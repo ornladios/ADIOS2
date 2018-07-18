@@ -164,6 +164,38 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 }
 
 template <class T>
+std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
+{
+    std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+        allStepsBlocksInfo;
+
+    for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
+    {
+        const size_t step = pair.first;
+        const std::vector<size_t> &blockPositions = pair.second;
+        // bp3 index starts at 1
+        allStepsBlocksInfo[step - 1] =
+            BlocksInfoCommon(variable, blockPositions);
+    }
+    return allStepsBlocksInfo;
+}
+
+template <class T>
+std::vector<typename core::Variable<T>::Info>
+BP3Deserializer::BlocksInfo(const core::Variable<T> &variable,
+                            const size_t step) const
+{
+    // bp3 format starts at 1
+    auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step + 1);
+    if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
+    {
+        return std::vector<typename core::Variable<T>::Info>();
+    }
+    return BlocksInfoCommon(variable, itStep->second);
+}
+
+template <class T>
 void BP3Deserializer::ClipContiguousMemory(
     typename core::Variable<T>::Info &blockInfo,
     const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
@@ -509,6 +541,44 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
     }
 
     return infoMap;
+}
+
+// PRIVATE
+template <class T>
+std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
+    const core::Variable<T> &variable,
+    const std::vector<size_t> &blocksIndexOffsets) const
+{
+    std::vector<typename core::Variable<T>::Info> blocksInfo;
+    blocksInfo.reserve(blocksIndexOffsets.size());
+
+    for (const size_t blockIndexOffset : blocksIndexOffsets)
+    {
+        size_t position = blockIndexOffset;
+
+        const Characteristics<T> blockCharacteristics =
+            ReadElementIndexCharacteristics<T>(
+                m_Metadata.m_Buffer, position,
+                static_cast<DataTypes>(GetDataType<T>()));
+
+        typename core::Variable<T>::Info blockInfo;
+        blockInfo.Start = blockCharacteristics.Start;
+        blockInfo.Count = blockCharacteristics.Count;
+
+        if (blockCharacteristics.Statistics.IsValue) // value
+        {
+            blockInfo.IsValue = true;
+            blockInfo.Value = blockCharacteristics.Statistics.Value;
+        }
+        else // array
+        {
+            blockInfo.IsValue = false;
+            blockInfo.Min = blockCharacteristics.Statistics.Min;
+            blockInfo.Max = blockCharacteristics.Statistics.Max;
+        }
+        blocksInfo.push_back(blockInfo);
+    }
+    return blocksInfo;
 }
 
 } // end namespace format

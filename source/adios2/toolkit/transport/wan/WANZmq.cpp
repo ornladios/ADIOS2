@@ -29,11 +29,6 @@ WANZmq::WANZmq(const std::string ipAddress, const std::string port,
     {
         throw std::runtime_error("ERROR: Creating ZeroMQ context failed");
     }
-    if (m_DebugMode)
-    {
-        std::cout << "[WANZmq] IP Address " << ipAddress << std::endl;
-        std::cout << "[WANZmq] Port " << port << std::endl;
-    }
 }
 
 WANZmq::~WANZmq()
@@ -59,14 +54,27 @@ int WANZmq::OpenSubscribe(const std::string &name, const Mode openMode,
 
     if (m_OpenMode == Mode::Write)
     {
+        m_OpenModeStr = "Write";
         m_Socket = zmq_socket(m_Context, ZMQ_PUB);
         error = zmq_bind(m_Socket, ip.c_str());
     }
     else if (m_OpenMode == Mode::Read)
     {
+        m_OpenModeStr = "Read";
         m_Socket = zmq_socket(m_Context, ZMQ_SUB);
         error = zmq_connect(m_Socket, ip.c_str());
         zmq_setsockopt(m_Socket, ZMQ_SUBSCRIBE, "", 0);
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "WANZmq::Open received invalid OpenMode parameter");
+    }
+
+    if (m_DebugMode)
+    {
+        std::cout << "[WANZmq Transport] OpenMode: " << m_OpenModeStr;
+        std::cout << ", Address: " << ip << std::endl;
     }
 
     return error;
@@ -87,6 +95,11 @@ int WANZmq::OpenPush(const std::string &name, const Mode openMode,
     {
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         error = zmq_bind(m_Socket, ip.c_str());
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "WANZmq::Open received invalid OpenMode parameter");
     }
 
     return error;
@@ -133,11 +146,6 @@ void WANZmq::Open(const std::string &name, const Mode openMode)
     }
 
     ProfilerStop("open");
-
-    if (m_DebugMode)
-    {
-        std::cout << "[WANZmq] Open " << std::endl;
-    }
 
     if (m_DebugMode)
     {

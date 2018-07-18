@@ -70,7 +70,7 @@ TEST_F(BPWriteTypesHighLevel, ADIOS2BPWriteTypes)
     adios2_fwrite(fhw, "varR32", adios2_type_float, data_R32, 1, shape, start,
                   count, 0);
     adios2_fwrite(fhw, "varR64", adios2_type_double, data_R64, 1, shape, start,
-                  count, 0);
+                  count, adios2_advance_step_false);
 
     adios2_fclose(fhw);
 

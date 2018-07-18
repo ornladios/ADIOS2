@@ -11,8 +11,8 @@
 #ifndef ADIOS2_CORE_STREAM_TCC_
 #define ADIOS2_CORE_STREAM_TCC_
 
-#include <adios2/core/Stream.h>
 #include "adios2/core/Variable.h"
+#include <adios2/core/Stream.h>
 
 namespace adios2
 {

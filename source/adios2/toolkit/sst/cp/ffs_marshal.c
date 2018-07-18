@@ -813,7 +813,7 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
     }
 }
 
-static void WaitForReadRequests(SstStream Stream)
+static SstStatusValue WaitForReadRequests(SstStream Stream)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
 
@@ -830,10 +830,14 @@ static void WaitForReadRequests(SstStream Stream)
             }
             else
             {
-                /* handle errors here */
+                CP_verbose(Stream, "Wait for remote read completion failed, "
+                                   "returning failure\n");
+                return Result;
             }
         }
     }
+    CP_verbose(Stream, "All remote memory reads completed\n");
+    return SstSuccess;
 }
 
 static void MapLocalToGlobalIndex(size_t Dims, const size_t *LocalIndex,
@@ -1117,17 +1121,27 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
     }
 }
 
-extern void SstFFSPerformGets(SstStream Stream)
+extern SstStatusValue SstFFSPerformGets(SstStream Stream)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    SstStatusValue Ret;
 
     IssueReadRequests(Stream, Info->PendingVarRequests);
 
-    WaitForReadRequests(Stream);
+    Ret = WaitForReadRequests(Stream);
 
-    FillReadRequests(Stream, Info->PendingVarRequests);
-
+    if (Ret == SstSuccess)
+    {
+        FillReadRequests(Stream, Info->PendingVarRequests);
+    }
+    else
+    {
+        CP_verbose(Stream, "Some memory read failed, not filling requests and "
+                           "returning failure\n");
+    }
     ClearReadRequests(Stream);
+
+    return Ret;
 }
 
 extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)

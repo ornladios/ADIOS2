@@ -104,7 +104,7 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
                               const size_t *Start, const size_t *Count,
                               void *Data);
 
-extern void SstFFSPerformGets(SstStream Stream);
+extern SstStatusValue SstFFSPerformGets(SstStream Stream);
 
 extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
                                  const float timeout_sec);

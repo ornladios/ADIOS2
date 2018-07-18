@@ -14,10 +14,39 @@
 #include "Engine.h"
 
 #include "adios2/core/Engine.h"
+#include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
+
+template <class T>
+static std::vector<typename Variable<T>::Info> ToBlocksInfo(
+    const std::vector<typename core::Variable<T>::Info> &coreBlocksInfo)
+{
+    std::vector<typename Variable<T>::Info> blocksInfo;
+    blocksInfo.reserve(coreBlocksInfo.size());
+
+    for (const typename core::Variable<T>::Info &coreBlockInfo : coreBlocksInfo)
+    {
+        typename Variable<T>::Info blockInfo;
+        blockInfo.Start = coreBlockInfo.Start;
+        blockInfo.Count = coreBlockInfo.Count;
+        blockInfo.IsValue = coreBlockInfo.IsValue;
+        if (blockInfo.IsValue)
+        {
+            blockInfo.Value = coreBlockInfo.Value;
+        }
+        else
+        {
+            blockInfo.Min = coreBlockInfo.Min;
+            blockInfo.Max = coreBlockInfo.Max;
+        }
+        blocksInfo.push_back(blockInfo);
+    }
+
+    return blocksInfo;
+}
 
 template <class T>
 void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
@@ -93,6 +122,47 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
     m_Engine->Get<T>(variableName, dataV, launch);
+}
+
+template <class T>
+std::map<size_t, std::vector<typename Variable<T>::Info>>
+Engine::AllStepsBlocksInfo(const Variable<T> variable) const
+{
+    adios2::helper::CheckForNullptr(
+        m_Engine, "for Engine in call to Engine::AllStepsBlocksInfo");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable,
+        "for variable in call to Engine::AllStepsBlocksInfo");
+
+    const std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+        coreAllStepsBlockInfo =
+            m_Engine->AllStepsBlocksInfo<T>(*variable.m_Variable);
+
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+        allStepsBlocksInfo;
+
+    for (const auto &pair : coreAllStepsBlockInfo)
+    {
+        const size_t step = pair.first;
+        const std::vector<typename core::Variable<T>::Info> &coreBlocksInfo =
+            pair.second;
+
+        allStepsBlocksInfo[step] = ToBlocksInfo<T>(coreBlocksInfo);
+    }
+    return allStepsBlocksInfo;
+}
+
+template <class T>
+std::vector<typename Variable<T>::Info>
+Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
+{
+    adios2::helper::CheckForNullptr(m_Engine,
+                                    "for Engine in call to Engine::BlocksInfo");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::BlocksInfo");
+
+    const auto blocksInfo = m_Engine->BlocksInfo<T>(*variable.m_Variable, step);
+    return ToBlocksInfo<T>(blocksInfo);
 }
 
 } // end namespace adios2

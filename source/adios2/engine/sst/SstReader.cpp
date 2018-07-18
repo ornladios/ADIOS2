@@ -205,8 +205,15 @@ void SstReader::EndStep()
 {
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
+        SstStatusValue Result;
         // this does all the deferred gets and fills in the variable array data
-        SstFFSPerformGets(m_Input);
+        Result = SstFFSPerformGets(m_Input);
+        if (Result != SstSuccess)
+        {
+            // tentative, until we change EndStep so that it has a return value
+            throw std::runtime_error(
+                "ERROR:  Writer failed before returning data");
+        }
     }
     if (m_WriterMarshalMethod == SstMarshalBP)
     {

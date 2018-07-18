@@ -110,7 +110,13 @@ Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
                                                                                \
     template void Engine::Get<T>(Variable<T>, std::vector<T> &, const Mode);   \
     template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
-                                 const Mode);
+                                 const Mode);                                  \
+                                                                               \
+    template std::map<size_t, std::vector<typename Variable<T>::Info>>         \
+    Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \
+                                                                               \
+    template std::vector<typename Variable<T>::Info> Engine::BlocksInfo(       \
+        const Variable<T> variable, const size_t step) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
