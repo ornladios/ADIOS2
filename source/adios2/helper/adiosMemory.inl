@@ -320,9 +320,9 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
 // Author:Shawn Yang, shawnyang610@gmail.com
 
 template <class T>
-int NdCopy(const std::vector<char> &in, const Dims &inStart,
+int NdCopy(char *in, const Dims &inStart,
            const Dims &inCount, bool inIsRowMaj, bool inIsBigEndian,
-           std::vector<char> &out, const Dims &outStart, const Dims &outCount,
+           char *out, const Dims &outStart, const Dims &outCount,
            bool outIsRowMaj, bool outIsBigEndian, bool safeMode)
 {
     Dims inEnd(inStart.size());
@@ -390,10 +390,10 @@ int NdCopy(const std::vector<char> &in, const Dims &inStart,
         }
     };
 
-    auto GetIoOvlpBase = [](char *&ioOvlpBase, const std::vector<char> &io,
+    auto GetIoOvlpBase = [](char *&ioOvlpBase, char *io,
                             const Dims &ioStart, Dims &ioStride,
                             Dims &ovlpStart) {
-        ioOvlpBase = (char *)io.data();
+        ioOvlpBase = io;
         for (size_t i = 0; i < ioStart.size(); i++)
             ioOvlpBase = ioOvlpBase + (ovlpStart[i] - ioStart[i]) * ioStride[i];
     };
@@ -535,8 +535,8 @@ int NdCopy(const std::vector<char> &in, const Dims &inStart,
         }
         GetRltvOvlpStartPos(inRltvOvlpStartPos, inStart, ovlpStart);
         GetRltvOvlpStartPos(outRltvOvlpStartPos, outStart, ovlpStart);
-        inOvlpBase = (char *)in.data();
-        outOvlpBase = (char *)out.data();
+        inOvlpBase = in;
+        outOvlpBase = out;
         // Same Endian"
         if (inIsBigEndian == outIsBigEndian)
         {

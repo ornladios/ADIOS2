@@ -17,6 +17,8 @@
 #include "adios2/operator/compress/CompressZfp.h"
 #endif
 
+#include "adios2/helper/adiosFunctions.h"
+
 #include <iostream>
 
 namespace adios2
@@ -189,8 +191,8 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                 // done in order to avoid expensive memory copy operations
                 // happening inside the lock. Once the shared pointer is
                 // assigned to k, its life cycle in m_BufferMap does not matter
-                // any more. So even if it is released somewhere else the memory
-                // is still valid until k dies.
+                // any more. So even if m_BufferMap[j.index] is modified somewhere else the memory
+                // that this shared pointer refers to is still valid until k runs out of scope.
                 m_MutexBuffer.lock();
                 std::shared_ptr<std::vector<char>> k = m_BufferMap[j.index];
                 m_MutexBuffer.unlock();
@@ -238,9 +240,28 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                 {
                     Box<Dims> srcbox(j.start, j.count);
                     Box<Dims> dstbox(variable.m_Start, variable.m_Count);
+
+                    /*
+                    // original copy
                     CopyLocalToGlobal(
                         reinterpret_cast<char *>(variable.GetData()), dstBox,
                         k->data() + j.position, srcBox, sizeof(T), overlapBox);
+                        */
+
+
+                    // new implementation
+                    helper::NdCopy<T>(
+                            k->data(),
+                            j.start,
+                            j.count,
+                            true,
+                            true,
+                            reinterpret_cast<char*>(variable.GetData()),
+                            variable.m_Start,
+                            variable.m_Count,
+                            true,
+                            true
+                            );
                 }
             }
         }
