@@ -141,7 +141,7 @@ struct _SstStream
     int GlobalOpRequired;
 
     /* writer side marshal info */
-    void *MarshalData;
+    void *WriterMarshalData;
     size_t MetadataSize;
     void *M; // building metadata block
     size_t DataSize;

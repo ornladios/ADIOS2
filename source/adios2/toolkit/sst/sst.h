@@ -50,6 +50,8 @@ typedef enum {
     SstQueueFullDiscard = 1
 } SstQueueFullPolicy;
 
+typedef enum { SstCompressNone = 0, SstCompressZFP = 1 } SstCompressionMethod;
+
 /*
  *  Writer-side operations
  */

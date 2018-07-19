@@ -32,7 +32,8 @@ struct _SstBlock
     MACRO(QueueLimit, Int, int, 0)                                             \
     MACRO(QueueFullPolicy, QueueFullPolicy, size_t, 0)                         \
     MACRO(IsRowMajor, IsRowMajor, int, 0)                                      \
-    MACRO(ControlTransport, String, char *, NULL)
+    MACRO(ControlTransport, String, char *, NULL)                              \
+    MACRO(CompressionMethod, CompressionMethod, size_t, 0)
 
 typedef enum {
     SstRegisterFile,

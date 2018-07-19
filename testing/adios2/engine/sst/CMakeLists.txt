@@ -135,3 +135,15 @@ add_test(
     -nw 3 -nr 5 -v -p TestSst -arg 'RendezvousReaderCount:0,QueueLimit:3' -arg '--expect_time_gap')
 set_tests_properties(ADIOSSstDelayedReaderWithBlockingTest.3x5 PROPERTIES TIMEOUT 30) 
 
+if(ADIOS2_HAVE_ZFP)
+  add_test(
+    NAME ADIOSSstZFPCompression.1x1
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
+    -nw 1 -nr 1 -v -p TestSst -arg 'CompressionMethod:zfp' )
+  set_tests_properties(ADIOSSstZFPCompression.1x1 PROPERTIES TIMEOUT 30) 
+  add_test(
+    NAME ADIOSSstZFPCompression.3x5
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
+    -nw 3 -nr 5 -v -p TestSst -arg 'CompressionMethod:zfp' )
+  set_tests_properties(ADIOSSstZFPCompression.3x5 PROPERTIES TIMEOUT 30) 
+endif()

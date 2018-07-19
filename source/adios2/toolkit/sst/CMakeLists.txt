@@ -15,6 +15,11 @@ if(ADIOS2_SST_HAVE_LIBFABRIC)
   target_link_libraries(sst PRIVATE libfabric::libfabric)
 endif()
 
+if(ADIOS2_HAVE_ZFP)
+  target_sources(sst PRIVATE cp/ffs_zfp.c)
+  target_link_libraries(sst PRIVATE zfp::zfp)
+endif()
+
 # Set library version information
 set_target_properties(sst PROPERTIES
   OUTPUT_NAME adios2_sst
@@ -37,6 +42,7 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/toolkit/sst/SSTConfig.h
 target_compile_features(sst PRIVATE ${ADIOS2_C99_FEATURES})
 
 target_include_directories(sst PRIVATE
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
