@@ -19,8 +19,10 @@
 std::string ip = "127.0.0.1";
 std::string port = "12306";
 
-adios2::Dims start({0, 0});
-adios2::Dims count({60, 80});
+adios2::Dims start({2, 3});
+adios2::Dims count({2, 3});
+size_t steps = 10;
+int timeout = 20;
 
 int rank, size;
 
@@ -64,9 +66,18 @@ int main(int argc, char *argv[])
     adios2::Variable<float> bpFloats;
 
     // read data
-
-    for (int i = 0; i < 1000; ++i)
+    size_t i = 0;
+    auto start_time = std::chrono::system_clock::now();
+    while (i < steps)
     {
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > timeout)
+        {
+            std::cout << "Timeout" << std::endl;
+            return -1;
+        }
         adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
