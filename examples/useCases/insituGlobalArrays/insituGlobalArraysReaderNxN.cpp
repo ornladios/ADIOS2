@@ -14,6 +14,7 @@
 
 #include <algorithm> // std::transform
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <thread> // sleep_for
 #include <vector>
@@ -32,6 +33,7 @@ typedef struct
     adios2::Dims shape;
     adios2::Dims start;
     adios2::Dims count;
+    std::vector<double> data;
 } VarInfo;
 
 std::string DimsToString(adios2::Dims &dims)
@@ -106,7 +108,35 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
+    // sync printouts
+    MPI_Barrier(readerComm);
     return varinfos;
+}
+
+void ReadVariables(int rank, adios2::Engine &reader, adios2::IO &io,
+                   std::vector<VarInfo> &varinfos)
+{
+    for (auto &vi : varinfos)
+    {
+        /*std::cout << "       Read Variable Name: " << vi.varName
+                  << " dimensions = " << DimsToString(vi.count)
+                  << " offset = " << DimsToString(vi.start) << std::endl;*/
+        if (vi.type == "double")
+        {
+            adios2::Variable<double> variable =
+                io.InquireVariable<double>(vi.varName);
+            variable.SetSelection({vi.start, vi.count});
+            reader.Get(variable, vi.data);
+        }
+        else
+        {
+            std::cout << "ERROR: This example does not support reading "
+                         "variables of type: "
+                      << vi.type << ". Skip reading variable " << vi.varName
+                      << std::endl;
+        }
+    }
+    reader.PerformGets();
 }
 
 void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
@@ -128,7 +158,12 @@ void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
     {
         std::cout << "       Name: " << vi.varName
                   << " dimensions = " << DimsToString(vi.count)
-                  << " offset = " << DimsToString(vi.start) << std::endl;
+                  << " offset = " << DimsToString(vi.start) << " = [";
+        for (auto d : vi.data)
+        {
+            std::cout << "  " << std::fixed << std::setprecision(2) << d;
+        }
+        std::cout << "  ]" << std::endl;
     }
 
 #ifdef ADIOS2_HAVE_MPI
@@ -225,6 +260,7 @@ int main(int argc, char *argv[])
 
             std::vector<VarInfo> varinfos =
                 ProcessMetadata(rank, reader, io, varNameList);
+            ReadVariables(rank, reader, io, varinfos);
             SerialPrintout(varinfos, rank, nproc);
 
             reader.EndStep();
