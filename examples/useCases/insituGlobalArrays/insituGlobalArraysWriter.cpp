@@ -26,12 +26,14 @@
  *      Author: pnorbert
  */
 
+#include <algorithm> // std::transform
 #include <iostream>
 #include <vector>
 
 #include <adios2.h>
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+MPI_Comm writerComm;
 #endif
 
 const int NSTEPS = 5;
@@ -55,13 +57,39 @@ std::vector<std::vector<std::string>> VarTree = {
 std::vector<std::vector<size_t>> SizesTree = {
     {5, 5, 5}, {3, 3}, {4, 4}, {5, 5}};
 
+std::string argEngine = "BPFile";
+adios2::Params engineParams;
+
+void ProcessArgs(int rank, int argc, char *argv[])
+{
+    if (argc > 1)
+    {
+        argEngine = argv[1];
+    }
+    std::string elc = argEngine;
+    std::transform(elc.begin(), elc.end(), elc.begin(), ::tolower);
+    if (elc == "sst")
+    {
+        engineParams["MarshalMethod"] = "BP";
+    }
+    else if (elc == "insitumpi")
+    {
+        engineParams["verbose"] = "3";
+    }
+}
+
 int main(int argc, char *argv[])
 {
     int rank = 0, nproc = 1;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    int wrank, wnproc;
+    MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
+    MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
+    const unsigned int color = 1;
+    MPI_Comm_split(MPI_COMM_WORLD, color, wrank, &writerComm);
+    MPI_Comm_rank(writerComm, &rank);
+    MPI_Comm_size(writerComm, &nproc);
 #endif
 
     const int maxProc = VarTree.size();
@@ -76,8 +104,20 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    ProcessArgs(rank, argc, argv);
+    if (!rank)
+    {
+        std::cout << "Writer: ADIOS2 Engine set to: " << argEngine
+                  << "   Parameters:";
+        for (auto &p : engineParams)
+        {
+            std::cout << "    " << p.first << " = " << p.second;
+        }
+        std::cout << std::endl;
+    }
+
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(writerComm);
 #else
     adios2::ADIOS adios;
 #endif
@@ -96,6 +136,8 @@ int main(int argc, char *argv[])
     try
     {
         adios2::IO io = adios.DeclareIO("Output");
+        io.SetEngine(argEngine);
+        io.SetParameters(engineParams);
         for (int i = 0; i < nvars; i++)
         {
             size_t nelems = SizesTree[rank][i];

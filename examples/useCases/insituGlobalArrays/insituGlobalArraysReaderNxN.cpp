@@ -12,34 +12,76 @@
  *      Author: pnorbert
  */
 
-#include <iostream>
-#include <vector>
+#include <algorithm> // std::transform
 #include <chrono>
+#include <iostream>
 #include <thread> // sleep_for
-
+#include <vector>
 
 #include <adios2.h>
+
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+MPI_Comm readerComm;
 #endif
 
 typedef struct
 {
-    //core::VariableBase *v = nullptr;
     std::string varName;
     std::string type;
     adios2::Dims shape;
     adios2::Dims start;
     adios2::Dims count;
-    //void *readbuf = nullptr; // read in buffer
 } VarInfo;
 
-
-std::vector<VarInfo> ProcessMetadata(int rank,
-        const adios2::Engine &reader, const adios2::IO &io, 
-        const std::map<std::string, adios2::Params> &varNameList)
+std::string DimsToString(adios2::Dims &dims)
 {
-    std::vector<VarInfo> varinfos; 
+    std::string s = "\"";
+    for (int i = 0; i < dims.size(); i++)
+    {
+        if (i > 0)
+        {
+            s += ", ";
+        }
+        s += std::to_string(dims[i]);
+    }
+    s += "\"";
+    return s;
+}
+
+/* Find the block written by rank for a given variable
+ * Appends the block info to the passed Varinfo vector if found
+ */
+template <class T>
+void ProcessVariableMetadata(int rank, const std::string &name,
+                             const std::string &type,
+                             const adios2::Engine &reader, adios2::IO &io,
+                             std::vector<VarInfo> &varinfos)
+{
+    const adios2::Variable<T> variable = io.InquireVariable<T>(name);
+    std::vector<typename adios2::Variable<T>::Info> blocks =
+        reader.BlocksInfo(variable, reader.CurrentStep());
+    for (auto &block : blocks)
+    {
+        /* offset in first dimension is encoding writer's rank */
+        if (block.Start.size() > 0 && block.Start[0] == rank)
+        {
+            /*std::cout << "        Rank " << rank << "     Variable '" << name
+                      << "' found a block dimensions = "
+                      << DimsToString(block.Count)
+                      << " offset = " << DimsToString(block.Start) <<
+               std::endl;*/
+            varinfos.push_back(
+                {name, type, variable.Shape(), block.Start, block.Count});
+        }
+    }
+}
+
+std::vector<VarInfo>
+ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
+                const std::map<std::string, adios2::Params> &varNameList)
+{
+    std::vector<VarInfo> varinfos;
     for (auto &var : varNameList)
     {
         const std::string &name(var.first);
@@ -49,76 +91,115 @@ std::vector<VarInfo> ProcessMetadata(int rank,
         const std::string &shape = it->second;
         if (!rank)
         {
-        std::cout << "    Variable '" << name << "' type " << type   
-            << " dimensions = " << shape << std::endl;
+            std::cout << "    Variable '" << name << "' type " << type
+                      << " dimensions = " << shape << std::endl;
         }
-/*        if (type == "compound")
+        if (type == "compound")
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-        else if (type == helper::GetType<T>())                                     \
-        {                                                                          \
-            auto variable = io.InquireVariable<T>(variablePair.first);                  \
-        }
+    else if (type == adios2::GetType<T>())                                     \
+    {                                                                          \
+        ProcessVariableMetadata<T>(rank, name, type, reader, io, varinfos);    \
+    }
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
-
-    */
     }
     return varinfos;
 }
 
 void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
 {
-    // Serialize printout
+// Serialize printout
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(readerComm);
     int token = 0;
     MPI_Status st;
     if (rank > 0)
     {
-        MPI_Recv(&token, 1, MPI_INT, rank-1, 0, MPI_COMM_WORLD, &st);
+        MPI_Recv(&token, 1, MPI_INT, rank - 1, 0, readerComm, &st);
     }
 #endif
 
-    std::cout << "    Rank " << rank << " variables:" << varinfos.size() << std::endl;
+    std::cout << "    Rank " << rank << " variables:" << varinfos.size()
+              << std::endl;
     for (auto &vi : varinfos)
     {
-        std::cout << "       Name: " << vi.varName << std::endl;
+        std::cout << "       Name: " << vi.varName
+                  << " dimensions = " << DimsToString(vi.count)
+                  << " offset = " << DimsToString(vi.start) << std::endl;
     }
 
 #ifdef ADIOS2_HAVE_MPI
-    if (rank < nproc-1)
+    if (rank < nproc - 1)
     {
-        //std::chrono::milliseconds timespan(100);
-        //std::this_thread::sleep_for(timespan);
-        MPI_Send(&token, 1, MPI_INT, rank+1, 0, MPI_COMM_WORLD);
+        // std::chrono::milliseconds timespan(100);
+        // std::this_thread::sleep_for(timespan);
+        MPI_Send(&token, 1, MPI_INT, rank + 1, 0, readerComm);
     }
 #endif
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(readerComm);
 }
 
+std::string argEngine = "BPFile";
+adios2::Params engineParams;
 
+void ProcessArgs(int rank, int argc, char *argv[])
+{
+    if (argc > 1)
+    {
+        argEngine = argv[1];
+    }
+    std::string elc = argEngine;
+    std::transform(elc.begin(), elc.end(), elc.begin(), ::tolower);
+    if (elc == "sst")
+    {
+        engineParams["MarshalMethod"] = "BP";
+    }
+    else if (elc == "insitumpi")
+    {
+        engineParams["verbose"] = "3";
+    }
+}
 
 int main(int argc, char *argv[])
 {
     int rank = 0, nproc = 1;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    int wrank, wnproc;
+    MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
+    MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
+    const unsigned int color = 2;
+    MPI_Comm_split(MPI_COMM_WORLD, color, wrank, &readerComm);
+    MPI_Comm_rank(readerComm, &rank);
+    MPI_Comm_size(readerComm, &nproc);
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(readerComm);
 #else
     adios2::ADIOS adios;
 #endif
 
+    ProcessArgs(rank, argc, argv);
+    if (!rank)
+    {
+        std::cout << "Reader: ADIOS2 Engine set to: " << argEngine
+                  << "   Parameters:";
+        for (auto &p : engineParams)
+        {
+            std::cout << "    " << p.first << " = " << p.second;
+        }
+        std::cout << std::endl;
+    }
+
     try
     {
         adios2::IO io = adios.DeclareIO("Input");
+        io.SetEngine(argEngine);
+        io.SetParameters(engineParams);
         adios2::Engine reader = io.Open("output.bp", adios2::Mode::Read);
 
         while (true)
@@ -130,18 +211,22 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            std::map<std::string, adios2::Params> varNameList = io.AvailableVariables();
+            std::map<std::string, adios2::Params> varNameList =
+                io.AvailableVariables();
             const size_t nTotalVars = varNameList.size();
-            if (!rank) 
+            if (!rank)
             {
                 std::cout << "File info:" << std::endl;
-                std::cout << "  Current step:   " << reader.CurrentStep() << std::endl;
-                std::cout << "  Total number of variables = " << nTotalVars << std::endl;
+                std::cout << "  Current step:   " << reader.CurrentStep()
+                          << std::endl;
+                std::cout << "  Total number of variables = " << nTotalVars
+                          << std::endl;
             }
 
-            std::vector<VarInfo> varinfos = ProcessMetadata(rank, reader, io, varNameList);
+            std::vector<VarInfo> varinfos =
+                ProcessMetadata(rank, reader, io, varNameList);
             SerialPrintout(varinfos, rank, nproc);
-            
+
             reader.EndStep();
         }
 
