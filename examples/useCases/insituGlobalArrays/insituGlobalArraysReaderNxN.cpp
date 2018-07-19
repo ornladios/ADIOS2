@@ -169,8 +169,8 @@ void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
 #ifdef ADIOS2_HAVE_MPI
     if (rank < nproc - 1)
     {
-        // std::chrono::milliseconds timespan(100);
-        // std::this_thread::sleep_for(timespan);
+        std::chrono::milliseconds timespan(100);
+        std::this_thread::sleep_for(timespan);
         MPI_Send(&token, 1, MPI_INT, rank + 1, 0, readerComm);
     }
 #endif
