@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     {
         auto now_time = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                now_time - start_time);
+            now_time - start_time);
         if (duration.count() > timeout)
         {
             std::cout << "Timeout" << std::endl;

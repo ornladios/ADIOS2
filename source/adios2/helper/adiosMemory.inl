@@ -320,10 +320,10 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
 // Author:Shawn Yang, shawnyang610@gmail.com
 
 template <class T>
-int NdCopy(char *in, const Dims &inStart,
-           const Dims &inCount, bool inIsRowMaj, bool inIsBigEndian,
-           char *out, const Dims &outStart, const Dims &outCount,
-           bool outIsRowMaj, bool outIsBigEndian, bool safeMode)
+int NdCopy(char *in, const Dims &inStart, const Dims &inCount, bool inIsRowMaj,
+           bool inIsBigEndian, char *out, const Dims &outStart,
+           const Dims &outCount, bool outIsRowMaj, bool outIsBigEndian,
+           bool safeMode)
 {
     Dims inEnd(inStart.size());
     Dims outEnd(inStart.size());
@@ -390,9 +390,8 @@ int NdCopy(char *in, const Dims &inStart,
         }
     };
 
-    auto GetIoOvlpBase = [](char *&ioOvlpBase, char *io,
-                            const Dims &ioStart, Dims &ioStride,
-                            Dims &ovlpStart) {
+    auto GetIoOvlpBase = [](char *&ioOvlpBase, char *io, const Dims &ioStart,
+                            Dims &ioStride, Dims &ovlpStart) {
         ioOvlpBase = io;
         for (size_t i = 0; i < ioStart.size(); i++)
             ioOvlpBase = ioOvlpBase + (ovlpStart[i] - ioStart[i]) * ioStride[i];

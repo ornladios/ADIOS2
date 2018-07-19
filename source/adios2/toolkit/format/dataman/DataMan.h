@@ -79,17 +79,8 @@ public:
     const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 
 private:
-    bool GetOverlap(const Box<Dims> &b1, const Box<Dims> &b2, Box<Dims> &o);
-    bool IsContinuous(const Box<Dims> &inner, const Box<Dims> &outer);
-    Dims GetRelativePosition(const Dims &inner, const Dims &outer);
-    Dims GetAbsolutePosition(const Dims &inner, const Dims &outer);
-    size_t MultiToOne(const Dims &global, const Dims &position);
-    Dims OneToMulti(const Dims &global, size_t position);
-    void CopyLocalToGlobal(char *dst, const Box<Dims> &dstbox, const char *src,
-                           const Box<Dims> &srcbox, const size_t size,
-                           const Box<Dims> &overlapBox);
-    void PrintBox(const Box<Dims> in, std::string name);
-
+    bool HasOverlap(Dims in_start, Dims in_count, Dims out_start,
+                    Dims out_count);
     bool BufferContainsSteps(int index, size_t begin, size_t end);
 
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
