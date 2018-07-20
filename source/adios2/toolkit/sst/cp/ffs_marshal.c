@@ -373,7 +373,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
 }
 
 #if !defined(ADIOS2_HAVE_ZFP)
-#define ZFPcompressionPossible(Type) 0
+#define ZFPcompressionPossible(Type, DimCount) 0
 #endif
 
 static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
@@ -432,7 +432,7 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         RecalcMarshalStorageSize(Stream);
 
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
-            ZFPcompressionPossible(Type))
+            ZFPcompressionPossible(Type, DimCount))
         {
             Type = "char";
             ElemSize = 1;
@@ -1055,7 +1055,7 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 
                 if ((Stream->WriterConfigParams->CompressionMethod ==
                      SstCompressZFP) &&
-                    ZFPcompressionPossible(Type))
+                    ZFPcompressionPossible(Type, DimCount))
                 {
 #ifdef ADIOS2_HAVE_ZFP
                     /*
@@ -1503,7 +1503,7 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
         MetaEntry->Offsets = CopyDims(DimCount, Offsets);
 
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
-            ZFPcompressionPossible(Type))
+            ZFPcompressionPossible(Type, DimCount))
         {
 #ifdef ADIOS2_HAVE_ZFP
             /* this should never be true if ZFP is not available */

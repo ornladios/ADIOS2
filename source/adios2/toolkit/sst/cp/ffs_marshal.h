@@ -85,4 +85,4 @@ extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount,
 extern void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount,
                                char *Type, void *bufferIn, const size_t sizeIn,
                                const size_t *Dimensions, attr_list Parameters);
-extern int ZFPcompressionPossible(const char *Type);
+extern int ZFPcompressionPossible(const char *Type, const int DimCount);

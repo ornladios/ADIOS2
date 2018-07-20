@@ -55,9 +55,9 @@ static zfp_type GetZFPType(const char *Type)
     return zfp_type_none;
 }
 
-extern int ZFPcompressionPossible(const char *Type)
+extern int ZFPcompressionPossible(const char *Type, int DimCount)
 {
-    return (GetZFPType(Type) != zfp_type_none);
+    return ((GetZFPType(Type) != zfp_type_none) && (DimCount < 4));
 }
 
 static zfp_field *GetZFPField(void *Data, const size_t DimCount, char *Type,
