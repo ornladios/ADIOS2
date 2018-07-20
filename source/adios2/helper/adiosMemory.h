@@ -141,8 +141,8 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
  *                 stack/simulated stack which has more overhead for the algm.
  */
 template <class T>
-int NdCopy(const char *in, const Dims &inStart, const Dims &inCount, bool inIsRowMaj,
-           bool inIsBigEndian, char *out, const Dims &outStart,
+int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
+           bool inIsRowMaj, bool inIsBigEndian, char *out, const Dims &outStart,
            const Dims &outCount, bool outIsRowMaj, bool outIsBigEndian,
            bool safeMode = false);
 
