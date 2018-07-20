@@ -108,8 +108,10 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
+#ifdef ADIOS2_HAVE_MPI
     // sync printouts
     MPI_Barrier(readerComm);
+#endif
     return varinfos;
 }
 
@@ -173,8 +175,8 @@ void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
         std::this_thread::sleep_for(timespan);
         MPI_Send(&token, 1, MPI_INT, rank + 1, 0, readerComm);
     }
-#endif
     MPI_Barrier(readerComm);
+#endif
 }
 
 std::string argEngine = "BPFile";
