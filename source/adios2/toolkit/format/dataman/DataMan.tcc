@@ -33,6 +33,8 @@ bool DataManSerializer::PutZfp(core::Variable<T> &variable, std::string doid,
 {
     nlohmann::json metaj;
 
+    metaj["M"] = m_IsRowMajor;
+    metaj["E"] = m_IsLittleEndian;
     metaj["N"] = variable.m_Name;
     metaj["Y"] = variable.m_Type;
     metaj["S"] = variable.m_Shape;
@@ -96,6 +98,8 @@ bool DataManSerializer::PutRaw(core::Variable<T> &variable, std::string doid,
 {
     nlohmann::json metaj;
 
+    metaj["M"] = m_IsRowMajor;
+    metaj["E"] = m_IsLittleEndian;
     metaj["N"] = variable.m_Name;
     metaj["Y"] = variable.m_Type;
     metaj["S"] = variable.m_Shape;
@@ -233,9 +237,11 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                 else
                 {
                     helper::NdCopy<T>(
-                        k->data() + j.position, j.start, j.count, true, true,
+                        k->data() + j.position, j.start, j.count, j.isRowMajor,
+                        j.isLittleEndian,
                         reinterpret_cast<char *>(variable.GetData()),
-                        variable.m_Start, variable.m_Count, true, true);
+                        variable.m_Start, variable.m_Count, m_IsRowMajor,
+                        m_IsLittleEndian);
                 }
             }
         }

@@ -26,6 +26,9 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     MPI_Comm_rank(mpiComm, &m_MPIRank);
     MPI_Comm_size(mpiComm, &m_MPISize);
 
+    m_IsLittleEndian = helper::IsLittleEndian();
+    m_IsRowMajor = helper::IsRowMajor(io.m_HostLanguage);
+
     GetIntParameter(m_IO.m_Parameters, "TransportChannels",
                     m_TransportChannels);
 }

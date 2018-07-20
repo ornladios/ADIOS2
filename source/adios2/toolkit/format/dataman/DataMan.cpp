@@ -10,7 +10,7 @@
 
 #include "DataMan.tcc"
 
-#include <cstring> //std::memcpy
+#include <cstring>
 #include <iostream>
 
 namespace adios2
@@ -18,8 +18,18 @@ namespace adios2
 namespace format
 {
 
+DataManSerializer::DataManSerializer(bool isRowMajor, bool isLittleEndian)
+{
+    m_IsRowMajor = isRowMajor;
+    m_IsLittleEndian = isLittleEndian;
+}
+
 void DataManSerializer::New(size_t size)
 {
+    // make a new shared object each time because the old shared object could
+    // still be alive and needed somewhere in the workflow, for example the
+    // queue in transport manager. It will be automatically released when the
+    // entire workflow finishes using it.
     m_Buffer = std::make_shared<std::vector<char>>();
     m_Buffer->reserve(size);
     m_Position = 0;
@@ -28,6 +38,12 @@ void DataManSerializer::New(size_t size)
 const std::shared_ptr<std::vector<char>> DataManSerializer::Get()
 {
     return m_Buffer;
+}
+
+DataManDeserializer::DataManDeserializer(bool isRowMajor, bool isLittleEndian)
+{
+    m_IsRowMajor = isRowMajor;
+    m_IsLittleEndian = isLittleEndian;
 }
 
 void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
@@ -56,6 +72,8 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
             nlohmann::json metaj =
                 nlohmann::json::parse(data->data() + position);
             position += metasize;
+            var.isRowMajor = metaj["M"].get<bool>();
+            var.isLittleEndian = metaj["E"].get<bool>();
             var.name = metaj["N"].get<std::string>();
             var.type = metaj["Y"].get<std::string>();
             var.shape = metaj["S"].get<Dims>();

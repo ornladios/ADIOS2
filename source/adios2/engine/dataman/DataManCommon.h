@@ -46,6 +46,9 @@ protected:
     bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;
 
+    bool m_IsLittleEndian;
+    bool m_IsRowMajor;
+
     std::shared_ptr<transportman::DataMan> m_DataMan;
     std::shared_ptr<std::thread> m_DataThread;
 
