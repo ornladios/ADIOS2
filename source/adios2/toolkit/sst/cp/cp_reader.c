@@ -43,7 +43,11 @@ redo:
 
     free(FileName);
     char *Buffer = calloc(1, Size + 1);
-    (void)fread(Buffer, Size, 1, WriterInfo);
+    if (fread(Buffer, Size, 1, WriterInfo) != 1)
+    {
+        fprintf(stderr, "Filesystem read failed, exiting\n");
+        exit(1);
+    }
     fclose(WriterInfo);
     return Buffer;
 }
@@ -55,7 +59,11 @@ static char *readContactInfoScreen(const char *Name, SstStream Stream)
     fprintf(stdout, "Please enter the contact information associated with SST "
                     "input stream \"%s\":\n",
             Name);
-    fgets(Input, sizeof(Input), stdin);
+    if (fgets(Input, sizeof(Input), stdin) == NULL)
+    {
+        fprintf(stdout, "Read from stdin failed, exiting\n");
+        exit(1);
+    }
     while (isspace(*Skip))
         Skip++;
     return strdup(Skip);
