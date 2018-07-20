@@ -600,8 +600,8 @@ static void NdCopyIterDFDynamicRevEndian(char *inBase, char *outBase,
 }
 
 template <class T>
-int NdCopy(char *in, const Dims &inStart, const Dims &inCount, bool inIsRowMaj,
-           bool inIsBigEndian, char *out, const Dims &outStart,
+int NdCopy(const char *in, const Dims &inStart, const Dims &inCount, bool inIsRowMaj,
+           bool inIsBigEndian, const char *out, const Dims &outStart,
            const Dims &outCount, bool outIsRowMaj, bool outIsBigEndian,
            bool safeMode)
 {
@@ -670,9 +670,9 @@ int NdCopy(char *in, const Dims &inStart, const Dims &inCount, bool inIsRowMaj,
         }
     };
 
-    auto GetIoOvlpBase = [](char *&ioOvlpBase, char *io, const Dims &ioStart,
+    auto GetIoOvlpBase = [](char *&ioOvlpBase, const char *io, const Dims &ioStart,
                             Dims &ioStride, Dims &ovlpStart) {
-        ioOvlpBase = io;
+        ioOvlpBase = (char*)io;
         for (size_t i = 0; i < ioStart.size(); i++)
             ioOvlpBase = ioOvlpBase + (ovlpStart[i] - ioStart[i]) * ioStride[i];
     };
@@ -814,8 +814,8 @@ int NdCopy(char *in, const Dims &inStart, const Dims &inCount, bool inIsRowMaj,
         }
         GetRltvOvlpStartPos(inRltvOvlpStartPos, inStart, ovlpStart);
         GetRltvOvlpStartPos(outRltvOvlpStartPos, outStart, ovlpStart);
-        inOvlpBase = in;
-        outOvlpBase = out;
+        inOvlpBase = (char*)in;
+        outOvlpBase = (char*)out;
         // Same Endian"
         if (inIsBigEndian == outIsBigEndian)
         {
