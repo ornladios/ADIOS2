@@ -17,6 +17,8 @@
 #include "adios2/operator/compress/CompressZfp.h"
 #endif
 
+#include "adios2/helper/adiosFunctions.h"
+
 #include <iostream>
 
 namespace adios2
@@ -171,30 +173,23 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
         {
             if (j.name == variable.m_Name)
             {
-
-                Box<Dims> srcBox(j.start,
-                                 GetAbsolutePosition(j.start, j.count));
-                Box<Dims> dstBox(
-                    variable.m_Start,
-                    GetAbsolutePosition(variable.m_Start, variable.m_Count));
-                Box<Dims> overlapBox;
-
-                if (GetOverlap(srcBox, dstBox, overlapBox) == false)
+                if (HasOverlap(j.start, j.count, variable.m_Start,
+                               variable.m_Count) == false)
                 {
                     return -3; // step and variable found but variable does not
                                // have desired part
                 }
-
                 // Get the shared pointer first and then copy memory. This is
                 // done in order to avoid expensive memory copy operations
                 // happening inside the lock. Once the shared pointer is
                 // assigned to k, its life cycle in m_BufferMap does not matter
-                // any more. So even if it is released somewhere else the memory
-                // is still valid until k dies.
+                // any more. So even if m_BufferMap[j.index] is modified
+                // somewhere else the memory
+                // that this shared pointer refers to is still valid until k
+                // runs out of scope.
                 m_MutexBuffer.lock();
                 std::shared_ptr<std::vector<char>> k = m_BufferMap[j.index];
                 m_MutexBuffer.unlock();
-
                 if (j.compression == "zfp")
                 {
 #ifdef ADIOS2_HAVE_ZFP
@@ -212,9 +207,10 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                     {
                         return -4; // decompression failed
                     }
-                    CopyLocalToGlobal(
-                        reinterpret_cast<char *>(variable.GetData()), dstBox,
-                        decompressBuffer.data(), srcBox, sizeof(T), overlapBox);
+                    helper::NdCopy<T>(
+                        decompressBuffer.data(), j.start, j.count, true, true,
+                        reinterpret_cast<char *>(variable.GetData()),
+                        variable.m_Start, variable.m_Count, true, true);
 #else
                     throw std::runtime_error(
                         "Data received is compressed using ZFP. However, ZFP "
@@ -236,11 +232,10 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                 }
                 else
                 {
-                    Box<Dims> srcbox(j.start, j.count);
-                    Box<Dims> dstbox(variable.m_Start, variable.m_Count);
-                    CopyLocalToGlobal(
-                        reinterpret_cast<char *>(variable.GetData()), dstBox,
-                        k->data() + j.position, srcBox, sizeof(T), overlapBox);
+                    helper::NdCopy<T>(
+                        k->data() + j.position, j.start, j.count, true, true,
+                        reinterpret_cast<char *>(variable.GetData()),
+                        variable.m_Start, variable.m_Count, true, true);
                 }
             }
         }
