@@ -328,7 +328,7 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
 // functions) and copies to the output buffer in blocks. the memory address
 // calculation complexity for copying each block is minimized to O(1), which is
 // independent of the number of dimensions.
-static void NdCopyRecurDFSeqPadding(size_t curDim, char *&inOvlpBase,
+static void NdCopyRecurDFSeqPadding(size_t curDim, const char *&inOvlpBase,
                                     char *&outOvlpBase, Dims &inOvlpGapSize,
                                     Dims &outOvlpGapSize, Dims &ovlpCount,
                                     size_t &minContDim, size_t &blockSize)
@@ -372,7 +372,7 @@ static void NdCopyRecurDFSeqPadding(size_t curDim, char *&inOvlpBase,
 // the number of dimensions.
 
 static void NdCopyRecurDFSeqPaddingRevEndian(
-    size_t curDim, char *&inOvlpBase, char *&outOvlpBase, Dims &inOvlpGapSize,
+    size_t curDim, const char *&inOvlpBase, char *&outOvlpBase, Dims &inOvlpGapSize,
     Dims &outOvlpGapSize, Dims &ovlpCount, size_t minCountDim, size_t blockSize,
     size_t elmSize, size_t numElmsPerBlock)
 {
@@ -408,7 +408,7 @@ static void NdCopyRecurDFSeqPaddingRevEndian(
 // used for buffer of Column major
 // the memory address calculation complexity for copying each element is
 // minimized to average O(1), which is independent of the number of dimensions.
-static void NdCopyRecurDFNonSeqDynamic(size_t curDim, char *inBase,
+static void NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase,
                                        char *outBase, Dims &inRltvOvlpSPos,
                                        Dims &outRltvOvlpSPos, Dims &inStride,
                                        Dims &outStride, Dims &ovlpCount,
@@ -436,7 +436,7 @@ static void NdCopyRecurDFNonSeqDynamic(size_t curDim, char *inBase,
 // The memory address calculation complexity for copying each element is
 // minimized to average O(1), which is independent of the number of dimensions.
 
-static void NdCopyRecurDFNonSeqDynamicRevEndian(size_t curDim, char *inBase,
+static void NdCopyRecurDFNonSeqDynamicRevEndian(size_t curDim, const char *inBase,
                                                 char *outBase,
                                                 Dims &inRltvOvlpSPos,
                                                 Dims &outRltvOvlpSPos,
@@ -462,7 +462,7 @@ static void NdCopyRecurDFNonSeqDynamicRevEndian(size_t curDim, char *inBase,
     }
 }
 
-static void NdCopyIterDFSeqPadding(char *&inOvlpBase, char *&outOvlpBase,
+static void NdCopyIterDFSeqPadding(const char *&inOvlpBase, char *&outOvlpBase,
                                    Dims &inOvlpGapSize, Dims &outOvlpGapSize,
                                    Dims &ovlpCount, size_t minContDim,
                                    size_t blockSize)
@@ -492,7 +492,7 @@ static void NdCopyIterDFSeqPadding(char *&inOvlpBase, char *&outOvlpBase,
 }
 
 static void NdCopyIterDFSeqPaddingRevEndian(
-    char *&inOvlpBase, char *&outOvlpBase, Dims &inOvlpGapSize,
+    const char *&inOvlpBase, char *&outOvlpBase, Dims &inOvlpGapSize,
     Dims &outOvlpGapSize, Dims &ovlpCount, size_t minContDim, size_t blockSize,
     size_t elmSize, size_t numElmsPerBlock)
 {
@@ -525,14 +525,14 @@ static void NdCopyIterDFSeqPaddingRevEndian(
         } while (pos[curDim] == ovlpCount[curDim]);
     }
 }
-static void NdCopyIterDFDynamic(char *inBase, char *outBase,
+static void NdCopyIterDFDynamic(const char *inBase, char *outBase,
                                 Dims &inRltvOvlpSPos, Dims &outRltvOvlpSPos,
                                 Dims &inStride, Dims &outStride,
                                 Dims &ovlpCount, size_t elmSize)
 {
     size_t curDim = 0;
     Dims pos(ovlpCount.size() + 1, 0);
-    std::vector<char *> inAddr(ovlpCount.size() + 1);
+    std::vector<const char *> inAddr(ovlpCount.size() + 1);
     inAddr[0] = inBase;
     std::vector<char *> outAddr(ovlpCount.size() + 1);
     outAddr[0] = outBase;
@@ -560,7 +560,7 @@ static void NdCopyIterDFDynamic(char *inBase, char *outBase,
     }
 }
 
-static void NdCopyIterDFDynamicRevEndian(char *inBase, char *outBase,
+static void NdCopyIterDFDynamicRevEndian(const char *inBase, char *outBase,
                                          Dims &inRltvOvlpSPos,
                                          Dims &outRltvOvlpSPos, Dims &inStride,
                                          Dims &outStride, Dims &ovlpCount,
@@ -568,7 +568,7 @@ static void NdCopyIterDFDynamicRevEndian(char *inBase, char *outBase,
 {
     size_t curDim = 0;
     Dims pos(ovlpCount.size() + 1, 0);
-    std::vector<char *> inAddr(ovlpCount.size() + 1);
+    std::vector<const char *> inAddr(ovlpCount.size() + 1);
     inAddr[0] = inBase;
     std::vector<char *> outAddr(ovlpCount.size() + 1);
     outAddr[0] = outBase;
@@ -601,7 +601,7 @@ static void NdCopyIterDFDynamicRevEndian(char *inBase, char *outBase,
 
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount, bool inIsRowMaj,
-           bool inIsBigEndian, const char *out, const Dims &outStart,
+           bool inIsBigEndian, char *out, const Dims &outStart,
            const Dims &outCount, bool outIsRowMaj, bool outIsBigEndian,
            bool safeMode)
 {
@@ -617,7 +617,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount, bool inIsRo
     Dims inRltvOvlpStartPos(inStart.size());
     Dims outRltvOvlpStartPos(inStart.size());
     size_t minContDim, blockSize;
-    char *inOvlpBase = nullptr;
+    const char *inOvlpBase = nullptr;
     char *outOvlpBase = nullptr;
     auto GetInEnd = [](Dims &inEnd, const Dims &inStart, const Dims &inCount) {
         for (size_t i = 0; i < inStart.size(); i++)
@@ -670,11 +670,17 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount, bool inIsRo
         }
     };
 
-    auto GetIoOvlpBase = [](char *&ioOvlpBase, const char *io, const Dims &ioStart,
-                            Dims &ioStride, Dims &ovlpStart) {
-        ioOvlpBase = (char*)io;
-        for (size_t i = 0; i < ioStart.size(); i++)
-            ioOvlpBase = ioOvlpBase + (ovlpStart[i] - ioStart[i]) * ioStride[i];
+    auto GetInOvlpBase = [](const char*& inOvlpBase, const char *in, const Dims &inStart,
+                            Dims &inStride, Dims &ovlpStart) {
+        inOvlpBase = in;
+        for (size_t i = 0; i < inStart.size(); i++)
+            inOvlpBase = inOvlpBase + (ovlpStart[i] - inStart[i]) * inStride[i];
+    };
+    auto GetOutOvlpBase = [](char*& outOvlpBase, char *out, const Dims &outStart,
+                            Dims &outStride, Dims &ovlpStart) {
+        outOvlpBase = out;
+        for (size_t i = 0; i < outStart.size(); i++)
+            outOvlpBase = outOvlpBase + (ovlpStart[i] - outStart[i]) * outStride[i];
     };
     auto GetIoOvlpGapSize = [](Dims &ioOvlpGapSize, Dims &ioStride,
                                const Dims &ioCount, Dims &ovlpCount) {
@@ -732,8 +738,8 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount, bool inIsRo
         GetIoStrides(outStride, outCount, sizeof(T));
         GetIoOvlpGapSize(inOvlpGapSize, inStride, inCount, ovlpCount);
         GetIoOvlpGapSize(outOvlpGapSize, outStride, outCount, ovlpCount);
-        GetIoOvlpBase(inOvlpBase, in, inStart, inStride, ovlpStart);
-        GetIoOvlpBase(outOvlpBase, out, outStart, outStride, ovlpStart);
+        GetInOvlpBase(inOvlpBase, in, inStart, inStride, ovlpStart);
+        GetOutOvlpBase(outOvlpBase, out, outStart, outStride, ovlpStart);
         minContDim = GetMinContDim(inCount, outCount, ovlpCount);
         blockSize = GetBlockSize(ovlpCount, minContDim, sizeof(T));
         // same endianess mode: most optimized, contiguous data copying
@@ -814,8 +820,8 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount, bool inIsRo
         }
         GetRltvOvlpStartPos(inRltvOvlpStartPos, inStart, ovlpStart);
         GetRltvOvlpStartPos(outRltvOvlpStartPos, outStart, ovlpStart);
-        inOvlpBase = (char*)in;
-        outOvlpBase = (char*)out;
+        inOvlpBase = in;
+        outOvlpBase = out;
         // Same Endian"
         if (inIsBigEndian == outIsBigEndian)
         {
