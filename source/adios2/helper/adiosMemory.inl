@@ -601,9 +601,9 @@ static void NdCopyIterDFDynamicRevEndian(const char *inBase, char *outBase,
 
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
-           bool inIsRowMaj, bool inIsBigEndian, char *out, const Dims &outStart,
-           const Dims &outCount, bool outIsRowMaj, bool outIsBigEndian,
-           bool safeMode)
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const bool safeMode)
 {
     Dims inEnd(inStart.size());
     Dims outEnd(inStart.size());
@@ -728,7 +728,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
     // algrithm optimizations:
     // 1. contigous data copying
     // 2. mem pointer arithmetics by sequential padding. O(1) overhead/block
-    if (inIsRowMaj == true && outIsRowMaj == true)
+    if (inIsRowMajor == true && outIsRowMajor == true)
     {
         GetInEnd(inEnd, inStart, inCount);
         GetOutEnd(outEnd, outStart, outCount);
@@ -747,7 +747,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         blockSize = GetBlockSize(ovlpCount, minContDim, sizeof(T));
         // same endianess mode: most optimized, contiguous data copying
         // algorithm used.
-        if (inIsBigEndian == outIsBigEndian)
+        if (inIsLittleEndian == outIsLittleEndian)
         {
             // most efficient algm
             // warning: number of function stacks used is number of dimensions
@@ -796,7 +796,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         if (!HasOvlp(ovlpStart, ovlpEnd))
             return 1; // no overlap found
         // col-major ==> col-major mode
-        if (!inIsRowMaj && !outIsRowMaj)
+        if (!inIsRowMajor && !outIsRowMajor)
         {
             std::reverse(revInCount.begin(), revInCount.end());
             GetIoStrides(inStride, revInCount, sizeof(T));
@@ -806,7 +806,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             std::reverse(outStride.begin(), outStride.end());
         }
         // row-major ==> col-major mode
-        else if (inIsRowMaj && !outIsRowMaj)
+        else if (inIsRowMajor && !outIsRowMajor)
         {
             GetIoStrides(inStride, inCount, sizeof(T));
             std::reverse(revOutCount.begin(), revOutCount.end());
@@ -814,7 +814,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             std::reverse(outStride.begin(), outStride.end());
         }
         // col-major ==> row-major mode
-        else if (!inIsRowMaj && outIsRowMaj)
+        else if (!inIsRowMajor && outIsRowMajor)
         {
             std::reverse(revInCount.begin(), revInCount.end());
             GetIoStrides(inStride, revInCount, sizeof(T));
@@ -826,7 +826,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         inOvlpBase = in;
         outOvlpBase = out;
         // Same Endian"
-        if (inIsBigEndian == outIsBigEndian)
+        if (inIsLittleEndian == outIsLittleEndian)
         {
             if (!safeMode)
                 NdCopyRecurDFNonSeqDynamic(0, inOvlpBase, outOvlpBase,

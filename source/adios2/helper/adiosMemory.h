@@ -142,9 +142,9 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
  */
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
-           bool inIsRowMaj, bool inIsBigEndian, char *out, const Dims &outStart,
-           const Dims &outCount, bool outIsRowMaj, bool outIsBigEndian,
-           bool safeMode = false);
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const bool safeMode = false);
 
 } // end namespace helper
 } // end namespace adios2

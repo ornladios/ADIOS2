@@ -27,6 +27,7 @@ namespace format
 class DataManSerializer
 {
 public:
+    DataManSerializer(bool isRowMajor, bool isLittleEndian);
     void New(size_t size);
     const std::shared_ptr<std::vector<char>> Get();
 
@@ -48,11 +49,14 @@ private:
     std::shared_ptr<std::vector<char>> m_Buffer;
     std::vector<char> m_CompressBuffer;
     size_t m_Position = 0;
+    bool m_IsRowMajor;
+    bool m_IsLittleEndian;
 };
 
 class DataManDeserializer
 {
 public:
+    DataManDeserializer(bool isRowMajor, bool isLittleEndian);
     size_t MaxStep();
     size_t MinStep();
     void Put(std::shared_ptr<std::vector<char>> data);
@@ -61,6 +65,8 @@ public:
     void Erase(size_t step);
     struct DataManVar
     {
+        bool isRowMajor;
+        bool isLittleEndian;
         Dims shape;
         Dims count;
         Dims start;
@@ -88,6 +94,8 @@ private:
     std::unordered_map<int, std::shared_ptr<std::vector<char>>> m_BufferMap;
     size_t m_MaxStep = std::numeric_limits<size_t>::min();
     size_t m_MinStep = std::numeric_limits<size_t>::max();
+    bool m_IsRowMajor;
+    bool m_IsLittleEndian;
 
     std::mutex m_MutexMetaData;
     std::mutex m_MutexBuffer;
