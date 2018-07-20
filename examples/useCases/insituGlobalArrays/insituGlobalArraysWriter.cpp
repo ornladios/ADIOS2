@@ -36,8 +36,8 @@
 MPI_Comm writerComm;
 #endif
 
-const int NSTEPS = 5;
-const int BIGDIM = 1000;
+const size_t NSTEPS = 5;
+const size_t BIGDIM = 1000;
 
 /* Variables:
    a: size 8,  written by rank 0 (5 elements) and rank 1 (3 elements)
@@ -74,7 +74,7 @@ void ProcessArgs(int rank, int argc, char *argv[])
     }
     else if (elc == "insitumpi")
     {
-        engineParams["verbose"] = "3";
+        engineParams["verbose"] = "5";
     }
 }
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     MPI_Comm_size(writerComm, &nproc);
 #endif
 
-    const int maxProc = VarTree.size();
+    const size_t maxProc = VarTree.size();
     if (nproc > maxProc)
     {
         if (!rank)
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 #endif
 
     // We have a varying number of vars on each processor
-    const int nvars = VarTree[rank].size();
+    const size_t nvars = VarTree[rank].size();
     // A 1D array for each variable
     std::vector<std::vector<double>> Vars(nvars);
     for (int i = 0; i < nvars; i++)
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
                 size_t nelems = SizesTree[rank][i];
                 for (int j = 0; j < nelems; j++)
                 {
-                    Vars[i][j] = (double)step / 100.0 + (double)rank;
+                    Vars[i][j] = ((double)step + 1.0) / 100.0 + (double)rank;
                 }
 
                 // Make a 2D selection to describe the local dimensions of the
