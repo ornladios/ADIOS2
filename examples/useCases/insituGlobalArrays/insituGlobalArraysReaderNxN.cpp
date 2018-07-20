@@ -181,6 +181,7 @@ void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
 
 std::string argEngine = "BPFile";
 adios2::Params engineParams;
+std::map<std::string, adios2::Params> engineTransports;
 
 void ProcessArgs(int rank, int argc, char *argv[])
 {
@@ -196,7 +197,13 @@ void ProcessArgs(int rank, int argc, char *argv[])
     }
     else if (elc == "insitumpi")
     {
-        engineParams["verbose"] = "3";
+        engineParams["verbose"] = "1";
+    }
+    else if (elc == "dataman")
+    {
+        engineParams["WorkflowMode"] = "subscribe";
+        engineTransports["WAN"] = {
+            {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "25600"}};
     }
 }
 
@@ -229,6 +236,16 @@ int main(int argc, char *argv[])
         {
             std::cout << "    " << p.first << " = " << p.second;
         }
+        std::cout << "  Transports: ";
+        for (auto &t : engineTransports)
+        {
+            std::cout << "  " << t.first << " : {";
+            for (auto &p : t.second)
+            {
+                std::cout << " {" << p.first << ", " << p.second << "}";
+            }
+            std::cout << " }";
+        }
         std::cout << std::endl;
     }
 
@@ -237,12 +254,16 @@ int main(int argc, char *argv[])
         adios2::IO io = adios.DeclareIO("Input");
         io.SetEngine(argEngine);
         io.SetParameters(engineParams);
+        for (auto &t : engineTransports)
+        {
+            io.AddTransport(t.first, t.second);
+        }
         adios2::Engine reader = io.Open("output.bp", adios2::Mode::Read);
 
         while (true)
         {
             adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable, 0.0f);
+                reader.BeginStep(adios2::StepMode::NextAvailable, 60.0f);
             if (status != adios2::StepStatus::OK)
             {
                 break;

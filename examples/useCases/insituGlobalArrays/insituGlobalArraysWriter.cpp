@@ -59,6 +59,7 @@ std::vector<std::vector<size_t>> SizesTree = {
 
 std::string argEngine = "BPFile";
 adios2::Params engineParams;
+std::map<std::string, adios2::Params> engineTransports;
 
 void ProcessArgs(int rank, int argc, char *argv[])
 {
@@ -74,7 +75,13 @@ void ProcessArgs(int rank, int argc, char *argv[])
     }
     else if (elc == "insitumpi")
     {
-        engineParams["verbose"] = "5";
+        engineParams["verbose"] = "1";
+    }
+    else if (elc == "dataman")
+    {
+        engineParams["WorkflowMode"] = "subscribe";
+        engineTransports["WAN"] = {
+            {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "25600"}};
     }
 }
 
@@ -113,6 +120,16 @@ int main(int argc, char *argv[])
         {
             std::cout << "    " << p.first << " = " << p.second;
         }
+        std::cout << "  Transports: ";
+        for (auto &t : engineTransports)
+        {
+            std::cout << "  " << t.first << " : {";
+            for (auto &p : t.second)
+            {
+                std::cout << " {" << p.first << ", " << p.second << "}";
+            }
+            std::cout << " }";
+        }
         std::cout << std::endl;
     }
 
@@ -138,6 +155,11 @@ int main(int argc, char *argv[])
         adios2::IO io = adios.DeclareIO("Output");
         io.SetEngine(argEngine);
         io.SetParameters(engineParams);
+        for (auto &t : engineTransports)
+        {
+            io.AddTransport(t.first, t.second);
+        }
+
         for (int i = 0; i < nvars; i++)
         {
             size_t nelems = SizesTree[rank][i];
