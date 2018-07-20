@@ -372,6 +372,10 @@ extern void FFSFreeMarshalData(SstStream Stream)
     }
 }
 
+#if !defined(ADIOS2_HAVE_ZFP)
+#define ZFPcompressionPossible(Type) 0
+#endif
+
 static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
                                     const char *Name, const char *Type,
                                     size_t ElemSize, size_t DimCount)
@@ -1462,10 +1466,6 @@ extern void SstFFSSetZFPParams(SstStream Stream, attr_list Attrs)
         Info->ZFPParams = Attrs;
     }
 }
-
-#if !defined(ADIOS2_HAVE_ZFP)
-#define ZFPcompressionPossible(Type) 0
-#endif
 
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const char *Type, size_t ElemSize, size_t DimCount,
