@@ -274,6 +274,10 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
             subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
+    /* Update variable's starting step, which equals to the min value in the
+     * sorted map minus one */
+    variable->m_StepsStart =
+        variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
 }
 
 template <class T>
@@ -367,6 +371,10 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
             subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
+    /* Update variable's starting step, which equals to the min value in the
+     * sorted map minus one */
+    variable->m_StepsStart =
+        variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
 }
 
 template <class T>

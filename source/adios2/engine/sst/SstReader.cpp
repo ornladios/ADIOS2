@@ -346,6 +346,38 @@ void SstReader::PerformGets()
 
 void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
 
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    SstReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
+    {                                                                          \
+        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
+        {                                                                      \
+            throw std::invalid_argument("ERROR: SST Engine doesn't implement " \
+                                        "function DoAllStepsBlocksInfo\n");    \
+        }                                                                      \
+        else if (m_WriterMarshalMethod == SstMarshalBP)                        \
+        {                                                                      \
+            return m_BP3Deserializer->AllStepsBlocksInfo(variable);            \
+        }                                                                      \
+    }                                                                          \
+                                                                               \
+    std::vector<typename Variable<T>::Info> SstReader::DoBlocksInfo(           \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        if (m_WriterMarshalMethod == SstMarshalFFS)                            \
+        {                                                                      \
+            throw std::invalid_argument("ERROR: SST Engine doesn't implement " \
+                                        "function DoAllStepsBlocksInfo\n");    \
+        }                                                                      \
+        else if (m_WriterMarshalMethod == SstMarshalBP)                        \
+        {                                                                      \
+            return m_BP3Deserializer->BlocksInfo(variable, step);              \
+        }                                                                      \
+    }
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

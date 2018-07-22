@@ -217,6 +217,9 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
             }
         }
     }
+
+    // Force PerformGets() even if there will be nothing to actually read
+    m_BP3Deserializer.m_PerformedGets = false;
     return StepStatus::OK;
 }
 
@@ -509,6 +512,22 @@ void InSituMPIReader::DoClose(const int transportIndex)
         }
     }
 }
+
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    InSituMPIReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const   \
+    {                                                                          \
+        return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
+    }                                                                          \
+                                                                               \
+    std::vector<typename Variable<T>::Info> InSituMPIReader::DoBlocksInfo(     \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return m_BP3Deserializer.BlocksInfo(variable, step);                   \
+    }
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace engine
 } // end namespace core
