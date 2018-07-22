@@ -15,7 +15,6 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
-#include "adios2/toolkit/format/dataman/DataMan.tcc"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
