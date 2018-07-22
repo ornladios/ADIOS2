@@ -29,21 +29,10 @@ class DataManSerializer
 public:
     DataManSerializer(bool isRowMajor, bool isLittleEndian);
     void New(size_t size);
+    template <class T>
+    bool Put(const core::Variable<T> &variable, const std::string doid,
+             const size_t step, const int rank, const Params &params);
     const std::shared_ptr<std::vector<char>> Get();
-
-    template <class T>
-    bool Put(core::Variable<T> &variable, std::string doid, size_t step,
-             int rank, const Params &params);
-
-    template <class T>
-    bool PutRaw(core::Variable<T> &variable, std::string doid, size_t step,
-                int rank, const Params &params);
-
-#ifdef ADIOS2_HAVE_ZFP
-    template <class T>
-    bool PutZfp(core::Variable<T> &variable, std::string doid, size_t step,
-                int rank, const Params &params);
-#endif
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;
@@ -51,6 +40,9 @@ private:
     size_t m_Position = 0;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
+    template <class T>
+    bool Zfp(nlohmann::json &metaj, size_t &datasize,
+             const core::Variable<T> &variable, const Params &params);
 };
 
 } // end namespace format
