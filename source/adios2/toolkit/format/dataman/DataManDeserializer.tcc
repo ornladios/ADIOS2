@@ -27,7 +27,9 @@ namespace format
 {
 
 template <class T>
-int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
+int DataManDeserializer::Get(T *output_data, const std::string &varName,
+                             const Dims &varStart, const Dims &varCount,
+                             const size_t step)
 {
 
     std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
@@ -52,10 +54,9 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
     {
         for (const auto &j : *vec)
         {
-            if (j.name == variable.m_Name)
+            if (j.name == varName)
             {
-                if (HasOverlap(j.start, j.count, variable.m_Start,
-                               variable.m_Count) == false)
+                if (HasOverlap(j.start, j.count, varStart, varCount) == false)
                 {
                     return -3; // step and variable found but variable does not
                                // have desired part
@@ -77,7 +78,11 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                     Params p = {{"Rate", std::to_string(j.compressionRate)}};
                     core::compress::CompressZfp zfp(p, true);
                     std::vector<char> decompressBuffer;
-                    decompressBuffer.reserve(variable.PayloadSize());
+                    size_t datasize =
+                        std::accumulate(j.count.begin(), j.count.end(), 1,
+                                        std::multiplies<size_t>());
+
+                    decompressBuffer.reserve(datasize);
                     try
                     {
                         zfp.Decompress(k->data() + j.position, j.size,
@@ -88,10 +93,10 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                     {
                         return -4; // decompression failed
                     }
-                    helper::NdCopy<T>(
-                        decompressBuffer.data(), j.start, j.count, true, true,
-                        reinterpret_cast<char *>(variable.GetData()),
-                        variable.m_Start, variable.m_Count, true, true);
+                    helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
+                                      true, true,
+                                      reinterpret_cast<char *>(output_data),
+                                      varStart, varCount, true, true);
 #else
                     throw std::runtime_error(
                         "Data received is compressed using ZFP. However, ZFP "
@@ -115,15 +120,20 @@ int DataManDeserializer::Get(core::Variable<T> &variable, size_t step)
                 {
                     helper::NdCopy<T>(
                         k->data() + j.position, j.start, j.count, j.isRowMajor,
-                        j.isLittleEndian,
-                        reinterpret_cast<char *>(variable.GetData()),
-                        variable.m_Start, variable.m_Count, m_IsRowMajor,
-                        m_IsLittleEndian);
+                        j.isLittleEndian, reinterpret_cast<char *>(output_data),
+                        varStart, varCount, m_IsRowMajor, m_IsLittleEndian);
                 }
             }
         }
     }
     return 0;
+}
+
+template <class T>
+int DataManDeserializer::Get(core::Variable<T> &variable, const size_t step)
+{
+    return Get(variable.GetData(), variable.m_Name, variable.m_Start,
+               variable.m_Count, step);
 }
 } // namespace format
 } // namespace adios2

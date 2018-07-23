@@ -57,32 +57,41 @@ void VerifyData(const std::vector<T> &data, size_t step)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
+    std::cout << std::endl;
 }
 
-void DataManSerialize(Dims shape, Dims start, Dims count, size_t steps,
-                      std::string workflowMode, std::string transport)
-{
-}
-
-void DataManDeserialize(Dims shape, Dims start, Dims count, size_t steps,
-                        std::string workflowMode, std::string transport)
-{
-}
-
-TEST_F(DataManFormatTest, WriteRead_1D_Subscribe_ZeroMQ)
+TEST_F(DataManFormatTest, 1D_MultiStepRowMajorLittleEndian)
 {
     Dims shape = {10};
     Dims start = {0};
     Dims count = {10};
+    Params params;
 
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
 
-    size_t steps = 200;
-    std::string mode = "subscribe";
-    std::string transport = "ZMQ";
-    DataManSerialize(shape, start, count, steps, mode, transport);
-    DataManDeserialize(shape, start, count, steps, mode, transport);
+    format::DataManSerializer s(true, true);
+
+    for (int i = 0; i < 100; ++i)
+    {
+        std::vector<float> in_float(datasize);
+        GenData(in_float, i);
+        s.Put(in_float.data(), "float", shape, start, count, "Test", i, 0,
+              params);
+    }
+
+    auto buffer = s.Get();
+
+    format::DataManDeserializer d(true, true);
+
+    d.Put(buffer);
+
+    for (int i = 0; i < 100; ++i)
+    {
+        std::vector<float> out_float(datasize);
+        d.Get(out_float.data(), "float", start, count, i);
+        VerifyData(out_float, i);
+    }
 }
 
 int main(int argc, char **argv)
