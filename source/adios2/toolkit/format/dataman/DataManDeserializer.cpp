@@ -191,38 +191,5 @@ bool DataManDeserializer::HasOverlap(Dims in_start, Dims in_count,
     return true;
 }
 
-bool DataManDeserializer::GetVarList(size_t step,
-                                     std::vector<DataManVar> &varList)
-{
-    m_MutexMetaData.lock();
-    auto metaDataStep = m_MetaDataMap.find(step);
-    if (metaDataStep == m_MetaDataMap.end())
-    {
-        return false;
-    }
-    for (auto &i : *metaDataStep->second)
-    {
-        bool hasVar = false;
-        for (DataManVar &j : varList)
-        {
-            if (j.name == i.name)
-            {
-                hasVar = true;
-            }
-        }
-        if (hasVar == false)
-        {
-            DataManVar var;
-            var.name = i.name;
-            var.shape = i.shape;
-            var.type = i.type;
-            var.doid = i.doid;
-            varList.push_back(std::move(var));
-        }
-    }
-    m_MutexMetaData.unlock();
-    return true;
-}
-
 } // namespace format
 } // namespace adios2

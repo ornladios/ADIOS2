@@ -158,11 +158,9 @@ void DataManReader::RunCallback()
     for (size_t step = m_DataManDeserializer.MinStep();
          step <= m_DataManDeserializer.MaxStep(); ++step)
     {
-        std::vector<format::DataManDeserializer::DataManVar> varList;
-        m_DataManDeserializer.GetVarList(step, varList);
-        for (auto &i : varList)
+        const auto varList = m_DataManDeserializer.GetMetaData(step);
+        for (const auto &i : *varList)
         {
-
             if (i.type == "compound")
             {
                 throw("Compound type is not supported yet.");

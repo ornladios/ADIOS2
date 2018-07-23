@@ -55,7 +55,6 @@ public:
         std::string compression;
         float compressionRate;
     };
-    bool GetVarList(size_t step, std::vector<DataManVar> &varList);
     const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
 
 private:
