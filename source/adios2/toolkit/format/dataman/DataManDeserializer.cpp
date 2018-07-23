@@ -18,13 +18,15 @@ namespace adios2
 namespace format
 {
 
-DataManDeserializer::DataManDeserializer(bool isRowMajor, bool isLittleEndian)
+DataManDeserializer::DataManDeserializer(const bool isRowMajor,
+                                         const bool isLittleEndian)
 {
     m_IsRowMajor = isRowMajor;
     m_IsLittleEndian = isLittleEndian;
 }
 
-void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
+void DataManDeserializer::Put(
+    const std::shared_ptr<const std::vector<char>> data)
 {
     int key = rand();
     m_MutexBuffer.lock();
@@ -140,8 +142,15 @@ size_t DataManDeserializer::MinStep()
     return m_MinStep;
 }
 
-const std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>
-DataManDeserializer::GetMetaData(size_t step)
+const std::unordered_map<
+    size_t, std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>>
+DataManDeserializer::GetMetaData()
+{
+    return m_MetaDataMap;
+}
+
+std::shared_ptr<const std::vector<DataManDeserializer::DataManVar>>
+DataManDeserializer::GetMetaData(const size_t step)
 {
     std::lock_guard<std::mutex> l(m_MutexMetaData);
     const auto &i = m_MetaDataMap.find(step);
@@ -156,7 +165,7 @@ DataManDeserializer::GetMetaData(size_t step)
 }
 
 bool DataManDeserializer::BufferContainsSteps(int index, size_t begin,
-                                              size_t end)
+                                              size_t end) const
 {
     // This is a private function and is always called after m_MutexMetaData is
     // locked, so there is no need to lock again here.
@@ -178,7 +187,7 @@ bool DataManDeserializer::BufferContainsSteps(int index, size_t begin,
 }
 
 bool DataManDeserializer::HasOverlap(Dims in_start, Dims in_count,
-                                     Dims out_start, Dims out_count)
+                                     Dims out_start, Dims out_count) const
 {
     for (size_t i = 0; i < in_start.size(); ++i)
     {

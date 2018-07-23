@@ -33,7 +33,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 
 DataManReader::~DataManReader()
 {
-
     m_Listening = false;
     if (m_DataThread != nullptr)
     {
@@ -55,8 +54,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
     StepStatus status;
 
-    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
-        m_DataManDeserializer.GetMetaData(m_CurrentStep);
+    auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
 
     if (vars == nullptr)
     {
@@ -83,6 +81,10 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 #undef declare_type
         }
         status = StepStatus::OK;
+    }
+    if (m_UpdatingMetaData)
+    {
+        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
     }
     return status;
 }
@@ -158,7 +160,11 @@ void DataManReader::RunCallback()
     for (size_t step = m_DataManDeserializer.MinStep();
          step <= m_DataManDeserializer.MaxStep(); ++step)
     {
-        const auto varList = m_DataManDeserializer.GetMetaData(step);
+        auto varList = m_DataManDeserializer.GetMetaData(step);
+        if (varList == nullptr)
+        {
+            return;
+        }
         for (const auto &i : *varList)
         {
             if (i.type == "compound")
@@ -202,6 +208,16 @@ void DataManReader::RunCallback()
     void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    DataManReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const     \
+    {                                                                          \
+        return AllStepsBlocksInfo(variable);                                   \
+    }                                                                          \
+    std::vector<typename Variable<T>::Info> DataManReader::DoBlocksInfo(       \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return BlocksInfo(variable, step);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
