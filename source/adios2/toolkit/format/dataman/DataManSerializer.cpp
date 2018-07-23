@@ -22,6 +22,7 @@ DataManSerializer::DataManSerializer(bool isRowMajor, bool isLittleEndian)
 {
     m_IsRowMajor = isRowMajor;
     m_IsLittleEndian = isLittleEndian;
+    New(1024);
 }
 
 void DataManSerializer::New(size_t size)

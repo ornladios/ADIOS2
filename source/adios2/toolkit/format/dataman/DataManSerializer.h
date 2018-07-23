@@ -30,7 +30,12 @@ public:
     DataManSerializer(bool isRowMajor, bool isLittleEndian);
     void New(size_t size);
     template <class T>
-    bool Put(const core::Variable<T> &variable, const std::string doid,
+    void Put(const T *inputData, const std::string &varName,
+             const Dims &varShape, const Dims &varStart, const Dims &varCount,
+             const std::string &doid, const size_t step, const int rank,
+             const Params &params);
+    template <class T>
+    void Put(const core::Variable<T> &variable, const std::string &doid,
              const size_t step, const int rank, const Params &params);
     const std::shared_ptr<std::vector<char>> Get();
 
@@ -41,8 +46,8 @@ private:
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     template <class T>
-    bool Zfp(nlohmann::json &metaj, size_t &datasize,
-             const core::Variable<T> &variable, const Params &params);
+    bool Zfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+             const Dims &varCount, const Params &params);
 };
 
 } // end namespace format

@@ -3,12 +3,17 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(TestDataMan TestDataMan.cpp)
-target_link_libraries(TestDataMan adios2 gtest)
+add_executable(TestDataManEngine TestDataManEngine.cpp)
+add_executable(TestDataManFormat TestDataManFormat.cpp)
+
+target_link_libraries(TestDataManEngine adios2 gtest)
+target_link_libraries(TestDataManFormat adios2 gtest adios2::thirdparty::nlohmann_json)
 
 if(ADIOS2_HAVE_MPI)
-    target_link_libraries(TestDataMan MPI::MPI_C)
+    target_link_libraries(TestDataManEngine MPI::MPI_C)
+    target_link_libraries(TestDataManFormat MPI::MPI_C)
 endif()
 
-gtest_add_tests(TARGET TestDataMan)
+gtest_add_tests(TARGET TestDataManEngine)
+gtest_add_tests(TARGET TestDataManFormat)
 

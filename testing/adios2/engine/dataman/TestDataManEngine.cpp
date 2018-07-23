@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestDataMan.cpp
+ * TestDataManEngine.cpp
  *
  *  Created on: Jul 12, 2018
  *      Author: Jason Wang
@@ -25,10 +25,10 @@ int mpiSize = 1;
 std::string ip = "127.0.0.1";
 std::string port = "12306";
 
-class DataManTest : public ::testing::Test
+class DataManEngineTest : public ::testing::Test
 {
 public:
-    DataManTest() = default;
+    DataManEngineTest() = default;
 };
 
 template <class T>
@@ -147,7 +147,7 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
 }
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManTest, WriteRead_1D_Subscribe_ZeroMQ)
+TEST_F(DataManEngineTest, WriteRead_1D_Subscribe_ZeroMQ)
 {
     Dims shape = {10};
     Dims start = {0};

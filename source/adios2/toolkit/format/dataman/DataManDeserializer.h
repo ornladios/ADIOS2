@@ -32,7 +32,10 @@ public:
     size_t MinStep();
     void Put(std::shared_ptr<std::vector<char>> data);
     template <class T>
-    int Get(core::Variable<T> &variable, size_t step);
+    int Get(core::Variable<T> &variable, const size_t step);
+    template <class T>
+    int Get(T *output_data, const std::string &varName, const Dims &varStart,
+            const Dims &varCount, const size_t step);
     void Erase(size_t step);
     struct DataManVar
     {
