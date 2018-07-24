@@ -47,21 +47,15 @@ DataMan::~DataMan()
 void DataMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
 void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
-                                const Mode mode,
                                 const std::vector<Params> &paramsVector,
+                                const Mode mode, const std::string workflowMode,
                                 const bool profile)
 {
     m_TransportsParameters = paramsVector;
-    m_TransportChannels = streamNames.size();
 
-    if (streamNames.size() == 0)
-    {
-        throw("No streams to open from DataMan::OpenWANTransports");
-    }
+    m_BufferQueue.resize(streamNames.size());
 
-    m_BufferQueue.resize(m_TransportChannels);
-
-    for (size_t i = 0; i < m_TransportChannels; ++i)
+    for (size_t i = 0; i < streamNames.size(); ++i)
     {
 
         // Get parameters

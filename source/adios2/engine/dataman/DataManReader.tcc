@@ -40,26 +40,9 @@ std::map<size_t, std::vector<typename Variable<T>::Info>>
 DataManReader::AllStepsBlocksInfo(const Variable<T> &variable) const
 {
     std::map<size_t, std::vector<typename Variable<T>::Info>> m;
-    for (const auto &j : m_MetaDataMap)
+    for (const auto &i : m_MetaDataMap)
     {
-        std::vector<typename Variable<T>::Info> v;
-        for (const auto &i : *j.second)
-        {
-            typename Variable<T>::Info b;
-            b.Start = i.start;
-            b.Count = i.count;
-            b.IsValue = true;
-            if (i.count.size() == 1)
-            {
-                if (i.count[0] == 1)
-                {
-                    b.IsValue = false;
-                }
-            }
-            // TODO: assign b.Min, b.Max, b.Value
-            v.push_back(b);
-        }
-        m[j.first] = v;
+        m[i.first] = BlocksInfo(variable, i.first);
     }
     return m;
 }
@@ -76,19 +59,22 @@ DataManReader::BlocksInfo(const Variable<T> &variable, const size_t step) const
     }
     for (const auto &i : *it->second)
     {
-        typename Variable<T>::Info b;
-        b.Start = i.start;
-        b.Count = i.count;
-        b.IsValue = true;
-        if (i.count.size() == 1)
+        if (i.name == variable.m_Name)
         {
-            if (i.count[0] == 1)
+            typename Variable<T>::Info b;
+            b.Start = i.start;
+            b.Count = i.count;
+            b.IsValue = true;
+            if (i.count.size() == 1)
             {
-                b.IsValue = false;
+                if (i.count[0] == 1)
+                {
+                    b.IsValue = false;
+                }
             }
+            // TODO: assign b.Min, b.Max, b.Value
+            v.push_back(b);
         }
-        // TODO: assign b.Min, b.Max, b.Value
-        v.push_back(b);
     }
     return v;
 }

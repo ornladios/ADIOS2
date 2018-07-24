@@ -36,13 +36,11 @@ public:
     size_t CurrentStep() const;
 
 private:
-    size_t m_TransportChannels = 1;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     size_t m_StepsPerBuffer = 10;
 
     std::shared_ptr<format::BP3Serializer> m_BP3Serializer;
     std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
-    std::string m_Name;
 
     void Init();
     void IOThread(std::shared_ptr<transportman::DataMan> man) final;

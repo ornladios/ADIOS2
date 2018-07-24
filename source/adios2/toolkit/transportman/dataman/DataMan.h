@@ -33,8 +33,8 @@ public:
     ~DataMan();
 
     void OpenWANTransports(const std::vector<std::string> &streamNames,
-                           const Mode openMode,
                            const std::vector<Params> &parametersVector,
+                           const Mode openMode, const std::string workflowMode,
                            const bool profile);
 
     void WriteWAN(const std::vector<char> &buffer, size_t transportId);
@@ -46,9 +46,6 @@ public:
     void SetMaxReceiveBuffer(size_t size);
 
 private:
-    bool m_Blocking = true;
-    std::function<void(std::vector<char>)> m_Callback;
-
     // Objects for buffer queue
     std::vector<std::queue<std::shared_ptr<std::vector<char>>>> m_BufferQueue;
     void PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id);
@@ -60,16 +57,18 @@ private:
     bool GetStringParameter(const Params &params, std::string key,
                             std::string &value);
 
+    // For read thread
     void ReadThread(std::shared_ptr<Transport> transport);
     std::vector<std::thread> m_ReadThreads;
     bool m_Reading = false;
 
+    // For write thread
     void WriteThread(std::shared_ptr<Transport> transport, size_t id);
     std::vector<std::thread> m_WriteThreads;
     bool m_Writing = false;
 
+    // parameters
     std::vector<Params> m_TransportsParameters;
-    size_t m_TransportChannels;
     size_t m_MaxReceiveBuffer = 256 * 1024 * 1024;
     int m_Timeout = 5;
 };

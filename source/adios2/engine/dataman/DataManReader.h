@@ -37,14 +37,13 @@ public:
 
 private:
     bool m_UpdatingMetaData = true;
+    bool m_Listening = false;
 
     format::DataManDeserializer m_DataManDeserializer;
-    std::vector<core::Operator *> m_Callbacks;
     std::unordered_map<
         size_t,
         std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>>>
         m_MetaDataMap;
-    bool m_Listening = false;
     std::mutex m_MutexIO;
 
     void Init();

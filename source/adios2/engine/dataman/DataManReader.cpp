@@ -38,17 +38,13 @@ DataManReader::~DataManReader()
     {
         m_DataThread->join();
     }
-    if (m_ControlThread != nullptr)
-    {
-        m_ControlThread->join();
-    }
 }
 
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
     ++m_CurrentStep;
-    if (m_Synchronous == false)
+    if (m_WorkflowMode == "subscribe")
     {
         m_CurrentStep = m_DataManDeserializer.MinStep();
     }
@@ -100,40 +96,9 @@ void DataManReader::PerformGets() {}
 void DataManReader::Init()
 {
 
-    // register callbacks
-    for (auto &j : m_IO.m_Operators)
-    {
-        if (j.ADIOSOperator.m_Type == "Signature2")
-        {
-            m_Callbacks.push_back(&j.ADIOSOperator);
-        }
-    }
-
-    GetBoolParameter(m_IO.m_Parameters, "Synchronous", m_Synchronous);
-    GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
-    if (m_WorkflowMode == "subscribe")
-    {
-        m_Synchronous = false;
-    }
-
-    // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    for (auto &i : m_IO.m_TransportsParameters)
-    {
-        i["WorkflowMode"] = m_WorkflowMode;
-    }
-    size_t channels = m_IO.m_TransportsParameters.size();
-    std::vector<std::string> names;
-    for (size_t i = 0; i < channels; ++i)
-    {
-        names.push_back(m_Name + std::to_string(i));
-        m_IO.m_TransportsParameters[i]["Name"] = std::to_string(i);
-    }
-    m_DataMan->OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters,
-                                 true);
+    InitCommon();
 
     // start threads
-
     m_Listening = true;
     m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
                                                  m_DataMan);
