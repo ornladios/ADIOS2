@@ -41,6 +41,8 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
+void DataManWriter::PerformPuts() {}
+
 void DataManWriter::EndStep()
 {
     if (m_Format == "bp")

@@ -34,6 +34,7 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
     size_t CurrentStep() const;
+    void PerformPuts() final;
 
 private:
     size_t m_TransportChannels = 1;
