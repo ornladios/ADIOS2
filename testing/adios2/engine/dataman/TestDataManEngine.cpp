@@ -41,7 +41,7 @@ void GenData(std::vector<T> &data, const size_t step)
 }
 
 template <class T>
-void PrintData(std::vector<T> &data, size_t step)
+void PrintData(const std::vector<T> &data, size_t step)
 {
     std::cout << "Rank: " << mpiRank << " Step: " << step << " [";
     for (size_t i = 0; i < data.size(); ++i)
@@ -54,13 +54,15 @@ void PrintData(std::vector<T> &data, size_t step)
 template <class T>
 void VerifyData(const std::vector<T> &data, size_t step)
 {
-
     std::vector<T> tmpdata(data.size());
     GenData(tmpdata, step);
-
     for (size_t i = 0; i < data.size(); ++i)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
+    }
+    if (data.size() < 32)
+    {
+        PrintData(data, step);
     }
 }
 
@@ -133,10 +135,8 @@ void DataManReader(Dims shape, Dims start, Dims count, size_t steps,
             dataManReader.Get<float>(bpFloats, myFloats.data(),
                                      adios2::Mode::Sync);
             i = dataManReader.CurrentStep();
+            VerifyData(myFloats, i);
             dataManReader.EndStep();
-        }
-        else if (status == adios2::StepStatus::NotReady)
-        {
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {

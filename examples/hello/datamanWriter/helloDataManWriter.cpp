@@ -15,10 +15,15 @@
 #include <thread>
 #include <vector>
 
-size_t steps = 100;
+// adios2 dataman configurations
+std::string adiosEngine = "DataMan";
+std::string transportLibrary = "ZMQ";
 std::string ip = "127.0.0.1";
 std::string port = "12306";
+std::string workflowMode = "p2p";
 
+// data properties
+size_t steps = 100;
 adios2::Dims shape({10, 10});
 adios2::Dims start({0, 0});
 adios2::Dims count({6, 8});
@@ -43,35 +48,32 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     // initialize data
-
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-
     std::vector<float> myFloats(datasize);
-
     for (size_t i = 0; i < datasize; ++i)
     {
         myFloats[i] = i + rank * 10000;
     }
 
-    // initialize ADIOS 2
-
+    // initialize ADIOS2 with DataMan
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
-
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters({{"WorkflowMode", "subscribe"}});
+    dataManIO.SetEngine(adiosEngine);
+    dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
     dataManIO.AddTransport(
-        "WAN", {{"Library", "ZMQ"}, {"IPAddress", ip}, {"Port", port}});
+        "WAN",
+        {{"Library", transportLibrary}, {"IPAddress", ip}, {"Port", port}});
 
-    auto bpFloats =
-        dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
-
+    // open stream
     adios2::Engine dataManWriter =
         dataManIO.Open("myFloats.bp", adios2::Mode::Write);
 
-    // write data
+    // define variable
+    auto bpFloats =
+        dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
 
+    // write data
     for (int i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();

@@ -33,6 +33,9 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     if (m_TransportChannels == 0)
     {
         m_TransportChannels = 1;
+        m_IO.m_TransportsParameters.push_back({{"Library", "ZMQ"},
+                                               {"IPAddress", "127.0.0.1"},
+                                               {"Port", "12306"}});
     }
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {

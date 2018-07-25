@@ -18,16 +18,16 @@ namespace adios2
 namespace transport
 {
 
-WANZmqP2P::WANZmqP2P(const std::string ipAddress, const std::string port,
-                     MPI_Comm mpiComm, const std::string transportMode,
-                     const bool debugMode)
+WANZmqP2P::WANZmqP2P(const std::string &ipAddress, const std::string &port,
+                     const MPI_Comm mpiComm, const bool debugMode)
 : Transport("wan", "zmq", mpiComm, debugMode), m_IPAddress(ipAddress),
-  m_Port(port), m_WorkflowMode(transportMode)
+  m_Port(port)
 {
     m_Context = zmq_ctx_new();
     if (m_Context == nullptr || m_Context == NULL)
     {
-        throw std::runtime_error("ERROR: Creating ZeroMQ context failed");
+        throw std::runtime_error(
+            "[WANZmqP2P::WANZmqP2P] Creating ZeroMQ context failed.");
     }
 }
 
@@ -43,118 +43,52 @@ WANZmqP2P::~WANZmqP2P()
     }
 }
 
-int WANZmqP2P::OpenSubscribe(const std::string &name, const Mode openMode,
-                             const std::string ip)
-{
-    // PubSub mode uses the ZeroMQ Pub/Sub scheme and requires the IP address
-    // and port of the publisher (sender). Multiple subscriptors are allowed to
-    // subscribe to the same publisher.
-
-    int error = -1;
-
-    if (m_OpenMode == Mode::Write)
-    {
-        m_OpenModeStr = "Write";
-        m_Socket = zmq_socket(m_Context, ZMQ_PUB);
-        error = zmq_bind(m_Socket, ip.c_str());
-    }
-    else if (m_OpenMode == Mode::Read)
-    {
-        m_OpenModeStr = "Read";
-        m_Socket = zmq_socket(m_Context, ZMQ_SUB);
-        error = zmq_connect(m_Socket, ip.c_str());
-        zmq_setsockopt(m_Socket, ZMQ_SUBSCRIBE, "", 0);
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "WANZmqP2P::Open received invalid OpenMode parameter");
-    }
-
-    if (m_DebugMode)
-    {
-        std::cout << "[WANZmqP2P Transport] OpenMode: " << m_OpenModeStr;
-        std::cout << ", Address: " << ip << std::endl;
-    }
-
-    return error;
-}
-
-int WANZmqP2P::OpenPush(const std::string &name, const Mode openMode,
-                        const std::string ip)
-{
-    int error = -1;
-
-    if (m_OpenMode == Mode::Write)
-    {
-        m_Socket = zmq_socket(m_Context, ZMQ_REQ);
-        error = zmq_connect(m_Socket, ip.c_str());
-    }
-
-    else if (m_OpenMode == Mode::Read)
-    {
-        m_Socket = zmq_socket(m_Context, ZMQ_REP);
-        error = zmq_bind(m_Socket, ip.c_str());
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "WANZmqP2P::Open received invalid OpenMode parameter");
-    }
-
-    return error;
-}
-
-int WANZmqP2P::OpenQuery(const std::string &name, const Mode openMode,
-                         const std::string ip)
-{
-    return 0;
-}
-
 void WANZmqP2P::Open(const std::string &name, const Mode openMode)
 {
     m_Name = name;
     m_OpenMode = openMode;
     const std::string fullIP("tcp://" + m_IPAddress + ":" + m_Port);
 
+    int error = -1;
     ProfilerStart("open");
-
-    int err;
-    if (m_WorkflowMode == "subscribe")
+    if (m_OpenMode == Mode::Write)
     {
-        err = OpenSubscribe(name, openMode, fullIP);
+        m_Socket = zmq_socket(m_Context, ZMQ_REQ);
+        error = zmq_connect(m_Socket, fullIP.c_str());
     }
-    else if (m_WorkflowMode == "push")
+    else if (m_OpenMode == Mode::Read)
     {
-        err = OpenPush(name, openMode, fullIP);
-    }
-    else if (m_WorkflowMode == "query")
-    {
-        err = OpenQuery(name, openMode, fullIP);
+        m_Socket = zmq_socket(m_Context, ZMQ_REP);
+        error = zmq_bind(m_Socket, fullIP.c_str());
     }
     else
     {
         throw std::invalid_argument(
-            "WANZmqP2P::Open received wrong WorkflowMode parameter: " +
-            m_WorkflowMode + ". Should be subscribe, push or query");
+            "[WANZmqP2P::Open] invalid OpenMode parameter");
     }
-
-    if (err)
-    {
-        throw std::runtime_error("ERROR: zmq_connect() failed with " +
-                                 std::to_string(err));
-    }
-
     ProfilerStop("open");
 
     if (m_DebugMode)
     {
-        if (m_Socket == nullptr || m_Socket == NULL) // something goes wrong
-        {
-            throw std::ios_base::failure(
-                "ERROR: couldn't open socket for address " + m_Name +
-                ", in call to WANZmqP2P Open\n");
-        }
+        std::cout << "[WANZmq Transport] ";
+        std::cout << "OpenMode: " << m_OpenModeStr << ", ";
+        std::cout << "WorkflowMode: p2p, ";
+        std::cout << "IPAddress: " << m_IPAddress << ", ";
+        std::cout << "Port: " << m_Port << ", ";
+        std::cout << std::endl;
+    }
+
+    if (error)
+    {
+        throw std::runtime_error(
+            "[WANZmqP2P::Open] zmq_connect() failed with " +
+            std::to_string(error));
+    }
+
+    if (m_Socket == nullptr || m_Socket == NULL)
+    {
+        throw std::ios_base::failure(
+            "[WANZmqP2P::Open] couldn't open socket for address " + fullIP);
     }
     m_IsOpen = true;
 }
@@ -169,68 +103,37 @@ void WANZmqP2P::IWrite(const char *buffer, size_t size, Status &status,
                        size_t start)
 {
     int retInt = 0;
-    std::string retString = "OK";
-    if (m_WorkflowMode == "subscribe")
-    {
-        ProfilerStart("write");
-        retInt = zmq_send(m_Socket, buffer, size, 0);
-        ProfilerStop("write");
-    }
-    else if (m_WorkflowMode == "push")
-    {
-    }
-    else if (m_WorkflowMode == "query")
-    {
-    }
-    else
-    {
-        throw std::runtime_error(
-            "Unknown WorkflowMode caught in WANZmqP2P::IWrite");
-    }
-
+    char retChar[10];
+    ProfilerStart("write");
+    retInt = zmq_send(m_Socket, buffer, size, 0);
+    zmq_recv(m_Socket, retChar, 4, 0);
+    ProfilerStop("write");
+    const std::string retString = retChar;
     if (retInt < 0 || retString != "OK")
     {
-        throw std::ios_base::failure("ERROR: couldn't send message " + m_Name +
-                                     ", in call to WANZmqP2P::IWrite\n");
+        throw std::ios_base::failure(
+            "[WANZmqP2P::IWrite] couldn't send message " + m_Name);
     }
 }
 
 void WANZmqP2P::IRead(char *buffer, size_t size, Status &status, size_t start)
 {
-    if (m_WorkflowMode == "subscribe")
+    const std::string reply = "OK";
+    ProfilerStart("read");
+    int bytes = zmq_recv(m_Socket, buffer, size, 0);
+    zmq_send(m_Socket, reply.c_str(), 4, 0);
+    ProfilerStop("read");
+    if (bytes > 0)
     {
-        ProfilerStart("read");
-        int bytes = zmq_recv(m_Socket, buffer, size, ZMQ_DONTWAIT);
-        ProfilerStop("read");
-        if (bytes > 0)
-        {
-            status.Bytes = bytes;
-            status.Running = true;
-        }
-        else
-        {
-            status.Bytes = 0;
-            status.Running = true;
-        }
-        if (bytes == size)
-        {
-            status.Successful = true;
-        }
-        else
-        {
-            status.Successful = false;
-        }
-    }
-    else if (m_WorkflowMode == "push")
-    {
-    }
-    else if (m_WorkflowMode == "query")
-    {
+        status.Bytes = bytes;
+        status.Running = true;
+        status.Successful = true;
     }
     else
     {
-        throw std::runtime_error(
-            "Unknown WorkflowMode caught in WANZmqP2P::IRead");
+        status.Bytes = 0;
+        status.Running = true;
+        status.Successful = false;
     }
 }
 

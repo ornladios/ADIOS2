@@ -25,31 +25,20 @@ public:
     WANZmqPubSub(const std::string &ipAddress, const std::string &port,
                  const MPI_Comm mpiComm, const bool debugMode);
     ~WANZmqPubSub();
-
     void Open(const std::string &name, const Mode openMode) final;
-
     void SetBuffer(char *buffer, size_t size) final;
-
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
-
+    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
     void IWrite(const char *buffer, size_t size, Status &status,
                 size_t start = MaxSizeT) final;
-
-    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
-
     void IRead(char *buffer, size_t size, Status &status,
                size_t start = MaxSizeT) final;
-
     void Flush() final;
-
     void Close() final;
-
-    void SetAddress(const std::string address);
 
 private:
     void *m_Context = nullptr;
     void *m_Socket = nullptr;
-
     const std::string m_IPAddress;
     const std::string m_Port;
     std::string m_OpenModeStr;

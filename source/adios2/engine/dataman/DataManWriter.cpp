@@ -11,7 +11,7 @@
 #include "DataManWriter.h"
 #include "DataManWriter.tcc"
 
-#include <iostream> //needs to go away, this is just for demo purposes
+#include <iostream>
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector

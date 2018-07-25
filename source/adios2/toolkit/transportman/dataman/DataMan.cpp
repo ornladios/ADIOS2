@@ -17,6 +17,7 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
+#include "adios2/toolkit/transport/wan/WANZmqP2P.h"
 #include "adios2/toolkit/transport/wan/WANZmqPubSub.h"
 #endif
 
@@ -52,20 +53,15 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
                                 const bool profile)
 {
     m_TransportsParameters = paramsVector;
-
     m_BufferQueue.resize(streamNames.size());
 
     for (size_t i = 0; i < streamNames.size(); ++i)
     {
-
         // Get parameters
-
         std::string library;
         GetStringParameter(paramsVector[i], "Library", library);
-
         std::string ip;
         GetStringParameter(paramsVector[i], "IPAddress", ip);
-
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
 
@@ -85,26 +81,43 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         if (library == "zmq" || library == "ZMQ")
         {
 #ifdef ADIOS2_HAVE_ZEROMQ
+            // Open transport
+            if (workflowMode == "subscribe")
+            {
+                wanTransport = std::make_shared<transport::WANZmqPubSub>(
+                    ip, port, m_MPIComm, m_DebugMode);
+            }
+            else if (workflowMode == "p2p")
+            {
+                wanTransport = std::make_shared<transport::WANZmqP2P>(
+                    ip, port, m_MPIComm, m_DebugMode);
+            }
+            else if (workflowMode == "query")
+            {
+            }
+            else
+            {
+                throw(std::invalid_argument(
+                    "[DataMan::OpenWANTransports] workflow mode " +
+                    workflowMode + " not supported."));
+            }
 
-            wanTransport = std::make_shared<transport::WANZmqPubSub>(
-                ip, port, m_MPIComm, m_DebugMode);
             wanTransport->Open(streamNames[i], mode);
             m_Transports.emplace(i, wanTransport);
 
+            // launch thread
             if (mode == Mode::Read)
             {
                 m_Reading = true;
                 m_ReadThreads.emplace_back(
                     std::thread(&DataMan::ReadThread, this, wanTransport));
             }
-
             else if (mode == Mode::Write)
             {
                 m_Writing = true;
                 m_WriteThreads.emplace_back(
                     std::thread(&DataMan::WriteThread, this, wanTransport, i));
             }
-
 #else
             throw std::invalid_argument(
                 "ERROR: this version of ADIOS2 didn't compile with "
