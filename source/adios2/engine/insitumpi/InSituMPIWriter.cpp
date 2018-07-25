@@ -98,12 +98,12 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data, true);
     m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Metadata, true);
     m_BP3Serializer.ResetIndices();
-    /*if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
+    if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
     {
         std::vector<std::string> empty;
         m_BP3Serializer.PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
                                              empty);
-    }*/
+    }
 
     return StepStatus::OK;
 }
