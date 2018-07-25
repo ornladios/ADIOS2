@@ -46,13 +46,13 @@ protected:
     bool m_IsLittleEndian;
     bool m_IsRowMajor;
 
+    std::vector<std::string> m_StreamNames;
     std::vector<core::Operator *> m_Callbacks;
 
     std::shared_ptr<transportman::DataMan> m_DataMan;
     std::shared_ptr<std::thread> m_DataThread;
 
     virtual void IOThread(std::shared_ptr<transportman::DataMan> man) = 0;
-    void InitCommon();
     bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);

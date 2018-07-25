@@ -34,6 +34,10 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     {
         m_TransportChannels = 1;
     }
+    for (size_t i = 0; i < m_TransportChannels; ++i)
+    {
+        m_StreamNames.push_back(m_Name + std::to_string(i));
+    }
 
     // register callbacks
     for (auto &j : m_IO.m_Operators)
@@ -43,22 +47,6 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
             m_Callbacks.push_back(&j.ADIOSOperator);
         }
     }
-}
-
-void DataManCommon::InitCommon()
-{
-
-    // initialize parameters
-    std::vector<std::string> streamNames;
-    for (size_t i = 0; i < m_TransportChannels; ++i)
-    {
-        streamNames.push_back(m_Name + std::to_string(i));
-    }
-
-    // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    m_DataMan->OpenWANTransports(streamNames, m_IO.m_TransportsParameters,
-                                 Mode::Read, m_WorkflowMode, true);
 }
 
 bool DataManCommon::GetBoolParameter(Params &params, std::string key,

@@ -96,7 +96,10 @@ void DataManReader::PerformGets() {}
 void DataManReader::Init()
 {
 
-    InitCommon();
+    // initialize transports
+    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
+    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
+                                 Mode::Read, m_WorkflowMode, true);
 
     // start threads
     m_Listening = true;

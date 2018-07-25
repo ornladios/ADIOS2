@@ -17,7 +17,7 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-#include "adios2/toolkit/transport/wan/WANZmq.h"
+#include "adios2/toolkit/transport/wan/WANZmqPubSub.h"
 #endif
 
 namespace adios2
@@ -69,9 +69,6 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
 
-        std::string workflowMode;
-        GetStringParameter(paramsVector[i], "WorkflowMode", workflowMode);
-
         // Calculate port number
         int mpiRank, mpiSize;
         MPI_Comm_rank(m_MPIComm, &mpiRank);
@@ -89,8 +86,8 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         {
 #ifdef ADIOS2_HAVE_ZEROMQ
 
-            wanTransport = std::make_shared<transport::WANZmq>(
-                ip, port, m_MPIComm, workflowMode, m_DebugMode);
+            wanTransport = std::make_shared<transport::WANZmqPubSub>(
+                ip, port, m_MPIComm, m_DebugMode);
             wanTransport->Open(streamNames[i], mode);
             m_Transports.emplace(i, wanTransport);
 

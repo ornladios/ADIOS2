@@ -70,8 +70,6 @@ size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 void DataManWriter::Init()
 {
 
-    InitCommon();
-
     // initialize serializer
     if (m_Format == "bp")
     {
@@ -90,6 +88,11 @@ void DataManWriter::Init()
                                                             m_IsLittleEndian));
         }
     }
+
+    // initialize transports
+    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
+    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
+                                 Mode::Write, m_WorkflowMode, true);
 }
 
 void DataManWriter::IOThread(std::shared_ptr<transportman::DataMan> man) {}
