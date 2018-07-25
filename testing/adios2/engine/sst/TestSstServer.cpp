@@ -66,7 +66,7 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
 
     int mpiRank = 0, mpiSize = 1;
 
-    // Number of steps
+// Number of steps
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -115,7 +115,7 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-        // Advance to the next time step
+    // Advance to the next time step
     std::time_t EndTime = std::time(NULL) + DurationSeconds;
     size_t step = 0;
 
@@ -171,8 +171,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
-        usleep(1000*100);  /* sleep for .1 seconds */
-	step++;
+        usleep(1000 * 100); /* sleep for .1 seconds */
+        step++;
     }
 
     // Close the file
@@ -192,16 +192,17 @@ int main(int argc, char **argv)
     {
         if (std::string(argv[1]) == "--duration")
         {
-	    std::istringstream ss(argv[2]);
+            std::istringstream ss(argv[2]);
             if (!(ss >> DurationSeconds))
-		std::cerr << "Invalid number for duration " << argv[1] << '\n';
+                std::cerr << "Invalid number for duration " << argv[1] << '\n';
             argv++;
             argc--;
         }
-        else if (std::string(argv[1]) == "--engine_params") {
+        else if (std::string(argv[1]) == "--engine_params")
+        {
             engineParams = ParseEngineParams(argv[2]);
-        } 
-        else 
+        }
+        else
         {
             throw std::invalid_argument("Unknown argument \"" +
                                         std::string(argv[1]) + "\"");

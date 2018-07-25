@@ -98,7 +98,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
     {
         const size_t currentStep = engine.CurrentStep();
 
-	if (t == -1) t = currentStep;   // starting out 
+        if (t == -1)
+            t = currentStep; // starting out
 
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
@@ -213,12 +214,14 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         EXPECT_EQ(validateSstTestData(myStart, myLength, t), 0);
         write_times.push_back(write_time);
         ++t;
-	if (NSteps != -1) {
-	    NSteps--;
-	    if (NSteps == 0) {
-		break;
-	    }
-	}
+        if (NSteps != -1)
+        {
+            NSteps--;
+            if (NSteps == 0)
+            {
+                break;
+            }
+        }
     }
 
     if ((write_times.back() - write_times.front()) > 1)
@@ -226,15 +229,16 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         TimeGapDetected++;
     }
 
-    if (!IgnoreTimeGap) {
-	if (TimeGapExpected)
-	    {
-		EXPECT_TRUE(TimeGapDetected);
-	    }
-	else
-	    {
-		EXPECT_FALSE(TimeGapDetected);
-	    }
+    if (!IgnoreTimeGap)
+    {
+        if (TimeGapExpected)
+        {
+            EXPECT_TRUE(TimeGapDetected);
+        }
+        else
+        {
+            EXPECT_FALSE(TimeGapDetected);
+        }
     }
     // Close the file
     engine.Close();
@@ -257,21 +261,25 @@ int main(int argc, char **argv)
     {
         if (std::string(argv[1]) == "--num_steps")
         {
-	    std::istringstream ss(argv[2]);
+            std::istringstream ss(argv[2]);
             if (!(ss >> NSteps))
-		std::cerr << "Invalid number for num_steps " << argv[1] << '\n';
+                std::cerr << "Invalid number for num_steps " << argv[1] << '\n';
             argv++;
             argc--;
-	    std::cout << "Done, Nsteps was " << NSteps << " argc now " << argc << std::endl;
-        } else if (std::string(argv[1]) == "--expect_time_gap")
+            std::cout << "Done, Nsteps was " << NSteps << " argc now " << argc
+                      << std::endl;
+        }
+        else if (std::string(argv[1]) == "--expect_time_gap")
         {
             TimeGapExpected++;
-	    IgnoreTimeGap = 0;
-        } else if (std::string(argv[1]) == "--expect_contiguous_time")
+            IgnoreTimeGap = 0;
+        }
+        else if (std::string(argv[1]) == "--expect_contiguous_time")
         {
             TimeGapExpected = 0;
-	    IgnoreTimeGap = 0;
-        } else if (std::string(argv[1]) == "--ignore_time_gap")
+            IgnoreTimeGap = 0;
+        }
+        else if (std::string(argv[1]) == "--ignore_time_gap")
         {
             IgnoreTimeGap++;
         }

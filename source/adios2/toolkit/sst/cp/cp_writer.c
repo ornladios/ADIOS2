@@ -25,8 +25,13 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
 
 #ifdef MUTEX_DEBUG
-#define PTHREAD_MUTEX_LOCK(lock) printf("Trying lock line %d\n",  __LINE__ ); pthread_mutex_lock(lock);printf("Got lock\n");
-#define PTHREAD_MUTEX_UNLOCK(lock) printf("UNlocking line %d\n", __LINE__ ); pthread_mutex_unlock(lock);
+#define PTHREAD_MUTEX_LOCK(lock)                                               \
+    printf("Trying lock line %d\n", __LINE__);                                 \
+    pthread_mutex_lock(lock);                                                  \
+    printf("Got lock\n");
+#define PTHREAD_MUTEX_UNLOCK(lock)                                             \
+    printf("UNlocking line %d\n", __LINE__);                                   \
+    pthread_mutex_unlock(lock);
 #else
 #define PTHREAD_MUTEX_LOCK(lock) pthread_mutex_lock(lock);
 #define PTHREAD_MUTEX_UNLOCK(lock) pthread_mutex_unlock(lock);
