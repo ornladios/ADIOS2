@@ -5,9 +5,9 @@ use List::Util qw(shuffle);
 use strict;
 
 ##Parse Args
-my $verbose = '';	# option variable with default value (false)
-my $writer_prog = "bin/TestSstServer";
-my $reader_prog = "bin/TestSstClient";
+my $verbose = 0;	# option variable with default value (false)
+my $writer_prog = "TestSstServer";
+my $reader_prog = "TestSstClient";
 my $writer_args = "";
 my $reader_args = "";
 my $num_writers = 3;
@@ -17,6 +17,9 @@ my $test_protocol = 'kill_readers';
 my $duration = 60;
 my $interval = 5;
 my $exit_value = 0;
+
+use File::Basename;
+my $my_dirname = dirname(__FILE__);
 
 GetOptions ('verbose!' => \$verbose, 
 	    'writer=s' => \$writer_prog,
@@ -40,8 +43,8 @@ defined(my $writer_pid = fork) or die "Cannot fork $!";
 unless($writer_pid)
   {
     #Child process is here
-    exec ("mpirun -n $num_writers ./$writer_prog --duration $duration $writer_args");
-    die "Can't exec mpirun! $!";
+    exec ("@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_writers $my_dirname/$writer_prog --duration $duration" . join(" ", @$writer_args));
+    die "Can't exec @MPIEXEC@! $!";
   }
 print "Writer PID: $writer_pid\n" if $verbose;
         
@@ -59,9 +62,9 @@ if ($test_protocol == "kill_readers") {
       unless($reader_pid)
 	{
 	  #Child process is here
-	  print "EXEC $reader_prog\n" if $verbose;
-	  exec ("mpirun -n $num_readers $reader_prog $reader_args");
-	  die "Can't exec mpirun! $!";
+	  print "EXEC $my_dirname/$reader_prog\n" if $verbose;
+	  exec ("@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_readers $my_dirname/$reader_prog " . join(" ", @$reader_args));
+	  die "Can't exec @MPIEXEC@! $!";
 	}
       print "Reader PID: $reader_pid\n" if $verbose;
       push @ReaderPIDs, $reader_pid;
@@ -74,7 +77,7 @@ if ($test_protocol == "kill_readers") {
       print "KILLED Reader PID: $readerToKill\n" if $verbose;
       waitpid($readerToKill, 0);
       print "Status of killed reader was $?\n" if $verbose;
-      if (($? != 0) || ($? != 9)) {
+      if (($? != 0) && ($? != 9)) {
 	$exit_value = 1; #failure
 	print "Setting failure return because of bad exit status of killed reader\n";
       }

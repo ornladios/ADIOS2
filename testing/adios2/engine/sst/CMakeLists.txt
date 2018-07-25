@@ -161,3 +161,10 @@ if(ADIOS2_HAVE_ZFP)
     -nw 3 -nr 5 -v -p TestSst -arg 'CompressionMethod:zfp' )
   set_tests_properties(ADIOSSstZFPCompression.3x5 PROPERTIES TIMEOUT 30) 
 endif()
+
+add_test(
+  NAME ADIOSSstKillReadersTest
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol kill_readers
+    -nw 3 -nr 2 -warg 'RendezvousReaderCount:0' -rarg '--ignore_time_gap')
+set_tests_properties(ADIOSSstKillReadersTest PROPERTIES TIMEOUT 120) 
+
