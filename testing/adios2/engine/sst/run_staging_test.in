@@ -73,7 +73,7 @@ if [ "$writer_prog" == "UNSET" ]; then
 fi
 
 # remove any lingering sst contact files
-rm -f *.bpflx
+rm -f *.sst
 
 # Spawn the writer
 if [ $vflag == "yes" ]; then
