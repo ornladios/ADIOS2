@@ -359,6 +359,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
         {                                                                      \
             return m_BP3Deserializer->AllStepsBlocksInfo(variable);            \
         }                                                                      \
+	throw std::invalid_argument("ERROR: Unknown marshal mechanism in DoAllStepsBlocksInfo\n");\
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> SstReader::DoBlocksInfo(           \
@@ -373,6 +374,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
         {                                                                      \
             return m_BP3Deserializer->BlocksInfo(variable, step);              \
         }                                                                      \
+	throw std::invalid_argument("ERROR: Unknown marshal mechanism in DoBlocksInfo\n");\
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
