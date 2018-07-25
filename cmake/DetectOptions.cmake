@@ -72,8 +72,7 @@ endif()
 
 # DataMan
 # DataMan currently breaks the PGI compiler
-if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND
-   SHARED_LIBS_SUPPORTED AND NOT MSVC)
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
   set(ADIOS2_HAVE_DataMan TRUE)
 endif()
 
@@ -123,10 +122,14 @@ if(ADIOS1_FOUND)
 endif()
 
 # Python
-# Use the FindPythonLibsNew from pybind11
-list(INSERT CMAKE_MODULE_PATH 0
-  "${ADIOS2_SOURCE_DIR}/thirdparty/pybind11/pybind11/tools"
-)
+if(CMAKE_CXX_COMPILER_ID STREQUAL PGI)
+  if(ADIOS2_USE_Python STREQUAL ON)
+    message(FATAL_ERROR "Python bindings are not supported with the PGI compiler")
+  elseif(ADIOS2_USE_Python STREQUAL AUTO)
+    message(WARNING "Disabling python bindings as they are not supported with the PGI compiler")
+    set(ADIOS2_USE_Python OFF)
+  endif()
+endif()
 if(ADIOS2_USE_Python)
   if(NOT (ADIOS2_USE_Python STREQUAL AUTO))
     set(python_find_args REQUIRED)

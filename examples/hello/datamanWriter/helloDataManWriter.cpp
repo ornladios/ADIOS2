@@ -19,9 +19,9 @@ size_t steps = 100;
 std::string ip = "127.0.0.1";
 std::string port = "12306";
 
-adios2::Dims shape({200, 640, 512});
-adios2::Dims start({0, 0, 0});
-adios2::Dims count({200, 60, 80});
+adios2::Dims shape({10, 10});
+adios2::Dims start({0, 0});
+adios2::Dims count({6, 8});
 
 int rank, size;
 

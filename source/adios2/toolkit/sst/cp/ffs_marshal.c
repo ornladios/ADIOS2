@@ -8,84 +8,12 @@
 #include <mpi.h>
 #include <pthread.h>
 
+#include "adios2/ADIOSConfig.h"
+
 #include "sst.h"
 
 #include "cp_internal.h"
-
-typedef struct _FFSWriterRec
-{
-    void *Key;
-    int FieldID;
-    size_t DataOffset;
-    size_t MetaOffset;
-    int SingleValue;
-} * FFSWriterRec;
-
-struct FFSWriterMarshalBase
-{
-    int RecCount;
-    FFSWriterRec RecList;
-    FMContext LocalFMContext;
-    int MetaFieldCount;
-    FMFieldList MetaFields;
-    FMFormat MetaFormat;
-    int DataFieldCount;
-    FMFieldList DataFields;
-    FMFormat DataFormat;
-};
-
-typedef struct FFSVarRec
-{
-    void *Variable;
-    char *VarName;
-    FMFieldList *PerWriterMetaFieldDesc;
-    FMFieldList *PerWriterDataFieldDesc;
-    size_t DimCount;
-    size_t *GlobalDims;
-    size_t **PerWriterStart;
-    size_t **PerWriterCounts;
-    void **PerWriterIncomingData;
-} * FFSVarRec;
-
-typedef struct FFSArrayRequest
-{
-    FFSVarRec VarRec;
-    size_t *Start;
-    size_t *Count;
-    void *Data;
-    struct FFSArrayRequest *Next;
-} * FFSArrayRequest;
-
-enum WriterDataStatusEnum
-{
-    Empty = 0,
-    Needed = 1,
-    Requested = 2,
-    Full = 3
-};
-
-typedef struct FFSReaderPerWriterRec
-{
-    enum WriterDataStatusEnum Status;
-    char *RawBuffer;
-    DP_CompletionHandle ReadHandle;
-} FFSReaderPerWriterRec;
-
-struct FFSReaderMarshalBase
-{
-    int VarCount;
-    FFSVarRec VarList;
-    FMContext LocalFMContext;
-    FFSArrayRequest PendingVarRequests;
-
-    void **MetadataBaseAddrs;
-    FMFieldList *MetadataFieldLists;
-
-    void **DataBaseAddrs;
-    FMFieldList *DataFieldLists;
-
-    FFSReaderPerWriterRec *WriterInfo;
-};
+#include "ffs_marshal.h"
 
 static char *ConcatName(const char *base_name, const char *postfix)
 {
@@ -97,11 +25,12 @@ static char *ConcatName(const char *base_name, const char *postfix)
     return Ret;
 }
 
-static char *BuildArrayName(const char *base_name, const char *type)
+static char *BuildArrayName(const char *base_name, const char *type,
+                            const int element_size)
 {
     int Len = strlen(base_name) + strlen(type) + strlen("SST_") + 16;
     char *Ret = malloc(Len);
-    sprintf(Ret, "SST%d_", (int)strlen(type));
+    sprintf(Ret, "SST%d_%d_", element_size, (int)strlen(type));
     strcat(Ret, type);
     strcat(Ret, "_");
     strcat(Ret, base_name);
@@ -110,16 +39,16 @@ static char *BuildArrayName(const char *base_name, const char *type)
 }
 
 static void BreakdownArrayName(const char *Name, char **base_name_p,
-                               char **type_p)
+                               char **type_p, int *element_size_p)
 {
     int TypeLen;
-    char *TypeStart = index(Name, '_') + 1;
+    int ElementSize;
     const char *NameStart;
-    sscanf(Name, "SST%d_", &TypeLen);
-    NameStart = Name + TypeLen + 5;
-    while (*NameStart != '_')
-        NameStart++;
-    NameStart++;
+    char *TypeStart = index(Name, '_') + 1;
+    TypeStart = index(TypeStart, '_') + 1;
+    sscanf(Name, "SST%d_%d_", &ElementSize, &TypeLen);
+    NameStart = TypeStart + TypeLen + 1;
+    *element_size_p = ElementSize;
     *type_p = malloc(TypeLen + 1);
     strncpy(*type_p, TypeStart, TypeLen);
     (*type_p)[TypeLen] = 0;
@@ -248,7 +177,7 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
 
 static void RecalcMarshalStorageSize(SstStream Stream)
 {
-    struct FFSWriterMarshalBase *Info = Stream->MarshalData;
+    struct FFSWriterMarshalBase *Info = Stream->WriterMarshalData;
     if (Info->DataFieldCount)
     {
         FMFieldList LastDataField;
@@ -353,7 +282,8 @@ static void InitMarshalData(SstStream Stream)
         malloc(sizeof(struct FFSWriterMarshalBase));
     struct FFSMetadataInfoStruct *MBase;
 
-    Stream->MarshalData = Info;
+    memset(Info, 0, sizeof(*Info));
+    Stream->WriterMarshalData = Info;
     Info->RecCount = 0;
     Info->RecList = malloc(sizeof(Info->RecList[0]));
     Info->MetaFieldCount = 0;
@@ -380,10 +310,14 @@ extern void FFSFreeMarshalData(SstStream Stream)
     {
         /* writer side */
         struct FFSWriterMarshalBase *Info =
-            (struct FFSWriterMarshalBase *)Stream->MarshalData;
+            (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
         struct FFSMetadataInfoStruct *MBase;
         MBase = Stream->M;
 
+        for (int i = 0; i < Info->RecCount; i++)
+        {
+            free(Info->RecList[i].Type);
+        }
         if (Info->RecList)
             free(Info->RecList);
         if (Info->MetaFields)
@@ -393,7 +327,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
         if (Info->LocalFMContext)
             free_FMcontext(Info->LocalFMContext);
         free(Info);
-        Stream->MarshalData = NULL;
+        Stream->WriterMarshalData = NULL;
         free(Stream->D);
         Stream->D = NULL;
         free(MBase->BitField);
@@ -428,6 +362,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
             free(Info->VarList[i].PerWriterStart);
             free(Info->VarList[i].PerWriterCounts);
             free(Info->VarList[i].PerWriterIncomingData);
+            free(Info->VarList[i].PerWriterIncomingSize);
         }
         if (Info->VarList)
             free(Info->VarList);
@@ -437,21 +372,27 @@ extern void FFSFreeMarshalData(SstStream Stream)
     }
 }
 
+#if !defined(ADIOS2_HAVE_ZFP)
+#define ZFPcompressionPossible(Type, DimCount) 0
+#endif
+
 static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
                                     const char *Name, const char *Type,
                                     size_t ElemSize, size_t DimCount)
 {
-    if (!Stream->MarshalData)
+    if (!Stream->WriterMarshalData)
     {
         InitMarshalData(Stream);
     }
     struct FFSWriterMarshalBase *Info =
-        (struct FFSWriterMarshalBase *)Stream->MarshalData;
+        (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
     Info->RecList =
         realloc(Info->RecList, (Info->RecCount + 1) * sizeof(Info->RecList[0]));
     FFSWriterRec Rec = &Info->RecList[Info->RecCount];
     Rec->Key = Variable;
     Rec->FieldID = Info->RecCount;
+    Rec->DimCount = DimCount;
+    Rec->Type = strdup(Type);
     if (DimCount == 0)
     {
         // simple field, only add base value FMField to metadata
@@ -462,7 +403,6 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         RecalcMarshalStorageSize(Stream);
         Rec->MetaOffset =
             Info->MetaFields[Info->MetaFieldCount - 1].field_offset;
-        Rec->SingleValue = 1;
         Rec->DataOffset = (size_t)-1;
         // Changing the formats renders these invalid
         Info->MetaFormat = NULL;
@@ -471,13 +411,12 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
     {
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
-        char *ArrayName = BuildArrayName(Name, Type);
+        char *ArrayName = BuildArrayName(Name, Type, ElemSize);
         AddField(&Info->MetaFields, &Info->MetaFieldCount, ArrayName, "integer",
                  sizeof(size_t));
         free(ArrayName);
         Rec->MetaOffset =
             Info->MetaFields[Info->MetaFieldCount - 1].field_offset;
-        Rec->SingleValue = 0;
         char *ShapeName = ConcatName(Name, "Shape");
         char *CountName = ConcatName(Name, "Count");
         char *OffsetsName = ConcatName(Name, "Offsets");
@@ -492,6 +431,12 @@ static FFSWriterRec CreateWriterRec(SstStream Stream, void *Variable,
         free(OffsetsName);
         RecalcMarshalStorageSize(Stream);
 
+        if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
+            ZFPcompressionPossible(Type, DimCount))
+        {
+            Type = "char";
+            ElemSize = 1;
+        }
         // To Data, add FMFields for ElemCount and Array matching _ArrayRec
         char *ElemCountName = ConcatName(Name, "ElemCount");
         AddField(&Info->DataFields, &Info->DataFieldCount, ElemCountName,
@@ -560,9 +505,9 @@ static size_t CalcSize(const size_t Count, const size_t *Vals)
 
 static FFSWriterRec LookupWriterRec(SstStream Stream, void *Key)
 {
-    struct FFSWriterMarshalBase *Info = Stream->MarshalData;
+    struct FFSWriterMarshalBase *Info = Stream->WriterMarshalData;
 
-    if (!Stream->MarshalData)
+    if (!Stream->WriterMarshalData)
         return NULL;
 
     for (int i = 0; i < Info->RecCount; i++)
@@ -622,6 +567,8 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
         calloc(sizeof(size_t *), Stream->WriterCohortSize);
     Info->VarList[Info->VarCount].PerWriterIncomingData =
         calloc(sizeof(void *), Stream->WriterCohortSize);
+    Info->VarList[Info->VarCount].PerWriterIncomingSize =
+        calloc(sizeof(size_t), Stream->WriterCohortSize);
     return &Info->VarList[Info->VarCount++];
 }
 
@@ -808,12 +755,13 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
         const char *ArrayName = FieldList[i + 1].field_name + 4;
         FFSVarRec VarRec = LookupVarByName(Stream, ArrayName);
         VarRec->PerWriterIncomingData[Writer] = data_base->Array;
+        VarRec->PerWriterIncomingSize[Writer] = data_base->ElemCount;
         VarRec->PerWriterDataFieldDesc[Writer] = &FieldList[i + 1];
         i += 2;
     }
 }
 
-static void WaitForReadRequests(SstStream Stream)
+static SstStatusValue WaitForReadRequests(SstStream Stream)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
 
@@ -830,10 +778,14 @@ static void WaitForReadRequests(SstStream Stream)
             }
             else
             {
-                /* handle errors here */
+                CP_verbose(Stream, "Wait for remote read completion failed, "
+                                   "returning failure\n");
+                return Result;
             }
         }
     }
+    CP_verbose(Stream, "All remote memory reads completed\n");
+    return SstSuccess;
 }
 
 static void MapLocalToGlobalIndex(size_t Dims, const size_t *LocalIndex,
@@ -1089,16 +1041,33 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
             if (NeedWriter(Reqs, i))
             {
                 /* if needed this writer fill destination with acquired data */
-                int ElementSize =
-                    Reqs->VarRec->PerWriterDataFieldDesc[i]->field_size;
+                int ElementSize = Reqs->VarRec->ElementSize;
                 int DimCount = Reqs->VarRec->DimCount;
                 size_t *GlobalDimensions = Reqs->VarRec->GlobalDims;
                 size_t *RankOffset = Reqs->VarRec->PerWriterStart[i];
                 size_t *RankSize = Reqs->VarRec->PerWriterCounts[i];
                 size_t *SelOffset = Reqs->Start;
                 size_t *SelSize = Reqs->Count;
+                char *Type = Reqs->VarRec->Type;
                 void *IncomingData = Reqs->VarRec->PerWriterIncomingData[i];
+                size_t IncomingSize = Reqs->VarRec->PerWriterIncomingSize[i];
+                int FreeIncoming = 0;
 
+                if ((Stream->WriterConfigParams->CompressionMethod ==
+                     SstCompressZFP) &&
+                    ZFPcompressionPossible(Type, DimCount))
+                {
+#ifdef ADIOS2_HAVE_ZFP
+                    /*
+                     * replace old IncomingData with uncompressed, and free
+                     * afterwards
+                     */
+                    FreeIncoming = 1;
+                    IncomingData =
+                        FFS_ZFPDecompress(Stream, DimCount, Type, IncomingData,
+                                          IncomingSize, RankSize, NULL);
+#endif
+                }
                 if (Stream->ConfigParams->IsRowMajor)
                 {
                     ExtractSelectionFromPartialRM(
@@ -1111,29 +1080,44 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                         ElementSize, DimCount, GlobalDimensions, RankOffset,
                         RankSize, SelOffset, SelSize, IncomingData, Reqs->Data);
                 }
+                if (FreeIncoming)
+                {
+                    /* free uncompressed  */
+                    free(IncomingData);
+                }
             }
         }
         Reqs = Reqs->Next;
     }
 }
 
-extern void SstFFSPerformGets(SstStream Stream)
+extern SstStatusValue SstFFSPerformGets(SstStream Stream)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    SstStatusValue Ret;
 
     IssueReadRequests(Stream, Info->PendingVarRequests);
 
-    WaitForReadRequests(Stream);
+    Ret = WaitForReadRequests(Stream);
 
-    FillReadRequests(Stream, Info->PendingVarRequests);
-
+    if (Ret == SstSuccess)
+    {
+        FillReadRequests(Stream, Info->PendingVarRequests);
+    }
+    else
+    {
+        CP_verbose(Stream, "Some memory read failed, not filling requests and "
+                           "returning failure\n");
+    }
     ClearReadRequests(Stream);
+
+    return Ret;
 }
 
 extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
 {
     struct FFSWriterMarshalBase *Info =
-        (struct FFSWriterMarshalBase *)Stream->MarshalData;
+        (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
     struct FFSFormatBlock *Formats = NULL;
 
     CP_verbose(Stream, "Calling SstWriterEndStep\n");
@@ -1280,6 +1264,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     FMFieldList FieldList;
     FMStructDescList FormatList;
     void *BaseData;
+    static int DumpMetadata = -1;
 
     /* incoming metadata is all of our information about what was written
      * and is available to be read.  We'll process the data from each node
@@ -1347,8 +1332,17 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
         FFSdecode_to_buffer(Stream->ReaderFFSContext,
                             MetaData->Metadata[WriterRank]->block, decode_buf);
     }
-    // printf("\nIncomingMetadatablock is %p :\n", BaseData);
-    // FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+    if (DumpMetadata == -1)
+    {
+        DumpMetadata = (getenv("SstDumpMetadata") != NULL);
+    }
+    if (DumpMetadata && (Stream->Rank == 0))
+    {
+        printf("\nIncomingMetadatablock from WriterRank %d is %p :\n",
+               WriterRank, BaseData);
+        FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+        printf("\n\n");
+    }
     Info->MetadataBaseAddrs[WriterRank] = BaseData;
     FormatList = format_list_of_FMFormat(FMFormat_of_original(FFSformat));
     FieldList = FormatList[0].field_list;
@@ -1367,7 +1361,9 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             char *ArrayName;
             char *Type;
             FFSVarRec VarRec = NULL;
-            BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type);
+            int ElementSize;
+            BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
+                               &ElementSize);
             if (WriterRank != 0)
             {
                 VarRec = LookupVarByName(Stream, ArrayName);
@@ -1386,6 +1382,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             {
                 VarRec = CreateVarRec(Stream, ArrayName);
                 VarRec->DimCount = meta_base->Dims;
+                VarRec->Type = Type;
+                VarRec->ElementSize = ElementSize;
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, ArrayName, Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Count, meta_base->Offsets);
@@ -1457,41 +1455,73 @@ static void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
     MBase->BitField[Element] |= (1 << ElementBit);
 }
 
+extern void SstFFSSetZFPParams(SstStream Stream, attr_list Attrs)
+{
+    if (Stream->WriterMarshalData)
+    {
+        struct FFSWriterMarshalBase *Info = Stream->WriterMarshalData;
+        if (Info->ZFPParams)
+            free_attr_list(Info->ZFPParams);
+        add_ref_attr_list(Attrs);
+        Info->ZFPParams = Attrs;
+    }
+}
+
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const char *Type, size_t ElemSize, size_t DimCount,
                           const size_t *Shape, const size_t *Count,
-                          const size_t *Offsets, const void *data)
+                          const size_t *Offsets, const void *Data)
 {
 
+    struct FFSWriterMarshalBase *Info;
     struct FFSMetadataInfoStruct *MBase;
+
     FFSWriterRec Rec = LookupWriterRec(Stream, Variable);
     if (!Rec)
     {
         Rec = CreateWriterRec(Stream, Variable, Name, Type, ElemSize, DimCount);
     }
+    Info = (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
+
     MBase = Stream->M;
     FFSBitfieldSet(MBase, Rec->FieldID);
 
-    if (Rec->SingleValue)
+    if (Rec->DimCount == 0)
     {
         char *base = Stream->M + Rec->MetaOffset;
-        memcpy(base, data, ElemSize);
+        memcpy(base, Data, ElemSize);
     }
     else
     {
-        /* array case */
-        MetaArrayRec *MetaBase = Stream->M + Rec->MetaOffset;
-        ArrayRec *data_base = Stream->D + Rec->DataOffset;
-        size_t ElemCount = CalcSize(DimCount, Count);
-        data_base->ElemCount = ElemCount;
-        /* this is PutSync case, so we have to copy the data NOW */
-        data_base->Array = malloc(ElemCount * ElemSize);
-        memcpy(data_base->Array, data, ElemCount * ElemSize);
+        MetaArrayRec *MetaEntry = Stream->M + Rec->MetaOffset;
+        ArrayRec *DataEntry = Stream->D + Rec->DataOffset;
 
         /* handle metadata */
-        MetaBase->Dims = DimCount;
-        MetaBase->Shape = CopyDims(DimCount, Shape);
-        MetaBase->Count = CopyDims(DimCount, Count);
-        MetaBase->Offsets = CopyDims(DimCount, Offsets);
+        MetaEntry->Dims = DimCount;
+        MetaEntry->Shape = CopyDims(DimCount, Shape);
+        MetaEntry->Count = CopyDims(DimCount, Count);
+        MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+
+        if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
+            ZFPcompressionPossible(Type, DimCount))
+        {
+#ifdef ADIOS2_HAVE_ZFP
+            /* this should never be true if ZFP is not available */
+            size_t ByteCount;
+            char *Output = FFS_ZFPCompress(Stream, Rec->DimCount, Rec->Type,
+                                           (void *)Data, Count, &ByteCount);
+            DataEntry->ElemCount = ByteCount;
+            DataEntry->Array = Output;
+#endif
+        }
+        else
+        {
+            /* normal array case */
+            size_t ElemCount = CalcSize(DimCount, Count);
+            DataEntry->ElemCount = ElemCount;
+            /* this is PutSync case, so we have to copy the data NOW */
+            DataEntry->Array = malloc(ElemCount * ElemSize);
+            memcpy(DataEntry->Array, Data, ElemCount * ElemSize);
+        }
     }
 }

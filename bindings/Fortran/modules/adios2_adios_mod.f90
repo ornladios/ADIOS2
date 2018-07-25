@@ -15,14 +15,20 @@ module adios2_adios_mod
 contains
 
     subroutine adios2_declare_io(io, adios, io_name, ierr)
-        type(adios2_io), intent(out) :: io
+        type(adios2_io), intent(inout) :: io
         type(adios2_adios), intent(in) :: adios
         character*(*), intent(in)  :: io_name
         integer, intent(out) :: ierr
+        !local
+        integer:: length
 
         call adios2_declare_io_f2c(io%f2c, adios%f2c, &
                                    TRIM(ADJUSTL(io_name))//char(0), ierr)
-        if(ierr == 0 ) io%valid = .true.
+        if( ierr == 0 ) then
+            io%valid = .true.
+            call adios2_io_engine_type_f2c(io%f2c, io%engine_type, length, ierr)
+            io%engine_type = trim(io%engine_type(1:length))
+        end if
 
     end subroutine
 
@@ -34,7 +40,7 @@ contains
 
         call adios2_at_io_f2c(io%f2c, adios%f2c, &
                               TRIM(ADJUSTL(io_name))//char(0), ierr)
-        if(ierr == 0 ) io%valid = .true.
+        if(ierr == 0) io%valid = .true.
 
     end subroutine
 

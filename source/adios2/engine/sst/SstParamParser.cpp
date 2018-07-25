@@ -82,6 +82,34 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
         return false;
     };
 
+    auto lf_SetCompressionMethodParameter = [&](const std::string key,
+                                                size_t &parameter) {
+
+        auto itKey = io.m_Parameters.find(key);
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string method = itKey->second;
+            std::transform(method.begin(), method.end(), method.begin(),
+                           ::tolower);
+            if (method == "zfp")
+            {
+                parameter = SstCompressZFP;
+            }
+            else if (method == "none")
+            {
+                parameter = SstCompressNone;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown Sst CompressionMethod parameter \"" +
+                    method + "\"");
+            }
+            return true;
+        }
+        return false;
+    };
+
     // not really a parameter, but a convenient way to pass this around
     auto lf_SetIsRowMajorParameter = [&](const std::string key,
                                          int &parameter) {

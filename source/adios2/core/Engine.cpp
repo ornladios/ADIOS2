@@ -99,6 +99,22 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    Engine::DoAllStepsBlocksInfo(const Variable<T> &variable) const            \
+    {                                                                          \
+        ThrowUp("DoAllStepsBlocksInfo");                                       \
+    }                                                                          \
+                                                                               \
+    std::vector<typename Variable<T>::Info> Engine::DoBlocksInfo(              \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        ThrowUp("DoBlocksInfo");                                               \
+    }
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 // PRIVATE
 void Engine::ThrowUp(const std::string function) const
 {
@@ -137,7 +153,13 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
                                  const Mode);                                  \
                                                                                \
     template Variable<T> &Engine::FindVariable(                                \
-        const std::string &variableName, const std::string hint);
+        const std::string &variableName, const std::string hint);              \
+                                                                               \
+    template std::map<size_t, std::vector<typename Variable<T>::Info>>         \
+    Engine::AllStepsBlocksInfo(const Variable<T> &variable) const;             \
+                                                                               \
+    template std::vector<typename Variable<T>::Info> Engine::BlocksInfo(       \
+        const Variable<T> &variable, const size_t step) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

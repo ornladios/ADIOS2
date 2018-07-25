@@ -2,16 +2,18 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataMan.h
+ * DataManWriter.h
  *
  *  Created on: Jan 10, 2017
- *      Author: wfg
+ *      Author: Jason Wang
+ *              William F Godoy
  */
 
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
 #include "DataManCommon.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 
 namespace adios2
 {
@@ -32,14 +34,11 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
     size_t CurrentStep() const;
+    void PerformPuts() final;
 
 private:
-    unsigned int m_nDataThreads = 1;
-    unsigned int m_nControlThreads = 0;
     size_t m_TransportChannels = 1;
     size_t m_BufferSize = 1024 * 1024 * 1024;
-    bool m_DoMonitor = false;
-    bool m_Blocking = true;
     size_t m_StepsPerBuffer = 10;
 
     std::shared_ptr<format::BP3Serializer> m_BP3Serializer;

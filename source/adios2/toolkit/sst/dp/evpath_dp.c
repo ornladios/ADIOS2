@@ -57,6 +57,7 @@ typedef struct _Evpath_RS_Stream
     int WriterCohortSize;
     CP_PeerCohort PeerCohort;
     struct _EvpathWriterContactInfo *WriterContactInfo;
+    struct _EvpathCompletionHandle *PendingReadRequests;
 } * Evpath_RS_Stream;
 
 typedef struct _Evpath_WSR_Stream
@@ -290,8 +291,11 @@ typedef struct _EvpathCompletionHandle
     int CMcondition;
     CManager cm;
     void *CPStream;
+    void *DPStream;
     void *Buffer;
+    int Failed;
     int Rank;
+    struct _EvpathCompletionHandle *Next;
 } * EvpathCompletionHandle;
 
 static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
@@ -300,9 +304,24 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
     EvpathReadReplyMsg ReadReplyMsg = (EvpathReadReplyMsg)msg_v;
     Evpath_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
     CP_Services Svcs = (CP_Services)client_Data;
-    EvpathCompletionHandle Handle =
-        CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
+    EvpathCompletionHandle Handle = NULL;
 
+    if (CMCondition_has_signaled(cm, ReadReplyMsg->NotifyCondition))
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, "Got a reply to remote memory "
+                                            "read, but the condition is "
+                                            "already signalled, returning\n");
+        return;
+    }
+    Handle = CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
+
+    if (!Handle)
+    {
+        Svcs->verbose(
+            RS_Stream->CP_Stream,
+            "Got a reply to remote memory read, but condition not found\n");
+        return;
+    }
     Svcs->verbose(
         RS_Stream->CP_Stream,
         "Got a reply to remote memory read from rank %d, condition is %d\n",
@@ -474,6 +493,61 @@ static void EvpathProvideWriterDataToReader(CP_Services Svcs,
     }
 }
 
+static void AddRequestToList(CP_Services Svcs, Evpath_RS_Stream Stream,
+                             EvpathCompletionHandle Handle)
+{
+    Handle->Next = Stream->PendingReadRequests;
+    Stream->PendingReadRequests = Handle;
+}
+
+static void RemoveRequestFromList(CP_Services Svcs, Evpath_RS_Stream Stream,
+                                  EvpathCompletionHandle Handle)
+{
+    EvpathCompletionHandle Tmp = Stream->PendingReadRequests;
+
+    if (Stream->PendingReadRequests == Handle)
+    {
+        Stream->PendingReadRequests = Handle->Next;
+        return;
+    }
+
+    while (Tmp != NULL && Tmp->Next != Handle)
+    {
+        Tmp = Tmp->Next;
+    }
+
+    if (Tmp == NULL)
+        return;
+
+    // Tmp->Next must be the handle to remove
+    Tmp->Next = Tmp->Next->Next;
+}
+
+static void FailRequestsToRank(CP_Services Svcs, CManager cm,
+                               Evpath_RS_Stream Stream, int FailedRank)
+{
+    EvpathCompletionHandle Tmp = Stream->PendingReadRequests;
+    Svcs->verbose(Stream->CP_Stream,
+                  "Fail pending requests to writer rank %d\n", FailedRank);
+    while (Tmp != NULL)
+    {
+        if (Tmp->Rank == FailedRank)
+        {
+            Tmp->Failed = 1;
+            Svcs->verbose(Tmp->CPStream, "Found a pending remote memory read "
+                                         "to failed writer rank %d, marking as "
+                                         "failed and signalling condition %d\n",
+                          Tmp->Rank, Tmp->CMcondition);
+            CMCondition_signal(cm, Tmp->CMcondition);
+            Svcs->verbose(Tmp->CPStream, "Did the signal of condition %d\n",
+                          Tmp->Rank, Tmp->CMcondition);
+        }
+        Tmp = Tmp->Next;
+    }
+    Svcs->verbose(Stream->CP_Stream,
+                  "Done Failing requests to writer rank %d\n", FailedRank);
+}
+
 typedef struct _EvpathPerTimestepInfo
 {
     char *CheckString;
@@ -494,6 +568,8 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     ret->CMcondition = CMCondition_get(cm, NULL);
     ret->CPStream = Stream->CP_Stream;
+    ret->DPStream = Stream;
+    ret->Failed = 0;
     ret->cm = cm;
     ret->Buffer = Buffer;
     ret->Rank = Rank;
@@ -501,6 +577,7 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
      * set the completion handle as client Data on the condition so that
      * handler has access to it.
      */
+    AddRequestToList(Svcs, Stream, ret);
     CMCondition_set_client_data(cm, ret->CMcondition, ret);
 
     Svcs->verbose(Stream->CP_Stream,
@@ -525,9 +602,10 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     return ret;
 }
 
-static void EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
+static int EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
     EvpathCompletionHandle Handle = (EvpathCompletionHandle)Handle_v;
+    int Ret = 1;
     Svcs->verbose(
         Handle->CPStream,
         "Waiting for completion of memory read to rank %d, condition %d\n",
@@ -537,12 +615,39 @@ static void EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
      * this returns immediately.  Copying the incoming data to the waiting
      * buffer has been done by the reply handler.
      */
-    CMCondition_wait(Handle->cm, Handle->CMcondition);
-    Svcs->verbose(
-        Handle->CPStream,
-        "Remote memory read to rank %d with condition %d has completed\n",
-        Handle->Rank, Handle->CMcondition);
+    if (Handle->CMcondition != -1)
+        CMCondition_wait(Handle->cm, Handle->CMcondition);
+    if (Handle->Failed)
+    {
+        Svcs->verbose(Handle->CPStream, "Remote memory read to rank %d with "
+                                        "condition %d has FAILED because of "
+                                        "writer failure\n",
+                      Handle->Rank, Handle->CMcondition);
+        Ret = 0;
+    }
+    else
+    {
+        Svcs->verbose(
+            Handle->CPStream,
+            "Remote memory read to rank %d with condition %d has completed\n",
+            Handle->Rank, Handle->CMcondition);
+    }
+    RemoveRequestFromList(Svcs, Handle->DPStream, Handle);
     free(Handle);
+    return Ret;
+}
+
+static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
+                                    int FailedPeerRank)
+{
+    Evpath_RS_Stream Stream = (Evpath_RS_Stream)
+        Stream_v; /* DP_RS_Stream is the return from InitReader */
+    CManager cm = Svcs->getCManager(Stream->CP_Stream);
+    Svcs->verbose(Stream->CP_Stream, "received notification that writer peer "
+                                     "%d has failed, failing any pending "
+                                     "requests\n",
+                  FailedPeerRank);
+    FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
 static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
@@ -660,6 +765,7 @@ extern CP_DP_Interface LoadEVpathDP()
         EvpathProvideWriterDataToReader;
     evpathDPInterface.readRemoteMemory = EvpathReadRemoteMemory;
     evpathDPInterface.waitForCompletion = EvpathWaitForCompletion;
+    evpathDPInterface.notifyConnFailure = EvpathNotifyConnFailure;
     evpathDPInterface.provideTimestep = EvpathProvideTimestep;
     evpathDPInterface.releaseTimestep = EvpathReleaseTimestep;
     evpathDPInterface.destroyReader = EvpathDestroyReader;

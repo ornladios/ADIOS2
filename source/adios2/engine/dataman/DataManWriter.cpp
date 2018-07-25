@@ -41,6 +41,8 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
+void DataManWriter::PerformPuts() {}
+
 void DataManWriter::EndStep()
 {
     if (m_Format == "bp")
@@ -84,7 +86,8 @@ void DataManWriter::Init()
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {
             m_DataManSerializer.push_back(
-                std::make_shared<format::DataManSerializer>());
+                std::make_shared<format::DataManSerializer>(m_IsRowMajor,
+                                                            m_IsLittleEndian));
         }
     }
 

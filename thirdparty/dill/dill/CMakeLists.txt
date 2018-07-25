@@ -68,6 +68,7 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 set (CMAKE_MACOSX_RPATH 1)
 
 include(CMakeDependentOption)
+include(ExternalProject)
 
 # Setup shared library defaults.  If explicitly specified somehow, then default 
 # to that.  Otherwise base the default on whether or not shared libs are even
@@ -182,10 +183,30 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
 endif (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
 set(ARM_HARD_FLOAT ${HARDFP_AVAILABLE})
 
+option(DILL_IGNORE_NATIVE  "Build to do emulation, regardless of architecture" OFF)
+if (DILL_IGNORE_NATIVE)
+    set (NATIVE_CG false)
+    set (NATIVE_ARCH UNSUPPORTED)
+endif()
 find_package (LibFFI PATHS ${CMAKE_INSTALL_PREFIX} QUIET)
 IF (LIBFFI_FOUND) 
   set (EMULATION_POSSIBLE true)
-ENDIF (LIBFFI_FOUND) 
+ELSEIF (DILL_IGNORE_NATIVE)
+  set(FFI_PREFIX_DIR ${CMAKE_BINARY_DIR}/libffi)
+  set(FFI_SRC_DIR ${FFI_PREFIX_DIR}/src/LibFFI)
+  set(FFI_INSTALL_DIR ${FFI_PREFIX_DIR}/install)
+  ExternalProject_Add(LibFFI
+    PREFIX ${FFI_PREFIX_DIR}
+    GIT_REPOSITORY https://github.com/libffi/libffi.git
+    CONFIGURE_COMMAND cd ${FFI_SRC_DIR} && ./autogen.sh COMMAND ${FFI_SRC_DIR}/configure --prefix=${FFI_PREFIX_DIR}
+    )
+  set (EMULATION_POSSIBLE true)
+  ExternalProject_Get_property(LibFFI install_dir)
+  set (LIBFFI_INCLUDE_DIR ${install_dir}/include)
+  link_directories(${install_dir}/lib)
+  set (LIBFFI_LIBRARY -lffi)
+ENDIF()
+
 option(DILL_ENABLE_DISASSEMBLY
   "enable binutils-based disassembly (default is OFF)" OFF)
 
@@ -236,7 +257,7 @@ if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
 else ()
     message ( FATAL_ERROR "Configure has detected no native dynamic code generation support 
     for this architecture (\"$NATIVE_ARCH\"), -DDILL_MULTI_TARGET=ON 
-	was not specified, and no emulation is possible (avcall library 
+	was not specified, and no emulation is possible (libffi library 
 	not found)
 		       NO LIBRARY WILL BE BUILT")
 endif()
@@ -318,6 +339,9 @@ set(DILL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_LIST})
+if (FFI_PREFIX_DIR)
+  add_dependencies (dill LibFFI)
+endif()
 set_target_properties(dill PROPERTIES
   OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill
   VERSION ${DILL_VERSION}

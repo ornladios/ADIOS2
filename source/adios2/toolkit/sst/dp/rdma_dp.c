@@ -746,9 +746,28 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     return ret;
 }
 
-static void RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
+static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
+                                  int FailedPeerRank)
+{
+    Rdma_RS_Stream Stream = (Rdma_RS_Stream)
+        Stream_v; /* DP_RS_Stream is the return from InitReader */
+    CManager cm = Svcs->getCManager(Stream->CP_Stream);
+    Svcs->verbose(Stream->CP_Stream, "received notification that writer peer "
+                                     "%d has failed, failing any pending "
+                                     "requests\n",
+                  FailedPeerRank);
+    //   This is what EVPath does...
+    //   FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
+}
+
+/*
+ * RdmaWaitForCompletion should return 1 if successful, but 0 if the reads
+ * failed for some reason or were aborted by RdmaNotifyConnFailure()
+ */
+static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
     RdmaCompletionHandle Handle = (RdmaCompletionHandle)Handle_v;
+    int Ret = 1;
     Svcs->verbose(
         Handle->CPStream,
         "Waiting for completion of memory read to rank %d, condition %d\n",
@@ -765,6 +784,7 @@ static void RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
         Handle->Rank, Handle->CMcondition);
 
     free(Handle);
+    return Ret;
 }
 
 static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
@@ -984,6 +1004,7 @@ extern CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.provideWriterDataToReader = RdmaProvideWriterDataToReader;
     RdmaDPInterface.readRemoteMemory = RdmaReadRemoteMemory;
     RdmaDPInterface.waitForCompletion = RdmaWaitForCompletion;
+    RdmaDPInterface.notifyConnFailure = RdmaNotifyConnFailure;
     RdmaDPInterface.provideTimestep = RdmaProvideTimestep;
     RdmaDPInterface.releaseTimestep = RdmaReleaseTimestep;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;

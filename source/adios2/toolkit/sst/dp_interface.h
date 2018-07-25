@@ -180,9 +180,22 @@ typedef DP_CompletionHandle (*CP_DP_ReadRemoteMemoryFunc)(
  * CP_DP_WaitForCompletionFunc is the type of a dataplane function that
  * suspends the execution of the current thread until the asynchronous
  * CP_DP_ReadRemoteMemory call that returned its `handle` parameter.
+ * the return value is 0 in the event that the wait failed, 1 on success.
  */
-typedef void (*CP_DP_WaitForCompletionFunc)(CP_Services Svcs,
-                                            DP_CompletionHandle Handle);
+typedef int (*CP_DP_WaitForCompletionFunc)(CP_Services Svcs,
+                                           DP_CompletionHandle Handle);
+
+/*!
+ * CP_DP_NotifyConnFailureFunc is the type of a dataplane function which the
+ * control plane uses to notify the data plane that a CP-level connection
+ * has failed (and therefore the remote host is likely dead).  This is an
+ * informational function by the CP, but as a side effect it should cause
+ * any pending Wait operations (for ReadRemoteMemory) to complete and return
+ * an error.
+ */
+typedef void (*CP_DP_NotifyConnFailureFunc)(CP_Services Svcs,
+                                            DP_RS_Stream RS_Stream,
+                                            int FailedPeerRank);
 
 /*!
  * CP_DP_ProvideTimestepFunc is the type of a dataplane function that
@@ -226,6 +239,7 @@ struct _CP_DP_Interface
 
     CP_DP_ReadRemoteMemoryFunc readRemoteMemory;
     CP_DP_WaitForCompletionFunc waitForCompletion;
+    CP_DP_NotifyConnFailureFunc notifyConnFailure;
 
     CP_DP_ProvideTimestepFunc provideTimestep;
     CP_DP_ReleaseTimestepFunc releaseTimestep;

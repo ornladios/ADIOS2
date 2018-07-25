@@ -109,6 +109,43 @@ template <class T>
 void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
             const std::string hint, T value = T());
 
+/**
+ * Author:Shawn Yang, shawnyang610@gmail.com
+ * Copies n-dimensional Data from a source buffer to destination buffer, either
+ * can be of any Major and Endianess. Return 1 if no overlap is found.
+ * Copying from row-major to row-major of the same endian yields the best speed.
+ * Optimizations: first: looks for the largest contiguous data
+ * block size and copies the block of data as a whole. Second: by using
+ * depth-first traversal for dynamic memory pointer calculations.
+ * address calculation for each copied block is reduced to O(1) from O(n).
+ * which means the computational cost is drastically reduced for data of higher
+ * dimensions.
+ * For copying involving column major, or different endianess only the
+ * second optimization is applied.
+ * Note: in case of super high dimensional data(over 10000 dimensions),
+ * function stack may run out, set safeMode=true to switch to iterative
+ * algms(a little slower due to explicit stack running less efficiently).
+ * @param in pointer to source memory buffer
+ * @param inStart source data starting offset
+ * @param inCount source data structure
+ * @param inIsRowMaj specifies major for input
+ * @param inIsBigEndian specifies endianess for input
+ * @param out pointer to destination memory buffer
+ * @param outStart source data starting offset
+ * @param outCount destination data structure
+ * @param outIsRowMaj specifies major for output
+ * @param outIsBigEndian specifies endianess for output
+ * @param safeMode false:runs faster, the number of function stacks
+ *                 used by recursive algm is equal to the number of dimensions.
+ *                 true: runs a bit slower, same algorithm using the explicit
+ *                 stack/simulated stack which has more overhead for the algm.
+ */
+template <class T>
+int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const bool safeMode = false);
+
 } // end namespace helper
 } // end namespace adios2
 
