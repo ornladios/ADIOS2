@@ -26,7 +26,17 @@ template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     variable.SetData(data);
-    m_DataManDeserializer.Get(variable, m_CurrentStep);
+    if (m_WorkflowMode == "subscribe")
+    {
+        m_DataManDeserializer.Get(variable, m_CurrentStep);
+    }
+    else if (m_WorkflowMode == "p2p")
+    {
+        while (m_DataManDeserializer.Get(variable, m_CurrentStep) != 0)
+        {
+            std::cout << "while\n";
+        }
+    }
 }
 
 template <class T>

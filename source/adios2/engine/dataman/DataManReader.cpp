@@ -43,15 +43,51 @@ DataManReader::~DataManReader()
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    ++m_CurrentStep;
     if (m_WorkflowMode == "subscribe")
     {
-        m_CurrentStep = m_DataManDeserializer.MinStep();
+        return BeginStepSubscribe(stepMode, timeoutSeconds);
     }
+    else if (m_WorkflowMode == "p2p")
+    {
+        return BeginStepP2P(stepMode, timeoutSeconds);
+    }
+    else
+    {
+        throw(std::invalid_argument(
+            "[DataManReader::BeginStep] invalid workflow mode " +
+            m_WorkflowMode));
+        return StepStatus::EndOfStream;
+    }
+}
+
+void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+
+size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
+
+void DataManReader::PerformGets() {}
+
+// PRIVATE
+
+void DataManReader::Init()
+{
+
+    // initialize transports
+    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
+    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
+                                 Mode::Read, m_WorkflowMode, true);
+
+    // start threads
+    m_Listening = true;
+    m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
+                                                 m_DataMan);
+}
+
+StepStatus DataManReader::BeginStepSubscribe(StepMode stepMode,
+                                             const float timeoutSeconds)
+{
     StepStatus status;
-
+    m_CurrentStep = m_DataManDeserializer.MinStep();
     auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
-
     if (vars == nullptr)
     {
         status = StepStatus::NotReady;
@@ -85,26 +121,46 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     return status;
 }
 
-void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
-
-size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
-
-void DataManReader::PerformGets() {}
-
-// PRIVATE
-
-void DataManReader::Init()
+StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
+                                       const float timeoutSeconds)
 {
+    ++m_CurrentStep;
+    StepStatus status;
 
-    // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                 Mode::Read, m_WorkflowMode, true);
+    auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
 
-    // start threads
-    m_Listening = true;
-    m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
-                                                 m_DataMan);
+    if (vars == nullptr)
+    {
+        status = StepStatus::NotReady;
+        --m_CurrentStep;
+    }
+    else
+    {
+        for (const auto &i : *vars)
+        {
+            if (i.type == "compound")
+            {
+                throw("Compound type is not supported yet.");
+            }
+#define declare_type(T)                                                        \
+    else if (i.type == helper::GetType<T>())                                   \
+    {                                                                          \
+        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
+        if (v == nullptr)                                                      \
+        {                                                                      \
+            m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+        }
+        status = StepStatus::OK;
+    }
+    if (m_UpdatingMetaData)
+    {
+        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+    }
+    return status;
 }
 
 void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)

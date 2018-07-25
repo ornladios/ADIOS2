@@ -53,11 +53,13 @@ void WANZmqP2P::Open(const std::string &name, const Mode openMode)
     ProfilerStart("open");
     if (m_OpenMode == Mode::Write)
     {
+        m_OpenModeStr = "Write";
         m_Socket = zmq_socket(m_Context, ZMQ_REQ);
         error = zmq_connect(m_Socket, fullIP.c_str());
     }
     else if (m_OpenMode == Mode::Read)
     {
+        m_OpenModeStr = "Read";
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         error = zmq_bind(m_Socket, fullIP.c_str());
     }

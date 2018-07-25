@@ -33,6 +33,23 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 
 DataMan::~DataMan()
 {
+    while (true)
+    {
+        int s = 0;
+        m_Mutex.lock();
+        for (const auto &i : m_BufferQueue)
+        {
+            if (i.size() != 0)
+            {
+                ++s;
+            }
+        }
+        m_Mutex.unlock();
+        if (s == 0)
+        {
+            break;
+        }
+    }
     for (auto &readThread : m_ReadThreads)
     {
         m_Reading = false;

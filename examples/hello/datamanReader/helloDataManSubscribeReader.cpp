@@ -2,13 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloDataManWriter.cpp
+ * helloDataManReader_nompi.cpp
  *
- *  Created on: Feb 16, 2017
+ *  Created on: Jan 9, 2017
  *      Author: Jason Wang
  */
 
 #include <adios2.h>
+#include <chrono>
 #include <iostream>
 #include <mpi.h>
 #include <numeric>
@@ -20,13 +21,14 @@ std::string adiosEngine = "DataMan";
 std::string transportLibrary = "ZMQ";
 std::string ip = "127.0.0.1";
 std::string port = "12306";
-std::string workflowMode = "p2p";
+std::string workflowMode = "subscribe";
 
 // data properties
-size_t steps = 100;
-adios2::Dims shape({10, 10});
-adios2::Dims start({0, 0});
-adios2::Dims count({6, 8});
+size_t steps = 10;
+adios2::Dims start({2, 3});
+adios2::Dims count({2, 3});
+
+int timeout = 20;
 
 int rank, size;
 
@@ -51,10 +53,6 @@ int main(int argc, char *argv[])
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     std::vector<float> myFloats(datasize);
-    for (size_t i = 0; i < datasize; ++i)
-    {
-        myFloats[i] = i + rank * 10000;
-    }
 
     // initialize ADIOS2 with DataMan
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -66,31 +64,45 @@ int main(int argc, char *argv[])
         {{"Library", transportLibrary}, {"IPAddress", ip}, {"Port", port}});
 
     // open stream
-    adios2::Engine dataManWriter =
-        dataManIO.Open("myFloats.bp", adios2::Mode::Write);
+    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
-    // define variable
-    auto bpFloats =
-        dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
-
-    // write data
-    for (int i = 0; i < steps; ++i)
+    // read data
+    size_t i = 0;
+    adios2::Variable<float> bpFloats;
+    auto start_time = std::chrono::system_clock::now();
+    while (i < steps)
     {
-        dataManWriter.BeginStep();
-        // start[0] = 0;
-        // bpFloats.SetSelection({start, count});
-        dataManWriter.Put<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        Dump(myFloats, dataManWriter.CurrentStep());
-        dataManWriter.EndStep();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        for (auto &j : myFloats)
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > timeout)
         {
-            j += 1;
+            std::cout << "Timeout" << std::endl;
+            return -1;
+        }
+        adios2::StepStatus status = dataManReader.BeginStep();
+        if (status == adios2::StepStatus::OK)
+        {
+            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
+            bpFloats.SetSelection({start, count});
+            dataManReader.Get<float>(bpFloats, myFloats.data(),
+                                     adios2::Mode::Sync);
+            Dump(myFloats, dataManReader.CurrentStep());
+            i = dataManReader.CurrentStep();
+            dataManReader.EndStep();
+        }
+        else if (status == adios2::StepStatus::NotReady)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        else if (status == adios2::StepStatus::EndOfStream)
+        {
+            break;
         }
     }
 
     // finalize
-    dataManWriter.Close();
+    dataManReader.Close();
     MPI_Finalize();
 
     return 0;
