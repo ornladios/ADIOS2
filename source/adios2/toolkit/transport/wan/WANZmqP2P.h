@@ -23,7 +23,7 @@ class WANZmqP2P : public Transport
 
 public:
     WANZmqP2P(const std::string &ipAddress, const std::string &port,
-              const MPI_Comm mpiComm, const bool debugMode);
+              const MPI_Comm mpiComm, const int timeout, const bool debugMode);
     ~WANZmqP2P();
     void Open(const std::string &name, const Mode openMode) final;
     void SetBuffer(char *buffer, size_t size) final;
@@ -41,6 +41,7 @@ private:
     void *m_Socket = nullptr;
     const std::string m_IPAddress;
     const std::string m_Port;
+    const int m_Timeout;
     std::string m_OpenModeStr;
 };
 

@@ -81,6 +81,11 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         GetStringParameter(paramsVector[i], "IPAddress", ip);
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
+        int timeout;
+        if (GetIntParameter(paramsVector[i], "Timeout", timeout) == false)
+        {
+            timeout = 3000;
+        }
 
         // Calculate port number
         int mpiRank, mpiSize;
@@ -107,7 +112,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             else if (workflowMode == "p2p")
             {
                 wanTransport = std::make_shared<transport::WANZmqP2P>(
-                    ip, port, m_MPIComm, m_DebugMode);
+                    ip, port, m_MPIComm, timeout, m_DebugMode);
             }
             else if (workflowMode == "query")
             {
@@ -226,7 +231,7 @@ void DataMan::ReadThread(std::shared_ptr<Transport> transport)
     }
 }
 
-bool DataMan::GetBoolParameter(const Params &params, std::string key)
+bool DataMan::GetBoolParameter(const Params &params, const std::string key)
 {
     auto itKey = params.find(key);
     if (itKey != params.end())
@@ -245,7 +250,7 @@ bool DataMan::GetBoolParameter(const Params &params, std::string key)
     return false;
 }
 
-bool DataMan::GetStringParameter(const Params &params, std::string key,
+bool DataMan::GetStringParameter(const Params &params, const std::string key,
                                  std::string &value)
 {
     auto it = params.find(key);
@@ -253,6 +258,25 @@ bool DataMan::GetStringParameter(const Params &params, std::string key,
     {
         value = it->second;
         return true;
+    }
+    return false;
+}
+
+bool DataMan::GetIntParameter(const Params &params, const std::string key,
+                              int &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        try
+        {
+            value = std::stoi(it->second);
+            return true;
+        }
+        catch (std::exception &e)
+        {
+            return false;
+        }
     }
     return false;
 }

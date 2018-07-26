@@ -53,9 +53,11 @@ private:
     std::mutex m_Mutex;
 
     // Functions for parsing parameters
-    bool GetBoolParameter(const Params &params, std::string key);
-    bool GetStringParameter(const Params &params, std::string key,
+    bool GetBoolParameter(const Params &params, const std::string key);
+    bool GetStringParameter(const Params &params, const std::string key,
                             std::string &value);
+    bool GetIntParameter(const Params &params, const std::string key,
+                         int &value);
 
     // For read thread
     void ReadThread(std::shared_ptr<Transport> transport);

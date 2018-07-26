@@ -19,9 +19,10 @@ namespace transport
 {
 
 WANZmqP2P::WANZmqP2P(const std::string &ipAddress, const std::string &port,
-                     const MPI_Comm mpiComm, const bool debugMode)
+                     const MPI_Comm mpiComm, const int timeout,
+                     const bool debugMode)
 : Transport("wan", "zmq", mpiComm, debugMode), m_IPAddress(ipAddress),
-  m_Port(port)
+  m_Port(port), m_Timeout(timeout)
 {
     m_Context = zmq_ctx_new();
     if (m_Context == nullptr || m_Context == NULL)
@@ -62,6 +63,8 @@ void WANZmqP2P::Open(const std::string &name, const Mode openMode)
         m_OpenModeStr = "Read";
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         error = zmq_bind(m_Socket, fullIP.c_str());
+        int timeout = 5000;
+        zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
     }
     else
     {

@@ -43,8 +43,7 @@ DataManReader::~DataManReader()
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    if (m_CurrentStep == m_FinalStep - 1 && m_CurrentStep > 0 &&
-        m_FinalStep > 0)
+    if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0 && m_FinalStep > 0)
     {
         std::cout << "Current Step " << m_CurrentStep << std::endl;
         std::cout << "Final Step " << m_FinalStep << std::endl;
