@@ -275,6 +275,11 @@ bool DataMan::GetIntParameter(const Params &params, const std::string key,
         }
         catch (std::exception &e)
         {
+            std::cout << "Parameter " << key
+                      << " should be an integer in string format. However, "
+                      << e.what() << " has been caught while trying to convert "
+                                     "the value to an integer."
+                      << std::endl;
             return false;
         }
     }

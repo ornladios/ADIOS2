@@ -45,8 +45,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 {
     if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0 && m_FinalStep > 0)
     {
-        std::cout << "Current Step " << m_CurrentStep << std::endl;
-        std::cout << "Final Step " << m_FinalStep << std::endl;
         return StepStatus::EndOfStream;
     }
     if (m_WorkflowMode == "subscribe")
