@@ -79,7 +79,7 @@ void ProcessArgs(int rank, int argc, char *argv[])
     }
     else if (elc == "dataman")
     {
-        engineParams["WorkflowMode"] = "subscribe";
+        engineParams["WorkflowMode"] = "p2p";
         engineTransports["WAN"] = {
             {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "25600"}};
     }
