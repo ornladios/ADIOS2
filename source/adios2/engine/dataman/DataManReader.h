@@ -38,6 +38,7 @@ public:
 private:
     bool m_UpdatingMetaData = true;
     bool m_Listening = false;
+    size_t m_FinalStep = std::numeric_limits<size_t>::max();
 
     format::DataManDeserializer m_DataManDeserializer;
     std::unordered_map<

@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     adios2::Variable<float> bpFloats;
     auto start_time = std::chrono::system_clock::now();
     adios2::StepStatus status;
-    while (status != adios2::StepStatus::EndOfStream)
+    while (true)
     {
         status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
@@ -86,6 +86,11 @@ int main(int argc, char *argv[])
         else if (status == adios2::StepStatus::NotReady)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        else if (status == adios2::StepStatus::EndOfStream)
+        {
+            std::cout << "EndOfStream\n";
+            break;
         }
     }
 

@@ -121,6 +121,11 @@ void DataManWriter::DoClose(const int transportIndex)
             m_DataMan->WriteWAN(buffer, transportIndex);
         }
     }
+    else if (m_Format == "dataman")
+    {
+        m_DataMan->WriteWAN(format::DataManSerializer::EndSignal(CurrentStep()),
+                            0);
+    }
 }
 
 } // end namespace engine

@@ -30,7 +30,7 @@ public:
     DataManDeserializer(const bool isRowMajor, const bool isLittleEndian);
     size_t MaxStep();
     size_t MinStep();
-    void Put(const std::shared_ptr<const std::vector<char>> data);
+    int Put(const std::shared_ptr<const std::vector<char>> data);
     template <class T>
     int Get(core::Variable<T> &variable, const size_t step);
     template <class T>

@@ -25,9 +25,25 @@ DataManDeserializer::DataManDeserializer(const bool isRowMajor,
     m_IsLittleEndian = isLittleEndian;
 }
 
-void DataManDeserializer::Put(
+int DataManDeserializer::Put(
     const std::shared_ptr<const std::vector<char>> data)
 {
+    // check if is control signal
+
+    if (data->size() < 128)
+    {
+        try
+        {
+            nlohmann::json metaj = nlohmann::json::parse(data->data());
+            size_t finalStep = metaj["FinalStep"];
+            return finalStep;
+        }
+        catch (std::exception &e)
+        {
+        }
+    }
+
+    // if not control signal then go through standard deserialization
     int key = rand();
     m_MutexBuffer.lock();
     while (m_BufferMap.count(key) > 0)
@@ -92,6 +108,7 @@ void DataManDeserializer::Put(
         catch (std::exception &e)
         {
             std::cout << e.what() << std::endl;
+            return -1;
         }
         m_MutexMaxMin.lock();
         if (m_MaxStep < var.step)
@@ -104,6 +121,7 @@ void DataManDeserializer::Put(
         }
         m_MutexMaxMin.unlock();
     }
+    return 0;
 }
 
 void DataManDeserializer::Erase(size_t step)

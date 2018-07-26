@@ -43,6 +43,13 @@ DataManReader::~DataManReader()
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
+    if (m_CurrentStep == m_FinalStep - 1 && m_CurrentStep > 0 &&
+        m_FinalStep > 0)
+    {
+        std::cout << "Current Step " << m_CurrentStep << std::endl;
+        std::cout << "Final Step " << m_FinalStep << std::endl;
+        return StepStatus::EndOfStream;
+    }
     if (m_WorkflowMode == "subscribe")
     {
         return BeginStepSubscribe(stepMode, timeoutSeconds);
@@ -170,7 +177,11 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
         std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
         if (buffer != nullptr)
         {
-            m_DataManDeserializer.Put(buffer);
+            int ret = m_DataManDeserializer.Put(buffer);
+            if (ret > 0)
+            {
+                m_FinalStep = ret;
+            }
         }
         if (m_Callbacks.empty() == false)
         {
