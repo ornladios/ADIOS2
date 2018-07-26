@@ -48,13 +48,6 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
 
     case (Mode::Write):
         ProfilerStart("open");
-        ProfilerStart("open_mkdir");
-        if (m_RankMPI == 0)
-        {
-            MkDir(m_Name); // only rank 0 makes request to the file system
-        }
-        MPI_Barrier(m_MPIComm); // all ranks wait for directory .bp.dir
-        ProfilerStop("open_mkdir");
         m_FileDescriptor =
             open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
         ProfilerStop("open");

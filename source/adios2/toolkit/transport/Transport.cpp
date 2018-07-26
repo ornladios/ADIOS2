@@ -42,10 +42,6 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
     m_Profiler.Timers.emplace(std::make_pair(
         "open", profiling::Timer("open", TimeUnit::Microseconds, m_DebugMode)));
 
-    m_Profiler.Timers.emplace(std::make_pair(
-        "open_mkdir",
-        profiling::Timer("open_mkdir", TimeUnit::Microseconds, m_DebugMode)));
-
     if (openMode == Mode::Write)
     {
         m_Profiler.Timers.emplace(

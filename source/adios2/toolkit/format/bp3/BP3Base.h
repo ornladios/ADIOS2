@@ -254,6 +254,10 @@ public:
      */
     ResizeResult ResizeBuffer(const size_t dataIn, const std::string hint);
 
+    void ProfilerStart(const std::string process) noexcept;
+
+    void ProfilerStop(const std::string process) noexcept;
+
 protected:
     /** might be used in large payload copies to buffer */
     unsigned int m_Threads = 1;
@@ -513,10 +517,6 @@ protected:
      */
     std::string ReadBP3String(const std::vector<char> &buffer,
                               size_t &position) const noexcept;
-
-    void ProfilerStart(const std::string process) noexcept;
-
-    void ProfilerStop(const std::string process) noexcept;
 
 private:
     std::string GetBPSubStreamName(const std::string &name,
