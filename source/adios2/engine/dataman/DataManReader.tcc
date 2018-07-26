@@ -34,7 +34,6 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
     {
         while (m_DataManDeserializer.Get(variable, m_CurrentStep) != 0)
         {
-            std::cout << "while\n";
         }
     }
 }

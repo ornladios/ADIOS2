@@ -63,8 +63,7 @@ void WANZmqP2P::Open(const std::string &name, const Mode openMode)
         m_OpenModeStr = "Read";
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         error = zmq_bind(m_Socket, fullIP.c_str());
-        int timeout = 5000;
-        zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
+        zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
     }
     else
     {
@@ -80,6 +79,7 @@ void WANZmqP2P::Open(const std::string &name, const Mode openMode)
         std::cout << "WorkflowMode: p2p, ";
         std::cout << "IPAddress: " << m_IPAddress << ", ";
         std::cout << "Port: " << m_Port << ", ";
+        std::cout << "Timeout: " << m_Timeout << ", ";
         std::cout << std::endl;
     }
 
