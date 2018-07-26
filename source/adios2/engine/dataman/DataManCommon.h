@@ -36,11 +36,9 @@ public:
 protected:
     int m_MPIRank;
     int m_MPISize;
-    int m_RemoteMPISize;
-    int m_TransportChannels = 1;
+    int m_TransportChannels;
     std::string m_Format = "dataman";
     std::string m_WorkflowMode = "subscribe";
-    bool m_Synchronous = true;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;
@@ -48,20 +46,17 @@ protected:
     bool m_IsLittleEndian;
     bool m_IsRowMajor;
 
+    std::vector<std::string> m_StreamNames;
+    std::vector<core::Operator *> m_Callbacks;
+
     std::shared_ptr<transportman::DataMan> m_DataMan;
     std::shared_ptr<std::thread> m_DataThread;
 
-    std::shared_ptr<transportman::DataMan> m_ControlMan;
-    std::shared_ptr<std::thread> m_ControlThread;
-
     virtual void IOThread(std::shared_ptr<transportman::DataMan> man) = 0;
-    void InitCommon();
     bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
     bool GetIntParameter(Params &params, std::string key, int &value);
-    std::vector<std::string> ParseAddress(std::string input,
-                                          std::string protocol = "");
 
 }; // end class DataManCommon
 

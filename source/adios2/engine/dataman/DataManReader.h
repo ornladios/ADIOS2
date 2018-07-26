@@ -26,16 +26,6 @@ class DataManReader : public DataManCommon
 {
 
 public:
-    /**
-     * Constructor for dataman engine Reader for WAN communications
-     * @param adios
-     * @param name
-     * @param accessMode
-     * @param mpiComm
-     * @param method
-     * @param debugMode
-     * @param nthreads
-     */
     DataManReader(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
     virtual ~DataManReader();
@@ -43,42 +33,53 @@ public:
                          const float timeoutSeconds = 0.f) final;
     void PerformGets() final;
     void EndStep() final;
-    size_t CurrentStep() const;
+    size_t CurrentStep() const final;
 
 private:
-    std::vector<core::Operator *> m_Callbacks;
+    bool m_UpdatingMetaData = true;
+    bool m_Listening = false;
+    size_t m_FinalStep = std::numeric_limits<size_t>::max();
 
     format::DataManDeserializer m_DataManDeserializer;
-
-    bool m_Listening = false;
-
+    std::unordered_map<
+        size_t,
+        std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>>>
+        m_MetaDataMap;
     std::mutex m_MutexIO;
 
-    void IOThread(std::shared_ptr<transportman::DataMan> man) final;
-    void IOThreadBP(std::shared_ptr<transportman::DataMan> man);
-
     void Init();
-
+    void IOThread(std::shared_ptr<transportman::DataMan> man);
+    void IOThreadBP(std::shared_ptr<transportman::DataMan> man);
     void RunCallback();
-
     void DoClose(const int transportIndex = -1) final;
+    StepStatus BeginStepP2P(StepMode stepMode,
+                            const float timeoutSeconds = 0.f);
+    StepStatus BeginStepSubscribe(StepMode stepMode,
+                                  const float timeoutSeconds = 0.f);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
-    void DoGetDeferred(Variable<T> &, T *) final;
+    void DoGetDeferred(Variable<T> &, T *) final;                              \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
+    std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
+        const Variable<T> &variable, const size_t step) const final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-    /**
-     * All GetSync virtual functions call this function
-     * @param variable
-     * @param data
-     */
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    template <typename T>
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+    AllStepsBlocksInfo(const Variable<T> &variable) const;
+
+    template <typename T>
+    std::vector<typename Variable<T>::Info>
+    BlocksInfo(const Variable<T> &variable, const size_t step) const;
 };
 
 } // end namespace engine

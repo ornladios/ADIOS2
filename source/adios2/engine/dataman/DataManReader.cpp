@@ -33,31 +33,67 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 
 DataManReader::~DataManReader()
 {
-
     m_Listening = false;
     if (m_DataThread != nullptr)
     {
         m_DataThread->join();
-    }
-    if (m_ControlThread != nullptr)
-    {
-        m_ControlThread->join();
     }
 }
 
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    ++m_CurrentStep;
-    if (m_Synchronous == false)
+    if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0 && m_FinalStep > 0)
     {
-        m_CurrentStep = m_DataManDeserializer.MinStep();
+        std::cout << "Current Step " << m_CurrentStep << std::endl;
+        std::cout << "Final Step " << m_FinalStep << std::endl;
+        return StepStatus::EndOfStream;
     }
+    if (m_WorkflowMode == "subscribe")
+    {
+        return BeginStepSubscribe(stepMode, timeoutSeconds);
+    }
+    else if (m_WorkflowMode == "p2p")
+    {
+        return BeginStepP2P(stepMode, timeoutSeconds);
+    }
+    else
+    {
+        throw(std::invalid_argument(
+            "[DataManReader::BeginStep] invalid workflow mode " +
+            m_WorkflowMode));
+        return StepStatus::EndOfStream;
+    }
+}
+
+void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+
+size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
+
+void DataManReader::PerformGets() {}
+
+// PRIVATE
+
+void DataManReader::Init()
+{
+
+    // initialize transports
+    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
+    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
+                                 Mode::Read, m_WorkflowMode, true);
+
+    // start threads
+    m_Listening = true;
+    m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
+                                                 m_DataMan);
+}
+
+StepStatus DataManReader::BeginStepSubscribe(StepMode stepMode,
+                                             const float timeoutSeconds)
+{
     StepStatus status;
-
-    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
-        m_DataManDeserializer.GetMetaData(m_CurrentStep);
-
+    m_CurrentStep = m_DataManDeserializer.MinStep();
+    auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
     if (vars == nullptr)
     {
         status = StepStatus::NotReady;
@@ -84,57 +120,53 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         }
         status = StepStatus::OK;
     }
+    if (m_UpdatingMetaData)
+    {
+        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+    }
     return status;
 }
 
-void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
-
-size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
-
-void DataManReader::PerformGets() {}
-
-// PRIVATE
-
-void DataManReader::Init()
+StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
+                                       const float timeoutSeconds)
 {
+    ++m_CurrentStep;
+    StepStatus status;
 
-    // register callbacks
-    for (auto &j : m_IO.m_Operators)
+    auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
+
+    if (vars == nullptr)
     {
-        if (j.ADIOSOperator.m_Type == "Signature2")
+        status = StepStatus::NotReady;
+        --m_CurrentStep;
+    }
+    else
+    {
+        for (const auto &i : *vars)
         {
-            m_Callbacks.push_back(&j.ADIOSOperator);
+            if (i.type == "compound")
+            {
+                throw("Compound type is not supported yet.");
+            }
+#define declare_type(T)                                                        \
+    else if (i.type == helper::GetType<T>())                                   \
+    {                                                                          \
+        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
+        if (v == nullptr)                                                      \
+        {                                                                      \
+            m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
         }
+        status = StepStatus::OK;
     }
-
-    GetBoolParameter(m_IO.m_Parameters, "Synchronous", m_Synchronous);
-    GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
-    if (m_WorkflowMode == "subscribe")
+    if (m_UpdatingMetaData)
     {
-        m_Synchronous = false;
+        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
     }
-
-    // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    for (auto &i : m_IO.m_TransportsParameters)
-    {
-        i["WorkflowMode"] = m_WorkflowMode;
-    }
-    size_t channels = m_IO.m_TransportsParameters.size();
-    std::vector<std::string> names;
-    for (size_t i = 0; i < channels; ++i)
-    {
-        names.push_back(m_Name + std::to_string(i));
-        m_IO.m_TransportsParameters[i]["Name"] = std::to_string(i);
-    }
-    m_DataMan->OpenWANTransports(names, Mode::Read, m_IO.m_TransportsParameters,
-                                 true);
-
-    // start threads
-
-    m_Listening = true;
-    m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
-                                                 m_DataMan);
+    return status;
 }
 
 void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
@@ -144,7 +176,11 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
         std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
         if (buffer != nullptr)
         {
-            m_DataManDeserializer.Put(buffer);
+            int ret = m_DataManDeserializer.Put(buffer);
+            if (ret > 0)
+            {
+                m_FinalStep = ret;
+            }
         }
         if (m_Callbacks.empty() == false)
         {
@@ -158,11 +194,13 @@ void DataManReader::RunCallback()
     for (size_t step = m_DataManDeserializer.MinStep();
          step <= m_DataManDeserializer.MaxStep(); ++step)
     {
-        std::vector<format::DataManDeserializer::DataManVar> varList;
-        m_DataManDeserializer.GetVarList(step, varList);
-        for (auto &i : varList)
+        auto varList = m_DataManDeserializer.GetMetaData(step);
+        if (varList == nullptr)
         {
-
+            return;
+        }
+        for (const auto &i : *varList)
+        {
             if (i.type == "compound")
             {
                 throw("Compound type is not supported yet.");
@@ -204,6 +242,16 @@ void DataManReader::RunCallback()
     void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    DataManReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const     \
+    {                                                                          \
+        return AllStepsBlocksInfo(variable);                                   \
+    }                                                                          \
+    std::vector<typename Variable<T>::Info> DataManReader::DoBlocksInfo(       \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return BlocksInfo(variable, step);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

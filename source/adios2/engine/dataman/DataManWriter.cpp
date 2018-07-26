@@ -11,7 +11,7 @@
 #include "DataManWriter.h"
 #include "DataManWriter.tcc"
 
-#include <iostream> //needs to go away, this is just for demo purposes
+#include <iostream>
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
@@ -25,7 +25,7 @@ namespace engine
 
 DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: DataManCommon("DataManWriter", io, name, mode, mpiComm), m_Name(name)
+: DataManCommon("DataManWriter", io, name, mode, mpiComm)
 {
     m_EndMessage = ", in call to Open DataManWriter\n";
     Init();
@@ -71,8 +71,8 @@ size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 
 void DataManWriter::Init()
 {
-    m_TransportChannels = m_IO.m_TransportsParameters.size();
 
+    // initialize serializer
     if (m_Format == "bp")
     {
         m_BP3Serializer =
@@ -91,18 +91,10 @@ void DataManWriter::Init()
         }
     }
 
+    // initialize transports
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    for (auto &i : m_IO.m_TransportsParameters)
-    {
-        i["WorkflowMode"] = m_WorkflowMode;
-    }
-    std::vector<std::string> names;
-    for (size_t i = 0; i < m_TransportChannels; ++i)
-    {
-        names.push_back(m_Name + std::to_string(i));
-    }
-    m_DataMan->OpenWANTransports(names, Mode::Write,
-                                 m_IO.m_TransportsParameters, true);
+    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
+                                 Mode::Write, m_WorkflowMode, true);
 }
 
 void DataManWriter::IOThread(std::shared_ptr<transportman::DataMan> man) {}
@@ -130,6 +122,11 @@ void DataManWriter::DoClose(const int transportIndex)
         {
             m_DataMan->WriteWAN(buffer, transportIndex);
         }
+    }
+    else if (m_Format == "dataman")
+    {
+        m_DataMan->WriteWAN(format::DataManSerializer::EndSignal(CurrentStep()),
+                            0);
     }
 }
 

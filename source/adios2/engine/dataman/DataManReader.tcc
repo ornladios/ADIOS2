@@ -26,13 +26,67 @@ template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     variable.SetData(data);
-    m_DataManDeserializer.Get(variable, m_CurrentStep);
+    if (m_WorkflowMode == "subscribe")
+    {
+        m_DataManDeserializer.Get(variable, m_CurrentStep);
+    }
+    else if (m_WorkflowMode == "p2p")
+    {
+        while (m_DataManDeserializer.Get(variable, m_CurrentStep) != 0)
+        {
+            std::cout << "while\n";
+        }
+    }
 }
 
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     GetSyncCommon(variable, data);
+}
+
+template <typename T>
+std::map<size_t, std::vector<typename Variable<T>::Info>>
+DataManReader::AllStepsBlocksInfo(const Variable<T> &variable) const
+{
+    std::map<size_t, std::vector<typename Variable<T>::Info>> m;
+    for (const auto &i : m_MetaDataMap)
+    {
+        m[i.first] = BlocksInfo(variable, i.first);
+    }
+    return m;
+}
+
+template <typename T>
+std::vector<typename Variable<T>::Info>
+DataManReader::BlocksInfo(const Variable<T> &variable, const size_t step) const
+{
+    std::vector<typename Variable<T>::Info> v;
+    auto it = m_MetaDataMap.find(step);
+    if (it == m_MetaDataMap.end())
+    {
+        return v;
+    }
+    for (const auto &i : *it->second)
+    {
+        if (i.name == variable.m_Name)
+        {
+            typename Variable<T>::Info b;
+            b.Start = i.start;
+            b.Count = i.count;
+            b.IsValue = true;
+            if (i.count.size() == 1)
+            {
+                if (i.count[0] == 1)
+                {
+                    b.IsValue = false;
+                }
+            }
+            // TODO: assign b.Min, b.Max, b.Value
+            v.push_back(b);
+        }
+    }
+    return v;
 }
 
 } // end namespace engine

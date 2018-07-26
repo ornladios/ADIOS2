@@ -18,14 +18,32 @@ namespace adios2
 namespace format
 {
 
-DataManDeserializer::DataManDeserializer(bool isRowMajor, bool isLittleEndian)
+DataManDeserializer::DataManDeserializer(const bool isRowMajor,
+                                         const bool isLittleEndian)
 {
     m_IsRowMajor = isRowMajor;
     m_IsLittleEndian = isLittleEndian;
 }
 
-void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
+int DataManDeserializer::Put(
+    const std::shared_ptr<const std::vector<char>> data)
 {
+    // check if is control signal
+
+    if (data->size() < 128)
+    {
+        try
+        {
+            nlohmann::json metaj = nlohmann::json::parse(data->data());
+            size_t finalStep = metaj["FinalStep"];
+            return finalStep;
+        }
+        catch (std::exception &e)
+        {
+        }
+    }
+
+    // if not control signal then go through standard deserialization
     int key = rand();
     m_MutexBuffer.lock();
     while (m_BufferMap.count(key) > 0)
@@ -90,6 +108,7 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
         catch (std::exception &e)
         {
             std::cout << e.what() << std::endl;
+            return -1;
         }
         m_MutexMaxMin.lock();
         if (m_MaxStep < var.step)
@@ -102,6 +121,7 @@ void DataManDeserializer::Put(std::shared_ptr<std::vector<char>> data)
         }
         m_MutexMaxMin.unlock();
     }
+    return 0;
 }
 
 void DataManDeserializer::Erase(size_t step)
@@ -140,8 +160,15 @@ size_t DataManDeserializer::MinStep()
     return m_MinStep;
 }
 
-const std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>
-DataManDeserializer::GetMetaData(size_t step)
+const std::unordered_map<
+    size_t, std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>>
+DataManDeserializer::GetMetaData()
+{
+    return m_MetaDataMap;
+}
+
+std::shared_ptr<const std::vector<DataManDeserializer::DataManVar>>
+DataManDeserializer::GetMetaData(const size_t step)
 {
     std::lock_guard<std::mutex> l(m_MutexMetaData);
     const auto &i = m_MetaDataMap.find(step);
@@ -156,7 +183,7 @@ DataManDeserializer::GetMetaData(size_t step)
 }
 
 bool DataManDeserializer::BufferContainsSteps(int index, size_t begin,
-                                              size_t end)
+                                              size_t end) const
 {
     // This is a private function and is always called after m_MutexMetaData is
     // locked, so there is no need to lock again here.
@@ -178,7 +205,7 @@ bool DataManDeserializer::BufferContainsSteps(int index, size_t begin,
 }
 
 bool DataManDeserializer::HasOverlap(Dims in_start, Dims in_count,
-                                     Dims out_start, Dims out_count)
+                                     Dims out_start, Dims out_count) const
 {
     for (size_t i = 0; i < in_start.size(); ++i)
     {
@@ -188,39 +215,6 @@ bool DataManDeserializer::HasOverlap(Dims in_start, Dims in_count,
             return false;
         }
     }
-    return true;
-}
-
-bool DataManDeserializer::GetVarList(size_t step,
-                                     std::vector<DataManVar> &varList)
-{
-    m_MutexMetaData.lock();
-    auto metaDataStep = m_MetaDataMap.find(step);
-    if (metaDataStep == m_MetaDataMap.end())
-    {
-        return false;
-    }
-    for (auto &i : *metaDataStep->second)
-    {
-        bool hasVar = false;
-        for (DataManVar &j : varList)
-        {
-            if (j.name == i.name)
-            {
-                hasVar = true;
-            }
-        }
-        if (hasVar == false)
-        {
-            DataManVar var;
-            var.name = i.name;
-            var.shape = i.shape;
-            var.type = i.type;
-            var.doid = i.doid;
-            varList.push_back(std::move(var));
-        }
-    }
-    m_MutexMetaData.unlock();
     return true;
 }
 

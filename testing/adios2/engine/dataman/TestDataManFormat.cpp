@@ -57,7 +57,6 @@ void VerifyData(const std::vector<T> &data, size_t step)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-    std::cout << std::endl;
 }
 
 TEST_F(DataManFormatTest, 1D_MultiStepRowMajorLittleEndian)

@@ -41,5 +41,16 @@ const std::shared_ptr<std::vector<char>> DataManSerializer::Get()
     return m_Buffer;
 }
 
+std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
+{
+    nlohmann::json j;
+    j["FinalStep"] = step;
+    std::string s = j.dump() + '\0';
+    std::shared_ptr<std::vector<char>> c =
+        std::make_shared<std::vector<char>>(s.size());
+    std::memcpy(c->data(), s.c_str(), s.size());
+    return c;
+}
+
 } // namespace format
 } // namespace adios2

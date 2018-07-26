@@ -70,7 +70,7 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                 // that this shared pointer refers to is still valid until k
                 // runs out of scope.
                 m_MutexBuffer.lock();
-                std::shared_ptr<std::vector<char>> k = m_BufferMap[j.index];
+                auto k = m_BufferMap[j.index];
                 m_MutexBuffer.unlock();
                 if (j.compression == "zfp")
                 {

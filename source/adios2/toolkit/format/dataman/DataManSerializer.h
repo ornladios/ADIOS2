@@ -38,6 +38,7 @@ public:
     void Put(const core::Variable<T> &variable, const std::string &doid,
              const size_t step, const int rank, const Params &params);
     const std::shared_ptr<std::vector<char>> Get();
+    static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;
