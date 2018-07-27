@@ -49,6 +49,13 @@ public:
     virtual ~TransportMan() = default;
 
     /**
+     * Function that will be called from all ranks in communicator, only rank
+     * zero creates directories
+     * @params fileNames
+     */
+    void MkDirsBarrier(const std::vector<std::string> &fileNames);
+
+    /**
      *
      * @param baseNames passed from Open( name )
      * @param names actual filenames (from BP)

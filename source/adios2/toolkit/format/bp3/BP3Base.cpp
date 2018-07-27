@@ -103,6 +103,7 @@ void BP3Base::InitParameters(const Params &parameters)
         lf_EmplaceTimer("minmax");
         lf_EmplaceTimer("meta_sort_merge");
         lf_EmplaceTimer("aggregation");
+        lf_EmplaceTimer("mkdir");
 
         m_Profiler.Bytes.emplace("buffering", 0);
     }
@@ -328,6 +329,7 @@ void BP3Base::InitParameterProfileUnits(const std::string value)
     lf_EmplaceTimer("minmax", timeUnit);
     lf_EmplaceTimer("meta_sort_merge", timeUnit);
     lf_EmplaceTimer("aggregation", timeUnit);
+    lf_EmplaceTimer("mkdir", timeUnit);
 
     m_Profiler.Bytes.emplace("buffering", 0);
 }

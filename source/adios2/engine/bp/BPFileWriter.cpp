@@ -153,6 +153,8 @@ void BPFileWriter::InitTransports()
     }
 
     // only consumers will interact with transport managers
+    std::vector<std::string> bpSubStreamNames;
+
     if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
     {
         // Names passed to IO AddTransport option with key "Name"
@@ -161,9 +163,15 @@ void BPFileWriter::InitTransports()
                                                 m_IO.m_TransportsParameters);
 
         // /path/name.bp.dir/name.bp.rank
-        const std::vector<std::string> bpSubStreamNames =
-            m_BP3Serializer.GetBPSubStreamNames(transportsNames);
+        bpSubStreamNames = m_BP3Serializer.GetBPSubStreamNames(transportsNames);
+    }
 
+    m_BP3Serializer.ProfilerStart("mkdir");
+    m_FileDataManager.MkDirsBarrier(bpSubStreamNames);
+    m_BP3Serializer.ProfilerStop("mkdir");
+
+    if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
+    {
         m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
                                     m_BP3Serializer.m_Profiler.IsActive);
