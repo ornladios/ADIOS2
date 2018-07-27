@@ -14,6 +14,10 @@ if(ADIOS2_HAVE_MPI)
     target_link_libraries(TestDataManFormat MPI::MPI_C)
 endif()
 
+if(ADIOS2_HAVE_ZFP)
+    target_link_libraries(TestDataManFormat zfp::zfp)
+endif()
+
 gtest_add_tests(TARGET TestDataManEngine)
 gtest_add_tests(TARGET TestDataManFormat)
 

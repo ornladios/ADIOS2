@@ -3,6 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+add_subdirectory(operations)
+
 add_executable(TestBPWriteReadADIOS2 TestBPWriteReadADIOS2.cpp)
 target_link_libraries(TestBPWriteReadADIOS2 adios2 gtest)
 

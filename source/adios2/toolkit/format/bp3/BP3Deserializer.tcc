@@ -73,11 +73,36 @@ template <class T>
 void BP3Deserializer::SetVariableBlockInfo(
     core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo)
 {
-    auto lf_SetSubStreamInfo = [&](const Box<Dims> &selectionBox,
-                                   typename core::Variable<T>::Info &blockInfo,
-                                   const size_t step,
-                                   const std::vector<size_t> &blockIndexOffsets,
-                                   const BufferSTL &bufferSTL)
+    auto lf_SetSubStreamInfoOperations =
+        [&](const BP3OpInfo &bp3OpInfo, const size_t payloadOffset,
+            helper::SubStreamBoxInfo &subStreamInfo, const bool isRowMajor)
+
+    {
+        helper::BlockOperationInfo blockOperation;
+        blockOperation.PayloadOffset = payloadOffset;
+        blockOperation.PreShape = bp3OpInfo.PreShape;
+        blockOperation.PreStart = bp3OpInfo.PreStart;
+        blockOperation.PreCount = bp3OpInfo.PreCount;
+        blockOperation.Info["PreDataType"] = helper::GetType<T>();
+        // TODO: need to verify it's a match with PreDataType
+        // std::to_string(static_cast<size_t>(bp3OpInfo.PreDataType));
+        blockOperation.Info["Type"] = bp3OpInfo.Type;
+        blockOperation.PreSizeOf = sizeof(T);
+
+        // read metadata from supported type and populate Info
+        std::shared_ptr<BP3Operation> bpOp = SetBP3Operation(bp3OpInfo.Type);
+        bpOp->GetMetadata(bp3OpInfo.Metadata, blockOperation.Info);
+        blockOperation.PayloadSize = static_cast<size_t>(
+            std::stoull(blockOperation.Info.at("OutputSize")));
+
+        subStreamInfo.OperationsInfo.push_back(std::move(blockOperation));
+    };
+
+    auto lf_SetSubStreamInfo =
+        [&](const Box<Dims> &selectionBox,
+            typename core::Variable<T>::Info &blockInfo, const size_t step,
+            const std::vector<size_t> &blockIndexOffsets,
+            const BufferSTL &bufferSTL, const bool isRowMajor)
 
     {
         const std::vector<char> &buffer = bufferSTL.m_Buffer;
@@ -102,23 +127,36 @@ void BP3Deserializer::SetVariableBlockInfo(
             {
                 continue;
             }
-            // if they intersect get info Seeks (first: start, second:
-            // count)
+            // relative position
             subStreamInfo.Seeks.first =
-                blockCharacteristics.Statistics.PayloadOffset +
+                sizeof(T) *
                 helper::LinearIndex(subStreamInfo.BlockBox,
                                     subStreamInfo.IntersectionBox.first,
-                                    m_IsRowMajor) *
-                    sizeof(T);
+                                    isRowMajor);
 
             subStreamInfo.Seeks.second =
-                blockCharacteristics.Statistics.PayloadOffset +
+                sizeof(T) *
                 (helper::LinearIndex(subStreamInfo.BlockBox,
                                      subStreamInfo.IntersectionBox.second,
-                                     m_IsRowMajor) +
-                 1) *
-                    sizeof(T);
+                                     isRowMajor) +
+                 1);
 
+            const size_t payloadOffset =
+                blockCharacteristics.Statistics.PayloadOffset;
+            const auto &bp3Op = blockCharacteristics.Statistics.Op;
+            // if they intersect get info Seeks (first: start, second:
+            // count) depending on operation info
+            if (bp3Op.IsActive)
+            {
+                lf_SetSubStreamInfoOperations(bp3Op, payloadOffset,
+                                              subStreamInfo, m_IsRowMajor);
+            }
+            else
+            {
+                // make it absolute if no operations
+                subStreamInfo.Seeks.first += payloadOffset;
+                subStreamInfo.Seeks.second += payloadOffset;
+            }
             subStreamInfo.SubStreamID =
                 static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
 
@@ -151,7 +189,7 @@ void BP3Deserializer::SetVariableBlockInfo(
         }
 
         lf_SetSubStreamInfo(selectionBox, blockInfo, itStep->first,
-                            itStep->second, m_Metadata);
+                            itStep->second, m_Metadata, m_IsRowMajor);
         ++itStep;
     }
 }
@@ -161,6 +199,22 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
                                            T *data) const
 {
     GetValueFromMetadataCommon(variable, data);
+}
+
+template <class T>
+bool BP3Deserializer::IdentityOperation(
+    const std::vector<typename core::Variable<T>::Operation> &operations) const
+    noexcept
+{
+    bool identity = false;
+    for (const typename core::Variable<T>::Operation &op : operations)
+    {
+        if (op.Op->m_Type == "identity")
+        {
+            identity = true;
+        }
+    }
+    return identity;
 }
 
 template <class T>

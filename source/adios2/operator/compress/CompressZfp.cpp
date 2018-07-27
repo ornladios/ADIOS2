@@ -229,51 +229,51 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
 
     zfp_stream *stream = zfp_stream_open(NULL);
 
-    auto itTolerance = parameters.find("Tolerance");
-    const bool hasTolerance = lf_HasKey(itTolerance, parameters);
+    auto itAccuracy = parameters.find("accuracy");
+    const bool hasAccuracy = lf_HasKey(itAccuracy, parameters);
 
-    auto itRate = parameters.find("Rate");
+    auto itRate = parameters.find("rate");
     const bool hasRate = lf_HasKey(itRate, parameters);
 
-    auto itPrecision = parameters.find("Precision");
+    auto itPrecision = parameters.find("precision");
     const bool hasPrecision = lf_HasKey(itPrecision, parameters);
 
     if (m_DebugMode)
     {
-        if ((hasTolerance && hasRate) || (hasTolerance && hasPrecision) ||
+        if ((hasAccuracy && hasRate) || (hasAccuracy && hasPrecision) ||
             (hasRate && hasPrecision) ||
-            !(hasTolerance || hasRate || hasPrecision))
+            !(hasAccuracy || hasRate || hasPrecision))
         {
-            throw std::invalid_argument("ERROR: zfp parameters Tolerance, "
-                                        "Rate, Precision are mutually "
+            throw std::invalid_argument("ERROR: zfp parameters accuracy, "
+                                        "rate, and precision are mutually "
                                         "exclusive, only one of them is "
                                         "mandatory, from "
-                                        "class CompressZfp Transform\n");
+                                        "operator CompressZfp\n");
         }
     }
 
-    if (hasTolerance)
+    if (hasAccuracy)
     {
-        const double tolerance = helper::StringToDouble(
-            itTolerance->second, m_DebugMode,
-            "setting Tolerance in call to CompressZfp class Transform\n");
+        const double accuracy = helper::StringToDouble(
+            itAccuracy->second, m_DebugMode,
+            "setting Tolerance in call to CompressZfp\n");
 
-        zfp_stream_set_accuracy(stream, tolerance);
+        zfp_stream_set_accuracy(stream, accuracy);
     }
     else if (hasRate)
     {
-        const double rate = helper::StringToDouble(
-            itRate->second, m_DebugMode,
-            "setting Rate in call to CompressZfp class Transform\n");
+        const double rate =
+            helper::StringToDouble(itRate->second, m_DebugMode,
+                                   "setting Rate in call to CompressZfp\n");
         // TODO support last argument write random access?
         zfp_stream_set_rate(stream, rate, GetZfpType(type),
                             static_cast<unsigned int>(dimensions.size()), 0);
     }
     else if (hasPrecision)
     {
-        const unsigned int precision = helper::StringToUInt(
-            itPrecision->second, m_DebugMode,
-            "setting Precision in call to CompressZfp class Transform\n");
+        const unsigned int precision =
+            helper::StringToUInt(itPrecision->second, m_DebugMode,
+                                 "setting Precision in call to CompressZfp\n");
         zfp_stream_set_precision(stream, precision);
     }
 

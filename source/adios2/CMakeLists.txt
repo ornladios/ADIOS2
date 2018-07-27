@@ -44,6 +44,11 @@ add_library(adios2
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
   toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
+  toolkit/format/bp3/operation/BP3Operation.cpp
+  toolkit/format/bp3/operation/BP3Zfp.cpp
+  toolkit/format/bp3/operation/BP3Zfp.tcc
+  toolkit/format/bp3/operation/BP3SZ.cpp
+  toolkit/format/bp3/operation/BP3SZ.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 

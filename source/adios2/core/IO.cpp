@@ -106,11 +106,6 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
     return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
 }
 
-void IO::AddOperator(Operator &adiosOperator, const Params &parameters) noexcept
-{
-    m_Operators.push_back(OperatorInfo{adiosOperator, parameters});
-}
-
 void IO::SetTransportParameter(const unsigned int transportIndex,
                                const std::string key, const std::string value)
 {
@@ -327,6 +322,12 @@ std::string IO::InquireAttributeType(const std::string &name) const noexcept
     }
 
     return itAttribute->second.first;
+}
+
+size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
+{
+    m_Operations.push_back(Operation{&op, parameters, Params()});
+    return m_Operations.size() - 1;
 }
 
 Engine &IO::Open(const std::string &name, const Mode mode,

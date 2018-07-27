@@ -8,7 +8,6 @@ add_subdirectory(bpReader)
 add_subdirectory(bpTimeWriter)
 add_subdirectory(bpFlushWriter)
 add_subdirectory(bpAttributeWriter)
-add_subdirectory(callback)
 add_subdirectory(skeleton)
 
 if(ADIOS2_HAVE_ADIOS1)
@@ -28,18 +27,6 @@ endif()
 if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5Writer)
   add_subdirectory(hdf5Reader)
-endif()
-
-if(ADIOS2_HAVE_BZip2)
-  add_subdirectory(bpBZip2Wrapper)
-endif()
-
-if(ADIOS2_HAVE_ZFP)
-  add_subdirectory(bpZfpWrapper)
-endif()
-
-if(ADIOS2_HAVE_SZ)
-  add_subdirectory(bpSZWrapper)
 endif()
 
 if(ADIOS2_HAVE_MPI)

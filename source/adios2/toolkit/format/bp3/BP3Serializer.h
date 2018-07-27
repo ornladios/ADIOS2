@@ -428,6 +428,18 @@ private:
     template <class T>
     size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
         noexcept;
+
+    // Operations related functions
+    template <class T>
+    void PutCharacteristicOperation(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        std::vector<char> &buffer) noexcept;
+
+    template <class T>
+    void PutOperationPayloadInBuffer(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo);
 };
 
 #define declare_template_instantiation(T)                                      \

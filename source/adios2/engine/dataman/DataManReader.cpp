@@ -132,6 +132,14 @@ StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
     StepStatus status;
 
     auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
+    // register callbacks
+    for (const auto &j : m_IO.m_Operations)
+    {
+        if (j.Op->m_Type == "Signature2")
+        {
+            m_Callbacks.push_back(j.Op);
+        }
+    }
 
     if (vars == nullptr)
     {
@@ -244,12 +252,12 @@ void DataManReader::RunCallback()
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     DataManReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const     \
     {                                                                          \
-        return AllStepsBlocksInfo(variable);                                   \
+        return AllStepsBlocksInfoCommon(variable);                             \
     }                                                                          \
     std::vector<typename Variable<T>::Info> DataManReader::DoBlocksInfo(       \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
-        return BlocksInfo(variable, step);                                     \
+        return BlocksInfoCommon(variable, step);                               \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

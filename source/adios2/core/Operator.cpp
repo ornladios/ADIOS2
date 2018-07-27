@@ -34,9 +34,9 @@ Params &Operator::GetParameters() noexcept { return m_Parameters; }
 
 #define declare_type(T)                                                        \
                                                                                \
-    void Operator::RunCallback1(const T *arg0, const std::string &arg1,        \
-                                const std::string &arg2,                       \
-                                const std::string &arg3, const Dims &arg4)     \
+    void Operator::RunCallback1(                                               \
+        const T *arg0, const std::string &arg1, const std::string &arg2,       \
+        const std::string &arg3, const Dims &arg4) const                       \
     {                                                                          \
         CheckCallbackType("Callback1");                                        \
     }
@@ -45,7 +45,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void Operator::RunCallback2(void *arg0, const std::string &arg1,
                             const std::string &arg2, const std::string &arg3,
-                            const Dims &arg4)
+                            const Dims &arg4) const
 {
     CheckCallbackType("Callback2");
 }

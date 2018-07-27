@@ -57,6 +57,7 @@ public:
         T Max = T();
         T Value = T();
         bool IsValue = false;
+        std::vector<Operation> Operations;
 
         /** Contains (seek) read information for available [step][blockID],
          *  used in Read mode only,

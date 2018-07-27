@@ -594,9 +594,9 @@ void BP3Serializer::PutDimensionsRecord(const Dims &localDimensions,
 void BP3Serializer::PutNameRecord(const std::string name,
                                   std::vector<char> &buffer) noexcept
 {
-    const uint16_t length = static_cast<uint16_t>(name.length());
+    const uint16_t length = static_cast<uint16_t>(name.size());
     helper::InsertToBuffer(buffer, &length);
-    helper::InsertToBuffer(buffer, name.c_str(), length);
+    helper::InsertToBuffer(buffer, name.c_str(), name.size());
 }
 
 void BP3Serializer::PutNameRecord(const std::string name,

@@ -37,6 +37,8 @@ public:
 
 private:
     bool m_UpdatingMetaData = true;
+    std::vector<const core::Operator *> m_Callbacks;
+
     bool m_Listening = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
 
@@ -75,11 +77,11 @@ private:
 
     template <typename T>
     std::map<size_t, std::vector<typename Variable<T>::Info>>
-    AllStepsBlocksInfo(const Variable<T> &variable) const;
+    AllStepsBlocksInfoCommon(const Variable<T> &variable) const;
 
     template <typename T>
     std::vector<typename Variable<T>::Info>
-    BlocksInfo(const Variable<T> &variable, const size_t step) const;
+    BlocksInfoCommon(const Variable<T> &variable, const size_t step) const;
 };
 
 } // end namespace engine

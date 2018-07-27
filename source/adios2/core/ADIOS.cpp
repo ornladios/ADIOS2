@@ -10,9 +10,8 @@
 
 #include "ADIOS.h"
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <ios> //std::ios_base::failure
-/// \endcond
+#include <algorithm> // std::transform
+#include <ios>       //std::ios_base::failure
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey
@@ -32,7 +31,7 @@
 #include "adios2/operator/compress/CompressSZ.h"
 #endif
 
-// callback
+// callbacks
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
 
@@ -147,8 +146,11 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
     std::shared_ptr<Operator> operatorPtr;
 
     CheckOperator(name);
+    std::string typeLowerCase(type);
+    std::transform(typeLowerCase.begin(), typeLowerCase.end(),
+                   typeLowerCase.begin(), ::tolower);
 
-    if (type == "bzip2" || type == "BZip2")
+    if (typeLowerCase == "bzip2")
     {
 #ifdef ADIOS2_HAVE_BZIP2
         auto itPair = m_Operators.emplace(
@@ -161,7 +163,7 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
             "bzip2 library, in call to DefineOperator\n");
 #endif
     }
-    else if (type == "zfp" || type == "Zfp")
+    else if (typeLowerCase == "zfp")
     {
 #ifdef ADIOS2_HAVE_ZFP
         auto itPair = m_Operators.emplace(
@@ -174,7 +176,7 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
             "zfp library (minimum v1.5), in call to DefineOperator\n");
 #endif
     }
-    else if (type == "sz" || type == "SZ")
+    else if (typeLowerCase == "sz")
     {
 #ifdef ADIOS2_HAVE_SZ
         auto itPair = m_Operators.emplace(
@@ -184,7 +186,7 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
 #else
         throw std::invalid_argument(
             "ERROR: this version of ADIOS2 didn't compile with the "
-            "SZ library (minimum v1.4.11), in call to DefineOperator\n");
+            "SZ library (minimum v2.0.2.0), in call to DefineOperator\n");
 #endif
     }
     else

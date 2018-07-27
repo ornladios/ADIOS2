@@ -29,9 +29,9 @@ ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
 #undef declare_type
 
 #define declare_type(T, L)                                                     \
-    void Signature1::RunCallback1(const T *arg1, const std::string &arg2,      \
-                                  const std::string &arg3,                     \
-                                  const std::string &arg4, const Dims &arg5)   \
+    void Signature1::RunCallback1(                                             \
+        const T *arg1, const std::string &arg2, const std::string &arg3,       \
+        const std::string &arg4, const Dims &arg5) const                       \
     {                                                                          \
         if (m_Function##L)                                                     \
         {                                                                      \

@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
                                           {"IPAddress", "127.0.0.1"},
                                           {"Port", "12306"},
                                       });
-        dataManIO.AddOperator(callbackFloat); // propagate to all Engines
+        dataManIO.AddOperation(callbackFloat); // propagate to all Engines
 
         adios2::Engine dataManReader =
             dataManIO.Open("stream", adios2::Mode::Read);
