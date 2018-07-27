@@ -137,64 +137,12 @@ void HDFMixer::InitBuffer()
     */
 }
 
-void HDFMixer::WriteProfilingJSONFile()
-{ /*
-auto transportTypes = m_TransportsManager.GetTransportsTypes();
-auto transportProfilers = m_TransportsManager.GetTransportsProfilers();
-
-const std::string lineJSON(
-m_HDFSerialWriter.GetRankProfilingJSON(transportTypes,
-transportProfilers));
-
-const std::string profilingJSON(
-m_HDFSerialWriter.AggregateProfilingJSON(lineJSON));
-
-//if (m_HDFSerialWriter.m_BP1Aggregator.m_RankMPI == 0)
-if (m_HDFSerialWriter.m_MPIRank == 0)
-{
-transport::FileStream profilingJSONStream(m_MPIComm, m_DebugMode);
-auto baseNames = m_HDFSerialWriter.GetBaseNames({m_Name});
-profilingJSONStream.Open(baseNames[0] + "/profiling.json",
-OpenMode::Write);
-profilingJSONStream.Write(profilingJSON.c_str(), profilingJSON.size());
-profilingJSONStream.Close();
-}
-*/
-}
+void HDFMixer::WriteProfilingJSONFile() {}
 
 void HDFMixer::DoClose(const int transportIndex)
 {
-    /*if (m_DebugMode)
-      {
-          if (!m_TransportsManager.CheckTransportIndex(transportIndex))
-          {
-              auto transportsSize = m_TransportsManager.m_Transports.size();
-              throw std::invalid_argument(
-                  "ERROR: transport index " + std::to_string(transportIndex) +
-                  " outside range, -1 (default) to " +
-                  std::to_string(transportsSize - 1) + ", in call to Close\n");
-          }
-      }
-    */
-    // close bp buffer by flattening data and metadata
     m_HDFSerialWriter.Close();
     m_HDFVDSWriter.Close();
-    // send data to corresponding transports
-    /*
-    m_TransportsManager.WriteFiles(m_HDFSerialWriter.m_HeapBuffer.GetData(),
-                                   m_HDFSerialWriter.m_HeapBuffer.m_DataPosition,
-                                   transportIndex);
-
-    m_TransportsManager.CloseFiles(transportIndex);
-    */
-    /*
-      // do profiling later
-    if (m_HDFSerialWriter.m_Profiler.IsActive &&
-        m_TransportsManager.AllTransportsClosed())
-    {
-        WriteProfilingJSONFile();
-    }
-    */
 }
 
 } // end namespace engine
