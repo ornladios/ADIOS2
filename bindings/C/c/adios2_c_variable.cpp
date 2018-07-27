@@ -286,3 +286,21 @@ void adios2_set_data(adios2_variable *variable, const void *data)
     ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 }
+
+size_t adios2_add_operation(adios2_variable *variable, adios2_operator *op,
+                            const char *parameter_key,
+                            const char *parameter_value)
+{
+    adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                              "adios2_add_operation");
+    adios2::helper::CheckForNullptr(op, "for adios2_operator, in call to "
+                                        "adios2_add_operation");
+
+    adios2::core::VariableBase *variableBase =
+        reinterpret_cast<adios2::core::VariableBase *>(variable);
+    adios2::core::Operator *opCpp =
+        reinterpret_cast<adios2::core::Operator *>(op);
+
+    return variableBase->AddOperation(
+        *opCpp, adios2::Params{{parameter_key, parameter_value}});
+}

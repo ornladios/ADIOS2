@@ -154,6 +154,9 @@ void *adios2_get_data(const adios2_variable *variable);
  */
 void adios2_set_data(adios2_variable *variable, const void *data);
 
+size_t adios2_add_operation(adios2_operator *op, const char *parameter_key,
+                            const char *parameter_value);
+
 #ifdef __cplusplus
 } // end extern C
 #endif
