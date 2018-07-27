@@ -118,8 +118,8 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    unsigned int Variable<T>::AddOperator(Operator &op,                        \
-                                          const Params &parameters)            \
+    size_t Variable<T>::AddOperation(const Operator op,                        \
+                                     const Params &parameters)                 \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
                                 "in call to Variable<T>::AddOperator");        \
@@ -128,24 +128,24 @@ namespace adios2
             throw std::invalid_argument("ERROR: invalid operator, in call to " \
                                         "Variable<T>::AddOperator");           \
         }                                                                      \
-        return m_Variable->AddOperator(*op.m_Operator, parameters);            \
+        return m_Variable->AddOperation(*op.m_Operator, parameters);           \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    std::vector<typename Variable<T>::OperatorInfo>                            \
-    Variable<T>::OperatorsInfo() const noexcept                                \
+    std::vector<typename Variable<T>::Operation> Variable<T>::Operations()     \
+        const                                                                  \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
-                                "in call to Variable<T>::OperatorsInfo");      \
-        std::vector<OperatorInfo> operatorsInfo;                               \
-        operatorsInfo.reserve(m_Variable->m_OperatorsInfo.size());             \
+                                "in call to Variable<T>::Operations");         \
+        std::vector<Operation> operations;                                     \
+        operations.reserve(m_Variable->m_Operations.size());                   \
                                                                                \
-        for (auto &opInfo : m_Variable->m_OperatorsInfo)                       \
+        for (const auto &op : m_Variable->m_Operations)                        \
         {                                                                      \
-            operatorsInfo.push_back(                                           \
-                OperatorInfo{Operator(&opInfo.Op), opInfo.Parameters});        \
+            operations.push_back(                                              \
+                Operation{Operator(op.Op), op.Parameters, op.Info});           \
         }                                                                      \
-        return operatorsInfo;                                                  \
+        return operations;                                                     \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

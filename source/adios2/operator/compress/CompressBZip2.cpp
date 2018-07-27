@@ -13,9 +13,14 @@
 #include <cmath>     //std::ceil
 #include <ios>       //std::ios_base::failure
 #include <stdexcept> //std::invalid_argument
-/// \endcond
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <bzlib.h>
+#ifdef __cplusplus
+}
+#endif
 
 #include "adios2/helper/adiosFunctions.h"
 

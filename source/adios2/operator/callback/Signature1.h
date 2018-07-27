@@ -37,7 +37,7 @@ public:
 
 #define declare_type(T)                                                        \
     void RunCallback1(const T *, const std::string &, const std::string &,     \
-                      const std::string &, const Dims &) final;
+                      const std::string &, const Dims &) const final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 

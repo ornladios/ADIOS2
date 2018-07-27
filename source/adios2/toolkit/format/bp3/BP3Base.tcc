@@ -503,7 +503,51 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
             }     // for
             break;
         }
-        // TODO: implement compression and BP1 Stats characteristics
+        case (characteristic_transform_type):
+        {
+            const size_t typeLength = static_cast<size_t>(
+                helper::ReadValue<uint8_t>(buffer, position));
+            characteristics.Statistics.Op.Type =
+                std::string(&buffer[position], typeLength);
+            position += typeLength;
+
+            characteristics.Statistics.Op.PreDataType =
+                helper::ReadValue<uint8_t>(buffer, position);
+
+            const unsigned int dimensionsSize = static_cast<unsigned int>(
+                helper::ReadValue<uint8_t>(buffer, position));
+
+            characteristics.Statistics.Op.PreShape.reserve(dimensionsSize);
+            characteristics.Statistics.Op.PreStart.reserve(dimensionsSize);
+            characteristics.Statistics.Op.PreCount.reserve(dimensionsSize);
+            position += 2; // skip length (not required)
+
+            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            {
+                characteristics.Statistics.Op.PreCount.push_back(
+                    static_cast<size_t>(
+                        helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Statistics.Op.PreShape.push_back(
+                    static_cast<size_t>(
+                        helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Statistics.Op.PreStart.push_back(
+                    static_cast<size_t>(
+                        helper::ReadValue<uint64_t>(buffer, position)));
+            }
+
+            const size_t metadataLength = static_cast<size_t>(
+                helper::ReadValue<uint16_t>(buffer, position));
+
+            characteristics.Statistics.Op.Metadata =
+                std::vector<char>(buffer.begin() + position,
+                                  buffer.begin() + position + metadataLength);
+            position += metadataLength;
+
+            characteristics.Statistics.Op.IsActive = true;
+            break;
+        }
         default:
         {
             throw std::invalid_argument("ERROR: characteristic ID " +
@@ -520,6 +564,26 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 
         localPosition = position - start;
     }
+}
+
+template <class T>
+std::map<size_t, std::shared_ptr<BP3Operation>> BP3Base::SetBP3Operations(
+    const std::vector<core::VariableBase::Operation> &operations) const
+{
+    std::map<size_t, std::shared_ptr<BP3Operation>> bp3Operations;
+    std::shared_ptr<BP3Operation> bp3Operation;
+
+    for (auto i = 0; i < operations.size(); ++i)
+    {
+        const std::string type = operations[i].Op->m_Type;
+        std::shared_ptr<BP3Operation> bp3Operation = SetBP3Operation(type);
+
+        if (bp3Operation) // if the result is a supported type
+        {
+            bp3Operations.emplace(i, bp3Operation);
+        }
+    }
+    return bp3Operations;
 }
 
 } // end namespace format

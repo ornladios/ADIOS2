@@ -11,7 +11,6 @@ target_sources(adios2 PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx11/IO.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx11/IO.tcc
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx11/Operator.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/cxx11/Operator.tcc
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx11/Variable.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/cxx11/fstream/ADIOS2fstream.cpp
 )

@@ -43,11 +43,11 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     }
 
     // register callbacks
-    for (auto &j : m_IO.m_Operators)
+    for (auto &j : m_IO.m_Operations)
     {
-        if (j.ADIOSOperator.m_Type == "Signature2")
+        if (j.Op->m_Type == "Signature2")
         {
-            m_Callbacks.push_back(&j.ADIOSOperator);
+            m_Callbacks.push_back(j.Op);
         }
     }
 }

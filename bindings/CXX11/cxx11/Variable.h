@@ -119,29 +119,30 @@ public:
     size_t StepsStart() const;
 
     /**
-     * EXPERIMENTAL: Adds operator at the Variable level
-     * @param op operator to be added
-     * @param parameters key/value settings
-     * @return operator order in OperatorsInfo
+     * EXPERIMENTAL: carries information about an Operation added with
+     * AddOperation
      */
-    unsigned int AddOperator(Operator &op, const Params &parameters = Params());
+    struct Operation
+    {
+        const Operator Op;
+        const Params Parameters;
+        const Params Info;
+    };
 
     /**
-     * EXPERIMENTAL: carries information about an Operator added with
-     * AddOperator
+     * EXPERIMENTAL: Adds operation and parameters to current Variable object
+     * @param op operator to be added
+     * @param parameters key/value settings particular to the Variable, not to
+     * be confused by op own parameters
+     * @return operation index handler in Operations()
      */
-    struct OperatorInfo
-    {
-        Operator ADIOSOperator;
-        Params Parameters;
-        Params Info;
-    };
+    size_t AddOperation(const Operator op, const Params &parameters = Params());
 
     /**
      * EXPERIMENTAL: inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
-    std::vector<OperatorInfo> OperatorsInfo() const noexcept;
+    std::vector<Operation> Operations() const;
 
     struct Info
     {

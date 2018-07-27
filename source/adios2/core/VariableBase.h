@@ -32,17 +32,6 @@ class VariableBase
 {
 
 public:
-    /** Operators metadata info */
-    struct OperatorInfo
-    {
-        /** reference to object derived from Operator class */
-        core::Operator &Op;
-        /** Variable specific parameters */
-        Params Parameters;
-        /** resulting sizes from Operator */
-        Dims Sizes;
-    };
-
     /** unique identifier inside Method that creates a Variable */
     const std::string m_Name;
 
@@ -64,8 +53,20 @@ public:
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
 
+    /** Operators metadata info */
+    struct Operation
+    {
+        /** reference to object derived from Operator class,
+         *  needs a pointer to enable assignment operator (C++ class) */
+        core::Operator *Op;
+        /** Variable specific parameters */
+        Params Parameters;
+        /** resulting information from executing Operation (e.g. buffer size) */
+        Params Info;
+    };
+
     /** Registered transforms */
-    std::vector<OperatorInfo> m_OperatorsInfo;
+    std::vector<Operation> m_Operations;
 
     size_t m_AvailableStepsStart = 0;
     size_t m_AvailableStepsCount = 0;
@@ -86,7 +87,7 @@ public:
     std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
 
     /** wildcard memory space used for contiguous memory read */
-    std::vector<char> m_Memory;
+    std::map<size_t, std::vector<char>> m_RawMemory;
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
@@ -139,19 +140,13 @@ public:
     size_t GetAvailableStepsCount() const;
 
     /**
-     * Pushed a new transform to a sequence of transports. Not yet implemented.
-     * @param transform reference to an object derived from the Transform class
-     * @param parameters transform specific parameters
-     * @return transformID handler
+     * Adds an operation to this variable.
+     * @param op reference to an Operator object
+     * @param parameters operation specific parameters
+     * @return operator handler
      */
-    unsigned int AddOperator(core::Operator &transform,
-                             const Params &parameters = Params()) noexcept;
-
-    void ResetTransformParameters(const unsigned int transformIndex,
-                                  const Params &parameters = Params());
-
-    /** Clears out the transform sequence defined by AddTransform */
-    void ClearOperators() noexcept;
+    size_t AddOperation(core::Operator &op,
+                        const Params &parameters = Params()) noexcept;
 
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */

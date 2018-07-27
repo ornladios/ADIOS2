@@ -27,7 +27,7 @@ Signature2::Signature2(
 
 void Signature2::RunCallback2(void *arg1, const std::string &arg2,
                               const std::string &arg3, const std::string &arg4,
-                              const Dims &arg5)
+                              const Dims &arg5) const
 {
     if (m_Function)
     {

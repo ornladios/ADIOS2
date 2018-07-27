@@ -89,16 +89,47 @@ void BPFileReader::ReadVariableBlocks(Variable<T> &variable)
                         {{"transport", "File"}}, profile);
                 }
 
-                const Box<size_t> &seeks = subStreamInfo.Seeks;
-                const size_t blockStart = seeks.first;
-                const size_t blockSize = seeks.second - seeks.first;
+                // need to decompress before into m_Memory
+                if (subStreamInfo.OperationsInfo.size() > 0)
+                {
+                    const bool identity =
+                        m_BP3Deserializer.IdentityOperation<T>(
+                            blockInfo.Operations);
 
-                variable.m_Memory.resize(blockSize);
-                m_SubFileManager.ReadFile(variable.m_Memory.data(), blockSize,
-                                          blockStart, subFileIndex);
+                    const helper::BlockOperationInfo &blockOperationInfo =
+                        m_BP3Deserializer.InitPostOperatorBlockData(
+                            subStreamInfo.OperationsInfo,
+                            variable.m_RawMemory[1], identity);
 
+                    // if identity is true, just read the entire block content
+                    char *output =
+                        identity ? reinterpret_cast<char *>(blockInfo.Data)
+                                 : variable.m_RawMemory[1].data();
+                    m_SubFileManager.ReadFile(
+                        output, blockOperationInfo.PayloadSize,
+                        blockOperationInfo.PayloadOffset, subFileIndex);
+                    if (identity)
+                    {
+                        continue;
+                    }
+                    m_BP3Deserializer.GetPreOperatorBlockData(
+                        variable.m_RawMemory[1], blockOperationInfo,
+                        variable.m_RawMemory[0]);
+                }
+                else
+                {
+                    const size_t payloadStart = subStreamInfo.Seeks.first;
+                    const size_t payloadSize =
+                        subStreamInfo.Seeks.second - subStreamInfo.Seeks.first;
+                    // a single m_Memory can prevent threading per variable,
+                    // need to think for later
+                    variable.m_RawMemory[0].resize(payloadSize);
+                    m_SubFileManager.ReadFile(variable.m_RawMemory[0].data(),
+                                              payloadSize, payloadStart,
+                                              subFileIndex);
+                }
                 m_BP3Deserializer.ClipContiguousMemory<T>(
-                    blockInfo, variable.m_Memory, subStreamInfo.BlockBox,
+                    blockInfo, variable.m_RawMemory[0], subStreamInfo.BlockBox,
                     subStreamInfo.IntersectionBox);
             }
             // advance pointer to next step

@@ -83,9 +83,9 @@ std::map<std::string, Params> IO::AvailableAttributes() noexcept
     return m_IO.GetAvailableAttributes();
 }
 
-void IO::AddOperator(Operator &op, const Params &parameters)
+size_t IO::AddOperation(const Operator op, const Params &parameters) noexcept
 {
-    m_IO.AddOperator(*op.m_Operator, parameters);
+    return m_IO.AddOperation(*op.m_Operator, parameters);
 }
 
 std::string IO::EngineType() const noexcept { return m_IO.m_EngineType; }

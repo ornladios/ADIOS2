@@ -51,12 +51,12 @@ public:
 #define declare_type(T)                                                        \
     virtual void RunCallback1(const T *, const std::string &,                  \
                               const std::string &, const std::string &,        \
-                              const Dims &);
+                              const Dims &) const;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     virtual void RunCallback2(void *, const std::string &, const std::string &,
-                              const std::string &, const Dims &);
+                              const std::string &, const Dims &) const;
     /**
      * Returns a conservative buffer size to hold input data for classes
      * @param sizeIn size of input data to be compressed in bytes

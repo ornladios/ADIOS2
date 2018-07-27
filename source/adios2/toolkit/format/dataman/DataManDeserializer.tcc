@@ -75,7 +75,7 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                 if (j.compression == "zfp")
                 {
 #ifdef ADIOS2_HAVE_ZFP
-                    Params p = {{"Rate", std::to_string(j.compressionRate)}};
+                    Params p = {{"rate", std::to_string(j.compressionRate)}};
                     core::compress::CompressZfp zfp(p, true);
                     std::vector<char> decompressBuffer;
                     size_t datasize =

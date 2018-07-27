@@ -16,10 +16,35 @@
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
 
+#include "adios2/toolkit/format/bp3/operation/BP3SZ.h"
+#include "adios2/toolkit/format/bp3/operation/BP3Zfp.h"
+
 namespace adios2
 {
 namespace format
 {
+
+const std::set<std::string> BP3Base::m_TransformTypes = {
+    {"unknown", "none", "identity", "sz", "zfp"}};
+
+const std::map<int, std::string> BP3Base::m_TransformTypesToNames = {
+    {transform_unknown, "unknown"},
+    {transform_none, "none"},
+    {transform_identity, "identity"},
+    {transform_sz, "sz"},
+    {transform_zfp, "zfp"}
+    //{transform_mgard, "mgard"},
+    // {transform_zlib, "zlib"},
+    //    {transform_bzip2, "bzip2"},
+    //    {transform_szip, "szip"},
+    //    {transform_isobar, "isobar"},
+    //    {transform_aplod, "aplod"},
+    //    {transform_alacrity, "alacrity"},
+
+    //    {transform_sz, "sz"},
+    //    {transform_lz4, "lz4"},
+    //    {transform_blosc, "blosc"},
+};
 
 BP3Base::BP3Base(MPI_Comm mpiComm, const bool debugMode)
 : m_MPIComm(mpiComm), m_DebugMode(debugMode)
@@ -700,26 +725,21 @@ void BP3Base::ProfilerStop(const std::string process) noexcept
     }
 }
 
-std::string BP3Base::GetBPSubStreamName(const std::string &name,
-                                        const size_t rank) const noexcept
+BP3Base::TransformTypes
+BP3Base::TransformTypeEnum(const std::string transformType) const noexcept
 {
-    const std::string bpName = helper::AddExtension(name, ".bp");
+    TransformTypes transformEnum = transform_unknown;
 
-    // path/root.bp.dir/root.bp.Index
-    std::string bpRoot = bpName;
-    const auto lastPathSeparator(bpName.find_last_of(PathSeparator));
-
-    if (lastPathSeparator != std::string::npos)
+    for (const auto &pair : m_TransformTypesToNames)
     {
-        bpRoot = bpName.substr(lastPathSeparator);
+        if (pair.second == transformType)
+        {
+            transformEnum = static_cast<TransformTypes>(pair.first);
+            break;
+        }
     }
 
-    const size_t index =
-        m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : rank;
-
-    const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
-                                 "." + std::to_string(index));
-    return bpRankName;
+    return transformEnum;
 }
 
 void BP3Base::InitParameterSubStreams(const std::string value)
@@ -778,11 +798,61 @@ void BP3Base::InitParameterSubStreams(const std::string value)
     }
 }
 
+std::shared_ptr<BP3Operation>
+BP3Base::SetBP3Operation(const std::string type) const noexcept
+{
+    std::shared_ptr<BP3Operation> bp3Op;
+    if (type == "sz")
+    {
+        bp3Op = std::make_shared<BP3SZ>();
+    }
+    else if (type == "zfp")
+    {
+        bp3Op = std::make_shared<BP3Zfp>();
+    }
+    else if (type == "mgard")
+    {
+        // TODO
+    }
+    else if (type == "bzip2")
+    {
+        // TODO
+    }
+    return bp3Op;
+}
+
+// PRIVATE
+std::string BP3Base::GetBPSubStreamName(const std::string &name,
+                                        const size_t rank) const noexcept
+{
+    const std::string bpName = helper::AddExtension(name, ".bp");
+
+    // path/root.bp.dir/root.bp.Index
+    std::string bpRoot = bpName;
+    const auto lastPathSeparator(bpName.find_last_of(PathSeparator));
+
+    if (lastPathSeparator != std::string::npos)
+    {
+        bpRoot = bpName.substr(lastPathSeparator);
+    }
+
+    const size_t index =
+        m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : rank;
+
+    const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
+                                 "." + std::to_string(index));
+    return bpRankName;
+}
+
 #define declare_template_instantiation(T)                                      \
     template BP3Base::Characteristics<T>                                       \
     BP3Base::ReadElementIndexCharacteristics(                                  \
         const std::vector<char> &buffer, size_t &position,                     \
-        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;
+        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;    \
+                                                                               \
+    template std::map<size_t, std::shared_ptr<BP3Operation>>                   \
+    BP3Base::SetBP3Operations<T>(                                              \
+        const std::vector<core::VariableBase::Operation> &operations) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
