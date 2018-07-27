@@ -36,6 +36,7 @@ HDFMixer::HDFMixer(IO &io, const std::string &name, const Mode openMode,
 
 HDFMixer::~HDFMixer() = default;
 
+
 void HDFMixer::Init()
 {
     InitParameters();
@@ -59,6 +60,8 @@ StepStatus HDFMixer::BeginStep(StepMode mode, const float timeout_sec)
 {
     return StepStatus::OK;
 }
+
+void HDFMixer::PerformPuts() {}
 
 // void HDFMixer::Advance(const float /*timeout_sec*/)
 // void HDFMixer::EndStep(const float /*timeout_sec*/)

@@ -59,6 +59,8 @@ public:
     // void EndStep(const float /*timeout_sec*/);
     void EndStep() final;
 
+    void PerformPuts() final;
+
     void CreateName(std::string &pathName, std::string &rootName,
                     std::string &fullH5Name, int rank);
 
