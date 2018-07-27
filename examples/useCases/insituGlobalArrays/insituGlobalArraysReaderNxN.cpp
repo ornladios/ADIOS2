@@ -201,9 +201,11 @@ void ProcessArgs(int rank, int argc, char *argv[])
     }
     else if (elc == "dataman")
     {
-        engineParams["WorkflowMode"] = "subscribe";
-        engineTransports["WAN"] = {
-            {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "25600"}};
+        engineParams["WorkflowMode"] = "p2p";
+        engineTransports["WAN"] = {{"Library", "ZMQ"},
+                                   {"Timeout", "2000"},
+                                   {"IPAddress", "127.0.0.1"},
+                                   {"Port", "25600"}};
     }
 }
 
@@ -264,7 +266,12 @@ int main(int argc, char *argv[])
         {
             adios2::StepStatus status =
                 reader.BeginStep(adios2::StepMode::NextAvailable, 60.0f);
-            if (status != adios2::StepStatus::OK)
+            if (status == adios2::StepStatus::NotReady)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+            else if (status != adios2::StepStatus::OK)
             {
                 break;
             }
