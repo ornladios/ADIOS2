@@ -17,248 +17,285 @@
 //
 // class HDFSerialWriter
 //
-namespace adios2 {
-namespace core {
-namespace engine {
+namespace adios2
+{
+namespace core
+{
+namespace engine
+{
 
 HDFVDSWriter::HDFVDSWriter(MPI_Comm mpiComm, bool debugMode)
-    : m_MPISubfileComm(mpiComm), m_VDSFile(debugMode), m_Rank(-1) {
-  MPI_Comm_size(m_MPISubfileComm, &m_NumSubFiles);
-  MPI_Comm_rank(m_MPISubfileComm, &m_Rank);
+: m_MPISubfileComm(mpiComm), m_VDSFile(debugMode), m_Rank(-1)
+{
+    MPI_Comm_size(m_MPISubfileComm, &m_NumSubFiles);
+    MPI_Comm_rank(m_MPISubfileComm, &m_Rank);
 }
 
-void HDFVDSWriter::Init(const std::string &name) {
-  if (m_Rank > 0) {
-    return;
-  }
+void HDFVDSWriter::Init(const std::string &name)
+{
+    if (m_Rank > 0)
+    {
+        return;
+    }
 
-  //
-  // VDS can only operate on one process. So let rank = 0 handle it
-  //
-  std::string h5Name = adios2::helper::AddExtension(name, ".h5");
-  m_VDSFile.Init(h5Name, MPI_COMM_SELF, true);
-  // m_FileName = h5Name;
-  m_FileName = name;
+    //
+    // VDS can only operate on one process. So let rank = 0 handle it
+    //
+    std::string h5Name = adios2::helper::AddExtension(name, ".h5");
+    m_VDSFile.Init(h5Name, MPI_COMM_SELF, true);
+    // m_FileName = h5Name;
+    m_FileName = name;
 }
 
-void HDFVDSWriter::GetVarInfo(
-    const VariableBase &var, std::vector<hsize_t> &dimsf, int nDims,
-    std::vector<hsize_t> &start, std::vector<hsize_t> &count,
-    std::vector<hsize_t> &one) { // interop::HDF5Common summaryFile(true);
-  // std::vector<hsize_t> dimsf, start, one, count;
-  // int nDims = std::max(var.m_Shape.size(), var.m_Count.size());
+void HDFVDSWriter::GetVarInfo(const VariableBase &var,
+                              std::vector<hsize_t> &dimsf, int nDims,
+                              std::vector<hsize_t> &start,
+                              std::vector<hsize_t> &count,
+                              std::vector<hsize_t> &one)
+{ // interop::HDF5Common summaryFile(true);
+    // std::vector<hsize_t> dimsf, start, one, count;
+    // int nDims = std::max(var.m_Shape.size(), var.m_Count.size());
 
-  for (int i = 0; i < nDims; i++) {
-    if (var.m_Shape.size() > 0) {
-      dimsf.push_back(var.m_Shape[i]);
-    } else {
-      dimsf.push_back(var.m_Count[i]);
+    for (int i = 0; i < nDims; i++)
+    {
+        if (var.m_Shape.size() > 0)
+        {
+            dimsf.push_back(var.m_Shape[i]);
+        }
+        else
+        {
+            dimsf.push_back(var.m_Count[i]);
+        }
+        if (var.m_Start.size() > 0)
+        {
+            start.push_back(var.m_Start[i]);
+        }
+        else
+        {
+            start.push_back(0);
+        }
+        if (var.m_Count.size() > 0)
+        {
+            count.push_back(var.m_Count[i]);
+        }
+        else if (var.m_Shape.size() > 0)
+        {
+            count.push_back(var.m_Shape[i]);
+        }
+        else
+        {
+            count.push_back(0);
+        }
+        one.push_back(1);
     }
-    if (var.m_Start.size() > 0) {
-      start.push_back(var.m_Start[i]);
-    } else {
-      start.push_back(0);
-    }
-    if (var.m_Count.size() > 0) {
-      count.push_back(var.m_Count[i]);
-    } else if (var.m_Shape.size() > 0) {
-      count.push_back(var.m_Shape[i]);
-    } else {
-      count.push_back(0);
-    }
-    one.push_back(1);
-  }
 }
 
-void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type) {
-  hid_t space;
-  /* Create VDS dataspace.  */
-  int nDims = std::max(var.m_Shape.size(), var.m_Count.size());
+void HDFVDSWriter::AddVar(const VariableBase &var, hid_t h5Type)
+{
+    hid_t space;
+    /* Create VDS dataspace.  */
+    int nDims = std::max(var.m_Shape.size(), var.m_Count.size());
 
-  if (nDims == 0) {
-    if (m_Rank == 0) {
-      /*
-      std::cout<<" will deal with scalar later?"<<var.m_Name<<std::endl;
+    if (nDims == 0)
+    {
+        if (m_Rank == 0)
+        {
+            /*
+            std::cout<<" will deal with scalar later?"<<var.m_Name<<std::endl;
 
-      hid_t filespaceID = H5Screate(H5S_SCALAR);
-      hid_t dsetID = H5Dcreate(m_VDSFile.m_GroupId, var.m_Name.c_str(),
-      h5Type, filespaceID, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      //hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
-      //H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
-      herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL,
-      H5P_DEFAULT, values);
-      //herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL,
-      plistID, values);
+            hid_t filespaceID = H5Screate(H5S_SCALAR);
+            hid_t dsetID = H5Dcreate(m_VDSFile.m_GroupId, var.m_Name.c_str(),
+            h5Type, filespaceID, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            //hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
+            //H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
+            herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL,
+            H5P_DEFAULT, values);
+            //herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL,
+            plistID, values);
 
-      H5Sclose(filespaceID);
-      H5Dclose(dsetID);
-      */
-    }
-    return; //
-  }
-
-  /* Initialize hyperslab values. */
-  size_t all_starts[m_NumSubFiles][nDims];
-  size_t all_counts[m_NumSubFiles][nDims];
-
-  //
-  std::vector<hsize_t> dimsf, start, one, count;
-  GetVarInfo(var, dimsf, nDims, start, count, one);
-  //
-
-  MPI_Gather(start.data(), nDims, ADIOS2_MPI_SIZE_T, all_starts, nDims,
-             ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
-
-  MPI_Gather(count.data(), nDims, ADIOS2_MPI_SIZE_T, all_counts, nDims,
-             ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
-
-  herr_t status;
-  if (m_Rank == 0) {
-    m_VDSFile.CheckWriteGroup();
-    /* Set VDS creation property. */
-    hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
-    // status = H5Pset_fill_value(dcpl, ADIOS2_MPI_SIZE_T, 0);
-
-    space = H5Screate_simple(nDims, dimsf.data(), NULL);
-    // summaryFile.Init(fileName.c_str(), MPI_COMM_SELF, true);
-
-    hsize_t currCount[nDims], currStart[nDims];
-    // std::string subfileVarName="TimeStep0/"+var.m_Name; // need full
-    // path?  NEED TO GET the RIGHT SUBFILE VAR NAME RELATED to TIMESTEP!!
-    std::string subfileVarName;
-    interop::HDF5Common::StaticGetAdiosStepString(subfileVarName,
-                                                  m_VDSFile.m_CurrentAdiosStep);
-    subfileVarName += "/" + var.m_Name;
-
-    for (int i = 0; i < m_NumSubFiles; i++) {
-      for (int j = 0; j < nDims; j++) {
-        currCount[j] = all_counts[i][j];
-        currStart[j] = all_starts[i][j];
-        // std::cout<<i<<"th: subfile, "<<j<<"th dirmention:
-        // count:"<<currCount[j] <<" start:"<<currStart[j]<<std::endl;
-      }
-      hid_t src_space =
-          H5Screate_simple(nDims, currCount,
-                           NULL); // with factor=1, we do not flatten the data
-
-      status = H5Sselect_hyperslab(space, H5S_SELECT_SET, currStart, NULL,
-                                   one.data(), currCount);
-
-      std::string path, root, subfileName;
-      HDFSerialWriter::StaticCreateName(
-          path, root, subfileName, m_FileName,
-          i); // for each core, get the subfile name
-
-      // std::cout<<" subfileName="<<subfileName<<",
-      // var="<<subfileVarName<<std::endl;
-
-      status = H5Pset_virtual(dcpl, space, subfileName.c_str(),
-                              subfileVarName.c_str(), src_space);
-      status = H5Sclose(src_space);
+            H5Sclose(filespaceID);
+            H5Dclose(dsetID);
+            */
+        }
+        return; //
     }
 
-    /* Create a virtual dataset. */
-    // hid_t dset = H5Dcreate2 (m_VDSFile.m_FileId,  subfileVarName.c_str(),
-    // h5Type, space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+    /* Initialize hyperslab values. */
+    size_t all_starts[m_NumSubFiles][nDims];
+    size_t all_counts[m_NumSubFiles][nDims];
 
-    hid_t dset = H5Dcreate2(m_VDSFile.m_GroupId, var.m_Name.c_str(), h5Type,
-                            space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+    //
+    std::vector<hsize_t> dimsf, start, one, count;
+    GetVarInfo(var, dimsf, nDims, start, count, one);
+    //
 
-    status = H5Sclose(space);
-    status = H5Dclose(dset);
-    status = H5Pclose(dcpl);
-  }
+    MPI_Gather(start.data(), nDims, ADIOS2_MPI_SIZE_T, all_starts, nDims,
+               ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
 
-  // m_VDSFile.Close();
-  MPI_Barrier(m_MPISubfileComm);
+    MPI_Gather(count.data(), nDims, ADIOS2_MPI_SIZE_T, all_counts, nDims,
+               ADIOS2_MPI_SIZE_T, 0, m_MPISubfileComm);
+
+    herr_t status;
+    if (m_Rank == 0)
+    {
+        m_VDSFile.CheckWriteGroup();
+        /* Set VDS creation property. */
+        hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
+        // status = H5Pset_fill_value(dcpl, ADIOS2_MPI_SIZE_T, 0);
+
+        space = H5Screate_simple(nDims, dimsf.data(), NULL);
+        // summaryFile.Init(fileName.c_str(), MPI_COMM_SELF, true);
+
+        hsize_t currCount[nDims], currStart[nDims];
+        // std::string subfileVarName="TimeStep0/"+var.m_Name; // need full
+        // path?  NEED TO GET the RIGHT SUBFILE VAR NAME RELATED to TIMESTEP!!
+        std::string subfileVarName;
+        interop::HDF5Common::StaticGetAdiosStepString(
+            subfileVarName, m_VDSFile.m_CurrentAdiosStep);
+        subfileVarName += "/" + var.m_Name;
+
+        for (int i = 0; i < m_NumSubFiles; i++)
+        {
+            for (int j = 0; j < nDims; j++)
+            {
+                currCount[j] = all_counts[i][j];
+                currStart[j] = all_starts[i][j];
+                // std::cout<<i<<"th: subfile, "<<j<<"th dirmention:
+                // count:"<<currCount[j] <<" start:"<<currStart[j]<<std::endl;
+            }
+            hid_t src_space = H5Screate_simple(
+                nDims, currCount,
+                NULL); // with factor=1, we do not flatten the data
+
+            status = H5Sselect_hyperslab(space, H5S_SELECT_SET, currStart, NULL,
+                                         one.data(), currCount);
+
+            std::string path, root, subfileName;
+            HDFSerialWriter::StaticCreateName(
+                path, root, subfileName, m_FileName,
+                i); // for each core, get the subfile name
+
+            // std::cout<<" subfileName="<<subfileName<<",
+            // var="<<subfileVarName<<std::endl;
+
+            status = H5Pset_virtual(dcpl, space, subfileName.c_str(),
+                                    subfileVarName.c_str(), src_space);
+            status = H5Sclose(src_space);
+        }
+
+        /* Create a virtual dataset. */
+        // hid_t dset = H5Dcreate2 (m_VDSFile.m_FileId,  subfileVarName.c_str(),
+        // h5Type, space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+
+        hid_t dset = H5Dcreate2(m_VDSFile.m_GroupId, var.m_Name.c_str(), h5Type,
+                                space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
+
+        status = H5Sclose(space);
+        status = H5Dclose(dset);
+        status = H5Pclose(dcpl);
+    }
+
+    // m_VDSFile.Close();
+    MPI_Barrier(m_MPISubfileComm);
 }
 
-void HDFVDSWriter::Advance(const float timeoutSeconds) {
-  if (m_Rank > 0) {
-    return;
-  }
+void HDFVDSWriter::Advance(const float timeoutSeconds)
+{
+    if (m_Rank > 0)
+    {
+        return;
+    }
 
-  m_VDSFile.Advance();
+    m_VDSFile.Advance();
 }
 
-void HDFVDSWriter::Close(const int transportIndex) {
-  if (m_Rank > 0) {
-    return;
-  }
+void HDFVDSWriter::Close(const int transportIndex)
+{
+    if (m_Rank > 0)
+    {
+        return;
+    }
 
-  m_VDSFile.Close();
+    m_VDSFile.Close();
 }
 
 //
 // class HDFSerialWriter
 //
 HDFSerialWriter::HDFSerialWriter(MPI_Comm mpiComm, const bool debugMode = false)
-    : m_MPILocalComm(mpiComm), m_DebugMode(debugMode), m_H5File(debugMode) {}
+: m_MPILocalComm(mpiComm), m_DebugMode(debugMode), m_H5File(debugMode)
+{
+}
 
-void HDFSerialWriter::Advance(const float timeoutSeconds) {
-  m_H5File.Advance();
+void HDFSerialWriter::Advance(const float timeoutSeconds)
+{
+    m_H5File.Advance();
 }
 void HDFSerialWriter::Close(const int transportIndex) { m_H5File.Close(); };
 
 void HDFSerialWriter::StaticCreateName(std::string &pathName,
                                        std::string &rootName,
                                        std::string &fullH5Name,
-                                       const std::string &input, int rank) {
+                                       const std::string &input, int rank)
+{
 
-  auto lf_GetBaseName = [](const std::string &name) -> std::string {
-    const std::string baseName(adios2::helper::AddExtension(name, ".h5") +
-                               ".dir");
-    return baseName;
-  };
+    auto lf_GetBaseName = [](const std::string &name) -> std::string {
+        const std::string baseName(adios2::helper::AddExtension(name, ".h5") +
+                                   ".dir");
+        return baseName;
+    };
 
-  auto lf_GetRootTag = [](const std::string &userTag) -> std::string {
-    std::string h5RootName = userTag;
-    const auto lastPathSeparator(userTag.find_last_of(PathSeparator));
-    if (lastPathSeparator != std::string::npos) {
-      h5RootName = userTag.substr(lastPathSeparator);
-    }
-    return h5RootName;
-  };
+    auto lf_GetRootTag = [](const std::string &userTag) -> std::string {
+        std::string h5RootName = userTag;
+        const auto lastPathSeparator(userTag.find_last_of(PathSeparator));
+        if (lastPathSeparator != std::string::npos)
+        {
+            h5RootName = userTag.substr(lastPathSeparator);
+        }
+        return h5RootName;
+    };
 
-  pathName = lf_GetBaseName(input);
-  rootName = lf_GetRootTag(input);
+    pathName = lf_GetBaseName(input);
+    rootName = lf_GetRootTag(input);
 
-  fullH5Name = (pathName + "/" + rootName + "_" + std::to_string(rank) + ".h5");
+    fullH5Name =
+        (pathName + "/" + rootName + "_" + std::to_string(rank) + ".h5");
 }
 
-void HDFSerialWriter::Init(const std::string &name, int rank) {
-  /*
-  auto lf_GetBaseName = [](const std::string &name) -> std::string {
-    const std::string baseName(AddExtension(name, ".h5") + ".dir");
-    return baseName;
-  };
+void HDFSerialWriter::Init(const std::string &name, int rank)
+{
+    /*
+    auto lf_GetBaseName = [](const std::string &name) -> std::string {
+      const std::string baseName(AddExtension(name, ".h5") + ".dir");
+      return baseName;
+    };
 
-  auto lf_GetRootTag = [] (const std::string &userTag) -> std::string {
-    std::string h5RootName = userTag;
-    const auto lastPathSeparator(userTag.find_last_of(PathSeparator));
-    if (lastPathSeparator != std::string::npos)
-      {
-        h5RootName = userTag.substr(lastPathSeparator);
-      }
-    return h5RootName;
-  };
+    auto lf_GetRootTag = [] (const std::string &userTag) -> std::string {
+      std::string h5RootName = userTag;
+      const auto lastPathSeparator(userTag.find_last_of(PathSeparator));
+      if (lastPathSeparator != std::string::npos)
+        {
+          h5RootName = userTag.substr(lastPathSeparator);
+        }
+      return h5RootName;
+    };
 
-  std::string baseName=lf_GetBaseName(name);
+    std::string baseName=lf_GetBaseName(name);
 
-  auto rootTag = lf_GetRootTag(name);
-  const std::string h5Name(baseName + "/" +
-  rootTag+"_"+std::to_string(rank)+".h5");
+    auto rootTag = lf_GetRootTag(name);
+    const std::string h5Name(baseName + "/" +
+    rootTag+"_"+std::to_string(rank)+".h5");
 
-  */
-  std::string baseName, rootTag, h5Name;
-  StaticCreateName(baseName, rootTag, h5Name, name, rank);
-  // std::cout<<"rank="<<rank<<"  name="<<h5Name<<std::endl;
-  adios2::helper::CreateDirectory(baseName);
-  m_H5File.Init(h5Name, m_MPILocalComm, true);
+    */
+    std::string baseName, rootTag, h5Name;
+    StaticCreateName(baseName, rootTag, h5Name, name, rank);
+    // std::cout<<"rank="<<rank<<"  name="<<h5Name<<std::endl;
+    adios2::helper::CreateDirectory(baseName);
+    m_H5File.Init(h5Name, m_MPILocalComm, true);
 
-  m_FileName = h5Name;
-  m_Rank = rank;
-  // m_H5File.Init(h5Name, m_, true);
+    m_FileName = h5Name;
+    m_Rank = rank;
+    // m_H5File.Init(h5Name, m_, true);
 }
 
 /*
