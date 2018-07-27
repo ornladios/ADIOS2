@@ -36,7 +36,6 @@ HDFMixer::HDFMixer(IO &io, const std::string &name, const Mode openMode,
 
 HDFMixer::~HDFMixer() = default;
 
-
 void HDFMixer::Init()
 {
     InitParameters();
