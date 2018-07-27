@@ -137,28 +137,30 @@ void HDFMixer::InitBuffer()
     */
 }
 
-void HDFMixer::WriteProfilingJSONFile() { /*
-     auto transportTypes = m_TransportsManager.GetTransportsTypes();
-     auto transportProfilers = m_TransportsManager.GetTransportsProfilers();
+void HDFMixer::WriteProfilingJSONFile()
+{ /*
+auto transportTypes = m_TransportsManager.GetTransportsTypes();
+auto transportProfilers = m_TransportsManager.GetTransportsProfilers();
 
-     const std::string lineJSON(
-         m_HDFSerialWriter.GetRankProfilingJSON(transportTypes,
-     transportProfilers));
+const std::string lineJSON(
+m_HDFSerialWriter.GetRankProfilingJSON(transportTypes,
+transportProfilers));
 
-     const std::string profilingJSON(
-         m_HDFSerialWriter.AggregateProfilingJSON(lineJSON));
+const std::string profilingJSON(
+m_HDFSerialWriter.AggregateProfilingJSON(lineJSON));
 
-     //if (m_HDFSerialWriter.m_BP1Aggregator.m_RankMPI == 0)
-     if (m_HDFSerialWriter.m_MPIRank == 0)
-     {
-         transport::FileStream profilingJSONStream(m_MPIComm, m_DebugMode);
-         auto baseNames = m_HDFSerialWriter.GetBaseNames({m_Name});
-         profilingJSONStream.Open(baseNames[0] + "/profiling.json",
-                                  OpenMode::Write);
-         profilingJSONStream.Write(profilingJSON.c_str(), profilingJSON.size());
-         profilingJSONStream.Close();
-     }
-  */}
+//if (m_HDFSerialWriter.m_BP1Aggregator.m_RankMPI == 0)
+if (m_HDFSerialWriter.m_MPIRank == 0)
+{
+transport::FileStream profilingJSONStream(m_MPIComm, m_DebugMode);
+auto baseNames = m_HDFSerialWriter.GetBaseNames({m_Name});
+profilingJSONStream.Open(baseNames[0] + "/profiling.json",
+OpenMode::Write);
+profilingJSONStream.Write(profilingJSON.c_str(), profilingJSON.size());
+profilingJSONStream.Close();
+}
+*/
+}
 
 void HDFMixer::DoClose(const int transportIndex)
 {
