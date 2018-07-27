@@ -120,8 +120,10 @@ TEST_F(BPWriteReadSZ, ADIOS2BPWriteRead1D)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy);
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy);
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy)
+                    << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy)
+                    << msg;
             }
             ++t;
         }
