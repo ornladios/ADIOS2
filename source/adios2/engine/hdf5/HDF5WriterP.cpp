@@ -37,6 +37,8 @@ StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void HDF5WriterP::EndStep() { m_H5File.Advance(); }
 
+void HDF5WriterP::PerformPuts() {}
+
 // PRIVATE
 void HDF5WriterP::Init()
 {

@@ -24,7 +24,10 @@ void HDFMixer::DoPutSyncCommon(Variable<T> &variable, const T *values)
     variable.SetData(values);
     // m_WrittenVariables.insert(variable.m_Name);
     Variable<T> local(variable.m_Name, {}, {}, variable.m_Count,
-                      variable.m_Count.size(), NULL, false);
+                      variable.IsConstantDims(), false);
+
+    //    Variable<T> local(variable.m_Name, {}, {}, variable.m_Count,
+    //                      variable.m_Count.size(), NULL, false);
 
     // m_HDFSerialWriter.m_H5File.Write(variable, values);
     // writes only the m_Count() part
@@ -50,4 +53,4 @@ void HDFMixer::DoPutSyncCommon(Variable<T> &variable, const T *values)
 
 } // end namespace engine
 } // end namespace core
-} // end namespace adios
+} // namespace adios2

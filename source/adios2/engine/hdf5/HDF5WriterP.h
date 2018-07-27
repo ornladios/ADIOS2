@@ -45,6 +45,8 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void EndStep() final;
 
+    void PerformPuts() final;
+
 private:
     interop::HDF5Common m_H5File;
 

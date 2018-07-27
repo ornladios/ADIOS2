@@ -17,7 +17,7 @@
 //
 // class HDFSerialWriter
 //
-namespace adios
+namespace adios2
 {
 namespace core
 {
@@ -41,7 +41,7 @@ void HDFVDSWriter::Init(const std::string &name)
     //
     // VDS can only operate on one process. So let rank = 0 handle it
     //
-    std::string h5Name = AddExtension(name, ".h5");
+    std::string h5Name = adios2::helper::AddExtension(name, ".h5");
     m_VDSFile.Init(h5Name, MPI_COMM_SELF, true);
     // m_FileName = h5Name;
     m_FileName = name;
@@ -240,7 +240,8 @@ void HDFSerialWriter::StaticCreateName(std::string &pathName,
 {
 
     auto lf_GetBaseName = [](const std::string &name) -> std::string {
-        const std::string baseName(AddExtension(name, ".h5") + ".dir");
+        const std::string baseName(adios2::helper::AddExtension(name, ".h5") +
+                                   ".dir");
         return baseName;
     };
 
@@ -289,7 +290,7 @@ void HDFSerialWriter::Init(const std::string &name, int rank)
     std::string baseName, rootTag, h5Name;
     StaticCreateName(baseName, rootTag, h5Name, name, rank);
     // std::cout<<"rank="<<rank<<"  name="<<h5Name<<std::endl;
-    CreateDirectory(baseName);
+    adios2::helper::CreateDirectory(baseName);
     m_H5File.Init(h5Name, m_MPILocalComm, true);
 
     m_FileName = h5Name;
