@@ -53,7 +53,7 @@ public:
         size_t index;
         int rank;
         std::string compression;
-        float compressionRate;
+        Params params;
     };
     std::shared_ptr<const std::vector<DataManVar>>
     GetMetaData(const size_t step);

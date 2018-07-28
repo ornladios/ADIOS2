@@ -66,17 +66,15 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                 // happening inside the lock. Once the shared pointer is
                 // assigned to k, its life cycle in m_BufferMap does not matter
                 // any more. So even if m_BufferMap[j.index] is modified
-                // somewhere else the memory
-                // that this shared pointer refers to is still valid until k
-                // runs out of scope.
+                // somewhere else the memory that this shared pointer refers to
+                // is still valid until k runs out of scope.
                 m_MutexBuffer.lock();
                 auto k = m_BufferMap[j.index];
                 m_MutexBuffer.unlock();
                 if (j.compression == "zfp")
                 {
 #ifdef ADIOS2_HAVE_ZFP
-                    Params p = {{"rate", std::to_string(j.compressionRate)}};
-                    core::compress::CompressZfp zfp(p, true);
+                    core::compress::CompressZfp zfp(j.params, true);
                     std::vector<char> decompressBuffer;
                     size_t datasize =
                         std::accumulate(j.count.begin(), j.count.end(), 1,
@@ -87,7 +85,7 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                     {
                         zfp.Decompress(k->data() + j.position, j.size,
                                        decompressBuffer.data(), j.count, j.type,
-                                       p);
+                                       j.params);
                     }
                     catch (std::exception &e)
                     {

@@ -29,7 +29,6 @@ int DataManDeserializer::Put(
     const std::shared_ptr<const std::vector<char>> data)
 {
     // check if is control signal
-
     if (data->size() < 128)
     {
         try
@@ -81,16 +80,21 @@ int DataManDeserializer::Put(
             var.doid = metaj["D"].get<std::string>();
             var.position = position;
             var.index = key;
+
             auto it = metaj.find("Z");
             if (it != metaj.end())
             {
                 var.compression = it->get<std::string>();
             }
-            it = metaj.find("ZR");
-            if (it != metaj.end())
+
+            for (auto i = metaj.begin(); i != metaj.end(); ++i)
             {
-                var.compressionRate = it->get<float>();
+                if (i.key().find(":") != std::string::npos)
+                {
+                    var.params[i.key()] = i.value();
+                }
             }
+
             if (position + var.size > data->capacity())
             {
                 break;

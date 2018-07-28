@@ -117,14 +117,20 @@ bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
                             const Params &params)
 {
 #ifdef ADIOS2_HAVE_ZFP
-    float rate = 2.0;
-    const auto j = params.find("CompressionRate");
-    if (j != params.end())
+
+    Params p;
+
+    for (const auto &i : params)
     {
-        rate = stof(j->second);
+        std::string prefix = i.first.substr(0, 4);
+        if (prefix == "zfp:" || prefix == "ZFP:" || prefix == "Zfp:")
+        {
+            metaj[i.first] = i.second;
+            std::string key = i.first.substr(4);
+            p[key] = i.second;
+        }
     }
-    metaj["ZR"] = rate;
-    Params p = {{"Rate", std::to_string(rate)}};
+
     core::compress::CompressZfp zfp(p, true);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
