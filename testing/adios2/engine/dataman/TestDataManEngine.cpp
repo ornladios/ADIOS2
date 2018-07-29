@@ -198,26 +198,6 @@ void DataManReaderLoose(const Dims &shape, const Dims &start, const Dims &count,
 }
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManEngineTest, WriteRead_1D_P2P)
-{
-    Dims shape = {10};
-    Dims start = {0};
-    Dims count = {10};
-    size_t steps = 200;
-    std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
-                                                    {"IPAddress", "127.0.0.1"},
-                                                    {"Port", "12306"},
-                                                    {"Timeout", "20"}}};
-    std::string workflowMode = "p2p";
-    auto r = std::thread(DataManReaderStrict, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    DataManWriter(shape, start, count, steps, workflowMode, transportParams);
-    std::cout << "Writer ended" << std::endl;
-    r.join();
-    std::cout << "Reader ended" << std::endl;
-}
-
 TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
 {
     Dims shape = {10};
@@ -246,10 +226,53 @@ TEST_F(DataManEngineTest, WriteRead_2D_Subscribe_Zfp)
          {"IPAddress", "127.0.0.1"},
          {"Port", "12307"},
          {"CompressionMethod", "zfp"},
-         {"zfp:rate", "2"}}};
+         {"zfp:rate", "4"}}};
     std::string workflowMode = "subscribe";
     auto r = std::thread(DataManReaderLoose, shape, start, count, steps,
                          workflowMode, transportParams);
+    DataManWriter(shape, start, count, steps, workflowMode, transportParams);
+    std::cout << "Writer ended" << std::endl;
+    r.join();
+    std::cout << "Reader ended" << std::endl;
+}
+
+TEST_F(DataManEngineTest, WriteRead_2D_Subscribe_SZ)
+{
+    Dims shape = {5, 4};
+    Dims start = {0, 0};
+    Dims count = {5, 4};
+    size_t steps = 200;
+    std::vector<adios2::Params> transportParams = {{
+        {"Library", "ZMQ"},
+        {"IPAddress", "127.0.0.1"},
+        {"Port", "12307"},
+        {"CompressionMethod", "sz"},
+    }};
+    std::string workflowMode = "subscribe";
+    auto r = std::thread(DataManReaderLoose, shape, start, count, steps,
+                         workflowMode, transportParams);
+    DataManWriter(shape, start, count, steps, workflowMode, transportParams);
+    std::cout << "Writer ended" << std::endl;
+    r.join();
+    std::cout << "Reader ended" << std::endl;
+}
+
+TEST_F(DataManEngineTest, WriteRead_1D_Subscribe_BZip2)
+{
+    Dims shape = {10};
+    Dims start = {0};
+    Dims count = {10};
+    size_t steps = 200;
+    std::vector<adios2::Params> transportParams = {{
+        {"Library", "ZMQ"},
+        {"IPAddress", "127.0.0.1"},
+        {"Port", "12307"},
+        {"CompressionMethod", "bzip2"},
+    }};
+    std::string workflowMode = "subscribe";
+    auto r = std::thread(DataManReaderStrict, shape, start, count, steps,
+                         workflowMode, transportParams);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     DataManWriter(shape, start, count, steps, workflowMode, transportParams);
     std::cout << "Writer ended" << std::endl;
     r.join();
