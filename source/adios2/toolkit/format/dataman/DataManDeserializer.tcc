@@ -78,15 +78,10 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                     core::compress::CompressZfp zfp(j.params, true);
                     std::vector<char> decompressBuffer;
                     size_t datasize =
-                        std::accumulate(j.count.begin(), j.count.end(), 1,
-                                        std::multiplies<size_t>());
+                        std::accumulate(j.count.begin(), j.count.end(),
+                                        sizeof(T), std::multiplies<size_t>());
 
                     decompressBuffer.reserve(datasize);
-                    for (auto kkk : j.params)
-                    {
-                        std::cout << kkk.first << ": " << kkk.second
-                                  << std::endl;
-                    }
                     try
                     {
                         zfp.Decompress(k->data() + j.position, j.size,
@@ -100,8 +95,6 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                                   << e.what() << std::endl;
                         return -4; // decompression failed
                     }
-                    printf("%u\n", decompressBuffer.data());
-                    printf("%u\n", output_data);
                     helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
                                       true, true,
                                       reinterpret_cast<char *>(output_data),

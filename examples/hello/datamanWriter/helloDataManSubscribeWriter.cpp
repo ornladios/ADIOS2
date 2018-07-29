@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloDataManWriter.cpp
+ * helloDataManSubscribeWriter.cpp
  *
  *  Created on: Feb 16, 2017
  *      Author: Jason Wang
@@ -23,7 +23,7 @@ std::vector<adios2::Params> transportParams = {
     {{"Library", "ZMQ"},
      {"IPAddress", "127.0.0.1"},
      {"Port", "12307"},
-     {"CompressionMethod", "zfp"},
+     {"CompressionMethod", "sz"},
      {"zfp:rate", "2.0"}},
 };
 
