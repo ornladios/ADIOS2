@@ -18,11 +18,11 @@
 
 // adios2 dataman configurations
 std::string adiosEngine = "DataMan";
-std::string transportLibrary = "ZMQ";
-std::string ip = "127.0.0.1";
-std::string port = "12306";
 std::string workflowMode = "p2p";
-std::string timeout = "1000";
+std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
+                                                {"IPAddress", "127.0.0.1"},
+                                                {"Port", "12306"},
+                                                {"Timeout", "2000"}}};
 
 // data properties
 size_t steps = 10;
@@ -58,10 +58,10 @@ int main(int argc, char *argv[])
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine(adiosEngine);
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
-    dataManIO.AddTransport("WAN", {{"Library", transportLibrary},
-                                   {"IPAddress", ip},
-                                   {"Port", port},
-                                   {"Timeout", timeout}});
+    for (const auto &i : transportParams)
+    {
+        dataManIO.AddTransport("WAN", i);
+    }
 
     // open stream
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);

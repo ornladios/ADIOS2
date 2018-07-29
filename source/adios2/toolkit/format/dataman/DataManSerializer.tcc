@@ -63,9 +63,9 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     const auto i = params.find("CompressionMethod");
     if (i != params.end())
     {
-        metaj["Z"] = i->second;
-        if (i->second == "zfp")
+        if (i->second == "zfp" || i->second == "Zfp" || i->second == "ZFP")
         {
+            metaj["Z"] = i->second;
             compressed = Zfp<T>(metaj, datasize, inputData, varCount, params);
         }
         else

@@ -89,9 +89,10 @@ int DataManDeserializer::Put(
 
             for (auto i = metaj.begin(); i != metaj.end(); ++i)
             {
-                if (i.key().find(":") != std::string::npos)
+                auto pos = i.key().find(":");
+                if (pos != std::string::npos)
                 {
-                    var.params[i.key()] = i.value();
+                    var.params[i.key().substr(pos + 1)] = i.value();
                 }
             }
 

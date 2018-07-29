@@ -71,7 +71,8 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                 m_MutexBuffer.lock();
                 auto k = m_BufferMap[j.index];
                 m_MutexBuffer.unlock();
-                if (j.compression == "zfp")
+                if (j.compression == "zfp" || j.compression == "Zfp" ||
+                    j.compression == "ZFP")
                 {
 #ifdef ADIOS2_HAVE_ZFP
                     core::compress::CompressZfp zfp(j.params, true);
@@ -81,6 +82,11 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                                         std::multiplies<size_t>());
 
                     decompressBuffer.reserve(datasize);
+                    for (auto kkk : j.params)
+                    {
+                        std::cout << kkk.first << ": " << kkk.second
+                                  << std::endl;
+                    }
                     try
                     {
                         zfp.Decompress(k->data() + j.position, j.size,
@@ -89,8 +95,13 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                     }
                     catch (std::exception &e)
                     {
+                        std::cout << "[DataManDeserializer::Get] Zfp "
+                                     "decompression failed with exception: "
+                                  << e.what() << std::endl;
                         return -4; // decompression failed
                     }
+                    printf("%u\n", decompressBuffer.data());
+                    printf("%u\n", output_data);
                     helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
                                       true, true,
                                       reinterpret_cast<char *>(output_data),
