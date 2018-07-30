@@ -285,8 +285,7 @@ void adios2_set_data(adios2_variable *variable, const void *data)
 }
 
 size_t adios2_add_operation(adios2_variable *variable, adios2_operator *op,
-                            const char *parameter_key,
-                            const char *parameter_value)
+                            const char *key, const char *value)
 {
     adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
                                               "adios2_add_operation");
@@ -298,6 +297,17 @@ size_t adios2_add_operation(adios2_variable *variable, adios2_operator *op,
     adios2::core::Operator *opCpp =
         reinterpret_cast<adios2::core::Operator *>(op);
 
-    return variableBase->AddOperation(
-        *opCpp, adios2::Params{{parameter_key, parameter_value}});
+    return variableBase->AddOperation(*opCpp, adios2::Params{{key, value}});
+}
+
+void adios2_set_operation_parameter(adios2_variable *variable,
+                                    const size_t operation_id, const char *key,
+                                    const char *value)
+{
+    adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                              "adios2_set_operation_parameter");
+
+    adios2::core::VariableBase *variableBase =
+        reinterpret_cast<adios2::core::VariableBase *>(variable);
+    variableBase->SetOperationParameter(operation_id, key, value);
 }

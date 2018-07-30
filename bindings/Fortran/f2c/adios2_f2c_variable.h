@@ -62,6 +62,19 @@ void FC_GLOBAL(adios2_set_step_selection_f2c,
                                               const int64_t *step_count,
                                               int *ierr);
 
+void FC_GLOBAL(adios2_add_operation_f2c,
+               ADIOS2_ADD_OPERATION_F2C)(int *operation_id,
+                                         adios2_variable **variable,
+                                         adios2_operator **op, const char *key,
+                                         const char *value, int *ierr);
+
+void FC_GLOBAL(adios2_set_operation_parameter_f2c,
+               ADIOS2_SET_OPERATION_PARAMETER_F2C)(adios2_variable **variable,
+                                                   const int *operation_id,
+                                                   const char *key,
+                                                   const char *value,
+                                                   int *ierr);
+
 #ifdef __cplusplus
 }
 #endif

@@ -194,6 +194,24 @@ size_t VariableBase::AddOperation(Operator &op,
     return m_Operations.size() - 1;
 }
 
+void VariableBase::SetOperationParameter(const size_t operationID,
+                                         const std::string key,
+                                         const std::string value)
+{
+    if (m_DebugMode)
+    {
+        if (operationID >= m_Operations.size())
+        {
+            throw std::invalid_argument(
+                "ERROR: invalid operationID " + std::to_string(operationID) +
+                ", check returned id from AddOperation, in call to "
+                "SetOperationParameter\n");
+        }
+    }
+
+    m_Operations[operationID].Parameters[key] = value;
+}
+
 void VariableBase::CheckDimensions(const std::string hint) const
 {
     if (m_DebugMode && m_ShapeID == ShapeID::GlobalArray)

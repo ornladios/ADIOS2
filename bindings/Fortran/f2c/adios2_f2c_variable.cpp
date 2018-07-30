@@ -235,3 +235,41 @@ void FC_GLOBAL(adios2_set_step_selection_f2c,
         *ierr = -1;
     }
 }
+
+void FC_GLOBAL(adios2_add_operation_f2c,
+               ADIOS2_ADD_OPERATION_F2C)(int *operation_id,
+                                         adios2_variable **variable,
+                                         adios2_operator **op, const char *key,
+                                         const char *value, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *operation_id =
+            static_cast<int>(adios2_add_operation(*variable, *op, key, value));
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 add_operation: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_set_operation_parameter_f2c,
+               ADIOS2_SET_OPERATION_PARAMETER_F2C)(adios2_variable **variable,
+                                                   const int *operation_id,
+                                                   const char *key,
+                                                   const char *value, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_set_operation_parameter(
+            *variable, static_cast<std::size_t>(*operation_id), key, value);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 set_operation_parameter: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
