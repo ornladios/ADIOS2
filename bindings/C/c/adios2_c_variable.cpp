@@ -43,10 +43,7 @@ const char *adios2_variable_name(const adios2_variable *variable,
 
     const adios2::core::VariableBase *variableBase =
         reinterpret_cast<const adios2::core::VariableBase *>(variable);
-    if (length != nullptr)
-    {
-        *length = variableBase->m_Name.size();
-    }
+    *length = variableBase->m_Name.size();
     return variableBase->m_Name.c_str();
 }
 

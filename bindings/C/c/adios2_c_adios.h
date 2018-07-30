@@ -83,6 +83,14 @@ adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name,
                                         const char *type);
 
 /**
+ * retrieves an existing operator by name
+ * @param adios ADIOS* handler that owns the Operator* component
+ * @param name unique operator name within adios component
+ * @return if found returns an operator handler, if not found returns NULL
+ */
+adios2_operator *adios2_inquire_operator(adios2_adios *adios, const char *name);
+
+/**
  * Flushes all adios2_engine in all adios2_io handlers created with the current
  * adios2_adios handler using adios2_declare_io and adios2_open
  * If no adios2_io or adios2_engine is created it does nothing.

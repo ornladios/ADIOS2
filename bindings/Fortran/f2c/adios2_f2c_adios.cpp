@@ -103,6 +103,45 @@ void FC_GLOBAL(adios2_at_io_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_define_operator_f2c,
+               ADIOS2_DEFINE_OPERATOR_F2C)(adios2_operator **op,
+                                           adios2_adios **adios,
+                                           const char *op_name,
+                                           const char *op_type, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *op = adios2_define_operator(*adios, op_name, op_type);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 define_operator: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_inquire_operator_f2c,
+               ADIOS2_INQUIRE_OPERATOR_F2C)(adios2_operator **op,
+                                            adios2_adios **adios,
+                                            const char *op_name, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *op = adios2_inquire_operator(*adios, op_name);
+        if (*op == nullptr)
+        {
+            *ierr = 1;
+        }
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 inquire_operator: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_flush_all_f2c, ADIOS2_FLUSH_ALL_F2C)(adios2_adios **adios,
                                                            int *ierr)
 {

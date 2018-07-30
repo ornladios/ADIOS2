@@ -16,7 +16,7 @@
 #include <vector>
 
 void FC_GLOBAL(adios2_variable_name_f2c,
-               adios2_variable_NAME_F2C)(const adios2_variable **variable,
+               ADIOS2_VARIABLE_NAME_F2C)(const adios2_variable **variable,
                                          char name[4096], int *length,
                                          int *ierr)
 {
@@ -46,7 +46,7 @@ void FC_GLOBAL(adios2_variable_name_f2c,
 }
 
 void FC_GLOBAL(adios2_variable_type_f2c,
-               adios2_variable_TYPE_F2C)(const adios2_variable **variable,
+               ADIOS2_VARIABLE_TYPE_F2C)(const adios2_variable **variable,
                                          int *type, int *ierr)
 {
     *ierr = 0;
@@ -62,7 +62,7 @@ void FC_GLOBAL(adios2_variable_type_f2c,
 }
 
 void FC_GLOBAL(adios2_variable_ndims_f2c,
-               adios2_variable_NDIMS_F2C)(const adios2_variable **variable,
+               ADIOS2_VARIABLE_NDIMS_F2C)(const adios2_variable **variable,
                                           int *ndims, int *ierr)
 {
     *ierr = 0;
@@ -78,7 +78,7 @@ void FC_GLOBAL(adios2_variable_ndims_f2c,
 }
 
 void FC_GLOBAL(adios2_variable_shape_f2c,
-               adios2_variable_SHAPE_F2C)(const adios2_variable **variable,
+               ADIOS2_VARIABLE_SHAPE_F2C)(const adios2_variable **variable,
                                           int64_t *shape, int *ierr)
 {
     *ierr = 0;
@@ -101,7 +101,7 @@ void FC_GLOBAL(adios2_variable_shape_f2c,
 
 void
     FC_GLOBAL(adios2_variable_steps_start_f2c,
-              adios2_variable_STEPS_START_F2C)(const adios2_variable **variable,
+              ADIOS2_VARIABLE_STEPS_START_F2C)(const adios2_variable **variable,
                                                int64_t *steps_start, int *ierr)
 {
     *ierr = 0;
