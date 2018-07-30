@@ -1,4 +1,4 @@
-program TestBPWriteReadHeatMapSZ2D
+program TestBPWriteReadHeatMapSZ3D
   use mpi
   use adios2
 
@@ -12,29 +12,29 @@ program TestBPWriteReadHeatMapSZ2D
   type(adios2_operator) :: sz_operator
   integer:: operation_id
 
-  integer(kind=1), dimension(:, :), allocatable :: temperatures_i1, &
-                                                   sel_temperatures_i1
+  integer(kind=1), dimension(:, :, :), allocatable :: temperatures_i1, &
+                                                      sel_temperatures_i1
 
-  integer(kind=2), dimension(:, :), allocatable :: temperatures_i2, &
-                                                   sel_temperatures_i2
+  integer(kind=2), dimension(:, :, :), allocatable :: temperatures_i2, &
+                                                      sel_temperatures_i2
 
-  integer(kind=4), dimension(:, :), allocatable :: temperatures_i4, &
-                                                   sel_temperatures_i4
+  integer(kind=4), dimension(:, :, :), allocatable :: temperatures_i4, &
+                                                      sel_temperatures_i4
 
-  integer(kind=8), dimension(:, :), allocatable :: temperatures_i8, &
-                                                   sel_temperatures_i8
+  integer(kind=8), dimension(:, :, :), allocatable :: temperatures_i8, &
+                                                      sel_temperatures_i8
 
-  real(kind=4), dimension(:, :), allocatable :: temperatures_r4, &
-                                                sel_temperatures_r4
+  real(kind=4), dimension(:, :, :), allocatable :: temperatures_r4, &
+                                                   sel_temperatures_r4
 
-  real(kind=8), dimension(:, :), allocatable :: temperatures_r8, &
-                                                sel_temperatures_r8
+  real(kind=8), dimension(:, :, :), allocatable :: temperatures_r8, &
+                                                   sel_temperatures_r8
 
-  integer(kind=8), dimension(2) :: ishape, istart, icount
-  integer(kind=8), dimension(2) :: sel_start, sel_count
+  integer(kind=8), dimension(3) :: ishape, istart, icount
+  integer(kind=8), dimension(3) :: sel_start, sel_count
   integer :: ierr, irank, isize
-  integer :: in1, in2
-  integer :: i1, i2, i
+  integer :: in1, in2, in3
+  integer :: i1, i2, i3
 
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -42,17 +42,18 @@ program TestBPWriteReadHeatMapSZ2D
 
   in1 = 10
   in2 = 10
+  in3 = 10
 
-  icount = (/in1, in2/)
-  istart = (/0, in2*irank/)
-  ishape = (/in1, in2*isize/)
+  icount = (/in1, in2, in3/)
+  istart = (/0, 0, in3*irank/)
+  ishape = (/in1, in2, in3*isize/)
 
-  allocate (temperatures_i1(in1, in2))
-  allocate (temperatures_i2(in1, in2))
-  allocate (temperatures_i4(in1, in2))
-  allocate (temperatures_i8(in1, in2))
-  allocate (temperatures_r4(in1, in2))
-  allocate (temperatures_r8(in1, in2))
+  allocate (temperatures_i1(in1, in2, in3))
+  allocate (temperatures_i2(in1, in2, in3))
+  allocate (temperatures_i4(in1, in2, in3))
+  allocate (temperatures_i8(in1, in2, in3))
+  allocate (temperatures_r4(in1, in2, in3))
+  allocate (temperatures_r8(in1, in2, in3))
 
   temperatures_i1 = 1
   temperatures_i2 = 1
@@ -67,30 +68,29 @@ program TestBPWriteReadHeatMapSZ2D
 
   call adios2_define_variable(var_temperatures(1), ioPut, &
                               'temperatures_i1', adios2_type_integer1, &
-                              2, ishape, istart, icount, &
+                              3, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(2), ioPut, &
                               'temperatures_i2', adios2_type_integer2, &
-                              2, ishape, istart, icount, &
+                              3, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(3), ioPut, &
                               'temperatures_i4', adios2_type_integer4, &
-                              2, ishape, istart, icount, &
+                              3, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
   call adios2_define_variable(var_temperatures(4), ioPut, &
                               'temperatures_i8', adios2_type_integer8, &
-                              2, ishape, istart, icount, &
+                              3, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
   call adios2_define_operator(sz_operator, adios, 'CompressorSZ', 'sz', ierr)
 
-
   call adios2_define_variable(var_temperatures(5), ioPut, &
                               'temperatures_r4', adios2_type_real, &
-                              2, ishape, istart, icount, &
+                              3, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
   call adios2_add_operation(operation_id, var_temperatures(5), &
@@ -101,17 +101,15 @@ program TestBPWriteReadHeatMapSZ2D
 
   call adios2_define_variable(var_temperatures(6), ioPut, &
                               'temperatures_r8', adios2_type_dp, &
-                              2, ishape, istart, icount, &
+                              3, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
   call adios2_add_operation(operation_id, var_temperatures(6), &
-                            sz_operator, '', '', ierr)
+                            sz_operator, 'accuracy', '0.01', ierr)
+
   if( operation_id /= 0 ) stop 'operation_id not added for dp type'
 
-  call adios2_set_operation_parameter( var_temperatures(6), operation_id, &
-                                       'accuracy', '0.01', ierr)
-
-  call adios2_open(bpWriter, ioPut, 'HeatMapSZ2D_f.bp', adios2_mode_write, &
+  call adios2_open(bpWriter, ioPut, 'HeatMapSZ3D_f.bp', adios2_mode_write, &
                    ierr)
 
   call adios2_put(bpWriter, var_temperatures(1), temperatures_i1, ierr)
@@ -135,7 +133,7 @@ program TestBPWriteReadHeatMapSZ2D
 
     call adios2_declare_io(ioGet, adios, 'HeatMapRead', ierr)
 
-    call adios2_open(bpReader, ioGet, 'HeatMapSZ2D_f.bp', &
+    call adios2_open(bpReader, ioGet, 'HeatMapSZ3D_f.bp', &
                      adios2_mode_read, MPI_COMM_SELF, ierr)
 
     call adios2_inquire_variable(var_temperaturesIn(1), ioGet, &
@@ -151,15 +149,15 @@ program TestBPWriteReadHeatMapSZ2D
     call adios2_inquire_variable(var_temperaturesIn(6), ioGet, &
                                  'temperatures_r8', ierr)
 
-    sel_start = (/0, 0/)
-    sel_count = (/ishape(1), ishape(2)/)
+    sel_start = (/0, 0, 0/)
+    sel_count = (/ishape(1), ishape(2), ishape(3)/)
 
-    allocate (sel_temperatures_i1(ishape(1), ishape(2)))
-    allocate (sel_temperatures_i2(ishape(1), ishape(2)))
-    allocate (sel_temperatures_i4(ishape(1), ishape(2)))
-    allocate (sel_temperatures_i8(ishape(1), ishape(2)))
-    allocate (sel_temperatures_r4(ishape(1), ishape(2)))
-    allocate (sel_temperatures_r8(ishape(1), ishape(2)))
+    allocate (sel_temperatures_i1(ishape(1), ishape(2), ishape(3)))
+    allocate (sel_temperatures_i2(ishape(1), ishape(2), ishape(3)))
+    allocate (sel_temperatures_i4(ishape(1), ishape(2), ishape(3)))
+    allocate (sel_temperatures_i8(ishape(1), ishape(2), ishape(3)))
+    allocate (sel_temperatures_r4(ishape(1), ishape(2), ishape(3)))
+    allocate (sel_temperatures_r8(ishape(1), ishape(2), ishape(3)))
 
     sel_temperatures_i1 = 0
     sel_temperatures_i2 = 0
@@ -168,17 +166,17 @@ program TestBPWriteReadHeatMapSZ2D
     sel_temperatures_r4 = 0.0_4
     sel_temperatures_r8 = 0.0_8
 
-    call adios2_set_selection(var_temperaturesIn(1), 2, sel_start, sel_count, &
+    call adios2_set_selection(var_temperaturesIn(1), 3, sel_start, sel_count, &
                               ierr)
-    call adios2_set_selection(var_temperaturesIn(2), 2, sel_start, sel_count, &
+    call adios2_set_selection(var_temperaturesIn(2), 3, sel_start, sel_count, &
                               ierr)
-    call adios2_set_selection(var_temperaturesIn(3), 2, sel_start, sel_count, &
+    call adios2_set_selection(var_temperaturesIn(3), 3, sel_start, sel_count, &
                               ierr)
-    call adios2_set_selection(var_temperaturesIn(4), 2, sel_start, sel_count, &
+    call adios2_set_selection(var_temperaturesIn(4), 3, sel_start, sel_count, &
                               ierr)
-    call adios2_set_selection(var_temperaturesIn(5), 2, sel_start, sel_count, &
+    call adios2_set_selection(var_temperaturesIn(5), 3, sel_start, sel_count, &
                               ierr)
-    call adios2_set_selection(var_temperaturesIn(6), 2, sel_start, sel_count, &
+    call adios2_set_selection(var_temperaturesIn(6), 3, sel_start, sel_count, &
                               ierr)
 
     call adios2_get(bpReader, var_temperaturesIn(1), sel_temperatures_i1, ierr)
@@ -193,19 +191,21 @@ program TestBPWriteReadHeatMapSZ2D
     sum_i1 = 0
     sum_i2 = 0
 
-    do i2 = 1, sel_count(2)
-      do i1 = 1, sel_count(1)
-        sum_i1 = sum_i1 + sel_temperatures_i1(i1, i2)
-        sum_i2 = sum_i2 + sel_temperatures_i2(i1, i2)
+    do i3 = 1, sel_count(3)
+      do i2 = 1, sel_count(2)
+        do i1 = 1, sel_count(1)
+          sum_i1 = sum_i1 + sel_temperatures_i1(i1, i2, i3)
+          sum_i2 = sum_i2 + sel_temperatures_i2(i1, i2, i3)
+        end do
       end do
     end do
 
-    if (sum_i1 /= 100*isize) stop 'Test failed integer*1'
-    if (sum_i2 /= 100*isize) stop 'Test failed integer*2'
-    if (sum(sel_temperatures_i4) /= 100*isize) stop 'Test failed integer*4'
-    if (sum(sel_temperatures_i8) /= 100*isize) stop 'Test failed integer*8'
-    if (sum(sel_temperatures_r4) /= 100*isize) stop 'Test failed real*4'
-    if (sum(sel_temperatures_r8) /= 100*isize) stop 'Test failed real*8'
+    if (sum_i1 /= 1000*isize) stop 'Test failed integer*1'
+    if (sum_i2 /= 1000*isize) stop 'Test failed integer*2'
+    if (sum(sel_temperatures_i4) /= 1000*isize) stop 'Test failed integer*4'
+    if (sum(sel_temperatures_i8) /= 1000*isize) stop 'Test failed integer*8'
+    if (sum(sel_temperatures_r4) /= 1000*isize) stop 'Test failed real*4'
+    if (sum(sel_temperatures_r8) /= 1000*isize) stop 'Test failed real*8'
 
     if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
     if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)
@@ -219,4 +219,4 @@ program TestBPWriteReadHeatMapSZ2D
   call adios2_finalize(adios, ierr)
   call MPI_Finalize(ierr)
 
-end program TestBPWriteReadHeatMapSZ2D
+end program TestBPWriteReadHeatMapSZ3D

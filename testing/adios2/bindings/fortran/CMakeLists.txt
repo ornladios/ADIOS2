@@ -60,11 +60,18 @@ if(ADIOS2_HAVE_MPI)
   add_executable(TestBPReadGlobalsByName_f TestBPReadGlobalsByName.f90)
   target_link_libraries(TestBPReadGlobalsByName_f adios2_f MPI::MPI_Fortran)
   
-  add_executable(TestBPWriteReadSZ2D_f operation/TestBPWriteReadSZ2D.f90)
-  target_link_libraries(TestBPWriteReadSZ2D_f adios2_f MPI::MPI_Fortran)
+  if(ADIOS2_HAVE_SZ)
+    add_executable(TestBPWriteReadSZ2D_f operation/TestBPWriteReadSZ2D.f90)
+    target_link_libraries(TestBPWriteReadSZ2D_f adios2_f MPI::MPI_Fortran)
+    
+    add_executable(TestBPWriteReadSZ3D_f operation/TestBPWriteReadSZ3D.f90)
+    target_link_libraries(TestBPWriteReadSZ3D_f adios2_f MPI::MPI_Fortran)
+  endif()
   
-  add_executable(TestBPWriteReadZfp2D_f operation/TestBPWriteReadZfp2D.f90)
-  target_link_libraries(TestBPWriteReadZfp2D_f adios2_f MPI::MPI_Fortran)
+  if(ADIOS2_HAVE_ZFP)
+    add_executable(TestBPWriteReadZfp2D_f operation/TestBPWriteReadZfp2D.f90)
+    target_link_libraries(TestBPWriteReadZfp2D_f adios2_f MPI::MPI_Fortran)
+  endif()
   
   set(test_parameters
     ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
@@ -118,13 +125,21 @@ if(ADIOS2_HAVE_MPI)
     COMMAND ${test_parameters} $<TARGET_FILE:TestBPReadGlobalsByName_f>
   )
   
-  add_test(NAME BPWriteReadSZ2D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadSZ2D_f>
-  )
+  if(ADIOS2_HAVE_SZ)
+    add_test(NAME BPWriteReadSZ2D_f
+      COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadSZ2D_f>
+    )
+    
+    add_test(NAME BPWriteReadSZ3D_f
+      COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadSZ3D_f>
+    )
+  endif()
   
-  add_test(NAME BPWriteReadZfp2D_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadZfp2D_f>
-  )
+  if(ADIOS2_HAVE_ZFP)
+    add_test(NAME BPWriteReadZfp2D_f
+      COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadZfp2D_f>
+    )
+  endif()
   
 else()
   
