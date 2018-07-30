@@ -43,30 +43,34 @@ defined(my $writer_pid = fork) or die "Cannot fork $!";
 unless($writer_pid)
   {
     #Child process is here
-    exec ("@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_writers $my_dirname/$writer_prog --duration $duration" . join(" ", @$writer_args));
+    print "TestDriver: EXEC $my_dirname/$writer_prog\n" if $verbose;
+    exec ("@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_writers $my_dirname/$writer_prog " . join(" ", @$writer_args));
     die "Can't exec @MPIEXEC@! $!";
   }
-print "Writer PID: $writer_pid\n" if $verbose;
+print "TestDriver: Writer PID: $writer_pid\n" if $verbose;
         
+my $endtime = time() + $duration;
 
 if ($test_protocol == "kill_readers") {
   
   my @ReaderPIDs;
-  print "Duration at beginning is $duration\n" if $verbose;
-  while ($duration > 0) {
+  print "TestDriver: Duration at beginning is $duration\n" if $verbose;
+
+  while (time() < $endtime) {
+    my $this_start = time();
     my $r = rand();
-    print "Start, number of readers is $#ReaderPIDs\n" if $verbose;
+    print "TestDriver: Start, number of readers is $#ReaderPIDs, max readers is $max_readers\n" if $verbose;
     if ((($#ReaderPIDs <= 0) || ($r < 0.5))  && ($#ReaderPIDs != $max_readers)){
       # fork a reader
       defined(my $reader_pid = fork) or die "Cannot fork $!";
       unless($reader_pid)
 	{
 	  #Child process is here
-	  print "EXEC $my_dirname/$reader_prog\n" if $verbose;
+	  print "TestDriver: EXEC $my_dirname/$reader_prog\n" if $verbose;
 	  exec ("@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_readers $my_dirname/$reader_prog " . join(" ", @$reader_args));
 	  die "Can't exec @MPIEXEC@! $!";
 	}
-      print "Reader PID: $reader_pid\n" if $verbose;
+      print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
       push @ReaderPIDs, $reader_pid;
     } else {
       # kill a reader 
@@ -74,31 +78,37 @@ if ($test_protocol == "kill_readers") {
       @ReaderPIDs = shuffle @ReaderPIDs;
       my $readerToKill = shift @ReaderPIDs;
       kill 'KILL', $readerToKill;
-      print "KILLED Reader PID: $readerToKill\n" if $verbose;
+      print "TestDriver: KILLED Reader PID: $readerToKill\n" if $verbose;
       waitpid($readerToKill, 0);
-      print "Status of killed reader was $?\n" if $verbose;
+      print "TestDriver: Status of killed reader was $?\n" if $verbose;
       if (($? != 0) && ($? != 9)) {
 	$exit_value = 1; #failure
-	print "Setting failure return because of bad exit status of killed reader\n";
+	print "TestDriver: Setting failure return because of bad exit status of killed reader\n";
       }
     }
-    sleep $interval;
-    $duration -= $interval;
-    print "Duration is now $duration\n" if $verbose;
+    my $sleep_time = ($this_start + $interval) - time();
+    print "TestDriver: TEST SLEEP TIME IS $sleep_time\n";
+    if ($sleep_time > 0) {
+      sleep $sleep_time;
+    }
+    my $time_remaining = $endtime - time();
+    print "TestDriver: TEST TIME REMAINING is $time_remaining \n";
   }
+  print "TestDriver: Killing the writer\n";
+  kill 'USR1', $writer_pid;
   foreach my $readerPID (@ReaderPIDs) {
       waitpid($readerPID, 0);
-      print "Status of final reader was $?\n" if $verbose;
+      print "TestDriver: Status of final reader was $?\n" if $verbose;
       if ($? != 0) {
 	$exit_value = 1; #failure
-	print "Setting failure return because of bad exit status on normal reader\n";
+	print "TestDriver: Setting failure return because of bad exit status on normal reader\n";
       }
   }    
   waitpid($writer_pid, 0);
-  print "Status of writer was $?\n" if $verbose;
+  print "TestDriver: Status of writer was $?\n" if $verbose;
   if ($? != 0) {
     $exit_value = 1; #failure
-    print "Setting failure return because of bad exit status of writer\n";
+    print "TestDriver: Setting failure return because of bad exit status of writer\n";
   }
   exit $exit_value;
 } # end kill_readers protocol
