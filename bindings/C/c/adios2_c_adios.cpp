@@ -59,6 +59,33 @@ adios2_io *adios2_at_io(adios2_adios *adios, const char *io_name)
     return io;
 }
 
+adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name,
+                                        const char *type)
+{
+    adios2::helper::CheckForNullptr(
+        adios, "for adios2_adios, in call to adios2_define_operator");
+    adios2_operator *op = reinterpret_cast<adios2_operator *>(
+        &reinterpret_cast<adios2::core::ADIOS *>(adios)->DefineOperator(name,
+                                                                        type));
+    return op;
+}
+
+adios2_operator *adios2_inquire_operator(adios2_adios *adios, const char *name)
+{
+    adios2::helper::CheckForNullptr(
+        adios, "for adios2_adios, in call to adios2_inquire_operator");
+
+    adios2::core::Operator *opCpp =
+        reinterpret_cast<adios2::core::ADIOS *>(adios)->InquireOperator(name);
+
+    if (opCpp == nullptr)
+    {
+        return nullptr;
+    }
+
+    return reinterpret_cast<adios2_operator *>(opCpp);
+}
+
 void adios2_flush_all(adios2_adios *adios)
 {
     adios2::helper::CheckForNullptr(

@@ -101,9 +101,17 @@ module adios2_parameters_mod
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
         character(len=1024):: name = ''
-        character(len=15):: type
+        character(len=15):: type = ''
         integer :: mode = adios2_mode_undefined
     end type
+
+    type adios2_operator
+        integer(kind=8):: f2c = 0_8
+        logical :: valid = .false.
+        character(len=1024):: name = ''
+        character(len=1024):: type = ''
+    end type
+
 
     ! High-level API
     type adios2_file

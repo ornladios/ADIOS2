@@ -154,6 +154,27 @@ void *adios2_get_data(const adios2_variable *variable);
  */
 void adios2_set_data(adios2_variable *variable, const void *data);
 
+/**
+ * add an operation to an
+ * @param op operator performing the particular operation
+ * @param key parameter key supported by the operation
+ * @param value parameter value supported by the operation
+ * @return operation_id handler to be used with adios2_add_operation_param
+ */
+size_t adios2_add_operation(adios2_variable *variable, adios2_operator *op,
+                            const char *key, const char *value);
+
+/**
+ * Adds a parameter to an operation created with adios2_add_operation
+ * @param variable
+ * @param operation_id
+ * @param key
+ * @param value
+ */
+void adios2_set_operation_parameter(adios2_variable *variable,
+                                    const size_t operation_id, const char *key,
+                                    const char *value);
+
 #ifdef __cplusplus
 } // end extern C
 #endif

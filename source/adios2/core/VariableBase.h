@@ -148,6 +148,15 @@ public:
     size_t AddOperation(core::Operator &op,
                         const Params &parameters = Params()) noexcept;
 
+    /**
+     * Sets a parameter by key/value in an existing operation from AddOperation
+     * @param operationID returned handler form AddOperation
+     * @param key input parameter key
+     * @param value input parameter value
+     */
+    void SetOperationParameter(const size_t operationID, const std::string key,
+                               const std::string value);
+
     /** Self-check dims according to type, called from Engine before Write
      * @param hint extra debugging info for the exception */
     void CheckDimensions(const std::string hint) const;
