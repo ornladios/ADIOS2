@@ -740,8 +740,30 @@ void SstWriterClose(SstStream Stream)
     {
         CP_verbose(Stream,
                    "Waiting for timesteps to be released in WriterClose\n");
-        CP_verbose(Stream, "The first timestep still queued is %d\n",
-                   Stream->QueuedTimesteps->Timestep);
+        if (Stream->Verbose)
+        {
+            CPTimestepList List = Stream->QueuedTimesteps;
+            char *StringList = malloc(1);
+            StringList[0] = 0;
+            while (List)
+            {
+                char tmp[20];
+                sprintf(tmp, "%ld ", List->Timestep);
+                StringList =
+                    realloc(StringList, strlen(StringList) + strlen(tmp) + 1);
+                strcat(StringList, tmp);
+                List = List->Next;
+            }
+            CP_verbose(Stream, "The timesteps still queued are: %s\n",
+                       StringList);
+            free(StringList);
+        }
+        CP_verbose(Stream, "Reader Count is %d\n", Stream->ReaderCount);
+        for (int i = 0; i < Stream->ReaderCount; i++)
+        {
+            printf("Reader [%d] status is %d\n", i,
+                   Stream->Readers[i]->ReaderStatus);
+        }
         /* NEED TO HANDLE FAILURE HERE */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
@@ -1310,7 +1332,7 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
 
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Reader Close message received for stream %p.  Setting state to "
-               "PeerClosed and releasing timesteps.",
+               "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
 }
