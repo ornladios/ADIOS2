@@ -24,7 +24,7 @@ adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
 // Number of steps
-std::size_t NSteps = -1;
+std::size_t NSteps = 200;
 
 static std::string Trim(std::string &str)
 {
@@ -209,10 +209,13 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
         engine.Get(var_time, (int64_t *)&write_time);
-        engine.EndStep();
+	try {
+	    engine.EndStep();
 
-        EXPECT_EQ(validateSstTestData(myStart, myLength, t), 0);
-        write_times.push_back(write_time);
+	    EXPECT_EQ(validateSstTestData(myStart, myLength, t), 0);
+	    write_times.push_back(write_time);
+	} catch (...) {std::cout << "Exception in EndStep, writer failed";}
+
         ++t;
         if (NSteps != -1)
         {
