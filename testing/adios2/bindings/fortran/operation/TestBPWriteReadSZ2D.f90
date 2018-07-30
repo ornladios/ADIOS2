@@ -1,4 +1,4 @@
-program TestBPWriteReadHeatMap2D
+program TestBPWriteReadHeatMapSZ2D
   use mpi
   use adios2
 
@@ -9,6 +9,8 @@ program TestBPWriteReadHeatMap2D
   type(adios2_io) :: ioPut, ioGet
   type(adios2_engine) :: bpWriter, bpReader
   type(adios2_variable), dimension(6) :: var_temperatures, var_temperaturesIn
+  type(adios2_operator) :: sz_operator
+  integer:: operation_id
 
   integer(kind=1), dimension(:, :), allocatable :: temperatures_i1, &
                                                    sel_temperatures_i1
@@ -32,7 +34,7 @@ program TestBPWriteReadHeatMap2D
   integer(kind=8), dimension(2) :: sel_start, sel_count
   integer :: ierr, irank, isize
   integer :: in1, in2
-  integer :: i1, i2
+  integer :: i1, i2, i
 
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -83,17 +85,32 @@ program TestBPWriteReadHeatMap2D
                               2, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
+  call adios2_define_operator(sz_operator, adios, 'CompressorSZ', 'sz', ierr)
+
+
   call adios2_define_variable(var_temperatures(5), ioPut, &
                               'temperatures_r4', adios2_type_real, &
                               2, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
+
+  call adios2_add_operation(operation_id, var_temperatures(5), &
+                            sz_operator, 'accuracy', '0.01', ierr)
+
+  if( operation_id /= 0 ) stop 'operation_id not added for real type'
+
 
   call adios2_define_variable(var_temperatures(6), ioPut, &
                               'temperatures_r8', adios2_type_dp, &
                               2, ishape, istart, icount, &
                               adios2_constant_dims, ierr)
 
-  call adios2_open(bpWriter, ioPut, 'HeatMap2D_f.bp', adios2_mode_write, &
+  call adios2_add_operation(operation_id, var_temperatures(6), &
+                            sz_operator, 'accuracy', '0.01', ierr)
+
+  if( operation_id /= 0 ) stop 'operation_id not added for dp type'
+
+
+  call adios2_open(bpWriter, ioPut, 'HeatMapSZ2D_f.bp', adios2_mode_write, &
                    ierr)
 
   call adios2_put(bpWriter, var_temperatures(1), temperatures_i1, ierr)
@@ -117,7 +134,7 @@ program TestBPWriteReadHeatMap2D
 
     call adios2_declare_io(ioGet, adios, 'HeatMapRead', ierr)
 
-    call adios2_open(bpReader, ioGet, 'HeatMap2D_f.bp', &
+    call adios2_open(bpReader, ioGet, 'HeatMapSZ2D_f.bp', &
                      adios2_mode_read, MPI_COMM_SELF, ierr)
 
     call adios2_inquire_variable(var_temperaturesIn(1), ioGet, &
@@ -201,4 +218,4 @@ program TestBPWriteReadHeatMap2D
   call adios2_finalize(adios, ierr)
   call MPI_Finalize(ierr)
 
-end program TestBPWriteReadHeatMap2D
+end program TestBPWriteReadHeatMapSZ2D
