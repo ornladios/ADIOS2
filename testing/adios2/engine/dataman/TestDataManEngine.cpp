@@ -13,6 +13,8 @@
 #include <thread>
 
 #include <adios2.h>
+#include <adios2/ADIOSMacros.h>
+#include <adios2/helper/adiosFunctions.h>
 #include <gtest/gtest.h>
 
 #ifdef ADIOS2_HAVE_MPI
@@ -63,6 +65,50 @@ void VerifyData(const std::vector<T> &data, size_t step)
     {
         PrintData(data, step);
     }
+}
+
+void UserCallBack(void *data, const std::string &doid, const std::string var,
+                  const std::string &dtype,
+                  const std::vector<std::size_t> varshape)
+{
+
+    std::cout << "Object : " << doid << std::endl;
+    std::cout << "Variable :" << var << std::endl;
+    std::cout << "Type : " << dtype << std::endl;
+    std::cout << "Shape : [";
+    for (size_t i = 0; i < varshape.size(); ++i)
+    {
+        std::cout << varshape[i];
+        if (i != varshape.size() - 1)
+        {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]" << std::endl;
+
+    size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
+                                     std::multiplies<std::size_t>());
+
+    size_t dumpsize = 128;
+    if (varsize < dumpsize)
+    {
+        dumpsize = varsize;
+    }
+    dumpsize = varsize;
+
+    std::cout << "Data : " << std::endl;
+
+#define declare_type(T)                                                        \
+    if (dtype == adios2::helper::GetType<T>())                                 \
+    {                                                                          \
+        for (size_t i = 0; i < dumpsize; ++i)                                  \
+        {                                                                      \
+            std::cout << (reinterpret_cast<T *>(data))[i] << " ";              \
+        }                                                                      \
+        std::cout << std::endl;                                                \
+    }
+    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
 }
 
 void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
@@ -145,6 +191,44 @@ void DataManReaderStrict(const Dims &shape, const Dims &start,
     dataManReader.Close();
 }
 
+void DataManReaderCallback(const Dims &shape, const Dims &start,
+                           const Dims &count, const size_t steps,
+                           const std::string &workflowMode,
+                           const std::vector<adios2::Params> &transParams)
+{
+    int timeout = 5;
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
+                                      std::multiplies<size_t>());
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(adios2::DebugON);
+#endif
+    adios2::Operator callbackFloat = adios.DefineOperator(
+        "Print float Variable callback",
+        std::function<void(void *, const std::string &, const std::string &,
+                           const std::string &, const adios2::Dims &)>(
+            UserCallBack));
+
+    adios2::IO dataManIO = adios.DeclareIO("WAN");
+    dataManIO.SetEngine("DataMan");
+    dataManIO.SetParameters({
+        {"WorkflowMode", "subscribe"},
+    });
+    dataManIO.AddTransport(
+        "WAN",
+        {
+            {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12306"},
+        });
+    dataManIO.AddOperation(callbackFloat); // propagate to all Engines
+
+    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
+
+    std::this_thread::sleep_for(std::chrono::seconds(timeout));
+
+    dataManReader.Close();
+}
+
 void DataManReaderLoose(const Dims &shape, const Dims &start, const Dims &count,
                         const size_t steps, const std::string &workflowMode,
                         const std::vector<adios2::Params> &transParams)
@@ -208,6 +292,23 @@ TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
         {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12307"}}};
     std::string workflowMode = "subscribe";
     auto r = std::thread(DataManReaderLoose, shape, start, count, steps,
+                         workflowMode, transportParams);
+    DataManWriter(shape, start, count, steps, workflowMode, transportParams);
+    std::cout << "Writer ended" << std::endl;
+    r.join();
+    std::cout << "Reader ended" << std::endl;
+}
+
+TEST_F(DataManEngineTest, WriteRead_1D_Callback)
+{
+    Dims shape = {10};
+    Dims start = {0};
+    Dims count = {10};
+    size_t steps = 200;
+    std::vector<adios2::Params> transportParams = {
+        {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12307"}}};
+    std::string workflowMode = "subscribe";
+    auto r = std::thread(DataManReaderCallback, shape, start, count, steps,
                          workflowMode, transportParams);
     DataManWriter(shape, start, count, steps, workflowMode, transportParams);
     std::cout << "Writer ended" << std::endl;
