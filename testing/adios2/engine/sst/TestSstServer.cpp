@@ -7,6 +7,7 @@
 #include <ctime>
 
 #include <iostream>
+#include <signal.h>
 #include <sstream>
 #include <stdexcept>
 
@@ -22,8 +23,12 @@ public:
     SstWriteTest() = default;
 };
 
-adios2::Params engineParams = {}; // parsed from command line
-int DurationSeconds = 100;
+adios2::Params engineParams = {};         // parsed from command line
+int DurationSeconds = 60 * 60 * 24 * 365; // one year default
+int MyCloseNow = 0;
+int GlobalCloseNow = 0;
+
+void SigHandler(int sig) { MyCloseNow = 1; }
 
 static std::string Trim(std::string &str)
 {
@@ -119,7 +124,7 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
     std::time_t EndTime = std::time(NULL) + DurationSeconds;
     size_t step = 0;
 
-    while (std::time(NULL) < EndTime)
+    while ((std::time(NULL) < EndTime) && !GlobalCloseNow)
     {
         // Generate test data for each process uniquely
         generateSstTestData(step, mpiRank, mpiSize);
@@ -173,8 +178,11 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         engine.EndStep();
         usleep(1000 * 100); /* sleep for .1 seconds */
         step++;
+#ifdef ADIOS2_HAVE_MPI
+        MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
+                      MPI_COMM_WORLD);
+#endif
     }
-
     // Close the file
     engine.Close();
 }
@@ -213,6 +221,12 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
     }
+
+    struct sigaction act;
+    act.sa_handler = SigHandler;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+    sigaction(SIGUSR1, &act, 0);
 
     result = RUN_ALL_TESTS();
 
