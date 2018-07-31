@@ -79,11 +79,6 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                 m_MutexBuffer.unlock();
                 if (j.compression == "zfp")
                 {
-                    std::cout << "=========" << std::endl;
-                    for (auto i : j.params)
-                    {
-                        std::cout << i.first << "   " << i.second << std::endl;
-                    }
 #ifdef ADIOS2_HAVE_ZFP
                     core::compress::CompressZfp decompressor(j.params, true);
                     std::vector<char> decompressBuffer;

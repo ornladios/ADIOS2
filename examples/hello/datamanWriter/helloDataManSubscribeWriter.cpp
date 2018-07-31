@@ -24,8 +24,12 @@ std::vector<adios2::Params> transportParams = {
      {"IPAddress", "127.0.0.1"},
      {"Port", "12307"},
      {"CompressionMethod", "sz"},
-     {"zfp:rate", "2.0"}},
-};
+     {"sz:accuracy", "10"}},
+    {{"Library", "ZMQ"},
+     {"IPAddress", "127.0.0.1"},
+     {"Port", "12308"},
+     {"CompressionMethod", "zfp"},
+     {"zfp:rate", "4"}}};
 
 // data properties
 size_t steps = 1000;

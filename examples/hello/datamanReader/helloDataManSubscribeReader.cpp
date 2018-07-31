@@ -20,7 +20,7 @@
 std::string adiosEngine = "DataMan";
 std::string workflowMode = "subscribe";
 std::vector<adios2::Params> transportParams = {
-    {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12307"}}};
+    {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12308"}}};
 
 // data properties
 size_t steps = 10;

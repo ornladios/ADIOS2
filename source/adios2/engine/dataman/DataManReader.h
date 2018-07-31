@@ -46,7 +46,6 @@ private:
         size_t,
         std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>>>
         m_MetaDataMap;
-    std::mutex m_MutexIO;
 
     void Init();
     void IOThread(std::shared_ptr<transportman::DataMan> man);

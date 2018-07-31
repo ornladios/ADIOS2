@@ -33,6 +33,7 @@ DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
 
 DataMan::~DataMan()
 {
+    auto start_time = std::chrono::system_clock::now();
     while (true)
     {
         int s = 0;
@@ -49,6 +50,17 @@ DataMan::~DataMan()
         {
             break;
         }
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > m_Timeout)
+        {
+            break;
+        }
+        // add a sleep here because this loop is occupying the buffer queue
+        // lock, and this sleep would make time for reader or writer thread and
+        // help it finish sooner.
+        std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
     for (auto &readThread : m_ReadThreads)
     {
@@ -81,11 +93,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         GetStringParameter(paramsVector[i], "IPAddress", ip);
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
-        int timeout;
-        if (GetIntParameter(paramsVector[i], "Timeout", timeout) == false)
-        {
-            timeout = 3000;
-        }
+        GetIntParameter(paramsVector[i], "Timeout", m_Timeout);
 
         // Calculate port number
         int mpiRank, mpiSize;
@@ -112,7 +120,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             else if (workflowMode == "p2p")
             {
                 wanTransport = std::make_shared<transport::WANZmqP2P>(
-                    ip, port, m_MPIComm, timeout, m_DebugMode);
+                    ip, port, m_MPIComm, m_Timeout, m_DebugMode);
             }
             else if (workflowMode == "query")
             {
