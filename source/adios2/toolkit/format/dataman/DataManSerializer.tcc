@@ -71,18 +71,18 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     {
         if (i->second == "zfp" || i->second == "Zfp" || i->second == "ZFP")
         {
-            metaj["Z"] = i->second;
+            metaj["Z"] = "zfp";
             compressed = Zfp<T>(metaj, datasize, inputData, varCount, params);
         }
         else if (i->second == "sz" || i->second == "Sz" || i->second == "SZ")
         {
-            metaj["Z"] = i->second;
+            metaj["Z"] = "sz";
             compressed = Sz<T>(metaj, datasize, inputData, varCount, params);
         }
         else if (i->second == "bzip2" || i->second == "Bzip2" ||
                  i->second == "BZip2" || i->second == "BZIP2")
         {
-            metaj["Z"] = i->second;
+            metaj["Z"] = "bzip2";
             compressed = BZip2<T>(metaj, datasize, inputData, varCount, params);
         }
         else
@@ -140,8 +140,8 @@ bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
         std::string prefix = i.first.substr(0, 4);
         if (prefix == "zfp:" || prefix == "Zfp:" || prefix == "ZFP:")
         {
-            metaj[i.first] = i.second;
             std::string key = i.first.substr(4);
+            metaj[i.first] = i.second;
             p[key] = i.second;
         }
     }
@@ -177,11 +177,11 @@ bool DataManSerializer::Sz(nlohmann::json &metaj, size_t &datasize,
     Params p;
     for (const auto &i : params)
     {
-        std::string prefix = i.first.substr(0, 4);
+        std::string prefix = i.first.substr(0, 3);
         if (prefix == "sz:" || prefix == "Sz:" || prefix == "SZ:")
         {
-            metaj[i.first] = i.second;
             std::string key = i.first.substr(3);
+            metaj[i.first] = i.second;
             p[key] = i.second;
         }
     }
@@ -218,12 +218,12 @@ bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
     Params p;
     for (const auto &i : params)
     {
-        std::string prefix = i.first.substr(0, 4);
+        std::string prefix = i.first.substr(0, 6);
         if (prefix == "bzip2:" || prefix == "Bzip2:" || prefix == "BZip2:" ||
             prefix == "BZIP2:")
         {
+            std::string key = i.first.substr(6);
             metaj[i.first] = i.second;
-            std::string key = i.first.substr(3);
             p[key] = i.second;
         }
     }

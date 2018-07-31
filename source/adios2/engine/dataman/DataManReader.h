@@ -37,7 +37,6 @@ public:
 
 private:
     bool m_UpdatingMetaData = true;
-    std::vector<const core::Operator *> m_Callbacks;
 
     bool m_Listening = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
