@@ -92,9 +92,9 @@ void UserCallBack(void *data, const std::string &doid, const std::string var,
     {
         dumpsize = varsize;
     }
-    dumpsize = varsize;
 
-    std::cout << "Data : " << std::endl;
+    std::cout << "Printing data for the first " << dumpsize << " elements"
+              << std::endl;
 
 #define declare_type(T)                                                        \
     if (dtype == adios2::helper::GetType<T>())                                 \
@@ -156,7 +156,6 @@ void DataManReaderStrict(const Dims &shape, const Dims &start,
     }
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     adios2::Variable<float> bpFloats;
-    size_t i = 0;
 
     for (size_t i = 0; i < steps; ++i)
     {
@@ -174,8 +173,9 @@ void DataManReaderStrict(const Dims &shape, const Dims &start,
         }
         else
         {
-            i--;
-            continue;
+            std::cout << "DataManReader end of stream at Step " << i
+                      << std::endl;
+            break;
         }
     }
     dataManReader.Close();
@@ -187,8 +187,6 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
                            const std::vector<adios2::Params> &transParams,
                            const size_t timeout)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
     adios2::ADIOS adios(adios2::DebugON);
     adios2::Operator callbackFloat = adios.DefineOperator(
         "Print float Variable callback",
