@@ -290,6 +290,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_P2P)
     std::cout << "Reader thread ended" << std::endl;
 }
 
+#ifdef ADIOS2_HAVE_ZFP
 TEST_F(DataManEngineTest, WriteRead_2D_P2P_Zfp)
 {
     // set parameters
@@ -317,7 +318,9 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_Zfp)
     r.join();
     std::cout << "Reader thread ended" << std::endl;
 }
+#endif // ZFP
 
+#ifdef ADIOS2_HAVE_SZ
 TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
 {
     // set parameters
@@ -346,7 +349,9 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
     r.join();
     std::cout << "Reader thread ended" << std::endl;
 }
+#endif // SZ
 
+#ifdef ADIOS2_HAVE_BZIP2
 TEST_F(DataManEngineTest, WriteRead_2D_P2P_BZip2)
 {
     // set parameters
@@ -374,6 +379,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_BZip2)
     r.join();
     std::cout << "Reader thread ended" << std::endl;
 }
+#endif // BZIP2
 
 TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
 {
@@ -425,7 +431,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_Callback)
     std::cout << "Reader thread ended" << std::endl;
 }
 
-#endif
+#endif // ZEROMQ
 
 int main(int argc, char **argv)
 {
