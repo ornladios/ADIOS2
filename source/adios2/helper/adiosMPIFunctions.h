@@ -100,7 +100,7 @@ void GathervArrays(const T *source, const size_t sourceCount,
 template <class T>
 void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
                     size_t &position, MPI_Comm mpiComm,
-                    const int rankDestination = 0);
+                    const int rankDestination = 0, const size_t extraSize = 0);
 
 /**
  * Gets the displacements (offsets, start) for each
