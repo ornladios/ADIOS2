@@ -318,6 +318,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_Zfp)
 }
 #endif // ZFP
 
+/*
 #ifdef ADIOS2_HAVE_SZ
 TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
 {
@@ -348,6 +349,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
     std::cout << "Reader thread ended" << std::endl;
 }
 #endif // SZ
+*/
 
 #ifdef ADIOS2_HAVE_BZIP2
 TEST_F(DataManEngineTest, WriteRead_2D_P2P_BZip2)
