@@ -436,7 +436,10 @@ TEST_F(DataManEngineTest, WriteRead_1D_Callback)
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Init(&argc, &argv);
+    int mpi_provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
+    std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
+              << " and provided Mode " << mpi_provided << std::endl;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
