@@ -41,8 +41,6 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
-size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
-
 void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
@@ -78,7 +76,7 @@ void DataManWriter::EndStep()
     }
 }
 
-void DataManWriter::Flush(const int transportIndex) {}
+size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 
 // PRIVATE functions below
 

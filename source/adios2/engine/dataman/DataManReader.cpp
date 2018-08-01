@@ -33,9 +33,13 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 
 DataManReader::~DataManReader()
 {
-    if (m_IsClosed == false)
+    m_Listening = false;
+    m_CallbackMutex.lock();
+    m_Callbacks.resize(0);
+    m_CallbackMutex.unlock();
+    if (m_DataThread != nullptr)
     {
-        DoClose();
+        m_DataThread->join();
     }
 }
 
@@ -63,13 +67,11 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
 }
 
+void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+
 size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
 void DataManReader::PerformGets() {}
-
-void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
-
-void DataManReader::Flush(const int transportIndex) {}
 
 // PRIVATE
 
@@ -271,21 +273,7 @@ void DataManReader::RunCallback()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void DataManReader::DoClose(const int transportIndex)
-{
-    if (transportIndex == -1)
-    {
-        m_Listening = false;
-        m_CallbackMutex.lock();
-        m_Callbacks.resize(0);
-        m_CallbackMutex.unlock();
-        if (m_DataThread != nullptr)
-        {
-            m_DataThread->join();
-        }
-    }
-    m_DataMan = nullptr;
-}
+void DataManReader::DoClose(const int transportIndex) {}
 
 void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
 {

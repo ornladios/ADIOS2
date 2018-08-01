@@ -31,10 +31,9 @@ public:
     virtual ~DataManReader();
     StepStatus BeginStep(StepMode stepMode,
                          const float timeoutSeconds = 0.f) final;
-    size_t CurrentStep() const final;
     void PerformGets() final;
     void EndStep() final;
-    void Flush(const int transportIndex = -1) final;
+    size_t CurrentStep() const final;
 
 private:
     bool m_UpdatingMetaData = true;
