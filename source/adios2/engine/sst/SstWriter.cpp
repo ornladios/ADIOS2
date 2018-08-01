@@ -110,6 +110,8 @@ void SstWriter::EndStep()
 
 void SstWriter::PerformPuts() {}
 
+void SstWriter::Flush(const int transportIndex) {}
+
 // PRIVATE functions below
 void SstWriter::Init()
 {
