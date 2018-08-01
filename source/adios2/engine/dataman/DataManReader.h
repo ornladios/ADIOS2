@@ -37,7 +37,6 @@ public:
 
 private:
     bool m_UpdatingMetaData = true;
-    std::vector<const core::Operator *> m_Callbacks;
 
     bool m_Listening = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
@@ -47,7 +46,6 @@ private:
         size_t,
         std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>>>
         m_MetaDataMap;
-    std::mutex m_MutexIO;
 
     void Init();
     void IOThread(std::shared_ptr<transportman::DataMan> man);

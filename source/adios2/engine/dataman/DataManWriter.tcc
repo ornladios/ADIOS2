@@ -55,6 +55,14 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     {
         PutSyncCommonDataMan(variable, values);
     }
+    else if (m_Format == "binary")
+    {
+    }
+    else
+    {
+        throw(std::invalid_argument(
+            "[DataManWriter::PutSyncCommon] invalid format " + m_Format));
+    }
 }
 
 template <class T>

@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloDataManWriter.cpp
+ * helloDataManSubscribeWriter.cpp
  *
  *  Created on: Feb 16, 2017
  *      Author: Jason Wang
@@ -17,13 +17,22 @@
 
 // adios2 dataman configurations
 std::string adiosEngine = "DataMan";
-std::string transportLibrary = "ZMQ";
-std::string ip = "127.0.0.1";
-std::string port = "12306";
 std::string workflowMode = "subscribe";
+std::vector<adios2::Params> transportParams = {
+    {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12306"}},
+    {{"Library", "ZMQ"},
+     {"IPAddress", "127.0.0.1"},
+     {"Port", "12307"},
+     {"CompressionMethod", "sz"},
+     {"sz:accuracy", "10"}},
+    {{"Library", "ZMQ"},
+     {"IPAddress", "127.0.0.1"},
+     {"Port", "12308"},
+     {"CompressionMethod", "zfp"},
+     {"zfp:rate", "4"}}};
 
 // data properties
-size_t steps = 100;
+size_t steps = 1000;
 adios2::Dims shape({10, 10});
 adios2::Dims start({0, 0});
 adios2::Dims count({6, 8});
@@ -61,9 +70,10 @@ int main(int argc, char *argv[])
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine(adiosEngine);
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
-    dataManIO.AddTransport(
-        "WAN",
-        {{"Library", transportLibrary}, {"IPAddress", ip}, {"Port", port}});
+    for (const auto &i : transportParams)
+    {
+        dataManIO.AddTransport("WAN", i);
+    }
 
     // open stream
     adios2::Engine dataManWriter =

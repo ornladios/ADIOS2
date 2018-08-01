@@ -49,6 +49,12 @@ private:
     template <class T>
     bool Zfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
              const Dims &varCount, const Params &params);
+    template <class T>
+    bool Sz(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+            const Dims &varCount, const Params &params);
+    template <class T>
+    bool BZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+               const Dims &varCount, const Params &params);
 };
 
 } // end namespace format

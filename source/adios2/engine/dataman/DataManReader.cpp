@@ -34,6 +34,9 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 DataManReader::~DataManReader()
 {
     m_Listening = false;
+    m_CallbackMutex.lock();
+    m_Callbacks.resize(0);
+    m_CallbackMutex.unlock();
     if (m_DataThread != nullptr)
     {
         m_DataThread->join();
@@ -129,31 +132,30 @@ StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
                                        const float timeoutSeconds)
 {
     ++m_CurrentStep;
-    StepStatus status;
-
+    if (m_UpdatingMetaData)
+    {
+        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+    }
     auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
-    // register callbacks
-    for (const auto &j : m_IO.m_Operations)
+    auto start_time = std::chrono::system_clock::now();
+    while (vars == nullptr)
     {
-        if (j.Op->m_Type == "Signature2")
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() > timeoutSeconds)
         {
-            m_Callbacks.push_back(j.Op);
+            return StepStatus::EndOfStream;
         }
+        vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
     }
 
-    if (vars == nullptr)
+    for (const auto &i : *vars)
     {
-        status = StepStatus::NotReady;
-        --m_CurrentStep;
-    }
-    else
-    {
-        for (const auto &i : *vars)
+        if (i.type == "compound")
         {
-            if (i.type == "compound")
-            {
-                throw("Compound type is not supported yet.");
-            }
+            throw("Compound type is not supported yet.");
+        }
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
@@ -163,16 +165,11 @@ StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
             m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-        }
-        status = StepStatus::OK;
     }
-    if (m_UpdatingMetaData)
-    {
-        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
-    }
-    return status;
+
+    return StepStatus::OK;
 }
 
 void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
@@ -188,29 +185,30 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
                 m_FinalStep = ret;
             }
         }
-        if (m_Callbacks.empty() == false)
-        {
-            RunCallback();
-        }
+
+        RunCallback();
     }
 }
 
 void DataManReader::RunCallback()
 {
-    for (size_t step = m_DataManDeserializer.MinStep();
-         step <= m_DataManDeserializer.MaxStep(); ++step)
+    m_CallbackMutex.lock();
+    if (m_Callbacks.empty() == false)
     {
-        auto varList = m_DataManDeserializer.GetMetaData(step);
-        if (varList == nullptr)
+        for (size_t step = m_DataManDeserializer.MinStep();
+             step <= m_DataManDeserializer.MaxStep(); ++step)
         {
-            return;
-        }
-        for (const auto &i : *varList)
-        {
-            if (i.type == "compound")
+            auto varList = m_DataManDeserializer.GetMetaData(step);
+            if (varList == nullptr)
             {
-                throw("Compound type is not supported yet.");
+                return;
             }
+            for (const auto &i : *varList)
+            {
+                if (i.type == "compound")
+                {
+                    throw("Compound type is not supported yet.");
+                }
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
@@ -230,14 +228,27 @@ void DataManReader::RunCallback()
         m_DataManDeserializer.Get(*v, step);                                   \
         for (auto &j : m_Callbacks)                                            \
         {                                                                      \
-            j->RunCallback2(varData.data(), i.doid, i.name, i.type, i.shape);  \
+            if (j->m_Type == "Signature2")                                     \
+            {                                                                  \
+                j->RunCallback2(varData.data(), i.doid, i.name, i.type,        \
+                                i.shape);                                      \
+            }                                                                  \
+            else                                                               \
+            {                                                                  \
+                throw(std::runtime_error(                                      \
+                    "[DataManReader::RunCallback] Callback funtion "           \
+                    "registered is not of Signatrue2. It might be modified "   \
+                    "from outside DataMan Engine."));                          \
+            }                                                                  \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+                ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+            }
+            m_DataManDeserializer.Erase(step);
         }
-        m_DataManDeserializer.Erase(step);
     }
+    m_CallbackMutex.unlock();
 }
 
 #define declare_type(T)                                                        \
@@ -282,11 +293,9 @@ void DataManReader::IOThreadBP(std::shared_ptr<transportman::DataMan> man)
                 std::memcpy(deserializer.m_Data.m_Buffer.data(), buffer->data(),
                             buffer->size());
 
-                m_MutexIO.lock();
                 m_IO.RemoveAllVariables();
                 m_IO.RemoveAllAttributes();
                 deserializer.ParseMetadata(deserializer.m_Data, m_IO);
-                m_MutexIO.unlock();
 
                 const auto variablesInfo = m_IO.GetAvailableVariables();
                 for (const auto &variableInfoPair : variablesInfo)

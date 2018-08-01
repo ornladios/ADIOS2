@@ -63,6 +63,17 @@ void DataManWriter::EndStep()
             m_DataMan->WriteWAN(buf, i);
         }
     }
+    else if (m_Format == "binary")
+    {
+        throw(std::invalid_argument("[DataManWriter::EndStep] binary format is "
+                                    "not supported in generic "
+                                    "BeginStep-EndStep API."));
+    }
+    else
+    {
+        throw(std::invalid_argument("[DataManWriter::EndStep] format " +
+                                    m_Format + " is not supported."));
+    }
 }
 
 size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
@@ -71,6 +82,11 @@ size_t DataManWriter::CurrentStep() const { return m_CurrentStep; }
 
 void DataManWriter::Init()
 {
+
+    // initialize transports
+    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
+    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
+                                 Mode::Write, m_WorkflowMode, true);
 
     // initialize serializer
     if (m_Format == "bp")
@@ -90,11 +106,14 @@ void DataManWriter::Init()
                                                             m_IsLittleEndian));
         }
     }
-
-    // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                 Mode::Write, m_WorkflowMode, true);
+    else if (m_Format == "binary")
+    {
+    }
+    else
+    {
+        throw(std::invalid_argument("[DataManWriter::Init] format " + m_Format +
+                                    " is not supported."));
+    }
 }
 
 void DataManWriter::IOThread(std::shared_ptr<transportman::DataMan> man) {}
