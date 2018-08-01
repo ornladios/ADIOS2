@@ -62,7 +62,10 @@ void VerifyData(const std::vector<T> &data, size_t step)
         ASSERT_EQ(data[i], tmpdata[i]);
     }
 
-    PrintData(data, step);
+    if (step < 500)
+    {
+        PrintData(data, step);
+    }
 }
 
 void UserCallBack(void *data, const std::string &doid, const std::string var,
@@ -203,7 +206,7 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
     {
         dataManIO.AddTransport("WAN", params);
     }
-    dataManIO.AddOperation(callbackFloat); // propagate to all Engines
+    dataManIO.AddOperation(callbackFloat);
 
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
