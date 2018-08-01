@@ -122,10 +122,24 @@ void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
     m_H5File.Write(variable, values);
 }
 
-void HDF5WriterP::DoClose(const int transportIndex)
+void HDF5WriterP::Flush(const int transportIndex)
 {
     m_H5File.WriteAttrFromIO(m_IO);
-    m_H5File.Close();
+
+    m_Flushed = true;
+}
+
+void HDF5WriterP::DoClose(const int transportIndex)
+{
+    if (!m_Flushed)
+    {
+        m_H5File.WriteAttrFromIO(m_IO);
+        m_H5File.Close();
+    }
+    else
+    {
+        printf("flushed, no close (##asend usage) \n");
+    }
 }
 
 } // end namespace engine

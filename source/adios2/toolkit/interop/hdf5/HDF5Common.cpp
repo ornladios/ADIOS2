@@ -159,10 +159,18 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 
     if (m_NumAdiosSteps <= 0)
     {
-        hid_t attr = H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
+        hsize_t numobj;
+        H5Gget_num_objs(m_FileId, &numobj);
+        m_NumAdiosSteps = numobj;
 
-        H5Aread(attr, H5T_NATIVE_UINT, &m_NumAdiosSteps);
-        H5Aclose(attr);
+        if (H5Aexists(m_FileId, ATTRNAME_NUM_STEPS.c_str()))
+        {
+            hid_t attr =
+                H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
+
+            H5Aread(attr, H5T_NATIVE_UINT, &m_NumAdiosSteps);
+            H5Aclose(attr);
+        }
     }
 
     return m_NumAdiosSteps;
@@ -1060,6 +1068,11 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         std::string attrName = apair.first;
         Params temp = apair.second;
         std::string attrType = temp["Type"];
+
+        if (H5Aexists(m_FileId, attrName.c_str()) > 0)
+        {
+            continue;
+        }
 
         if (attrType == "compound")
         {
