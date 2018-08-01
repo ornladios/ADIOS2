@@ -62,10 +62,7 @@ void VerifyData(const std::vector<T> &data, size_t step)
         ASSERT_EQ(data[i], tmpdata[i]);
     }
 
-    if (step < 500)
-    {
-        PrintData(data, step);
-    }
+    PrintData(data, step);
 }
 
 void UserCallBack(void *data, const std::string &doid, const std::string var,
@@ -162,7 +159,8 @@ void DataManReaderStrict(const Dims &shape, const Dims &start,
 
     for (size_t i = 0; i < steps; ++i)
     {
-        adios2::StepStatus status = dataManReader.BeginStep();
+        adios2::StepStatus status =
+            dataManReader.BeginStep(StepMode::NextAvailable, 10);
         if (status == adios2::StepStatus::OK)
         {
             bpFloats = dataManIO.InquireVariable<float>("bpFloats");
@@ -206,7 +204,7 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
     {
         dataManIO.AddTransport("WAN", params);
     }
-    dataManIO.AddOperation(callbackFloat);
+    dataManIO.AddOperation(callbackFloat); // propagate to all Engines
 
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 

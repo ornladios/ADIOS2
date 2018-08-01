@@ -28,13 +28,13 @@ class DataManWriter : public DataManCommon
 public:
     DataManWriter(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
+
     ~DataManWriter() = default;
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    void EndStep() final;
     size_t CurrentStep() const;
     void PerformPuts() final;
-    void EndStep() final;
-    void Flush(const int transportIndex = -1) final;
 
 private:
     size_t m_BufferSize = 1024 * 1024 * 1024;
