@@ -272,7 +272,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_P2P)
     std::string workflowMode = "p2p";
     std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
                                                     {"IPAddress", "127.0.0.1"},
-                                                    {"Port", "12307"},
+                                                    {"Port", "12306"},
                                                     {"Timeout", "2"}}};
 
     // run workflow
@@ -331,7 +331,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
     std::vector<adios2::Params> transportParams = {{
         {"Library", "ZMQ"},
         {"IPAddress", "127.0.0.1"},
-        {"Port", "12307"},
+        {"Port", "12308"},
         {"CompressionMethod", "sz"},
         {"sz:accuracy", "0.1"},
     }};
@@ -363,7 +363,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_BZip2)
     std::vector<adios2::Params> transportParams = {{
         {"Library", "ZMQ"},
         {"IPAddress", "127.0.0.1"},
-        {"Port", "12307"},
+        {"Port", "12309"},
         {"CompressionMethod", "bzip2"},
     }};
 
@@ -390,7 +390,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
     Dims count = {10};
     size_t steps = 10000;
     std::vector<adios2::Params> transportParams = {
-        {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12307"}}};
+        {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12310"}}};
     std::string workflowMode = "subscribe";
 
     // run workflow
@@ -416,7 +416,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_Callback)
     size_t steps = 10000;
     std::string workflowMode = "subscribe";
     std::vector<adios2::Params> transportParams = {
-        {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12307"}}};
+        {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12311"}}};
 
     // run workflow
     auto r = std::thread(DataManReaderCallback, shape, start, count, steps,
