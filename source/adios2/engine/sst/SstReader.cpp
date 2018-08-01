@@ -242,6 +242,8 @@ void SstReader::EndStep()
     SstReleaseStep(m_Input);
 }
 
+void SstReader::Flush(const int transportIndex) {}
+
 // PRIVATE
 void SstReader::Init()
 {
