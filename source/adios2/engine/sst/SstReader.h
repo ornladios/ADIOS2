@@ -51,6 +51,7 @@ public:
     size_t CurrentStep() const final;
     void EndStep();
     void PerformGets();
+    void Flush(const int transportIndex = -1) final;
 
 private:
     template <class T>
