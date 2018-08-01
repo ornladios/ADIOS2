@@ -162,7 +162,8 @@ void DataManReaderStrict(const Dims &shape, const Dims &start,
 
     for (size_t i = 0; i < steps; ++i)
     {
-        adios2::StepStatus status = dataManReader.BeginStep();
+        adios2::StepStatus status =
+            dataManReader.BeginStep(StepMode::NextAvailable, 5);
         if (status == adios2::StepStatus::OK)
         {
             bpFloats = dataManIO.InquireVariable<float>("bpFloats");
