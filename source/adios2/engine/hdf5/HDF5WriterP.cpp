@@ -138,7 +138,7 @@ void HDF5WriterP::DoClose(const int transportIndex)
     }
     else
     {
-        printf("flushed, no close (##asend usage) \n");
+        // printf("flushed, no close (##asend usage) \n");
     }
 }
 

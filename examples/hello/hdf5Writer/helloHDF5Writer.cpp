@@ -75,10 +75,11 @@ int main(int argc, char *argv[])
         hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension-num",
                                              m_globalDims.size());
 
-#ifndef NEVER
+#ifdef NEVER
         /** Create h5 file, engine becomes unreachable after this*/
         hdf5Writer.Close();
 #else
+        hdf5Writer.Flush();
         hdf5Writer.Flush();
 #endif
     }
