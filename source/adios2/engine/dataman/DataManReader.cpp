@@ -67,11 +67,13 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     }
 }
 
-void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
-
 size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
 void DataManReader::PerformGets() {}
+
+void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+
+void DataManReader::Flush(const int transportIndex) {}
 
 // PRIVATE
 
