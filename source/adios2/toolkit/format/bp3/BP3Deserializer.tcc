@@ -99,7 +99,7 @@ void BP3Deserializer::SetVariableBlockInfo(
     };
 
     auto lf_SetSubStreamInfo =
-        [&](const Box<Dims> &selectionBox,
+        [&](const std::string &variableName, const Box<Dims> &selectionBox,
             typename core::Variable<T>::Info &blockInfo, const size_t step,
             const std::vector<size_t> &blockIndexOffsets,
             const BufferSTL &bufferSTL, const bool isRowMajor)
@@ -127,6 +127,38 @@ void BP3Deserializer::SetVariableBlockInfo(
             {
                 continue;
             }
+
+            if (m_DebugMode)
+            {
+                const size_t dimensions = blockCharacteristics.Shape.size();
+                if (dimensions != blockInfo.Shape.size())
+                {
+                    throw std::invalid_argument(
+                        "ERROR: block Shape (available) and "
+                        "selection Shape (requested) dimensions, do not match "
+                        "when reading variable " +
+                        variableName + ", in call to Get");
+                }
+
+                for (auto i = 0; i < dimensions; ++i)
+                {
+                    if (blockInfo.Start[i] + blockInfo.Count[i] >
+                        blockCharacteristics.Shape[i])
+                    {
+                        throw std::invalid_argument(
+                            "ERROR: selection Start " +
+                            helper::DimsToString(blockInfo.Start) +
+                            " and Count " +
+                            helper::DimsToString(blockInfo.Count) +
+                            " (requested) is out of bounds of available "
+                            "Shape " +
+                            helper::DimsToString(blockCharacteristics.Shape) +
+                            " , when reading variable " + variableName +
+                            ", in call to Get");
+                    }
+                }
+            }
+
             // relative position
             subStreamInfo.Seeks.first =
                 sizeof(T) *
@@ -188,8 +220,9 @@ void BP3Deserializer::SetVariableBlockInfo(
             }
         }
 
-        lf_SetSubStreamInfo(selectionBox, blockInfo, itStep->first,
-                            itStep->second, m_Metadata, m_IsRowMajor);
+        lf_SetSubStreamInfo(variable.m_Name, selectionBox, blockInfo,
+                            itStep->first, itStep->second, m_Metadata,
+                            m_IsRowMajor);
         ++itStep;
     }
 }
