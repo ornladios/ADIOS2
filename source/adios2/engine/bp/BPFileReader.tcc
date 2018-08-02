@@ -115,6 +115,10 @@ void BPFileReader::ReadVariableBlocks(Variable<T> &variable)
                     m_BP3Deserializer.GetPreOperatorBlockData(
                         variable.m_RawMemory[1], blockOperationInfo,
                         variable.m_RawMemory[0]);
+
+                    helper::ClipVector(variable.m_RawMemory[0],
+                                       subStreamInfo.Seeks.first,
+                                       subStreamInfo.Seeks.second);
                 }
                 else
                 {

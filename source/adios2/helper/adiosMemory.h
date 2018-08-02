@@ -93,6 +93,8 @@ T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
  * @param contiguousMemory input contiguous memory
  * @param blockBox input block box for contiguous memory
  * @param intersectionBox between input blockBox and start,count box
+ * @param isBlockMemory true: blockBox memory (operations), false: only
+ * intersection
  * @param isRowMajor true: contiguous data is row major, false: column major
  * @param reverseDimensions true: data and contiguousMemory have different
  * ordering column/row or row/column major, respectively.
@@ -104,6 +106,17 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor = true,
                           const bool reverseDimensions = false);
+
+/**
+ * Clips a vector returning the sub-vector between start and end (end is
+ * exclusive), new size is end-start
+ * @param vec
+ * @param start
+ * @param end
+ */
+template <class T>
+void ClipVector(std::vector<T> &vec, const size_t start,
+                const size_t end) noexcept;
 
 template <class T>
 void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
