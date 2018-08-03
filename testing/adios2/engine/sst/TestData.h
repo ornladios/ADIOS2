@@ -24,6 +24,7 @@ std::array<int16_t, 10> data_I16;
 std::array<int32_t, 10> data_I32;
 std::array<int64_t, 10> data_I64;
 std::array<float, 10> data_R32;
+std::array<float, 10> data_R32_large;
 std::array<double, 10> data_R64;
 double data_R64_2d[10][2];
 double data_R64_2d_rev[2][10];
@@ -33,6 +34,7 @@ std::vector<int16_t> in_I16;
 std::vector<int32_t> in_I32;
 std::vector<int64_t> in_I64;
 std::vector<float> in_R32;
+std::vector<float> in_R32_large;
 std::vector<double> in_R64;
 std::vector<double> in_R64_2d;
 std::vector<double> in_R64_2d_rev;
@@ -52,6 +54,10 @@ void generateSstTestData(int step, int rank, int size)
         data_R64_2d[i][1] = 10000 + j + 10 * i;
         data_R64_2d_rev[0][i] = j + 10 * i;
         data_R64_2d_rev[1][i] = 10000 + j + 10 * i;
+    }
+    for (int i = 0; i < sizeof(data_R32_large); i++)
+    {
+        data_R32_large[i] = j + 10 * i;
     }
 }
 
