@@ -22,6 +22,11 @@ if(ADIOS2_HAVE_MPI)
   add_executable(hello_bpSubStreams helloBPSubStreams.cpp)
   target_link_libraries(hello_bpSubStreams adios2 MPI::MPI_C adios2)
   
+  if(ADIOS2_HAVE_SZ)
+  	add_executable(hello_bpSZ helloBPSZ.cpp)
+  	target_link_libraries(hello_bpSZ adios2 MPI::MPI_C adios2)
+  endif()
+  
 else()
   add_executable(hello_bpWriter helloBPWriter_nompi.cpp)
   target_link_libraries(hello_bpWriter adios2)
