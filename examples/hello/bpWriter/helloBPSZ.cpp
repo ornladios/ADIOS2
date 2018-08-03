@@ -52,9 +52,6 @@ int main(int argc, char *argv[])
         std::iota(myFloats.begin(), myFloats.end(), 0.);
         std::iota(myDoubles.begin(), myDoubles.end(), 0.);
 
-        const std::string myString("Hello Variable String from rank " +
-                                   std::to_string(rank));
-
         /** ADIOS class factory of IO class objects, DebugON is recommended */
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 
