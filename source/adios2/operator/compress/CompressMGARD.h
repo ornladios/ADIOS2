@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * CompressSZ.h : wrapper to SZ compression library
+ * CompressMGARD.h :
  *
- *  Created on: Jul 24, 2017
+ *  Created on: Aug 3, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSSZ_H_
-#define ADIOS2_OPERATOR_COMPRESS_COMPRESSSZ_H_
+#ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARD_H_
+#define ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARD_H_
 
 #include "adios2/core/Operator.h"
 
@@ -20,7 +20,7 @@ namespace core
 namespace compress
 {
 
-class CompressSZ : public Operator
+class CompressMGARD : public Operator
 {
 
 public:
@@ -28,11 +28,9 @@ public:
      * Unique constructor
      * @param debugMode
      */
-    CompressSZ(const Params &parameters, const bool debugMode);
+    CompressMGARD(const Params &parameters, const bool debugMode);
 
-    ~CompressSZ() = default;
-
-    size_t BufferMaxSize(const size_t sizeIn) const final;
+    ~CompressMGARD() = default;
 
     /**
      * Compression signature for legacy libraries that use void*
@@ -49,21 +47,20 @@ public:
                     const Params &parameters = Params()) const final;
 
     /**
-     * Wrapper around zfp decompression
+     * Decompression signature for legacy libraries that use void*
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
      * @param dimensions
      * @param type
-     * @return size of decompressed data in dataOut
+     * @return size of decompressed buffer in bytes
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const Dims &dimensions, const std::string type,
-                      const Params &parameters) const final;
+                      const size_t sizeOut) const final;
 };
 
 } // end namespace compress
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_TRANSFORM_COMPRESSION_COMPRESSSZ_H_ */
+#endif /* ADIOS2_OPERATOR_COMPRESS_COMPRESSMGARD_H_ */
