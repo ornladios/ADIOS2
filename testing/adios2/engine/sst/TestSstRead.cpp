@@ -249,6 +249,14 @@ int main(int argc, char **argv)
         {
             TimeGapExpected++;
         }
+        else if (std::string(argv[1]) == "--compress_sz")
+        {
+            // CompressSz++;     Nothing on read side
+        }
+        else if (std::string(argv[1]) == "--compress_zfp")
+        {
+            // CompressZfp++;    Nothing on read side
+        }
         else
         {
             throw std::invalid_argument("Unknown argument \"" +
