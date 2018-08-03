@@ -12,6 +12,7 @@
 
     <io name="writer">
         <engine type="SST">
+            <parameter key="MarshalMethod" value="FFS"/>
         </engine>
     </io>
 
@@ -22,6 +23,7 @@
 
     <io name="readerInput">
         <engine type="SST">
+            <parameter key="MarshalMethod" value="FFS"/>
         </engine>
     </io>
     
