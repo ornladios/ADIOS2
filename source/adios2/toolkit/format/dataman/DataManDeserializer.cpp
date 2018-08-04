@@ -44,13 +44,12 @@ int DataManDeserializer::Put(
 
     // if not control signal then go through standard deserialization
     int key = rand();
-    m_MutexBuffer.lock();
+    std::lock_guard<std::mutex> l(m_Mutex);
     while (m_BufferMap.count(key) > 0)
     {
         key = rand();
     }
     m_BufferMap[key] = data;
-    m_MutexBuffer.unlock();
     size_t position = 0;
     while (position < data->capacity())
     {
@@ -100,14 +99,12 @@ int DataManDeserializer::Put(
             {
                 break;
             }
-            m_MutexMetaData.lock();
             if (m_MetaDataMap[var.step] == nullptr)
             {
                 m_MetaDataMap[var.step] =
                     std::make_shared<std::vector<DataManVar>>();
             }
             m_MetaDataMap[var.step]->push_back(std::move(var));
-            m_MutexMetaData.unlock();
             position += var.size;
         }
         catch (std::exception &e)
@@ -115,7 +112,6 @@ int DataManDeserializer::Put(
             std::cout << e.what() << std::endl;
             return -1;
         }
-        m_MutexMaxMin.lock();
         if (m_MaxStep < var.step)
         {
             m_MaxStep = var.step;
@@ -124,44 +120,62 @@ int DataManDeserializer::Put(
         {
             m_MinStep = var.step;
         }
-        m_MutexMaxMin.unlock();
     }
     return 0;
 }
 
 void DataManDeserializer::Erase(size_t step)
 {
-    m_MutexMetaData.lock();
-    const auto &i = m_MetaDataMap.find(step);
-    if (i != m_MetaDataMap.end())
+    std::lock_guard<std::mutex> l(m_Mutex);
+    const auto &varVec = m_MetaDataMap.find(step);
+    // if metadata map has this step
+    if (varVec != m_MetaDataMap.end())
     {
-        for (const auto &k : *i->second)
+        // loop for all vars in this step of metadata map
+        for (const auto &var : *varVec->second)
         {
-            if (BufferContainsSteps(k.index, step + 1, MaxStep()) == false)
+            bool toDelete = true;
+            // loop for any steps larger than the current step and smaller than
+            // the max step
+            for (size_t checkingStep = step + 1; checkingStep <= m_MaxStep;
+                 ++checkingStep)
             {
-                m_MutexBuffer.lock();
-                m_BufferMap.erase(k.index);
-                m_MutexBuffer.unlock();
+                // find this step in metadata map
+                const auto &checkingVarVec = m_MetaDataMap.find(checkingStep);
+                if (checkingVarVec != m_MetaDataMap.end())
+                {
+                    // loop for all vars in var vector
+                    for (const auto &checkingVar : *checkingVarVec->second)
+                    {
+                        // if any DataManVar for the current step being deleted
+                        // contains the same raw buffer index as any future
+                        // steps contain, then don't delete
+                        if (checkingVar.index == var.index)
+                        {
+                            toDelete = false;
+                        }
+                    }
+                }
+            }
+            if (toDelete)
+            {
+                m_BufferMap.erase(var.index);
             }
         }
     }
     m_MetaDataMap.erase(step);
-    m_MutexMetaData.unlock();
-
-    m_MutexMaxMin.lock();
     m_MinStep = step + 1;
-    m_MutexMaxMin.unlock();
 }
 
 size_t DataManDeserializer::MaxStep()
 {
-    std::lock_guard<std::mutex> l(m_MutexMaxMin);
+    std::lock_guard<std::mutex> l(m_Mutex);
     return m_MaxStep;
 }
 
 size_t DataManDeserializer::MinStep()
 {
-    std::lock_guard<std::mutex> l(m_MutexMaxMin);
+    std::lock_guard<std::mutex> l(m_Mutex);
     return m_MinStep;
 }
 
@@ -169,13 +183,14 @@ const std::unordered_map<
     size_t, std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>>
 DataManDeserializer::GetMetaData()
 {
+    std::lock_guard<std::mutex> l(m_Mutex);
     return m_MetaDataMap;
 }
 
 std::shared_ptr<const std::vector<DataManDeserializer::DataManVar>>
 DataManDeserializer::GetMetaData(const size_t step)
 {
-    std::lock_guard<std::mutex> l(m_MutexMetaData);
+    std::lock_guard<std::mutex> l(m_Mutex);
     const auto &i = m_MetaDataMap.find(step);
     if (i != m_MetaDataMap.end())
     {
@@ -185,28 +200,6 @@ DataManDeserializer::GetMetaData(const size_t step)
     {
         return nullptr;
     }
-}
-
-bool DataManDeserializer::BufferContainsSteps(int index, size_t begin,
-                                              size_t end) const
-{
-    // This is a private function and is always called after m_MutexMetaData is
-    // locked, so there is no need to lock again here.
-    for (size_t i = begin; i <= end; ++i)
-    {
-        const auto &j = m_MetaDataMap.find(i);
-        if (j != m_MetaDataMap.end())
-        {
-            for (const auto &k : *j->second)
-            {
-                if (k.index == index)
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
 }
 
 bool DataManDeserializer::HasOverlap(Dims in_start, Dims in_count,
