@@ -2,18 +2,18 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BPFileReader.h
+ * BP3Reader.h
  *
  *  Created on: Feb 27, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_BP_BPFILEREADER_H_
-#define ADIOS2_ENGINE_BP_BPFILEREADER_H_
+#ifndef ADIOS2_ENGINE_BP3_BP3READER_H_
+#define ADIOS2_ENGINE_BP3_BP3READER_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
-#include "adios2/toolkit/format/bp3/BP3.h" //format::BP1Deserializer
+#include "adios2/toolkit/format/bp3/BP3.h" //format::BP3Deserializer
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2
@@ -23,7 +23,7 @@ namespace core
 namespace engine
 {
 
-class BPFileReader : public Engine
+class BP3Reader : public Engine
 {
 
 public:
@@ -34,10 +34,10 @@ public:
      * @param openMode only read
      * @param mpiComm
      */
-    BPFileReader(IO &io, const std::string &name, const Mode mode,
-                 MPI_Comm mpiComm);
+    BP3Reader(IO &io, const std::string &name, const Mode mode,
+              MPI_Comm mpiComm);
 
-    virtual ~BPFileReader() = default;
+    virtual ~BP3Reader() = default;
 
     StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
                          const float timeoutSeconds = 0.f) final;
@@ -93,4 +93,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_BP_BPFILEREADER_H_ */
+#endif /* ADIOS2_ENGINE_BP3_BP3READER_H_ */

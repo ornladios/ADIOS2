@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BPFileReader.cpp
+ * BP3Reader.cpp
  *
  *  Created on: Feb 27, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "BPFileReader.h"
-#include "BPFileReader.tcc"
+#include "BP3Reader.h"
+#include "BP3Reader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 
@@ -20,8 +20,8 @@ namespace core
 namespace engine
 {
 
-BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
-                           MPI_Comm mpiComm)
+BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
+                     MPI_Comm mpiComm)
 : Engine("BPFileReader", io, name, mode, mpiComm),
   m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
   m_SubFileManager(mpiComm, m_DebugMode)
@@ -29,7 +29,7 @@ BPFileReader::BPFileReader(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
-StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
+StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     if (m_DebugMode)
     {
@@ -90,11 +90,11 @@ StepStatus BPFileReader::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
-size_t BPFileReader::CurrentStep() const { return m_CurrentStep; }
+size_t BP3Reader::CurrentStep() const { return m_CurrentStep; }
 
-void BPFileReader::EndStep() { PerformGets(); }
+void BP3Reader::EndStep() { PerformGets(); }
 
-void BPFileReader::PerformGets()
+void BP3Reader::PerformGets()
 {
     if (m_BP3Deserializer.m_DeferredVariables.empty())
     {
@@ -128,7 +128,7 @@ void BPFileReader::PerformGets()
 }
 
 // PRIVATE
-void BPFileReader::Init()
+void BP3Reader::Init()
 {
     if (m_DebugMode)
     {
@@ -144,7 +144,7 @@ void BPFileReader::Init()
     InitBuffer();
 }
 
-void BPFileReader::InitTransports()
+void BP3Reader::InitTransports()
 {
     if (m_IO.m_TransportsParameters.empty())
     {
@@ -165,7 +165,7 @@ void BPFileReader::InitTransports()
     }
 }
 
-void BPFileReader::InitBuffer()
+void BP3Reader::InitBuffer()
 {
     // Put all metadata in buffer
     if (m_BP3Deserializer.m_RankMPI == 0)
@@ -186,18 +186,18 @@ void BPFileReader::InitBuffer()
 }
 
 #define declare_type(T)                                                        \
-    void BPFileReader::DoGetSync(Variable<T> &variable, T *data)               \
+    void BP3Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
-    void BPFileReader::DoGetDeferred(Variable<T> &variable, T *data)           \
+    void BP3Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void BPFileReader::DoClose(const int transportIndex)
+void BP3Reader::DoClose(const int transportIndex)
 {
     PerformGets();
     m_SubFileManager.CloseFiles();
@@ -206,12 +206,12 @@ void BPFileReader::DoClose(const int transportIndex)
 
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
-    BPFileReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
+    BP3Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
         return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> BPFileReader::DoBlocksInfo(        \
+    std::vector<typename Variable<T>::Info> BP3Reader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         return m_BP3Deserializer.BlocksInfo(variable, step);                   \
