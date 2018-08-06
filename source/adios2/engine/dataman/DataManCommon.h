@@ -38,7 +38,7 @@ protected:
     int m_MPISize;
     int m_TransportChannels;
     std::string m_Format = "dataman";
-    std::string m_WorkflowMode = "subscribe";
+    std::string m_WorkflowMode = "p2p";
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;

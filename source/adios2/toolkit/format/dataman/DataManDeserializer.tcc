@@ -38,9 +38,9 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                              const size_t step)
 {
 
+    std::lock_guard<std::mutex> l(m_Mutex);
     std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
 
-    m_MutexMetaData.lock();
     const auto &i = m_MetaDataMap.find(step);
     if (i == m_MetaDataMap.end())
     {
@@ -50,7 +50,6 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
     {
         vec = i->second;
     }
-    m_MutexMetaData.unlock();
 
     if (vec == nullptr)
     {
@@ -74,9 +73,7 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                 // any more. So even if m_BufferMap[j.index] is modified
                 // somewhere else the memory that this shared pointer refers to
                 // is still valid until k runs out of scope.
-                m_MutexBuffer.lock();
                 auto k = m_BufferMap[j.index];
-                m_MutexBuffer.unlock();
                 if (j.compression == "zfp")
                 {
 #ifdef ADIOS2_HAVE_ZFP

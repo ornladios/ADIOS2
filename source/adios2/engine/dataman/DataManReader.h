@@ -37,8 +37,6 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    bool m_UpdatingMetaData = true;
-
     bool m_Listening = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
 

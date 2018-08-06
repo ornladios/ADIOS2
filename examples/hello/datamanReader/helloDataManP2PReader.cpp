@@ -25,7 +25,7 @@ std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
                                                 {"Timeout", "2000"}}};
 
 // data properties
-size_t steps = 10;
+size_t steps = 100;
 adios2::Dims start({2, 3});
 adios2::Dims count({2, 3});
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     adios2::Variable<float> bpFloats;
     auto start_time = std::chrono::system_clock::now();
     adios2::StepStatus status;
-    while (true)
+    for (int i = 0; i < steps; ++i)
     {
         status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
@@ -82,10 +82,6 @@ int main(int argc, char *argv[])
                                      adios2::Mode::Sync);
             dataManReader.EndStep();
             Dump(myFloats, dataManReader.CurrentStep());
-        }
-        else if (status == adios2::StepStatus::NotReady)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
