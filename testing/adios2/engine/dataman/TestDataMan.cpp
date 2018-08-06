@@ -53,6 +53,22 @@ void PrintData(const std::vector<T> &data, size_t step)
 }
 
 template <class T>
+void VerifyData(const T *data, const size_t size, size_t step)
+{
+    std::vector<T> tmpdata(size);
+    GenData(tmpdata, step);
+    for (size_t i = 0; i < size; ++i)
+    {
+        ASSERT_EQ(data[i], tmpdata[i]);
+    }
+
+    if (step < 500)
+    {
+        PrintData(data, step);
+    }
+}
+
+template <class T>
 void VerifyData(const std::vector<T> &data, size_t step)
 {
     std::vector<T> tmpdata(data.size());
@@ -72,10 +88,9 @@ void UserCallBack(void *data, const std::string &doid, const std::string var,
                   const std::string &dtype,
                   const std::vector<std::size_t> varshape)
 {
-
-    std::cout << "Object : " << doid << std::endl;
-    std::cout << "Variable :" << var << std::endl;
-    std::cout << "Type : " << dtype << std::endl;
+    std::cout << "Object : " << doid << ", ";
+    std::cout << "Variable :" << var << ", ";
+    std::cout << "Type : " << dtype << ", ";
     std::cout << "Shape : [";
     for (size_t i = 0; i < varshape.size(); ++i)
     {
@@ -85,7 +100,8 @@ void UserCallBack(void *data, const std::string &doid, const std::string var,
             std::cout << ", ";
         }
     }
-    std::cout << "]" << std::endl;
+    std::cout << "]"
+              << ". ";
 
     size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
                                      std::multiplies<std::size_t>());
@@ -96,8 +112,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string var,
         dumpsize = varsize;
     }
 
-    std::cout << "Printing data for the first " << dumpsize << " elements"
-              << std::endl;
+    std::cout << "Printing data for the first " << dumpsize << " elements: ";
 
 #define declare_type(T)                                                        \
     if (dtype == adios2::helper::GetType<T>())                                 \
@@ -118,7 +133,6 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-    std::vector<float> myFloats(datasize);
     adios2::ADIOS adios(adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
@@ -127,24 +141,58 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     {
         dataManIO.AddTransport("WAN", params);
     }
+    std::vector<char> myChars(datasize);
+    std::vector<unsigned char> myUChars(datasize);
+    std::vector<short> myShorts(datasize);
+    std::vector<unsigned short> myUShorts(datasize);
+    std::vector<int> myInts(datasize);
+    std::vector<unsigned int> myUInts(datasize);
+    std::vector<float> myFloats(datasize);
+    std::vector<double> myDoubles(datasize);
+    auto bpChars =
+        dataManIO.DefineVariable<char>("bpChars", shape, start, count);
+    auto bpUChars = dataManIO.DefineVariable<unsigned char>("bpUChars", shape,
+                                                            start, count);
+    auto bpShorts =
+        dataManIO.DefineVariable<short>("bpShorts", shape, start, count);
+    auto bpUShorts = dataManIO.DefineVariable<unsigned short>(
+        "bpUShorts", shape, start, count);
+    auto bpInts = dataManIO.DefineVariable<int>("bpInts", shape, start, count);
+    auto bpUInts =
+        dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats =
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
+    auto bpDoubles =
+        dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
+        GenData(myChars, i);
+        GenData(myUChars, i);
+        GenData(myShorts, i);
+        GenData(myUShorts, i);
+        GenData(myInts, i);
+        GenData(myUInts, i);
         GenData(myFloats, i);
-        dataManWriter.Put<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        GenData(myDoubles, i);
+        dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
+        dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
+        dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
+        dataManWriter.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+        dataManWriter.Put(bpInts, myInts.data(), adios2::Mode::Sync);
+        dataManWriter.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
+        dataManWriter.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        dataManWriter.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
         dataManWriter.EndStep();
     }
     dataManWriter.Close();
 }
 
-void DataManReaderStrict(const Dims &shape, const Dims &start,
-                         const Dims &count, const size_t steps,
-                         const std::string &workflowMode,
-                         const std::vector<adios2::Params> &transParams)
+void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
+                      const size_t steps, const std::string &workflowMode,
+                      const std::vector<adios2::Params> &transParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -166,6 +214,14 @@ void DataManReaderStrict(const Dims &shape, const Dims &start,
             dataManReader.BeginStep(StepMode::NextAvailable, 5);
         if (status == adios2::StepStatus::OK)
         {
+            const auto &vars = dataManIO.AvailableVariables();
+            ASSERT_EQ(vars.size(), 8);
+            std::cout << "All available variables : ";
+            for (const auto &var : vars)
+            {
+                std::cout << var.first << ", ";
+            }
+            std::cout << std::endl;
             bpFloats = dataManIO.InquireVariable<float>("bpFloats");
             bpFloats.SetSelection({start, count});
             dataManReader.Get<float>(bpFloats, myFloats.data(),
@@ -216,10 +272,11 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
     dataManReader.Close();
 }
 
-void DataManReaderLoose(const Dims &shape, const Dims &start, const Dims &count,
-                        const size_t steps, const std::string &workflowMode,
-                        const std::vector<adios2::Params> &transParams,
-                        const size_t timeout)
+void DataManReaderSubscribe(const Dims &shape, const Dims &start,
+                            const Dims &count, const size_t steps,
+                            const std::string &workflowMode,
+                            const std::vector<adios2::Params> &transParams,
+                            const size_t timeout)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -280,7 +337,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_P2P)
                                                     {"Timeout", "2"}}};
 
     // run workflow
-    auto r = std::thread(DataManReaderStrict, shape, start, count, steps,
+    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
                          workflowMode, transportParams);
     std::cout << "Reader thread started" << std::endl;
     auto w = std::thread(DataManWriter, shape, start, count, steps,
@@ -309,7 +366,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_Zfp)
          {"zfp:rate", "4"}}};
 
     // run workflow
-    auto r = std::thread(DataManReaderStrict, shape, start, count, steps,
+    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
                          workflowMode, transportParams);
     std::cout << "Reader thread started" << std::endl;
     auto w = std::thread(DataManWriter, shape, start, count, steps,
@@ -337,10 +394,11 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
         {"Port", "12308"},
         {"CompressionMethod", "sz"},
         {"sz:accuracy", "0.01"},
+        {"CompressionVariables", "bpFloats,bpDoubles"},
     }};
 
     // run workflow
-    auto r = std::thread(DataManReaderStrict, shape, start, count, steps,
+    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
                          workflowMode, transportParams);
     std::cout << "Reader thread started" << std::endl;
     auto w = std::thread(DataManWriter, shape, start, count, steps,
@@ -370,7 +428,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_BZip2)
     }};
 
     // run workflow
-    auto r = std::thread(DataManReaderStrict, shape, start, count, steps,
+    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
                          workflowMode, transportParams);
     std::cout << "Reader thread started" << std::endl;
     auto w = std::thread(DataManWriter, shape, start, count, steps,
@@ -396,7 +454,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
     std::string workflowMode = "subscribe";
 
     // run workflow
-    auto r = std::thread(DataManReaderLoose, shape, start, count, steps,
+    auto r = std::thread(DataManReaderSubscribe, shape, start, count, steps,
                          workflowMode, transportParams, timeout);
     std::cout << "Reader thread started" << std::endl;
     auto w = std::thread(DataManWriter, shape, start, count, steps,
