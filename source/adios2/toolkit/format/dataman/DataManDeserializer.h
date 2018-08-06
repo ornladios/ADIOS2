@@ -63,7 +63,6 @@ public:
 private:
     bool HasOverlap(Dims in_start, Dims in_count, Dims out_start,
                     Dims out_count) const;
-    bool BufferContainsSteps(int index, size_t begin, size_t end) const;
 
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
         m_MetaDataMap;
@@ -74,9 +73,7 @@ private:
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
 
-    std::mutex m_MutexMetaData;
-    std::mutex m_MutexBuffer;
-    std::mutex m_MutexMaxMin;
+    std::mutex m_Mutex;
 };
 
 } // end namespace format

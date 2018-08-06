@@ -72,7 +72,7 @@ private:
     // parameters
     std::vector<Params> m_TransportsParameters;
     size_t m_MaxReceiveBuffer = 256 * 1024 * 1024;
-    int m_Timeout = 5;
+    int m_Timeout = 10;
 };
 
 } // end namespace transportman

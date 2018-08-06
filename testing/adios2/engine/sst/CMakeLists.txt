@@ -67,6 +67,22 @@ add_test(
     -nw 3 -nr 5 -v -p TestSst -arg "MarshalMethod:BP")
 set_tests_properties(ADIOSSstTest.3x5BP PROPERTIES TIMEOUT 30) 
 
+if (ADIOS2_HAVE_ZFP)
+    add_test(
+        NAME ADIOSSstTest.3x5BP.zfp
+        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+        -nw 3 -nr 5 -v -p TestSst -arg "--compress_zfp MarshalMethod:BP")
+    set_tests_properties(ADIOSSstTest.3x5BP.zfp PROPERTIES TIMEOUT 30)
+endif()
+
+if (ADIOS2_HAVE_SZ)
+    add_test(
+        NAME ADIOSSstTest.3x5BP.sz
+        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+        -nw 3 -nr 5 -v -p TestSst -arg "--compress_sz MarshalMethod:BP")
+    set_tests_properties(ADIOSSstTest.3x5BP.sz PROPERTIES TIMEOUT 30)
+endif()
+
 add_test(
   NAME ADIOSSstTest.5x3
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test

@@ -55,6 +55,9 @@ private:
     template <class T>
     bool BZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                const Dims &varCount, const Params &params);
+
+    bool IsCompressionAvailable(const std::string &method,
+                                const std::string &type, const Dims &count);
 };
 
 } // end namespace format
