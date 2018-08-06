@@ -27,8 +27,8 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/ADIOS.h"
+#include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
-#include "adios2/engine/bp/BPFileReader.h"
 #include "adios2/helper/adiosFunctions.h"
 
 // C headers

@@ -15,8 +15,8 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
-#include "adios2/engine/bp/BPFileReader.h"
-#include "adios2/engine/bp/BPFileWriter.h"
+#include "adios2/engine/bp3/BP3Reader.h"
+#include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
@@ -373,20 +373,21 @@ Engine &IO::Open(const std::string &name, const Mode mode,
                        engineTypeLC.begin(), ::tolower);
     }
 
-    if (isDefaultEngine || engineTypeLC == "bpfile")
+    if (isDefaultEngine || engineTypeLC == "bpfile" || engineTypeLC == "bp3" ||
+        engineTypeLC == "bp")
     {
         if (mode == Mode::Read)
         {
-            engine = std::make_shared<engine::BPFileReader>(*this, name, mode,
-                                                            mpiComm);
+            engine =
+                std::make_shared<engine::BP3Reader>(*this, name, mode, mpiComm);
         }
         else
         {
-            engine = std::make_shared<engine::BPFileWriter>(*this, name, mode,
-                                                            mpiComm);
+            engine =
+                std::make_shared<engine::BP3Writer>(*this, name, mode, mpiComm);
         }
 
-        m_EngineType = "bpfile";
+        m_EngineType = "bp";
     }
     else if (engineTypeLC == "hdfmixer")
     {

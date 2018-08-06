@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BPFileReader.tcc
+ * BP3Reader.tcc
  *
  *  Created on: Feb 27, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_BP_BPFILEREADER_TCC_
-#define ADIOS2_ENGINE_BP_BPFILEREADER_TCC_
+#ifndef ADIOS2_ENGINE_BP3_BP3READER_TCC_
+#define ADIOS2_ENGINE_BP3_BP3READER_TCC_
 
-#include "BPFileReader.h"
+#include "BP3Reader.h"
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -23,14 +23,14 @@ namespace engine
 {
 
 template <>
-inline void BPFileReader::GetSyncCommon(Variable<std::string> &variable,
-                                        std::string *data)
+inline void BP3Reader::GetSyncCommon(Variable<std::string> &variable,
+                                     std::string *data)
 {
     m_BP3Deserializer.GetValueFromMetadata(variable, data);
 }
 
 template <class T>
-inline void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
+inline void BP3Reader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     if (variable.m_SingleValue)
     {
@@ -46,7 +46,7 @@ inline void BPFileReader::GetSyncCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-void BPFileReader::GetDeferredCommon(Variable<T> &variable, T *data)
+void BP3Reader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     // cheap
     if (variable.m_SingleValue)
@@ -61,7 +61,7 @@ void BPFileReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-void BPFileReader::ReadVariableBlocks(Variable<T> &variable)
+void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
 {
     const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
@@ -152,4 +152,4 @@ void BPFileReader::ReadVariableBlocks(Variable<T> &variable)
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_BP_BPFILEREADER_TCC_ */
+#endif /* ADIOS2_ENGINE_BP3_BP3READER_TCC_ */

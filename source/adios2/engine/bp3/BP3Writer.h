@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BPFileWriter.h
+ * BP3Writer.h
  *
  *  Created on: Dec 16, 2016
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_BP_BPFILEWRITER_H_
-#define ADIOS2_ENGINE_BP_BPFILEWRITER_H_
+#ifndef ADIOS2_ENGINE_BP3_BP3WRITER_H_
+#define ADIOS2_ENGINE_BP3_BP3WRITER_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
@@ -23,7 +23,7 @@ namespace core
 namespace engine
 {
 
-class BPFileWriter : public core::Engine
+class BP3Writer : public core::Engine
 {
 
 public:
@@ -33,10 +33,10 @@ public:
      * @param openMode w (supported), r, a from OpenMode in ADIOSTypes.h
      * @param mpiComm MPI communicator
      */
-    BPFileWriter(IO &io, const std::string &name, const Mode mode,
-                 MPI_Comm mpiComm);
+    BP3Writer(IO &io, const std::string &name, const Mode mode,
+              MPI_Comm mpiComm);
 
-    ~BPFileWriter();
+    ~BP3Writer();
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     size_t CurrentStep() const final;
@@ -109,4 +109,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_BP_BPFILEWRITER_H_ */
+#endif /* ADIOS2_ENGINE_BP3_BP3WRITER_H_ */

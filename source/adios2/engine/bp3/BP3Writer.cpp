@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BPFileWriter.cpp
+ * BP3Writer.cpp
  *
  *  Created on: Dec 19, 2016
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "BPFileWriter.h"
-#include "BPFileWriter.tcc"
+#include "BP3Writer.h"
+#include "BP3Writer.tcc"
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
@@ -24,8 +24,8 @@ namespace core
 namespace engine
 {
 
-BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode mode,
-                           MPI_Comm mpiComm)
+BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
+                     MPI_Comm mpiComm)
 : Engine("BPFileWriter", io, name, mode, mpiComm),
   m_BP3Serializer(mpiComm, m_DebugMode),
   m_FileDataManager(mpiComm, m_DebugMode),
@@ -35,21 +35,21 @@ BPFileWriter::BPFileWriter(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
-BPFileWriter::~BPFileWriter() = default;
+BP3Writer::~BP3Writer() = default;
 
-StepStatus BPFileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
+StepStatus BP3Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_BP3Serializer.m_DeferredVariables.clear();
     m_BP3Serializer.m_DeferredVariablesDataSize = 0;
     return StepStatus::OK;
 }
 
-size_t BPFileWriter::CurrentStep() const
+size_t BP3Writer::CurrentStep() const
 {
     return m_BP3Serializer.m_MetadataSet.CurrentStep;
 }
 
-void BPFileWriter::PerformPuts()
+void BP3Writer::PerformPuts()
 {
     if (m_BP3Serializer.m_DeferredVariables.empty())
     {
@@ -85,7 +85,7 @@ void BPFileWriter::PerformPuts()
     m_BP3Serializer.m_DeferredVariables.clear();
 }
 
-void BPFileWriter::EndStep()
+void BP3Writer::EndStep()
 {
     if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
@@ -104,7 +104,7 @@ void BPFileWriter::EndStep()
     }
 }
 
-void BPFileWriter::Flush(const int transportIndex)
+void BP3Writer::Flush(const int transportIndex)
 {
     DoFlush(false, transportIndex);
     m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
@@ -116,7 +116,7 @@ void BPFileWriter::Flush(const int transportIndex)
 }
 
 // PRIVATE
-void BPFileWriter::Init()
+void BP3Writer::Init()
 {
     InitParameters();
     InitTransports();
@@ -124,12 +124,12 @@ void BPFileWriter::Init()
 }
 
 #define declare_type(T)                                                        \
-    void BPFileWriter::DoPutSync(Variable<T> &variable, const T *data)         \
+    void BP3Writer::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
         variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
-    void BPFileWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
+    void BP3Writer::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
@@ -137,12 +137,12 @@ void BPFileWriter::Init()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void BPFileWriter::InitParameters()
+void BP3Writer::InitParameters()
 {
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 }
 
-void BPFileWriter::InitTransports()
+void BP3Writer::InitTransports()
 {
     // TODO need to add support for aggregators here later
     if (m_IO.m_TransportsParameters.empty())
@@ -178,7 +178,7 @@ void BPFileWriter::InitTransports()
     }
 }
 
-void BPFileWriter::InitBPBuffer()
+void BP3Writer::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
@@ -194,7 +194,7 @@ void BPFileWriter::InitBPBuffer()
     }
 }
 
-void BPFileWriter::DoFlush(const bool isFinal, const int transportIndex)
+void BP3Writer::DoFlush(const bool isFinal, const int transportIndex)
 {
     if (m_BP3Serializer.m_Aggregator.m_IsActive)
     {
@@ -206,7 +206,7 @@ void BPFileWriter::DoFlush(const bool isFinal, const int transportIndex)
     }
 }
 
-void BPFileWriter::DoClose(const int transportIndex)
+void BP3Writer::DoClose(const int transportIndex)
 {
     if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
@@ -233,7 +233,7 @@ void BPFileWriter::DoClose(const int transportIndex)
     }
 }
 
-void BPFileWriter::WriteProfilingJSONFile()
+void BP3Writer::WriteProfilingJSONFile()
 {
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
@@ -266,7 +266,7 @@ void BPFileWriter::WriteProfilingJSONFile()
     }
 }
 
-void BPFileWriter::WriteCollectiveMetadataFile(const bool isFinal)
+void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
     m_BP3Serializer.AggregateCollectiveMetadata(
         m_MPIComm, m_BP3Serializer.m_Metadata, true);
@@ -298,7 +298,7 @@ void BPFileWriter::WriteCollectiveMetadataFile(const bool isFinal)
     }
 }
 
-void BPFileWriter::WriteData(const bool isFinal, const int transportIndex)
+void BP3Writer::WriteData(const bool isFinal, const int transportIndex)
 {
     size_t dataSize = m_BP3Serializer.m_Data.m_Position;
 
@@ -318,8 +318,7 @@ void BPFileWriter::WriteData(const bool isFinal, const int transportIndex)
     m_FileDataManager.FlushFiles(transportIndex);
 }
 
-void BPFileWriter::AggregateWriteData(const bool isFinal,
-                                      const int transportIndex)
+void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 {
     m_BP3Serializer.CloseStream(m_IO, false);
 
