@@ -92,7 +92,8 @@ StepStatus DataManReader::BeginStepSubscribe(StepMode stepMode,
 {
     StepStatus status;
     m_CurrentStep = m_DataManDeserializer.MinStep();
-    auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
+    m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+    auto vars = m_MetaDataMap[m_CurrentStep];
     if (vars == nullptr)
     {
         status = StepStatus::NotReady;
@@ -119,10 +120,6 @@ StepStatus DataManReader::BeginStepSubscribe(StepMode stepMode,
         }
         status = StepStatus::OK;
     }
-    if (m_UpdatingMetaData)
-    {
-        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
-    }
     return status;
 }
 
@@ -130,24 +127,46 @@ StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
                                        const float timeoutSeconds)
 {
     ++m_CurrentStep;
-    if (m_UpdatingMetaData)
-    {
-        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
-    }
-    auto vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
+
+    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
+        nullptr;
+
     auto start_time = std::chrono::system_clock::now();
+
     while (vars == nullptr)
     {
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
-        if (duration.count() > timeoutSeconds)
+        // Copy the metadata map locally. This map is light in memory because
+        // the var metadata is stored in shared objects. Once this is copied,
+        // even if the map is changed in deserializer, these shared objects are
+        // still valid.
+        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+        auto i = m_MetaDataMap.find(m_CurrentStep);
+        if (i == m_MetaDataMap.end())
         {
-            return StepStatus::EndOfStream;
+            auto now_time = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                now_time - start_time);
+            // timeout == 0.f means there is no timeout, and it should block
+            // forever until it receives something.
+            if (duration.count() > timeoutSeconds && timeoutSeconds != 0.f)
+            {
+                return StepStatus::EndOfStream;
+            }
+            // sleep for a little time because
+            // m_DataManDeserializer.GetMetaData(m_CurrentStep) will lock the
+            // metadata map in deserializer. If this thread is always locking
+            // the map then it would delay the IOThread from putting new
+            // variables into the map.
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
         }
-        vars = m_DataManDeserializer.GetMetaData(m_CurrentStep);
+        else
+        {
+            vars = i->second;
+        }
     }
 
+    // register all variables available in the current step into m_IO
+    m_IO.RemoveAllVariables();
     for (const auto &i : *vars)
     {
         if (i.type == "compound")
@@ -157,11 +176,7 @@ StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
-        if (v == nullptr)                                                      \
-        {                                                                      \
-            m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
-        }                                                                      \
+        m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);             \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

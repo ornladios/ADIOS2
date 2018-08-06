@@ -69,21 +69,47 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     const auto i = params.find("CompressionMethod");
     if (i != params.end())
     {
-        if (i->second == "zfp" || i->second == "Zfp" || i->second == "ZFP")
+        std::string compressionMethod = i->second;
+        std::transform(compressionMethod.begin(), compressionMethod.end(),
+                       compressionMethod.begin(), ::tolower);
+        if (compressionMethod == "zfp")
         {
-            metaj["Z"] = "zfp";
-            compressed = Zfp<T>(metaj, datasize, inputData, varCount, params);
+            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                                       varCount))
+            {
+                compressed =
+                    Zfp<T>(metaj, datasize, inputData, varCount, params);
+                if (compressed)
+                {
+                    metaj["Z"] = "zfp";
+                }
+            }
         }
-        else if (i->second == "sz" || i->second == "Sz" || i->second == "SZ")
+        else if (compressionMethod == "sz")
         {
-            metaj["Z"] = "sz";
-            compressed = Sz<T>(metaj, datasize, inputData, varCount, params);
+            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                                       varCount))
+            {
+                compressed =
+                    Sz<T>(metaj, datasize, inputData, varCount, params);
+                if (compressed)
+                {
+                    metaj["Z"] = "sz";
+                }
+            }
         }
-        else if (i->second == "bzip2" || i->second == "Bzip2" ||
-                 i->second == "BZip2" || i->second == "BZIP2")
+        else if (compressionMethod == "bzip2")
         {
-            metaj["Z"] = "bzip2";
-            compressed = BZip2<T>(metaj, datasize, inputData, varCount, params);
+            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                                       varCount))
+            {
+                compressed =
+                    BZip2<T>(metaj, datasize, inputData, varCount, params);
+                if (compressed)
+                {
+                    metaj["Z"] = "bzip2";
+                }
+            }
         }
         else
         {
@@ -159,7 +185,6 @@ bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
     {
         std::cout << "Got exception " << e.what()
                   << " from ZFP. Turned off compression." << std::endl;
-        metaj.erase(metaj.find("Z"));
     }
 #else
     throw(std::invalid_argument(
@@ -200,7 +225,6 @@ bool DataManSerializer::Sz(nlohmann::json &metaj, size_t &datasize,
     {
         std::cout << "Got exception " << e.what()
                   << " from SZ. Turned off compression." << std::endl;
-        metaj.erase(metaj.find("Z"));
     }
 #else
     throw(std::invalid_argument(
@@ -242,7 +266,6 @@ bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
     {
         std::cout << "Got exception " << e.what()
                   << " from BZip2. Turned off compression." << std::endl;
-        metaj.erase(metaj.find("Z"));
     }
 #else
     throw(std::invalid_argument(

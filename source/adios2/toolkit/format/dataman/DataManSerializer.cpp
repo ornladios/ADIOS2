@@ -52,5 +52,41 @@ std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
     return c;
 }
 
+bool DataManSerializer::IsCompressionAvailable(const std::string &method,
+                                               const std::string &type,
+                                               const Dims &count)
+{
+    if (method == "zfp")
+    {
+        if (type == "int" || type == "long" || type == "int32_t" ||
+            type == "int64_t" || type == "float" || type == "double")
+        {
+            if (count.size() <= 3)
+            {
+                return true;
+            }
+        }
+    }
+    else if (method == "sz")
+    {
+        if (type == "float" || type == "double")
+        {
+            if (count.size() <= 5)
+            {
+                return true;
+            }
+        }
+    }
+    else if (method == "bzip2")
+    {
+        if (type == "int" || type == "long" || type == "int32_t" ||
+            type == "int64_t" || type == "float" || type == "double")
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace format
 } // namespace adios2
