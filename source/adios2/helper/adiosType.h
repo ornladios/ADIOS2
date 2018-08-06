@@ -76,15 +76,12 @@ struct BlockOperationInfo
  */
 struct SubStreamBoxInfo
 {
-    /** particular substream ID */
-    size_t SubStreamID;
-
-    /**  from characteristics, first = Start point, second =
-         End point of block of data */
-    Box<Dims> BlockBox;
-
     /** stores information about any data operation applied in this block box */
     std::vector<BlockOperationInfo> OperationsInfo;
+
+    /**  from characteristics, first = Start point, second =
+     End point of block of data */
+    Box<Dims> BlockBox;
 
     /** Intersection box between BlockBox and variable block
      *  first = Start point, second = End point */
@@ -92,6 +89,11 @@ struct SubStreamBoxInfo
 
     /** Seeks (offsets) in serialized stream for intersection box */
     Box<size_t> Seeks;
+
+    /** particular substream ID */
+    size_t SubStreamID;
+
+    bool ZeroBlock = false;
 };
 
 /**

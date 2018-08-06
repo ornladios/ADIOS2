@@ -76,6 +76,11 @@ void BPFileReader::ReadVariableBlocks(Variable<T> &variable)
 
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
+                if (subStreamInfo.ZeroBlock)
+                {
+                    continue;
+                }
+
                 const size_t subFileIndex = subStreamInfo.SubStreamID;
 
                 if (m_SubFileManager.m_Transports.count(subFileIndex) == 0)
