@@ -117,6 +117,12 @@ void BP3Deserializer::SetVariableBlockInfo(
 
             // check if they intersect
             helper::SubStreamBoxInfo subStreamInfo;
+
+            if (helper::GetTotalSize(blockCharacteristics.Count) == 0)
+            {
+                subStreamInfo.ZeroBlock = true;
+            }
+
             subStreamInfo.BlockBox = helper::StartEndBox(
                 blockCharacteristics.Start, blockCharacteristics.Count);
             subStreamInfo.IntersectionBox =
@@ -140,10 +146,17 @@ void BP3Deserializer::SetVariableBlockInfo(
                         variableName + ", in call to Get");
                 }
 
+                Dims readInShape = blockCharacteristics.Shape;
+                if (m_ReverseDimensions)
+                {
+                    std::reverse(readInShape.begin(), readInShape.end());
+                }
+
                 for (auto i = 0; i < dimensions; ++i)
                 {
+
                     if (blockInfo.Start[i] + blockInfo.Count[i] >
-                        blockCharacteristics.Shape[i])
+                        readInShape[i])
                     {
                         throw std::invalid_argument(
                             "ERROR: selection Start " +
