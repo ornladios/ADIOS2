@@ -28,22 +28,20 @@ class DataManWriter : public DataManCommon
 public:
     DataManWriter(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
-
     ~DataManWriter() = default;
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
-    void EndStep() final;
     size_t CurrentStep() const;
     void PerformPuts() final;
+    void EndStep() final;
+    void Flush(const int transportIndex = -1) final;
 
 private:
-    size_t m_TransportChannels = 1;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     size_t m_StepsPerBuffer = 10;
 
     std::shared_ptr<format::BP3Serializer> m_BP3Serializer;
     std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
-    std::string m_Name;
 
     void Init();
     void IOThread(std::shared_ptr<transportman::DataMan> man) final;

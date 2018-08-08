@@ -24,6 +24,7 @@ typedef struct adios2_io adios2_io;
 typedef struct adios2_variable adios2_variable;
 typedef struct adios2_attribute adios2_attribute;
 typedef struct adios2_engine adios2_engine;
+typedef struct adios2_operator adios2_operator;
 typedef struct adios2_FILE adios2_FILE;
 
 typedef enum {

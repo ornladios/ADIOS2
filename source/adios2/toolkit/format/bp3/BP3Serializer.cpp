@@ -230,6 +230,7 @@ std::string BP3Serializer::GetRankProfilingJSON(
     lf_WriterTimer(rankLog, profiler.Timers.at("memcpy"));
     lf_WriterTimer(rankLog, profiler.Timers.at("minmax"));
     lf_WriterTimer(rankLog, profiler.Timers.at("meta_sort_merge"));
+    lf_WriterTimer(rankLog, profiler.Timers.at("mkdir"));
 
     const size_t transportsSize = transportsTypes.size();
 
@@ -593,9 +594,9 @@ void BP3Serializer::PutDimensionsRecord(const Dims &localDimensions,
 void BP3Serializer::PutNameRecord(const std::string name,
                                   std::vector<char> &buffer) noexcept
 {
-    const uint16_t length = static_cast<uint16_t>(name.length());
+    const uint16_t length = static_cast<uint16_t>(name.size());
     helper::InsertToBuffer(buffer, &length);
-    helper::InsertToBuffer(buffer, name.c_str(), length);
+    helper::InsertToBuffer(buffer, name.c_str(), name.size());
 }
 
 void BP3Serializer::PutNameRecord(const std::string name,

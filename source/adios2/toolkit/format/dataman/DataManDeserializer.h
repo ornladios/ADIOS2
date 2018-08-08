@@ -27,16 +27,16 @@ namespace format
 class DataManDeserializer
 {
 public:
-    DataManDeserializer(bool isRowMajor, bool isLittleEndian);
+    DataManDeserializer(const bool isRowMajor, const bool isLittleEndian);
     size_t MaxStep();
     size_t MinStep();
-    void Put(std::shared_ptr<std::vector<char>> data);
+    int Put(const std::shared_ptr<const std::vector<char>> data);
     template <class T>
     int Get(core::Variable<T> &variable, const size_t step);
     template <class T>
     int Get(T *output_data, const std::string &varName, const Dims &varStart,
             const Dims &varCount, const size_t step);
-    void Erase(size_t step);
+    void Erase(const size_t step);
     struct DataManVar
     {
         bool isRowMajor;
@@ -53,27 +53,27 @@ public:
         size_t index;
         int rank;
         std::string compression;
-        float compressionRate;
+        Params params;
     };
-    bool GetVarList(size_t step, std::vector<DataManVar> &varList);
-    const std::shared_ptr<std::vector<DataManVar>> GetMetaData(size_t step);
+    std::shared_ptr<const std::vector<DataManVar>>
+    GetMetaData(const size_t step);
+    const std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
+    GetMetaData();
 
 private:
     bool HasOverlap(Dims in_start, Dims in_count, Dims out_start,
-                    Dims out_count);
-    bool BufferContainsSteps(int index, size_t begin, size_t end);
+                    Dims out_count) const;
 
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
         m_MetaDataMap;
-    std::unordered_map<int, std::shared_ptr<std::vector<char>>> m_BufferMap;
+    std::unordered_map<int, std::shared_ptr<const std::vector<char>>>
+        m_BufferMap;
     size_t m_MaxStep = std::numeric_limits<size_t>::min();
     size_t m_MinStep = std::numeric_limits<size_t>::max();
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
 
-    std::mutex m_MutexMetaData;
-    std::mutex m_MutexBuffer;
-    std::mutex m_MutexMaxMin;
+    std::mutex m_Mutex;
 };
 
 } // end namespace format

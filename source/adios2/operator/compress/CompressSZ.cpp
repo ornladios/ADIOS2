@@ -14,7 +14,10 @@
 #include <ios>   //std::ios_base::failure
 #include <iostream>
 #include <stdexcept> //std::invalid_argument
-/// \endcond
+
+extern "C" {
+#include <sz.h>
+}
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -26,7 +29,7 @@ namespace compress
 {
 
 CompressSZ::CompressSZ(const Params &parameters, const bool debugMode)
-: Operator("SZ", parameters, debugMode)
+: Operator("sz", parameters, debugMode)
 {
 }
 
@@ -49,13 +52,13 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     memset(&sz, 0, sizeof(sz_params));
     sz.max_quant_intervals = 65536;
     sz.quantization_intervals = 0;
-    sz.dataEndianType = LITTLE_ENDIAN_DATA;
-    sz.sysEndianType = LITTLE_ENDIAN_DATA;
+    //    sz.dataEndianType = LITTLE_ENDIAN_DATA;
+    //    sz.sysEndianType = LITTLE_ENDIAN_DATA;
     sz.sol_ID = SZ;
-    sz.layers = 1;
+    // sz.layers = 1;
     sz.sampleDistance = 100;
     sz.predThreshold = 0.99;
-    sz.offset = 0;
+    //    sz.offset = 0;
     sz.szMode = SZ_BEST_COMPRESSION; // SZ_BEST_SPEED; //SZ_BEST_COMPRESSION;
     sz.gzipMode = 1;
     sz.errorBoundMode = ABS;
@@ -63,7 +66,8 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     sz.relBoundRatio = 1E-3;
     sz.psnr = 80.0;
     sz.pw_relBoundRatio = 1E-5;
-    sz.segment_size = (int)pow(5, (double)ndims);
+    sz.segment_size =
+        static_cast<int>(std::pow(5., static_cast<double>(ndims)));
     sz.pwr_type = SZ_PWR_MIN_TYPE;
 
     size_t outsize;
@@ -73,9 +77,6 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     int use_configfile = 0;
     int use_zchecker = 0;
     std::string sz_configfile = "sz.config";
-    // std::string zc_configfile = "zc.config";
-
-    std::cout << "debugMode:" << this->m_DebugMode << std::endl;
 
     Params::const_iterator it;
     for (it = parameters.begin(); it != parameters.end(); it++)
@@ -94,21 +95,9 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
         {
             sz.quantization_intervals = std::stoi(it->second);
         }
-        else if (it->first == "dataEndianType")
-        {
-            sz.dataEndianType = std::stoi(it->second);
-        }
-        else if (it->first == "sysEndianType")
-        {
-            sz.sysEndianType = std::stoi(it->second);
-        }
         else if (it->first == "sol_ID")
         {
             sz.sol_ID = std::stoi(it->second);
-        }
-        else if (it->first == "layers")
-        {
-            sz.layers = std::stoi(it->second);
         }
         else if (it->first == "sampleDistance")
         {
@@ -117,10 +106,6 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
         else if (it->first == "predThreshold")
         {
             sz.predThreshold = std::stof(it->second);
-        }
-        else if (it->first == "offset")
-        {
-            sz.offset = std::stoi(it->second);
         }
         else if (it->first == "szMode")
         {
@@ -220,7 +205,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                  (it->first == "accuracy"))
         {
             sz.errorBoundMode = ABS;
-            sz.absErrBound = std::stof(it->second);
+            sz.absErrBound = std::stod(it->second);
         }
         else if ((it->first == "rel") || (it->first == "relative"))
         {
@@ -258,15 +243,10 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                       << std::endl;
             std::cout << "sz.quantization_intervals: "
                       << sz.quantization_intervals << std::endl;
-            std::cout << "sz.dataEndianType: " << sz.dataEndianType
-                      << std::endl;
-            std::cout << "sz.sysEndianType: " << sz.sysEndianType << std::endl;
             std::cout << "sz.sol_ID: " << sz.sol_ID << std::endl;
-            std::cout << "sz.layers: " << sz.layers << std::endl;
             std::cout << "sz.sampleDistance: " << sz.sampleDistance
                       << std::endl;
             std::cout << "sz.predThreshold: " << sz.predThreshold << std::endl;
-            std::cout << "sz.offset: " << sz.offset << std::endl;
             std::cout << "sz.szMode: " << sz.szMode << std::endl;
             std::cout << "sz.gzipMode: " << sz.gzipMode << std::endl;
             std::cout << "sz.errorBoundMode: " << sz.errorBoundMode
@@ -313,9 +293,8 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
          */
     }
 
-    unsigned char *bytes;
-    bytes = SZ_compress(dtype, (void *)dataIn, &outsize, r[4], r[3], r[2], r[1],
-                        r[0]);
+    const unsigned char *bytes = SZ_compress(dtype, (void *)dataIn, &outsize,
+                                             r[4], r[3], r[2], r[1], r[0]);
     memcpy(bufferOut, bytes, outsize);
     return static_cast<size_t>(outsize);
 }
@@ -323,17 +302,17 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const Dims &dimensions,
                               const std::string varType,
-                              const Params &parameters) const
+                              const Params & /*parameters*/) const
 {
-    int ndims = dimensions.size();
-    if (ndims > 5)
+    if (dimensions.size() > 5)
     {
-        throw std::invalid_argument("No more than 5 dimension is supported.\n");
+        throw std::invalid_argument("ERROR: SZZ decompression doesn't support "
+                                    "more than 5 dimension variables.\n");
     }
 
     // Get type info
-    int dtype;
-    size_t typeSizeBytes;
+    int dtype = 0;
+    size_t typeSizeBytes = 0;
     if (varType == "double")
     {
         dtype = SZ_DOUBLE;
@@ -346,32 +325,32 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     }
     else
     {
-        throw std::invalid_argument("No supported data type\n");
+        throw std::runtime_error(
+            "ERROR: data type must be either double or float in SZ\n");
     }
 
     // r[0] is the fastest changing dimension and r[4] is the lowest changing
     // dimension
     // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
-    size_t r[5] = {0, 0, 0, 0, 0};
-    for (int i = 0; i < ndims; i++)
+    std::vector<size_t> rs(5, 0);
+    const size_t ndims = dimensions.size();
+    for (auto i = 0; i < ndims; ++i)
     {
-        uint dsize = dimensions[i];
-        r[ndims - i - 1] = dsize;
-        /*
-         if (fd->group->adios_host_language_fortran == adios_flag_yes)
-         r[i] = dsize;
-         else
-         r[ndims-i-1] = dsize;
-         d = d->next;
-         */
+        rs[ndims - i - 1] = dimensions[i];
     }
 
-    size_t dataSizeBytes = GetTotalSize(dimensions) * typeSizeBytes;
+    const size_t dataSizeBytes =
+        helper::GetTotalSize(dimensions) * typeSizeBytes;
 
-    void *orig_buff;
-    orig_buff = SZ_decompress(dtype, (unsigned char *)bufferIn, sizeIn, r[4],
-                              r[3], r[2], r[1], r[0]);
-    memcpy(dataOut, orig_buff, dataSizeBytes);
+    const void *result = SZ_decompress(
+        dtype, reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
+        sizeIn, rs[4], rs[3], rs[2], rs[1], rs[0]);
+
+    if (result == nullptr)
+    {
+        throw std::runtime_error("ERROR: SZ_decompress failed\n");
+    }
+    std::memcpy(dataOut, result, dataSizeBytes);
 
     return static_cast<size_t>(dataSizeBytes);
 }

@@ -49,6 +49,26 @@ struct SubFileInfo
 using SubFileInfoMap =
     std::map<size_t, std::map<size_t, std::vector<SubFileInfo>>>;
 
+struct BlockOperationInfo
+{
+    /** additional info: e.g. Type */
+    Params Info;
+
+    /** pre operation shape */
+    Dims PreShape;
+    /** pre operation start */
+    Dims PreStart;
+    /** pre operation count */
+    Dims PreCount;
+
+    /** payload offset position of operated data */
+    size_t PayloadOffset = MaxSizeT;
+    /** size in bytes **/
+    size_t PayloadSize = MaxSizeT;
+    /** Pre type sizeof */
+    size_t PreSizeOf = 0;
+};
+
 /**
  * Contains SubStream info for intersecting block
  * key: subfile (substream) index
@@ -56,16 +76,24 @@ using SubFileInfoMap =
  */
 struct SubStreamBoxInfo
 {
-    /** particular substream ID */
-    size_t SubStreamID;
+    /** stores information about any data operation applied in this block box */
+    std::vector<BlockOperationInfo> OperationsInfo;
+
     /**  from characteristics, first = Start point, second =
-         End point of block of data */
+     End point of block of data */
     Box<Dims> BlockBox;
+
     /** Intersection box between BlockBox and variable block
      *  first = Start point, second = End point */
     Box<Dims> IntersectionBox;
+
     /** Seeks (offsets) in serialized stream for intersection box */
     Box<size_t> Seeks;
+
+    /** particular substream ID */
+    size_t SubStreamID;
+
+    bool ZeroBlock = false;
 };
 
 /**

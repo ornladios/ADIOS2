@@ -41,6 +41,7 @@ public:
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
     void PerformPuts() final;
     void EndStep() final;
+    void Flush(const int transportIndex = -1) final;
 
 private:
     void Init(); ///< calls InitCapsules and InitTransports based on Method,

@@ -1,4 +1,4 @@
-program TestBPWriteReadHeatMap3D
+program TestBPWriteReadHeatMap2D
   use mpi
   use adios2
 
@@ -201,4 +201,4 @@ program TestBPWriteReadHeatMap3D
   call adios2_finalize(adios, ierr)
   call MPI_Finalize(ierr)
 
-end program TestBPWriteReadHeatMap3D
+end program TestBPWriteReadHeatMap2D

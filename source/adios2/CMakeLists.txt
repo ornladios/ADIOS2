@@ -29,8 +29,8 @@ add_library(adios2
   helper/adiosXML.cpp
 
 #engine derived classes  
-  engine/bp/BPFileReader.cpp engine/bp/BPFileReader.tcc
-  engine/bp/BPFileWriter.cpp engine/bp/BPFileWriter.tcc
+  engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc
+  engine/bp3/BP3Writer.cpp engine/bp3/BP3Writer.tcc
 
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
@@ -44,6 +44,11 @@ add_library(adios2
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
   toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
+  toolkit/format/bp3/operation/BP3Operation.cpp
+  toolkit/format/bp3/operation/BP3Zfp.cpp
+  toolkit/format/bp3/operation/BP3Zfp.tcc
+  toolkit/format/bp3/operation/BP3SZ.cpp
+  toolkit/format/bp3/operation/BP3SZ.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 
@@ -76,20 +81,13 @@ if(ADIOS2_HAVE_SysVShMem)
 endif()
 
 if(ADIOS2_HAVE_ZeroMQ)
-  target_sources(adios2 PRIVATE
-    toolkit/transport/wan/WANZmq.cpp
-  )
-  target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
-endif()
-
-if(ADIOS2_HAVE_SST)
-  add_subdirectory(toolkit/sst)
-  target_sources(adios2 PRIVATE
-    engine/sst/SstReader.cpp
-    engine/sst/SstWriter.cpp
-    engine/sst/SstParamParser.cpp
-  )
-  target_link_libraries(adios2 PRIVATE sst)
+    target_sources(adios2 PRIVATE
+        toolkit/transport/wan/WANZmqPubSub.cpp
+        toolkit/transport/wan/WANZmqPubSub.h
+        toolkit/transport/wan/WANZmqP2P.cpp
+        toolkit/transport/wan/WANZmqP2P.h
+        )
+    target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()
 
 if(ADIOS2_HAVE_DataMan)
@@ -113,6 +111,17 @@ if(ADIOS2_HAVE_DataMan)
   )
   target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
 endif()
+
+if(ADIOS2_HAVE_SST)
+  add_subdirectory(toolkit/sst)
+  target_sources(adios2 PRIVATE
+    engine/sst/SstReader.cpp
+    engine/sst/SstWriter.cpp
+    engine/sst/SstParamParser.cpp
+  )
+  target_link_libraries(adios2 PRIVATE sst)
+endif()
+
 
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZip2.cpp)

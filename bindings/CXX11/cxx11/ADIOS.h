@@ -144,7 +144,7 @@ public:
                             const Params &parameters = Params());
 
     /**
-     * Gets an existing Operator identified by its name
+     * Returns an existing Operator identified by its name
      * @param name of Operator to be retrieved
      * @return object to an existing operator in current ADIOS object, Operator
      * object is false if name is not found

@@ -239,11 +239,25 @@ public:
     std::map<std::string, Params> AvailableAttributes() noexcept;
 
     /**
-     * Adds an Operator at the IO object level
-     * @param op operator to be added
-     * @param parameters key/value parameters for op
+     * EXPERIMENTAL: carries information about an Operation added with
+     * AddOperation
      */
-    void AddOperator(Operator &op, const Params &parameters = Params());
+    struct Operation
+    {
+        const Operator Op;
+        const Params Parameters;
+        const Params Info;
+    };
+
+    /**
+     * EXPERIMENTAL: Adds operation and parameters to current IO object
+     * @param op operator to be added
+     * @param parameters key/value settings particular to the IO, not to
+     * be confused by op own parameters
+     * @return operation index handler in Operations()
+     */
+    size_t AddOperation(const Operator op,
+                        const Params &parameters = Params()) noexcept;
 
     /**
      * Inspect current engine type

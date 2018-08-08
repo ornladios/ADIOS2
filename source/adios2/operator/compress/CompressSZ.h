@@ -11,10 +11,6 @@
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSSZ_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSSZ_H_
 
-extern "C" {
-#include <sz.h>
-}
-
 #include "adios2/core/Operator.h"
 
 namespace adios2

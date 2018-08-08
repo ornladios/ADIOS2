@@ -55,8 +55,33 @@ int main(int argc, char *argv[])
         hdf5Writer.Put<float>(h5Floats, myFloats.data());
         hdf5Writer.Put(h5Ints, myInts.data());
 
+        std::vector<int64_t> m_globalDims = {10, 20, 30, 40};
+        hdf5IO.DefineAttribute<std::string>(
+            "adios2_schema/version_major",
+            std::to_string(ADIOS2_VERSION_MAJOR));
+        hdf5IO.DefineAttribute<std::string>(
+            "adios2_schema/version_minor",
+            std::to_string(ADIOS2_VERSION_MINOR));
+        hdf5IO.DefineAttribute<std::string>("/adios2_schema/mesh/type",
+                                            "explicit");
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension0",
+                                             m_globalDims[0]);
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension1",
+                                             m_globalDims[1]);
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension2",
+                                             m_globalDims[2]);
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension3",
+                                             m_globalDims[3]);
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension-num",
+                                             m_globalDims.size());
+
+#ifdef NEVER
         /** Create h5 file, engine becomes unreachable after this*/
         hdf5Writer.Close();
+#else
+        hdf5Writer.Flush();
+        hdf5Writer.Flush();
+#endif
     }
     catch (std::invalid_argument &e)
     {

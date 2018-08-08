@@ -117,10 +117,40 @@ contains
 
         if( variable%type /= adios2_type ) then
             write(0,*) 'ERROR: adios2 variable ', variable%name, &
-                       ' type mismatch, in call to adios2_', hint
+                       ' type mismatch, in call to adios2_', &
+                        TRIM(ADJUSTL(hint))//char(0)
             ierr = -1
         end if
 
+    end subroutine
+
+    subroutine adios2_add_operation(operation_id, variable, op, key, value, &
+                                    ierr)
+        integer, intent(out):: operation_id
+        type(adios2_variable), intent(in):: variable
+        type(adios2_operator), intent(in):: op
+        character*(*), intent(in):: key
+        character*(*), intent(in):: value
+        integer, intent(out):: ierr
+
+        call adios2_add_operation_f2c(operation_id, variable%f2c, op%f2c, &
+                                      TRIM(ADJUSTL(key))//char(0), &
+                                      TRIM(ADJUSTL(value))//char(0), ierr)
+    end subroutine
+
+
+    subroutine adios2_set_operation_parameter(variable, operation_id, key, &
+                                              value, ierr)
+        type(adios2_variable), intent(in):: variable
+        integer, intent(in):: operation_id
+        character*(*), intent(in):: key
+        character*(*), intent(in):: value
+        integer, intent(out):: ierr
+
+        call adios2_set_operation_parameter_f2c(variable%f2c, operation_id, &
+                                                TRIM(ADJUSTL(key))//char(0), &
+                                                TRIM(ADJUSTL(value))//char(0), &
+                                                ierr)
     end subroutine
 
 end module

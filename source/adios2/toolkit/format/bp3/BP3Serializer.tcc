@@ -13,6 +13,8 @@
 
 #include "BP3Serializer.h"
 
+#include <algorithm> // std::all_of
+
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -64,7 +66,15 @@ inline void BP3Serializer::PutVariablePayload(
     const typename core::Variable<T>::Info &blockInfo) noexcept
 {
     ProfilerStart("buffering");
-    PutPayloadInBuffer(variable, blockInfo.Data);
+    if (blockInfo.Operations.empty())
+    {
+        PutPayloadInBuffer(variable, blockInfo.Data);
+    }
+    else
+    {
+        PutOperationPayloadInBuffer(variable, blockInfo);
+    }
+
     ProfilerStop("buffering");
 }
 
@@ -609,6 +619,7 @@ inline void BP3Serializer::PutVariableCharacteristics(
     PutCharacteristicRecord(characteristic_payload_offset,
                             characteristicsCounter, stats.PayloadOffset,
                             buffer);
+
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -646,7 +657,7 @@ void BP3Serializer::PutVariableCharacteristics(
     PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                     buffer);
 
-    const uint8_t characteristicID = characteristic_dimensions;
+    uint8_t characteristicID = characteristic_dimensions;
     helper::InsertToBuffer(buffer, &characteristicID);
     const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
     helper::InsertToBuffer(buffer, &dimensions); // count
@@ -662,6 +673,23 @@ void BP3Serializer::PutVariableCharacteristics(
     PutCharacteristicRecord(characteristic_payload_offset,
                             characteristicsCounter, stats.PayloadOffset,
                             buffer);
+
+    if (blockInfo.Operations.size())
+    {
+        const bool isZeroCount =
+            std::all_of(blockInfo.Count.begin(), blockInfo.Count.end(),
+                        [](const size_t i) { return i == 0; });
+
+        // do not compress if count dimensions are all zero
+        if (!isZeroCount)
+        {
+            characteristicID = characteristic_transform_type;
+            helper::InsertToBuffer(buffer, &characteristicID);
+            PutCharacteristicOperation(variable, blockInfo, buffer);
+            ++characteristicsCounter;
+        }
+    }
+
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -875,6 +903,66 @@ BP3Serializer::GetAttributeSizeInData(const core::Attribute<T> &attribute) const
     size_t size = 14 + attribute.m_Name.size() + 10;
     size += 4 + sizeof(T) * attribute.m_Elements;
     return size;
+}
+
+// operations related functions
+template <class T>
+void BP3Serializer::PutCharacteristicOperation(
+    const core::Variable<T> &variable,
+    const typename core::Variable<T>::Info &blockInfo,
+    std::vector<char> &buffer) noexcept
+{
+    // TODO: we only take the first operation for now
+    const std::map<size_t, std::shared_ptr<BP3Operation>> bp3Operations =
+        SetBP3Operations<T>(blockInfo.Operations);
+
+    const size_t operationIndex = bp3Operations.begin()->first;
+    std::shared_ptr<BP3Operation> bp3Operation = bp3Operations.begin()->second;
+
+    auto &operation = blockInfo.Operations[operationIndex];
+
+    const std::string type = operation.Op->m_Type;
+    const uint8_t typeLength = static_cast<uint8_t>(type.size());
+    helper::InsertToBuffer(buffer, &typeLength);
+    helper::InsertToBuffer(buffer, type.c_str(), type.size());
+
+    // pre-transform type
+    const uint8_t dataType = GetDataType<T>();
+    helper::InsertToBuffer(buffer, &dataType);
+    // pre-transform dimensions
+    const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
+    helper::InsertToBuffer(buffer, &dimensions); // count
+    const uint16_t dimensionsLength = static_cast<uint16_t>(24 * dimensions);
+    helper::InsertToBuffer(buffer, &dimensionsLength); // length
+    PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
+                        buffer);
+    // here put the metadata info depending on operation
+    bp3Operation->SetMetadata(variable, blockInfo, operation, buffer);
+}
+
+template <class T>
+void BP3Serializer::PutOperationPayloadInBuffer(
+    const core::Variable<T> &variable,
+    const typename core::Variable<T>::Info &blockInfo)
+{
+    // TODO: we only take the first operation for now
+    const std::map<size_t, std::shared_ptr<BP3Operation>> bp3Operations =
+        SetBP3Operations<T>(blockInfo.Operations);
+
+    const size_t operationIndex = bp3Operations.begin()->first;
+    const std::shared_ptr<BP3Operation> bp3Operation =
+        bp3Operations.begin()->second;
+
+    bp3Operation->SetData(variable, blockInfo,
+                          blockInfo.Operations[operationIndex], m_Data);
+
+    // update metadata
+    bool isFound = false;
+    SerialElementIndex &variableIndex = GetSerialElementIndex(
+        variable.m_Name, m_MetadataSet.VarsIndices, isFound);
+    bp3Operation->UpdateMetadata(variable, blockInfo,
+                                 blockInfo.Operations[operationIndex],
+                                 variableIndex.Buffer);
 }
 
 } // end namespace format

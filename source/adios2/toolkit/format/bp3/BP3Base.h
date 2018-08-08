@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <bitset>
+#include <memory> //std::shared_ptr
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -23,8 +24,10 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/VariableBase.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/BufferSTL.h"
+#include "adios2/toolkit/format/bp3/operation/BP3Operation.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2
@@ -254,6 +257,10 @@ public:
      */
     ResizeResult ResizeBuffer(const size_t dataIn, const std::string hint);
 
+    void ProfilerStart(const std::string process) noexcept;
+
+    void ProfilerStop(const std::string process) noexcept;
+
 protected:
     /** might be used in large payload copies to buffer */
     unsigned int m_Threads = 1;
@@ -365,6 +372,38 @@ protected:
         statistic_finite = 6
     };
 
+    enum TransformTypes
+    {
+        transform_unknown = -1,
+        transform_none = 0,
+        transform_identity = 1,
+        transform_zlib = 2,
+        transform_bzip2 = 3,
+        transform_szip = 4,
+        transform_isobar = 5,
+        transform_aplod = 6,
+        transform_alacrity = 7,
+        transform_zfp = 8,
+        transform_sz = 9,
+        transform_lz4 = 10,
+        transform_blosc = 11,
+        transform_mgard = 12
+    };
+
+    static const std::set<std::string> m_TransformTypes;
+    static const std::map<int, std::string> m_TransformTypesToNames;
+
+    /** Returns the proper derived class for BP3Operation based on type
+     * @param type input, must be a supported type under bp3/operation
+     * @return derived class if supported, false pointer if type not supported
+     */
+    std::shared_ptr<BP3Operation> SetBP3Operation(const std::string type) const
+        noexcept;
+
+    template <class T>
+    std::map<size_t, std::shared_ptr<BP3Operation>> SetBP3Operations(
+        const std::vector<core::VariableBase::Operation> &operations) const;
+
     struct ProcessGroupIndex
     {
         uint64_t Offset;
@@ -374,6 +413,19 @@ protected:
         std::string Name;
         std::string StepName;
         char IsColumnMajor;
+    };
+
+    /** pre-transform shape */
+    struct BP3OpInfo
+    {
+        std::vector<char> Metadata;
+        // pre-operator dimensions
+        Dims PreShape;
+        Dims PreCount;
+        Dims PreStart;
+        std::string Type; // Operator type, not data type
+        uint8_t PreDataType;
+        bool IsActive = false;
     };
 
     template <class T>
@@ -394,6 +446,7 @@ protected:
         std::bitset<32> Bitmap;
         uint8_t BitFinite;
         bool IsValue = false;
+        BP3OpInfo Op;
     };
 
     template <class T>
@@ -514,9 +567,14 @@ protected:
     std::string ReadBP3String(const std::vector<char> &buffer,
                               size_t &position) const noexcept;
 
-    void ProfilerStart(const std::string process) noexcept;
-
-    void ProfilerStop(const std::string process) noexcept;
+    // Transform related functions
+    /**
+     * Translates string to enum
+     * @param transformType input
+     * @return corresponding enum TransformTypes
+     */
+    TransformTypes TransformTypeEnum(const std::string transformType) const
+        noexcept;
 
 private:
     std::string GetBPSubStreamName(const std::string &name,
@@ -536,7 +594,11 @@ private:
     extern template BP3Base::Characteristics<T>                                \
     BP3Base::ReadElementIndexCharacteristics(                                  \
         const std::vector<char> &buffer, size_t &position,                     \
-        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;
+        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;    \
+                                                                               \
+    extern template std::map<size_t, std::shared_ptr<BP3Operation>>            \
+    BP3Base::SetBP3Operations<T>(                                              \
+        const std::vector<core::VariableBase::Operation> &operations) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

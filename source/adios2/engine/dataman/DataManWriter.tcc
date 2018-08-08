@@ -55,6 +55,14 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     {
         PutSyncCommonDataMan(variable, values);
     }
+    else if (m_Format == "binary")
+    {
+    }
+    else
+    {
+        throw(std::invalid_argument(
+            "[DataManWriter::PutSyncCommon] invalid format " + m_Format));
+    }
 }
 
 template <class T>
@@ -62,24 +70,8 @@ void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
 {
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {
-        std::string streamName = m_Name + ", ";
-        auto it = m_IO.m_TransportsParameters[i].find("CompressionMethod");
-        if (it != m_IO.m_TransportsParameters[i].end())
-        {
-            streamName += " Compressed Using " + it->second + ", ";
-        }
-        else
-        {
-            streamName += "Original Data";
-        }
-        it = m_IO.m_TransportsParameters[i].find("CompressionRate");
-        if (it != m_IO.m_TransportsParameters[i].end())
-        {
-            streamName += it->second + "%% Original Size";
-        }
-
-        m_DataManSerializer[i]->Put(variable, streamName, CurrentStep(),
-                                    m_MPIRank, m_IO.m_TransportsParameters[i]);
+        m_DataManSerializer[i]->Put(variable, m_Name, CurrentStep(), m_MPIRank,
+                                    m_IO.m_TransportsParameters[i]);
     }
 }
 

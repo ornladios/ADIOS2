@@ -187,31 +187,30 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
     m_StepsCount = boxSteps.second;
 }
 
-// transforms related functions
-unsigned int VariableBase::AddOperator(core::Operator &transform,
-                                       const Params &parameters) noexcept
+size_t VariableBase::AddOperation(Operator &op,
+                                  const Params &parameters) noexcept
 {
-    m_OperatorsInfo.push_back(OperatorInfo{transform, parameters});
-    return static_cast<unsigned int>(m_OperatorsInfo.size() - 1);
+    m_Operations.push_back(Operation{&op, parameters, Params()});
+    return m_Operations.size() - 1;
 }
 
-void VariableBase::ResetTransformParameters(const unsigned int transformIndex,
-                                            const Params &parameters)
+void VariableBase::SetOperationParameter(const size_t operationID,
+                                         const std::string key,
+                                         const std::string value)
 {
     if (m_DebugMode)
     {
-        if (transformIndex < m_OperatorsInfo.size())
+        if (operationID >= m_Operations.size())
         {
-            m_OperatorsInfo[transformIndex].Parameters = parameters;
+            throw std::invalid_argument(
+                "ERROR: invalid operationID " + std::to_string(operationID) +
+                ", check returned id from AddOperation, in call to "
+                "SetOperationParameter\n");
         }
     }
-    else
-    {
-        m_OperatorsInfo[transformIndex].Parameters = parameters;
-    }
-}
 
-void VariableBase::ClearOperators() noexcept { m_OperatorsInfo.clear(); }
+    m_Operations[operationID].Parameters[key] = value;
+}
 
 void VariableBase::CheckDimensions(const std::string hint) const
 {
@@ -228,7 +227,6 @@ void VariableBase::CheckDimensions(const std::string hint) const
     }
 
     CheckDimensionsCommon(hint);
-    // TODO need to think more exceptions here
 }
 
 size_t VariableBase::SelectionSize() const noexcept

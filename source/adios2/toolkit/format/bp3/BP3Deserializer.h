@@ -13,10 +13,12 @@
 
 #include <mutex>
 #include <set>
+#include <utility> //std::pair
+#include <vector>
 
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
-#include "adios2/helper/adiosFunctions.h" //VariablesSubFileInfo
+#include "adios2/helper/adiosFunctions.h" //VariablesSubFileInfo, BlockOperation
 #include "adios2/toolkit/format/bp3/BP3Base.h"
 
 namespace adios2
@@ -72,8 +74,23 @@ public:
     void SetVariableBlockInfo(core::Variable<T> &variable,
                               typename core::Variable<T>::Info &blockInfo);
 
+    // Operation related functions
+    template <class T>
+    bool IdentityOperation(
+        const std::vector<typename core::Variable<T>::Operation> &operations)
+        const noexcept;
+
+    const helper::BlockOperationInfo &InitPostOperatorBlockData(
+        const std::vector<helper::BlockOperationInfo> &blockOperationsInfo,
+        std::vector<char> &postOpData, const bool identity) const;
+
+    void GetPreOperatorBlockData(
+        const std::vector<char> &postOpData,
+        const helper::BlockOperationInfo &blockOperationInfo,
+        std::vector<char> &preOpData) const;
     /**
-     * Clips and assigns memory to blockInfo.Data from a contiguous memory input
+     * Clips and assigns memory to blockInfo.Data from a contiguous memory
+     * input
      * @param blockInfo
      * @param contiguousMemory
      * @param blockBox
@@ -165,6 +182,7 @@ private:
                      const std::vector<size_t> &blocksIndexOffsets) const;
 };
 
+// TODO: deprecate this
 #define declare_template_instantiation(T)                                      \
     extern template void BP3Deserializer::GetSyncVariableDataFromStream(       \
         core::Variable<T> &, BufferSTL &) const;                               \
@@ -203,7 +221,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
                                                                                \
     extern template std::vector<typename core::Variable<T>::Info>              \
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
-        const;
+        const;                                                                 \
+                                                                               \
+    extern template bool BP3Deserializer::IdentityOperation<T>(                \
+        const std::vector<typename core::Variable<T>::Operation> &)            \
+        const noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

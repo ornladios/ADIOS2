@@ -102,6 +102,10 @@
     MACRO(float)                                                               \
     MACRO(double)
 
+#define ADIOS2_FOREACH_SZ_TYPE_1ARG(MACRO)                                     \
+    MACRO(float)                                                               \
+    MACRO(double)
+
 #define ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(MACRO)                              \
     MACRO(std::string)                                                         \
     MACRO(char)                                                                \

@@ -47,12 +47,6 @@ class IO
 {
 
 public:
-    struct OperatorInfo
-    {
-        Operator &ADIOSOperator;
-        Params Parameters;
-    };
-
     /** unique identifier */
     const std::string m_Name;
 
@@ -72,8 +66,16 @@ public:
     /** From AddTransport, parameters in map for each transport in vector */
     std::vector<Params> m_TransportsParameters;
 
-    /** From AddOperator, contains operators added to this IO */
-    std::vector<OperatorInfo> m_Operators;
+    /** Carries information about operations added with AddOperation */
+    struct Operation
+    {
+        Operator *Op;
+        Params Parameters;
+        Params Info;
+    };
+
+    /** From AddOperation, contains operators added to this IO */
+    std::vector<Operation> m_Operations;
 
     /** BPFileWriter engine default if unknown */
     std::string m_EngineType = "BPFile";
@@ -307,11 +309,12 @@ public:
     /**
      * Adds an operator defined by the ADIOS class. Could be a variable set
      * transform, callback function, etc.
-     * @param adiosOperator operator created by the ADIOS class
+     * @param op operator created by the ADIOS class
      * @param parameters specific parameters for current IO
+     * @return operation handler
      */
-    void AddOperator(Operator &adiosOperator,
-                     const Params &parameters = Params()) noexcept;
+    size_t AddOperation(Operator &op,
+                        const Params &parameters = Params()) noexcept;
 
     /**
      * @brief Creates a polymorphic object that derives the Engine class,

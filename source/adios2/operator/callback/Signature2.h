@@ -32,7 +32,7 @@ public:
     ~Signature2() = default;
 
     void RunCallback2(void *, const std::string &, const std::string &,
-                      const std::string &, const Dims &) final;
+                      const std::string &, const Dims &) const final;
 
 private:
     std::function<void(void *, const std::string &, const std::string &,

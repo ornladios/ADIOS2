@@ -126,6 +126,14 @@ T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept
 }
 
 template <class T>
+void ClipVector(std::vector<T> &vec, const size_t start,
+                const size_t end) noexcept
+{
+    vec.resize(end);
+    vec.erase(vec.begin(), vec.begin() + start);
+}
+
+template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const std::vector<char> &contiguousMemory,
                           const Box<Dims> &blockBox,
@@ -268,7 +276,6 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
     const Dims &start = intersectionBox.first;
     if (start.size() == 1) // 1D copy memory
     {
-        // normalize intersection start with variable.m_Start
         const size_t normalizedStart =
             (start.front() - destStart.front()) * sizeof(T);
         char *rawVariableData = reinterpret_cast<char *>(dest);

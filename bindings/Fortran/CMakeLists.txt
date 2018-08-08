@@ -13,6 +13,7 @@ set(F2C
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_io.cpp 
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_variable.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_engine.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_operator.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_FILE.cpp
 )
 

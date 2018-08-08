@@ -41,6 +41,44 @@ void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
     ParseAttributesIndex(bufferSTL, io);
 }
 
+const helper::BlockOperationInfo &BP3Deserializer::InitPostOperatorBlockData(
+    const std::vector<helper::BlockOperationInfo> &blockOperationsInfo,
+    std::vector<char> &postOpData, const bool identity) const
+{
+
+    size_t index = 0;
+    for (const helper::BlockOperationInfo &blockOperationInfo :
+         blockOperationsInfo)
+    {
+        const std::string type = blockOperationInfo.Info.at("Type");
+        if (m_TransformTypes.count(type) == 1)
+        {
+            if (!identity)
+            {
+                postOpData.resize(blockOperationInfo.PayloadSize);
+            }
+            break;
+        }
+        ++index;
+    }
+    return blockOperationsInfo.at(index);
+}
+
+void BP3Deserializer::GetPreOperatorBlockData(
+    const std::vector<char> &postOpData,
+    const helper::BlockOperationInfo &blockOperationInfo,
+    std::vector<char> &preOpData) const
+{
+    // pre-allocate decompressed block
+    preOpData.resize(helper::GetTotalSize(blockOperationInfo.PreCount) *
+                     blockOperationInfo.PreSizeOf);
+
+    // get the right bp3Op
+    std::shared_ptr<BP3Operation> bp3Op =
+        SetBP3Operation(blockOperationInfo.Info.at("Type"));
+    bp3Op->GetData(postOpData.data(), blockOperationInfo, preOpData.data());
+}
+
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
@@ -505,7 +543,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
                                                                                \
     template std::vector<typename core::Variable<T>::Info>                     \
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
-        const;
+        const;                                                                 \
+                                                                               \
+    template bool BP3Deserializer::IdentityOperation<T>(                       \
+        const std::vector<typename core::Variable<T>::Operation> &)            \
+        const noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

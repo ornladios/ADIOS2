@@ -46,7 +46,6 @@ void FileStdio::Open(const std::string &name, const Mode openMode)
     switch (m_OpenMode)
     {
     case (Mode::Write):
-        MkDir(m_Name);
         m_File = std::fopen(name.c_str(), "wb");
         break;
     case (Mode::Append):

@@ -23,14 +23,33 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
 : Engine(engineType, io, name, mode, mpiComm)
 {
 
+    // initialize parameters
     MPI_Comm_rank(mpiComm, &m_MPIRank);
     MPI_Comm_size(mpiComm, &m_MPISize);
-
     m_IsLittleEndian = helper::IsLittleEndian();
     m_IsRowMajor = helper::IsRowMajor(io.m_HostLanguage);
+    GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
+    m_TransportChannels = m_IO.m_TransportsParameters.size();
+    if (m_TransportChannels == 0)
+    {
+        m_TransportChannels = 1;
+        m_IO.m_TransportsParameters.push_back({{"Library", "ZMQ"},
+                                               {"IPAddress", "127.0.0.1"},
+                                               {"Port", "12306"}});
+    }
+    for (size_t i = 0; i < m_TransportChannels; ++i)
+    {
+        m_StreamNames.push_back(m_Name + std::to_string(i));
+    }
 
-    GetIntParameter(m_IO.m_Parameters, "TransportChannels",
-                    m_TransportChannels);
+    // register callbacks
+    for (auto &j : m_IO.m_Operations)
+    {
+        if (j.Op->m_Type == "Signature2")
+        {
+            m_Callbacks.push_back(j.Op);
+        }
+    }
 }
 
 bool DataManCommon::GetBoolParameter(Params &params, std::string key,
@@ -77,24 +96,6 @@ bool DataManCommon::GetIntParameter(Params &params, std::string key, int &value)
         return true;
     }
     return false;
-}
-
-std::vector<std::string> DataManCommon::ParseAddress(std::string input,
-                                                     std::string protocol)
-{
-    std::vector<std::string> strings;
-    std::istringstream f(input);
-    std::string s;
-    while (getline(f, s, ','))
-    {
-        s.erase(remove_if(s.begin(), s.end(), isspace), s.end());
-        if (protocol == "tcp")
-        {
-            s = protocol + "://" + s;
-        }
-        strings.push_back(s);
-    }
-    return std::move(strings);
 }
 
 } // end namespace engine

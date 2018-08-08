@@ -38,6 +38,7 @@ public:
     void Put(const core::Variable<T> &variable, const std::string &doid,
              const size_t step, const int rank, const Params &params);
     const std::shared_ptr<std::vector<char>> Get();
+    static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;
@@ -48,6 +49,15 @@ private:
     template <class T>
     bool Zfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
              const Dims &varCount, const Params &params);
+    template <class T>
+    bool Sz(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+            const Dims &varCount, const Params &params);
+    template <class T>
+    bool BZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
+               const Dims &varCount, const Params &params);
+
+    bool IsCompressionAvailable(const std::string &method,
+                                const std::string &type, const Dims &count);
 };
 
 } // end namespace format
