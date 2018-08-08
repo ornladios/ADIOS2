@@ -27,7 +27,7 @@ template <class T>
 void SstReader::ReadVariableBlocks(Variable<T> &variable)
 {
     std::vector<void *> sstReadHandlers;
-    std::vector<NonContiguousBpBuffer> nonContiguousBpBuffer;
+    std::vector<std::vector<char>> buffers;
 
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
@@ -55,27 +55,21 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                             subStreamInfo.OperationsInfo,
                             variable.m_RawMemory[1], identity);
                     // if identity is true, just read the entire block content
+                    buffers.emplace_back();
+                    buffers.back().resize(blockOperationInfo.PayloadSize);
                     char *output =
                         identity ? reinterpret_cast<char *>(blockInfo.Data)
-                                 : variable.m_RawMemory[1].data();
+                                 : buffers.back().data();
+
                     auto ret = SstReadRemoteMemory(
                         m_Input, rank, CurrentStep(),
                         blockOperationInfo.PayloadOffset,
                         blockOperationInfo.PayloadSize, output, dp_info);
-                    SstWaitForCompletion(m_Input, ret);
+                    sstReadHandlers.push_back(ret);
                     if (identity)
                     {
                         continue;
                     }
-                    m_BP3Deserializer->GetPreOperatorBlockData(
-                        variable.m_RawMemory[1], blockOperationInfo,
-                        variable.m_RawMemory[0]);
-                    helper::ClipVector(variable.m_RawMemory[0],
-                                       subStreamInfo.Seeks.first,
-                                       subStreamInfo.Seeks.second);
-                    m_BP3Deserializer->ClipContiguousMemory<T>(
-                        blockInfo, variable.m_RawMemory[0],
-                        subStreamInfo.BlockBox, subStreamInfo.IntersectionBox);
                 }
                 // if remote data buffer is not compressed
                 else
@@ -107,42 +101,13 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     // find all contiguous parts.
                     else
                     {
-                        // if configured to buffer all sst read requests then
-                        // put all read requests in a vector
-                        if (m_BufferNonContiguousVariables)
-                        {
-                            nonContiguousBpBuffer.emplace_back();
-                            nonContiguousBpBuffer.back().VariableName =
-                                variable.m_Name;
-                            nonContiguousBpBuffer.back()
-                                .ContiguousMemory.resize(writerBlockSize);
-                            nonContiguousBpBuffer.back().BlockBox =
-                                subStreamInfo.BlockBox;
-                            nonContiguousBpBuffer.back().IntersectionBox =
-                                subStreamInfo.IntersectionBox;
-                            auto ret = SstReadRemoteMemory(
-                                m_Input, rank, CurrentStep(), writerBlockStart,
-                                writerBlockSize, nonContiguousBpBuffer.back()
-                                                     .ContiguousMemory.data(),
-                                dp_info);
-                            sstReadHandlers.push_back(ret);
-                        }
-                        // if not configured to buffer all sst read requests
-                        // then immediately issue each SstRead. This is NOT
-                        // recommended as blocking read will harm performance.
-                        else
-                        {
-                            std::vector<char> contiguousMemory(writerBlockSize);
-                            auto ret = SstReadRemoteMemory(
-                                m_Input, rank, CurrentStep(), writerBlockStart,
-                                writerBlockSize, contiguousMemory.data(),
-                                dp_info);
-                            SstWaitForCompletion(m_Input, ret);
-                            m_BP3Deserializer->ClipContiguousMemory<T>(
-                                blockInfo, contiguousMemory,
-                                subStreamInfo.BlockBox,
-                                subStreamInfo.IntersectionBox);
-                        }
+                        // batch all read requests
+                        buffers.emplace_back();
+                        buffers.back().resize(writerBlockSize);
+                        auto ret = SstReadRemoteMemory(
+                            m_Input, rank, CurrentStep(), writerBlockStart,
+                            writerBlockSize, buffers.back().data(), dp_info);
+                        sstReadHandlers.push_back(ret);
                     }
                 }
             }
@@ -159,13 +124,75 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
         SstWaitForCompletion(m_Input, i);
     }
 
-    size_t blockID = 0;
+    size_t iter = 0;
 
-    for (const auto &i : nonContiguousBpBuffer)
+    for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
-        m_BP3Deserializer->ClipContiguousMemory<T>(
-            variable.m_BlocksInfo.at(blockID), i.ContiguousMemory, i.BlockBox,
-            i.IntersectionBox);
+        T *originalBlockData = blockInfo.Data;
+        for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
+        {
+            const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo =
+                stepPair.second;
+            for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
+            {
+                const size_t rank = subStreamInfo.SubStreamID;
+                void *dp_info = NULL;
+                if (m_CurrentStepMetaData->DP_TimestepInfo)
+                {
+                    dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];
+                }
+                // if remote data buffer is compressed
+                if (subStreamInfo.OperationsInfo.size() > 0)
+                {
+                    const bool identity =
+                        m_BP3Deserializer->IdentityOperation<T>(
+                            blockInfo.Operations);
+                    const helper::BlockOperationInfo &blockOperationInfo =
+                        m_BP3Deserializer->InitPostOperatorBlockData(
+                            subStreamInfo.OperationsInfo,
+                            variable.m_RawMemory[1], identity);
+                    m_BP3Deserializer->GetPreOperatorBlockData(
+                        buffers[iter], blockOperationInfo,
+                        variable.m_RawMemory[0]);
+                    helper::ClipVector(variable.m_RawMemory[0],
+                                       subStreamInfo.Seeks.first,
+                                       subStreamInfo.Seeks.second);
+                    m_BP3Deserializer->ClipContiguousMemory<T>(
+                        blockInfo, variable.m_RawMemory[0],
+                        subStreamInfo.BlockBox, subStreamInfo.IntersectionBox);
+                    ++iter;
+                }
+                // if remote data buffer is not compressed
+                else
+                {
+                    size_t dummy;
+                    // if both input and output are contiguous memory then
+                    // directly issue SstRead and put data in place
+                    if (helper::IsIntersectionContiguousSubarray(
+                            subStreamInfo.BlockBox,
+                            subStreamInfo.IntersectionBox,
+                            m_BP3Deserializer->m_IsRowMajor, dummy) == false ||
+                        helper::IsIntersectionContiguousSubarray(
+                            helper::StartEndBox(
+                                blockInfo.Start, blockInfo.Count,
+                                m_BP3Deserializer->m_ReverseDimensions),
+                            subStreamInfo.IntersectionBox,
+                            m_BP3Deserializer->m_IsRowMajor, dummy) == false)
+                    {
+                        size_t blockID = 0;
+                        m_BP3Deserializer->ClipContiguousMemory<T>(
+                            variable.m_BlocksInfo.at(blockID), buffers[iter],
+                            subStreamInfo.BlockBox,
+                            subStreamInfo.IntersectionBox);
+                        ++iter;
+                    }
+                }
+            }
+            // advance pointer to next step
+            blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
+        }
+        // move back to original position
+        blockInfo.Data = originalBlockData;
     }
 }
 
