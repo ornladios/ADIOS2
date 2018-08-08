@@ -66,14 +66,6 @@ private:
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
     format::BP3Deserializer *m_BP3Deserializer;
-    bool m_BufferNonContiguousVariables = true;
-    struct NonContiguousBpBuffer
-    {
-        std::string VariableName;
-        std::vector<char> ContiguousMemory;
-        Box<Dims> BlockBox;
-        Box<Dims> IntersectionBox;
-    };
     /* --- Used only with BP marshaling --- */
 
     struct _SstParams Params;
