@@ -61,10 +61,10 @@ void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
     variable.SetBlockInfo(data, CurrentStep());
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP3Serializer.m_DeferredVariablesDataSize +=
-        1.05 * variable.PayloadSize() +
-        4 *
-            m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
-                                                 variable.m_Count);
+        static_cast<size_t>(1.05 * variable.PayloadSize() +
+                            4 *
+                                m_BP3Serializer.GetBPIndexSizeInData(
+                                    variable.m_Name, variable.m_Count));
 }
 
 } // end namespace engine
