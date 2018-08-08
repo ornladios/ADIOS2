@@ -46,6 +46,19 @@ struct SmallTestData
         {0.1f, 1.1f, 2.1f, 3.1f, 4.1f, 5.1f, 6.1f, 7.1f, 8.1f, 9.1f}};
     std::array<double, 10> R64 = {
         {10.2, 11.2, 12.2, 13.2, 14.2, 15.2, 16.2, 17.2, 18.2, 19.2}};
+
+    std::array<std::complex<float>, 10> CR32 = {
+        {(0.1f, 1.1f), (1.1f, 2.1f), (2.1f, 3.1f), (3.1f, 4.1f), (4.1f, 5.1f),
+         (5.1f, 6.1f), (6.1f, 7.1f), (7.1f, 8.1f), (8.1f, 9.1f),
+         (9.1f, 10.1f)}};
+    std::array<std::complex<double>, 10> CR64 = {
+        {(10.2, 11.2), (11.2, 12.2), (12.2, 13.2), (13.2, 14.2), (14.2, 15.2),
+         (15.2, 16.2), (16.2, 17.2), (17.2, 18.2), (18.2, 19.2), (19.2, 20.2)}};
+
+    std::array<std::complex<long double>, 10> CRLD = {
+        {(10.2L, 11.2L), (11.2L, 12.2L), (12.2L, 13.2L), (13.2L, 14.2L),
+         (14.2L, 15.2L), (15.2L, 16.2L), (16.2L, 17.2L), (17.2L, 18.2L),
+         (18.2L, 19.2L), (19.2L, 20.2L)}};
 };
 
 SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
