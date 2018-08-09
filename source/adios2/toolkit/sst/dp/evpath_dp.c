@@ -573,6 +573,8 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     ret->cm = cm;
     ret->Buffer = Buffer;
     ret->Rank = Rank;
+    ret->Failed = 0;
+
     /*
      * set the completion handle as client Data on the condition so that
      * handler has access to it.
