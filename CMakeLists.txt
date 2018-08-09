@@ -1,19 +1,11 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0)
 
-# Note that this whole if block is for backwards compatibility and can be
-# replaced with a single project(ATL VERSION A.B.C) if the minum required is
-# raised to > 3.0
-if(POLICY CMP0048)
-  cmake_policy(SET CMP0048 NEW)
-  project(ATL VERSION 2.2.1 LANGUAGES C)
-else()
-  project(ATL C)
-  set(ATL_MAJOR_VERSION 2)
-  set(ATL_MINOR_VERSION 2)
-  set(ATL_PATCH_VERSION 1)
-  set(ATL_VERSION
-    ${ATL_MAJOR_VERSION}.${ATL_MINOR_VERSION}.${ATL_PATCH_VERSION})
-endif()
+project(ATL C)
+set(ATL_VERSION_MAJOR 2)
+set(ATL_VERSION_MINOR 2)
+set(ATL_VERSION_PATCH 1)
+set(ATL_VERSION
+  ${ATL_VERSION_MAJOR}.${ATL_VERSION_MINOR}.${ATL_VERSION_PATCH})
 
 # Some boilerplate to setup nice output directories
 set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
