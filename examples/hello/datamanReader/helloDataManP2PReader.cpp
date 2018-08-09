@@ -22,7 +22,7 @@ std::string workflowMode = "p2p";
 std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
                                                 {"IPAddress", "127.0.0.1"},
                                                 {"Port", "12306"},
-                                                {"Timeout", "2000"}}};
+                                                {"Timeout", "5"}}};
 
 // data properties
 size_t steps = 100;
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
             bpFloats.SetSelection({start, count});
             dataManReader.Get<float>(bpFloats, myFloats.data(),
                                      adios2::Mode::Sync);
-            dataManReader.EndStep();
             Dump(myFloats, dataManReader.CurrentStep());
+            dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
