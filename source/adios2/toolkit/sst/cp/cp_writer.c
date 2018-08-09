@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +47,70 @@ static char *buildContactInfo(SstStream Stream)
     return FullInfo;
 }
 
+struct NameListEntry
+{
+    const char *FileName;
+    struct NameListEntry *Next;
+};
+
+struct NameListEntry *FileNameList = NULL;
+
+static void RemoveAllFilesInList()
+{
+    while (FileNameList)
+    {
+        struct NameListEntry *Next = FileNameList->Next;
+        fprintf(stderr, "SST stream open at exit, unlinking contact file %s\n",
+                FileNameList->FileName);
+        unlink(FileNameList->FileName);
+        free(FileNameList);
+        FileNameList = Next;
+    }
+}
+
+static void ExitAndRemoveFiles(int signum)
+{
+    fprintf(stderr, "ADIOS2 caught SigInt, exiting with error\n");
+    exit(1);
+}
+
+static void AddNameToExitList(const char *FileName)
+{
+    static int First = 1;
+    if (First)
+    {
+        struct sigaction sa;
+        First = 0;
+        atexit(RemoveAllFilesInList);
+
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = ExitAndRemoveFiles;
+        sigemptyset(&sa.sa_mask);
+        sigaction(SIGINT, &sa, NULL);
+    }
+
+    struct NameListEntry *NewHead = malloc(sizeof(*NewHead));
+    NewHead->FileName = FileName;
+    NewHead->Next = FileNameList;
+    FileNameList = NewHead;
+}
+
+static void RemoveNameFromExitList(const char *FileName)
+{
+    struct NameListEntry **LastPtr = &FileNameList;
+    struct NameListEntry *List = FileNameList;
+    while (List)
+    {
+        if (strcmp(FileName, List->FileName) == 0)
+        {
+            *LastPtr = List->Next;
+            free(List);
+            return;
+        }
+        List = List->Next;
+    }
+}
+
 static void writeContactInfoFile(const char *Name, SstStream Stream)
 {
     char *Contact = buildContactInfo(Stream);
@@ -63,9 +128,11 @@ static void writeContactInfoFile(const char *Name, SstStream Stream)
     fprintf(WriterInfo, "%s", Contact);
     fclose(WriterInfo);
     rename(TmpName, FileName);
+    Stream->AbsoluteFilename = realpath(FileName, NULL);
     free(Contact);
     free(TmpName);
     free(FileName);
+    AddNameToExitList(Stream->AbsoluteFilename);
 }
 
 static void writeContactInfoScreen(const char *Name, SstStream Stream)
@@ -101,11 +168,9 @@ static void registerContactInfo(const char *Name, SstStream Stream)
 
 static void removeContactInfoFile(SstStream Stream)
 {
-    const char *Name = Stream->Filename;
-    char *FileName = malloc(strlen(Name) + strlen(SST_POSTFIX) + 1);
-    sprintf(FileName, "%s" SST_POSTFIX, Name);
-    unlink(FileName);
-    free(FileName);
+    const char *Name = Stream->AbsoluteFilename;
+    unlink(Name);
+    RemoveNameFromExitList(Name);
 }
 
 static void removeContactInfo(SstStream Stream)
