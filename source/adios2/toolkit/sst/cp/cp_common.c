@@ -785,6 +785,8 @@ extern void SstStreamDestroy(SstStream Stream)
 
     if (Stream->Filename)
         free(Stream->Filename);
+    if (Stream->AbsoluteFilename)
+        free(Stream->AbsoluteFilename);
     if (Stream->ParamsBlock)
         free(Stream->ParamsBlock);
     //   Stream is free'd in LastCall
