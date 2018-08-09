@@ -41,6 +41,12 @@ const std::shared_ptr<std::vector<char>> DataManSerializer::Get()
     return m_Buffer;
 }
 
+float DataManSerializer::GetMetaRatio()
+{
+    return static_cast<float>(m_TotalMetadataSize) /
+           static_cast<float>(m_TotalMetadataSize + m_TotalDataSize);
+}
+
 std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
 {
     nlohmann::json j;

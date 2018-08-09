@@ -37,7 +37,7 @@ int DataManDeserializer::Put(
             size_t finalStep = metaj["FinalStep"];
             return finalStep;
         }
-        catch (std::exception &e)
+        catch (std::exception)
         {
         }
     }
@@ -63,8 +63,10 @@ int DataManDeserializer::Put(
         DataManVar var;
         try
         {
+            //            nlohmann::json metaj =
+            //            nlohmann::json::parse(data->data() + position);
             nlohmann::json metaj =
-                nlohmann::json::parse(data->data() + position);
+                nlohmann::json::from_msgpack(data->data() + position, metasize);
             position += metasize;
             var.isRowMajor = metaj["M"].get<bool>();
             var.isLittleEndian = metaj["E"].get<bool>();

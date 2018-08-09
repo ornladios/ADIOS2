@@ -125,9 +125,11 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     }
     metaj["I"] = datasize;
 
-    std::string metastr = metaj.dump() + '\0';
+    //    std::string metastr = metaj.dump() + '\0';
+    std::vector<std::uint8_t> metacbor = nlohmann::json::to_msgpack(metaj);
 
-    uint32_t metasize = metastr.size();
+    //    uint32_t metasize = metastr.size();
+    uint32_t metasize = metacbor.size();
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
     {
@@ -139,8 +141,10 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     std::memcpy(m_Buffer->data() + m_Position, &metasize, sizeof(metasize));
     m_Position += sizeof(metasize);
 
-    std::memcpy(m_Buffer->data() + m_Position, metastr.c_str(), metasize);
+    //    std::memcpy(m_Buffer->data() + m_Position, metastr.c_str(), metasize);
+    std::memcpy(m_Buffer->data() + m_Position, metacbor.data(), metasize);
     m_Position += metasize;
+    m_TotalMetadataSize += metasize;
 
     if (compressed)
     {
@@ -152,6 +156,7 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
         std::memcpy(m_Buffer->data() + m_Position, inputData, datasize);
     }
     m_Position += datasize;
+    m_TotalDataSize += datasize;
 }
 
 template <class T>
