@@ -9,9 +9,15 @@ add_executable(TestSstServer TestSstServer.cpp)
 add_executable(TestSstClient TestSstClient.cpp)
 if(ADIOS2_HAVE_Fortran)
   add_library(TestData_f OBJECT TestData_mod.f90)
-  add_executable(TestSstWrite_f TestSstWriteF.f90 $<TARGET_OBJECTS:TestData_f>)
+
+  if (ADIOS2_HAVE_MPI)
+    add_executable(TestSstWrite_f TestSstWriteF.f90 $<TARGET_OBJECTS:TestData_f>)
+    add_executable(TestSstRead_f TestSstReadF.f90 $<TARGET_OBJECTS:TestData_f>)
+  else()
+    add_executable(TestSstWrite_f TestSstWriteF_nompi.f90 $<TARGET_OBJECTS:TestData_f>)
+    add_executable(TestSstRead_f TestSstReadF_nompi.f90 $<TARGET_OBJECTS:TestData_f>)
+  endif()
   target_link_libraries(TestSstWrite_f adios2_f)
-  add_executable(TestSstRead_f TestSstReadF.f90 $<TARGET_OBJECTS:TestData_f>)
   target_link_libraries(TestSstRead_f adios2_f)
 endif()
 
@@ -57,52 +63,6 @@ add_test(
     -nw 1 -nr 1 -v -p TestSst)
 set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 30) 
 
-add_test(
-  NAME ADIOSSstTest.2x1
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 2 -nr 1 -v -p TestSst)
-set_tests_properties(ADIOSSstTest.2x1 PROPERTIES TIMEOUT 30) 
-
-add_test(
-  NAME ADIOSSstTest.1x2
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 1 -nr 2 -v -p TestSst)
-set_tests_properties(ADIOSSstTest.1x2 PROPERTIES TIMEOUT 30) 
-
-add_test(
-  NAME ADIOSSstTest.3x5
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 3 -nr 5 -v -p TestSst)
-set_tests_properties(ADIOSSstTest.3x5 PROPERTIES TIMEOUT 30) 
-
-add_test(
-  NAME ADIOSSstTest.3x5BP
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 3 -nr 5 -v -p TestSst -arg "MarshalMethod:BP")
-set_tests_properties(ADIOSSstTest.3x5BP PROPERTIES TIMEOUT 30) 
-
-if (ADIOS2_HAVE_ZFP)
-    add_test(
-        NAME ADIOSSstTest.3x5BP.zfp
-        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-        -nw 3 -nr 5 -v -p TestSst -arg "--compress_zfp MarshalMethod:BP")
-    set_tests_properties(ADIOSSstTest.3x5BP.zfp PROPERTIES TIMEOUT 30)
-endif()
-
-if (ADIOS2_HAVE_SZ)
-    add_test(
-        NAME ADIOSSstTest.3x5BP.sz
-        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-        -nw 3 -nr 5 -v -p TestSst -arg "--compress_sz MarshalMethod:BP")
-    set_tests_properties(ADIOSSstTest.3x5BP.sz PROPERTIES TIMEOUT 30)
-endif()
-
-add_test(
-  NAME ADIOSSstTest.5x3
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 5 -nr 3 -v -p TestSst)
-set_tests_properties(ADIOSSstTest.5x3 PROPERTIES TIMEOUT 30) 
-
 if(ADIOS2_HAVE_Fortran)
   add_test(
     NAME ADIOSSstTest.FtoC_1x1
@@ -127,43 +87,7 @@ if(ADIOS2_HAVE_Fortran)
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 1 -v -w TestSstWrite_f -r TestSstRead_f)
   set_tests_properties(ADIOSSstTest.FtoF_1x1 PROPERTIES TIMEOUT 30) 
-
-  add_test(
-    NAME ADIOSSstTest.FtoC_3x5
-    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 3 -nr 5 -v -w TestSstWrite_f -r TestSstRead)
-  set_tests_properties(ADIOSSstTest.FtoC_3x5 PROPERTIES TIMEOUT 30) 
-
-  add_test(
-    NAME ADIOSSstTest.FtoC_3x5BP
-    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 3 -nr 5 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
-  set_tests_properties(ADIOSSstTest.FtoC_3x5BP PROPERTIES TIMEOUT 30) 
-  
-
-  add_test(
-    NAME ADIOSSstTest.CtoF_3x5
-    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 3 -nr 5 -v -w TestSstWrite -r TestSstRead_f)
-  set_tests_properties(ADIOSSstTest.CtoF_3x5 PROPERTIES TIMEOUT 30) 
-  add_test(
-    NAME ADIOSSstTest.FtoF_3x5
-    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 3 -nr 5 -v -w TestSstWrite_f -r TestSstRead_f)
-  set_tests_properties(ADIOSSstTest.FtoF_3x5 PROPERTIES TIMEOUT 30) 
-endif()
-
-add_test(
-  NAME ADIOSSstDelayedReaderTest.3x5
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
-    -nw 3 -nr 5 -v -p TestSst)
-set_tests_properties(ADIOSSstDelayedReaderTest.3x5 PROPERTIES TIMEOUT 30) 
-
-add_test(
-  NAME ADIOSSstDelayedReaderWithBlockingTest.3x5
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
-    -nw 3 -nr 5 -v -p TestSst -arg 'RendezvousReaderCount:0,QueueLimit:3' -arg '--expect_time_gap')
-set_tests_properties(ADIOSSstDelayedReaderWithBlockingTest.3x5 PROPERTIES TIMEOUT 30) 
+endif(ADIOS2_HAVE_Fortran)
 
 if(ADIOS2_HAVE_ZFP)
   add_test(
@@ -171,11 +95,10 @@ if(ADIOS2_HAVE_ZFP)
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
     -nw 1 -nr 1 -v -p TestSst -arg 'CompressionMethod:zfp' )
   set_tests_properties(ADIOSSstZFPCompression.1x1 PROPERTIES TIMEOUT 30) 
-  add_test(
-    NAME ADIOSSstZFPCompression.3x5
-    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
-    -nw 3 -nr 5 -v -p TestSst -arg 'CompressionMethod:zfp' )
-  set_tests_properties(ADIOSSstZFPCompression.3x5 PROPERTIES TIMEOUT 30) 
+endif()
+
+if (ADIOS2_HAVE_MPI)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/TestSSTMxN.cmake)
 endif()
 
 #add_test(

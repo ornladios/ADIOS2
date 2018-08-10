@@ -151,10 +151,7 @@ if(PythonFull_FOUND)
 endif()
 
 # Sst
-if(ADIOS2_USE_SST STREQUAL ON AND NOT ADIOS2_HAVE_MPI)
-  message(FATAL_ERROR "SST currently requires MPI to be available")
-endif()
-if(ADIOS2_USE_SST AND ADIOS2_HAVE_MPI)
+if(ADIOS2_USE_SST)
   set(ADIOS2_HAVE_SST TRUE)
   find_package(LIBFABRIC 1.6)
   if(LIBFABRIC_FOUND)
