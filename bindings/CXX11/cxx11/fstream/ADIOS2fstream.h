@@ -20,10 +20,12 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 namespace core
 {
 class Stream;
 }
+/// \endcond
 
 class fstream
 {

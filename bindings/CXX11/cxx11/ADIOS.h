@@ -25,11 +25,13 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 namespace core
 {
 class ADIOS; // private implementation
 }
+/// \endcond
 
 class ADIOS
 {

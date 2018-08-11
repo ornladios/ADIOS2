@@ -23,6 +23,7 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 class ADIOS; // friend
 
@@ -30,6 +31,7 @@ namespace core
 {
 class IO; // private implementation
 }
+/// \endcond
 
 class IO
 {

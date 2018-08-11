@@ -17,6 +17,7 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 class IO; // friend
 
@@ -25,6 +26,7 @@ namespace core
 template <class T>
 class Attribute; // private implementation
 }
+/// \endcond
 
 template <class T>
 class Attribute

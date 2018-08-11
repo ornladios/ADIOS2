@@ -18,6 +18,7 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 class IO;     // friend
 class Engine; // friend
@@ -28,6 +29,7 @@ namespace core
 template <class T>
 class Variable; // private implementation
 }
+/// \endcond
 
 template <class T>
 class Variable
