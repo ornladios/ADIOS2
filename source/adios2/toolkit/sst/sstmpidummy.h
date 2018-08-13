@@ -109,9 +109,11 @@ static int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         n = sizeof(unsigned int);
         break;
     case MPI_UNSIGNED_LONG:
+    case MPI_LONG:
         n = sizeof(unsigned long);
         break;
     case MPI_UNSIGNED_LONG_LONG:
+    case MPI_LONG_LONG:
         n = sizeof(unsigned long long);
         break;
     default:
@@ -131,9 +133,11 @@ static int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         nrecv = sizeof(unsigned int);
         break;
     case MPI_UNSIGNED_LONG:
+    case MPI_LONG:
         nrecv = sizeof(unsigned long);
         break;
     case MPI_UNSIGNED_LONG_LONG:
+    case MPI_LONG_LONG:
         nrecv = sizeof(unsigned long long);
         break;
     default:
