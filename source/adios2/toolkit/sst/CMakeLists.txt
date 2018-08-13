@@ -39,7 +39,9 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/toolkit/sst/SSTConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit/sst
 )
 
-target_compile_features(sst PRIVATE ${ADIOS2_C99_FEATURES})
+if (NOT MSVC)
+  target_compile_features(sst PRIVATE ${ADIOS2_C99_FEATURES})
+endif()
 
 target_include_directories(sst PRIVATE
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
