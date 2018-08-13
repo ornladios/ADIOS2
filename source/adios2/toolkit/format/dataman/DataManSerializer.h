@@ -62,6 +62,16 @@ private:
 
     size_t m_TotalDataSize;
     size_t m_TotalMetadataSize;
+
+    struct VarDefaults
+    {
+        std::string doid;
+        bool isRowMajor;
+        bool isLittleEndian;
+        std::string type;
+        Dims shape;
+    };
+    std::map<std::string, VarDefaults> m_VarDefaultsMap;
 };
 
 } // end namespace format
