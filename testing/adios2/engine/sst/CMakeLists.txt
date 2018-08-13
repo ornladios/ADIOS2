@@ -61,32 +61,32 @@ add_test(
   NAME ADIOSSstTest.Simple_1x1
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 1 -v -p TestSst)
-set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 30) 
+set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 30 Run_serial on) 
 
 if(ADIOS2_HAVE_Fortran)
   add_test(
     NAME ADIOSSstTest.FtoC_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 1 -v -w TestSstWrite_f -r TestSstRead)
-  set_tests_properties(ADIOSSstTest.FtoC_1x1 PROPERTIES TIMEOUT 30) 
+  set_tests_properties(ADIOSSstTest.FtoC_1x1 PROPERTIES TIMEOUT 30  Run_serial on) 
 
   add_test(
     NAME ADIOSSstTest.FtoC_1x1BP
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 1 -v -w TestSstWrite_f -r TestSstRead -arg "MarshalMethod:BP")
-  set_tests_properties(ADIOSSstTest.FtoC_1x1BP PROPERTIES TIMEOUT 30) 
+  set_tests_properties(ADIOSSstTest.FtoC_1x1BP PROPERTIES TIMEOUT 30  Run_serial on) 
 
   add_test(
     NAME ADIOSSstTest.CtoF_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 1 -v -w TestSstWrite -r TestSstRead_f)
-  set_tests_properties(ADIOSSstTest.CtoF_1x1 PROPERTIES TIMEOUT 30) 
+  set_tests_properties(ADIOSSstTest.CtoF_1x1 PROPERTIES TIMEOUT 30  Run_serial on) 
 
   add_test(
     NAME ADIOSSstTest.FtoF_1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 1 -v -w TestSstWrite_f -r TestSstRead_f)
-  set_tests_properties(ADIOSSstTest.FtoF_1x1 PROPERTIES TIMEOUT 30) 
+  set_tests_properties(ADIOSSstTest.FtoF_1x1 PROPERTIES TIMEOUT 30  Run_serial on) 
 endif(ADIOS2_HAVE_Fortran)
 
 if(ADIOS2_HAVE_ZFP)
@@ -94,7 +94,7 @@ if(ADIOS2_HAVE_ZFP)
     NAME ADIOSSstZFPCompression.1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
     -nw 1 -nr 1 -v -p TestSst -arg 'CompressionMethod:zfp' )
-  set_tests_properties(ADIOSSstZFPCompression.1x1 PROPERTIES TIMEOUT 30) 
+  set_tests_properties(ADIOSSstZFPCompression.1x1 PROPERTIES TIMEOUT 30  Run_serial on) 
 endif()
 
 if (ADIOS2_HAVE_MPI)

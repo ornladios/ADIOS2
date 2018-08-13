@@ -37,7 +37,7 @@ reader_prog="UNSET"
 writer_prog="UNSET"
 
 reader_delay=0
-args=" --filename Test$$ "
+args=""
 
 while [ $# -gt 0 ]
 do
