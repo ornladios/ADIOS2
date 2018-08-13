@@ -118,6 +118,7 @@ cmake_dependent_option(ADIOS2_ENABLE_PIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ${ADIOS2_ENABLE_PIC})
 mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
 
+<<<<<<< HEAD
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
@@ -134,6 +135,145 @@ include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 if(ADIOS2_HAVE_MPI)
   # Workaround for MPI forcing the link of C++ bindings
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
+=======
+# Default to a RelWithDebInfo build if not specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebugInfo)
+endif()
+
+
+set (SRC_LIST dill_util.c dill_pkg.c dill_cplus.c dill_virtual.c virtual.c dill.c vm.c)
+
+
+CHECK_TYPE_SIZE("void*" CMAKE_SIZEOF_VOID_P)
+CHECK_TYPE_SIZE("long" SIZEOF_LONG)
+set (NATIVE_CG true)
+if (("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "i.86") OR
+	("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64") OR
+	("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "AMD64"))
+    if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+      	set (NATIVE_ARCH x86_64)
+	set (HOST_X86_64 1)
+	set (TEST_PERL_FLAGS "-max_arg=4")
+	set (ARCH_FILE x86_64)
+    else (CMAKE_SIZEOF_VOID_P MATCHES "8")
+	set (NATIVE_ARCH x86)
+	set (HOST_X86 1)
+	set (TEST_PERL_FLAGS -no_float -max_arg=2)
+	set (ARCH_FILE x86)
+    endif (CMAKE_SIZEOF_VOID_P MATCHES "8")
+elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.*")
+    if ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.5.*")
+	set (NATIVE_ARCH arm5)
+	set (HOST_ARM5 1)
+	set (TEST_PERL_FLAGS -max_arg=4)
+	set (ARCH_FILE arm5)
+    elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.6.")
+	set (NATIVE_ARCH arm6)
+	set (HOST_ARM6 1)
+	set (TEST_PERL_FLAGS -max_arg=4)
+	set (ARCH_FILE arm6)
+    elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "arm.7.")
+	set (NATIVE_ARCH arm6)
+	set (HOST_ARM7 1)
+	set (TEST_PERL_FLAGS -max_arg=4)
+	set (ARCH_FILE arm6)
+    else ()
+	set (NATIVE_ARCH arm6)
+	set (HOST_ARM6 1)
+	set (TEST_PERL_FLAGS -max_arg=4)
+	set (ARCH_FILE arm6)
+    endif()
+elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "aarch64")
+    set (NATIVE_ARCH arm8)
+    set (HOST_ARM8 1)
+    set (ARCH_FILE arm8)
+elseif ("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "ppc64le")
+    set (NATIVE_ARCH ppc64le)
+    set (HOST_PPC64LE 1)
+    set (ARCH_FILE ppc64le)
+else()
+    message (STATUS "NO CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
+    set (NATIVE_CG false)
+    set (NATIVE_ARCH UNSUPPORTED)
+endif()
+
+IF ((${CMAKE_SYSTEM_NAME} MATCHES "Darwin") OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+    set (USE_MMAP_CODE_SEG 1)
+ENDIF()
+
+TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+set (HARDFP_AVAILABLE 0)
+# Determine float ABI of ARM Linux
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_program(READELF readelf)
+    if (READELF MATCHES "NOTFOUND")
+        message(WARNING "readelf not found; float ABI detection disabled")
+    else (READELF MATCHES "NOTFOUND")
+        find_library(MATH_LIBRARY m /usr/lib)
+        execute_process(
+            COMMAND ${READELF} -A ${MATH_LIBRARY}
+            OUTPUT_VARIABLE ELF_ARCH
+            ERROR_QUIET)
+        if (ELF_ARCH MATCHES "Tag_ABI_VFP_args: VFP registers")
+	    set(HARDFP_AVAILABLE 1)
+        endif ()
+    endif (READELF MATCHES "NOTFOUND")
+endif (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm" AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+set(ARM_HARD_FLOAT ${HARDFP_AVAILABLE})
+
+option(DILL_IGNORE_NATIVE  "Build to do emulation, regardless of architecture" OFF)
+if (DILL_IGNORE_NATIVE)
+    set (NATIVE_CG false)
+    set (NATIVE_ARCH UNSUPPORTED)
+endif()
+find_package (LibFFI PATHS ${CMAKE_INSTALL_PREFIX} QUIET)
+IF (LIBFFI_FOUND) 
+  set (EMULATION_POSSIBLE true)
+ELSEIF (DILL_IGNORE_NATIVE)
+  set(FFI_PREFIX_DIR ${CMAKE_BINARY_DIR}/libffi)
+  set(FFI_SRC_DIR ${FFI_PREFIX_DIR}/src/LibFFI)
+  set(FFI_INSTALL_DIR ${FFI_PREFIX_DIR}/install)
+  ExternalProject_Add(LibFFI
+    PREFIX ${FFI_PREFIX_DIR}
+    GIT_REPOSITORY https://github.com/libffi/libffi.git
+    CONFIGURE_COMMAND cd ${FFI_SRC_DIR} && ./autogen.sh COMMAND ${FFI_SRC_DIR}/configure --prefix=${FFI_PREFIX_DIR}
+    )
+  set (EMULATION_POSSIBLE true)
+  ExternalProject_Get_property(LibFFI install_dir)
+  set (LIBFFI_INCLUDE_DIR ${install_dir}/include)
+  link_directories(${install_dir}/lib)
+  set (LIBFFI_LIBRARY -lffi)
+ENDIF()
+
+option(DILL_ENABLE_DISASSEMBLY
+  "enable binutils-based disassembly (default is OFF)" OFF)
+
+set (ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
+foreach(_arch ${ARCHITECTURES})
+  add_custom_command(
+    OUTPUT "dill_${_arch}.c"
+    COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
+    DEPENDS ${_arch}.ops
+  ) 
+  list(APPEND arch_files "dill_${_arch}.c" "${_arch}.c" "${_arch}_rt.c")
+endforeach()
+list(REMOVE_ITEM arch_files virtual_rt.c)
+
+add_custom_command(
+  OUTPUT "dill.h" "dill.c"
+  COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/base.ops
+  DEPENDS base.ops
+) 
+
+option(DILL_MULTI_TARGET  "Build all available target architectures" OFF)
+
+if(DILL_MULTI_TARGET)
+  message(STATUS "arch files is ${arch_files}")
+  list(APPEND SRC_LIST ${arch_files})
+elseif(NOT "${NATIVE_ARCH}" STREQUAL "UNSUPPORTED") 
+  list(APPEND SRC_LIST dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
+>>>>>>> dill 2018-08-13 (84f5763a)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
