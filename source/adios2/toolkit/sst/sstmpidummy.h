@@ -46,6 +46,7 @@ typedef int MPI_Op;
 #define MPI_2INT 10
 #define MPI_UNSIGNED_SHORT 11
 #define MPI_LONG_LONG_INT 12
+#define MPI_LONG_LONG 12
 #define MPI_LONG_DOUBLE 13
 #define MPI_FLOAT_INT 14
 #define MPI_DOUBLE_INT 15
