@@ -58,10 +58,11 @@ std::vector<T> AllGatherValues(const T source, MPI_Comm mpiComm)
 template <class T>
 void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
                     size_t &position, MPI_Comm mpiComm,
-                    const int rankDestination)
+                    const int rankDestination, const size_t extraSize)
 {
     const size_t inSize = in.size();
-    std::vector<size_t> counts = GatherValues(inSize, mpiComm, rankDestination);
+    const std::vector<size_t> counts =
+        GatherValues(inSize, mpiComm, rankDestination);
 
     size_t gatheredSize = 0;
 
@@ -72,10 +73,11 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     {
         gatheredSize = std::accumulate(counts.begin(), counts.end(), size_t(0));
 
-        const size_t newSize = out.size() + gatheredSize;
+        const size_t newSize = position + gatheredSize;
         try
         {
-            out.resize(newSize);
+            out.reserve(newSize + extraSize); // to avoid power of 2 growth
+            out.resize(newSize + extraSize);
         }
         catch (...)
         {

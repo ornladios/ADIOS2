@@ -785,6 +785,8 @@ extern void SstStreamDestroy(SstStream Stream)
 
     if (Stream->Filename)
         free(Stream->Filename);
+    if (Stream->AbsoluteFilename)
+        free(Stream->AbsoluteFilename);
     if (Stream->ParamsBlock)
         free(Stream->ParamsBlock);
     //   Stream is free'd in LastCall
@@ -811,6 +813,7 @@ extern void SstStreamDestroy(SstStream Stream)
             free_FMfield_list(CP_SstParamsList);
         CP_SstParamsList = NULL;
     }
+    CP_verbose(Stream, "SstStreamDestroy successful, returning\n");
 }
 
 extern char *CP_GetContactString(SstStream Stream)

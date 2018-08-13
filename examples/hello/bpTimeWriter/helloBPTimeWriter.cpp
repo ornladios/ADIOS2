@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
             /** global array: name, { shape (total dimensions) }, { start
              * (local) },
              * { count (local) }, all are constant dimensions */
-            const unsigned int variablesSize = 1;
+            const unsigned int variablesSize = 10;
             std::vector<adios2::Variable<float>> bpFloats(variablesSize);
 
             adios2::Variable<std::string> bpString =
@@ -106,8 +106,9 @@ int main(int argc, char *argv[])
 
             bpWriter.Close();
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        // MPI_Barrier(MPI_COMM_WORLD);
 
+        if (false)
         { /////////////////////READ
             //            if (rank == 0)
             //            {

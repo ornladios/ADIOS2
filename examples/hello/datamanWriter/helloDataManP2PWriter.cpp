@@ -18,8 +18,10 @@
 // adios2 dataman configurations
 std::string adiosEngine = "DataMan";
 std::string workflowMode = "p2p";
-std::vector<adios2::Params> transportParams = {
-    {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12306"}}};
+std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
+                                                {"IPAddress", "127.0.0.1"},
+                                                {"Port", "12306"},
+                                                {"Timeout", "5"}}};
 
 // data properties
 size_t steps = 100;

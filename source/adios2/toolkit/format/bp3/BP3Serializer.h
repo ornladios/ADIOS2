@@ -138,10 +138,22 @@ public:
     void UpdateOffsetsInMetadata();
 
 private:
+    std::vector<char> m_SerializedIndices;
+    std::vector<char> m_GatheredSerializedIndices;
+
     /** BP format version */
     const uint8_t m_Version = 3;
 
     static std::mutex m_Mutex;
+
+    /** aggregate pg rank indices */
+    std::vector<char> m_PGRankIndices;
+    /** deserialized variable indices per rank (vector index) */
+    std::unordered_map<std::string, std::vector<SerialElementIndex>>
+        m_VariableRankIndices;
+    /** deserialized attribute indices per rank (vector index) */
+    std::unordered_map<std::string, std::vector<SerialElementIndex>>
+        m_AttributesRankIndices;
 
     /**
      * Put in BP buffer all attributes defined in an IO object.
@@ -348,53 +360,15 @@ private:
                        const bool addSubfiles = false);
 
     /**
-     * Used for PG index, aggregates without merging
-     * @param index
-     * @param count
+     * Refactored function that reduces the communication at scale by just
+     * calling a Gather/GatherV pair once for all indices
      * @param comm
      * @param bufferSTL
+     * @param inMetadataBuffer
+     * @return contains indices positions in buffer
      */
-    void AggregateIndex(const SerialElementIndex &index, const size_t count,
-                        MPI_Comm comm, BufferSTL &bufferSTL);
-
-    /**
-     * Collective operation to aggregate and merge (sort) indices (variables and
-     * attributes)
-     * @param indices has containing indices per unique variable/attribute name
-     * @param comm communicator domain, allows reusing the function in
-     * aggregation
-     * @param bufferSTL buffer where merged indices will be placed (metadata or
-     * data footer in aggregation)
-     * @param isRankConstant true: use for attributes as values are constant
-     * across all ranks, false: default used for variables as values  can vary
-     * across ranks
-     */
-    void AggregateMergeIndex(
-        const std::unordered_map<std::string, SerialElementIndex> &indices,
-        MPI_Comm comm, BufferSTL &bufferSTL, const bool isRankConstant = false);
-
-    /**
-     * Returns a serialized buffer with all indices with format:
-     * Rank (4 bytes), Buffer
-     * @param indices input of all indices to be serialized
-     * @return buffer with serialized indices
-     */
-    std::vector<char> SerializeIndices(
-        const std::unordered_map<std::string, SerialElementIndex> &indices,
-        MPI_Comm comm) const noexcept;
-
-    /**
-     * In rank=0, deserialize gathered indices
-     * @param serializedIndices input gathered indices
-     * @param comm establishes MPI domain
-     * @param true: constant across ranks, no need to merge (attributes), false:
-     * variable across ranks, can merge (variables)
-     * @return hash[name][rank] = bp index buffer
-     */
-    std::unordered_map<std::string, std::vector<SerialElementIndex>>
-    DeserializeIndicesPerRankThreads(const std::vector<char> &serializedIndices,
-                                     MPI_Comm comm,
-                                     const bool isRankConstant) const noexcept;
+    std::vector<size_t>
+    AggregateCollectiveMetadataIndices(MPI_Comm comm, BufferSTL &bufferSTL);
 
     /**
      * Merge indices by time step (default) and write to m_HeapBuffer.m_Metadata

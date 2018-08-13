@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         /** Put variables for buffering, template type is optional */
         bpFileWriter.Put<float>(bpFloats, myFloats.data());
         bpFileWriter.Put(bpInts, myInts.data());
-        bpFileWriter.Put(bpString, myString);
+        // bpFileWriter.Put(bpString, myString);
 
         /** Create bp file, engine becomes unreachable after this*/
         bpFileWriter.Close();
