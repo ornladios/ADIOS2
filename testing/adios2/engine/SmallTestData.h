@@ -48,17 +48,30 @@ struct SmallTestData
         {10.2, 11.2, 12.2, 13.2, 14.2, 15.2, 16.2, 17.2, 18.2, 19.2}};
 
     std::array<std::complex<float>, 10> CR32 = {
-        {(0.1f, 1.1f), (1.1f, 2.1f), (2.1f, 3.1f), (3.1f, 4.1f), (4.1f, 5.1f),
-         (5.1f, 6.1f), (6.1f, 7.1f), (7.1f, 8.1f), (8.1f, 9.1f),
-         (9.1f, 10.1f)}};
+        {std::complex<float>(0.1f, 1.1f), std::complex<float>(1.1f, 2.1f),
+         std::complex<float>(2.1f, 3.1f), std::complex<float>(3.1f, 4.1f),
+         std::complex<float>(4.1f, 5.1f), std::complex<float>(5.1f, 6.1f),
+         std::complex<float>(6.1f, 7.1f), std::complex<float>(7.1f, 8.1f),
+         std::complex<float>(8.1f, 9.1f), std::complex<float>(9.1f, 10.1f)}};
+
     std::array<std::complex<double>, 10> CR64 = {
-        {(10.2, 11.2), (11.2, 12.2), (12.2, 13.2), (13.2, 14.2), (14.2, 15.2),
-         (15.2, 16.2), (16.2, 17.2), (17.2, 18.2), (18.2, 19.2), (19.2, 20.2)}};
+        {std::complex<double>(10.2, 11.2), std::complex<double>(11.2, 12.2),
+         std::complex<double>(12.2, 13.2), std::complex<double>(13.2, 14.2),
+         std::complex<double>(14.2, 15.2), std::complex<double>(15.2, 16.2),
+         std::complex<double>(16.2, 17.2), std::complex<double>(17.2, 18.2),
+         std::complex<double>(18.2, 19.2), std::complex<double>(19.2, 20.2)}};
 
     std::array<std::complex<long double>, 10> CRLD = {
-        {(10.2L, 11.2L), (11.2L, 12.2L), (12.2L, 13.2L), (13.2L, 14.2L),
-         (14.2L, 15.2L), (15.2L, 16.2L), (16.2L, 17.2L), (17.2L, 18.2L),
-         (18.2L, 19.2L), (19.2L, 20.2L)}};
+        {std::complex<long double>(10.2, 11.2),
+         std::complex<long double>(11.2, 12.2),
+         std::complex<long double>(12.2, 13.2),
+         std::complex<long double>(13.2, 14.2),
+         std::complex<long double>(14.2, 15.2),
+         std::complex<long double>(15.2, 16.2),
+         std::complex<long double>(16.2, 17.2),
+         std::complex<long double>(17.2, 18.2),
+         std::complex<long double>(18.2, 19.2),
+         std::complex<long double>(19.2, 20.2)}};
 };
 
 SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
@@ -76,6 +89,19 @@ SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
     std::for_each(in.R32.begin(), in.R32.end(), [&](float &v) { v += j; });
     std::for_each(in.R64.begin(), in.R64.end(), [&](double &v) { v += j; });
 
+    std::for_each(in.CR32.begin(), in.CR32.end(), [&](std::complex<float> &v) {
+        v.real(v.real() + static_cast<float>(j));
+        v.imag(v.imag() + static_cast<float>(j));
+    });
+    std::for_each(in.CR64.begin(), in.CR64.end(), [&](std::complex<double> &v) {
+        v.real(v.real() + static_cast<double>(j));
+        v.imag(v.imag() + static_cast<double>(j));
+    });
+    std::for_each(in.CRLD.begin(), in.CRLD.end(),
+                  [&](std::complex<long double> &v) {
+                      v.real(v.real() + static_cast<long double>(j));
+                      v.imag(v.imag() + static_cast<long double>(j));
+                  });
     return in;
 }
 
@@ -92,6 +118,20 @@ void UpdateSmallTestData(SmallTestData &in, int step, int rank, int size)
     std::for_each(in.U64.begin(), in.U64.end(), [&](uint64_t &v) { v += j; });
     std::for_each(in.R32.begin(), in.R32.end(), [&](float &v) { v += j; });
     std::for_each(in.R64.begin(), in.R64.end(), [&](double &v) { v += j; });
+
+    std::for_each(in.CR32.begin(), in.CR32.end(), [&](std::complex<float> &v) {
+        v.real(v.real() + static_cast<float>(j));
+        v.imag(v.imag() + static_cast<float>(j));
+    });
+    std::for_each(in.CR64.begin(), in.CR64.end(), [&](std::complex<double> &v) {
+        v.real(v.real() + static_cast<double>(j));
+        v.imag(v.imag() + static_cast<double>(j));
+    });
+    std::for_each(in.CRLD.begin(), in.CRLD.end(),
+                  [&](std::complex<long double> &v) {
+                      v.real(v.real() + static_cast<long double>(j));
+                      v.imag(v.imag() + static_cast<long double>(j));
+                  });
 }
 
 #endif // TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_
