@@ -22,6 +22,7 @@ public:
 };
 
 adios2::Params engineParams = {}; // parsed from command line
+std::string fname = "ADIOS2Sst";
 
 int CompressSz = 0;
 int CompressZfp = 0;
@@ -64,8 +65,6 @@ static adios2::Params ParseEngineParams(std::string Input)
 TEST_F(SstWriteTest, ADIOS2SstWrite)
 {
     // form a mpiSize * Nx 1D array
-    const std::string fname = "ADIOS2Sst";
-
     int mpiRank = 0, mpiSize = 1;
 
     // Number of steps
@@ -217,6 +216,11 @@ int main(int argc, char **argv)
         else if (std::string(argv[1]) == "--compress_zfp")
         {
             CompressZfp++;
+        else if (std::string(argv[1]) == "--filename")
+        {
+            fname = std::string(argv[2]);
+            argv++;
+            argc--;
         }
         else
         {

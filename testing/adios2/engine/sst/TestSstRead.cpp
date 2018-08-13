@@ -22,6 +22,7 @@ public:
 
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
+std::string fname = "ADIOS2Sst";
 
 static std::string Trim(std::string &str)
 {
@@ -62,8 +63,6 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname = "ADIOS2Sst";
-
     int mpiRank = 0, mpiSize = 1;
 
     // Number of steps
@@ -256,8 +255,14 @@ int main(int argc, char **argv)
         else if (std::string(argv[1]) == "--compress_zfp")
         {
             // CompressZfp++;    Nothing on read side
+        else if (std::string(argv[1]) == "--filename")
+        {
+            fname = std::string(argv[2]);
+            argv++;
+            argc--;
         }
         else
+
         {
             throw std::invalid_argument("Unknown argument \"" +
                                         std::string(argv[1]) + "\"");
