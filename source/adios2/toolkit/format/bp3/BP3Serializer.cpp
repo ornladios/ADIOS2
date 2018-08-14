@@ -1221,8 +1221,37 @@ void BP3Serializer::MergeSerializeIndices(
             break;
         }
 
+        case (type_complex):
+        {
+            auto characteristics = ReadElementIndexCharacteristics<double>(
+                buffer, position, type_complex, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
+        case (type_double_complex):
+        {
+            auto characteristics = ReadElementIndexCharacteristics<double>(
+                buffer, position, type_double_complex, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
+        case (type_long_double_complex):
+        {
+            auto characteristics = ReadElementIndexCharacteristics<double>(
+                buffer, position, type_long_double_complex, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
         default:
-            // TODO: complex, long double
             throw std::invalid_argument(
                 "ERROR: type " + std::to_string(dataType) +
                 " not supported in BP3 Metadata Merge\n");

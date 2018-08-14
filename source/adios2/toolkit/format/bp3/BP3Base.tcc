@@ -342,8 +342,7 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
             if (characteristics.Count.empty() || characteristics.Count[0] == 1)
             {
                 characteristics.Statistics.Value =
-                    helper::ReadValue<typename TypeInfo<T>::ValueType>(
-                        buffer, position);
+                    helper::ReadValue<T>(buffer, position);
                 characteristics.Statistics.IsValue = true;
             }
             else // used for attributes
@@ -360,16 +359,14 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_min):
         {
             characteristics.Statistics.Min =
-                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
-                                                                   position);
+                helper::ReadValue<T>(buffer, position);
             break;
         }
 
         case (characteristic_max):
         {
             characteristics.Statistics.Max =
-                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
-                                                                   position);
+                helper::ReadValue<T>(buffer, position);
             break;
         }
 

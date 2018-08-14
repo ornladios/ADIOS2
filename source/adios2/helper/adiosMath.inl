@@ -36,6 +36,8 @@ template <class T>
 void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
                       std::complex<T> &min, std::complex<T> &max) noexcept
 {
+    min = values[0];
+    max = values[0];
 
     T minNorm = std::norm(values[0]);
     T maxNorm = minNorm;
