@@ -10,9 +10,8 @@
 
 #include "CompressSZ.h"
 
-#include <cmath> //std::ceil
-#include <ios>   //std::ios_base::failure
-#include <iostream>
+#include <cmath>     //std::ceil
+#include <ios>       //std::ios_base::failure
 #include <stdexcept> //std::invalid_argument
 
 extern "C" {
@@ -42,10 +41,11 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             const size_t elementSize, const std::string varType,
                             void *bufferOut, const Params &parameters) const
 {
-    int ndims = dimensions.size();
+    const size_t ndims = dimensions.size();
     if (ndims > 5)
     {
-        throw std::invalid_argument("No more than 5 dimension is supported.\n");
+        throw std::invalid_argument("ERROR: ADIOS2 SZ compression: no more "
+                                    "than 5 dimension is supported.\n");
     }
 
     sz_params sz;
@@ -81,7 +81,6 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     Params::const_iterator it;
     for (it = parameters.begin(); it != parameters.end(); it++)
     {
-        std::cout << it->first << " => " << it->second << '\n';
         if (it->first == "init")
         {
             use_configfile = 1;
@@ -124,8 +123,12 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
             }
             else
             {
-                std::cout << "[WARN] An unknown szMode: " << it->second
-                          << std::endl;
+                if (m_DebugMode)
+                {
+                    throw std::invalid_argument(
+                        "ERROR: ADIOS2 operator unknown SZ parameter szMode: " +
+                        it->second + "\n");
+                }
             }
             sz.szMode = szMode;
         }
@@ -158,8 +161,13 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
             }
             else
             {
-                std::cout << "[WARN] An unknown errorBoundMode: " << it->second
-                          << std::endl;
+                if (m_DebugMode)
+                {
+                    throw std::invalid_argument("ERROR: ADIOS2 operator "
+                                                "unknown SZ parameter "
+                                                "errorBoundMode: " +
+                                                it->second + "\n");
+                }
             }
             sz.errorBoundMode = errorBoundMode;
         }
@@ -196,8 +204,13 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
             }
             else
             {
-                std::cout << "[WARN] An unknown pwr_type: " << it->second
-                          << std::endl;
+                if (m_DebugMode)
+                {
+                    throw std::invalid_argument("ERROR: ADIOS2 operator "
+                                                "unknown SZ parameter "
+                                                "pwr_type: " +
+                                                it->second + "\n");
+                }
             }
             sz.pwr_type = pwr_type;
         }
@@ -225,40 +238,17 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
         }
         else
         {
-            std::cout << "[WARN] An unknown SZ parameter: " << it->first
-                      << std::endl;
+            // TODO: ignoring unknown option due to Fortran bindings passing
+            // empty parameter
         }
     }
 
     if (use_configfile)
     {
-        std::cout << "SZ config:" << sz_configfile << std::endl;
         SZ_Init((char *)sz_configfile.c_str());
     }
     else
     {
-        if (m_DebugMode)
-        {
-            std::cout << "sz.max_quant_intervals: " << sz.max_quant_intervals
-                      << std::endl;
-            std::cout << "sz.quantization_intervals: "
-                      << sz.quantization_intervals << std::endl;
-            std::cout << "sz.sol_ID: " << sz.sol_ID << std::endl;
-            std::cout << "sz.sampleDistance: " << sz.sampleDistance
-                      << std::endl;
-            std::cout << "sz.predThreshold: " << sz.predThreshold << std::endl;
-            std::cout << "sz.szMode: " << sz.szMode << std::endl;
-            std::cout << "sz.gzipMode: " << sz.gzipMode << std::endl;
-            std::cout << "sz.errorBoundMode: " << sz.errorBoundMode
-                      << std::endl;
-            std::cout << "sz.absErrBound: " << sz.absErrBound << std::endl;
-            std::cout << "sz.relBoundRatio: " << sz.relBoundRatio << std::endl;
-            std::cout << "sz.psnr: " << sz.psnr << std::endl;
-            std::cout << "sz.pw_relBoundRatio: " << sz.pw_relBoundRatio
-                      << std::endl;
-            std::cout << "sz.segment_size: " << sz.segment_size << std::endl;
-            std::cout << "sz.pwr_type: " << sz.pwr_type << std::endl;
-        }
         SZ_Init_Params(&sz);
     }
 
@@ -274,7 +264,13 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     }
     else
     {
-        throw std::invalid_argument("No supported data type\n");
+        if (m_DebugMode)
+        {
+            throw std::invalid_argument(
+                "ERROR: ADIOS2 SZ Compression only support "
+                "double or float, type: " +
+                varType + " is unsupported\n");
+        }
     }
 
     // r[0] is the fastest changing dimension and r[4] is the lowest changing
@@ -295,7 +291,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
     const unsigned char *bytes = SZ_compress(dtype, (void *)dataIn, &outsize,
                                              r[4], r[3], r[2], r[1], r[0]);
-    memcpy(bufferOut, bytes, outsize);
+    std::memcpy(bufferOut, bytes, outsize);
     return static_cast<size_t>(outsize);
 }
 
@@ -306,7 +302,7 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
 {
     if (dimensions.size() > 5)
     {
-        throw std::invalid_argument("ERROR: SZZ decompression doesn't support "
+        throw std::invalid_argument("ERROR: SZ decompression doesn't support "
                                     "more than 5 dimension variables.\n");
     }
 
