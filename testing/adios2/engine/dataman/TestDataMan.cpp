@@ -307,17 +307,20 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
         if (status == adios2::StepStatus::OK)
         {
             bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            bpFloats.SetSelection({start, count});
-            dataManReader.Get<float>(bpFloats, myFloats.data(),
-                                     adios2::Mode::Sync);
-            i = dataManReader.CurrentStep();
-            VerifyData(myFloats, i);
-            dataManReader.EndStep();
+            if (bpFloats)
+            {
+                bpFloats.SetSelection({start, count});
+                dataManReader.Get<float>(bpFloats, myFloats.data(),
+                                         adios2::Mode::Sync);
+                i = dataManReader.CurrentStep();
+                VerifyData(myFloats, i);
+            }
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
             break;
         }
+        dataManReader.EndStep();
     }
     dataManReader.Close();
 }

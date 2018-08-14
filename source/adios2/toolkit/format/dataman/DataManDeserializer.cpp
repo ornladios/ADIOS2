@@ -63,22 +63,86 @@ int DataManDeserializer::Put(
         DataManVar var;
         try
         {
-            //            nlohmann::json metaj =
-            //            nlohmann::json::parse(data->data() + position);
             nlohmann::json metaj =
                 nlohmann::json::from_msgpack(data->data() + position, metasize);
             position += metasize;
-            var.isRowMajor = metaj["M"].get<bool>();
-            var.isLittleEndian = metaj["E"].get<bool>();
+
+            // compulsory properties
             var.name = metaj["N"].get<std::string>();
-            var.type = metaj["Y"].get<std::string>();
-            var.shape = metaj["S"].get<Dims>();
-            var.count = metaj["C"].get<Dims>();
             var.start = metaj["O"].get<Dims>();
+            var.count = metaj["C"].get<Dims>();
             var.step = metaj["T"].get<size_t>();
             var.size = metaj["I"].get<size_t>();
-            var.rank = metaj["R"].get<int>();
-            var.doid = metaj["D"].get<std::string>();
+
+            // optional properties
+
+            auto itMap = m_VarDefaultsMap.find(var.name);
+            auto itJson = metaj.find("D");
+            if (itJson != metaj.end())
+            {
+                var.doid = itJson->get<std::string>();
+                m_VarDefaultsMap[var.name].doid = var.doid;
+            }
+            else
+            {
+                if (itMap != m_VarDefaultsMap.end())
+                {
+                    var.doid = itMap->second.doid;
+                }
+            }
+            itJson = metaj.find("M");
+            if (itJson != metaj.end())
+            {
+                var.isRowMajor = itJson->get<bool>();
+                m_VarDefaultsMap[var.name].isRowMajor = var.isRowMajor;
+            }
+            else
+            {
+                if (itMap != m_VarDefaultsMap.end())
+                {
+                    var.isRowMajor = itMap->second.isRowMajor;
+                }
+            }
+            itJson = metaj.find("E");
+            if (itJson != metaj.end())
+            {
+                var.isLittleEndian = itJson->get<bool>();
+                m_VarDefaultsMap[var.name].isLittleEndian = var.isLittleEndian;
+            }
+            else
+            {
+                if (itMap != m_VarDefaultsMap.end())
+                {
+                    var.isLittleEndian = itMap->second.isLittleEndian;
+                }
+            }
+            itJson = metaj.find("Y");
+            if (itJson != metaj.end())
+            {
+                var.type = itJson->get<std::string>();
+                m_VarDefaultsMap[var.name].type = var.type;
+            }
+            else
+            {
+                if (itMap != m_VarDefaultsMap.end())
+                {
+                    var.type = itMap->second.type;
+                }
+            }
+            itJson = metaj.find("S");
+            if (itJson != metaj.end())
+            {
+                var.shape = itJson->get<Dims>();
+                m_VarDefaultsMap[var.name].shape = var.shape;
+            }
+            else
+            {
+                if (itMap != m_VarDefaultsMap.end())
+                {
+                    var.shape = itMap->second.shape;
+                }
+            }
+
             var.position = position;
             var.index = key;
 

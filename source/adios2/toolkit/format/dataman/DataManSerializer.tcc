@@ -53,16 +53,55 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
 
     nlohmann::json metaj;
 
-    metaj["M"] = m_IsRowMajor;
-    metaj["E"] = m_IsLittleEndian;
+    // compulsory properties
     metaj["N"] = varName;
-    metaj["Y"] = GetType<T>();
-    metaj["S"] = varShape;
-    metaj["C"] = varCount;
     metaj["O"] = varStart;
+    metaj["C"] = varCount;
     metaj["T"] = step;
-    metaj["R"] = rank;
-    metaj["D"] = doid;
+
+    // optional properties
+    auto it = m_VarDefaultsMap.find(varName);
+    if (it != m_VarDefaultsMap.end())
+    {
+        if (doid != it->second.doid)
+        {
+            metaj["D"] = doid;
+            it->second.doid = doid;
+        }
+        if (m_IsRowMajor != it->second.isRowMajor)
+        {
+            metaj["M"] = m_IsRowMajor;
+            it->second.isRowMajor = m_IsRowMajor;
+        }
+        if (m_IsLittleEndian != it->second.isLittleEndian)
+        {
+            metaj["E"] = m_IsLittleEndian;
+            it->second.isLittleEndian = m_IsLittleEndian;
+        }
+        if (GetType<T>() != it->second.type)
+        {
+            metaj["Y"] = GetType<T>();
+            it->second.type = GetType<T>();
+        }
+        if (varShape != it->second.shape)
+        {
+            metaj["S"] = varShape;
+            it->second.shape = varShape;
+        }
+    }
+    else
+    {
+        metaj["D"] = doid;
+        metaj["M"] = m_IsRowMajor;
+        metaj["E"] = m_IsLittleEndian;
+        metaj["Y"] = GetType<T>();
+        metaj["S"] = varShape;
+        m_VarDefaultsMap[varName].doid = doid;
+        m_VarDefaultsMap[varName].isRowMajor = m_IsRowMajor;
+        m_VarDefaultsMap[varName].isLittleEndian = m_IsLittleEndian;
+        m_VarDefaultsMap[varName].type = GetType<T>();
+        m_VarDefaultsMap[varName].shape = varShape;
+    }
 
     size_t datasize;
 
@@ -125,10 +164,8 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     }
     metaj["I"] = datasize;
 
-    //    std::string metastr = metaj.dump() + '\0';
     std::vector<std::uint8_t> metacbor = nlohmann::json::to_msgpack(metaj);
 
-    //    uint32_t metasize = metastr.size();
     uint32_t metasize = metacbor.size();
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
@@ -141,7 +178,6 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     std::memcpy(m_Buffer->data() + m_Position, &metasize, sizeof(metasize));
     m_Position += sizeof(metasize);
 
-    //    std::memcpy(m_Buffer->data() + m_Position, metastr.c_str(), metasize);
     std::memcpy(m_Buffer->data() + m_Position, metacbor.data(), metasize);
     m_Position += metasize;
     m_TotalMetadataSize += metasize;

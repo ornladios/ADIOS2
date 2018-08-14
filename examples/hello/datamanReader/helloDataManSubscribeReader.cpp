@@ -84,11 +84,14 @@ int main(int argc, char *argv[])
         if (status == adios2::StepStatus::OK)
         {
             bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            bpFloats.SetSelection({start, count});
-            dataManReader.Get<float>(bpFloats, myFloats.data(),
-                                     adios2::Mode::Sync);
-            Dump(myFloats, dataManReader.CurrentStep());
-            i = dataManReader.CurrentStep();
+            if (bpFloats)
+            {
+                bpFloats.SetSelection({start, count});
+                dataManReader.Get<float>(bpFloats, myFloats.data(),
+                                         adios2::Mode::Sync);
+                Dump(myFloats, dataManReader.CurrentStep());
+                i = dataManReader.CurrentStep();
+            }
             dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::NotReady)

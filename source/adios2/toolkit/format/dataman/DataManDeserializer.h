@@ -51,7 +51,6 @@ public:
         size_t size;
         size_t position;
         size_t index;
-        int rank;
         std::string compression;
         Params params;
     };
@@ -74,6 +73,16 @@ private:
     bool m_IsLittleEndian;
 
     std::mutex m_Mutex;
+
+    struct VarDefaults
+    {
+        std::string doid;
+        bool isRowMajor;
+        bool isLittleEndian;
+        std::string type;
+        Dims shape;
+    };
+    std::map<std::string, VarDefaults> m_VarDefaultsMap;
 };
 
 } // end namespace format
