@@ -327,6 +327,7 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     {
         if (List->Timestep < Ret)
         {
+            List->ReferenceCount++;
             Ret = List->Timestep;
         }
         List = List->Next;
@@ -550,7 +551,21 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     MPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, MPI_LONG,
                   MPI_MAX, Stream->mpiComm);
 
-    AddRefRangeTimestep(Stream, GlobalStartingTimestep, LONG_MAX);
+    /*
+     *  The earliestAvailableTimestepNumber subroutine also added to the
+     *  reference count of all existing timesteps, in case we will be making
+     *  it available to the joining reader.  Once we've determined what the
+     *  starting timestep we'll make available is (GlobalStartingTimestep),
+     *  decrement the ref count of others.
+     */
+    if (MyStartingTimestep != GlobalStartingTimestep)
+    {
+        SubRefRangeTimestep(Stream, MyStartingTimestep,
+                            GlobalStartingTimestep - 1);
+    }
+    CP_verbose(Stream,
+               "My oldest timestep was %ld, global oldest timestep was %ld\n",
+               MyStartingTimestep, GlobalStartingTimestep);
 
     CP_WSR_Stream->StartingTimestep = GlobalStartingTimestep;
 
