@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
     // open stream
     adios2::Engine dataManWriter =
-        dataManIO.Open("myFloats.bp", adios2::Mode::Write);
+        dataManIO.Open("stream", adios2::Mode::Write);
 
     // define variable
     auto bpFloats =
