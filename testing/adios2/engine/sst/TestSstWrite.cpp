@@ -23,6 +23,9 @@ public:
 
 adios2::Params engineParams = {}; // parsed from command line
 
+int CompressSz = 0;
+int CompressZfp = 0;
+
 static std::string Trim(std::string &str)
 {
     size_t first = str.find_first_not_of(' ');
@@ -98,15 +101,34 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         adios2::Dims time_shape{static_cast<unsigned int>(mpiSize)};
         adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
         adios2::Dims time_count{1};
-        io.DefineVariable<int8_t>("i8", shape, start, count);
-        io.DefineVariable<int16_t>("i16", shape, start, count);
-        io.DefineVariable<int32_t>("i32", shape, start, count);
-        io.DefineVariable<int64_t>("i64", shape, start, count);
-        io.DefineVariable<float>("r32", shape, start, count);
-        io.DefineVariable<double>("r64", shape, start, count);
-        io.DefineVariable<double>("r64_2d", shape2, start2, count2);
-        io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
-        io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
+
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
+        auto var_r64_2d =
+            io.DefineVariable<double>("r64_2d", shape2, start2, count2);
+        auto var_r64_2d_rev =
+            io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
+        auto var_time = io.DefineVariable<int64_t>("time", time_shape,
+                                                   time_start, time_count);
+        if (CompressSz)
+        {
+            adios2::Operator SzOp = adios.DefineOperator("szCompressor", "sz");
+            // TODO: Add a large dataset for SZ test.
+            // var_r32.AddOperation(SzOp, {{"accuracy", "0.001"}});
+        }
+        if (CompressZfp)
+        {
+            adios2::Operator ZfpOp =
+                adios.DefineOperator("zfpCompressor", "zfp");
+            var_r32.AddOperation(ZfpOp, {{"rate", "20"}});
+            var_r64.AddOperation(ZfpOp, {{"rate", "20"}});
+            var_r64_2d.AddOperation(ZfpOp, {{"rate", "20"}});
+            var_r64_2d_rev.AddOperation(ZfpOp, {{"rate", "20"}});
+        }
     }
 
     // Create the Engine
@@ -187,6 +209,14 @@ int main(int argc, char **argv)
         if (std::string(argv[1]) == "--expect_time_gap")
         {
             //  TimeGapExpected++;   Nothing on write side
+        }
+        else if (std::string(argv[1]) == "--compress_sz")
+        {
+            CompressSz++;
+        }
+        else if (std::string(argv[1]) == "--compress_zfp")
+        {
+            CompressZfp++;
         }
         else
         {
