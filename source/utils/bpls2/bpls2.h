@@ -54,7 +54,8 @@ enum ADIOS_DATATYPES
     adios_string = 9,
     adios_complex = 10,
     adios_double_complex = 11,
-    adios_string_array = 12
+	adios_string_array = 12,
+	adios_long_double_complex = 13
 };
 
 struct Entry

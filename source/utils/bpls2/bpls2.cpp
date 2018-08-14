@@ -1335,6 +1335,10 @@ int getTypeInfo(enum ADIOS_DATATYPES adiosvartype, int *elemsize)
         *elemsize = 16;
         break;
 
+    case adios_long_double_complex:
+        *elemsize = 32;
+        break;
+
     case adios_long_double: // do not know how to print
     //*elemsize = 16;
     default:
@@ -1971,6 +1975,7 @@ const std::map<std::string, enum ADIOS_DATATYPES> adios_types_map = {
     {"double", adios_double},
     {"float complex", adios_complex},
     {"double complex", adios_double_complex},
+    {"long double complex", adios_long_double_complex},
     {"signed char", adios_byte},
     {"short", adios_short},
     {"long int", adios_long},
@@ -2328,6 +2333,11 @@ int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
     case adios_double_complex:
         fprintf(outf, (f ? fmt : "(%g,i%g)"), ((double *)data)[2 * item],
                 ((double *)data)[2 * item + 1]);
+        break;
+
+    case adios_long_double_complex:
+        fprintf(outf, (f ? fmt : "(%Lg,i%Lg)"), ((long double *)data)[2 * item],
+                ((long double *)data)[2 * item + 1]);
         break;
 
     default:

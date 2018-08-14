@@ -88,6 +88,12 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>(
+                "cr32", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>(
+                "cr64", shape, start, count);
+            auto var_crld = io.DefineVariable<std::complex<long double>>(
+                "crld", shape, start, count);
         }
 
         // Create the BP Engine
@@ -121,6 +127,10 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
+            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+            auto var_crld =
+                io.InquireVariable<std::complex<long double>>("crld");
 
             bpWriter.BeginStep();
             bpWriter.Put(var_iString, currentTestData.S1);
@@ -174,6 +184,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             bpWriter.Put(var_r64, currentTestData.R64.data());
             var_r64.SetSelection(sel2);
             bpWriter.Put(var_r64, currentTestData.R64.data() + Nx / 2);
+
+            var_cr32.SetSelection(sel1);
+            bpWriter.Put(var_cr32, currentTestData.CR32.data());
+            var_cr32.SetSelection(sel2);
+            bpWriter.Put(var_cr32, currentTestData.CR32.data() + Nx / 2);
+
+            var_cr64.SetSelection(sel1);
+            bpWriter.Put(var_cr64, currentTestData.CR64.data());
+            var_cr64.SetSelection(sel2);
+            bpWriter.Put(var_cr64, currentTestData.CR64.data() + Nx / 2);
+
+            var_crld.SetSelection(sel1);
+            bpWriter.Put(var_crld, currentTestData.CRLD.data());
+            var_crld.SetSelection(sel2);
+            bpWriter.Put(var_crld, currentTestData.CRLD.data() + Nx / 2);
 
             bpWriter.EndStep();
         }
@@ -252,6 +277,24 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
+        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+        EXPECT_TRUE(var_cr32);
+        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr32.Steps(), NSteps);
+        ASSERT_EQ(var_cr32.Shape()[0], mpiSize * Nx);
+
+        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+        EXPECT_TRUE(var_cr64);
+        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr64.Steps(), NSteps);
+        ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
+
+        auto var_crld = io.InquireVariable<std::complex<long double>>("crld");
+        EXPECT_TRUE(var_crld);
+        ASSERT_EQ(var_crld.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_crld.Steps(), NSteps);
+        ASSERT_EQ(var_crld.Shape()[0], mpiSize * Nx);
+
         // TODO: other types
 
         SmallTestData testData;
@@ -267,6 +310,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         std::array<uint64_t, Nx> U64;
         std::array<float, Nx> R32;
         std::array<double, Nx> R64;
+        std::array<std::complex<float>, Nx> CR32;
+        std::array<std::complex<double>, Nx> CR64;
+        std::array<std::complex<long double>, Nx> CRLD;
 
         size_t t = 0;
 
@@ -285,6 +331,10 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         const auto r32AllInfo = bpReader.AllStepsBlocksInfo(var_r32);
         const auto r64AllInfo = bpReader.AllStepsBlocksInfo(var_r64);
 
+        const auto cr32AllInfo = bpReader.AllStepsBlocksInfo(var_cr32);
+        const auto cr64AllInfo = bpReader.AllStepsBlocksInfo(var_cr64);
+        const auto crldAllInfo = bpReader.AllStepsBlocksInfo(var_crld);
+
         EXPECT_EQ(iStringAllInfo.size(), NSteps);
         EXPECT_EQ(i8AllInfo.size(), NSteps);
         EXPECT_EQ(i16AllInfo.size(), NSteps);
@@ -296,6 +346,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         EXPECT_EQ(u64AllInfo.size(), NSteps);
         EXPECT_EQ(r32AllInfo.size(), NSteps);
         EXPECT_EQ(r64AllInfo.size(), NSteps);
+        EXPECT_EQ(cr32AllInfo.size(), NSteps);
+        EXPECT_EQ(cr64AllInfo.size(), NSteps);
+        EXPECT_EQ(crldAllInfo.size(), NSteps);
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
@@ -325,6 +378,13 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             const std::vector<adios2::Variable<double>::Info> &r64Info =
                 r64AllInfo.at(t);
 
+            const std::vector<adios2::Variable<std::complex<float>>::Info>
+                &cr32Info = cr32AllInfo.at(t);
+            const std::vector<adios2::Variable<std::complex<double>>::Info>
+                &cr64Info = cr64AllInfo.at(t);
+            const std::vector<adios2::Variable<std::complex<long double>>::Info>
+                &crldInfo = crldAllInfo.at(t);
+
             EXPECT_EQ(iStringInfo.size(), mpiSize);
             EXPECT_EQ(i8Info.size(), 2 * mpiSize);
             EXPECT_EQ(i16Info.size(), 2 * mpiSize);
@@ -336,6 +396,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             EXPECT_EQ(u64Info.size(), 2 * mpiSize);
             EXPECT_EQ(r32Info.size(), 2 * mpiSize);
             EXPECT_EQ(r64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(cr32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(cr64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(crldInfo.size(), 2 * mpiSize);
 
             // String
             for (size_t i = 0; i < mpiSize; ++i)
@@ -376,6 +439,15 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 EXPECT_FALSE(r64Info[0].IsValue);
                 EXPECT_EQ(r64Info[i].Count[0], Nx / 2);
 
+                EXPECT_FALSE(cr32Info[0].IsValue);
+                EXPECT_EQ(cr32Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(cr64Info[0].IsValue);
+                EXPECT_EQ(cr64Info[i].Count[0], Nx / 2);
+
+                EXPECT_FALSE(crldInfo[0].IsValue);
+                EXPECT_EQ(crldInfo[i].Count[0], Nx / 2);
+
                 const size_t inRank = i / 2;
                 int8_t i8Min, i8Max;
                 int16_t i16Min, i16Max;
@@ -387,6 +459,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 uint64_t u64Min, u64Max;
                 float r32Min, r32Max;
                 double r64Min, r64Max;
+                std::complex<float> cr32Min, cr32Max;
+                std::complex<double> cr64Min, cr64Max;
+                std::complex<long double> crldMin, crldMax;
 
                 SmallTestData currentTestData =
                     generateNewSmallTestData(m_TestData, static_cast<int>(t),
@@ -404,6 +479,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                     ASSERT_EQ(u64Info[i].Start[0], inRank * Nx);
                     ASSERT_EQ(r32Info[i].Start[0], inRank * Nx);
                     ASSERT_EQ(r64Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(cr32Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(cr64Info[i].Start[0], inRank * Nx);
+                    ASSERT_EQ(crldInfo[i].Start[0], inRank * Nx);
 
                     i8Min =
                         *std::min_element(currentTestData.I8.begin(),
@@ -465,6 +543,54 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                     r64Max =
                         *std::max_element(currentTestData.R64.begin(),
                                           currentTestData.R64.begin() + Nx / 2);
+
+                    cr32Min = currentTestData.CR32.front();
+                    cr32Max = currentTestData.CR32.front();
+                    for (auto it = currentTestData.CR32.begin();
+                         it != currentTestData.CR32.begin() + Nx / 2; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr32Min))
+                        {
+                            cr32Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr32Max))
+                        {
+                            cr32Max = *it;
+                        }
+                    }
+
+                    cr64Min = currentTestData.CR64.front();
+                    cr64Max = currentTestData.CR64.front();
+                    for (auto it = currentTestData.CR64.begin();
+                         it != currentTestData.CR64.begin() + Nx / 2; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr64Min))
+                        {
+                            cr64Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr64Max))
+                        {
+                            cr64Max = *it;
+                        }
+                    }
+
+                    crldMin = currentTestData.CRLD.front();
+                    crldMax = currentTestData.CRLD.front();
+                    for (auto it = currentTestData.CRLD.begin();
+                         it != currentTestData.CRLD.begin() + Nx / 2; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(crldMin))
+                        {
+                            crldMin = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(crldMax))
+                        {
+                            crldMax = *it;
+                        }
+                    }
                 }
                 else
                 {
@@ -478,6 +604,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                     ASSERT_EQ(u64Info[i].Start[0], inRank * Nx + Nx / 2);
                     ASSERT_EQ(r32Info[i].Start[0], inRank * Nx + Nx / 2);
                     ASSERT_EQ(r64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(cr32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(cr64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    ASSERT_EQ(crldInfo[i].Start[0], inRank * Nx + Nx / 2);
 
                     i8Min =
                         *std::min_element(currentTestData.I8.begin() + Nx / 2,
@@ -548,6 +677,54 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                     r64Max =
                         *std::max_element(currentTestData.R64.begin() + Nx / 2,
                                           currentTestData.R64.begin() + Nx);
+
+                    cr32Min = currentTestData.CR32[Nx / 2];
+                    cr32Max = currentTestData.CR32[Nx / 2];
+                    for (auto it = currentTestData.CR32.begin() + Nx / 2;
+                         it != currentTestData.CR32.begin() + Nx; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr32Min))
+                        {
+                            cr32Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr32Max))
+                        {
+                            cr32Max = *it;
+                        }
+                    }
+
+                    cr64Min = currentTestData.CR64[Nx / 2];
+                    cr64Max = currentTestData.CR64[Nx / 2];
+                    for (auto it = currentTestData.CR64.begin() + Nx / 2;
+                         it != currentTestData.CR64.begin() + Nx; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr64Min))
+                        {
+                            cr64Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr64Max))
+                        {
+                            cr64Max = *it;
+                        }
+                    }
+
+                    crldMin = currentTestData.CRLD[Nx / 2];
+                    crldMax = currentTestData.CRLD[Nx / 2];
+                    for (auto it = currentTestData.CRLD.begin() + Nx / 2;
+                         it != currentTestData.CRLD.begin() + Nx; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(crldMin))
+                        {
+                            crldMin = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(crldMax))
+                        {
+                            crldMax = *it;
+                        }
+                    }
                 }
 
                 ASSERT_EQ(i8Info[i].Min, i8Min);
@@ -572,6 +749,13 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 ASSERT_EQ(r32Info[i].Max, r32Max);
                 ASSERT_EQ(r64Info[i].Min, r64Min);
                 ASSERT_EQ(r64Info[i].Max, r64Max);
+
+                ASSERT_EQ(cr32Info[i].Min, cr32Min);
+                ASSERT_EQ(cr32Info[i].Max, cr32Max);
+                ASSERT_EQ(cr64Info[i].Min, cr64Min);
+                ASSERT_EQ(cr64Info[i].Max, cr64Max);
+                ASSERT_EQ(crldInfo[i].Min, crldMin);
+                ASSERT_EQ(crldInfo[i].Max, crldMax);
             }
 
             // Generate test data for each rank uniquely
@@ -630,6 +814,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             var_r64.SetSelection(sel2);
             bpReader.Get(var_r64, R64.data() + Nx / 2);
 
+            var_cr32.SetSelection(sel1);
+            bpReader.Get(var_cr32, CR32.data());
+            var_cr32.SetSelection(sel2);
+            bpReader.Get(var_cr32, CR32.data() + Nx / 2);
+
+            var_cr64.SetSelection(sel1);
+            bpReader.Get(var_cr64, CR64.data());
+            var_cr64.SetSelection(sel2);
+            bpReader.Get(var_cr64, CR64.data() + Nx / 2);
+
+            var_crld.SetSelection(sel1);
+            bpReader.Get(var_crld, CRLD.data());
+            var_crld.SetSelection(sel2);
+            bpReader.Get(var_crld, CRLD.data() + Nx / 2);
+
             bpReader.EndStep();
 
             EXPECT_EQ(IString, currentTestData.S1);
@@ -650,6 +849,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
+                EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
+                EXPECT_EQ(CRLD[i], currentTestData.CRLD[i]) << msg;
             }
 
             ++t;
@@ -729,6 +931,12 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>(
+                "cr32", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>(
+                "cr64", shape, start, count);
+            auto var_crld = io.DefineVariable<std::complex<long double>>(
+                "crld", shape, start, count);
         }
 
         // Create the BP Engine
@@ -755,6 +963,10 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
+            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+            auto var_crld =
+                io.InquireVariable<std::complex<long double>>("crld");
 
             bpWriter.BeginStep();
             bpWriter.Put(var_iString, currentTestData.S1);
@@ -808,6 +1020,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
             bpWriter.Put(var_r64, currentTestData.R64.data());
             var_r64.SetSelection(sel2);
             bpWriter.Put(var_r64, currentTestData.R64.data() + Ny * Nx / 2);
+
+            var_cr32.SetSelection(sel1);
+            bpWriter.Put(var_cr32, currentTestData.CR32.data());
+            var_cr32.SetSelection(sel2);
+            bpWriter.Put(var_cr32, currentTestData.CR32.data() + Ny * Nx / 2);
+
+            var_cr64.SetSelection(sel1);
+            bpWriter.Put(var_cr64, currentTestData.CR64.data());
+            var_cr64.SetSelection(sel2);
+            bpWriter.Put(var_cr64, currentTestData.CR64.data() + Ny * Nx / 2);
+
+            var_crld.SetSelection(sel1);
+            bpWriter.Put(var_crld, currentTestData.CRLD.data());
+            var_crld.SetSelection(sel2);
+            bpWriter.Put(var_crld, currentTestData.CRLD.data() + Ny * Nx / 2);
 
             bpWriter.EndStep();
         }
@@ -896,6 +1123,27 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
         ASSERT_EQ(var_r64.Shape()[0], Ny);
         ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
+        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+        EXPECT_TRUE(var_cr32);
+        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr32.Steps(), NSteps);
+        ASSERT_EQ(var_cr32.Shape()[0], Ny);
+        ASSERT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+        EXPECT_TRUE(var_cr64);
+        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr64.Steps(), NSteps);
+        ASSERT_EQ(var_cr64.Shape()[0], Ny);
+        ASSERT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+        auto var_crld = io.InquireVariable<std::complex<long double>>("crld");
+        EXPECT_TRUE(var_crld);
+        ASSERT_EQ(var_crld.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_crld.Steps(), NSteps);
+        ASSERT_EQ(var_crld.Shape()[0], Ny);
+        ASSERT_EQ(var_crld.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
         std::string IString;
         std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
@@ -907,6 +1155,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
         std::array<uint64_t, Nx * Ny> U64;
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
+        std::array<std::complex<float>, Nx * Ny> CR32;
+        std::array<std::complex<double>, Nx * Ny> CR64;
+        std::array<std::complex<long double>, Nx * Ny> CRLD;
 
         size_t t = 0;
 
@@ -964,6 +1215,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
             var_r64.SetSelection(sel2);
             bpReader.Get(var_r64, R64.data() + Ny * Nx / 2);
 
+            var_cr32.SetSelection(sel1);
+            bpReader.Get(var_cr32, CR32.data());
+            var_cr32.SetSelection(sel2);
+            bpReader.Get(var_cr32, CR32.data() + Ny * Nx / 2);
+
+            var_cr64.SetSelection(sel1);
+            bpReader.Get(var_cr64, CR64.data());
+            var_cr64.SetSelection(sel2);
+            bpReader.Get(var_cr64, CR64.data() + Ny * Nx / 2);
+
+            var_crld.SetSelection(sel1);
+            bpReader.Get(var_crld, CRLD.data());
+            var_crld.SetSelection(sel2);
+            bpReader.Get(var_crld, CRLD.data() + Ny * Nx / 2);
+
             bpReader.EndStep();
 
             // Generate test data for each rank uniquely
@@ -988,6 +1254,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
+                EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
+                EXPECT_EQ(CRLD[i], currentTestData.CRLD[i]) << msg;
             }
 
             ++t;
@@ -1066,6 +1335,12 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>(
+                "cr32", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>(
+                "cr64", shape, start, count);
+            auto var_crld = io.DefineVariable<std::complex<long double>>(
+                "crld", shape, start, count);
         }
 
         // Create the BP Engine
@@ -1092,6 +1367,10 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
+            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+            auto var_crld =
+                io.InquireVariable<std::complex<long double>>("crld");
 
             bpWriter.BeginStep();
 
@@ -1144,6 +1423,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             bpWriter.Put(var_r64, currentTestData.R64.data());
             var_r64.SetSelection(sel2);
             bpWriter.Put(var_r64, currentTestData.R64.data() + Ny * Nx / 2);
+
+            var_cr32.SetSelection(sel1);
+            bpWriter.Put(var_cr32, currentTestData.CR32.data());
+            var_cr32.SetSelection(sel2);
+            bpWriter.Put(var_cr32, currentTestData.CR32.data() + Ny * Nx / 2);
+
+            var_cr64.SetSelection(sel1);
+            bpWriter.Put(var_cr64, currentTestData.CR64.data());
+            var_cr64.SetSelection(sel2);
+            bpWriter.Put(var_cr64, currentTestData.CR64.data() + Ny * Nx / 2);
+
+            var_crld.SetSelection(sel1);
+            bpWriter.Put(var_crld, currentTestData.CRLD.data());
+            var_crld.SetSelection(sel2);
+            bpWriter.Put(var_crld, currentTestData.CRLD.data() + Ny * Nx / 2);
 
             bpWriter.EndStep();
         }
@@ -1227,6 +1521,27 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
         ASSERT_EQ(var_r64.Shape()[0], Ny);
         ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
+        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+        EXPECT_TRUE(var_cr32);
+        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr32.Steps(), NSteps);
+        ASSERT_EQ(var_cr32.Shape()[0], Ny);
+        ASSERT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+        EXPECT_TRUE(var_cr64);
+        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_cr64.Steps(), NSteps);
+        ASSERT_EQ(var_cr64.Shape()[0], Ny);
+        ASSERT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+        auto var_crld = io.InquireVariable<std::complex<long double>>("crld");
+        EXPECT_TRUE(var_crld);
+        ASSERT_EQ(var_crld.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_crld.Steps(), NSteps);
+        ASSERT_EQ(var_crld.Shape()[0], Ny);
+        ASSERT_EQ(var_crld.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get
         // completely garbage data
@@ -1240,6 +1555,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
         std::array<uint64_t, Nx * Ny> U64;
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
+        std::array<std::complex<float>, Nx * Ny> CR32;
+        std::array<std::complex<double>, Nx * Ny> CR64;
+        std::array<std::complex<long double>, Nx * Ny> CRLD;
 
         size_t t = 0;
 
@@ -1266,6 +1584,16 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             const std::vector<adios2::Variable<double>::Info> r64Info =
                 bpReader.BlocksInfo(var_r64, bpReader.CurrentStep());
 
+            const std::vector<adios2::Variable<std::complex<float>>::Info>
+                cr32Info =
+                    bpReader.BlocksInfo(var_cr32, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<std::complex<double>>::Info>
+                cr64Info =
+                    bpReader.BlocksInfo(var_cr64, bpReader.CurrentStep());
+            const std::vector<adios2::Variable<std::complex<long double>>::Info>
+                crldInfo =
+                    bpReader.BlocksInfo(var_crld, bpReader.CurrentStep());
+
             EXPECT_EQ(i8Info.size(), 2 * mpiSize);
             EXPECT_EQ(i16Info.size(), 2 * mpiSize);
             EXPECT_EQ(i32Info.size(), 2 * mpiSize);
@@ -1276,6 +1604,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             EXPECT_EQ(u64Info.size(), 2 * mpiSize);
             EXPECT_EQ(r32Info.size(), 2 * mpiSize);
             EXPECT_EQ(r64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(cr32Info.size(), 2 * mpiSize);
+            EXPECT_EQ(cr64Info.size(), 2 * mpiSize);
+            EXPECT_EQ(crldInfo.size(), 2 * mpiSize);
 
             for (size_t i = 0; i < 2 * mpiSize; ++i)
             {
@@ -1289,6 +1620,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 EXPECT_FALSE(u64Info[0].IsValue);
                 EXPECT_FALSE(r32Info[0].IsValue);
                 EXPECT_FALSE(r64Info[0].IsValue);
+                EXPECT_FALSE(cr32Info[0].IsValue);
+                EXPECT_FALSE(cr64Info[0].IsValue);
+                EXPECT_FALSE(crldInfo[0].IsValue);
 
                 const size_t inRank = i / 2;
                 int8_t i8Min, i8Max;
@@ -1301,6 +1635,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 uint64_t u64Min, u64Max;
                 float r32Min, r32Max;
                 double r64Min, r64Max;
+                std::complex<float> cr32Min, cr32Max;
+                std::complex<double> cr64Min, cr64Max;
+                std::complex<long double> crldMin, crldMax;
 
                 SmallTestData currentTestData =
                     generateNewSmallTestData(m_TestData, static_cast<int>(t),
@@ -1357,6 +1694,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                     ASSERT_EQ(r64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(r64Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(r64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(cr32Info[i].Start[0], 0);
+                    ASSERT_EQ(cr32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr32Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(cr32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(cr64Info[i].Start[0], 0);
+                    ASSERT_EQ(cr64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr64Info[i].Count[0], Ny / 2);
+                    EXPECT_EQ(cr64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(crldInfo[i].Start[0], 0);
+                    ASSERT_EQ(crldInfo[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(crldInfo[i].Count[0], Ny / 2);
+                    EXPECT_EQ(crldInfo[i].Count[1], Nx);
 
                     i8Min = *std::min_element(currentTestData.I8.begin(),
                                               currentTestData.I8.begin() +
@@ -1418,6 +1770,54 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                     r64Max = *std::max_element(currentTestData.R64.begin(),
                                                currentTestData.R64.begin() +
                                                    Ny * Nx / 2);
+
+                    cr32Min = currentTestData.CR32.front();
+                    cr32Max = currentTestData.CR32.front();
+                    for (auto it = currentTestData.CR32.begin();
+                         it != currentTestData.CR32.begin() + Ny * Nx / 2; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr32Min))
+                        {
+                            cr32Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr32Max))
+                        {
+                            cr32Max = *it;
+                        }
+                    }
+
+                    cr64Min = currentTestData.CR64.front();
+                    cr64Max = currentTestData.CR64.front();
+                    for (auto it = currentTestData.CR64.begin();
+                         it != currentTestData.CR64.begin() + Ny * Nx / 2; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr64Min))
+                        {
+                            cr64Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr64Max))
+                        {
+                            cr64Max = *it;
+                        }
+                    }
+
+                    crldMin = currentTestData.CRLD.front();
+                    crldMax = currentTestData.CRLD.front();
+                    for (auto it = currentTestData.CRLD.begin();
+                         it != currentTestData.CRLD.begin() + Ny * Nx / 2; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(crldMin))
+                        {
+                            crldMin = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(crldMax))
+                        {
+                            crldMax = *it;
+                        }
+                    }
                 }
                 else
                 {
@@ -1470,6 +1870,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                     ASSERT_EQ(r64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(r64Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(r64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(cr32Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(cr32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr32Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(cr32Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(cr64Info[i].Start[0], Ny / 2);
+                    ASSERT_EQ(cr64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr64Info[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(cr64Info[i].Count[1], Nx);
+
+                    ASSERT_EQ(crldInfo[i].Start[0], Ny / 2);
+                    ASSERT_EQ(crldInfo[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(crldInfo[i].Count[0], Ny - Ny / 2);
+                    EXPECT_EQ(crldInfo[i].Count[1], Nx);
 
                     i8Min = *std::min_element(
                         currentTestData.I8.begin() + Ny * Nx / 2,
@@ -1540,6 +1955,54 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                     r64Max = *std::max_element(
                         currentTestData.R64.begin() + Ny * Nx / 2,
                         currentTestData.R64.begin() + Ny * Nx);
+
+                    cr32Min = currentTestData.CR32[Ny * Nx / 2];
+                    cr32Max = currentTestData.CR32[Ny * Nx / 2];
+                    for (auto it = currentTestData.CR32.begin() + Ny * Nx / 2;
+                         it != currentTestData.CR32.begin() + Ny * Nx; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr32Min))
+                        {
+                            cr32Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr32Max))
+                        {
+                            cr32Max = *it;
+                        }
+                    }
+
+                    cr64Min = currentTestData.CR64[Ny * Nx / 2];
+                    cr64Max = currentTestData.CR64[Ny * Nx / 2];
+                    for (auto it = currentTestData.CR64.begin() + Ny * Nx / 2;
+                         it != currentTestData.CR64.begin() + Ny * Nx; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(cr64Min))
+                        {
+                            cr64Min = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(cr64Max))
+                        {
+                            cr64Max = *it;
+                        }
+                    }
+
+                    crldMin = currentTestData.CRLD[Ny * Nx / 2];
+                    crldMax = currentTestData.CRLD[Ny * Nx / 2];
+                    for (auto it = currentTestData.CRLD.begin() + Ny * Nx / 2;
+                         it != currentTestData.CRLD.begin() + Ny * Nx; ++it)
+                    {
+                        if (std::norm(*it) < std::norm(crldMin))
+                        {
+                            crldMin = *it;
+                            continue;
+                        }
+                        if (std::norm(*it) > std::norm(crldMax))
+                        {
+                            crldMax = *it;
+                        }
+                    }
                 }
                 ASSERT_EQ(i8Info[i].Min, i8Min);
                 ASSERT_EQ(i8Info[i].Max, i8Max);
@@ -1563,6 +2026,13 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 ASSERT_EQ(r32Info[i].Max, r32Max);
                 ASSERT_EQ(r64Info[i].Min, r64Min);
                 ASSERT_EQ(r64Info[i].Max, r64Max);
+
+                ASSERT_EQ(cr32Info[i].Min, cr32Min);
+                ASSERT_EQ(cr32Info[i].Max, cr32Max);
+                ASSERT_EQ(cr64Info[i].Min, cr64Min);
+                ASSERT_EQ(cr64Info[i].Max, cr64Max);
+                ASSERT_EQ(crldInfo[i].Min, crldMin);
+                ASSERT_EQ(crldInfo[i].Max, crldMax);
             }
 
             var_i8.SetSelection(sel1);
@@ -1615,6 +2085,21 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             var_r64.SetSelection(sel2);
             bpReader.Get(var_r64, R64.data() + Ny * Nx / 2);
 
+            var_cr32.SetSelection(sel1);
+            bpReader.Get(var_cr32, CR32.data());
+            var_cr32.SetSelection(sel2);
+            bpReader.Get(var_cr32, CR32.data() + Ny * Nx / 2);
+
+            var_cr64.SetSelection(sel1);
+            bpReader.Get(var_cr64, CR64.data());
+            var_cr64.SetSelection(sel2);
+            bpReader.Get(var_cr64, CR64.data() + Ny * Nx / 2);
+
+            var_crld.SetSelection(sel1);
+            bpReader.Get(var_crld, CRLD.data());
+            var_crld.SetSelection(sel2);
+            bpReader.Get(var_crld, CRLD.data() + Ny * Nx / 2);
+
             bpReader.EndStep();
 
             // Generate test data for each rank uniquely
@@ -1637,6 +2122,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
+                EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
+                EXPECT_EQ(CRLD[i], currentTestData.CRLD[i]) << msg;
             }
 
             ++t;
