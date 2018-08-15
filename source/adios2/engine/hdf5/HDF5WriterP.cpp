@@ -35,7 +35,11 @@ StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
-void HDF5WriterP::EndStep() { m_H5File.Advance(); }
+void HDF5WriterP::EndStep()
+{
+    m_H5File.Advance();
+    m_H5File.WriteAttrFromIO(m_IO);
+}
 
 void HDF5WriterP::PerformPuts() {}
 
@@ -122,6 +126,12 @@ void HDF5WriterP::DoPutSyncCommon(Variable<T> &variable, const T *values)
     m_H5File.Write(variable, values);
 }
 
+// I forced attribute writing to hdf5 in Endstep().
+// So Do not call engine.Flush()
+// unless you are using ascent
+// Flush() call makes DoClose skips m_H5File.Close() so ascent calls sequences
+// work.
+
 void HDF5WriterP::Flush(const int transportIndex)
 {
     m_H5File.WriteAttrFromIO(m_IO);
@@ -139,6 +149,7 @@ void HDF5WriterP::DoClose(const int transportIndex)
     else
     {
         // printf("flushed, no close (##asend usage) \n");
+        // m_H5File.Close();
     }
 }
 

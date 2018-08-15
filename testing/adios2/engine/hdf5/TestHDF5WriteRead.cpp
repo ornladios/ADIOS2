@@ -3003,7 +3003,6 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
 
         // Advance to the next time step
         engine.EndStep();
-        engine.Flush();
 
         if (step == 1)
         {
