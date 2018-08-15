@@ -92,17 +92,17 @@ public:
     /**
      * Declares a new IO class object and returns a reference to that
      * object.
-     * @param ioName must be unique
+     * @param ioName unique IO name identifier within current ADIOS object
      * @return reference to newly created IO object inside current ADIOS
      * object
      * @exception std::invalid_argument if IO with unique name is already
-     * declared, in debug mode only
+     * declared, in ADIOS debug mode only
      */
     IO DeclareIO(const std::string name);
 
     /**
      * Retrieve a reference to an existing IO object created with DeclareIO.
-     * @param name of IO to look for
+     * @param name of IO to look for in current ADIOS object
      * @return if IO exists returns a reference to existing IO object inside
      * ADIOS
      * @exception std::invalid_argument if IO was not created with
@@ -136,8 +136,8 @@ public:
      * @param name unique operator name within ADIOS object
      * @param function C++11 callable target
      * @param parameters key/value parameters at the operator level
-     * @return Operator object for Callback functions
-     * * @exception std::invalid_argument if library can't support current
+     * @return Operator object
+     * @exception std::invalid_argument if library can't support current
      * operator due to missing dependency or unsupported signature
      */
     template <class R, class... Args>

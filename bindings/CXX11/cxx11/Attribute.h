@@ -34,10 +34,14 @@ class Attribute
     friend class IO;
 
 public:
+    /**
+    * Empty (default) constructor, use it as a placeholder for future
+    * attributes from IO:DefineAttribute<T> or IO:InquireAttribute<T>
+    */
     Attribute<T>() = default;
     ~Attribute<T>() = default;
 
-    /** true: valid, false: invalid */
+    /** Checks if object is valid, e.g. if( attribute ) { //..valid } */
     explicit operator bool() const noexcept;
 
     /**

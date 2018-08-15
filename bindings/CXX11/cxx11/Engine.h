@@ -102,7 +102,7 @@ public:
     /**
      * Put data associated with a Variable in the adios2 library
      * Overloaded version that accepts a variable name string.
-     * @param variable contains variable metadata information
+     * @param variableName finds a variable with this unique name
      * @param data user data to be associated with a variable
      * @param launch mode policy
      * <pre>
@@ -135,7 +135,7 @@ public:
      * Put data associated with a Variable in the adios2 library
      * Overloaded version that accepts variables names, and r-values and single
      * variable data.
-     * @param variable contains variable metadata information
+     * @param variableName finds a variable with this unique name
      * @param data user data to be associated with a variable r-value or single
      * data value
      * @param launch mode policy, optional for API consistency, internally is
@@ -175,9 +175,7 @@ public:
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();
 
-    /**
-     * Ends current step, by default consumes all Put/Get data in deferred mode
-     */
+    /** Ends current step, by default calls PerformsPut/Get internally*/
     void EndStep();
 
     /**

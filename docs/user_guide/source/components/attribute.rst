@@ -1,6 +1,6 @@
-**********
-Attributes
-**********
+*********
+Attribute
+*********
 
 Attributes are extra information associated with a particular IO component. They can be thought of a very simplified version of a Variable, but with the goal of adding extra metadata. The most common use is the addition of human-readable information available when producing data (*e.g.* "experiment name", "date and time", "04,27,2017", schema). 
 

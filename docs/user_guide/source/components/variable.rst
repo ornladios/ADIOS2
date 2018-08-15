@@ -1,6 +1,6 @@
-*********
-Variables
-*********
+********
+Variable
+********
 
 Self-describing Variables are the atomic unit of data representation in the ADIOS2 library when interacting with applications. Thus, the Variable component is the link between a piece of data coming an application and its self-describing information or metadata. This component handles all application variables classified by data type and shape type.
 
