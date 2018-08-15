@@ -95,6 +95,7 @@ if ($test_protocol == "kill_readers") {
     print "TestDriver: TEST TIME REMAINING is $time_remaining \n";
   }
   print "TestDriver: Killing the writer\n";
+  kill 'USR1', $writer_pid;
   kill '-USR1', $writer_pid;
   foreach my $readerPID (@ReaderPIDs) {
       waitpid($readerPID, 0);

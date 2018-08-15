@@ -181,6 +181,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
 #ifdef ADIOS2_HAVE_MPI
         MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
                       MPI_COMM_WORLD);
+#else
+        GlobalCloseNow = MyCloseNow;
 #endif
     }
     // Close the file

@@ -329,6 +329,9 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
         {
             List->ReferenceCount++;
             Ret = List->Timestep;
+            CP_verbose(Stream, "Earliest available : Writer-side Timestep %ld "
+                               "now has reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         List = List->Next;
     }
@@ -346,6 +349,9 @@ static void AddRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount++;
+            CP_verbose(Stream, "AddRef : Writer-side Timestep %ld now has "
+                               "reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         List = List->Next;
     }
@@ -362,6 +368,9 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount--;
+            CP_verbose(Stream, "SubRef : Writer-side Timestep %ld now has "
+                               "reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         if (List->ReferenceCount == 0)
         {
