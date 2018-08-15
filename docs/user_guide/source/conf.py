@@ -25,6 +25,9 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+import subprocess, os
+
+
 extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
@@ -33,6 +36,10 @@ extensions = [
     'sphinxcontrib.blockdiag',
     'breathe'
 ]
+
+# generate doxygen xml outputs
+subprocess.call('cd ../../api_doxygen/C; doxygen', shell=True)
+subprocess.call('cd ../../api_doxygen/CXX11; doxygen', shell=True)
 
 breathe_projects = { "C": "../../api_doxygen/C/xml", 
                      "CXX11": "../../api_doxygen/CXX11/xml" }
