@@ -151,7 +151,7 @@ if(PythonFull_FOUND)
 endif()
 
 # Sst
-if(ADIOS2_USE_SST)
+if(ADIOS2_USE_SST AND NOT MSVC)
   set(ADIOS2_HAVE_SST TRUE)
   find_package(LIBFABRIC 1.6)
   if(LIBFABRIC_FOUND)
