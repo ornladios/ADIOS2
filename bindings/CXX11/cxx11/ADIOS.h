@@ -83,8 +83,10 @@ public:
     /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;
 
-    /** prevents copy constructor, ADIOS is the only object that manages its own
-     * memory. Create a separate for independent tasks */
+    /**
+     * DELETED Copy Constructor.
+     * ADIOS is the only object that manages its own memory.
+     * Create a separate for independent tasks */
     ADIOS(const ADIOS &) = delete;
 
     ~ADIOS() = default;

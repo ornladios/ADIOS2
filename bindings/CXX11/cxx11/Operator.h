@@ -40,6 +40,13 @@ class Operator
     friend class Variable;
 
 public:
+    /**
+     * Empty (default) constructor, use it as a placeholder for future
+     * operators from ADIOS::DefineOperator functions.
+     * Can be used with STL containers.
+     */
+    Operator() = default;
+
     ~Operator() = default;
 
     /** true: valid object, false: invalid object */

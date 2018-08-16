@@ -164,6 +164,10 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
                                     const adios2_mode open_mode,
                                     MPI_Comm mpi_comm);
 
+/**
+ * Flushes all engines created with current io handler using adios2_open
+ * @param io handler whose engine will be flushed
+ */
 void adios2_flush_all_engines(adios2_io *io);
 
 /**

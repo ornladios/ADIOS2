@@ -41,7 +41,8 @@ class Variable
 public:
     /**
      * Empty (default) constructor, use it as a placeholder for future
-     * variables from IO:DefineVariable<T> or IO:InquireVariable<T>
+     * variables from IO:DefineVariable<T> or IO:InquireVariable<T>.
+     * Can be used with STL containers.
      */
     Variable<T>() = default;
 

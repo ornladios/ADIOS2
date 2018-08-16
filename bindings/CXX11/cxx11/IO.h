@@ -262,7 +262,7 @@ public:
                         const Params &parameters = Params()) noexcept;
 
     /**
-     * Inspect current engine type
+     * Inspect current engine type from SetEngine
      * @return current engine type
      */
     std::string EngineType() const noexcept;

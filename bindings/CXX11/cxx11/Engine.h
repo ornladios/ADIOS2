@@ -34,6 +34,11 @@ class Engine
     friend class IO;
 
 public:
+    /**
+     * Empty (default) constructor, use it as a placeholder for future
+     * engines from IO::Open.
+     * Can be used with STL containers.
+     */
     Engine() = default;
 
     ~Engine() = default;
@@ -83,7 +88,7 @@ public:
     void FixedSchedule();
 
     /**
-     * Put data associated with a Variable in the adios2 library
+     * Put data associated with a Variable in the Engine
      * @param variable contains variable metadata information
      * @param data user data to be associated with a variable
      * @param launch mode policy
@@ -100,9 +105,10 @@ public:
              const Mode launch = Mode::Deferred);
 
     /**
-     * Put data associated with a Variable in the adios2 library
+     * Put data associated with a Variable in the Engine
      * Overloaded version that accepts a variable name string.
-     * @param variableName finds a variable with this unique name
+     * @param variableName find variable by name inside IO that created this
+     * Engine with Open
      * @param data user data to be associated with a variable
      * @param launch mode policy
      * <pre>
@@ -118,7 +124,7 @@ public:
              const Mode launch = Mode::Deferred);
 
     /**
-     * Put data associated with a Variable in the adios2 library
+     * Put data associated with a Variable in the Engine
      * Overloaded version that accepts r-values and single variable data.
      * @param variable contains variable metadata information
      * @param datum user data to be associated with a variable, r-value or
@@ -132,10 +138,11 @@ public:
              const Mode launch = Mode::Deferred);
 
     /**
-     * Put data associated with a Variable in the adios2 library
+     * Put data associated with a Variable in the Engine
      * Overloaded version that accepts variables names, and r-values and single
      * variable data.
-     * @param variableName finds a variable with this unique name
+     * @param variableName find variable by name inside IO that created this
+     * Engine with Open
      * @param data user data to be associated with a variable r-value or single
      * data value
      * @param launch mode policy, optional for API consistency, internally is
@@ -149,25 +156,113 @@ public:
     /** Perform all Put calls in Deferred mode up to this point */
     void PerformPuts();
 
+    /**
+     * Get data associated with a Variable from the Engine
+     * @param variable contains variable metadata information
+     * @param data user data to be associated with a variable, it must be
+     * pre-allocated
+     * @param launch mode policy
+     * <pre>
+     * 		Mode::Deferred, lazy evaluation, do not use data until
+     * first PerformGets, EndStep, or Close. This is the preferred way.
+     * 		Mode::Sync, data is obtained by the Engine and can be used
+     * immediately.
+     * Special case, only use if necessary.
+     * </pre>
+     * @exception std::invalid_argument for invalid variable or nullptr data
+     */
     template <class T>
     void Get(Variable<T> variable, T *data, const Mode launch = Mode::Deferred);
 
+    /**
+     * Get data associated with a Variable from the Engine. Overloaded version
+     * to get variable by name.
+     * @param variableName find variable by name inside IO that created this
+     * Engine with Open
+     * @param data user data to be associated with a variable. It must be
+     * pre-allocated
+     * @param launch mode policy
+     * <pre>
+     * 		Mode::Deferred, lazy evaluation, do not use data until
+     * first PerformGets, EndStep, or Close. This is the preferred way.
+     * 		Mode::Sync, data is obtained by the Engine and can be
+     * used
+     * immediately.
+     * Special case, only use if necessary.
+     * </pre>
+     * @exception std::invalid_argument for invalid variableName (variable
+     * doesn't exist in IO) or nullptr data
+     */
     template <class T>
     void Get(const std::string &variableName, T *data,
              const Mode launch = Mode::Deferred);
 
+    /**
+     * Get single value data associated with a Variable from the Engine
+     * Overloaded version that accepts r-values and single variable data.
+     * @param variable contains variable metadata information
+     * @param datum user data to be populated, r-value or single data value
+     * @param launch mode policy, optional for API consistency, internally
+     * is always sync
+     * @exception std::invalid_argument if variable is invalid or nullptr &datum
+     */
     template <class T>
     void Get(Variable<T> variable, T &datum,
              const Mode launch = Mode::Deferred);
 
+    /**
+     * Get single value data associated with a Variable from the Engine
+     * Overloaded version that accepts r-values and single variable data.
+     * @param variableName find variable by name inside IO that created this
+     * Engine with Open
+     * @param datum user data to be populated, r-value or single data value
+     * @param launch mode policy, optional for API consistency, internally
+     * is always sync
+     * @exception std::invalid_argument if variable is invalid or nullptr
+     * &datum
+     */
     template <class T>
     void Get(const std::string &variableName, T &datum,
              const Mode launch = Mode::Deferred);
 
+    /**
+     * Get data associated with a Variable from the Engine.
+     * Overloaded version that accepts a std::vector without pre-allocation.
+     * @param variable contains variable metadata information
+     * @param dataV user data vector to be associated with a variable, it
+     * doesn't need to be pre-allocated. Engine will resize.
+     * @param launch mode policy
+     * <pre>
+     * 		Mode::Deferred, lazy evaluation, do not use data until
+     * first PerformGets, EndStep, or Close. This is the preferred way.
+     * 		Mode::Sync, data is obtained by the Engine and can be used
+     * immediately.
+     * Special case, only use if necessary.
+     * </pre>
+     * @exception std::invalid_argument for invalid variable
+     */
     template <class T>
     void Get(Variable<T> variable, std::vector<T> &dataV,
              const Mode launch = Mode::Deferred);
 
+    /**
+     * Get data associated with a Variable from the Engine.
+     * Overloaded version that accepts a std::vector without pre-allocation.
+     * @param variableName find variable by name inside IO that created this
+     * Engine with Open
+     * @param dataV user data vector to be associated with a variable, it
+     * doesn't need to be pre-allocated. Engine will resize.
+     * @param launch mode policy
+     * <pre>
+     * 		Mode::Deferred, lazy evaluation, do not use data until
+     * first PerformGets, EndStep, or Close. This is the preferred way.
+     * 		Mode::Sync, data is obtained by the Engine and can be
+     * used
+     * immediately.
+     * Special case, only use if necessary.
+     * </pre>
+     * @exception std::invalid_argument for invalid variable
+     */
     template <class T>
     void Get(const std::string &variableName, std::vector<T> &dataV,
              const Mode launch = Mode::Deferred);

@@ -1,4 +1,4 @@
-# Documentation for the Adaptable Input / Output System (ADIOS) v2.2.0
+# Documentation for the ADaptable Input Output System, ADIOS2 v2.2.0
 
 # Generate User Guide in html with Sphinx
 
@@ -13,7 +13,7 @@ Python v2.7 or above is required to build the Sphinx based user guide. Sphinx ca
 	* sphinx_rtd_theme https://sphinx-rtd-theme.readthedocs.io/en/latest/installing.html
 	* breathe https://breathe.readthedocs.io/en/latest/
 	
-2. To generate the User Guide under doc/user_guide/build/html format (default) from the existing Sphinx source files:
+2. To generate the User Guide under docs/user_guide/build/html format (default) from the existing Sphinx source files:
 	
 	```
 	$ cd ADIOS2/docs/user_guide 
