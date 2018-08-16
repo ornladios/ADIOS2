@@ -216,6 +216,7 @@ int main(int argc, char **argv)
         else if (std::string(argv[1]) == "--compress_zfp")
         {
             CompressZfp++;
+	}
         else if (std::string(argv[1]) == "--filename")
         {
             fname = std::string(argv[2]);
