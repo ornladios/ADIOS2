@@ -212,7 +212,7 @@ bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
             p[key] = i.second;
         }
     }
-    core::compress::CompressZfp compressor(p, true);
+    core::compress::CompressZfp compressor(p, false);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
@@ -254,8 +254,7 @@ bool DataManSerializer::Sz(nlohmann::json &metaj, size_t &datasize,
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-
-    core::compress::CompressSZ compressor(p, true);
+    core::compress::CompressSZ compressor(p, false);
     try
     {
         datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
@@ -295,8 +294,7 @@ bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-
-    core::compress::CompressBZip2 compressor(p, true);
+    core::compress::CompressBZip2 compressor(p, false);
     try
     {
         datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
