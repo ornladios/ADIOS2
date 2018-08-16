@@ -17,6 +17,7 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 class ADIOS; // friend class
 class IO;    // friend class
@@ -28,6 +29,7 @@ namespace core
 {
 class Operator; // private implementation
 }
+/// \endcond
 
 class Operator
 {
@@ -38,6 +40,13 @@ class Operator
     friend class Variable;
 
 public:
+    /**
+     * Empty (default) constructor, use it as a placeholder for future
+     * operators from ADIOS::DefineOperator functions.
+     * Can be used with STL containers.
+     */
+    Operator() = default;
+
     ~Operator() = default;
 
     /** true: valid object, false: invalid object */

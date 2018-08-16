@@ -94,11 +94,12 @@ size_t adios2_variable_steps(const adios2_variable *variable);
 
 /**
  * Set new dimensions: shape, start and count
- * @param variable
- * @param ndims
- * @param shape
- * @param start
- * @param count
+ * @param variable handler for which new dimensions will be applied to
+ * @param ndims number of dimensions. shape, start, and count must have the same
+ * ndims
+ * @param shape new shape dimensions array
+ * @param start new start dimensions array
+ * @param count new count dimensions array
  */
 void adios2_set_dimensions(adios2_variable *variable, const size_t ndims,
                            const size_t *shape, const size_t *start,
@@ -106,27 +107,29 @@ void adios2_set_dimensions(adios2_variable *variable, const size_t ndims,
 
 /**
  * Set a new shape dimension
- * @param variable
- * @param ndims
- * @param shape
+ * @param variable handler for which new shape will be applied to
+ * @param ndims number of dimensions for shape
+ * @param shape new shape dimensions array
  */
 void adios2_set_shape(adios2_variable *variable, const size_t ndims,
                       const size_t *shape);
 
 /**
  * Set new start and count dimensions
- * @param variable
- * @param start
- * @param count
+ * @param variable handler for which new selection will be applied to
+ * @param ndims number of dimensions for start and count
+ * @param start new start dimensions array
+ * @param count new count dimensions array
  */
 void adios2_set_selection(adios2_variable *variable, const size_t ndims,
                           const size_t *start, const size_t *count);
 
 /**
- * Set new step selection using step_start and step_count
- * @param variable
- * @param step_start
- * @param step_count
+ * Set new step selection using step_start and step_count. Used mostly for
+ * reading from file-based engines (e.g. bpfile, hdf5)
+ * @param variable handler for which new selection will be applied to
+ * @param step_start starting step for reading
+ * @param step_count number of steps to read from step start
  */
 void adios2_set_step_selection(adios2_variable *variable,
                                const size_t step_start,
@@ -134,9 +137,8 @@ void adios2_set_step_selection(adios2_variable *variable,
 
 /**
  * Returns the minimum required allocation (in number of elements of a certain
- * type, not bytes)
- * for the current selection
- * @param variable
+ * type, not bytes) for the current selection
+ * @param variable handler for which data size will be inspected from
  * @return memory size to be allocated by a pointer/vector to read this
  */
 size_t adios2_selection_size(const adios2_variable *variable);
@@ -155,8 +157,8 @@ void *adios2_get_data(const adios2_variable *variable);
 void adios2_set_data(adios2_variable *variable, const void *data);
 
 /**
- * add an operation to an
- * @param op operator performing the particular operation
+ * Adds an operation to a variable (e.g. compression, callback)
+ * @param variable handler on which operation is applied to
  * @param key parameter key supported by the operation
  * @param value parameter value supported by the operation
  * @return operation_id handler to be used with adios2_add_operation_param
@@ -166,10 +168,10 @@ size_t adios2_add_operation(adios2_variable *variable, adios2_operator *op,
 
 /**
  * Adds a parameter to an operation created with adios2_add_operation
- * @param variable
- * @param operation_id
- * @param key
- * @param value
+ * @param variable handler on which operation is applied to
+ * @param operation_id handler returned from adios2_add_operation
+ * @param key parameter key supported by the operation
+ * @param value parameter value supported by the operation
  */
 void adios2_set_operation_parameter(adios2_variable *variable,
                                     const size_t operation_id, const char *key,

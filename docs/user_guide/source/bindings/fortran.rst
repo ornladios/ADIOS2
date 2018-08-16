@@ -31,7 +31,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 :ref:`ADIOS` subroutines
 ------------------------
 
-* :f90:`subroutine adios2_init` starting point for the adios component 
+* :f90:`subroutine adios2_init` starting point for the adios2 library 
 
    .. code-block:: fortran
 

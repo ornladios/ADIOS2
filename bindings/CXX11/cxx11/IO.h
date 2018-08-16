@@ -23,6 +23,7 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 class ADIOS; // friend
 
@@ -30,6 +31,7 @@ namespace core
 {
 class IO; // private implementation
 }
+/// \endcond
 
 class IO
 {
@@ -260,7 +262,7 @@ public:
                         const Params &parameters = Params()) noexcept;
 
     /**
-     * Inspect current engine type
+     * Inspect current engine type from SetEngine
      * @return current engine type
      */
     std::string EngineType() const noexcept;

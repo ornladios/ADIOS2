@@ -19,6 +19,12 @@
 extern "C" {
 #endif
 
+/**
+ * Inspect adios2_operator type
+ * @param op operator handler to be inspected
+ * @param length placeholder that gets filled with the type string length
+ * @return type (e.g. sz, zfp, callback_signature1, etc.)
+ */
 const char *adios2_operator_type(const adios2_operator *op, size_t *length);
 
 #ifdef __cplusplus
