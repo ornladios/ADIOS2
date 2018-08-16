@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestDataMan.cpp
+ * TestDataMan.h
  *
  *  Created on: Jul 12, 2018
  *      Author: Jason Wang
@@ -21,11 +21,7 @@ using namespace adios2;
 int mpiRank = 0;
 int mpiSize = 1;
 
-class DataManEngineTest : public ::testing::Test
-{
-public:
-    DataManEngineTest() = default;
-};
+size_t print_step = 0;
 
 template <class T>
 void GenData(std::vector<T> &data, const size_t step)
@@ -53,27 +49,27 @@ void PrintData(const std::vector<T> &data, size_t step)
 }
 
 template <class T>
-void VerifyData(const T *data, const size_t size, size_t step)
-{
-    std::vector<T> tmpdata(size);
-    GenData(tmpdata, step);
-    for (size_t i = 0; i < size; ++i)
-    {
-        ASSERT_EQ(data[i], tmpdata[i]);
-    }
-
-    if (step < 500)
-    {
-        PrintData(data, step);
-    }
-}
-
-template <class T>
 void VerifyData(const std::vector<T> &data, size_t step)
 {
     std::vector<T> tmpdata(data.size());
     GenData(tmpdata, step);
     for (size_t i = 0; i < data.size(); ++i)
+    {
+        ASSERT_EQ(data[i], tmpdata[i]);
+    }
+    if (print_step < 10)
+    {
+        PrintData(data, step);
+        ++print_step;
+    }
+}
+
+template <class T>
+void VerifyData(const T *data, const size_t size, size_t step)
+{
+    std::vector<T> tmpdata(size);
+    GenData(tmpdata, step);
+    for (size_t i = 0; i < size; ++i)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
@@ -133,7 +129,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-    adios2::ADIOS adios(adios2::DebugON);
+    adios2::ADIOS adios;
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
@@ -208,7 +204,8 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     adios2::Variable<float> bpFloats;
 
-    for (size_t i = 0; i < steps; ++i)
+    size_t i;
+    for (i = 0; i < steps; ++i)
     {
         adios2::StepStatus status =
             dataManReader.BeginStep(StepMode::NextAvailable, 5);
@@ -216,12 +213,15 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
         {
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 8);
-            std::cout << "All available variables : ";
-            for (const auto &var : vars)
+            if (print_step < 10)
             {
-                std::cout << var.first << ", ";
+                std::cout << "All available variables : ";
+                for (const auto &var : vars)
+                {
+                    std::cout << var.first << ", ";
+                }
+                std::cout << std::endl;
             }
-            std::cout << std::endl;
             bpFloats = dataManIO.InquireVariable<float>("bpFloats");
             bpFloats.SetSelection({start, count});
             dataManReader.Get<float>(bpFloats, myFloats.data(),
@@ -238,7 +238,9 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
             break;
         }
     }
+    ASSERT_EQ(i, steps);
     dataManReader.Close();
+    print_step = 0;
 }
 
 void DataManReaderCallback(const Dims &shape, const Dims &start,
@@ -323,197 +325,4 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
         dataManReader.EndStep();
     }
     dataManReader.Close();
-}
-
-#ifdef ADIOS2_HAVE_ZEROMQ
-TEST_F(DataManEngineTest, WriteRead_1D_P2P)
-{
-    // set parameters
-    Dims shape = {10};
-    Dims start = {0};
-    Dims count = {10};
-    size_t steps = 200;
-    std::string workflowMode = "p2p";
-    std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
-                                                    {"IPAddress", "127.0.0.1"},
-                                                    {"Port", "12306"},
-                                                    {"Timeout", "2"}}};
-
-    // run workflow
-    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Writer thread started" << std::endl;
-    w.join();
-    std::cout << "Writer thread ended" << std::endl;
-    r.join();
-    std::cout << "Reader thread ended" << std::endl;
-}
-
-#ifdef ADIOS2_HAVE_ZFP
-TEST_F(DataManEngineTest, WriteRead_2D_P2P_Zfp)
-{
-    // set parameters
-    Dims shape = {5, 5};
-    Dims start = {0, 0};
-    Dims count = {5, 5};
-    size_t steps = 200;
-    std::string workflowMode = "p2p";
-    std::vector<adios2::Params> transportParams = {
-        {{"Library", "ZMQ"},
-         {"IPAddress", "127.0.0.1"},
-         {"Port", "12307"},
-         {"CompressionMethod", "zfp"},
-         {"zfp:rate", "4"}}};
-
-    // run workflow
-    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Writer thread started" << std::endl;
-    w.join();
-    std::cout << "Writer thread ended" << std::endl;
-    r.join();
-    std::cout << "Reader thread ended" << std::endl;
-}
-#endif // ZFP
-
-#ifdef ADIOS2_HAVE_SZ
-TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
-{
-    // set parameters
-    Dims shape = {10, 10};
-    Dims start = {0, 0};
-    Dims count = {6, 8};
-    size_t steps = 20;
-    std::string workflowMode = "p2p";
-    std::vector<adios2::Params> transportParams = {{
-        {"Library", "ZMQ"},
-        {"IPAddress", "127.0.0.1"},
-        {"Port", "12308"},
-        {"CompressionMethod", "sz"},
-        {"sz:accuracy", "0.01"},
-        {"CompressionVariables", "bpFloats,bpDoubles"},
-    }};
-
-    // run workflow
-    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Writer thread started" << std::endl;
-    w.join();
-    std::cout << "Writer thread ended" << std::endl;
-    r.join();
-    std::cout << "Reader thread ended" << std::endl;
-}
-#endif // SZ
-
-#ifdef ADIOS2_HAVE_BZIP2
-TEST_F(DataManEngineTest, WriteRead_2D_P2P_BZip2)
-{
-    // set parameters
-    Dims shape = {10, 10};
-    Dims start = {0, 0};
-    Dims count = {10, 10};
-    size_t steps = 200;
-    std::string workflowMode = "p2p";
-    std::vector<adios2::Params> transportParams = {{
-        {"Library", "ZMQ"},
-        {"IPAddress", "127.0.0.1"},
-        {"Port", "12309"},
-        {"CompressionMethod", "bzip2"},
-    }};
-
-    // run workflow
-    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Writer thread started" << std::endl;
-    w.join();
-    std::cout << "Writer thread ended" << std::endl;
-    r.join();
-    std::cout << "Reader thread ended" << std::endl;
-}
-#endif // BZIP2
-
-TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
-{
-    // set parameters
-    size_t timeout = 3;
-    Dims shape = {10};
-    Dims start = {0};
-    Dims count = {10};
-    size_t steps = 10000;
-    std::vector<adios2::Params> transportParams = {
-        {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12310"}}};
-    std::string workflowMode = "subscribe";
-
-    // run workflow
-    auto r = std::thread(DataManReaderSubscribe, shape, start, count, steps,
-                         workflowMode, transportParams, timeout);
-    std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Writer thread started" << std::endl;
-    w.join();
-    std::cout << "Writer thread ended" << std::endl;
-    r.join();
-    std::cout << "Reader thread ended" << std::endl;
-}
-
-TEST_F(DataManEngineTest, WriteRead_1D_Callback)
-{
-    // set parameters
-    size_t timeout = 3;
-    Dims shape = {10};
-    Dims start = {0};
-    Dims count = {10};
-    size_t steps = 10000;
-    std::string workflowMode = "subscribe";
-    std::vector<adios2::Params> transportParams = {
-        {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12311"}}};
-
-    // run workflow
-    auto r = std::thread(DataManReaderCallback, shape, start, count, steps,
-                         workflowMode, transportParams, timeout);
-    std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         workflowMode, transportParams);
-    std::cout << "Writer thread started" << std::endl;
-    w.join();
-    std::cout << "Writer thread ended" << std::endl;
-    r.join();
-    std::cout << "Reader thread ended" << std::endl;
-}
-
-#endif // ZEROMQ
-
-int main(int argc, char **argv)
-{
-#ifdef ADIOS2_HAVE_MPI
-    int mpi_provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
-    std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
-              << " and provided Mode " << mpi_provided << std::endl;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-    int result;
-    ::testing::InitGoogleTest(&argc, argv);
-    result = RUN_ALL_TESTS();
-
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Finalize();
-#endif
-
-    return result;
 }
