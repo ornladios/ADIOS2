@@ -21,19 +21,19 @@ Copyright.txt for more details.
 ## Documentation
 Please find ADIOS2 software documentation for:
 
-1. [ADIOS2 User Guide at readthedocs](http://adios2-adaptable-io-system-version-2.readthedocs.io/en/latest/index.html)
+1. [ADIOS2 User Guide at readthedocs](https://adios2-adaptable-io-system-version-2.readthedocs.io)
 
-2. Local user guide and api documentation generation [docs/ReadMe.md](docs/ReadMe.md)
+2. Local user guide documentation generation [docs/ReadMe.md](docs/ReadMe.md)
 
 ## Directory layout
 * cmake - Project specific CMake modules
 * examples - ADIOS2 Examples
 * scripts - Project maintenance and development scripts
-* source - Main ADIOS2 source  
-    * adios2 - source directory for the ADIOS2 library to be installed    under install-dir/lib/libadios2.  
+* source - ADIOS2 source  
+    * adios2 - source directory for the ADIOS2 library to be installed under install-dir/lib/libadios2.  
     * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
-* bindings - Additional language bindings (C, Fortran and Python)
-* testing - Tests
+* bindings - public interface language bindings (C++11, C++98, C, Fortran and Python)
+* testing - Tests using gtest
   
 
 ## Getting Started
