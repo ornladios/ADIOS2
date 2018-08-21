@@ -107,23 +107,24 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
 {
     TimeUnit timeUnit = TimeUnit::Microseconds; // default
 
-    if (timeUnitString == "Microseconds")
+    if (timeUnitString == "Microseconds" || timeUnitString == "microseconds")
     {
         timeUnit = TimeUnit::Microseconds;
     }
-    else if (timeUnitString == "Milliseconds")
+    else if (timeUnitString == "Milliseconds" ||
+             timeUnitString == "milliseconds")
     {
         timeUnit = TimeUnit::Milliseconds;
     }
-    else if (timeUnitString == "Seconds")
+    else if (timeUnitString == "Seconds" || timeUnitString == "seconds")
     {
         timeUnit = TimeUnit::Seconds;
     }
-    else if (timeUnitString == "Minutes")
+    else if (timeUnitString == "Minutes" || timeUnitString == "minutes")
     {
         timeUnit = TimeUnit::Minutes;
     }
-    else if (timeUnitString == "Hours")
+    else if (timeUnitString == "Hours" || timeUnitString == "hours")
     {
         timeUnit = TimeUnit::Hours;
     }
@@ -131,7 +132,9 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
     {
         if (debugMode)
         {
-            throw std::invalid_argument("ERROR: profile_units=value "
+            throw std::invalid_argument("ERROR: invalid value " +
+                                        timeUnitString +
+                                        " in ProfileUnits=value "
                                         " must be Microseconds, Milliseconds, "
                                         "Seconds, Minutes or Hours\n");
         }
@@ -142,15 +145,15 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
 size_t BytesFactor(const std::string units, const bool debugMode)
 {
     size_t factor = 1; // bytes
-    if (units == "Gb")
+    if (units == "Gb" || units == "gb")
     {
         factor = 1024 * 1024 * 1024;
     }
-    else if (units == "Mb")
+    else if (units == "Mb" || units == "mb")
     {
         factor = 1024 * 1024;
     }
-    else if (units == "Kb")
+    else if (units == "Kb" || units == "kb")
     {
         factor = 1024;
     }
@@ -162,8 +165,9 @@ size_t BytesFactor(const std::string units, const bool debugMode)
     {
         if (debugMode)
         {
-            throw std::invalid_argument("ERROR: units " + units +
-                                        " not supported\n");
+            throw std::invalid_argument(
+                "ERROR: units " + units +
+                " not supported in call to BytesFactor\n");
         }
     }
     return factor;

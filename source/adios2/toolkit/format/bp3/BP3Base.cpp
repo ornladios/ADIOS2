@@ -67,7 +67,8 @@ void BP3Base::InitParameters(const Params &parameters)
         std::string key(pair.first);
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
-        const std::string value(pair.second);
+        std::string value(pair.second);
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
         if (key == "profile")
         {
