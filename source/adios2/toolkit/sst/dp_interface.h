@@ -3,9 +3,13 @@
 
 #include <sst_data.h>
 
+#include "adios2/ADIOSConfig.h"
 #include <evpath.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
-
+#else
+#include "sstmpidummy.h"
+#endif
 /*!
  *
  * CP_DP_Interface is the set of data format descriptions and function

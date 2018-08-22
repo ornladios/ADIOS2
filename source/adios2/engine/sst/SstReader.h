@@ -11,9 +11,7 @@
 #ifndef ADIOS2_ENGINE_SST_SSTREADER_H_
 #define ADIOS2_ENGINE_SST_SSTREADER_H_
 
-#include <iostream> //std::cout << Needs to go
-
-#include <mpi.h>
+#include <adios2/ADIOSMPI.h>
 
 #include "adios2/toolkit/sst/sst.h"
 
