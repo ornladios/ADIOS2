@@ -59,8 +59,8 @@ if ($test_protocol == "kill_readers") {
   while (time() < $endtime) {
     my $this_start = time();
     my $r = rand();
-    print "TestDriver: Start, number of readers is $#ReaderPIDs, max readers is $max_readers\n" if $verbose;
-    if ((($#ReaderPIDs <= 0) || ($r < 0.5))  && ($#ReaderPIDs != $max_readers)){
+    print "TestDriver: Start, number of readers is scalar(@ReaderPIDs), max readers is $max_readers\n" if $verbose;
+    if (((scalar(@ReaderPIDs) <= 0) || ($r < 0.5))  && (scalar(@ReaderPIDs) != $max_readers)){
       # fork a reader
       defined(my $reader_pid = fork) or die "Cannot fork $!";
       unless($reader_pid)
