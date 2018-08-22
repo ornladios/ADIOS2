@@ -1,7 +1,9 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>

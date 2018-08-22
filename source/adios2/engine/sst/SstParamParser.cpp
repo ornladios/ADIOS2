@@ -1,6 +1,6 @@
 
+#include <adios2/ADIOSMPI.h>
 #include <memory>
-#include <mpi.h>
 
 #include "SstParamParser.h"
 #include "adios2/helper/adiosFunctions.h"

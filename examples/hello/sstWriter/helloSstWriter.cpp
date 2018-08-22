@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 #else
     rank = 0;
     size = 1;
+#define MPI_COMM_WORLD 0
 #endif
 
     std::vector<float> myFloats = {

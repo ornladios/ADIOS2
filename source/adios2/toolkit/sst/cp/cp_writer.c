@@ -9,9 +9,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#else
+#include "sstmpidummy.h"
+#endif
 #include <pthread.h>
 
 #include "sst.h"

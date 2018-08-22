@@ -9,7 +9,9 @@
 #    include <malloc.h>
 #  endif
 #  include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#endif
 #  include <errno.h>
 #  include <sys/types.h>
 #  ifndef HAVE_WINDOWS_H
