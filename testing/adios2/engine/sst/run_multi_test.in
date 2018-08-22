@@ -5,7 +5,7 @@ use List::Util qw(shuffle);
 use strict;
 
 ##Parse Args
-my $verbose = 0;	# option variable with default value (false)
+my $verbose = 1;	# option variable with default value (false)
 my $writer_prog = "TestSstServer";
 my $reader_prog = "TestSstClient";
 my $writer_args = "";
