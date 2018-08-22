@@ -256,14 +256,6 @@ int main(int argc, char **argv)
         {
             // CompressZfp++;    Nothing on read side
         }
-        else if (std::string(argv[1]) == "--compress_sz")
-        {
-            // CompressSz++;     Nothing on read side
-        }
-        else if (std::string(argv[1]) == "--compress_zfp")
-        {
-            // CompressZfp++;    Nothing on read side
-        }
         else if (std::string(argv[1]) == "--filename")
         {
             fname = std::string(argv[2]);
