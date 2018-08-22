@@ -70,7 +70,7 @@ namespace mgard
     solve_tridiag_M (const int l, std::vector<double> &v);
 
   void
-    restrict (const int l, std::vector<double> &v);
+    apply_restriction (const int l, std::vector<double> &v);
 
   void
     interpolate_from_level_nMl (const int l, std::vector<double> &v);

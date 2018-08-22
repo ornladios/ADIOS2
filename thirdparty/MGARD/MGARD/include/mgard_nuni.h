@@ -82,7 +82,7 @@ namespace mgard_cannon
   void pi_lminus1(const int  l, std::vector<double>& v,  const std::vector<double>& coords);
 
 
-  void restrict(const int  l, std::vector<double>& v, const std::vector<double>& coords);
+  void apply_restriction(const int  l, std::vector<double>& v, const std::vector<double>& coords);
 
 
 

@@ -319,7 +319,7 @@ solve_tridiag_M (const int l, std::vector<double> &v)
 }
 
 void
-restrict (const int l, std::vector<double> &v)
+apply_restriction (const int l, std::vector<double> &v)
 {
   int stride = std::pow (2, l);
   int Pstride = stride / 2;
@@ -832,7 +832,7 @@ decompress_memory (const void *src, int srcLen, void *dst, int dstLen)
   strm.opaque = Z_NULL;
 
   int err = -1;
-  int ret = -1;
+  // int ret = -1;
 
   err = inflateInit2 (&strm, (15 + 32)); // 15 window bits, and the +32 tells
                                          // zlib to to detect if using gzip or
@@ -842,7 +842,7 @@ decompress_memory (const void *src, int srcLen, void *dst, int dstLen)
       err = inflate (&strm, Z_FINISH);
       if (err == Z_STREAM_END)
         {
-          ret = strm.total_out;
+          // ret = strm.total_out;
         }
       else
         {
@@ -958,7 +958,7 @@ refactor (const int nrow, const int ncol, const int l_target, double *v,
 
           mass_matrix_multiply (l, row_vec);
 
-          restrict (l + 1, row_vec);
+          apply_restriction (l + 1, row_vec);
 
           solve_tridiag_M (l + 1, row_vec);
 
@@ -981,7 +981,7 @@ refactor (const int nrow, const int ncol, const int l_target, double *v,
 
               mass_matrix_multiply (l, col_vec);
 
-              restrict (l + 1, col_vec);
+              apply_restriction (l + 1, col_vec);
               solve_tridiag_M (l + 1, col_vec);
 
               for (int irow = 0; irow < nrow; ++irow)
@@ -1030,7 +1030,7 @@ recompose (const int nrow, const int ncol, const int l_target, double *v,
 
           mass_matrix_multiply (l - 1, row_vec);
 
-          restrict (l, row_vec);
+          apply_restriction (l, row_vec);
           solve_tridiag_M (l, row_vec);
 
           for (int jcol = 0; jcol < ncol; ++jcol)
@@ -1051,7 +1051,7 @@ recompose (const int nrow, const int ncol, const int l_target, double *v,
 
               mass_matrix_multiply (l - 1, col_vec);
 
-              restrict (l, col_vec);
+              apply_restriction (l, col_vec);
               solve_tridiag_M (l, col_vec);
 
               for (int irow = 0; irow < nrow; ++irow)

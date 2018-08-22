@@ -263,7 +263,7 @@ namespace mgard_cannon
       }
   }
 
-  void restrict(const int  l, std::vector<double>& v, const std::vector<double>& coords)
+  void apply_restriction(const int  l, std::vector<double>& v, const std::vector<double>& coords)
   {
     int stride = std::pow(2,l);
     int Pstride = stride/2;//finer stride

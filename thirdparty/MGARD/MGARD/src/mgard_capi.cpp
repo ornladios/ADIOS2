@@ -43,11 +43,11 @@ extern "C" unsigned char *mgard_compress(int itype_flag,  void  *data, int &out_
 
   if(itype_flag == 0)
     {
-      float *v   = static_cast<float*>(data);
-      float *tol = static_cast<float*>(tol_in);
-      assert (*tol >= 1e-8);
+      //float *v   = static_cast<float*>(data);
+      //float *tol = static_cast<float*>(tol_in);
+      //assert (*tol >= 1e-8);
       
-      unsigned char* mgard_compressed_ptr;
+      unsigned char* mgard_compressed_ptr = nullptr;
 
       //mgard_compressed_ptr = mgard::refactor_qz_float(nrow, ncol, v, out_size, *tol);
 
@@ -68,11 +68,11 @@ extern "C" unsigned char *mgard_compress(int itype_flag,  void  *data, int &out_
   else
     {
       std::cerr <<"MGARD: Unknown data type, assuming 32-bit floats...\n";
-      const float *v = static_cast<const float*>(data);
-      float *tol = static_cast<float*>(tol_in);
-      assert (*tol >= 1e-8);
+      //const float *v = static_cast<const float*>(data);
+      //float *tol = static_cast<float*>(tol_in);
+      //assert (*tol >= 1e-8);
       
-      unsigned char* mgard_compressed_ptr;
+      unsigned char* mgard_compressed_ptr = nullptr;
 
       //mgard_compressed_ptr = mgard::refactor_qz_float(nrow, ncol, v, out_size, *tol);
 
