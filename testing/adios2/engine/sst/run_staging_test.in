@@ -76,19 +76,27 @@ fi
 rm -f *.sst
 
 # Spawn the writer
-if [ $vflag == "yes" ]; then
-    echo "Doing        (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog $args) & writer_pid=$!"
+if [ -z "@MPIEXEC@" ]; then
+    write_spawn_cmd=""
+    read_spawn_cmd=""
+else
+    write_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw"
+    read_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr"
 fi
-(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog $args ) & writer_pid=$!
+if [ $vflag == "yes" ]; then
+    echo "Doing        ($write_spawn_cmd ./$writer_prog $args) & writer_pid=$!"
+fi
+
+($write_spawn_cmd ./$writer_prog $args ) & writer_pid=$!
 
 # Spawn the reader
-if [ $vflag == "yes" ]; then
-    echo "Doing (@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!"
-fi
 if [ "$reader_delay" -ne 0 ]; then
     sleep $reader_delay
 fi
-(@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!
+if [ $vflag == "yes" ]; then
+    echo "Doing ($read_spawn_smd ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!"
+fi
+($read_spawn_cmd ./$reader_prog $args 2>&1 1>/dev/null) & reader_pid=$!
 
 
 

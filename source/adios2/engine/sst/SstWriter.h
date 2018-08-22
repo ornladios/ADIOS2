@@ -11,10 +11,7 @@
 #ifndef ADIOS2_ENGINE_SST_SST_WRITER_H_
 #define ADIOS2_ENGINE_SST_SST_WRITER_H_
 
-#include <iostream> //std::cout must be removed, only used for hello example
-#include <unistd.h> //sleep must be removed
-
-#include <mpi.h>
+#include <adios2/ADIOSMPI.h>
 
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/sst/sst.h"
