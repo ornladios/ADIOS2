@@ -15,7 +15,7 @@ Currently, only primitive types are supported in ADIOS2 with plans to extend to 
 
    Data types Variables supported by ADIOS2:
 
-   std::string
+   std::string (As of ADIOS 2.2.0 only used as single values, not arrays)
    char
    signed char  
    unsigned char  
@@ -30,14 +30,8 @@ Currently, only primitive types are supported in ADIOS2 with plans to extend to 
    float  
    double  
    long double  
-   // Work in progress
    std::complex<float>   
    std::complex<double>  
-   std::complex<long double>
-
-.. caution::
-   
-   As of beta release version 2.2.0 complex types are WORK IN PROGRESS
 
 
 Any fixed width size integer defined in header <cstdint> should map to any of the primitive types above depending on the system. In 64-bit systems: ``uint32_t -> unsigned int``, ``std::int64_t -> long int or long long int``. 

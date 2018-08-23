@@ -35,8 +35,7 @@ namespace py11
     MACRO(double)                                                              \
     MACRO(long double)                                                         \
     MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)                                                \
-    MACRO(std::complex<long double>)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_NUMPY_TYPE_1ARG(MACRO)                                  \
     MACRO(char)                                                                \
@@ -54,8 +53,7 @@ namespace py11
     MACRO(double)                                                              \
     MACRO(long double)                                                         \
     MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)                                                \
-    MACRO(std::complex<long double>)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(MACRO)                        \
     MACRO(char)                                                                \

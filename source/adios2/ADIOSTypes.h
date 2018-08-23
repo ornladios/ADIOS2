@@ -135,7 +135,6 @@ using std::uint64_t;
 // Complex
 using cfloat = std::complex<float>;
 using cdouble = std::complex<double>;
-using cldouble = std::complex<long double>;
 
 // Limit
 constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
@@ -372,11 +371,6 @@ template <>
 inline std::string GetType<std::complex<double>>() noexcept
 {
     return "double complex";
-}
-template <>
-inline std::string GetType<std::complex<long double>>() noexcept
-{
-    return "long double complex";
 }
 
 } // end namespace adios2

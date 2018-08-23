@@ -196,11 +196,6 @@ inline std::string GetType<std::complex<double>>() noexcept
 {
     return "double complex";
 }
-template <>
-inline std::string GetType<std::complex<long double>>() noexcept
-{
-    return "long double complex";
-}
 
 } // end namespace cxx98
 } // end namespace adios2

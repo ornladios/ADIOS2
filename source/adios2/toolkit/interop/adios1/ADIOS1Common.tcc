@@ -108,11 +108,6 @@ enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cdouble>() const {
     return adios_double_complex;
 }
 
-template <>
-enum ADIOS_DATATYPES ADIOS1Common::GetADIOS1Type<cldouble>() const {
-    return adios_unknown;
-}
-
 } // end namespace interop
 } // end namespace adios2
 
