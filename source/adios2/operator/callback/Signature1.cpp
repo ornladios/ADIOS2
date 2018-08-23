@@ -20,6 +20,7 @@ namespace callback
     Signature1::Signature1(                                                    \
         const std::function<void(const T *, const std::string &,               \
                                  const std::string &, const std::string &,     \
+                                 const size_t, const Dims &, const Dims &,     \
                                  const Dims &)> &function,                     \
         const Params &parameters, const bool debugMode)                        \
     : Operator("Signature1", parameters, debugMode), m_Function##L(function)   \
@@ -31,11 +32,12 @@ ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
 #define declare_type(T, L)                                                     \
     void Signature1::RunCallback1(                                             \
         const T *arg1, const std::string &arg2, const std::string &arg3,       \
-        const std::string &arg4, const Dims &arg5) const                       \
+        const std::string &arg4, const size_t arg5, const Dims &arg6,          \
+        const Dims &arg7, const Dims &arg8) const                              \
     {                                                                          \
         if (m_Function##L)                                                     \
         {                                                                      \
-            m_Function##L(arg1, arg2, arg3, arg4, arg5);                       \
+            m_Function##L(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);     \
         }                                                                      \
         else                                                                   \
         {                                                                      \

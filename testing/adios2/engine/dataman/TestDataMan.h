@@ -110,9 +110,48 @@ void VerifyData(const std::vector<T> &data, const size_t step,
     VerifyData(data.data(), data.size(), step, transParams);
 }
 
-void UserCallBack(void *data, const std::string &doid, const std::string var,
-                  const std::string &dtype,
-                  const std::vector<std::size_t> varshape)
+void UserCallBack2(float *data, const std::string &doid, const std::string &var,
+                   const std::string &dtype, const size_t step,
+                   const adios2::Dims &varshape, const adios2::Dims &start,
+                   const adios2::Dims &count)
+{
+    std::cout << "Object : " << doid << ", ";
+    std::cout << "Variable :" << var << ", ";
+    std::cout << "Type : " << dtype << ", ";
+    std::cout << "Shape : [";
+    for (size_t i = 0; i < varshape.size(); ++i)
+    {
+        std::cout << varshape[i];
+        if (i != varshape.size() - 1)
+        {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]"
+              << ". ";
+
+    size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
+                                     std::multiplies<std::size_t>());
+
+    size_t dumpsize = 128;
+    if (varsize < dumpsize)
+    {
+        dumpsize = varsize;
+    }
+
+    std::cout << "Printing data for the first " << dumpsize << " elements: ";
+
+    for (size_t i = 0; i < dumpsize; ++i)
+    {
+        std::cout << data[i] << " ";
+    }
+    std::cout << std::endl;
+}
+
+void UserCallBack1(void *data, const std::string &doid, const std::string &var,
+                   const std::string &dtype, const size_t step,
+                   const adios2::Dims &varshape, const adios2::Dims &start,
+                   const adios2::Dims &count)
 {
     std::cout << "Object : " << doid << ", ";
     std::cout << "Variable :" << var << ", ";
@@ -346,12 +385,12 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
                            const size_t timeout)
 {
     adios2::ADIOS adios(adios2::DebugON);
-    adios2::Operator callbackFloat = adios.DefineOperator(
-        "Print float Variable callback",
+    adios2::Operator callback = adios.DefineOperator(
+        "Print all variables callback void",
         std::function<void(void *, const std::string &, const std::string &,
-                           const std::string &, const adios2::Dims &)>(
-            UserCallBack));
-
+                           const std::string &, const size_t,
+                           const adios2::Dims &, const adios2::Dims &,
+                           const adios2::Dims &)>(UserCallBack1));
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters({
@@ -361,12 +400,9 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
     {
         dataManIO.AddTransport("WAN", params);
     }
-    dataManIO.AddOperation(callbackFloat);
-
+    dataManIO.AddOperation(callback);
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
-
     std::this_thread::sleep_for(std::chrono::seconds(timeout));
-
     dataManReader.Close();
 }
 
