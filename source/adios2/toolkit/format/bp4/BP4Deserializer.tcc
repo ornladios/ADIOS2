@@ -334,6 +334,140 @@ inline void BP4Deserializer::DefineVariableInIO<std::string>(
         variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
 }
 
+
+/*Lipeng*/
+template <class T>
+void BP4Deserializer::DefineVariableInIOPerStep(const ElementIndexHeader &header,
+                                         core::IO &io,
+                                         const std::vector<char> &buffer,
+                                         size_t position,
+                                         size_t step) const
+{
+    const size_t initialPosition = position;
+
+    Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+        buffer, position, static_cast<DataTypes>(header.DataType));
+
+    std::string variableName(header.Name);
+    if (!header.Path.empty())
+    {
+        variableName = header.Path + PathSeparator + header.Name;
+    }
+
+    core::Variable<T> *variable = nullptr;    
+    variable = io.InquireVariable<T>(variableName);
+    if (variable)
+    {
+        size_t endPositionCurrentStep = initialPosition - (header.Name.size() + header.GroupName.size() + header.Path.size() + 23) 
+                                        + static_cast<size_t>(header.Length) + 4;
+        position = initialPosition;
+        variable->m_AvailableStepsCount = step;
+        while (position < endPositionCurrentStep)
+        {
+            const size_t subsetPosition = position;
+
+            // read until step is found
+            const Characteristics<T> subsetCharacteristics =
+                ReadElementIndexCharacteristics<T>(
+                    buffer, position, static_cast<DataTypes>(header.DataType),
+                    false);
+
+            if (helper::LessThan(subsetCharacteristics.Statistics.Min,
+                                 variable->m_Min))
+            {
+                variable->m_Min = subsetCharacteristics.Statistics.Min;
+            }
+
+            if (helper::GreaterThan(subsetCharacteristics.Statistics.Max,
+                                    variable->m_Max))
+            {
+                variable->m_Max = subsetCharacteristics.Statistics.Max;
+            }
+            variable->m_AvailableStepBlockIndexOffsets[step].push_back(subsetPosition);
+            position = subsetPosition + subsetCharacteristics.EntryLength + 5;                        
+        }
+        return;
+    }
+
+    if (characteristics.Statistics.IsValue)
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        variable = &io.DefineVariable<T>(variableName);
+        variable->m_Value = characteristics.Statistics.Value;
+        variable->m_Min = characteristics.Statistics.Value;
+        variable->m_Max = characteristics.Statistics.Value;
+    }
+    else
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+
+        if (m_ReverseDimensions)
+        {
+            std::reverse(characteristics.Shape.begin(),
+                         characteristics.Shape.end());
+        }
+
+        variable = &io.DefineVariable<T>(variableName, characteristics.Shape,
+                                         Dims(characteristics.Shape.size(), 0),
+                                         characteristics.Shape);
+
+        variable->m_Min = characteristics.Statistics.Min;
+        variable->m_Max = characteristics.Statistics.Max;
+    }
+
+    // going back to get variable index position
+    variable->m_IndexStart =
+        initialPosition - (header.Name.size() + header.GroupName.size() +
+                           header.Path.size() + 23);
+
+    const size_t endPosition =
+        variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
+
+    position = initialPosition;
+
+    size_t currentStep = 0; // Starts at 1 in bp file
+    std::unordered_set<uint32_t> stepsFound;
+    variable->m_AvailableStepsCount = 0;
+    while (position < endPosition)
+    {
+        const size_t subsetPosition = position;
+
+        // read until step is found
+        const Characteristics<T> subsetCharacteristics =
+            ReadElementIndexCharacteristics<T>(
+                buffer, position, static_cast<DataTypes>(header.DataType),
+                false);
+
+        if (helper::LessThan(subsetCharacteristics.Statistics.Min,
+                             variable->m_Min))
+        {
+            variable->m_Min = subsetCharacteristics.Statistics.Min;
+        }
+
+        if (helper::GreaterThan(subsetCharacteristics.Statistics.Max,
+                                variable->m_Max))
+        {
+            variable->m_Max = subsetCharacteristics.Statistics.Max;
+        }
+
+        if (subsetCharacteristics.Statistics.Step > currentStep)
+        {
+            currentStep = subsetCharacteristics.Statistics.Step;
+        }
+        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        {
+            ++variable->m_AvailableStepsCount;
+        }
+        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
+            subsetPosition);
+        position = subsetPosition + subsetCharacteristics.EntryLength + 5;
+    }
+    /* Update variable's starting step, which equals to the min value in the
+     * sorted map minus one */
+    variable->m_StepsStart =
+        variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
+}
+
 template <class T>
 void BP4Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                                          core::IO &io,

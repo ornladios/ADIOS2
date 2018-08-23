@@ -24,7 +24,7 @@ BP4FileReader::BP4FileReader(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
 : Engine("BP4FileReader", io, name, mode, mpiComm),
   m_BP4Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
-  m_SubFileManager(mpiComm, m_DebugMode)
+  m_SubFileManager(mpiComm, m_DebugMode), m_FileMetadataIndexManager(mpiComm, m_DebugMode)
 {
     Init();
 }
@@ -162,6 +162,11 @@ void BP4FileReader::InitTransports()
         const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
         m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
+        
+        /*Lipeng*/
+        const std::string metadataIndexFile(m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
+        m_FileMetadataIndexManager.OpenFiles({metadataIndexFile}, adios2::Mode::Read,
+                                m_IO.m_TransportsParameters, profile);
     }
 }
 
@@ -177,9 +182,22 @@ void BP4FileReader::InitBuffer()
 
         m_FileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(),
                                fileSize);
+
+        const size_t metadataIndexFileSize = m_FileMetadataIndexManager.GetFileSize(0);
+        m_BP4Deserializer.m_MetadataIndex.Resize(
+            metadataIndexFileSize,
+            "allocating metadata index buffer, in call to BPFileReader Open");
+        m_FileMetadataIndexManager.ReadFile(m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(),
+                               metadataIndexFileSize);
     }
     // broadcast buffer to all ranks from zero
     helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+
+    // broadcast metadata index buffer to all ranks from zero
+    helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer, m_MPIComm);
+
+    /*Lipeng*/
+    m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex);
 
     // fills IO with Variables and Attributes
     m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, m_IO);

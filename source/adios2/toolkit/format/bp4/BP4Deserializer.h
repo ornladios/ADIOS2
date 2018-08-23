@@ -33,6 +33,12 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
+    /*Lipeng*/
+    // 
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, std::vector<uint64_t>>> m_MetadataIndexTable;
+
+    BufferSTL m_MetadataIndex;
+
     /**
      * Unique constructor
      * @param mpiComm
@@ -41,6 +47,8 @@ public:
     BP4Deserializer(MPI_Comm mpiComm, const bool debugMode);
 
     ~BP4Deserializer() = default;
+
+    void ParseMetadataIndex(const BufferSTL &bufferSTL);
 
     void ParseMetadata(const BufferSTL &bufferSTL, core::IO &io);
 
@@ -151,9 +159,18 @@ private:
     static std::mutex m_Mutex;
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
+
     void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
+    void ParsePGIndexPerStep(const BufferSTL &bufferSTL, const core::IO &io, 
+                                    size_t submetadatafileId, size_t step);
+
     void ParseVariablesIndex(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseVariablesIndexPerStep(const BufferSTL &bufferSTL, core::IO &io, 
+                                                size_t submetadatafileId, size_t step);
+
     void ParseAttributesIndex(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseAttributesIndexPerStep(const BufferSTL &bufferSTL, core::IO &io,
+                                            size_t submetadatafileId, size_t step);
 
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
@@ -167,6 +184,12 @@ private:
     void DefineVariableInIO(const ElementIndexHeader &header, core::IO &io,
                             const std::vector<char> &buffer,
                             size_t position) const;
+
+    template <class T>
+    void DefineVariableInIOPerStep(const ElementIndexHeader &header,
+                                    core::IO &io, 
+                                    const std::vector<char> &buffer,
+                                    size_t position, size_t step) const;
 
     template <class T>
     void DefineAttributeInIO(const ElementIndexHeader &header, core::IO &io,

@@ -204,6 +204,7 @@ std::string BP4Base::GetBPMetadataFileName(const std::string &name) const noexce
 
 }
 
+/*Lipeng*/
 std::vector<std::string>
 BP4Base::GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const
     noexcept
@@ -217,6 +218,7 @@ BP4Base::GetBPMetadataIndexFileNames(const std::vector<std::string> &names) cons
     return metadataIndexFileNames;
 }
 
+/*Lipeng*/
 std::string BP4Base::GetBPMetadataIndexFileName(const std::string &name) const 
     noexcept
 {
@@ -908,7 +910,7 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
     //const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
     //                             "." + std::to_string(index));
 
-    const std::string bpRankName(bpRoot + PathSeparator + "dat." + std::to_string(index));
+    const std::string bpRankName(bpRoot + PathSeparator + "data." + std::to_string(index));
     return bpRankName;
 }
 
