@@ -31,7 +31,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_Zfp)
          {"IPAddress", "127.0.0.1"},
          {"Port", "12307"},
          {"CompressionMethod", "zfp"},
-         {"zfp:rate", "4"}}};
+         {"zfp:precision", "0.001"}}};
 
     // run workflow
     auto r = std::thread(DataManReaderP2P, shape, start, count, steps,

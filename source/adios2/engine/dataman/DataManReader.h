@@ -79,6 +79,10 @@ private:
     template <typename T>
     std::vector<typename Variable<T>::Info>
     BlocksInfoCommon(const Variable<T> &variable, const size_t step) const;
+
+    template <typename T>
+    void CheckIOVariable(const std::string &name, const Dims &shape,
+                         const Dims &start, const Dims &count);
 };
 
 } // end namespace engine
