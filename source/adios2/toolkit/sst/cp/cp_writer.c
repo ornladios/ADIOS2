@@ -327,7 +327,11 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     {
         if (List->Timestep < Ret)
         {
+            List->ReferenceCount++;
             Ret = List->Timestep;
+            CP_verbose(Stream, "Earliest available : Writer-side Timestep %ld "
+                               "now has reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         List = List->Next;
     }
@@ -345,6 +349,9 @@ static void AddRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount++;
+            CP_verbose(Stream, "AddRef : Writer-side Timestep %ld now has "
+                               "reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         List = List->Next;
     }
@@ -361,6 +368,9 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount--;
+            CP_verbose(Stream, "SubRef : Writer-side Timestep %ld now has "
+                               "reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         if (List->ReferenceCount == 0)
         {
@@ -550,7 +560,21 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     MPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, MPI_LONG,
                   MPI_MAX, Stream->mpiComm);
 
-    AddRefRangeTimestep(Stream, GlobalStartingTimestep, LONG_MAX);
+    /*
+     *  The earliestAvailableTimestepNumber subroutine also added to the
+     *  reference count of all existing timesteps, in case we will be making
+     *  it available to the joining reader.  Once we've determined what the
+     *  starting timestep we'll make available is (GlobalStartingTimestep),
+     *  decrement the ref count of others.
+     */
+    if (MyStartingTimestep != GlobalStartingTimestep)
+    {
+        SubRefRangeTimestep(Stream, MyStartingTimestep,
+                            GlobalStartingTimestep - 1);
+    }
+    CP_verbose(Stream,
+               "My oldest timestep was %ld, global oldest timestep was %ld\n",
+               MyStartingTimestep, GlobalStartingTimestep);
 
     CP_WSR_Stream->StartingTimestep = GlobalStartingTimestep;
 

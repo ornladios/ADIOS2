@@ -25,10 +25,8 @@ public:
 
 adios2::Params engineParams = {};         // parsed from command line
 int DurationSeconds = 60 * 60 * 24 * 365; // one year default
-int MyCloseNow = 0;
-int GlobalCloseNow = 0;
-
-void SigHandler(int sig) { MyCloseNow = 1; }
+static int MyCloseNow = 0;
+static int GlobalCloseNow = 0;
 
 static std::string Trim(std::string &str)
 {
@@ -62,6 +60,14 @@ static adios2::Params ParseEngineParams(std::string Input)
         Ret[Trim(ParamName)] = Trim(ParamValue);
     }
     return Ret;
+}
+
+std::string shutdown_name = "DieTest";
+
+inline bool file_exists(const std::string &name)
+{
+    struct stat buffer;
+    return (stat(name.c_str(), &buffer) == 0);
 }
 
 // ADIOS2 SST write
@@ -176,11 +182,21 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
-        usleep(1000 * 100); /* sleep for .1 seconds */
+        usleep(1000 * 1000); /* sleep for 1 seconds */
         step++;
 #ifdef ADIOS2_HAVE_MPI
         MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
                       MPI_COMM_WORLD);
+        if (file_exists(shutdown_name))
+        {
+            MyCloseNow = GlobalCloseNow = 1;
+        }
+#else
+        GlobalCloseNow = MyCloseNow;
+        if (file_exists(shutdown_name))
+        {
+            MyCloseNow = GlobalCloseNow = 1;
+        }
 #endif
     }
     // Close the file
@@ -206,6 +222,12 @@ int main(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--shutdown_filename")
+        {
+            shutdown_name = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--engine_params")
         {
             engineParams = ParseEngineParams(argv[2]);
@@ -221,12 +243,6 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
     }
-
-    struct sigaction act;
-    act.sa_handler = SigHandler;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    sigaction(SIGUSR1, &act, 0);
 
     result = RUN_ALL_TESTS();
 
