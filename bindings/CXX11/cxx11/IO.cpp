@@ -83,6 +83,16 @@ std::map<std::string, Params> IO::AvailableAttributes() noexcept
     return m_IO.GetAvailableAttributes();
 }
 
+std::string IO::VariableType(const std::string &name) const noexcept
+{
+    return m_IO.InquireVariableType(name);
+}
+
+std::string IO::AttributeType(const std::string &name) const noexcept
+{
+    return m_IO.InquireAttributeType(name);
+}
+
 size_t IO::AddOperation(const Operator op, const Params &parameters) noexcept
 {
     return m_IO.AddOperation(*op.m_Operator, parameters);
