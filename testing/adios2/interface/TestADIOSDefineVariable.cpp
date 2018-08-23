@@ -546,6 +546,41 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
     EXPECT_FALSE(var_c64);
 }
 
+TEST_F(ADIOSDefineVariableTest, DefineCheckType)
+{
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineVariable<std::string>("iString");
+    io.DefineVariable<int8_t>("i8", shape, start, count);
+    io.DefineVariable<int16_t>("i16", shape, start, count);
+    io.DefineVariable<int32_t>("i32", shape, start, count);
+    io.DefineVariable<int64_t>("i64", shape, start, count);
+    io.DefineVariable<uint8_t>("u8", shape, start, count);
+    io.DefineVariable<uint16_t>("u16", shape, start, count);
+    io.DefineVariable<uint32_t>("u32", shape, start, count);
+    io.DefineVariable<uint64_t>("u64", shape, start, count);
+    io.DefineVariable<float>("r32", shape, start, count);
+    io.DefineVariable<double>("r64", shape, start, count);
+    io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+    io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+
+    EXPECT_EQ(io.VariableType("iString"), adios2::GetType<std::string>());
+    EXPECT_EQ(io.VariableType("i8"), adios2::GetType<int8_t>());
+    EXPECT_EQ(io.VariableType("i16"), adios2::GetType<int16_t>());
+    EXPECT_EQ(io.VariableType("i32"), adios2::GetType<int32_t>());
+    EXPECT_EQ(io.VariableType("i64"), adios2::GetType<int64_t>());
+    EXPECT_EQ(io.VariableType("u8"), adios2::GetType<uint8_t>());
+    EXPECT_EQ(io.VariableType("u16"), adios2::GetType<uint16_t>());
+    EXPECT_EQ(io.VariableType("u32"), adios2::GetType<uint32_t>());
+    EXPECT_EQ(io.VariableType("u64"), adios2::GetType<uint64_t>());
+    EXPECT_EQ(io.VariableType("r32"), adios2::GetType<float>());
+    EXPECT_EQ(io.VariableType("r64"), adios2::GetType<double>());
+    EXPECT_EQ(io.VariableType("c32"), adios2::GetType<std::complex<float>>());
+    EXPECT_EQ(io.VariableType("c64"), adios2::GetType<std::complex<double>>());
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
