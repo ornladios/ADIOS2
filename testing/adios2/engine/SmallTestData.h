@@ -60,18 +60,6 @@ struct SmallTestData
          std::complex<double>(14.2, 15.2), std::complex<double>(15.2, 16.2),
          std::complex<double>(16.2, 17.2), std::complex<double>(17.2, 18.2),
          std::complex<double>(18.2, 19.2), std::complex<double>(19.2, 20.2)}};
-
-    std::array<std::complex<long double>, 10> CRLD = {
-        {std::complex<long double>(10.2, 11.2),
-         std::complex<long double>(11.2, 12.2),
-         std::complex<long double>(12.2, 13.2),
-         std::complex<long double>(13.2, 14.2),
-         std::complex<long double>(14.2, 15.2),
-         std::complex<long double>(15.2, 16.2),
-         std::complex<long double>(16.2, 17.2),
-         std::complex<long double>(17.2, 18.2),
-         std::complex<long double>(18.2, 19.2),
-         std::complex<long double>(19.2, 20.2)}};
 };
 
 SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
@@ -97,11 +85,7 @@ SmallTestData generateNewSmallTestData(SmallTestData in, int step, int rank,
         v.real(v.real() + static_cast<double>(j));
         v.imag(v.imag() + static_cast<double>(j));
     });
-    std::for_each(in.CRLD.begin(), in.CRLD.end(),
-                  [&](std::complex<long double> &v) {
-                      v.real(v.real() + static_cast<long double>(j));
-                      v.imag(v.imag() + static_cast<long double>(j));
-                  });
+
     return in;
 }
 
@@ -127,11 +111,6 @@ void UpdateSmallTestData(SmallTestData &in, int step, int rank, int size)
         v.real(v.real() + static_cast<double>(j));
         v.imag(v.imag() + static_cast<double>(j));
     });
-    std::for_each(in.CRLD.begin(), in.CRLD.end(),
-                  [&](std::complex<long double> &v) {
-                      v.real(v.real() + static_cast<long double>(j));
-                      v.imag(v.imag() + static_cast<long double>(j));
-                  });
 }
 
 #endif // TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_

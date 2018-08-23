@@ -167,7 +167,6 @@ public:
 
     hid_t m_DefH5TypeComplexDouble;
     hid_t m_DefH5TypeComplexFloat;
-    hid_t m_DefH5TypeComplexLongDouble;
 
     unsigned int m_CurrentAdiosStep = 0;
 

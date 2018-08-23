@@ -41,13 +41,6 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
     H5Tinsert(m_DefH5TypeComplexDouble, "dreal", 0, H5T_NATIVE_DOUBLE);
     H5Tinsert(m_DefH5TypeComplexDouble, "dimg", H5Tget_size(H5T_NATIVE_DOUBLE),
               H5T_NATIVE_DOUBLE);
-
-    m_DefH5TypeComplexLongDouble =
-        H5Tcreate(H5T_COMPOUND, sizeof(std::complex<long double>));
-    H5Tinsert(m_DefH5TypeComplexLongDouble, "ldouble real", 0,
-              H5T_NATIVE_LDOUBLE);
-    H5Tinsert(m_DefH5TypeComplexLongDouble, "ldouble img",
-              H5Tget_size(H5T_NATIVE_LDOUBLE), H5T_NATIVE_LDOUBLE);
 }
 
 void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
@@ -486,10 +479,6 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
     else if (H5Tequal(m_DefH5TypeComplexDouble, h5Type))
     {
         AddVar<std::complex<double>>(io, name, datasetId);
-    }
-    else if (H5Tequal(m_DefH5TypeComplexLongDouble, h5Type))
-    {
-        AddVar<std::complex<long double>>(io, name, datasetId);
     }
 
     // H5Tclose(h5Type);

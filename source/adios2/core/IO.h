@@ -399,7 +399,6 @@ private:
     std::map<unsigned int, Variable<long double>> m_LDouble;
     std::map<unsigned int, Variable<cfloat>> m_CFloat;
     std::map<unsigned int, Variable<cdouble>> m_CDouble;
-    std::map<unsigned int, Variable<cldouble>> m_CLDouble;
     std::map<unsigned int, VariableCompound> m_Compound;
 
     /** Gets the internal reference to a variable map for type T

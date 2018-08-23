@@ -228,12 +228,6 @@ std::map<unsigned int, Variable<cdouble>> &IO::GetVariableMap()
     return m_CDouble;
 }
 
-template <>
-std::map<unsigned int, Variable<cldouble>> &IO::GetVariableMap()
-{
-    return m_CLDouble;
-}
-
 // attributes
 template <>
 std::map<unsigned int, Attribute<std::string>> &IO::GetAttributeMap()

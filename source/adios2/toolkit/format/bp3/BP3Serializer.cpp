@@ -1241,16 +1241,6 @@ void BP3Serializer::MergeSerializeIndices(
             break;
         }
 
-        case (type_long_double_complex):
-        {
-            auto characteristics = ReadElementIndexCharacteristics<double>(
-                buffer, position, type_long_double_complex, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
         default:
             throw std::invalid_argument(
                 "ERROR: type " + std::to_string(dataType) +
