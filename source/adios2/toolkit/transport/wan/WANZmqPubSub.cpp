@@ -109,7 +109,7 @@ void WANZmqPubSub::IWrite(const char *buffer, size_t size, Status &status,
 {
     int retInt = 0;
     ProfilerStart("write");
-    retInt = zmq_send(m_Socket, buffer, size, 0);
+    retInt = zmq_send(m_Socket, buffer, size, ZMQ_DONTWAIT);
     ProfilerStop("write");
     if (retInt < 0)
     {

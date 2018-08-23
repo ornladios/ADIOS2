@@ -75,7 +75,6 @@ void DataManReader::Flush(const int transportIndex) {}
 
 void DataManReader::Init()
 {
-
     // initialize transports
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
     m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
@@ -102,21 +101,25 @@ StepStatus DataManReader::BeginStepSubscribe(StepMode stepMode,
     {
         for (const auto &i : *vars)
         {
-            if (i.type == "compound")
+            if (i.step == m_CurrentStep)
             {
-                throw("Compound type is not supported yet.");
-            }
+                if (i.type == "compound")
+                {
+                    throw("Compound type is not supported yet.");
+                }
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
-        if (v == nullptr)                                                      \
-        {                                                                      \
-            m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
-        }                                                                      \
+        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+                ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+                else
+                {
+                    throw("Unknown type caught in "
+                          "DataManReader::BegineStepSubscribe.");
+                }
+            }
         }
         status = StepStatus::OK;
     }
@@ -166,7 +169,6 @@ StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
     }
 
     // register all variables available in the current step into m_IO
-    m_IO.RemoveAllVariables();
     for (const auto &i : *vars)
     {
         if (i.type == "compound")
@@ -176,7 +178,7 @@ StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);             \
+        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -198,7 +200,6 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
                 m_FinalStep = ret;
             }
         }
-
         RunCallback();
     }
 }
@@ -238,7 +239,8 @@ void DataManReader::RunCallback()
                             std::multiplies<size_t>());                        \
         std::vector<T> varData(datasize, std::numeric_limits<T>::quiet_NaN()); \
         v->SetData(varData.data());                                            \
-        m_DataManDeserializer.Get(*v, step);                                   \
+        m_DataManDeserializer.Get(varData.data(), v->m_Name, v->m_Start,       \
+                                  v->m_Count, step);                           \
         for (auto &j : m_Callbacks)                                            \
         {                                                                      \
             if (j->m_Type == "Signature2")                                     \

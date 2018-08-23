@@ -24,15 +24,6 @@ int mpiSize = 1;
 size_t print_lines = 0;
 
 template <class T>
-void GenData(std::vector<T> &data, const size_t step)
-{
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        data[i] = i + mpiRank * 10000 + step * 100;
-    }
-}
-
-template <class T>
 void GenData(std::vector<std::complex<T>> &data, const size_t step)
 {
     for (size_t i = 0; i < data.size(); ++i)
@@ -42,13 +33,22 @@ void GenData(std::vector<std::complex<T>> &data, const size_t step)
 }
 
 template <class T>
-void PrintData(const std::vector<T> &data, size_t step)
+void GenData(std::vector<T> &data, const size_t step)
+{
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        data[i] = i + mpiRank * 10000 + step * 100;
+    }
+}
+
+template <class T>
+void PrintData(const T *data, const size_t size, const size_t step)
 {
     std::cout << "Rank: " << mpiRank << " Step: " << step << " [";
     size_t printsize = 32;
-    if (data.size() < printsize)
+    if (size < printsize)
     {
-        printsize = data.size();
+        printsize = size;
     }
     for (size_t i = 0; i < printsize; ++i)
     {
@@ -58,35 +58,56 @@ void PrintData(const std::vector<T> &data, size_t step)
 }
 
 template <class T>
-void VerifyData(const std::vector<T> &data, size_t step)
+void VerifyData(const std::complex<T> *data, const size_t size, size_t step,
+                const std::vector<Params> &transParams)
 {
-    std::vector<T> tmpdata(data.size());
-    GenData(tmpdata, step);
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        ASSERT_EQ(data[i], tmpdata[i]);
-    }
-    if (print_lines < 100)
-    {
-        PrintData(data, step);
-        ++print_lines;
-    }
-}
-
-template <class T>
-void VerifyData(const T *data, const size_t size, size_t step)
-{
-    std::vector<T> tmpdata(size);
+    std::vector<std::complex<T>> tmpdata(size);
     GenData(tmpdata, step);
     for (size_t i = 0; i < size; ++i)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
-
-    if (step < 500)
+    if (print_lines < 100)
     {
-        PrintData(data, step);
+        PrintData(data, size, step);
+        ++print_lines;
     }
+}
+
+template <class T>
+void VerifyData(const T *data, const size_t size, size_t step,
+                const std::vector<Params> &transParams)
+{
+    bool compressed = false;
+    for (const auto &i : transParams)
+    {
+        auto j = i.find("CompressionMethod");
+        if (j != i.end())
+        {
+            compressed = true;
+        }
+    }
+    std::vector<T> tmpdata(size);
+    GenData(tmpdata, step);
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (!compressed)
+        {
+            ASSERT_EQ(data[i], tmpdata[i]);
+        }
+    }
+    if (print_lines < 100)
+    {
+        PrintData(data, size, step);
+        ++print_lines;
+    }
+}
+
+template <class T>
+void VerifyData(const std::vector<T> &data, const size_t step,
+                const std::vector<Params> &transParams)
+{
+    VerifyData(data.data(), data.size(), step, transParams);
 }
 
 void UserCallBack(void *data, const std::string &doid, const std::string var,
@@ -294,16 +315,16 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
-            VerifyData(myChars, currentStep);
-            VerifyData(myUChars, currentStep);
-            VerifyData(myShorts, currentStep);
-            VerifyData(myUShorts, currentStep);
-            VerifyData(myInts, currentStep);
-            VerifyData(myUInts, currentStep);
-            VerifyData(myFloats, currentStep);
-            VerifyData(myDoubles, currentStep);
-            VerifyData(myComplexes, currentStep);
-            VerifyData(myDComplexes, currentStep);
+            VerifyData(myChars, currentStep, transParams);
+            VerifyData(myUChars, currentStep, transParams);
+            VerifyData(myShorts, currentStep, transParams);
+            VerifyData(myUShorts, currentStep, transParams);
+            VerifyData(myInts, currentStep, transParams);
+            VerifyData(myUInts, currentStep, transParams);
+            VerifyData(myFloats, currentStep, transParams);
+            VerifyData(myDoubles, currentStep, transParams);
+            VerifyData(myComplexes, currentStep, transParams);
+            VerifyData(myDComplexes, currentStep, transParams);
             dataManReader.EndStep();
         }
         else
@@ -377,21 +398,23 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
             now_time - start_time);
         if (duration.count() > timeout)
         {
-            std::cout << "DataMan Timeout" << std::endl;
-            return;
+            std::cout << "DataMan Timeout. Last step received: " << i
+                      << std::endl;
+            ASSERT_GT(i, 0);
+            break;
         }
         adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
-            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            if (bpFloats)
+            while (not bpFloats)
             {
-                bpFloats.SetSelection({start, count});
-                dataManReader.Get<float>(bpFloats, myFloats.data(),
-                                         adios2::Mode::Sync);
-                i = dataManReader.CurrentStep();
-                VerifyData(myFloats, i);
+                bpFloats = dataManIO.InquireVariable<float>("bpFloats");
             }
+            bpFloats.SetSelection({start, count});
+            dataManReader.Get<float>(bpFloats, myFloats.data(),
+                                     adios2::Mode::Sync);
+            i = dataManReader.CurrentStep();
+            VerifyData(myFloats, i, transParams);
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {

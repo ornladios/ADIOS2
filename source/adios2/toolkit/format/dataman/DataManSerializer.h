@@ -33,10 +33,11 @@ public:
     void Put(const T *inputData, const std::string &varName,
              const Dims &varShape, const Dims &varStart, const Dims &varCount,
              const std::string &doid, const size_t step, const int rank,
-             const Params &params);
+             const Params &params, const bool optimizeMetadata);
     template <class T>
     void Put(const core::Variable<T> &variable, const std::string &doid,
-             const size_t step, const int rank, const Params &params);
+             const size_t step, const int rank, const Params &params,
+             const bool optimizeMetadata);
     const std::shared_ptr<std::vector<char>> Get();
     float GetMetaRatio();
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);

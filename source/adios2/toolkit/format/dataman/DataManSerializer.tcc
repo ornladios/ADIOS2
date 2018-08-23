@@ -35,10 +35,11 @@ namespace format
 template <class T>
 void DataManSerializer::Put(const core::Variable<T> &variable,
                             const std::string &doid, const size_t step,
-                            const int rank, const Params &params)
+                            const int rank, const Params &params,
+                            const bool optimizeMetadata)
 {
     Put(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-        variable.m_Count, doid, step, rank, params);
+        variable.m_Count, doid, step, rank, params, optimizeMetadata);
 }
 
 template <class T>
@@ -46,7 +47,7 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
                             const Dims &varShape, const Dims &varStart,
                             const Dims &varCount, const std::string &doid,
                             const size_t step, const int rank,
-                            const Params &params)
+                            const Params &params, const bool optimizeMetadata)
 {
 
     bool compressed = false;
@@ -61,7 +62,7 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
 
     // optional properties
     auto it = m_VarDefaultsMap.find(varName);
-    if (it != m_VarDefaultsMap.end())
+    if (it != m_VarDefaultsMap.end() && optimizeMetadata)
     {
         if (doid != it->second.doid)
         {

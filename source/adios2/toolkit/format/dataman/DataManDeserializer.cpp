@@ -90,6 +90,7 @@ int DataManDeserializer::Put(
                     var.doid = itMap->second.doid;
                 }
             }
+
             itJson = metaj.find("M");
             if (itJson != metaj.end())
             {
@@ -103,6 +104,7 @@ int DataManDeserializer::Put(
                     var.isRowMajor = itMap->second.isRowMajor;
                 }
             }
+
             itJson = metaj.find("E");
             if (itJson != metaj.end())
             {
@@ -116,6 +118,7 @@ int DataManDeserializer::Put(
                     var.isLittleEndian = itMap->second.isLittleEndian;
                 }
             }
+
             itJson = metaj.find("Y");
             if (itJson != metaj.end())
             {
@@ -129,6 +132,7 @@ int DataManDeserializer::Put(
                     var.type = itMap->second.type;
                 }
             }
+
             itJson = metaj.find("S");
             if (itJson != metaj.end())
             {
@@ -250,6 +254,9 @@ const std::unordered_map<
 DataManDeserializer::GetMetaData()
 {
     std::lock_guard<std::mutex> l(m_Mutex);
+    // This meta data map is supposed to be very light weight to return because
+    // 1) it only holds shared pointers, and 2) the old steps are removed
+    // regularly by the engine.
     return m_MetaDataMap;
 }
 

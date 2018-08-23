@@ -20,7 +20,7 @@
 std::string adiosEngine = "DataMan";
 std::string workflowMode = "subscribe";
 std::vector<adios2::Params> transportParams = {
-    {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12308"}}};
+    {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12306"}}};
 
 // data properties
 size_t steps = 10;
@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
     // read data
     size_t i = 0;
     adios2::Variable<float> bpFloats;
+
     auto start_time = std::chrono::system_clock::now();
     while (i < steps)
     {
@@ -83,15 +84,15 @@ int main(int argc, char *argv[])
         adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
-            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            if (bpFloats)
+            while (!bpFloats)
             {
-                bpFloats.SetSelection({start, count});
-                dataManReader.Get<float>(bpFloats, myFloats.data(),
-                                         adios2::Mode::Sync);
-                Dump(myFloats, dataManReader.CurrentStep());
-                i = dataManReader.CurrentStep();
+                bpFloats = dataManIO.InquireVariable<float>("bpFloats");
             }
+            bpFloats.SetSelection({start, count});
+            dataManReader.Get<float>(bpFloats, myFloats.data(),
+                                     adios2::Mode::Sync);
+            Dump(myFloats, dataManReader.CurrentStep());
+            i = dataManReader.CurrentStep();
             dataManReader.EndStep();
         }
         else if (status == adios2::StepStatus::NotReady)
