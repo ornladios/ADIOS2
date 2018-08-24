@@ -162,10 +162,10 @@ private:
 #define declare_type(T)                                                        \
     Operator DefineCallBack(                                                   \
         const std::string name,                                                \
-        const std::function<void(const T *, const std::string &,                 \
-                                 const std::string &, const std::string &,         \
-                                 const size_t, const Dims &,\
-                                 const Dims &, const Dims &)> &function,                     \
+        const std::function<void(const T *, const std::string &,               \
+                                 const std::string &, const std::string &,     \
+                                 const size_t, const Dims &, const Dims &,     \
+                                 const Dims &)> &function,                     \
         const Params &parameters);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -175,7 +175,8 @@ private:
         const std::string name,
         const std::function<void(void *, const std::string &,
                                  const std::string &, const std::string &,
-                                 const size_t, const Dims &, const Dims &, const Dims &)> &function,
+                                 const size_t, const Dims &, const Dims &,
+                                 const Dims &)> &function,
         const Params &parameters);
 };
 
