@@ -1572,7 +1572,6 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         count_t[MAX_DIMS];             // processed <0 values in start/count
     uint64_t s[MAX_DIMS], c[MAX_DIMS]; // for block reading of smaller chunks
     uint64_t nelems;                   // number of elements to read
-    int tdims;                         // number of dimensions including time
     int tidx;
     uint64_t st, ct;
     std::vector<T> dataV;
@@ -1615,7 +1614,6 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
             return 0;
         tidx = 1;
     }
-    tdims = ndim + tidx;
 
     int out_of_bound = 0;
     for (j = 0; j < ndim; j++)
