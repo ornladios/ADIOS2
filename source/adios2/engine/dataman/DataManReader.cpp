@@ -206,7 +206,7 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
 
 void DataManReader::RunCallback()
 {
-    m_CallbackMutex.lock();
+    std::lock_guard<std::mutex> l(m_CallbackMutex);
     if (m_Callbacks.empty() == false)
     {
         for (size_t step = m_DataManDeserializer.MinStep();
@@ -215,7 +215,7 @@ void DataManReader::RunCallback()
             auto varList = m_DataManDeserializer.GetMetaData(step);
             if (varList == nullptr)
             {
-                return;
+                continue;
             }
             for (const auto &i : *varList)
             {
@@ -226,27 +226,25 @@ void DataManReader::RunCallback()
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
-        if (v == nullptr)                                                      \
-        {                                                                      \
-            Dims start(i.shape.size(), 0);                                     \
-            Dims count = i.shape;                                              \
-            m_IO.DefineVariable<T>(i.name, i.shape, start, count);             \
-            v = m_IO.InquireVariable<T>(i.name);                               \
-        }                                                                      \
+        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
         size_t datasize =                                                      \
-            std::accumulate(v->m_Count.begin(), v->m_Count.end(), sizeof(T),   \
+            std::accumulate(i.count.begin(), i.count.end(), sizeof(T),         \
                             std::multiplies<size_t>());                        \
         std::vector<T> varData(datasize, std::numeric_limits<T>::quiet_NaN()); \
-        v->SetData(varData.data());                                            \
-        m_DataManDeserializer.Get(varData.data(), v->m_Name, v->m_Start,       \
-                                  v->m_Count, step);                           \
+        m_DataManDeserializer.Get(varData.data(), i.name, i.start, i.count,    \
+                                  step);                                       \
         for (auto &j : m_Callbacks)                                            \
         {                                                                      \
-            if (j->m_Type == "Signature2")                                     \
+            if (j->m_Type == "Signature1")                                     \
             {                                                                  \
-                j->RunCallback2(varData.data(), i.doid, i.name, i.type,        \
-                                i.shape);                                      \
+                j->RunCallback2(reinterpret_cast<T *>(varData.data()), i.doid, \
+                                i.name, i.type, step, i.shape, i.start,        \
+                                i.count);                                      \
+            }                                                                  \
+            else if (j->m_Type == "Signature2")                                \
+            {                                                                  \
+                j->RunCallback2(varData.data(), i.doid, i.name, i.type, step,  \
+                                i.shape, i.start, i.count);                    \
             }                                                                  \
             else                                                               \
             {                                                                  \
@@ -263,7 +261,6 @@ void DataManReader::RunCallback()
             m_DataManDeserializer.Erase(step);
         }
     }
-    m_CallbackMutex.unlock();
 }
 
 #define declare_type(T)                                                        \

@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloDataManReader_nompi.cpp
+ * DataManCallbackReceiver.cpp
  *
  *  Created on: Jan 9, 2017
  *      Author: Jason Wang
@@ -20,26 +20,27 @@
 #include <adios2.h>
 
 // matches Signature2 in ADIOS2
-void UserCallBack(void *data, const std::string &doid, const std::string var,
-                  const std::string &dtype,
-                  const std::vector<std::size_t> varshape)
+void UserCallBack(void *data, const std::string &doid, const std::string &var,
+                  const std::string &type, const size_t step,
+                  const adios2::Dims &shape, const adios2::Dims &start,
+                  const adios2::Dims &count)
 {
 
     std::cout << "Object : " << doid << std::endl;
     std::cout << "Variable :" << var << std::endl;
-    std::cout << "Type : " << dtype << std::endl;
+    std::cout << "Type : " << type << std::endl;
     std::cout << "Shape : [";
-    for (size_t i = 0; i < varshape.size(); ++i)
+    for (size_t i = 0; i < count.size(); ++i)
     {
-        std::cout << varshape[i];
-        if (i != varshape.size() - 1)
+        std::cout << count[i];
+        if (i != count.size() - 1)
         {
             std::cout << ", ";
         }
     }
     std::cout << "]" << std::endl;
 
-    size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
+    size_t varsize = std::accumulate(count.begin(), count.end(), 1,
                                      std::multiplies<std::size_t>());
 
     size_t dumpsize = 128;
@@ -52,7 +53,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string var,
     std::cout << "Data : " << std::endl;
 
 #define declare_type(T)                                                        \
-    if (dtype == adios2::helper::GetType<T>())                                 \
+    if (type == adios2::helper::GetType<T>())                                  \
     {                                                                          \
         for (size_t i = 0; i < dumpsize; ++i)                                  \
         {                                                                      \
@@ -82,8 +83,9 @@ int main(int argc, char *argv[])
         adios2::Operator callbackFloat = adios.DefineOperator(
             "Print float Variable callback",
             std::function<void(void *, const std::string &, const std::string &,
-                               const std::string &, const adios2::Dims &)>(
-                UserCallBack));
+                               const std::string &, const size_t,
+                               const adios2::Dims &, const adios2::Dims &,
+                               const adios2::Dims &)>(UserCallBack));
 
         adios2::IO dataManIO = adios.DeclareIO("WAN");
         dataManIO.SetEngine("DataMan");

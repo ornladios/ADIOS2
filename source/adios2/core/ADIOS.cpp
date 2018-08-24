@@ -217,8 +217,9 @@ Operator *ADIOS::InquireOperator(const std::string name) noexcept
 #define declare_type(T)                                                        \
     Operator &ADIOS::DefineCallBack(                                           \
         const std::string name,                                                \
-        const std::function<void(const T *, const std::string,                 \
-                                 const std::string, const std::string,         \
+        const std::function<void(const T *, const std::string &,               \
+                                 const std::string &, const std::string &,     \
+                                 const size_t, const Dims &, const Dims &,     \
                                  const Dims &)> &function,                     \
         const Params &parameters)                                              \
     {                                                                          \
@@ -237,7 +238,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 Operator &ADIOS::DefineCallBack(
     const std::string name,
     const std::function<void(void *, const std::string &, const std::string &,
-                             const std::string &, const Dims &)> &function,
+                             const std::string &, const size_t, const Dims &,
+                             const Dims &, const Dims &)> &function,
     const Params &parameters)
 {
     CheckOperator(name);

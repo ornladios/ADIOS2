@@ -19,7 +19,8 @@ namespace callback
 
 Signature2::Signature2(
     const std::function<void(void *, const std::string &, const std::string &,
-                             const std::string &, const Dims &)> &function,
+                             const std::string &, const size_t, const Dims &,
+                             const Dims &, const Dims &)> &function,
     const Params &parameters, const bool debugMode)
 : Operator("Signature2", parameters, debugMode), m_Function(function)
 {
@@ -27,11 +28,12 @@ Signature2::Signature2(
 
 void Signature2::RunCallback2(void *arg1, const std::string &arg2,
                               const std::string &arg3, const std::string &arg4,
-                              const Dims &arg5) const
+                              const size_t arg5, const Dims &arg6,
+                              const Dims &arg7, const Dims &arg8) const
 {
     if (m_Function)
     {
-        m_Function(arg1, arg2, arg3, arg4, arg5);
+        m_Function(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     }
     else
     {
