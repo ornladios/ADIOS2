@@ -1,0 +1,34 @@
+MGARD (MultiGrid Adaptive Reduction of Data) is a recently developed
+technique for multilevel lossy compression and reduction of scientific
+data. The technique is based on the theory of multigrid methods. This
+archive presents a preliminary C language API for integration with
+existing software, use at your own risk!
+
+The API consists of a header file: include/mgard_capi.h
+
+Users need only include this header file, and link against the static
+library libmgard.a.
+
+This header file provides prototypes for the following functions:
+
+unsigned char *mgard_compress(int itype_flag, void *data, int
+*out_size, int nrow, int ncol, void* tol) : Returns pointer to unsigned char array of compressed data
+                      
+     itype_flag: Data type, 0 for float, 1 for double
+     data : Pointer to the input buffer (interpreted as 2D matrix) to compress with MGARD,
+            this buffer will be destroyed!
+     out_size: size of input data, returns compressed size on exit
+     nrow: Number of rows of matrix
+     ncol: Number of columns of matrix
+     tol: Upper bound for desired tolerance
+     
+
+void *mgard_decompress(int itype_flag, unsigned char *data,
+int data_len, int nrow, int ncol): Returns float/double pointer to array of decompressed data 
+
+     itype_flag: Data type, 0 for float, 1 for double
+     data : Pointer to the input buffer (interpreted as 2D matrix) to decompress with MGARD,
+            this buffer will be destroyed!
+     data_len: size of input data in bytes
+     nrow: Number of rows of matrix
+     ncol: Number of columns of matrix
