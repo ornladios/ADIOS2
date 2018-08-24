@@ -695,42 +695,19 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         {
             print_data_hist(vi, &names[n][1]);
         }
-
-        if (longopt && vi->statistics)
+#endif
+        if (longopt /* TODO: && variable->has_statistics */)
         {
-
-            if (timestep == false || timed == false)
+            if (timestep == false)
             {
-
                 fprintf(outf, " = ");
-                if (vartype == adios_complex || vartype == adios_double_complex)
-                {
-                    // force printing (double,double) here
-                    print_data(vi->statistics->min, 0, adios_double_complex,
-                               false);
-                    fprintf(outf, " / ");
-                    print_data(vi->statistics->max, 0, adios_double_complex,
-                               false);
-                    fprintf(outf, " / ");
-                    print_data(vi->statistics->avg, 0, adios_double_complex,
-                               false);
-                    fprintf(outf, " / ");
-                    print_data(vi->statistics->std_dev, 0, adios_double_complex,
-                               false);
-                }
-                else
-                {
-                    print_data(vi->statistics->min, 0, vartype, false);
-                    fprintf(outf, " / ");
-                    print_data(vi->statistics->max, 0, vartype, false);
-                    fprintf(outf, " / ");
-                    print_data(vi->statistics->avg, 0, adios_double, false);
-                    fprintf(outf, " / ");
-                    print_data(vi->statistics->std_dev, 0, adios_double, false);
-                }
+                print_data(&variable->m_Min, 0, adiosvartype, false);
+                fprintf(outf, " / ");
+                print_data(&variable->m_Max, 0, adiosvartype, false);
 
-                // fprintf(outf," {MIN / MAX / AVG / STD_DEV} ");
+                // fprintf(outf," {MIN / MAX} ");
             }
+#if 0
             else
             {
                 int time_start = 0, time_end = vi->nsteps;
@@ -813,8 +790,8 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                 }
                 fprintf(outf, "\n");
             }
-        } // longopt && vi->statistics
 #endif
+        } // longopt && vi->statistics
         fprintf(outf, "\n");
 
         if (show_decomp)
@@ -1362,10 +1339,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     uint64_t nelems;                   // number of elements to read
     // size_t elemsize;                   // size in bytes of one element
     uint64_t st, ct;
-    T *data;
-
     std::vector<T> dataV;
-
     uint64_t sum; // working var to sum up things
     uint64_t
         maxreadn; // max number of elements to read once up to a limit (10MB
@@ -1440,7 +1414,8 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                nelems * elemsize);
     }
 
-    print_slice_info(variable, start_t, count_t);
+    print_slice_info(variable, (tidx == 1), start_t, count_t,
+                     variable->m_Shape);
 
     maxreadn = (uint64_t)MAX_BUFFERSIZE / elemsize;
     if (nelems < maxreadn)
@@ -1547,7 +1522,6 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
         dataV.resize(variable->SelectionSize());
         fp->Get(*variable, dataV, adios2::Mode::Sync);
-        // fp->Get(*variable, data, adios2::Mode::Sync);
 
         // print slice
         print_dataset(dataV.data(), variable->m_Type, s, c, tdims,
@@ -1582,8 +1556,6 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         }
     } // end while sum < nelems
     print_endline();
-
-    // free(data);
     return 0;
 }
 
@@ -1592,50 +1564,38 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
  */
 template <class T>
 int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
-                 int blockid)
+                 size_t step, size_t blockid,
+                 typename core::Variable<T>::Info &blockinfo)
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
         count_t[MAX_DIMS];             // processed <0 values in start/count
     uint64_t s[MAX_DIMS], c[MAX_DIMS]; // for block reading of smaller chunks
     uint64_t nelems;                   // number of elements to read
-    int elemsize;                      // size in bytes of one element
     int tidx;
     uint64_t st, ct;
-    void *data;
-    uint64_t sum;    // working var to sum up things
-    int maxreadn;    // max number of elements to read once up to a limit (10MB
-                     // of
-                     // data)
-    int actualreadn; // our decision how much to read at once
-    int readn[MAX_DIMS]; // how big chunk to read in in each dimension?
+    std::vector<T> dataV;
+    uint64_t sum; // working var to sum up things
+    uint64_t
+        maxreadn; // max number of elements to read once up to a limit (10MB
+                  // of
+                  // data)
+    uint64_t actualreadn;     // our decision how much to read at once
+    uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     int status;
     bool incdim;          // used in incremental reading in
     int ndigits_dims[32]; // # of digits (to print) of each dimension
 
-#if 0
-    if (getTypeInfo(vi->type, &elemsize))
-    {
-        fprintf(stderr, "Adios type %d (%s) not supported in bpls. var=%s\n",
-                vi->type, adios_type_to_string(vi->type), name);
-        return 10;
-    }
-
-    if (blockid < 0 || blockid > vi->sum_nblocks)
-    {
-        fprintf(stderr,
-                "Invalid block id for var=%s, id=%d, available %d blocks\n",
-                name, blockid, vi->sum_nblocks);
-        return 10;
-    }
-
+    const size_t elemsize = variable->m_ElementSize;
+    const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
+    const int ndim = static_cast<int>(variable->m_Shape.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
 
     nelems = 1;
     tidx = 0;
 
-    if (timed)
+    if (nsteps > 1)
     {
         if (istart[0] < 0) // negative index means last-|index|
             st = nsteps + istart[0];
@@ -1650,41 +1610,30 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
             printf("    time: st=%" PRIu64 " ct=%" PRIu64 "\n", st, ct);
 
         // check if this block falls into the requested time
-        int idx = 0;
-        for (i = 0; i < st; i++)
-        {
-            idx += vi->nblocks[i];
-        }
-        if (blockid < idx)
-            return 0;
-        for (i = st; i < st + ct; i++)
-        {
-            idx += vi->nblocks[i];
-        }
-        if (blockid > idx)
+        if (step < st || step >= st + ct)
             return 0;
         tidx = 1;
     }
 
     int out_of_bound = 0;
-    for (j = 0; j < vi->ndim; j++)
+    for (j = 0; j < ndim; j++)
     {
         if (istart[j + tidx] < 0) // negative index means last-|index|
-            st = vi->blockinfo[blockid].count[j] + istart[j + tidx];
+            st = blockinfo.Count[j] + istart[j + tidx];
         else
             st = istart[j + tidx];
         if (icount[j + tidx] < 0) // negative index means last-|index|+1-start
-            ct = vi->blockinfo[blockid].count[j] + icount[j + tidx] + 1 - st;
+            ct = blockinfo.Count[j] + icount[j + tidx] + 1 - st;
         else
             ct = icount[j + tidx];
 
-        if (st > vi->blockinfo[blockid].count[j])
+        if (st > blockinfo.Count[j])
         {
             out_of_bound = 1;
         }
-        else if (ct > vi->blockinfo[blockid].count[j] - st)
+        else if (ct > blockinfo.Count[j] - st)
         {
-            ct = vi->blockinfo[blockid].count[j] - st;
+            ct = blockinfo.Count[j] - st;
         }
         if (verbose > 2)
             printf("    j=%d, st=%" PRIu64 " ct=%" PRIu64 "\n", j, st, ct);
@@ -1703,8 +1652,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                nelems * elemsize);
     }
 
-    print_slice_info(vi->ndim, vi->blockinfo[blockid].count, false, vi->nsteps,
-                     start_t, count_t);
+    print_slice_info(variable, false, start_t, count_t, blockinfo.Count);
 
     if (out_of_bound)
         return 0;
@@ -1714,7 +1662,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         maxreadn = nelems;
 
     // allocate data array
-    data = (void *)malloc(maxreadn * elemsize + 8); // +8 for just to be sure
+    // data = (void *)malloc(maxreadn * elemsize + 8); // +8 for just to be sure
 
     // determine strategy how to read in:
     //  - at once
@@ -1725,7 +1673,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         printf("Read size strategy:\n");
     sum = (uint64_t)1;
     actualreadn = (uint64_t)1;
-    for (i = vi->ndim - 1; i >= 0; i--)
+    for (i = ndim - 1; i >= 0; i--)
     {
         if (sum >= (uint64_t)maxreadn)
         {
@@ -1739,18 +1687,18 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                 readn[i] = count_t[i];
         }
         if (verbose > 1)
-            printf("    dim %d: read %d elements\n", i, readn[i]);
+            printf("    dim %d: read %" PRIu64 " elements\n", i, readn[i]);
         sum = sum * (uint64_t)count_t[i];
         actualreadn = actualreadn * readn[i];
     }
     if (verbose > 1)
-        printf("    read %d elements at once, %" PRIu64
+        printf("    read %" PRIu64 " elements at once, %" PRIu64
                " in total (nelems=%" PRIu64 ")\n",
                actualreadn, sum, nelems);
 
     // init s and c
     // and calculate ndigits_dims
-    for (j = 0; j < vi->ndim; j++)
+    for (j = 0; j < ndim; j++)
     {
         s[j] = start_t[j];
         c[j] = readn[j];
@@ -1766,12 +1714,12 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
         // how many elements do we read in next?
         actualreadn = 1;
-        for (j = 0; j < vi->ndim; j++)
+        for (j = 0; j < ndim; j++)
             actualreadn *= c[j];
 
-        uint64_t startoffset = s[vi->ndim - 1];
-        uint64_t tmpprod = c[vi->ndim - 1];
-        for (i = vi->ndim - 2; i >= 0; i--)
+        uint64_t startoffset = s[ndim - 1];
+        uint64_t tmpprod = c[ndim - 1];
+        for (i = ndim - 2; i >= 0; i--)
         {
             startoffset += s[i] * tmpprod;
             tmpprod *= c[i];
@@ -1779,49 +1727,63 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
         if (verbose > 2)
         {
-            printf("adios_read_var name=%s ", name);
-            PRINT_DIMS_UINT64("  start", s, vi->ndim, j);
-            PRINT_DIMS_UINT64("  count", c, vi->ndim, j);
-            printf("  read %d elems\n", actualreadn);
+            printf("adios_read_var name=%s ", variable->m_Name.c_str());
+            PRINT_DIMS_UINT64("  start", s, ndim, j);
+            PRINT_DIMS_UINT64("  count", c, ndim, j);
+            printf("  read %" PRIu64 " elems\n", actualreadn);
         }
         if (verbose > 1)
-            printf("    read block %d from offset %" PRIu64 " nelems %d)\n",
+            printf("    read block %zu from offset %" PRIu64 " nelems %" PRIu64
+                   ")\n",
                    blockid, startoffset, actualreadn);
 
         // read a slice finally
-        ADIOS_SELECTION *wb = adios_selection_writeblock(blockid);
-        wb->u.block.is_absolute_index = true;
-        wb->u.block.is_sub_pg_selection = 1;
-        wb->u.block.element_offset = startoffset;
-        wb->u.block.nelements = actualreadn;
-        status = adios_schedule_read_byid(fp, wb, vi->varid, 0, 1, data);
+        Dims startv = helper::Uint64ArrayToSizetVector(ndim, s);
+        Dims countv = helper::Uint64ArrayToSizetVector(ndim, c);
 
-        if (status < 0)
+        /* In current implementation we read with global selection, so
+         * we need to adjust start_t for global offsets here.
+         * TODO: this will change in the future to block reading with relative
+         * selection
+         */
+        for (j = 0; j < ndim; j++)
         {
-            fprintf(stderr, "Error when scheduling variable %s for reading. "
-                            "errno=%d : %s \n",
-                    name, adios_errno, adios_errmsg());
-            free(data);
-            return 11;
+            startv[j] += blockinfo.Start[j];
         }
 
-        status = adios_perform_reads(fp, 1); // blocking read performed here
-        adios_selection_delete(wb);
-        if (status < 0)
+        if (verbose > 2)
         {
-            fprintf(stderr, "Error when reading variable %s. errno=%d : %s \n",
-                    name, adios_errno, adios_errmsg());
-            free(data);
-            return 11;
+            printf("set selection: ");
+            PRINT_DIMS_SIZET("  start", startv.data(), ndim, j);
+            PRINT_DIMS_SIZET("  count", countv.data(), ndim, j);
+            printf("\n");
         }
 
+        if (!variable->m_SingleValue)
+        {
+            variable->SetSelection({startv, countv});
+        }
+
+        if (nsteps > 1)
+        {
+            if (verbose > 2)
+            {
+                printf("set Step selection: from %" PRIu64 " read %" PRIu64
+                       " steps\n",
+                       s[0], c[0]);
+            }
+            variable->SetStepSelection({step, 1});
+        }
+
+        dataV.resize(variable->SelectionSize());
+        fp->Get(*variable, dataV, adios2::Mode::Sync);
         // print slice
-        print_dataset(data, vi->type, s, c, vi->ndim, ndigits_dims);
+        print_dataset(dataV.data(), variable->m_Type, s, c, ndim, ndigits_dims);
 
         // prepare for next read
         sum += actualreadn;
         incdim = true; // largest dim should be increased
-        for (j = vi->ndim - 1; j >= 0; j--)
+        for (j = ndim - 1; j >= 0; j--)
         {
             if (incdim)
             {
@@ -1847,11 +1809,6 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         }
     } // end while sum < nelems
     print_endline();
-
-    free(data);
-#else
-    printf("Block reading is not implemented yet\n");
-#endif
     return 0;
 }
 
@@ -1937,23 +1894,24 @@ void print_stop() { fclose(outf); }
 static int nextcol =
     0; // column index to start with (can have lines split in two calls)
 
-void print_slice_info(core::VariableBase *variable, uint64_t *s, uint64_t *c)
+void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
+                      uint64_t *c, Dims count)
 {
     // print the slice info in indexing is on and
     // not the complete variable is read
     size_t ndim = variable->m_Shape.size();
     size_t nsteps = variable->m_AvailableStepsCount;
     bool isaslice = false;
-    int tidx = (nsteps > 1 ? 1 : 0);
+    int tidx = (timed ? 1 : 0);
     size_t tdim = ndim + tidx;
-    if (nsteps > 1)
+    if (timed)
     {
         if (c[0] < nsteps)
             isaslice = true;
     }
     for (size_t i = 0; i < ndim; i++)
     {
-        if (c[i + tidx] < variable->m_Shape[i])
+        if (c[i + tidx] < count[i])
             isaslice = true;
     }
     if (isaslice)
@@ -2458,110 +2416,82 @@ template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
-    // int blockid = 0;
-    size_t nsteps = variable->GetAvailableStepsCount();
+    // size_t nsteps = variable->GetAvailableStepsCount();
     size_t ndim = variable->m_Shape.size();
-    // enum ADIOS_DATATYPES vartype = type_to_enum(variable->m_Type);
-    // size_t nblocks = 1; /* FIXME: we need the number of blocks here */
-    int ndigits_nsteps = ndigits(nsteps - 1);
+    enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
+    std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
+        fp->AllStepsBlocksInfo(*variable);
+    if (allblocks.empty())
+    {
+        return;
+    }
+    size_t laststep = allblocks.rbegin()->first;
+    int ndigits_nsteps = ndigits(laststep);
     if (ndim == 0)
     {
         // scalars
-        for (size_t i = 0; i < nsteps; i++)
+        for (auto &blockpair : allblocks)
         {
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, i);
-#if 0
-            fprintf(outf, "%d instances available\n", vi->nblocks[i]);
-            if (dump && vi->statistics && vi->statistics->blocks)
+            size_t step = blockpair.first;
+            std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+                blockpair.second;
+            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
+            fprintf(outf, "%zu instances available\n", blocks.size());
+            if (dump)
             {
                 fprintf(outf, "               ");
-                if (vi->statistics->blocks->mins)
+                int col = 0;
+                for (size_t j = 0; j < blocks.size(); j++)
                 {
-                    int col = 0;
-                    for (int j = 0; j < vi->nblocks[i]; j++)
+                    print_data(&blocks[j].Value, 0, adiosvartype, true);
+                    ++col;
+                    if (j < blocks.size() - 1)
                     {
-                        if (vartype == adios_complex ||
-                            vartype == adios_double_complex)
+                        if (col < ncols)
                         {
-                            print_data(vi->statistics->blocks->mins[blockid], 0,
-                                       adios_double_complex, true);
+                            fprintf(outf, " ");
                         }
                         else
                         {
-                            print_data(vi->statistics->blocks->mins[blockid], 0,
-                                       vartype, true);
+                            fprintf(outf, "\n               ");
+                            col = 0;
                         }
-                        ++col;
-                        if (j < vi->nblocks[i] - 1)
-                        {
-                            if (col < ncols)
-                            {
-                                fprintf(outf, " ");
-                            }
-                            else
-                            {
-                                fprintf(outf, "\n               ");
-                                col = 0;
-                            }
-                        }
-                        ++blockid;
                     }
-                    fprintf(outf, "\n");
                 }
+                fprintf(outf, "\n");
             }
-#else
-            fprintf(outf, "\n");
-#endif
         }
         return;
     }
     else
     {
         // arrays
-        /*
         int ndigits_nblocks;
-        int ndigits_procid;
-        int ndigits_time;
         int ndigits_dims[32];
         for (size_t k = 0; k < ndim; k++)
         {
             // get digit lengths for each dimension
             ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
         }
-        */
 
-        for (size_t i = 0; i < nsteps; i++)
+        for (auto &blockpair : allblocks)
         {
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, i);
+            size_t step = blockpair.first;
+            std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+                blockpair.second;
+            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
             fprintf(outf, "\n");
-#if 0
-            ndigits_nblocks = ndigits(vi->nblocks[i] - 1);
-            ndigits_procid =
-                ndigits(vi->blockinfo[blockid + vi->nblocks[i] - 1].process_id);
-            ndigits_time =
-                ndigits(vi->blockinfo[blockid + vi->nblocks[i] - 1].time_index);
-            for (int j = 0; j < vi->nblocks[i]; j++)
+            ndigits_nblocks = ndigits(blocks.size() - 1);
+            for (size_t j = 0; j < blocks.size(); j++)
             {
-                if (verbose < 1)
+                fprintf(outf, "          block %*zu: [", ndigits_nblocks, j);
+                for (size_t k = 0; k < ndim; k++)
                 {
-                    fprintf(outf, "          block %*d: [", ndigits_nblocks, j);
-                }
-                else
-                {
-                    fprintf(outf, "          block %*d proc %*u time %*u: [",
-                            ndigits_nblocks, j, ndigits_procid,
-                            vi->blockinfo[blockid].process_id, ndigits_time,
-                            vi->blockinfo[blockid].time_index);
-                }
-                for (int k = 0; k < ndim; k++)
-                {
-                    if (vi->blockinfo[blockid].count[k])
+                    if (blocks[j].Count[k])
                     {
                         fprintf(outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
-                                vi->blockinfo[blockid].start[k],
-                                ndigits_dims[k],
-                                vi->blockinfo[blockid].start[k] +
-                                    vi->blockinfo[blockid].count[k] - 1);
+                                blocks[j].Start[k], ndigits_dims[k],
+                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
                     }
                     else
                     {
@@ -2573,98 +2503,27 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 fprintf(outf, "]");
 
                 /* Print per-block statistics if available */
-                if (longopt && vi->statistics->blocks)
+                if (longopt)
                 {
-                    fprintf(outf, " = ");
-                    if (vi->statistics->blocks->mins)
+                    if (true /* TODO: variable->has_minmax */)
                     {
-                        if (vartype == adios_complex ||
-                            vartype == adios_double_complex)
-                        {
-                            print_data(vi->statistics->blocks->mins[blockid], 0,
-                                       adios_double_complex, false);
-                        }
-                        else
-                        {
-                            print_data(vi->statistics->blocks->mins[blockid], 0,
-                                       vartype, false);
-                        }
-                    }
-                    else
-                    {
-                        fprintf(outf, "N/A ");
-                    }
+                        fprintf(outf, " = ");
+                        print_data(&blocks[j].Min, 0, adiosvartype, false);
 
-                    fprintf(outf, " / ");
-                    if (vi->statistics->blocks->maxs)
-                    {
-                        if (vartype == adios_complex ||
-                            vartype == adios_double_complex)
-                        {
-                            print_data(vi->statistics->blocks->maxs[blockid], 0,
-                                       adios_double_complex, false);
-                        }
-                        else
-                        {
-                            print_data(vi->statistics->blocks->maxs[blockid], 0,
-                                       vartype, false);
-                        }
+                        fprintf(outf, " / ");
+                        print_data(&blocks[j].Max, 0, adiosvartype, false);
                     }
                     else
                     {
-                        fprintf(outf, "N/A ");
+                        fprintf(outf, "N/A / N/A");
                     }
-
-                    fprintf(outf, "/ ");
-                    if (vi->statistics->blocks->avgs)
+                    fprintf(outf, "\n");
+                    if (dump)
                     {
-                        if (vartype == adios_complex ||
-                            vartype == adios_double_complex)
-                        {
-                            print_data(vi->statistics->blocks->avgs[blockid], 0,
-                                       adios_double_complex, false);
-                        }
-                        else
-                        {
-                            print_data(vi->statistics->blocks->avgs[blockid], 0,
-                                       adios_double, false);
-                        }
-                    }
-                    else
-                    {
-                        fprintf(outf, "N/A ");
-                    }
-
-                    fprintf(outf, "/ ");
-                    if (vi->statistics->blocks->avgs)
-                    {
-                        if (vartype == adios_complex ||
-                            vartype == adios_double_complex)
-                        {
-                            print_data(
-                                vi->statistics->blocks->std_devs[blockid], 0,
-                                adios_double_complex, false);
-                        }
-                        else
-                        {
-                            print_data(
-                                vi->statistics->blocks->std_devs[blockid], 0,
-                                adios_double, false);
-                        }
-                    }
-                    else
-                    {
-                        fprintf(outf, "N/A ");
+                        readVarBlock(fp, io, variable, step, j, blocks[j]);
                     }
                 }
-                fprintf(outf, "\n");
-                if (dump)
-                {
-                    readVarBlock(fp, io, variable, blockid);
-                }
-                blockid++;
             }
-#endif
         }
     }
 }
