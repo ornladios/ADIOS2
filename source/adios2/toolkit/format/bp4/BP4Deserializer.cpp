@@ -51,6 +51,7 @@ void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
     {
         ParsePGIndexPerStep(bufferSTL, io, 0, i+1);
         ParseVariablesIndexPerStep(bufferSTL, io, 0, i+1);
+        ParseAttributesIndexPerStep(bufferSTL, io, 0, i+1);
     }
 }
 
