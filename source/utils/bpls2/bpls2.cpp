@@ -796,7 +796,6 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
 
         if (show_decomp)
         {
-            // adios_inq_var_blockinfo(fp, vi);
             print_decomp(fp, io, variable);
         }
     }
@@ -811,12 +810,10 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         }
         fprintf(outf, "\n");
 
-        /*if (show_decomp)
+        if (show_decomp)
         {
-            adios_inq_var_blockinfo(fp, vi);
-            adios_inq_var_stat(fp, vi, false, show_decomp);
-            print_decomp(fp, vi, names[n], timed);
-        }*/
+            print_decomp(fp, io, variable);
+        }
     }
 
     if (dump && !show_decomp)
