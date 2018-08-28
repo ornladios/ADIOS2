@@ -13,11 +13,13 @@
 
 #include <gtest/gtest.h>
 
-void ZfpRate1D(const double rate)
+#define str_helper(X) #X
+
+void ZfpRate1D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp1D.bp");
+    const std::string fname("ADIOS2BPWriteReadZfpConfig1D.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -39,9 +41,11 @@ void ZfpRate1D(const double rate)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -54,12 +58,6 @@ void ZfpRate1D(const double rate)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator zfpOp = adios.DefineOperator("zfpCompressor", "zfp");
-
-        var_r32.AddOperation(zfpOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(zfpOp, {{"rate", std::to_string(2 * rate)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -128,11 +126,11 @@ void ZfpRate1D(const double rate)
     }
 }
 
-void ZfpRate2D(const double rate)
+void ZfpRate2D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp2D.bp");
+    const std::string fname("ADIOS2BPWriteReadZfpConfig2D.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -155,9 +153,11 @@ void ZfpRate2D(const double rate)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -170,12 +170,6 @@ void ZfpRate2D(const double rate)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -243,11 +237,11 @@ void ZfpRate2D(const double rate)
     }
 }
 
-void ZfpRate3D(const double rate)
+void ZfpRate3D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp3D.bp");
+    const std::string fname("ADIOS2BPWriteReadZfpConfig3D.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -271,9 +265,11 @@ void ZfpRate3D(const double rate)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -286,12 +282,6 @@ void ZfpRate3D(const double rate)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
-
-        var_r32.AddOperation(szOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"rate", std::to_string(rate)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -361,11 +351,11 @@ void ZfpRate3D(const double rate)
     }
 }
 
-void ZfpRate1DSel(const double rate)
+void ZfpRate1DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp1DSel.bp");
+    const std::string fname("ADIOS2BPWriteReadZfpConfig1DSel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -387,9 +377,11 @@ void ZfpRate1DSel(const double rate)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -402,12 +394,6 @@ void ZfpRate1DSel(const double rate)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator zfpOp = adios.DefineOperator("zfpCompressor", "zfp");
-
-        var_r32.AddOperation(zfpOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(zfpOp, {{"rate", std::to_string(2 * rate)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -481,11 +467,11 @@ void ZfpRate1DSel(const double rate)
     }
 }
 
-void ZfpRate2DSel(const double rate)
+void ZfpRate2DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp2DSel.bp");
+    const std::string fname("ADIOS2BPWriteReadSZConfig2DSel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -508,9 +494,11 @@ void ZfpRate2DSel(const double rate)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -523,12 +511,6 @@ void ZfpRate2DSel(const double rate)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -600,11 +582,11 @@ void ZfpRate2DSel(const double rate)
     }
 }
 
-void ZfpRate3DSel(const double rate)
+void ZfpRate3DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp3DSel.bp");
+    const std::string fname("ADIOS2BPWriteReadZfpConfig3DSel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -628,9 +610,11 @@ void ZfpRate3DSel(const double rate)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -643,12 +627,6 @@ void ZfpRate3DSel(const double rate)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
-
-        var_r32.AddOperation(szOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"rate", std::to_string(rate)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -725,11 +703,11 @@ void ZfpRate3DSel(const double rate)
     }
 }
 
-void ZfpRate2DSmallSel(const double rate)
+void ZfpRate2DSmallSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp2DSmallSel.bp");
+    const std::string fname("ADIOS2BPWriteReadSZConfig2DSmallSel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -753,9 +731,11 @@ void ZfpRate2DSmallSel(const double rate)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -768,12 +748,6 @@ void ZfpRate2DSmallSel(const double rate)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
-
-        var_r32.AddOperation(szOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"rate", std::to_string(rate)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -844,27 +818,39 @@ void ZfpRate2DSmallSel(const double rate)
     }
 }
 
-class BPWriteReadZfp : public ::testing::TestWithParam<double>
+class BPWriteReadZfpConfig : public ::testing::TestWithParam<std::string>
 {
 public:
-    BPWriteReadZfp() = default;
+    BPWriteReadZfpConfig() = default;
 
     virtual void SetUp() {}
     virtual void TearDown() {}
 };
 
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp1D) { ZfpRate1D(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp2D) { ZfpRate2D(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp3D) { ZfpRate3D(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp1DSel) { ZfpRate1DSel(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp2DSel) { ZfpRate2DSel(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp3DSel) { ZfpRate3DSel(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp2DSmallSel)
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp1D) { ZfpRate1D(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2D) { ZfpRate2D(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp3D) { ZfpRate3D(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp1DSel)
+{
+    ZfpRate1DSel(GetParam());
+}
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSel)
+{
+    ZfpRate2DSel(GetParam());
+}
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp3DSel)
+{
+    ZfpRate3DSel(GetParam());
+}
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSmallSel)
 {
     ZfpRate2DSmallSel(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(ZfpRate, BPWriteReadZfp, ::testing::Values(8., 9., 10));
+INSTANTIATE_TEST_CASE_P(ZfpConfigFile, BPWriteReadZfpConfig,
+                        ::testing::Values("configZfp_rate8.xml",
+                                          "configZfp_rate9.xml",
+                                          "configZfp_rate10.xml"));
 
 int main(int argc, char **argv)
 {
