@@ -294,6 +294,7 @@ void ADIOS::XMLInit(const std::string configXML)
                     "ERROR: config xml file is empty, " + hint + "\n");
             }
         }
+        return fileContents;
     };
 
     auto lf_GetParametersXML = [&](const pugi::xml_node &node) -> Params {
@@ -372,7 +373,8 @@ void ADIOS::XMLInit(const std::string configXML)
         core::IO &currentIO = itCurrentIO.first->second;
 
         // must be unique per io
-        const pugi::xml_node engine = io.child("engine");
+        const pugi::xml_node engine =
+            helper::XMLNode("engine", io, m_DebugMode, hint, false, true);
 
         if (engine)
         {
@@ -382,19 +384,6 @@ void ADIOS::XMLInit(const std::string configXML)
 
             const Params parameters = lf_GetParametersXML(engine);
             currentIO.SetParameters(parameters);
-
-            if (m_DebugMode) // check for 2nd engine
-            {
-                const pugi::xml_node engineNode2 = io.child("engine");
-                if (engineNode2)
-                {
-                    throw std::invalid_argument("ERROR: XML only one <engine> "
-                                                "element can exist inside <io "
-                                                "name=\"" +
-                                                std::string(io.value()) +
-                                                "\"> element, " + hint + "\n");
-                }
-            }
         }
 
         for (const pugi::xml_node variable : io.children("variable"))
@@ -405,13 +394,12 @@ void ADIOS::XMLInit(const std::string configXML)
 
     // BODY OF FUNCTION
     const std::string fileContents = lf_FileContents(configXML);
-
     const pugi::xml_document document =
         helper::XMLDocument(fileContents, m_DebugMode, hint);
 
     // must be unique
     const pugi::xml_node config =
-        helper::XMLNode("adios2-config", document, m_DebugMode, hint, true);
+        helper::XMLNode("adios-config", document, m_DebugMode, hint, true);
 
     for (const pugi::xml_node op : config.children("operator"))
     {

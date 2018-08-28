@@ -45,6 +45,7 @@ pugi::xml_document XMLDocument(const std::string &xmlContents,
  * @param document xml string source for finding nodeName
  * @param debugMode true: check if nodeName exist, false: no-check
  * @param hint improve exception message for debugging
+ * @param isMandatory
  * @param isUnique true: nodeName must be unique in XML document, false:
  * multiple elements can have the same name
  * @return pugi node for nodeName
@@ -52,7 +53,8 @@ pugi::xml_document XMLDocument(const std::string &xmlContents,
  */
 pugi::xml_node XMLNode(const std::string nodeName,
                        const pugi::xml_document &document, const bool debugMode,
-                       const std::string hint, const bool isUnique = false);
+                       const std::string hint, const bool isMandatory = true,
+                       const bool isUnique = false);
 
 /**
  * Version that gets a node from inside another node
@@ -68,7 +70,8 @@ pugi::xml_node XMLNode(const std::string nodeName,
  */
 pugi::xml_node XMLNode(const std::string nodeName,
                        const pugi::xml_node &upperNode, const bool debugMode,
-                       const std::string hint, const bool isUnique = false);
+                       const std::string hint, const bool isMandatory = true,
+                       const bool isUnique = false);
 
 /**
  * Gets a node attribute e.g. name in io <io name="testIO">
@@ -80,7 +83,8 @@ pugi::xml_node XMLNode(const std::string nodeName,
  */
 pugi::xml_attribute XMLAttribute(const std::string attributeName,
                                  const pugi::xml_node &node,
-                                 const bool debugMode, const std::string hint);
+                                 const bool debugMode, const std::string hint,
+                                 const bool isMandatory = true);
 
 } // end namespace helper
 } // end namespace adios2

@@ -12,6 +12,7 @@
 #include "adiosXML.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <iterator>  // std::distance
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
@@ -37,8 +38,8 @@ pugi::xml_document XMLDocument(const std::string &xmlContents,
         if (!parse_result)
         {
             throw std::invalid_argument(
-                "ERROR: XML: parse error in string " + xmlContents +
-                " description: " + std::string(parse_result.description()) +
+                "ERROR: XML: parse error in XML string, description: " +
+                std::string(parse_result.description()) +
                 ", check with any XML editor if format is ill-formed, " + hint +
                 "\n");
         }
@@ -49,13 +50,13 @@ pugi::xml_document XMLDocument(const std::string &xmlContents,
 pugi::xml_node XMLNode(const std::string nodeName,
                        const pugi::xml_document &xmlDocument,
                        const bool debugMode, const std::string hint,
-                       const bool isUnique)
+                       const bool isMandatory, const bool isUnique)
 {
     const pugi::xml_node node = xmlDocument.child(nodeName.c_str());
 
     if (debugMode)
     {
-        if (!node)
+        if (isMandatory && !node)
         {
             throw std::invalid_argument("ERROR: XML: no <" + nodeName +
                                         "> element found, " + hint);
@@ -63,13 +64,15 @@ pugi::xml_node XMLNode(const std::string nodeName,
 
         if (isUnique)
         {
-            const pugi::xml_node node2 = xmlDocument.child(nodeName.c_str());
-            if (node2)
+            const size_t nodes =
+                std::distance(xmlDocument.children(nodeName.c_str()).begin(),
+                              xmlDocument.children(nodeName.c_str()).end());
+            if (nodes > 1)
             {
                 throw std::invalid_argument("ERROR: XML only one <" + nodeName +
                                             "> element can exist inside " +
-                                            xmlDocument.name() + ", " + hint +
-                                            "\n");
+                                            std::string(xmlDocument.name()) +
+                                            ", " + hint + "\n");
             }
         }
     }
@@ -78,28 +81,31 @@ pugi::xml_node XMLNode(const std::string nodeName,
 
 pugi::xml_node XMLNode(const std::string nodeName,
                        const pugi::xml_node &upperNode, const bool debugMode,
-                       const std::string hint, const bool isUnique)
+                       const std::string hint, const bool isMandatory,
+                       const bool isUnique)
 {
     const pugi::xml_node node = upperNode.child(nodeName.c_str());
 
     if (debugMode)
     {
-        if (!node)
+        if (isMandatory && !node)
         {
-            throw std::invalid_argument("ERROR: XML: no <" + nodeName +
-                                        "> element found, inside <" +
-                                        upperNode.name() + "> element " + hint);
+            throw std::invalid_argument(
+                "ERROR: XML: no <" + nodeName + "> element found, inside <" +
+                std::string(upperNode.name()) + "> element " + hint);
         }
 
         if (isUnique)
         {
-            const pugi::xml_node node2 = upperNode.child(nodeName.c_str());
-            if (node2)
+            const size_t nodes =
+                std::distance(upperNode.children(nodeName.c_str()).begin(),
+                              upperNode.children(nodeName.c_str()).end());
+            if (nodes > 1)
             {
                 throw std::invalid_argument("ERROR: XML only one <" + nodeName +
                                             "> element can exist inside <" +
-                                            upperNode.name() + "> element, " +
-                                            hint + "\n");
+                                            std::string(upperNode.name()) +
+                                            "> element, " + hint + "\n");
             }
         }
     }
@@ -108,13 +114,14 @@ pugi::xml_node XMLNode(const std::string nodeName,
 
 pugi::xml_attribute XMLAttribute(const std::string attributeName,
                                  const pugi::xml_node &node,
-                                 const bool debugMode, const std::string hint)
+                                 const bool debugMode, const std::string hint,
+                                 const bool isMandatory)
 {
     const pugi::xml_attribute attribute = node.attribute(attributeName.c_str());
 
     if (debugMode)
     {
-        if (!attribute)
+        if (isMandatory && !attribute)
         {
             const std::string nodeName(node.name());
 
