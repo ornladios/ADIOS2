@@ -10,7 +10,7 @@ endfunction()
 include(CMakeDependentOption)
 
 add_subdirectory(KWSys)
-add_subdirectory(MGARD)
+#add_subdirectory(MGARD)
 
 if(BUILD_TESTING)
   add_subdirectory(GTest)
