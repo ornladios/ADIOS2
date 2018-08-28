@@ -428,10 +428,11 @@ void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
             /*Lipeng*/
             m_FileMetadataIndexManager.m_Transports.clear();
         }
-        /*Lipeng*/
-        m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true);
-        m_BP4Serializer.ResetIndicesBuffer();
+
     }
+    /*Lipeng*/
+    m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true);
+    m_BP4Serializer.ResetIndicesBuffer();
 }
 
 void BP4FileWriter::WriteData(const bool isFinal, const int transportIndex)
