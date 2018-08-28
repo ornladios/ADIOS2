@@ -14,7 +14,7 @@
 #include <ios>       //std::ios_base::failure
 
 #include "adios2/ADIOSMPI.h"
-#include "adios2/helper/adiosFunctions.h" //InquireKey
+#include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 
 // OPERATORS
 
@@ -53,8 +53,7 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
         {
-            helper::InitXML(configFile, m_MPIComm, m_HostLanguage, m_DebugMode,
-                            m_Operators, m_IOs);
+            XMLInit(configFile);
         }
         // TODO expand for other formats
     }
@@ -273,6 +272,155 @@ void ADIOS::CheckOperator(const std::string name) const
                 "or with call to DefineOperator, name must "
                 "be unique, in call to DefineOperator\n");
         }
+    }
+}
+
+// requires pugi
+void ADIOS::XMLInit(const std::string configXML)
+{
+    const std::string hint("for config file " + configXML +
+                           " in call to ADIOS constructor");
+
+    auto lf_FileContents = [&](const std::string configXML) -> std::string {
+
+        const std::string fileContents(
+            helper::BroadcastFile(configXML, m_MPIComm));
+
+        if (m_DebugMode)
+        {
+            if (fileContents.empty())
+            {
+                throw std::invalid_argument(
+                    "ERROR: config xml file is empty, " + hint + "\n");
+            }
+        }
+    };
+
+    auto lf_GetParametersXML = [&](const pugi::xml_node &node) -> Params {
+
+        const std::string errorMessage("in node " + std::string(node.value()) +
+                                       ", " + hint);
+        Params parameters;
+
+        for (const pugi::xml_node paramNode : node.children("parameter"))
+        {
+            const pugi::xml_attribute key = helper::XMLAttribute(
+                "key", paramNode, m_DebugMode, errorMessage);
+
+            const pugi::xml_attribute value = helper::XMLAttribute(
+                "value", paramNode, m_DebugMode, errorMessage);
+
+            parameters.emplace(key.value(), value.value());
+        }
+        return parameters;
+    };
+
+    auto lf_OperatorXML = [&](const pugi::xml_node &operatorNode) {
+
+        const pugi::xml_attribute name =
+            helper::XMLAttribute("name", operatorNode, m_DebugMode, hint);
+
+        const pugi::xml_attribute type =
+            helper::XMLAttribute("type", operatorNode, m_DebugMode, hint);
+
+        const Params parameters = lf_GetParametersXML(operatorNode);
+
+        DefineOperator(name.value(), type.value(), parameters);
+    };
+
+    // node is the variable node
+    auto lf_IOVariableXML = [&](const pugi::xml_node node,
+                                core::IO &currentIO) {
+
+        const std::string variableName = std::string(
+            helper::XMLAttribute("name", node, m_DebugMode, hint).value());
+
+        for (const pugi::xml_node operation : node.children("operation"))
+        {
+            const pugi::xml_attribute op =
+                helper::XMLAttribute("operator", operation, m_DebugMode, hint);
+
+            auto itOperator = m_Operators.find(std::string(op.value()));
+            if (m_DebugMode)
+            {
+                if (itOperator == m_Operators.end())
+                {
+                    throw std::invalid_argument(
+                        "ERROR: operator " + std::string(op.value()) +
+                        " not previously defined, from variable " +
+                        variableName + " inside io " +
+                        std::string(currentIO.m_Name) + ", " + hint + "\n");
+                }
+            }
+
+            const Params parameters = lf_GetParametersXML(operation);
+            currentIO.m_VarOpsPlaceholder[variableName].push_back(
+                core::IO::Operation{itOperator->second.get(), parameters,
+                                    Params()});
+        }
+    };
+
+    auto lf_IOXML = [&](const pugi::xml_node &io) {
+
+        const pugi::xml_attribute ioName =
+            helper::XMLAttribute("name", io, m_DebugMode, hint);
+
+        // Build the IO object
+        auto itCurrentIO = m_IOs.emplace(
+            ioName.value(), core::IO(ioName.value(), m_MPIComm, true,
+                                     m_HostLanguage, m_DebugMode));
+        core::IO &currentIO = itCurrentIO.first->second;
+
+        // must be unique per io
+        const pugi::xml_node engine = io.child("engine");
+
+        if (engine)
+        {
+            const pugi::xml_attribute type =
+                helper::XMLAttribute("type", engine, m_DebugMode, hint);
+            currentIO.SetEngine(type.value());
+
+            const Params parameters = lf_GetParametersXML(engine);
+            currentIO.SetParameters(parameters);
+
+            if (m_DebugMode) // check for 2nd engine
+            {
+                const pugi::xml_node engineNode2 = io.child("engine");
+                if (engineNode2)
+                {
+                    throw std::invalid_argument("ERROR: XML only one <engine> "
+                                                "element can exist inside <io "
+                                                "name=\"" +
+                                                std::string(io.value()) +
+                                                "\"> element, " + hint + "\n");
+                }
+            }
+        }
+
+        for (const pugi::xml_node variable : io.children("variable"))
+        {
+            lf_IOVariableXML(variable, currentIO);
+        }
+    };
+
+    // BODY OF FUNCTION
+    const std::string fileContents = lf_FileContents(configXML);
+
+    const pugi::xml_document document =
+        helper::XMLDocument(fileContents, m_DebugMode, hint);
+
+    // must be unique
+    const pugi::xml_node config =
+        helper::XMLNode("adios2-config", document, m_DebugMode, hint, true);
+
+    for (const pugi::xml_node op : config.children("operator"))
+    {
+        lf_OperatorXML(op);
+    }
+
+    for (const pugi::xml_node io : config.children("io"))
+    {
+        lf_IOXML(io);
     }
 }
 

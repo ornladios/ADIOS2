@@ -189,6 +189,8 @@ private:
     void CheckMPI() const;
 
     void CheckOperator(const std::string name) const;
+
+    void XMLInit(const std::string configFile);
 };
 
 } // end namespace core

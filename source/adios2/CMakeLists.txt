@@ -68,7 +68,8 @@ target_include_directories(adios2
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml)
+target_link_libraries(adios2 PRIVATE adios2sys_interface) 
+target_link_libraries(adios2 PUBLIC pugixml)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2 PUBLIC ${ADIOS2_CXX11_FEATURES})
 

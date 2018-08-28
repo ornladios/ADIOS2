@@ -113,6 +113,9 @@ std::vector<int> GetGathervDisplacements(const size_t *counts,
 
 void CheckMPIReturn(const int value, const std::string hint);
 
+std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,
+                          const int rankSource = 0);
+
 } // end namespace helper
 } // end namespace adios2
 

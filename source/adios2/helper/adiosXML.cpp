@@ -20,191 +20,110 @@
 #include "adios2/helper/adiosMPIFunctions.h"
 #include "adios2/helper/adiosString.h"
 
-#include <pugixml.hpp>
-
 namespace adios2
 {
 namespace helper
 {
 
-Params InitParametersXML(const pugi::xml_node &node, const bool debugMode)
+pugi::xml_document XMLDocument(const std::string &xmlContents,
+                               const bool debugMode, const std::string hint)
 {
-    Params params;
-    for (const pugi::xml_node paramNode : node.children("parameter"))
-    {
-        const pugi::xml_attribute key = paramNode.attribute("key");
-        if (debugMode)
-        {
-            if (!key)
-            {
-                throw std::invalid_argument("ERROR: XML: No \"key\" attribute "
-                                            "found on <parameter> element, in "
-                                            "call to ADIOS constructor\n");
-            }
-        }
-
-        const pugi::xml_attribute value = paramNode.attribute("value");
-
-        if (debugMode)
-        {
-            if (!value)
-            {
-
-                throw std::invalid_argument("ERROR: XML: No \"value\" "
-                                            "attribute found on <parameter> "
-                                            "element,  for key " +
-                                            std::string(key.value()) +
-                                            ", in call to ADIOS constructor\n");
-            }
-        }
-
-        params.emplace(key.value(), value.value());
-    }
-    return params;
-}
-
-void InitIOXML(
-    const pugi::xml_node &ioNode, MPI_Comm mpiComm,
-    const std::string hostLanguage, const bool debugMode,
-    std::map<std::string, std::shared_ptr<core::Operator>> &transforms,
-    std::map<std::string, core::IO> &ios)
-{
-    // Extract <io name=""> attribute
-    const pugi::xml_attribute nameAttr = ioNode.attribute("name");
-    if (!nameAttr)
-    {
-        if (debugMode)
-        {
-            throw std::invalid_argument("ERROR: XML: No \"name\" attribute "
-                                        "found on <io> element, in call to "
-                                        "ADIOS constructor.\n");
-        }
-        return;
-    }
-    const std::string ioName = nameAttr.value();
-
-    // Build the IO object
-    auto ioIt = ios.emplace(
-        ioName, core::IO(ioName, mpiComm, true, hostLanguage, debugMode));
-    core::IO &io = ioIt.first->second;
-
-    // Extract <engine> element
-    if (debugMode)
-    {
-        unsigned int count = 0;
-
-        for (const pugi::xml_node engineNode : ioNode.children("engine"))
-        {
-            ++count;
-            if (count == 2)
-            {
-                throw std::invalid_argument(
-                    "ERROR: XML only one <engine> element "
-                    "can exist inside an <io> element from io " +
-                    ioName + ", in call to ADIOS constructor\n");
-            }
-        }
-    }
-
-    const pugi::xml_node engineNode = ioNode.child("engine");
-    if (engineNode)
-    {
-        const pugi::xml_attribute engineTypeAttr = engineNode.attribute("type");
-
-        if (debugMode)
-        {
-            if (!engineTypeAttr)
-            {
-                throw std::invalid_argument(
-                    "ERROR: XML: No \"type\" attribute "
-                    "found on <engine> element, in call to "
-                    "ADIOS constructor");
-            }
-        }
-
-        io.SetEngine(engineTypeAttr.value());
-    }
-
-    // Process <engine> parameters
-    io.SetParameters(InitParametersXML(engineNode, debugMode));
-
-    // Extract and process <transport> elements
-    for (const pugi::xml_node transportNode : ioNode.children("transport"))
-    {
-        const pugi::xml_attribute typeXMLAttribute =
-            transportNode.attribute("type");
-
-        if (debugMode)
-        {
-            if (!typeXMLAttribute)
-            {
-
-                throw std::invalid_argument("ERROR: XML: No \"type\" attribute "
-                                            "found on <transport> element, in "
-                                            "call to ADIOS constructor\n");
-            }
-        }
-
-        io.AddTransport(typeXMLAttribute.value(),
-                        InitParametersXML(transportNode, debugMode));
-    }
-}
-
-void InitXML(const std::string configXML, MPI_Comm mpiComm,
-             const std::string hostLanguage, const bool debugMode,
-             std::map<std::string, std::shared_ptr<core::Operator>> &transforms,
-             std::map<std::string, core::IO> &ios)
-{
-    int mpiRank;
-    MPI_Comm_rank(mpiComm, &mpiRank);
-    std::string fileContents;
-
-    // Read the file on rank 0 and broadcast it to everybody else
-    if (mpiRank == 0)
-    {
-        fileContents = FileToString(configXML);
-    }
-
-    fileContents = BroadcastValue(fileContents, mpiComm);
-
-    if (debugMode && fileContents.empty())
-    {
-        throw std::invalid_argument("ERROR: config xml file " + configXML +
-                                    " is either empty or file couldn't be "
-                                    "found, in call to ADIOS constructor\n");
-    }
-
-    pugi::xml_document doc;
-    auto parse_result = doc.load_buffer_inplace(
-        const_cast<char *>(fileContents.data()), fileContents.size());
+    pugi::xml_document document;
+    auto parse_result = document.load_buffer_inplace(
+        const_cast<char *>(xmlContents.data()), xmlContents.size());
 
     if (debugMode)
     {
         if (!parse_result)
         {
             throw std::invalid_argument(
-                "ERROR: XML: parse error in file " + configXML +
+                "ERROR: XML: parse error in string " + xmlContents +
                 " description: " + std::string(parse_result.description()) +
-                ", in call to ADIOS constructor\n");
+                ", check with any XML editor if format is ill-formed, " + hint +
+                "\n");
         }
     }
+    return document;
+}
 
-    const pugi::xml_node configNode = doc.child("adios-config");
+pugi::xml_node XMLNode(const std::string nodeName,
+                       const pugi::xml_document &xmlDocument,
+                       const bool debugMode, const std::string hint,
+                       const bool isUnique)
+{
+    const pugi::xml_node node = xmlDocument.child(nodeName.c_str());
 
     if (debugMode)
     {
-        if (!configNode)
+        if (!node)
         {
-            throw std::invalid_argument(
-                "ERROR: XML: No <adios-config> element found in file " +
-                configXML + ", in call to ADIOS constructor\n");
+            throw std::invalid_argument("ERROR: XML: no <" + nodeName +
+                                        "> element found, " + hint);
+        }
+
+        if (isUnique)
+        {
+            const pugi::xml_node node2 = xmlDocument.child(nodeName.c_str());
+            if (node2)
+            {
+                throw std::invalid_argument("ERROR: XML only one <" + nodeName +
+                                            "> element can exist inside " +
+                                            xmlDocument.name() + ", " + hint +
+                                            "\n");
+            }
         }
     }
+    return node;
+}
 
-    for (const pugi::xml_node ioNode : configNode.children("io"))
+pugi::xml_node XMLNode(const std::string nodeName,
+                       const pugi::xml_node &upperNode, const bool debugMode,
+                       const std::string hint, const bool isUnique)
+{
+    const pugi::xml_node node = upperNode.child(nodeName.c_str());
+
+    if (debugMode)
     {
-        InitIOXML(ioNode, mpiComm, hostLanguage, debugMode, transforms, ios);
+        if (!node)
+        {
+            throw std::invalid_argument("ERROR: XML: no <" + nodeName +
+                                        "> element found, inside <" +
+                                        upperNode.name() + "> element " + hint);
+        }
+
+        if (isUnique)
+        {
+            const pugi::xml_node node2 = upperNode.child(nodeName.c_str());
+            if (node2)
+            {
+                throw std::invalid_argument("ERROR: XML only one <" + nodeName +
+                                            "> element can exist inside <" +
+                                            upperNode.name() + "> element, " +
+                                            hint + "\n");
+            }
+        }
     }
+    return node;
+}
+
+pugi::xml_attribute XMLAttribute(const std::string attributeName,
+                                 const pugi::xml_node &node,
+                                 const bool debugMode, const std::string hint)
+{
+    const pugi::xml_attribute attribute = node.attribute(attributeName.c_str());
+
+    if (debugMode)
+    {
+        if (!attribute)
+        {
+            const std::string nodeName(node.name());
+
+            throw std::invalid_argument("ERROR: XML: No attribute " +
+                                        attributeName + " found on <" +
+                                        nodeName + "> element" + hint);
+        }
+    }
+    return attribute;
 }
 
 } // end namespace helper

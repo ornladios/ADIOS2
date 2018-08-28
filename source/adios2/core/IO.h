@@ -80,6 +80,8 @@ public:
     /** BPFileWriter engine default if unknown */
     std::string m_EngineType = "BPFile";
 
+    std::map<std::string, std::vector<Operation>> m_VarOpsPlaceholder;
+
     /**
      * @brief Constructor called from ADIOS factory class DeclareIO function.
      * Not to be used direclty in applications.

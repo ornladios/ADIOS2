@@ -3,7 +3,7 @@
      - operator API using Zfp compression rate
      executables in build/bin -->
 
-<adios-config>
+<adios2-config>
 
      <!--====================================
           Create operator inside ADIOS object 
@@ -31,4 +31,4 @@
         </variable>
     </io>
     
-</adios-config>
+</adios2-config>
