@@ -24,6 +24,7 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Variable.h"
 #include "adios2/core/VariableCompound.h"
@@ -47,6 +48,9 @@ class IO
 {
 
 public:
+    /** reference to object that created current IO */
+    ADIOS &m_ADIOS;
+
     /** unique identifier */
     const std::string m_Name;
 
@@ -85,14 +89,16 @@ public:
     /**
      * @brief Constructor called from ADIOS factory class DeclareIO function.
      * Not to be used direclty in applications.
+     * @param adios reference to ADIOS object that owns current IO
      * @param name unique identifier for this IO object
      * @param mpiComm MPI communicator from ADIOS factory class
      * @param inConfigFile IO defined in config file (XML)
      * @param hostLanguage current language using the adios2 library
      * @param debugMode true: extra exception checks (recommended)
      */
-    IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
-       const std::string hostLanguage, const bool debugMode);
+    IO(ADIOS &adios, const std::string name, MPI_Comm mpiComm,
+       const bool inConfigFile, const std::string hostLanguage,
+       const bool debugMode);
 
     ~IO() = default;
 

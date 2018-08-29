@@ -14,12 +14,16 @@
 #include <gtest/gtest.h>
 
 #define str_helper(X) #X
+#define mystr(X) str_helper(X)
 
 void ZfpRate1D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfpConfig1D.bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig1D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -41,10 +45,12 @@ void ZfpRate1D(const std::string configFile)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         true);
 #endif
     {
@@ -130,7 +136,10 @@ void ZfpRate2D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfpConfig2D.bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig2D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -153,10 +162,12 @@ void ZfpRate2D(const std::string configFile)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         true);
 #endif
     {
@@ -241,7 +252,10 @@ void ZfpRate3D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfpConfig3D.bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig3D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -265,10 +279,12 @@ void ZfpRate3D(const std::string configFile)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         true);
 #endif
     {
@@ -355,7 +371,10 @@ void ZfpRate1DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfpConfig1DSel.bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig1DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -377,10 +396,12 @@ void ZfpRate1DSel(const std::string configFile)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         true);
 #endif
     {
@@ -471,7 +492,10 @@ void ZfpRate2DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZConfig2DSel.bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig2DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -494,10 +518,12 @@ void ZfpRate2DSel(const std::string configFile)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         true);
 #endif
     {
@@ -586,7 +612,10 @@ void ZfpRate3DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfpConfig3DSel.bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig3DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -610,10 +639,12 @@ void ZfpRate3DSel(const std::string configFile)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         true);
 #endif
     {
@@ -707,7 +738,10 @@ void ZfpRate2DSmallSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZConfig2DSmallSel.bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig2DSmallSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -731,10 +765,12 @@ void ZfpRate2DSmallSel(const std::string configFile)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(std::string(str_helper(XML_CONFIG_DIR)) + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
                         true);
 #endif
     {
@@ -847,10 +883,11 @@ TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSmallSel)
     ZfpRate2DSmallSel(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(ZfpConfigFile, BPWriteReadZfpConfig,
-                        ::testing::Values("configZfp_rate8.xml",
-                                          "configZfp_rate9.xml",
-                                          "configZfp_rate10.xml"));
+INSTANTIATE_TEST_CASE_P(
+    ZfpConfigFile, BPWriteReadZfpConfig,
+    ::testing::Values("configZfp_rate8.xml", "configZfp_rate8Simple.xml",
+                      "configZfp_rate9.xml", "configZfp_rate9Simple.xml",
+                      "configZfp_rate10.xml", "configZfp_rate10Simple.xml"));
 
 int main(int argc, char **argv)
 {

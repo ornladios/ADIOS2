@@ -21,13 +21,14 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/IO.h"
 #include "adios2/core/Operator.h"
 
 namespace adios2
 {
 namespace core
 {
+
+class IO;
 
 /** @brief Point of entry class for an application.
  *         Serves as factory of IO class objects and Transforms */

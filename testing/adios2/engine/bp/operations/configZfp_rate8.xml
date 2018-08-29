@@ -26,9 +26,10 @@
         
         <variable name="r64">
         	<operation operator="CompressorZfp">
-        		<parameter key="rate" value="8"/>	
+        		<parameter key="rate" value="16"/>	
         	</operation>
         </variable>
+        
     </io>
     
 </adios-config>

@@ -58,7 +58,7 @@ void CheckMPIReturn(const int value, const std::string hint)
 }
 
 std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,
-                          const int rankSource)
+                          const std::string hint, const int rankSource)
 {
     int rank;
     MPI_Comm_rank(mpiComm, &rank);
@@ -68,7 +68,7 @@ std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,
     if (rank == rankSource)
     {
         // load file contents
-        fileContents = FileToString(fileName);
+        fileContents = FileToString(fileName, hint);
     }
     fileContents = BroadcastValue(fileContents, mpiComm, rankSource);
 

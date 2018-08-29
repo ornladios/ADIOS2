@@ -5,13 +5,6 @@
 
 <adios-config>
 
-     <!--====================================
-          Create operator inside ADIOS object 
-          using this config file 
-         ====================================-->
-	<operator name="CompressorZfp" type="zfp">
-	</operator>
-
     <!--====================================
            Apply to variables inside an IO
            as an operation  
@@ -19,16 +12,17 @@
     <io name="TestIO">
         
         <variable name="r32">
-        	<operation operator="CompressorZfp">
-        		<parameter key="rate" value="9"/>	
+        	<operation type="zfp">
+        		<parameter key="rate" value="10"/>	
         	</operation>
         </variable>
         
         <variable name="r64">
-        	<operation operator="CompressorZfp">
-        		<parameter key="rate" value="18"/>	
+        	<operation type="zfp">
+        		<parameter key="rate" value="20"/>	
         	</operation>
         </variable>
+        
     </io>
     
 </adios-config>

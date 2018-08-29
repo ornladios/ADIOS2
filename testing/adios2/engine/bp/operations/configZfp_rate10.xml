@@ -26,7 +26,7 @@
         
         <variable name="r64">
         	<operation operator="CompressorZfp">
-        		<parameter key="rate" value="10"/>	
+        		<parameter key="rate" value="20"/>	
         	</operation>
         </variable>
     </io>

@@ -14,6 +14,7 @@
 #include <ios>       //std::ios_base::failure
 
 #include "adios2/ADIOSMPI.h"
+#include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 
 // OPERATORS
@@ -102,7 +103,7 @@ IO &ADIOS::DeclareIO(const std::string name)
     }
 
     auto ioPair = m_IOs.emplace(
-        name, IO(name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
+        name, IO(*this, name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
     IO &io = ioPair.first->second;
     io.SetDeclared();
     return io;
@@ -283,8 +284,9 @@ void ADIOS::XMLInit(const std::string configXML)
 
     auto lf_FileContents = [&](const std::string configXML) -> std::string {
 
-        const std::string fileContents(
-            helper::BroadcastFile(configXML, m_MPIComm));
+        const std::string fileContents(helper::BroadcastFile(
+            configXML, m_MPIComm,
+            "when parsing configXML file, in call to the ADIOS constructor"));
 
         if (m_DebugMode)
         {
@@ -338,26 +340,74 @@ void ADIOS::XMLInit(const std::string configXML)
 
         for (const pugi::xml_node operation : node.children("operation"))
         {
-            const pugi::xml_attribute op =
-                helper::XMLAttribute("operator", operation, m_DebugMode, hint);
+            const pugi::xml_attribute opName = helper::XMLAttribute(
+                "operator", operation, m_DebugMode, hint, false);
 
-            auto itOperator = m_Operators.find(std::string(op.value()));
+            const pugi::xml_attribute opType = helper::XMLAttribute(
+                "type", operation, m_DebugMode, hint, false);
+
             if (m_DebugMode)
             {
-                if (itOperator == m_Operators.end())
+                if (opName && opType)
                 {
                     throw std::invalid_argument(
-                        "ERROR: operator " + std::string(op.value()) +
-                        " not previously defined, from variable " +
-                        variableName + " inside io " +
-                        std::string(currentIO.m_Name) + ", " + hint + "\n");
+                        "ERROR: operator (" + std::string(opName.value()) +
+                        ") and type (" + std::string(opType.value()) +
+                        ") attributes can't coexist in <operation> element "
+                        "inside <variable name=\"" +
+                        variableName + "\"> element, " + hint + "\n");
+                }
+
+                if (!opName && !opType)
+                {
+                    throw std::invalid_argument(
+                        "ERROR: <operation> element "
+                        "inside <variable name=\"" +
+                        variableName +
+                        "\"> element requires either operator "
+                        "(existing) or type (supported) attribute, " +
+                        hint + "\n");
                 }
             }
 
+            core::Operator *op = nullptr;
+
+            if (opName)
+            {
+                auto itOperator = m_Operators.find(std::string(opName.value()));
+                if (m_DebugMode)
+                {
+                    if (itOperator == m_Operators.end())
+                    {
+                        throw std::invalid_argument(
+                            "ERROR: operator " + std::string(opName.value()) +
+                            " not previously defined, from variable " +
+                            variableName + " inside io " +
+                            std::string(currentIO.m_Name) + ", " + hint + "\n");
+                    }
+                }
+                op = itOperator->second.get();
+            }
+
+            if (opType)
+            {
+                const std::string operatorType = std::string(opType.value());
+                const std::string operatorName =
+                    "__" + currentIO.m_Name + "_" + operatorType;
+                auto itOperator = m_Operators.find(operatorName);
+
+                if (itOperator == m_Operators.end())
+                {
+                    op = &DefineOperator(operatorName, operatorType);
+                }
+                else
+                {
+                    op = itOperator->second.get();
+                }
+            }
             const Params parameters = lf_GetParametersXML(operation);
             currentIO.m_VarOpsPlaceholder[variableName].push_back(
-                core::IO::Operation{itOperator->second.get(), parameters,
-                                    Params()});
+                core::IO::Operation{op, parameters, Params()});
         }
     };
 
@@ -368,7 +418,7 @@ void ADIOS::XMLInit(const std::string configXML)
 
         // Build the IO object
         auto itCurrentIO = m_IOs.emplace(
-            ioName.value(), core::IO(ioName.value(), m_MPIComm, true,
+            ioName.value(), core::IO(*this, ioName.value(), m_MPIComm, true,
                                      m_HostLanguage, m_DebugMode));
         core::IO &currentIO = itCurrentIO.first->second;
 

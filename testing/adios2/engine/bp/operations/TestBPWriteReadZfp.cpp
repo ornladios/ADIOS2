@@ -17,7 +17,7 @@ void ZfpRate1D(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp1D.bp");
+    const std::string fname("BPWriteReadZfp1D_" + std::to_string(rate) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -132,7 +132,7 @@ void ZfpRate2D(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp2D.bp");
+    const std::string fname("BPWriteReadZfp2D_" + std::to_string(rate) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -247,7 +247,7 @@ void ZfpRate3D(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp3D.bp");
+    const std::string fname("BPWriteReadZfp3D_" + std::to_string(rate) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -365,7 +365,8 @@ void ZfpRate1DSel(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp1DSel.bp");
+    const std::string fname("BPWriteReadZfp1DSel_" + std::to_string(rate) +
+                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -485,7 +486,8 @@ void ZfpRate2DSel(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp2DSel.bp");
+    const std::string fname("BPWriteReadZfp2DSel_" + std::to_string(rate) +
+                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -604,7 +606,8 @@ void ZfpRate3DSel(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp3DSel.bp");
+    const std::string fname("BPWriteReadZfp3DSel_" + std::to_string(rate) +
+                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -729,7 +732,8 @@ void ZfpRate2DSmallSel(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadZfp2DSmallSel.bp");
+    const std::string fname("BPWriteReadZfp2DSmallSel_" + std::to_string(rate) +
+                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
