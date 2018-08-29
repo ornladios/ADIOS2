@@ -56,6 +56,11 @@ int main(int argc, char **argv)
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
     std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
               << " and provided Mode " << mpi_provided << std::endl;
+    if (mpi_provided != MPI_THREAD_MULTIPLE)
+    {
+        MPI_Finalize();
+        return 0;
+    }
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
