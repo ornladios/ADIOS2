@@ -1367,6 +1367,122 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 
     };
 
+    /*Lipeng*/
+    auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
+                            BufferSTL &bufferSTL) {
+
+        ElementIndexHeader header;
+        size_t firstRank = 0;
+        // index positions per rank
+        std::vector<size_t> positions(indices.size(), 0);
+        // merge index length
+        size_t headerSize = 0;
+
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            size_t &position = positions[r];
+
+            header = ReadElementIndexHeader(buffer, position);
+            firstRank = r;
+
+            headerSize = position;
+            break;
+        }
+
+        if (m_DebugMode)
+        {
+            if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
+            {
+                throw std::runtime_error(
+                    "ERROR: invalid data type for variable " + header.Name +
+                    "when writing collective metadata\n");
+            }
+        }
+
+        // move all positions to headerSize
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            positions[r] = headerSize;
+        }
+
+        uint64_t setsCount = 0;
+        unsigned int currentTimeStep = 1;
+        std::vector<char> sorted;
+
+        for (size_t r = firstRank; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+
+            auto &position = positions[r];
+            if (position >= buffer.size())
+            {
+                continue;
+            }
+
+            uint8_t count = 0;
+            uint32_t length = 0;
+            uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+
+            size_t localPosition = position;
+            lf_GetCharacteristics(buffer, localPosition,
+                                  header.DataType, count, length,
+                                  timeStep);
+            ++setsCount;
+
+            // here copy to sorted buffer
+            helper::InsertToBuffer(sorted, &buffer[position],
+                                           length + 5);
+            position += length + 5;
+                
+        }
+
+        const uint32_t entryLength =
+            static_cast<uint32_t>(headerSize + sorted.size() - 4);
+        // Copy header to metadata buffer, need mutex here
+        {
+            std::lock_guard<std::mutex> lock(m_Mutex);
+            auto &buffer = bufferSTL.m_Buffer;
+            auto &position = bufferSTL.m_Position;
+
+            helper::CopyToBuffer(buffer, position, &entryLength);
+            helper::CopyToBuffer(buffer, position,
+                                 &indices[firstRank].Buffer[4],
+                                 headerSize - 8 - 4);
+            helper::CopyToBuffer(buffer, position, &setsCount);
+            helper::CopyToBuffer(buffer, position, sorted.data(),
+                                 sorted.size());
+        }
+    };
+
+    auto lf_MergeRankRange = [&](
+        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
+            &nameRankIndices,
+        const std::vector<std::string> &names, const size_t start,
+        const size_t end, BufferSTL &bufferSTL)
+
+    {
+        for (auto i = start; i < end; ++i)
+        {
+            auto itIndex = nameRankIndices.find(names[i]);
+            lf_MergeRank(itIndex->second, bufferSTL);
+        }
+    };
+    /*Lipeng*/
+
     // BODY OF FUNCTION STARTS HERE
     if (m_Threads == 1) // enforcing serial version for now
     {
@@ -1375,6 +1491,43 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
             lf_MergeRankSerial(rankIndices.second, bufferSTL);
         }
         return;
+    }
+
+    // TODO need to debug this part, if threaded per variable
+    const size_t elements = nameRankIndices.size();
+    const size_t stride = elements / m_Threads;        // elements per thread
+    const size_t last = stride + elements % m_Threads; // remainder to last
+
+    std::vector<std::thread> threads;
+    threads.reserve(m_Threads);
+
+    // copy names in order to use threads
+    std::vector<std::string> names;
+    names.reserve(nameRankIndices.size());
+
+    for (const auto &nameRankIndexPair : nameRankIndices)
+    {
+        names.push_back(nameRankIndexPair.first);
+    }
+
+    for (unsigned int t = 0; t < m_Threads; ++t)
+    {
+        const size_t start = stride * t;
+        size_t end = start + stride;
+
+        if (t == m_Threads - 1)
+        {
+            end = start + last;
+        }
+
+        threads.push_back(
+            std::thread(lf_MergeRankRange, std::ref(nameRankIndices),
+                        std::ref(names), start, end, std::ref(bufferSTL)));
+    }
+
+    for (auto &thread : threads)
+    {
+        thread.join();
     }
 }
 
