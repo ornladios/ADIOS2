@@ -326,9 +326,13 @@ void ADIOS::XMLInit(const std::string configXML)
         const pugi::xml_attribute type =
             helper::XMLAttribute("type", operatorNode, m_DebugMode, hint);
 
+        std::string typeLowerCase = std::string(type.value());
+        std::transform(typeLowerCase.begin(), typeLowerCase.end(),
+                       typeLowerCase.begin(), ::tolower);
+
         const Params parameters = lf_GetParametersXML(operatorNode);
 
-        DefineOperator(name.value(), type.value(), parameters);
+        DefineOperator(name.value(), typeLowerCase, parameters);
     };
 
     // node is the variable node
@@ -391,7 +395,10 @@ void ADIOS::XMLInit(const std::string configXML)
 
             if (opType)
             {
-                const std::string operatorType = std::string(opType.value());
+                std::string operatorType = std::string(opType.value());
+                std::transform(operatorType.begin(), operatorType.end(),
+                               operatorType.begin(), ::tolower);
+
                 const std::string operatorName =
                     "__" + currentIO.m_Name + "_" + operatorType;
                 auto itOperator = m_Operators.find(operatorName);

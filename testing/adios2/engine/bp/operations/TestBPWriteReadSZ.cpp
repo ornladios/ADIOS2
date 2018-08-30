@@ -17,7 +17,8 @@ void SZAccuracy1D(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ1D.bp");
+    const std::string fname("ADIOS2BPWriteReadSZ1D_" +
+                            std::to_string(accuracy) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -131,7 +132,8 @@ void SZAccuracy2D(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2D.bp");
+    const std::string fname("ADIOS2BPWriteReadSZ2D_" +
+                            std::to_string(accuracy) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -248,7 +250,8 @@ void SZAccuracy3D(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ3D.bp");
+    const std::string fname("ADIOS2BPWriteReadSZ3D_" +
+                            std::to_string(accuracy) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -368,7 +371,8 @@ void SZAccuracy1DSel(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ1DSel.bp");
+    const std::string fname("ADIOS2BPWriteReadSZ1DSel_" +
+                            std::to_string(accuracy) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -484,7 +488,8 @@ void SZAccuracy2DSel(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2DSel.bp");
+    const std::string fname("ADIOS2BPWriteReadSZ2DSel_" +
+                            std::to_string(accuracy) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -603,7 +608,8 @@ void SZAccuracy3DSel(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ3DSel.bp");
+    const std::string fname("ADIOS2BPWriteReadSZ3DSel_" +
+                            std::to_string(accuracy) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -727,7 +733,8 @@ void SZAccuracy2DSmallSel(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2DSmallSel.bp");
+    const std::string fname("ADIOS2BPWriteReadSZ2DSmallSel_" +
+                            std::to_string(accuracy) + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows

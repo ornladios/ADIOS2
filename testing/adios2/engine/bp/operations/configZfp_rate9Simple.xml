@@ -12,13 +12,13 @@
     <io name="TestIO">
         
         <variable name="r32">
-        	<operation type="zfp">
+        	<operation type="ZFP">
         		<parameter key="rate" value="9"/>	
         	</operation>
         </variable>
         
         <variable name="r64">
-        	<operation type="zfp">
+        	<operation type="ZFP">
         		<parameter key="rate" value="18"/>	
         	</operation>
         </variable>
