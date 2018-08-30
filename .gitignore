@@ -29,4 +29,3 @@ build/
 # Doxygen generated files
 html/
 *.html
-xml/
