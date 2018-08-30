@@ -18,27 +18,18 @@
 #include <utility> //std::pair
 /// \endcond
 
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
-#include "adios2/core/Operator.h"
 
 namespace adios2
 {
 namespace helper
 {
 
-/**
- * Called inside the ADIOS XML constructors to get contents from file,
- * broadcast and fill transforms and ios
- * @param configXMLFile
- * @param mpiComm
- * @param debugMode
- * @param transforms
- * @param ios
- */
-void InitXML(const std::string configXML, MPI_Comm mpiComm,
-             const std::string hostLanguage, const bool debugMode,
-             std::map<std::string, std::shared_ptr<core::Operator>> &transforms,
-             std::map<std::string, core::IO> &ios);
+void ParseConfigXML(
+    core::ADIOS &adios, const std::string &configFile,
+    std::map<std::string, core::IO> &ios,
+    std::map<std::string, std::shared_ptr<core::Operator>> &operators);
 
 } // end namespace helper
 } // end namespace adios2

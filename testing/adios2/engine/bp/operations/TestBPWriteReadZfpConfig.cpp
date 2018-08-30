@@ -13,16 +13,21 @@
 
 #include <gtest/gtest.h>
 
-void SZAccuracy1D(const double accuracy)
+#define str_helper(X) #X
+#define mystr(X) str_helper(X)
+
+void ZfpRate1D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ1D_" +
-                            std::to_string(accuracy) + ".bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig1D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
-    const size_t Nx = 1000;
+    const size_t Nx = 100;
 
     // Number of steps
     const size_t NSteps = 1;
@@ -40,9 +45,13 @@ void SZAccuracy1D(const double accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -55,12 +64,6 @@ void SZAccuracy1D(const double accuracy)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -75,6 +78,9 @@ void SZAccuracy1D(const double accuracy)
         bpWriter.Close();
     }
 
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -114,10 +120,8 @@ void SZAccuracy1D(const double accuracy)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy)
-                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -128,12 +132,14 @@ void SZAccuracy1D(const double accuracy)
     }
 }
 
-void SZAccuracy2D(const double accuracy)
+void ZfpRate2D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2D_" +
-                            std::to_string(accuracy) + ".bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig2D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -156,9 +162,13 @@ void SZAccuracy2D(const double accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -171,12 +181,6 @@ void SZAccuracy2D(const double accuracy)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -232,10 +236,8 @@ void SZAccuracy2D(const double accuracy)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy)
-                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -246,12 +248,14 @@ void SZAccuracy2D(const double accuracy)
     }
 }
 
-void SZAccuracy3D(const double accuracy)
+void ZfpRate3D(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ3D_" +
-                            std::to_string(accuracy) + ".bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig3D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -275,9 +279,13 @@ void SZAccuracy3D(const double accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -290,12 +298,6 @@ void SZAccuracy3D(const double accuracy)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -353,10 +355,8 @@ void SZAccuracy3D(const double accuracy)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy)
-                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -367,16 +367,18 @@ void SZAccuracy3D(const double accuracy)
     }
 }
 
-void SZAccuracy1DSel(const double accuracy)
+void ZfpRate1DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ1DSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig1DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
-    const size_t Nx = 1000;
+    const size_t Nx = 100;
 
     // Number of steps
     const size_t NSteps = 1;
@@ -394,15 +396,19 @@ void SZAccuracy1DSel(const double accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
-        const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
-        const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
+        const adios2::Dims shape{static_cast<std::size_t>(Nx * mpiSize)};
+        const adios2::Dims start{static_cast<std::size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
@@ -410,15 +416,9 @@ void SZAccuracy1DSel(const double accuracy)
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
 
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (size_t step = 0; step < NSteps; ++step)
+        for (auto step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
@@ -429,6 +429,9 @@ void SZAccuracy1DSel(const double accuracy)
         bpWriter.Close();
     }
 
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -444,9 +447,10 @@ void SZAccuracy1DSel(const double accuracy)
         EXPECT_TRUE(var_r64);
         ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+        ASSERT_EQ(var_r64.Shape()[0], static_cast<std::size_t>(mpiSize) * Nx);
 
-        const adios2::Dims start{mpiRank * Nx + Nx / 2};
+        const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx +
+                                 Nx / 2};
         const adios2::Dims count{Nx / 2};
         const adios2::Box<adios2::Dims> sel(start, count);
         var_r32.SetSelection(sel);
@@ -469,10 +473,10 @@ void SZAccuracy1DSel(const double accuracy)
                 std::string msg = ss.str();
 
                 ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 + i]),
-                          accuracy)
+                          1E-4)
                     << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]),
-                          accuracy)
+                          1E-4)
                     << msg;
             }
             ++t;
@@ -484,12 +488,14 @@ void SZAccuracy1DSel(const double accuracy)
     }
 }
 
-void SZAccuracy2DSel(const double accuracy)
+void ZfpRate2DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2DSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig2DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -512,9 +518,13 @@ void SZAccuracy2DSel(const double accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -527,12 +537,6 @@ void SZAccuracy2DSel(const double accuracy)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -589,10 +593,10 @@ void SZAccuracy2DSel(const double accuracy)
                 std::string msg = ss.str();
 
                 ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]),
-                          accuracy)
+                          1E-4)
                     << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny + i]),
-                          accuracy)
+                          1E-4)
                     << msg;
             }
             ++t;
@@ -604,12 +608,14 @@ void SZAccuracy2DSel(const double accuracy)
     }
 }
 
-void SZAccuracy3DSel(const double accuracy)
+void ZfpRate3DSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ3DSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig3DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -633,9 +639,13 @@ void SZAccuracy3DSel(const double accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -648,12 +658,6 @@ void SZAccuracy3DSel(const double accuracy)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -689,7 +693,8 @@ void SZAccuracy3DSel(const double accuracy)
         ASSERT_EQ(var_r64.Shape()[1], Ny);
         ASSERT_EQ(var_r64.Shape()[2], Nz);
 
-        const adios2::Dims start{mpiRank * Nx + Nx / 2, 0, 0};
+        const adios2::Dims start{
+            static_cast<std::size_t>(mpiRank) * Nx + Nx / 2, 0, 0};
         const adios2::Dims count{Nx / 2, Ny, Nz};
         const adios2::Box<adios2::Dims> sel(start, count);
         var_r32.SetSelection(sel);
@@ -713,11 +718,11 @@ void SZAccuracy3DSel(const double accuracy)
 
                 ASSERT_LT(
                     std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny * Nz + i]),
-                    accuracy)
+                    1E-4)
                     << msg;
                 ASSERT_LT(
                     std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny * Nz + i]),
-                    accuracy)
+                    1E-4)
                     << msg;
             }
             ++t;
@@ -729,12 +734,14 @@ void SZAccuracy3DSel(const double accuracy)
     }
 }
 
-void SZAccuracy2DSmallSel(const double accuracy)
+void ZfpRate2DSmallSel(const std::string configFile)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2DSmallSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const auto begin = configFile.find("_rate") + 5;
+    const auto end = configFile.find_last_of(".") - begin;
+    const std::string rate = configFile.substr(begin, end);
+    const std::string fname("BPWriteReadZfpConfig2DSmallSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -758,9 +765,13 @@ void SZAccuracy2DSmallSel(const double accuracy)
 #endif
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
+                            adios2::PathSeparator + configFile,
+                        true);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -773,12 +784,6 @@ void SZAccuracy2DSmallSel(const double accuracy)
                                                 adios2::ConstantDims);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
                                                  adios2::ConstantDims);
-
-        // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
-
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -828,17 +833,17 @@ void SZAccuracy2DSmallSel(const double accuracy)
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
 
-            ASSERT_LT(std::abs(decompressedR32s[0] - 0.06), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[0] - 0.06), 0.01);
+            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06), 0.01);
 
-            ASSERT_LT(std::abs(decompressedR32s[1] - 0.07), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[1] - 0.07), 0.01);
+            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07), 0.01);
 
-            ASSERT_LT(std::abs(decompressedR32s[2] - 0.11), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[2] - 0.11), 0.01);
+            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11), 0.01);
 
-            ASSERT_LT(std::abs(decompressedR32s[3] - 0.12), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[3] - 0.12), 0.01);
+            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12), 0.01);
 
             ++t;
         }
@@ -849,27 +854,40 @@ void SZAccuracy2DSmallSel(const double accuracy)
     }
 }
 
-class BPWriteReadSZ : public ::testing::TestWithParam<double>
+class BPWriteReadZfpConfig : public ::testing::TestWithParam<std::string>
 {
 public:
-    BPWriteReadSZ() = default;
-    virtual void SetUp(){};
-    virtual void TearDown(){};
+    BPWriteReadZfpConfig() = default;
+
+    virtual void SetUp() {}
+    virtual void TearDown() {}
 };
 
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ1D) { SZAccuracy1D(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ2D) { SZAccuracy2D(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ3D) { SZAccuracy3D(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ1DSel) { SZAccuracy1DSel(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ2DSel) { SZAccuracy2DSel(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ3DSel) { SZAccuracy3DSel(GetParam()); }
-TEST_F(BPWriteReadSZ, ADIOS2BPWriteReadSZ2DSmallSel)
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp1D) { ZfpRate1D(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2D) { ZfpRate2D(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp3D) { ZfpRate3D(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp1DSel)
 {
-    SZAccuracy2DSmallSel(0.01);
+    ZfpRate1DSel(GetParam());
+}
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSel)
+{
+    ZfpRate2DSel(GetParam());
+}
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp3DSel)
+{
+    ZfpRate3DSel(GetParam());
+}
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSmallSel)
+{
+    ZfpRate2DSmallSel(GetParam());
 }
 
-INSTANTIATE_TEST_CASE_P(SZAccuracy, BPWriteReadSZ,
-                        ::testing::Values(0.01, 0.001, 0.0001, 0.00001));
+INSTANTIATE_TEST_CASE_P(
+    ZfpConfigFile, BPWriteReadZfpConfig,
+    ::testing::Values("configZfp_rate8.xml", "configZfp_rate8Simple.xml",
+                      "configZfp_rate9.xml", "configZfp_rate9Simple.xml",
+                      "configZfp_rate10.xml", "configZfp_rate10Simple.xml"));
 
 int main(int argc, char **argv)
 {

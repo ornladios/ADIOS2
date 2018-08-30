@@ -27,9 +27,10 @@ namespace helper
 /**
  * Opens and checks for file and dumps content to a single string.
  * @param fileName of text file
+ * @param hint exception message
  * @return file contents in a string
  */
-std::string FileToString(const std::string &fileName) noexcept;
+std::string FileToString(const std::string &fileName, const std::string hint);
 
 /**
  * Transforms a vector to a map of parameters

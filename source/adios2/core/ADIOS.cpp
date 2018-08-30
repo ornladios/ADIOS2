@@ -14,7 +14,8 @@
 #include <ios>       //std::ios_base::failure
 
 #include "adios2/ADIOSMPI.h"
-#include "adios2/helper/adiosFunctions.h" //InquireKey
+#include "adios2/core/IO.h"
+#include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 
 // OPERATORS
 
@@ -53,8 +54,7 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
         {
-            helper::InitXML(configFile, m_MPIComm, m_HostLanguage, m_DebugMode,
-                            m_Operators, m_IOs);
+            XMLInit(configFile);
         }
         // TODO expand for other formats
     }
@@ -103,7 +103,7 @@ IO &ADIOS::DeclareIO(const std::string name)
     }
 
     auto ioPair = m_IOs.emplace(
-        name, IO(name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
+        name, IO(*this, name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
     IO &io = ioPair.first->second;
     io.SetDeclared();
     return io;
@@ -274,6 +274,11 @@ void ADIOS::CheckOperator(const std::string name) const
                 "be unique, in call to DefineOperator\n");
         }
     }
+}
+
+void ADIOS::XMLInit(const std::string &configFileXML)
+{
+    helper::ParseConfigXML(*this, configFileXML, m_IOs, m_Operators);
 }
 
 } // end namespace core

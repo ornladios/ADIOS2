@@ -22,13 +22,14 @@ namespace adios2
 namespace helper
 {
 
-std::string FileToString(const std::string &fileName) noexcept
+std::string FileToString(const std::string &fileName, const std::string hint)
 {
     std::ifstream fileStream(fileName);
 
     if (!fileStream)
     {
-        return std::string(); // empty string
+        throw std::ios_base::failure("ERROR: file " + fileName +
+                                     " not found, " + hint + "\n");
     }
 
     std::ostringstream fileSS;

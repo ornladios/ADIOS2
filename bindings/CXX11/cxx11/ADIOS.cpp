@@ -10,6 +10,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
+#include "adios2/core/IO.h"
 
 namespace adios2
 {

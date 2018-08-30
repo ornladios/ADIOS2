@@ -82,6 +82,54 @@ TEST_F(XMLConfigTest, TwoEnginesException)
 #endif
 }
 
+TEST_F(XMLConfigTest, OpTypeException)
+{
+    const std::string configFile(configDir +
+                                 std::string(&adios2::PathSeparator, 1) +
+                                 "configOpTypeException.xml");
+
+#ifdef ADIOS2_HAVE_MPI
+    EXPECT_THROW(
+        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON),
+        std::invalid_argument);
+#else
+    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
+                 std::invalid_argument);
+#endif
+}
+
+TEST_F(XMLConfigTest, OpNullException)
+{
+    const std::string configFile(configDir +
+                                 std::string(&adios2::PathSeparator, 1) +
+                                 "configOpNullException.xml");
+
+#ifdef ADIOS2_HAVE_MPI
+    EXPECT_THROW(
+        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON),
+        std::invalid_argument);
+#else
+    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
+                 std::invalid_argument);
+#endif
+}
+
+TEST_F(XMLConfigTest, OpNoneException)
+{
+    const std::string configFile(configDir +
+                                 std::string(&adios2::PathSeparator, 1) +
+                                 "configOpNoneException.xml");
+
+#ifdef ADIOS2_HAVE_MPI
+    EXPECT_THROW(
+        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON),
+        std::invalid_argument);
+#else
+    EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
+                 std::invalid_argument);
+#endif
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

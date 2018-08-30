@@ -49,7 +49,22 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
                                               constantDims, m_DebugMode));
     m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), size));
-    return itVariablePair.first->second;
+
+    Variable<T> &variable = itVariablePair.first->second;
+
+    // check IO placeholder for variable operations
+    auto itOperations = m_VarOpsPlaceholder.find(name);
+    if (itOperations != m_VarOpsPlaceholder.end())
+    {
+        variable.m_Operations.reserve(itOperations->second.size());
+
+        for (auto &operation : itOperations->second)
+        {
+            variable.AddOperation(*operation.Op, operation.Parameters);
+        }
+    }
+
+    return variable;
 }
 
 template <class T>
