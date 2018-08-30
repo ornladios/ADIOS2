@@ -18,73 +18,18 @@
 #include <utility> //std::pair
 /// \endcond
 
+#include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
-#include "adios2/core/Operator.h"
-
-#include <pugixml.hpp>
 
 namespace adios2
 {
 namespace helper
 {
 
-/**
- * Get and check XML Document
- * @param xmlContents string with xml contents
- * @param debugMode true: check if ill-formed, false: no-check
- * @param hint improve exception message for debugging
- * @return  pugi compatible xml document
- * @exception std::invalid_argument in debugMode if xml is ill-formed
- */
-pugi::xml_document XMLDocument(const std::string &xmlContents,
-                               const bool debugMode, const std::string hint);
-
-/**
- * Get xml tag "element node" <nodeName> ... </nodeName> from xml document
- * @param nodeName tag element node to look for
- * @param document xml string source for finding nodeName
- * @param debugMode true: check if nodeName exist, false: no-check
- * @param hint improve exception message for debugging
- * @param isMandatory
- * @param isUnique true: nodeName must be unique in XML document, false:
- * multiple elements can have the same name
- * @return pugi node for nodeName
- * @exception std::invalid_argument in debugMode if nodeName not found
- */
-pugi::xml_node XMLNode(const std::string nodeName,
-                       const pugi::xml_document &document, const bool debugMode,
-                       const std::string hint, const bool isMandatory = true,
-                       const bool isUnique = false);
-
-/**
- * Version that gets a node from inside another node
- * @param nodeName tag element node to look for
- * @param upperNode xml node element for finding nodeName
- * @param debugMode true: check if nodeName exist, false: no-check
- * @param hint improve exception message for debugging
- * @param isUnique true: nodeName must be unique in XML document, false:
- * multiple elements can have the same name
- * @return pugi node for nodeName
- * @exception std::invalid_argument in debugMode if nodeName not found or is not
- * unique (if isUnique=true)
- */
-pugi::xml_node XMLNode(const std::string nodeName,
-                       const pugi::xml_node &upperNode, const bool debugMode,
-                       const std::string hint, const bool isMandatory = true,
-                       const bool isUnique = false);
-
-/**
- * Gets a node attribute e.g. name in io <io name="testIO">
- * @param attributeName
- * @param node
- * @param debugMode
- * @param hint
- * @return
- */
-pugi::xml_attribute XMLAttribute(const std::string attributeName,
-                                 const pugi::xml_node &node,
-                                 const bool debugMode, const std::string hint,
-                                 const bool isMandatory = true);
+void ParseConfigXML(
+    core::ADIOS &adios, const std::string &configFile,
+    std::map<std::string, core::IO> &ios,
+    std::map<std::string, std::shared_ptr<core::Operator>> &operators);
 
 } // end namespace helper
 } // end namespace adios2

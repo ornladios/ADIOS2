@@ -35,8 +35,14 @@ class IO;
 class ADIOS
 {
 public:
+    /** if true will do more checks, exceptions, warnings, expect slower code */
+    const bool m_DebugMode = true;
+
     /** Passed from parallel constructor, MPI_Comm is a pointer itself. */
     MPI_Comm m_MPIComm;
+
+    /** Changed by language bindings in constructor */
+    const std::string m_HostLanguage = "C++";
 
     /**
      * @brief Constructor for MPI applications WITH a XML config file
@@ -166,12 +172,6 @@ private:
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
 
-    /** if true will do more checks, exceptions, warnings, expect slower code */
-    const bool m_DebugMode = true;
-
-    /** Changed by language bindings in constructor */
-    const std::string m_HostLanguage = "C++";
-
     /**
      * @brief List of IO class objects defined from either ADIOS
      * configuration file (XML) or the DeclareIO function explicitly.
@@ -191,7 +191,7 @@ private:
 
     void CheckOperator(const std::string name) const;
 
-    void XMLInit(const std::string configFile);
+    void XMLInit(const std::string &configFileXML);
 };
 
 } // end namespace core
