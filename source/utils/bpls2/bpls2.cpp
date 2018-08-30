@@ -2514,11 +2514,11 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     {
                         fprintf(outf, "N/A / N/A");
                     }
-                    fprintf(outf, "\n");
-                    if (dump)
-                    {
-                        readVarBlock(fp, io, variable, step, j, blocks[j]);
-                    }
+                }
+                fprintf(outf, "\n");
+                if (dump)
+                {
+                    readVarBlock(fp, io, variable, step, j, blocks[j]);
                 }
             }
         }
