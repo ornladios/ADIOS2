@@ -673,6 +673,12 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
 
+        if (m_ReverseDimensions)
+        {
+            std::reverse(blockInfo.Start.begin(), blockInfo.Start.end());
+            std::reverse(blockInfo.Count.begin(), blockInfo.Count.end());
+        }
+
         if (blockCharacteristics.Statistics.IsValue) // value
         {
             blockInfo.IsValue = true;
