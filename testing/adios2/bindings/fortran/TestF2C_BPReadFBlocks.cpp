@@ -22,16 +22,7 @@ public:
 // ADIOS2 Fortran BP write, ADIOS2 C++ read
 TEST_F(BPReadFBlocks, FHeatMap2D)
 {
-
-    // Each process would write a 4x2 array and all processes would
-    // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("'HeatMap2D_f.bp");
-
     int mpiRank = 0, mpiSize = 1;
-
-    const std::size_t Nx = 10;
-    const std::size_t NSteps = 1;
-    const std::size_t NVars = 1000;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -79,15 +70,7 @@ TEST_F(BPReadFBlocks, FHeatMap2D)
 
 TEST_F(BPReadFBlocks, FHeatMap3D)
 {
-    // Each process would write a 4x2 array and all processes would
-    // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("'HeatMap3D_f.bp");
-
     int mpiRank = 0, mpiSize = 1;
-
-    const std::size_t Nx = 10;
-    const std::size_t NSteps = 1;
-    const std::size_t NVars = 1000;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
