@@ -855,8 +855,8 @@ void SstWriterClose(SstStream Stream)
         CP_verbose(Stream, "Reader Count is %d\n", Stream->ReaderCount);
         for (int i = 0; i < Stream->ReaderCount; i++)
         {
-            printf("Reader [%d] status is %d\n", i,
-                   Stream->Readers[i]->ReaderStatus);
+            CP_verbose(Stream, "Reader [%d] status is %d\n", i,
+                       Stream->Readers[i]->ReaderStatus);
         }
         /* NEED TO HANDLE FAILURE HERE */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
