@@ -341,7 +341,6 @@ extern void FFSFreeMarshalData(SstStream Stream)
     }
     else
     {
-        printf("FREEING READER SIDE\n");
         /* reader side */
         struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
         for (int i = 0; i < Stream->WriterCohortSize; i++)
