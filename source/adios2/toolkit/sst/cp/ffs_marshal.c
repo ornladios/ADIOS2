@@ -341,7 +341,7 @@ extern void FFSFreeMarshalData(SstStream Stream)
     }
     else
     {
-
+        printf("FREEING READER SIDE\n");
         /* reader side */
         struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
         for (int i = 0; i < Stream->WriterCohortSize; i++)
@@ -1240,6 +1240,11 @@ extern void FFSClearTimestepData(SstStream Stream)
 {
 
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    for (int i = 0; i < Stream->WriterCohortSize; i++)
+    {
+        if (Info->WriterInfo[i].RawBuffer)
+            free(Info->WriterInfo[i].RawBuffer);
+    }
     memset(Info->WriterInfo, 0,
            sizeof(Info->WriterInfo[0]) * Stream->WriterCohortSize);
     memset(Info->MetadataBaseAddrs, 0,
@@ -1402,6 +1407,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             VarRec->PerWriterMetaFieldDesc[WriterRank] = &FieldList[i];
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
             i += 4;
+            free(ArrayName);
         }
         else
         {

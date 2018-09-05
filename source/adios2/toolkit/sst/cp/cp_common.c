@@ -721,6 +721,11 @@ extern void AddToLastCallFreeList(void *Block)
 
 extern void SstStreamDestroy(SstStream Stream)
 {
+    /*
+     * StackStream is only used to access verbosity info
+     * in a safe way after all streams have been destroyed
+     */
+    struct _SstStream StackStream = *Stream;
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
     if (Stream->Role == ReaderRole)
@@ -760,8 +765,7 @@ extern void SstStreamDestroy(SstStream Stream)
         free(FFSList);
         FFSList = Tmp;
     }
-    if ((Stream->Role == WriterRole) &&
-        (Stream->ConfigParams->MarshalMethod == SstMarshalFFS))
+    if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
     {
         FFSFreeMarshalData(Stream);
         if (Stream->M)
@@ -818,7 +822,7 @@ extern void SstStreamDestroy(SstStream Stream)
             free_FMfield_list(CP_SstParamsList);
         CP_SstParamsList = NULL;
     }
-    CP_verbose(Stream, "SstStreamDestroy successful, returning\n");
+    CP_verbose(&StackStream, "SstStreamDestroy successful, returning\n");
 }
 
 extern char *CP_GetContactString(SstStream Stream)
