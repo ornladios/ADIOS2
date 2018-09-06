@@ -368,6 +368,8 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
             m_FileDataManager.FlushFiles(transportIndex);
         }
+
+        m_BP3Serializer.m_Aggregator.Close();
     }
 
     m_BP3Serializer.m_Aggregator.ResetBuffers();
