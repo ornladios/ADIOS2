@@ -141,22 +141,31 @@ void MPIChain::HandshakeLinks()
     MPI_Request sendRequest;
     if (m_Rank > 0) // send
     {
-        MPI_Isend(&m_Rank, 1, MPI_INT, m_Rank - 1, 0, m_Comm, &sendRequest);
+        helper::CheckMPIReturn(
+            MPI_Isend(&m_Rank, 1, MPI_INT, m_Rank - 1, 0, m_Comm, &sendRequest),
+            "Isend handshake with neighbor, MPIChain aggregator, at Open");
     }
 
     if (m_Rank < m_Size - 1) // receive
     {
         MPI_Request receiveRequest;
-        MPI_Irecv(&link, 1, MPI_INT, m_Rank + 1, 0, m_Comm, &receiveRequest);
+        helper::CheckMPIReturn(
+            MPI_Irecv(&link, 1, MPI_INT, m_Rank + 1, 0, m_Comm,
+                      &receiveRequest),
+            "Irecv handshake with neighbor, MPIChain aggregator, at Open");
 
         MPI_Status receiveStatus;
-        MPI_Wait(&receiveRequest, &receiveStatus);
+        helper::CheckMPIReturn(
+            MPI_Wait(&receiveRequest, &receiveStatus),
+            "Irecv Wait handshake with neighbor, MPIChain aggregator, at Open");
     }
 
     if (m_Rank > 0)
     {
         MPI_Status sendStatus;
-        MPI_Wait(&sendRequest, &sendStatus);
+        helper::CheckMPIReturn(
+            MPI_Wait(&sendRequest, &sendStatus),
+            "Isend wait handshake with neighbor, MPIChain aggregator, at Open");
     }
 }
 

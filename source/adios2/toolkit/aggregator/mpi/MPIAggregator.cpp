@@ -23,7 +23,9 @@ MPIAggregator::~MPIAggregator()
 {
     if (m_IsActive)
     {
-        MPI_Comm_free(&m_Comm);
+        helper::CheckMPIReturn(MPI_Comm_free(&m_Comm),
+                               "freeing aggregators comm in MPIAggregator "
+                               "destructor, not recommended");
     }
 }
 
@@ -111,7 +113,8 @@ void MPIAggregator::Close()
 {
     if (m_IsActive)
     {
-        MPI_Comm_free(&m_Comm);
+        helper::CheckMPIReturn(MPI_Comm_free(&m_Comm),
+                               "freeing aggregators comm at Close\n");
         m_IsActive = false;
     }
 }
@@ -140,8 +143,10 @@ void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
         if (static_cast<size_t>(parentRank) >= consumer &&
             static_cast<size_t>(parentRank) < consumer + stride)
         {
-            MPI_Comm_split(parentComm, static_cast<int>(consumer), parentRank,
-                           &m_Comm);
+            helper::CheckMPIReturn(
+                MPI_Comm_split(parentComm, static_cast<int>(consumer),
+                               parentRank, &m_Comm),
+                "creating aggregators comm with split at Open");
             m_ConsumerRank = static_cast<int>(consumer);
             m_SubStreamIndex = static_cast<size_t>(s);
         }
@@ -169,7 +174,8 @@ void MPIAggregator::HandshakeRank(const int rank)
         message = m_Rank;
     }
 
-    MPI_Bcast(&message, 1, MPI_INT, rank, m_Comm);
+    helper::CheckMPIReturn(MPI_Bcast(&message, 1, MPI_INT, rank, m_Comm),
+                           "handshake with aggregator rank 0 at Open");
 }
 
 } // end namespace aggregator

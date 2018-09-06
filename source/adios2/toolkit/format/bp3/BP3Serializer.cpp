@@ -150,6 +150,7 @@ void BP3Serializer::CloseData(core::IO &io)
             m_Profiler.Bytes.at("buffering") = m_Data.m_AbsolutePosition;
         }
 
+        m_Aggregator.Close();
         m_IsClosed = true;
     }
 
