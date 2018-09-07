@@ -103,6 +103,6 @@ endif()
 add_test(
   NAME ADIOSSstKillReadersTest.Serialized
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol kill_readers
-    -nw 3 -nr 2 -max_readers 1 -warg 'RendezvousReaderCount:0' -rarg '--ignore_time_gap')
+    -verbose -nw 3 -nr 2 -max_readers 1 -warg 'RendezvousReaderCount:0' -rarg '--ignore_time_gap')
 set_tests_properties(ADIOSSstKillReadersTest.Serialized PROPERTIES TIMEOUT 240) 
 
