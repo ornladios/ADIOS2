@@ -89,6 +89,7 @@ if(ADIOS2_HAVE_MPI)
   
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
   gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args})
+  gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
   
 endif()
 

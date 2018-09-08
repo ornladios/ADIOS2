@@ -206,6 +206,7 @@ void BP4Serializer::ResetIndices()
 void BP4Serializer::ResetIndicesBuffer() 
 {
     m_MetadataSet.PGIndex.Buffer.resize(0);
+    m_MetadataSet.PGIndex.LastUpdatedPosition = 0;
     m_MetadataSet.DataPGCount = 0;
     m_MetadataSet.DataPGLengthPosition = 0;
     m_MetadataSet.DataPGVarsCount = 0;
@@ -218,6 +219,7 @@ void BP4Serializer::ResetIndicesBuffer()
         const size_t headersize = 15 + 8 + variableName.size();
         index.Buffer.resize(headersize);
         index.Count = 0;
+        index.LastUpdatedPosition = headersize;
     } 
 
     for( auto& attributesIndexPair : m_MetadataSet.AttributesIndices)
