@@ -81,8 +81,8 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     if (Params->ControlTransport == NULL)
     {
-        /* determine reasonable default, now "enet" */
-        Params->ControlTransport = strdup("enet");
+        /* determine reasonable default, now "sockets" */
+        Params->ControlTransport = strdup("sockets");
     }
     for (int i = 0; Params->ControlTransport[i] != 0; i++)
     {
