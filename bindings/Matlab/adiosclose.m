@@ -27,18 +27,17 @@ function adiosclose(varargin)
 checkArgCounts(varargin{:});
 [args, msg] = parse_inputs(varargin{:});
 if (~isempty(msg))
-    error('MATLAB:adiosopen:inputParsing', '%s', msg);
+    error('MATLAB:adiosclose:inputParsing', '%s', msg);
 end
 
 if (args.Verbose > 0)
-    fn=sprintf('File handler=%lld',args.fh);
-    gharr=sprintf('%lld ',args.ghs);
-    ghs=sprintf('Group handlers=[%s]',gharr);
-    CallArguments = sprintf('adiosclosec:\n  %s\n  %s\n  Verbose=%d\n', fn, ghs, args.Verbose);
+    fhs=sprintf('File handler=%lld',args.fh);
+    aos=sprintf('ADIOS handler=%lld',args.ao);
+    CallArguments = sprintf('adiosclosec:\n  %s\n  %s\n  Verbose=%d\n', fhs, aos, args.Verbose);
 end
 
 
-adiosclosec(args.fh, args.ghs, args.Verbose);
+adiosclosec(args.fh, args.ao, args.Verbose);
 
 
 
@@ -67,9 +66,8 @@ end
 function [args, msg] = parse_inputs(varargin)
 
 arg1  = '';
-args.fh=int64(0);
-args.ngroups=0;
-args.ghs=int64([]);
+args.fh=uint64(0);
+args.ao=uint64(0);
 args.Verbose = 0;  % verbosity, default is off, i.e. 0
 
 msg = '';
@@ -82,20 +80,16 @@ if isstruct(varargin{1})
     %
     fnames = fieldnames(arg1);
     if ( ~strcmp(fnames{1},'Name')        || ...
-         ~strcmp(fnames{2},'FileHandler') || ...
-         ~strcmp(fnames{3},'TimeStart')   || ...
-         ~strcmp(fnames{4},'TimeSteps')     || ...
-         ~strcmp(fnames{5},'Groups')         ...
+         ~strcmp(fnames{2},'Handlers') || ...
+         ~strcmp(fnames{3},'Variables')   || ...
+         ~strcmp(fnames{4},'Attributes') ...
        )
     
         msg = 'STRUCT input argument does not seem to be output of ADIOSOPEN';
         return
     end
-    args.fh = int64(arg1.FileHandler);
-    args.ngroups = length(arg1.Groups);
-    for i=1:length(arg1.Groups)
-        args.ghs(i) = int64(arg1.Groups(i).GroupHandler);
-    end
+    args.fh = uint64(arg1.Handlers.FileHandler);
+    args.ao = uint64(arg1.Handlers.ADIOSHandler);
     varargin = {varargin{2:end}};
 else
     msg = 'STRUCT input argument must be the output of ADIOSOPEN';

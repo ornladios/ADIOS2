@@ -135,8 +135,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
        mexErrMsgIdAndTxt("MATLAB:adiosopenc:open","Opening the file failed\n");
     }
 
-    //FIXME: adios2_inquire_all_variables(group, &nvars, &adios_vars);
-    //FIXME: adios2_inquire_all_attributes(group, &nattrs, &adios_attrs);
+    adios2_inquire_all_variables(group, &nvars, &adios_vars);
+    adios2_inquire_all_attributes(group, &nattrs, &adios_attrs);
     if (verbose) mexPrintf("Opened file fp=%lld nvars=%zu nattrs=%zu\n", (int64_t) fp, nvars, nattrs);
 
 
