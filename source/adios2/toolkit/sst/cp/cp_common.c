@@ -97,7 +97,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     if ((strcmp(Params->ControlTransport, "enet") == 0) && 
 	getenv("USLEEP_MULTIPLIER")) {
-	sscanf("%d", getenv("USLEEP_MULTIPLIER"), &usleep_multiplier);
+	sscanf(getenv("USLEEP_MULTIPLIER"), "%d", &usleep_multiplier);
 	printf("USING %d as usleep multiplier before connections\n", usleep_multiplier);
     }
     CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
