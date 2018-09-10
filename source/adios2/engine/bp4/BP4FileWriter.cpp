@@ -245,8 +245,10 @@ void BP4FileWriter::DoClose(const int transportIndex)
     {
         WriteProfilingJSONFile();
     }
-
-    m_BP4Serializer.m_Aggregator.Close();
+    if (m_BP4Serializer.m_Aggregator.m_IsActive)
+    {
+        m_BP4Serializer.m_Aggregator.Close();
+    }
 }
 
 void BP4FileWriter::WriteProfilingJSONFile()
