@@ -214,12 +214,12 @@ void BP4FileWriter::DoClose(const int transportIndex)
         PerformPuts();
         
         /*Lipeng*/
-        DoFlush(true, transportIndex);
+        DoFlush(false, transportIndex);
         /*Lipeng*/
         if (m_BP4Serializer.m_CollectiveMetadata &&
             m_FileDataManager.AllTransportsClosed())
         {
-            WriteCollectiveMetadataFile(true);
+            WriteCollectiveMetadataFile(false);
         }
     }
 
@@ -245,6 +245,8 @@ void BP4FileWriter::DoClose(const int transportIndex)
     {
         WriteProfilingJSONFile();
     }
+
+    m_BP4Serializer.m_Aggregator.Close();
 }
 
 void BP4FileWriter::WriteProfilingJSONFile()
