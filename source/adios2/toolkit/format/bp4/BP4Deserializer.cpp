@@ -328,12 +328,6 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
             break;
         }
 
-        case (type_long_double_complex):
-        {
-            DefineVariableInIOPerStep<std::complex<long double>>(header, io, buffer,
-                                                          position, step);
-            break;
-        }
 
         } // end switch
     };
@@ -462,12 +456,6 @@ void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
             break;
         }
 
-        case (type_long_double_complex):
-        {
-            DefineVariableInIO<std::complex<long double>>(header, io, buffer,
-                                                          position);
-            break;
-        }
 
         } // end switch
     };

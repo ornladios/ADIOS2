@@ -152,13 +152,6 @@ int8_t BP4Base::GetDataType<cdouble>() const noexcept
     return type;
 }
 
-template <>
-int8_t BP4Base::GetDataType<cldouble>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_long_double_complex);
-    return type;
-}
-
 template <class T>
 BP4Base::Characteristics<T> BP4Base::ReadElementIndexCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
