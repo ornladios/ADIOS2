@@ -506,6 +506,7 @@ void BP4FileWriter::AggregateWriteData(const bool isFinal,
 
             m_FileDataManager.FlushFiles(transportIndex);
         }
+        m_BP4Serializer.m_Aggregator.Close();
     }
 
     m_BP4Serializer.m_Aggregator.ResetBuffers();

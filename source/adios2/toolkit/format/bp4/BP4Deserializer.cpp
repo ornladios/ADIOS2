@@ -173,7 +173,7 @@ void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][0];
-    std::cout << step << ", " << position << std::endl;
+    //std::cout << step << ", " << position << std::endl;
     m_MetadataSet.DataPGCount = m_MetadataSet.DataPGCount+helper::ReadValue<uint64_t>(buffer, position);
 
     ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
