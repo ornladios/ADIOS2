@@ -335,6 +335,10 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     while (Stream->Peers[i] != -1)
     {
         int peer = Stream->Peers[i];
+	int ReaderRank = Stream->Rank;
+	extern int usleep_multiplier;
+	if (usleep_multiplier != 0) 
+	    usleep(ReaderRank * usleep_multiplier);
         CMConnection Conn = CMget_conn(
             Stream->CPInfo->cm, Stream->ConnectionsToWriter[peer].ContactList);
         if (!Conn)

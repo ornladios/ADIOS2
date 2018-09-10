@@ -18,6 +18,8 @@
 
 #include "cp_internal.h"
 
+int usleep_multiplier = 0;
+
 void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 {
     if (Params->RendezvousReaderCount >= 0)
@@ -81,12 +83,22 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     if (Params->ControlTransport == NULL)
     {
-        /* determine reasonable default, now "sockets" */
-        Params->ControlTransport = strdup("sockets");
+        /* determine reasonable default, now "enet" */
+        Params->ControlTransport = strdup("enet");
+    }
+    if ((strcmp(Params->ControlTransport, "enet") == 0) && 
+	getenv("USLEEP_MULTIPLIER")) {
+	sscanf("%d", getenv("USLEEP_MULTIPLIER"), &usleep_multiplier);
+	printf("USING %d as usleep multiplier before connections\n", usleep_multiplier);
     }
     for (int i = 0; Params->ControlTransport[i] != 0; i++)
     {
         Params->ControlTransport[i] = tolower(Params->ControlTransport[i]);
+    }
+    if ((strcmp(Params->ControlTransport, "enet") == 0) && 
+	getenv("USLEEP_MULTIPLIER")) {
+	sscanf("%d", getenv("USLEEP_MULTIPLIER"), &usleep_multiplier);
+	printf("USING %d as usleep multiplier before connections\n", usleep_multiplier);
     }
     CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);
