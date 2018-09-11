@@ -267,12 +267,30 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     return variablesInfo;
 }
 
-std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
+std::map<std::string, Params>
+IO::GetAvailableAttributes(const std::string &variableName,
+                           const std::string separator) noexcept
 {
     std::map<std::string, Params> attributesInfo;
+    const std::string variablePrefix = variableName + separator;
+
     for (const auto &attributePair : m_Attributes)
     {
-        const std::string name(attributePair.first);
+        const std::string absoluteName(attributePair.first);
+        std::string name = absoluteName;
+        if (!variableName.empty())
+        {
+            // valid associated attribute
+            if (absoluteName.find(variablePrefix) == 0)
+            {
+                name = absoluteName.substr(variablePrefix.size());
+            }
+            else
+            {
+                continue;
+            }
+        }
+
         const std::string type(attributePair.second.first);
         attributesInfo[name]["Type"] = type;
 
@@ -282,7 +300,7 @@ std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Attribute<T> &attribute = *InquireAttribute<T>(name);                  \
+        Attribute<T> &attribute = *InquireAttribute<T>(absoluteName);          \
         attributesInfo[name]["Elements"] =                                     \
             std::to_string(attribute.m_Elements);                              \
                                                                                \

@@ -46,9 +46,59 @@ Attribute<T> IO::DefineAttribute(const std::string &name, const T &value)
 }
 
 template <class T>
+Attribute<T> IO::DefineAttribute(const adios2::Variable<T> variable,
+                                 const std::string &name, const T &value,
+                                 const std::string separator)
+{
+    if (!variable)
+    {
+        throw std::invalid_argument(
+            "ERROR: variable can't be false when "
+            "defining related attribute value with name " +
+            name + ", in call to DefineAttribute\n");
+    }
+
+    const std::string absoluteName = variable.m_Name + separator + name;
+    return DefineAttribute(absoluteName, value, separator);
+}
+
+template <class T>
+Attribute<T> IO::DefineAttribute(const adios2::Variable<T> variable,
+                                 const std::string &name, const T *data,
+                                 const size_t size, const std::string separator)
+{
+    if (!variable)
+    {
+        throw std::invalid_argument(
+            "ERROR: variable can't be false when "
+            "defining related attribute array with name " +
+            name + ", in call to DefineAttribute\n");
+    }
+
+    const std::string absoluteName = variable.m_Name + separator + name;
+    return DefineAttribute(absoluteName, data, size);
+}
+
+template <class T>
 Attribute<T> IO::InquireAttribute(const std::string &name) noexcept
 {
     return Attribute<T>(m_IO.InquireAttribute<T>(name));
+}
+
+template <class T>
+Attribute<T> IO::InquireAttribute(const Variable<T> variable,
+                                  const std::string &name,
+                                  const std::string separator) noexcept
+{
+    if (!variable)
+    {
+        throw std::invalid_argument("ERROR: variable can't be false when "
+                                    "inquiring related attribute with name " +
+                                    name + ", in call to DefineAttribute\n");
+    }
+
+    const std::string absoluteName = variable.m_Name + separator + name;
+    return InquireAttribute<T>(absoluteName);
 }
 
 } // end namespace adios2

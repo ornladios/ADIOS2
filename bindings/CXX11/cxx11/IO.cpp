@@ -78,9 +78,11 @@ std::map<std::string, Params> IO::AvailableVariables() noexcept
     return m_IO.GetAvailableVariables();
 }
 
-std::map<std::string, Params> IO::AvailableAttributes() noexcept
+std::map<std::string, Params>
+IO::AvailableAttributes(const std::string &variableName,
+                        const std::string separator) noexcept
 {
-    return m_IO.GetAvailableAttributes();
+    return m_IO.GetAvailableAttributes(variableName, separator);
 }
 
 std::string IO::VariableType(const std::string &name) const noexcept

@@ -145,12 +145,47 @@ public:
      * @brief Define single value attribute
      * @param name must be unique for the IO object
      * @param value single data value
-     * @return reference to internal Attribute
+     * @return Attribute object reference to internal Attribute
      * @exception std::invalid_argument if Attribute with unique name is already
      * defined, in debug mode only
      */
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T &value);
+
+    /**
+     * @brief Define single value attribute associated with an existing variable
+     * Attribute full name = variable.Name() + separator + name
+     * @param variable existing variable object (must be valid)
+     * @param name attribute local name associated to variable.
+     *             Must be unique for the IO object and the variable.
+     * @param value single data value
+     * @param separator default='/'
+     * @return Attribute object that references to internal Attribute
+     * @exception std::invalid_argument if Attribute with unique name is
+     * already defined, in debug mode only
+     */
+    template <class T>
+    Attribute<T> DefineAttribute(const adios2::Variable<T> variable,
+                                 const std::string &name, const T &value,
+                                 const std::string separator = "/");
+
+    /**
+     * @brief Define single value attribute associated with an existing variable
+     * Attribute full name = variable.Name() + separator + name
+     * @param variable existing variable object (must be valid)
+     * @param name attribute local name associated to variable.
+     *             Must be unique for the IO object and the variable.
+     * @param data array data value
+     * @param size array data size
+     * @return Attribute object that references to internal Attribute
+     * @exception std::invalid_argument if Attribute with unique name is
+     * already defined, in debug mode only
+     */
+    template <class T>
+    Attribute<T> DefineAttribute(const adios2::Variable<T> variable,
+                                 const std::string &name, const T *data,
+                                 const size_t size,
+                                 const std::string separator = "/");
 
     /**
      * Gets an existing attribute of primitive type by name
@@ -160,6 +195,11 @@ public:
      */
     template <class T>
     Attribute<T> InquireAttribute(const std::string &name) noexcept;
+
+    template <class T>
+    Attribute<T> InquireAttribute(const Variable<T> variable,
+                                  const std::string &name,
+                                  const std::string separator = "/") noexcept;
 
     /**
      * @brief Removes an existing Variable in current IO object.
@@ -229,16 +269,35 @@ public:
     std::map<std::string, Params> AvailableVariables() noexcept;
 
     /**
-     * Returns a map with variable information
+     * Returns a map with available attributes information
      * @return map:
      * <pre>
-     * key: variable name
+     * key: unique attribute name
      * value: Params
-     * 		string key: variable info key
-     *      string value: variable info value
+     * 		string key: attribute info key
+     *      string value: attribute info value
      * </pre>
      */
     std::map<std::string, Params> AvailableAttributes() noexcept;
+
+    /**
+     * Returns a map with available attributes information associated to a
+     * particular variableName
+     * @param variableName unique variable name associated with resulting
+     * attributes, if empty (default) return all attributes
+     * @param separator optional name hierarchy separator (/, ::, _, -, \\,
+     * etc.)
+     * @return map:
+     * <pre>
+     * key: unique attribute name
+     * value: Params
+     * 		string key: attribute info key
+     *      string value: attribute info value
+     * </pre>
+     */
+    std::map<std::string, Params>
+    AvailableAttributes(const std::string &variableName = "",
+                        const std::string separator = "/") noexcept;
 
     /**
      * Inspects variable type. This function can be used in conjunction with

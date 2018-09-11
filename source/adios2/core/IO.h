@@ -304,7 +304,9 @@ public:
      * @return map with current attributes and info
      * keys: Type, Elements, Value
      */
-    std::map<std::string, Params> GetAvailableAttributes() noexcept;
+    std::map<std::string, Params>
+    GetAvailableAttributes(const std::string &variableName,
+                           const std::string separator) noexcept;
 
     /**
      * @brief Check existence in config file passed to ADIOS class constructor
