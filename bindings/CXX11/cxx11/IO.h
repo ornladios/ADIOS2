@@ -269,18 +269,6 @@ public:
     std::map<std::string, Params> AvailableVariables() noexcept;
 
     /**
-     * Returns a map with available attributes information
-     * @return map:
-     * <pre>
-     * key: unique attribute name
-     * value: Params
-     * 		string key: attribute info key
-     *      string value: attribute info value
-     * </pre>
-     */
-    std::map<std::string, Params> AvailableAttributes() noexcept;
-
-    /**
      * Returns a map with available attributes information associated to a
      * particular variableName
      * @param variableName unique variable name associated with resulting
@@ -296,7 +284,7 @@ public:
      * </pre>
      */
     std::map<std::string, Params>
-    AvailableAttributes(const std::string &variableName = "",
+    AvailableAttributes(const std::string &variableName = std::string(),
                         const std::string separator = "/") noexcept;
 
     /**
