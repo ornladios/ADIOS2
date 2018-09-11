@@ -58,7 +58,9 @@ function [data, attributes] = adiosread(varargin)
 %
 
 checkArgCounts(varargin{:});
-[args, msg] = parse_inputs(varargin{:});
+% remember first arg actual name for error prints
+Arg1Name = inputname(1);
+[args, msg] = parse_inputs(Arg1Name, varargin{:});
 if (~isempty(msg))
     error('MATLAB:adiosread:inputParsing', '%s', msg);
 end
@@ -67,7 +69,7 @@ offsets=sprintf('%d ', args.Starts);
 counts=sprintf('%d ', args.Counts);
 verbose=sprintf('%d ', args.Verbose);
 
-CallArguments = sprintf('adiosreadc:\n  File name=%s \n  Var=%s\n  Starts=[%s]  Counts=[%s]\n  StepStart=%d  StepCount=%d\n  Verbose=%s', ...
+CallArguments = sprintf('adiosread.m:\n  File name=%s \n  Var=%s\n  Starts=[%s]  Counts=[%s]\n  StepStart=%d  StepCount=%d\n  Verbose=%s', ...
  args.FileName, args.Path, offsets, counts, args.StepStart, args.StepCount, verbose);
 if (args.Verbose > 0) 
     CallArguments
@@ -102,7 +104,9 @@ end
 % FUNCTION:   parse_inputs   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [args, msg] = parse_inputs(varargin)
+function [args, msg] = parse_inputs(Arg1Name, varargin)
+
+nargs = nargin - 1; % size of argument list besides the 1st string 
 
 args.File    = uint64(0);   % saved file handler
 args.FileName = '';         % file name (for debugging purposes)
@@ -114,7 +118,7 @@ args.Starts = int64([]);    % start positions in each dimension for slicing
 args.Counts  = int64([]);   % counts in each dimension for slicing
 args.StepStart = int64(1);  % starting step
 args.StepCount = int64(-1); % number of steps to read
-args.Verbose = 4;           % verbosity, default is off, i.e. 0
+args.Verbose = 0;           % verbosity, default is off, i.e. 0
 
 msg = '';
 
@@ -140,12 +144,12 @@ if (ischar(varargin{2}))
     % VARPATH
     args.Path = varargin{2};
     for k = 1:length(infostruct.Variables)
-        if( strcmp(f.Variables(k).Name,'T'));
-            Args.VarIndex = k;
+        if (strcmp(infostruct.Variables(k).Name, args.Path))
+            args.VarIndex = k;
             break
         end
     end
-    if (Args.VarIndex < 0)
+    if (args.VarIndex < 0)
         msg = ['2nd argument path does not match any variable names '...
         'in the info struct from ADIOSOPEN'];
 
@@ -161,14 +165,13 @@ elseif (isnumeric(varargin{2}))
         'in the info struct from ADIOSOPEN'];
         return
     end
-
 else
     msg = ['2nd argument to ADIOSREAD must be a string or a number'];
     return
 end
 
 % Arg 3: START array
-if (nargin >= 3)
+if (nargs >= 3)
     array = varargin{3};
     if (~isnumeric(array) || isempty(array) || size(array, 1) ~= 1 || ndims(array) ~= 2)
         msg = '3rd argument must be an 1-by-N array of integers.';
@@ -184,7 +187,7 @@ if (nargin >= 3)
 end
 
 % Arg 4: COUNT array
-if (nargin >= 4)
+if (nargs >= 4)
     array = varargin{4};
     if (~isnumeric(array) || isempty(array) || size(array, 1) ~= 1 || ndims(array) ~= 2)
         msg = '4th argument must be an 1-by-N array of integers.';
@@ -193,14 +196,14 @@ if (nargin >= 4)
     if((isempty(array) || size(array, 1) ~= 1) || ...
        (size(array,2) ~= size(infostruct.Variables(args.VarIndex).Dims,2)))
 
-       msg = sprintf('4th argument array size must equal to the dimensions of the variable which is %u in case of variable "%s"', args.Path);
+       msg = sprintf('4th argument array size must equal to the dimensions of the variable which is %u in case of variable "%s"', infostruct.Variables(args.VarIndex).Dims, args.Path);
        return
     end
     args.Counts = int64(fix(array));
 end
 
 % Arg 5: STEPSTART 
-if (nargin >= 5)
+if (nargs >= 5)
     value = varargin{5};
     if (~isnumeric(value) || isempty(value) || ndims(value) ~= 2 ||...
        size(value, 1) ~= 1 || size(value, 2) ~= 1 )
@@ -208,10 +211,23 @@ if (nargin >= 5)
         return
     end
     args.StepStart = int64(fix(value));
+    if (args.StepStart == 0 || args.StepStart > infostruct.Variables(args.VarIndex).StepsCount)
+       msg = sprintf('5th argument StepStart must be or between 1 and the available Steps (%d for variable "%s)".\nSee %s.Variables(%d).StepsCount', infostruct.Variables(args.VarIndex).StepsCount, args.Path, Arg1Name, args.VarIndex);
+       return
+    end
+    if args.StepStart < 0
+        % recalculate negative start here so that we can check stepcount correctly below
+        % this calculation is 0..count-1 based here
+        while args.StepStart < 0
+            args.StepStart = infostruct.Variables(args.VarIndex).StepsCount + args.StepStart;
+        end
+        % fix back to 1..count base
+        args.StepStart = args.StepStart + 1;
+    end
 end
 
 % Arg 5: STEPCOUNT
-if (nargin >= 6)
+if (nargs >= 6)
     value = varargin{6};
     if (~isnumeric(value) || isempty(value) || ndims(value) ~= 2 ||...
        size(value, 1) ~= 1 || size(value, 2) ~= 1 )
@@ -219,5 +235,13 @@ if (nargin >= 6)
         return
     end
     args.StepCount = int64(fix(value));
+    if (args.StepCount == 0)
+       msg = '6th argument StepCount cannot be zero';
+       return
+    end
+    if (args.StepStart + args.StepCount - 1  > infostruct.Variables(args.VarIndex).StepsCount)
+       msg = sprintf('5th and 6th arguments StepStart and StepCount request steps [%d..%d] beyond the available Steps (%d for variable "%s)".\nSee %s.Variables(%d).StepsCount', args.StepStart, args.StepStart+args.StepCount-1, infostruct.Variables(args.VarIndex).StepsCount, args.Path, Arg1Name, args.VarIndex);
+       return
+    end
 end
 

@@ -43,9 +43,10 @@ void recalc_offsets( const size_t ndim,  const size_t *dims, mwSize in_noffsets,
                      const int64_t *in_offsets, const int64_t *in_counts, 
                      size_t *offsets, size_t *counts);
 void recalc_steps(const size_t varStepStart,  const size_t varStepCount, 
-                  const size_t in_stepstart,  const size_t in_stepcount, 
+                  const int64_t in_stepstart,  const int64_t in_stepcount, 
                   size_t *start, size_t *count);
 static void swap_order(size_t n, size_t *array);
+void printArrayInt64(size_t nelems, void *array);
 
 
 
@@ -169,6 +170,7 @@ mxArray* readdata(adios2_engine *fp, adios2_io *group, const char *path,
     recalc_steps(varStepStart, varStepCount, in_stepstart, in_stepcount, &qstepstart, &qstepcount);
 
     if (mxndim > varNdim) {
+        if (verbose) mexPrintf("Add steps as extra dimension, start=%zu  count=%zu ", qstepstart, qstepcount);
         qoffsets[varNdim] = qstepstart;
         qcounts[varNdim] = qstepcount;  // steps become slowest dimension
     }
@@ -181,10 +183,9 @@ mxArray* readdata(adios2_engine *fp, adios2_io *group, const char *path,
         data = (void *) mxCalloc(varDim[0], sizeof(char));
     } else {
         if (verbose) { 
-            mexPrintf("Create %d-D Matlab array [", mxndim);
-            for (i=0; i<mxndim; i++)
-                mexPrintf("%lld ", qcounts[i]);
-            mexPrintf("]\n");
+            mexPrintf("Create %d-D Matlab array ", mxndim);
+            printArrayInt64(mxndim, qcounts);
+            mexPrintf("\n");
         }
         out = createMatlabArray(adiostype, mxndim, qcounts); 
         data = (void *) mxGetData(out);
@@ -194,9 +195,15 @@ mxArray* readdata(adios2_engine *fp, adios2_io *group, const char *path,
     swap_order(varNdim, qoffsets); // again, leave out the steps from the swap 
     swap_order(varNdim, qcounts);
 
-    if (verbose) mexPrintf("Set selection for variable\n");
+    if (verbose) {
+        mexPrintf("Set selection for variable: start = ");
+            printArrayInt64(varNdim, qoffsets);
+        mexPrintf("  count = ");
+            printArrayInt64(varNdim, qcounts);
+        mexPrintf("\n");
+        mexPrintf("Set step-selection for variable: start = %zu  count = %zu\n", qstepstart, qstepcount);
+    }
     adios2_set_selection(avar, varNdim, qoffsets, qcounts);
-    if (verbose) mexPrintf("Set step-selection for variable\n");
     adios2_set_step_selection(avar, qstepstart, qstepcount);
 
     /* read in data */
@@ -400,19 +407,21 @@ void recalc_offsets( const size_t ndim,  const size_t *dims, mwSize in_noffsets,
 }
 
 void recalc_steps(const size_t varStepStart,  const size_t varStepCount, 
-                  const size_t in_stepstart,  const size_t in_stepcount, 
+                  const int64_t in_stepstart,  const int64_t in_stepcount, 
                   size_t *start, size_t *count)
 {
     /* handle steps for variables with multiple steps */
     if (in_stepstart < 0) /* negative offset means last step -|start| */
-        *start = varStepStart + in_stepstart;
+        *start = varStepCount + in_stepstart;
     else
         *start = in_stepstart - 1; /* C index start from 0 */
 
     if (in_stepcount < 0) /* negative offset means last step -|start| */
-        *count = varStepCount + in_stepcount;
+    {
+        *count = varStepCount + in_stepcount + 1 - *start;
+    }
     else
-        *count = in_stepcount - 1; /* C index start from 0 */
+        *count = in_stepcount; /* C index start from 0 */
 }
 
 /* Reverse the order in an array in place.
@@ -428,6 +437,15 @@ static void swap_order(size_t n, size_t *array)
     }
 }
 
+void printArrayInt64(size_t nelems, void *array)
+{
+    int64_t *a = (int64_t *)array;
+    size_t i;
+    mexPrintf("[");
+    for (i=0; i<nelems; i++)
+        mexPrintf("%lld%s", a[i], (i<nelems-1 ? " " : ""));
+    mexPrintf("]");
+}
 
 
 
