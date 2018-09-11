@@ -165,7 +165,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
         const adios2::Box<adios2::Dims> sel(start, count);
 
-        unsigned int t = 0;
+        size_t t = 0;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
@@ -366,7 +366,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
     }
 }
 
-TEST_F(BPWriteReadAsStreamTestADIOS2, DISABLED_ADIOS2BPWriteRead2D2x4)
+TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
@@ -465,109 +465,109 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, DISABLED_ADIOS2BPWriteRead2D2x4)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_i8 = io.InquireVariable<int8_t>("i8");
-        EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i8.Steps(), NSteps);
-        ASSERT_EQ(var_i8.Shape()[0], Ny);
-        ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_i16 = io.InquireVariable<int16_t>("i16");
-        EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Steps(), NSteps);
-        ASSERT_EQ(var_i16.Shape()[0], Ny);
-        ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_i32 = io.InquireVariable<int32_t>("i32");
-        EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Steps(), NSteps);
-        ASSERT_EQ(var_i32.Shape()[0], Ny);
-        ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_i64 = io.InquireVariable<int64_t>("i64");
-        EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Steps(), NSteps);
-        ASSERT_EQ(var_i64.Shape()[0], Ny);
-        ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u8 = io.InquireVariable<uint8_t>("u8");
-        EXPECT_TRUE(var_u8);
-        ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u8.Steps(), NSteps);
-        ASSERT_EQ(var_u8.Shape()[0], Ny);
-        ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u16 = io.InquireVariable<uint16_t>("u16");
-        EXPECT_TRUE(var_u16);
-        ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u16.Steps(), NSteps);
-        ASSERT_EQ(var_u16.Shape()[0], Ny);
-        ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u32 = io.InquireVariable<uint32_t>("u32");
-        EXPECT_TRUE(var_u32);
-        ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u32.Steps(), NSteps);
-        ASSERT_EQ(var_u32.Shape()[0], Ny);
-        ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u64 = io.InquireVariable<uint64_t>("u64");
-        EXPECT_TRUE(var_u64);
-        ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u64.Steps(), NSteps);
-        ASSERT_EQ(var_u64.Shape()[0], Ny);
-        ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], Ny);
-        ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], Ny);
-        ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        std::array<int8_t, Nx * Ny> I8;
-        std::array<int16_t, Nx * Ny> I16;
-        std::array<int32_t, Nx * Ny> I32;
-        std::array<int64_t, Nx * Ny> I64;
-        std::array<uint8_t, Nx * Ny> U8;
-        std::array<uint16_t, Nx * Ny> U16;
-        std::array<uint32_t, Nx * Ny> U32;
-        std::array<uint64_t, Nx * Ny> U64;
-        std::array<float, Nx * Ny> R32;
-        std::array<double, Nx * Ny> R64;
-
-        const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
-        const adios2::Dims count{Ny, Nx};
-
-        const adios2::Box<adios2::Dims> sel(start, count);
-
-        var_i8.SetSelection(sel);
-        var_i16.SetSelection(sel);
-        var_i32.SetSelection(sel);
-        var_i64.SetSelection(sel);
-
-        var_u8.SetSelection(sel);
-        var_u16.SetSelection(sel);
-        var_u32.SetSelection(sel);
-        var_u64.SetSelection(sel);
-
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
-        unsigned int t = 0;
+        size_t t = 0;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps);
+            ASSERT_EQ(var_i8.Shape()[0], Ny);
+            ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps);
+            ASSERT_EQ(var_i16.Shape()[0], Ny);
+            ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps);
+            ASSERT_EQ(var_i32.Shape()[0], Ny);
+            ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps);
+            ASSERT_EQ(var_i64.Shape()[0], Ny);
+            ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps);
+            ASSERT_EQ(var_u8.Shape()[0], Ny);
+            ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps);
+            ASSERT_EQ(var_u16.Shape()[0], Ny);
+            ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps);
+            ASSERT_EQ(var_u32.Shape()[0], Ny);
+            ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps);
+            ASSERT_EQ(var_u64.Shape()[0], Ny);
+            ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], Ny);
+            ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], Ny);
+            ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            std::array<int8_t, Nx * Ny> I8;
+            std::array<int16_t, Nx * Ny> I16;
+            std::array<int32_t, Nx * Ny> I32;
+            std::array<int64_t, Nx * Ny> I64;
+            std::array<uint8_t, Nx * Ny> U8;
+            std::array<uint16_t, Nx * Ny> U16;
+            std::array<uint32_t, Nx * Ny> U32;
+            std::array<uint64_t, Nx * Ny> U64;
+            std::array<float, Nx * Ny> R32;
+            std::array<double, Nx * Ny> R64;
+
+            const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+            const adios2::Dims count{Ny, Nx};
+
+            const adios2::Box<adios2::Dims> sel(start, count);
+
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
+
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
+
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
@@ -615,7 +615,7 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, DISABLED_ADIOS2BPWriteRead2D2x4)
     }
 }
 
-TEST_F(BPWriteReadAsStreamTestADIOS2, DISABLED_ADIOS2BPWriteRead2D4x2)
+TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
@@ -717,112 +717,113 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, DISABLED_ADIOS2BPWriteRead2D4x2)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_i8 = io.InquireVariable<int8_t>("i8");
-        EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i8.Steps(), NSteps);
-        ASSERT_EQ(var_i8.Shape()[0], Ny);
-        ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_i16 = io.InquireVariable<int16_t>("i16");
-        EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Steps(), NSteps);
-        ASSERT_EQ(var_i16.Shape()[0], Ny);
-        ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_i32 = io.InquireVariable<int32_t>("i32");
-        EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Steps(), NSteps);
-        ASSERT_EQ(var_i32.Shape()[0], Ny);
-        ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_i64 = io.InquireVariable<int64_t>("i64");
-        EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Steps(), NSteps);
-        ASSERT_EQ(var_i64.Shape()[0], Ny);
-        ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u8 = io.InquireVariable<uint8_t>("u8");
-        EXPECT_TRUE(var_u8);
-        ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u8.Steps(), NSteps);
-        ASSERT_EQ(var_u8.Shape()[0], Ny);
-        ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u16 = io.InquireVariable<uint16_t>("u16");
-        EXPECT_TRUE(var_u16);
-        ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u16.Steps(), NSteps);
-        ASSERT_EQ(var_u16.Shape()[0], Ny);
-        ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u32 = io.InquireVariable<uint32_t>("u32");
-        EXPECT_TRUE(var_u32);
-        ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u32.Steps(), NSteps);
-        ASSERT_EQ(var_u32.Shape()[0], Ny);
-        ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_u64 = io.InquireVariable<uint64_t>("u64");
-        EXPECT_TRUE(var_u64);
-        ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u64.Steps(), NSteps);
-        ASSERT_EQ(var_u64.Shape()[0], Ny);
-        ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], Ny);
-        ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], Ny);
-        ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        // If the size of the array is smaller than the data
-        // the result is weird... double and uint64_t would get
-        // completely garbage data
-        std::array<int8_t, Nx * Ny> I8;
-        std::array<int16_t, Nx * Ny> I16;
-        std::array<int32_t, Nx * Ny> I32;
-        std::array<int64_t, Nx * Ny> I64;
-        std::array<uint8_t, Nx * Ny> U8;
-        std::array<uint16_t, Nx * Ny> U16;
-        std::array<uint32_t, Nx * Ny> U32;
-        std::array<uint64_t, Nx * Ny> U64;
-        std::array<float, Nx * Ny> R32;
-        std::array<double, Nx * Ny> R64;
-
-        const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
-        const adios2::Dims count{Ny, Nx};
-
-        const adios2::Box<adios2::Dims> sel(start, count);
-
-        var_i8.SetSelection(sel);
-        var_i16.SetSelection(sel);
-        var_i32.SetSelection(sel);
-        var_i64.SetSelection(sel);
-
-        var_u8.SetSelection(sel);
-        var_u16.SetSelection(sel);
-        var_u32.SetSelection(sel);
-        var_u64.SetSelection(sel);
-
-        var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
-
-        unsigned int t = 0;
+        size_t t = 0;
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            EXPECT_TRUE(var_i8);
+            ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i8.Steps(), NSteps);
+            ASSERT_EQ(var_i8.Shape()[0], Ny);
+            ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            EXPECT_TRUE(var_i16);
+            ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i16.Steps(), NSteps);
+            ASSERT_EQ(var_i16.Shape()[0], Ny);
+            ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            EXPECT_TRUE(var_i32);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps);
+            ASSERT_EQ(var_i32.Shape()[0], Ny);
+            ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            EXPECT_TRUE(var_i64);
+            ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_i64.Steps(), NSteps);
+            ASSERT_EQ(var_i64.Shape()[0], Ny);
+            ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u8 = io.InquireVariable<uint8_t>("u8");
+            EXPECT_TRUE(var_u8);
+            ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u8.Steps(), NSteps);
+            ASSERT_EQ(var_u8.Shape()[0], Ny);
+            ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u16 = io.InquireVariable<uint16_t>("u16");
+            EXPECT_TRUE(var_u16);
+            ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u16.Steps(), NSteps);
+            ASSERT_EQ(var_u16.Shape()[0], Ny);
+            ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u32 = io.InquireVariable<uint32_t>("u32");
+            EXPECT_TRUE(var_u32);
+            ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u32.Steps(), NSteps);
+            ASSERT_EQ(var_u32.Shape()[0], Ny);
+            ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_u64 = io.InquireVariable<uint64_t>("u64");
+            EXPECT_TRUE(var_u64);
+            ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_u64.Steps(), NSteps);
+            ASSERT_EQ(var_u64.Shape()[0], Ny);
+            ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], Ny);
+            ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
+            ASSERT_EQ(var_r64.Shape()[0], Ny);
+            ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+
+            // If the size of the array is smaller than the data
+            // the result is weird... double and uint64_t would get
+            // completely garbage data
+            std::array<int8_t, Nx * Ny> I8;
+            std::array<int16_t, Nx * Ny> I16;
+            std::array<int32_t, Nx * Ny> I32;
+            std::array<int64_t, Nx * Ny> I64;
+            std::array<uint8_t, Nx * Ny> U8;
+            std::array<uint16_t, Nx * Ny> U16;
+            std::array<uint32_t, Nx * Ny> U32;
+            std::array<uint64_t, Nx * Ny> U64;
+            std::array<float, Nx * Ny> R32;
+            std::array<double, Nx * Ny> R64;
+
+            const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+            const adios2::Dims count{Ny, Nx};
+
+            const adios2::Box<adios2::Dims> sel(start, count);
+
+            var_i8.SetSelection(sel);
+            var_i16.SetSelection(sel);
+            var_i32.SetSelection(sel);
+            var_i64.SetSelection(sel);
+
+            var_u8.SetSelection(sel);
+            var_u16.SetSelection(sel);
+            var_u32.SetSelection(sel);
+            var_u64.SetSelection(sel);
+
+            var_r32.SetSelection(sel);
+            var_r64.SetSelection(sel);
+
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 

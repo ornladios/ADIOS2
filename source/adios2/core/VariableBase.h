@@ -181,6 +181,19 @@ public:
 
     bool IsValidStep(const size_t step) const noexcept;
 
+    /**
+     * Resets m_StepsStart and m_StepsCount. Must be called in BeginStep
+     */
+    void ResetStepsSelection(const bool zeroStart) noexcept;
+
+    /**
+     * Checks if variable has a conflict to be accessed as a stream and
+     * random-access (SetStepSelection has been called)
+     * @param hint improve exception error message
+     * @throws std::invalid_argument if random access and streaming are called
+     */
+    void CheckRandomAccessConflict(const std::string hint) const;
+
 protected:
     const bool m_DebugMode = false;
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count

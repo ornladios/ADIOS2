@@ -233,14 +233,15 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     for (const auto &variablePair : m_Variables)
     {
         const std::string name(variablePair.first);
-        const std::string type(variablePair.second.first);
-        variablesInfo[name]["Type"] = type;
+        const std::string type = InquireVariableType(name);
+
         if (type == "compound")
         {
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
+        variablesInfo[name]["Type"] = type;                                    \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             helper::ValueToString(variable.m_AvailableStepsCount);             \
@@ -558,6 +559,37 @@ void IO::FlushAll()
         {
             enginePair.second->Flush();
         }
+    }
+}
+
+void IO::ResetVariablesStepSelection(const bool zeroStart,
+                                     const std::string hint)
+{
+    const auto &variablesData = GetVariablesDataMap();
+
+    for (const auto &variableData : variablesData)
+    {
+        const std::string name = variableData.first;
+        const std::string type = InquireVariableType(name);
+
+        if (type.empty())
+        {
+            continue;
+        }
+
+        if (type == "compound")
+        {
+        }
+// using relative start
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = InquireVariable<T>(name);                      \
+        variable->CheckRandomAccessConflict(hint);                             \
+        variable->ResetStepsSelection(zeroStart);                              \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
     }
 }
 

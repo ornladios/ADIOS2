@@ -40,8 +40,6 @@ public:
     File(const std::string &name, const std::string mode,
          const std::string configFile, const std::string ioInConfigFile);
 
-    File(File &&) = default;
-
     ~File() = default;
 
     void SetParameter(const std::string key, const std::string value) noexcept;

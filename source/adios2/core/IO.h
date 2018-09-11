@@ -378,6 +378,13 @@ public:
      */
     void SetStreamOpenMode(const StreamOpenMode mode);
 
+    /**
+     * Resets all variables m_StepsStart and m_StepsCount
+     * @param alwaysZero true: always m_StepsStart = 0, false: capture
+     */
+    void ResetVariablesStepSelection(const bool zeroStart = false,
+                                     const std::string hint = "");
+
 private:
     /** true: exist in config file (XML) */
     const bool m_InConfigFile = false;

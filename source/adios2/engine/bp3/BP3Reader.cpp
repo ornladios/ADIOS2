@@ -72,55 +72,7 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         return StepStatus::EndOfStream;
     }
 
-    const auto &variablesData = m_IO.GetVariablesDataMap();
-
-    for (const auto &variableData : variablesData)
-    {
-        const std::string name = variableData.first;
-        const std::string type = m_IO.InquireVariableType(name);
-
-        if (type.empty())
-        {
-            continue;
-        }
-
-        if (type == "compound")
-        {
-        }
-// using relative start
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
-        if (m_DebugMode)                                                       \
-        {                                                                      \
-            if (variable->m_RandomAccess)                                      \
-            {                                                                  \
-                throw std::invalid_argument(                                   \
-                    "ERROR: calling BeginStep (streaming) before "             \
-                    "SetStepSelection (random-access) is incompatible, for "   \
-                    "variable " +                                              \
-                    variable->m_Name + ", in call to BeginStep\n");            \
-            }                                                                  \
-        }                                                                      \
-                                                                               \
-        if (mode == StepMode::NextAvailable)                                   \
-        {                                                                      \
-            variable->m_StepsCount = 1;                                        \
-            if (variable->m_FirstStreamingStep)                                \
-            {                                                                  \
-                variable->m_StepsStart = 0;                                    \
-                variable->m_FirstStreamingStep = false;                        \
-            }                                                                  \
-            else                                                               \
-            {                                                                  \
-                ++variable->m_StepsStart;                                      \
-            }                                                                  \
-        }                                                                      \
-    }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-    }
+    m_IO.ResetVariablesStepSelection(false, "in call to BP3 Reader BeginStep");
 
     return StepStatus::OK;
 }

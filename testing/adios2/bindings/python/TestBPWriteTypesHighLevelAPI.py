@@ -28,54 +28,46 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-fw = adios2.open("types_np.bp", "w", comm)
+with adios2.open("types_np.bp", "w", comm) as fw:
 
-
-if(rank == 0):
-    fw.write("tag", "Testing ADIOS2 high-level API")
-    fw.write("gvarI8", np.array(data.I8[0]))
-    fw.write("gvarI16", np.array(data.I16[0]))
-    fw.write("gvarI32", np.array(data.I32[0]))
-    fw.write("gvarI64", np.array(data.I64[0]))
-    fw.write("gvarU8", np.array(data.U8[0]))
-    fw.write("gvarU16", np.array(data.U16[0]))
-    fw.write("gvarU32", np.array(data.U32[0]))
-    fw.write("gvarU64", np.array(data.U64[0]))
-    fw.write("gvarR32", np.array(data.R32[0]))
-    fw.write("gvarR64", np.array(data.R64[0]))
-
-for i in range(0, 3):
-    fw.write("steps", "Step:" + str(i))
-
-    fw.write("varI8", data.I8, shape, start, count)
-    fw.write("varI16", data.I16, shape, start, count)
-    fw.write("varI32", data.I32, shape, start, count)
-    fw.write("varI64", data.I64, shape, start, count)
-    fw.write("varU8", data.U8, shape, start, count)
-    fw.write("varU16", data.U16, shape, start, count)
-    fw.write("varU32", data.U32, shape, start, count)
-    fw.write("varU64", data.U64, shape, start, count)
-    fw.write("varR32", data.R32, shape, start, count)
-    fw.write("varR64", data.R64, shape, start, count, True)
-
-fw.close()
+    if(rank == 0):
+        fw.write("tag", "Testing ADIOS2 high-level API")
+        fw.write("gvarI8", np.array(data.I8[0]))
+        fw.write("gvarI16", np.array(data.I16[0]))
+        fw.write("gvarI32", np.array(data.I32[0]))
+        fw.write("gvarI64", np.array(data.I64[0]))
+        fw.write("gvarU8", np.array(data.U8[0]))
+        fw.write("gvarU16", np.array(data.U16[0]))
+        fw.write("gvarU32", np.array(data.U32[0]))
+        fw.write("gvarU64", np.array(data.U64[0]))
+        fw.write("gvarR32", np.array(data.R32[0]))
+        fw.write("gvarR64", np.array(data.R64[0]))
+    
+    for i in range(0, 5):
+        
+        print( "i: " + str(i))
+        fw.write("steps", "Step:" + str(i))
+    
+        fw.write("varI8", data.I8, shape, start, count)
+        fw.write("varI16", data.I16, shape, start, count)
+        fw.write("varI32", data.I32, shape, start, count)
+        fw.write("varI64", data.I64, shape, start, count)
+        fw.write("varU8", data.U8, shape, start, count)
+        fw.write("varU16", data.U16, shape, start, count)
+        fw.write("varU32", data.U32, shape, start, count)
+        fw.write("varU64", data.U64, shape, start, count)
+        fw.write("varR32", data.R32, shape, start, count)
+        fw.write("varR64", data.R64, shape, start, count, endl=True)
 
 # Reader
 with adios2.open("types_np.bp", "r", comm) as fr:
- 
-    step_vars = fr.availablevariables()
-         
-    for name, info in step_vars.items():
-        print("variable_name: " + name)
-        for key, value in info.items():
-            print("\t" + key + ": " + value)
-        print("\n")
+
+    for fr_step in fr:
     
-    
-    for step in fr:
-    
-        print("Step" + str(step))
-        step_vars = fr.availablevariables()
+        step = fr_step.currentstep()
+        print("Step: " + str(step))
+        
+        step_vars = fr_step.availablevariables()
          
         for name, info in step_vars.items():
             print("variable_name: " + name)
@@ -83,21 +75,22 @@ with adios2.open("types_np.bp", "r", comm) as fr:
                 print("\t" + key + ": " + value)
             print("\n")
         
-        if(fr.currenstep() == 1):
-            inTag = fr.readstring("tag")
-            inI8 = fr.read("gvarI8")
-            inI16 = fr.read("gvarI16")
-            inI32 = fr.read("gvarI32")
-            inI64 = fr.read("gvarI64")
-            inU8 = fr.read("gvarU8")
-            inU16 = fr.read("gvarU16")
-            inU32 = fr.read("gvarU32")
-            inU64 = fr.read("gvarU64")
-            inR32 = fr.read("gvarR32")
-            inR64 = fr.read("gvarR64")
-    
+        if(step == 0):
+            inTag = fr_step.readstring("tag")
             if(inTag != "Testing ADIOS2 high-level API"):
+                print("InTag: " + str(inTag))
                 raise ValueError('tag read failed')
+            
+            inI8 = fr_step.read("gvarI8")
+            inI16 = fr_step.read("gvarI16")
+            inI32 = fr_step.read("gvarI32")
+            inI64 = fr_step.read("gvarI64")
+            inU8 = fr_step.read("gvarU8")
+            inU16 = fr_step.read("gvarU16")
+            inU32 = fr_step.read("gvarU32")
+            inU64 = fr_step.read("gvarU64")
+            inR32 = fr_step.read("gvarR32")
+            inR64 = fr_step.read("gvarR64")
     
             if(inI8[0] != data.I8[0]):
                 raise ValueError('gvarI8 read failed')
@@ -131,30 +124,28 @@ with adios2.open("types_np.bp", "r", comm) as fr:
             
             if(inR64[0] != data.R64[0]):
                 raise ValueError('gvarR64 read failed')
-    
-        instepStr = fr.readstring("steps")
-        indataI8 = fr.read("varI8", start, count)
-        indataI16 = fr.read("varI16", start, count)
-        indataI32 = fr.read("varI32", start, count)
-        indataI64 = fr.read("varI64", start, count)
-        indataU8 = fr.read("varU8", start, count)
-        indataU16 = fr.read("varU16", start, count)
-        indataU32 = fr.read("varU32", start, count)
-        indataU64 = fr.read("varU64", start, count)
-        indataR32 = fr.read("varR32", start, count)
-        indataR64 = fr.read("varR64", start, count)
-    
-        stepStr = "Step:" + str(i).strip()
-        i = i + 1
-    
+        
+        stepStr = "Step:" + str(step)
+        
+        instepStr = fr_step.readstring("steps")
         if(instepStr != stepStr):
-            raise ValueError(
-                'steps variable read failed: ' + instepStr + " " + stepStr)
-    
+            raise ValueError('steps variable read failed: ' + instepStr + " " + stepStr)
+        
+        indataI8 = fr_step.read("varI8", start, count)
         if((indataI8 == data.I8).all() is False):
             print("InData: " + str(indataI8))
             print("Data: " + str(data.I8))
             raise ValueError('I8 array read failed')
+        
+        indataI16 = fr_step.read("varI16", start, count)
+        indataI32 = fr_step.read("varI32", start, count)
+        indataI64 = fr_step.read("varI64", start, count)
+        indataU8 = fr_step.read("varU8", start, count)
+        indataU16 = fr_step.read("varU16", start, count)
+        indataU32 = fr_step.read("varU32", start, count)
+        indataU64 = fr_step.read("varU64", start, count)
+        indataR32 = fr_step.read("varR32", start, count)
+        indataR64 = fr_step.read("varR64", start, count)
     
         if((indataI16 == data.I16).all() is False):
             print("InData: " + str(indataI16))

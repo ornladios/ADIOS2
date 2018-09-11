@@ -1514,21 +1514,18 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         var_r32.SetStepSelection({tInitial + 1, NSteps - tInitial + 1});
         var_r64.SetStepSelection({tInitial + 1, NSteps - tInitial + 1});
 
-        bpReader.Get(var_i8, I8.data());
-        bpReader.Get(var_i16, I16.data());
-        bpReader.Get(var_i32, I32.data());
-        bpReader.Get(var_i64, I64.data());
+        EXPECT_THROW(bpReader.Get(var_i8, I8.data()), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_i16, I16.data()), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_i32, I32.data()), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_i64, I64.data()), std::invalid_argument);
 
-        bpReader.Get(var_u8, U8.data());
-        bpReader.Get(var_u16, U16.data());
-        bpReader.Get(var_u32, U32.data());
-        bpReader.Get(var_u64, U64.data());
+        EXPECT_THROW(bpReader.Get(var_u8, U8.data()), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_u16, U16.data()), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_u32, U32.data()), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_u64, U64.data()), std::invalid_argument);
 
-        bpReader.Get(var_r32, R32.data());
-        bpReader.Get(var_r64, R64.data());
-
-        // due to overflow
-        ASSERT_THROW(bpReader.PerformGets(), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_r32, R32.data()), std::invalid_argument);
+        EXPECT_THROW(bpReader.Get(var_r64, R64.data()), std::invalid_argument);
     }
 }
 

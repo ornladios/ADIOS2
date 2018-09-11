@@ -179,7 +179,6 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
                            const Dims &selectionCount)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
-    std::cout << "Type " << type << "\n";
 
     if (type.empty())
     {

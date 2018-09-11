@@ -434,9 +434,9 @@ protected:
         double BitSumSquare;
         uint64_t Offset;
         uint64_t PayloadOffset;
-        T Min;
-        T Max;
-        T Value;
+        T Min = T();
+        T Max = T();
+        T Value = T();
         std::vector<T> Values;
         uint32_t Step;
         uint32_t FileIndex;

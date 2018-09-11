@@ -247,6 +247,38 @@ bool VariableBase::IsValidStep(const size_t step) const noexcept
     return false;
 }
 
+void VariableBase::CheckRandomAccessConflict(const std::string hint) const
+{
+    if (m_DebugMode && m_RandomAccess)
+    {
+        throw std::invalid_argument("ERROR: can't mix streaming and "
+                                    "random-access (call to StepStepSelection)"
+                                    "for variable " +
+                                    m_Name + ", " + hint);
+    }
+}
+
+void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
+{
+    m_StepsCount = 1;
+
+    if (zeroStart)
+    {
+        m_StepsStart = 0;
+        return;
+    }
+
+    if (m_FirstStreamingStep)
+    {
+        m_StepsStart = 0;
+        m_FirstStreamingStep = false;
+    }
+    else
+    {
+        ++m_StepsStart;
+    }
+}
+
 // PRIVATE
 void VariableBase::InitShapeType()
 {
