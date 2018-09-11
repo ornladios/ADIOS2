@@ -1,10 +1,14 @@
-#ADIOS_DIR=/ccs/proj/e2e/pnorbert/ADIOS/ADIOS2/build.titan.gnu-nompi/install
-ADIOS_DIR=/global/homes/p/pnorbert/adios/2.2/login
+###  CORI
+#ADIOS_DIR=/global/homes/p/pnorbert/adios/2.2/login
+#ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib -L${ADIOS_DIR}/lib -ladios2 
 ADIOS_INC=-I${ADIOS_DIR}/include
-ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib -L${ADIOS_DIR}/lib -ladios2 
+MEXLIBS="LDFLAGS=${ADIOS_LIBS}"
+###   TITAN
+ADIOS_DIR=/ccs/proj/e2e/pnorbert/ADIOS/ADIOS2/build.titan.gnu-nompi/install
+ADIOS_LIBS=-L${ADIOS_DIR}/lib -ladios2 -ladios2_sst -ladios2_evpath  -ladios2_ffs -ladios2_enet -ladios2_atl  -ladios2_dill -lbz2 -lrt 
+MEXLIBS=${ADIOS_LIBS}
 
 MEXOPTS=-DDEBUG CFLAGS="-g -std=c99 -fPIC"
-MEXLIBS="LDFLAGS=${ADIOS_LIBS}"
 default:
 	@echo "ADIOS reader methods for MATLAB"
 	@echo "Have 'mex' compiler in the path and run"

@@ -5,26 +5,19 @@ function adios()
 %   with an easy to use interface and a set of different data writing methods
 %   so that everyone can choose the best method for a particular system.
 %
-%   ADIOSREAD can be used in itself to read in a variable with a known name.
-%   ADIOSOPEN returns a structure with information on all adios groups, 
-%   variables and attributes. The structure can be used to read many variables
-%   without repeatedly opening and closing the file behind the scenes. 
-%   ADIOSCLOSE closes the file, opened by ADIOSOPEN.
+%   ADIOSOPEN     returns a structure with information on an ADIOS BP File
+%                 variables and attributes.
+%   ADIOSREAD     reads in a variable from the file.
+%                 It expects the info structure returned by ADIOSOPEN.
+%   ADIOSREADATTR reads in an attribute from the file.
+%                 It expects the info structure returned by ADIOSOPEN.
+%   ADIOSCLOSE    closes the file.
 %
 %   Organization of an ADIOS BP file
 %   --------------------------------
-%   There is usually one adios group in a file, but there can be more. 
-%   An adios group is the set of all variables and attributes that have been
-%   written by a (parallel) program at one place in the code. The programmer
-%   may have decided to write more than one groups into the file.
-%   Note that the adios group is not the same as HDF5 groups. Each variable in
-%   the group has a path, which defines a logical hierarchy of the variables 
-%   within one adios group. This logical hierarchy is similar to the hierarchy
-%   in a HDF5 file.
-%
-%   Therefore, ADIOSREAD expects one of the info.Groups(idx) structure to
-%   specify a group to read from, instead of the info structure itself, where
-%   info is returned by ADIOSOPEN.
+%   An ADIOS BP file contains a set of variables and attributes.
+%   Each variable in the group has a path, which defines a logical 
+%   hierarchy of the variables within the file. 
 %
 %   Time dimension of a variable
 %   ----------------------------
@@ -45,10 +38,10 @@ function adios()
 %   Please read the file COPYING in the top directory of the ADIOS source
 %   distribution for information on the copyrights.
 %
-%   See also ADIOSOPEN, ADIOSREAD, ADIOSCLOSE.
+%   See also ADIOSOPEN, ADIOSREAD, ADIOSREADATTR, ADIOSCLOSE
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   $Revision: 1.0 $  $Date: 2009/08/05 12:53:41 $
+%   Date: 2018/09/07
 %   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 help adios

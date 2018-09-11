@@ -13,7 +13,7 @@
  *    adiosobj: int64 adios object handler
  *    Verbose:  numeric (double)
  *
- * $Revision: 1.0 $  $Date: 2009/08/05 12:53:41 $
+ * Date: 2018/09/07
  * Author: Norbert Podhorszki <pnorbert@ornl.gov>
  *=================================================================*/
 
@@ -48,13 +48,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
     /* 1. get file handler */
     uint64p = (uint64_t *) mxGetData(prhs[0]);
-    fp = (adios2_engine *) uint64p;
+    fp = (adios2_engine *) *uint64p;
     if (verbose) mexPrintf("File handler: \"%llu\"\n", *uint64p);
 
     /* 2. get adios object handler */
     uint64p = (uint64_t *) mxGetData(prhs[1]);
-    adiosobj = (adios2_adios *) uint64p;
+    adiosobj = (adios2_adios *) *uint64p;
     if (verbose) mexPrintf("ADIOS handler: \"%llu\"\n", *uint64p);
+
+    group = adios2_at_io(adiosobj, "matlabiogroup");
+    size_t step = adios2_current_step(fp);
+    if (verbose) mexPrintf("Current step in file handler: %zu\n", step);
 
     if (verbose) mexPrintf("Close file handler\n");
     adios2_close(fp);

@@ -35,7 +35,7 @@
  *
  *
  *
- * $Revision: 1.0 $  $Date: 2018/09/07 12:53:41 $
+ * Date: 2018/09/07
  * Author: Norbert Podhorszki <pnorbert@ornl.gov>
  *=================================================================*/
 
@@ -46,7 +46,7 @@
 
 static int verbose=0;
 
-mxClassID adiostypeToMatlabClass(int type, mxComplexity *complexity );
+mxClassID adiostypeToMatlabClass(int adiostype, mxComplexity *complexity );
 mxClassID adiostypestringToMatlabClass(const char * type, mxComplexity *complexity );
 mxArray* valueToMatlabValue(const void * data, mxClassID mxtype, mxComplexity complexFlag);
 void errorCheck(int nlhs, int nrhs, const mxArray *prhs[]);
@@ -288,6 +288,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             mexPrintf("      %s: adios type=%s size=%zu\n", attrname, atype, asize);
     }
 
+    if (verbose) mexPrintf("Lock the function call to not loose the ADIOS handlers\n");
+    //mexLock();
     if (verbose) mexPrintf("return from adiosopenc\n");
 }
 
@@ -360,10 +362,10 @@ char* getString(const mxArray *mxstr)
 }
 
 /** return the appropriate class for an adios type (and complexity too) */
-mxClassID adiostypeToMatlabClass(adios2_type type, mxComplexity *complexity ) 
+mxClassID adiostypeToMatlabClass(adios2_type adiostype, mxComplexity *complexity ) 
 {
     *complexity = mxREAL;
-    switch( type ) {
+    switch( adiostype ) {
         case adios2_type_unsigned_char:
         case adios2_type_uint8_t:
             return mxUINT8_CLASS;
@@ -424,7 +426,7 @@ mxClassID adiostypeToMatlabClass(adios2_type type, mxComplexity *complexity )
         default:
             mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",
                  "Adios type id=%d not supported in matlab.\n",
-                 type);
+                 adiostype);
             break;
     }
     return 0; /* just to avoid warnings. never executed */
