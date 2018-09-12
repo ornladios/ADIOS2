@@ -80,7 +80,6 @@ bool sortnames;  // sort names before listing
 bool listattrs;  // do list attributes too
 bool listmeshes; // do list meshes too
 bool attrsonly;  // do list attributes only
-bool readattrs;  // also read all attributes and print
 bool longopt;    // -l is turned on
 bool timestep;
 bool noindex;          // do no print array indices with data
@@ -385,6 +384,9 @@ int bplsMain(int argc, char *argv[])
     if (hidden_attrs_flag)
         hidden_attrs = true;
 
+    if (attrsonly)
+        listattrs = true;
+
     if (verbose > 1)
         printSettings();
 
@@ -430,7 +432,6 @@ void init_globals()
     listattrs = false;
     listmeshes = false;
     attrsonly = false;
-    readattrs = false;
     longopt = false;
     // timefrom             = 1;
     // timeto               = -1;
@@ -607,25 +608,22 @@ int doList_vars(core::Engine *fp, core::IO *io)
             if (!entry.isVar)
             {
                 // list (and print) attribute
-                if (readattrs || dump)
+                if (longopt || dump)
                 {
                     fprintf(outf, "  attr   = ");
-                    /*
-                    int type_size = adios_type_size(vartype, value);
-                    int nelems = attrsize / type_size;
-                    char *p = (char *)value;
-                    if (nelems > 1)
-                        fprintf(outf, "{");
-                    for (i = 0; i < nelems; i++)
+                    if (entry.typeName == "compound")
                     {
-                        if (i > 0)
-                            fprintf(outf, ", ");
-                        print_data(p, 0, vartype, false);
-                        p += type_size;
+                        // not supported
                     }
-                    if (nelems > 1)
-                        fprintf(outf, "}");
-                    */
+#define declare_template_instantiation(T)                                      \
+    else if (entry.typeName == helper::GetType<T>())                           \
+    {                                                                          \
+        core::Attribute<T> *a = io->InquireAttribute<T>(name);                 \
+        retval = printAttributeValue(fp, io, a);                               \
+    }
+                    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(
+                        declare_template_instantiation)
+#undef declare_template_instantiation
                     fprintf(outf, "\n");
                     matches = false; // already printed
                 }
@@ -823,6 +821,35 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         fprintf(outf, "\n");
     }
     return retval;
+}
+
+template <class T>
+int printAttributeValue(core::Engine *fp, core::IO *io,
+                        core::Attribute<T> *attribute)
+{
+    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
+
+    if (attribute->m_IsSingleValue)
+    {
+        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
+                   true);
+    }
+    else
+    {
+        fprintf(outf, "{");
+        size_t nelems = attribute->m_DataArray.size();
+        for (size_t j = 0; j < nelems; j++)
+        {
+            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
+                       true);
+            if (j < nelems - 1)
+            {
+                fprintf(outf, ", ");
+            }
+        }
+        fprintf(outf, "}");
+    }
+    return 0;
 }
 
 #define PRINT_ARRAY(str, ndim, dims, loopvar, format)                          \

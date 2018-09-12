@@ -89,6 +89,9 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                       core::Variable<T> *variable);
 
 template <class T>
+int printAttributeValue(core::Engine *fp, core::IO *io,
+                        core::Attribute<T> *attribute);
+template <class T>
 int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable);
 
 template <class T>
