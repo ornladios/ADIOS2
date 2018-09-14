@@ -229,16 +229,16 @@ Notes:
 
 In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library gets built:
 
-============================ =================================================== ============================================
-CMake VAR Options              Values                                              Description                                                                           |
-============================ =================================================== ============================================
- `BUILD_SHARED_LIBS`          ``ON``/OFF                                          Build shared libraries.                                                               
- `ADIOS2_ENABLE_PIC`          ``ON``/OFF                                          Enable Position Independent Code.                                
- `ADIOS2_BUILD_EXAMPLES`      ``ON``/OFF                                          Build examples.                                                                       
- `ADIOS2_BUILD_TESTING`       ``ON``/OFF                                          Build test code.                                                                      
- `CMAKE_INSTALL_PREFIX`       /path/to/install (``/usr/local``)                   Install location.                                                                     
- `CMAKE_BUILD_TYPE`           ``Debug`` / Release / RelWithDebInfo / MinSizeRel   The level of compiler optimization to use.                                            
-============================ =================================================== ============================================
+==================================== ================================================= ============================================
+CMake VAR Options                       Values                                          Description                                                                           |
+==================================== ================================================= ============================================
+ `BUILD_SHARED_LIBS`                   ``ON``/OFF                                       Build shared libraries.                                                               
+ `CMAKE_POSITION_INDEPENDENT_CODE`     ``ON``/OFF                                       Enable Position Independent Code.                                
+ `ADIOS2_BUILD_EXAMPLES`               ``ON``/OFF                                       Build examples.                                                                       
+ `ADIOS2_BUILD_TESTING`                ``ON``/OFF                                       Build test code.                                                                      
+ `CMAKE_INSTALL_PREFIX`                /path/to/install (``/usr/local``)                Install location.                                                                     
+ `CMAKE_BUILD_TYPE`                    ``Debug``/Release/RelWithDebInfo/MinSizeRel      Compiler optimization levels.                                            
+=================================== ================================================== ============================================
 
 Example: the following configuration will build, test and install under /opt/adios2/2.2.0 an optimized (Release) version of ADIOS2.
 
@@ -249,3 +249,6 @@ Example: the following configuration will build, test and install under /opt/adi
     $ make -j 4
     $ ctest
     $ make install
+ 
+For a full configurable script example, click `here. <https://github.com/ornladios/ADIOS2/tree/master/scripts/runconf/runconf.sh>`_
+ 
