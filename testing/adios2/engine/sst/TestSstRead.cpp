@@ -133,6 +133,16 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r64.Shape()[0], writerSize * Nx);
 
+        auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
+        EXPECT_TRUE(var_c32);
+        ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_c32.Shape()[0], writerSize * Nx);
+
+        auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+        EXPECT_TRUE(var_c64);
+        ASSERT_EQ(var_c64.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_c64.Shape()[0], writerSize * Nx);
+
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
         EXPECT_TRUE(var_r64_2d);
         ASSERT_EQ(var_r64_2d.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -179,6 +189,8 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
 
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
+        var_c32.SetSelection(sel);
+        var_c64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);
         var_r64_2d_rev.SetSelection(sel3);
 
@@ -190,6 +202,8 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         in_I64.reserve(myLength);
         in_R32.reserve(myLength);
         in_R64.reserve(myLength);
+        in_C32.reserve(myLength);
+        in_C64.reserve(myLength);
         in_R64_2d.reserve(myLength * 2);
         in_R64_2d_rev.reserve(myLength * 2);
         engine.Get(var_i8, in_I8.data());
@@ -199,6 +213,8 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
 
         engine.Get(var_r32, in_R32.data());
         engine.Get(var_r64, in_R64.data());
+        engine.Get(var_c32, in_C32.data());
+        engine.Get(var_c64, in_C64.data());
         engine.Get(var_r64_2d, in_R64_2d.data());
         engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;

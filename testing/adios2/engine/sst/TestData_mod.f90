@@ -18,6 +18,8 @@ module sst_test_data
     integer(kind=8), dimension(10) :: data_I64
     real(kind=4), dimension(10) :: data_R32
     real(kind=8), dimension(10) :: data_R64
+    complex(kind=4), dimension(10) :: data_C32
+    complex(kind=8), dimension(10) :: data_C64
     real (kind=8), dimension(2, 10) :: data_R64_2d
     real (kind=8), dimension(10, 2) :: data_R64_2d_rev
 
@@ -27,6 +29,8 @@ module sst_test_data
     integer(kind=8), dimension(:), allocatable :: in_I64
     real(kind=4), dimension(:), allocatable :: in_R32
     real(kind=8), dimension(:), allocatable :: in_R64 
+    complex(kind=4), dimension(:), allocatable :: in_C32
+    complex(kind=8), dimension(:), allocatable :: in_C64 
     real (kind=8), dimension(:,:), allocatable :: in_R64_2d 
     real (kind=8), dimension(:,:), allocatable :: in_R64_2d_rev 
 
@@ -44,6 +48,8 @@ module sst_test_data
          data_I64(i) = (j + 10 * (i-1));
          data_R32(i) = (j + 10 * (i-1));
          data_R64(i) = (j + 10 * (i-1));
+         data_C32(i) = cmplx((j + 10 * (i-1)), - (j + 10 * (i-1)));
+         data_C64(i) = cmplx((j + 10 * (i-1)), - (j + 10 * (i-1)));
          data_R64_2d(1,i) = (j + 10 * (i-1));
          data_R64_2d(2,i) = 10000 + (j + 10 * (i-1));
          data_R64_2d_rev(i,1) = (j + 10 * (i-1));
