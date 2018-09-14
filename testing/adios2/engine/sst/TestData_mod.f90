@@ -48,8 +48,8 @@ module sst_test_data
          data_I64(i) = (j + 10 * (i-1));
          data_R32(i) = (j + 10 * (i-1));
          data_R64(i) = (j + 10 * (i-1));
-         data_C32(i) = cmplx((j + 10 * (i-1)), - (j + 10 * (i-1)));
-         data_C64(i) = cmplx((j + 10 * (i-1)), - (j + 10 * (i-1)));
+         data_C32(i) = cmplx(-(j + 10 * (i-1)), (j + 10 * (i-1)));
+         data_C64(i) = cmplx(-(j + 10 * (i-1)), (j + 10 * (i-1)));
          data_R64_2d(1,i) = (j + 10 * (i-1));
          data_R64_2d(2,i) = 10000 + (j + 10 * (i-1));
          data_R64_2d_rev(i,1) = (j + 10 * (i-1));

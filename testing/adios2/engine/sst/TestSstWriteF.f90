@@ -86,6 +86,19 @@ program TestSstWrite
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
 
+  write (*,*) ierr
+  call adios2_define_variable(variables(10), ioWrite, "c32", &
+       adios2_type_complex, 1, &
+       shape_dims, start_dims, count_dims,&
+       adios2_constant_dims, ierr)
+
+  write (*,*) ierr
+  call adios2_define_variable(variables(11), ioWrite, "c64", &
+       adios2_type_complex_dp, 1, &
+       shape_dims, start_dims, count_dims, &
+       adios2_constant_dims, ierr)
+
+  write (*,*) ierr
   call adios2_define_variable(variables(7), ioWrite, "r64_2d", &
        adios2_type_dp, 2, &
        shape_dims2, start_dims2, count_dims2, &
@@ -99,16 +112,6 @@ program TestSstWrite
   call adios2_define_variable(variables(9), ioWrite, "time", &
        adios2_type_integer8, 1, &
        shape_time, start_time, count_time, &
-       adios2_constant_dims, ierr)
-
-  call adios2_define_variable(variables(10), ioWrite, "c32", &
-       adios2_type_complex, 1, &
-       shape_dims, start_dims, count_dims,&
-       adios2_constant_dims, ierr)
-
-  call adios2_define_variable(variables(11), ioWrite, "c64", &
-       adios2_type_complex_dp, 1, &
-       shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
 
   call adios2_open(sstWriter, ioWrite, "ADIOS2Sst", adios2_mode_write, ierr)
