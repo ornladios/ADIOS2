@@ -86,6 +86,19 @@ program TestSstWrite
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
 
+  write (*,*) ierr
+  call adios2_define_variable(variables(10), ioWrite, "c32", &
+       adios2_type_complex, 1, &
+       shape_dims, start_dims, count_dims,&
+       adios2_constant_dims, ierr)
+
+  write (*,*) ierr
+  call adios2_define_variable(variables(11), ioWrite, "c64", &
+       adios2_type_complex_dp, 1, &
+       shape_dims, start_dims, count_dims, &
+       adios2_constant_dims, ierr)
+
+  write (*,*) ierr
   call adios2_define_variable(variables(7), ioWrite, "r64_2d", &
        adios2_type_dp, 2, &
        shape_dims2, start_dims2, count_dims2, &
@@ -117,6 +130,8 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(8), data_R64_2d_rev, ierr)
      localtime = 0    ! should be time(), but non-portable and value is unused
      call adios2_put(sstWriter, variables(9), loc(localtime), ierr)
+     call adios2_put(sstWriter, variables(10), data_C32, ierr)
+     call adios2_put(sstWriter, variables(11), data_C64, ierr)
      call adios2_end_step(sstWriter, ierr)
   end do
 

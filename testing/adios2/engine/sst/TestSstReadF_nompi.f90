@@ -114,6 +114,24 @@ program TestSstRead
   if (shape_in(1) /= nx*writerSize) stop 'r64_2d_rev shape_in(2) read failed'
   if (shape_in(2) /= 2) stop 'r64_2d_rev shape_in(1) read failed'
 
+  call adios2_inquire_variable(variables(10), ioRead, "c32", ierr)
+  call adios2_variable_name(variables(10), variable_name, ierr)
+  if (variable_name /= 'c32') stop 'c32 not recognized'
+  call adios2_variable_type(variables(10), variable_type, ierr)
+  if (variable_type /= adios2_type_complex) stop 'c32 type not recognized'
+  call adios2_variable_shape(variables(10), ndims, shape_in, ierr)
+  if (ndims /= 1) stop 'c32 ndims is not 1'
+  if (shape_in(1) /= nx*writerSize) stop 'c32 shape_in read failed'
+
+  call adios2_inquire_variable(variables(11), ioRead, "c64", ierr)
+  call adios2_variable_name(variables(11), variable_name, ierr)
+  if (variable_name /= 'c64') stop 'c64 not recognized'
+  call adios2_variable_type(variables(11), variable_type, ierr)
+  if (variable_type /= adios2_type_complex_dp) stop 'c64 type not recognized'
+  call adios2_variable_shape(variables(11), ndims, shape_in, ierr)
+  if (ndims /= 1) stop 'c64 ndims is not 1'
+  if (shape_in(1) /= nx*writerSize) stop 'c64 shape_in read failed'
+
   
   myStart = (writerSize * Nx / isize) * irank
   myLength = ((writerSize * Nx + isize - 1) / isize)
@@ -127,6 +145,8 @@ program TestSstRead
   allocate (in_I64(myLength));
   allocate (in_R32(myLength));
   allocate (in_R64(myLength));
+  allocate (in_C32(myLength));
+  allocate (in_C64(myLength));
   allocate (in_R64_2d(2, myLength));
   allocate (in_R64_2d_rev(myLength, 2));
 
@@ -151,6 +171,8 @@ program TestSstRead
   call adios2_set_selection(variables(6), 1, start_dims, count_dims, ierr)
   call adios2_set_selection(variables(7), 2, start_dims2, count_dims2, ierr)
   call adios2_set_selection(variables(8), 2, start_dims3, count_dims3, ierr)
+  call adios2_set_selection(variables(10), 1, start_dims, count_dims, ierr)
+  call adios2_set_selection(variables(11), 1, start_dims, count_dims, ierr)
 
   call adios2_get(sstReader, variables(1), in_I8, ierr)
   call adios2_get(sstReader, variables(2), in_I16, ierr)
@@ -160,6 +182,8 @@ program TestSstRead
   call adios2_get(sstReader, variables(6), in_R64, ierr)
   call adios2_get(sstReader, variables(7), in_R64_2d, ierr)
   call adios2_get(sstReader, variables(8), in_R64_2d_rev, ierr)
+  call adios2_get(sstReader, variables(10), in_C32, ierr)
+  call adios2_get(sstReader, variables(11), in_C64, ierr)
 
   call adios2_end_step(sstReader, ierr)
   

@@ -25,6 +25,8 @@ std::array<int32_t, 10> data_I32;
 std::array<int64_t, 10> data_I64;
 std::array<float, 10> data_R32;
 std::array<double, 10> data_R64;
+std::array<std::complex<float>, 10> data_C32;
+std::array<std::complex<double>, 10> data_C64;
 double data_R64_2d[10][2];
 double data_R64_2d_rev[2][10];
 
@@ -34,6 +36,8 @@ std::vector<int32_t> in_I32;
 std::vector<int64_t> in_I64;
 std::vector<float> in_R32;
 std::vector<double> in_R64;
+std::vector<std::complex<float>> in_C32;
+std::vector<std::complex<double>> in_C64;
 std::vector<double> in_R64_2d;
 std::vector<double> in_R64_2d_rev;
 
@@ -48,6 +52,10 @@ void generateSstTestData(int step, int rank, int size)
         data_I64[i] = (int64_t)(j + 10 * i);
         data_R32[i] = j + 10 * i;
         data_R64[i] = j + 10 * i;
+        data_C32[i].imag(j + 10 * i);
+        data_C32[i].real(-(j + 10 * i));
+        data_C64[i].imag(j + 10 * i);
+        data_C64[i].real(-(j + 10 * i));
         data_R64_2d[i][0] = j + 10 * i;
         data_R64_2d[i][1] = 10000 + j + 10 * i;
         data_R64_2d_rev[0][i] = j + 10 * i;
@@ -105,6 +113,24 @@ int validateSstTestData(int start, int length, int step)
             std::cout << "Expected " << (double)((i + start) * 10 + step)
                       << ", got " << in_R64[i] << " for in_R64[" << i
                       << "](global[" << i + start << "])" << std::endl;
+            failures++;
+        }
+        if ((in_C32[i].imag() != (float)((i + start) * 10 + step)) ||
+            (in_C32[i].real() != -(float)((i + start) * 10 + step)))
+        {
+            std::cout << "Expected [" << (float)((i + start) * 10 + step)
+                      << ", " << -(float)((i + start) * 10 + step) << "], got "
+                      << in_C32[i] << " for in_C32[" << i << "](global["
+                      << i + start << "])" << std::endl;
+            failures++;
+        }
+        if ((in_C64[i].imag() != (double)((i + start) * 10 + step)) ||
+            (in_C64[i].real() != (-(double)((i + start) * 10 + step))))
+        {
+            std::cout << "Expected [" << (double)((i + start) * 10 + step)
+                      << ", " << -(double)((i + start) * 10 + step) << "], got "
+                      << in_C64[i] << " for in_C64[" << i << "](global["
+                      << i + start << "])" << std::endl;
             failures++;
         }
         if (in_R64_2d[2 * i] != (double)((i + start) * 10 + step))

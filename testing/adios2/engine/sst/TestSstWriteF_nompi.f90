@@ -98,6 +98,16 @@ program TestSstWrite
        shape_time, start_time, count_time, &
        adios2_constant_dims, ierr)
 
+  call adios2_define_variable(variables(10), ioWrite, "c32", &
+       adios2_type_complex, 1, &
+       shape_dims, start_dims, count_dims,&
+       adios2_constant_dims, ierr)
+
+  call adios2_define_variable(variables(11), ioWrite, "c64", &
+       adios2_type_complex_dp, 1, &
+       shape_dims, start_dims, count_dims, &
+       adios2_constant_dims, ierr)
+
   call adios2_open(sstWriter, ioWrite, "ADIOS2Sst", adios2_mode_write, ierr)
 
   !Put array contents to bp buffer, based on var1 metadata
@@ -114,6 +124,8 @@ program TestSstWrite
      call adios2_put(sstWriter, variables(8), data_R64_2d_rev, ierr)
      localtime = 0    ! should be time(), but non-portable and value is unused
      call adios2_put(sstWriter, variables(9), loc(localtime), ierr)
+     call adios2_put(sstWriter, variables(10), data_C32, ierr)
+     call adios2_put(sstWriter, variables(11), data_C64, ierr)
      call adios2_end_step(sstWriter, ierr)
   end do
 
