@@ -19,7 +19,7 @@ fi
 git remote set-url origin https://github.com/${GH_USERNAME}/adios2.git
 
 echo "Testing SSH access to GitHub..."
-ssh -T git@github.com 2>/dev/null
+ssh -o ConnectTimeout=10 -T git@github.com 2>/dev/null
 if [ $? -eq 1 ]
 then
   echo "Success!  Setting up SSH push access to your fork."
