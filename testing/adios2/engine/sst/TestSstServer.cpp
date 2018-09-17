@@ -115,6 +115,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         io.DefineVariable<int64_t>("i64", shape, start, count);
         io.DefineVariable<float>("r32", shape, start, count);
         io.DefineVariable<double>("r64", shape, start, count);
+        io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+        io.DefineVariable<std::complex<double>>("c64", shape, start, count);
         io.DefineVariable<double>("r64_2d", shape2, start2, count2);
         io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
         io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
@@ -144,6 +146,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
         auto var_r32 = io.InquireVariable<float>("r32");
         auto var_r64 = io.InquireVariable<double>("r64");
+        auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
+        auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
         auto var_r64_2d_rev = io.InquireVariable<double>("r64_2d_rev");
         auto var_time = io.InquireVariable<int64_t>("time");
@@ -161,6 +165,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         var_i64.SetSelection(sel);
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
+        var_c32.SetSelection(sel);
+        var_c64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);
         var_r64_2d_rev.SetSelection(sel3);
         var_time.SetSelection(sel_time);
@@ -176,6 +182,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         engine.Put(var_i64, data_I64.data(), sync);
         engine.Put(var_r32, data_R32.data(), sync);
         engine.Put(var_r64, data_R64.data(), sync);
+        engine.Put(var_c32, data_C32.data(), sync);
+        engine.Put(var_c64, data_C64.data(), sync);
         engine.Put(var_r64_2d, &data_R64_2d[0][0], sync);
         engine.Put(var_r64_2d_rev, &data_R64_2d_rev[0][0], sync);
         // Advance to the next time step
