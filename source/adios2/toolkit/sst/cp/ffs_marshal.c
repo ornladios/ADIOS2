@@ -1311,8 +1311,11 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
     }
 
-    if (!MetaData->Metadata[WriterRank]->block) {
-	fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == NULL for WriterRank = %d\n", WriterRank);
+    if (!MetaData->Metadata[WriterRank]->block)
+    {
+        fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == "
+                        "NULL for WriterRank = %d\n",
+                WriterRank);
     }
     FFSformat = FFSTypeHandle_from_encode(
         Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block);
