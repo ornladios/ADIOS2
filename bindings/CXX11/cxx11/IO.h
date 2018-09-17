@@ -130,75 +130,59 @@ public:
 
     /**
      * @brief Define array attribute
-     * @param name must be unique for the IO object
-     * @param array pointer to user data
+     * @param name must be unique for the IO object or for a Variable if
+     * variableName is not empty (associated to a variable)
+     * @param data pointer to user data
      * @param size number of data elements
-     * @return reference to internal Attribute
-     * @exception std::invalid_argument if Attribute with unique name is
-     * already defined, in debug mode only
+     * @param variableName default is empty, if not empty attributes is
+     * associated to a variable
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     * @return object reference to internal Attribute in IO
+     * @exception std::invalid_argument if Attribute with unique name (in IO or
+     * Variable) is already defined, in debug mode only
      */
     template <class T>
     Attribute<T> DefineAttribute(const std::string &name, const T *data,
-                                 const size_t size);
+                                 const size_t size,
+                                 const std::string &variableName = "",
+                                 const std::string separator = "/");
 
     /**
      * @brief Define single value attribute
-     * @param name must be unique for the IO object
+     * @param name must be unique for the IO object or for a Variable if
+     * variableName is not empty (associated to a variable)
      * @param value single data value
-     * @return Attribute object reference to internal Attribute
-     * @exception std::invalid_argument if Attribute with unique name is already
-     * defined, in debug mode only
+     * @param variableName default is empty, if not empty attributes is
+     * associated to a variable
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     * @return object reference to internal Attribute in IO
+     * @exception std::invalid_argument if Attribute with unique name (in IO or
+     * Variable) is already defined, in debug mode only
      */
     template <class T>
-    Attribute<T> DefineAttribute(const std::string &name, const T &value);
-
-    /**
-     * @brief Define single value attribute associated with an existing variable
-     * Attribute full name = variable.Name() + separator + name
-     * @param variable existing variable object (must be valid)
-     * @param name attribute local name associated to variable.
-     *             Must be unique for the IO object and the variable.
-     * @param value single data value
-     * @param separator default='/'
-     * @return Attribute object that references to internal Attribute
-     * @exception std::invalid_argument if Attribute with unique name is
-     * already defined, in debug mode only
-     */
-    template <class T>
-    Attribute<T> DefineAttribute(const adios2::Variable<T> variable,
-                                 const std::string &name, const T &value,
+    Attribute<T> DefineAttribute(const std::string &name, const T &value,
+                                 const std::string &variableName = "",
                                  const std::string separator = "/");
 
     /**
-     * @brief Define single value attribute associated with an existing variable
-     * Attribute full name = variable.Name() + separator + name
-     * @param variable existing variable object (must be valid)
-     * @param name attribute local name associated to variable.
-     *             Must be unique for the IO object and the variable.
-     * @param data array data value
-     * @param size array data size
-     * @return Attribute object that references to internal Attribute
-     * @exception std::invalid_argument if Attribute with unique name is
-     * already defined, in debug mode only
+     * @brief Retrieve an existing attribute
+     * @param name must be unique for the IO object or for a Variable if
+     * variableName is not empty (associated to a variable)
+     * @param variableName default is empty, if not empty attributes is expected
+     * to be associated to a variable
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     * @return object reference to internal Attribute in IO, object is false if
+     * Attribute is not found
      */
     template <class T>
-    Attribute<T> DefineAttribute(const adios2::Variable<T> variable,
-                                 const std::string &name, const T *data,
-                                 const size_t size,
-                                 const std::string separator = "/");
-
-    /**
-     * Gets an existing attribute of primitive type by name
-     * @param name of attribute to be retrieved
-     * @return object to an existing attribute in current IO, object is false if
-     * not found
-     */
-    template <class T>
-    Attribute<T> InquireAttribute(const std::string &name) noexcept;
-
-    template <class T>
-    Attribute<T> InquireAttribute(const Variable<T> variable,
-                                  const std::string &name,
+    Attribute<T> InquireAttribute(const std::string &name,
+                                  const std::string &variableName = "",
                                   const std::string separator = "/") noexcept;
 
     /**
@@ -351,14 +335,16 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
-    extern template Attribute<T> IO::DefineAttribute(const std::string &,      \
-                                                     const T *, const size_t); \
+    extern template Attribute<T> IO::DefineAttribute(                          \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string);                                                    \
                                                                                \
-    extern template Attribute<T> IO::DefineAttribute(const std::string &,      \
-                                                     const T &);               \
+    extern template Attribute<T> IO::DefineAttribute(                          \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string);                                                    \
                                                                                \
     extern template Attribute<T> IO::InquireAttribute<T>(                      \
-        const std::string &) noexcept;
+        const std::string &, const std::string &, const std::string) noexcept;
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 

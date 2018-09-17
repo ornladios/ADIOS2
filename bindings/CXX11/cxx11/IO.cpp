@@ -118,12 +118,17 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
-    template Attribute<T> IO::DefineAttribute(const std::string &, const T *,  \
-                                              const size_t);                   \
+    template Attribute<T> IO::DefineAttribute(                                 \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string);                                                    \
                                                                                \
-    template Attribute<T> IO::DefineAttribute(const std::string &, const T &); \
+    template Attribute<T> IO::DefineAttribute(const std::string &, const T &,  \
+                                              const std::string &,             \
+                                              const std::string);              \
                                                                                \
-    template Attribute<T> IO::InquireAttribute<T>(const std::string &) noexcept;
+    template Attribute<T> IO::InquireAttribute<T>(                             \
+        const std::string &, const std::string &, const std::string) noexcept;
+
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 

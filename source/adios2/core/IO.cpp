@@ -355,9 +355,14 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
     return type;
 }
 
-std::string IO::InquireAttributeType(const std::string &name) const noexcept
+std::string IO::InquireAttributeType(const std::string &name,
+                                     const std::string &variableName,
+                                     const std::string separator) const noexcept
 {
-    auto itAttribute = m_Attributes.find(name);
+    const std::string globalName =
+        helper::GlobalName(name, variableName, separator);
+
+    auto itAttribute = m_Attributes.find(globalName);
     if (itAttribute == m_Attributes.end())
     {
         return std::string();
@@ -665,12 +670,14 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
 
 #define declare_template_instantiation(T)                                      \
-    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
-                                                  const T *, const size_t);    \
-    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
-                                                  const T &);                  \
+    template Attribute<T> &IO::DefineAttribute<T>(                             \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string);                                                    \
+    template Attribute<T> &IO::DefineAttribute<T>(                             \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string);                                                    \
     template Attribute<T> *IO::InquireAttribute<T>(                            \
-        const std::string &) noexcept;
+        const std::string &, const std::string &, const std::string) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

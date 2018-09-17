@@ -115,6 +115,18 @@ unsigned int StringToUInt(const std::string value, const bool debugMode,
  */
 std::string DimsToString(const Dims &dimensions);
 
+/**
+ * Sets global name: prefix + separator + localName. If prefix is empty it
+ * returns the localName as-is.
+ * e.g.  "temperature" + "/" + "units"
+ * @param localName
+ * @param prefix
+ * @param separator
+ * @return 1) prefix + separator + localName, 2) empty prefix: returns localName
+ */
+std::string GlobalName(const std::string &localName, const std::string &prefix,
+                       const std::string separator) noexcept;
+
 } // end namespace helper
 } // end namespace adios2
 

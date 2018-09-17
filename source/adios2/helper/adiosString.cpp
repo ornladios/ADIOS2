@@ -247,5 +247,16 @@ std::string DimsToString(const Dims &dimensions)
     return dimensionsString;
 }
 
+std::string GlobalName(const std::string &localName, const std::string &prefix,
+                       const std::string separator) noexcept
+{
+    if (prefix.empty())
+    {
+        return localName;
+    }
+
+    return prefix + separator + localName;
+}
+
 } // end namespace helper
 } // end namespace adios2

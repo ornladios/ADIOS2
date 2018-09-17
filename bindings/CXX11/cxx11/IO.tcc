@@ -34,71 +34,30 @@ Variable<T> IO::InquireVariable(const std::string &name) noexcept
 
 template <class T>
 Attribute<T> IO::DefineAttribute(const std::string &name, const T *data,
-                                 const size_t size)
-{
-    return Attribute<T>(&m_IO.DefineAttribute(name, data, size));
-}
-
-template <class T>
-Attribute<T> IO::DefineAttribute(const std::string &name, const T &value)
-{
-    return Attribute<T>(&m_IO.DefineAttribute<T>(name, value));
-}
-
-template <class T>
-Attribute<T> IO::DefineAttribute(const adios2::Variable<T> variable,
-                                 const std::string &name, const T &value,
+                                 const size_t size,
+                                 const std::string &variableName,
                                  const std::string separator)
 {
-    if (!variable)
-    {
-        throw std::invalid_argument(
-            "ERROR: variable can't be false when "
-            "defining related attribute value with name " +
-            name + ", in call to DefineAttribute\n");
-    }
-
-    const std::string absoluteName = variable.m_Name + separator + name;
-    return DefineAttribute(absoluteName, value, separator);
+    return Attribute<T>(
+        &m_IO.DefineAttribute(name, data, size, variableName, separator));
 }
 
 template <class T>
-Attribute<T> IO::DefineAttribute(const adios2::Variable<T> variable,
-                                 const std::string &name, const T *data,
-                                 const size_t size, const std::string separator)
+Attribute<T> IO::DefineAttribute(const std::string &name, const T &value,
+                                 const std::string &variableName,
+                                 const std::string separator)
 {
-    if (!variable)
-    {
-        throw std::invalid_argument(
-            "ERROR: variable can't be false when "
-            "defining related attribute array with name " +
-            name + ", in call to DefineAttribute\n");
-    }
-
-    const std::string absoluteName = variable.m_Name + separator + name;
-    return DefineAttribute(absoluteName, data, size);
+    return Attribute<T>(
+        &m_IO.DefineAttribute<T>(name, value, variableName, separator));
 }
 
 template <class T>
-Attribute<T> IO::InquireAttribute(const std::string &name) noexcept
-{
-    return Attribute<T>(m_IO.InquireAttribute<T>(name));
-}
-
-template <class T>
-Attribute<T> IO::InquireAttribute(const Variable<T> variable,
-                                  const std::string &name,
+Attribute<T> IO::InquireAttribute(const std::string &name,
+                                  const std::string &variableName,
                                   const std::string separator) noexcept
 {
-    if (!variable)
-    {
-        throw std::invalid_argument("ERROR: variable can't be false when "
-                                    "inquiring related attribute with name " +
-                                    name + ", in call to DefineAttribute\n");
-    }
-
-    const std::string absoluteName = variable.m_Name + separator + name;
-    return InquireAttribute<T>(absoluteName);
+    return Attribute<T>(
+        m_IO.InquireAttribute<T>(name, variableName, separator));
 }
 
 } // end namespace adios2
