@@ -81,12 +81,30 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     if (Params->ControlTransport == NULL)
     {
-        /* determine reasonable default, now "sockets" */
-        Params->ControlTransport = strdup("sockets");
+        /* determine reasonable default, now "enet" */
+        Params->ControlTransport = strdup("enet");
+    }
+    Stream->ConnectionUsleepMultiplier = 50;
+    if ((strcmp(Params->ControlTransport, "enet") == 0) &&
+        getenv("USLEEP_MULTIPLIER"))
+    {
+        sscanf("%d", getenv("USLEEP_MULTIPLIER"),
+               &Stream->ConnectionUsleepMultiplier);
     }
     for (int i = 0; Params->ControlTransport[i] != 0; i++)
     {
         Params->ControlTransport[i] = tolower(Params->ControlTransport[i]);
+    }
+    if ((strcmp(Params->ControlTransport, "enet") == 0) &&
+        getenv("USLEEP_MULTIPLIER"))
+    {
+        int tmp;
+        if (sscanf(getenv("USLEEP_MULTIPLIER"), "%d", &tmp) == 1)
+        {
+            Stream->ConnectionUsleepMultiplier = tmp;
+        }
+        CP_verbose(Stream, "USING %d as usleep multiplier before connections\n",
+                   Stream->ConnectionUsleepMultiplier);
     }
     CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);

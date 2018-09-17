@@ -166,8 +166,10 @@ struct _SstStream
     VarSetupUpcallFunc VarSetupUpcall;
     ArraySetupUpcallFunc ArraySetupUpcall;
     void *SetupUpcallReader;
-
     void *ReaderMarshalData;
+
+    /* stream parameters */
+    int ConnectionUsleepMultiplier;
 };
 
 /*
