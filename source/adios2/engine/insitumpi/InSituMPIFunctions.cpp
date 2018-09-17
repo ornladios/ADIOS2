@@ -126,7 +126,11 @@ std::vector<int> AssignPeers(const int rank, const int nproc,
 
     std::vector<int> directPeers;
 
-    if (nproc == nAllPeers)
+    if (!nAllPeers)
+    {
+        return directPeers;
+    }
+    else if (nproc == nAllPeers)
     {
         // one-to-one direct assignment
         directPeers.push_back(allPeers[rank]);
