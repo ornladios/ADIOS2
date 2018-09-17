@@ -18,8 +18,6 @@
 
 #include "cp_internal.h"
 
-int usleep_multiplier = 0;
-
 void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 {
     if (Params->RendezvousReaderCount >= 0)
@@ -86,10 +84,10 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         /* determine reasonable default, now "enet" */
         Params->ControlTransport = strdup("enet");
     }
+    Stream->ConnectionUsleepMultiplier = 50;
     if ((strcmp(Params->ControlTransport, "enet") == 0) && 
 	getenv("USLEEP_MULTIPLIER")) {
-	sscanf("%d", getenv("USLEEP_MULTIPLIER"), &usleep_multiplier);
-	printf("USING %d as usleep multiplier before connections\n", usleep_multiplier);
+	sscanf("%d", getenv("USLEEP_MULTIPLIER"), &Stream->ConnectionUsleepMultiplier);
     }
     for (int i = 0; Params->ControlTransport[i] != 0; i++)
     {
@@ -97,8 +95,12 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     if ((strcmp(Params->ControlTransport, "enet") == 0) && 
 	getenv("USLEEP_MULTIPLIER")) {
-	sscanf(getenv("USLEEP_MULTIPLIER"), "%d", &usleep_multiplier);
-	printf("USING %d as usleep multiplier before connections\n", usleep_multiplier);
+	int tmp;
+	if (sscanf(getenv("USLEEP_MULTIPLIER"), "%d", &tmp) == 1) {
+	    Stream->ConnectionUsleepMultiplier = tmp;
+	}
+	CP_verbose(Stream, "USING %d as usleep multiplier before connections\n", 
+		   Stream->ConnectionUsleepMultiplier); 
     }
     CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);

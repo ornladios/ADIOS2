@@ -273,9 +273,8 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
         if (SoloPeer >= ReaderSize)
             SoloPeer--;
 	
-	extern int usleep_multiplier;
-	if (usleep_multiplier != 0) 
-	    usleep(WriterRank * usleep_multiplier);
+	if (reader->ParentStream->ConnectionUsleepMultiplier != 0) 
+	    usleep(WriterRank * reader->ParentStream->ConnectionUsleepMultiplier);
         reader->Connections[SoloPeer].CMconn =
             CMget_conn(reader->ParentStream->CPInfo->cm,
                        reader->Connections[SoloPeer].ContactList);
@@ -298,9 +297,8 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
     while (reader->Peers[i] != -1)
     {
         int peer = reader->Peers[i];
-	extern int usleep_multiplier;
-	if (usleep_multiplier != 0) 
-	    usleep(WriterRank * usleep_multiplier);
+	if (reader->ParentStream->ConnectionUsleepMultiplier != 0) 
+	    usleep(WriterRank * reader->ParentStream->ConnectionUsleepMultiplier);
         reader->Connections[peer].CMconn =
             CMget_conn(reader->ParentStream->CPInfo->cm,
                        reader->Connections[peer].ContactList);
