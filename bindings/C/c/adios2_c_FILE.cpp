@@ -86,149 +86,149 @@ void adios2_fwrite(adios2_FILE *stream, const char *name,
     case (adios2_type_string):
     {
         const std::string stringCpp(reinterpret_cast<const char *>(data));
-        streamCpp.Write(name, stringCpp, endStep);
+        streamCpp.Write(name, stringCpp);
         break;
     }
     case (adios2_type_char):
     {
         streamCpp.Write(name, reinterpret_cast<const char *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
 
         break;
     }
     case (adios2_type_signed_char):
     {
         streamCpp.Write(name, reinterpret_cast<const signed char *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_short):
     {
         streamCpp.Write(name, reinterpret_cast<const short *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_int):
     {
         streamCpp.Write(name, reinterpret_cast<const int *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_long_int):
     {
         streamCpp.Write(name, reinterpret_cast<const long int *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_long_long_int):
     {
         streamCpp.Write(name, reinterpret_cast<const long long int *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_unsigned_char):
     {
         streamCpp.Write(name, reinterpret_cast<const unsigned char *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_unsigned_short):
     {
         streamCpp.Write(name, reinterpret_cast<const unsigned short *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_unsigned_int):
     {
         streamCpp.Write(name, reinterpret_cast<const unsigned int *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_unsigned_long_int):
     {
         streamCpp.Write(name, reinterpret_cast<const unsigned long int *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_unsigned_long_long_int):
     {
         streamCpp.Write(name,
                         reinterpret_cast<const unsigned long long int *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_float):
     {
         streamCpp.Write(name, reinterpret_cast<const float *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_double):
     {
         streamCpp.Write(name, reinterpret_cast<const double *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_float_complex):
     {
         streamCpp.Write(name,
                         reinterpret_cast<const std::complex<float> *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_double_complex):
     {
         streamCpp.Write(name,
                         reinterpret_cast<const std::complex<double> *>(data),
-                        shapeV, startV, countV, endStep);
+                        shapeV, startV, countV);
         break;
     }
     case (adios2_type_int8_t):
     {
         streamCpp.Write(name, reinterpret_cast<const int8_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_int16_t):
     {
         streamCpp.Write(name, reinterpret_cast<const int16_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_int32_t):
     {
         streamCpp.Write(name, reinterpret_cast<const int32_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_int64_t):
     {
         streamCpp.Write(name, reinterpret_cast<const int64_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_uint8_t):
     {
         streamCpp.Write(name, reinterpret_cast<const uint8_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_uint16_t):
     {
         streamCpp.Write(name, reinterpret_cast<const uint16_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_uint32_t):
     {
         streamCpp.Write(name, reinterpret_cast<const uint32_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     case (adios2_type_uint64_t):
     {
         streamCpp.Write(name, reinterpret_cast<const uint64_t *>(data), shapeV,
-                        startV, countV, endStep);
+                        startV, countV);
         break;
     }
     default:
@@ -244,16 +244,15 @@ namespace
 {
 template <class T>
 void adios2_fread_common(adios2::core::Stream &stream, const std::string &name,
-                         T *data, const adios2::Box<adios2::Dims> &selection,
-                         const bool endStep)
+                         T *data, const adios2::Box<adios2::Dims> &selection)
 {
     if (selection.first.empty() && selection.second.empty())
     {
-        stream.Read(name, data, endStep);
+        stream.Read(name, data);
         return;
     }
 
-    stream.Read(name, data, selection, endStep);
+    stream.Read(name, data, selection);
 }
 
 template <class T>
@@ -277,7 +276,7 @@ void adios2_fread_steps_common(adios2::core::Stream &stream,
 
 void adios2_fread(adios2_FILE *stream, const char *name, const adios2_type type,
                   void *data, const size_t ndims, const size_t *selection_start,
-                  const size_t *selection_count, const int end_step)
+                  const size_t *selection_count)
 {
     adios2::helper::CheckForNullptr(stream, "null adios2_FILE for variable " +
                                                 std::string(name) +
@@ -298,15 +297,13 @@ void adios2_fread(adios2_FILE *stream, const char *name, const adios2_type type,
     adios2::core::Stream &streamCpp =
         *reinterpret_cast<adios2::core::Stream *>(stream);
     const adios2::Box<adios2::Dims> selection(startV, countV);
-    const bool endStep = (end_step == adios2_advance_step_true) ? true : false;
 
     switch (type)
     {
 
     case (adios2_type_string):
     {
-        std::vector<std::string> dataString =
-            streamCpp.Read<std::string>(name, endStep);
+        std::vector<std::string> dataString = streamCpp.Read<std::string>(name);
 
         if (dataString.empty())
         {
@@ -321,148 +318,144 @@ void adios2_fread(adios2_FILE *stream, const char *name, const adios2_type type,
     case (adios2_type_char):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<char *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_signed_char):
     {
         adios2_fread_common(streamCpp, name,
-                            reinterpret_cast<signed char *>(data), selection,
-                            endStep);
+                            reinterpret_cast<signed char *>(data), selection);
         break;
     }
     case (adios2_type_short):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<short *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_int):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<int *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_long_int):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<long int *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_long_long_int):
     {
         adios2_fread_common(streamCpp, name,
-                            reinterpret_cast<long long int *>(data), selection,
-                            endStep);
+                            reinterpret_cast<long long int *>(data), selection);
         break;
     }
     case (adios2_type_unsigned_char):
     {
         adios2_fread_common(streamCpp, name,
-                            reinterpret_cast<unsigned char *>(data), selection,
-                            endStep);
+                            reinterpret_cast<unsigned char *>(data), selection);
         break;
     }
     case (adios2_type_unsigned_short):
     {
         adios2_fread_common(streamCpp, name,
-                            reinterpret_cast<unsigned short *>(data), selection,
-                            endStep);
+                            reinterpret_cast<unsigned short *>(data),
+                            selection);
         break;
     }
     case (adios2_type_unsigned_int):
     {
         adios2_fread_common(streamCpp, name,
-                            reinterpret_cast<unsigned int *>(data), selection,
-                            endStep);
+                            reinterpret_cast<unsigned int *>(data), selection);
         break;
     }
     case (adios2_type_unsigned_long_int):
     {
         adios2_fread_common(streamCpp, name,
                             reinterpret_cast<unsigned long int *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_unsigned_long_long_int):
     {
         adios2_fread_common(streamCpp, name,
                             reinterpret_cast<unsigned long long int *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_float):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<float *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_double):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<double *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_float_complex):
     {
         adios2_fread_common(streamCpp, name,
                             reinterpret_cast<std::complex<float> *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_double_complex):
     {
         adios2_fread_common(streamCpp, name,
                             reinterpret_cast<std::complex<double> *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_int8_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<int8_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_int16_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<int16_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_int32_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<int32_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_int64_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<int64_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_uint8_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<uint8_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_uint16_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<uint16_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_uint32_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<uint32_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     case (adios2_type_uint64_t):
     {
         adios2_fread_common(streamCpp, name, reinterpret_cast<uint64_t *>(data),
-                            selection, endStep);
+                            selection);
         break;
     }
     default:

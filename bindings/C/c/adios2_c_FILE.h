@@ -39,7 +39,7 @@ void adios2_fwrite(adios2_FILE *stream, const char *name,
 
 void adios2_fread(adios2_FILE *stream, const char *name, const adios2_type type,
                   void *data, const size_t ndims, const size_t *selection_start,
-                  const size_t *selection_count, const int end_step);
+                  const size_t *selection_count);
 
 void adios2_fread_steps(adios2_FILE *stream, const char *name,
                         const adios2_type type, void *data, const size_t ndims,

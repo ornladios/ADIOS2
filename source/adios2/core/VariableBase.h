@@ -53,6 +53,14 @@ public:
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
 
+    /** For read mode. true: SetStepSelection was used, only valid in File based
+     * engines, false: streaming */
+    bool m_RandomAccess = false;
+
+    /** used in streaming mode, true: first variable encounter, false: variable
+     * already encountered in previous step */
+    bool m_FirstStreamingStep = true;
+
     /** Operators metadata info */
     struct Operation
     {
@@ -77,7 +85,7 @@ public:
     /** Index Metadata Position in a serial metadata buffer */
     size_t m_IndexStart = 0;
 
-    /** Index to Step and Subsets inside a step characteristics position in a
+    /** Index to Step and blocks' (inside a step) characteristics position in a
      * serial metadata buffer
      * <pre>
      * key: step number (time_index in bp3 format)
@@ -170,6 +178,8 @@ public:
 
     bool IsConstantDims() const noexcept;
     void SetConstantDims() noexcept;
+
+    bool IsValidStep(const size_t step) const noexcept;
 
 protected:
     const bool m_DebugMode = false;

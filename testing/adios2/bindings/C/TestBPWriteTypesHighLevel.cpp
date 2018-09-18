@@ -103,29 +103,29 @@ TEST_F(BPWriteTypesHighLevel, ADIOS2BPWriteTypes)
         selection_count[0] = data_size;
 
         adios2_fread(fhr, "varString", adios2_type_string, idata_String, 1,
-                     NULL, NULL, 0);
+                     NULL, NULL);
 
         adios2_fread(fhr, "varI8", adios2_type_int8_t, idata_I8, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varI16", adios2_type_int16_t, idata_I16, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varI32", adios2_type_int32_t, idata_I32, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varI64", adios2_type_int64_t, idata_I64, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varU8", adios2_type_uint8_t, idata_U8, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varU16", adios2_type_uint16_t, idata_U16, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varU32", adios2_type_uint32_t, idata_U32, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varU64", adios2_type_uint64_t, idata_U64, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
 
         adios2_fread(fhr, "varR32", adios2_type_float, idata_R32, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
         adios2_fread(fhr, "varR64", adios2_type_double, idata_R64, 1,
-                     selection_start, selection_count, 0);
+                     selection_start, selection_count);
 
         EXPECT_EQ(strcmp(idata_String, "hello stream"), 0);
 

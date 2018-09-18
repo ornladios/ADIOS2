@@ -61,137 +61,142 @@ for i in range(0, 3):
 fw.close()
 
 # Reader
-fr = adios2.open("types_np.bp", "r", comm)
-
-vars_info = fr.available_variables()
-
-for name, info in vars_info.items():
-    print("variable_name: " + name)
-    for key, value in info.items():
-        print("\t" + key + ": " + value)
-    print("\n")
-
-indataU32steps = fr.read("varU32", start, count)
-print(indataU32steps)
-
-inTag = fr.readstring("tag")
-inI8 = fr.read("gvarI8")
-inI16 = fr.read("gvarI16")
-inI32 = fr.read("gvarI32")
-inI64 = fr.read("gvarI64")
-inU8 = fr.read("gvarU8")
-inU16 = fr.read("gvarU16")
-inU32 = fr.read("gvarU32")
-inU64 = fr.read("gvarU64")
-inR32 = fr.read("gvarR32")
-inR64 = fr.read("gvarR64")
-
-if(inTag != "Testing ADIOS2 high-level API"):
-    raise ValueError('tag read failed')
-
-if(inI8[0] != data.I8[0]):
-    raise ValueError('gvarI8 read failed')
-
-if(inI16[0] != data.I16[0]):
-    raise ValueError('gvarI16 read failed')
-
-if(inI32[0] != data.I32[0]):
-    raise ValueError('gvarI32 read failed')
-
-if(inU16[0] != data.U16[0]):
-    raise ValueError('gvarU16 read failed')
-
-if(inI64[0] != data.I64[0]):
-    raise ValueError('gvarI64 read failed')
-
-if(inU64[0] != data.U64[0]):
-    raise ValueError('gvarU64 read failed')
-
-if(inI8[0] != data.I8[0]):
-    raise ValueError('gvarI8 read failed')
-
-if(inU8[0] != data.U8[0]):
-    raise ValueError('gvarU8 read failed')
-
-if(inU32[0] != data.U32[0]):
-    raise ValueError('gvarU32 read failed')
-
-if(inR32[0] != data.R32[0]):
-    raise ValueError('gvarR32 read failed')
-
-if(inR64[0] != data.R64[0]):
-    raise ValueError('gvarR64 read failed')
-
-i = 0
-
-while(not fr.eof()):
-    instepStr = fr.readstring("steps")
-    indataI8 = fr.read("varI8", start, count)
-    indataI16 = fr.read("varI16", start, count)
-    indataI32 = fr.read("varI32", start, count)
-    indataI64 = fr.read("varI64", start, count)
-    indataU8 = fr.read("varU8", start, count)
-    indataU16 = fr.read("varU16", start, count)
-    indataU32 = fr.read("varU32", start, count)
-    indataU64 = fr.read("varU64", start, count)
-    indataR32 = fr.read("varR32", start, count)
-    indataR64 = fr.read("varR64", start, count, True)
-
-    stepStr = "Step:" + str(i).strip()
-    i = i + 1
-
-    if(instepStr != stepStr):
-        raise ValueError(
-            'steps variable read failed: ' + instepStr + " " + stepStr)
-
-    if((indataI8 == data.I8).all() is False):
-        print("InData: " + str(indataI8))
-        print("Data: " + str(data.I8))
-        raise ValueError('I8 array read failed')
-
-    if((indataI16 == data.I16).all() is False):
-        print("InData: " + str(indataI16))
-        print("Data: " + str(data.I16))
-        raise ValueError('I16 array read failed')
-
-    if((indataI32 == data.I32).all() is False):
-        print("InData: " + str(indataI32))
-        print("Data: " + str(data.I32))
-        raise ValueError('I32 array read failed')
-
-    if((indataI64 == data.I64).all() is False):
-        print("InData: " + str(indataI64))
-        print("Data: " + str(data.I64))
-        raise ValueError('I64 array read failed')
-
-    if((indataU8 == data.U8).all() is False):
-        print("InData: " + str(indataU8))
-        print("Data: " + str(data.U8))
-        raise ValueError('U8 array read failed')
-
-    if((indataU16 == data.U16).all() is False):
-        print("InData: " + str(indataU16))
-        print("Data: " + str(data.U16))
-        raise ValueError('U16 array read failed')
-
-    if((indataU32 == data.U32).all() is False):
-        print("InData: " + str(indataU32))
-        print("Data: " + str(data.U32))
-        raise ValueError('U32 array read failed')
-
-    if((indataU64 == data.U64).all() is False):
-        print("InData: " + str(indataU64))
-        print("Data: " + str(data.U64))
-        raise ValueError('U64 array read failed')
-
-    if((indataR32 == data.R32).all() is False):
-        print("InData: " + str(indataR32))
-        print("Data: " + str(data.R32))
-        raise ValueError('R32 array read failed')
-
-    if((indataR64 == data.R64).all() is False):
-        print("InData: " + str(indataR64))
-        print("Data: " + str(data.R64))
-        raise ValueError('R64 array read failed')
-
-fr.close()
+with adios2.open("types_np.bp", "r", comm) as fr:
+ 
+    step_vars = fr.availablevariables()
+         
+    for name, info in step_vars.items():
+        print("variable_name: " + name)
+        for key, value in info.items():
+            print("\t" + key + ": " + value)
+        print("\n")
+    
+    
+    for step in fr:
+    
+        print("Step" + str(step))
+        step_vars = fr.availablevariables()
+         
+        for name, info in step_vars.items():
+            print("variable_name: " + name)
+            for key, value in info.items():
+                print("\t" + key + ": " + value)
+            print("\n")
+        
+        if(fr.currenstep() == 1):
+            inTag = fr.readstring("tag")
+            inI8 = fr.read("gvarI8")
+            inI16 = fr.read("gvarI16")
+            inI32 = fr.read("gvarI32")
+            inI64 = fr.read("gvarI64")
+            inU8 = fr.read("gvarU8")
+            inU16 = fr.read("gvarU16")
+            inU32 = fr.read("gvarU32")
+            inU64 = fr.read("gvarU64")
+            inR32 = fr.read("gvarR32")
+            inR64 = fr.read("gvarR64")
+    
+            if(inTag != "Testing ADIOS2 high-level API"):
+                raise ValueError('tag read failed')
+    
+            if(inI8[0] != data.I8[0]):
+                raise ValueError('gvarI8 read failed')
+    
+            if(inI16[0] != data.I16[0]):
+                raise ValueError('gvarI16 read failed')
+    
+            if(inI32[0] != data.I32[0]):
+                raise ValueError('gvarI32 read failed')
+    
+            if(inU16[0] != data.U16[0]):
+                raise ValueError('gvarU16 read failed')
+    
+            if(inI64[0] != data.I64[0]):
+                raise ValueError('gvarI64 read failed')
+    
+            if(inU64[0] != data.U64[0]):
+                raise ValueError('gvarU64 read failed')
+    
+            if(inI8[0] != data.I8[0]):
+                raise ValueError('gvarI8 read failed')
+            
+            if(inU8[0] != data.U8[0]):
+                raise ValueError('gvarU8 read failed')
+            
+            if(inU32[0] != data.U32[0]):
+                raise ValueError('gvarU32 read failed')
+            
+            if(inR32[0] != data.R32[0]):
+                raise ValueError('gvarR32 read failed')
+            
+            if(inR64[0] != data.R64[0]):
+                raise ValueError('gvarR64 read failed')
+    
+        instepStr = fr.readstring("steps")
+        indataI8 = fr.read("varI8", start, count)
+        indataI16 = fr.read("varI16", start, count)
+        indataI32 = fr.read("varI32", start, count)
+        indataI64 = fr.read("varI64", start, count)
+        indataU8 = fr.read("varU8", start, count)
+        indataU16 = fr.read("varU16", start, count)
+        indataU32 = fr.read("varU32", start, count)
+        indataU64 = fr.read("varU64", start, count)
+        indataR32 = fr.read("varR32", start, count)
+        indataR64 = fr.read("varR64", start, count)
+    
+        stepStr = "Step:" + str(i).strip()
+        i = i + 1
+    
+        if(instepStr != stepStr):
+            raise ValueError(
+                'steps variable read failed: ' + instepStr + " " + stepStr)
+    
+        if((indataI8 == data.I8).all() is False):
+            print("InData: " + str(indataI8))
+            print("Data: " + str(data.I8))
+            raise ValueError('I8 array read failed')
+    
+        if((indataI16 == data.I16).all() is False):
+            print("InData: " + str(indataI16))
+            print("Data: " + str(data.I16))
+            raise ValueError('I16 array read failed')
+    
+        if((indataI32 == data.I32).all() is False):
+            print("InData: " + str(indataI32))
+            print("Data: " + str(data.I32))
+            raise ValueError('I32 array read failed')
+    
+        if((indataI64 == data.I64).all() is False):
+            print("InData: " + str(indataI64))
+            print("Data: " + str(data.I64))
+            raise ValueError('I64 array read failed')
+    
+        if((indataU8 == data.U8).all() is False):
+            print("InData: " + str(indataU8))
+            print("Data: " + str(data.U8))
+            raise ValueError('U8 array read failed')
+    
+        if((indataU16 == data.U16).all() is False):
+            print("InData: " + str(indataU16))
+            print("Data: " + str(data.U16))
+            raise ValueError('U16 array read failed')
+    
+        if((indataU32 == data.U32).all() is False):
+            print("InData: " + str(indataU32))
+            print("Data: " + str(data.U32))
+            raise ValueError('U32 array read failed')
+    
+        if((indataU64 == data.U64).all() is False):
+            print("InData: " + str(indataU64))
+            print("Data: " + str(data.U64))
+            raise ValueError('U64 array read failed')
+    
+        if((indataR32 == data.R32).all() is False):
+            print("InData: " + str(indataR32))
+            print("Data: " + str(data.R32))
+            raise ValueError('R32 array read failed')
+    
+        if((indataR64 == data.R64).all() is False):
+            print("InData: " + str(indataR64))
+            print("Data: " + str(data.R64))
+            raise ValueError('R64 array read failed')

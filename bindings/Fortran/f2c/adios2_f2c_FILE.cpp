@@ -167,14 +167,13 @@ void FC_GLOBAL(adios2_fwrite_f2c,
 
 void FC_GLOBAL(adios2_fread_value_f2c,
                adios2_FREAD_VALUE_F2C)(adios2_FILE **fh, const char *name,
-                                       const int *type, void *data,
-                                       const int *end_step, int *ierr)
+                                       const int *type, void *data, int *ierr)
 {
     *ierr = 0;
     try
     {
         adios2_fread(*fh, name, static_cast<adios2_type>(*type), data, 0,
-                     nullptr, nullptr, *end_step);
+                     nullptr, nullptr);
     }
     catch (std::exception &e)
     {
@@ -209,8 +208,7 @@ void FC_GLOBAL(adios2_fread_f2c,
                adios2_FREAD_F2C)(adios2_FILE **fh, const char *name,
                                  const int *type, void *data, const int *ndims,
                                  const int64_t *selection_start,
-                                 const int64_t *selection_count,
-                                 const int *end_step, int *ierr)
+                                 const int64_t *selection_count, int *ierr)
 {
     *ierr = 0;
     try
@@ -220,7 +218,7 @@ void FC_GLOBAL(adios2_fread_f2c,
         adios2_Int64ToSizeTVector(selection_count, *ndims, selectionCountV);
 
         adios2_fread(*fh, name, static_cast<adios2_type>(*type), data, *ndims,
-                     selectionStartV.data(), selectionCountV.data(), *end_step);
+                     selectionStartV.data(), selectionCountV.data());
     }
     catch (std::exception &e)
     {

@@ -19,29 +19,33 @@ namespace core
 {
 
 Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
-               const std::string engineType, const Params &parameters,
-               const vParams &transportParameters,
-               const std::string hostLanguage)
-: m_HostLanguage(hostLanguage)
+               const std::string engineType, const std::string hostLanguage)
+: m_Name(name), m_ADIOS(std::make_shared<ADIOS>(comm, DebugON, hostLanguage)),
+  m_IO(&m_ADIOS->DeclareIO(name)), m_Mode(mode)
 {
-    Open(name, mode, comm, engineType, parameters, transportParameters);
+    if (mode == adios2::Mode::Read)
+    {
+        CheckOpen();
+    }
+}
+
+Stream::Stream(const std::string &name, const Mode mode,
+               const std::string engineType, const std::string hostLanguage)
+: Stream(name, mode, MPI_COMM_SELF, engineType, hostLanguage)
+{
 }
 
 Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
                const std::string configFile, const std::string ioInConfigFile,
                const std::string hostLanguage)
-: m_HostLanguage(hostLanguage)
+: m_Name(name),
+  m_ADIOS(std::make_shared<ADIOS>(configFile, comm, DebugON, hostLanguage)),
+  m_IO(&m_ADIOS->DeclareIO(ioInConfigFile)), m_Mode(mode)
 {
-    Open(name, mode, comm, configFile, ioInConfigFile);
-}
-
-Stream::Stream(const std::string &name, const Mode mode,
-               const std::string engineType, const Params &parameters,
-               const vParams &transportParameters,
-               const std::string hostLanguage)
-: Stream(name, mode, MPI_COMM_SELF, engineType, parameters, transportParameters,
-         hostLanguage)
-{
+    if (mode == adios2::Mode::Read)
+    {
+        CheckOpen();
+    }
 }
 
 Stream::Stream(const std::string &name, const Mode mode,
@@ -51,75 +55,65 @@ Stream::Stream(const std::string &name, const Mode mode,
 {
 }
 
-Stream::Stream(const std::string hostLanguage) : m_HostLanguage(hostLanguage) {}
-
-void Stream::Open(const std::string &name, const Mode mode, MPI_Comm comm,
-                  const std::string engineType, const Params &parameters,
-                  const vParams &transportParameters)
+bool Stream::GetStep()
 {
-    ThrowIfOpen(name + ", in call to constructor or open\n");
-    m_Name = name;
-    m_ADIOS = std::make_shared<ADIOS>(comm, DebugON, m_HostLanguage);
-    m_IO = &m_ADIOS->DeclareIO(name);
-    m_IO->SetEngine(engineType);
-    m_Engine = &m_IO->Open(name, mode, comm);
-    m_Status = m_Engine->BeginStep();
-    m_IsOpen = true;
+    if (!m_FirstStep)
+    {
+        m_Engine->EndStep();
+    }
+    else
+    {
+        m_FirstStep = false;
+    }
+
+    if (m_Engine->BeginStep() != StepStatus::OK)
+    {
+        return false;
+    }
+
+    return true;
 }
 
-void Stream::Open(const std::string &name, const Mode mode, MPI_Comm comm,
-                  const std::string configFile,
-                  const std::string ioInConfigFile)
+bool Stream::GetStep(std::map<std::string, Params> &availableVariables,
+                     std::map<std::string, Params> &availableAttributes)
 {
-    ThrowIfOpen(name + ", in call to constructor or open with config file\n");
-    m_Name = name;
-    m_ADIOS =
-        std::make_shared<ADIOS>(configFile, comm, DebugON, m_HostLanguage);
-    m_IO = &m_ADIOS->DeclareIO(ioInConfigFile);
-    m_Engine = &m_IO->Open(name, mode, comm);
-    m_Status = m_Engine->BeginStep();
-    m_IsOpen = true;
-}
-
-void Stream::Open(const std::string &name, const Mode mode,
-                  const std::string engineType, const Params &parameters,
-                  const vParams &transportParameters)
-{
-    Open(name, mode, MPI_COMM_SELF, engineType, parameters,
-         transportParameters);
-}
-
-void Stream::Open(const std::string &name, const Mode mode,
-                  const std::string configFile,
-                  const std::string ioInConfigFile)
-{
-    Open(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile);
+    availableVariables = m_IO->GetAvailableVariables();
+    availableAttributes = m_IO->GetAvailableAttributes();
+    return GetStep();
 }
 
 void Stream::Close()
 {
-    ThrowIfNotOpen(m_Name + ", in call to Close");
-    m_Engine->Close();
-    m_IsOpen = false;
-    m_Status = StepStatus::NotReady;
-}
-
-// PRIVATE
-void Stream::ThrowIfNotOpen(const std::string hint) const
-{
-    if (!m_IsOpen)
+    if (m_Engine != nullptr)
     {
-        throw std::invalid_argument("ERROR: adios2 stream is not opened, " +
-                                    hint + "\n");
+        m_Engine->Close();
+        m_Engine = nullptr;
     }
 }
 
-void Stream::ThrowIfOpen(const std::string hint) const
+size_t Stream::CurrentStep() const
 {
-    if (m_IsOpen)
+    if (m_FirstStep)
     {
-        throw std::invalid_argument("ERROR: adios2 stream is already opened, " +
-                                    hint + "\n");
+        return 0;
+    }
+
+    if (m_Engine == nullptr)
+    {
+        throw std::invalid_argument("ERROR: stream with name " + m_Name +
+                                    "is invalid or closed, in call "
+                                    "to CurrentStep");
+    }
+
+    return m_Engine->CurrentStep();
+}
+
+// PRIVATE
+void Stream::CheckOpen()
+{
+    if (m_Engine == nullptr)
+    {
+        m_Engine = &m_IO->Open(m_Name, m_Mode);
     }
 }
 
@@ -131,24 +125,24 @@ void Stream::ThrowIfOpen(const std::string hint) const
     template void Stream::Write<T>(const std::string &, const T &,             \
                                    const bool);                                \
                                                                                \
-    template void Stream::Read<T>(const std::string &, T *, const bool);       \
+    template void Stream::Read<T>(const std::string &, T *);                   \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *,                    \
                                   const Box<size_t> &);                        \
                                                                                \
-    template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
-                                  const bool);                                 \
+    template void Stream::Read<T>(const std::string &, T *,                    \
+                                  const Box<Dims> &);                          \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
                                   const Box<size_t> &);                        \
                                                                                \
-    template std::vector<T> Stream::Read<T>(const std::string &, const bool);  \
+    template std::vector<T> Stream::Read<T>(const std::string &);              \
                                                                                \
     template std::vector<T> Stream::Read<T>(                                   \
         const std::string &, const Box<Dims> &, const Box<size_t> &);          \
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &,               \
-                                            const Box<Dims> &, const bool);
+                                            const Box<Dims> &);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

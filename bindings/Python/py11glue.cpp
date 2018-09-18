@@ -66,9 +66,7 @@ adios2::py11::ADIOS ADIOSInit(pybind11::object &object, const bool debugMode)
 }
 
 adios2::py11::File Open(const std::string &name, const std::string mode,
-                        pybind11::object &object, const std::string engineType,
-                        const adios2::Params &parameters,
-                        const adios2::vParams &transportParameters)
+                        pybind11::object &object, const std::string engineType)
 {
     MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
 
@@ -84,8 +82,7 @@ adios2::py11::File Open(const std::string &name, const std::string mode,
         throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
                                  "to ADIOS constructor\n");
     }
-    return adios2::py11::File(name, mode, *mpiCommPtr, engineType, parameters,
-                              transportParameters);
+    return adios2::py11::File(name, mode, *mpiCommPtr, engineType);
 }
 
 adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
@@ -123,12 +120,9 @@ adios2::py11::ADIOS ADIOSInit(const bool debugMode)
 }
 
 adios2::py11::File Open(const std::string &name, const std::string mode,
-                        const std::string engineType,
-                        const adios2::Params &parameters,
-                        const adios2::vParams &transportParameters)
+                        const std::string engineType)
 {
-    return adios2::py11::File(name, mode, engineType, parameters,
-                              transportParameters);
+    return adios2::py11::File(name, mode, engineType);
 }
 
 adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
@@ -155,6 +149,7 @@ PYBIND11_MODULE(adios2, m)
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
     m.attr("VariableDims") = false;
+
     // enum classes
     pybind11::enum_<adios2::Mode>(m, "Mode")
         .value("Write", adios2::Mode::Write)
@@ -177,6 +172,7 @@ PYBIND11_MODULE(adios2, m)
         .value("EndOfStream", adios2::StepStatus::EndOfStream)
         .value("OtherError", adios2::StepStatus::OtherError)
         .export_values();
+
 #ifdef ADIOS2_HAVE_MPI
     m.def("ADIOS", &ADIOSInit,
           "adios2 module starting point, creates an ADIOS class object",
@@ -190,9 +186,7 @@ PYBIND11_MODULE(adios2, m)
 
     m.def("open", &Open, "High-level API, file object open",
           pybind11::arg("name"), pybind11::arg("mode"), pybind11::arg("object"),
-          pybind11::arg("engineType") = "BPFile",
-          pybind11::arg("parameters") = adios2::Params(),
-          pybind11::arg("transportParameters") = adios2::vParams());
+          pybind11::arg("engineType") = "BPFile");
 
     m.def("open", &OpenConfig,
           "High-level API, file object open with a runtime config file",
@@ -211,9 +205,7 @@ PYBIND11_MODULE(adios2, m)
 
     m.def("open", &Open, "High-level API, file object open",
           pybind11::arg("name"), pybind11::arg("mode"),
-          pybind11::arg("engineType") = "BPFile",
-          pybind11::arg("parameters") = adios2::Params(),
-          pybind11::arg("transportParameters") = adios2::vParams());
+          pybind11::arg("engineType") = "BPFile");
 
     m.def("open", &OpenConfig,
           "High-level API, file object open with a runtime config file",
@@ -318,6 +310,7 @@ PYBIND11_MODULE(adios2, m)
                         adios2::py11::Engine::Get,
              pybind11::arg("variable"), pybind11::arg("array"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
+
         .def("Get", (void (adios2::py11::Engine::*)(
                         adios2::core::VariableBase *, std::string &,
                         const adios2::Mode launch)) &
@@ -336,15 +329,39 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("transportIndex") = -1);
 
     pybind11::class_<adios2::py11::File>(m, "py11::File")
-        .def("eof", &adios2::py11::File::eof)
         .def("__repr__",
-             [](const adios2::py11::File &a) {
-                 return "<adios2.file named '" + a.m_Name + "' and mode '" +
-                        a.m_Mode + "'>";
+             [](const adios2::py11::File &stream) {
+                 return "<adios2.file named '" + stream.m_Name +
+                        "' and mode '" + stream.m_Mode + "'>";
              })
-        .def_property_readonly("closed", &adios2::py11::File::IsClosed)
 
-        .def("available_variables", &adios2::py11::File::GetAvailableVariables)
+        //.def("__len__", [](const adios2::py11::File &stream) { return 3; })
+        .def("__contains__",
+             [](const adios2::py11::File &stream, size_t &step) {
+                 step = stream.CurrentStep();
+                 return stream.GetStep();
+             })
+
+        .def("__enter__",
+             [](adios2::py11::File &stream) { return std::move(stream); })
+
+        .def("__exit__", [](adios2::py11::File &stream) { stream.Close(); })
+
+        .def("setparameter", &adios2::py11::File::SetParameter,
+             pybind11::arg("key"), pybind11::arg("value"))
+
+        .def("setparameters", &adios2::py11::File::SetParameters,
+             pybind11::arg("kwargs"))
+
+        .def("addtransport", &adios2::py11::File::AddTransport,
+             pybind11::return_value_policy::take_ownership,
+             pybind11::arg("type"), pybind11::arg("kwargs") = adios2::Params())
+
+        .def("availablevariables", &adios2::py11::File::AvailableVariables,
+             pybind11::return_value_policy::take_ownership)
+
+        .def("availableattributes", &adios2::py11::File::AvailableAttributes,
+             pybind11::return_value_policy::take_ownership)
 
         .def("write", (void (adios2::py11::File::*)(
                           const std::string &, const pybind11::array &,
@@ -366,40 +383,44 @@ PYBIND11_MODULE(adios2, m)
              (void (adios2::py11::File::*)(
                  const std::string &, const std::string &, const bool endl)) &
                  adios2::py11::File::Write,
-             pybind11::arg("name"), pybind11::arg("stringValue"),
+             pybind11::arg("name"), pybind11::arg("string"),
              pybind11::arg("endl") = false)
 
-        .def("readstring", (std::string (adios2::py11::File::*)(
-                               const std::string &, const bool)) &
-                               adios2::py11::File::ReadString,
+        .def("readstring",
+             (std::string (adios2::py11::File::*)(const std::string &)) &
+                 adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("endl") = false)
+             pybind11::arg("name"))
 
         .def("readstring", (std::string (adios2::py11::File::*)(
                                const std::string &, const size_t)) &
                                adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership)
 
-        .def("read", (pybind11::array (adios2::py11::File::*)(
-                         const std::string &, const bool endl)) &
-                         adios2::py11::File::Read,
+        .def("read",
+             (pybind11::array (adios2::py11::File::*)(const std::string &)) &
+                 adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("endl") = false)
+             pybind11::arg("name"))
 
         .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
-                         const adios2::Dims &, const bool)) &
+                         const adios2::Dims &)) &
                          adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("selectionStart"),
-             pybind11::arg("selectionCount"), pybind11::arg("endl") = false)
+             pybind11::arg("name"), pybind11::arg("start"),
+             pybind11::arg("count"))
 
         .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
                          const adios2::Dims &, const size_t, const size_t)) &
                          adios2::py11::File::Read,
-             pybind11::return_value_policy::take_ownership)
+             pybind11::return_value_policy::take_ownership,
+             pybind11::arg("name"), pybind11::arg("start"),
+             pybind11::arg("count"), pybind11::arg("stepstart"),
+             pybind11::arg("stepcount"))
 
         .def("close", &adios2::py11::File::Close)
+
         .def("currentstep", &adios2::py11::File::CurrentStep);
 }

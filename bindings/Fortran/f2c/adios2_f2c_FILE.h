@@ -56,8 +56,7 @@ void FC_GLOBAL(adios2_fwrite_f2c,
 
 void FC_GLOBAL(adios2_fread_value_f2c,
                adios2_FREAD_VALUE_F2C)(adios2_FILE **fh, const char *name,
-                                       const int *type, void *data,
-                                       const int *end_step, int *ierr);
+                                       const int *type, void *data, int *ierr);
 
 void FC_GLOBAL(adios2_fread_value_step_f2c,
                adios2_FREAD_VALUE_step_F2C)(adios2_FILE **fh, const char *name,
@@ -69,8 +68,7 @@ void FC_GLOBAL(adios2_fread_f2c,
                adios2_FREAD_F2C)(adios2_FILE **fh, const char *name,
                                  const int *type, void *data, const int *ndims,
                                  const int64_t *selection_start,
-                                 const int64_t *selection_count,
-                                 const int *end_step, int *ierr);
+                                 const int64_t *selection_count, int *ierr);
 
 void FC_GLOBAL(adios2_fread_steps_f2c, adios2_FREAD_STEPS_F2C)(
     adios2_FILE **fh, const char *name, const int *type, void *data,

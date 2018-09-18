@@ -19,6 +19,12 @@
 
 namespace adios2
 {
+class fstream;
+bool getstep(adios2::fstream &stream);
+}
+
+namespace adios2
+{
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 namespace core
@@ -45,15 +51,24 @@ public:
      * (Append)
      * @param comm MPI communicator establishing domain for fstream
      * @param engineType available adios2 engine
-     * @param parameters engine parameters
-     * @param transportParameters engine transport parameters
      * @exception std::invalid_argument (user input error) or std::runtime_error
      * (system error)
      */
     fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-            const std::string engineType = "BPFile",
-            const Params &parameters = Params(),
-            const vParams &transportParameters = vParams());
+            const std::string engineType = "BPFile");
+
+    /**
+     * High-level API non-MPI constructor, based on C++11 fstream. Allows for
+     * passing parameters in source code.
+     * @param name stream name
+     * @param mode fstream::in (Read), fstream::out (Write), fstream::app
+     * (Append)
+     * @param engineType available adios2 engine
+     * @exception std::invalid_argument (user input error) or
+     * std::runtime_error (system error)
+     */
+    fstream(const std::string &name, const openmode mode,
+            const std::string engineType = "BPFile");
 
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for
@@ -64,27 +79,12 @@ public:
      * @param comm MPI communicator establishing domain for fstream
      * @param configFile adios2 runtime configuration file
      * @param ioInConfigFile specific io name in configFile
-     * @exception std::invalid_argument (user input error) or std::runtime_error
+     * @exception std::invalid_argument (user input error) or
+     * std::runtime_error
      * (system error)
      */
     fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-            const std::string configFile, const std::string ioInConfigFile);
-    /**
-     * High-level API non-MPI constructor, based on C++11 fstream. Allows for
-     * passing parameters in source code.
-     * @param name stream name
-     * @param mode fstream::in (Read), fstream::out (Write), fstream::app
-     * (Append)
-     * @param engineType available adios2 engine
-     * @param parameters engine parameters
-     * @param transportParameters engine transport parameters
-     * @exception std::invalid_argument (user input error) or
-     * std::runtime_error (system error)
-     */
-    fstream(const std::string &name, const openmode mode,
-            const std::string engineType = "BPFile",
-            const Params &parameters = Params(),
-            const vParams &transportParameters = vParams());
+            const std::string &configFile, const std::string ioInConfigFile);
 
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for
@@ -98,20 +98,17 @@ public:
      * std::runtime_error (system error)
      */
     fstream(const std::string &name, const openmode mode,
-            const std::string configFile, const std::string ioInConfigFile);
+            const std::string &configFile, const std::string ioInConfigFile);
+
+    /** Empty constructor, allows the use of open later in the code */
+    fstream() = default;
+
+    ~fstream();
 
     /**
-     * Empty constructor, allows the use of open later in the code
+     * Checks if fstream object is valid
      */
-    fstream();
-
-    /**
-     * Copy constructor is deleted
-     * @param
-     */
-    fstream(const fstream &) = delete;
-
-    ~fstream() = default;
+    explicit operator bool() const noexcept;
 
     /**
      * High-level API MPI open, based on C++11 fstream. Allows for
@@ -121,15 +118,11 @@ public:
      * (Append)
      * @param comm MPI communicator establishing domain for fstream
      * @param engineType available adios2 engine
-     * @param parameters engine parameters
-     * @param transportParameters engine transport parameters
      * @exception std::invalid_argument (user input error) or std::runtime_error
      * (system error)
      */
     void open(const std::string &name, const openmode mode, MPI_Comm comm,
-              const std::string engineType = "BPFile",
-              const Params &parameters = Params(),
-              const vParams &transportParameters = vParams());
+              const std::string engineType = "BPFile");
 
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for
@@ -153,15 +146,11 @@ public:
      * @param mode fstream::in (Read), fstream::out (Write), fstream::app
      * (Append)
      * @param engineType available adios2 engine
-     * @param parameters engine parameters
-     * @param transportParameters engine transport parameters
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
     void open(const std::string &name, const openmode mode,
-              const std::string engineType = "BPFile",
-              const Params &parameters = Params(),
-              const vParams &transportParameters = vParams());
+              const std::string engineType = "BPFile");
 
     /**
      * High-level API non-MPI constructor, based on C++11 fstream. Allows for
@@ -176,15 +165,6 @@ public:
      */
     void open(const std::string &name, const openmode mode,
               const std::string configFile, const std::string ioInConfigFile);
-
-    /** checks if fstream is open or not*/
-    bool is_open() const noexcept;
-
-    /** check if end of file (stream) is reached, use this for streaming mode:
-     * step by step */
-    bool eof() const noexcept;
-
-    explicit operator bool() const noexcept;
 
     /**
      * writes a self-describing array variable
@@ -228,7 +208,7 @@ public:
      * @param endl end current step and moves forward to the next step
      */
     template <class T>
-    void read(const std::string &name, T *values, const bool endl = false);
+    void read(const std::string &name, T *values);
 
     /**
      * Reads into a single value for current step (streaming
@@ -240,7 +220,7 @@ public:
      * @param endl true: end current step and moves forward to the next step
      */
     template <class T>
-    void read(const std::string &name, T &value, const bool endl = false);
+    void read(const std::string &name, T &value);
 
     /**
      * Reads into an array variable for a range of steps
@@ -279,7 +259,7 @@ public:
      */
     template <class T>
     void read(const std::string &name, T *values, const Dims &selectionStart,
-              const Dims &selectionCount, const bool endl = false);
+              const Dims &selectionCount);
 
     /**
      * Reads into a pre-allocated pointer a selection piece in dimensions and
@@ -306,7 +286,7 @@ public:
      * a size=1 vector
      */
     template <class T>
-    std::vector<T> read(const std::string &name, const bool endl = false);
+    std::vector<T> read(const std::string &name);
 
     /**
      * Return single value given name and size
@@ -345,7 +325,7 @@ public:
      */
     template <class T>
     std::vector<T> read(const std::string &name, const Dims &selectionStart,
-                        const Dims &selectionCount, const bool endl = false);
+                        const Dims &selectionCount);
 
     /**
      * Reads a selection piece in dimension and a selection piece in steps
@@ -367,8 +347,23 @@ public:
     /** close current stream becoming inaccessible */
     void close();
 
+    //    friend bool getstep(adios2::fstream &stream,
+    //                        std::map<std::string, Params> &availableVariables,
+    //                        std::map<std::string, Params>
+    //                        &availableAttributes);
+    //
+    //    friend bool getstep(adios2::fstream &stream,
+    //                        std::map<std::string, Params>
+    //                        &availableVariables);
+
+    friend bool getstep(adios2::fstream &stream);
+
+    size_t currentstep() const noexcept;
+
 protected:
-    std::shared_ptr<core::Stream> m_Stream;
+    std::unique_ptr<core::Stream> m_Stream;
+
+    adios2::Mode ToMode(const openmode mode) const noexcept;
 };
 
 #define declare_template_instantiation(T)                                      \
@@ -379,27 +374,24 @@ protected:
     extern template void fstream::write<T>(const std::string &, const T &,     \
                                            const bool);                        \
                                                                                \
-    extern template std::vector<T> fstream::read<T>(const std::string &,       \
-                                                    const bool);               \
+    extern template std::vector<T> fstream::read<T>(const std::string &);      \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
-        const std::string &, const Dims &, const Dims &, const bool);          \
+        const std::string &, const Dims &, const Dims &);                      \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
         const std::string &, const Dims &, const Dims &, const size_t,         \
         const size_t);                                                         \
                                                                                \
-    extern template void fstream::read<T>(const std::string &, T *,            \
-                                          const bool);                         \
+    extern template void fstream::read<T>(const std::string &, T *);           \
                                                                                \
-    extern template void fstream::read<T>(const std::string &name, T &,        \
-                                          const bool);                         \
+    extern template void fstream::read<T>(const std::string &name, T &);       \
                                                                                \
     extern template void fstream::read<T>(const std::string &name, T &,        \
                                           const size_t);                       \
                                                                                \
-    extern template void fstream::read<T>(                                     \
-        const std::string &, T *, const Dims &, const Dims &, const bool);     \
+    extern template void fstream::read<T>(const std::string &, T *,            \
+                                          const Dims &, const Dims &);         \
                                                                                \
     extern template void fstream::read<T>(const std::string &, T *,            \
                                           const size_t, const size_t);         \

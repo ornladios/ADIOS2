@@ -25,94 +25,55 @@ namespace py11
 {
 
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
-           const std::string engineType, const Params &parameters,
-           const vParams &transportParameters)
-: m_Name(name), m_Mode(mode)
+           const std::string engineType)
+: m_Name(name), m_Mode(mode),
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, engineType,
+                                          "Python"))
 {
-    if (mode == "r")
-    {
-        m_Stream = std::make_shared<core::Stream>(name, adios2::Mode::Read,
-                                                  comm, engineType, parameters,
-                                                  transportParameters);
-    }
-    else if (mode == "w")
-    {
-        m_Stream = std::make_shared<core::Stream>(name, adios2::Mode::Write,
-                                                  comm, engineType, parameters,
-                                                  transportParameters);
-    }
-    else if (mode == "a")
-    {
-        m_Stream = std::make_shared<core::Stream>(name, adios2::Mode::Append,
-                                                  comm, engineType, parameters,
-                                                  transportParameters);
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "ERROR: adios2 mode " + mode + " for file " + name +
-            " not supported, only \"r\", \"w\" and \"a\" (read, write, append) "
-            "are valid modes, in call to open\n");
-    }
-    m_IsClosed = false;
+}
+
+File::File(const std::string &name, const std::string mode,
+           const std::string engineType)
+: File(name, mode, MPI_COMM_SELF, engineType)
+{
 }
 
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
            const std::string configFile, const std::string ioInConfigFile)
-: m_Name(name), m_Mode(mode)
-{
-    if (mode == "r")
-    {
-        m_Stream = std::make_shared<core::Stream>(
-            name, adios2::Mode::Read, comm, configFile, ioInConfigFile);
-    }
-    else if (mode == "w")
-    {
-        m_Stream = std::make_shared<core::Stream>(
-            name, adios2::Mode::Write, comm, configFile, ioInConfigFile);
-    }
-    else if (mode == "a")
-    {
-        m_Stream = std::make_shared<core::Stream>(
-            name, adios2::Mode::Append, comm, configFile, ioInConfigFile);
-    }
-    else
-    {
-        throw std::invalid_argument("ERROR: adios2 mode " + mode +
-                                    " for file " + name +
-                                    " not supported, in call to open\n");
-    }
-    m_IsClosed = false;
-}
-
-File::File(const std::string &name, const std::string mode,
-           const std::string engineType, const Params &parameters,
-           const vParams &transportParameters)
-: File(name, mode, MPI_COMM_SELF, engineType, parameters, transportParameters)
+: m_Name(name), m_Mode(mode),
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
+                                          ioInConfigFile, "Python"))
 {
 }
-
 File::File(const std::string &name, const std::string mode,
            const std::string configFile, const std::string ioInConfigFile)
 : File(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile)
 {
 }
 
-bool File::eof() const
+void File::SetParameter(const std::string key, const std::string value) noexcept
 {
-    bool eof = false;
-
-    if (m_Stream->m_Status == StepStatus::EndOfStream)
-    {
-        eof = true;
-    }
-
-    return eof;
+    m_Stream->m_IO->SetParameter(key, value);
 }
 
-std::map<std::string, adios2::Params> File::GetAvailableVariables() noexcept
+void File::SetParameters(const Params &parameters) noexcept
+{
+    m_Stream->m_IO->SetParameters(parameters);
+}
+
+size_t File::AddTransport(const std::string type, const Params &parameters)
+{
+    return m_Stream->m_IO->AddTransport(type, parameters);
+}
+
+std::map<std::string, adios2::Params> File::AvailableVariables() noexcept
 {
     return m_Stream->m_IO->GetAvailableVariables();
+}
+
+std::map<std::string, adios2::Params> File::AvailableAttributes() noexcept
+{
+    return m_Stream->m_IO->GetAvailableAttributes();
 }
 
 void File::Write(const std::string &name, const pybind11::array &array,
@@ -152,9 +113,14 @@ void File::Write(const std::string &name, const std::string &stringValue,
     m_Stream->Write(name, stringValue, endl);
 }
 
-std::string File::ReadString(const std::string &name, const bool endl)
+bool File::GetStep() const
 {
-    return m_Stream->Read<std::string>(name, endl).front();
+    return const_cast<File *>(this)->m_Stream->GetStep();
+}
+
+std::string File::ReadString(const std::string &name)
+{
+    return m_Stream->Read<std::string>(name).front();
 }
 
 std::string File::ReadString(const std::string &name, const size_t step)
@@ -164,14 +130,13 @@ std::string File::ReadString(const std::string &name, const size_t step)
     return value;
 }
 
-pybind11::array File::Read(const std::string &name, const bool endl)
+pybind11::array File::Read(const std::string &name)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
     if (type == "string")
     {
-        const std::string value =
-            m_Stream->Read<std::string>(name, endl).front();
+        const std::string value = m_Stream->Read<std::string>(name).front();
         pybind11::array pyArray(pybind11::dtype::of<char>(),
                                 Dims{value.size()});
         char *pyPtr =
@@ -190,14 +155,13 @@ pybind11::array File::Read(const std::string &name, const bool endl)
             pyCount = {1};                                                     \
             pybind11::array pyArray(pybind11::dtype::of<T>(), pyCount);        \
             m_Stream->Read<T>(name, reinterpret_cast<T *>(                     \
-                                        const_cast<void *>(pyArray.data())),   \
-                              endl);                                           \
+                                        const_cast<void *>(pyArray.data())));  \
             return pyArray;                                                    \
         }                                                                      \
         else                                                                   \
         {                                                                      \
             const Dims zerosStart(variable.m_Shape.size(), 0);                 \
-            return Read(name, zerosStart, variable.m_Shape, endl);             \
+            return Read(name, zerosStart, variable.m_Shape);                   \
         }                                                                      \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -212,9 +176,10 @@ pybind11::array File::Read(const std::string &name, const bool endl)
 }
 
 pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
-                           const Dims &selectionCount, const bool endl)
+                           const Dims &selectionCount)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
+    std::cout << "Type " << type << "\n";
 
     if (type.empty())
     {
@@ -225,7 +190,7 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
         pybind11::array pyArray(pybind11::dtype::of<T>(), selectionCount);     \
         m_Stream->Read<T>(                                                     \
             name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            Box<Dims>(selectionStart, selectionCount), endl);                  \
+            Box<Dims>(selectionStart, selectionCount));                        \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -278,11 +243,37 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
 void File::Close()
 {
     m_Stream->Close();
-    m_IsClosed = true;
+    m_Stream.reset();
 }
 
-bool File::IsClosed() const noexcept { return m_IsClosed; }
+size_t File::CurrentStep() const { return m_Stream->CurrentStep(); };
 
-size_t File::CurrentStep() const { return m_Stream->m_Engine->CurrentStep(); };
+// PRIVATE
+adios2::Mode File::ToMode(const std::string mode) const
+{
+    adios2::Mode modeCpp = adios2::Mode::Undefined;
+    if (mode == "w")
+    {
+        modeCpp = adios2::Mode::Write;
+    }
+    else if (mode == "a")
+    {
+        modeCpp = adios2::Mode::Append;
+    }
+    else if (mode == "r")
+    {
+        modeCpp = adios2::Mode::Read;
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: adios2 mode " + mode + " for file " + m_Name +
+            " not supported, only \"r\", \"w\" and \"a\" (read, write, append) "
+            "are valid modes, in call to open\n");
+    }
+
+    return modeCpp;
+}
+
 } // end namespace py11
 } // end namespace adios2

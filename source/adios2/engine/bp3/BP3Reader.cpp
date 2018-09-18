@@ -35,10 +35,11 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     {
         if (mode != StepMode::NextAvailable)
         {
-            throw std::invalid_argument("ERROR: mode is not supported yet, "
-                                        "only NextAvailable is valid for "
-                                        "engine BPFileReader, in call to "
-                                        "BeginStep\n");
+            throw std::invalid_argument(
+                "ERROR: mode is not supported yet, "
+                "only NextAvailable is valid for "
+                "engine BP3 with adios2::Mode::Read, in call to "
+                "BeginStep\n");
         }
 
         if (!m_BP3Deserializer.m_DeferredVariables.empty())
@@ -50,8 +51,10 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
+    bool localFirstStep = false;
     if (m_FirstStep)
     {
+        localFirstStep = true;
         m_FirstStep = false;
     }
     else
@@ -59,8 +62,13 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         ++m_CurrentStep;
     }
 
+    // used to inquire for variables in streaming mode
+    m_IO.m_Streaming = true;
+    m_IO.m_EngineStep = m_CurrentStep;
+
     if (m_CurrentStep >= m_BP3Deserializer.m_MetadataSet.StepsCount)
     {
+        m_IO.m_Streaming = false;
         return StepStatus::EndOfStream;
     }
 
@@ -71,16 +79,43 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         const std::string name = variableData.first;
         const std::string type = m_IO.InquireVariableType(name);
 
+        if (type.empty())
+        {
+            continue;
+        }
+
         if (type == "compound")
         {
         }
+// using relative start
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
+        if (m_DebugMode)                                                       \
+        {                                                                      \
+            if (variable->m_RandomAccess)                                      \
+            {                                                                  \
+                throw std::invalid_argument(                                   \
+                    "ERROR: calling BeginStep (streaming) before "             \
+                    "SetStepSelection (random-access) is incompatible, for "   \
+                    "variable " +                                              \
+                    variable->m_Name + ", in call to BeginStep\n");            \
+            }                                                                  \
+        }                                                                      \
+                                                                               \
         if (mode == StepMode::NextAvailable)                                   \
         {                                                                      \
-            variable->SetStepSelection({m_CurrentStep, 1});                    \
+            variable->m_StepsCount = 1;                                        \
+            if (variable->m_FirstStreamingStep)                                \
+            {                                                                  \
+                variable->m_StepsStart = 0;                                    \
+                variable->m_FirstStreamingStep = false;                        \
+            }                                                                  \
+            else                                                               \
+            {                                                                  \
+                ++variable->m_StepsStart;                                      \
+            }                                                                  \
         }                                                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)

@@ -116,8 +116,7 @@
      call adios2_fread(adios2_fhr, "var_I32", in_I32, start_dims, count_dims, ierr)
      call adios2_fread(adios2_fhr, "var_I64", in_I64, start_dims, count_dims, ierr)
      call adios2_fread(adios2_fhr, "var_R32", in_R32, start_dims, count_dims, ierr)
-     call adios2_fread(adios2_fhr, "var_R64", in_R64, start_dims, count_dims, &
-                       adios2_advance_yes, ierr)
+     call adios2_fread(adios2_fhr, "var_R64", in_R64, start_dims, count_dims, ierr)
 
      do n = 1, count_dims(1)
          if(in_I8(n) /= data_I8(n) ) stop 'I8 read failure'

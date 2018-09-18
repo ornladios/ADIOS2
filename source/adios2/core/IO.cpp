@@ -87,7 +87,7 @@ void IO::SetParameter(const std::string key, const std::string value) noexcept
 
 Params &IO::GetParameters() noexcept { return m_Parameters; }
 
-unsigned int IO::AddTransport(const std::string type, const Params &parameters)
+size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
     Params parametersMap(parameters);
     if (m_DebugMode)
@@ -105,7 +105,7 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 
     parametersMap["transport"] = type;
     m_TransportsParameters.push_back(parametersMap);
-    return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
+    return m_TransportsParameters.size() - 1;
 }
 
 void IO::SetTransportParameter(const unsigned int transportIndex,
@@ -312,7 +312,29 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
         return std::string();
     }
 
-    return itVariable->second.first;
+    const std::string type = itVariable->second.first;
+
+    if (m_Streaming)
+    {
+        if (type == "compound")
+        {
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const Variable<T> &variable =                                          \
+            const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
+                itVariable->second.second);                                    \
+        if (!variable.IsValidStep(m_EngineStep + 1))                           \
+        {                                                                      \
+            return std::string();                                              \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+
+    return type;
 }
 
 std::string IO::InquireAttributeType(const std::string &name) const noexcept
