@@ -257,6 +257,26 @@ void FC_GLOBAL(adios2_define_attribute_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_define_variable_attribute_f2c,
+               ADIOS2_DEFINE_VARIABLE_ATTRIBUTE_F2C)(
+    adios2_attribute **attribute, adios2_io **io, const char *name,
+    const int *type, const void *data, const int *elements,
+    const char *variable_name, const char *separator, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *attribute = adios2_define_variable_attribute(
+            *io, name, static_cast<adios2_type>(*type), data,
+            static_cast<std::size_t>(*elements), variable_name, separator);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 define_variable_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_inquire_attribute_f2c,
                ADIOS2_INQUIRE_ATTRIBUTE_F2C)(adios2_attribute **attribute,
                                              adios2_io **io,
@@ -271,6 +291,24 @@ void FC_GLOBAL(adios2_inquire_attribute_f2c,
     catch (std::exception &e)
     {
         std::cerr << "ADIOS2 inquire_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_inquire_variable_attribute_f2c,
+               ADIOS2_INQUIRE_VARIABLE_ATTRIBUTE_F2C)(
+    adios2_attribute **attribute, adios2_io **io, const char *attribute_name,
+    const char *variable_name, const char *separator, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *attribute = adios2_inquire_variable_attribute(
+            *io, attribute_name, variable_name, separator);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 inquire_variable_attribute: " << e.what() << "\n";
         *ierr = -1;
     }
 }

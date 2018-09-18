@@ -16,6 +16,10 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 adios2_variable *
 adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                        const size_t ndims, const size_t *shape,
@@ -434,6 +438,16 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
     return reinterpret_cast<adios2_attribute *>(attribute);
 }
 
+adios2_attribute *adios2_define_variable_attribute(
+    adios2_io *io, const char *name, const adios2_type type, const void *data,
+    const size_t elements, const char *variable_name, const char *separator)
+{
+    const std::string globalName =
+        std::string(variable_name) + std::string(separator) + std::string(name);
+    return adios2_define_attribute(io, globalName.c_str(), type, data,
+                                   elements);
+}
+
 adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
 {
     adios2::helper::CheckForNullptr(
@@ -464,6 +478,16 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
 #undef declare_template_instantiation
 
     return reinterpret_cast<adios2_attribute *>(attribute);
+}
+
+adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
+                                                    const char *name,
+                                                    const char *variable_name,
+                                                    const char *separator)
+{
+    const std::string globalName =
+        std::string(variable_name) + std::string(separator) + std::string(name);
+    return adios2_inquire_attribute(io, globalName.c_str());
 }
 
 int adios2_remove_attribute(adios2_io *io, const char *name)
@@ -574,3 +598,7 @@ const char *adios2_io_engine_type(const adios2_io *io, size_t *length)
     }
     return ioCpp->m_EngineType.c_str();
 }
+
+#ifdef __cplusplus
+} // end extern C
+#endif
