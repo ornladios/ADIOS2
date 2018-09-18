@@ -112,6 +112,12 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " BeginStep()\n";
     }
+
+    if (m_RankDirectPeers.size() == 0)
+    {
+        return StepStatus::EndOfStream;
+    }
+
     // Wait for the Step message from all peers
     // with a timeout
 
