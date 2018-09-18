@@ -81,7 +81,6 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     // Send the step to all reader peers, asynchronously
     // We need to call Wait on all Isend/Irecv calls at some point otherwise
     // MPI_Comm_free() will never release the communicator
-    // const int index = m_MPIRequests.size() - 1;
     for (auto peerRank : m_RankDirectPeers)
     {
         m_MPIRequests.emplace_back();
