@@ -18,7 +18,8 @@ namespace adios2
 
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string engineType)
-: m_Stream(new core::Stream(name, ToMode(mode), comm, engineType, "C++"))
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, engineType,
+                                          "C++"))
 {
 }
 
@@ -31,8 +32,8 @@ fstream::fstream(const std::string &name, const openmode mode,
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string &configFile,
                  const std::string ioInConfigFile)
-: m_Stream(new core::Stream(name, ToMode(mode), comm, configFile,
-                            ioInConfigFile, "C++"))
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
+                                          ioInConfigFile, "C++"))
 {
 }
 
@@ -54,8 +55,8 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                                     " is already opened, in call to open");
     }
 
-    m_Stream = std::unique_ptr<core::Stream>(
-        new core::Stream(name, ToMode(mode), comm, engineType, "C++"));
+    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), comm,
+                                              engineType, "C++");
 }
 
 void fstream::open(const std::string &name, const openmode mode,
@@ -74,8 +75,8 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                                     " is already opened, in call to open");
     }
 
-    m_Stream = std::unique_ptr<core::Stream>(new core::Stream(
-        name, ToMode(mode), comm, configFile, ioInConfigFile, "C++"));
+    m_Stream = std::make_shared<core::Stream>(
+        name, ToMode(mode), comm, configFile, ioInConfigFile, "C++");
 }
 
 void fstream::open(const std::string &name, const openmode mode,
@@ -101,20 +102,11 @@ void fstream::close()
     m_Stream.reset();
 }
 
-// bool getstep(adios2::fstream &stream,
-//             std::map<std::string, Params> &availableVariables,
-//             std::map<std::string, Params> &availableAttributes)
-//{
-//    return stream.m_Stream->GetStep();
-//}
-//
-// bool getstep(adios2::fstream &stream,
-//             std::map<std::string, Params> &availableVariables)
-//{
-//    return stream.m_Stream->GetStep();
-//}
-
-bool getstep(adios2::fstream &stream) { return stream.m_Stream->GetStep(); }
+bool getstep(adios2::fstream &stream, adios2::fstep &step)
+{
+    step = stream;
+    return step.m_Stream->GetStep();
+}
 
 size_t fstream::currentstep() const noexcept { return m_Stream->CurrentStep(); }
 

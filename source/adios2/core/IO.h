@@ -156,7 +156,7 @@ public:
      * @param key parameter key
      * @param value parameter value
      */
-    void SetTransportParameter(const unsigned int transportIndex,
+    void SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value);
 
     /**

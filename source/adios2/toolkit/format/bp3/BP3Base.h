@@ -430,22 +430,24 @@ protected:
     template <class T>
     struct Stats
     {
-        double BitSum;
-        double BitSumSquare;
-        uint64_t Offset;
-        uint64_t PayloadOffset;
-        T Min = T();
-        T Max = T();
-        T Value = T();
+        double BitSum = 0.;
+        double BitSumSquare = 0.;
+        uint64_t Offset = 0;
+        uint64_t PayloadOffset = 0;
+        T Min;
+        T Max;
+        T Value;
         std::vector<T> Values;
-        uint32_t Step;
-        uint32_t FileIndex;
-        uint32_t MemberID;
-        uint32_t BitCount;
+        uint32_t Step = 0;
+        uint32_t FileIndex = 0;
+        uint32_t MemberID = 0;
+        uint32_t BitCount = 0;
         std::bitset<32> Bitmap;
-        uint8_t BitFinite;
+        uint8_t BitFinite = 0;
         bool IsValue = false;
         BP3OpInfo Op;
+
+        Stats() : Min(), Max(), Value() {}
     };
 
     template <class T>

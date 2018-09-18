@@ -126,7 +126,7 @@ void adios2_set_parameter(adios2_io *io, const char *key, const char *value);
  * @return transport_index handler used for setting transport parameters or at
  * Close
  */
-unsigned int adios2_add_transport(adios2_io *io, const char *transport_type);
+size_t adios2_add_transport(adios2_io *io, const char *transport_type);
 
 /**
  * Sets a single transport parameter using io and transport_index (from
@@ -136,8 +136,7 @@ unsigned int adios2_add_transport(adios2_io *io, const char *transport_type);
  * @param key parameter key
  * @param value parameter value
  */
-void adios2_set_transport_parameter(adios2_io *io,
-                                    const unsigned int transport_index,
+void adios2_set_transport_parameter(adios2_io *io, const size_t transport_index,
                                     const char *key, const char *value);
 
 /**

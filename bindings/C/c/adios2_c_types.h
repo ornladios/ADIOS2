@@ -26,6 +26,7 @@ typedef struct adios2_attribute adios2_attribute;
 typedef struct adios2_engine adios2_engine;
 typedef struct adios2_operator adios2_operator;
 typedef struct adios2_FILE adios2_FILE;
+typedef adios2_FILE adios2_step;
 
 typedef enum {
     adios2_debug_mode_off = 0,

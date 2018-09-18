@@ -74,14 +74,6 @@ bool Stream::GetStep()
     return true;
 }
 
-bool Stream::GetStep(std::map<std::string, Params> &availableVariables,
-                     std::map<std::string, Params> &availableAttributes)
-{
-    availableVariables = m_IO->GetAvailableVariables();
-    availableAttributes = m_IO->GetAvailableAttributes();
-    return GetStep();
-}
-
 void Stream::Close()
 {
     if (m_Engine != nullptr)

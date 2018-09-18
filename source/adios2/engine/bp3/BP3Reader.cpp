@@ -51,10 +51,8 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
-    bool localFirstStep = false;
     if (m_FirstStep)
     {
-        localFirstStep = true;
         m_FirstStep = false;
     }
     else

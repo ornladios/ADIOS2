@@ -108,13 +108,12 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
     return m_TransportsParameters.size() - 1;
 }
 
-void IO::SetTransportParameter(const unsigned int transportIndex,
+void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
     if (m_DebugMode)
     {
-        if (transportIndex >=
-            static_cast<unsigned int>(m_TransportsParameters.size()))
+        if (transportIndex >= m_TransportsParameters.size())
         {
             throw std::invalid_argument(
                 "ERROR: transportIndex is larger than "

@@ -86,8 +86,8 @@ public:
      * @return transportIndex handler
      * @exception std::invalid_argument if type=transport
      */
-    unsigned int AddTransport(const std::string type,
-                              const Params &parameters = Params());
+    size_t AddTransport(const std::string type,
+                        const Params &parameters = Params());
 
     /**
      * @brief Sets a single parameter to an existing transport identified
@@ -100,7 +100,7 @@ public:
      * @exception std::invalid_argument if transportIndex not valid, e.g. not a
      * handler from AddTransport.
      */
-    void SetTransportParameter(const unsigned int transportIndex,
+    void SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value);
 
     /**

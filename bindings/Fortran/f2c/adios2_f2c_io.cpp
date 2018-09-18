@@ -8,12 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2_f2c_io.h"
+#include "adios2_f2c_common.h"
 
-#include <cstddef>  //std::size_t
-#include <iostream> //std::cerr
-#include <stdexcept>
-#include <vector>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void FC_GLOBAL(adios2_set_engine_f2c,
                ADIOS2_SET_ENGINE_F2C)(adios2_io **io, const char *engine_type,
@@ -86,7 +85,7 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
     try
     {
         adios2_set_transport_parameter(
-            *io, static_cast<unsigned int>(*transport_index), key, value);
+            *io, static_cast<size_t>(*transport_index), key, value);
     }
     catch (std::exception &e)
     {
@@ -390,3 +389,7 @@ void FC_GLOBAL(adios2_io_engine_type_f2c,
         *ierr = -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

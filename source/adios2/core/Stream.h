@@ -74,9 +74,6 @@ public:
 
     bool GetStep();
 
-    bool GetStep(std::map<std::string, Params> &availableVariables,
-                 std::map<std::string, Params> &availableAttributes);
-
     template <class T>
     void Read(const std::string &name, T *values);
 

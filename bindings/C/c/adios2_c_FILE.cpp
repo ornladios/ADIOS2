@@ -240,6 +240,24 @@ void adios2_fwrite(adios2_FILE *stream, const char *name,
     }
 }
 
+adios2_step *adios2_fgets(adios2_step *step, adios2_FILE *stream)
+{
+    adios2::helper::CheckForNullptr(
+        stream, "null adios2_FILE, in call to adios2_fgets\n");
+    adios2::core::Stream &streamCpp =
+        *reinterpret_cast<adios2::core::Stream *>(stream);
+
+    if (streamCpp.GetStep())
+    {
+        step = stream;
+        return step;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 namespace
 {
 template <class T>

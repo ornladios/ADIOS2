@@ -8,20 +8,13 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2_f2c_adios.h"
+#include "adios2_f2c_common.h"
 
-#include <iostream> //std::cerr
-#include <stdexcept>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef ADIOS2_HAVE_MPI_F
-void FC_GLOBAL(adios2_init_f2c,
-               ADIOS2_INIT_F2C)(adios2_adios **adios, MPI_Fint *comm,
-                                const int *debug_mode, int *ierr)
-{
-    FC_GLOBAL(adios2_init_config_f2c, ADIOS2_INIT_CONFIG_F2C)
-    (adios, "", comm, debug_mode, ierr);
-}
-
 void FC_GLOBAL(adios2_init_config_f2c,
                ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
                                        const char *config_file, MPI_Fint *comm,
@@ -40,15 +33,15 @@ void FC_GLOBAL(adios2_init_config_f2c,
         *ierr = -1;
     }
 }
-#else
-void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_adios **adios,
-                                                 const int *debug_mode,
-                                                 int *ierr)
+
+void FC_GLOBAL(adios2_init_f2c,
+               ADIOS2_INIT_F2C)(adios2_adios **adios, MPI_Fint *comm,
+                                const int *debug_mode, int *ierr)
 {
     FC_GLOBAL(adios2_init_config_f2c, ADIOS2_INIT_CONFIG_F2C)
-    (adios, "", debug_mode, ierr);
+    (adios, "", comm, debug_mode, ierr);
 }
-
+#else
 void FC_GLOBAL(adios2_init_config_f2c,
                ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
                                        const char *config_file,
@@ -66,6 +59,14 @@ void FC_GLOBAL(adios2_init_config_f2c,
         std::cerr << "ADIOS2 init_config: " << e.what() << "\n";
         *ierr = -1;
     }
+}
+
+void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_adios **adios,
+                                                 const int *debug_mode,
+                                                 int *ierr)
+{
+    FC_GLOBAL(adios2_init_config_f2c, ADIOS2_INIT_CONFIG_F2C)
+    (adios, "", debug_mode, ierr);
 }
 #endif
 
@@ -171,3 +172,7 @@ void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_adios **adios,
         *ierr = -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

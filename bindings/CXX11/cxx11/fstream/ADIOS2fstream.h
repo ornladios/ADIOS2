@@ -20,7 +20,8 @@
 namespace adios2
 {
 class fstream;
-bool getstep(adios2::fstream &stream);
+using fstep = fstream;
+bool getstep(adios2::fstream &stream, adios2::fstep &step);
 }
 
 namespace adios2
@@ -347,23 +348,17 @@ public:
     /** close current stream becoming inaccessible */
     void close();
 
-    //    friend bool getstep(adios2::fstream &stream,
-    //                        std::map<std::string, Params> &availableVariables,
-    //                        std::map<std::string, Params>
-    //                        &availableAttributes);
-    //
-    //    friend bool getstep(adios2::fstream &stream,
-    //                        std::map<std::string, Params>
-    //                        &availableVariables);
-
-    friend bool getstep(adios2::fstream &stream);
+    friend bool getstep(adios2::fstream &stream, adios2::fstep &step);
 
     size_t currentstep() const noexcept;
 
 protected:
-    std::unique_ptr<core::Stream> m_Stream;
+    std::shared_ptr<core::Stream> m_Stream;
 
     adios2::Mode ToMode(const openmode mode) const noexcept;
+
+private:
+    fstream(fstream &stream) = default;
 };
 
 #define declare_template_instantiation(T)                                      \
