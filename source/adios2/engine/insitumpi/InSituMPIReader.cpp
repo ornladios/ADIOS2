@@ -464,16 +464,6 @@ void InSituMPIReader::Init()
 
 void InSituMPIReader::InitParameters()
 {
-    auto itFixedSchedule = m_IO.m_Parameters.find("FixedSchedule");
-    if (itFixedSchedule == m_IO.m_Parameters.end())
-    {
-        m_FixedLocalSchedule = false;
-    }
-    else if (itFixedSchedule->second == "true")
-    {
-        m_FixedLocalSchedule = true;
-    }
-
     auto itVerbosity = m_IO.m_Parameters.find("verbose");
     if (itVerbosity != m_IO.m_Parameters.end())
     {

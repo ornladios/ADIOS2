@@ -13,7 +13,6 @@
     <io name="writer">
         <engine type="InSituMPI">
             <parameter key="verbose" value="5"/>
-            <parameter key="FixedSchedule" value="true"/>
         </engine>
     </io>
 
@@ -25,7 +24,6 @@
     <io name="reader">
         <engine type="InSituMPI">
             <parameter key="verbose" value="5"/>
-            <parameter key="FixedSchedule" value="true"/>
         </engine>
     </io>
 </adios-config>
