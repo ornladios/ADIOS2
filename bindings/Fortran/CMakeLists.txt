@@ -26,6 +26,7 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_attribute_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_variable_attribute_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_begin_step_mod.f90
