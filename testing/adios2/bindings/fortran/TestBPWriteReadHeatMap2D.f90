@@ -38,7 +38,7 @@ program TestBPWriteReadHeatMap2D
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
   call MPI_COMM_SIZE(MPI_COMM_WORLD, isize, ierr)
 
-  in1 = 10
+  in1 = 5
   in2 = 10
 
   icount = (/in1, in2/)
@@ -182,12 +182,12 @@ program TestBPWriteReadHeatMap2D
       end do
     end do
 
-    if (sum_i1 /= 100*isize) stop 'Test failed integer*1'
-    if (sum_i2 /= 100*isize) stop 'Test failed integer*2'
-    if (sum(sel_temperatures_i4) /= 100*isize) stop 'Test failed integer*4'
-    if (sum(sel_temperatures_i8) /= 100*isize) stop 'Test failed integer*8'
-    if (sum(sel_temperatures_r4) /= 100*isize) stop 'Test failed real*4'
-    if (sum(sel_temperatures_r8) /= 100*isize) stop 'Test failed real*8'
+    if (sum_i1 /= 50*isize) stop 'Test failed integer*1'
+    if (sum_i2 /= 50*isize) stop 'Test failed integer*2'
+    if (sum(sel_temperatures_i4) /= 50*isize) stop 'Test failed integer*4'
+    if (sum(sel_temperatures_i8) /= 50*isize) stop 'Test failed integer*8'
+    if (sum(sel_temperatures_r4) /= 50*isize) stop 'Test failed real*4'
+    if (sum(sel_temperatures_r8) /= 50*isize) stop 'Test failed real*8'
 
     if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
     if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)
