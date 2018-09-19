@@ -14,6 +14,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName;  // comes from command line
+
 class BPWriteReadAsStreamTestADIOS2_Threads : public ::testing::Test
 {
 public:
@@ -87,8 +89,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
@@ -120,6 +129,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead1D8)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.SetParameter("Threads", "2");
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -332,8 +346,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
@@ -365,6 +386,12 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D2x4)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.SetParameter("Threads", "2");
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -588,8 +615,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
@@ -622,6 +656,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads, ADIOS2BPWriteRead2D4x2)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.SetParameter("Threads", "2");
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -840,8 +879,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
@@ -879,6 +925,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.SetParameter("Threads", "2");
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
@@ -1093,8 +1144,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
@@ -1126,6 +1184,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.SetParameter("Threads", "2");
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -1349,8 +1412,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.SetParameter("Threads", "2");
         io.AddTransport("file");
 
@@ -1383,6 +1453,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2_Threads,
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.SetParameter("Threads", "2");
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -1549,6 +1624,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

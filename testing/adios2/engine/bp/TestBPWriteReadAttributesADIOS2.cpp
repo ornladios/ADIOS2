@@ -14,6 +14,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName;  // comes from command line
+
 class BPWriteReadAttributeTestADIOS2 : public ::testing::Test
 {
 public:
@@ -76,7 +78,15 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         io.DefineAttribute<float>(r32_Single, currentTestData.R32.front());
         io.DefineAttribute<double>(r64_Single, currentTestData.R64.front());
 
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.AddTransport("File");
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
@@ -88,6 +98,10 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         adios2::IO ioRead = adios.DeclareIO("ioRead");
         // ioRead.AddTransport("File");
         // ioRead.SetParameter("OpenAsFile", "true");
+        if (!engineName.empty())
+        {
+            ioRead.SetEngine(engineName);
+        }
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
@@ -249,7 +263,15 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         io.DefineAttribute<double>(r64_Array, currentTestData.R64.data(),
                                    currentTestData.R64.size());
 
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.AddTransport("file");
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
@@ -259,6 +281,11 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
+
+        if (!engineName.empty())
+        {
+            ioRead.SetEngine(engineName);
+        }
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
@@ -722,6 +749,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

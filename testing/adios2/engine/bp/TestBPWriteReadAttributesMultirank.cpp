@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+std::string engineName;  // comes from command line
+
 class BPWriteReadAttributeTestMultirank : public ::testing::Test
 {
 public:
@@ -59,7 +61,15 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
                   << " = " << mpiRank << " and attribute " << attrpath
                   << " = \"" << desc << "\"" << std::endl;
 
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.AddTransport("file");
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
@@ -71,6 +81,11 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
     // reader
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
+
+        if (!engineName.empty())
+        {
+            ioRead.SetEngine(engineName);
+        }
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
@@ -108,6 +123,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

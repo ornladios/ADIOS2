@@ -1258,6 +1258,26 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
             break;
         }
 
+        case (type_complex):
+        {
+            auto characteristics = ReadElementIndexCharacteristics<double>(
+                buffer, position, type_complex, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
+        case (type_double_complex):
+        {
+            auto characteristics = ReadElementIndexCharacteristics<double>(
+                buffer, position, type_double_complex, true);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
         default:
             // TODO: complex, long double
             throw std::invalid_argument(

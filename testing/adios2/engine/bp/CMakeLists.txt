@@ -3,6 +3,11 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
+set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
+file(MAKE_DIRECTORY ${BP3_DIR})
+file(MAKE_DIRECTORY ${BP4_DIR})
+
 add_subdirectory(operations)
 
 add_executable(TestBPWriteReadADIOS2 TestBPWriteReadADIOS2.cpp)
@@ -88,8 +93,8 @@ if(ADIOS2_HAVE_MPI)
   )
   
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
-  gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args})
-  gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+  gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+  gtest_add_tests(TARGET TestBPWriteAggregateRead ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
   
 endif()
 
@@ -122,3 +127,28 @@ gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args})
 gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteReadAttributesMultirank ${extra_test_args} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2_Threads ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadAsStreamADIOS2_Threads ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadAttributesADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadAttributesADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestStreamWriteReadHighLevelAPI ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestStreamWriteReadHighLevelAPI ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteFlushRead ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteFlushRead ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteMultiblockRead ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteMultiblockRead ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadMultiblock ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadMultiblock ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadVector ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadVector ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadAttributesMultirank ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadAttributesMultirank ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteMemorySelectionRead ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args}) WORKING_DIRECTORY ${BP3_DIR})
+

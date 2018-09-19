@@ -356,7 +356,6 @@ protected:
         type_complex = 10,            //!< type_complex
         type_double_complex = 11,     //!< type_double_complex
         type_string_array = 12,       //!< type_string_array
-        type_long_double_complex = 13 //!< type_double_complex
     };
 
     /**
