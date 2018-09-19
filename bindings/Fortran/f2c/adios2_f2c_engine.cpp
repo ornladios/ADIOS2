@@ -8,10 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2_f2c_engine.h"
+#include "adios2_f2c_common.h"
 
-#include <iostream> //std::cerr
-#include <stdexcept>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void FC_GLOBAL(adios2_begin_step_f2c,
                ADIOS2_BEGIN_STEP_F2C)(adios2_engine **engine,
@@ -193,3 +194,7 @@ void FC_GLOBAL(adios2_current_step_f2c,
         *ierr = -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

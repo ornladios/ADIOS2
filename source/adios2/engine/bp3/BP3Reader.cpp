@@ -35,10 +35,11 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     {
         if (mode != StepMode::NextAvailable)
         {
-            throw std::invalid_argument("ERROR: mode is not supported yet, "
-                                        "only NextAvailable is valid for "
-                                        "engine BPFileReader, in call to "
-                                        "BeginStep\n");
+            throw std::invalid_argument(
+                "ERROR: mode is not supported yet, "
+                "only NextAvailable is valid for "
+                "engine BP3 with adios2::Mode::Read, in call to "
+                "BeginStep\n");
         }
 
         if (!m_BP3Deserializer.m_DeferredVariables.empty())
@@ -59,33 +60,17 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         ++m_CurrentStep;
     }
 
+    // used to inquire for variables in streaming mode
+    m_IO.m_Streaming = true;
+    m_IO.m_EngineStep = m_CurrentStep;
+
     if (m_CurrentStep >= m_BP3Deserializer.m_MetadataSet.StepsCount)
     {
+        m_IO.m_Streaming = false;
         return StepStatus::EndOfStream;
     }
 
-    const auto &variablesData = m_IO.GetVariablesDataMap();
-
-    for (const auto &variableData : variablesData)
-    {
-        const std::string name = variableData.first;
-        const std::string type = m_IO.InquireVariableType(name);
-
-        if (type == "compound")
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
-        if (mode == StepMode::NextAvailable)                                   \
-        {                                                                      \
-            variable->SetStepSelection({m_CurrentStep, 1});                    \
-        }                                                                      \
-    }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-    }
+    m_IO.ResetVariablesStepSelection(false, "in call to BP3 Reader BeginStep");
 
     return StepStatus::OK;
 }

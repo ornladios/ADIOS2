@@ -44,7 +44,7 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     adios2_set_parameter(ioH, "Threads", "1");
 
     // Set transport and parameters
-    const unsigned int transportID = adios2_add_transport(ioH, "File");
+    const size_t transportID = adios2_add_transport(ioH, "File");
     adios2_set_transport_parameter(ioH, transportID, "library", "fstream");
 
     // count dims are allocated in stack

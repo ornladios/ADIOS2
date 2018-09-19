@@ -496,7 +496,7 @@ void adios2_set_parameter(adios2_io *io, const char *key, const char *value)
     reinterpret_cast<adios2::core::IO *>(io)->SetParameter(key, value);
 }
 
-unsigned int adios2_add_transport(adios2_io *io, const char *transport_type)
+size_t adios2_add_transport(adios2_io *io, const char *transport_type)
 {
     adios2::helper::CheckForNullptr(
         io, "for adios2_io, in call to adios2_add_transport");
@@ -504,8 +504,7 @@ unsigned int adios2_add_transport(adios2_io *io, const char *transport_type)
         transport_type);
 }
 
-void adios2_set_transport_parameter(adios2_io *io,
-                                    const unsigned int transport_index,
+void adios2_set_transport_parameter(adios2_io *io, const size_t transport_index,
                                     const char *key, const char *value)
 {
     adios2::helper::CheckForNullptr(

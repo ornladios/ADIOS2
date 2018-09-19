@@ -15,118 +15,68 @@
 
 namespace adios2
 {
-fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-                 const std::string engineType, const Params &parameters,
-                 const vParams &transportParameters)
-{
-    if (mode == openmode::out)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Write, comm,
-                                                  engineType, parameters,
-                                                  transportParameters, "C++");
-    }
-    else if (mode == openmode::app)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Append, comm,
-                                                  engineType, parameters,
-                                                  transportParameters, "C++");
-    }
-    else if (mode == openmode::in)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Read, comm,
-                                                  engineType, parameters,
-                                                  transportParameters, "C++");
-    }
-}
 
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-                 const std::string configFile, const std::string ioInConfigFile)
+                 const std::string engineType)
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, engineType,
+                                          "C++"))
 {
-    if (mode == openmode::out)
-    {
-        m_Stream = std::make_shared<core::Stream>(
-            name, Mode::Write, comm, configFile, ioInConfigFile, "C++");
-    }
-    else if (mode == openmode::app)
-    {
-        m_Stream = std::make_shared<core::Stream>(
-            name, Mode::Append, comm, configFile, ioInConfigFile, "C++");
-    }
-    else if (mode == openmode::in)
-    {
-        m_Stream = std::make_shared<core::Stream>(
-            name, Mode::Read, comm, configFile, ioInConfigFile, "C++");
-    }
 }
 
 fstream::fstream(const std::string &name, const openmode mode,
-                 const std::string engineType, const Params &parameters,
-                 const vParams &transportParameters)
+                 const std::string engineType)
+: fstream(name, mode, MPI_COMM_SELF, engineType)
 {
-    if (mode == openmode::out)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Write, engineType,
-                                                  parameters,
-                                                  transportParameters, "C++");
-    }
-    else if (mode == openmode::app)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Append,
-                                                  engineType, parameters,
-                                                  transportParameters, "C++");
-    }
-    else if (mode == openmode::in)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Read, engineType,
-                                                  parameters,
-                                                  transportParameters, "C++");
-    }
+}
+
+fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
+                 const std::string &configFile,
+                 const std::string ioInConfigFile)
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
+                                          ioInConfigFile, "C++"))
+{
 }
 
 fstream::fstream(const std::string &name, const openmode mode,
-                 const std::string configFile, const std::string ioInConfigFile)
+                 const std::string &configFile,
+                 const std::string ioInConfigFile)
+: fstream(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile)
 {
-    if (mode == openmode::out)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Write, configFile,
-                                                  ioInConfigFile, "C++");
-    }
-    else if (mode == openmode::app)
-    {
-        m_Stream = std::make_shared<core::Stream>(
-            name, Mode::Append, configFile, ioInConfigFile, "C++");
-    }
-    else if (mode == openmode::in)
-    {
-        m_Stream = std::make_shared<core::Stream>(name, Mode::Read, configFile,
-                                                  ioInConfigFile, "C++");
-    }
 }
 
-fstream::fstream() : m_Stream(std::make_shared<core::Stream>("C++")) {}
+fstream::~fstream() = default;
 
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
-                   const std::string engineType, const Params &parameters,
-                   const vParams &transportParameters)
+                   const std::string engineType)
 {
-    m_Stream->Open(name, static_cast<Mode>(mode), comm, engineType, parameters,
-                   transportParameters);
+    if (m_Stream)
+    {
+        throw std::invalid_argument("ERROR: adios2::fstream with name " + name +
+                                    " is already opened, in call to open");
+    }
+
+    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), comm,
+                                              engineType, "C++");
+}
+
+void fstream::open(const std::string &name, const openmode mode,
+                   const std::string engineType)
+{
+    open(name, mode, MPI_COMM_SELF, engineType);
 }
 
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                    const std::string configFile,
                    const std::string ioInConfigFile)
 {
-    m_Stream->Open(name, static_cast<Mode>(mode), comm, configFile,
-                   ioInConfigFile);
-}
+    if (m_Stream)
+    {
+        throw std::invalid_argument("ERROR: adios2::fstream with name " + name +
+                                    " is already opened, in call to open");
+    }
 
-void fstream::open(const std::string &name, const openmode mode,
-                   const std::string engineType, const Params &parameters,
-                   const vParams &transportParameters)
-{
-    open(name, mode, MPI_COMM_SELF, engineType, parameters,
-         transportParameters);
+    m_Stream = std::make_shared<core::Stream>(
+        name, ToMode(mode), comm, configFile, ioInConfigFile, "C++");
 }
 
 void fstream::open(const std::string &name, const openmode mode,
@@ -136,23 +86,47 @@ void fstream::open(const std::string &name, const openmode mode,
     open(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile);
 }
 
-bool fstream::is_open() const noexcept { return m_Stream->m_IsOpen; }
-
-bool fstream::eof() const noexcept
+fstream::operator bool() const noexcept
 {
-    bool eof = false;
-
-    if (m_Stream->m_Status == StepStatus::EndOfStream)
+    if (!m_Stream)
     {
-        eof = true;
+        return false;
     }
 
-    return eof;
+    return true;
 }
 
-fstream::operator bool() const noexcept { return eof(); }
+void fstream::close()
+{
+    m_Stream->Close();
+    m_Stream.reset();
+}
 
-void fstream::close() { m_Stream->Close(); }
+bool getstep(adios2::fstream &stream, adios2::fstep &step)
+{
+    step = stream;
+    return step.m_Stream->GetStep();
+}
+
+size_t fstream::currentstep() const noexcept { return m_Stream->CurrentStep(); }
+
+adios2::Mode fstream::ToMode(const openmode mode) const noexcept
+{
+    adios2::Mode modeCpp = adios2::Mode::Undefined;
+    switch (mode)
+    {
+    case (openmode::out):
+        modeCpp = adios2::Mode::Write;
+        break;
+    case (openmode::in):
+        modeCpp = adios2::Mode::Read;
+        break;
+    case (openmode::app):
+        modeCpp = adios2::Mode::Append;
+        break;
+    }
+    return modeCpp;
+}
 
 #define declare_template_instantiation(T)                                      \
     template void fstream::write<T>(const std::string &, const T *,            \
@@ -162,24 +136,24 @@ void fstream::close() { m_Stream->Close(); }
     template void fstream::write<T>(const std::string &, const T &,            \
                                     const bool);                               \
                                                                                \
-    template std::vector<T> fstream::read<T>(const std::string &, const bool); \
+    template std::vector<T> fstream::read<T>(const std::string &);             \
                                                                                \
-    template std::vector<T> fstream::read<T>(                                  \
-        const std::string &, const Dims &, const Dims &, const bool);          \
+    template std::vector<T> fstream::read<T>(const std::string &,              \
+                                             const Dims &, const Dims &);      \
                                                                                \
     template std::vector<T> fstream::read<T>(const std::string &,              \
                                              const Dims &, const Dims &,       \
                                              const size_t, const size_t);      \
                                                                                \
-    template void fstream::read<T>(const std::string &, T *, const bool);      \
+    template void fstream::read<T>(const std::string &, T *);                  \
                                                                                \
-    template void fstream::read<T>(const std::string &name, T &, const bool);  \
+    template void fstream::read<T>(const std::string &name, T &);              \
                                                                                \
     template void fstream::read<T>(const std::string &name, T &,               \
                                    const size_t);                              \
                                                                                \
     template void fstream::read<T>(const std::string &, T *, const Dims &,     \
-                                   const Dims &, const bool);                  \
+                                   const Dims &);                              \
                                                                                \
     template void fstream::read<T>(const std::string &, T *, const Dims &,     \
                                    const Dims &, const size_t, const size_t);

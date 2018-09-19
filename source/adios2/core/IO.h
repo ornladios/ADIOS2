@@ -84,6 +84,15 @@ public:
     /** BPFileWriter engine default if unknown */
     std::string m_EngineType = "BPFile";
 
+    /** at read for file engines: true: in streaming (step-by-step) mode, or
+     * false: random-access mode (files) */
+    bool m_Streaming = false;
+
+    /** used if m_Streaming is true by file reader engines */
+    size_t m_EngineStep = 0;
+
+    /** placeholder when reading XML file variable operations, executed until
+     * DefineVariable in code */
     std::map<std::string, std::vector<Operation>> m_VarOpsPlaceholder;
 
     /**
@@ -136,8 +145,8 @@ public:
      * @param params acceptable parameters for a particular transport
      * @return transportIndex handler
      */
-    unsigned int AddTransport(const std::string type,
-                              const Params &parameters = Params());
+    size_t AddTransport(const std::string type,
+                        const Params &parameters = Params());
 
     /**
      * @brief Sets a single parameter to an existing transport identified with a
@@ -147,7 +156,7 @@ public:
      * @param key parameter key
      * @param value parameter value
      */
-    void SetTransportParameter(const unsigned int transportIndex,
+    void SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value);
 
     /**
@@ -369,6 +378,13 @@ public:
      */
     void SetStreamOpenMode(const StreamOpenMode mode);
 
+    /**
+     * Resets all variables m_StepsStart and m_StepsCount
+     * @param alwaysZero true: always m_StepsStart = 0, false: capture
+     */
+    void ResetVariablesStepSelection(const bool zeroStart = false,
+                                     const std::string hint = "");
+
 private:
     /** true: exist in config file (XML) */
     const bool m_InConfigFile = false;
@@ -412,7 +428,7 @@ private:
     /** Gets the internal reference to a variable map for type T
      *  This function is specialized in IO.tcc */
     template <class T>
-    std::map<unsigned int, Variable<T>> &GetVariableMap();
+    std::map<unsigned int, Variable<T>> &GetVariableMap() noexcept;
 
     /**
      * Map holding attribute identifiers
@@ -442,7 +458,7 @@ private:
     std::map<unsigned int, Attribute<long double>> m_LDoubleA;
 
     template <class T>
-    std::map<unsigned int, Attribute<T>> &GetAttributeMap();
+    std::map<unsigned int, Attribute<T>> &GetAttributeMap() noexcept;
 
     std::map<std::string, std::shared_ptr<Engine>> m_Engines;
 
@@ -468,6 +484,10 @@ private:
     bool IsEnd(DataMap::const_iterator itDataMap, const DataMap &dataMap) const;
 
     void CheckTransportType(const std::string type) const;
+
+    template <class T>
+    bool IsAvailableStep(const size_t step,
+                         const unsigned int variableIndex) noexcept;
 };
 
 // Explicit declaration of the public template methods

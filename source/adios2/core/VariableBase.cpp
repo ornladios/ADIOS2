@@ -179,12 +179,12 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
     {
         throw std::invalid_argument("ERROR: boxSteps.second count argument "
                                     " can't be zero, from variable " +
-                                    m_Name +
-                                    ", in call to Setting Step Selection\n");
+                                    m_Name + ", in call to SetStepSelection\n");
     }
 
     m_StepsStart = boxSteps.first;
     m_StepsCount = boxSteps.second;
+    m_RandomAccess = true;
 }
 
 size_t VariableBase::AddOperation(Operator &op,
@@ -236,6 +236,48 @@ size_t VariableBase::SelectionSize() const noexcept
 
 bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; };
 void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; };
+
+bool VariableBase::IsValidStep(const size_t step) const noexcept
+{
+    if (m_AvailableStepBlockIndexOffsets.count(step) == 1)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void VariableBase::CheckRandomAccessConflict(const std::string hint) const
+{
+    if (m_DebugMode && m_RandomAccess)
+    {
+        throw std::invalid_argument("ERROR: can't mix streaming and "
+                                    "random-access (call to StepStepSelection)"
+                                    "for variable " +
+                                    m_Name + ", " + hint);
+    }
+}
+
+void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
+{
+    m_StepsCount = 1;
+
+    if (zeroStart)
+    {
+        m_StepsStart = 0;
+        return;
+    }
+
+    if (m_FirstStreamingStep)
+    {
+        m_StepsStart = 0;
+        m_FirstStreamingStep = false;
+    }
+    else
+    {
+        ++m_StepsStart;
+    }
+}
 
 // PRIVATE
 void VariableBase::InitShapeType()

@@ -36,12 +36,12 @@ void IO::SetParameters(const Params &parameters) noexcept
 
 const Params &IO::GetParameters() const noexcept { return m_IO.m_Parameters; }
 
-unsigned int IO::AddTransport(const std::string type, const Params &parameters)
+size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
     return m_IO.AddTransport(type, parameters);
 }
 
-void IO::SetTransportParameter(const unsigned int transportIndex,
+void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
     m_IO.SetTransportParameter(transportIndex, key, value);

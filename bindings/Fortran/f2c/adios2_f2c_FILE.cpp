@@ -8,12 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2_f2c_FILE.h"
-
-#include <cstddef>  //std::size_t
-#include <iostream> //std::cerr
-#include <stdexcept>
-#include <vector>
+#include "adios2_f2c_common.h"
 
 namespace
 {
@@ -41,6 +36,10 @@ void adios2_Int64ToSizeTVector(const int64_t *dimensions, const int size,
     }
 }
 } // end empty namespace
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef ADIOS2_HAVE_MPI_F
 void FC_GLOBAL(adios2_fopen_f2c,
@@ -174,7 +173,14 @@ void FC_GLOBAL(adios2_fread_value_f2c,
     try
     {
         adios2_fread(*fh, name, static_cast<adios2_type>(*type), data, 0,
-                     nullptr, nullptr, *end_step);
+                     nullptr, nullptr);
+        if (*end_step == 1)
+        {
+            if (adios2_fgets(*fh, *fh) == nullptr)
+            {
+                *ierr = -1; // end of file
+            }
+        }
     }
     catch (std::exception &e)
     {
@@ -219,8 +225,16 @@ void FC_GLOBAL(adios2_fread_f2c,
         adios2_Int64ToSizeTVector(selection_start, *ndims, selectionStartV);
         adios2_Int64ToSizeTVector(selection_count, *ndims, selectionCountV);
 
-        adios2_fread(*fh, name, static_cast<adios2_type>(*type), data, *ndims,
-                     selectionStartV.data(), selectionCountV.data(), *end_step);
+        adios2_fread(*fh, name, static_cast<adios2_type>(*type), data,
+                     static_cast<size_t>(*ndims), selectionStartV.data(),
+                     selectionCountV.data());
+        if (*end_step == 1)
+        {
+            if (adios2_fgets(*fh, *fh) == nullptr)
+            {
+                *ierr = -1; // end of file
+            }
+        }
     }
     catch (std::exception &e)
     {
@@ -272,3 +286,7 @@ void FC_GLOBAL(adios2_fclose_f2c, adios2_FCLOSE_F2C)(adios2_FILE **fh,
         *ierr = -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

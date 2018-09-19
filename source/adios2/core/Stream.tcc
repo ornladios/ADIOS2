@@ -11,8 +11,9 @@
 #ifndef ADIOS2_CORE_STREAM_TCC_
 #define ADIOS2_CORE_STREAM_TCC_
 
+#include "Stream.h"
+
 #include "adios2/core/Variable.h"
-#include <adios2/core/Stream.h>
 
 namespace adios2
 {
@@ -23,8 +24,6 @@ template <class T>
 void Stream::Write(const std::string &name, const T *data, const Dims &shape,
                    const Dims &start, const Dims &count, const bool endStep)
 {
-    ThrowIfNotOpen("variable " + name + ", in call to write\n");
-
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
 
     if (variable == nullptr)
@@ -44,12 +43,14 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
         }
     }
 
+    CheckOpen();
+
     m_Engine->Put(*variable, data, adios2::Mode::Sync);
 
     if (endStep)
     {
         m_Engine->EndStep();
-        m_Status = m_Engine->BeginStep();
+        m_Engine->BeginStep();
     }
 }
 
@@ -61,7 +62,7 @@ void Stream::Write(const std::string &name, const T &datum, const bool endStep)
 }
 
 template <class T>
-void Stream::Read(const std::string &name, T *values, const bool endStep)
+void Stream::Read(const std::string &name, T *values)
 {
     CheckPCommon(name, values);
 
@@ -72,8 +73,7 @@ void Stream::Read(const std::string &name, T *values, const bool endStep)
         return;
     }
 
-    variable->SetStepSelection({m_Engine->CurrentStep(), 1});
-    GetPCommon(*variable, values, endStep);
+    GetPCommon(*variable, values);
 }
 
 template <class T>
@@ -90,12 +90,12 @@ void Stream::Read(const std::string &name, T *values,
     }
 
     variable->SetStepSelection(stepSelection);
-    GetPCommon(*variable, values, false);
+    GetPCommon(*variable, values);
 }
 
 template <class T>
 void Stream::Read(const std::string &name, T *values,
-                  const Box<Dims> &selection, const bool endStep)
+                  const Box<Dims> &selection)
 {
     CheckPCommon(name, values);
 
@@ -107,7 +107,7 @@ void Stream::Read(const std::string &name, T *values,
     }
 
     variable->SetSelection(selection);
-    GetPCommon(*variable, values, endStep);
+    GetPCommon(*variable, values);
 }
 
 template <class T>
@@ -125,35 +125,23 @@ void Stream::Read(const std::string &name, T *values,
 
     variable->SetSelection(selection);
     variable->SetStepSelection(stepSelection);
-    GetPCommon(*variable, values, false);
+    GetPCommon(*variable, values);
 }
 
 template <class T>
-std::vector<T> Stream::Read(const std::string &name, const bool endStep)
+std::vector<T> Stream::Read(const std::string &name)
 {
-    ThrowIfNotOpen("variable " + name + ", in call to read\n");
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
     {
         return std::vector<T>();
     }
-
-    variable->SetStepSelection({m_Engine->CurrentStep(), 1});
-    return GetCommon(*variable, endStep);
+    return GetCommon(*variable);
 }
 
-// template <class T>
-// std::vector<T> Stream::Read(const std::string &name,
-//                            const Box<size_t> &stepSelection)
-//{
-//    // TODO
-//}
-
 template <class T>
-std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
-                            const bool endStep)
+std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection)
 {
-    ThrowIfNotOpen("variable " + name + ", in call to read\n");
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
     {
@@ -161,15 +149,13 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
     }
 
     variable->SetSelection(selection);
-    variable->SetStepSelection({m_Engine->CurrentStep(), 1});
-    return GetCommon(*variable, endStep);
+    return GetCommon(*variable);
 }
 
 template <class T>
 std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
                             const Box<size_t> &stepSelection)
 {
-    ThrowIfNotOpen("variable " + name + ", in call to read\n");
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
     {
@@ -178,55 +164,47 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
 
     variable->SetSelection(selection);
     variable->SetStepSelection(stepSelection);
-    return GetCommon(*variable, false);
+    return GetCommon(*variable);
 }
 
 // PRIVATE
 template <class T>
-std::vector<T> Stream::GetCommon(Variable<T> &variable, const bool endStep)
+std::vector<T> Stream::GetCommon(Variable<T> &variable)
 {
     try
     {
         std::vector<T> values(variable.SelectionSize());
+        CheckOpen();
         m_Engine->Get(variable, values.data(), adios2::Mode::Sync);
-        if (endStep)
-        {
-            m_Engine->EndStep();
-            m_Status = m_Engine->BeginStep();
-        }
         return values;
     }
-    catch (...)
+    catch (std::exception &e)
     {
-        std::throw_with_nested(std::runtime_error(
-            "ERROR: couldn't Read variable " + variable.m_Name + "\n"));
+        std::throw_with_nested(
+            std::runtime_error("ERROR: couldn't read variable " +
+                               variable.m_Name + "\n" + e.what()));
     }
 }
 
 template <class T>
-void Stream::GetPCommon(Variable<T> &variable, T *values, const bool endStep)
+void Stream::GetPCommon(Variable<T> &variable, T *values)
 {
     try
     {
+        CheckOpen();
         m_Engine->Get(variable, values, adios2::Mode::Sync);
-        if (endStep)
-        {
-            m_Engine->EndStep();
-            m_Status = m_Engine->BeginStep();
-        }
     }
-    catch (...)
+    catch (std::exception &e)
     {
-        std::throw_with_nested(std::runtime_error(
-            "ERROR: couldn't Read pointer variable " + variable.m_Name + "\n"));
+        std::throw_with_nested(
+            std::runtime_error("ERROR: couldn't read pointer variable " +
+                               variable.m_Name + "\n" + e.what()));
     }
 }
 
 template <class T>
 void Stream::CheckPCommon(const std::string &name, const T *values) const
 {
-    ThrowIfNotOpen("variable " + name + ", in call to read pointer\n");
-
     if (values == nullptr)
     {
         throw std::runtime_error(

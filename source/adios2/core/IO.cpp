@@ -87,7 +87,7 @@ void IO::SetParameter(const std::string key, const std::string value) noexcept
 
 Params &IO::GetParameters() noexcept { return m_Parameters; }
 
-unsigned int IO::AddTransport(const std::string type, const Params &parameters)
+size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
     Params parametersMap(parameters);
     if (m_DebugMode)
@@ -105,16 +105,15 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 
     parametersMap["transport"] = type;
     m_TransportsParameters.push_back(parametersMap);
-    return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
+    return m_TransportsParameters.size() - 1;
 }
 
-void IO::SetTransportParameter(const unsigned int transportIndex,
+void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
     if (m_DebugMode)
     {
-        if (transportIndex >=
-            static_cast<unsigned int>(m_TransportsParameters.size()))
+        if (transportIndex >= m_TransportsParameters.size())
         {
             throw std::invalid_argument(
                 "ERROR: transportIndex is larger than "
@@ -233,14 +232,15 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     for (const auto &variablePair : m_Variables)
     {
         const std::string name(variablePair.first);
-        const std::string type(variablePair.second.first);
-        variablesInfo[name]["Type"] = type;
+        const std::string type = InquireVariableType(name);
+
         if (type == "compound")
         {
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
+        variablesInfo[name]["Type"] = type;                                    \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             helper::ValueToString(variable.m_AvailableStepsCount);             \
@@ -312,7 +312,29 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
         return std::string();
     }
 
-    return itVariable->second.first;
+    const std::string type = itVariable->second.first;
+
+    if (m_Streaming)
+    {
+        if (type == "compound")
+        {
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const Variable<T> &variable =                                          \
+            const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
+                itVariable->second.second);                                    \
+        if (!variable.IsValidStep(m_EngineStep + 1))                           \
+        {                                                                      \
+            return std::string();                                              \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+
+    return type;
 }
 
 std::string IO::InquireAttributeType(const std::string &name) const noexcept
@@ -536,6 +558,37 @@ void IO::FlushAll()
         {
             enginePair.second->Flush();
         }
+    }
+}
+
+void IO::ResetVariablesStepSelection(const bool zeroStart,
+                                     const std::string hint)
+{
+    const auto &variablesData = GetVariablesDataMap();
+
+    for (const auto &variableData : variablesData)
+    {
+        const std::string name = variableData.first;
+        const std::string type = InquireVariableType(name);
+
+        if (type.empty())
+        {
+            continue;
+        }
+
+        if (type == "compound")
+        {
+        }
+// using relative start
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = InquireVariable<T>(name);                      \
+        variable->CheckRandomAccessConflict(hint);                             \
+        variable->ResetStepsSelection(zeroStart);                              \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
     }
 }
 

@@ -182,7 +182,7 @@ constexpr bool endl = true;
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;
-using vParams = std::map<std::string, std::string>;
+using vParams = std::vector<std::pair<std::string, Params>>;
 using Steps = size_t;
 
 template <class T>

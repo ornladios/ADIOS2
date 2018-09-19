@@ -29,30 +29,29 @@ public:
     const std::string m_Mode;
 
     File(const std::string &name, const std::string mode, MPI_Comm comm,
-         const std::string engineType = "BPFile",
-         const Params &parameters = Params(),
-         const vParams &transportParameters = vParams());
+         const std::string engineType = "BPFile");
+
+    File(const std::string &name, const std::string mode,
+         const std::string engineType = "BPFile");
 
     File(const std::string &name, const std::string mode, MPI_Comm comm,
          const std::string configFile, const std::string ioInConfigFile);
 
     File(const std::string &name, const std::string mode,
-         const std::string engineType = "BPFile",
-         const Params &parameters = Params(),
-         const vParams &transportParameters = vParams());
-
-    File(const std::string &name, const std::string mode,
          const std::string configFile, const std::string ioInConfigFile);
-
-    File(const File &) = delete;
-
-    File(File &&) = default;
 
     ~File() = default;
 
-    bool eof() const;
+    void SetParameter(const std::string key, const std::string value) noexcept;
 
-    std::map<std::string, adios2::Params> GetAvailableVariables() noexcept;
+    void SetParameters(const Params &parameters) noexcept;
+
+    size_t AddTransport(const std::string type,
+                        const Params &parameters = Params());
+
+    std::map<std::string, adios2::Params> AvailableVariables() noexcept;
+
+    std::map<std::string, adios2::Params> AvailableAttributes() noexcept;
 
     void Write(const std::string &name, const pybind11::array &array,
                const Dims &shape, const Dims &start, const Dims &count,
@@ -64,14 +63,16 @@ public:
     void Write(const std::string &name, const std::string &stringValue,
                const bool endl = false);
 
-    std::string ReadString(const std::string &name, const bool endl = false);
+    bool GetStep() const;
+
+    std::string ReadString(const std::string &name);
 
     std::string ReadString(const std::string &name, const size_t step);
 
-    pybind11::array Read(const std::string &name, const bool endl = false);
+    pybind11::array Read(const std::string &name);
 
     pybind11::array Read(const std::string &name, const Dims &selectionStart,
-                         const Dims &selectionCount, const bool endl = false);
+                         const Dims &selectionCount);
 
     pybind11::array Read(const std::string &name, const Dims &selectionStart,
                          const Dims &selectionCount,
@@ -79,13 +80,12 @@ public:
                          const size_t stepSelectionCount);
     void Close();
 
-    bool IsClosed() const noexcept;
-
     size_t CurrentStep() const;
 
 private:
     std::shared_ptr<core::Stream> m_Stream;
-    bool m_IsClosed = true;
+
+    adios2::Mode ToMode(const std::string mode) const;
 };
 
 } // end namespace py11

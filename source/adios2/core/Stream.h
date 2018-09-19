@@ -32,84 +32,66 @@ class Stream
 {
 
 public:
-    bool m_IsOpen = false;
+    /** internal ADIOS object owned by Stream */
+    std::shared_ptr<ADIOS> m_ADIOS;
 
-    StepStatus m_Status = StepStatus::NotReady;
-
-    /** reference to IO with name m_Name inside m_ADIOS */
+    /**
+     * reference to IO with name m_Name inside m_ADIOS, exposed as public
+     * to use certain functions
+     */
     IO *m_IO = nullptr;
-    /** reference to Engine with name m_Name inside m_ADIOS */
+
+    /**
+     * reference to Engine with name m_Name inside m_ADIOS, exposed as public
+     * to use certain functions directly
+     */
     Engine *m_Engine = nullptr;
 
     Stream(const std::string &name, const Mode mode, MPI_Comm comm,
-           const std::string engineType = "BPFile",
-           const Params &parameters = Params(),
-           const vParams &transportParameters = vParams(),
-           const std::string hostLanguage = "C++");
+           const std::string engineType, const std::string hostLanguage);
+
+    Stream(const std::string &name, const Mode mode,
+           const std::string engineType, const std::string hostLanguage);
 
     Stream(const std::string &name, const Mode mode, MPI_Comm comm,
            const std::string configFile, const std::string ioInConfigFile,
-           const std::string hostLanguage = "C++");
-
-    Stream(const std::string &name, const Mode mode,
-           const std::string engineType = "BPFile",
-           const Params &parameters = Params(),
-           const vParams &transportParameters = vParams(),
-           const std::string hostLanguage = "C++");
+           const std::string hostLanguage);
 
     Stream(const std::string &name, const Mode mode,
            const std::string configFile, const std::string ioInConfigFile,
-           const std::string hostLanguage = "C++");
-
-    Stream(const std::string hostLanguage = "C++");
-
-    void Open(const std::string &name, const Mode mode, MPI_Comm comm,
-              const std::string engineType = "BPFile",
-              const Params &parameters = Params(),
-              const vParams &transportParameters = vParams());
-
-    void Open(const std::string &name, const Mode mode, MPI_Comm comm,
-              const std::string configFile, const std::string ioInConfigFile);
-
-    void Open(const std::string &name, const Mode mode,
-              const std::string engineType = "BPFile",
-              const Params &parameters = Params(),
-              const vParams &transportParameters = vParams());
-
-    void Open(const std::string &name, const Mode mode,
-              const std::string configFile, const std::string ioInConfigFile);
+           const std::string hostLanguage);
 
     ~Stream() = default;
 
     template <class T>
     void Write(const std::string &name, const T *values,
                const Dims &shape = Dims{}, const Dims &start = Dims{},
-               const Dims &count = Dims{}, const bool endStep = false);
+               const Dims &count = Dims{}, const bool endl = false);
 
     template <class T>
     void Write(const std::string &name, const T &value,
-               const bool endStep = false);
+               const bool endl = false);
+
+    bool GetStep();
 
     template <class T>
-    void Read(const std::string &name, T *values, const bool endStep = false);
+    void Read(const std::string &name, T *values);
 
     template <class T>
     void Read(const std::string &name, T *values, const Box<size_t> &step);
 
     template <class T>
-    void Read(const std::string &name, T *values, const Box<Dims> &selection,
-              const bool endStep = false);
+    void Read(const std::string &name, T *values, const Box<Dims> &selection);
 
     template <class T>
     void Read(const std::string &name, T *values, const Box<Dims> &selection,
               const Box<size_t> &stepSelection);
 
     template <class T>
-    std::vector<T> Read(const std::string &name, const bool endStep = false);
+    std::vector<T> Read(const std::string &name);
 
     template <class T>
-    std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
-                        const bool endStep = false);
+    std::vector<T> Read(const std::string &name, const Box<Dims> &selection);
 
     template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
@@ -117,27 +99,28 @@ public:
 
     void Close();
 
-private:
-    /** Current language bindings calling high-level Stream API */
-    const std::string m_HostLanguage = "C++";
+    size_t CurrentStep() const;
 
+private:
     /** Stream, IO and Engine names  */
     std::string m_Name;
 
-    /** internal ADIOS object owned by Stream */
-    std::shared_ptr<ADIOS> m_ADIOS;
+    /** mode to open engine at first read/write */
+    Mode m_Mode;
 
-    void ThrowIfNotOpen(const std::string hint) const;
-    void ThrowIfOpen(const std::string hint) const;
-
-    template <class T>
-    std::vector<T> GetCommon(Variable<T> &variable, const bool endStep);
+    /** internal flag to check if getstep was called */
+    bool m_FirstStep = true;
 
     template <class T>
-    void GetPCommon(Variable<T> &variable, T *values, const bool endStep);
+    std::vector<T> GetCommon(Variable<T> &variable);
+
+    template <class T>
+    void GetPCommon(Variable<T> &variable, T *values);
 
     template <class T>
     void CheckPCommon(const std::string &name, const T *values) const;
+
+    void CheckOpen();
 };
 
 // Explicit declaration of the public template methods
@@ -149,26 +132,24 @@ private:
     extern template void Stream::Write<T>(const std::string &, const T &,      \
                                           const bool);                         \
                                                                                \
-    extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const bool);                          \
+    extern template void Stream::Read<T>(const std::string &, T *);            \
                                                                                \
     extern template void Stream::Read<T>(const std::string &, T *,             \
                                          const Box<size_t> &);                 \
                                                                                \
     extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const Box<Dims> &, const bool);       \
+                                         const Box<Dims> &);                   \
                                                                                \
     extern template void Stream::Read<T>(                                      \
         const std::string &, T *, const Box<Dims> &, const Box<size_t> &);     \
                                                                                \
-    extern template std::vector<T> Stream::Read<T>(const std::string &,        \
-                                                   const bool);                \
+    extern template std::vector<T> Stream::Read<T>(const std::string &);       \
                                                                                \
     extern template std::vector<T> Stream::Read<T>(                            \
         const std::string &, const Box<Dims> &, const Box<size_t> &);          \
                                                                                \
-    extern template std::vector<T> Stream::Read<T>(                            \
-        const std::string &, const Box<Dims> &, const bool);
+    extern template std::vector<T> Stream::Read<T>(const std::string &,        \
+                                                   const Box<Dims> &);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
