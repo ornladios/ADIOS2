@@ -314,15 +314,6 @@ void InSituMPIReader::EndStep()
     }
     ClearMetadataBuffer();
 
-    // Send final acknowledgment to the Writer
-    int dummy = 1;
-    MPI_Bcast(&dummy, 1, MPI_INT, m_ReaderRootRank, m_MPIComm);
-    if (m_ReaderRootRank == m_ReaderRank)
-    {
-        MPI_Send(&dummy, 1, MPI_INT, m_WriteRootGlobalRank,
-                 insitumpi::MpiTags::ReadCompleted, m_CommWorld);
-    }
-
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank
@@ -399,49 +390,56 @@ void InSituMPIReader::AsyncRecvAllVariables()
 void InSituMPIReader::ProcessReceives()
 {
     const int nRequests = m_OngoingReceives.size();
-    int nCompletedRequests = 0;
-    int index, ierr;
-    MPI_Status status;
-    while (nCompletedRequests != nRequests)
+    std::vector<MPI_Status> statuses(nRequests);
+    int ierr;
+
+    // Wait for all transfers to complete
+    ierr = MPI_Waitall(nRequests, m_MPIRequests.data(), statuses.data());
+
+    if (ierr == MPI_ERR_IN_STATUS)
     {
-        ierr = MPI_Waitany(nRequests, m_MPIRequests.data(), &index, &status);
-        if (ierr == MPI_SUCCESS)
+        for (int i = 0; i < nRequests; i++)
         {
-            if (0 <= index && index < nRequests)
+            if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
             {
-                if (m_OngoingReceives[index].inPlaceDataArray == nullptr)
-                {
-                    const std::vector<char> &rawData =
-                        m_OngoingReceives[index].temporaryDataArray;
-                    const helper::SubFileInfo &sfi =
-                        m_OngoingReceives[index].sfi;
-                    const std::string *name =
-                        m_OngoingReceives[index].varNamePointer;
-                    m_BP3Deserializer.ClipMemory(*name, m_IO, rawData,
-                                                 sfi.BlockBox,
-                                                 sfi.IntersectionBox);
-                }
-                // MPI_Request_free(&m_MPIRequests[index]); // not required???
-                // m_MPIRequests[index] = MPI_REQUEST_NULL; // not required???
-                ++nCompletedRequests;
+                std::cerr << "InSituMPI Reader " << m_ReaderRank
+                          << " Pending transfer error when waiting for all "
+                             "data transfers to complete. Receive index = "
+                          << i << std::endl;
             }
-            else
+            else if (statuses[i].MPI_ERROR != MPI_SUCCESS)
             {
-                std::cerr
-                    << "InSituMPI Reader " << m_ReaderRank
-                    << " MPI Error when waiting for receives to complete. "
-                       "Received index = "
-                    << index << std::endl;
+                std::cerr << "InSituMPI Reader " << m_ReaderRank
+                          << " MPI Error when waiting for all data transfers "
+                             "to complete. Error code = "
+                          << ierr << std::endl;
             }
-        }
-        else
-        {
-            std::cerr << "InSituMPI Reader " << m_ReaderRank
-                      << " MPI Error when waiting for receives to complete. "
-                         "Error code = "
-                      << ierr << std::endl;
         }
     }
+
+    // Send final acknowledgment to the Writer
+    int dummy = 1;
+    MPI_Bcast(&dummy, 1, MPI_INT, m_ReaderRootRank, m_MPIComm);
+    if (m_ReaderRootRank == m_ReaderRank)
+    {
+        MPI_Send(&dummy, 1, MPI_INT, m_WriteRootGlobalRank,
+                 insitumpi::MpiTags::ReadCompleted, m_CommWorld);
+    }
+
+    // Deserialize received messages
+    for (int i = 0; i < nRequests; i++)
+    {
+        if (m_OngoingReceives[i].inPlaceDataArray == nullptr)
+        {
+            const std::vector<char> &rawData =
+                m_OngoingReceives[i].temporaryDataArray;
+            const helper::SubFileInfo &sfi = m_OngoingReceives[i].sfi;
+            const std::string *name = m_OngoingReceives[i].varNamePointer;
+            m_BP3Deserializer.ClipMemory(*name, m_IO, rawData, sfi.BlockBox,
+                                         sfi.IntersectionBox);
+        }
+    }
+
     m_OngoingReceives.clear();
     m_MPIRequests.clear();
 }
@@ -466,16 +464,6 @@ void InSituMPIReader::Init()
 
 void InSituMPIReader::InitParameters()
 {
-    auto itFixedSchedule = m_IO.m_Parameters.find("FixedSchedule");
-    if (itFixedSchedule == m_IO.m_Parameters.end())
-    {
-        m_FixedLocalSchedule = false;
-    }
-    else if (itFixedSchedule->second == "true")
-    {
-        m_FixedLocalSchedule = true;
-    }
-
     auto itVerbosity = m_IO.m_Parameters.find("verbose");
     if (itVerbosity != m_IO.m_Parameters.end())
     {
