@@ -94,46 +94,61 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 }
 
 template <class T>
-Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value)
+Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
+                                  const std::string &variableName,
+                                  const std::string separator)
 {
+    const std::string globalName =
+        helper::GlobalName(name, variableName, separator);
     if (m_DebugMode)
     {
-        CheckAttributeCommon(name);
+        CheckAttributeCommon(globalName);
     }
 
     auto &attributeMap = GetAttributeMap<T>();
     const unsigned int size = static_cast<unsigned int>(attributeMap.size());
 
     auto itAttributePair =
-        attributeMap.emplace(size, Attribute<T>(name, value));
-    m_Attributes.emplace(name, std::make_pair(helper::GetType<T>(), size));
+        attributeMap.emplace(size, Attribute<T>(globalName, value));
+    m_Attributes.emplace(globalName,
+                         std::make_pair(helper::GetType<T>(), size));
 
     return itAttributePair.first->second;
 }
 
 template <class T>
 Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
-                                  const size_t elements)
+                                  const size_t elements,
+                                  const std::string &variableName,
+                                  const std::string separator)
 {
+    const std::string globalName =
+        helper::GlobalName(name, variableName, separator);
+
     if (m_DebugMode)
     {
-        CheckAttributeCommon(name);
+        CheckAttributeCommon(globalName);
     }
 
     auto &attributeMap = GetAttributeMap<T>();
     const unsigned int size = static_cast<unsigned int>(attributeMap.size());
 
     auto itAttributePair =
-        attributeMap.emplace(size, Attribute<T>(name, array, elements));
-    m_Attributes.emplace(name, std::make_pair(helper::GetType<T>(), size));
+        attributeMap.emplace(size, Attribute<T>(globalName, array, elements));
+    m_Attributes.emplace(globalName,
+                         std::make_pair(helper::GetType<T>(), size));
 
     return itAttributePair.first->second;
 }
 
 template <class T>
-Attribute<T> *IO::InquireAttribute(const std::string &name) noexcept
+Attribute<T> *IO::InquireAttribute(const std::string &name,
+                                   const std::string &variableName,
+                                   const std::string separator) noexcept
 {
-    auto itAttribute = m_Attributes.find(name);
+    const std::string globalName =
+        helper::GlobalName(name, variableName, separator);
+    auto itAttribute = m_Attributes.find(globalName);
 
     if (itAttribute == m_Attributes.end())
     {

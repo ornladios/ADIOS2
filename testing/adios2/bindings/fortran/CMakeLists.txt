@@ -32,6 +32,11 @@ if(ADIOS2_HAVE_MPI)
   target_sources(TestBPWriteAttributes_f PRIVATE TestBPWriteAttributes.f90)
   target_link_libraries(TestBPWriteAttributes_f MPI::MPI_Fortran)
   
+  add_executable(TestBPWriteVariableAttributes_f $<TARGET_OBJECTS:SmallTestData_f>)
+  target_link_libraries(TestBPWriteVariableAttributes_f adios2_f)
+  target_sources(TestBPWriteVariableAttributes_f PRIVATE TestBPWriteVariableAttributes.f90)
+  target_link_libraries(TestBPWriteVariableAttributes_f MPI::MPI_Fortran)
+  
   add_executable(TestBPWriteTypesByName_f $<TARGET_OBJECTS:SmallTestData_f>)
   target_link_libraries(TestBPWriteTypesByName_f adios2_f)
   target_sources(TestBPWriteTypesByName_f PRIVATE TestBPWriteTypesByName.f90)
@@ -83,6 +88,10 @@ if(ADIOS2_HAVE_MPI)
   
   add_test(NAME BPWriteAttributes_f
     COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteAttributes_f>
+  )
+  
+  add_test(NAME BPWriteVariableAttributes_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteVariableAttributes_f>
   )
   
   add_test(NAME BPWriteReadTypesByName_f

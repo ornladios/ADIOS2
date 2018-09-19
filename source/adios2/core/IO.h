@@ -184,13 +184,16 @@ public:
      * @param name must be unique for the IO object
      * @param array pointer to user data
      * @param elements number of data elements
+     * @param variableName optionally associates the attribute to a Variable
      * @return reference to internal Attribute
      * @exception std::invalid_argument if Attribute with unique name is already
      * defined, in debug mode only
      */
     template <class T>
     Attribute<T> &DefineAttribute(const std::string &name, const T *array,
-                                  const size_t elements);
+                                  const size_t elements,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/");
 
     /**
      * @brief Define single value attribute
@@ -201,7 +204,9 @@ public:
      * defined, in debug mode only
      */
     template <class T>
-    Attribute<T> &DefineAttribute(const std::string &name, const T &value);
+    Attribute<T> &DefineAttribute(const std::string &name, const T &value,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/");
 
     /**
      * @brief Removes an existing Variable in current IO object.
@@ -290,21 +295,28 @@ public:
      * found
      */
     template <class T>
-    Attribute<T> *InquireAttribute(const std::string &name) noexcept;
+    Attribute<T> *InquireAttribute(const std::string &name,
+                                   const std::string &variableName = "",
+                                   const std::string separator = "/") noexcept;
 
     /**
      * @brief Returns the type of an existing attribute as an string
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    std::string InquireAttributeType(const std::string &name) const noexcept;
+    std::string InquireAttributeType(const std::string &name,
+                                     const std::string &variableName = "",
+                                     const std::string separator = "/") const
+        noexcept;
 
     /**
      * @brief Retrieve map with attributes info. Use when reading.
      * @return map with current attributes and info
      * keys: Type, Elements, Value
      */
-    std::map<std::string, Params> GetAvailableAttributes() noexcept;
+    std::map<std::string, Params>
+    GetAvailableAttributes(const std::string &variableName = std::string(),
+                           const std::string separator = "/") noexcept;
 
     /**
      * @brief Check existence in config file passed to ADIOS class constructor
@@ -503,11 +515,13 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 
 #define declare_template_instantiation(T)                                      \
     extern template Attribute<T> &IO::DefineAttribute<T>(                      \
-        const std::string &, const T *, const size_t);                         \
-    extern template Attribute<T> &IO::DefineAttribute<T>(const std::string &,  \
-                                                         const T &);           \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string);                                                    \
+    extern template Attribute<T> &IO::DefineAttribute<T>(                      \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string);                                                    \
     extern template Attribute<T> *IO::InquireAttribute<T>(                     \
-        const std::string &) noexcept;
+        const std::string &, const std::string &, const std::string) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
