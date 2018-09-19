@@ -281,7 +281,13 @@ IO::GetAvailableAttributes(const std::string &variableName,
         if (!variableName.empty())
         {
             // valid associated attribute
-            if (absoluteName.find(variablePrefix) == 0)
+            if (absoluteName.size() <= variablePrefix.size())
+            {
+                continue;
+            }
+
+            if (absoluteName.compare(0, variablePrefix.size(),
+                                     variablePrefix) == 0)
             {
                 name = absoluteName.substr(variablePrefix.size());
             }
