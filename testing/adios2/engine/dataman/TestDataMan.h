@@ -28,7 +28,8 @@ void GenData(std::vector<std::complex<T>> &data, const size_t step)
 {
     for (size_t i = 0; i < data.size(); ++i)
     {
-        data[i] = i + mpiRank * 10000 + step * 100 + 0.1i;
+        data[i] = {static_cast<T>(i + mpiRank * 10000 + step * 100),
+                   static_cast<T>(i + mpiRank * 10000)};
     }
 }
 
