@@ -12,7 +12,6 @@ module adios2_io_mod
     use adios2_io_open_mod
     use adios2_io_define_variable_mod
     use adios2_io_define_attribute_mod
-    use adios2_io_define_variable_attribute_mod
     use adios2_variable_mod
     implicit none
 
