@@ -188,7 +188,7 @@ std::string BP4Base::GetBPMetadataFileName(const std::string &name) const noexce
 
     if (lastPathSeparator != std::string::npos)
     {
-        bpRoot = bpName.substr(lastPathSeparator);
+        bpRoot = bpName.substr(lastPathSeparator+1);
     }
 
     //const size_t index =
@@ -199,7 +199,7 @@ std::string BP4Base::GetBPMetadataFileName(const std::string &name) const noexce
     //const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
     //                             "." + std::to_string(index));
 
-    const std::string bpMetaDataRankName(bpRoot + PathSeparator + "md." + std::to_string(index));
+    const std::string bpMetaDataRankName(bpName + PathSeparator + "md." + std::to_string(index));
     return bpMetaDataRankName;
 
 }
@@ -232,7 +232,7 @@ std::string BP4Base::GetBPMetadataIndexFileName(const std::string &name) const
 
     if (lastPathSeparator != std::string::npos)
     {
-        bpRoot = bpName.substr(lastPathSeparator);
+        bpRoot = bpName.substr(lastPathSeparator+1);
     }
 
     //const size_t index =
@@ -243,7 +243,7 @@ std::string BP4Base::GetBPMetadataIndexFileName(const std::string &name) const
     //const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
     //                             "." + std::to_string(index));
 
-    const std::string bpMetaDataIndexRankName(bpRoot + PathSeparator + "md.idx");
+    const std::string bpMetaDataIndexRankName(bpName + PathSeparator + "md.idx");
     return bpMetaDataIndexRankName;
 }
 
@@ -900,7 +900,7 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
 
     if (lastPathSeparator != std::string::npos)
     {
-        bpRoot = bpName.substr(lastPathSeparator);
+        bpRoot = bpName.substr(lastPathSeparator+1);
     }
 
     const size_t index =
@@ -909,8 +909,8 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
     /*Lipeng*/
     //const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
     //                             "." + std::to_string(index));
-
-    const std::string bpRankName(bpRoot + PathSeparator + "data." + std::to_string(index));
+    
+    const std::string bpRankName(bpName + PathSeparator + "data." + std::to_string(index));
     return bpRankName;
 }
 
