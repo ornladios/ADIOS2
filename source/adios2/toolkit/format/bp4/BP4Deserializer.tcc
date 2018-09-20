@@ -335,6 +335,113 @@ inline void BP4Deserializer::DefineVariableInIO<std::string>(
 }
 
 
+template <>
+inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
+    const ElementIndexHeader &header, core::IO &io,
+    const std::vector<char> &buffer, size_t position, size_t step) const
+{
+    const size_t initialPosition = position;
+
+    const Characteristics<std::string> characteristics =
+        ReadElementIndexCharacteristics<std::string>(
+            buffer, position, static_cast<DataTypes>(header.DataType));
+
+    std::string variableName(header.Name);
+    if (!header.Path.empty())
+    {
+        variableName = header.Path + PathSeparator + header.Name;
+    }
+
+    core::Variable<std::string> *variable = nullptr;
+    variable = io.InquireVariable<std::string>(variableName);
+    if (variable)
+    {
+        size_t endPositionCurrentStep = initialPosition - (header.Name.size() + header.GroupName.size() + header.Path.size() + 23) 
+                                        + static_cast<size_t>(header.Length) + 4;
+        position = initialPosition;
+        variable->m_AvailableStepsCount = step;
+        while (position < endPositionCurrentStep)
+        {
+            const size_t subsetPosition = position;
+
+            // read until step is found
+            const Characteristics<std::string> subsetCharacteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, position, static_cast<DataTypes>(header.DataType),
+                    false);
+
+            if (helper::LessThan(subsetCharacteristics.Statistics.Min,
+                                 variable->m_Min))
+            {
+                variable->m_Min = subsetCharacteristics.Statistics.Min;
+            }
+
+            if (helper::GreaterThan(subsetCharacteristics.Statistics.Max,
+                                    variable->m_Max))
+            {
+                variable->m_Max = subsetCharacteristics.Statistics.Max;
+            }
+            variable->m_AvailableStepBlockIndexOffsets[step].push_back(subsetPosition);
+            position = subsetPosition + subsetCharacteristics.EntryLength + 5;                        
+        }
+        return;
+    }
+
+    if (characteristics.Statistics.IsValue)
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        variable = &io.DefineVariable<std::string>(variableName);
+        variable->m_Value =
+            characteristics.Statistics.Value; // assigning first step
+    }
+    else
+    {
+        throw std::runtime_error("ERROR: variable " + variableName +
+                                 " of type string can't be an array, when "
+                                 "parsing metadata in call to Open");
+    }
+
+    // going back to get variable index position
+    variable->m_IndexStart =
+        initialPosition - (header.Name.size() + header.GroupName.size() +
+                           header.Path.size() + 23);
+
+    const size_t endPosition =
+        variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
+
+    position = initialPosition;
+
+    size_t currentStep = 0; // Starts at 1 in bp file
+    std::unordered_set<uint32_t> stepsFound;
+    variable->m_AvailableStepsCount = 0;
+    while (position < endPosition)
+    {
+        const size_t subsetPosition = position;
+
+        // read until step is found
+        const Characteristics<std::string> subsetCharacteristics =
+            ReadElementIndexCharacteristics<std::string>(
+                buffer, position, static_cast<DataTypes>(header.DataType),
+                false);
+
+        if (subsetCharacteristics.Statistics.Step > currentStep)
+        {
+            currentStep = subsetCharacteristics.Statistics.Step;
+        }
+        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        {
+            ++variable->m_AvailableStepsCount;
+        }
+        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
+            subsetPosition);
+        position = subsetPosition + subsetCharacteristics.EntryLength + 5;
+    }
+    /* Update variable's starting step, which equals to the min value in the
+     * sorted map minus one */
+    variable->m_StepsStart =
+        variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
+}
+
 /*Lipeng*/
 template <class T>
 void BP4Deserializer::DefineVariableInIOPerStep(const ElementIndexHeader &header,
