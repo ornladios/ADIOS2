@@ -5,7 +5,6 @@
   unsigned short  shape2D   attr   = {4, 5}
   short           varI16    {10} = -510 / 521
   int             varI32    {10} = -131070 / 131081
-  long int        varI64    {10} = -8589934590 / 8589934601
   signed char     varI8     {10} = -8 / 9
   float           varR32    {10} = 0 / 9
   double          varR64    {10} = 0 / 9
