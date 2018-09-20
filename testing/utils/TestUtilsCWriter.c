@@ -115,7 +115,12 @@ int main(int argc, char *argv[])
     adios2_put(engineH, varU8, data_U8, adios2_mode_deferred);
     adios2_put(engineH, varU16, data_U16, adios2_mode_deferred);
     adios2_put(engineH, varU32, data_U32, adios2_mode_deferred);
-    adios2_put(engineH, varU64, data_U64, adios2_mode_deferred);
+
+    // Do not write the 64 bit integer array because its type
+    // name is different on Windows than Linux and the bpls
+    // output will look different
+    // long int   vs   long long int
+    // adios2_put(engineH, varU64, data_U64, adios2_mode_deferred);
 
     adios2_put(engineH, varR32, data_R32, adios2_mode_deferred);
     adios2_put(engineH, varR64, data_R64, adios2_mode_deferred);
