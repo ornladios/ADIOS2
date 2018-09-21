@@ -24,6 +24,18 @@ add_test(NAME Utils.C.Writer
 # This test produces TestUtilsCWriter.bp
 
 
+# bpls2 -la to screen for testing
+add_test(NAME Utils.Bpls.la.Screen
+  COMMAND ${CMAKE_COMMAND}
+    -DARGS=-la
+    -DINPUT_FILE=TestUtilsCWriter.bp
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+)
+set_property(TEST Utils.Bpls.la.Screen
+  PROPERTY DEPENDS Utils.C.Writer
+)
+
+
 # bpls2 -la
 add_test(NAME Utils.Bpls.la.Dump
   COMMAND ${CMAKE_COMMAND}
