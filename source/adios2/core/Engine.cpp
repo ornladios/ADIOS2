@@ -113,7 +113,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         ThrowUp("DoBlocksInfo");                                               \
-         return std::vector<typename Variable<T>::Info>();                     \
+        return std::vector<typename Variable<T>::Info>();                      \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
