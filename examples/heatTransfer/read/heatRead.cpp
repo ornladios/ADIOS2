@@ -108,6 +108,8 @@ int main(int argc, char *argv[])
         adios2::Engine reader =
             inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
 
+        reader.FixedSchedule();
+
         std::vector<double> Tin;
         std::vector<double> Tout;
         std::vector<double> dT;

@@ -255,8 +255,12 @@ void InSituMPIReader::PerformGets()
 
     // Create read schedule per writer
     // const std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
-    m_ReadScheduleMap.clear();
-    m_ReadScheduleMap = m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+    if (m_CurrentStep == 0 || !m_FixedLocalSchedule)
+    {
+        m_ReadScheduleMap.clear();
+        m_ReadScheduleMap =
+            m_BP3Deserializer.PerformGetsVariablesSubFileInfo(m_IO);
+    }
     // bool reader_IsRowMajor = IsRowMajor(m_IO.m_HostLanguage);
     // bool writer_IsRowMajor = m_BP3Deserializer.m_IsRowMajor;
     // recalculate seek offsets to payload offset 0 (beginning of blocks)

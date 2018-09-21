@@ -76,8 +76,7 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
     {
         variable.SetData(data);
         // Create the async send for the variable now
-        const helper::SubFileInfoMap sfim =
-            m_BP3Deserializer.GetSubFileInfo(variable);
+        const helper::SubFileInfoMap sfim = m_ReadScheduleMap[variable.m_Name];
         // m_BP3Deserializer.GetSubFileInfoMap(variable.m_Name);
         /* FIXME: this only works if there is only one block read for each
          * variable.
