@@ -224,7 +224,7 @@ void BP4FileWriter::DoClose(const int transportIndex)
     }
 
     /*Lipeng*/
-    //DoFlush(true, transportIndex);
+    DoFlush(true, transportIndex);
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
@@ -232,13 +232,13 @@ void BP4FileWriter::DoClose(const int transportIndex)
     }
 
     /*Lipeng*/
-    /*
+    
     if (m_BP4Serializer.m_CollectiveMetadata &&
         m_FileDataManager.AllTransportsClosed())
     {
         WriteCollectiveMetadataFile(true);
     }
-    */
+    
 
     if (m_BP4Serializer.m_Profiler.IsActive &&
         m_FileDataManager.AllTransportsClosed())
@@ -348,6 +348,10 @@ void BP4FileWriter::PopulateMetadataIndexFileContent(const uint64_t currentStep,
 
 void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
 {
+    if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength > 0)
+    {
+        return;
+    }
     m_BP4Serializer.AggregateCollectiveMetadata(
         m_MPIComm, m_BP4Serializer.m_Metadata, true);
 
@@ -398,7 +402,16 @@ void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
                                         m_BP4Serializer.m_Profiler.IsActive);
         //metadataIndexFileNames.pop_back();    
 
-        uint64_t currentStep = m_BP4Serializer.m_MetadataSet.TimeStep-1; // The current TimeStep has already been increased by 1 at this point, so decrease it by 1
+        uint64_t currentStep;
+        if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength == 0) 
+        {
+            currentStep = m_BP4Serializer.m_MetadataSet.TimeStep;
+        }
+        else 
+        {
+            currentStep = m_BP4Serializer.m_MetadataSet.TimeStep-1; // The current TimeStep has already been increased by 1 at this point, so decrease it by 1
+        }
+        
 
 
         if ( currentStep == 1)     // TimeStep starts from 1
