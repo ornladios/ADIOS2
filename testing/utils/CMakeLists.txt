@@ -50,7 +50,7 @@ set_property(TEST Utils.Bpls.la.Dump
 
 add_test(NAME Utils.Bpls.la.ValidateFC
   COMMAND ${CMAKE_COMMAND}
-    -E env FC
+    -E env diff
     ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsla.expected.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsla.result.txt
 )
