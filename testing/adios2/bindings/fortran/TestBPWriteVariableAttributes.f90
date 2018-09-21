@@ -10,6 +10,7 @@ program TestBPWriteVariableAttributes
     type(adios2_engine) :: bpWriter, bpReader
     type(adios2_variable) :: var
     type(adios2_attribute), dimension(14) :: attributes
+    type(adios2_attribute) :: failed_att
 
     integer :: ierr, i
 
@@ -26,6 +27,13 @@ program TestBPWriteVariableAttributes
     ! create a global variable
     call adios2_define_variable(var, ioWrite, "myVar", adios2_type_integer4, &
                                 ierr)
+
+    call adios2_define_attribute(failed_att, ioWrite, 'att_String', &
+                                 'ADIOS2 String attribute', 'myVar2', '/', ierr)
+    if(ierr == 0) stop 'myVar2 does not exist, should not create attribute att_String'
+    if(failed_att%valid .eqv. .true.) then
+        stop 'failed attribute must not exist ' // trim(failed_att%name)
+    end if
 
     do i=1,14
         if( attributes(i)%valid .eqv. .true. ) stop 'Invalid attribute default'

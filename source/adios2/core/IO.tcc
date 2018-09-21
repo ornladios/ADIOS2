@@ -98,6 +98,17 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                                   const std::string &variableName,
                                   const std::string separator)
 {
+    if (m_DebugMode)
+    {
+        if (!variableName.empty() && InquireVariableType(variableName).empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: variable " + variableName +
+                " doesn't exist, can't associate attribute " + name +
+                ", in call to DefineAttribute");
+        }
+    }
+
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
     if (m_DebugMode)
@@ -122,6 +133,17 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
                                   const std::string &variableName,
                                   const std::string separator)
 {
+    if (m_DebugMode)
+    {
+        if (!variableName.empty() && InquireVariableType(variableName).empty())
+        {
+            throw std::invalid_argument(
+                "ERROR: variable " + variableName +
+                " doesn't exist, can't associate attribute " + name +
+                ", in call to DefineAttribute");
+        }
+    }
+
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
