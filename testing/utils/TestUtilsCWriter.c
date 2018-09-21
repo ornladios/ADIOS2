@@ -94,11 +94,11 @@ int main(int argc, char *argv[])
     adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
     adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
     adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
-    //adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
+    // adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
     adios2_variable *varU8 = adios2_inquire_variable(ioH, "varU8");
     adios2_variable *varU16 = adios2_inquire_variable(ioH, "varU16");
     adios2_variable *varU32 = adios2_inquire_variable(ioH, "varU32");
-    //adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
+    // adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
     adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
     adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
     adios2_variable *R64_2d = adios2_inquire_variable(ioH, "R64_2d");
