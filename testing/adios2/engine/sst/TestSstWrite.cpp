@@ -101,6 +101,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
         adios2::Dims time_count{1};
 
+	auto scalar_r64 = io.DefineVariable<double>("scalar_r64");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -147,6 +148,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
+	auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         auto var_i32 = io.InquireVariable<int32_t>("i32");
@@ -184,6 +186,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         // starting index + count
         const adios2::Mode sync = adios2::Mode::Sync;
 
+	if (mpiRank == 0) engine.Put(scalar_r64, (step+1) * 1.5);
         engine.Put(var_i8, data_I8.data(), sync);
         engine.Put(var_i16, data_I16.data(), sync);
         engine.Put(var_i32, data_I32.data(), sync);

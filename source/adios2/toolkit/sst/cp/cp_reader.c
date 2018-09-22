@@ -414,6 +414,8 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
     {
         Stream->Timesteps = New;
     }
+    CP_verbose(Stream, "Received a Timestep metadata message for timestep %d, signaling condition\n", tsm->Timestep);
+
     pthread_cond_signal(&Stream->DataCondition);
     pthread_mutex_unlock(&Stream->DataLock);
 }

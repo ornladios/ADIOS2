@@ -99,6 +99,9 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
 
         int writerSize;
 
+        auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
+        EXPECT_TRUE(scalar_r64);
+
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -210,6 +213,8 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         engine.Get(var_i16, in_I16.data());
         engine.Get(var_i32, in_I32.data());
         engine.Get(var_i64, in_I64.data());
+
+        engine.Get(scalar_r64, in_scalar_R64);
 
         engine.Get(var_r32, in_R32.data());
         engine.Get(var_r64, in_R64.data());
