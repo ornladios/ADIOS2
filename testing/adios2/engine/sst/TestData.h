@@ -76,11 +76,12 @@ int validateSstTestData(int start, int length, int step)
 {
     int failures = 0;
     if (in_scalar_R64 != 1.5 * (step + 1))
-        {
-            std::cout << "Expected " << 1.5*(step+1) << ", got " 
-                      << in_scalar_R64 << " for in_scalar_R64, timestep " << step << std::endl;
-            failures++;
-        }
+    {
+        std::cout << "Expected " << 1.5 * (step + 1) << ", got "
+                  << in_scalar_R64 << " for in_scalar_R64, timestep " << step
+                  << std::endl;
+        failures++;
+    }
     for (int i = 0; i < length; i++)
     {
         if (in_I8[i] != (int8_t)((i + start) * 10 + step))

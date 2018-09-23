@@ -22,6 +22,7 @@ module sst_test_data
     complex(kind=8), dimension(10) :: data_C64
     real (kind=8), dimension(2, 10) :: data_R64_2d
     real (kind=8), dimension(10, 2) :: data_R64_2d_rev
+    real (kind=8) :: data_scalar_R64
 
     integer(kind=1), dimension(:), allocatable :: in_I8
     integer(kind=2), dimension(:), allocatable :: in_I16
@@ -33,6 +34,7 @@ module sst_test_data
     complex(kind=8), dimension(:), allocatable :: in_C64 
     real (kind=8), dimension(:,:), allocatable :: in_R64_2d 
     real (kind=8), dimension(:,:), allocatable :: in_R64_2d_rev 
+    real (kind=8) :: in_scalar_R64
 
     contains
     subroutine GenerateTestData(step, rank, size)
@@ -41,6 +43,7 @@ module sst_test_data
       
       integer (kind=8) :: i, j
       j =  rank * Nx * 10 + step;
+      data_scalar_r64 = (step + 1) * 1.5;
       do i = 1, Nx
          data_I8(i) = (j + 10 * (i-1));
          data_I16(i) = (j + 10 * (i-1));
@@ -63,6 +66,9 @@ module sst_test_data
       
       integer (kind=8) :: i
       do i = 1, length
+         if (in_scalar_R64 /= (step - 1) * 1.5) then
+            stop 'scalar_r64 value failed'
+         end if
          if (in_I8(i) /= INT(((i - 1 + start)* 10 + step), kind=1)) then
             stop 'data_I8 value failed'
          end if
