@@ -50,9 +50,13 @@ double in_scalar_R64;
 std::complex<float> in_scalar_C32;
 std::complex<double> in_scalar_C64;
 
+double data_scalar_R64;
+
 void generateSstTestData(int step, int rank, int size)
 {
     int64_t j = rank * Nx * 10 + step;
+
+    data_scalar_R64 = (step + 1) * 1.5;
     for (int i = 0; i < sizeof(data_I8); i++)
     {
         data_I8[i] = (int8_t)(j + 10 * i);

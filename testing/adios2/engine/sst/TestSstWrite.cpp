@@ -187,7 +187,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         const adios2::Mode sync = adios2::Mode::Sync;
 
         if (mpiRank == 0)
-            engine.Put(scalar_r64, (step + 1) * 1.5);
+            engine.Put(scalar_r64, data_scalar_R64);
         engine.Put(var_i8, data_I8.data(), sync);
         engine.Put(var_i16, data_I16.data(), sync);
         engine.Put(var_i32, data_I32.data(), sync);
