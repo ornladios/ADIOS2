@@ -77,11 +77,12 @@ program TestBPWriteVariableAttributes
     call adios2_define_attribute(attributes(12), ioWrite, 'att_i64_array', &
                                  data_I64, 3, var%name, '/', ierr)
 
+    ! uses / by default
     call adios2_define_attribute(attributes(13), ioWrite, 'att_r32_array', &
-                                 data_R32, 3, var%name, '/', ierr)
+                                 data_R32, 3, var%name, ierr)
 
     call adios2_define_attribute(attributes(14), ioWrite, 'att_r64_array', &
-                                 data_R64, 3, var%name, '/', ierr)
+                                 data_R64, 3, var%name, ierr)
 
     do i=1,14
         if( attributes(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_attribute'
