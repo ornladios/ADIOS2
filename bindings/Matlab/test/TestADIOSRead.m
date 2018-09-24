@@ -38,7 +38,7 @@ function testHeat(verbose)
 
 fprintf('\n************* Test reading heat.bp ************\n');
 fprintf('****  Open file...\n');
-f=adiosopen('../heat.bp','Verbose', verbose);
+f=adiosopen('heat.bp','Verbose', verbose);
 f.Handlers
 
 fprintf('\n****   Check variables...\n');
