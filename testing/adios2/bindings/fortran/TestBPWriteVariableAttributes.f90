@@ -32,7 +32,7 @@ program TestBPWriteVariableAttributes
                                  'ADIOS2 String attribute', 'myVar2', '/', ierr)
     if(ierr == 0) stop 'myVar2 does not exist, should not create attribute att_String'
     if(failed_att%valid .eqv. .true.) then
-        stop 'failed attribute must not exist ' // trim(failed_att%name)
+        stop 'failed attribute must not exist '
     end if
 
     do i=1,14
