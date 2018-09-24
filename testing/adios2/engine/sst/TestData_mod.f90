@@ -66,8 +66,7 @@ module sst_test_data
       
       integer (kind=8) :: i
       do i = 1, length
-         if (in_scalar_R64 /= (step - 1) * 1.5D0) then
-            WRITE(*,*)  'Testing Scalar R64.  Got ', in_scalar_R64, ' Expected ',  (step - 1) * 1.5D0
+         if (in_scalar_R64 /= (step + 1) * 1.5D0) then
             stop 'scalar_r64 value failed'
          end if
          if (in_I8(i) /= INT(((i - 1 + start)* 10 + step), kind=1)) then
