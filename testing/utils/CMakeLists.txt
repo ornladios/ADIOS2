@@ -8,11 +8,6 @@ target_link_libraries(TestUtilsCWriter adios2)
 
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestUtilsCWriter MPI::MPI_C)
-  
-#  set(extra_test_args
-#    EXEC_WRAPPER
-#    ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
-#  )
   set(cmd_executor ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1)
 else()
   set(cmd_executor)
@@ -48,6 +43,8 @@ set_property(TEST Utils.Bpls.la.Dump
   PROPERTY DEPENDS Utils.C.Writer
 )
 
+if(ADIOS2_HAVE_MPI)
+
 add_test(NAME Utils.Bpls.la.ValidateFC
   COMMAND ${CMAKE_COMMAND}
     -E env diff
@@ -68,6 +65,8 @@ set_property(TEST Utils.Bpls.la.Validate
   PROPERTY DEPENDS Utils.Bpls.la.Dump
 )
 
+endif(ADIOS2_HAVE_MPI)
+
 
 # bpls2 -Al
 add_test(NAME Utils.Bpls.Al.Dump
@@ -81,6 +80,8 @@ set_property(TEST Utils.Bpls.Al.Dump
   PROPERTY DEPENDS Utils.C.Writer
 )
 
+if(ADIOS2_HAVE_MPI)
+
 add_test(NAME Utils.Bpls.Al.Validate
   COMMAND ${CMAKE_COMMAND}
     -E compare_files
@@ -91,6 +92,7 @@ set_property(TEST Utils.Bpls.Al.Validate
   PROPERTY DEPENDS Utils.Bpls.Al.Dump
 )
 
+endif(ADIOS2_HAVE_MPI)
 
 # bpls2 -ldD
 add_test(NAME Utils.Bpls.ldDav.Dump
@@ -104,6 +106,8 @@ set_property(TEST Utils.Bpls.ldDav.Dump
   PROPERTY DEPENDS Utils.C.Writer
 )
 
+if(ADIOS2_HAVE_MPI)
+
 add_test(NAME Utils.Bpls.ldDav.Validate
   COMMAND ${CMAKE_COMMAND}
     -E compare_files
@@ -115,6 +119,7 @@ set_property(TEST Utils.Bpls.ldDav.Validate
 )
 
 
+endif(ADIOS2_HAVE_MPI)
 
 
 # bpls2 -ld varI16 -n 10
