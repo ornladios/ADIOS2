@@ -53,22 +53,22 @@ module adios2_io_define_attribute_mod
         module procedure adios2_define_variable_attribute_integer8_1d
 
         ! Single value
-        module procedure adios2_define_variable_attribute_separator_string
-        module procedure adios2_define_variable_attribute_separator_real
-        module procedure adios2_define_variable_attribute_separator_dp
-        module procedure adios2_define_variable_attribute_separator_integer1
-        module procedure adios2_define_variable_attribute_separator_integer2
-        module procedure adios2_define_variable_attribute_separator_integer4
-        module procedure adios2_define_variable_attribute_separator_integer8
+        module procedure adios2_def_var_att_sep_string
+        module procedure adios2_def_var_att_sep_real
+        module procedure adios2_def_var_att_sep_dp
+        module procedure adios2_def_var_att_sep_integer1
+        module procedure adios2_def_var_att_sep_integer2
+        module procedure adios2_def_var_att_sep_integer4
+        module procedure adios2_def_var_att_sep_integer8
 
         ! 1D Array
-        module procedure adios2_define_variable_attribute_separator_string_1d
-        module procedure adios2_define_variable_attribute_separator_real_1d
-        module procedure adios2_define_variable_attribute_separator_dp_1d
-        module procedure adios2_define_variable_attribute_separator_integer1_1d
-        module procedure adios2_define_variable_attribute_separator_integer2_1d
-        module procedure adios2_define_variable_attribute_separator_integer4_1d
-        module procedure adios2_define_variable_attribute_separator_integer8_1d
+        module procedure adios2_def_var_att_sep_string_1d
+        module procedure adios2_def_var_att_sep_real_1d
+        module procedure adios2_def_var_att_sep_dp_1d
+        module procedure adios2_def_var_att_sep_integer1_1d
+        module procedure adios2_def_var_att_sep_integer2_1d
+        module procedure adios2_def_var_att_sep_integer4_1d
+        module procedure adios2_def_var_att_sep_integer8_1d
 
     end interface
 
@@ -750,9 +750,9 @@ contains
     end subroutine
 
     ! Variable attribute default separator
-    subroutine adios2_define_variable_attribute_separator_string(attribute, io, name, &
-                                                                 data, variable_name, &
-                                                                 ierr)
+    subroutine adios2_def_var_att_sep_string(attribute, io, name, &
+                                             data, variable_name, &
+                                             ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -779,9 +779,9 @@ contains
 
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_real(attribute, io, name, &
-                                                               data, variable_name, &
-                                                               ierr)
+    subroutine adios2_def_var_att_sep_real(attribute, io, name, &
+                                           data, variable_name, &
+                                           ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -806,9 +806,9 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_dp(attribute, io, name, &
-                                                             data, variable_name, &
-                                                             ierr)
+    subroutine adios2_def_var_att_sep_dp(attribute, io, name, &
+                                         data, variable_name, &
+                                         ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -833,9 +833,9 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer1(attribute, io, name, &
-                                                                   data, variable_name, &
-                                                                   ierr)
+    subroutine adios2_def_var_att_sep_integer1(attribute, io, name, &
+                                               data, variable_name, &
+                                               ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -860,9 +860,9 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer2(attribute, io, name, &
-                                                                   data, variable_name, &
-                                                                   ierr)
+    subroutine adios2_def_var_att_sep_integer2(attribute, io, name, &
+                                               data, variable_name, &
+                                               ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -887,9 +887,9 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer4(attribute, io, name, &
-                                                                   data, variable_name, &
-                                                                   ierr)
+    subroutine adios2_def_var_att_sep_integer4(attribute, io, name, &
+                                               data, variable_name, &
+                                               ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -914,9 +914,9 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer8(attribute, io, name, &
-                                                                   data, variable_name, &
-                                                                   ierr)
+    subroutine adios2_def_var_att_sep_integer8(attribute, io, name, &
+                                               data, variable_name, &
+                                               ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -942,10 +942,10 @@ contains
     end subroutine
 
     ! 1D
-    subroutine adios2_define_variable_attribute_separator_string_1d(attribute, io, name, &
-                                                                    data, length, &
-                                                                    variable_name, &
-                                                                    ierr)
+    subroutine adios2_def_var_att_sep_string_1d(attribute, io, name, &
+                                                data, length, &
+                                                variable_name, &
+                                                ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -982,11 +982,11 @@ contains
 
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_real_1d(attribute, io, &
-                                                                  name, data, &
-                                                                  length, &
-                                                                  variable_name, &
-                                                                  ierr)
+    subroutine adios2_def_var_att_sep_real_1d(attribute, io, &
+                                              name, data, &
+                                              length, &
+                                              variable_name, &
+                                              ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -1012,11 +1012,11 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_dp_1d(attribute, io, &
-                                                                name, data, &
-                                                                length, &
-                                                                variable_name, &
-                                                                ierr)
+    subroutine adios2_def_var_att_sep_dp_1d(attribute, io, &
+                                            name, data, &
+                                            length, &
+                                            variable_name, &
+                                            ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -1042,11 +1042,11 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer1_1d(attribute, io, &
-                                                                      name, data, &
-                                                                      length, &
-                                                                      variable_name, &
-                                                                      ierr)
+    subroutine adios2_def_var_att_sep_integer1_1d(attribute, io, &
+                                                  name, data, &
+                                                  length, &
+                                                  variable_name, &
+                                                  ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -1073,11 +1073,11 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer2_1d(attribute, io, &
-                                                                      name, data, &
-                                                                      length, &
-                                                                      variable_name, &
-                                                                      ierr)
+    subroutine adios2_def_var_att_sep_integer2_1d(attribute, io, &
+                                                  name, data, &
+                                                  length, &
+                                                  variable_name, &
+                                                  ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -1104,11 +1104,11 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer4_1d(attribute, io, &
-                                                                      name, data, &
-                                                                      length, &
-                                                                      variable_name, &
-                                                                      ierr)
+    subroutine adios2_def_var_att_sep_integer4_1d(attribute, io, &
+                                                  name, data, &
+                                                  length, &
+                                                  variable_name, &
+                                                  ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
@@ -1134,11 +1134,11 @@ contains
         end if
     end subroutine
 
-    subroutine adios2_define_variable_attribute_separator_integer8_1d(attribute, io, &
-                                                                      name, data, &
-                                                                      length, &
-                                                                      variable_name, &
-                                                                      ierr)
+    subroutine adios2_def_var_att_sep_integer8_1d(attribute, io, &
+                                                  name, data, &
+                                                  length, &
+                                                  variable_name, &
+                                                  ierr)
         type(adios2_attribute), intent(out) :: attribute
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
