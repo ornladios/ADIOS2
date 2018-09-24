@@ -668,6 +668,41 @@ TEST_F(ADIOSDefineAttributeTest, DefineCheckType)
     EXPECT_EQ(io.AttributeType("r64"), adios2::GetType<double>());
 }
 
+TEST_F(ADIOSDefineAttributeTest, VariableException)
+{
+    const std::string separator = "/";
+
+    std::vector<std::string> numbers = {"one", "two", "three"};
+
+// Write test data using BP
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+
+        EXPECT_THROW(
+            io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"),
+            std::invalid_argument);
+
+        EXPECT_THROW(io.DefineAttribute<std::string>(
+                         "Hello Array", numbers.data(), numbers.size(),
+                         "myVar1", separator),
+                     std::invalid_argument);
+
+        auto var = io.DefineVariable<int>("myVar1");
+
+        EXPECT_NO_THROW(
+            io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"));
+
+        EXPECT_NO_THROW(io.DefineAttribute<std::string>(
+            "Hello Array", numbers.data(), numbers.size(), "myVar1",
+            separator));
+    }
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
