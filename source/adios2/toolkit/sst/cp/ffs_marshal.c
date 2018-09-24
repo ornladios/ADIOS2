@@ -198,7 +198,8 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
         {
             return strdup("float");
         }
-        else if ((sizeof(long double) != sizeof(double)) && (size == sizeof(long double)))
+        else if ((sizeof(long double) != sizeof(double)) &&
+                 (size == sizeof(long double)))
         {
             return strdup("long double");
         }
@@ -1473,8 +1474,6 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             {
                 char *Type = TranslateFFSType2ADIOS(FieldList[i].field_type,
                                                     FieldList[i].field_size);
-                printf("Inserting Variable %s, Type %s (%s, %d)\n", FieldName,
-                       Type, FieldList[i].field_type, FieldList[i].field_size);
                 VarRec = CreateVarRec(Stream, FieldName);
                 VarRec->DimCount = 0;
                 VarRec->Variable = Stream->VarSetupUpcall(
