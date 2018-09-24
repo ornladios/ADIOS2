@@ -56,7 +56,8 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name);
  * @param OUT: number of variables
  * @param OUT: array of variable pointers (pointer to an adios2_variable**)
  */
-void adios2_inquire_all_variables(adios2_io *io, size_t *nvars, adios2_variable ***vars);
+void adios2_inquire_all_variables(adios2_io *io, size_t *nvars,
+                                  adios2_variable ***vars);
 
 /**
  * Remove a variable, DANGEROUS function as it creates dangling pointers
@@ -126,12 +127,14 @@ adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
                                                     const char *variable_name,
                                                     const char *separator);
 /**
- * Returns an array of attribute handlers for all attributes present in the group
+ * Returns an array of attribute handlers for all attributes present in the
+ * group
  * @param io handler to attribute io owner
  * @param OUT: number of attributes
  * @param OUT: array of attribute pointers (pointer to an adios2_attribute**)
  */
-void adios2_inquire_all_attributes(adios2_io *io, size_t *nattrs, adios2_attribute ***attrs);
+void adios2_inquire_all_attributes(adios2_io *io, size_t *nattrs,
+                                   adios2_attribute ***attrs);
 
 /**
  * Remove an attribute, DANGEROUS function as it creates dangling pointers

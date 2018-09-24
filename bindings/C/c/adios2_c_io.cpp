@@ -242,16 +242,17 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
     return reinterpret_cast<adios2_variable *>(variable);
 }
 
-void adios2_inquire_all_variables(adios2_io *io, size_t *nvars, adios2_variable ***vars)
+void adios2_inquire_all_variables(adios2_io *io, size_t *nvars,
+                                  adios2_variable ***vars)
 {
     adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
     const auto &dataMap = ioCpp.GetVariablesDataMap();
 
     *nvars = dataMap.size();
-    adios2_variable ** list = (adios2_variable **) 
-            calloc (*nvars, sizeof(adios2_variable*));
+    adios2_variable **list =
+        (adios2_variable **)calloc(*nvars, sizeof(adios2_variable *));
     size_t n = 0;
-    for ( auto it = dataMap.begin(); it != dataMap.end(); ++it )
+    for (auto it = dataMap.begin(); it != dataMap.end(); ++it)
     {
         const std::string name(it->first);
         const std::string type(it->second.first);
@@ -262,15 +263,15 @@ void adios2_inquire_all_variables(adios2_io *io, size_t *nvars, adios2_variable 
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-        else if (type == adios2::helper::GetType<T>())                             \
-        {                                                                          \
-            variable = ioCpp.InquireVariable<T>(name);                             \
-            list[n] = reinterpret_cast<adios2_variable *>(variable); \
-        }
+    else if (type == adios2::helper::GetType<T>())                             \
+    {                                                                          \
+        variable = ioCpp.InquireVariable<T>(name);                             \
+        list[n] = reinterpret_cast<adios2_variable *>(variable);               \
+    }
         ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-            n++;
+        n++;
     }
     *vars = list;
 }
@@ -544,16 +545,17 @@ adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
     return adios2_inquire_attribute(io, globalName.c_str());
 }
 
-void adios2_inquire_all_attributes(adios2_io *io, size_t *nattrs, adios2_attribute ***attrs)
+void adios2_inquire_all_attributes(adios2_io *io, size_t *nattrs,
+                                   adios2_attribute ***attrs)
 {
     adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
     const auto &dataMap = ioCpp.GetAttributesDataMap();
 
     *nattrs = dataMap.size();
-    adios2_attribute ** list = (adios2_attribute **) 
-            calloc (*nattrs, sizeof(adios2_attribute*));
+    adios2_attribute **list =
+        (adios2_attribute **)calloc(*nattrs, sizeof(adios2_attribute *));
     size_t n = 0;
-    for ( auto it = dataMap.begin(); it != dataMap.end(); ++it )
+    for (auto it = dataMap.begin(); it != dataMap.end(); ++it)
     {
         const std::string name(it->first);
         const std::string type(it->second.first);
@@ -564,15 +566,15 @@ void adios2_inquire_all_attributes(adios2_io *io, size_t *nattrs, adios2_attribu
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-        else if (type == adios2::helper::GetType<T>())                             \
-        {                                                                          \
-            attribute = ioCpp.InquireAttribute<T>(name);                             \
-            list[n] = reinterpret_cast<adios2_attribute *>(attribute); \
-        }
+    else if (type == adios2::helper::GetType<T>())                             \
+    {                                                                          \
+        attribute = ioCpp.InquireAttribute<T>(name);                           \
+        list[n] = reinterpret_cast<adios2_attribute *>(attribute);             \
+    }
         ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-            n++;
+        n++;
     }
     *attrs = list;
 }
