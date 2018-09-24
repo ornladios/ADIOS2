@@ -2,9 +2,14 @@
 C bindings
 **********
 
+The C bindings are specifically designed for C applications and those using an older C++ standard (98 and 03). If you are using a C++11 or more recent standard, please use the C++11 bindings.  
+
+
+
+
 .. note::
     
-    use `#include "adios2_c.h"` for the C bindings
+    use `#include "adios2_c.h"` for the C bindings, `adios2.h` is the C++11 header
 
 
 adios2_adios handler functions
