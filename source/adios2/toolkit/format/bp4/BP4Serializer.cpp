@@ -1364,19 +1364,33 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
             uint8_t count = 0;
             uint32_t length = 0;
             uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
-            size_t localPosition = position;
-            lf_GetCharacteristics(buffer, localPosition,
-                                    header.DataType, count, length,
-                                    timeStep);
-            //std::cout << "rank: " << r << ", timeStep: " << timeStep<< std::endl;
-            ++setsCount;
 
-            //std::cout << "setsCount: " << setsCount << ", positionOut: " << positionOut << ", position: " << position<< std::endl;   
-            helper::CopyToBuffer(bufferOut, positionOut, &buffer[position],
-                            length + 5);
+            while (timeStep == currentTimeStep)
+            {
+                if (position >= buffer.size())
+                {
+                    break;
+                }
+                size_t localPosition = position;
+                lf_GetCharacteristics(buffer, localPosition,
+                                        header.DataType, count, length,
+                                        timeStep);
+                //std::cout << "rank: " << r << ", timeStep: " << timeStep<< std::endl;
+                if (timeStep != currentTimeStep)
+                {
+                    break;
+                }
 
-            position += length + 5;
-            //std::cout << "length: " << length << ", position: " << position << ", positions[r]: " << positions[r] << std::endl; 
+                ++setsCount;
+
+                //std::cout << "setsCount: " << setsCount << ", positionOut: " << positionOut << ", position: " << position<< std::endl;   
+                helper::CopyToBuffer(bufferOut, positionOut, &buffer[position],
+                                    length + 5);
+
+                position += length + 5;
+                //std::cout << "length: " << length << ", position: " << position << ", positions[r]: " << positions[r] << std::endl; 
+
+            }
         }
 
         const uint32_t entryLength =
