@@ -670,13 +670,6 @@ TEST_F(ADIOSDefineAttributeTest, DefineCheckType)
 
 TEST_F(ADIOSDefineAttributeTest, VariableException)
 {
-    int mpiRank = 0, mpiSize = 1;
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
-
-    const std::string s1_Array = std::string("s1_Array_");
     const std::string separator = "/";
 
     std::vector<std::string> numbers = {"one", "two", "three"};
