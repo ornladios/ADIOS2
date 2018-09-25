@@ -219,8 +219,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
                           << " fixed Writer schedule = "
                           << m_RemoteDefinitionsLocked
                           << " fixed Reader schedule = "
-                          << m_IO.m_DefinitionsLocked
-                          << std::endl;
+                          << m_IO.m_DefinitionsLocked << std::endl;
             }
         }
     }
@@ -274,7 +273,8 @@ void InSituMPIReader::PerformGets()
         SendReadSchedule(m_ReadScheduleMap);
     }
 
-    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked || !m_RemoteDefinitionsLocked)
+    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked ||
+        !m_RemoteDefinitionsLocked)
     {
         // Allocate the MPI_Request and OngoingReceives vectors
         m_MPIRequests.reserve(nRequests);

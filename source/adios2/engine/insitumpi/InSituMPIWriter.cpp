@@ -202,11 +202,11 @@ void InSituMPIWriter::PerformPuts()
             {
                 if (m_Verbosity == 5)
                 {
-                    std::cout
-                        << "InSituMPI Writer " << m_WriterRank
-                        << " fixed Writer schedule = " << m_IO.m_DefinitionsLocked
-                        << " fixed Reader schedule = " << m_RemoteDefinitionsLocked
-                        << std::endl;
+                    std::cout << "InSituMPI Writer " << m_WriterRank
+                              << " fixed Writer schedule = "
+                              << m_IO.m_DefinitionsLocked
+                              << " fixed Reader schedule = "
+                              << m_RemoteDefinitionsLocked << std::endl;
                 }
             }
         }
