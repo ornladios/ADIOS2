@@ -241,6 +241,15 @@ public:
     void FlushAll();
 
     /**
+     * @brief Promise that no more definitions or changes to defined variables
+     * will occur. Useful information if called before the first EndStep() of an
+     * output Engine, as it will know that the definitions are complete and
+     * constant for the entire lifetime of the output and may optimize metadata
+     * handling.
+     */
+    void LockDefinitions();
+
+    /**
      * Returns a map with variable information
      * @return map:
      * <pre>

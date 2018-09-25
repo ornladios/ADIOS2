@@ -44,7 +44,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Open(" << m_Name
                   << "). Fixed Read schedule = "
-                  << (m_FixedLocalSchedule ? "yes" : "no")
+                  << (m_IO.m_DefinitionsLocked ? "yes" : "no")
                   << ". #readers=" << m_ReaderNproc
                   << " #writers=" << m_RankAllPeers.size()
                   << " #appsize=" << m_GlobalNproc
@@ -153,7 +153,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     m_NCallsPerformGets = 0;
 
     // Sync. recv. the global metadata
-    if (!m_FixedRemoteSchedule)
+    if (!m_RemoteDefinitionsLocked)
     {
         unsigned long mdLen = 0;
 
@@ -199,7 +199,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     // Recv the flag about fixed schedule on the sender side
     if (m_CurrentStep == 0)
     {
-        int fixed = (m_FixedRemoteSchedule ? 1 : 0);
+        int fixed = (m_RemoteDefinitionsLocked ? 1 : 0);
         if (m_ReaderRootRank == m_ReaderRank)
         {
             MPI_Status status;
@@ -210,15 +210,16 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
 
         // broadcast fixed schedule flag to every reader
         MPI_Bcast(&fixed, 1, MPI_INT, m_ReaderRootRank, m_MPIComm);
-        m_FixedRemoteSchedule = (fixed ? true : false);
+        m_RemoteDefinitionsLocked = (fixed ? true : false);
         if (m_ReaderRootRank == m_ReaderRank)
         {
             if (m_Verbosity == 5)
             {
                 std::cout << "InSituMPI Reader " << m_ReaderRank
                           << " fixed Writer schedule = "
-                          << m_FixedRemoteSchedule
-                          << " fixed Reader schedule = " << m_FixedLocalSchedule
+                          << m_RemoteDefinitionsLocked
+                          << " fixed Reader schedule = "
+                          << m_IO.m_DefinitionsLocked
                           << std::endl;
             }
         }
@@ -247,7 +248,7 @@ void InSituMPIReader::PerformGets()
     {
         if (m_ReaderRootRank == m_ReaderRank)
         {
-            int fixed = (int)m_FixedLocalSchedule;
+            int fixed = (int)m_IO.m_DefinitionsLocked;
             MPI_Send(&fixed, 1, MPI_INT, m_WriteRootGlobalRank,
                      insitumpi::MpiTags::FixedRemoteSchedule, m_CommWorld);
         }
@@ -255,7 +256,7 @@ void InSituMPIReader::PerformGets()
 
     // Create read schedule per writer
     // const std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
-    if (m_CurrentStep == 0 || !m_FixedLocalSchedule)
+    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked)
     {
         m_ReadScheduleMap.clear();
         m_ReadScheduleMap =
@@ -267,13 +268,13 @@ void InSituMPIReader::PerformGets()
     int nRequests = insitumpi::FixSeeksToZeroOffset(
         m_ReadScheduleMap, helper::IsRowMajor(m_IO.m_HostLanguage));
 
-    if (m_CurrentStep == 0 || !m_FixedLocalSchedule)
+    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked)
     {
         // Send schedule to writers
         SendReadSchedule(m_ReadScheduleMap);
     }
 
-    if (m_CurrentStep == 0 || !m_FixedLocalSchedule || !m_FixedRemoteSchedule)
+    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked || !m_RemoteDefinitionsLocked)
     {
         // Allocate the MPI_Request and OngoingReceives vectors
         m_MPIRequests.reserve(nRequests);

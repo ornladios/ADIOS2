@@ -58,13 +58,6 @@ size_t Engine::CurrentStep() const
     return m_Engine->CurrentStep();
 }
 
-void Engine::FixedSchedule()
-{
-    adios2::helper::CheckForNullptr(m_Engine,
-                                    "in call to Engine::FixedSchedule");
-    m_Engine->FixedSchedule();
-}
-
 void Engine::PerformPuts()
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::PerformPuts");

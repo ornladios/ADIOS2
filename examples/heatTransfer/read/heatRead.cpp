@@ -108,8 +108,6 @@ int main(int argc, char *argv[])
         adios2::Engine reader =
             inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
 
-        reader.FixedSchedule();
-
         std::vector<double> Tin;
         std::vector<double> Tout;
         std::vector<double> dT;
@@ -143,6 +141,10 @@ int main(int argc, char *argv[])
 
             if (firstStep)
             {
+                // Promise that we are not going to change the variable sizes
+                // nor add new variables
+                inIO.LockDefinitions();
+
                 unsigned int gndx = vTin.Shape()[0];
                 unsigned int gndy = vTin.Shape()[1];
 

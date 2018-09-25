@@ -76,8 +76,6 @@ void Engine::Close(const int transportIndex)
 
 void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 
-void Engine::FixedSchedule() noexcept { m_FixedLocalSchedule = true; };
-
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}

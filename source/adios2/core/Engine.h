@@ -308,15 +308,6 @@ public:
     virtual void Flush(const int transportIndex = -1);
 
     /**
-     * @brief Promise that no more definitions or changes to defined variables
-     * will occur. Useful information if called before the first EndStep() of an
-     * output Engine, as it will know that the definitions are complete and
-     * constant for the entire lifetime of the output and may optimize metadata
-     * handling.
-     */
-    void FixedSchedule() noexcept;
-
-    /**
      * Extracts all available blocks information for a particular
      * variable. This can be an expensive function, memory scales up with
      * metadata: steps and blocks per step
@@ -364,15 +355,6 @@ protected:
 
     /** keep track if the current Engine is marked for destruction in IO */
     bool m_IsClosed = false;
-
-    /** true: No more definitions or changes to existing variables are allowed
-     */
-    bool m_FixedLocalSchedule = false;
-
-    /** true: We know that the source/targe has a fixed write/read schedule
-     * and this engine can utilize this fact for optimizing I/O
-     */
-    bool m_FixedRemoteSchedule = false;
 
     /** Called from constructors */
     virtual void Init();

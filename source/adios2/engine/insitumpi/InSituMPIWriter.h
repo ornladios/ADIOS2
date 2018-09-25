@@ -72,6 +72,11 @@ private:
      */
     insitumpi::WriteScheduleMap m_WriteScheduleMap;
 
+    /** true: We know that the source/targe has a fixed write/read schedule
+     * and this engine can utilize this fact for optimizing I/O
+     */
+    bool m_RemoteDefinitionsLocked = false;
+
     std::vector<MPI_Request> m_MPIRequests; // for MPI_Waitall in EndStep()
 
     void Init() final;

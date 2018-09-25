@@ -73,6 +73,11 @@ Engine IO::Open(const std::string &name, const Mode mode)
 
 void IO::FlushAll() { m_IO.FlushAll(); }
 
+void IO::LockDefinitions()
+{
+    m_IO.LockDefinitions();
+}
+
 std::map<std::string, Params> IO::AvailableVariables() noexcept
 {
     return m_IO.GetAvailableVariables();
