@@ -17,6 +17,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    engines/engines
    runtime/runtime
    bindings/bindings
+   faq/faq
  
 * :ref:`search`
    

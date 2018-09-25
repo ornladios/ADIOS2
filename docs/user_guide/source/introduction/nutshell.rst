@@ -37,7 +37,7 @@ The key aspects of the ADIOS2 infrastructure include:
 
 #. **Language Support:** ADIOS2 is written in full taking advantage of the
    C++11 major standard update. In addition, it started providing bindings for
-   seamless support in Python, C, Fortran and the C++98 standard.  
+   seamless support in Python, C, Fortran and Matlab.  
 
 
 #. **Commitment:** ADIOS2 is committed to the community of researchers, users
