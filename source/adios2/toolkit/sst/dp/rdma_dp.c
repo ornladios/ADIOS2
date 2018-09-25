@@ -799,10 +799,10 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
     FabricState Fabric = Stream->Fabric;
     RdmaCompletionHandle Handle_t;
     struct fi_cq_data_entry CQEntry = {0};
-    ssize_t rc;
 
     while (Handle->Pending > 0)
     {
+        ssize_t rc;
         rc = fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
         if (rc < 1)
         {
