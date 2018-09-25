@@ -181,6 +181,8 @@ std::map<std::string, Params> IO::AvailableAttributes() noexcept
     return m_IO.GetAvailableAttributes();
 }
 
+void IO::LockDefinitions() noexcept { return m_IO.LockDefinitions(); }
+
 std::string IO::EngineType() const noexcept { return m_IO.m_EngineType; }
 
 } // end namespace py11
