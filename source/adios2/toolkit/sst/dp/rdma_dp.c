@@ -799,7 +799,6 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
     FabricState Fabric = Stream->Fabric;
     RdmaCompletionHandle Handle_t;
     struct fi_cq_data_entry CQEntry = {0};
-    double EndWTime;
     ssize_t rc;
 
     while (Handle->Pending > 0)
@@ -816,7 +815,6 @@ static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
                           CQEntry.op_context);
             Handle_t = (RdmaCompletionHandle)CQEntry.op_context;
             Handle_t->Pending--;
-            EndWTime = MPI_Wtime();
         }
     }
 
