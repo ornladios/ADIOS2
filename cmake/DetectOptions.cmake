@@ -157,6 +157,8 @@ if(ADIOS2_USE_SST AND NOT MSVC)
   if(LIBFABRIC_FOUND)
     set(ADIOS2_SST_HAVE_LIBFABRIC TRUE)
   endif()
+else()
+  set(ADIOS2_HAVE_SST FALSE)
 endif()
 
 #SysV IPC

@@ -35,7 +35,7 @@ if(PKG_CONFIG_FOUND)
       set(_pkg_ver_arg ">=${LIBFABRIC_FIND_VERSION}")
     endif()
   endif()
-  pkg_check_modules(LIBFABRIC IMPORTED_TARGET "libfabric${_pkg_ver_arg}")
+  pkg_check_modules(LIBFABRIC "libfabric${_pkg_ver_arg}" IMPORTED_TARGET GLOBAL)
 endif()
 
 if(_CMAKE_PREFIX_PATH)

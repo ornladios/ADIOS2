@@ -237,7 +237,8 @@ endfunction()
 function(_pkg_create_imp_target _prefix _imp_target_global)
   # only create the target if it is linkable, i.e. no executables
   if (NOT TARGET PkgConfig::${_prefix}
-      AND ( ${_prefix}_INCLUDE_DIRS OR ${_prefix}_LINK_LIBRARIES OR ${_prefix}_CFLAGS_OTHER ))
+      AND ( ${_prefix}_INCLUDE_DIRS OR ${_prefix}_LINK_LIBRARIES OR
+            ${_prefix}_CFLAGS_OTHER OR ${_prefix}_LDFLAGS ))
     if(${_imp_target_global})
       set(_global_opt "GLOBAL")
     else()
