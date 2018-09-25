@@ -27,9 +27,10 @@ namespace helper
 /**
  * Opens and checks for file and dumps content to a single string.
  * @param fileName of text file
+ * @param hint exception message
  * @return file contents in a string
  */
-std::string FileToString(const std::string &fileName) noexcept;
+std::string FileToString(const std::string &fileName, const std::string hint);
 
 /**
  * Transforms a vector to a map of parameters
@@ -113,6 +114,18 @@ unsigned int StringToUInt(const std::string value, const bool debugMode,
  * @return string dimensions values
  */
 std::string DimsToString(const Dims &dimensions);
+
+/**
+ * Sets global name: prefix + separator + localName. If prefix is empty it
+ * returns the localName as-is.
+ * e.g.  "temperature" + "/" + "units"
+ * @param localName
+ * @param prefix
+ * @param separator
+ * @return 1) prefix + separator + localName, 2) empty prefix: returns localName
+ */
+std::string GlobalName(const std::string &localName, const std::string &prefix,
+                       const std::string separator) noexcept;
 
 } // end namespace helper
 } // end namespace adios2

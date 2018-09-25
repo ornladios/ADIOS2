@@ -70,8 +70,18 @@ void DataManWriter::PutSyncCommonDataMan(Variable<T> &variable, const T *values)
 {
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {
-        m_DataManSerializer[i]->Put(variable, m_Name, CurrentStep(), m_MPIRank,
-                                    m_IO.m_TransportsParameters[i]);
+        if (m_WorkflowMode == "subscribe")
+        {
+            m_DataManSerializer[i]->Put(variable, m_Name, CurrentStep(),
+                                        m_MPIRank,
+                                        m_IO.m_TransportsParameters[i], false);
+        }
+        else
+        {
+            m_DataManSerializer[i]->Put(variable, m_Name, CurrentStep(),
+                                        m_MPIRank,
+                                        m_IO.m_TransportsParameters[i], true);
+        }
     }
 }
 

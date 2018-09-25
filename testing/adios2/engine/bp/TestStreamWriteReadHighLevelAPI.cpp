@@ -14,10 +14,10 @@
 
 #include "../SmallTestData.h"
 
-class StreamwriteReadHighLevelAPI : public ::testing::Test
+class StreamWriteReadHighLevelAPI : public ::testing::Test
 {
 public:
-    StreamwriteReadHighLevelAPI() = default;
+    StreamWriteReadHighLevelAPI() = default;
 
     SmallTestData m_TestData;
 };
@@ -27,7 +27,7 @@ public:
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
+TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -112,64 +112,67 @@ TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
         float gr32 = -1.f;
         double gr64 = -1.f;
 
-        iStream.read("gi8", gi8);
-        iStream.read("gi16", gi16);
-        iStream.read("gi32", gi32);
-        iStream.read("gi64", gi64);
-        iStream.read("gu8", gu8);
-        iStream.read("gu16", gu16);
-        iStream.read("gu32", gu32);
-        iStream.read("gu64", gu64);
-        iStream.read("gr32", gr32);
-        iStream.read("gr64", gr64);
-
-        EXPECT_EQ(gi8, m_TestData.I8.front());
-        EXPECT_EQ(gi16, m_TestData.I16.front());
-        EXPECT_EQ(gi32, m_TestData.I32.front());
-        EXPECT_EQ(gi64, m_TestData.I64.front());
-        EXPECT_EQ(gu8, m_TestData.U8.front());
-        EXPECT_EQ(gu16, m_TestData.U16.front());
-        EXPECT_EQ(gu32, m_TestData.U32.front());
-        EXPECT_EQ(gu64, m_TestData.U64.front());
-        EXPECT_EQ(gr32, m_TestData.R32.front());
-        EXPECT_EQ(gr64, m_TestData.R64.front());
-
-        auto vgi8 = iStream.read<int8_t>("gi8");
-        auto vgi16 = iStream.read<int16_t>("gi16");
-        auto vgi32 = iStream.read<int32_t>("gi32");
-        auto vgi64 = iStream.read<int64_t>("gi64");
-        auto vgu8 = iStream.read<uint8_t>("gu8");
-        auto vgu16 = iStream.read<uint16_t>("gu16");
-        auto vgu32 = iStream.read<uint32_t>("gu32");
-        auto vgu64 = iStream.read<uint64_t>("gu64");
-        auto vgr32 = iStream.read<float>("gr32");
-        auto vgr64 = iStream.read<double>("gr64");
-
-        EXPECT_EQ(vgi8.front(), m_TestData.I8.front());
-        EXPECT_EQ(vgi16.front(), m_TestData.I16.front());
-        EXPECT_EQ(vgi32.front(), m_TestData.I32.front());
-        EXPECT_EQ(vgi64.front(), m_TestData.I64.front());
-        EXPECT_EQ(vgu8.front(), m_TestData.U8.front());
-        EXPECT_EQ(vgu16.front(), m_TestData.U16.front());
-        EXPECT_EQ(vgu32.front(), m_TestData.U32.front());
-        EXPECT_EQ(vgu64.front(), m_TestData.U64.front());
-        EXPECT_EQ(vgr32.front(), m_TestData.R32.front());
-        EXPECT_EQ(vgr64.front(), m_TestData.R64.front());
-
         size_t t = 0;
-        while (!iStream.eof())
+        for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)
         {
-            auto IString = iStream.read<std::string>("iString");
-            auto I8 = iStream.read<int8_t>("i8", start, count);
-            auto I16 = iStream.read<int16_t>("i16", start, count);
-            auto I32 = iStream.read<int32_t>("i32", start, count);
-            auto I64 = iStream.read<int64_t>("i64", start, count);
-            auto U8 = iStream.read<uint8_t>("u8", start, count);
-            auto U16 = iStream.read<uint16_t>("u16", start, count);
-            auto U32 = iStream.read<uint32_t>("u32", start, count);
-            auto U64 = iStream.read<uint64_t>("u64", start, count);
-            auto R32 = iStream.read<float>("r32", start, count);
-            auto R64 = iStream.read<double>("r64", start, count, adios2::endl);
+            if (iStep.currentstep() == 0)
+            {
+                iStep.read("gi8", gi8);
+                iStep.read("gi16", gi16);
+                iStep.read("gi32", gi32);
+                iStep.read("gi64", gi64);
+                iStep.read("gu8", gu8);
+                iStep.read("gu16", gu16);
+                iStep.read("gu32", gu32);
+                iStep.read("gu64", gu64);
+                iStep.read("gr32", gr32);
+                iStep.read("gr64", gr64);
+
+                EXPECT_EQ(gi8, m_TestData.I8.front());
+                EXPECT_EQ(gi16, m_TestData.I16.front());
+                EXPECT_EQ(gi32, m_TestData.I32.front());
+                EXPECT_EQ(gi64, m_TestData.I64.front());
+                EXPECT_EQ(gu8, m_TestData.U8.front());
+                EXPECT_EQ(gu16, m_TestData.U16.front());
+                EXPECT_EQ(gu32, m_TestData.U32.front());
+                EXPECT_EQ(gu64, m_TestData.U64.front());
+                EXPECT_EQ(gr32, m_TestData.R32.front());
+                EXPECT_EQ(gr64, m_TestData.R64.front());
+
+                auto vgi8 = iStep.read<int8_t>("gi8");
+                auto vgi16 = iStep.read<int16_t>("gi16");
+                auto vgi32 = iStep.read<int32_t>("gi32");
+                auto vgi64 = iStep.read<int64_t>("gi64");
+                auto vgu8 = iStep.read<uint8_t>("gu8");
+                auto vgu16 = iStep.read<uint16_t>("gu16");
+                auto vgu32 = iStep.read<uint32_t>("gu32");
+                auto vgu64 = iStep.read<uint64_t>("gu64");
+                auto vgr32 = iStep.read<float>("gr32");
+                auto vgr64 = iStep.read<double>("gr64");
+
+                EXPECT_EQ(vgi8.front(), m_TestData.I8.front());
+                EXPECT_EQ(vgi16.front(), m_TestData.I16.front());
+                EXPECT_EQ(vgi32.front(), m_TestData.I32.front());
+                EXPECT_EQ(vgi64.front(), m_TestData.I64.front());
+                EXPECT_EQ(vgu8.front(), m_TestData.U8.front());
+                EXPECT_EQ(vgu16.front(), m_TestData.U16.front());
+                EXPECT_EQ(vgu32.front(), m_TestData.U32.front());
+                EXPECT_EQ(vgu64.front(), m_TestData.U64.front());
+                EXPECT_EQ(vgr32.front(), m_TestData.R32.front());
+                EXPECT_EQ(vgr64.front(), m_TestData.R64.front());
+            }
+
+            auto IString = iStep.read<std::string>("iString");
+            auto I8 = iStep.read<int8_t>("i8", start, count);
+            auto I16 = iStep.read<int16_t>("i16", start, count);
+            auto I32 = iStep.read<int32_t>("i32", start, count);
+            auto I64 = iStep.read<int64_t>("i64", start, count);
+            auto U8 = iStep.read<uint8_t>("u8", start, count);
+            auto U16 = iStep.read<uint16_t>("u16", start, count);
+            auto U32 = iStep.read<uint32_t>("u32", start, count);
+            auto U64 = iStep.read<uint64_t>("u64", start, count);
+            auto R32 = iStep.read<float>("r32", start, count);
+            auto R64 = iStep.read<double>("r64", start, count);
 
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
@@ -206,7 +209,7 @@ TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
 //******************************************************************************
 
 // ADIOS2 BP write, native ADIOS1 read
-TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
+TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
@@ -276,19 +279,20 @@ TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
 
         // for (size_t t = 0; t < NSteps; ++t)
         size_t t = 0;
-        while (!iStream.eof())
+        adios2::fstep iStep;
+        while (adios2::getstep(iStream, iStep))
         {
-            auto IString = iStream.read<std::string>("iString");
-            auto I8 = iStream.read<int8_t>("i8", start, count);
-            auto I16 = iStream.read<int16_t>("i16", start, count);
-            auto I32 = iStream.read<int32_t>("i32", start, count);
-            auto I64 = iStream.read<int64_t>("i64", start, count);
-            auto U8 = iStream.read<uint8_t>("u8", start, count);
-            auto U16 = iStream.read<uint16_t>("u16", start, count);
-            auto U32 = iStream.read<uint32_t>("u32", start, count);
-            auto U64 = iStream.read<uint64_t>("u64", start, count);
-            auto R32 = iStream.read<float>("r32", start, count);
-            auto R64 = iStream.read<double>("r64", start, count, adios2::endl);
+            auto IString = iStep.read<std::string>("iString");
+            auto I8 = iStep.read<int8_t>("i8", start, count);
+            auto I16 = iStep.read<int16_t>("i16", start, count);
+            auto I32 = iStep.read<int32_t>("i32", start, count);
+            auto I64 = iStep.read<int64_t>("i64", start, count);
+            auto U8 = iStep.read<uint8_t>("u8", start, count);
+            auto U16 = iStep.read<uint16_t>("u16", start, count);
+            auto U32 = iStep.read<uint32_t>("u32", start, count);
+            auto U64 = iStep.read<uint64_t>("u64", start, count);
+            auto R32 = iStep.read<float>("r32", start, count);
+            auto R64 = iStep.read<double>("r64", start, count);
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
@@ -323,7 +327,7 @@ TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
 // 2D 4x2 test data
 //******************************************************************************
 
-TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
+TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
@@ -395,19 +399,20 @@ TEST_F(StreamwriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 
         // for (size_t t = 0; t < NSteps; ++t)
         size_t t = 0;
-        while (!iStream)
+
+        for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)
         {
-            auto IString = iStream.read<std::string>("iString");
-            auto I8 = iStream.read<int8_t>("i8", start, count);
-            auto I16 = iStream.read<int16_t>("i16", start, count);
-            auto I32 = iStream.read<int32_t>("i32", start, count);
-            auto I64 = iStream.read<int64_t>("i64", start, count);
-            auto U8 = iStream.read<uint8_t>("u8", start, count);
-            auto U16 = iStream.read<uint16_t>("u16", start, count);
-            auto U32 = iStream.read<uint32_t>("u32", start, count);
-            auto U64 = iStream.read<uint64_t>("u64", start, count);
-            auto R32 = iStream.read<float>("r32", start, count);
-            auto R64 = iStream.read<double>("r64", start, count, adios2::endl);
+            auto IString = iStep.read<std::string>("iString");
+            auto I8 = iStep.read<int8_t>("i8", start, count);
+            auto I16 = iStep.read<int16_t>("i16", start, count);
+            auto I32 = iStep.read<int32_t>("i32", start, count);
+            auto I64 = iStep.read<int64_t>("i64", start, count);
+            auto U8 = iStep.read<uint8_t>("u8", start, count);
+            auto U16 = iStep.read<uint16_t>("u16", start, count);
+            auto U32 = iStep.read<uint32_t>("u32", start, count);
+            auto U64 = iStep.read<uint64_t>("u64", start, count);
+            auto R32 = iStep.read<float>("r32", start, count);
+            auto R64 = iStep.read<double>("r64", start, count);
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(

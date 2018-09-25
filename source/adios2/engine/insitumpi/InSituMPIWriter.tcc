@@ -130,7 +130,6 @@ void InSituMPIWriter::AsyncSendVariable(
                     }
 
                     m_MPIRequests.emplace_back();
-                    const int index = m_MPIRequests.size() - 1;
 
                     const auto &seek = sfi.Seeks;
                     const size_t blockStart = seek.first;
@@ -139,7 +138,7 @@ void InSituMPIWriter::AsyncSendVariable(
                     MPI_Isend(blockInfo.Data + blockStart, blockSize, MPI_CHAR,
                               m_RankAllPeers[readerPair.first],
                               insitumpi::MpiTags::Data, m_CommWorld,
-                              m_MPIRequests.data() + index);
+                              &m_MPIRequests.back());
                 }
             }
         }

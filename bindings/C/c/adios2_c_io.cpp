@@ -16,6 +16,10 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 adios2_variable *
 adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                        const size_t ndims, const size_t *shape,
@@ -260,6 +264,15 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const void *data,
                                           const size_t elements)
 {
+    return adios2_define_variable_attribute(io, name, type, data, elements, "",
+                                            "");
+}
+
+adios2_attribute *adios2_define_variable_attribute(
+    adios2_io *io, const char *name, const adios2_type type, const void *data,
+    const size_t elements, const char *variable_name, const char *separator)
+{
+
     adios2::helper::CheckForNullptr(
         io, "for adios2_io, in call to adios2_define_attribute");
 
@@ -276,7 +289,8 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
     {
         // relying on null terminated character for the size
         const std::string singleString(reinterpret_cast<const char *>(data));
-        attribute = &ioCpp.DefineAttribute<std::string>(name, singleString);
+        attribute = &ioCpp.DefineAttribute<std::string>(
+            name, singleString, variable_name, separator);
         break;
     }
     case (adios2_type_string_array):
@@ -290,135 +304,156 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
         }
 
         attribute = &ioCpp.DefineAttribute<std::string>(
-            name, arrayStrings.data(), arrayStrings.size());
+            name, arrayStrings.data(), arrayStrings.size(), variable_name,
+            separator);
         break;
     }
     case (adios2_type_char):
     {
         attribute = &ioCpp.DefineAttribute<char>(
-            name, reinterpret_cast<const char *>(data), elements);
+            name, reinterpret_cast<const char *>(data), elements, variable_name,
+            separator);
         break;
     }
     case (adios2_type_signed_char):
     {
         attribute = &ioCpp.DefineAttribute<signed char>(
-            name, reinterpret_cast<const signed char *>(data), elements);
+            name, reinterpret_cast<const signed char *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_short):
     {
         attribute = &ioCpp.DefineAttribute<short>(
-            name, reinterpret_cast<const short *>(data), elements);
+            name, reinterpret_cast<const short *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_int):
     {
         attribute = &ioCpp.DefineAttribute<int>(
-            name, reinterpret_cast<const int *>(data), elements);
+            name, reinterpret_cast<const int *>(data), elements, variable_name,
+            separator);
         break;
     }
     case (adios2_type_long_int):
     {
         attribute = &ioCpp.DefineAttribute<long int>(
-            name, reinterpret_cast<const long int *>(data), elements);
+            name, reinterpret_cast<const long int *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_long_long_int):
     {
         attribute = &ioCpp.DefineAttribute<long long int>(
-            name, reinterpret_cast<const long long int *>(data), elements);
+            name, reinterpret_cast<const long long int *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_unsigned_char):
     {
         attribute = &ioCpp.DefineAttribute<unsigned char>(
-            name, reinterpret_cast<const unsigned char *>(data), elements);
+            name, reinterpret_cast<const unsigned char *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_unsigned_short):
     {
         attribute = &ioCpp.DefineAttribute<unsigned short>(
-            name, reinterpret_cast<const unsigned short *>(data), elements);
+            name, reinterpret_cast<const unsigned short *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_unsigned_int):
     {
         attribute = &ioCpp.DefineAttribute<unsigned int>(
-            name, reinterpret_cast<const unsigned int *>(data), elements);
+            name, reinterpret_cast<const unsigned int *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_unsigned_long_int):
     {
         attribute = &ioCpp.DefineAttribute<unsigned long int>(
-            name, reinterpret_cast<const unsigned long int *>(data), elements);
+            name, reinterpret_cast<const unsigned long int *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_unsigned_long_long_int):
     {
         attribute = &ioCpp.DefineAttribute<unsigned long long int>(
             name, reinterpret_cast<const unsigned long long int *>(data),
-            elements);
+            elements, variable_name, separator);
         break;
     }
     case (adios2_type_float):
     {
         attribute = &ioCpp.DefineAttribute<float>(
-            name, reinterpret_cast<const float *>(data), elements);
+            name, reinterpret_cast<const float *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_double):
     {
         attribute = &ioCpp.DefineAttribute<double>(
-            name, reinterpret_cast<const double *>(data), elements);
+            name, reinterpret_cast<const double *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_int8_t):
     {
 
         attribute = &ioCpp.DefineAttribute<int8_t>(
-            name, reinterpret_cast<const int8_t *>(data), elements);
+            name, reinterpret_cast<const int8_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_int16_t):
     {
         attribute = &ioCpp.DefineAttribute<int16_t>(
-            name, reinterpret_cast<const int16_t *>(data), elements);
+            name, reinterpret_cast<const int16_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_int32_t):
     {
         attribute = &ioCpp.DefineAttribute<int32_t>(
-            name, reinterpret_cast<const int32_t *>(data), elements);
+            name, reinterpret_cast<const int32_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_int64_t):
     {
         attribute = &ioCpp.DefineAttribute<int64_t>(
-            name, reinterpret_cast<const int64_t *>(data), elements);
+            name, reinterpret_cast<const int64_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_uint8_t):
     {
         attribute = &ioCpp.DefineAttribute<uint8_t>(
-            name, reinterpret_cast<const uint8_t *>(data), elements);
+            name, reinterpret_cast<const uint8_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_uint16_t):
     {
         attribute = &ioCpp.DefineAttribute<uint16_t>(
-            name, reinterpret_cast<const uint16_t *>(data), elements);
+            name, reinterpret_cast<const uint16_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_uint32_t):
     {
         attribute = &ioCpp.DefineAttribute<uint32_t>(
-            name, reinterpret_cast<const uint32_t *>(data), elements);
+            name, reinterpret_cast<const uint32_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_uint64_t):
     {
         attribute = &ioCpp.DefineAttribute<uint64_t>(
-            name, reinterpret_cast<const uint64_t *>(data), elements);
+            name, reinterpret_cast<const uint64_t *>(data), elements,
+            variable_name, separator);
         break;
     }
     case (adios2_type_unknown):
@@ -466,6 +501,16 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
     return reinterpret_cast<adios2_attribute *>(attribute);
 }
 
+adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
+                                                    const char *name,
+                                                    const char *variable_name,
+                                                    const char *separator)
+{
+    const std::string globalName =
+        std::string(variable_name) + std::string(separator) + std::string(name);
+    return adios2_inquire_attribute(io, globalName.c_str());
+}
+
 int adios2_remove_attribute(adios2_io *io, const char *name)
 {
     adios2::helper::CheckForNullptr(
@@ -496,7 +541,7 @@ void adios2_set_parameter(adios2_io *io, const char *key, const char *value)
     reinterpret_cast<adios2::core::IO *>(io)->SetParameter(key, value);
 }
 
-unsigned int adios2_add_transport(adios2_io *io, const char *transport_type)
+size_t adios2_add_transport(adios2_io *io, const char *transport_type)
 {
     adios2::helper::CheckForNullptr(
         io, "for adios2_io, in call to adios2_add_transport");
@@ -504,8 +549,7 @@ unsigned int adios2_add_transport(adios2_io *io, const char *transport_type)
         transport_type);
 }
 
-void adios2_set_transport_parameter(adios2_io *io,
-                                    const unsigned int transport_index,
+void adios2_set_transport_parameter(adios2_io *io, const size_t transport_index,
                                     const char *key, const char *value)
 {
     adios2::helper::CheckForNullptr(
@@ -575,3 +619,7 @@ const char *adios2_io_engine_type(const adios2_io *io, size_t *length)
     }
     return ioCpp->m_EngineType.c_str();
 }
+
+#ifdef __cplusplus
+} // end extern C
+#endif

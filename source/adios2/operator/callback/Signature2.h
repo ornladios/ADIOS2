@@ -26,17 +26,20 @@ class Signature2 : public Operator
 public:
     Signature2(const std::function<
                    void(void *, const std::string &, const std::string &,
-                        const std::string &, const Dims &)> &function,
+                        const std::string &, const size_t, const Dims &,
+                        const Dims &, const Dims &)> &function,
                const Params &parameters, const bool debugMode);
 
     ~Signature2() = default;
 
     void RunCallback2(void *, const std::string &, const std::string &,
-                      const std::string &, const Dims &) const final;
+                      const std::string &, const size_t, const Dims &,
+                      const Dims &, const Dims &) const final;
 
 private:
     std::function<void(void *, const std::string &, const std::string &,
-                       const std::string &, const Dims &)>
+                       const std::string &, const size_t, const Dims &,
+                       const Dims &, const Dims &)>
         m_Function;
 };
 

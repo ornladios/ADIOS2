@@ -25,10 +25,8 @@ public:
 
 adios2::Params engineParams = {};         // parsed from command line
 int DurationSeconds = 60 * 60 * 24 * 365; // one year default
-int MyCloseNow = 0;
-int GlobalCloseNow = 0;
-
-void SigHandler(int sig) { MyCloseNow = 1; }
+static int MyCloseNow = 0;
+static int GlobalCloseNow = 0;
 
 static std::string Trim(std::string &str)
 {
@@ -62,6 +60,14 @@ static adios2::Params ParseEngineParams(std::string Input)
         Ret[Trim(ParamName)] = Trim(ParamValue);
     }
     return Ret;
+}
+
+std::string shutdown_name = "DieTest";
+
+inline bool file_exists(const std::string &name)
+{
+    struct stat buffer;
+    return (stat(name.c_str(), &buffer) == 0);
 }
 
 // ADIOS2 SST write
@@ -109,6 +115,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         io.DefineVariable<int64_t>("i64", shape, start, count);
         io.DefineVariable<float>("r32", shape, start, count);
         io.DefineVariable<double>("r64", shape, start, count);
+        io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+        io.DefineVariable<std::complex<double>>("c64", shape, start, count);
         io.DefineVariable<double>("r64_2d", shape2, start2, count2);
         io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
         io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
@@ -138,6 +146,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
         auto var_r32 = io.InquireVariable<float>("r32");
         auto var_r64 = io.InquireVariable<double>("r64");
+        auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
+        auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
         auto var_r64_2d_rev = io.InquireVariable<double>("r64_2d_rev");
         auto var_time = io.InquireVariable<int64_t>("time");
@@ -155,6 +165,8 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         var_i64.SetSelection(sel);
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
+        var_c32.SetSelection(sel);
+        var_c64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);
         var_r64_2d_rev.SetSelection(sel3);
         var_time.SetSelection(sel_time);
@@ -170,17 +182,29 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         engine.Put(var_i64, data_I64.data(), sync);
         engine.Put(var_r32, data_R32.data(), sync);
         engine.Put(var_r64, data_R64.data(), sync);
+        engine.Put(var_c32, data_C32.data(), sync);
+        engine.Put(var_c64, data_C64.data(), sync);
         engine.Put(var_r64_2d, &data_R64_2d[0][0], sync);
         engine.Put(var_r64_2d_rev, &data_R64_2d_rev[0][0], sync);
         // Advance to the next time step
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
-        usleep(1000 * 100); /* sleep for .1 seconds */
+        usleep(1000 * 1000); /* sleep for 1 seconds */
         step++;
 #ifdef ADIOS2_HAVE_MPI
         MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
                       MPI_COMM_WORLD);
+        if (file_exists(shutdown_name))
+        {
+            MyCloseNow = GlobalCloseNow = 1;
+        }
+#else
+        GlobalCloseNow = MyCloseNow;
+        if (file_exists(shutdown_name))
+        {
+            MyCloseNow = GlobalCloseNow = 1;
+        }
 #endif
     }
     // Close the file
@@ -206,6 +230,12 @@ int main(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--shutdown_filename")
+        {
+            shutdown_name = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--engine_params")
         {
             engineParams = ParseEngineParams(argv[2]);
@@ -221,12 +251,6 @@ int main(int argc, char **argv)
     if (argc > 1)
     {
     }
-
-    struct sigaction act;
-    act.sa_handler = SigHandler;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    sigaction(SIGUSR1, &act, 0);
 
     result = RUN_ALL_TESTS();
 

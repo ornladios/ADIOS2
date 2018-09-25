@@ -55,10 +55,12 @@ namespace adios2
 namespace core
 {
 
-IO::IO(const std::string name, MPI_Comm mpiComm, const bool inConfigFile,
-       const std::string hostLanguage, const bool debugMode)
-: m_Name(name), m_MPIComm(mpiComm), m_InConfigFile(inConfigFile),
-  m_HostLanguage(hostLanguage), m_DebugMode(debugMode)
+IO::IO(ADIOS &adios, const std::string name, MPI_Comm mpiComm,
+       const bool inConfigFile, const std::string hostLanguage,
+       const bool debugMode)
+: m_ADIOS(adios), m_Name(name), m_MPIComm(mpiComm),
+  m_InConfigFile(inConfigFile), m_HostLanguage(hostLanguage),
+  m_DebugMode(debugMode)
 {
 }
 
@@ -85,7 +87,7 @@ void IO::SetParameter(const std::string key, const std::string value) noexcept
 
 Params &IO::GetParameters() noexcept { return m_Parameters; }
 
-unsigned int IO::AddTransport(const std::string type, const Params &parameters)
+size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
     Params parametersMap(parameters);
     if (m_DebugMode)
@@ -103,16 +105,15 @@ unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 
     parametersMap["transport"] = type;
     m_TransportsParameters.push_back(parametersMap);
-    return static_cast<unsigned int>(m_TransportsParameters.size() - 1);
+    return m_TransportsParameters.size() - 1;
 }
 
-void IO::SetTransportParameter(const unsigned int transportIndex,
+void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
     if (m_DebugMode)
     {
-        if (transportIndex >=
-            static_cast<unsigned int>(m_TransportsParameters.size()))
+        if (transportIndex >= m_TransportsParameters.size())
         {
             throw std::invalid_argument(
                 "ERROR: transportIndex is larger than "
@@ -231,14 +232,15 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     for (const auto &variablePair : m_Variables)
     {
         const std::string name(variablePair.first);
-        const std::string type(variablePair.second.first);
-        variablesInfo[name]["Type"] = type;
+        const std::string type = InquireVariableType(name);
+
         if (type == "compound")
         {
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
+        variablesInfo[name]["Type"] = type;                                    \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             helper::ValueToString(variable.m_AvailableStepsCount);             \
@@ -265,12 +267,36 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     return variablesInfo;
 }
 
-std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
+std::map<std::string, Params>
+IO::GetAvailableAttributes(const std::string &variableName,
+                           const std::string separator) noexcept
 {
     std::map<std::string, Params> attributesInfo;
+    const std::string variablePrefix = variableName + separator;
+
     for (const auto &attributePair : m_Attributes)
     {
-        const std::string name(attributePair.first);
+        const std::string absoluteName(attributePair.first);
+        std::string name = absoluteName;
+        if (!variableName.empty())
+        {
+            // valid associated attribute
+            if (absoluteName.size() <= variablePrefix.size())
+            {
+                continue;
+            }
+
+            if (absoluteName.compare(0, variablePrefix.size(),
+                                     variablePrefix) == 0)
+            {
+                name = absoluteName.substr(variablePrefix.size());
+            }
+            else
+            {
+                continue;
+            }
+        }
+
         const std::string type(attributePair.second.first);
         attributesInfo[name]["Type"] = type;
 
@@ -280,7 +306,7 @@ std::map<std::string, Params> IO::GetAvailableAttributes() noexcept
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Attribute<T> &attribute = *InquireAttribute<T>(name);                  \
+        Attribute<T> &attribute = *InquireAttribute<T>(absoluteName);          \
         attributesInfo[name]["Elements"] =                                     \
             std::to_string(attribute.m_Elements);                              \
                                                                                \
@@ -310,12 +336,39 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
         return std::string();
     }
 
-    return itVariable->second.first;
+    const std::string type = itVariable->second.first;
+
+    if (m_Streaming)
+    {
+        if (type == "compound")
+        {
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        const Variable<T> &variable =                                          \
+            const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
+                itVariable->second.second);                                    \
+        if (!variable.IsValidStep(m_EngineStep + 1))                           \
+        {                                                                      \
+            return std::string();                                              \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+    }
+
+    return type;
 }
 
-std::string IO::InquireAttributeType(const std::string &name) const noexcept
+std::string IO::InquireAttributeType(const std::string &name,
+                                     const std::string &variableName,
+                                     const std::string separator) const noexcept
 {
-    auto itAttribute = m_Attributes.find(name);
+    const std::string globalName =
+        helper::GlobalName(name, variableName, separator);
+
+    auto itAttribute = m_Attributes.find(globalName);
     if (itAttribute == m_Attributes.end())
     {
         return std::string();
@@ -537,6 +590,37 @@ void IO::FlushAll()
     }
 }
 
+void IO::ResetVariablesStepSelection(const bool zeroStart,
+                                     const std::string hint)
+{
+    const auto &variablesData = GetVariablesDataMap();
+
+    for (const auto &variableData : variablesData)
+    {
+        const std::string name = variableData.first;
+        const std::string type = InquireVariableType(name);
+
+        if (type.empty())
+        {
+            continue;
+        }
+
+        if (type == "compound")
+        {
+        }
+// using relative start
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = InquireVariable<T>(name);                      \
+        variable->CheckRandomAccessConflict(hint);                             \
+        variable->ResetStepsSelection(zeroStart);                              \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+}
+
 // PRIVATE
 int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
     noexcept
@@ -592,12 +676,14 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
 
 #define declare_template_instantiation(T)                                      \
-    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
-                                                  const T *, const size_t);    \
-    template Attribute<T> &IO::DefineAttribute<T>(const std::string &,         \
-                                                  const T &);                  \
+    template Attribute<T> &IO::DefineAttribute<T>(                             \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string);                                                    \
+    template Attribute<T> &IO::DefineAttribute<T>(                             \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string);                                                    \
     template Attribute<T> *IO::InquireAttribute<T>(                            \
-        const std::string &) noexcept;
+        const std::string &, const std::string &, const std::string) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

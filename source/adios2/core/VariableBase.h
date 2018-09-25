@@ -53,6 +53,14 @@ public:
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
 
+    /** For read mode. true: SetStepSelection was used, only valid in File based
+     * engines, false: streaming */
+    bool m_RandomAccess = false;
+
+    /** used in streaming mode, true: first variable encounter, false: variable
+     * already encountered in previous step */
+    bool m_FirstStreamingStep = true;
+
     /** Operators metadata info */
     struct Operation
     {
@@ -77,7 +85,7 @@ public:
     /** Index Metadata Position in a serial metadata buffer */
     size_t m_IndexStart = 0;
 
-    /** Index to Step and Subsets inside a step characteristics position in a
+    /** Index to Step and blocks' (inside a step) characteristics position in a
      * serial metadata buffer
      * <pre>
      * key: step number (time_index in bp3 format)
@@ -170,6 +178,21 @@ public:
 
     bool IsConstantDims() const noexcept;
     void SetConstantDims() noexcept;
+
+    bool IsValidStep(const size_t step) const noexcept;
+
+    /**
+     * Resets m_StepsStart and m_StepsCount. Must be called in BeginStep
+     */
+    void ResetStepsSelection(const bool zeroStart) noexcept;
+
+    /**
+     * Checks if variable has a conflict to be accessed as a stream and
+     * random-access (SetStepSelection has been called)
+     * @param hint improve exception error message
+     * @throws std::invalid_argument if random access and streaming are called
+     */
+    void CheckRandomAccessConflict(const std::string hint) const;
 
 protected:
     const bool m_DebugMode = false;

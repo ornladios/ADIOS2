@@ -28,11 +28,17 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
     variable.SetData(data);
     if (m_WorkflowMode == "subscribe")
     {
-        m_DataManDeserializer.Get(variable, m_CurrentStep);
+        while (m_DataManDeserializer.Get(data, variable.m_Name,
+                                         variable.m_Start, variable.m_Count,
+                                         m_CurrentStep) != 0)
+        {
+        }
     }
     else if (m_WorkflowMode == "p2p")
     {
-        while (m_DataManDeserializer.Get(variable, m_CurrentStep) != 0)
+        while (m_DataManDeserializer.Get(data, variable.m_Name,
+                                         variable.m_Start, variable.m_Count,
+                                         m_CurrentStep) != 0)
         {
         }
     }
@@ -41,7 +47,22 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    GetSyncCommon(variable, data);
+    if (m_WorkflowMode == "subscribe")
+    {
+        while (m_DataManDeserializer.Get(data, variable.m_Name,
+                                         variable.m_Start, variable.m_Count,
+                                         m_CurrentStep) != 0)
+        {
+        }
+    }
+    else if (m_WorkflowMode == "p2p")
+    {
+        while (m_DataManDeserializer.Get(data, variable.m_Name,
+                                         variable.m_Start, variable.m_Count,
+                                         m_CurrentStep) != 0)
+        {
+        }
+    }
 }
 
 template <typename T>
@@ -87,6 +108,28 @@ DataManReader::BlocksInfoCommon(const Variable<T> &variable,
         }
     }
     return v;
+}
+
+template <typename T>
+void DataManReader::CheckIOVariable(const std::string &name, const Dims &shape,
+                                    const Dims &start, const Dims &count)
+{
+    auto v = m_IO.InquireVariable<T>(name);
+    if (v == nullptr)
+    {
+        m_IO.DefineVariable<T>(name, shape, start, count);
+    }
+    else
+    {
+        if (v->m_Shape != shape)
+        {
+            v->SetShape(shape);
+        }
+        if (v->m_Start != start || v->m_Count != count)
+        {
+            v->SetSelection({start, count});
+        }
+    }
 }
 
 } // end namespace engine

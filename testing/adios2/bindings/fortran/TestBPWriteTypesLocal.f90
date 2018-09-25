@@ -8,7 +8,7 @@
      integer :: inx, irank, isize, ierr, i
 
      type(adios2_adios) :: adios
-     type(adios2_io) :: ioWrite, ioRead
+     type(adios2_io) :: ioWrite, ioRead, ioDummy
      type(adios2_variable), dimension(12) :: variables
      type(adios2_engine) :: bpWriter, bpReader
 
@@ -88,6 +88,16 @@
 
      write(*,*) "Engine type: ", ioWrite%engine_type
      if( TRIM(ioWrite%engine_type) /= 'BPFile' ) stop 'Wrong engine_type'
+
+     call adios2_set_engine(ioWrite, "SST", ierr)
+     write(*,*) "Engine type: ", ioWrite%engine_type
+     if( TRIM(ioWrite%engine_type) /= 'SST' ) stop 'Wrong engine_type'
+
+     call adios2_at_io(ioDummy, adios, "ioWrite", ierr)
+     write(*,*) "Engine type: ", ioDummy%engine_type
+     if( TRIM(ioDummy%engine_type) /= 'SST' ) stop 'Wrong engine_type'
+
+     call adios2_set_engine(ioWrite, "BPFile", ierr)
 
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes_local.bp", adios2_mode_write, &

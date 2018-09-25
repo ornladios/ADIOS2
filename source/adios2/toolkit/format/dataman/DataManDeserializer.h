@@ -32,8 +32,6 @@ public:
     size_t MinStep();
     int Put(const std::shared_ptr<const std::vector<char>> data);
     template <class T>
-    int Get(core::Variable<T> &variable, const size_t step);
-    template <class T>
     int Get(T *output_data, const std::string &varName, const Dims &varStart,
             const Dims &varCount, const size_t step);
     void Erase(const size_t step);
@@ -51,7 +49,6 @@ public:
         size_t size;
         size_t position;
         size_t index;
-        int rank;
         std::string compression;
         Params params;
     };
@@ -74,6 +71,16 @@ private:
     bool m_IsLittleEndian;
 
     std::mutex m_Mutex;
+
+    struct VarDefaults
+    {
+        std::string doid;
+        bool isRowMajor;
+        bool isLittleEndian;
+        std::string type;
+        Dims shape;
+    };
+    std::map<std::string, VarDefaults> m_VarDefaultsMap;
 };
 
 } // end namespace format

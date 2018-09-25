@@ -5,9 +5,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#else
+#include "sstmpidummy.h"
+#endif
 
 #include "sst.h"
 
@@ -79,9 +84,27 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         /* determine reasonable default, now "enet" */
         Params->ControlTransport = strdup("enet");
     }
+    Stream->ConnectionUsleepMultiplier = 50;
+    if ((strcmp(Params->ControlTransport, "enet") == 0) &&
+        getenv("USLEEP_MULTIPLIER"))
+    {
+        sscanf("%d", getenv("USLEEP_MULTIPLIER"),
+               &Stream->ConnectionUsleepMultiplier);
+    }
     for (int i = 0; Params->ControlTransport[i] != 0; i++)
     {
         Params->ControlTransport[i] = tolower(Params->ControlTransport[i]);
+    }
+    if ((strcmp(Params->ControlTransport, "enet") == 0) &&
+        getenv("USLEEP_MULTIPLIER"))
+    {
+        int tmp;
+        if (sscanf(getenv("USLEEP_MULTIPLIER"), "%d", &tmp) == 1)
+        {
+            Stream->ConnectionUsleepMultiplier = tmp;
+        }
+        CP_verbose(Stream, "USING %d as usleep multiplier before connections\n",
+                   Stream->ConnectionUsleepMultiplier);
     }
     CP_verbose(Stream, "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);
@@ -716,6 +739,11 @@ extern void AddToLastCallFreeList(void *Block)
 
 extern void SstStreamDestroy(SstStream Stream)
 {
+    /*
+     * StackStream is only used to access verbosity info
+     * in a safe way after all streams have been destroyed
+     */
+    struct _SstStream StackStream = *Stream;
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
     if (Stream->Role == ReaderRole)
@@ -755,8 +783,7 @@ extern void SstStreamDestroy(SstStream Stream)
         free(FFSList);
         FFSList = Tmp;
     }
-    if ((Stream->Role == WriterRole) &&
-        (Stream->ConfigParams->MarshalMethod == SstMarshalFFS))
+    if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
     {
         FFSFreeMarshalData(Stream);
         if (Stream->M)
@@ -813,7 +840,7 @@ extern void SstStreamDestroy(SstStream Stream)
             free_FMfield_list(CP_SstParamsList);
         CP_SstParamsList = NULL;
     }
-    CP_verbose(Stream, "SstStreamDestroy successful, returning\n");
+    CP_verbose(&StackStream, "SstStreamDestroy successful, returning\n");
 }
 
 extern char *CP_GetContactString(SstStream Stream)

@@ -18,6 +18,7 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 class IO;     // friend
 class Engine; // friend
@@ -28,6 +29,7 @@ namespace core
 template <class T>
 class Variable; // private implementation
 }
+/// \endcond
 
 template <class T>
 class Variable
@@ -37,9 +39,16 @@ class Variable
     friend class Engine;
 
 public:
+    /**
+     * Empty (default) constructor, use it as a placeholder for future
+     * variables from IO:DefineVariable<T> or IO:InquireVariable<T>.
+     * Can be used with STL containers.
+     */
     Variable<T>() = default;
+
     ~Variable<T>() = default;
 
+    /** Checks if object is valid, e.g. if( variable ) { //..valid } */
     explicit operator bool() const noexcept;
 
     /**
@@ -144,6 +153,7 @@ public:
      */
     std::vector<Operation> Operations() const;
 
+    /** Contains sub-block information for a particular Variable<T> */
     struct Info
     {
         Dims Start;

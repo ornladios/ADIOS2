@@ -135,7 +135,6 @@ using std::uint64_t;
 // Complex
 using cfloat = std::complex<float>;
 using cdouble = std::complex<double>;
-using cldouble = std::complex<long double>;
 
 // Limit
 constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
@@ -183,7 +182,7 @@ constexpr bool endl = true;
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;
-using vParams = std::map<std::string, std::string>;
+using vParams = std::vector<std::pair<std::string, Params>>;
 using Steps = size_t;
 
 template <class T>
@@ -372,11 +371,6 @@ template <>
 inline std::string GetType<std::complex<double>>() noexcept
 {
     return "double complex";
-}
-template <>
-inline std::string GetType<std::complex<long double>>() noexcept
-{
-    return "long double complex";
 }
 
 } // end namespace adios2

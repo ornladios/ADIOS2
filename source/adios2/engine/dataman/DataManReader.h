@@ -51,10 +51,6 @@ private:
     void IOThreadBP(std::shared_ptr<transportman::DataMan> man);
     void RunCallback();
     void DoClose(const int transportIndex = -1) final;
-    StepStatus BeginStepP2P(StepMode stepMode,
-                            const float timeoutSeconds = 0.f);
-    StepStatus BeginStepSubscribe(StepMode stepMode,
-                                  const float timeoutSeconds = 0.f);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -79,6 +75,10 @@ private:
     template <typename T>
     std::vector<typename Variable<T>::Info>
     BlocksInfoCommon(const Variable<T> &variable, const size_t step) const;
+
+    template <typename T>
+    void CheckIOVariable(const std::string &name, const Dims &shape,
+                         const Dims &start, const Dims &count);
 };
 
 } // end namespace engine

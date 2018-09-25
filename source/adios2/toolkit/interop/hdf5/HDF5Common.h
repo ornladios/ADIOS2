@@ -42,6 +42,11 @@ public:
 
     ~HDF5DatasetGuard()
     {
+        if (m_Chain.size() == 0)
+        {
+            return;
+        }
+
         for (int i = 0; i < m_Chain.size() - 1; i++)
         {
             H5Gclose(m_Chain[i]);
@@ -120,11 +125,18 @@ public:
     void StoreADIOSName(const std::string adiosName, hid_t dsetID);
     void ReadADIOSName(hid_t dsetID, std::string &adiosName);
 
+    void LocateAttrParent(const std::string &attrName,
+                          std::vector<std::string> &list,
+                          std::vector<hid_t> &datasetChain);
+
     void Close();
     void Advance();
 
     void WriteAttrFromIO(core::IO &io);
     void ReadAttrToIO(core::IO &io);
+
+    void ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
+                            std::string const &pathFromRoot);
 
     void SetAdiosStep(int ts);
 
@@ -155,7 +167,6 @@ public:
 
     hid_t m_DefH5TypeComplexDouble;
     hid_t m_DefH5TypeComplexFloat;
-    hid_t m_DefH5TypeComplexLongDouble;
 
     unsigned int m_CurrentAdiosStep = 0;
 
@@ -174,10 +185,12 @@ private:
                           hid_t attrId, hid_t h5Type, hid_t sid);
     void ReadInNonStringAttr(core::IO &io, const std::string &attrName,
                              hid_t attrId, hid_t h5Type, hid_t sid);
-    void WriteStringAttr(core::IO &io, const std::string &attrName);
+    void WriteStringAttr(core::IO &io, core::Attribute<std::string> *adiosAttr,
+                         const std::string &attrName, hid_t parentID);
 
     template <class T>
-    void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr);
+    void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
+                            hid_t parentID, const char *h5Name);
 
     const bool m_DebugMode;
     bool m_WriteMode = false;

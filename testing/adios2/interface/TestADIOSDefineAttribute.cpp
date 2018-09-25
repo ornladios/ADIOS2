@@ -637,6 +637,72 @@ TEST_F(ADIOSDefineAttributeTest, DefineAndRemoveAll)
     EXPECT_FALSE(attr_r64);
 }
 
+TEST_F(ADIOSDefineAttributeTest, DefineCheckType)
+{
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineAttribute<std::string>("iString", "String Attribute");
+    io.DefineAttribute<int8_t>("i8", -8);
+    io.DefineAttribute<int16_t>("i16", -16);
+    io.DefineAttribute<int32_t>("i32", -32);
+    io.DefineAttribute<int64_t>("i64", -64);
+    io.DefineAttribute<uint8_t>("u8", 8);
+    io.DefineAttribute<uint16_t>("u16", 16);
+    io.DefineAttribute<uint32_t>("u32", 32);
+    io.DefineAttribute<uint64_t>("u64", 64);
+    io.DefineAttribute<float>("r32", 32);
+    io.DefineAttribute<double>("r64", 64);
+
+    EXPECT_EQ(io.AttributeType("iString"), adios2::GetType<std::string>());
+    EXPECT_EQ(io.AttributeType("i8"), adios2::GetType<int8_t>());
+    EXPECT_EQ(io.AttributeType("i16"), adios2::GetType<int16_t>());
+    EXPECT_EQ(io.AttributeType("i32"), adios2::GetType<int32_t>());
+    EXPECT_EQ(io.AttributeType("i64"), adios2::GetType<int64_t>());
+    EXPECT_EQ(io.AttributeType("u8"), adios2::GetType<uint8_t>());
+    EXPECT_EQ(io.AttributeType("u16"), adios2::GetType<uint16_t>());
+    EXPECT_EQ(io.AttributeType("u32"), adios2::GetType<uint32_t>());
+    EXPECT_EQ(io.AttributeType("u64"), adios2::GetType<uint64_t>());
+    EXPECT_EQ(io.AttributeType("r32"), adios2::GetType<float>());
+    EXPECT_EQ(io.AttributeType("r64"), adios2::GetType<double>());
+}
+
+TEST_F(ADIOSDefineAttributeTest, VariableException)
+{
+    const std::string separator = "/";
+
+    std::vector<std::string> numbers = {"one", "two", "three"};
+
+// Write test data using BP
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+
+        EXPECT_THROW(
+            io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"),
+            std::invalid_argument);
+
+        EXPECT_THROW(io.DefineAttribute<std::string>(
+                         "Hello Array", numbers.data(), numbers.size(),
+                         "myVar1", separator),
+                     std::invalid_argument);
+
+        auto var = io.DefineVariable<int>("myVar1");
+
+        EXPECT_NO_THROW(
+            io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"));
+
+        EXPECT_NO_THROW(io.DefineAttribute<std::string>(
+            "Hello Array", numbers.data(), numbers.size(), "myVar1",
+            separator));
+    }
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

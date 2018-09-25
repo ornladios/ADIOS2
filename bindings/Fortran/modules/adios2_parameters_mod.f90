@@ -65,7 +65,6 @@ module adios2_parameters_mod
 
     integer(kind=8), parameter, dimension(1) :: adios2_null_dims = (/-1/)
 
-    ! Debug mode
     logical, parameter :: adios2_advance_yes = .true.
     logical, parameter :: adios2_advance_no  = .false.
 

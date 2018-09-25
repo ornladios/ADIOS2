@@ -8,8 +8,8 @@
  *      Author: Greg Eisenhauer
  */
 
+#include <adios2/ADIOSMPI.h>
 #include <memory>
-#include <mpi.h>
 
 #include "SstParamParser.h"
 #include "SstWriter.h"

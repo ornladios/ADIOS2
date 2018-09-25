@@ -81,6 +81,21 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const size_t elements);
 
 /**
+ * Defines an attribute associated to a variable by name
+ * @param io handler that owns the variable
+ * @param name unique attribute name inside IO handler
+ * @param type primitive type
+ * @param data attribute data single value or array
+ * @param elements size of data, if 1 it's a single value attribute, else
+ * accepts arrays
+ * @param separator hierarchy separator (e.g. "/" in variable/attribute )
+ * @return attribute handler
+ */
+adios2_attribute *adios2_define_variable_attribute(
+    adios2_io *io, const char *name, const adios2_type type, const void *data,
+    const size_t elements, const char *variable_name, const char *separator);
+
+/**
  * Returns a handler to a previously defined attribute identified by a unique
  * name
  * @param io handler to attribute io owner
@@ -88,6 +103,20 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
  * @return attribute handler if found, else NULL
  */
 adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name);
+
+/**
+ * Returns a handler to a previously defined attribute associated to a variable
+ * identified by a unique name
+ * @param io handler to attribute io owner
+ * @param name unique name input
+ * @param variable_name name of the variable associate with this attribute
+ * @param separator hierarchy separator (e.g. "/" in variable/attribute )
+ * @return attribute handler if found, else NULL
+ */
+adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
+                                                    const char *name,
+                                                    const char *variable_name,
+                                                    const char *separator);
 
 /**
  * Remove an attribute, DANGEROUS function as it creates dangling pointers
@@ -126,7 +155,7 @@ void adios2_set_parameter(adios2_io *io, const char *key, const char *value);
  * @return transport_index handler used for setting transport parameters or at
  * Close
  */
-unsigned int adios2_add_transport(adios2_io *io, const char *transport_type);
+size_t adios2_add_transport(adios2_io *io, const char *transport_type);
 
 /**
  * Sets a single transport parameter using io and transport_index (from
@@ -136,8 +165,7 @@ unsigned int adios2_add_transport(adios2_io *io, const char *transport_type);
  * @param key parameter key
  * @param value parameter value
  */
-void adios2_set_transport_parameter(adios2_io *io,
-                                    const unsigned int transport_index,
+void adios2_set_transport_parameter(adios2_io *io, const size_t transport_index,
                                     const char *key, const char *value);
 
 /**
@@ -164,6 +192,10 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
                                     const adios2_mode open_mode,
                                     MPI_Comm mpi_comm);
 
+/**
+ * Flushes all engines created with current io handler using adios2_open
+ * @param io handler whose engine will be flushed
+ */
 void adios2_flush_all_engines(adios2_io *io);
 
 /**

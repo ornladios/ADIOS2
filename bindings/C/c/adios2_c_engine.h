@@ -33,25 +33,115 @@ adios2_step_status adios2_begin_step(adios2_engine *engine,
 size_t adios2_current_step(const adios2_engine *engine);
 
 //***************** PUT *****************
+/**
+ * Put data associated with a Variable in an engine, used for engines with
+ * adios2_mode_write at adios2_open
+ * @param engine handler for a particular engine where data will be put
+ * @param variable contains variable metadata informatio
+ * @param data user data to be associated with a variable, must be the same type
+ * passed to adios2_define_variable
+ * @param launch mode policy
+ * <pre>
+ * 		adios2_mode_deferred: lazy evaulation, do not use data until
+ * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
+ * preferred way.
+ * 		adios_mode_sync, data is consumed by the engine and can be
+ * reused
+ * immediately. Special case, only use if necessary.
+ * </pre>
+ */
 void adios2_put(adios2_engine *engine, adios2_variable *variable,
                 const void *data, const adios2_mode mode);
 
+/**
+ * Put data associated with a Variable in an engine, used for engines with
+ * adios2_mode_write at adios2_open.
+ * This is the name string version
+ * @param engine handler for a particular engine where data will be put
+ * @param variable_name variable with this name must exists in adios2_io that
+ * opened the engine handler (1st parameter)
+ * @param data user data to be associated with a variable, must be the same type
+ * passed to adios2_define_variable
+ * @param launch mode policy
+ * <pre>
+ * 		adios2_mode_deferred: lazy evaulation, do not use data until
+ * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
+ * preferred way.
+ * 		adios_mode_sync, data is consumed by the engine and can be
+ * reused
+ * immediately. Special case, only use if necessary.
+ * </pre>
+ */
 void adios2_put_by_name(adios2_engine *engine, const char *variable_name,
                         const void *data, const adios2_mode mode);
 
+/**
+ * Performs all the adios2_put and adios2_put_by_name called with mode
+ * adios2_mode_deferred, up to this point, by putting the data in the Engine.
+ * User data can be reused after this point.
+ * @param engine handler for a particular engine where data will be put
+ */
 void adios2_perform_puts(adios2_engine *engine);
 
 //***************** GET *****************
+/**
+ * Gets data associated with a Variable from an engine, used for engines with
+ * adios2_mode_read at adios2_open.
+ * This is the name string version
+ * @param engine handler for a particular engine where data will be put
+ * @param variable handler must exists in adios2_io that
+ * opened the engine handler (1st parameter). Typically from
+ * adios2_inquire_variable
+ * @param data user data to be associated with a variable, must be the same type
+ * passed to adios2_define_variable. Must be pre-allocated for the required
+ * variable selection.
+ * @param launch mode policy
+ * <pre>
+ * 		adios2_mode_deferred: lazy evaluation, do not use data until
+ * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
+ * preferred way.
+ * 		adios_mode_sync, data is populated by the engine and can be
+ * reused
+ * immediately. Special case, only use if necessary.
+ * </pre>
+ */
 void adios2_get(adios2_engine *engine, adios2_variable *variable, void *data,
                 const adios2_mode mode);
 
+/**
+ * Gets data associated with a Variable from an engine, used for engines with
+ * adios2_mode_read at adios2_open.
+ * This is the name string version
+ * @param engine handler for a particular engine where data will be put
+ * @param variable_name variable with this name must exists in adios2_io that
+ * opened the engine handler (1st parameter).
+ * @param data user data to be associated with a variable, must be the same type
+ * passed to adios2_define_variable. Must be pre-allocated for the required
+ * variable selection.
+ * @param launch mode policy
+ * <pre>
+ * 		adios2_mode_deferred: lazy evaluation, do not use data until
+ * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
+ * preferred way.
+ * 		adios_mode_sync, data is populated by the engine and can be
+ * reused
+ * immediately. Special case, only use if necessary.
+ * </pre>
+ */
 void adios2_get_by_name(adios2_engine *engine, const char *variable_name,
                         void *data, const adios2_mode mode);
 
+/**
+ * Performs all the adios2_get and adios2_get_by_name called with mode
+ * adios2_mode_deferred up to this point by getting the data from the Engine.
+ * User data can be reused after this point.
+ * @param engine handler for a particular engine where data will be obtained
+ */
 void adios2_perform_gets(adios2_engine *engine);
 
 /**
- * terminates interaction with current step
+ * terminates interaction with current step. By default puts/gets data to/from
+ * all transports
  * @param engine handler executing IO tasks
  */
 void adios2_end_step(adios2_engine *engine);
@@ -70,9 +160,10 @@ void adios2_flush(adios2_engine *engine);
 void adios2_flush_by_index(adios2_engine *engine, const int transport_index);
 
 /**
- * Close all transports in adios2_Engine
+ * Close all transports in adios2_Engine. Call is required to close system
+ * resources.
  * @param engine handler containing all transports to
- * be closed. engine Becomes NULL after this function is called.
+ * be closed. engine becomes NULL after this function is called.
  */
 void adios2_close(adios2_engine *engine);
 

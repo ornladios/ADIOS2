@@ -8,11 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2_f2c_operator.h"
+#include "adios2_f2c_common.h"
 
-#include <cstddef>  //std::size_t
-#include <iostream> //std::cerr
-#include <stdexcept>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void FC_GLOBAL(adios2_operator_type_f2c,
                ADIOS2_OPERATOR_TYPE_F2C)(const adios2_operator **op,
@@ -43,3 +43,7 @@ void FC_GLOBAL(adios2_operator_type_f2c,
         *ierr = -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

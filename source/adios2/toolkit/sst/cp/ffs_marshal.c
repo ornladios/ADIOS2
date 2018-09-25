@@ -3,9 +3,14 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#else
+#include "sstmpidummy.h"
+#endif
 #include <pthread.h>
 
 #include "adios2/ADIOSConfig.h"
@@ -14,6 +19,28 @@
 
 #include "cp_internal.h"
 #include "ffs_marshal.h"
+
+typedef struct dcomplex
+{
+    double real_part;
+    double imag_part;
+} dcomplex_struct;
+
+typedef struct fcomplex
+{
+    float real_part;
+    float imag_part;
+} fcomplex_struct;
+
+FMField fcomplex_field_list[] = {
+    {"real", "float", sizeof(float), FMOffset(fcomplex_struct *, real_part)},
+    {"imag", "float", sizeof(float), FMOffset(fcomplex_struct *, imag_part)},
+    {NULL, NULL, 0, 0}};
+
+FMField dcomplex_field_list[] = {
+    {"real", "float", sizeof(double), FMOffset(dcomplex_struct *, real_part)},
+    {"imag", "float", sizeof(double), FMOffset(dcomplex_struct *, imag_part)},
+    {NULL, NULL, 0, 0}};
 
 static char *ConcatName(const char *base_name, const char *postfix)
 {
@@ -113,6 +140,14 @@ static char *TranslateADIOS2Type2FFS(const char *Type)
     else if (strcmp(Type, "long double") == 0)
     {
         return strdup("float");
+    }
+    else if (strcmp(Type, "float complex") == 0)
+    {
+        return strdup("complex4");
+    }
+    else if (strcmp(Type, "double complex") == 0)
+    {
+        return strdup("complex8");
     }
     return strdup(Type);
 }
@@ -336,7 +371,6 @@ extern void FFSFreeMarshalData(SstStream Stream)
     }
     else
     {
-
         /* reader side */
         struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
         for (int i = 0; i < Stream->WriterCohortSize; i++)
@@ -1140,9 +1174,17 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     if (!Info->DataFormat)
     {
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
-        FMFormat Format = FMregister_simple_format(
-            Info->LocalFMContext, "Data", Info->DataFields,
-            FMstruct_size_field_list(Info->DataFields, sizeof(char *)));
+        FMStructDescRec struct_list[4] = {
+            {NULL, NULL, 0, NULL},
+            {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
+            {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {NULL, NULL, 0, NULL}};
+        struct_list[0].format_name = "Data";
+        struct_list[0].field_list = Info->DataFields;
+        struct_list[0].struct_size =
+            FMstruct_size_field_list(Info->DataFields, sizeof(char *));
+        FMFormat Format =
+            register_data_format(Info->LocalFMContext, &struct_list[0]);
         Info->DataFormat = Format;
         Block->FormatServerRep =
             get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
@@ -1235,6 +1277,11 @@ extern void FFSClearTimestepData(SstStream Stream)
 {
 
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    for (int i = 0; i < Stream->WriterCohortSize; i++)
+    {
+        if (Info->WriterInfo[i].RawBuffer)
+            free(Info->WriterInfo[i].RawBuffer);
+    }
     memset(Info->WriterInfo, 0,
            sizeof(Info->WriterInfo[0]) * Stream->WriterCohortSize);
     memset(Info->MetadataBaseAddrs, 0,
@@ -1302,6 +1349,12 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
     }
 
+    if (!MetaData->Metadata[WriterRank]->block)
+    {
+        fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == "
+                        "NULL for WriterRank = %d\n",
+                WriterRank);
+    }
     FFSformat = FFSTypeHandle_from_encode(
         Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block);
 
@@ -1397,6 +1450,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             VarRec->PerWriterMetaFieldDesc[WriterRank] = &FieldList[i];
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
             i += 4;
+            free(ArrayName);
         }
         else
         {

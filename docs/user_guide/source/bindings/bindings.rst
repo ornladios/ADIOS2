@@ -61,7 +61,7 @@ The current interaction flow for each language binding API with the ADIOS2 libra
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
 
-.. include:: cxx.rst
+.. include:: cxx11.rst
 .. include:: fortran.rst
 .. include:: c.rst
 .. include:: python.rst

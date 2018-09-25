@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 /**
- * Create an ADIOS struct pointer handler using a runtime config file in MPI
+ * Create an ADIOS struct pointer handler using a runtime config file in a MPI
  * application.
  * @param config_file runtime configuration file, XML format, future: JSON
  * @param mpi_comm MPI communicator from application for ADIOS scope
@@ -31,7 +31,8 @@ adios2_adios *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
                                  const adios2_debug_mode debug_mode);
 
 /**
- * Create an ADIOS struct pointer in MPI application.
+ * Create an ADIOS struct pointer in a MPI application, without a runtime config
+ * file.
  * @param mpi_comm MPI communicator from application for ADIOS scope
  * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
  * @return valid ADIOS* handler
@@ -73,7 +74,7 @@ adios2_io *adios2_declare_io(adios2_adios *adios, const char *io_name);
 adios2_io *adios2_at_io(adios2_adios *adios, const char *io_name);
 
 /**
- * define an operator supported by ADIOS2: e.g.
+ * Define an operator supported by ADIOS2: e.g.
  * @param adios ADIOS* handler that owns the Operator* component
  * @param name unique operator name within adios component
  * @param type supported type: e.g. : "zfp", "sz"
@@ -83,7 +84,7 @@ adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name,
                                         const char *type);
 
 /**
- * retrieves an existing operator by name
+ * Retrieve an existing operator by name
  * @param adios ADIOS* handler that owns the Operator* component
  * @param name unique operator name within adios component
  * @return if found returns an operator handler, if not found returns NULL
@@ -101,7 +102,8 @@ void adios2_flush_all(adios2_adios *adios);
 /**
  * Final point for adios2_ADIOS handler.
  * Deallocate adios pointer. Required to avoid memory leaks.
- * @param adios input to be deallocated
+ * @param adios handler to be deallocated, must be initialized with any of the
+ * adios2_init signatures
  */
 void adios2_finalize(adios2_adios *adios);
 

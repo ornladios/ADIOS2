@@ -27,7 +27,8 @@ public:
 #define declare_type(T)                                                        \
     Signature1(const std::function<void(                                       \
                    const T *, const std::string &, const std::string &,        \
-                   const std::string &, const Dims &)> &function,              \
+                   const std::string &, const size_t, const Dims &,            \
+                   const Dims &, const Dims &)> &function,                     \
                const Params &parameters, const bool debugMode);
 
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
@@ -37,14 +38,16 @@ public:
 
 #define declare_type(T)                                                        \
     void RunCallback1(const T *, const std::string &, const std::string &,     \
-                      const std::string &, const Dims &) const final;
+                      const std::string &, const size_t, const Dims &,         \
+                      const Dims &, const Dims &) const final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 private:
 #define declare_type(T, L)                                                     \
     std::function<void(const T *, const std::string &, const std::string &,    \
-                       const std::string &, const Dims &)>                     \
+                       const std::string &, const size_t, const Dims &,        \
+                       const Dims &, const Dims &)>                            \
         m_Function##L;
     ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
 #undef declare_type

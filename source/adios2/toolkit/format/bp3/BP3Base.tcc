@@ -152,13 +152,6 @@ int8_t BP3Base::GetDataType<cdouble>() const noexcept
     return type;
 }
 
-template <>
-int8_t BP3Base::GetDataType<cldouble>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_long_double_complex);
-    return type;
-}
-
 template <class T>
 BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
@@ -342,8 +335,7 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
             if (characteristics.Count.empty() || characteristics.Count[0] == 1)
             {
                 characteristics.Statistics.Value =
-                    helper::ReadValue<typename TypeInfo<T>::ValueType>(
-                        buffer, position);
+                    helper::ReadValue<T>(buffer, position);
                 characteristics.Statistics.IsValue = true;
             }
             else // used for attributes
@@ -360,16 +352,14 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_min):
         {
             characteristics.Statistics.Min =
-                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
-                                                                   position);
+                helper::ReadValue<T>(buffer, position);
             break;
         }
 
         case (characteristic_max):
         {
             characteristics.Statistics.Max =
-                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
-                                                                   position);
+                helper::ReadValue<T>(buffer, position);
             break;
         }
 

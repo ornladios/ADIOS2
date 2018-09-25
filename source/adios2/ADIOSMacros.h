@@ -48,8 +48,7 @@
     MACRO(double)                                                              \
     MACRO(long double)                                                         \
     MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)                                                \
-    MACRO(std::complex<long double>)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                              \
     MACRO(char)                                                                \
@@ -67,8 +66,7 @@
     MACRO(double)                                                              \
     MACRO(long double)                                                         \
     MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)                                                \
-    MACRO(std::complex<long double>)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(MACRO)                      \
     MACRO(float)                                                               \
@@ -93,8 +91,7 @@
     MACRO(double)                                                              \
     MACRO(long double)                                                         \
     MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)                                                \
-    MACRO(std::complex<long double>)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_ZFP_TYPE_1ARG(MACRO)                                    \
     MACRO(int32_t)                                                             \
@@ -157,7 +154,7 @@
    virtual          short& foo_Short(std::string bar);
    virtual unsigned short& foo_UShort(std::string bar);
    ...
-   virtual std::complex<long double>& foo_CLDouble(std::string bar);
+   virtual std::complex<double>& foo_CDouble(std::string bar);
   </pre>
 */
 #define ADIOS2_FOREACH_TYPE_2ARGS(MACRO)                                       \
@@ -177,8 +174,7 @@
     MACRO(double, Double)                                                      \
     MACRO(long double, LDouble)                                                \
     MACRO(std::complex<float>, CFloat)                                         \
-    MACRO(std::complex<double>, CDouble)                                       \
-    MACRO(std::complex<long double>, CLDouble)
+    MACRO(std::complex<double>, CDouble)
 
 #define ADIOS2_FOREACH_PRIMITIVE_TYPE_2ARGS(MACRO)                             \
     MACRO(char, Char)                                                          \
@@ -198,8 +194,7 @@
 
 #define ADIOS2_FOREACH_COMPLEX_TYPE_2ARGS(MACRO)                               \
     MACRO(std::complex<float>, CFloat)                                         \
-    MACRO(std::complex<double>, CDouble)                                       \
-    MACRO(std::complex<long double>, CLDouble)
+    MACRO(std::complex<double>, CDouble)
 
 #define ADIOS2_FOREACH_LAUNCH_MODE(MACRO)                                      \
     MACRO(Sync)                                                                \

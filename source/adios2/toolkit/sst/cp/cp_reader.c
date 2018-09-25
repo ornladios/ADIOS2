@@ -8,9 +8,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#else
+#include "sstmpidummy.h"
+#endif
 #include <pthread.h>
 
 #include "sst.h"
@@ -330,6 +335,9 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     while (Stream->Peers[i] != -1)
     {
         int peer = Stream->Peers[i];
+        int ReaderRank = Stream->Rank;
+        if (Stream->ConnectionUsleepMultiplier != 0)
+            usleep(ReaderRank * Stream->ConnectionUsleepMultiplier);
         CMConnection Conn = CMget_conn(
             Stream->CPInfo->cm, Stream->ConnectionsToWriter[peer].ContactList);
         if (!Conn)

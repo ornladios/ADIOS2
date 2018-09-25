@@ -278,7 +278,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                                                                  m_DebugMode);
         }
 #ifndef _WIN32
-        else if (library == "POSIX")
+        else if (library == "POSIX" || library == "posix")
         {
             transport =
                 std::make_shared<transport::FilePOSIX>(m_MPIComm, m_DebugMode);
@@ -300,6 +300,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 
         std::string library(defaultLibrary);
         helper::SetParameterValue("Library", parameters, library);
+        helper::SetParameterValue("library", parameters, library);
         return library;
     };
 
@@ -308,6 +309,7 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 
         std::string profileUnits(defaultTimeUnit);
         helper::SetParameterValue("ProfileUnits", parameters, profileUnits);
+        helper::SetParameterValue("profileunits", parameters, profileUnits);
         return helper::StringToTimeUnit(profileUnits, m_DebugMode);
     };
 

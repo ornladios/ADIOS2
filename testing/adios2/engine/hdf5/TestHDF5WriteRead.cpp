@@ -2878,6 +2878,233 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
     }
 }
 
+TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
+{
+    // Each process would write a 1x8 array and all processes would
+    // form a mpiSize * Nx 1D array
+    const std::string h5name = "ATTRTESTADIOS2vsHDF5.h5";
+    const std::string bpname = "ATTRTESTADIOS2vsHDF5.bp";
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const std::size_t Nx = 8;
+
+    // Number of steps
+    const std::size_t NSteps = 3;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+// Write test data using ADIOS2
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    adios2::IO io = adios.DeclareIO("TestIO");
+
+    std::string var1Name = "var1";
+    std::string var2Name = "var2";
+    std::string var3Name = "grp/var3";
+    std::string var4Name = "var4";
+
+    std::string ioAttrName = "file_notes";
+    std::string ioAttrValue = "this is a comment";
+
+    std::string v1AttrAName = "var1/meshWidth";
+    int32_t v1AttrAValue = 111;
+    std::string v1AttrBName = "var1/meshLength";
+    int32_t v1AttrBValue = 222;
+
+    std::string v2AttrName = "var2/meshName";
+    std::string v2AttrValue = "unstructured";
+
+    std::string v3AttrName = var3Name + "/targetDensity";
+    double v3AttrValue = 55;
+
+    std::string v4AttrName = "var4/unitName";
+    std::string v4AttrValue = "kg";
+
+    // Declare 1D variables (NumOfProcesses * Nx)
+    // The local process' part (start, count) can be defined now or later
+    // before Write().
+    {
+        adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
+        adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
+        adios2::Dims count{static_cast<unsigned int>(Nx)};
+
+        io.DefineVariable<int32_t>(var1Name, shape, start, count);
+        io.DefineVariable<float>(var2Name, shape, start, count);
+        io.DefineVariable<double>(var3Name, shape, start, count);
+
+        io.DefineAttribute<std::string>(ioAttrName, ioAttrValue);
+
+        io.DefineAttribute<int32_t>(v1AttrAName, v1AttrAValue);
+        io.DefineAttribute<int32_t>(v1AttrBName, v1AttrBValue);
+
+        io.DefineAttribute<std::string>(v2AttrName, v2AttrValue);
+        io.DefineAttribute<double>(v3AttrName, v3AttrValue);
+    }
+
+    // Create the HDF5 Engine
+    io.SetEngine("HDF5");
+
+    // HDf5 engine calls the HDF5 common object that calls the hDF5 library.
+    // The IO functionality, SetParameters and AddTransports will be added
+    // in the future. For now `io.AddTransport("file", {
+    // "library", "MPI"}});` is omitted.
+    // })
+    // io.AddTransport("File");
+
+    adios2::Engine engine = io.Open(h5name, adios2::Mode::Write);
+
+    for (size_t step = 0; step < NSteps; ++step)
+    {
+        // Generate test data for each process uniquely
+        SmallTestData currentTestData =
+            generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
+
+        // Retrieve the variables that previously went out of scope
+        auto var1 = io.InquireVariable<int32_t>(var1Name);
+        auto var2 = io.InquireVariable<float>(var2Name);
+        auto var3 = io.InquireVariable<double>(var3Name);
+
+        // Make a 1D selection to describe the local dimensions of the
+        // variable we write and its offsets in the global spaces
+
+        adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+
+        var1.SetSelection(sel);
+        var2.SetSelection(sel);
+        var3.SetSelection(sel);
+
+        // Write each one
+        // fill in the variable with values from starting index to
+        // starting index + count
+        engine.BeginStep();
+        engine.Put(var1, currentTestData.I32.data());
+        engine.Put(var2, currentTestData.R32.data());
+        engine.Put(var3, currentTestData.R64.data());
+        if (step == 1)
+        {
+            adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
+            adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
+            adios2::Dims count{static_cast<unsigned int>(Nx)};
+
+            io.DefineVariable<int32_t>(var4Name, shape, start, count);
+            auto var4 = io.InquireVariable<int32_t>(var4Name);
+            engine.Put(var4, currentTestData.I32.data());
+
+            io.DefineAttribute<std::string>(v4AttrName, v4AttrValue);
+        }
+
+        // Advance to the next time step
+        engine.EndStep();
+
+        if (step == 1)
+        {
+            io.RemoveVariable(var4Name);
+            io.RemoveAttribute(v4AttrName);
+        }
+    }
+
+    // Close the file
+    engine.Close();
+
+    {
+        adios2::IO io = adios.DeclareIO("HDF5ReadIO");
+        io.SetEngine("HDF5");
+
+        adios2::Engine hdf5Reader = io.Open(h5name, adios2::Mode::Read);
+
+        auto var1 = io.InquireVariable<int32_t>(var1Name);
+        EXPECT_TRUE(var1);
+        ASSERT_EQ(var1.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var1.Steps(), NSteps);
+        ASSERT_EQ(var1.Shape()[0], mpiSize * Nx);
+
+        auto var2 = io.InquireVariable<float>(var2Name);
+        EXPECT_TRUE(var2);
+        ASSERT_EQ(var2.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var2.Steps(), NSteps);
+        ASSERT_EQ(var2.Shape()[0], mpiSize * Nx);
+
+        auto var3 = io.InquireVariable<double>(var3Name);
+        EXPECT_TRUE(var3);
+        ASSERT_EQ(var3.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var3.Steps(), NSteps);
+        ASSERT_EQ(var3.Shape()[0], mpiSize * Nx);
+
+        SmallTestData testData;
+
+        std::array<int32_t, Nx> I32;
+        std::array<float, Nx> R32;
+        std::array<double, Nx> R64;
+
+        const adios2::Dims start{mpiRank * Nx};
+        const adios2::Dims count{Nx};
+
+        const adios2::Box<adios2::Dims> sel(start, count);
+
+        var1.SetSelection(sel);
+        var2.SetSelection(sel);
+        var3.SetSelection(sel);
+
+        for (size_t t = 0; t < NSteps; ++t)
+        {
+            var1.SetStepSelection({t, 1});
+            var2.SetStepSelection({t, 1});
+            var3.SetStepSelection({t, 1});
+
+            // Generate test data for each rank uniquely
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+
+            hdf5Reader.BeginStep();
+
+            hdf5Reader.Get(var1, I32.data());
+            hdf5Reader.Get(var2, R32.data());
+            hdf5Reader.Get(var3, R64.data());
+
+            hdf5Reader.EndStep();
+
+            // EXPECT_EQ(IString, currentTestData.S1);
+
+            for (size_t i = 0; i < Nx; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
+                std::string msg = ss.str();
+
+                EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+            }
+        }
+
+        const std::map<std::string, adios2::Params> &attributesInfo =
+            io.AvailableAttributes();
+
+        EXPECT_EQ(6, attributesInfo.size());
+
+        std::cout << " other tests will follow after William make changes: "
+                     "e.g. GetNumAttr(var) etc +  Write a bp file and read "
+                     "back in hdf5 and verify"
+                  << std::endl;
+        /*
+        hdf5Reader.GetNumAttributes(var1); // expects 2
+        hdf5Reader.GetNumAttributes(var2); // expects 1
+        hdf5Reader.GetNumAttributes(var3); // expects 0
+
+        hdf5Reader.GetNumAttributes(); // expects 4
+        */
+        hdf5Reader.Close();
+    }
+}
+
 //******************************************************************************
 // main
 //******************************************************************************

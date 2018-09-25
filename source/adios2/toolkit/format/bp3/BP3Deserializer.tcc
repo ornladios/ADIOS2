@@ -52,19 +52,42 @@ typename core::Variable<T>::Info &
 BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable, T *data)
 {
     const size_t stepsStart = variable.m_StepsStart;
-    const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
-    // bp3 starts at step "1"
-    auto itStep = indices.find(stepsStart + 1);
+    const size_t stepsCount = variable.m_StepsCount;
+
     if (m_DebugMode)
     {
-        if (itStep == indices.end())
+        const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
+        const size_t maxStep = indices.rbegin()->first;
+        if (stepsStart + 1 > maxStep)
         {
-            throw std::invalid_argument("ERROR: step start in Variable " +
-                                        variable.m_Name +
-                                        " is invalid, in call to Get\n");
+            throw std::invalid_argument(
+                "ERROR: steps start " + std::to_string(stepsStart) +
+                " from SetStepsSelection or BeginStep is larger than "
+                "the maximum available step " +
+                std::to_string(maxStep - 1) + " for variable " +
+                variable.m_Name + ", in call to Get\n");
+        }
+
+        auto itStep = std::next(indices.begin(), stepsStart);
+
+        for (auto i = 0; i < stepsCount; ++i)
+        {
+            if (itStep == indices.end())
+            {
+                throw std::invalid_argument(
+                    "ERROR: offset " + std::to_string(i) +
+                    " from steps start " + std::to_string(stepsStart) +
+                    " in variable " + variable.m_Name +
+                    " is beyond the largest available step = " +
+                    std::to_string(maxStep - 1) +
+                    ", check Variable SetStepSelection argument stepsCount "
+                    "(random access), or "
+                    "number of BeginStep calls (streaming), in call to Get");
+            }
+            ++itStep;
         }
     }
-    const size_t stepsCount = variable.m_StepsCount;
+
     // create block info
     return variable.SetBlockInfo(data, stepsStart, stepsCount);
 }
@@ -215,24 +238,10 @@ void BP3Deserializer::SetVariableBlockInfo(
     const Box<Dims> selectionBox = helper::StartEndBox(
         blockInfo.Start, blockInfo.Count, m_ReverseDimensions);
 
-    auto itStep = indices.find(blockInfo.StepsStart + 1);
+    auto itStep = std::next(indices.begin(), blockInfo.StepsStart);
 
     for (auto i = 0; i < blockInfo.StepsCount; ++i)
     {
-        if (m_DebugMode)
-        {
-            if (itStep == indices.end())
-            {
-                throw std::invalid_argument(
-                    "ERROR: offset " + std::to_string(i) +
-                    " from stepsStart in variable " + variable.m_Name +
-                    " is beyond the largest available step =" +
-                    std::to_string(indices.rbegin()->first) +
-                    ", check Variable SetStepSelection argument stepsCount,"
-                    "in call to Get");
-            }
-        }
-
         lf_SetSubStreamInfo(variable.m_Name, selectionBox, blockInfo,
                             itStep->first, itStep->second, m_Metadata,
                             m_IsRowMajor);
@@ -672,6 +681,12 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         typename core::Variable<T>::Info blockInfo;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
+
+        if (m_ReverseDimensions)
+        {
+            std::reverse(blockInfo.Start.begin(), blockInfo.Start.end());
+            std::reverse(blockInfo.Count.begin(), blockInfo.Count.end());
+        }
 
         if (blockCharacteristics.Statistics.IsValue) // value
         {

@@ -8,12 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2_f2c_io.h"
+#include "adios2_f2c_common.h"
 
-#include <cstddef>  //std::size_t
-#include <iostream> //std::cerr
-#include <stdexcept>
-#include <vector>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void FC_GLOBAL(adios2_set_engine_f2c,
                ADIOS2_SET_ENGINE_F2C)(adios2_io **io, const char *engine_type,
@@ -86,7 +85,7 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
     try
     {
         adios2_set_transport_parameter(
-            *io, static_cast<unsigned int>(*transport_index), key, value);
+            *io, static_cast<size_t>(*transport_index), key, value);
     }
     catch (std::exception &e)
     {
@@ -258,6 +257,26 @@ void FC_GLOBAL(adios2_define_attribute_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_define_variable_attribute_f2c,
+               ADIOS2_DEFINE_VARIABLE_ATTRIBUTE_F2C)(
+    adios2_attribute **attribute, adios2_io **io, const char *name,
+    const int *type, const void *data, const int *elements,
+    const char *variable_name, const char *separator, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *attribute = adios2_define_variable_attribute(
+            *io, name, static_cast<adios2_type>(*type), data,
+            static_cast<std::size_t>(*elements), variable_name, separator);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 define_variable_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_inquire_attribute_f2c,
                ADIOS2_INQUIRE_ATTRIBUTE_F2C)(adios2_attribute **attribute,
                                              adios2_io **io,
@@ -272,6 +291,24 @@ void FC_GLOBAL(adios2_inquire_attribute_f2c,
     catch (std::exception &e)
     {
         std::cerr << "ADIOS2 inquire_attribute: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
+void FC_GLOBAL(adios2_inquire_variable_attribute_f2c,
+               ADIOS2_INQUIRE_VARIABLE_ATTRIBUTE_F2C)(
+    adios2_attribute **attribute, adios2_io **io, const char *attribute_name,
+    const char *variable_name, const char *separator, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        *attribute = adios2_inquire_variable_attribute(
+            *io, attribute_name, variable_name, separator);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 inquire_variable_attribute: " << e.what() << "\n";
         *ierr = -1;
     }
 }
@@ -390,3 +427,7 @@ void FC_GLOBAL(adios2_io_engine_type_f2c,
         *ierr = -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif

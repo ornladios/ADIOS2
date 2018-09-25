@@ -17,6 +17,7 @@
 namespace adios2
 {
 
+/// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
 class IO; // friend
 
@@ -25,6 +26,7 @@ namespace core
 template <class T>
 class Attribute; // private implementation
 }
+/// \endcond
 
 template <class T>
 class Attribute
@@ -32,10 +34,15 @@ class Attribute
     friend class IO;
 
 public:
+    /**
+    * Empty (default) constructor, use it as a placeholder for future
+    * attributes from IO:DefineAttribute<T> or IO:InquireAttribute<T>.
+    * Can be used with STL containers.
+    */
     Attribute<T>() = default;
     ~Attribute<T>() = default;
 
-    /** true: valid, false: invalid */
+    /** Checks if object is valid, e.g. if( attribute ) { //..valid } */
     explicit operator bool() const noexcept;
 
     /**

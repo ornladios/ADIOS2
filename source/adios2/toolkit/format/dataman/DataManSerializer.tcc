@@ -35,10 +35,11 @@ namespace format
 template <class T>
 void DataManSerializer::Put(const core::Variable<T> &variable,
                             const std::string &doid, const size_t step,
-                            const int rank, const Params &params)
+                            const int rank, const Params &params,
+                            const bool optimizeMetadata)
 {
     Put(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-        variable.m_Count, doid, step, rank, params);
+        variable.m_Count, doid, step, rank, params, optimizeMetadata);
 }
 
 template <class T>
@@ -46,23 +47,62 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
                             const Dims &varShape, const Dims &varStart,
                             const Dims &varCount, const std::string &doid,
                             const size_t step, const int rank,
-                            const Params &params)
+                            const Params &params, const bool optimizeMetadata)
 {
 
     bool compressed = false;
 
     nlohmann::json metaj;
 
-    metaj["M"] = m_IsRowMajor;
-    metaj["E"] = m_IsLittleEndian;
+    // compulsory properties
     metaj["N"] = varName;
-    metaj["Y"] = GetType<T>();
-    metaj["S"] = varShape;
-    metaj["C"] = varCount;
     metaj["O"] = varStart;
+    metaj["C"] = varCount;
     metaj["T"] = step;
-    metaj["R"] = rank;
-    metaj["D"] = doid;
+
+    // optional properties
+    auto it = m_VarDefaultsMap.find(varName);
+    if (it != m_VarDefaultsMap.end() && optimizeMetadata)
+    {
+        if (doid != it->second.doid)
+        {
+            metaj["D"] = doid;
+            it->second.doid = doid;
+        }
+        if (m_IsRowMajor != it->second.isRowMajor)
+        {
+            metaj["M"] = m_IsRowMajor;
+            it->second.isRowMajor = m_IsRowMajor;
+        }
+        if (m_IsLittleEndian != it->second.isLittleEndian)
+        {
+            metaj["E"] = m_IsLittleEndian;
+            it->second.isLittleEndian = m_IsLittleEndian;
+        }
+        if (GetType<T>() != it->second.type)
+        {
+            metaj["Y"] = GetType<T>();
+            it->second.type = GetType<T>();
+        }
+        if (varShape != it->second.shape)
+        {
+            metaj["S"] = varShape;
+            it->second.shape = varShape;
+        }
+    }
+    else
+    {
+        metaj["D"] = doid;
+        metaj["M"] = m_IsRowMajor;
+        metaj["E"] = m_IsLittleEndian;
+        metaj["Y"] = GetType<T>();
+        metaj["S"] = varShape;
+        m_VarDefaultsMap[varName].doid = doid;
+        m_VarDefaultsMap[varName].isRowMajor = m_IsRowMajor;
+        m_VarDefaultsMap[varName].isLittleEndian = m_IsLittleEndian;
+        m_VarDefaultsMap[varName].type = GetType<T>();
+        m_VarDefaultsMap[varName].shape = varShape;
+    }
 
     size_t datasize;
 
@@ -125,10 +165,8 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     }
     metaj["I"] = datasize;
 
-    //    std::string metastr = metaj.dump() + '\0';
     std::vector<std::uint8_t> metacbor = nlohmann::json::to_msgpack(metaj);
 
-    //    uint32_t metasize = metastr.size();
     uint32_t metasize = metacbor.size();
     size_t totalsize = sizeof(metasize) + metasize + datasize;
     if (m_Buffer->capacity() < m_Position + totalsize)
@@ -141,7 +179,6 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     std::memcpy(m_Buffer->data() + m_Position, &metasize, sizeof(metasize));
     m_Position += sizeof(metasize);
 
-    //    std::memcpy(m_Buffer->data() + m_Position, metastr.c_str(), metasize);
     std::memcpy(m_Buffer->data() + m_Position, metacbor.data(), metasize);
     m_Position += metasize;
     m_TotalMetadataSize += metasize;
@@ -176,7 +213,7 @@ bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
             p[key] = i.second;
         }
     }
-    core::compress::CompressZfp compressor(p, true);
+    core::compress::CompressZfp compressor(p, false);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
@@ -218,8 +255,7 @@ bool DataManSerializer::Sz(nlohmann::json &metaj, size_t &datasize,
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-
-    core::compress::CompressSZ compressor(p, true);
+    core::compress::CompressSZ compressor(p, false);
     try
     {
         datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
@@ -259,8 +295,7 @@ bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-
-    core::compress::CompressBZip2 compressor(p, true);
+    core::compress::CompressBZip2 compressor(p, false);
     try
     {
         datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),

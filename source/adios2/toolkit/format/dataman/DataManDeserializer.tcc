@@ -192,12 +192,6 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
     return 0;
 }
 
-template <class T>
-int DataManDeserializer::Get(core::Variable<T> &variable, const size_t step)
-{
-    return Get(variable.GetData(), variable.m_Name, variable.m_Start,
-               variable.m_Count, step);
-}
 } // namespace format
 } // namespace adios2
 

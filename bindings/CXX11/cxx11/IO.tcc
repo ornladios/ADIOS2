@@ -34,21 +34,30 @@ Variable<T> IO::InquireVariable(const std::string &name) noexcept
 
 template <class T>
 Attribute<T> IO::DefineAttribute(const std::string &name, const T *data,
-                                 const size_t size)
+                                 const size_t size,
+                                 const std::string &variableName,
+                                 const std::string separator)
 {
-    return Attribute<T>(&m_IO.DefineAttribute(name, data, size));
+    return Attribute<T>(
+        &m_IO.DefineAttribute(name, data, size, variableName, separator));
 }
 
 template <class T>
-Attribute<T> IO::DefineAttribute(const std::string &name, const T &value)
+Attribute<T> IO::DefineAttribute(const std::string &name, const T &value,
+                                 const std::string &variableName,
+                                 const std::string separator)
 {
-    return Attribute<T>(&m_IO.DefineAttribute<T>(name, value));
+    return Attribute<T>(
+        &m_IO.DefineAttribute<T>(name, value, variableName, separator));
 }
 
 template <class T>
-Attribute<T> IO::InquireAttribute(const std::string &name) noexcept
+Attribute<T> IO::InquireAttribute(const std::string &name,
+                                  const std::string &variableName,
+                                  const std::string separator) noexcept
 {
-    return Attribute<T>(m_IO.InquireAttribute<T>(name));
+    return Attribute<T>(
+        m_IO.InquireAttribute<T>(name, variableName, separator));
 }
 
 } // end namespace adios2

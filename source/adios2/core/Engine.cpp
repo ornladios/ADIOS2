@@ -67,7 +67,9 @@ void Engine::Close(const int transportIndex)
 
     if (transportIndex == -1)
     {
-        MPI_Comm_free(&m_MPIComm);
+        helper::CheckMPIReturn(MPI_Comm_free(&m_MPIComm),
+                               "freeing comm in Engine " + m_Name +
+                                   ", in call to Close");
         m_IsClosed = true;
     }
 }
@@ -104,12 +106,14 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
     Engine::DoAllStepsBlocksInfo(const Variable<T> &variable) const            \
     {                                                                          \
         ThrowUp("DoAllStepsBlocksInfo");                                       \
+        return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> Engine::DoBlocksInfo(              \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         ThrowUp("DoBlocksInfo");                                               \
+        return std::vector<typename Variable<T>::Info>();                      \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

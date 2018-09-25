@@ -45,8 +45,8 @@ This engine allows the user to fine tune the buffering operations through the fo
 ==================== ===================== ==============================
  **Key**              **Value Format**      **Default** and Examples 
 ==================== ===================== ==============================
- Profile              string ON/OFF         **ON**, OFF
- CollectiveMetadata   string ON/OFF         **ON**, OFF 
+ Profile              string On/Off         **On**, Off
+ CollectiveMetadata   string On/Off         **On**, Off 
  Threads              integer > 1           **1**, 2, 3, 4, 16, 32, 64 
  InitialBufferSize    float+units >= 16Kb   **16Kb**, 10Mb, 0.5Gb 
  MaxBufferSize        float+units >= 16Kb   **at EndStep**, 10Mb, 0.5Gb   

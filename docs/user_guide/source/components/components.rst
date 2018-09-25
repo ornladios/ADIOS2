@@ -1,6 +1,6 @@
-################################
-Application Programmer Interface
-################################
+###########################
+ADIOS2 Interface Components
+###########################
 
 .. include:: overview.rst
 .. include:: adios.rst

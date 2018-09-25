@@ -22,13 +22,14 @@ namespace adios2
 namespace helper
 {
 
-std::string FileToString(const std::string &fileName) noexcept
+std::string FileToString(const std::string &fileName, const std::string hint)
 {
     std::ifstream fileStream(fileName);
 
     if (!fileStream)
     {
-        return std::string(); // empty string
+        throw std::ios_base::failure("ERROR: file " + fileName +
+                                     " not found, " + hint + "\n");
     }
 
     std::ostringstream fileSS;
@@ -244,6 +245,17 @@ std::string DimsToString(const Dims &dimensions)
     dimensionsString.pop_back();
     dimensionsString += "]";
     return dimensionsString;
+}
+
+std::string GlobalName(const std::string &localName, const std::string &prefix,
+                       const std::string separator) noexcept
+{
+    if (prefix.empty())
+    {
+        return localName;
+    }
+
+    return prefix + separator + localName;
 }
 
 } // end namespace helper

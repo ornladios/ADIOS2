@@ -46,21 +46,85 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         return StepStatus::EndOfStream;
     }
-    if (m_WorkflowMode == "subscribe")
+
+    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
+        nullptr;
+    auto start_time = std::chrono::system_clock::now();
+
+    while (vars == nullptr)
     {
-        return BeginStepSubscribe(stepMode, timeoutSeconds);
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        // timeout == 0.f means there is no timeout, and it should block
+        // forever until it receives something.
+        if (timeoutSeconds != 0.f)
+        {
+            if (duration.count() > timeoutSeconds)
+            {
+                return StepStatus::NotReady;
+            }
+        }
+
+        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+
+        if (stepMode == StepMode::NextAvailable)
+        {
+            size_t minStep = std::numeric_limits<size_t>::max();
+            ;
+            for (const auto &i : m_MetaDataMap)
+            {
+                if (minStep > i.first)
+                {
+                    minStep = i.first;
+                }
+            }
+            m_CurrentStep = minStep;
+        }
+        else if (stepMode == StepMode::LatestAvailable)
+        {
+            size_t maxStep = 0;
+            for (const auto &i : m_MetaDataMap)
+            {
+                if (maxStep < i.first)
+                {
+                    maxStep = i.first;
+                }
+            }
+            m_CurrentStep = maxStep;
+        }
+        else
+        {
+            throw(std::invalid_argument(
+                "[DataManReader::BeginStep] Step mode is not supported!"));
+        }
+
+        vars = m_MetaDataMap[m_CurrentStep];
     }
-    else if (m_WorkflowMode == "p2p")
+
+    for (const auto &i : *vars)
     {
-        return BeginStepP2P(stepMode, timeoutSeconds);
+        if (i.step == m_CurrentStep)
+        {
+            if (i.type == "compound")
+            {
+                throw("Compound type is not supported yet.");
+            }
+#define declare_type(T)                                                        \
+    else if (i.type == helper::GetType<T>())                                   \
+    {                                                                          \
+        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
-    else
-    {
-        throw(std::invalid_argument(
-            "[DataManReader::BeginStep] invalid workflow mode " +
-            m_WorkflowMode));
-        return StepStatus::EndOfStream;
+            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+            else
+            {
+                throw("Unknown type caught in "
+                      "DataManReader::BeginStepSubscribe.");
+            }
+        }
     }
+    return StepStatus::OK;
 }
 
 size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
@@ -75,6 +139,11 @@ void DataManReader::Flush(const int transportIndex) {}
 
 void DataManReader::Init()
 {
+    if (m_WorkflowMode != "subscribe" && m_WorkflowMode != "p2p")
+    {
+        throw(std::invalid_argument(
+            "[DataManReader::Init] invalid workflow mode " + m_WorkflowMode));
+    }
 
     // initialize transports
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
@@ -85,104 +154,6 @@ void DataManReader::Init()
     m_Listening = true;
     m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
                                                  m_DataMan);
-}
-
-StepStatus DataManReader::BeginStepSubscribe(StepMode stepMode,
-                                             const float timeoutSeconds)
-{
-    StepStatus status;
-    m_CurrentStep = m_DataManDeserializer.MinStep();
-    m_MetaDataMap = m_DataManDeserializer.GetMetaData();
-    auto vars = m_MetaDataMap[m_CurrentStep];
-    if (vars == nullptr)
-    {
-        status = StepStatus::NotReady;
-    }
-    else
-    {
-        for (const auto &i : *vars)
-        {
-            if (i.type == "compound")
-            {
-                throw("Compound type is not supported yet.");
-            }
-#define declare_type(T)                                                        \
-    else if (i.type == helper::GetType<T>())                                   \
-    {                                                                          \
-        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
-        if (v == nullptr)                                                      \
-        {                                                                      \
-            m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);         \
-        }                                                                      \
-    }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-        }
-        status = StepStatus::OK;
-    }
-    return status;
-}
-
-StepStatus DataManReader::BeginStepP2P(StepMode stepMode,
-                                       const float timeoutSeconds)
-{
-    ++m_CurrentStep;
-
-    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
-        nullptr;
-
-    auto start_time = std::chrono::system_clock::now();
-
-    while (vars == nullptr)
-    {
-        // Copy the metadata map locally. This map is light in memory because
-        // the var metadata is stored in shared objects. Once this is copied,
-        // even if the map is changed in deserializer, these shared objects are
-        // still valid.
-        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
-        auto i = m_MetaDataMap.find(m_CurrentStep);
-        if (i == m_MetaDataMap.end())
-        {
-            auto now_time = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                now_time - start_time);
-            // timeout == 0.f means there is no timeout, and it should block
-            // forever until it receives something.
-            if (duration.count() > timeoutSeconds && timeoutSeconds != 0.f)
-            {
-                return StepStatus::EndOfStream;
-            }
-            // sleep for a little time because
-            // m_DataManDeserializer.GetMetaData(m_CurrentStep) will lock the
-            // metadata map in deserializer. If this thread is always locking
-            // the map then it would delay the IOThread from putting new
-            // variables into the map.
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
-        }
-        else
-        {
-            vars = i->second;
-        }
-    }
-
-    // register all variables available in the current step into m_IO
-    m_IO.RemoveAllVariables();
-    for (const auto &i : *vars)
-    {
-        if (i.type == "compound")
-        {
-            throw("Compound type is not supported yet.");
-        }
-#define declare_type(T)                                                        \
-    else if (i.type == helper::GetType<T>())                                   \
-    {                                                                          \
-        m_IO.DefineVariable<T>(i.name, i.shape, i.start, i.count);             \
-    }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-    }
-
-    return StepStatus::OK;
 }
 
 void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
@@ -198,14 +169,13 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
                 m_FinalStep = ret;
             }
         }
-
         RunCallback();
     }
 }
 
 void DataManReader::RunCallback()
 {
-    m_CallbackMutex.lock();
+    std::lock_guard<std::mutex> l(m_CallbackMutex);
     if (m_Callbacks.empty() == false)
     {
         for (size_t step = m_DataManDeserializer.MinStep();
@@ -214,7 +184,7 @@ void DataManReader::RunCallback()
             auto varList = m_DataManDeserializer.GetMetaData(step);
             if (varList == nullptr)
             {
-                return;
+                continue;
             }
             for (const auto &i : *varList)
             {
@@ -225,26 +195,25 @@ void DataManReader::RunCallback()
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        Variable<T> *v = m_IO.InquireVariable<T>(i.name);                      \
-        if (v == nullptr)                                                      \
-        {                                                                      \
-            Dims start(i.shape.size(), 0);                                     \
-            Dims count = i.shape;                                              \
-            m_IO.DefineVariable<T>(i.name, i.shape, start, count);             \
-            v = m_IO.InquireVariable<T>(i.name);                               \
-        }                                                                      \
+        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
         size_t datasize =                                                      \
-            std::accumulate(v->m_Count.begin(), v->m_Count.end(), sizeof(T),   \
+            std::accumulate(i.count.begin(), i.count.end(), sizeof(T),         \
                             std::multiplies<size_t>());                        \
         std::vector<T> varData(datasize, std::numeric_limits<T>::quiet_NaN()); \
-        v->SetData(varData.data());                                            \
-        m_DataManDeserializer.Get(*v, step);                                   \
+        m_DataManDeserializer.Get(varData.data(), i.name, i.start, i.count,    \
+                                  step);                                       \
         for (auto &j : m_Callbacks)                                            \
         {                                                                      \
-            if (j->m_Type == "Signature2")                                     \
+            if (j->m_Type == "Signature1")                                     \
             {                                                                  \
-                j->RunCallback2(varData.data(), i.doid, i.name, i.type,        \
-                                i.shape);                                      \
+                j->RunCallback2(reinterpret_cast<T *>(varData.data()), i.doid, \
+                                i.name, i.type, step, i.shape, i.start,        \
+                                i.count);                                      \
+            }                                                                  \
+            else if (j->m_Type == "Signature2")                                \
+            {                                                                  \
+                j->RunCallback2(varData.data(), i.doid, i.name, i.type, step,  \
+                                i.shape, i.start, i.count);                    \
             }                                                                  \
             else                                                               \
             {                                                                  \
@@ -261,7 +230,6 @@ void DataManReader::RunCallback()
             m_DataManDeserializer.Erase(step);
         }
     }
-    m_CallbackMutex.unlock();
 }
 
 #define declare_type(T)                                                        \

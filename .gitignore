@@ -30,3 +30,6 @@ build/
 html/
 *.html
 
+# Visual Studio
+.vs/
+CMakeSettings.json

@@ -13,7 +13,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 
    introduction/introduction
    installation/installation
-   api/api
+   components/components
    engines/engines
    runtime/runtime
    bindings/bindings

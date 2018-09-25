@@ -32,24 +32,22 @@ void fstream::write(const std::string &name, const T &value, const bool endl)
 }
 
 template <class T>
-void fstream::read(const std::string &name, T *values, const bool endl)
+void fstream::read(const std::string &name, T *values)
 {
-    m_Stream->Read(name, values, endl);
+    m_Stream->Read(name, values);
 }
 
 template <class T>
-void fstream::read(const std::string &name, T &value, const bool endl)
+void fstream::read(const std::string &name, T &value)
 {
-    m_Stream->Read(name, &value, endl);
+    m_Stream->Read(name, &value);
 }
 
 template <class T>
 void fstream::read(const std::string &name, T *values,
-                   const Dims &selectionStart, const Dims &selectionCount,
-                   const bool endl)
+                   const Dims &selectionStart, const Dims &selectionCount)
 {
-    m_Stream->Read(name, values, Box<Dims>(selectionStart, selectionCount),
-                   endl);
+    m_Stream->Read(name, values, Box<Dims>(selectionStart, selectionCount));
 }
 
 template <class T>
@@ -70,18 +68,17 @@ void fstream::read(const std::string &name, T &value,
 }
 
 template <class T>
-std::vector<T> fstream::read(const std::string &name, const bool endl)
+std::vector<T> fstream::read(const std::string &name)
 {
-    return m_Stream->Read<T>(name, endl);
+    return m_Stream->Read<T>(name);
 }
 
 template <class T>
 std::vector<T> fstream::read(const std::string &name,
                              const Dims &selectionStart,
-                             const Dims &selectionCount, const bool endl)
+                             const Dims &selectionCount)
 {
-    return m_Stream->Read<T>(name, Box<Dims>(selectionStart, selectionCount),
-                             endl);
+    return m_Stream->Read<T>(name, Box<Dims>(selectionStart, selectionCount));
 }
 
 template <class T>

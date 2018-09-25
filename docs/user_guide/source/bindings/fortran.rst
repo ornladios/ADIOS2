@@ -31,7 +31,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 :ref:`ADIOS` subroutines
 ------------------------
 
-* :f90:`subroutine adios2_init` starting point for the adios component 
+* :f90:`subroutine adios2_init` starting point for the adios2 library 
 
    .. code-block:: fortran
 
@@ -75,15 +75,33 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
       ! WHERE:
       
+      ! io component that defines an IO tasks inside adios component
+      type(adios2_io), intent(out):: io
+      
       ! adios component from adios2_init spawning io tasks 
       type(adios2_adios), intent(in):: adios
+      
+      ! unique name associated with this io component inside adios
+      character*(*), intent(in):: io_name
+
+* :f90:`subroutine adios2_at_io` retrieve an existing io component, useful when the original handler for adios2_declare_io goes out of scope
+
+   .. code-block:: fortran
+
+      subroutine adios2_at_io(io, adios, io_name, ierr)
+      
+      ! WHERE:
       
       ! io component that defines an IO tasks inside adios component
       type(adios2_io), intent(out):: io
       
-      ! unique name associated with this io component inside adios
-      character*(*), intent(in):: io
-    
+      ! adios component from adios2_init that owns io tasks 
+      type(adios2_adios), intent(in):: adios
+      
+      ! unique name associated with an existing io component (created with adios2_declare_io)
+      character*(*), intent(in):: io_name
+
+
 * :f90:`subroutine adios2_flush_all` flush all current engines in all ios
 
    .. code-block:: fortran

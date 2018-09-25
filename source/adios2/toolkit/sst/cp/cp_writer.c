@@ -9,9 +9,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#else
+#include "sstmpidummy.h"
+#endif
 #include <pthread.h>
 
 #include "sst.h"
@@ -267,6 +272,10 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
         int SoloPeer = WriterRank / ((double)WriterSize / (double)ReaderSize);
         if (SoloPeer >= ReaderSize)
             SoloPeer--;
+
+        if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
+            usleep(WriterRank *
+                   reader->ParentStream->ConnectionUsleepMultiplier);
         reader->Connections[SoloPeer].CMconn =
             CMget_conn(reader->ParentStream->CPInfo->cm,
                        reader->Connections[SoloPeer].ContactList);
@@ -289,6 +298,9 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
     while (reader->Peers[i] != -1)
     {
         int peer = reader->Peers[i];
+        if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
+            usleep(WriterRank *
+                   reader->ParentStream->ConnectionUsleepMultiplier);
         reader->Connections[peer].CMconn =
             CMget_conn(reader->ParentStream->CPInfo->cm,
                        reader->Connections[peer].ContactList);
@@ -322,7 +334,11 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     {
         if (List->Timestep < Ret)
         {
+            List->ReferenceCount++;
             Ret = List->Timestep;
+            CP_verbose(Stream, "Earliest available : Writer-side Timestep %ld "
+                               "now has reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         List = List->Next;
     }
@@ -340,6 +356,9 @@ static void AddRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount++;
+            CP_verbose(Stream, "AddRef : Writer-side Timestep %ld now has "
+                               "reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         List = List->Next;
     }
@@ -356,6 +375,9 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount--;
+            CP_verbose(Stream, "SubRef : Writer-side Timestep %ld now has "
+                               "reference count %d\n",
+                       List->Timestep, List->ReferenceCount);
         }
         if (List->ReferenceCount == 0)
         {
@@ -545,7 +567,21 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     MPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, MPI_LONG,
                   MPI_MAX, Stream->mpiComm);
 
-    AddRefRangeTimestep(Stream, GlobalStartingTimestep, LONG_MAX);
+    /*
+     *  The earliestAvailableTimestepNumber subroutine also added to the
+     *  reference count of all existing timesteps, in case we will be making
+     *  it available to the joining reader.  Once we've determined what the
+     *  starting timestep we'll make available is (GlobalStartingTimestep),
+     *  decrement the ref count of others.
+     */
+    if (MyStartingTimestep != GlobalStartingTimestep)
+    {
+        SubRefRangeTimestep(Stream, MyStartingTimestep,
+                            GlobalStartingTimestep - 1);
+    }
+    CP_verbose(Stream,
+               "My oldest timestep was %ld, global oldest timestep was %ld\n",
+               MyStartingTimestep, GlobalStartingTimestep);
 
     CP_WSR_Stream->StartingTimestep = GlobalStartingTimestep;
 
@@ -826,8 +862,8 @@ void SstWriterClose(SstStream Stream)
         CP_verbose(Stream, "Reader Count is %d\n", Stream->ReaderCount);
         for (int i = 0; i < Stream->ReaderCount; i++)
         {
-            printf("Reader [%d] status is %d\n", i,
-                   Stream->Readers[i]->ReaderStatus);
+            CP_verbose(Stream, "Reader [%d] status is %d\n", i,
+                       Stream->Readers[i]->ReaderStatus);
         }
         /* NEED TO HANDLE FAILURE HERE */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);

@@ -129,10 +129,39 @@ int main(int argc, char *argv[])
             }
         }
 
-        // ReadData<float>(h5IO, h5Reader, "h5Floats");
-        // ReadData<int>(h5IO, h5Reader, "h5Ints");
+        const std::map<std::string, adios2::Params> attributes =
+            h5IO.AvailableAttributes();
 
-        /** Close h5 file, engine becomes unreachable after this*/
+        for (const auto attrPair : attributes)
+        {
+            std::cout << "AttrName: " << attrPair.first;
+            std::cout << std::endl;
+
+            for (const auto &parameter : attrPair.second)
+            {
+                std::cout << "\t" << parameter.first << ": " << parameter.second
+                          << "\n";
+                if (parameter.second == "double")
+                {
+                    // ReadData<double>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "float")
+                {
+                    // ReadData<float>(h5IO, h5Reader, variablePair.first);
+                }
+                else if (parameter.second == "unsigned int")
+                {
+                    // ReadData<unsigned int>(h5IO, h5Reader,
+                    // variablePair.first);
+                }
+                else if (parameter.second == "int")
+                {
+                    // ReadData<int>(h5IO, h5Reader, variablePair.first);
+                }
+                //... add more types if needed
+            }
+        }
+
         h5Reader.Close();
     }
     catch (std::invalid_argument &e)

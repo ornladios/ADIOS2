@@ -8,12 +8,11 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "adios2_f2c_variable.h"
+#include "adios2_f2c_common.h"
 
-#include <cstddef>  //std::size_t
-#include <iostream> //std::cerr
-#include <stdexcept>
-#include <vector>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void FC_GLOBAL(adios2_variable_name_f2c,
                ADIOS2_VARIABLE_NAME_F2C)(const adios2_variable **variable,
@@ -273,3 +272,7 @@ void FC_GLOBAL(adios2_set_operation_parameter_f2c,
         *ierr = -1;
     }
 }
+
+#ifdef __cplusplus
+}
+#endif
