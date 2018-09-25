@@ -689,6 +689,7 @@ static int NeedWriter(FFSArrayRequest Req, int i)
 static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    SstFullMetadata Mdata = Stream->CurrentMetadata;
 
     while (Reqs)
     {
@@ -713,7 +714,7 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 realloc(Info->WriterInfo[i].RawBuffer, DataSize);
             Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
                 Stream, i, Stream->ReaderTimestep, 0, DataSize,
-                Info->WriterInfo[i].RawBuffer, NULL);
+                Info->WriterInfo[i].RawBuffer, Mdata->DP_TimestepInfo[i]);
             Info->WriterInfo[i].Status = Requested;
         }
     }
