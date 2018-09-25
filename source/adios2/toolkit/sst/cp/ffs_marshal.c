@@ -710,11 +710,13 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
             size_t DataSize =
                 ((struct FFSMetadataInfoStruct *)Info->MetadataBaseAddrs[i])
                     ->DataBlockSize;
+            void *DP_TimestepInfo = Mdata->DP_TimestepInfo ? Mdata->DP_TimestepInfo[i] : NULL;
             Info->WriterInfo[i].RawBuffer =
                 realloc(Info->WriterInfo[i].RawBuffer, DataSize);
+            
             Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
                 Stream, i, Stream->ReaderTimestep, 0, DataSize,
-                Info->WriterInfo[i].RawBuffer, Mdata->DP_TimestepInfo[i]);
+                Info->WriterInfo[i].RawBuffer, DP_TimestepInfo);
             Info->WriterInfo[i].Status = Requested;
         }
     }
