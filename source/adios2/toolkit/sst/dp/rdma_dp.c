@@ -8,11 +8,20 @@
 #include <evpath.h>
 #include <mpi.h>
 
+#include <SSTConfig.h>
+
 #include <rdma/fabric.h>
 #include <rdma/fi_cm.h>
 #include <rdma/fi_domain.h>
 #include <rdma/fi_endpoint.h>
 #include <rdma/fi_rma.h>
+
+#ifdef SST_HAVE_FI_GNI
+#include <rdma/fi_ext_gni.h>
+#ifdef SST_HAVE_CRAY_DRC
+#include <rdmacred.h>
+#endif /* SST_HAVE_CRAY_DRC */
+#endif /* SST_HAVE_FI_GNI */
 
 #include "sst_data.h"
 
@@ -261,9 +270,8 @@ typedef struct _Rdma_WSR_Stream
 
 typedef struct _RdmaPerTimestepInfo
 {
-    char *CheckString;
-    int CheckInt;
-    pthread_mutex_t CheckLock;
+    uint8_t *Block;
+    uint64_t Key;
 } * RdmaPerTimestepInfo;
 
 typedef struct _TimestepEntry
@@ -473,12 +481,13 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
 
 typedef struct _RdmaCompletionHandle
 {
-    int CMcondition;
-    CManager cm;
+    struct fid_mr *LocalMR;
     void *CPStream;
     void *Buffer;
     size_t Length;
     int Rank;
+    int Pending;
+    double StartWTime;
 } * RdmaCompletionHandle;
 
 static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
@@ -698,43 +707,71 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
                                   size_t Length, void *Buffer,
                                   void *DP_TimestepInfo)
 {
-    Rdma_RS_Stream Stream = (Rdma_RS_Stream)
-        Stream_v; /* DP_RS_Stream is the return from InitReader */
-    CManager cm = Svcs->getCManager(Stream->CP_Stream);
+    Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)Stream_v;
+    FabricState Fabric = RS_Stream->Fabric;
+    RdmaPerTimestepInfo Info = (RdmaPerTimestepInfo)DP_TimestepInfo;
     RdmaCompletionHandle ret = malloc(sizeof(struct _RdmaCompletionHandle));
-    struct _RdmaReadRequestMsg ReadRequestMsg;
+    fi_addr_t SrcAddress;
+    void *LocalDesc = NULL;
+    uint8_t *Addr;
+    ssize_t rc;
 
-    ret->CMcondition = CMCondition_get(cm, NULL);
-    ret->CPStream = Stream->CP_Stream;
-    ret->cm = cm;
+    Svcs->verbose(RS_Stream->CP_Stream,
+                  "Performing remote read of Writer Rank %d\n", Rank);
+
+    if (Info)
+    {
+        Svcs->verbose(RS_Stream->CP_Stream,
+                      "Block address is %p, with a key of %d\n", Info->Block,
+                      Info->Key);
+    }
+    else
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, "Timestep info is null\n");
+    }
+
+    ret->CPStream = RS_Stream;
     ret->Buffer = Buffer;
     ret->Rank = Rank;
     ret->Length = Length;
-    /*
-     * set the completion handle as client Data on the condition so that
-     * handler has access to it.
-     */
-    CMCondition_set_client_data(cm, ret->CMcondition, ret);
+    ret->Pending = 1;
 
-    Svcs->verbose(Stream->CP_Stream,
-                  "ADIOS requesting to read remote memory for Timestep %d "
-                  "from Rank %d, WSR_Stream = %p\n",
-                  Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream);
+    SrcAddress = RS_Stream->WriterAddr[Rank];
 
-    /* send request to appropriate writer */
-    /* memset avoids uninit byte warnings from valgrind */
-    memset(&ReadRequestMsg, 0, sizeof(ReadRequestMsg));
-    ReadRequestMsg.Timestep = Timestep;
-    ReadRequestMsg.Offset = Offset;
-    ReadRequestMsg.Length = Length;
-    ReadRequestMsg.WS_Stream = Stream->WriterContactInfo[Rank].WS_Stream;
-    ReadRequestMsg.RS_Stream = Stream;
-    ReadRequestMsg.RequestingRank = Stream->Rank;
-    ReadRequestMsg.NotifyCondition = ret->CMcondition;
-    Svcs->sendToPeer(Stream->CP_Stream, Stream->PeerCohort, Rank,
-                     Stream->ReadRequestFormat, &ReadRequestMsg);
+    if (Fabric->local_mr_req)
+    {
+        // register dest buffer
+        fi_mr_reg(Fabric->domain, Buffer, Length, FI_READ, 0, 0, 0,
+                  &ret->LocalMR, Fabric->ctx);
+        LocalDesc = fi_mr_desc(ret->LocalMR);
+    }
 
-    return ret;
+    Addr = Info->Block + Offset;
+
+    Svcs->verbose(RS_Stream->CP_Stream,
+                  "Target of remote read on Writer Rank %d is %p\n", Rank,
+                  Addr);
+
+    do
+    {
+        ret->StartWTime = MPI_Wtime();
+        rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress,
+                     (uint64_t)Addr, Info->Key, ret);
+    } while (rc == -EAGAIN);
+
+    if (rc != 0)
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, "fi_read failed with code %d.\n",
+                      rc);
+        free(ret);
+        return NULL;
+    }
+
+    Svcs->verbose(RS_Stream->CP_Stream,
+                  "Posted RDMA get for Writer Rank %d for handle %p\n", Rank,
+                  (void *)ret);
+
+    return (ret);
 }
 
 static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
@@ -758,24 +795,35 @@ static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
 static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
     RdmaCompletionHandle Handle = (RdmaCompletionHandle)Handle_v;
-    int Ret = 1;
-    Svcs->verbose(
-        Handle->CPStream,
-        "Waiting for completion of memory read to rank %d, condition %d\n",
-        Handle->Rank, Handle->CMcondition);
-    /*
-     * Wait for the CM condition to be signalled.  If it has been already,
-     * this returns immediately.  Copying the incoming data to the waiting
-     * buffer has been done by the reply handler.
-     */
-    CMCondition_wait(Handle->cm, Handle->CMcondition);
-    Svcs->verbose(
-        Handle->CPStream,
-        "Remote memory read to rank %d with condition %d has completed\n",
-        Handle->Rank, Handle->CMcondition);
+    Rdma_RS_Stream Stream = Handle->CPStream;
+    FabricState Fabric = Stream->Fabric;
+    RdmaCompletionHandle Handle_t;
+    struct fi_cq_data_entry CQEntry = {0};
 
-    free(Handle);
-    return Ret;
+    while (Handle->Pending > 0)
+    {
+        ssize_t rc;
+        rc = fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+        if (rc < 1)
+        {
+            // Handle errrors
+        }
+        else
+        {
+            Svcs->verbose(Stream->CP_Stream,
+                          "got completion for request with handle %p.\n",
+                          CQEntry.op_context);
+            Handle_t = (RdmaCompletionHandle)CQEntry.op_context;
+            Handle_t->Pending--;
+        }
+    }
+
+    if (Fabric->local_mr_req)
+    {
+        fi_close((struct fid *)Handle->LocalMR);
+    }
+
+    return (1);
 }
 
 static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
@@ -788,10 +836,6 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     RdmaPerTimestepInfo Info = malloc(sizeof(struct _RdmaPerTimestepInfo));
     FabricState Fabric = Stream->Fabric;
 
-    Info->CheckString = malloc(64);
-    sprintf(Info->CheckString, "Rdma info for timestep %ld from rank %d",
-            Timestep, Stream->Rank);
-    Info->CheckInt = Stream->Rank * 1000 + Timestep;
     Entry->Data = malloc(sizeof(*Data));
     memcpy(Entry->Data, Data, sizeof(*Data));
     Entry->Timestep = Timestep;
@@ -803,7 +847,17 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     pthread_mutex_lock(&ts_mutex);
     Entry->Next = Stream->Timesteps;
     Stream->Timesteps = Entry;
+    // Probably doesn't need to be in the lock
+    // |
+    // ---------------------------------------------------------------------------------------------------
+    Info->Key = Entry->Key;
     pthread_mutex_unlock(&ts_mutex);
+    Info->Block = Data->block;
+
+    Svcs->verbose(Stream->CP_Stream,
+                  "Providing timestep data with block %p and access key %d\n",
+                  Info->Block, Info->Key);
+
     *TimestepInfoPtr = Info;
 }
 
@@ -845,10 +899,6 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     Info = ReleaseTSL->DP_TimestepInfo;
     if (Info)
     {
-        if (Info->CheckString)
-        {
-            free(Info->CheckString);
-        }
         free(Info);
     }
     free(ReleaseTSL);
@@ -970,10 +1020,8 @@ static FMStructDescRec RdmaWriterContactStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static FMField RdmaTimestepInfoList[] = {
-    {"CheckString", "string", sizeof(char *),
-     FMOffset(RdmaPerTimestepInfo, CheckString)},
-    {"CheckInt", "integer", sizeof(void *),
-     FMOffset(RdmaPerTimestepInfo, CheckInt)},
+    {"Block", "integer", sizeof(void *), FMOffset(RdmaPerTimestepInfo, Block)},
+    {"Key", "integer", sizeof(uint64_t), FMOffset(RdmaPerTimestepInfo, Key)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec RdmaTimestepInfoStructs[] = {
@@ -988,7 +1036,7 @@ extern CP_DP_Interface LoadRdmaDP()
     memset(&RdmaDPInterface, 0, sizeof(RdmaDPInterface));
     RdmaDPInterface.ReaderContactFormats = RdmaReaderContactStructs;
     RdmaDPInterface.WriterContactFormats = RdmaWriterContactStructs;
-    RdmaDPInterface.TimestepInfoFormats = NULL; // RdmaTimestepInfoStructs;
+    RdmaDPInterface.TimestepInfoFormats = RdmaTimestepInfoStructs;
     RdmaDPInterface.initReader = RdmaInitReader;
     RdmaDPInterface.initWriter = RdmaInitWriter;
     RdmaDPInterface.initWriterPerReader = RdmaInitWriterPerReader;
