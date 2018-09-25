@@ -397,6 +397,21 @@ void FC_GLOBAL(adios2_flush_all_engines_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_lock_definitions_f2c,
+               ADIOS2_LOCK_DEFINITIONS_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = 0;
+    try
+    {
+        adios2_lock_definitions(*io);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "ADIOS2 lock_definitions: " << e.what() << "\n";
+        *ierr = -1;
+    }
+}
+
 void FC_GLOBAL(adios2_io_engine_type_f2c,
                ADIOS2_IO_ENGINE_TYPE_F2C)(const adios2_io **io,
                                           char engine_type[32], int *length,
