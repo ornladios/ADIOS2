@@ -199,6 +199,16 @@ adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
 void adios2_flush_all_engines(adios2_io *io);
 
 /**
+ * Promise that no more definitions or changes to defined variables will
+ * occur. Useful information if called before the first adios2_end_step() of
+ * an output Engine, as it will know that the definitions are complete and
+ * constant for the entire lifetime of the output and may optimize metadata
+ * handling.
+ * @param io handler
+ */
+void adios2_lock_definitions(adios2_io *io);
+
+/**
  * return engine type string and length without null character
  * @param io
  * @param length
