@@ -16,11 +16,11 @@ add_test(
     -nw 3 -nr 5 -v -p TestSst)
 set_tests_properties(ADIOSSstTest.3x5 PROPERTIES TIMEOUT 30) 
 
-add_test(
-  NAME ADIOSSstTest.3x5BP
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 3 -nr 5 -v -p TestSst -arg "MarshalMethod:BP")
-set_tests_properties(ADIOSSstTest.3x5BP PROPERTIES TIMEOUT 30) 
+# add_test(
+#   NAME ADIOSSstTest.3x5BP
+#   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+#     -nw 3 -nr 5 -v -p TestSst -arg "MarshalMethod:BP")
+# set_tests_properties(ADIOSSstTest.3x5BP PROPERTIES TIMEOUT 30) 
 
 add_test(
   NAME ADIOSSstTest.5x3

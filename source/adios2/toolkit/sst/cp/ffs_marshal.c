@@ -192,13 +192,14 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
             return strdup("unsigned short");
         }
     }
-    else if (strcmp(Type, "double") == 0)
+    else if ((strcmp(Type, "double") == 0) || (strcmp(Type, "float") == 0))
     {
         if (size == sizeof(float))
         {
             return strdup("float");
         }
-        else if (size == sizeof(long double))
+        else if ((sizeof(long double) != sizeof(double)) &&
+                 (size == sizeof(long double)))
         {
             return strdup("long double");
         }
@@ -206,6 +207,14 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
         {
             return strdup("double");
         }
+    }
+    else if (strcmp(Type, "complex4") == 0)
+    {
+        return strdup("float complex");
+    }
+    else if (strcmp(Type, "complex8") == 0)
+    {
+        return strdup("double complex");
     }
     return strdup(Type);
 }

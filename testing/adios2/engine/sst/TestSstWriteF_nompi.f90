@@ -11,7 +11,7 @@ program TestSstWrite
 
   type(adios2_adios)::adios
   type(adios2_io)::ioWrite, ioRead
-  type(adios2_variable), dimension(12)::variables
+  type(adios2_variable), dimension(20)::variables
   type(adios2_engine)::sstWriter;
 
   !read handlers
@@ -20,11 +20,12 @@ program TestSstWrite
   integer(kind = 8), dimension(:), allocatable::shape_in
   integer(kind = 8)::localtime
 
-  !Application variables 
-  insteps = 10;
-
+  ! No MPI
   irank = 0;
   isize = 1;
+
+  !Application variables 
+  insteps = 10;
 
   !Variable dimensions 
   shape_dims(1) = isize * nx
@@ -53,6 +54,9 @@ program TestSstWrite
   call adios2_set_engine(ioWrite, "Sst", ierr)
 
   !Defines a variable to be written 
+  call adios2_define_variable(variables(12), ioWrite, "scalar_r64", &
+       adios2_type_dp, ierr)
+  
   call adios2_define_variable(variables(1), ioWrite, "i8", &
        adios2_type_integer1, 1, &
        shape_dims, start_dims, count_dims, &
@@ -114,6 +118,7 @@ program TestSstWrite
   do i = 1, insteps
      call GenerateTestData(i - 1, irank, isize)
      call adios2_begin_step(sstWriter, adios2_step_mode_append, 0.0, ierr)
+     call adios2_put(sstWriter, variables(12), data_scalar_r64, ierr)
      call adios2_put(sstWriter, variables(1), data_I8, ierr)
      call adios2_put(sstWriter, variables(2), data_I16, ierr)
      call adios2_put(sstWriter, variables(3), data_I32, ierr)

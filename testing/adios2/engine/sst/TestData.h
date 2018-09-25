@@ -41,9 +41,22 @@ std::vector<std::complex<double>> in_C64;
 std::vector<double> in_R64_2d;
 std::vector<double> in_R64_2d_rev;
 
+int8_t in_scalar_I8;
+int16_t in_scalar_I16;
+int32_t in_scalar_I32;
+int64_t in_scalar_I64;
+float in_scalar_R32;
+double in_scalar_R64;
+std::complex<float> in_scalar_C32;
+std::complex<double> in_scalar_C64;
+
+double data_scalar_R64;
+
 void generateSstTestData(int step, int rank, int size)
 {
     int64_t j = rank * Nx * 10 + step;
+
+    data_scalar_R64 = (step + 1) * 1.5;
     for (int i = 0; i < sizeof(data_I8); i++)
     {
         data_I8[i] = (int8_t)(j + 10 * i);
@@ -66,6 +79,13 @@ void generateSstTestData(int step, int rank, int size)
 int validateSstTestData(int start, int length, int step)
 {
     int failures = 0;
+    if (in_scalar_R64 != 1.5 * (step + 1))
+    {
+        std::cout << "Expected " << 1.5 * (step + 1) << ", got "
+                  << in_scalar_R64 << " for in_scalar_R64, timestep " << step
+                  << std::endl;
+        failures++;
+    }
     for (int i = 0; i < length; i++)
     {
         if (in_I8[i] != (int8_t)((i + start) * 10 + step))
