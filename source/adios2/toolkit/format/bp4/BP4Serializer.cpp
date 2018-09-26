@@ -1341,7 +1341,7 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
         }
 
         uint64_t setsCount = 0;
-        unsigned int currentTimeStep = 1;
+        //unsigned int currentTimeStep = 1;
         bool marching = true;
 
         const size_t entryLengthPosition = positionOut;
@@ -1363,9 +1363,10 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 
             uint8_t count = 0;
             uint32_t length = 0;
-            uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+            //uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+            uint32_t timeStep = 1;
 
-            while (timeStep == currentTimeStep)
+            while (true)
             {
                 if (position >= buffer.size())
                 {
@@ -1376,10 +1377,6 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
                                         header.DataType, count, length,
                                         timeStep);
                 //std::cout << "rank: " << r << ", timeStep: " << timeStep<< std::endl;
-                if (timeStep != currentTimeStep)
-                {
-                    break;
-                }
 
                 ++setsCount;
 
