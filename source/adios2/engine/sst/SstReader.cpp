@@ -297,8 +297,16 @@ void SstReader::Init()
             /*  when you have to get all the array data and put it where  */   \
             /*  it's supposed to go. */                                        \
             /* m_BP3Deserializer->GetDeferredVariable(variable, data);  */     \
-            m_BP3Deserializer->InitVariableBlockInfo(variable, data);          \
-            m_BP3Deserializer->m_DeferredVariables.insert(variable.m_Name);    \
+            if (variable.m_SingleValue)                                        \
+            {                                                                  \
+                *data = variable.m_Value;                                      \
+            }                                                                  \
+            else                                                               \
+            {                                                                  \
+                m_BP3Deserializer->InitVariableBlockInfo(variable, data);      \
+                m_BP3Deserializer->m_DeferredVariables.insert(                 \
+                    variable.m_Name);                                          \
+            }                                                                  \
         }                                                                      \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
