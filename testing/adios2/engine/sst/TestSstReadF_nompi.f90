@@ -12,7 +12,7 @@ program TestSstRead
 
   type(adios2_adios)::adios
   type(adios2_io)::ioWrite, ioRead
-  type(adios2_variable), dimension(12)::variables
+  type(adios2_variable), dimension(20)::variables
   type(adios2_engine)::sstReader;
 
   !read handlers
@@ -132,6 +132,11 @@ program TestSstRead
   if (ndims /= 1) stop 'c64 ndims is not 1'
   if (shape_in(1) /= nx*writerSize) stop 'c64 shape_in read failed'
 
+  call adios2_inquire_variable(variables(12), ioRead, "scalar_r64", ierr)
+  call adios2_variable_name(variables(12), variable_name, ierr)
+  if (variable_name /= 'scalar_r64') stop 'scalar_r64 not recognized'
+  call adios2_variable_type(variables(12), variable_type, ierr)
+  if (variable_type /= adios2_type_dp) stop 'scalar_r64 type not recognized'
   
   myStart = (writerSize * Nx / isize) * irank
   myLength = ((writerSize * Nx + isize - 1) / isize)
@@ -184,6 +189,7 @@ program TestSstRead
   call adios2_get(sstReader, variables(8), in_R64_2d_rev, ierr)
   call adios2_get(sstReader, variables(10), in_C32, ierr)
   call adios2_get(sstReader, variables(11), in_C64, ierr)
+  call adios2_get(sstReader, variables(12), in_scalar_R64, ierr)
 
   call adios2_end_step(sstReader, ierr)
   

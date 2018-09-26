@@ -106,12 +106,14 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
     Engine::DoAllStepsBlocksInfo(const Variable<T> &variable) const            \
     {                                                                          \
         ThrowUp("DoAllStepsBlocksInfo");                                       \
+        return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> Engine::DoBlocksInfo(              \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         ThrowUp("DoBlocksInfo");                                               \
+        return std::vector<typename Variable<T>::Info>();                      \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

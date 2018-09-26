@@ -2,7 +2,7 @@
 Installing the ADIOS2 library and the C++ and C bindings
 ********************************************************
 
-ADIOS2 by default will build and install the C++11 `libadios2`  library and the C++11, C bindings. In addition, the C++98 bindings are created from a separate library `libadios2_cxx98`.
+ADIOS2 by default will build and install the C++11 `libadios2`  library and the C++11, C bindings.
 
 1. **Minimum requirements:** 
 
@@ -14,13 +14,11 @@ ADIOS2 by default will build and install the C++11 `libadios2`  library and the 
     * Libraries: 
       
       - ```lib/libadios2.*```  C++11 and C bindings
-      - ```lib/libadios2_cxx98.*``` C++98 bindings
     
     * Headers: 
       
       - ```include/adios2.h```       C++11 `namespace adios2`
       - ```include/adios2_c.h```     C  prefix `adios2_`
-      - ```include/adios2_cxx98.h``` C++98 `namespace adios2::cxx98`
       
     * Config file: run this command to get installation info 
       

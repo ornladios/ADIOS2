@@ -192,13 +192,14 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
             return strdup("unsigned short");
         }
     }
-    else if (strcmp(Type, "double") == 0)
+    else if ((strcmp(Type, "double") == 0) || (strcmp(Type, "float") == 0))
     {
         if (size == sizeof(float))
         {
             return strdup("float");
         }
-        else if (size == sizeof(long double))
+        else if ((sizeof(long double) != sizeof(double)) &&
+                 (size == sizeof(long double)))
         {
             return strdup("long double");
         }
@@ -206,6 +207,14 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
         {
             return strdup("double");
         }
+    }
+    else if (strcmp(Type, "complex4") == 0)
+    {
+        return strdup("float complex");
+    }
+    else if (strcmp(Type, "complex8") == 0)
+    {
+        return strdup("double complex");
     }
     return strdup(Type);
 }
@@ -689,6 +698,7 @@ static int NeedWriter(FFSArrayRequest Req, int i)
 static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 {
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    SstFullMetadata Mdata = Stream->CurrentMetadata;
 
     while (Reqs)
     {
@@ -709,11 +719,14 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
             size_t DataSize =
                 ((struct FFSMetadataInfoStruct *)Info->MetadataBaseAddrs[i])
                     ->DataBlockSize;
+            void *DP_TimestepInfo =
+                Mdata->DP_TimestepInfo ? Mdata->DP_TimestepInfo[i] : NULL;
             Info->WriterInfo[i].RawBuffer =
                 realloc(Info->WriterInfo[i].RawBuffer, DataSize);
+
             Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
                 Stream, i, Stream->ReaderTimestep, 0, DataSize,
-                Info->WriterInfo[i].RawBuffer, NULL);
+                Info->WriterInfo[i].RawBuffer, DP_TimestepInfo);
             Info->WriterInfo[i].Status = Requested;
         }
     }

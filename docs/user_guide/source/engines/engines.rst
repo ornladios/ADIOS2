@@ -16,7 +16,6 @@ Parameters are passed at:
 .. include:: hdf5.rst
 .. include:: dataman.rst
 .. include:: sst.rst
-.. include:: plugin.rst
 
 
    

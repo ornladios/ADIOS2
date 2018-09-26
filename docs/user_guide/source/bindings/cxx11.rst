@@ -1,6 +1,6 @@
-************************
-C++11 and C++98 bindings
-************************
+**************
+C++11 bindings
+**************
 
 .. role:: cpp(code)
    :language: c++
@@ -8,19 +8,18 @@ C++11 and C++98 bindings
    
 .. caution::
 
-   DO NOT use the clause ``using namespace adios2`` or ``using namespace adios2::cxx98`` in your code. It might create name conflicts.
-   Always use adios2:: explicitly, *e.g.* adios2::ADIOS, adios2::IO.
+   DO NOT use the clause ``using namespace adios2`` in your code. This is in general a bad practices that creates potential name conflicts. Always use adios2:: explicitly, *e.g.* adios2::ADIOS, adios2::IO.
 
 
 .. tip::
 
-   Prefer the C++11 bindings to take advantage of added functionality and to avoid application binary interface (ABI) incompatabilities between C++98 and the native C++11 library. Use C++98 if, and only if, it's your only choice.
+   Prefer the C++11 bindings to take advantage of added functionality (*e.g.* move semantics, lambdas, etc.). If you must use an older C++ standard (98 or 03) to avoid application binary interface (ABI) incompatibilities use the C bindings.
    
 
 ADIOS2 components classes
 -------------------------
 
-ADIOS2 C++ bindings objects are mapped 1-to-1 to the ADIOS components described in the :ref:`Components Overview` section. Only the ``adios2::ADIOS`` object is "owned" by the developer's program using adios2, all other components are light-weigth objects refering to a component that lives inside the ``adios2::ADIOS`` "factory" object.`
+ADIOS2 C++ bindings objects are mapped 1-to-1 to the ADIOS components described in the :ref:`Components Overview` section. Only the ``adios2::ADIOS`` object is "owned" by the developer's program using adios2, all other components are light-weigth objects that point internally to a component that lives inside the ``adios2::ADIOS`` "factory" object.`
  
 .. code-block:: c++
    
