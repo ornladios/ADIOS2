@@ -29,7 +29,7 @@ public:
 TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
 {
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "ADIOS2BPWriteAttributeReadArrayTypes.bp";
+                              "ADIOS2BPWriteAttributeMultirankReadArrayTypes.bp";
 
     int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
