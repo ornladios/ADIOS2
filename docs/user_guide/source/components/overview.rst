@@ -14,14 +14,14 @@ The simple way to understand the big picture for the ADIOS2 core components is t
 ADIOS2's public APIs are based on the natural choice for each supported language to represent each ADIOS2 components and its interaction with application datatypes. Thus, 
 
 
-============== ========================== ======================
+============== ========================== ==================================
  **Language**      **Component API**       **Application Data**   
-============== ========================== ======================
- C++(11/98)     objects/member functions    pointers/references
+============== ========================== ==================================
+ C++(11/newer)  objects/member functions    pointers/references/std::vector
  C              handler/functions           pointers 
  Fortran        handler/subroutines         arrays up to 6D 
  Python         objects/member functions    numpy arrays. 
-============== ========================== ======================
+============== ========================== ==================================
 
 The following section provides a common overview to all languages based on the C++11 APIs. For each specific language go to the `ref:Language Bindings APIs` section, but it's highly recommended to read this section as components map 1-to-1 in other languages. 
 

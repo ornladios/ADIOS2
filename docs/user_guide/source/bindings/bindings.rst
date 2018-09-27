@@ -7,7 +7,7 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 +----------+----------+---------------------+
 | Language | Standard | Interface           |
 +----------+----------+---------------------+
-|          | 11       | #include adios2.h   |
+|          | 11/newer | #include adios2.h   |
 | C++      |          |                     |
 |          | older    | use C bindings      |
 +----------+----------+---------------------+
@@ -22,7 +22,7 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 
 .. tip::
 
-   Prefer the C++11 bindings if your application C++ compiler supports the 2011 (or later) standard. For code using previous C++ standards (98 or 03) prefer the C bindings for ABI compatibility.   
+   Prefer the C++11 bindings if your application C++ compiler supports the 2011 (or later) standard. For code using previous C++ standards (98 or 03) use the C bindings for ABI compatibility.   
 
 
 .. caution::
