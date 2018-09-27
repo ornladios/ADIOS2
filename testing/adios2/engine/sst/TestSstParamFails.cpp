@@ -77,7 +77,11 @@ TEST_F(SstParamFailTest, MarshalMethodUnknown)
 {
     engineParams = ParseEngineParams("MarshalMethod:unknown");
 
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
     adios2::ADIOS adios(true);
+#endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -97,7 +101,11 @@ TEST_F(SstParamFailTest, CompressionMethodUnknown)
 {
     engineParams = ParseEngineParams("CompressionMethod:unknown");
 
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
     adios2::ADIOS adios(true);
+#endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -117,7 +125,11 @@ TEST_F(SstParamFailTest, QueueFullPolicyUnknown)
 {
     engineParams = ParseEngineParams("QueueFullPolicy:unknown");
 
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
     adios2::ADIOS adios(true);
+#endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -137,7 +149,11 @@ TEST_F(SstParamFailTest, RendezvousReaderCountBad)
 {
     engineParams = ParseEngineParams("RendezvousReaderCount:unknown");
 
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
     adios2::ADIOS adios(true);
+#endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -157,7 +173,11 @@ TEST_F(SstParamFailTest, QueueLimitBad)
 {
     engineParams = ParseEngineParams("QueueLimit:unknown");
 
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
     adios2::ADIOS adios(true);
+#endif
 
     adios2::IO io = adios.DeclareIO("TestIO");
 
