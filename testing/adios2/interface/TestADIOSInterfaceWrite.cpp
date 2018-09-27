@@ -580,6 +580,38 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
     EXPECT_EQ(var_uint64_t.Sizeof(), 8);
 }
 
+TEST_F(ADIOSInterfaceWriteTest, Exceptions)
+{
+    adios2::Operator invalidOp = adios.InquireOperator("InvalidOp");
+    EXPECT_FALSE(invalidOp);
+    EXPECT_THROW(adios.AtIO("IOnull"), std::invalid_argument);
+    EXPECT_THROW(adios.DefineOperator("WrongOp", "UnsupportedType"),
+                 std::invalid_argument);
+
+#ifdef ADIOS2_HAVE_BZIP2
+    EXPECT_NO_THROW(adios.DefineOperator("bzip2Op", "bzip2"));
+    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"),
+                 std::invalid_argument);
+#else
+    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"),
+                 std::invalid_argument);
+#endif
+
+#ifdef ADIOS2_HAVE_ZFP
+    EXPECT_NO_THROW(adios.DefineOperator("zfpOp", "zfp"));
+    EXPECT_THROW(adios.DefineOperator("zfpOp", "zfp"), std::invalid_argument);
+#else
+    EXPECT_THROW(adios.DefineOperator("zfpOp", "zfp"), std::invalid_argument);
+#endif
+
+#ifdef ADIOS2_HAVE_SZ
+    EXPECT_NO_THROW(adios.DefineOperator("szOp", "sz"));
+    EXPECT_THROW(adios.DefineOperator("szOp", "sz"), std::invalid_argument);
+#else
+    EXPECT_THROW(adios.DefineOperator("szOp", "sz"), std::invalid_argument);
+#endif
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

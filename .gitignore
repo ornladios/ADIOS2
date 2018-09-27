@@ -29,6 +29,8 @@ build/
 # Doxygen generated files
 html/
 *.html
+docs/api_doxygen/CXX11/xml/
+docs/api_doxygen/C/xml/
 
 # Visual Studio
 .vs/
