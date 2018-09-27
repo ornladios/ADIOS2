@@ -37,6 +37,7 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
                   const int64_t *in_counts, const int64_t in_stepstart,
                   const int64_t in_stepcount);
 void errorCheck(int nlhs, int nrhs, const mxArray *prhs[]);
+void checkDimSize(const int ndims, const size_t *dims);
 char *getString(const mxArray *mxstr);
 mxClassID adiostypeToMatlabClass(int adiostype, mxComplexity *complexity);
 mxArray *createMatlabArray(int adiostype, size_t ndim, size_t *dims);
@@ -190,6 +191,8 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
         qcounts[varNdim] = qstepcount; // steps become slowest dimension
     }
 
+    checkDimSize(varNdim, qcounts);
+
     /* create Matlab array with the appropriate type and size */
     void *data;
     mxArray *out;
@@ -280,19 +283,22 @@ void errorCheck(int nlhs, int nrhs, const mxArray *prhs[])
         mexErrMsgIdAndTxt("MATLAB:adiosreadc:lhs",
                           "Too many output arguments.");
     }
+}
 
-#if !defined(MX_COMPAT_32)
-    /* Make sure that it is safe to cast dim to mwSize when using
-     * largeArrayDims.*/
-    if (dim > MWSIZE_MAX)
+void checkDimSize(const int ndims, const size_t * dims)
+{
+    /* Make sure that it is safe to cast dim to mwSize (MWSIZE_MAX is limited)*/
+    for (int i=0; i<ndims; ++i)
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosreadc:dimensionTooLarge",
-                          "The input dimension, %.0f, is larger than the "
-                          "maximum value of mwSize, %u, when built with "
-                          "largeArrayDims.",
-                          dim, MWSIZE_MAX);
+        if (dims[i] > MWSIZE_MAX)
+        {
+            mexErrMsgIdAndTxt("MATLAB:adiosreadc:dimensionTooLarge",
+                          "The selected dimension size, %zu, is larger than the "
+                          "maximum supported value of mwSize, %u, so we cannot create "
+                          "the result array\n",
+                          dims[i], MWSIZE_MAX);
+        }
     }
-#endif
 }
 
 /** Make a C char* string from a Matlab string */

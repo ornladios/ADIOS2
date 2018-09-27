@@ -400,19 +400,6 @@ void errorCheck(int nlhs, int nrhs, const mxArray *prhs[])
         mexErrMsgIdAndTxt("MATLAB:adiosopenc:lhs",
                           "Too many output arguments.");
     }
-
-#if !defined(MX_COMPAT_32)
-    /* Make sure that it is safe to cast dim to mwSize when using
-     * largeArrayDims.*/
-    if (dim > MWSIZE_MAX)
-    {
-        mexErrMsgIdAndTxt("MATLAB:adiosopenc:dimensionTooLarge",
-                          "The input dimension, %.0f, is larger than the "
-                          "maximum value of mwSize, %u, when built with "
-                          "largeArrayDims.",
-                          dim, MWSIZE_MAX);
-    }
-#endif
 }
 
 /** Make a C char* string from a Matlab string */

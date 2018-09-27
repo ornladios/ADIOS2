@@ -10,7 +10,7 @@ ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib -L${ADIOS_DIR}/lib -ladios2
 ADIOS_DIR=/ccs/proj/e2e/pnorbert/ADIOS/ADIOS2/build.titan.gnu-nompi-shared/install
 MEXLIBS=${ADIOS_LIBS}
 
-MEXOPTS=-DDEBUG CFLAGS="-g -std=c99 -fPIC"
+MEXOPTS=-largeArrayDims -DDEBUG CFLAGS="-g -std=c99 -fPIC"
 default:
 	@echo "ADIOS reader methods for MATLAB"
 	@echo "Have 'mex' compiler in the path and run"
