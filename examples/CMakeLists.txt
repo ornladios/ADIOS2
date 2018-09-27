@@ -8,7 +8,9 @@ add_subdirectory(hello)
 add_subdirectory(useCases)
 
 if(ADIOS2_HAVE_MPI)
-  add_subdirectory(heatTransfer)
+  if(MPIEXEC_MAX_NUMPROCS GREATER 3)
+    add_subdirectory(heatTransfer)
+  endif()
 endif()
 
 add_subdirectory(plugins)

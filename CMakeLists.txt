@@ -132,6 +132,12 @@ adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
+  cmake_host_system_information(RESULT ncores QUERY NUMBER_OF_PHYSICAL_CORES)
+  message("-- Found MPI nprocs = " ${ncores})
+  if(ncores LESS 4)
+    message("-- Reducing MPI nprocs to " ${ncores} " for tests")
+    set(MPIEXEC_MAX_NUMPROCS ${NPROCS})
+  endif()
   # Workaround for MPI forcing the link of C++ bindings
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()

@@ -13,4 +13,3 @@ endif()
 
 add_subdirectory(C)
 add_subdirectory(CXX11)
-add_subdirectory(CXX98)
