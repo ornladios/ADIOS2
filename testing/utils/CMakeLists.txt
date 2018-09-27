@@ -18,6 +18,32 @@ add_test(NAME Utils.C.Writer
 )
 # This test produces TestUtilsCWriter.bp
 
+# bpls2 -h
+add_test(NAME Utils.Bpls.h.Dump
+  COMMAND ${CMAKE_COMMAND}
+    -DARGS=-h
+    -DINPUT_FILE=TestUtilsCWriter.bp
+    -DOUTPUT_FILE=TestUtilsCWriter.bplsh.result.txt
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+)
+set_property(TEST Utils.Bpls.h.Dump
+  PROPERTY DEPENDS Utils.C.Writer
+)
+
+if(ADIOS2_HAVE_MPI)
+
+add_test(NAME Utils.Bpls.h.Validate
+  COMMAND ${CMAKE_COMMAND}
+    -E compare_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsh.expected.txt
+    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsh.result.txt
+)
+set_property(TEST Utils.Bpls.h.Validate
+  PROPERTY DEPENDS Utils.Bpls.h.Dump
+)
+
+endif(ADIOS2_HAVE_MPI)
+
 
 # bpls2 -la to screen for testing
 add_test(NAME Utils.Bpls.la.Screen
@@ -44,16 +70,6 @@ set_property(TEST Utils.Bpls.la.Dump
 )
 
 if(ADIOS2_HAVE_MPI)
-
-add_test(NAME Utils.Bpls.la.ValidateFC
-  COMMAND ${CMAKE_COMMAND}
-    -E env diff
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsla.expected.txt
-    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsla.result.txt
-)
-set_property(TEST Utils.Bpls.la.ValidateFC
-  PROPERTY DEPENDS Utils.Bpls.la.Dump
-)
 
 add_test(NAME Utils.Bpls.la.Validate
   COMMAND ${CMAKE_COMMAND}
@@ -94,7 +110,7 @@ set_property(TEST Utils.Bpls.Al.Validate
 
 endif(ADIOS2_HAVE_MPI)
 
-# bpls2 -ldD
+# bpls2 -ldDav
 add_test(NAME Utils.Bpls.ldDav.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARGS='-ldDav'
@@ -116,6 +132,34 @@ add_test(NAME Utils.Bpls.ldDav.Validate
 )
 set_property(TEST Utils.Bpls.ldDav.Validate
   PROPERTY DEPENDS Utils.Bpls.ldDav.Dump
+)
+
+
+endif(ADIOS2_HAVE_MPI)
+
+
+# bpls2 -ldDavvv
+add_test(NAME Utils.Bpls.ldDavvv.Dump
+  COMMAND ${CMAKE_COMMAND}
+    -DARGS='-ldDavvv'
+    -DINPUT_FILE=TestUtilsCWriter.bp
+    -DOUTPUT_FILE=TestUtilsCWriter.bplsldDavvv.result.txt
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+)
+set_property(TEST Utils.Bpls.ldDavvv.Dump
+  PROPERTY DEPENDS Utils.C.Writer
+)
+
+if(ADIOS2_HAVE_MPI)
+
+add_test(NAME Utils.Bpls.ldDavvv.Validate
+  COMMAND ${CMAKE_COMMAND}
+    -E compare_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldDavvv.expected.txt
+    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsldDavvv.result.txt
+)
+set_property(TEST Utils.Bpls.ldDavvv.Validate
+  PROPERTY DEPENDS Utils.Bpls.ldDavvv.Dump
 )
 
 
