@@ -1,0 +1,3 @@
+add_subdirectory(cmake_build_dir)
+#add_subdirectory(cmake_install_dir)
+#add_subdirectory(non_cmake_install_dir)
