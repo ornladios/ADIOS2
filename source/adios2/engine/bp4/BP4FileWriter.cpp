@@ -348,15 +348,18 @@ void BP4FileWriter::PopulateMetadataIndexFileContent(const uint64_t currentStep,
 
 void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
 {
-    if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength > 0)
-    {
-        return;
-    }
+
     m_BP4Serializer.AggregateCollectiveMetadata(
         m_MPIComm, m_BP4Serializer.m_Metadata, true);
 
     if (m_BP4Serializer.m_RankMPI == 0)
     {
+        if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength > 0)
+        {
+            // if some metadata has already been written, don't need to write
+            // it at close.  
+            return;
+        }
         // first init metadata files
         const std::vector<std::string> transportsNames =
             m_FileMetadataManager.GetFilesBaseNames(

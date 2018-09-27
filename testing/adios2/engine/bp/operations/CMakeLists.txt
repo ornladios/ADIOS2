@@ -3,6 +3,11 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
+set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
+file(MAKE_DIRECTORY ${BP3_DIR})
+file(MAKE_DIRECTORY ${BP4_DIR})
+
 if(ADIOS2_HAVE_MPI)
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
@@ -15,7 +20,8 @@ if(ADIOS2_HAVE_SZ)
     target_link_libraries(TestBPWriteReadSZ MPI::MPI_C)
   endif()
   
-  gtest_add_tests(TARGET TestBPWriteReadSZ ${extra_test_args})
+  gtest_add_tests(TARGET TestBPWriteReadSZ ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+  gtest_add_tests(TARGET TestBPWriteReadSZ ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 endif()
 
 
