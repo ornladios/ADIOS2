@@ -211,7 +211,12 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
 
 Operator *ADIOS::InquireOperator(const std::string name) noexcept
 {
-    return helper::InquireKey(name, m_Operators)->get();
+    std::shared_ptr<Operator> *op = helper::InquireKey(name, m_Operators);
+    if (op == nullptr)
+    {
+        return nullptr;
+    }
+    return op->get();
 }
 
 #define declare_type(T)                                                        \

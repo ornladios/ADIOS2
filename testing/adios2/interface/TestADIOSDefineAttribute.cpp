@@ -34,6 +34,8 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
 
     // Attribute should be unique per process
     io.DefineAttribute<std::string>(name, "-1");
+    auto availableAttributes = io.AvailableAttributes();
+    EXPECT_EQ(availableAttributes.size(), 1);
 
     EXPECT_THROW(io.DefineAttribute<std::string>(name, "0"),
                  std::invalid_argument);

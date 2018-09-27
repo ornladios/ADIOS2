@@ -89,9 +89,13 @@ TEST_F(XMLConfigTest, OpTypeException)
                                  "configOpTypeException.xml");
 
 #ifdef ADIOS2_HAVE_MPI
-    EXPECT_THROW(
-        adios2::ADIOS adios(configFile, MPI_COMM_WORLD, adios2::DebugON),
-        std::invalid_argument);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) // COMM_SELF
+    {
+        EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
+                     std::invalid_argument);
+    }
 #else
     EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
                  std::invalid_argument);
