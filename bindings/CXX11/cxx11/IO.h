@@ -247,7 +247,7 @@ public:
      * constant for the entire lifetime of the output and may optimize metadata
      * handling.
      */
-    void LockDefinitions();
+    void LockDefinitions() noexcept;
 
     /**
      * Returns a map with variable information
