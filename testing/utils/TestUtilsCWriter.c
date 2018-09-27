@@ -8,6 +8,8 @@
  *      Author: Norbert Podhorszki
  */
 
+#include <string.h>
+
 #include <adios2_c.h>
 
 #ifdef ADIOS2_HAVE_MPI
@@ -29,10 +31,16 @@ int main(int argc, char *argv[])
     adios2_adios *adiosH = adios2_init_nompi(adios2_debug_mode_on);
 #endif
 
+    char engineName[32] = "BPFile";
+    if (argc > 1)
+    {
+        strncpy(engineName, argv[1], sizeof(engineName));
+    }
+
     // IO
     adios2_io *ioH = adios2_declare_io(adiosH, "CArrayTypes");
     // Set engine parameters
-    adios2_set_engine(ioH, "BPFile");
+    adios2_set_engine(ioH, engineName);
     adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
     adios2_set_parameter(ioH, "Threads", "1");
 
@@ -84,10 +92,20 @@ int main(int argc, char *argv[])
     // Define attributes in ioH
     adios2_define_attribute(ioH, "name", adios2_type_string, "TestUtilsCWrite",
                             1);
+    // adios2_define_attribute(ioH, "strarray", adios2_type_string_array,
+    // strarray, 4);
     adios2_define_attribute(ioH, "nwriters", adios2_type_int, &nproc, 1);
     unsigned short shape2D[2] = {(unsigned short)d2_Nx, (unsigned short)d2_Ny};
     adios2_define_attribute(ioH, "shape2D", adios2_type_unsigned_short, shape2D,
                             2);
+    adios2_define_attribute(ioH, "aI8", adios2_type_int8_t, data_I8, 1);
+    adios2_define_attribute(ioH, "aI16", adios2_type_int16_t, data_I16, 1);
+    adios2_define_attribute(ioH, "aI32", adios2_type_int32_t, data_I32, 1);
+    adios2_define_attribute(ioH, "aU8", adios2_type_uint8_t, data_U8, 1);
+    adios2_define_attribute(ioH, "aU16", adios2_type_uint16_t, data_U16, 1);
+    adios2_define_attribute(ioH, "aU32", adios2_type_uint32_t, data_U32, 1);
+    adios2_define_attribute(ioH, "aR32", adios2_type_float, data_R32, 1);
+    adios2_define_attribute(ioH, "aR64", adios2_type_double, data_R64, 1);
 
     // inquire variables
     adios2_variable *varNproc = adios2_inquire_variable(ioH, "nproc");

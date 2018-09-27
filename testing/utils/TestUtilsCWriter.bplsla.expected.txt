@@ -1,4 +1,12 @@
   double          R64_2d    {4, 5} = 0 / 19
+  short           aI16      attr   = 512
+  int             aI32      attr   = 131072
+  signed char     aI8       attr   = 0
+  float           aR32      attr   = 0
+  double          aR64      attr   = 0
+  unsigned short  aU16      attr   = 32768
+  unsigned int    aU32      attr   = 2147483648
+  unsigned char   aU8       attr   = 128
   string          name      attr   = "TestUtilsCWrite"
   int             nproc     scalar = 1
   int             nwriters  attr   = 1
