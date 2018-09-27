@@ -134,6 +134,9 @@ public:
             io.DefineVariable<float>("myArray", {gndx, gndy}, {offsx, offsy},
                                      {ndx, ndy}, adios2::ConstantDims);
 
+        adios2::Variable<double> varScalar =
+            io.DefineVariable<double>("myScalar");
+
         adios2::Engine writer = io.Open(streamName, adios2::Mode::Write, comm);
 
         for (size_t step = 0; step < steps; ++step)
@@ -149,6 +152,8 @@ public:
             }
             writer.BeginStep(adios2::StepMode::Append);
             writer.Put<float>(varArray, myArray.data());
+            if (wrank == 0)
+                writer.Put<double>(varScalar, 1.5 * (step + 1));
             writer.EndStep();
             std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
         }
@@ -217,6 +222,8 @@ public:
         size_t step = 0;
         adios2::Variable<float> vMyArray;
         std::vector<float> myArray;
+        adios2::Variable<double> vMyScalar;
+        double myIncomingScalar;
 
         while (true)
         {
@@ -231,6 +238,12 @@ public:
             if (!vMyArray)
             {
                 throw std::ios_base::failure("Missing 'myArray' variable.");
+            }
+
+            vMyScalar = io.InquireVariable<double>("myScalar");
+            if (!vMyScalar)
+            {
+                throw std::ios_base::failure("Missing 'myScalar' variable.");
             }
 
             // 2D decomposition of global array reading
@@ -260,7 +273,12 @@ public:
             myArray.resize(elementsSize);
 
             reader.Get(vMyArray, myArray.data());
+            reader.Get(vMyScalar, myIncomingScalar);
             reader.EndStep();
+            float expectedScalarValue = 1.5 * (step + 1);
+            EXPECT_EQ(myIncomingScalar, expectedScalarValue)
+                << "Error in read, did not receive the expected value:"
+                << " rank " << rank << ", step " << step;
             CheckData(myArray, gndx, gndy, offsx, offsy, ndx, ndy, step, rank);
             std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
             ++step;
