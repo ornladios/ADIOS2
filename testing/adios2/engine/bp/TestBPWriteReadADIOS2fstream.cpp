@@ -54,7 +54,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
-        io.AddTransport("file", {{"Library", "fstream"}});
+        const size_t transportID = io.AddTransport("file");
+        io.SetTransportParameter(transportID, "Library", "fstream");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
