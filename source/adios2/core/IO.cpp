@@ -32,11 +32,6 @@
 #include "adios2/engine/sst/SstWriter.h"
 #endif
 
-#ifdef ADIOS2_HAVE_ADIOS1 // external dependencies
-#include "adios2/engine/adios1/ADIOS1Reader.h"
-#include "adios2/engine/adios1/ADIOS1Writer.h"
-#endif
-
 #ifdef ADIOS2_HAVE_HDF5 // external dependencies
 #include "adios2/engine/hdf5/HDF5ReaderP.h"
 #include "adios2/engine/hdf5/HDF5WriterP.h"
@@ -488,21 +483,6 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "Sst library, can't use Sst engine\n");
-#endif
-    }
-    else if (engineTypeLC == "adios1")
-    {
-#ifdef ADIOS2_HAVE_ADIOS1
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::ADIOS1Reader>(*this, name, mode,
-                                                            mpiComm);
-        else
-            engine = std::make_shared<engine::ADIOS1Writer>(*this, name, mode,
-                                                            mpiComm);
-#else
-        throw std::invalid_argument(
-            "ERROR: this version didn't compile with ADIOS "
-            "1.x library, can't use ADIOS1 engine\n");
 #endif
     }
     else if (engineTypeLC == "hdf5")

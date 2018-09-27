@@ -66,7 +66,6 @@ To build ADIOS2:
     -- Looking for pthread_create in pthread
     -- Looking for pthread_create in pthread - found
     -- Found Threads: TRUE  
-    -- Could NOT find ADIOS1 (missing:  ADIOS1_LIBRARY ADIOS1_INCLUDE_DIR) (Required is at least version "1.12.0")
     -- Found PythonInterp: /usr/bin/python3 (found version "3.5.2") 
     -- Found PythonLibs: /usr/lib/x86_64-linux-gnu/libpython3.5m.so
     -- Found PythonModule_numpy: /usr/lib/python3/dist-packages/numpy  
@@ -142,7 +141,6 @@ To build ADIOS2:
           SST      : OFF
           ZeroMQ   : ON
           HDF5     : ON
-          ADIOS1   : OFF
           Python   : ON
           Fortran  : ON
           SysVShMem: ON
@@ -202,7 +200,6 @@ CMake VAR Option        Values                    Description
  `ADIOS2_USE_DataMan`  **`AUTO`**/``ON``/OFF      Enable the DataMan engine for Wide-Area-Network transports.                                    
  `ADIOS2_USE_ZeroMQ`   **`AUTO`**/``ON``/OFF      Enable `ZeroMQ <http://zeromq.org/>`_ for the DataMan engine.                                            
  `ADIOS2_USE_HDF5`     **`AUTO`**/``ON``/OFF      Enable the `HDF5 <https://www.hdfgroup.org>`_ engine. If HDF5 is not in the path or not the correct version is in the path, set the correct path by the -DHDF5_ROOT=... option      
- `ADIOS2_USE_ADIOS1`   **`AUTO`**/``ON``/OFF      Enable the `ADIOS 1.x <https://www.olcf.ornl.gov/center-projects/adios>`_ engine, only v1.12 or above are valid.   
  `ADIOS2_USE_Python`   **`AUTO`**/``ON``/OFF      Enable the Python >= 2.7 bindings. mpi4py and numpy. Python 3 will be used if Python 2 and 3 are found. If you want a python version not in the path then choose the right pyhton executable by -DPYTHON_EXECUTABLE=... 
  `ADIOS2_USE_Fortran`  **`AUTO`**/``ON``/OFF      Enable the Fortran 90 or above bindings. Must have a Fortran compiler. Default is OFF, must be explicitly set to ON.
  `ADIOS2_USE_SST`      **`AUTO`**/``ON``/OFF      Enable the Simplified Staging Engine (SST) and its dependencies, requires MPI. 
@@ -219,13 +216,13 @@ Examples: Enable Fortran, disable Python bindings and ZeroMQ functionality
 
 
 Notes: 
-   * The `ADIOS2_USE_HDF5` and `ADIOS2_USE_ADIOS1` options require the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled. Similary, enabling MPI and Python bindings require `mpi4py`.
+   * The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled. Similary, enabling MPI and Python bindings require `mpi4py`.
    
    * Optional ROOT suffix to a dependency can guide cmake into finding a particular dependency:
    
 .. code-block:: bash
 
-    $ cmake -DADIOS1_ROOT=/opt/adios/1.12.0 ../ADIOS2
+    $ cmake -DHDF5_ROOT=/opt/hdf5/1.12.0 ../ADIOS2
 
 In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library gets built:
 

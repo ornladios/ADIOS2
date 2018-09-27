@@ -28,7 +28,6 @@ public:
 // 1D 1x8 test data
 //******************************************************************************
 
-// ADIOS2 BP write, native ADIOS1 read
 TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 {
     int mpiRank = 0, mpiSize = 1;

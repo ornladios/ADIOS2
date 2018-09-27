@@ -23,7 +23,6 @@ set(ENV{FFLAGS} -fsanitize=undefined -fno-sanitize-recover=all -pthread)
 set(ENV{UBSAN_OPTIONS} "print_stacktrace=1")
 
 set(dashboard_cache "
-ADIOS2_USE_ADIOS1:STRING=OFF
 ADIOS2_USE_BZip2:STRING=ON
 ADIOS2_USE_DataMan:STRING=ON
 ADIOS2_USE_Fortran:STRING=ON

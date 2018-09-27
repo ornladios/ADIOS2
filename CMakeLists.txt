@@ -125,7 +125,6 @@ adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
-adios_option(ADIOS1    "Enable support for the ADIOS 1.x engine" OFF)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
@@ -143,7 +142,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-  BZip2 ZFP SZ MPI DataMan SST ZeroMQ HDF5 ADIOS1 Python Fortran SysVShMem
+  BZip2 ZFP SZ MPI DataMan SST ZeroMQ HDF5 Python Fortran SysVShMem
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(

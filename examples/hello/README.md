@@ -2,9 +2,6 @@ examples/hello
 
 Provides tests and illustrates how to use very basic functionality in adios2
 
-1. adios1Writer (-DADIOS2_USE_ADIOS1=ON -DADIOS1_DIR=/adios1-location)  
-    * Write BP format files using adios1 library through adios2 interface    
-	
 1. bpWriter    
     * Write BP format files for one Variable  
     

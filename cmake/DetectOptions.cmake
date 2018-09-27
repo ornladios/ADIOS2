@@ -108,19 +108,6 @@ elseif(ADIOS2_USE_HDF5)
   set(ADIOS2_HAVE_HDF5 TRUE)
 endif()
 
-# ADIOS1
-if(NOT ADIOS2_HAVE_MPI)
-  set(adios1_find_args COMPONENTS sequential)
-endif()
-if(ADIOS2_USE_ADIOS1 STREQUAL AUTO)
-  find_package(ADIOS1 1.12.0 ${adios1_find_args})
-elseif(ADIOS2_USE_ADIOS1)
-  find_package(ADIOS1 1.12.0 REQUIRED ${adios1_find_args})
-endif()
-if(ADIOS1_FOUND)
-  set(ADIOS2_HAVE_ADIOS1 TRUE)
-endif()
-
 # Python
 if(CMAKE_CXX_COMPILER_ID STREQUAL PGI)
   if(ADIOS2_USE_Python STREQUAL ON)

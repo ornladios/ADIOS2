@@ -191,13 +191,6 @@ function(GenerateADIOSPackageConfig)
       list(APPEND ADIOS2_CXX_LIBS ${ZeroMQ_LIBRARIES})
       list(APPEND ADIOS2_CXX_INCS ${ZeroMQ_INCLUDE_DIRS})
     endif()
-    if(ADIOS2_HAVE_ADIOS1)
-      install(FILES cmake/FindADIOS1.cmake
-        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules
-      )
-      list(APPEND ADIOS2_CXX_LIBS ${ADIOS1_LIBRARIES})
-      list(APPEND ADIOS2_CXX_INCS ${ADIOS1_INCLUDE_DIRS})
-    endif()
     if(ADIOS2_HAVE_HDF5)
       list(APPEND ADIOS2_CXX_LIBS ${HDF5_C_LIBRARIES})
       if(HDF5_C_INCLUDE_DIRS)

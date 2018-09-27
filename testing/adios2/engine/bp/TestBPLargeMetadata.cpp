@@ -54,7 +54,6 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
-        // io.SetEngine("ADIOS1");
 
         adios2::Dims shape{static_cast<size_t>(mpiSize * Nx)};
         adios2::Dims start{static_cast<size_t>(mpiRank * Nx)};

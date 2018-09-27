@@ -24,7 +24,6 @@ set(dashboard_cache "
 CMAKE_C_FLAGS=-fsanitize=address -fno-omit-frame-pointer
 CMAKE_CXX_FLAGS=-fsanitize=address -fno-omit-frame-pointer
 
-ADIOS2_USE_ADIOS1:STRING=OFF
 ADIOS2_USE_BZip2:STRING=ON
 ADIOS2_USE_DataMan:STRING=ON
 ADIOS2_USE_Fortran:STRING=OFF

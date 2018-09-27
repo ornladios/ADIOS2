@@ -81,7 +81,6 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
-        // ioRead.SetEngine("ADIOS1");
         // ioRead.AddTransport("File");
         // ioRead.SetParameter("OpenAsFile", "true");
 
