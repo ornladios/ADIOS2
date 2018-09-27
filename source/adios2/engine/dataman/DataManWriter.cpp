@@ -33,11 +33,22 @@ DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
-    for (size_t i = 0; i < m_TransportChannels; ++i)
-    {
-        m_DataManSerializer[i]->New(m_BufferSize);
-    }
     ++m_CurrentStep;
+    if (m_Format == "dataman")
+    {
+        for (size_t i = 0; i < m_TransportChannels; ++i)
+        {
+            m_DataManSerializer[i]->New(m_BufferSize);
+        }
+    }
+    else if (m_Format == "binary")
+    {
+    }
+    else
+    {
+        throw(std::invalid_argument("[DataManWriter::EndStep] format " +
+                                    m_Format + " is not supported."));
+    }
     return StepStatus::OK;
 }
 
@@ -47,15 +58,7 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
-    if (m_Format == "bp")
-    {
-        m_BP3Serializer->SerializeData(m_IO, true);
-        m_BP3Serializer->CloseStream(m_IO);
-        m_DataMan->WriteWAN(m_BP3Serializer->m_Data.m_Buffer, 0);
-        m_BP3Serializer->ResetBuffer(m_BP3Serializer->m_Data, true);
-        m_BP3Serializer->ResetIndices();
-    }
-    else if (m_Format == "dataman")
+    if (m_Format == "dataman")
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {
@@ -67,9 +70,6 @@ void DataManWriter::EndStep()
     }
     else if (m_Format == "binary")
     {
-        throw(std::invalid_argument("[DataManWriter::EndStep] binary format is "
-                                    "not supported in generic "
-                                    "BeginStep-EndStep API."));
     }
     else
     {
@@ -91,15 +91,7 @@ void DataManWriter::Init()
                                  Mode::Write, m_WorkflowMode, true);
 
     // initialize serializer
-    if (m_Format == "bp")
-    {
-        m_BP3Serializer =
-            std::make_shared<format::BP3Serializer>(m_MPIComm, m_DebugMode);
-        m_BP3Serializer->InitParameters(m_IO.m_Parameters);
-        m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name, m_IO.m_HostLanguage,
-                                              {"WAN_Zmq"});
-    }
-    else if (m_Format == "dataman")
+    if (m_Format == "dataman")
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {
@@ -134,17 +126,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
-    if (m_Format == "bp")
-    {
-        m_BP3Serializer->CloseData(m_IO);
-        auto &buffer = m_BP3Serializer->m_Data.m_Buffer;
-        auto &position = m_BP3Serializer->m_Data.m_Position;
-        if (position > 0)
-        {
-            m_DataMan->WriteWAN(buffer, transportIndex);
-        }
-    }
-    else if (m_Format == "dataman")
+    if (m_Format == "dataman")
     {
         m_DataMan->WriteWAN(format::DataManSerializer::EndSignal(CurrentStep()),
                             0);

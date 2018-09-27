@@ -29,6 +29,7 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     m_IsLittleEndian = helper::IsLittleEndian();
     m_IsRowMajor = helper::IsRowMajor(io.m_HostLanguage);
     GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
+    GetStringParameter(m_IO.m_Parameters, "Format", m_Format);
     m_TransportChannels = m_IO.m_TransportsParameters.size();
     if (m_TransportChannels == 0)
     {
@@ -52,28 +53,6 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     }
 }
 
-bool DataManCommon::GetBoolParameter(Params &params, std::string key,
-                                     bool &value)
-{
-    auto itKey = params.find(key);
-    if (itKey != params.end())
-    {
-        std::transform(itKey->second.begin(), itKey->second.end(),
-                       itKey->second.begin(), ::tolower);
-        if (itKey->second == "yes" || itKey->second == "true")
-        {
-            value = true;
-            return true;
-        }
-        if (itKey->second == "no" || itKey->second == "false")
-        {
-            value = false;
-            return true;
-        }
-    }
-    return false;
-}
-
 bool DataManCommon::GetStringParameter(Params &params, std::string key,
                                        std::string &value)
 {
@@ -82,17 +61,6 @@ bool DataManCommon::GetStringParameter(Params &params, std::string key,
     {
         value = it->second;
         std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-        return true;
-    }
-    return false;
-}
-
-bool DataManCommon::GetIntParameter(Params &params, std::string key, int &value)
-{
-    auto it = params.find(key);
-    if (it != params.end())
-    {
-        value = std::stoi(it->second);
         return true;
     }
     return false;

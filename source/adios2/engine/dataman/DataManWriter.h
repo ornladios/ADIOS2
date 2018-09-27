@@ -40,7 +40,6 @@ private:
     size_t m_BufferSize = 1024 * 1024 * 1024;
     size_t m_StepsPerBuffer = 10;
 
-    std::shared_ptr<format::BP3Serializer> m_BP3Serializer;
     std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
 
     void Init();
@@ -57,13 +56,6 @@ private:
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
-
-    template <class T>
-    void PutSyncCommonBP(Variable<T> &variable,
-                         const typename Variable<T>::Info &blockInfo);
-
-    template <class T>
-    void PutSyncCommonDataMan(Variable<T> &variable, const T *values);
 
     void DoClose(const int transportIndex = -1) final;
 };

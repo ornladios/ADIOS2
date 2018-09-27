@@ -194,7 +194,7 @@ void UserCallBack1(void *data, const std::string &doid, const std::string &var,
 }
 
 void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
-                   const size_t steps, const std::string &workflowMode,
+                   const size_t steps, const adios2::Params &engineParams,
                    const std::vector<adios2::Params> &transParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
@@ -202,7 +202,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     adios2::ADIOS adios;
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
+    dataManIO.SetParameters(engineParams);
     for (const auto &params : transParams)
     {
         dataManIO.AddTransport("WAN", params);
@@ -268,7 +268,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
 }
 
 void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
-                      const size_t steps, const std::string &workflowMode,
+                      const size_t steps, const adios2::Params &engineParams,
                       const std::vector<adios2::Params> &transParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
@@ -276,7 +276,7 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
     adios2::ADIOS adios(adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
+    dataManIO.SetParameters(engineParams);
     for (const auto &params : transParams)
     {
         dataManIO.AddTransport("WAN", params);
@@ -333,6 +333,7 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
                 dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
+            auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
             bpShorts.SetSelection({start, count});
@@ -381,7 +382,7 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
 
 void DataManReaderCallback(const Dims &shape, const Dims &start,
                            const Dims &count, const size_t steps,
-                           const std::string &workflowMode,
+                           const adios2::Params &engineParams,
                            const std::vector<adios2::Params> &transParams,
                            const size_t timeout)
 {
@@ -394,9 +395,7 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
                            const adios2::Dims &)>(UserCallBack1));
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters({
-        {"WorkflowMode", "subscribe"},
-    });
+    dataManIO.SetParameters(engineParams);
     for (const auto &params : transParams)
     {
         dataManIO.AddTransport("WAN", params);
@@ -409,7 +408,7 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
 
 void DataManReaderSubscribe(const Dims &shape, const Dims &start,
                             const Dims &count, const size_t steps,
-                            const std::string &workflowMode,
+                            const adios2::Params &engineParams,
                             const std::vector<adios2::Params> &transParams,
                             const size_t timeout)
 {
@@ -419,7 +418,7 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
     adios2::ADIOS adios(adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters({{"WorkflowMode", workflowMode}});
+    dataManIO.SetParameters(engineParams);
     for (const auto &params : transParams)
     {
         dataManIO.AddTransport("WAN", params);
