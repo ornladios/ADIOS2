@@ -25,23 +25,8 @@ namespace engine
 template <class T>
 void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
-    if (m_WorkflowMode == "subscribe")
-    {
-        while (m_DataManDeserializer.Get(data, variable.m_Name,
-                                         variable.m_Start, variable.m_Count,
-                                         m_CurrentStep) != 0)
-        {
-        }
-    }
-    else if (m_WorkflowMode == "p2p")
-    {
-        while (m_DataManDeserializer.Get(data, variable.m_Name,
-                                         variable.m_Start, variable.m_Count,
-                                         m_CurrentStep) != 0)
-        {
-        }
-    }
+    GetDeferredCommon(variable, data);
+    PerformGets();
 }
 
 template <class T>
@@ -72,7 +57,7 @@ DataManReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
     std::map<size_t, std::vector<typename Variable<T>::Info>> m;
     for (const auto &i : m_MetaDataMap)
     {
-        m[i.first] = BlocksInfo(variable, i.first);
+        m[i.first] = BlocksInfoCommon(variable, i.first);
     }
     return m;
 }

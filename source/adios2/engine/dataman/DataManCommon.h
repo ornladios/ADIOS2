@@ -14,7 +14,6 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
-#include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
@@ -54,10 +53,8 @@ protected:
     std::shared_ptr<std::thread> m_DataThread;
 
     virtual void IOThread(std::shared_ptr<transportman::DataMan> man) = 0;
-    bool GetBoolParameter(Params &params, std::string key, bool &value);
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
-    bool GetIntParameter(Params &params, std::string key, int &value);
 
 }; // end class DataManCommon
 

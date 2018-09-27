@@ -48,7 +48,6 @@ private:
 
     void Init();
     void IOThread(std::shared_ptr<transportman::DataMan> man);
-    void IOThreadBP(std::shared_ptr<transportman::DataMan> man);
     void RunCallback();
     void DoClose(const int transportIndex = -1) final;
 

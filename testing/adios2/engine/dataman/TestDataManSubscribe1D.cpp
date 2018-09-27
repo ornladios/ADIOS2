@@ -25,16 +25,16 @@ TEST_F(DataManEngineTest, WriteRead_1D_Subscribe)
     Dims start = {0};
     Dims count = {10};
     size_t steps = 10000;
+    adios2::Params engineParams = {{"WorkflowMode", "subscribe"}};
     std::vector<adios2::Params> transportParams = {
         {{"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12310"}}};
-    std::string workflowMode = "subscribe";
 
     // run workflow
     auto r = std::thread(DataManReaderSubscribe, shape, start, count, steps,
-                         workflowMode, transportParams, timeout);
+                         engineParams, transportParams, timeout);
     std::cout << "Reader thread started" << std::endl;
     auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         workflowMode, transportParams);
+                         engineParams, transportParams);
     std::cout << "Writer thread started" << std::endl;
     w.join();
     std::cout << "Writer thread ended" << std::endl;
