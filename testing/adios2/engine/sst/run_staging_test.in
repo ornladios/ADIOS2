@@ -83,6 +83,10 @@ else
     write_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw"
     read_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr"
 fi
+if [ $nr -eq "0" ]; then
+   read_spawn_cmd="echo"
+fi
+
 if [ $vflag == "yes" ]; then
     echo "Doing        ($write_spawn_cmd ./$writer_prog $args) & writer_pid=$!"
 fi

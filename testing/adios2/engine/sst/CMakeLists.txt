@@ -66,7 +66,7 @@ set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
 add_test(
   NAME ADIOSSstTest.NoReaderNoWait
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-    -nw 1 -nr 0 -v -p TestSst -arg "RendezvousReaderCount:0,QueueLimit:3")
+    -nw 1 -nr 0 -v -p TestSst -arg "RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard")
 set_tests_properties(ADIOSSstTest.NoReaderNoWait PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
 
 if(ADIOS2_HAVE_Fortran)
