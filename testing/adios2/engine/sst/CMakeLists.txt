@@ -107,6 +107,7 @@ endif()
 
 if (ADIOS2_HAVE_MPI)
   include(${CMAKE_CURRENT_SOURCE_DIR}/TestSSTMxN.cmake)
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 endif()
 
 add_test(
@@ -115,4 +116,4 @@ add_test(
     -verbose -nw 3 -nr 2 -max_readers 1 -warg 'RendezvousReaderCount:0' -rarg '--ignore_time_gap')
 set_tests_properties(ADIOSSstKillReadersTest.Serialized PROPERTIES TIMEOUT 240 RUN_SERIAL 1)
 
-gtest_add_tests(TARGET TestSstParamFails)
+gtest_add_tests(TARGET TestSstParamFails ${extra_test_args})
