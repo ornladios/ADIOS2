@@ -237,10 +237,12 @@ PYBIND11_MODULE(adios2, m)
         .def("SetEngine", &adios2::py11::IO::SetEngine)
         .def("SetParameters", &adios2::py11::IO::SetParameters,
              pybind11::arg("parameters") = adios2::Params())
-        .def("SetParameters", &adios2::py11::IO::SetParameters)
+        .def("SetParameter", &adios2::py11::IO::SetParameter)
         .def("GetParameters", &adios2::py11::IO::GetParameters,
              pybind11::return_value_policy::reference_internal)
-        .def("AddTransport", &adios2::py11::IO::AddTransport)
+        .def("AddTransport", &adios2::py11::IO::AddTransport,
+             pybind11::arg("type"),
+             pybind11::arg("parameters") = adios2::Params())
 
         .def("DefineVariable",
              (adios2::core::VariableBase *
