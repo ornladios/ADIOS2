@@ -39,6 +39,9 @@ SCRIPT_DIR=${PWD}/Source/scripts/dashboard/nightly
 
 source /opt/rh/devtoolset-7/enable
 
+export ZFP_ROOT=${HOME}/Dashboards/Support/zfp/0.5.3
+export SZ_ROOT=${HOME}/Dashboards/Support/sz/master
+
 for F in gcc7 intel17 intel18 gcc7-mpich intel17-impi intel18-openmpi gcc7-gcov gcc7-mpich-gcov gcc7-valgrind clang5-asan clang5-msan gcc7-coverity
 do
   log "Running ${F}"
