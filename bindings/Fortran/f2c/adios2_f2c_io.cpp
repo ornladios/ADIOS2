@@ -245,6 +245,7 @@ void FC_GLOBAL(adios2_define_attribute_f2c,
                                             const int *type, const void *data,
                                             const int *elements, int *ierr)
 {
+
     *ierr = 0;
     try
     {
@@ -295,9 +296,37 @@ void FC_GLOBAL(adios2_define_variable_attribute_f2c,
     *ierr = 0;
     try
     {
-        *attribute = adios2_define_variable_attribute(
-            *io, name, static_cast<adios2_type>(*type), data,
-            static_cast<std::size_t>(*elements), variable_name, separator);
+        if (*type == adios2_type_string_array)
+        {
+            char **char2D = new char *[*elements];
+
+            // need to covert to row-major char** style
+            std::vector<std::string> dataV(*elements);
+            for (auto i = 0; i < *elements; ++i)
+            {
+                char2D[i] = new char[adios2_string_array_element_max_size];
+
+                const char *fstringMemory =
+                    reinterpret_cast<const char *>(data);
+
+                strcpy(
+                    char2D[i],
+                    &fstringMemory[i * adios2_string_array_element_max_size]);
+            }
+
+            *attribute = adios2_define_variable_attribute(
+                *io, name, static_cast<adios2_type>(*type),
+                static_cast<const void *>(char2D),
+                static_cast<std::size_t>(*elements), variable_name, separator);
+
+            delete[] char2D;
+        }
+        else
+        {
+            *attribute = adios2_define_variable_attribute(
+                *io, name, static_cast<adios2_type>(*type), data,
+                static_cast<std::size_t>(*elements), variable_name, separator);
+        }
     }
     catch (std::exception &e)
     {
