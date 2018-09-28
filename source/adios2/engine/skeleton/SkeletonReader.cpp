@@ -128,17 +128,25 @@ void SkeletonReader::Init()
 
 void SkeletonReader::InitParameters()
 {
-    auto itVerbosity = m_IO.m_Parameters.find("verbose");
-    if (itVerbosity != m_IO.m_Parameters.end())
+    for (const auto &pair : m_IO.m_Parameters)
     {
-        m_Verbosity = std::stoi(itVerbosity->second);
-        if (m_DebugMode)
+        std::string key(pair.first);
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+
+        std::string value(pair.second);
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+
+        if (key == "verbose")
         {
-            if (m_Verbosity < 0 || m_Verbosity > 5)
-                throw std::invalid_argument(
-                    "ERROR: Method verbose argument must be an "
-                    "integer in the range [0,5], in call to "
-                    "Open or Engine constructor\n");
+            m_Verbosity = std::stoi(value);
+            if (m_DebugMode)
+            {
+                if (m_Verbosity < 0 || m_Verbosity > 5)
+                    throw std::invalid_argument(
+                        "ERROR: Method verbose argument must be an "
+                        "integer in the range [0,5], in call to "
+                        "Open or Engine constructor\n");
+            }
         }
     }
 }
