@@ -51,6 +51,11 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     size_t count[1];
     count[0] = data_Nx;
 
+    // define attribute
+    const char *strarray[] = {"first", "second", "third", "fourth"};
+    adios2_define_attribute(ioH, "strarray", adios2_type_string_array, strarray,
+                            4);
+
     // Define variables in ioH
     {
 
