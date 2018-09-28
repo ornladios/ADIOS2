@@ -636,8 +636,13 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
         /* add the reader-rank-specific Stream identifier to each outgoing
          * message */
         *RS_StreamPtr = CP_WSR_Stream->Connections[peer].RemoteStreamID;
-        CP_verbose(s, "Sending a message to reader %d\n", peer);
-        CMwrite(conn, f, Msg);
+        CP_verbose(s, "Sending a message to reader %d (%p)\n", peer,
+                   *RS_StreamPtr);
+        if (CMwrite(conn, f, Msg) != 1)
+        {
+            CP_verbose(s, "Message failed to send to reader %d (%p)\n", peer,
+                       *RS_StreamPtr);
+        }
         j++;
     }
 }
