@@ -71,8 +71,8 @@ static void BreakdownArrayName(const char *Name, char **base_name_p,
     int TypeLen;
     int ElementSize;
     const char *NameStart;
-    char *TypeStart = index(Name, '_') + 1;
-    TypeStart = index(TypeStart, '_') + 1;
+    char *TypeStart = strchr(Name, '_') + 1;
+    TypeStart = strchr(TypeStart, '_') + 1;
     sscanf(Name, "SST%d_%d_", &ElementSize, &TypeLen);
     NameStart = TypeStart + TypeLen + 1;
     *element_size_p = ElementSize;
@@ -257,7 +257,7 @@ static void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
         FMFieldList PriorField;
         PriorField = &((*FieldP)[(*CountP) - 1]);
         int PriorFieldSize = PriorField->field_size;
-        if (index(PriorField->field_type, '['))
+        if (strchr(PriorField->field_type, '['))
         {
             // really a pointer
             PriorFieldSize = sizeof(void *);

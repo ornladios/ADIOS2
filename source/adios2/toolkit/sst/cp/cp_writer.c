@@ -346,25 +346,6 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     return Ret;
 }
 
-static void AddRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
-{
-    CPTimestepList List;
-    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    List = Stream->QueuedTimesteps;
-    while (List)
-    {
-        if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
-        {
-            List->ReferenceCount++;
-            CP_verbose(Stream, "AddRef : Writer-side Timestep %ld now has "
-                               "reference count %d\n",
-                       List->Timestep, List->ReferenceCount);
-        }
-        List = List->Next;
-    }
-    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
-}
-
 static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
 {
     CPTimestepList Last = NULL, List;

@@ -495,39 +495,6 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     pthread_mutex_unlock(&Stream->DataLock);
 }
 
-static TSMetadataList waitForMetadata(SstStream Stream, long Timestep)
-{
-    struct _TimestepMetadataList *Next;
-    pthread_mutex_lock(&Stream->DataLock);
-    Next = Stream->Timesteps;
-    while (1)
-    {
-        Next = Stream->Timesteps;
-        while (Next)
-        {
-            if (Next->MetadataMsg->Timestep == Timestep)
-            {
-                pthread_mutex_unlock(&Stream->DataLock);
-                CP_verbose(Stream, "Returning metadata for Timestep %d\n",
-                           Timestep);
-                return Next;
-            }
-            Next = Next->Next;
-        }
-        /* didn't find requested timestep, check Stream status */
-        if (Stream->Status != Established)
-        {
-            /* closed or failed, return NULL */
-            return NULL;
-        }
-        CP_verbose(Stream, "Waiting for metadata for Timestep %d\n", Timestep);
-        /* wait until we get the timestep metadata or something else changes */
-        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
-    }
-    /* NOTREACHED */
-    pthread_mutex_unlock(&Stream->DataLock);
-}
-
 static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
 {
     struct _TimestepMetadataList *Next;
