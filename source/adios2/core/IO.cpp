@@ -17,7 +17,6 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/engine/bp3/BP3Reader.h"
 #include "adios2/engine/bp3/BP3Writer.h"
-#include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
@@ -30,11 +29,6 @@
 #ifdef ADIOS2_HAVE_SST // external dependencies
 #include "adios2/engine/sst/SstReader.h"
 #include "adios2/engine/sst/SstWriter.h"
-#endif
-
-#ifdef ADIOS2_HAVE_ADIOS1 // external dependencies
-#include "adios2/engine/adios1/ADIOS1Reader.h"
-#include "adios2/engine/adios1/ADIOS1Writer.h"
 #endif
 
 #ifdef ADIOS2_HAVE_HDF5 // external dependencies
@@ -490,21 +484,6 @@ Engine &IO::Open(const std::string &name, const Mode mode,
                                     "Sst library, can't use Sst engine\n");
 #endif
     }
-    else if (engineTypeLC == "adios1")
-    {
-#ifdef ADIOS2_HAVE_ADIOS1
-        if (mode == Mode::Read)
-            engine = std::make_shared<engine::ADIOS1Reader>(*this, name, mode,
-                                                            mpiComm);
-        else
-            engine = std::make_shared<engine::ADIOS1Writer>(*this, name, mode,
-                                                            mpiComm);
-#else
-        throw std::invalid_argument(
-            "ERROR: this version didn't compile with ADIOS "
-            "1.x library, can't use ADIOS1 engine\n");
-#endif
-    }
     else if (engineTypeLC == "hdf5")
     {
 #ifdef ADIOS2_HAVE_HDF5
@@ -532,11 +511,6 @@ Engine &IO::Open(const std::string &name, const Mode mode,
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "MPI, can't use InSituMPI engine\n");
 #endif
-    }
-    else if (engineTypeLC == "pluginengine")
-    {
-        engine =
-            std::make_shared<engine::PluginEngine>(*this, name, mode, mpiComm);
     }
     else if (engineTypeLC == "skeleton")
     {

@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     {
         // if not defined by user, we can change the default settings
         // BPFile is the default engine
-        bpReaderIO.SetEngine("ADIOS1");
+        bpReaderIO.SetEngine("BP");
         bpReaderIO.SetParameters({{"num_threads", "2"}});
         bpReaderIO.SetParameter("OpenAsFile", "true");
 

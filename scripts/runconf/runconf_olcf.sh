@@ -43,8 +43,6 @@ if [ `hostname | cut -c 1-5` == "titan" ]; then
         # ADIOS 1.x
         #module load adios/1.13.0
         export ADIOS_DIR=/ccs/proj/e2e/pnorbert/ADIOS/xk6.$TARGET
-        EXTERNAL_OPTS+="-DADIOS2_USE_ADIOS1=ON -DADIOS1_ROOT=${ADIOS_DIR} " 
-        #EXTERNAL_OPTS+="-DADIOS2_USE_ADIOS1=OFF -DADIOS2_USE_HDF5=OFF "
         # HDF5
         if [ "x$USE_MPI" == "xON" ]; then
             module load cray-hdf5-parallel
@@ -58,7 +56,7 @@ if [ `hostname | cut -c 1-5` == "titan" ]; then
         #      -DEVPath_ROOT=/opt/chaos 
         EXTERNAL_OPTS+="-DADIOS2_USE_Lustre=ON "
     else
-        EXTERNAL_OPTS+="-DADIOS2_USE_ADIOS1=OFF -DADIOS2_USE_HDF5=OFF -DADIOS2_USE_SST=OFF "
+        EXTERNAL_OPTS+="-DADIOS2_USE_HDF5=OFF -DADIOS2_USE_SST=OFF "
         EXTERNAL_OPTS+="-DADIOS2_USE_ZeroMQ=OFF -DADIOS2_USE_BZip2=OFF -DADIOS2_USE_ZFP=OFF -DADIOS2_USE_SZ=OFF"
     fi
     
@@ -100,14 +98,13 @@ elif [ `hostname -f | cut -c 1-9` == "summitdev" ]; then
     unset EXTERNAL_OPTS
     if [ $BUILD_FULL == "true" ]; then
         # ADIOS 1.x
-        EXTERNAL_OPTS+="-DADIOS2_USE_ADIOS1=OFF "
         EXTERNAL_OPTS+="-DADIOS2_USE_HDF5=OFF "
         # ZFP
         #      -DZFP_ROOT=/opt/zfp 
         # EVPATH
         EXTERNAL_OPTS+="-DEVPath_ROOT=/ccs/proj/csc143/SST_XGC_coupling/summitdev/sw.gcc/chaos "
     else
-        EXTERNAL_OPTS+="-DADIOS2_USE_ADIOS1=OFF -DADIOS2_USE_HDF5=OFF"
+        EXTERNAL_OPTS+="-DADIOS2_USE_HDF5=OFF"
     fi
 
     COMPILER_OPTS="-DCMAKE_CXX_COMPILER=${OMPI_CXX} -DCMAKE_C_COMPILER=${OMPI_CC} -DCMAKE_Fortran_COMPILER=${OMPI_FC}"
@@ -138,12 +135,11 @@ elif [ `hostname -f | cut -c 1-4` == "rhea" ]; then
     unset EXTERNAL_OPTS
     if [ $BUILD_FULL == "true" ]; then
         # ADIOS 1.x
-        EXTERNAL_OPTS+="-DADIOS2_USE_ADIOS1=OFF "
         EXTERNAL_OPTS+="-DADIOS2_USE_HDF5=OFF "
         # ZFP
         #      -DZFP_ROOT=/opt/zfp 
     else
-        EXTERNAL_OPTS+="-DADIOS2_USE_ADIOS1=OFF -DADIOS2_USE_HDF5=OFF"
+        EXTERNAL_OPTS+="-DADIOS2_USE_HDF5=OFF"
     fi
 
     #COMPILER_OPTS="-DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc -DCMAKE_Fortran_COMPILER=ifort "

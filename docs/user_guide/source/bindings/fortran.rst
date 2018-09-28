@@ -248,7 +248,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! io component owning the attribute
       type(adios2_io), intent(in):: io
       
-      ! engine_type: BPFile (default), HDF5, DataMan, SST, ADIOS1, InSituMPI
+      ! engine_type: BPFile (default), HDF5, DataMan, SST, InSituMPI
       character*(*), intent(in):: engine_type
 
 * :f90:`subroutine adios2_set_parameter` set IO key/value pair parameter in code, see :ref:`Supported Engines` for a list of available parameters for each engine type

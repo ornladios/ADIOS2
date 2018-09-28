@@ -26,7 +26,6 @@ public:
 // 1D 1x8 test data
 //******************************************************************************
 
-// ADIOS2 BP write, native ADIOS1 read
 TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
@@ -218,7 +217,6 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
 // 2D 2x4 test data
 //******************************************************************************
 
-// ADIOS2 BP write, native ADIOS1 read
 TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would

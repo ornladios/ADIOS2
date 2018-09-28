@@ -10,10 +10,6 @@ add_subdirectory(bpFlushWriter)
 add_subdirectory(bpAttributeWriter)
 add_subdirectory(skeleton)
 
-if(ADIOS2_HAVE_ADIOS1)
-  add_subdirectory(adios1Writer)
-endif()
-
 if(ADIOS2_HAVE_DataMan)
   add_subdirectory(datamanReader)
   add_subdirectory(datamanWriter)

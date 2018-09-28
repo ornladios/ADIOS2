@@ -24,7 +24,6 @@ set(ENV{CXX} icpc)
 set(ENV{FC}  ifort)
 
 set(dashboard_cache "
-ADIOS2_USE_ADIOS1:STRING=ON
 ADIOS2_USE_BZip2:STRING=ON
 ADIOS2_USE_DataMan:STRING=ON
 ADIOS2_USE_Fortran:STRING=ON

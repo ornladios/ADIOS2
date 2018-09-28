@@ -35,9 +35,6 @@ add_library(adios2
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
 
-  engine/plugin/PluginEngine.cpp
-  engine/plugin/PluginEngineInterface.cpp
-
 #toolkit
   toolkit/format/BufferSTL.cpp
   
@@ -147,18 +144,6 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(adios2 PUBLIC MPI::MPI_C)
 else()
   target_sources(adios2 PRIVATE helper/mpidummy.cpp)
-endif()
-
-if(ADIOS2_HAVE_ADIOS1)
-  target_sources(adios2 PRIVATE
-    engine/adios1/ADIOS1Reader.cpp
-    engine/adios1/ADIOS1Writer.cpp
-    
-    toolkit/interop/adios1/ADIOS1Common.cpp toolkit/interop/adios1/ADIOS1Common.tcc
-    toolkit/interop/adios1/ADIOS1CommonWrite.cpp toolkit/interop/adios1/ADIOS1CommonWrite.tcc
-    toolkit/interop/adios1/ADIOS1CommonRead.cpp toolkit/interop/adios1/ADIOS1CommonRead.tcc
-  )
-  target_link_libraries(adios2 PRIVATE adios1::adios)
 endif()
 
 if(ADIOS2_HAVE_HDF5)

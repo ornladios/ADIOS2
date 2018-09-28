@@ -37,7 +37,6 @@ public:
 // 1D 1x8 test data
 //******************************************************************************
 
-// ADIOS2 write, native ADIOS1 read
 TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
 {
     // Use a relative path + file name to test path in file name capability

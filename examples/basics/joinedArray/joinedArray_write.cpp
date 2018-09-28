@@ -70,8 +70,6 @@ int main(int argc, char *argv[])
         // Get io settings from the config file or
         // create one with default settings here
         adios2::IO io = adios.DeclareIO("Output");
-        // io.SetEngine("ADIOS1");
-        // io.AddTransport("File", {{"library", "MPI"}});
 
         /*
          * Define joinable local array: type, name, global and local size

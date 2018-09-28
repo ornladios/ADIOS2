@@ -116,8 +116,6 @@ A particular engine is set within the IO object that creates it with the ``IO::S
 +-------------------------+---------+---------------------------------------------+
 | File                    | BPFile  | DEFAULT write/read ADIOS2 native bp files   |
 |                         |         |                                             |
-|                         | ADIOS1  | write/read ADIOS1.x native bp files         |
-|                         |         |                                             |
 |                         | HDF5    | write/read interoperability with HDF5 files |
 +-------------------------+---------+---------------------------------------------+
 | Wide-Area-Network (WAN) | DataMan | write/read TCP/IP streams                   |

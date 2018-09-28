@@ -27,7 +27,6 @@ public:
 // 1D 1x8 test data
 //******************************************************************************
 
-// ADIOS2 BP write, native ADIOS1 read
 TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 {
     // Each process would write a 1x8 array and all processes would
@@ -103,7 +102,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         // files
         // Ex. if you tune Nx and NSteps, the test would fail. But if you clear
         // the cache in
-        // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteADIOS1Read1D8.bp.dir,
+        // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteRead1D8.bp.dir,
         // then it works
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -797,7 +796,6 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 // 2D 2x4 test data
 //******************************************************************************
 
-// ADIOS2 BP write, native ADIOS1 read
 TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
