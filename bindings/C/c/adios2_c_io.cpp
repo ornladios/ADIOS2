@@ -295,13 +295,10 @@ adios2_attribute *adios2_define_variable_attribute(
     }
     case (adios2_type_string_array):
     {
-        std::vector<std::string> arrayStrings(elements);
-        const char *char2D = reinterpret_cast<const char *>(data);
-        for (auto i = 0; i < elements; ++i)
-        {
-            arrayStrings[i] =
-                std::string(&char2D[i * adios2_string_array_element_max_size]);
-        }
+        const char **char2D =
+            reinterpret_cast<const char **>(const_cast<void *>(data));
+
+        std::vector<std::string> arrayStrings(char2D, char2D + elements);
 
         attribute = &ioCpp.DefineAttribute<std::string>(
             name, arrayStrings.data(), arrayStrings.size(), variable_name,
