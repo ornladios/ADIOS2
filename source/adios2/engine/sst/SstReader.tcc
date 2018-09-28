@@ -136,11 +136,6 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
                 const size_t rank = subStreamInfo.SubStreamID;
-                void *dp_info = NULL;
-                if (m_CurrentStepMetaData->DP_TimestepInfo)
-                {
-                    dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];
-                }
                 // if remote data buffer is compressed
                 if (subStreamInfo.OperationsInfo.size() > 0)
                 {
