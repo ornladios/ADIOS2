@@ -92,12 +92,16 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
 
     // READ
     {
+        adios2::fstream iStream;
+        EXPECT_FALSE(iStream);
+
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD);
+        iStream.open(fname, adios2::fstream::in, MPI_COMM_WORLD);
 #else
-        adios2::fstream iStream(fname, adios2::fstream::in);
+        iStream.open(fname, adios2::fstream::in);
 #endif
 
+        EXPECT_TRUE(iStream);
         const adios2::Dims start{mpiRank * Nx};
         const adios2::Dims count{Nx};
 
@@ -163,10 +167,16 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
             }
 
             auto IString = iStep.read<std::string>("iString");
-            auto I8 = iStep.read<int8_t>("i8", start, count);
-            auto I16 = iStep.read<int16_t>("i16", start, count);
-            auto I32 = iStep.read<int32_t>("i32", start, count);
-            auto I64 = iStep.read<int64_t>("i64", start, count);
+
+            std::vector<int8_t> I8(Nx);
+            std::vector<int16_t> I16(Nx);
+            std::vector<int32_t> I32(Nx);
+            std::vector<int64_t> I64(Nx);
+
+            iStep.read<int8_t>("i8", I8.data(), start, count);
+            iStep.read<int16_t>("i16", I16.data(), start, count);
+            iStep.read<int32_t>("i32", I32.data(), start, count);
+            iStep.read<int64_t>("i64", I64.data(), start, count);
             auto U8 = iStep.read<uint8_t>("u8", start, count);
             auto U16 = iStep.read<uint16_t>("u16", start, count);
             auto U32 = iStep.read<uint32_t>("u32", start, count);
@@ -443,9 +453,25 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
     }
 }
 
-//******************************************************************************
-// main
-//******************************************************************************
+TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
+{
+    // Each process would write a 1x8 array and all processes would
+    // form a mpiSize * Nx 1D array
+    const std::string fname("ADIOS2BP_hl_exception.bp");
+
+    {
+#ifdef ADIOS2_HAVE_MPI
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD);
+        EXPECT_THROW(
+            oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD),
+            std::invalid_argument);
+#else
+        adios2::fstream oStream(fname, adios2::fstream::out);
+        EXPECT_THROW(oStream.open("second", adios2::fstream::out),
+                     std::invalid_argument);
+#endif
+    }
+}
 
 int main(int argc, char **argv)
 {

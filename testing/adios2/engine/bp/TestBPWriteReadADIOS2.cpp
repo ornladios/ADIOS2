@@ -49,8 +49,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    EXPECT_TRUE(adios);
 #else
     adios2::ADIOS adios(true);
+    EXPECT_TRUE(adios);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -386,8 +388,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    EXPECT_TRUE(adios);
 #else
     adios2::ADIOS adios(true);
+    EXPECT_TRUE(adios);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

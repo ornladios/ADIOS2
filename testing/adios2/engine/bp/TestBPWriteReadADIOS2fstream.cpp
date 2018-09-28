@@ -245,10 +245,10 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
         SmallTestData testData;
 
         std::string IString;
-        std::array<int8_t, Nx> I8;
-        std::array<int16_t, Nx> I16;
-        std::array<int32_t, Nx> I32;
-        std::array<int64_t, Nx> I64;
+        std::vector<int8_t> I8(Nx);
+        std::vector<int16_t> I16(Nx);
+        std::vector<int32_t> I32(Nx);
+        std::vector<int64_t> I64(Nx);
         std::array<uint8_t, Nx> U8;
         std::array<uint16_t, Nx> U16;
         std::array<uint32_t, Nx> U32;
@@ -301,12 +301,12 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
-            bpReader.Get(var_iString, IString);
+            bpReader.Get("iString", IString);
 
-            bpReader.Get(var_i8, I8.data());
-            bpReader.Get(var_i16, I16.data());
-            bpReader.Get(var_i32, I32.data());
-            bpReader.Get(var_i64, I64.data());
+            bpReader.Get("i8", I8);
+            bpReader.Get("i16", I16);
+            bpReader.Get("i32", I32);
+            bpReader.Get("i64", I64);
 
             bpReader.Get(var_u8, U8.data());
             bpReader.Get(var_u16, U16.data());

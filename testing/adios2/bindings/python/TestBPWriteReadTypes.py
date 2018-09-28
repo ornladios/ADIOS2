@@ -71,6 +71,20 @@ varR64 = ioWriter.DefineVariable(
 attString = ioWriter.DefineAttribute("attrString", ["hello attribute"])
 attI8 = ioWriter.DefineAttribute("attrI8", data.I8)
 
+ioWriter.SetEngine("BPFile")
+ioParams = {}
+ioParams['Threads'] = '1'
+ioParams['InitialBufferSize'] = '17Kb'
+ioWriter.SetParameters(ioParams)
+
+engineType = ioWriter.EngineType()
+if(engineType != "BPFile"):
+    raise ValueError(str(engineType) +
+                     ' incorrect engine type, should be BPFile')
+
+ioWriter.SetParameter("profileunits", "microseconds")
+ioWriter.AddTransport("file")
+
 # ADIOS Engine
 writer = ioWriter.Open("npTypes.bp", adios2.Mode.Write)
 
