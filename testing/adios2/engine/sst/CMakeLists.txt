@@ -101,7 +101,7 @@ if(ADIOS2_HAVE_ZFP)
   add_test(
     NAME ADIOSSstZFPCompression.1x1
     COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test -rd 5
-    -nw 1 -nr 1 -v -p TestSst -arg 'CompressionMethod:zfp' )
+    -nw 1 -nr 1 -v -p TestSst -arg "CompressionMethod:zfp" )
   set_tests_properties(ADIOSSstZFPCompression.1x1 PROPERTIES TIMEOUT 30 RUN_SERIAL 1) 
 endif()
 
