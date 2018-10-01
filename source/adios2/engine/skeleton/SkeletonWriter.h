@@ -40,8 +40,10 @@ public:
     ~SkeletonWriter() = default;
 
     StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
+    void Flush(const int transportIndex = -1) final;
 
 private:
     int m_Verbosity = 0;

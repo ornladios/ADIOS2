@@ -4,6 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(bp)
+add_subdirectory(skeleton)
 
 if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5)
