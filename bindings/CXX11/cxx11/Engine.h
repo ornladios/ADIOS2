@@ -82,11 +82,6 @@ public:
      */
     size_t CurrentStep() const;
 
-    /** Informs the engine that the BeginStep Put/Get EndStep schedule is fixed
-     * for the entire run. Simplifies synchronized between reader and writers
-     */
-    void FixedSchedule();
-
     /**
      * Put data associated with a Variable in the Engine
      * @param variable contains variable metadata information

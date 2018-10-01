@@ -78,6 +78,11 @@ private:
      * engine */
     format::BP3Deserializer m_BP3Deserializer;
 
+    /** true: We know that the source/targe has a fixed write/read schedule
+     * and this engine can utilize this fact for optimizing I/O
+     */
+    bool m_RemoteDefinitionsLocked = false;
+
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;

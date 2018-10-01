@@ -72,7 +72,8 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    if (m_FixedLocalSchedule && m_FixedRemoteSchedule && m_CurrentStep > 0)
+    if (m_IO.m_DefinitionsLocked && m_RemoteDefinitionsLocked &&
+        m_CurrentStep > 0)
     {
         variable.SetData(data);
         // Create the async send for the variable now

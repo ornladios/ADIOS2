@@ -180,4 +180,12 @@ contains
 
     end subroutine
 
+    subroutine adios2_lock_definitions(io, ierr)
+        type(adios2_io), intent(in) :: io
+        integer, intent(out) :: ierr
+
+        call adios2_lock_definitions_f2c(io%f2c, ierr)
+
+    end subroutine
+
 end module

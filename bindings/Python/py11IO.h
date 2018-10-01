@@ -67,6 +67,8 @@ public:
 
     void FlushAll();
 
+    void LockDefinitions() noexcept;
+
     std::string EngineType() const noexcept;
 
 private:
