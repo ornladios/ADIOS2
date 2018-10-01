@@ -516,10 +516,14 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     CP_WSR_Stream->ParentStream = Stream;
     CP_WSR_Stream->Connections = connections_to_reader;
 
-    int success = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
-                               ReturnData->CP_ReaderInfo);
+    int MySuccess = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
+                                 ReturnData->CP_ReaderInfo);
 
-    if (!success)
+    int GlobalSuccess = 0;
+    MPI_Allreduce(&MySuccess, &GlobalSuccess, 1, MPI_INT, MPI_LAND,
+                  Stream->mpiComm);
+
+    if (!GlobalSuccess)
     {
         return NULL;
     }
@@ -588,7 +592,12 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                 (struct _CP_WriterInitInfo *)pointers[i]->CP_Info;
             response.DP_WriterInfo[i] = pointers[i]->DP_Info;
         }
-        CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response);
+        if (CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response) != 1)
+        {
+            CP_verbose(Stream,
+                       "Message failed to send to reader in participate in "
+                       "reader open\n");
+        }
         free(response.CP_WriterInfo);
         free(response.DP_WriterInfo);
     }
@@ -661,6 +670,15 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                 {
                     /* For first Msg, send all previous formats */
                     List->Msg->Formats = Stream->PreviousFormats;
+                }
+                else
+                {
+                    /*
+                     *  TENTATIVE!  TRYING TO SEE IF THIS MIGHT IMPACT RARE
+                     *  STUCK READER PROBLEM.
+                     *  Add  a short delay between consecutive messages
+                    */
+                    usleep(10 * Stream->ConnectionUsleepMultiplier);
                 }
                 sendOneToWSRCohort(
                     Reader, Stream->CPInfo->DeliverTimestepMetadataFormat,
