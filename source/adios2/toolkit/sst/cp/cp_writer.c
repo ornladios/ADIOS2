@@ -535,10 +535,14 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     CP_WSR_Stream->ParentStream = Stream;
     CP_WSR_Stream->Connections = connections_to_reader;
 
-    int success = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
-                               ReturnData->CP_ReaderInfo);
+    int MySuccess = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
+                                 ReturnData->CP_ReaderInfo);
 
-    if (!success)
+    int GlobalSuccess = 0;
+    MPI_Allreduce(&MySuccess, &GlobalSuccess, 1, MPI_INT, MPI_LAND,
+                  Stream->mpiComm);
+
+    if (!GlobalSuccess)
     {
         return NULL;
     }
