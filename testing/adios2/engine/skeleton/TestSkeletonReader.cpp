@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 #ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(mpiReaderComm);
 #else
-        adios2::ADIOS adios();
+        adios2::ADIOS adios;
 #endif
         adios2::IO io = adios.DeclareIO("reader");
         io.SetEngine("Skeleton");

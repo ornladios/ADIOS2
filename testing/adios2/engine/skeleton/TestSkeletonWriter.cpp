@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 #ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(mpiWriterComm);
 #else
-        adios2::ADIOS adios();
+        adios2::ADIOS adios;
 #endif
 
         std::vector<float> myArray(ndx);
