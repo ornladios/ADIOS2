@@ -40,6 +40,7 @@ SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     m_WriterStep++;
+    m_BetweenStepPairs = true;
     if (m_MarshalMethod == SstMarshalFFS)
     {
         return (StepStatus)SstFFSWriterBeginStep(m_Output, (int)mode,
@@ -63,6 +64,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 void SstWriter::EndStep()
 {
+    m_BetweenStepPairs = false;
     if (m_MarshalMethod == SstMarshalFFS)
     {
         SstFFSWriterEndStep(m_Output, m_WriterStep);
