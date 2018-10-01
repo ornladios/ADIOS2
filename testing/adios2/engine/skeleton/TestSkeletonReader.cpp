@@ -12,7 +12,7 @@
 const std::string streamname = "skeleton_stream";
 
 static void printDataStep(const float *data, const size_t start,
-                          const size_t count, const int rank, const int step)
+                          const size_t count, const int rank, const size_t step)
 {
     std::ofstream myfile;
     std::string filename = "data." + std::to_string(rank);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
                     // right-most processes need to read all the rest
                     ndx = gndx - ndx * (size_t)(nproc - 1);
                 }
-                int step = reader.CurrentStep();
+                size_t step = reader.CurrentStep();
                 adios2::Dims count, start;
                 count.push_back(ndx);
                 start.push_back(offsx);
