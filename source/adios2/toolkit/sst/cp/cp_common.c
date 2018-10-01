@@ -1058,5 +1058,9 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
             return;
         }
     }
-    CMwrite(Peers[Rank].CMconn, Format, Data);
+    if (CMwrite(Peers[Rank].CMconn, Format, Data) != 1)
+    {
+        CP_verbose(s, "Message failed to send to peer %d in CP_sendToPeer()\n",
+                   Rank);
+    }
 }

@@ -607,7 +607,12 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                 (struct _CP_WriterInitInfo *)pointers[i]->CP_Info;
             response.DP_WriterInfo[i] = pointers[i]->DP_Info;
         }
-        CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response);
+        if (CMwrite(conn, Stream->CPInfo->WriterResponseFormat, &response) != 1)
+        {
+            CP_verbose(Stream,
+                       "Message failed to send to reader in participate in "
+                       "reader open\n");
+        }
         free(response.CP_WriterInfo);
         free(response.DP_WriterInfo);
     }

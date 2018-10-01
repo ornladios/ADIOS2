@@ -255,8 +255,13 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
                                         ReaderRegister.WriterResponseCondition,
                                         &response);
 
-            CMwrite(conn, Stream->CPInfo->ReaderRegisterFormat,
-                    &ReaderRegister);
+            if (CMwrite(conn, Stream->CPInfo->ReaderRegisterFormat,
+                        &ReaderRegister) != 1)
+            {
+                CP_verbose(
+                    Stream,
+                    "Message failed to send to writer in SstReaderOpen\n");
+            }
             free(ReaderRegister.CP_ReaderInfo);
             free(ReaderRegister.DP_ReaderInfo);
 
@@ -617,7 +622,11 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
         /* add the writer Stream identifier to each outgoing
          * message */
         *WS_StreamPtr = s->ConnectionsToWriter[peer].RemoteStreamID;
-        CMwrite(conn, f, Msg);
+        if (CMwrite(conn, f, Msg) != 1)
+        {
+            CP_verbose(s, "Message failed to send to writer %d (%p)\n", peer,
+                       *WS_StreamPtr);
+        }
         i++;
     }
 }
