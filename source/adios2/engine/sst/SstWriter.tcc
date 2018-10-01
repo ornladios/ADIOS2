@@ -28,6 +28,12 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
     variable.SetData(values);
 
+    if (m_BetweenStepPairs == false)
+    {
+        throw std::logic_error("ERROR: When using the SST engine in ADIOS2, "
+                               "Put() calls must appear between "
+                               "BeginStep/EndStep pairs");
+    }
     if (variable.m_Count.empty())
     {
         variable.m_Count = variable.m_Shape;

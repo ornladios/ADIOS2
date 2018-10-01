@@ -66,6 +66,7 @@ private:
 
     SstStream m_Output;
     long m_WriterStep = -1;
+    bool m_BetweenStepPairs = false;
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
     Typedecl m_##Param = Default;
