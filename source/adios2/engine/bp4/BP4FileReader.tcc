@@ -76,6 +76,11 @@ void BP4FileReader::ReadVariableBlocks(Variable<T> &variable)
 
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
+                if (subStreamInfo.ZeroBlock)
+                {
+                    continue;
+                }
+
                 const size_t subFileIndex = subStreamInfo.SubStreamID;
 
                 if (m_SubFileManager.m_Transports.count(subFileIndex) == 0)
@@ -115,6 +120,10 @@ void BP4FileReader::ReadVariableBlocks(Variable<T> &variable)
                     m_BP4Deserializer.GetPreOperatorBlockData(
                         variable.m_RawMemory[1], blockOperationInfo,
                         variable.m_RawMemory[0]);
+                    
+                    helper::ClipVector(variable.m_RawMemory[0],
+                                       subStreamInfo.Seeks.first,
+                                       subStreamInfo.Seeks.second);
                 }
                 else
                 {
