@@ -24,7 +24,6 @@ const unsigned int steps = 2; // number of output steps
 
 int main(int argc, char *argv[])
 {
-    int wrank = 0, wnproc = 1;
     int rank = 0;
     int nproc = 1;
     int retval = 0;
@@ -33,6 +32,7 @@ int main(int argc, char *argv[])
     auto coutbuf = std::cout.rdbuf(out.rdbuf()); // save and redirect
 
 #ifdef ADIOS2_HAVE_MPI
+    int wrank = 0, wnproc = 1;
     MPI_Comm mpiWriterComm;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
