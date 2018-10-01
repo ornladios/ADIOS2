@@ -681,6 +681,15 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                     /* For first Msg, send all previous formats */
                     List->Msg->Formats = Stream->PreviousFormats;
                 }
+                else
+                {
+                    /*
+                     *  TENTATIVE!  TRYING TO SEE IF THIS MIGHT IMPACT RARE
+                     *  STUCK READER PROBLEM.
+                     *  Add  a short delay between consecutive messages
+                    */
+                    usleep(10 * Stream->ConnectionUsleepMultiplier);
+                }
                 sendOneToWSRCohort(
                     Reader, Stream->CPInfo->DeliverTimestepMetadataFormat,
                     List->Msg, &List->Msg->RS_Stream);
