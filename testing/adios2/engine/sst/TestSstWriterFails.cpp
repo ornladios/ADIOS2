@@ -64,12 +64,6 @@ static adios2::Params ParseEngineParams(std::string Input)
 // ADIOS2 SST write
 TEST_F(SstWriteFails, InvalidPut)
 {
-    // form a mpiSize * Nx 1D array
-    int mpiRank = 0, mpiSize = 1;
-
-    // Number of steps
-    const std::size_t NSteps = 10;
-
 // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
