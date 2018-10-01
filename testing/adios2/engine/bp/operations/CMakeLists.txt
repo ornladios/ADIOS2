@@ -40,8 +40,11 @@ if(ADIOS2_HAVE_ZFP)
     target_link_libraries(TestBPWriteReadZfpConfig MPI::MPI_C)
   endif()
   
-  gtest_add_tests(TARGET TestBPWriteReadZfp ${extra_test_args})
-  gtest_add_tests(TARGET TestBPWriteReadZfpConfig ${extra_test_args})
+  gtest_add_tests(TARGET TestBPWriteReadZfp ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+  gtest_add_tests(TARGET TestBPWriteReadZfp ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+
+  gtest_add_tests(TARGET TestBPWriteReadZfpConfig ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+  gtest_add_tests(TARGET TestBPWriteReadZfpConfig ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 endif()
 
 if(ADIOS2_HAVE_MGARD)
