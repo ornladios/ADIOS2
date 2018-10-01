@@ -61,10 +61,16 @@ configure_file(
 )
 
 add_test(
-  NAME ADIOSSstTest.Simple_1x1
+  NAME ADIOSSstTest.1x1
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 1 -v -p TestSst -arg "MarshalMethod:FFS")
-set_tests_properties(ADIOSSstTest.Simple_1x1 PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
+set_tests_properties(ADIOSSstTest.1x1 PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
+
+add_test(
+  NAME ADIOSSstTest.1x1BP
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+    -nw 1 -nr 1 -v -p TestSst -arg "MarshalMethod:BP")
+set_tests_properties(ADIOSSstTest.1x1BP PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
 
 add_test(
   NAME ADIOSSstTest.NoReaderNoWait
