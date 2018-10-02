@@ -87,6 +87,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
                                      adios2::ConstantDims);
             io.DefineVariable<double>("r64", shape, start, count,
                                       adios2::ConstantDims);
+
+            io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
+                                                   adios2::ConstantDims);
+            io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
+                                                    adios2::ConstantDims);
         }
 
         if (!engineName.empty())
@@ -97,12 +102,6 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
         {
             // Create the BP Engine
             io.SetEngine("BPFile");
-        }
-
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
-                                                   adios2::ConstantDims);
-            io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
-                                                    adios2::ConstantDims);
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
