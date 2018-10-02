@@ -20,6 +20,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <limits>    //std::numeric_limits
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
@@ -90,7 +91,7 @@ public:
      * @return current step status
      */
     virtual StepStatus BeginStep(StepMode mode,
-                                 const float timeoutSeconds = 0.f);
+                                 const float timeoutSeconds = std::numeric_limits<float>::max());
 
     /**
      * Returns current step information for each engine.

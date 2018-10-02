@@ -30,7 +30,7 @@ public:
                   MPI_Comm mpiComm);
     virtual ~DataManReader();
     StepStatus BeginStep(StepMode stepMode,
-                         const float timeoutSeconds = 0.f) final;
+                         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     size_t CurrentStep() const final;
     void PerformGets() final;
     void EndStep() final;

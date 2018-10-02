@@ -52,7 +52,7 @@ public:
     HDFVDSWriter(MPI_Comm mpiComm, bool debugMode);
     void Init(const std::string &name);
     void AddVar(const VariableBase &var, hid_t h5Type);
-    void Advance(const float timeoutSeconds = 0.0);
+    void Advance(const float timeoutSeconds = std::numeric_limits<float>::max());
     void Close(const int transportIndex = -1);
 
     interop::HDF5Common m_VDSFile;
@@ -72,7 +72,7 @@ class HDFSerialWriter
 {
 public:
     HDFSerialWriter(MPI_Comm mpiComm, bool debugMode);
-    void Advance(const float timeoutSeconds = 0.0);
+    void Advance(const float timeoutSeconds = std::numeric_limits<float>::max());
     void Close(const int transportIndex = -1);
     void Init(const std::string &name, int rank);
 

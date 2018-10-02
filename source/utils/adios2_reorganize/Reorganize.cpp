@@ -135,7 +135,7 @@ void Reorganize::Run()
     while (true)
     {
         adios2::StepStatus status =
-            rStream.BeginStep(adios2::StepMode::NextAvailable, 0.0f);
+            rStream.BeginStep(adios2::StepMode::NextAvailable);
         if (status != adios2::StepStatus::OK)
         {
             break;

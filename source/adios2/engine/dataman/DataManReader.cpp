@@ -56,9 +56,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         auto now_time = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
             now_time - start_time);
-        // timeout == 0.f means there is no timeout, and it should block
+        // timeout == std::numeric_limits<float>::max() means there is no timeout, and it should block
         // forever until it receives something.
-        if (timeoutSeconds != 0.f)
+        if (timeoutSeconds != std::numeric_limits<float>::max())
         {
             if (duration.count() > timeoutSeconds)
             {
