@@ -79,24 +79,26 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
 void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
 {
     auto lf_Write = [&](const char *buffer, size_t size) {
-
-        ProfilerStart("write");
-        const auto writtenSize = write(m_FileDescriptor, buffer, size);
-        ProfilerStop("write");
-
-        if (writtenSize == -1)
+        while (size > 0)
         {
-            throw std::ios_base::failure("ERROR: couldn't write to file " +
-                                         m_Name +
-                                         ", in call to FileDescriptor Write\n");
-        }
+            ProfilerStart("write");
+            const auto writtenSize = write(m_FileDescriptor, buffer, size);
+            ProfilerStop("write");
 
-        if (static_cast<size_t>(writtenSize) != size)
-        {
-            throw std::ios_base::failure(
-                "ERROR: written size + " + std::to_string(writtenSize) +
-                " is not equal to intended size " + std::to_string(size) +
-                " in file " + m_Name + ", in call to FileDescriptor Write\n");
+            if (writtenSize == -1)
+            {
+                if (errno == EINTR)
+                {
+                    continue;
+                }
+
+                throw std::ios_base::failure(
+                    "ERROR: couldn't write to file " + m_Name +
+                    ", in call to FileDescriptor Write\n");
+            }
+
+            buffer += writtenSize;
+            size -= writtenSize;
         }
     };
 
@@ -135,24 +137,26 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
 void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 {
     auto lf_Read = [&](char *buffer, size_t size) {
-
-        ProfilerStart("read");
-        const auto readSize = read(m_FileDescriptor, buffer, size);
-        ProfilerStop("read");
-
-        if (readSize == -1)
+        while (size > 0)
         {
-            throw std::ios_base::failure("ERROR: couldn't read from file " +
-                                         m_Name +
-                                         ", in call to POSIX IO read\n");
-        }
+            ProfilerStart("read");
+            const auto readSize = read(m_FileDescriptor, buffer, size);
+            ProfilerStop("read");
 
-        if (static_cast<size_t>(readSize) != size)
-        {
-            throw std::ios_base::failure(
-                "ERROR: read size + " + std::to_string(readSize) +
-                " is not equal to intended size " + std::to_string(size) +
-                " in file " + m_Name + ", in call to POSIX IO read\n");
+            if (readSize == -1)
+            {
+                if (errno == EINTR)
+                {
+                    continue;
+                }
+
+                throw std::ios_base::failure("ERROR: couldn't read from file " +
+                                             m_Name +
+                                             ", in call to POSIX IO read\n");
+            }
+
+            buffer += readSize;
+            size -= readSize;
         }
     };
 
