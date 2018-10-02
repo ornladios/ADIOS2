@@ -1,0 +1,592 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
+ * BP4Base.tcc
+ *
+ *  Created on: Aug 1, 2018
+ *      Author: Lipeng Wan wanl@ornl.gov
+ */
+
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP4_BP4BASE_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BP4_BP4BASE_TCC_
+
+#include "BP4Base.h"
+
+#include <algorithm> //std::all_of
+
+#include "adios2/helper/adiosFunctions.h" //NextExponentialSize, helper::CopyFromBuffer
+
+namespace adios2
+{
+namespace format
+{
+
+// PROTECTED
+template <>
+int8_t BP4Base::GetDataType<std::string>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_string);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<char>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_byte);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<signed char>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_byte);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<short>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_short);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<int>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_integer);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<long int>() const noexcept
+{
+    int8_t type = static_cast<int8_t>(type_long);
+    if (sizeof(long int) == sizeof(int))
+    {
+        type = static_cast<int8_t>(type_integer);
+    }
+
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<long long int>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_long);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<unsigned char>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_unsigned_byte);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<unsigned short>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_unsigned_short);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<unsigned int>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_unsigned_integer);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<unsigned long int>() const noexcept
+{
+    int8_t type = static_cast<int8_t>(type_unsigned_long);
+    if (sizeof(unsigned long int) == sizeof(unsigned int))
+    {
+        type = static_cast<int8_t>(type_unsigned_integer);
+    }
+
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<unsigned long long int>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_unsigned_long);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<float>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_real);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<double>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_double);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<long double>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_long_double);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<cfloat>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_complex);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<cdouble>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_double_complex);
+    return type;
+}
+
+template <>
+int8_t BP4Base::GetDataType<cldouble>() const noexcept
+{
+    const int8_t type = static_cast<int8_t>(type_long_double_complex);
+    return type;
+}
+
+template <class T>
+BP4Base::Characteristics<T> BP4Base::ReadElementIndexCharacteristics(
+    const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
+    const bool untilTimeStep) const
+{
+    Characteristics<T> characteristics;
+    characteristics.EntryCount = helper::ReadValue<uint8_t>(buffer, position);
+    characteristics.EntryLength = helper::ReadValue<uint32_t>(buffer, position);
+
+    ParseCharacteristics(buffer, position, dataType, untilTimeStep,
+                         characteristics);
+
+    return characteristics;
+}
+
+template <>
+inline void BP4Base::ParseCharacteristics(
+    const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
+    const bool untilTimeStep,
+    Characteristics<std::string> &characteristics) const
+{
+    const size_t start = position;
+    size_t localPosition = 0;
+
+    bool foundTimeStep = false;
+
+    while (localPosition < characteristics.EntryLength)
+    {
+        const uint8_t id = helper::ReadValue<uint8_t>(buffer, position);
+
+        switch (id)
+        {
+        case (characteristic_time_index):
+        {
+            characteristics.Statistics.Step =
+                helper::ReadValue<uint32_t>(buffer, position);
+            foundTimeStep = true;
+            break;
+        }
+
+        case (characteristic_file_index):
+        {
+            characteristics.Statistics.FileIndex =
+                helper::ReadValue<uint32_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_value):
+        {
+            if (dataType == type_string)
+            {
+                // first get the length of the string
+                const size_t length = static_cast<size_t>(
+                    helper::ReadValue<uint16_t>(buffer, position));
+
+                characteristics.Statistics.Value =
+                    std::string(&buffer[position], length);
+
+                characteristics.Statistics.IsValue = true;
+                position += length;
+            }
+            else if (dataType == type_string_array)
+            {
+                if (characteristics.Count.size() != 1)
+                {
+                    // TODO: add exception here?
+                    break;
+                }
+
+                const size_t elements = characteristics.Count.front();
+                characteristics.Statistics.Values.reserve(elements);
+
+                for (size_t e = 0; e < elements; ++e)
+                {
+                    const size_t length = static_cast<size_t>(
+                        helper::ReadValue<uint16_t>(buffer, position));
+
+                    characteristics.Statistics.Values.push_back(
+                        std::string(&buffer[position], length));
+
+                    position += length;
+                }
+            }
+
+            break;
+        }
+
+        case (characteristic_offset):
+        {
+            characteristics.Statistics.Offset =
+                helper::ReadValue<uint64_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_payload_offset):
+        {
+            characteristics.Statistics.PayloadOffset =
+                helper::ReadValue<uint64_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_dimensions):
+        {
+            const unsigned int dimensionsSize = static_cast<unsigned int>(
+                helper::ReadValue<uint8_t>(buffer, position));
+
+            characteristics.Shape.reserve(dimensionsSize);
+            characteristics.Start.reserve(dimensionsSize);
+            characteristics.Count.reserve(dimensionsSize);
+            position += 2; // skip length (not required)
+
+            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            {
+                characteristics.Count.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Shape.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Start.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
+            }
+            break;
+        }
+        // TODO: implement compression and BP1 Stats characteristics
+        default:
+        {
+            throw std::invalid_argument("ERROR: characteristic ID " +
+                                        std::to_string(id) +
+                                        " not supported\n");
+        }
+
+        } // end id switch
+
+        if (untilTimeStep && foundTimeStep)
+        {
+            break;
+        }
+
+        localPosition = position - start;
+    }
+}
+
+template <class T>
+inline void
+BP4Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
+                              const DataTypes /*dataType*/,
+                              const bool untilTimeStep,
+                              Characteristics<T> &characteristics) const
+{
+    const size_t start = position;
+    size_t localPosition = 0;
+
+    bool foundTimeStep = false;
+
+    while (localPosition < characteristics.EntryLength)
+    {
+        const CharacteristicID id = static_cast<CharacteristicID>(
+            helper::ReadValue<uint8_t>(buffer, position));
+
+        switch (id)
+        {
+        case (characteristic_time_index):
+        {
+            characteristics.Statistics.Step =
+                helper::ReadValue<uint32_t>(buffer, position);
+            foundTimeStep = true;
+            break;
+        }
+
+        case (characteristic_file_index):
+        {
+            characteristics.Statistics.FileIndex =
+                helper::ReadValue<uint32_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_value):
+        {
+            // we are relying that count contains the dimensions
+            if (characteristics.Count.empty() || characteristics.Count[0] == 1)
+            {
+                characteristics.Statistics.Value =
+                    helper::ReadValue<typename TypeInfo<T>::ValueType>(
+                        buffer, position);
+                characteristics.Statistics.IsValue = true;
+            }
+            else // used for attributes
+            {
+                const size_t size = characteristics.Count[0];
+                characteristics.Statistics.Values.resize(size);
+                helper::CopyFromBuffer(buffer, position,
+                                       characteristics.Statistics.Values.data(),
+                                       size);
+            }
+            break;
+        }
+
+        case (characteristic_min):
+        {
+            characteristics.Statistics.Min =
+                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
+            break;
+        }
+
+        case (characteristic_max):
+        {
+            characteristics.Statistics.Max =
+                helper::ReadValue<typename TypeInfo<T>::ValueType>(buffer,
+                                                                   position);
+            break;
+        }
+
+        case (characteristic_offset):
+        {
+            characteristics.Statistics.Offset =
+                helper::ReadValue<uint64_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_payload_offset):
+        {
+            characteristics.Statistics.PayloadOffset =
+                helper::ReadValue<uint64_t>(buffer, position);
+            break;
+        }
+
+        case (characteristic_dimensions):
+        {
+            const unsigned int dimensionsSize = static_cast<unsigned int>(
+                helper::ReadValue<uint8_t>(buffer, position));
+
+            characteristics.Shape.reserve(dimensionsSize);
+            characteristics.Start.reserve(dimensionsSize);
+            characteristics.Count.reserve(dimensionsSize);
+            position += 2; // skip length (not required)
+
+            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            {
+                characteristics.Count.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Shape.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Start.push_back(static_cast<size_t>(
+                    helper::ReadValue<uint64_t>(buffer, position)));
+            }
+            // check for local variables (Start and Shape must be all zero)
+            const bool emptyShape = std::all_of(
+                characteristics.Shape.begin(), characteristics.Shape.end(),
+                [](const size_t dimension) { return dimension == 0; });
+
+            if (emptyShape)
+            {
+                characteristics.Shape.clear();
+            }
+
+            const bool emptyStart = std::all_of(
+                characteristics.Start.begin(), characteristics.Start.end(),
+                [](const size_t dimension) { return dimension == 0; });
+
+            if (emptyShape && emptyStart)
+            {
+                characteristics.Start.clear();
+            }
+
+            break;
+        }
+        case (characteristic_bitmap):
+        {
+            characteristics.Statistics.Bitmap =
+                std::bitset<32>(helper::ReadValue<uint32_t>(buffer, position));
+            break;
+        }
+        case (characteristic_stat):
+        {
+            if (characteristics.Statistics.Bitmap.none())
+            {
+                break;
+            }
+
+            for (unsigned int i = 0; i <= 6; ++i)
+            {
+                if (!characteristics.Statistics.Bitmap.test(i))
+                {
+                    continue;
+                }
+
+                const VariableStatistics bitStat =
+                    static_cast<VariableStatistics>(i);
+
+                switch (bitStat)
+                {
+                case (statistic_min):
+                {
+                    characteristics.Statistics.Min =
+                        helper::ReadValue<typename TypeInfo<T>::ValueType>(
+                            buffer, position);
+                    break;
+                }
+                case (statistic_max):
+                {
+                    characteristics.Statistics.Max =
+                        helper::ReadValue<typename TypeInfo<T>::ValueType>(
+                            buffer, position);
+                    break;
+                }
+                case (statistic_sum):
+                {
+                    characteristics.Statistics.BitSum =
+                        helper::ReadValue<double>(buffer, position);
+                    break;
+                }
+                case (statistic_sum_square):
+                {
+                    characteristics.Statistics.BitSumSquare =
+                        helper::ReadValue<double>(buffer, position);
+                    break;
+                }
+                case (statistic_finite):
+                {
+                    characteristics.Statistics.BitFinite =
+                        helper::ReadValue<uint8_t>(buffer, position);
+                    break;
+                }
+                case (statistic_hist):
+                {
+                    throw std::invalid_argument(
+                        "ERROR: ADIOS2 default BPFile engine doesn't support "
+                        "histogram statistics, use ADIOS1 Engine\n");
+                }
+                case (statistic_cnt):
+                {
+                    throw std::invalid_argument(
+                        "ERROR: ADIOS2 default BPfile engine doesn't support "
+                        "count statistics, use ADIOS1 Engine\n");
+                }
+
+                } // switch
+            }     // for
+            break;
+        }
+        case (characteristic_transform_type):
+        {
+            const size_t typeLength = static_cast<size_t>(
+                helper::ReadValue<uint8_t>(buffer, position));
+            characteristics.Statistics.Op.Type =
+                std::string(&buffer[position], typeLength);
+            position += typeLength;
+
+            characteristics.Statistics.Op.PreDataType =
+                helper::ReadValue<uint8_t>(buffer, position);
+
+            const unsigned int dimensionsSize = static_cast<unsigned int>(
+                helper::ReadValue<uint8_t>(buffer, position));
+
+            characteristics.Statistics.Op.PreShape.reserve(dimensionsSize);
+            characteristics.Statistics.Op.PreStart.reserve(dimensionsSize);
+            characteristics.Statistics.Op.PreCount.reserve(dimensionsSize);
+            position += 2; // skip length (not required)
+
+            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            {
+                characteristics.Statistics.Op.PreCount.push_back(
+                    static_cast<size_t>(
+                        helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Statistics.Op.PreShape.push_back(
+                    static_cast<size_t>(
+                        helper::ReadValue<uint64_t>(buffer, position)));
+
+                characteristics.Statistics.Op.PreStart.push_back(
+                    static_cast<size_t>(
+                        helper::ReadValue<uint64_t>(buffer, position)));
+            }
+
+            const size_t metadataLength = static_cast<size_t>(
+                helper::ReadValue<uint16_t>(buffer, position));
+
+            characteristics.Statistics.Op.Metadata =
+                std::vector<char>(buffer.begin() + position,
+                                  buffer.begin() + position + metadataLength);
+            position += metadataLength;
+
+            characteristics.Statistics.Op.IsActive = true;
+            break;
+        }
+        default:
+        {
+            throw std::invalid_argument("ERROR: characteristic ID " +
+                                        std::to_string(id) +
+                                        " not supported\n");
+        }
+
+        } // end id switch
+
+        if (untilTimeStep && foundTimeStep)
+        {
+            break;
+        }
+
+        localPosition = position - start;
+    }
+}
+
+template <class T>
+std::map<size_t, std::shared_ptr<BP4Operation>> BP4Base::SetBP4Operations(
+    const std::vector<core::VariableBase::Operation> &operations) const
+{
+    std::map<size_t, std::shared_ptr<BP4Operation>> bp4Operations;
+    std::shared_ptr<BP4Operation> bp4Operation;
+
+    for (auto i = 0; i < operations.size(); ++i)
+    {
+        const std::string type = operations[i].Op->m_Type;
+        std::shared_ptr<BP4Operation> bp4Operation = SetBP4Operation(type);
+
+        if (bp4Operation) // if the result is a supported type
+        {
+            bp4Operations.emplace(i, bp4Operation);
+        }
+    }
+    return bp4Operations;
+}
+
+} // end namespace format
+} // end namespace adios2
+
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP4_BP4Base_TCC_ */

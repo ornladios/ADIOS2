@@ -51,9 +51,15 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
     }
     else if (openMode == Mode::Append)
     {
+        /*
         m_Profiler.Timers.emplace(
             "append", profiling::Timer("append", timeUnit, m_DebugMode));
         m_Profiler.Bytes.emplace("append", 0);
+        */
+        m_Profiler.Timers.emplace(
+            "write", profiling::Timer("write", timeUnit, m_DebugMode));
+
+        m_Profiler.Bytes.emplace("write", 0);       
     }
     else if (openMode == Mode::Read)
     {

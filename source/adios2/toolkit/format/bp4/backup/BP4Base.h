@@ -1,0 +1,554 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
+ * BP4Base.h  base class for BP4Serializer and BP4Deserializer
+ *
+ *  Created on: Aug 3, 2018
+ *      Author: Lipeng Wan wanl@ornl.gov
+ */
+
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP4_BP4BASE_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP4_BP4BASE_H_
+
+/// \cond EXCLUDE_FROM_DOXYGEN
+#include <bitset>
+#include <string>
+#include <unordered_map>
+#include <vector>
+/// \endcond
+
+#include "adios2/ADIOSConfig.h"
+#include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSMacros.h"
+#include "adios2/ADIOSTypes.h"
+#include "adios2/core/Variable.h"
+#include "adios2/toolkit/aggregator/mpi/MPIChain.h"
+#include "adios2/toolkit/format/BufferSTL.h"
+#include "adios2/toolkit/profiling/iochrono/IOChrono.h"
+
+namespace adios2
+{
+namespace format
+{
+
+/**
+ * Base class for BP1Writer and BP1Reader format
+ */
+class BP4Base
+{
+
+public:
+    /**
+     * Metadata index used for Variables and Attributes, needed in a
+     * container for characteristic sets merge independently for each Variable
+     * or Attribute
+     */
+    struct SerialElementIndex
+    {
+        /** buffer containing the metadata index, start with 500bytes */
+        std::vector<char> Buffer;
+        /** number of characteristics sets (time and spatial aggregation) */
+        uint64_t Count = 0;
+        /** unique ID assigned to each variable for counter */
+        const uint32_t MemberID;
+
+        /** starting point for offsets characteristics update (used in
+         * aggregation) */
+        size_t LastUpdatedPosition = 0;
+
+        SerialElementIndex(const uint32_t memberID,
+                           const size_t bufferSize = 200)
+        : MemberID(memberID)
+        {
+            Buffer.reserve(bufferSize);
+        }
+    };
+
+    /** Single struct containing metadata indices and tracking information */
+    struct MetadataSet
+    {
+        /**
+         * updated with EndStep, if append it will be updated to last,
+         * starts with one in ADIOS1 BP4 format
+         */
+        uint32_t TimeStep = 1;
+
+        /** single buffer for PGIndex */
+        SerialElementIndex PGIndex = SerialElementIndex(0);
+
+        // no priority for now
+        /** @brief key: variable name, value: bp metadata variable index */
+        std::unordered_map<std::string, SerialElementIndex> VarsIndices;
+
+        /** @brief key: attribute name, value: bp metadata attribute index */
+        std::unordered_map<std::string, SerialElementIndex> AttributesIndices;
+
+        bool AreAttributesWritten = false;
+
+        /** Fixed size for mini footer, adding 28 bytes for ADIOS version */
+        const unsigned int MiniFooterSize = 28 + 28;
+
+        /** number of current PGs */
+        uint64_t DataPGCount = 0;
+        /** current PG initial ( relative ) position in data buffer */
+        size_t DataPGLengthPosition = 0;
+        /** number of variables in current PG */
+        uint32_t DataPGVarsCount = 0;
+        /** current PG variable count ( relative ) position */
+        size_t DataPGVarsCountPosition = 0;
+        /** true: currently writing to a pg, false: no current pg */
+        bool DataPGIsOpen = false;
+
+        /** Used at Read, steps start at zero */
+        size_t StepsStart = 0;
+
+        /** Used at Read, number of total steps */
+        size_t StepsCount = 1;
+
+        /** Similar to TimeStep, but uses uint64_t and start from zero. Used for
+         * streaming a large number of steps */
+        size_t CurrentStep = 0;
+
+        /* position of pg index in current buffer*/
+        size_t pgIndexStart;
+
+        /* position of var index in current buffer*/
+        size_t varIndexStart;
+
+        /* position of attr index in current buffer*/
+        size_t attrIndexStart;
+
+        /* length of metadata file to which we append*/
+        size_t metadataFileLength;
+    };
+
+    struct Minifooter
+    {
+        std::string VersionTag;
+        uint64_t PGIndexStart;
+        uint64_t VarsIndexStart;
+        uint64_t AttributesIndexStart;
+        uint8_t Version = 3;
+        bool IsLittleEndian = true;
+        bool HasSubFiles = false;
+    };
+
+    MPI_Comm m_MPIComm;  ///< MPI communicator from Engine
+    int m_RankMPI = 0;   ///< current MPI rank process
+    int m_SizeMPI = 1;   ///< current MPI processes size
+    int m_Processes = 1; ///< number of aggregated MPI processes
+
+    /** statistics verbosity, only 0 is supported */
+    unsigned int m_StatsLevel = 0;
+
+    /** contains data buffer for this rank */
+    BufferSTL m_Data;
+
+    /** contains collective metadata buffer, only used by rank 0 */
+    BufferSTL m_Metadata;
+
+    /** memory growth factor,s set by the user */
+    float m_GrowthFactor = DefaultBufferGrowthFactor;
+
+    /** max buffer size, set by the user */
+    size_t m_MaxBufferSize = DefaultMaxBufferSize;
+
+    /** contains bp1 format metadata indices*/
+    MetadataSet m_MetadataSet;
+
+    /** true: Close was called, Engine will call this many times for different
+     * transports */
+    bool m_IsClosed = false;
+
+    /** buffering and MPI aggregation profiling info, set by user */
+    profiling::IOChrono m_Profiler;
+
+    /** Default: write collective metadata in Capsule metadata. */
+    bool m_CollectiveMetadata = true;
+
+    /** Parameter to flush transports at every number of steps, to be used at
+     * EndStep */
+    size_t m_FlushStepsCount = 1;
+
+    /** from host language in data information at read */
+    bool m_IsRowMajor = true;
+
+    /** if reader and writer have different ordering (column vs row major) */
+    bool m_ReverseDimensions = false;
+
+    /** manages all communication tasks in aggregation */
+    aggregator::MPIChain m_Aggregator;
+
+    /**
+     * Unique constructor
+     * @param mpiComm for m_BP1Aggregator
+     * @param debugMode true: exceptions checks
+     */
+    BP4Base(MPI_Comm mpiComm, const bool debugMode);
+
+    virtual ~BP4Base();
+
+    void InitParameters(const Params &parameters);
+
+    /**
+     * Vector version of BPBaseNames
+     * @param names
+     * @return vector of base (name.bp) names
+     */
+    std::vector<std::string>
+    GetBPBaseNames(const std::vector<std::string> &names) const noexcept;
+
+    /**
+     * Get BP substream names from base names:
+     * /path/name.bp.dir/name.bp.Index
+     * where Index = Rank, and in aggregation = SubStreamID
+     * @param baseNames inputs
+     * @return vector of BP substream names for transports
+     */
+    std::vector<std::string>
+    GetBPSubStreamNames(const std::vector<std::string> &baseNames) const
+        noexcept;
+
+    std::vector<std::string>
+    GetBPMetadataFileNames(const std::vector<std::string> &names) const
+        noexcept;
+
+    std::string GetBPMetadataFileName(const std::string &name) const noexcept;
+
+    std::string GetBPSubFileName(const std::string &name,
+                                 const size_t subFileIndex) const noexcept;
+
+    /**
+     * Returns the estimated variable index size. Used by ResizeBuffer public
+     * function
+     * @param variableName input
+     * @param variableCount input
+     */
+    size_t GetBPIndexSizeInData(const std::string &variableName,
+                                const Dims &variableCount) const noexcept;
+
+    /**
+     * Sets buffer's positions to zero and fill buffer with zero char
+     * @param bufferSTL buffer to be reset
+     * @param resetAbsolutePosition true: both bufferSTL.m_Position and
+     * bufferSTL.m_AbsolutePosition set to 0,   false(default): only
+     * bufferSTL.m_Position
+     * is set to zero,
+     */
+    void ResetBuffer(BufferSTL &bufferSTL,
+                     const bool resetAbsolutePosition = false,
+                     const bool zeroInitialize = true);
+
+    /** Return type of the CheckAllocation function. */
+    enum class ResizeResult
+    {
+        Failure,   //!< FAILURE, caught a std::bad_alloc
+        Unchanged, //!< UNCHANGED, no need to resize (sufficient capacity)
+        Success,   //!< SUCCESS, resize was successful
+        Flush      //!< FLUSH, need to flush to transports for current variable
+    };
+
+    /**
+     * Resizes the data buffer to hold new dataIn size
+     * @param dataIn input size for new data
+     * @param hint for exception handling
+     * @return
+     * -1: allocation failed,
+     *  0: no allocation needed,
+     *  1: reallocation is sucessful
+     *  2: need a transport flush
+     */
+    ResizeResult ResizeBuffer(const size_t dataIn, const std::string hint);
+
+protected:
+    /** might be used in large payload copies to buffer */
+    unsigned int m_Threads = 1;
+    const bool m_DebugMode = false;
+
+    /** method type for file I/O */
+    enum IO_METHOD
+    {
+        METHOD_UNKNOWN = -2,
+        METHOD_NULL = -1,
+        METHOD_MPI = 0,
+        METHOD_DATATAP = 1 // OBSOLETE
+        ,
+        METHOD_POSIX = 2,
+        METHOD_DATASPACES = 3,
+        METHOD_VTK = 4 // non-existent
+        ,
+        METHOD_POSIX_ASCII = 5 // non-existent
+        ,
+        METHOD_MPI_CIO = 6 // OBSOLETE
+        ,
+        METHOD_PHDF5 = 7,
+        METHOD_PROVENANCE = 8 // OBSOLETE
+        ,
+        METHOD_MPI_STRIPE = 9 // OBSOLETE
+        ,
+        METHOD_MPI_LUSTRE = 10,
+        METHOD_MPI_STAGGER = 11 // OBSOLETE
+        ,
+        METHOD_MPI_AGG = 12 // OBSOLETE
+        ,
+        METHOD_ADAPTIVE = 13 // OBSOLETE
+        ,
+        METHOD_POSIX1 = 14 // OBSOLETE
+        ,
+        METHOD_NC4 = 15,
+        METHOD_MPI_AMR = 16,
+        METHOD_MPI_AMR1 = 17 // OBSOLETE
+        ,
+        METHOD_FLEXPATH = 18,
+        METHOD_NSSI_STAGING = 19,
+        METHOD_NSSI_FILTER = 20,
+        METHOD_DIMES = 21,
+        METHOD_VAR_MERGE = 22,
+        METHOD_MPI_BGQ = 23,
+        METHOD_ICEE = 24,
+        METHOD_COUNT = 25,
+        METHOD_FSTREAM = 26,
+        METHOD_FILE = 27,
+        METHOD_ZMQ = 28,
+        METHOD_MDTM = 29
+    };
+
+    /**
+     * DataTypes mapping in BP Format
+     */
+    enum DataTypes
+    {
+        type_unknown = -1, //!< type_unknown
+        type_byte = 0,     //!< type_byte
+        type_short = 1,    //!< type_short
+        type_integer = 2,  //!< type_integer
+        type_long = 4,     //!< type_long
+
+        type_unsigned_byte = 50,    //!< type_unsigned_byte
+        type_unsigned_short = 51,   //!< type_unsigned_short
+        type_unsigned_integer = 52, //!< type_unsigned_integer
+        type_unsigned_long = 54,    //!< type_unsigned_long
+
+        type_real = 5,        //!< type_real or float
+        type_double = 6,      //!< type_double
+        type_long_double = 7, //!< type_long_double
+
+        type_string = 9,              //!< type_string
+        type_complex = 10,            //!< type_complex
+        type_double_complex = 11,     //!< type_double_complex
+        type_string_array = 12,       //!< type_string_array
+        type_long_double_complex = 13 //!< type_double_complex
+    };
+
+    /**
+     * Characteristic ID in variable metadata
+     */
+    enum CharacteristicID
+    {
+        characteristic_value = 0,      //!< characteristic_value
+        characteristic_min = 1,        //!< Used to read in older bp file format
+        characteristic_max = 2,        //!< Used to read in older bp file format
+        characteristic_offset = 3,     //!< characteristic_offset
+        characteristic_dimensions = 4, //!< characteristic_dimensions
+        characteristic_var_id = 5,     //!< characteristic_var_id
+        characteristic_payload_offset = 6, //!< characteristic_payload_offset
+        characteristic_file_index = 7,     //!< characteristic_file_index
+        characteristic_time_index = 8,     //!< characteristic_time_index
+        characteristic_bitmap = 9,         //!< characteristic_bitmap
+        characteristic_stat = 10,          //!< characteristic_stat
+        characteristic_transform_type = 11 //!< characteristic_transform_type
+    };
+
+    /** Define statistics type for characteristic ID = 10 in bp1 format */
+    enum VariableStatistics
+    {
+        statistic_min = 0,
+        statistic_max = 1,
+        statistic_cnt = 2,
+        statistic_sum = 3,
+        statistic_sum_square = 4,
+        statistic_hist = 5,
+        statistic_finite = 6
+    };
+
+    struct ProcessGroupIndex
+    {
+        uint64_t Offset;
+        uint32_t Step;
+        int32_t ProcessID;
+        uint16_t Length;
+        std::string Name;
+        std::string StepName;
+        char IsColumnMajor;
+    };
+
+    template <class T>
+    struct Stats
+    {
+        double BitSum;
+        double BitSumSquare;
+        uint64_t Offset;
+        uint64_t PayloadOffset;
+        T Min;
+        T Max;
+        T Value;
+        std::vector<T> Values;
+        uint32_t Step;
+        uint32_t FileIndex;
+        uint32_t MemberID;
+        uint32_t BitCount;
+        std::bitset<32> Bitmap;
+        uint8_t BitFinite;
+        bool IsValue = false;
+    };
+
+    template <class T>
+    struct Characteristics
+    {
+        Stats<typename TypeInfo<T>::ValueType> Statistics;
+        Dims Shape;
+        Dims Start;
+        Dims Count;
+        uint32_t EntryLength;
+        uint8_t EntryCount;
+    };
+
+    struct ElementIndexHeader
+    {
+        uint64_t CharacteristicsSetsCount;
+        uint32_t Length;
+        uint32_t MemberID;
+        std::string GroupName;
+        std::string Name;
+        std::string Path;
+        uint8_t DataType = std::numeric_limits<uint8_t>::max() - 1;
+    };
+
+    /**
+     * Functions used for setting bool parameters of type On Off
+     * @param value
+     * @param parameter
+     * @param hint
+     */
+    void InitOnOffParameter(const std::string value, bool &parameter,
+                            const std::string hint);
+
+    /** profile=on (default) generate profiling.log
+     *  profile=off */
+    void InitParameterProfile(const std::string value);
+
+    /** profile_units=s (default) (mus, ms, s,m,h) from ADIOSTypes.h TimeUnit */
+    void InitParameterProfileUnits(const std::string value);
+
+    /** growth_factor=1.5 (default), must be > 1.0 */
+    void InitParameterBufferGrowth(const std::string value);
+
+    /** set initial buffer size */
+    void InitParameterInitBufferSize(const std::string value);
+
+    /** default = DefaultMaxBufferSize in ADIOSTypes.h, set max buffer size in
+     * Gb or Mb
+     *  max_buffer_size=100Mb or  max_buffer_size=1Gb */
+    void InitParameterMaxBufferSize(const std::string value);
+
+    /** Set available number of threads for vector operations */
+    void InitParameterThreads(const std::string value);
+
+    /** verbose file level=0 (default), not active yet */
+    void InitParameterStatLevel(const std::string value);
+
+    /** verbose file level=0 (default) */
+    void InitParameterCollectiveMetadata(const std::string value);
+
+    /** set steps count to flush */
+    void InitParameterFlushStepsCount(const std::string value);
+
+    /** set number of substreams, turns on aggregation if less < MPI_Size */
+    void InitParameterSubStreams(const std::string value);
+
+    /**
+     * Returns data type index from enum Datatypes
+     * @param variable input variable
+     * @return data type
+     */
+    template <class T>
+    int8_t GetDataType() const noexcept;
+
+    std::vector<uint8_t>
+    GetTransportIDs(const std::vector<std::string> &transportsTypes) const
+        noexcept;
+
+    /**
+     * Calculates the Process Index size in bytes according to the BP
+     * format,
+     * including list of method with no parameters (for now)
+     * @param name
+     * @param timeStepName
+     * @param transportsSize
+     * @return size of pg index
+     */
+    size_t GetProcessGroupIndexSize(const std::string name,
+                                    const std::string timeStepName,
+                                    const size_t transportsSize) const noexcept;
+
+    ProcessGroupIndex
+    ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
+                                size_t &position) const noexcept;
+
+    ElementIndexHeader ReadElementIndexHeader(const std::vector<char> &buffer,
+                                              size_t &position) const noexcept;
+
+    /**
+     * Read variable characteristics.
+     * @param buffer
+     * @param position
+     * @param untilTimeStep, stop if time step characteristic is found
+     * @return
+     */
+    template <class T>
+    Characteristics<T>
+    ReadElementIndexCharacteristics(const std::vector<char> &buffer,
+                                    size_t &position, const DataTypes dataType,
+                                    const bool untilTimeStep = false) const;
+
+    /**
+     * Common function to extract a bp string, 2 bytes for length + contents
+     * @param buffer
+     * @param position
+     * @return
+     */
+    std::string ReadBP4String(const std::vector<char> &buffer,
+                              size_t &position) const noexcept;
+
+    void ProfilerStart(const std::string process) noexcept;
+
+    void ProfilerStop(const std::string process) noexcept;
+
+private:
+    std::string GetBPSubStreamName(const std::string &name,
+                                   const size_t rank) const noexcept;
+
+    /**
+     * Specialized template for string and other types
+     */
+    template <class T>
+    void ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
+                              const DataTypes dataType,
+                              const bool untilTimeStep,
+                              Characteristics<T> &characteristics) const;
+};
+
+#define declare_template_instantiation(T)                                      \
+    extern template BP4Base::Characteristics<T>                                \
+    BP4Base::ReadElementIndexCharacteristics(                                  \
+        const std::vector<char> &buffer, size_t &position,                     \
+        const BP4Base::DataTypes dataType, const bool untilTimeStep) const;
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+} // end namespace format
+} // end namespace adios2
+
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP4_BP4BASE_H_ */
