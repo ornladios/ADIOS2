@@ -54,7 +54,8 @@ public:
 
     ~HDFMixer();
 
-    // void Advance(const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    // void Advance(const float timeoutSeconds =
+    // std::numeric_limits<float>::max()) final;
     StepStatus BeginStep(StepMode mode, const float timeout_sec);
     // void EndStep(const float /*timeout_sec*/);
     void EndStep() final;

@@ -42,8 +42,9 @@ public:
                    MPI_Comm mpiComm);
 
     ~SkeletonReader();
-    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
-                         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(
+        StepMode mode = StepMode::NextAvailable,
+        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;

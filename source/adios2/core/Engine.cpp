@@ -37,7 +37,8 @@ StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(StepMode::NextAvailable, std::numeric_limits<float>::max());
+        return BeginStep(StepMode::NextAvailable,
+                         std::numeric_limits<float>::max());
     }
     else
     {
