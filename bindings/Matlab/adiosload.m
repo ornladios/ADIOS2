@@ -1,5 +1,4 @@
 function adiosload(file, prefix)
-%// clang-format off
 %ADIOSLOAD Read all variables in an ADIOS BP file
 %
 %   ADIOSLOAD is a batch process to load all variables in an ADIOS BP 

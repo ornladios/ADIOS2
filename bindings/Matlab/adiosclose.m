@@ -1,5 +1,4 @@
 function adiosclose(varargin)
-%// clang-format off
 %ADIOSCLOSE Close an ADIOS BP file.
 %   
 %   ADIOSCLOSE closes an ADIOS BP file that was opened by ADIOSOPEN.

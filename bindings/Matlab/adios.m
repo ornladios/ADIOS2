@@ -1,5 +1,4 @@
 function adios()
-%// clang-format off
 %ADIOS Reader for the ADIOS BP file format
 %   
 %   ADIOS is a componentized I/O layer for high performance output combined
