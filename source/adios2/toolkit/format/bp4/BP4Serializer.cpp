@@ -221,6 +221,7 @@ void BP4Serializer::ResetIndicesBuffer()
         index.Buffer.resize(headersize);
         index.Count = 0;
         index.LastUpdatedPosition = headersize;
+        index.Valid = false;  // reset the flag to indicate the variable is not valid after the "endstep" call
     } 
 
     for( auto& attributesIndexPair : m_MetadataSet.AttributesIndices)
@@ -230,6 +231,7 @@ void BP4Serializer::ResetIndicesBuffer()
         const size_t headersize = 15 + 8 + attributesName.size();
         index.Buffer.resize(headersize);
         index.Count = 0;
+        index.Valid = false; // reset the flag to indicate the variable is not valid after the "endstep" call
     } 
 }
 
@@ -962,6 +964,10 @@ std::vector<char> BP4Serializer::SerializeIndices(
     for (const auto &indexPair : indices)
     {
         const SerialElementIndex &index = indexPair.second;
+        if (!index.Valid)
+        {
+            continue;  // if the variable is not put (not valid) at current step, skip
+        }
         serializedIndicesSize += 4 + index.Buffer.size();
     }
 
@@ -974,6 +980,11 @@ std::vector<char> BP4Serializer::SerializeIndices(
     for (const auto &indexPair : indices)
     {
         const SerialElementIndex &index = indexPair.second;
+
+        if (!index.Valid)
+        {
+            continue; // if the variable is not put (not valid) at current step, skip
+        }
 
         // add rank at the beginning
         const uint32_t rankSource = static_cast<uint32_t>(rank);

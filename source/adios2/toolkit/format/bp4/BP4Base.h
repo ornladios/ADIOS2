@@ -60,6 +60,13 @@ public:
          * aggregation) */
         size_t LastUpdatedPosition = 0;
 
+        /* flag indicating whether the variable is valid or not. */
+        /* if it's not valid (meaning the variable is not put at current step */
+        /* even though it was put in previous steps), */
+        /* the variable index will not be copied to the */
+        /* metatdata buffer when "endstep" of current step is called */
+        bool Valid = false;
+
         SerialElementIndex(const uint32_t memberID,
                            const size_t bufferSize = 200)
         : MemberID(memberID)

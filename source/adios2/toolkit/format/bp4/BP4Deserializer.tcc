@@ -15,6 +15,7 @@
 
 #include <algorithm> //std::reverse
 #include <unordered_set>
+#include <iostream>
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -359,7 +360,9 @@ inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
         size_t endPositionCurrentStep = initialPosition - (header.Name.size() + header.GroupName.size() + header.Path.size() + 23) 
                                         + static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
-        variable->m_AvailableStepsCount = step;
+        //variable->m_AvailableStepsCount = step;
+        ++variable->m_AvailableStepsCount;
+        //std::cout << variable->m_Name << ", " << variable->m_AvailableStepsCount << std::endl;
         while (position < endPositionCurrentStep)
         {
             const size_t subsetPosition = position;

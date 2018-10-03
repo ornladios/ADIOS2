@@ -46,6 +46,7 @@ inline void BP4Serializer::PutVariableMetadata(
     bool isNew = true; // flag to check if variable is new
     SerialElementIndex &variableIndex = GetSerialElementIndex(
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
+    variableIndex.Valid = true;  // flag to indicate this variable is put at current step
     stats.MemberID = variableIndex.MemberID;
 
     lf_SetOffset(stats.Offset);
@@ -267,6 +268,8 @@ void BP4Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
 {
     SerialElementIndex index(stats.MemberID);
     auto &buffer = index.Buffer;
+
+    index.Valid = true; // when the attribute is put, set this flag to true
 
     buffer.insert(buffer.end(), 4, '\0'); // skip attribute length (4)
     helper::InsertToBuffer(buffer, &stats.MemberID);
