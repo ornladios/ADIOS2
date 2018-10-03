@@ -59,11 +59,17 @@ StepStatus BP4FileReader::BeginStep(StepMode mode, const float timeoutSeconds)
         ++m_CurrentStep;
     }
 
+    // used to inquire for variables in streaming mode
+    m_IO.m_Streaming = true;
+    m_IO.m_EngineStep = m_CurrentStep;
+
     if (m_CurrentStep >= m_BP4Deserializer.m_MetadataSet.StepsCount)
     {
+        m_IO.m_Streaming = false;
         return StepStatus::EndOfStream;
     }
 
+    /*
     const auto &variablesData = m_IO.GetVariablesDataMap();
 
     for (const auto &variableData : variablesData)
@@ -86,6 +92,8 @@ StepStatus BP4FileReader::BeginStep(StepMode mode, const float timeoutSeconds)
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
     }
+    */
+    m_IO.ResetVariablesStepSelection(false, "in call to BP4 Reader BeginStep");
 
     return StepStatus::OK;
 }
