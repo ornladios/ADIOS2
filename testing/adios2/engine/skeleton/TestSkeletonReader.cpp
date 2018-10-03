@@ -110,8 +110,6 @@ int main(int argc, char *argv[])
                 // Let's fake the read from now on
                 // so that we can test the rest of the read API
                 gndx = (size_t)nproc;
-                size_t ndx = gndx / (size_t)nproc;
-                size_t offsx = ndx * (size_t)rank;
                 adios2::Variable<float> varArray = io.DefineVariable<float>(
                     "myArray", {gndx}, {gndx / (size_t)nproc},
                     {gndx / (size_t)nproc});
