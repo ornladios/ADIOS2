@@ -11,11 +11,14 @@
   int             nproc     scalar = 1
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
+  signed char     varChar   {10} = 97 / 106
   short           varI16    {10} = -510 / 521
   int             varI32    {10} = -131070 / 131081
   signed char     varI8     {10} = -8 / 9
   float           varR32    {10} = 0 / 9
   double          varR64    {10} = 0 / 9
+  signed char     varSChar  {10} = 97 / 106
   unsigned short  varU16    {10} = 32768 / 32777
   unsigned int    varU32    {10} = 2147483648 / 2147483657
   unsigned char   varU8     {10} = 128 / 137
+  unsigned char   varUChar  {10} = 97 / 106

@@ -10,7 +10,7 @@ Settings :
 ADIOS Open: read header info from TestUtilsCWriter.bp
 Try BPFile engine to open the file...
 File info:
-  of variables:  10
+  of variables:  13
   of attributes: 11
   statistics:    Min / Max 
 
@@ -47,6 +47,20 @@ set selection:   start = { 0 0 }  count = { 4 5 }
                1
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
+  signed char     varChar   {10} = 97 / 106
+        step 0: 
+          block 0: [0:9] = 97 / 106
+    j=0, st=0 ct=10
+    s[0]=0, c[0]=10, n=10
+ total size of data to read = 10
+Read size strategy:
+    dim 0: read 10 elements
+    read 10 elements at once, 10 in total (nelems=10)
+adios_read_var name=varChar   start = { 0 }  count = { 10 }  read 10 elems
+    read block 0 from offset 0 nelems 10)
+set selection:   start = { 0 }  count = { 10 }
+    (0)    97 98 99 100 101 102
+    (6)    103 104 105 106 
   short           varI16    {10} = -510 / 521
         step 0: 
           block 0: [0:9] = -510 / 521
@@ -117,6 +131,20 @@ adios_read_var name=varR64   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    0 1 2 3 4 5
     (6)    6 7 8 9 
+  signed char     varSChar  {10} = 97 / 106
+        step 0: 
+          block 0: [0:9] = 97 / 106
+    j=0, st=0 ct=10
+    s[0]=0, c[0]=10, n=10
+ total size of data to read = 10
+Read size strategy:
+    dim 0: read 10 elements
+    read 10 elements at once, 10 in total (nelems=10)
+adios_read_var name=varSChar   start = { 0 }  count = { 10 }  read 10 elems
+    read block 0 from offset 0 nelems 10)
+set selection:   start = { 0 }  count = { 10 }
+    (0)    97 98 99 100 101 102
+    (6)    103 104 105 106 
   unsigned short  varU16    {10} = 32768 / 32777
         step 0: 
           block 0: [0:9] = 32768 / 32777
@@ -159,3 +187,17 @@ adios_read_var name=varU8   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    128 129 130 131 132 133
     (6)    134 135 136 137 
+  unsigned char   varUChar  {10} = 97 / 106
+        step 0: 
+          block 0: [0:9] = 97 / 106
+    j=0, st=0 ct=10
+    s[0]=0, c[0]=10, n=10
+ total size of data to read = 10
+Read size strategy:
+    dim 0: read 10 elements
+    read 10 elements at once, 10 in total (nelems=10)
+adios_read_var name=varUChar   start = { 0 }  count = { 10 }  read 10 elems
+    read block 0 from offset 0 nelems 10)
+set selection:   start = { 0 }  count = { 10 }
+    (0)    97 98 99 100 101 102
+    (6)    103 104 105 106 
