@@ -11,7 +11,7 @@ ADIOS Open: read header info from TestUtilsCWriter.bp
 Try BPFile engine to open the file...
 File info:
   of variables:  13
-  of attributes: 11
+  of attributes: 12
   statistics:    Min / Max 
 
   double          R64_2d    {4, 5} = 0 / 19
@@ -47,6 +47,7 @@ set selection:   start = { 0 0 }  count = { 4 5 }
                1
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
+  string          strarray  attr   = {"first", "second", "third", "fourth"}
   signed char     varChar   {10} = 97 / 106
         step 0: 
           block 0: [0:9] = 97 / 106
