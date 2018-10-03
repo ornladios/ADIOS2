@@ -285,18 +285,19 @@ void errorCheck(int nlhs, int nrhs, const mxArray *prhs[])
     }
 }
 
-void checkDimSize(const int ndims, const size_t * dims)
+void checkDimSize(const int ndims, const size_t *dims)
 {
     /* Make sure that it is safe to cast dim to mwSize (MWSIZE_MAX is limited)*/
-    for (int i=0; i<ndims; ++i)
+    for (int i = 0; i < ndims; ++i)
     {
         if (dims[i] > MWSIZE_MAX)
         {
-            mexErrMsgIdAndTxt("MATLAB:adiosreadc:dimensionTooLarge",
-                          "The selected dimension size, %zu, is larger than the "
-                          "maximum supported value of mwSize, %u, so we cannot create "
-                          "the result array\n",
-                          dims[i], MWSIZE_MAX);
+            mexErrMsgIdAndTxt(
+                "MATLAB:adiosreadc:dimensionTooLarge",
+                "The selected dimension size, %zu, is larger than the "
+                "maximum supported value of mwSize, %u, so we cannot create "
+                "the result array\n",
+                dims[i], MWSIZE_MAX);
         }
     }
 }
