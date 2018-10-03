@@ -1,4 +1,5 @@
 function info = adiosopen(varargin)
+%// clang-format off
 %ADIOSOPEN Open an ADIOS BP file and provide information on it.
 %   
 %   ADIOSOPEN opens an ADIOS BP file and returns a structure that

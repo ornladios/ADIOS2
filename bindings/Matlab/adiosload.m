@@ -1,4 +1,5 @@
 function adiosload(file, prefix)
+%// clang-format off
 %ADIOSLOAD Read all variables in an ADIOS BP file
 %
 %   ADIOSLOAD is a batch process to load all variables in an ADIOS BP 
@@ -9,25 +10,25 @@ function adiosload(file, prefix)
 %      Read all the variables in FILE and use the same variable names.
 %
 %   ADIOSLOAD(FILE, PREFIX)
-%      Read all the variables in FILE and add PREFIX to the varaible names.
+%      Read all the variables in FILE and add PREFIX to the variable names.
 %
 %   See also ADIOSOPEN, ADIOSCLOSE, ADIOS.
 
 %   Copyright 2009 UT-BATTELLE, LLC
-%   $Revision: 1.0 $  $Date: 2009/08/05 12:53:41 $
+%   Date: 2018/10/03
 %   Author: Norbert Podhorszki <pnorbert@ornl.gov>
 
 if (~exist('prefix', 'var'))
     prefix = '';
 end
 fp = adiosopen(file);
-for i = 1:length(fp.Groups.Variables)
+for i = 1:length(fp.Variables)
     try
-        name{i} = fp.Groups.Variables(i).Name;
-        data{i} = adiosread(fp.Groups, fp.Groups.Variables(i).Name);
+        name{i} = fp.Variables(i).Name;
+        data{i} = adiosread(fp, fp.Variables(i).Name);
         assignin('base',[prefix name{i}],data{i});
     catch
-        warning(['Skip ... ', fp.Groups.Variables(i).Name]);
+        warning(['Skip ... ', fp.Variables(i).Name]);
     end
 end
 adiosclose(fp);

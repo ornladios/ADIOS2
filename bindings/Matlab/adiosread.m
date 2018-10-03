@@ -1,4 +1,5 @@
 function [data, attributes] = adiosread(varargin)
+%// clang-format off
 %ADIOSREAD Read data from an ADIOS BP file.
 %   
 %   ADIOSREAD reads data from BP file opened with ADIOSOPEN
