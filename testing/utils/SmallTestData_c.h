@@ -42,6 +42,6 @@ double d2_R64[4][5] = {{0, 1, 2, 3, 4},
                        {10, 11, 12, 13, 14},
                        {15, 16, 17, 18, 19}};
 
-// char *strarray[] = {"first", "second", "third", "fourth"};
+const char *strarray[] = {"first", "second", "third", "fourth"};
 
 #endif /* TESTING_UTILS_SMALLTESTDATA_C_H_ */

@@ -9,3 +9,4 @@
   string          name      attr   = "TestUtilsCWrite"
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
+  string          strarray  attr   = {"first", "second", "third", "fourth"}

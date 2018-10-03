@@ -8,6 +8,7 @@
  *      Author: Norbert Podhorszki
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <adios2_c.h>
@@ -99,8 +100,8 @@ int main(int argc, char *argv[])
     // Define attributes in ioH
     adios2_define_attribute(ioH, "name", adios2_type_string, "TestUtilsCWrite",
                             1);
-    // adios2_define_attribute(ioH, "strarray", adios2_type_string_array,
-    // strarray, 4);
+    adios2_define_attribute(ioH, "strarray", adios2_type_string_array, strarray,
+                            sizeof(strarray) / sizeof(char *));
     adios2_define_attribute(ioH, "nwriters", adios2_type_int, &nproc, 1);
     unsigned short shape2D[2] = {(unsigned short)d2_Nx, (unsigned short)d2_Ny};
     adios2_define_attribute(ioH, "shape2D", adios2_type_unsigned_short, shape2D,

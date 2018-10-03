@@ -11,6 +11,7 @@
   int             nproc     scalar = 1
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
+  string          strarray  attr   = {"first", "second", "third", "fourth"}
   signed char     varChar   {10} = 97 / 106
   short           varI16    {10} = -510 / 521
   int             varI32    {10} = -131070 / 131081
