@@ -16,6 +16,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <functional> //std::function
+#include <limits>     //std::numeric_limits
 #include <memory>     //std::shared_ptr
 #include <set>
 #include <string>
@@ -89,8 +90,9 @@ public:
      * @param timeoutSeconds (not yet implemented)
      * @return current step status
      */
-    virtual StepStatus BeginStep(StepMode mode,
-                                 const float timeoutSeconds = 0.f);
+    virtual StepStatus
+    BeginStep(StepMode mode,
+              const float timeoutSeconds = std::numeric_limits<float>::max());
 
     /**
      * Returns current step information for each engine.

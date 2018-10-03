@@ -45,7 +45,9 @@ public:
     virtual ~SstReader();
 
     StepStatus BeginStep();
-    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f);
+    StepStatus
+    BeginStep(StepMode mode,
+              const float timeoutSeconds = std::numeric_limits<float>::max());
     size_t CurrentStep() const final;
     void EndStep();
     void PerformGets();

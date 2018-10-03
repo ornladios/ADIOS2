@@ -40,7 +40,9 @@ public:
 
     bool IsValid();
 
-    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    StepStatus BeginStep(
+        StepMode mode,
+        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     size_t CurrentStep() const final;
     void EndStep() final;
 

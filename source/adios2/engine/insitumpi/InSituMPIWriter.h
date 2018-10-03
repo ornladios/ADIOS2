@@ -43,7 +43,9 @@ public:
 
     ~InSituMPIWriter();
 
-    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    StepStatus BeginStep(
+        StepMode mode,
+        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     void PerformPuts() final;
     void EndStep() final;
 
