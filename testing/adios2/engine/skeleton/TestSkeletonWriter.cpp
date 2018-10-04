@@ -62,6 +62,9 @@ int main(int argc, char *argv[])
             "myArray", {(unsigned int)nproc * ndx}, {(unsigned int)rank * ndx},
             {ndx}, adios2::ConstantDims);
 
+        adios2::Variable<std::string> varSyncString =
+            io.DefineVariable<std::string>("mySyncString");
+
         adios2::Engine writer = io.Open(streamname, adios2::Mode::Write);
 
         for (size_t step = 0; step < steps; ++step)
@@ -73,6 +76,7 @@ int main(int argc, char *argv[])
                 ++idx;
             }
             writer.BeginStep(adios2::StepMode::Append);
+            writer.Put<std::string>(varSyncString, "Hello", adios2::Mode::Sync);
             writer.Put<float>(varArray, myArray.data());
             writer.EndStep();
         }

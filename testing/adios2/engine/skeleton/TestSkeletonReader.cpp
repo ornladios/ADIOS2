@@ -98,6 +98,7 @@ int main(int argc, char *argv[])
 
             // discover in the metadata that the variable exists
             adios2::Variable<float> vMyArray;
+            size_t gndx;
             vMyArray = io.InquireVariable<float>("myArray");
             if (!vMyArray)
             {
@@ -106,31 +107,44 @@ int main(int argc, char *argv[])
                        "engine must retrieve variables from the writer and "
                        "create Variable objects before they can be "
                        "inquired\n";
+                // Let's fake the read from now on
+                // so that we can test the rest of the read API
+                gndx = (size_t)nproc;
+                adios2::Variable<float> varArray = io.DefineVariable<float>(
+                    "myArray", {gndx}, {gndx / (size_t)nproc},
+                    {gndx / (size_t)nproc});
+
+                adios2::Variable<std::string> varSyncString =
+                    io.DefineVariable<std::string>("mySyncString");
             }
             else
             {
-                // now read the variable
-                // Get the read decomposition
-                size_t gndx = vMyArray.Shape()[0];
-                size_t ndx = gndx / (size_t)nproc;
-                size_t offsx = ndx * (size_t)rank;
-                if (rank == nproc - 1)
-                {
-                    // right-most processes need to read all the rest
-                    ndx = gndx - ndx * (size_t)(nproc - 1);
-                }
-                size_t step = reader.CurrentStep();
-                adios2::Dims count, start;
-                count.push_back(ndx);
-                start.push_back(offsx);
-
-                vMyArray.SetSelection({start, count});
-
-                std::vector<float> myArray(ndx);
-                reader.Get(vMyArray, myArray.data());
-                reader.PerformGets();
-                printDataStep(myArray.data(), offsx, ndx, rank, step);
+                // Get the variable dimension
+                gndx = vMyArray.Shape()[0];
             }
+            size_t ndx = gndx / (size_t)nproc;
+            size_t offsx = ndx * (size_t)rank;
+            if (rank == nproc - 1)
+            {
+                // right-most processes need to read all the rest
+                ndx = gndx - ndx * (size_t)(nproc - 1);
+            }
+            size_t step = reader.CurrentStep();
+            adios2::Dims count, start;
+            count.push_back(ndx);
+            start.push_back(offsx);
+
+            if (vMyArray)
+            {
+                vMyArray.SetSelection({start, count});
+            }
+
+            std::vector<float> myArray(ndx);
+            std::string s;
+            reader.Get("mySyncString", s, adios2::Mode::Sync);
+            reader.Get("myArray", myArray.data());
+            reader.PerformGets();
+            printDataStep(myArray.data(), offsx, ndx, rank, step);
 
             reader.EndStep();
         }
