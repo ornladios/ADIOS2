@@ -41,9 +41,9 @@ module adios2_parameters_mod
 
     ! error
     integer, parameter :: adios2_error_none = 0
-    integer, parameter :: adios2_error_invalid_argument = 1,
-    integer, parameter :: adios2_error_system_error = 2,
-    integer, parameter :: adios2_error_runtime_error = 3,
+    integer, parameter :: adios2_error_invalid_argument = 1
+    integer, parameter :: adios2_error_system_error = 2
+    integer, parameter :: adios2_error_runtime_error = 3
     integer, parameter :: adios2_error_exception = 4
 
     ! Mode

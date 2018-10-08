@@ -13,6 +13,7 @@
 #include <ctime>
 #include <iostream>  //std::cerr
 #include <stdexcept> // std::runtime_error, std::exception
+#include <system_error>
 
 #include <adios2sys/SystemTools.hxx>
 

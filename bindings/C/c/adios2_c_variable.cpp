@@ -43,7 +43,7 @@ const std::map<std::string, std::vector<adios2_type>>
 };
 
 adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
-                                const std::string hint)
+                                const std::string &hint)
 {
     adios2_shapeid shapeID = adios2_shapeid_unknown;
     switch (shapeIDCpp)

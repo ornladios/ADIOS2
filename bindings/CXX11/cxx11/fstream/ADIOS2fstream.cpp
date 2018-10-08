@@ -128,7 +128,7 @@ adios2::Mode fstream::ToMode(const openmode mode) const noexcept
 }
 
 // PRIVATE
-void fstream::CheckOpen(const std::string name) const
+void fstream::CheckOpen(const std::string &name) const
 {
     if (m_Stream)
     {

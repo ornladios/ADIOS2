@@ -367,7 +367,7 @@ protected:
 private:
     fstream(fstream &stream) = default;
 
-    void CheckOpen(const std::string name) const;
+    void CheckOpen(const std::string &name) const;
 };
 
 #define declare_template_instantiation(T)                                      \

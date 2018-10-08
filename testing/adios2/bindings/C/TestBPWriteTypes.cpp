@@ -56,8 +56,8 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     // define attribute
     const char *strarray[] = {"first", "second", "third", "fourth"};
 
-    adios2_attribute *attribute = adios2_define_attribute(
-        ioH, "strarray", adios2_type_string_array, strarray, 4);
+    adios2_define_attribute(ioH, "strarray", adios2_type_string_array, strarray,
+                            4);
 
     // Define variables in ioH
     {

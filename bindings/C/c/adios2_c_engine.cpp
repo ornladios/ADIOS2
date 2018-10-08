@@ -16,7 +16,7 @@
 namespace
 {
 
-adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string hint)
+adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string &hint)
 {
     adios2::Mode modeCpp = adios2::Mode::Undefined;
     switch (mode)
@@ -34,7 +34,8 @@ adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string hint)
     return modeCpp;
 }
 
-adios2::StepMode ToStepMode(const adios2_step_mode mode, const std::string hint)
+adios2::StepMode ToStepMode(const adios2_step_mode mode,
+                            const std::string &hint)
 {
     adios2::StepMode stepModeCpp = adios2::StepMode::NextAvailable;
     switch (mode)
@@ -392,12 +393,6 @@ adios2_error adios2_close_by_index(adios2_engine *engine,
                                                 "adios2_close_by_index");
         auto &engineCpp = *reinterpret_cast<adios2::core::Engine *>(engine);
         engineCpp.Close(transport_index);
-
-        if (transport_index == -1)
-        {
-            engine = nullptr;
-        }
-
         return adios2_error_none;
     }
     catch (...)

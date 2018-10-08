@@ -185,7 +185,6 @@ adios2_error adios2_finalize(adios2_adios *adios)
         adios2::helper::CheckForNullptr(
             adios, "for adios2_adios, in call to adios2_finalize");
         delete reinterpret_cast<adios2::core::ADIOS *>(adios);
-        adios = nullptr;
         return adios2_error_none;
     }
     catch (...)
