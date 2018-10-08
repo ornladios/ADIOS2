@@ -70,7 +70,7 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept;
  *  std::exception         : 4
  * </pre>
  */
-int ExceptionToError(const std::string function);
+int ExceptionToError(const std::string &function);
 
 } // end namespace helper
 } // end namespace adios2

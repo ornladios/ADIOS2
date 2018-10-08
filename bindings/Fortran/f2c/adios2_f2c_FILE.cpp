@@ -11,6 +11,7 @@
 #include "adios2_f2c_common.h"
 
 #include <iostream>
+#include <stdexcept> //std::invalid_argument
 
 namespace
 {

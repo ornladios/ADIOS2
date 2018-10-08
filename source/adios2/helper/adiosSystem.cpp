@@ -74,7 +74,7 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept
     return isZeroIndexed;
 }
 
-int ExceptionToError(const std::string function)
+int ExceptionToError(const std::string &function)
 {
     try
     {

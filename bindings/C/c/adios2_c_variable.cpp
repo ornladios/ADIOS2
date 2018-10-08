@@ -13,10 +13,6 @@
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 namespace
 {
 const std::map<std::string, std::vector<adios2_type>>
@@ -78,6 +74,10 @@ adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
 }
 
 } // end anonymous namespace
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
                                   const size_t *start, const size_t *count)

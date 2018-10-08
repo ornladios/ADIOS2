@@ -61,7 +61,7 @@ adios2::StepMode ToStepMode(const adios2_step_mode mode,
 }
 
 adios2_step_status ToStepStatus(const adios2::StepStatus statusCpp,
-                                const std::string hint)
+                                const std::string &hint)
 {
     adios2_step_status status = adios2_step_status_other_error;
 

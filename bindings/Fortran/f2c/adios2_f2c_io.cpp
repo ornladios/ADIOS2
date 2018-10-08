@@ -10,7 +10,9 @@
 
 #include "adios2_f2c_common.h"
 
-#include <string.h>
+#include <stdexcept> //std::invalid_argument
+
+#include <string.h> //strcpy
 
 #include "adios2/ADIOSTypes.h"
 #include "adios2/helper/adiosFunctions.h"

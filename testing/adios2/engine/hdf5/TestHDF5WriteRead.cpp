@@ -54,7 +54,11 @@ private:
 class HDF5NativeWriter
 {
 public:
-    HDF5NativeWriter(const std::string fileName, MPI_Comm comm);
+#ifdef ADIOS2_HAVE_MPI
+    HDF5NativeWriter(const std::string &fileName, MPI_Comm comm);
+#else
+    HDF5NativeWriter(const std::string &fileName);
+#endif
     ~HDF5NativeWriter();
 
     void Advance();
@@ -81,8 +85,11 @@ private:
     hid_t m_FileId;
     hid_t m_GroupId;
 };
-
-HDF5NativeWriter::HDF5NativeWriter(const std::string fileName, MPI_Comm comm)
+#ifdef ADIOS2_HAVE_MPI
+HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName, MPI_Comm comm)
+#else
+HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
+#endif
 : m_CurrentTimeStep(0), m_TotalTimeSteps(0)
 {
     m_FilePropertyListId = H5Pcreate(H5P_FILE_ACCESS);
@@ -1018,7 +1025,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
 
         HDF5NativeWriter h5writer(fname, MPI_COMM_WORLD);
 #else
-        HDF5NativeWriter h5writer(fname, 0);
+        HDF5NativeWriter h5writer(fname);
 #endif
 
         int dimSize = 1;
@@ -1831,7 +1838,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D2x4)
 
         HDF5NativeWriter h5writer(fname, MPI_COMM_WORLD);
 #else
-        HDF5NativeWriter h5writer(fname, 0);
+        HDF5NativeWriter h5writer(fname);
 #endif
 
         int dimSize = 2;
@@ -2646,7 +2653,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
 
         HDF5NativeWriter h5writer(fname, MPI_COMM_WORLD);
 #else
-        HDF5NativeWriter h5writer(fname, 0);
+        HDF5NativeWriter h5writer(fname);
 #endif
 
         int dimSize = 2;
