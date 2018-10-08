@@ -37,6 +37,16 @@ adios2_error adios2_attribute_type(adios2_type *type,
                                    const adios2_attribute *attribute);
 
 /**
+ * Retrieve attribute type in string form "char", "unsigned long", etc.
+ * @param type output, string form "int", "char"
+ * @param size output, type size without '\0'
+ * @param attribute handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_attribute_type_string(char *type, size_t *size,
+                                          const adios2_variable *attribute);
+
+/**
  * Retrieve attribute data pointer (read-only)
  * @param data output attribute values, must be pre-allocated
  * @param size data size

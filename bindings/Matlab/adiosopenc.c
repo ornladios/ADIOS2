@@ -146,7 +146,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     /********************************************************/
     /* Open ADIOS file now and get variables and attributes */
-    adiosobj = adios2_init_nompi(adios2_debug_mode_on);
+    adiosobj = adios2_init(adios2_debug_mode_on);
     group = adios2_declare_io(adiosobj, "matlabiogroup"); // name is arbitrary
     fp = adios2_open(group, fname, adios2_mode_read);
     if (fp == NULL)
@@ -155,8 +155,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                           "Opening the file failed\n");
     }
 
-    adios2_inquire_all_variables(group, &nvars, &adios_vars);
-    adios2_inquire_all_attributes(group, &nattrs, &adios_attrs);
+    adios2_inquire_all_variables(&adios_vars, &nvars, group);
+    adios2_inquire_all_attributes(&adios_attrs, &nattrs, group);
     if (verbose)
         mexPrintf("Opened file fp=%lld nvars=%zu nattrs=%zu\n", (int64_t)fp,
                   nvars, nattrs);
@@ -235,21 +235,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         const adios2_variable *avar = adios_vars[vi];
         /* field NAME */
         size_t namelen;
-        const char *varname = adios2_variable_name(avar, &namelen);
+        const char varname[adios2_string_array_element_max_size];
+
+        adios2_variable_name(varname, &namelen, avar);
         mxSetFieldByNumber(vars, vi, var_field_Name, mxCreateString(varname));
         /* field TYPE */
-        const adios2_type adiostype = adios2_variable_type(avar);
-        mxtype = adiostypeToMatlabClass(adiostype, &complexFlag);
+        adios2_type *adiostype;
+        adios2_variable_type(adiostype, avar);
+        mxtype = adiostypeToMatlabClass(*adiostype, &complexFlag);
         arr = mxCreateNumericMatrix(1, 1, mxtype, complexFlag);
         mxSetFieldByNumber(vars, vi, var_field_Type,
                            mxCreateString(mxGetClassName(arr)));
         mxDestroyArray(arr);
         /* field DIMS */
-        size_t ndim = adios2_variable_ndims(avar);
-        const size_t *dims = adios2_variable_shape(avar);
+        size_t ndim;
+        adios2_variable_ndims(&ndim, avar);
+        size_t *dims = (size_t *)malloc(ndim * sizeof(size_t));
+        adios2_variable_shape(dims, avar);
         /* Flip dimensions from ADIOS-read-api/C/row-major order to
          * Matlab/Fortran/column-major order */
         size_t *mxdims = swap_order(ndim, dims);
+
         if (verbose > 1)
         {
             mexPrintf("      %s: ndims=%d, adios type=%d, dimensions [",
@@ -275,12 +281,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mxSetFieldByNumber(vars, vi, var_field_Dims, arr);
 
         /* field STEPSSTART */
-        size_t stepsStart = adios2_variable_steps_start(avar);
+        size_t stepsStart;
+        adios2_variable_steps_start(&stepsStart, avar);
         arr = valueToMatlabValue((void *)(&stepsStart), mxINT64_CLASS, mxREAL);
         mxSetFieldByNumber(vars, vi, var_field_StepsStart, arr);
 
         /* field STEPSCOUNT */
-        size_t stepsCount = adios2_variable_steps(avar);
+        size_t stepsCount;
+        adios2_variable_steps(&stepsCount, avar);
         arr = valueToMatlabValue((void *)(&stepsCount), mxINT64_CLASS, mxREAL);
         mxSetFieldByNumber(vars, vi, var_field_StepsCount, arr);
 
@@ -294,6 +302,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         // FIXME arr = valueToMatlabValue(vinfo->gmax, mxtype, complexFlag);
         arr = valueToMatlabValue(&fakemin, mxDOUBLE_CLASS, complexFlag);
         mxSetFieldByNumber(vars, vi, var_field_GlobalMax, arr);
+
+        free(dims);
     }
 
     /******************************/
@@ -306,12 +316,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         const adios2_attribute *aa = adios_attrs[ai];
         /* field NAME */
         size_t namelen;
-        const char *attrname = adios2_attribute_name(aa, &namelen);
+        const char attrname[adios2_string_array_element_max_size];
+        adios2_attribute_name(attrname, &namelen, aa);
+
         mxSetFieldByNumber(attrs, ai, attr_field_Name,
                            mxCreateString(attrname));
         /* field TYPE */
         size_t typelen;
-        const char *atype = adios2_attribute_type(aa, &typelen);
+        const char atype[adios2_string_array_element_max_size];
+        adios2_attribute_type_string(atype, &typelen, aa);
+
         mxtype = adiostypestringToMatlabClass(atype, &complexFlag);
         // mxtype = adiostypeToMatlabClass(adiostype, &complexFlag);
         arr = mxCreateNumericMatrix(1, 1, mxtype, complexFlag);
@@ -320,7 +334,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mxDestroyArray(arr);
         /* field VALUE */
         size_t asize;
-        const void *data = adios2_attribute_data(aa, &asize);
+        const void *data;
+        adios2_attribute_data(data, &asize, aa);
         arr = valueToMatlabValue(data, mxtype, complexFlag);
         mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
         if (verbose > 1)

@@ -63,6 +63,16 @@ adios2_error adios2_variable_type(adios2_type *type,
                                   const adios2_variable *variable);
 
 /**
+ * Retrieve variable type in string form "char", "unsigned long", etc.
+ * @param type output, string form "int", "char"
+ * @param size output, type size without '\0'
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_type_string(char *type, size_t *size,
+                                         const adios2_variable *variable);
+
+/**
  * Retrieve variable shapeid
  * @param shapeid output, from enum adios2_shapeid
  * @param variable handler
@@ -106,6 +116,17 @@ adios2_error adios2_variable_start(size_t *start,
  */
 adios2_error adios2_variable_count(size_t *count,
                                    const adios2_variable *variable);
+
+/**
+ * Read API, get available steps start from available steps count
+ * (e.g. in a file for a variable).
+ * @param steps_start output absolute first available step, don't use with
+ * adios2_set_step_selection as inputs are relative, use 0 instead.
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_steps_start(size_t *steps_start,
+                                         const adios2_variable *variable);
 
 /**
  * Read API, get available steps count from available steps count

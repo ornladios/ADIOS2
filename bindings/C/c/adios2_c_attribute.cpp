@@ -88,6 +88,33 @@ adios2_error adios2_attribute_type(adios2_type *type,
     }
 }
 
+adios2_error adios2_attribute_type_string(char *type, size_t *size,
+                                          const adios2_variable *attribute)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            attribute, "for const adios2_attribute, in call to "
+                       "adios2_attribute_type_string");
+        adios2::helper::CheckForNullptr(
+            type, "for char* type, in call to adios2_attribute_type_string");
+        adios2::helper::CheckForNullptr(
+            size,
+            "for size_t* length, in call to adios2_attribute_type_string");
+
+        const adios2::core::AttributeBase *attributeBase =
+            reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
+        *size = attributeBase->m_Type.size();
+        attributeBase->m_Type.copy(type, *size);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_attribute_type_string"));
+    }
+}
+
 adios2_error adios2_attribute_data(void *data, size_t *size,
                                    const adios2_attribute *attribute)
 {

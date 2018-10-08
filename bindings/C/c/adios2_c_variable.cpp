@@ -180,6 +180,32 @@ adios2_error adios2_variable_type(adios2_type *type,
     }
 }
 
+adios2_error adios2_variable_type_string(char *type, size_t *size,
+                                         const adios2_variable *variable)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for const adios2_variable, in call to "
+                                        "adios2_variable_type_string");
+        adios2::helper::CheckForNullptr(
+            type, "for char* type, in call to adios2_variable_type_string");
+        adios2::helper::CheckForNullptr(
+            size, "for size_t* length, in call to adios2_variable_type_string");
+
+        const adios2::core::VariableBase *variableBase =
+            reinterpret_cast<const adios2::core::VariableBase *>(variable);
+        *size = variableBase->m_Type.size();
+        variableBase->m_Type.copy(type, *size);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_variable_type_string"));
+    }
+}
+
 adios2_error adios2_variable_shapeid(adios2_shapeid *shapeid,
                                      const adios2_variable *variable)
 {
@@ -297,6 +323,26 @@ adios2_error adios2_variable_count(size_t *count,
     }
 }
 
+adios2_error adios2_variable_steps_start(size_t *steps_start,
+                                         const adios2_variable *variable)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for const adios2_variable, in call to "
+                                        "adios2_variable_steps_start");
+        const adios2::core::VariableBase *variableBase =
+            reinterpret_cast<const adios2::core::VariableBase *>(variable);
+        *steps_start = variableBase->m_AvailableStepsStart;
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_variable_steps_start"));
+    }
+}
+
 adios2_error adios2_variable_steps(size_t *steps,
                                    const adios2_variable *variable)
 {
@@ -304,7 +350,7 @@ adios2_error adios2_variable_steps(size_t *steps,
     {
         adios2::helper::CheckForNullptr(variable,
                                         "for const adios2_variable, in call to "
-                                        "adios2_variable_steps_count");
+                                        "adios2_variable_steps");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
         *steps = variableBase->m_AvailableStepsCount;

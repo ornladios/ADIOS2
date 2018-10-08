@@ -59,7 +59,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     if (verbose)
         mexPrintf("ADIOS handler: \"%llu\"\n", *uint64p);
 
-    size_t step = adios2_current_step(fp);
+    size_t step;
+    adios2_current_step(&step, fp);
     if (verbose)
         mexPrintf("Current step in file handler: %zu\n", step);
 

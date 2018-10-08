@@ -141,11 +141,20 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
         mexErrMsgIdAndTxt("MATLAB:adiosreadc:variable %s does not exist", path);
     }
 
-    const size_t varStepStart = adios2_variable_steps_start(avar);
-    const size_t varStepCount = adios2_variable_steps(avar);
-    const size_t varNdim = adios2_variable_ndims(avar);
-    const size_t *varDim = adios2_variable_shape(avar);
-    const adios2_type adiostype = adios2_variable_type(avar);
+    size_t varStepStart;
+    adios2_variable_steps_start(&varStepStart, avar);
+
+    size_t varStepCount;
+    adios2_variable_steps(&varStepCount, avar);
+
+    size_t varNdim;
+    adios2_variable_ndims(&varNdim, avar);
+
+    size_t *varDim = (size_t *)malloc(varNdim * sizeof(size_t));
+    adios2_variable_shape(varDim, avar);
+
+    adios2_type adiostype;
+    adios2_variable_type(&adiostype, avar);
 
     /* if (verbose) {
         mexPrintf("Var=%s type=%s C dimensions %dD [", path,
@@ -242,6 +251,8 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
         out = mxCreateString((char *)data);
         mxFree(data);
     }
+
+    free(varDim);
 
     return out;
 }
