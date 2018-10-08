@@ -39,6 +39,13 @@ module adios2_parameters_mod
     integer, parameter :: adios2_not_found = -1
     integer, parameter :: adios2_found = 0
 
+    ! error
+    integer, parameter :: adios2_error_none = 0
+    integer, parameter :: adios2_error_invalid_argument = 1,
+    integer, parameter :: adios2_error_system_error = 2,
+    integer, parameter :: adios2_error_runtime_error = 3,
+    integer, parameter :: adios2_error_exception = 4
+
     ! Mode
     integer, parameter :: adios2_mode_undefined = 0
     integer, parameter :: adios2_mode_write = 1
@@ -83,7 +90,7 @@ module adios2_parameters_mod
     type adios2_variable
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
-        character(len=1024):: name = ''
+        character(len=4096):: name = ''
         integer :: type = -1
         integer :: ndims = -1
     end type
@@ -91,7 +98,7 @@ module adios2_parameters_mod
     type adios2_attribute
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
-        character(len=1024):: name = ''
+        character(len=4096):: name = ''
         integer :: type = -1
         integer :: length = 0
     end type
@@ -99,7 +106,7 @@ module adios2_parameters_mod
     type adios2_engine
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
-        character(len=1024):: name = ''
+        character(len=64):: name = ''
         character(len=15):: type = ''
         integer :: mode = adios2_mode_undefined
     end type
@@ -107,8 +114,8 @@ module adios2_parameters_mod
     type adios2_operator
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
-        character(len=1024):: name = ''
-        character(len=1024):: type = ''
+        character(len=64):: name = ''
+        character(len=64):: type = ''
     end type
 
 

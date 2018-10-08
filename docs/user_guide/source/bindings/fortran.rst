@@ -6,7 +6,16 @@ Fortran bindings
    :language: fortran
    :class: highlight
 
-The Fortran bindings API consist entirely on subroutines calls. Always, the 1st argument is a Fortran type (struct) to an ADIOS2 component, while the last argument is an error integer flag, :f90:`integer ierr`. ``ierr==0`` means normal execution while any other value represents an error or a different state.
+The Fortran bindings API consist entirely on subroutines calls. Always, the 1st argument is a Fortran type (struct) to an ADIOS2 component, while the last argument is an error integer flag, :f90:`integer ierr`. ``ierr==0`` means normal execution while any other value represents an error or a different state. ADIOS2 Fortran bindings provide a list of possible errors coming from the C++ standardized error exception library:
+
+.. code-block:: fortran
+
+    ! error possible values for ierr
+    integer, parameter :: adios2_error_none = 0
+    integer, parameter :: adios2_error_invalid_argument = 1,
+    integer, parameter :: adios2_error_system_error = 2,
+    integer, parameter :: adios2_error_runtime_error = 3,
+    integer, parameter :: adios2_error_exception = 4
 
 Click here for a `Fortran write and read example`_ to illustrate the use of the APIs calls before digging into the description of each subroutine. This test will compile under your build/bin/ directory.
 
@@ -17,7 +26,7 @@ The following subsections describe the overall component representation and the 
 ADIOS2 typed handlers
 ---------------------
 
-ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components described in the :ref:`Application Programmer Interface` section
+ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components described in the :ref:`Application Programmer Interface` section. For convenience, each type handler contains descriptive components used for read-only inspection.
  
 .. code-block:: fortran
 
@@ -26,6 +35,49 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
    type(adios2_variable) :: variable
    type(adios2_attribute) :: attribute
    type(adios2_engine) :: engine
+   
+   !Read-only components for inspection and ( = defaults)
+   
+   type adios2_adios
+        logical :: valid = .false.
+    end type
+
+    type adios2_io
+        logical :: valid = .false.
+        character(len=15):: engine_type = 'BPFile'
+    end type
+
+    type adios2_variable
+        logical :: valid = .false.
+        character(len=4095):: name = ''
+        integer :: type = -1
+        integer :: ndims = -1
+    end type
+
+    type adios2_attribute
+        logical :: valid = .false.
+        character(len=4095):: name = ''
+        integer :: type = -1
+        integer :: length = 0
+    end type
+
+    type adios2_engine
+        logical :: valid = .false.
+        character(len=63):: name = ''
+        character(len=15):: type = ''
+        integer :: mode = adios2_mode_undefined
+    end type
+
+    type adios2_operator
+        logical :: valid = .false.
+        character(len=63):: name = ''
+        character(len=63):: type = ''
+    end type
+   
+
+.. caution::
+
+   Use the type read-only components for information purposes only. Changing their values directly, *e.g.* `variable%name = new_name` does not have any effect inside the adios2 library 
    
 
 :ref:`ADIOS` subroutines
@@ -125,9 +177,9 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       type(adios2_adios), intent(in):: adios
 
 
-   .. caution::
+.. caution::
    
-      Make sure that for every call to ``adios2_init`` there is a call to ``adios2_finalize`` for the same adios handler. Not doing so will result in memory leaks. 
+   Make sure that for every call to ``adios2_init`` there is a call to ``adios2_finalize`` for the same adios handler. Not doing so will result in memory leaks. 
 
       
 :ref:`IO` subroutines
@@ -199,7 +251,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       integer, parameter :: adios2_type_string = 10
       integer, parameter :: adios2_type_string_array = 11
   
- 
+
 .. tip::
 
    Always prefer using adios2_type_xxx parameters explicitly rather than raw numbers. 
@@ -306,12 +358,17 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
       ! unique key name to search for attribute 
       character*(*), intent(in) :: name
-      
+
+..  caution::
+
+   Use the adios2_remove_* subroutines with extreme CAUTION. They create outdated dangling information in the adios2_type handlers. If you don't need them, don't use them. 
+
+
 * :f90:`subroutine adios2_remove_variable` remove existing variable by its unique name
    
    .. code-block:: fortran
    
-      subroutine adios2_remove_variable(io, name, ierr)
+      subroutine adios2_remove_variable(io, name, result, ierr)
         
       ! WHERE:
       
@@ -321,12 +378,15 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! unique key name to search for variable 
       character*(*), intent(in) :: name
       
+      ! true: variable removed, false: variable not found, not removed
+      logical, intent(out) :: result
+      
       
 * :f90:`subroutine adios2_remove_attribute` remove existing attribute by its unique name
    
    .. code-block:: fortran
    
-      subroutine adios2_remove_attribute(io, name, ierr)
+      subroutine adios2_remove_attribute(io, name, result, ierr)
         
       ! WHERE:
       
@@ -335,6 +395,9 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
       ! unique key name to search for attribute 
       character*(*), intent(in) :: name
+      
+      ! true: attribute removed, false: attribute not found, not removed
+      logical, intent(out) :: result
       
 * :f90:`subroutine adios2_remove_all_variables` remove all existing variables
    
@@ -400,6 +463,10 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       !                      adios2_mode_append,
       !                      adios2_mode_read,  
       integer, intent(in):: adios2_mode
+
+
+
+
 
 
 :ref:`Variables` subroutines
@@ -473,7 +540,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
    .. code-block:: fortran
    
       ! Full signature
-      subroutine adios2_begin_step(engine, adios2_step_mode, timeout_seconds, ierr)
+      subroutine adios2_begin_step(engine, adios2_step_mode, timeout_seconds, status, ierr)
       ! Default Timeout = 0.
       subroutine adios2_begin_step(engine, adios2_step_mode, ierr)
       ! Default step_mode for read and write
@@ -490,8 +557,11 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       !                      adios2_step_mode_append (write mode default)
       integer, intent(in):: adios2_step_mode
       
-      ! optional engine timeout (if supported), in seconds
+      ! optional 
+      ! engine timeout (if supported), in seconds
       real, intent(in):: timeout_seconds
+      ! status of the stream from adios2_step_status_* parameters
+      integer, intent(out):: status
    
    
 * :f90:`subroutine adios2_current_step` extracts current step
@@ -499,7 +569,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
    .. code-block:: fortran
    
       ! Full signature
-      subroutine adios2_current_step(engine, current_step, ierr)
+      subroutine adios2_current_step(current_step, engine, ierr)
       
       ! WHERE:
       ! engine handler  
