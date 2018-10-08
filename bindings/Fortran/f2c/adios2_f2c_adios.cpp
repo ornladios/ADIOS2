@@ -10,28 +10,30 @@
 
 #include "adios2_f2c_common.h"
 
+#include "adios2/ADIOSMPI.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifdef ADIOS2_HAVE_MPI_F
+
+// this function is not exposed in the public APIs
+extern adios2_adios *adios2_init_config_glue(const char *config_file,
+                                             MPI_Comm comm,
+                                             const adios2_debug_mode debug_mode,
+                                             const char *host_language);
+
 void FC_GLOBAL(adios2_init_config_f2c,
                ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
                                        const char *config_file, MPI_Fint *comm,
                                        const int *debug_mode, int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        *adios = adios2_init_config_glue(
-            config_file, MPI_Comm_f2c(*comm),
-            static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 init_config: " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *adios = adios2_init_config_glue(
+        config_file, MPI_Comm_f2c(*comm),
+        static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
+    *ierr = (*adios == NULL) ? static_cast<int>(adios2_error_exception)
+                             : static_cast<int>(adios2_error_none);
 }
 
 void FC_GLOBAL(adios2_init_f2c,
@@ -42,23 +44,21 @@ void FC_GLOBAL(adios2_init_f2c,
     (adios, "", comm, debug_mode, ierr);
 }
 #else
+
+// this function is not exposed in the public APIs
+extern adios2_adios *adios2_init_config_glue(const char *config_file,
+                                             const adios2_debug_mode debug_mode,
+                                             const char *host_language);
+
 void FC_GLOBAL(adios2_init_config_f2c,
                ADIOS2_INIT_CONFIG_F2C)(adios2_adios **adios,
                                        const char *config_file,
                                        const int *debug_mode, int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        *adios = adios2_init_config_nompi_glue(
-            config_file, static_cast<adios2_debug_mode>(*debug_mode),
-            "Fortran");
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 init_config: " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *adios = adios2_init_config_glue(
+        config_file, static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
+    *ierr = (*adios == NULL) ? static_cast<int>(adios2_error_exception)
+                             : static_cast<int>(adios2_error_none);
 }
 
 void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_adios **adios,
@@ -72,36 +72,21 @@ void FC_GLOBAL(adios2_init_f2c, ADIOS2_INIT_F2C)(adios2_adios **adios,
 
 void FC_GLOBAL(adios2_declare_io_f2c,
                ADIOS2_DECLARE_IO_F2C)(adios2_io **io, adios2_adios **adios,
-                                      const char *io_name, int *ierr)
+                                      const char *name, int *ierr)
 {
-    *ierr = 0;
 
-    try
-    {
-        *io = adios2_declare_io(*adios, io_name);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 declare_io: " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *io = adios2_declare_io(*adios, name);
+    *ierr = (*io == NULL) ? static_cast<int>(adios2_error_exception)
+                          : static_cast<int>(adios2_error_none);
 }
 
-void FC_GLOBAL(adios2_at_io_f2c,
-               ADIOS2_at_IO_F2C)(adios2_io **io, adios2_adios **adios,
-                                 const char *io_name, int *ierr)
+void FC_GLOBAL(adios2_at_io_f2c, ADIOS2_at_IO_F2C)(adios2_io **io,
+                                                   adios2_adios **adios,
+                                                   const char *name, int *ierr)
 {
-    *ierr = 0;
-
-    try
-    {
-        *io = adios2_at_io(*adios, io_name);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 at_io: " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *io = adios2_at_io(*adios, name);
+    *ierr = (*io == NULL) ? static_cast<int>(adios2_error_exception)
+                          : static_cast<int>(adios2_error_none);
 }
 
 void FC_GLOBAL(adios2_define_operator_f2c,
@@ -110,16 +95,9 @@ void FC_GLOBAL(adios2_define_operator_f2c,
                                            const char *op_name,
                                            const char *op_type, int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        *op = adios2_define_operator(*adios, op_name, op_type);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 define_operator: " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *op = adios2_define_operator(*adios, op_name, op_type);
+    *ierr = (*op == NULL) ? static_cast<int>(adios2_error_exception)
+                          : static_cast<int>(adios2_error_none);
 }
 
 void FC_GLOBAL(adios2_inquire_operator_f2c,
@@ -127,50 +105,22 @@ void FC_GLOBAL(adios2_inquire_operator_f2c,
                                             adios2_adios **adios,
                                             const char *op_name, int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        *op = adios2_inquire_operator(*adios, op_name);
-        if (*op == nullptr)
-        {
-            *ierr = 1;
-        }
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 inquire_operator: " << e.what() << "\n";
-        *ierr = -1;
-    }
+
+    *op = adios2_inquire_operator(*adios, op_name);
+    *ierr = (*op == NULL) ? static_cast<int>(adios2_error_exception)
+                          : static_cast<int>(adios2_error_none);
 }
 
 void FC_GLOBAL(adios2_flush_all_f2c, ADIOS2_FLUSH_ALL_F2C)(adios2_adios **adios,
                                                            int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        adios2_flush_all(*adios);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 flush_all: " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *ierr = static_cast<int>(adios2_flush_all(*adios));
 }
 
 void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_adios **adios,
                                                          int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        adios2_finalize(*adios);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 finalize: " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *ierr = static_cast<int>(adios2_finalize(*adios));
 }
 
 #ifdef __cplusplus

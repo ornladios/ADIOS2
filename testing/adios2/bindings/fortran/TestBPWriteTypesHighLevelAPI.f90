@@ -49,8 +49,7 @@
    count_dims(1) = inx
 
    !!!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   call adios2_fopen(fhw, 'ftypes_hl.bp', adios2_mode_write, &
-                     MPI_COMM_WORLD, ierr)
+   call adios2_fopen(fhw, 'ftypes_hl.bp', 'w', MPI_COMM_WORLD, ierr)
 
    ! Global single value variables
    if (irank == 0) then
@@ -86,8 +85,7 @@
    call adios2_fclose(fhw, ierr)
 
    !!!!!!!!!!!!!!!!!!!!!!!!! High-level READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   call adios2_fopen(fhr, 'ftypes_hl.bp', adios2_mode_read, &
-                     MPI_COMM_WORLD, ierr)
+   call adios2_fopen(fhr, 'ftypes_hl.bp', 'r', MPI_COMM_WORLD, ierr)
 
    i = 0
    do

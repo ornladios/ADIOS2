@@ -54,8 +54,8 @@ public:
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
-    ADIOS(const std::string configFile, MPI_Comm mpiComm,
-          const bool debugMode = true, const std::string hostLanguage = "C++");
+    ADIOS(const std::string configFile, MPI_Comm mpiComm, const bool debugMode,
+          const std::string hostLanguage);
 
     /**
      * @brief Constructor for non-MPI applications WITH a XML config file (it
@@ -66,8 +66,8 @@ public:
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
-    ADIOS(const std::string configFile, const bool debugMode = true,
-          const std::string hostLanguage = "C++");
+    ADIOS(const std::string configFile, const bool debugMode,
+          const std::string hostLanguage);
 
     /**
      * @brief Constructor for MPI apps WITHOUT a XML config file
@@ -76,8 +76,8 @@ public:
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
-    ADIOS(MPI_Comm mpiComm, const bool debugMode = true,
-          const std::string hostLanguage = "C++");
+    ADIOS(MPI_Comm mpiComm, const bool debugMode,
+          const std::string hostLanguage);
 
     /**
      *  @brief ADIOS no-MPI default empty constructor
@@ -85,7 +85,7 @@ public:
      * false: optional feature to turn off checks on user input data,
      * recommended in stable flows
      */
-    ADIOS(const bool debugMode = true, const std::string hostLanguage = "C++");
+    ADIOS(const bool debugMode, const std::string hostLanguage);
 
     /**
      * Delete copy constructor explicitly. Objects shouldn't be allowed to be

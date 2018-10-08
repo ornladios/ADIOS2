@@ -12,14 +12,25 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
-const char *adios2_operator_type(const adios2_operator *op, size_t *length)
+adios2_error adios2_operator_type(char *type, size_t *size,
+                                  const adios2_operator *op)
 {
-    adios2::helper::CheckForNullptr(
-        op, "for adios2_operator, in call to adios2_operator_type");
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            op, "for adios2_operator, in call to adios2_operator_type");
 
-    const adios2::core::Operator *opCpp =
-        reinterpret_cast<const adios2::core::Operator *>(op);
+        const adios2::core::Operator *opCpp =
+            reinterpret_cast<const adios2::core::Operator *>(op);
 
-    *length = opCpp->m_Type.size();
-    return opCpp->m_Type.c_str();
+        *size = opCpp->m_Type.size();
+        opCpp->m_Type.copy(type, *size);
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_operator_type"));
+    }
 }

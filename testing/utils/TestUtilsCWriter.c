@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
 #else
-    adios2_adios *adiosH = adios2_init_nompi(adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
 #endif
 
     char engineName[32] = "BPFile";

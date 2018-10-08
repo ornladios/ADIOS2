@@ -41,11 +41,11 @@ public:
      */
     Engine() = default;
 
+    /** Using RAII STL containers only */
     ~Engine() = default;
 
-    /**
-     * true: valid engine, false: invalid, not created with IO::Open
-     */
+    /** true: valid engine, false: invalid, not created with IO::Open or post
+     * IO::Close*/
     explicit operator bool() const noexcept;
 
     /**

@@ -87,17 +87,21 @@ std::vector<RunParams> CreateRunParams()
         err = 101;                                                             \
         goto endread;                                                          \
     }                                                                          \
-    if (adios2_variable_ndims(vi) != NDIM)                                     \
+    size_t ndims;                                                              \
+    adios2_variable_ndims(&ndims, vi);                                         \
+    if (ndims != NDIM)                                                         \
     {                                                                          \
         printE("Variable %s has %zu dimensions, but expected %u\n", VARNAME,   \
-               adios2_variable_ndims(vi), NDIM);                               \
+               ndims, NDIM);                                                   \
         err = 102;                                                             \
         goto endread;                                                          \
     }                                                                          \
-    if (adios2_variable_steps(vi) != NSTEPS)                                   \
+    size_t steps;                                                              \
+    adios2_variable_steps(&steps, vi);                                         \
+    if (steps != NSTEPS)                                                       \
     {                                                                          \
         printE("Variable %s has %zu steps, but expected %zu\n", VARNAME,       \
-               adios2_variable_steps(vi), NSTEPS);                             \
+               steps, NSTEPS);                                                 \
         err = 103;                                                             \
         /*goto endread; */                                                     \
     }
@@ -246,8 +250,13 @@ public:
                  NBLOCKS, NSTEPS, REDEFINE ? "_redefine" : "");
 
         alloc_vars();
+#ifdef ADIOS2_HAVE_MPI
         adios2_adios *adiosH =
             adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+#else
+        adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
+#endif
+
         ioW = adios2_declare_io(adiosH, "multiblockwrite"); // group for writing
         ioR = adios2_declare_io(adiosH, "multiblockread");  // group for reading
         set_gdim();
@@ -316,7 +325,8 @@ public:
         log("Write step %d to %s\n", step, FILENAME);
         tb = MPI_Wtime();
 
-        adios2_begin_step(engineW, adios2_step_mode_append, 0.0);
+        adios2_step_status status;
+        adios2_begin_step(engineW, adios2_step_mode_append, 0.0, &status);
         for (block = 0; block < NBLOCKS; block++)
         {
             v = VALUE(rank, step, block);
@@ -371,8 +381,9 @@ public:
             return 1;
         }
 
-        adios2_step_status status =
-            adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0);
+        adios2_step_status status;
+        adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0,
+                          &status);
 
         log("  Check variable definitions... %s\n", FILENAME);
         tb = MPI_Wtime();
@@ -394,8 +405,8 @@ public:
             ts = 0;
             if (step > 0)
             {
-                status = adios2_begin_step(
-                    engineR, adios2_step_mode_next_available, 0.0);
+                adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0,
+                                  &status);
             }
             for (size_t block = 0; block < NBLOCKS; block++)
             {

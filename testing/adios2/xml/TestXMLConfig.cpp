@@ -91,10 +91,11 @@ TEST_F(XMLConfigTest, OpTypeException)
 #ifdef ADIOS2_HAVE_MPI
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank == 0) // COMM_SELF
+    if (rank == 0)
     {
-        EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),
-                     std::invalid_argument);
+        EXPECT_THROW(
+            adios2::ADIOS adios(configFile, MPI_COMM_SELF, adios2::DebugON),
+            std::invalid_argument);
     }
 #else
     EXPECT_THROW(adios2::ADIOS adios(configFile, adios2::DebugON),

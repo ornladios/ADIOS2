@@ -7,7 +7,7 @@ program TestSstWrite
   integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
   integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
   integer(kind = 8), dimension(1)::shape_time, start_time, count_time
-  integer::inx, irank, isize, ierr, i, insteps
+  integer::inx, irank, isize, ierr, i, insteps, status
 
   type(adios2_adios)::adios
   type(adios2_io)::ioWrite, ioRead
@@ -117,7 +117,8 @@ program TestSstWrite
   !Put array contents to bp buffer, based on var1 metadata
   do i = 1, insteps
      call GenerateTestData(i - 1, irank, isize)
-     call adios2_begin_step(sstWriter, adios2_step_mode_append, 0.0, ierr)
+     call adios2_begin_step(sstWriter, adios2_step_mode_append, 0.0, status, &
+                            ierr)
      call adios2_put(sstWriter, variables(12), data_scalar_r64, ierr)
      call adios2_put(sstWriter, variables(1), data_I8, ierr)
      call adios2_put(sstWriter, variables(2), data_I16, ierr)

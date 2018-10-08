@@ -1079,7 +1079,11 @@ int doList(const char *path)
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
-    core::ADIOS adios(true);
+#ifdef ADIOS2_HAVE_MPI
+    core::ADIOS adios(MPI_COMM_SELF, true, "C++");
+#else
+    core::ADIOS adios(true, "C++");
+#endif
     core::IO &io = adios.DeclareIO("bpls");
     core::Engine *fp = nullptr;
     std::vector<std::string> engineList = getEnginesList(path);

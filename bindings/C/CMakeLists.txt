@@ -6,7 +6,6 @@
 
 target_sources(adios2 PRIVATE 
 ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_adios.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_glue.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_io.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_engine.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_variable.cpp
@@ -30,7 +29,6 @@ install(
 install(
   FILES c/adios2_c_types.h 
         c/adios2_c_adios.h
-        c/adios2_c_glue.h 
         c/adios2_c_io.h
         c/adios2_c_variable.h
         c/adios2_c_attribute.h

@@ -12,7 +12,14 @@
 class ADIOSDefineAttributeTest : public ::testing::Test
 {
 public:
-    ADIOSDefineAttributeTest() : adios(true), io(adios.DeclareIO("TestIO")) {}
+#ifdef ADIOS2_HAVE_MPI
+    ADIOSDefineAttributeTest()
+    : adios(MPI_COMM_WORLD, true), io(adios.DeclareIO("TestIO"))
+#else
+    ADIOSDefineAttributeTest() : adios(true), io(adios.DeclareIO("TestIO"))
+#endif
+    {
+    }
 
     SmallTestData m_TestData;
 
@@ -61,18 +68,18 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     SmallTestData currentTestData =
         generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
 
-    std::string mpiRankString = std::to_string(mpiRank);
-    std::string s1_Single = std::string("s1_Single_") + mpiRankString;
-    std::string i8_Single = std::string("i8_Single_") + mpiRankString;
-    std::string i16_Single = std::string("i16_Single_") + mpiRankString;
-    std::string i32_Single = std::string("i32_Single_") + mpiRankString;
-    std::string i64_Single = std::string("i64_Single_") + mpiRankString;
-    std::string u8_Single = std::string("u8_Single_") + mpiRankString;
-    std::string u16_Single = std::string("u16_Single_") + mpiRankString;
-    std::string u32_Single = std::string("u32_Single_") + mpiRankString;
-    std::string u64_Single = std::string("u64_Single_") + mpiRankString;
-    std::string float_Single = std::string("float_Single_") + mpiRankString;
-    std::string double_Single = std::string("double_Single_") + mpiRankString;
+    const std::string mpiRankString(std::to_string(mpiRank));
+    const std::string s1_Single("s1_Single_" + mpiRankString);
+    const std::string i8_Single("i8_Single_" + mpiRankString);
+    const std::string i16_Single("i16_Single_" + mpiRankString);
+    const std::string i32_Single("i32_Single_" + mpiRankString);
+    const std::string i64_Single("i64_Single_" + mpiRankString);
+    const std::string u8_Single("u8_Single_" + mpiRankString);
+    const std::string u16_Single("u16_Single_" + mpiRankString);
+    const std::string u32_Single("u32_Single_" + mpiRankString);
+    const std::string u64_Single("u64_Single_" + mpiRankString);
+    const std::string float_Single("float_Single_" + mpiRankString);
+    const std::string double_Single("double_Single_" + mpiRankString);
 
     // Define ADIOS global value
     auto attributeS1 =

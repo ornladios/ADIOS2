@@ -13,99 +13,112 @@
 
 #include "adios2_c_types.h"
 
-#include "adios2/ADIOSMPICommOnly.h"
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#ifdef ADIOS2_HAVE_MPI
 /**
- * Create an ADIOS struct pointer handler using a runtime config file in a MPI
- * application.
- * @param config_file runtime configuration file, XML format, future: JSON
- * @param mpi_comm MPI communicator from application for ADIOS scope
- * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
- * @return valid ADIOS* handler
+ * Starting point for MPI apps. Creates an ADIOS handler.
+ * @param configFile runtime config file
+ * @param comm defines domain scope from application
+ * @param debug_mode true: extra user-input debugging information, false:
+ * run without checking user-input (stable workflows)
+ * @return success: handler, failure: NULL
  */
-adios2_adios *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
+adios2_adios *adios2_init(MPI_Comm comm, const adios2_debug_mode debug_mode);
+
+/**
+ * Starting point for MPI apps. Creates an ADIOS handler allowing a runtime
+ * config file.
+ * @param configFile runtime config file
+ * @param comm defines domain scope from application
+ * @param debug_mode true: extra user-input debugging information, false:
+ * run without checking user-input (stable workflows)
+ * @return success: handler, failure: NULL
+ */
+adios2_adios *adios2_init_config(const char *config_file, MPI_Comm comm,
                                  const adios2_debug_mode debug_mode);
 
-/**
- * Create an ADIOS struct pointer in a MPI application, without a runtime config
- * file.
- * @param mpi_comm MPI communicator from application for ADIOS scope
- * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
- * @return valid ADIOS* handler
- */
-adios2_adios *adios2_init(MPI_Comm mpi_comm,
-                          const adios2_debug_mode debug_mode);
-/**
- * Create an ADIOS struct pointer handler using a runtime config file in serial
- * nonMPI
- * application.
- * @param config_file runtime configuration file, XML format, future: JSON
- * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
- * @return valid ADIOS* handler
- */
-adios2_adios *adios2_init_config_nompi(const char *config_file,
-                                       const adios2_debug_mode debug_mode);
+#else
 
 /**
- * Create an ADIOS struct pointer handler in serial nonMPI application.
- * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off
- * @return valid ADIOS* handler
+ * Initialize an ADIOS struct pointer handler in a serial, non-MPI application.
+ * Doesn't require a runtime config file.
+ * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off, adds extra
+ * checking to user input to be captured by adios2_error. Use it for stable
+ * workflows
+ * @return success: handler, failure: NULL
  */
-adios2_adios *adios2_init_nompi(const adios2_debug_mode debug_mode);
+adios2_adios *adios2_init(const adios2_debug_mode debug_mode);
 
 /**
- * Create an IO struct pointer handler from ADIOS* handler
- * @param adios ADIOS* handler that owns the IO* handler
- * @param io_name unique name for the newly declared io handler
- * @return valid IO* handler
+ * Initialize an ADIOS struct pointer handler in a serial, non-MPI application.
+ * Doesn't require a runtime config file.
+ * @param debug_mode adios2_debug_mode_on or adios2_debug_mode_off, adds extra
+ * checking to user input to be captured by adios2_error. Use it for stable
+ * workflows
+ * @return success: handler, failure: NULL
  */
-adios2_io *adios2_declare_io(adios2_adios *adios, const char *io_name);
+adios2_adios *adios2_init_config(const char *config_file,
+                                 const adios2_debug_mode debug_mode);
+#endif
 
 /**
- * Retrieves a previously declared IO handler
- * @param adios ADIOS* handler that owns the IO* handler
- * @param io_name unique name for the previously declared io handler
- * @return valid IO* handler or NULL is not found
+ * Declares a new io handler
+ * @param adios owner the io handler
+ * @param name unique io identifier within current adios handler
+ * @return success: handler, failure: NULL
  */
-adios2_io *adios2_at_io(adios2_adios *adios, const char *io_name);
+adios2_io *adios2_declare_io(adios2_adios *adios, const char *name);
 
 /**
- * Define an operator supported by ADIOS2: e.g.
- * @param adios ADIOS* handler that owns the Operator* component
- * @param name unique operator name within adios component
- * @param type supported type: e.g. : "zfp", "sz"
- * @return operator handler
+ * Retrieves a previously declared io handler by name
+ * @param adios owner the io handler
+ * @param name unique name for the previously declared io handler
+ * @return success: handler, failure: NULL
+ */
+adios2_io *adios2_at_io(adios2_adios *adios, const char *name);
+
+/**
+ * Defines an adios2 supported operator by its type.
+ * @param op output: valid operator handler, NULL if operator is not supported
+ * @param adios owner the op handler
+ * @param name unique operator name identifier within current ADIOS object
+ * @param type supported ADIOS2 operator type: zfp, sz
+ * @return success: handler, failure: NULL
  */
 adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name,
                                         const char *type);
 
 /**
- * Retrieve an existing operator by name
- * @param adios ADIOS* handler that owns the Operator* component
- * @param name unique operator name within adios component
- * @return if found returns an operator handler, if not found returns NULL
+ * Retrieves a previously defined operator handler
+ * @param adios owner the op handler
+ * @param name unique name for the previously defined op handler
+ * @return success: handler, failure: NULL
  */
 adios2_operator *adios2_inquire_operator(adios2_adios *adios, const char *name);
 
 /**
- * Flushes all adios2_engine in all adios2_io handlers created with the current
- * adios2_adios handler using adios2_declare_io and adios2_open
- * If no adios2_io or adios2_engine is created it does nothing.
- * @param adios input handler
+ * Flushes all adios2_engine in write mode in all adios2_io handlers.
+ * If no adios2_io or adios2_engine exists it does nothing.
+ * @param adios owner of all io and engines to be flushed
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-void adios2_flush_all(adios2_adios *adios);
+adios2_error adios2_flush_all(adios2_adios *adios);
 
 /**
- * Final point for adios2_ADIOS handler.
- * Deallocate adios pointer. Required to avoid memory leaks.
- * @param adios handler to be deallocated, must be initialized with any of the
- * adios2_init signatures
+ * Final point for adios handler. Deallocates adios pointer. Required to avoid
+ * memory leaks.
+ * @param adios handler to be deallocated, must be initialized with
+ * adios2_init or adios2_init_config
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-void adios2_finalize(adios2_adios *adios);
+adios2_error adios2_finalize(adios2_adios *adios);
 
 #ifdef __cplusplus
 } // end extern C

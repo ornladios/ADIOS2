@@ -274,7 +274,8 @@ int write_file(int step)
     log("Write step %d to %s\n", step, FILENAME);
     tb = MPI_Wtime();
 
-    adios2_begin_step(engineW, adios2_step_mode_append, 0.0);
+    adios2_step_status status;
+    adios2_begin_step(engineW, adios2_step_mode_append, 0.0, &status);
     for (block = 0; block < NBLOCKS; block++)
     {
         v = VALUE(rank, step, block);
@@ -306,17 +307,22 @@ int write_file(int step)
         err = 101;                                                             \
         goto endread;                                                          \
     }                                                                          \
-    if (adios2_variable_ndims(vi) != NDIM)                                     \
+    size_t ndims;                                                              \
+    adios2_variable_ndims(&ndims, vi);                                         \
+                                                                               \
+    if (ndims != NDIM)                                                         \
     {                                                                          \
         printE("Variable %s has %zu dimensions, but expected %u\n", VARNAME,   \
-               adios2_variable_ndims(vi), NDIM);                               \
+               ndims, NDIM);                                                   \
         err = 102;                                                             \
         goto endread;                                                          \
     }                                                                          \
-    if (adios2_variable_steps(vi) != NSTEPS)                                   \
+    size_t steps;                                                              \
+    adios2_variable_steps(&steps, vi);                                         \
+    if (steps != NSTEPS)                                                       \
     {                                                                          \
-        printE("Variable %s has %zu steps, but expected %u\n", VARNAME,        \
-               adios2_variable_steps(vi), NSTEPS);                             \
+        printE("Variable %s has %zu steps, but expected %u\n", VARNAME, steps, \
+               NSTEPS);                                                        \
         err = 103;                                                             \
         /*goto endread; */                                                     \
     }
@@ -371,8 +377,8 @@ int read_file()
         return 1;
     }
 
-    adios2_step_status status =
-        adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0);
+    adios2_step_status status;
+    adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0, &status);
 
     log("  Check variable definitions... %s\n", FILENAME);
     tb = MPI_Wtime();
@@ -394,8 +400,8 @@ int read_file()
         ts = 0;
         if (step > 0)
         {
-            status = adios2_begin_step(engineR, adios2_step_mode_next_available,
-                                       0.0);
+            adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0,
+                              &status);
         }
         for (block = 0; block < NBLOCKS; block++)
         {

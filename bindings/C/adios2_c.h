@@ -17,7 +17,6 @@
 #include "c/adios2_c_adios.h"
 #include "c/adios2_c_attribute.h"
 #include "c/adios2_c_engine.h"
-#include "c/adios2_c_glue.h"
 #include "c/adios2_c_io.h"
 #include "c/adios2_c_operator.h"
 #include "c/adios2_c_variable.h"

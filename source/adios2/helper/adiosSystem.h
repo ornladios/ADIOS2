@@ -57,6 +57,21 @@ bool IsRowMajor(const std::string hostLanguage) noexcept;
  */
 bool IsZeroIndexed(const std::string hostLanguage) noexcept;
 
+/**
+ * Function to be called inside a catch(...) block to convert C++ exceptions to
+ * error integers. Used by C, Fortran bindings.
+ * @param function function name to be printed in std::cerr
+ * @return error integers mapped to exceptions:
+ * <pre>
+ * 	none                   : 0
+ *  std::invalid_argument  : 1
+ *  std::system_error      : 2
+ *  std::runtime_exception : 3
+ *  std::exception         : 4
+ * </pre>
+ */
+int ExceptionToError(const std::string &function);
+
 } // end namespace helper
 } // end namespace adios2
 

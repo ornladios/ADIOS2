@@ -18,7 +18,10 @@
 #include "IO.h"
 #include "Operator.h"
 
-#include "adios2/ADIOSMPICommOnly.h"
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
+
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 
@@ -37,32 +40,34 @@ class ADIOS
 {
 
 public:
+#ifdef ADIOS2_HAVE_MPI
     /**
-     * adios2 library starting point. Creates an ADIOS object allowing a runtime
-     * config file.
-     * @param configFile runtime config file
-     * @param mpiComm defines domain scope from application
+     * Starting point for MPI apps. Creates an ADIOS object
+     * @param comm defines domain scope from application
      * @param debugMode true: extra user-input debugging information, false: run
      * without checking user-input (stable workflows)
      * @exception std::invalid_argument in debugMode = true if user input is
      * incorrect
      */
-    ADIOS(const std::string &configFile, MPI_Comm mpiComm,
-          const bool debugMode = true);
+    ADIOS(MPI_Comm comm, const bool debugMode = true);
 
     /**
-     * adios2 library starting point. Creates an ADIOS object.
-     * @param mpiComm defines domain scope from application
-     * @param debugMode true: extra user-input debugging information, false: run
-     * without checking user-input (stable workflows)
-     * @exception std::invalid_argument in debugMode = true if user input is
-     * incorrect
-     */
-    ADIOS(MPI_Comm mpiComm, const bool debugMode = true);
-
-    /**
-     * adios2 NON-MPI library starting point. Creates an ADIOS object allowing a
+     * Starting point for MPI apps. Creates an ADIOS object allowing a
      * runtime config file.
+     * @param configFile runtime config file
+     * @param comm defines domain scope from application
+     * @param debugMode true: extra user-input debugging information, false:
+     * run without checking user-input (stable workflows)
+     * @exception std::invalid_argument in debugMode = true if user input is
+     * incorrect
+     */
+    ADIOS(const std::string &configFile = "", MPI_Comm comm = MPI_COMM_SELF,
+          const bool debugMode = true);
+#else
+
+    /**
+     * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
+     * a runtime config file.
      * @param configFile runtime config file
      * @param debugMode true: extra user-input debugging information, false: run
      * without checking user-input (stable workflows)
@@ -72,29 +77,29 @@ public:
     ADIOS(const std::string &configFile, const bool debugMode = true);
 
     /**
-     * adios2 NON-MPI library starting point. Creates an ADIOS object
+     * Starting point for non-MPI apps. Creates an ADIOS object
      * @param debugMode true: extra user-input debugging information, false: run
      * without checking user-input (stable workflows)
      * @exception std::invalid_argument in debugMode = true if user input is
      * incorrect
      */
     ADIOS(const bool debugMode = true);
+#endif
 
     /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;
 
     /**
-     * DELETED Copy Constructor.
-     * ADIOS is the only object that manages its own memory.
-     * Create a separate for independent tasks */
+     * DELETED Copy Constructor. ADIOS is the only object that manages its own
+     * memory. Create a separate object for independent tasks */
     ADIOS(const ADIOS &) = delete;
 
+    /** Using RAII STL containers only */
     ~ADIOS() = default;
 
     /**
-     * Declares a new IO class object and returns a reference to that
-     * object.
-     * @param ioName unique IO name identifier within current ADIOS object
+     * Declares a new IO class object
+     * @param name unique IO name identifier within current ADIOS object
      * @return reference to newly created IO object inside current ADIOS
      * object
      * @exception std::invalid_argument if IO with unique name is already
@@ -103,44 +108,37 @@ public:
     IO DeclareIO(const std::string name);
 
     /**
-     * Retrieve a reference to an existing IO object created with DeclareIO.
-     * @param name of IO to look for in current ADIOS object
+     * Retrieve an existing IO object previously created with DeclareIO.
+     * @param name IO unique identifier key in current ADIOS object
      * @return if IO exists returns a reference to existing IO object inside
-     * ADIOS
+     * ADIOS, else throws an exception. IO objects can't be invalid.
      * @exception std::invalid_argument if IO was not created with
      * DeclareIO, in debug mode only
      */
     IO AtIO(const std::string name);
 
     /**
-     * Flushes all engines in all IOs created with the current ADIOS object
-     * using DeclareIO and IO.Open.
-     * If no IO or engine is created it does nothing.
-     * @exception std::runtime_error if any engine Flush fails
-     */
-    void FlushAll();
-
-    /**
-     * Defines an ADIOS2 supported operator by its type.
-     * @param name unique operator name within ADIOS object
-     * @param type supported ADIOS2 operator
-     * @param parameters key/value parameters at the operator level
+     * Defines an adios2 supported operator by its type.
+     * @param name unique operator name identifier within current ADIOS object
+     * @param type supported ADIOS2 operator type: zfp, sz
+     * @param parameters key/value parameters at the operator object level
      * @return Operator object
-     * @exception std::invalid_argument if library can't support current
-     * operator due to missing dependency
+     * @exception std::invalid_argument if adios2 can't support current
+     * operator due to missing dependency or unsupported type
      */
     Operator DefineOperator(const std::string name, const std::string type,
                             const Params &parameters = Params());
 
     /**
-     * Variadic template version for Operators of type Callback function
-     * with signatures suported in ADIOS2
+     * Defines an adios2 supported operator by its type. Variadic template
+     * version for Operators of type Callback function with signatures suported
+     * in ADIOS2. For new signature support open an issue on github.
      * @param name unique operator name within ADIOS object
      * @param function C++11 callable target
      * @param parameters key/value parameters at the operator level
      * @return Operator object
-     * @exception std::invalid_argument if library can't support current
-     * operator due to missing dependency or unsupported signature
+     * @exception std::invalid_argument if adios2 can't support current
+     * operator due to missing dependency or unsupported type
      */
     template <class R, class... Args>
     Operator DefineOperator(const std::string name,
@@ -148,12 +146,19 @@ public:
                             const Params &parameters = Params());
 
     /**
-     * Returns an existing Operator identified by its name
-     * @param name of Operator to be retrieved
+     * Retrieve an existing Operator object in current ADIOS object
+     * @param name Operator unique identifier key in current ADIOS object
      * @return object to an existing operator in current ADIOS object, Operator
-     * object is false if name is not found
+     * object is false if name is not found, in debugMode only
      */
     Operator InquireOperator(const std::string name) noexcept;
+
+    /**
+     * Flushes all engines in write mode in all IOs created with the current
+     * ADIOS object. If no IO or Engine exist, it does nothing.
+     * @exception std::runtime_error if any engine Flush fails
+     */
+    void FlushAll();
 
 private:
     std::shared_ptr<core::ADIOS> m_ADIOS;

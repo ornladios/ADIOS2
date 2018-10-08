@@ -20,109 +20,15 @@ extern "C" {
 #endif
 
 /**
- * Retrieve variable name (read-only)
- * @param variable handler
- * @return name
- */
-const char *adios2_variable_name(const adios2_variable *variable,
-                                 size_t *length);
-
-/**
- * Retrieve variable type (read-only)
- * @param variable handler
- * @return type
- */
-adios2_type adios2_variable_type(const adios2_variable *variable);
-
-/**
- * Retrieve variable shapeid
- * @param variable handler
- * @return shapeid enum type
- */
-adios2_shapeid adios2_variable_shapeid(const adios2_variable *variable);
-
-/**
- * Check if dimensions are constant
- * @param variable
- * @return 0: false (dimensions are not constant), 1: true dimensions are
- * declared constant
- */
-int adios2_variable_is_constant_dims(const adios2_variable *variable);
-
-/**
- * Retrieve current variable number of dimensions (read-only)
- * @param variable
- * @return
- */
-size_t adios2_variable_ndims(const adios2_variable *variable);
-
-/**
- * Retrieve current variable shape (read-only)
- * @param variable handler
- * @return shape
- */
-const size_t *adios2_variable_shape(const adios2_variable *variable);
-
-/**
- * Retrieve current variable start (read-only)
- * @param variable handler
- * @return
- */
-const size_t *adios2_variable_start(const adios2_variable *variable);
-
-/**
- * Retrieve current variable count (read-only)
- * @param variable
- * @return type
- */
-const size_t *adios2_variable_count(const adios2_variable *variable);
-
-/**
- * Read API, get available steps start (e.g. in a file for a variable)
- * @param variable
- * @return available steps start
- */
-size_t adios2_variable_steps_start(const adios2_variable *variable);
-
-/**
- * Read API, get available steps count from available steps count
- * (e.g. in a file for a variable). Not necessarily contiguous.
- * @param variable
- * @return available steps count
- */
-size_t adios2_variable_steps(const adios2_variable *variable);
-
-/**
- * Set new dimensions: shape, start and count
- * @param variable handler for which new dimensions will be applied to
- * @param ndims number of dimensions. shape, start, and count must have the same
- * ndims
- * @param shape new shape dimensions array
- * @param start new start dimensions array
- * @param count new count dimensions array
- */
-void adios2_set_dimensions(adios2_variable *variable, const size_t ndims,
-                           const size_t *shape, const size_t *start,
-                           const size_t *count);
-
-/**
- * Set a new shape dimension
- * @param variable handler for which new shape will be applied to
- * @param ndims number of dimensions for shape
- * @param shape new shape dimensions array
- */
-void adios2_set_shape(adios2_variable *variable, const size_t ndims,
-                      const size_t *shape);
-
-/**
  * Set new start and count dimensions
  * @param variable handler for which new selection will be applied to
  * @param ndims number of dimensions for start and count
  * @param start new start dimensions array
  * @param count new count dimensions array
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-void adios2_set_selection(adios2_variable *variable, const size_t ndims,
-                          const size_t *start, const size_t *count);
+adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
+                                  const size_t *start, const size_t *count);
 
 /**
  * Set new step selection using step_start and step_count. Used mostly for
@@ -130,41 +36,132 @@ void adios2_set_selection(adios2_variable *variable, const size_t ndims,
  * @param variable handler for which new selection will be applied to
  * @param step_start starting step for reading
  * @param step_count number of steps to read from step start
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-void adios2_set_step_selection(adios2_variable *variable,
-                               const size_t step_start,
-                               const size_t step_count);
+adios2_error adios2_set_step_selection(adios2_variable *variable,
+                                       const size_t step_start,
+                                       const size_t step_count);
+
+/**
+ * Retrieve variable name
+ * @param name output, must be pre-allocated
+ * @param size output, name size without '\0'
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_name(char *name, size_t *size,
+                                  const adios2_variable *variable);
+
+/**
+ * Retrieve variable type
+ * @param type output, from enum adios2_type
+ * @param size output, type size without '\0'
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_type(adios2_type *type,
+                                  const adios2_variable *variable);
+
+/**
+ * Retrieve variable type in string form "char", "unsigned long", etc.
+ * @param type output, string form "int", "char"
+ * @param size output, type size without '\0'
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_type_string(char *type, size_t *size,
+                                         const adios2_variable *variable);
+
+/**
+ * Retrieve variable shapeid
+ * @param shapeid output, from enum adios2_shapeid
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_shapeid(adios2_shapeid *shapeid,
+                                     const adios2_variable *variable);
+
+/**
+ * Retrieve current variable number of dimensions
+ * @param ndims output
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_ndims(size_t *ndims,
+                                   const adios2_variable *variable);
+
+/**
+ * Retrieve current variable shape
+ * @param shape output, must be pre-allocated with ndims
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_shape(size_t *shape,
+                                   const adios2_variable *variable);
+
+/**
+ * Retrieve current variable start
+ * @param start output, single value
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_start(size_t *start,
+                                   const adios2_variable *variable);
+
+/**
+ * Retrieve current variable start
+ * @param count output, must be pre-allocated with ndims
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_count(size_t *count,
+                                   const adios2_variable *variable);
+
+/**
+ * Read API, get available steps start from available steps count
+ * (e.g. in a file for a variable).
+ * @param steps_start output absolute first available step, don't use with
+ * adios2_set_step_selection as inputs are relative, use 0 instead.
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_steps_start(size_t *steps_start,
+                                         const adios2_variable *variable);
+
+/**
+ * Read API, get available steps count from available steps count
+ * (e.g. in a file for a variable). Not necessarily contiguous.
+ * @param steps output available steps, single value
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_steps(size_t *steps,
+                                   const adios2_variable *variable);
 
 /**
  * Returns the minimum required allocation (in number of elements of a certain
  * type, not bytes) for the current selection
+ * @param size number of elements of current type to be allocated by a
+ * pointer/vector to read current selection
  * @param variable handler for which data size will be inspected from
- * @return memory size to be allocated by a pointer/vector to read this
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-size_t adios2_selection_size(const adios2_variable *variable);
+adios2_error adios2_selection_size(size_t *size,
+                                   const adios2_variable *variable);
 
 /**
- * Get current data pointer, types must match
- * @param variable
- */
-void *adios2_get_data(const adios2_variable *variable);
-
-/**
- * Sets current data pointer, types must match
- * @param variable
- * @param data
- */
-void adios2_set_data(adios2_variable *variable, const void *data);
-
-/**
- * Adds an operation to a variable (e.g. compression, callback)
+ * Adds an operation to a variable (e.g. compression)
+ * @param operation_index output handler to be used with
+ adios2_add_operation_param
  * @param variable handler on which operation is applied to
- * @param key parameter key supported by the operation
- * @param value parameter value supported by the operation
- * @return operation_id handler to be used with adios2_add_operation_param
+ * @param key parameter key supported by the operation, empty if none
+ * @param value parameter value supported by the operation, empty if none
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-size_t adios2_add_operation(adios2_variable *variable, adios2_operator *op,
-                            const char *key, const char *value);
+adios2_error adios2_add_operation(size_t *operation_index,
+                                  adios2_variable *variable,
+                                  adios2_operator *op, const char *key,
+                                  const char *value);
 
 /**
  * Adds a parameter to an operation created with adios2_add_operation
@@ -172,10 +169,11 @@ size_t adios2_add_operation(adios2_variable *variable, adios2_operator *op,
  * @param operation_id handler returned from adios2_add_operation
  * @param key parameter key supported by the operation
  * @param value parameter value supported by the operation
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-void adios2_set_operation_parameter(adios2_variable *variable,
-                                    const size_t operation_id, const char *key,
-                                    const char *value);
+adios2_error adios2_set_operation_parameter(adios2_variable *variable,
+                                            const size_t operation_id,
+                                            const char *key, const char *value);
 
 #ifdef __cplusplus
 } // end extern C
