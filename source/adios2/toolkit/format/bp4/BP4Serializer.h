@@ -102,7 +102,7 @@ public:
 
     void ResetIndices();
 
-    /*Lipeng*/
+    /* Reset metadata buffer at the end of each step */
     void ResetIndicesBuffer();
 
     /**

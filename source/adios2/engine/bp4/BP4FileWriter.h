@@ -54,8 +54,7 @@ private:
     /** Manages the optional collective metadata files */
     transportman::TransportMan m_FileMetadataManager;
 
-    /*Lipeng*/
-    // Manages 
+    /* transport manager for managing the metadata index file */
     transportman::TransportMan m_FileMetadataIndexManager;
 
     void Init() final;

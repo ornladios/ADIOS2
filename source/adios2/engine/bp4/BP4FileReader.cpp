@@ -171,7 +171,7 @@ void BP4FileReader::InitTransports()
         m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
         
-        /*Lipeng*/
+        /* Open file to save the metadata index table */
         const std::string metadataIndexFile(m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
         m_FileMetadataIndexManager.OpenFiles({metadataIndexFile}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
@@ -204,7 +204,7 @@ void BP4FileReader::InitBuffer()
     // broadcast metadata index buffer to all ranks from zero
     helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer, m_MPIComm);
 
-    /*Lipeng*/
+    /* Parse metadata index table */
     m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex);
 
     // fills IO with Variables and Attributes

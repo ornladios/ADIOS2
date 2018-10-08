@@ -15,7 +15,6 @@
 #include <unordered_set>
 #include <vector>
 
-/*Lipeng*/
 #include <iostream>
 
 #include "adios2/helper/adiosFunctions.h" //helper::ReadValue<T>
@@ -38,7 +37,6 @@ BP4Deserializer::BP4Deserializer(MPI_Comm mpiComm, const bool debugMode)
 
 void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
 {
-    /*Lipeng*/
     //ParseMinifooter(bufferSTL);
     //ParsePGIndex(bufferSTL, io);
     //ParseVariablesIndex(bufferSTL, io);
@@ -47,6 +45,8 @@ void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
     steps = m_MetadataIndexTable[0].size();
     m_MetadataSet.StepsCount = steps;
     m_MetadataSet.CurrentStep = steps-1;
+    /* parse the metadata step by step using the pointers saved in the metadata
+    index table */
     for (int i = 0; i < steps; i++)
     {
         ParsePGIndexPerStep(bufferSTL, io, 0, i+1);
@@ -524,7 +524,7 @@ void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     }
 }
 
-/*Lipeng*/
+/* Parse the attributes index at each step */
 void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
                                             core::IO &io,
                                             size_t submetadatafileId,

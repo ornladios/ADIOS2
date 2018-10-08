@@ -203,7 +203,7 @@ void BP4Serializer::ResetIndices()
     m_MetadataSet.VarsIndices.clear();
 }
 
-/*Lipeng*/
+/* Reset the local metadata buffer at the end of each step */
 void BP4Serializer::ResetIndicesBuffer() 
 {
     m_MetadataSet.PGIndex.Buffer.resize(0);
@@ -310,9 +310,9 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 
     auto &position = bufferSTL.m_Position;
 
-    /*Lipeng*/
     //const uint64_t pgIndexStart =
     //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    /* save the starting position of the pgindex in the metadata file*/
     m_MetadataSet.pgIndexStart =
         inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
@@ -320,12 +320,14 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 
     //const uint64_t variablesIndexStart =
     //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    /* save the starting position of the varindex in the metadata file*/
     m_MetadataSet.varIndexStart =
         inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     AggregateMergeIndex(m_MetadataSet.VarsIndices, comm, bufferSTL);
 
     //const uint64_t attributesIndexStart =
     //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    /* save the starting position of the attrindex in the metadata file*/
     m_MetadataSet.attrIndexStart =
         inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL, true);
@@ -334,7 +336,7 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     MPI_Comm_rank(comm, &rank);
     if (rank == 0)
     {
-        /*Lipeng*/
+        /* no more minifooter in the global metadata*/
         //PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
         //              bufferSTL.m_Buffer, bufferSTL.m_Position,
         //              inMetadataBuffer);
@@ -945,7 +947,7 @@ void BP4Serializer::AggregateMergeIndex(
         helper::CopyToBuffer(buffer, countPosition, &totalCountU32);
 
         //MergeSerializeIndices(nameRankIndices, comm, bufferSTL);
-        /*Lipeng*/
+        /* merge and serialize all the indeices at each step */
         MergeSerializeIndicesPerStep(nameRankIndices, comm, bufferSTL);
 
         // Write length
@@ -1126,7 +1128,7 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     return deserialized;
 }
 
-/*Lipeng*/
+/* Merge and serialize all the indeices at each step */
 void BP4Serializer::MergeSerializeIndicesPerStep(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         &nameRankIndices,
@@ -1412,7 +1414,6 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 
     };
 
-    /*Lipeng*/
     auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
                             BufferSTL &bufferSTL) {
 
@@ -1526,7 +1527,6 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
             lf_MergeRank(itIndex->second, bufferSTL);
         }
     };
-    /*Lipeng*/
 
     // BODY OF FUNCTION STARTS HERE
     if (m_Threads == 1) // enforcing serial version for now

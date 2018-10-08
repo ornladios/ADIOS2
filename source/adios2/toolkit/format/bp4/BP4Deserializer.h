@@ -33,8 +33,7 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
-    /*Lipeng*/
-    // 
+    /* metadata index table*/
     std::unordered_map<uint64_t, std::unordered_map<uint64_t, std::vector<uint64_t>>> m_MetadataIndexTable;
 
     BufferSTL m_MetadataIndex;

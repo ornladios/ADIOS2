@@ -500,7 +500,7 @@ inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
         variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
 }
 
-/*Lipeng*/
+/* Define the variable of each step when parsing the metadata */
 template <class T>
 void BP4Deserializer::DefineVariableInIOPerStep(const ElementIndexHeader &header,
                                          core::IO &io,

@@ -52,7 +52,7 @@ private:
     format::BP4Deserializer m_BP4Deserializer;
     transportman::TransportMan m_FileManager;
     transportman::TransportMan m_SubFileManager;
-    /*Lipeng*/
+    /* transport manager for managing the metadata index file */
     transportman::TransportMan m_FileMetadataIndexManager;
 
     /** used for per-step reads, TODO: to be moved to BP4Deserializer */
