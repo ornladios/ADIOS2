@@ -43,7 +43,7 @@
    count_dims(1) = inx
 
    !!!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   call adios2_fopen(fhw, 'ftypes_hl.bp', adios2_mode_write, ierr)
+   call adios2_fopen(fhw, 'ftypes_hl.bp', 'w', ierr)
 
    ! Global single value variables
    call adios2_fwrite(fhw, "gvar_I8", data_I8(1), ierr)
@@ -77,7 +77,7 @@
    call adios2_fclose(fhw, ierr)
 
    !!!!!!!!!!!!!!!!!!!!!!!!! High-level READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   call adios2_fopen(fhr, 'ftypes_hl.bp', adios2_mode_read, ierr)
+   call adios2_fopen(fhr, 'ftypes_hl.bp', 'r', ierr)
 
    i = 0
    do

@@ -26,6 +26,7 @@ public:
 
 TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
 {
+
 #ifdef ADIOS2_HAVE_MPI
     int rank(0);
     int size(0);
@@ -33,7 +34,7 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #else
-    adios2_adios *adiosH = adios2_init_nompi(adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
 #endif
 
     // IO
@@ -44,7 +45,8 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     adios2_set_parameter(ioH, "Threads", "1");
 
     // Set transport and parameters
-    const size_t transportID = adios2_add_transport(ioH, "File");
+    size_t transportID;
+    adios2_add_transport(&transportID, ioH, "File");
     adios2_set_transport_parameter(ioH, transportID, "library", "fstream");
 
     // count dims are allocated in stack
@@ -53,12 +55,12 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
 
     // define attribute
     const char *strarray[] = {"first", "second", "third", "fourth"};
-    adios2_define_attribute(ioH, "strarray", adios2_type_string_array, strarray,
-                            4);
+
+    adios2_attribute *attribute = adios2_define_attribute(
+        ioH, "strarray", adios2_type_string_array, strarray, 4);
 
     // Define variables in ioH
     {
-
         adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, NULL, NULL,
                                count, adios2_constant_dims_true);
         adios2_define_variable(ioH, "varI16", adios2_type_int16_t, 1, NULL,
@@ -87,27 +89,28 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
     adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
     adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
     adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
+
     adios2_variable *varU8 = adios2_inquire_variable(ioH, "varU8");
     adios2_variable *varU16 = adios2_inquire_variable(ioH, "varU16");
     adios2_variable *varU32 = adios2_inquire_variable(ioH, "varU32");
     adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
+
     adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
     adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
-
     adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
-    adios2_put(engineH, varI8, data_I8, adios2_mode_sync);
-    adios2_put(engineH, varI16, data_I16, adios2_mode_sync);
-    adios2_put(engineH, varI32, data_I32, adios2_mode_sync);
-    adios2_put(engineH, varI64, data_I64, adios2_mode_sync);
+    adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
+    adios2_put(engineH, varI16, data_I16, adios2_mode_deferred);
+    adios2_put(engineH, varI32, data_I32, adios2_mode_deferred);
+    adios2_put(engineH, varI64, data_I64, adios2_mode_deferred);
 
-    adios2_put(engineH, varU8, data_U8, adios2_mode_sync);
-    adios2_put(engineH, varU16, data_U16, adios2_mode_sync);
-    adios2_put(engineH, varU32, data_U32, adios2_mode_sync);
-    adios2_put(engineH, varU64, data_U64, adios2_mode_sync);
+    adios2_put(engineH, varU8, data_U8, adios2_mode_deferred);
+    adios2_put(engineH, varU16, data_U16, adios2_mode_deferred);
+    adios2_put(engineH, varU32, data_U32, adios2_mode_deferred);
+    adios2_put(engineH, varU64, data_U64, adios2_mode_deferred);
 
-    adios2_put(engineH, varR32, data_R32, adios2_mode_sync);
-    adios2_put(engineH, varR64, data_R64, adios2_mode_sync);
+    adios2_put(engineH, varR32, data_R32, adios2_mode_deferred);
+    adios2_put(engineH, varR64, data_R64, adios2_mode_deferred);
 
     adios2_close(engineH);
 

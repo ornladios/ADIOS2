@@ -14,88 +14,187 @@
 #include "adios2/core/ADIOS.h"
 #include "adios2/helper/adiosFunctions.h"
 
-adios2_adios *adios2_init_config(const char *config_file, MPI_Comm mpi_comm,
-                                 const adios2_debug_mode debug_mode)
-{
-    adios2::helper::CheckForNullptr(
-        config_file, "for config_file, in call to adios2_init_config");
-    const bool debugBool = (debug_mode == adios2_debug_mode_on) ? true : false;
-    adios2_adios *adios = reinterpret_cast<adios2_adios *>(
-        new adios2::core::ADIOS(config_file, mpi_comm, debugBool, "C"));
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+#ifdef ADIOS2_HAVE_MPI
+
+// to be called from other languages, hidden from the public apis
+adios2_adios *adios2_init_config_glue(const char *config_file, MPI_Comm comm,
+                                      const adios2_debug_mode debug_mode,
+                                      const char *host_language)
+{
+    adios2_adios *adios = nullptr;
+
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            config_file,
+            "for config_file, in call to adios2_init or adios2_init_config");
+        const bool debugBool =
+            (debug_mode == adios2_debug_mode_on) ? true : false;
+        adios = reinterpret_cast<adios2_adios *>(new adios2::core::ADIOS(
+            config_file, comm, debugBool, host_language));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_init or adios2_init_config");
+    }
     return adios;
 }
 
-adios2_adios *adios2_init(MPI_Comm mpi_comm, const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init(MPI_Comm comm, const adios2_debug_mode debug_mode)
 {
-    return adios2_init_config("", mpi_comm, debug_mode);
-}
-adios2_adios *adios2_init_config_nompi(const char *config_file,
-                                       const adios2_debug_mode debug_mode)
-{
-    return adios2_init_config(config_file, MPI_COMM_SELF, debug_mode);
+    return adios2_init_config("", comm, debug_mode);
 }
 
-adios2_adios *adios2_init_nompi(const adios2_debug_mode debug_mode)
+adios2_adios *adios2_init_config(const char *config_file, MPI_Comm comm,
+                                 const adios2_debug_mode debug_mode)
 {
-    return adios2_init_config("", MPI_COMM_SELF, debug_mode);
+    return adios2_init_config_glue(config_file, comm, debug_mode, "C");
 }
 
-adios2_io *adios2_declare_io(adios2_adios *adios, const char *io_name)
+#else
+
+adios2_adios *adios2_init_config_glue(const char *config_file,
+                                      const adios2_debug_mode debug_mode,
+                                      const char *host_language)
 {
-    adios2::helper::CheckForNullptr(
-        adios, "for adios2_adios, in call to adios2_declare_io");
-    adios2_io *io = reinterpret_cast<adios2_io *>(
-        &reinterpret_cast<adios2::core::ADIOS *>(adios)->DeclareIO(io_name));
+    adios2_adios *adios = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            config_file,
+            "for config_file, in call to adios2_init or adios2_init_config");
+        const bool debugBool =
+            (debug_mode == adios2_debug_mode_on) ? true : false;
+        adios = reinterpret_cast<adios2_adios *>(
+            new adios2::core::ADIOS(config_file, debugBool, host_language));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_init or adios2_init_config");
+    }
+    return adios;
+}
+
+adios2_adios *adios2_init(const adios2_debug_mode debug_mode)
+{
+    return adios2_init_config("", debug_mode);
+}
+
+adios2_adios *adios2_init_config(const char *config_file,
+                                 const adios2_debug_mode debug_mode)
+{
+    return adios2_init_config_glue("", debug_mode, "C");
+}
+#endif
+
+adios2_io *adios2_declare_io(adios2_adios *adios, const char *name)
+{
+    adios2_io *io = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_declare_io");
+        io = reinterpret_cast<adios2_io *>(
+            &reinterpret_cast<adios2::core::ADIOS *>(adios)->DeclareIO(name));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_declare_io");
+    }
     return io;
 }
 
-adios2_io *adios2_at_io(adios2_adios *adios, const char *io_name)
+adios2_io *adios2_at_io(adios2_adios *adios, const char *name)
 {
-    adios2::helper::CheckForNullptr(
-        adios, "for adios2_adios, in call to adios2_at_io");
-    adios2_io *io = reinterpret_cast<adios2_io *>(
-        &reinterpret_cast<adios2::core::ADIOS *>(adios)->AtIO(io_name));
+    adios2_io *io = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_at_io");
+        io = reinterpret_cast<adios2_io *>(
+            &reinterpret_cast<adios2::core::ADIOS *>(adios)->AtIO(name));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_at_io");
+    }
     return io;
 }
 
 adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name,
                                         const char *type)
 {
-    adios2::helper::CheckForNullptr(
-        adios, "for adios2_adios, in call to adios2_define_operator");
-    adios2_operator *op = reinterpret_cast<adios2_operator *>(
-        &reinterpret_cast<adios2::core::ADIOS *>(adios)->DefineOperator(name,
-                                                                        type));
+    adios2_operator *op = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_define_operator");
+        op = reinterpret_cast<adios2_operator *>(
+            &reinterpret_cast<adios2::core::ADIOS *>(adios)->DefineOperator(
+                name, type));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_define_operator");
+    }
     return op;
 }
 
 adios2_operator *adios2_inquire_operator(adios2_adios *adios, const char *name)
 {
-    adios2::helper::CheckForNullptr(
-        adios, "for adios2_adios, in call to adios2_inquire_operator");
-
-    adios2::core::Operator *opCpp =
-        reinterpret_cast<adios2::core::ADIOS *>(adios)->InquireOperator(name);
-
-    if (opCpp == nullptr)
+    adios2_operator *op = nullptr;
+    try
     {
-        return nullptr;
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_inquire_operator");
+        op = reinterpret_cast<adios2_operator *>(
+            reinterpret_cast<adios2::core::ADIOS *>(adios)->InquireOperator(
+                name));
     }
-
-    return reinterpret_cast<adios2_operator *>(opCpp);
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_inquire_operator");
+    }
+    return op;
 }
 
-void adios2_flush_all(adios2_adios *adios)
+adios2_error adios2_flush_all(adios2_adios *adios)
 {
-    adios2::helper::CheckForNullptr(
-        adios, "for adios2_adios, in call to adios2_flush_all");
-    reinterpret_cast<adios2::core::ADIOS *>(adios)->FlushAll();
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_flush_all");
+        reinterpret_cast<adios2::core::ADIOS *>(adios)->FlushAll();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_flush_all"));
+    }
 }
 
-void adios2_finalize(adios2_adios *adios)
+adios2_error adios2_finalize(adios2_adios *adios)
 {
-    adios2::helper::CheckForNullptr(
-        adios, "for adios2_adios, in call to adios2_finalize");
-    delete reinterpret_cast<adios2::core::ADIOS *>(adios);
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_finalize");
+        delete reinterpret_cast<adios2::core::ADIOS *>(adios);
+        adios = nullptr;
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_finalize"));
+    }
 }
+
+#ifdef __cplusplus
+} // end extern C
+#endif

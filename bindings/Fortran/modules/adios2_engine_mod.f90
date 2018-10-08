@@ -63,12 +63,12 @@ contains
 
     end subroutine
 
-    subroutine adios2_current_step(engine, current_step, ierr)
-        type(adios2_engine), intent(in) :: engine
+    subroutine adios2_current_step(current_step, engine, ierr)
         integer(kind=8), intent(out) :: current_step
+        type(adios2_engine), intent(in) :: engine
         integer, intent(out) :: ierr
 
-        call adios2_current_step_f2c(engine%f2c, current_step, ierr)
+        call adios2_current_step_f2c(current_step, engine%f2c, ierr)
 
     end subroutine
 

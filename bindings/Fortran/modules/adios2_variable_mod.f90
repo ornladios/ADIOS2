@@ -14,76 +14,59 @@ module adios2_variable_mod
 
 contains
 
-    subroutine adios2_variable_name(variable, name, ierr)
-        type(adios2_variable), intent(in) :: variable
+    subroutine adios2_variable_name(name, variable, ierr)
         character(len=:), allocatable, intent(out) :: name
+        type(adios2_variable), intent(in) :: variable
         integer, intent(out) :: ierr
 
-        character(len=1024) :: c_name
+        !local
+        character(len=4096) :: c_name
         integer :: length
 
-        call adios2_variable_name_f2c(variable%f2c, c_name, length, ierr)
+        call adios2_variable_name_f2c(c_name, length, variable%f2c, ierr)
         call adios2_StringC2F(c_name, length, name)
 
     end subroutine
 
-    subroutine adios2_variable_type(variable, type, ierr)
-        type(adios2_variable), intent(in) :: variable
+    subroutine adios2_variable_type(type, variable, ierr)
         integer, intent(out) :: type
+        type(adios2_variable), intent(in) :: variable
         integer, intent(out) :: ierr
-
+        ! local
         integer :: c_type
 
-        call adios2_variable_type_f2c(variable%f2c, c_type, ierr)
+        call adios2_variable_type_f2c(c_type, variable%f2c, ierr)
         call adios2_TypeC2F(c_type, type)
 
     end subroutine
 
-    subroutine adios2_variable_ndims(variable, ndims, ierr)
-        type(adios2_variable), intent(in) :: variable
+    subroutine adios2_variable_ndims(ndims, variable, ierr)
         integer, intent(out) :: ndims
+        type(adios2_variable), intent(in) :: variable
         integer, intent(out) :: ierr
 
-        call adios2_variable_ndims_f2c(variable%f2c, ndims, ierr)
+        call adios2_variable_ndims_f2c(ndims, variable%f2c, ierr)
     end subroutine
 
-    subroutine adios2_variable_shape(variable, ndims, shape_dims, ierr)
-        type(adios2_variable), intent(in) :: variable
-        integer, intent(out) :: ndims
+    subroutine adios2_variable_shape(shape_dims, ndims, variable, ierr)
         integer(kind=8), dimension(:), allocatable, intent(out) :: shape_dims
+        integer, intent(out) :: ndims
+        type(adios2_variable), intent(in) :: variable
         integer, intent(out) :: ierr
 
-        call adios2_variable_ndims_f2c(variable%f2c, ndims, ierr)
+        call adios2_variable_ndims_f2c(ndims, variable%f2c, ierr)
         allocate (shape_dims(ndims))
-        call adios2_variable_shape_f2c(variable%f2c, shape_dims, ierr)
+        call adios2_variable_shape_f2c(shape_dims, variable%f2c, ierr)
 
     end subroutine
 
-    subroutine adios2_variable_steps_start(variable, steps_start, ierr)
+    subroutine adios2_variable_steps(steps, variable, ierr)
+        integer(kind=8), intent(out) :: steps
         type(adios2_variable), intent(in) :: variable
-        integer(kind=8), intent(out) :: steps_start
         integer, intent(out) :: ierr
 
-        call adios2_variable_steps_start_f2c(variable%f2c, steps_start, ierr)
+        call adios2_variable_steps_f2c(steps, variable%f2c, ierr)
 
-    end subroutine
-
-    subroutine adios2_variable_steps(variable, steps_count, ierr)
-        type(adios2_variable), intent(in) :: variable
-        integer(kind=8), intent(out) :: steps_count
-        integer, intent(out) :: ierr
-
-        call adios2_variable_steps_f2c(variable%f2c, steps_count, ierr)
-
-    end subroutine
-
-    subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
-        type(adios2_variable), intent(in) :: variable
-        integer, intent(in) :: ndims
-        integer(kind=8), dimension(:), intent(in) :: shape_dims
-        integer, intent(out) :: ierr
-
-        call adios2_set_shape_f2c(variable%f2c, ndims, shape_dims, ierr)
     end subroutine
 
     subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, &
@@ -116,38 +99,38 @@ contains
         integer, intent(out):: ierr
 
         if( variable%type /= adios2_type ) then
-            write(0,*) 'ERROR: adios2 variable ', variable%name, &
-                       ' type mismatch, in call to adios2_', &
-                        TRIM(ADJUSTL(hint))//char(0)
+            write(0,*) 'ERROR: adios2 variable ', TRIM(variable%name)//char(0), &
+                       ' type mismatch, in call to adios2_', TRIM(hint)//char(0)
+
             ierr = -1
         end if
 
     end subroutine
 
-    subroutine adios2_add_operation(operation_id, variable, op, key, value, &
+    subroutine adios2_add_operation(operation_index, variable, op, key, value, &
                                     ierr)
-        integer, intent(out):: operation_id
+        integer, intent(out):: operation_index
         type(adios2_variable), intent(in):: variable
         type(adios2_operator), intent(in):: op
         character*(*), intent(in):: key
         character*(*), intent(in):: value
         integer, intent(out):: ierr
 
-        call adios2_add_operation_f2c(operation_id, variable%f2c, op%f2c, &
+        call adios2_add_operation_f2c(operation_index, variable%f2c, op%f2c, &
                                       TRIM(ADJUSTL(key))//char(0), &
                                       TRIM(ADJUSTL(value))//char(0), ierr)
     end subroutine
 
 
-    subroutine adios2_set_operation_parameter(variable, operation_id, key, &
+    subroutine adios2_set_operation_parameter(variable, operation_index, key, &
                                               value, ierr)
         type(adios2_variable), intent(in):: variable
-        integer, intent(in):: operation_id
+        integer, intent(in):: operation_index
         character*(*), intent(in):: key
         character*(*), intent(in):: value
         integer, intent(out):: ierr
 
-        call adios2_set_operation_parameter_f2c(variable%f2c, operation_id, &
+        call adios2_set_operation_parameter_f2c(variable%f2c, operation_index, &
                                                 TRIM(ADJUSTL(key))//char(0), &
                                                 TRIM(ADJUSTL(value))//char(0), &
                                                 ierr)

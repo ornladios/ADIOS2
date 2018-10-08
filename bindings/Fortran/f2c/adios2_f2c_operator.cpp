@@ -16,31 +16,14 @@ extern "C" {
 
 void FC_GLOBAL(adios2_operator_type_f2c,
                ADIOS2_OPERATOR_TYPE_F2C)(const adios2_operator **op,
-                                         char name[1024], int *length,
-                                         int *ierr)
+                                         char type[1024], int *size, int *ierr)
 {
-    *ierr = 0;
-    try
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_operator_type(type, &sizeC, *op));
+    if (*ierr == static_cast<int>(adios2_error_none))
     {
-        std::size_t lengthC = 0;
-        const char *nameC = adios2_operator_type(*op, &lengthC);
-
-        if (nameC == nullptr)
-        {
-            throw std::runtime_error("ERROR: null pointer\n");
-        }
-
-        for (std::size_t i = 0; i < lengthC; ++i)
-        {
-            name[i] = nameC[i];
-        }
-
-        *length = static_cast<int>(lengthC);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 operator_type: " << e.what() << "\n";
-        *ierr = -1;
+        *size = static_cast<int>(sizeC);
     }
 }
 

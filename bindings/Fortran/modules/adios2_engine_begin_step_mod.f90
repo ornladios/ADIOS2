@@ -23,13 +23,16 @@ module adios2_engine_begin_step_mod
 
 contains
 
-    subroutine adios2_begin_step_full(engine, step_mode, timeout_seconds, ierr)
+    subroutine adios2_begin_step_full(engine, step_mode, timeout_seconds, &
+                                      status, ierr)
         type(adios2_engine), intent(in) :: engine
         integer, value, intent(in) :: step_mode
         real, value, intent(in) :: timeout_seconds
+        integer, intent(out) :: status
         integer, intent(out) :: ierr
 
-        call adios2_begin_step_f2c(engine%f2c, step_mode, timeout_seconds, ierr)
+        call adios2_begin_step_f2c(engine%f2c, step_mode, timeout_seconds, &
+                                   status, ierr)
 
     end subroutine
 
@@ -37,22 +40,27 @@ contains
         type(adios2_engine), intent(in) :: engine
         integer, value, intent(in) :: step_mode
         integer, intent(out) :: ierr
+        !local
+        integer status
 
-        call adios2_begin_step_f2c(engine%f2c, step_mode, 0._4, ierr)
+        call adios2_begin_step_f2c(engine%f2c, step_mode, 0._4, status, ierr)
 
     end subroutine
 
     subroutine adios2_begin_step_default(engine, ierr)
         type(adios2_engine), intent(in) :: engine
         integer, intent(out) :: ierr
+        !local
+        integer status
 
         if( engine%mode == adios2_mode_read ) then
             call adios2_begin_step_f2c(engine%f2c, &
                                        adios2_step_mode_next_available, 0._4, &
-                                       ierr)
+                                       status, ierr)
         else
             call adios2_begin_step_f2c(engine%f2c, &
-                                       adios2_step_mode_append, 0._4, ierr)
+                                       adios2_step_mode_append, 0._4, &
+                                       status, ierr)
         end if
 
     end subroutine

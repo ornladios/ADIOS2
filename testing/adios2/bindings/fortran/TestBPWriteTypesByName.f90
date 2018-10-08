@@ -5,7 +5,7 @@
      implicit none
 
      integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
-     integer :: inx, irank, isize, ierr, i
+     integer :: inx, irank, isize, ierr, i, length, step_status
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead
@@ -90,18 +90,19 @@
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
-     ! Put array contents to bp buffer, based on var1 metadata
-     if (irank == 0) then
-         call adios2_put(bpWriter, "gvar_I8", data_I8(1), ierr)
-         call adios2_put(bpWriter, "gvar_I16", data_I16(1), ierr)
-         call adios2_put(bpWriter, "gvar_I32", data_I32(1), ierr)
-         call adios2_put(bpWriter, "gvar_I64", data_I64(1), ierr)
-         call adios2_put(bpWriter, "gvar_R32", data_R32(1), ierr)
-         call adios2_put(bpWriter, "gvar_R64", data_R64(1), ierr)
-     end if
-
      do i = 1, 3
-         call adios2_begin_step(bpWriter, adios2_step_mode_append, 0.0, ierr)
+         call adios2_begin_step(bpWriter, adios2_step_mode_append, 0.0, &
+                               step_status, ierr)
+         ! Put array contents to bp buffer, based on var1 metadata
+         if (irank == 0 .and. i == 1) then
+           call adios2_put(bpWriter, "gvar_I8", data_I8(1), ierr)
+           call adios2_put(bpWriter, "gvar_I16", data_I16(1), ierr)
+           call adios2_put(bpWriter, "gvar_I32", data_I32(1), ierr)
+           call adios2_put(bpWriter, "gvar_I64", data_I64(1), ierr)
+           call adios2_put(bpWriter, "gvar_R32", data_R32(1), ierr)
+           call adios2_put(bpWriter, "gvar_R64", data_R64(1), ierr)
+         end if
+
          call adios2_put(bpWriter, "var_I8", data_I8, ierr)
          call adios2_put(bpWriter, "var_I16", data_I16, ierr)
          call adios2_put(bpWriter, "var_I32", data_I32, ierr)
@@ -121,56 +122,44 @@
      call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_read, ierr)
 
      call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
-     call adios2_variable_name(variables(1), variable_name, ierr)
-     if (variable_name /= 'var_I8') stop 'var_I8 not recognized'
-     call adios2_variable_type(variables(1), variable_type, ierr)
-     if (variable_type /= adios2_type_integer1) stop 'var_I8 type not recognized'
-     call adios2_variable_shape(variables(1), ndims, shape_in, ierr)
+     if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'
+     if (variables(1)%type /= adios2_type_integer1) stop 'var_I8 type not recognized'
+     call adios2_variable_shape(shape_in, ndims, variables(1), ierr)
      if (ndims /= 1) stop 'var_I8 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I8 shape_in read failed'
 
      call adios2_inquire_variable(variables(2), ioRead, "var_I16", ierr)
-     call adios2_variable_name(variables(2), variable_name, ierr)
-     if (variable_name /= 'var_I16') stop 'var_I16 not recognized'
-     call adios2_variable_type(variables(2), variable_type, ierr)
-     if (variable_type /= adios2_type_integer2) stop 'var_I16 type not recognized'
-     call adios2_variable_shape(variables(2), ndims, shape_in, ierr)
+     if (variables(2)%name /= 'var_I16') stop 'var_I16 not recognized'
+     if (variables(2)%type /= adios2_type_integer2) stop 'var_I16 type not recognized'
+     call adios2_variable_shape( shape_in, ndims,variables(2),ierr)
      if (ndims /= 1) stop 'var_I16 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I16 shape_in read failed'
 
      call adios2_inquire_variable(variables(3), ioRead, "var_I32", ierr)
-     call adios2_variable_name(variables(3), variable_name, ierr)
-     if (variable_name /= 'var_I32') stop 'var_I32 not recognized'
-     call adios2_variable_type(variables(3), variable_type, ierr)
-     if (variable_type /= adios2_type_integer4) stop 'var_I32 type not recognized'
-     call adios2_variable_shape(variables(3), ndims, shape_in, ierr)
+     if (variables(3)%name /= 'var_I32') stop 'var_I32 not recognized'
+     if (variables(3)%type /= adios2_type_integer4) stop 'var_I32 type not recognized'
+     call adios2_variable_shape( shape_in, ndims, variables(3),ierr)
      if (ndims /= 1) stop 'var_I32 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I32 shape_in read failed'
 
      call adios2_inquire_variable(variables(4), ioRead, "var_I64", ierr)
-     call adios2_variable_name(variables(4), variable_name, ierr)
-     if (variable_name /= 'var_I64') stop 'var_I64 not recognized'
-     call adios2_variable_type(variables(4), variable_type, ierr)
-     if (variable_type /= adios2_type_integer8) stop 'var_I64 type not recognized'
-     call adios2_variable_shape(variables(4), ndims, shape_in, ierr)
+     if (variables(4)%name /= 'var_I64') stop 'var_I64 not recognized'
+     if (variables(4)%type /= adios2_type_integer8) stop 'var_I64 type not recognized'
+     call adios2_variable_shape(shape_in, ndims, variables(4),ierr)
      if (ndims /= 1) stop 'var_I64 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_I64 shape_in read failed'
 
      call adios2_inquire_variable(variables(5), ioRead, "var_R32", ierr)
-     call adios2_variable_name(variables(5), variable_name, ierr)
-     if (variable_name /= 'var_R32') stop 'var_R32 not recognized'
-     call adios2_variable_type(variables(5), variable_type, ierr)
-     if (variable_type /= adios2_type_real) stop 'var_R32 type not recognized'
-     call adios2_variable_shape(variables(5), ndims, shape_in, ierr)
+     if (variables(5)%name /= 'var_R32') stop 'var_R32 not recognized'
+     if (variables(5)%type /= adios2_type_real) stop 'var_R32 type not recognized'
+     call adios2_variable_shape( shape_in, ndims, variables(5), ierr)
      if (ndims /= 1) stop 'var_R32 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_R32 shape_in read failed'
 
      call adios2_inquire_variable(variables(6), ioRead, "var_R64", ierr)
-     call adios2_variable_name(variables(6), variable_name, ierr)
-     if (variable_name /= 'var_R64') stop 'var_R64 not recognized'
-     call adios2_variable_type(variables(6), variable_type, ierr)
-     if (variable_type /= adios2_type_dp) stop 'var_R64 type not recognized'
-     call adios2_variable_shape(variables(6), ndims, shape_in, ierr)
+     if (variables(6)%name /= 'var_R64') stop 'var_R64 not recognized'
+     if (variables(6)%type /= adios2_type_dp) stop 'var_R64 type not recognized'
+     call adios2_variable_shape( shape_in, ndims,  variables(6), ierr)
      if (ndims /= 1) stop 'var_R64 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_R64 shape_in read failed'
 

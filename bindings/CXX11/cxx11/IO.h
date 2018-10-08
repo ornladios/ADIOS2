@@ -16,7 +16,10 @@
 #include "Operator.h"
 #include "Variable.h"
 
-#include "adios2/ADIOSMPICommOnly.h"
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
+
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 
@@ -42,20 +45,20 @@ public:
     ~IO() = default;
 
     /**
-     * Checks if IO exists in a config file passed to ADIOS object that
+     * @brief Checks if IO exists in a config file passed to ADIOS object that
      * created this IO
      * @return true: in config file, false: not in config file
      */
     bool InConfigFile() const noexcept;
 
     /**
-     * @brief Sets the engine type for this IO class object
+     * @brief Sets the engine type for current IO object
      * @param engineType predefined engine type, default is bpfile
      */
     void SetEngine(const std::string engineType) noexcept;
 
     /**
-     * @brief Sets a single parameter overwriting value if key exists;
+     * @brief Sets a single parameter. Overwrites value if key exists;
      * @param key parameter key
      * @param value parameter value
      */
@@ -69,31 +72,32 @@ public:
      * @param parameters adios::Params = std::map<std::string, std::string>
      * key/value parameters
      */
-    void SetParameters(const adios2::Params &parameters = Params()) noexcept;
+    void
+    SetParameters(const adios2::Params &parameters = adios2::Params()) noexcept;
 
     /**
      * Return current parameters set from either SetParameters/SetParameter
      * functions or from config XML for currrent IO object
      * @return string key/value map of current parameters (not modifiable)
      */
-    const Params &GetParameters() const noexcept;
+    const adios2::Params &GetParameters() const noexcept;
 
     /**
-     * @brief Adds a transport and its parameters for the IO Engine
+     * @brief Adds a transport and its parameters to current IO. Must be
+     * supported by current EngineType().
      * @param type must be a supported transport type for a particular Engine.
-     * CAN'T use the keyword "Transport" or "transport"
+     * CAN'T use the keywords "Transport" or "transport"
      * @param params acceptable parameters for a particular transport
      * @return transportIndex handler
      * @exception std::invalid_argument if type=transport
      */
     size_t AddTransport(const std::string type,
-                        const Params &parameters = Params());
+                        const adios2::Params &parameters = adios2::Params());
 
     /**
      * @brief Sets a single parameter to an existing transport identified
-     * with a
-     * transportIndex handler from AddTransport.
-     * This function overwrites existing parameter with the same key.
+     * with a transportIndex handler from AddTransport.
+     * Overwrites existing parameter with the same key.
      * @param transportIndex index handler from AddTransport
      * @param key parameter key
      * @param value parameter value
@@ -104,13 +108,13 @@ public:
                                const std::string key, const std::string value);
 
     /**
-     * Define a Variable<T> object within current IO object
+     * Define a Variable<T> object within IO
      * @param name unique variable identifier
      * @param shape global dimension
      * @param start local offset
      * @param count local dimension
      * @param constantDims true: shape, start, count won't change, false:
-     * shape, start, count will change over time
+     * shape, start, count will change after definition
      * @return Variable<T> object
      */
     template <class T>
@@ -120,7 +124,7 @@ public:
                    const bool constantDims = false);
 
     /**
-     * Returns a Variable object within current IO object
+     * Retrieve a Variable object within current IO object
      * @param name unique variable identifier within IO object
      * @return if found Variable object is true and has functionality, else
      * false and has no functionality
@@ -129,8 +133,8 @@ public:
     Variable<T> InquireVariable(const std::string &name) noexcept;
 
     /**
-     * @brief Define array attribute
-     * @param name must be unique for the IO object or for a Variable if
+     * @brief Define attribute inside io. Array input version
+     * @param name unique attribute identifier IO object or for a Variable if
      * variableName is not empty (associated to a variable)
      * @param data pointer to user data
      * @param size number of data elements
@@ -186,9 +190,8 @@ public:
                                   const std::string separator = "/") noexcept;
 
     /**
-     * @brief Removes an existing Variable in current IO object.
-     * Dangerous function since corresponding Variable<T> object is invalidated
-     * after this call.
+     * @brief DANGEROUS! Removes an existing Variable in current IO object.
+     * Might create dangling objects.
      * @param name unique Variable input
      * @return true: found and removed variable, false: not found, nothing
      * to remove
@@ -196,15 +199,14 @@ public:
     bool RemoveVariable(const std::string &name) noexcept;
 
     /**
-     * @brief Removes all existing variables in current IO object.
-     * Dangerous function since invalidates all Variable<T> objects.
+     * @brief DANGEROUS! Removes all existing variables in current IO object.
+     * Might create dangling objects.
      */
     void RemoveAllVariables() noexcept;
 
     /**
-     * @brief Removes an existing Attribute in current IO object.
-     * Dangerous function since corresponding Attribute<T> object is invalidated
-     * after this call.
+     * @brief DANGEROUS! Removes an existing Attribute in current IO object.
+     * Might create dangling objects.
      * @param name unique Attribute identifier
      * @return true: found and removed attribute, false: not found, nothing to
      * remove
@@ -212,30 +214,33 @@ public:
     bool RemoveAttribute(const std::string &name) noexcept;
 
     /**
-     * @brief Removes all existing attributes in current IO object.
-     * Dangerous function since invalidates all Attribute<T> objects.
+     * @brief DANGEROUS! Removes all existing attributes in current IO object.
+     * Might create dangling objects.
      */
     void RemoveAllAttributes() noexcept;
 
     /**
      * Open an Engine to start heavy-weight input/output operations.
-     * New MPI communicator version
+     * Reuses ADIOS object communicator
      * @param name unique engine identifier
-     * @param mode
-     * @param comm
-     * @return engine object
-     */
-    Engine Open(const std::string &name, const Mode mode, MPI_Comm comm);
-
-    /**
-     * Open an Engine to start heavy-weight input/output operations.
-     * Reuses ADIOS object communicator ADIOS>IO>Engine
-     * @param name unique engine identifier
-     * @param mode adios2::Mode::Write,adios2::Mode::Read or
-     * adios2::Mode::Append
+     * @param mode adios2::Mode::Write, adios2::Mode::Read, or
+     *             adios2::Mode::Append (not yet support)
      * @return engine object
      */
     Engine Open(const std::string &name, const Mode mode);
+
+#ifdef ADIOS2_HAVE_MPI
+    /**
+     * Open an Engine to start heavy-weight input/output operations.
+     * New MPI communicator version
+     * @param name unique engine identifier within IO
+     * @param mode adios2::Mode::Write, adios2::Mode::Read, or
+     *             adios2::Mode::Append (not yet support)
+     * @param comm new communicator other than ADIOS object's communicator
+     * @return engine object
+     */
+    Engine Open(const std::string &name, const Mode mode, MPI_Comm comm);
+#endif
 
     /** Flushes all engines created with this IO with the Open function */
     void FlushAll();

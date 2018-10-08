@@ -15,8 +15,6 @@
 #include <FC.h>
 #include <adios2_c.h>
 
-#include <iostream> //std::cerr
-#include <stdexcept>
 #include <stdint.h> // int64_t
 #include <vector>
 

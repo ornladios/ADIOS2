@@ -6,6 +6,7 @@ program TestRemove
 
     integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
     integer :: inx, irank, isize, ierr, i
+    logical :: res
 
     ! low-level
     type(adios2_adios) :: adios
@@ -83,48 +84,61 @@ program TestRemove
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp,  ierr)
 
+     if (variables(1)%valid .eqv. .false. ) stop 'var_I8 not defined'
+     if (variables(2)%valid .eqv. .false. ) stop 'var_I16 not defined'
+     if (variables(3)%valid .eqv. .false. ) stop 'var_I32 not defined'
+     if (variables(4)%valid .eqv. .false. ) stop 'var_I64 not defined'
+     if (variables(5)%valid .eqv. .false. ) stop 'var_R32 not defined'
+     if (variables(6)%valid .eqv. .false. ) stop 'var_R64 not defined'
+     if (variables(7)%valid .eqv. .false. ) stop 'gvar_I8 not defined'
+     if (variables(8)%valid .eqv. .false. ) stop 'gvar_I16 not defined'
+     if (variables(9)%valid .eqv. .false. ) stop 'gvar_I32 not defined'
+     if (variables(10)%valid .eqv. .false. ) stop 'gvar_I64 not defined'
+     if (variables(11)%valid .eqv. .false. ) stop 'gvar_R32 not defined'
+     if (variables(12)%valid .eqv. .false. ) stop 'gvar_IR64 not defined'
+
     ! remove piece
-    call adios2_remove_variable(ioWrite, "gvar_R64", ierr)
-    if (ierr /= 1) stop 'gvar_R64 not removed'
+    call adios2_remove_variable(ioWrite, "gvar_R64", res, ierr)
+    if( res .eqv. .false. ) stop 'adios2_remove_variable failed'
 
     call adios2_inquire_variable(variables(12), ioWrite, "gvar_R64", ierr)
-    if (ierr == adios2_found) stop 'gvar_R64 found with inquire, not removed'
+    if (variables(12)%valid .eqv. .true. ) stop 'gvar_R64 found with inquire, not removed'
 
     ! remove all
     call adios2_remove_all_variables(ioWrite, ierr)
 
     call adios2_inquire_variable(variables(1), ioWrite, "var_I8", ierr)
-    if (ierr == adios2_found) stop 'var_I8 found'
+    if (variables(1)%valid .eqv. .true. ) stop 'var_I8 found'
 
     call adios2_inquire_variable(variables(2), ioWrite, "var_I16", ierr)
-    if (ierr == adios2_found) stop 'var_I16 found'
+    if (variables(2)%valid .eqv. .true.) stop 'var_I16 found'
 
     call adios2_inquire_variable(variables(3), ioWrite, "var_I32", ierr)
-    if (ierr == adios2_found) stop 'var_I32 found'
+    if (variables(3)%valid .eqv. .true.) stop 'var_I32 found'
 
     call adios2_inquire_variable(variables(4), ioWrite, "var_I64", ierr)
-    if (ierr == adios2_found) stop 'var_I64 found'
+    if (variables(4)%valid .eqv. .true.) stop 'var_I64 found'
 
     call adios2_inquire_variable(variables(5), ioWrite, "var_R32", ierr)
-    if (ierr == adios2_found) stop 'var_R32 found'
+    if (variables(5)%valid .eqv. .true.) stop 'var_R32 found'
 
     call adios2_inquire_variable(variables(6), ioWrite, "var_R64", ierr)
-    if (ierr == adios2_found) stop 'var_R64 found'
+    if (variables(6)%valid .eqv. .true.) stop 'var_R64 found'
 
     call adios2_inquire_variable(variables(7), ioWrite, "gvar_I8", ierr)
-    if (ierr == adios2_found) stop 'gvar_I8 found'
+    if (variables(7)%valid .eqv. .true.) stop 'gvar_I8 found'
 
     call adios2_inquire_variable(variables(8), ioWrite, "gvar_I16", ierr)
-    if (ierr == adios2_found) stop 'gvar_I16 found'
+    if (variables(8)%valid .eqv. .true.) stop 'gvar_I16 found'
 
     call adios2_inquire_variable(variables(9), ioWrite, "gvar_I32", ierr)
-    if (ierr == adios2_found) stop 'gvar_I32 found'
+    if (variables(9)%valid .eqv. .true.) stop 'gvar_I32 found'
 
     call adios2_inquire_variable(variables(10), ioWrite, "gvar_I64", ierr)
-    if (ierr == adios2_found) stop 'gvar_I64 found'
+    if (variables(10)%valid .eqv. .true.) stop 'gvar_I64 found'
 
     call adios2_inquire_variable(variables(11), ioWrite, "gvar_R32", ierr)
-    if (ierr == adios2_found) stop 'gvar_R32 found'
+    if (variables(11)%valid .eqv. .true.) stop 'gvar_R32 found'
 
     call adios2_finalize(adios, ierr)
 

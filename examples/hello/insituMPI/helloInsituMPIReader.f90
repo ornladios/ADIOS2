@@ -53,7 +53,7 @@ program helloInsituMPIReader
             call adios2_inquire_variable( varArray, io, 'myArray', ierr )
 
             if (step == 0) then
-                call adios2_variable_shape(varArray, ndims, shape_dims, ierr)
+                call adios2_variable_shape( shape_dims, ndims, varArray, ierr)
                 ! ndims is assumed to be 2 here
                 call DecomposeArray( shape_dims(1), shape_dims(2), rank, nproc)
                 allocate (sel_start(2), sel_count(2))

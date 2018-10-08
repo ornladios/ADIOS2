@@ -33,10 +33,9 @@ TEST_F(BPWriteTypesHighLevel, ADIOS2BPWriteTypes)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    adios2_FILE *fhw =
-        adios2_fopen("ctypes_hl.bp", adios2_mode_write, MPI_COMM_WORLD);
+    adios2_FILE *fhw = adios2_fopen("ctypes_hl.bp", "w", MPI_COMM_WORLD);
 #else
-    adios2_FILE *fhw = adios2_fopen_nompi("ctypes_hl.bp", adios2_mode_write);
+    adios2_FILE *fhw = adios2_fopen("ctypes_hl.bp", "w");
 #endif
 
     size_t shape[1];
@@ -49,42 +48,41 @@ TEST_F(BPWriteTypesHighLevel, ADIOS2BPWriteTypes)
     count[0] = data_Nx;
 
     adios2_fwrite(fhw, "varString", adios2_type_string, "hello stream", 1,
-                  shape, start, count, 0);
+                  shape, start, count, adios2_false);
     adios2_fwrite(fhw, "varI8", adios2_type_int8_t, data_I8, 1, shape, start,
-                  count, 0);
+                  count, adios2_false);
     adios2_fwrite(fhw, "varI16", adios2_type_int16_t, data_I16, 1, shape, start,
-                  count, 0);
+                  count, adios2_false);
     adios2_fwrite(fhw, "varI32", adios2_type_int32_t, data_I32, 1, shape, start,
-                  count, 0);
+                  count, adios2_false);
     adios2_fwrite(fhw, "varI64", adios2_type_int64_t, data_I64, 1, shape, start,
-                  count, 0);
+                  count, adios2_false);
 
     adios2_fwrite(fhw, "varU8", adios2_type_uint8_t, data_U8, 1, shape, start,
-                  count, 0);
+                  count, adios2_false);
     adios2_fwrite(fhw, "varU16", adios2_type_uint16_t, data_U16, 1, shape,
-                  start, count, 0);
+                  start, count, adios2_false);
     adios2_fwrite(fhw, "varU32", adios2_type_uint32_t, data_U32, 1, shape,
-                  start, count, 0);
+                  start, count, adios2_false);
     adios2_fwrite(fhw, "varU64", adios2_type_uint64_t, data_U64, 1, shape,
-                  start, count, 0);
+                  start, count, adios2_false);
     adios2_fwrite(fhw, "varR32", adios2_type_float, data_R32, 1, shape, start,
-                  count, 0);
+                  count, adios2_false);
     adios2_fwrite(fhw, "varR64", adios2_type_double, data_R64, 1, shape, start,
-                  count, adios2_advance_step_false);
+                  count, adios2_true);
 
     adios2_fclose(fhw);
-
     {
 // for reading
 #ifdef ADIOS2_HAVE_MPI
-        adios2_FILE *fhr =
-            adios2_fopen("ctypes_hl.bp", adios2_mode_read, MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
+        adios2_FILE *fhr = adios2_fopen("ctypes_hl.bp", "r", MPI_COMM_WORLD);
 #else
-        adios2_FILE *fhr = adios2_fopen_nompi("ctypes_hl.bp", adios2_mode_read);
+        adios2_FILE *fhr = adios2_fopen("ctypes_hl.bp", "r");
 #endif
         const size_t data_size = 10;
 
-        char *idata_String = (char *)malloc(13);
+        char *idata_String = (char *)calloc(13, sizeof(char));
         int8_t *idata_I8 = (int8_t *)malloc(data_size * sizeof(int8_t));
         int16_t *idata_I16 = (int16_t *)malloc(data_size * sizeof(int16_t));
         int32_t *idata_I32 = (int32_t *)malloc(data_size * sizeof(int32_t));

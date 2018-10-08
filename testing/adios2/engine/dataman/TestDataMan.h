@@ -199,7 +199,11 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+#else
     adios2::ADIOS adios;
+#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -273,7 +277,11 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+#else
     adios2::ADIOS adios(adios2::DebugON);
+#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -386,7 +394,11 @@ void DataManReaderCallback(const Dims &shape, const Dims &start,
                            const std::vector<adios2::Params> &transParams,
                            const size_t timeout)
 {
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+#else
     adios2::ADIOS adios(adios2::DebugON);
+#endif
     adios2::Operator callback = adios.DefineOperator(
         "Print all variables callback void",
         std::function<void(void *, const std::string &, const std::string &,
@@ -415,7 +427,11 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     std::vector<float> myFloats(datasize);
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+#else
     adios2::ADIOS adios(adios2::DebugON);
+#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);

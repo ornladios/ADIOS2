@@ -18,31 +18,33 @@ extern "C" {
 #endif
 
 /**
- * Retrieve attribute name (read-only)
+ * Retrieve attribute name
+ * @param name output name, must be pre-allocated
+ * @param size name size
  * @param attribute handler
- * @param size name length
- * @return attribute name
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-const char *adios2_attribute_name(const adios2_attribute *attribute,
-                                  size_t *size);
+adios2_error adios2_attribute_name(char *name, size_t *size,
+                                   const adios2_attribute *attribute);
 
 /**
- * Retrieve attribute type (read-only)
+ * Retrieve attribute type
+ * @param type
  * @param attribute handler
- * @param size type length
- * @return attribute type
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-const char *adios2_attribute_type(const adios2_attribute *attribute,
-                                  size_t *size);
+adios2_error adios2_attribute_type(adios2_type *type,
+                                   const adios2_attribute *attribute);
 
 /**
  * Retrieve attribute data pointer (read-only)
- * @param attribute handler
+ * @param data output attribute values, must be pre-allocated
  * @param size data size
- * @return data pointer
+ * @param attribute handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-const void *adios2_attribute_data(const adios2_attribute *attribute,
-                                  size_t *size);
+adios2_error adios2_attribute_data(void *data, size_t *size,
+                                   const adios2_attribute *attribute);
 
 #ifdef __cplusplus
 } // end extern C

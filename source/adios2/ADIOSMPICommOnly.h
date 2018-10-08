@@ -12,20 +12,25 @@
 #include <mpi.h>
 #else
 #ifdef __cplusplus
+
 namespace adios2
 {
 namespace helper
 {
 namespace mpi
 {
-typedef int MPI_Comm;
+using MPI_Comm = int;
 } // end namespace mpi
 } // end namespace helper
 } // end namespace adios2
-using adios2::helper::mpi::MPI_Comm;
+namespace adios2
+{
+using helper::mpi::MPI_Comm;
+}
 #else
 typedef int MPI_Comm;
 #endif
+
 #endif
 
 #endif /* ADIOS2_ADIOSMPICOMMONLY_H_ */

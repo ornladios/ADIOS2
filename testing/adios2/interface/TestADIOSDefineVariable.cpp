@@ -10,7 +10,14 @@
 class ADIOSDefineVariableTest : public ::testing::Test
 {
 public:
-    ADIOSDefineVariableTest() : adios(true), io(adios.DeclareIO("TestIO")) {}
+#ifdef ADIOS2_HAVE_MPI
+    ADIOSDefineVariableTest()
+    : adios(MPI_COMM_WORLD, true), io(adios.DeclareIO("TestIO"))
+#else
+    ADIOSDefineVariableTest() : adios(true), io(adios.DeclareIO("TestIO"))
+#endif
+    {
+    }
 
 protected:
     adios2::ADIOS adios;
@@ -64,15 +71,14 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize),
-                       static_cast<unsigned int>(Ny * mpiSize),
-                       static_cast<unsigned int>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank),
-                       static_cast<unsigned int>(Ny * mpiRank),
-                       static_cast<unsigned int>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<unsigned int>(Nx),
-                       static_cast<unsigned int>(Ny),
-                       static_cast<unsigned int>(Nz)};
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
+                       static_cast<size_t>(Ny * mpiSize),
+                       static_cast<size_t>(Nz * mpiSize)};
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
+                       static_cast<size_t>(Ny * mpiRank),
+                       static_cast<size_t>(Nz * mpiRank)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
+                       static_cast<size_t>(Nz)};
     // Define ADIOS global array
     auto globalarray =
         io.DefineVariable<int>("globalarray", shape, start, count);
@@ -109,15 +115,14 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize),
-                       static_cast<unsigned int>(Ny * mpiSize),
-                       static_cast<unsigned int>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank),
-                       static_cast<unsigned int>(Ny * mpiRank),
-                       static_cast<unsigned int>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<unsigned int>(Nx),
-                       static_cast<unsigned int>(Ny),
-                       static_cast<unsigned int>(Nz)};
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
+                       static_cast<size_t>(Ny * mpiSize),
+                       static_cast<size_t>(Nz * mpiSize)};
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
+                       static_cast<size_t>(Ny * mpiRank),
+                       static_cast<size_t>(Nz * mpiRank)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
+                       static_cast<size_t>(Nz)};
     // Define ADIOS global array
     auto globalarray = io.DefineVariable<int>("globalarray", shape);
 
@@ -157,15 +162,14 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize),
-                       static_cast<unsigned int>(Ny * mpiSize),
-                       static_cast<unsigned int>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank),
-                       static_cast<unsigned int>(Ny * mpiRank),
-                       static_cast<unsigned int>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<unsigned int>(Nx),
-                       static_cast<unsigned int>(Ny),
-                       static_cast<unsigned int>(Nz)};
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
+                       static_cast<size_t>(Ny * mpiSize),
+                       static_cast<size_t>(Nz * mpiSize)};
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
+                       static_cast<size_t>(Ny * mpiRank),
+                       static_cast<size_t>(Nz * mpiRank)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
+                       static_cast<size_t>(Nz)};
     // Define ADIOS global array
     auto globalarray =
         io.DefineVariable<int>("globalarray", shape, start, count, true);
@@ -238,15 +242,14 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize),
-                       static_cast<unsigned int>(Ny * mpiSize),
-                       static_cast<unsigned int>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank),
-                       static_cast<unsigned int>(Ny * mpiRank),
-                       static_cast<unsigned int>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<unsigned int>(Nx),
-                       static_cast<unsigned int>(Ny),
-                       static_cast<unsigned int>(Nz)};
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
+                       static_cast<size_t>(Ny * mpiSize),
+                       static_cast<size_t>(Nz * mpiSize)};
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
+                       static_cast<size_t>(Ny * mpiRank),
+                       static_cast<size_t>(Nz * mpiRank)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
+                       static_cast<size_t>(Nz)};
     // Define ADIOS global array
     auto localArray = io.DefineVariable<int>(
         "localArray", {}, {},
@@ -294,9 +297,8 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims count{static_cast<unsigned int>(Nx),
-                       static_cast<unsigned int>(Ny),
-                       static_cast<unsigned int>(Nz)};
+    adios2::Dims count{Nx, Ny, Nz};
+
     // Define ADIOS global array
     auto localArray = io.DefineVariable<int>("localArray", {}, {}, count, true);
 

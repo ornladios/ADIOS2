@@ -61,10 +61,12 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
 
 void IO::RemoveAllAttributes() noexcept { m_IO.RemoveAllAttributes(); }
 
+#ifdef ADIOS2_HAVE_MPI
 Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
 {
     return Engine(&m_IO.Open(name, mode, comm));
 }
+#endif
 
 Engine IO::Open(const std::string &name, const Mode mode)
 {

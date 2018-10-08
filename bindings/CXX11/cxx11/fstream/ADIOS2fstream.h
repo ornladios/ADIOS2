@@ -13,7 +13,12 @@
 
 #include <memory> //std::shared_ptr
 
-#include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSConfig.h"
+
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#endif
+
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 
@@ -44,6 +49,7 @@ public:
         app
     };
 
+#ifdef ADIOS2_HAVE_MPI
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for
      * passing parameters in source code.
@@ -58,6 +64,22 @@ public:
     fstream(const std::string &name, const openmode mode, MPI_Comm comm,
             const std::string engineType = "BPFile");
 
+    /**
+     * High-level API MPI constructor, based on C++11 fstream. Allows for
+     * runtime config file.
+     * @param name stream name
+     * @param mode fstream::in (Read), fstream::out (Write), fstream::app
+     * (Append)
+     * @param comm MPI communicator establishing domain for fstream
+     * @param configFile adios2 runtime configuration file
+     * @param ioInConfigFile specific io name in configFile
+     * @exception std::invalid_argument (user input error) or
+     * std::runtime_error
+     * (system error)
+     */
+    fstream(const std::string &name, const openmode mode, MPI_Comm comm,
+            const std::string &configFile, const std::string ioInConfigFile);
+#else
     /**
      * High-level API non-MPI constructor, based on C++11 fstream. Allows for
      * passing parameters in source code.
@@ -77,22 +99,6 @@ public:
      * @param name stream name
      * @param mode fstream::in (Read), fstream::out (Write), fstream::app
      * (Append)
-     * @param comm MPI communicator establishing domain for fstream
-     * @param configFile adios2 runtime configuration file
-     * @param ioInConfigFile specific io name in configFile
-     * @exception std::invalid_argument (user input error) or
-     * std::runtime_error
-     * (system error)
-     */
-    fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-            const std::string &configFile, const std::string ioInConfigFile);
-
-    /**
-     * High-level API MPI constructor, based on C++11 fstream. Allows for
-     * runtime config file.
-     * @param name stream name
-     * @param mode fstream::in (Read), fstream::out (Write), fstream::app
-     * (Append)
      * @param configFile adios2 runtime configuration file
      * @param ioInConfigFile specific io name in configFile
      * @exception std::invalid_argument (user input error) or
@@ -100,17 +106,18 @@ public:
      */
     fstream(const std::string &name, const openmode mode,
             const std::string &configFile, const std::string ioInConfigFile);
-
+#endif
     /** Empty constructor, allows the use of open later in the code */
     fstream() = default;
 
-    ~fstream();
+    ~fstream() = default;
 
     /**
      * Checks if fstream object is valid
      */
     explicit operator bool() const noexcept;
 
+#ifdef ADIOS2_HAVE_MPI
     /**
      * High-level API MPI open, based on C++11 fstream. Allows for
      * passing parameters in source code. Used after empty constructor.
@@ -139,7 +146,7 @@ public:
      */
     void open(const std::string &name, const openmode mode, MPI_Comm comm,
               const std::string configFile, const std::string ioInConfigFile);
-
+#else
     /**
      * High-level API non-MPI open, based on C++11 fstream. Allows for
      * passing parameters in source code. Used after empty constructor.
@@ -166,7 +173,7 @@ public:
      */
     void open(const std::string &name, const openmode mode,
               const std::string configFile, const std::string ioInConfigFile);
-
+#endif
     /**
      * writes a self-describing array variable
      * @param name variable name
@@ -359,6 +366,8 @@ protected:
 
 private:
     fstream(fstream &stream) = default;
+
+    void CheckOpen(const std::string name) const;
 };
 
 #define declare_template_instantiation(T)                                      \

@@ -10,11 +10,13 @@
 
 #include "adios2_f2c_common.h"
 
+#include <iostream>
+
 namespace
 {
 
-void adios2_Int64ToSizeTVector(const int64_t *dimensions, const int size,
-                               std::vector<std::size_t> &output)
+std::vector<std::size_t> adios2_Int64ToSizeTVector(const int64_t *dimensions,
+                                                   const int size)
 {
 
     if (dimensions == nullptr || size <= 0)
@@ -23,7 +25,7 @@ void adios2_Int64ToSizeTVector(const int64_t *dimensions, const int size,
                                     "start, count dimensions in Fortran ");
     }
 
-    output.resize(size);
+    std::vector<std::size_t> output(size);
 
     for (int d = 0; d < size; ++d)
     {
@@ -34,6 +36,7 @@ void adios2_Int64ToSizeTVector(const int64_t *dimensions, const int size,
         }
         output[d] = dimensions[d];
     }
+    return output;
 }
 } // end empty namespace
 
@@ -42,77 +45,86 @@ extern "C" {
 #endif
 
 #ifdef ADIOS2_HAVE_MPI_F
+
+// these functions are not exposed in the public C API
+extern adios2_FILE *adios2_fopen_glue(const char *name, const char *mode,
+                                      MPI_Comm comm, const char *host_language);
+
+extern adios2_FILE *adios2_fopen_config_glue(const char *name, const char *mode,
+                                             MPI_Comm comm,
+                                             const char *config_file,
+                                             const char *io_in_config_file,
+                                             const char *host_language);
+
 void FC_GLOBAL(adios2_fopen_f2c,
                adios2_FOPEN_F2C)(adios2_FILE **fh, const char *name,
-                                 const int *mode, int *comm, int *ierr)
+                                 const char *mode, int *comm, int *ierr)
 {
-    *ierr = 0;
     try
     {
-        *fh = adios2_fopen_glue(name, static_cast<adios2_mode>(*mode),
-                                MPI_Comm_f2c(*comm), "Fortran");
+        *fh = adios2_fopen_glue(name, mode, MPI_Comm_f2c(*comm), "Fortran");
+        *ierr = static_cast<int>(adios2_error_none);
     }
-    catch (std::exception &e)
+    catch (...)
     {
-        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
-                  << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 
 void FC_GLOBAL(adios2_fopen_config_f2c, adios2_FOPEN_CONFIG_F2C)(
-    adios2_FILE **fh, const char *name, const int *mode, int *comm,
+    adios2_FILE **fh, const char *name, const char *mode, int *comm,
     const char *config_file, const char *io_in_config_file, int *ierr)
 {
-    *ierr = 0;
     try
     {
-        *fh = adios2_fopen_config_glue(name, static_cast<adios2_mode>(*mode),
-                                       MPI_Comm_f2c(*comm), config_file,
-                                       io_in_config_file, "Fortran");
+        *fh =
+            adios2_fopen_config_glue(name, mode, MPI_Comm_f2c(*comm),
+                                     config_file, io_in_config_file, "Fortran");
+        *ierr = static_cast<int>(adios2_error_none);
     }
-    catch (std::exception &e)
+    catch (...)
     {
-        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
-                  << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 #else
+// these functions are not exposed in the public C API
+extern adios2_FILE *adios2_fopen_glue(const char *name, const char *mode,
+                                      const char *host_language);
+
+extern adios2_FILE *adios2_fopen_config_glue(const char *name, const char *mode,
+                                             const char *config_file,
+                                             const char *io_in_config_file,
+                                             const char *host_language);
+
 void FC_GLOBAL(adios2_fopen_f2c, adios2_FOPEN_F2C)(adios2_FILE **fh,
                                                    const char *name,
-                                                   const int *mode, int *ierr)
+                                                   const char *mode, int *ierr)
 {
-    *ierr = 0;
     try
     {
-        *fh = adios2_fopen_nompi_glue(name, static_cast<adios2_mode>(*mode),
-                                      "Fortran");
+        *fh = adios2_fopen_glue(name, mode, "Fortran");
+        *ierr = static_cast<int>(adios2_error_none);
     }
-    catch (std::exception &e)
+    catch (...)
     {
-        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
-                  << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 
 void FC_GLOBAL(adios2_fopen_config_f2c, adios2_FOPEN_CONFIG_F2C)(
-    adios2_FILE **fh, const char *name, const int *mode,
+    adios2_FILE **fh, const char *name, const char *mode,
     const char *config_file, const char *io_in_config_file, int *ierr)
 {
-    *ierr = 0;
     try
     {
-        *fh = adios2_fopen_config_nompi_glue(
-            name, static_cast<adios2_mode>(*mode), config_file,
-            io_in_config_file, "Fortran");
+        *fh = adios2_fopen_config_glue(name, mode, config_file,
+                                       io_in_config_file, "Fortran");
+        *ierr = static_cast<int>(adios2_error_none);
     }
-    catch (std::exception &e)
+    catch (...)
     {
-        std::cerr << "ADIOS2 fopen with name " << std::string(name) << " "
-                  << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 #endif
@@ -122,18 +134,9 @@ void FC_GLOBAL(adios2_fwrite_value_f2c,
                                         const int *type, const void *data,
                                         const int *end_step, int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        adios2_fwrite(*fh, name, static_cast<adios2_type>(*type), data, 0,
-                      nullptr, nullptr, nullptr, *end_step);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 fwrite value variable: " << std::string(name)
-                  << " " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *ierr = adios2_fwrite(*fh, name, static_cast<adios2_type>(*type), data, 0,
+                          nullptr, nullptr, nullptr,
+                          static_cast<adios2_bool>(*end_step));
 }
 
 void FC_GLOBAL(adios2_fwrite_f2c,
@@ -143,24 +146,23 @@ void FC_GLOBAL(adios2_fwrite_f2c,
                                   const int64_t *start, const int64_t *count,
                                   const int *end_step, int *ierr)
 {
-    *ierr = 0;
-
     try
     {
-        std::vector<std::size_t> shapeV, startV, countV;
-        adios2_Int64ToSizeTVector(shape, *ndims, shapeV);
-        adios2_Int64ToSizeTVector(start, *ndims, startV);
-        adios2_Int64ToSizeTVector(count, *ndims, countV);
+        const std::vector<std::size_t> shapeV =
+            adios2_Int64ToSizeTVector(shape, *ndims);
+        const std::vector<std::size_t> startV =
+            adios2_Int64ToSizeTVector(start, *ndims);
+        const std::vector<std::size_t> countV =
+            adios2_Int64ToSizeTVector(count, *ndims);
 
-        adios2_fwrite(*fh, name, static_cast<adios2_type>(*type), data,
-                      static_cast<size_t>(*ndims), shapeV.data(), startV.data(),
-                      countV.data(), *end_step);
+        *ierr = static_cast<int>(adios2_fwrite(
+            *fh, name, static_cast<adios2_type>(*type), data,
+            static_cast<size_t>(*ndims), shapeV.data(), startV.data(),
+            countV.data(), static_cast<adios2_bool>(*end_step)));
     }
     catch (std::exception &e)
     {
-        std::cerr << "ADIOS2 fwrite array variable: " << std::string(name)
-                  << " " << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 
@@ -169,11 +171,17 @@ void FC_GLOBAL(adios2_fread_value_f2c,
                                        const int *type, void *data,
                                        const int *end_step, int *ierr)
 {
-    *ierr = 0;
     try
     {
-        adios2_fread(*fh, name, static_cast<adios2_type>(*type), data, 0,
-                     nullptr, nullptr);
+        if (*end_step != 0 && *end_step != 1)
+        {
+            throw std::invalid_argument(
+                "ERROR: advance must be adios2_advance_yes(1) or "
+                "adios2_advance_no(0), in call to adios2_fread");
+        }
+
+        *ierr = adios2_fread(*fh, name, static_cast<adios2_type>(*type), data,
+                             0, nullptr, nullptr);
         if (*end_step == 1)
         {
             if (adios2_fgets(*fh, *fh) == nullptr)
@@ -186,7 +194,7 @@ void FC_GLOBAL(adios2_fread_value_f2c,
     {
         std::cerr << "ADIOS2 fread value variable " << std::string(name) << " "
                   << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 
@@ -196,38 +204,28 @@ void FC_GLOBAL(adios2_fread_value_step_f2c,
                                             const int64_t *step_selection_start,
                                             int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        adios2_fread_steps(*fh, name, static_cast<adios2_type>(*type), data, 0,
-                           nullptr, nullptr,
-                           static_cast<std::size_t>(*step_selection_start), 1);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 fread value variable " << std::string(name)
-                  << " and step " << step_selection_start << e.what() << "\n";
-        *ierr = -1;
-    }
+    *ierr = static_cast<int>(adios2_fread_steps(
+        *fh, name, static_cast<adios2_type>(*type), data, 0, nullptr, nullptr,
+        static_cast<std::size_t>(*step_selection_start), 1));
 }
 
 void FC_GLOBAL(adios2_fread_f2c,
                adios2_FREAD_F2C)(adios2_FILE **fh, const char *name,
                                  const int *type, void *data, const int *ndims,
-                                 const int64_t *selection_start,
-                                 const int64_t *selection_count,
+                                 const int64_t *start, const int64_t *count,
                                  const int *end_step, int *ierr)
 {
     *ierr = 0;
     try
     {
-        std::vector<std::size_t> selectionStartV, selectionCountV;
-        adios2_Int64ToSizeTVector(selection_start, *ndims, selectionStartV);
-        adios2_Int64ToSizeTVector(selection_count, *ndims, selectionCountV);
+        const std::vector<std::size_t> startV =
+            adios2_Int64ToSizeTVector(start, *ndims);
+        const std::vector<std::size_t> countV =
+            adios2_Int64ToSizeTVector(count, *ndims);
 
-        adios2_fread(*fh, name, static_cast<adios2_type>(*type), data,
-                     static_cast<size_t>(*ndims), selectionStartV.data(),
-                     selectionCountV.data());
+        *ierr = adios2_fread(*fh, name, static_cast<adios2_type>(*type), data,
+                             static_cast<size_t>(*ndims), startV.data(),
+                             countV.data());
         if (*end_step == 1)
         {
             if (adios2_fgets(*fh, *fh) == nullptr)
@@ -240,51 +238,40 @@ void FC_GLOBAL(adios2_fread_f2c,
     {
         std::cerr << "ADIOS2 fread array variable " << std::string(name) << " "
                   << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 
 void FC_GLOBAL(adios2_fread_steps_f2c, adios2_FREAD_STEPS_F2C)(
     adios2_FILE **fh, const char *name, const int *type, void *data,
-    const int *ndims, const int64_t *selection_start,
-    const int64_t *selection_count, const int64_t *step_selection_start,
-    const int64_t *step_selection_count, int *ierr)
+    const int *ndims, const int64_t *start, const int64_t *count,
+    const int64_t *step_start, const int64_t *step_count, int *ierr)
 {
-
-    *ierr = 0;
     try
     {
-        std::vector<std::size_t> selectionStartV, selectionCountV;
-        adios2_Int64ToSizeTVector(selection_start, *ndims, selectionStartV);
-        adios2_Int64ToSizeTVector(selection_count, *ndims, selectionCountV);
+        const std::vector<std::size_t> startV =
+            adios2_Int64ToSizeTVector(start, *ndims);
+        const std::vector<std::size_t> countV =
+            adios2_Int64ToSizeTVector(count, *ndims);
 
-        adios2_fread_steps(*fh, name, static_cast<adios2_type>(*type), data,
-                           static_cast<std::size_t>(*ndims),
-                           selectionStartV.data(), selectionCountV.data(),
-                           static_cast<std::size_t>(*step_selection_start),
-                           static_cast<std::size_t>(*step_selection_count));
+        *ierr = adios2_fread_steps(*fh, name, static_cast<adios2_type>(*type),
+                                   data, static_cast<std::size_t>(*ndims),
+                                   startV.data(), countV.data(),
+                                   static_cast<std::size_t>(*step_start),
+                                   static_cast<std::size_t>(*step_count));
     }
     catch (std::exception &e)
     {
         std::cerr << "ADIOS2 fread variable " << std::string(name) << " "
                   << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(adios2_error_exception);
     }
 }
 
 void FC_GLOBAL(adios2_fclose_f2c, adios2_FCLOSE_F2C)(adios2_FILE **fh,
                                                      int *ierr)
 {
-    *ierr = 0;
-    try
-    {
-        adios2_fclose(*fh);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 fclose " << e.what() << "\n";
-        *ierr = -1;
-    }
+    *ierr = adios2_fclose(*fh);
 }
 
 #ifdef __cplusplus

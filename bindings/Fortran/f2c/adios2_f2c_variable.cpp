@@ -10,149 +10,90 @@
 
 #include "adios2_f2c_common.h"
 
+#include "adios2/helper/adiosFunctions.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void FC_GLOBAL(adios2_variable_name_f2c,
-               ADIOS2_VARIABLE_NAME_F2C)(const adios2_variable **variable,
-                                         char name[4096], int *length,
+               ADIOS2_VARIABLE_NAME_F2C)(char name[4096], int *size,
+                                         const adios2_variable **variable,
                                          int *ierr)
 {
-    *ierr = 0;
-    try
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_variable_name(name, &sizeC, *variable));
+    if (*ierr == static_cast<int>(adios2_error_none))
     {
-        std::size_t lengthC = 0;
-        const char *nameC = adios2_variable_name(*variable, &lengthC);
-
-        if (nameC == nullptr)
-        {
-            throw std::runtime_error("ERROR: null pointer\n");
-        }
-
-        for (std::size_t i = 0; i < lengthC; ++i)
-        {
-            name[i] = nameC[i];
-        }
-
-        *length = static_cast<int>(lengthC);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 variable_name: " << e.what() << "\n";
-        *ierr = -1;
+        *size = static_cast<int>(sizeC);
     }
 }
 
 void FC_GLOBAL(adios2_variable_type_f2c,
-               ADIOS2_VARIABLE_TYPE_F2C)(const adios2_variable **variable,
-                                         int *type, int *ierr)
+               ADIOS2_VARIABLE_TYPE_F2C)(int *type,
+                                         const adios2_variable **variable,
+                                         int *ierr)
 {
-    *ierr = 0;
-    try
+    *type = -1;
+    adios2_type typeC;
+    *ierr = static_cast<int>(adios2_variable_type(&typeC, *variable));
+    if (*ierr == static_cast<int>(adios2_error_none))
     {
-        *type = static_cast<int>(adios2_variable_type(*variable));
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 variable_type: " << e.what() << "\n";
-        *ierr = -1;
+        *type = static_cast<int>(typeC);
     }
 }
 
 void FC_GLOBAL(adios2_variable_ndims_f2c,
-               ADIOS2_VARIABLE_NDIMS_F2C)(const adios2_variable **variable,
-                                          int *ndims, int *ierr)
+               ADIOS2_VARIABLE_NDIMS_F2C)(int *ndims,
+                                          const adios2_variable **variable,
+                                          int *ierr)
 {
-    *ierr = 0;
-    try
+    *ndims = -1;
+    size_t ndimsC;
+    *ierr = static_cast<int>(adios2_variable_ndims(&ndimsC, *variable));
+    if (*ierr == static_cast<int>(adios2_error_none))
     {
-        *ndims = static_cast<int>(adios2_variable_ndims(*variable));
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 variable_ndims: " << e.what() << "\n";
-        *ierr = -1;
+        *ndims = static_cast<int>(ndimsC);
     }
 }
 
 void FC_GLOBAL(adios2_variable_shape_f2c,
-               ADIOS2_VARIABLE_SHAPE_F2C)(const adios2_variable **variable,
-                                          int64_t *shape, int *ierr)
+               ADIOS2_VARIABLE_SHAPE_F2C)(int64_t *shape,
+                                          const adios2_variable **variable,
+                                          int *ierr)
 {
-    *ierr = 0;
-    try
+    size_t ndims;
+    *ierr = static_cast<int>(adios2_variable_ndims(&ndims, *variable));
+    if (*ierr > 0)
     {
-        const size_t ndims = adios2_variable_ndims(*variable);
-        const size_t *shapeC = adios2_variable_shape(*variable);
+        return;
+    }
 
-        for (auto d = 0; d < ndims; ++d)
-        {
-            shape[d] = static_cast<int64_t>(shapeC[d]);
-        }
-    }
-    catch (std::exception &e)
+    size_t shapeC[ndims];
+    *ierr = static_cast<int>(adios2_variable_shape(shapeC, *variable));
+    if (*ierr > 0)
     {
-        std::cerr << "ADIOS2 variable_shape: " << e.what() << "\n";
-        *ierr = -1;
+        return;
     }
-}
 
-void
-    FC_GLOBAL(adios2_variable_steps_start_f2c,
-              ADIOS2_VARIABLE_STEPS_START_F2C)(const adios2_variable **variable,
-                                               int64_t *steps_start, int *ierr)
-{
-    *ierr = 0;
-    try
+    for (auto d = 0; d < ndims; ++d)
     {
-        *steps_start =
-            static_cast<int64_t>(adios2_variable_steps_start(*variable));
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 variable_steps_start: " << e.what() << "\n";
-        *ierr = -1;
+        shape[d] = static_cast<int64_t>(shapeC[d]);
     }
 }
 
 void FC_GLOBAL(adios2_variable_steps_f2c,
-               adios2_variable_STEPS_F2C)(const adios2_variable **variable,
-                                          int64_t *steps_count, int *ierr)
+               adios2_variable_STEPS_F2C)(int64_t *steps,
+                                          const adios2_variable **variable,
+                                          int *ierr)
 {
-    *ierr = 0;
-    try
+    *steps = -1;
+    size_t stepsC;
+    *ierr = static_cast<int>(adios2_variable_steps(&stepsC, *variable));
+    if (*ierr == static_cast<int>(adios2_error_none))
     {
-        *steps_count = static_cast<int64_t>(adios2_variable_steps(*variable));
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 variable_steps: " << e.what() << "\n";
-        *ierr = -1;
-    }
-}
-
-void FC_GLOBAL(adios2_set_shape_f2c,
-               ADIOS2_SET_SHAPE_F2C)(adios2_variable **variable,
-                                     const int *ndims, const int64_t *shape,
-                                     int *ierr)
-{
-    *ierr = 0;
-    try
-    {
-        if (shape == nullptr || ndims == nullptr)
-        {
-            throw std::invalid_argument(
-                "ERROR: either shape_dims or ndims is a null pointer, in call "
-                "to adios2_set_selection\n");
-        }
-        std::vector<std::size_t> shapeV(shape, shape + *ndims);
-        adios2_set_shape(*variable, shapeV.size(), shapeV.data());
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 set_shape: " << e.what() << "\n";
-        *ierr = -1;
+        *steps = static_cast<int64_t>(stepsC);
     }
 }
 
@@ -173,7 +114,6 @@ void FC_GLOBAL(adios2_set_selection_f2c,
 
     };
 
-    *ierr = 0;
     try
     {
         if (start == nullptr || count == nullptr || ndims == nullptr)
@@ -185,12 +125,13 @@ void FC_GLOBAL(adios2_set_selection_f2c,
         std::vector<std::size_t> startV, countV;
         lf_IntToSizeT(start, *ndims, startV);
         lf_IntToSizeT(count, *ndims, countV);
-        adios2_set_selection(*variable, *ndims, startV.data(), countV.data());
+        *ierr = static_cast<int>(adios2_set_selection(
+            *variable, *ndims, startV.data(), countV.data()));
     }
-    catch (std::exception &e)
+    catch (...)
     {
-        std::cerr << "ADIOS2 set_selection: " << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(
+            adios2::helper::ExceptionToError("adios2_set_selection"));
     }
 }
 
@@ -200,8 +141,6 @@ void FC_GLOBAL(adios2_set_step_selection_f2c,
                                               const int64_t *step_count,
                                               int *ierr)
 {
-    *ierr = 0;
-
     try
     {
         if (step_start == nullptr || step_count == nullptr)
@@ -226,12 +165,12 @@ void FC_GLOBAL(adios2_set_step_selection_f2c,
 
         const std::size_t stepStart = static_cast<std::size_t>(*step_start);
         const std::size_t stepCount = static_cast<std::size_t>(*step_count);
-        adios2_set_step_selection(*variable, stepStart, stepCount);
+        *ierr = adios2_set_step_selection(*variable, stepStart, stepCount);
     }
-    catch (std::exception &e)
+    catch (...)
     {
-        std::cerr << "ADIOS2 set_step_selection: " << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(
+            adios2::helper::ExceptionToError("adios2_set_selection"));
     }
 }
 
@@ -241,16 +180,13 @@ void FC_GLOBAL(adios2_add_operation_f2c,
                                          adios2_operator **op, const char *key,
                                          const char *value, int *ierr)
 {
-    *ierr = 0;
-    try
+    *operation_id = -1;
+    size_t operation_idC;
+    *ierr = static_cast<int>(
+        adios2_add_operation(&operation_idC, *variable, *op, key, value));
+    if (*ierr == static_cast<int>(adios2_error_none))
     {
-        *operation_id =
-            static_cast<int>(adios2_add_operation(*variable, *op, key, value));
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "ADIOS2 add_operation: " << e.what() << "\n";
-        *ierr = -1;
+        *operation_id = static_cast<int>(operation_idC);
     }
 }
 
@@ -260,16 +196,22 @@ void FC_GLOBAL(adios2_set_operation_parameter_f2c,
                                                    const char *key,
                                                    const char *value, int *ierr)
 {
-    *ierr = 0;
     try
     {
-        adios2_set_operation_parameter(
-            *variable, static_cast<std::size_t>(*operation_id), key, value);
+        if (*operation_id < 0)
+        {
+            throw std::invalid_argument("ERROR: operation_id can't be "
+                                        "negative, in call to "
+                                        "adios2_set_operation_paramter");
+        }
+
+        *ierr = static_cast<int>(adios2_set_operation_parameter(
+            *variable, static_cast<std::size_t>(*operation_id), key, value));
     }
-    catch (std::exception &e)
+    catch (...)
     {
-        std::cerr << "ADIOS2 set_operation_parameter: " << e.what() << "\n";
-        *ierr = -1;
+        *ierr = static_cast<int>(
+            adios2::helper::ExceptionToError("adios2_set_operation_parameter"));
     }
 }
 

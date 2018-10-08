@@ -73,12 +73,12 @@ contains
         call adios2_inquire_variable_f2c(variable%f2c, io%f2c, &
                                          TRIM(ADJUSTL(name))//char(0), ierr)
 
-        if(ierr == adios2_found) then
+        if(variable%f2c > 0_8) then
             variable%valid = .true.
             variable%name = name
-            call adios2_variable_type(variable, variable%type, ierr)
-            call adios2_variable_ndims(variable, variable%ndims, ierr)
-        else if(ierr == adios2_not_found) then
+            call adios2_variable_type(variable%type, variable, ierr)
+            call adios2_variable_ndims(variable%ndims, variable, ierr)
+        else
             variable%valid = .false.
             variable%name = ''
             variable%type = adios2_type_unknown
@@ -87,22 +87,24 @@ contains
 
     end subroutine
 
-    subroutine adios2_remove_variable(io, name, ierr)
+    subroutine adios2_remove_variable(io, name, result, ierr)
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
+        logical, intent(out) :: result
         integer, intent(out) :: ierr
         ! Local
         type(adios2_variable):: variable
+        integer:: resultInt
 
         call adios2_inquire_variable(variable, io, name, ierr)
-        if(ierr == adios2_found) then
+        if( variable%valid ) then
             call adios2_remove_variable_f2c(io%f2c, &
-                                            TRIM(ADJUSTL(name))//char(0), ierr)
-            if( ierr == 0 ) then
-                variable%valid = .false.
-                variable%name = ''
-                variable%type = adios2_type_unknown
-                variable%ndims = -1
+                                            TRIM(ADJUSTL(name))//char(0), &
+                                            resultInt, ierr)
+            if( resultInt == 1) then
+                result = .true.
+            else
+                result = .false.
             end if
         end if
 
@@ -142,24 +144,26 @@ contains
     end subroutine
 
 
-    subroutine adios2_remove_attribute(io, name, ierr)
+    subroutine adios2_remove_attribute(io, name, result, ierr)
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
+        logical, intent(out) :: result
         integer, intent(out) :: ierr
-
         ! Local
         type(adios2_attribute):: attribute
+        integer :: resultInt
 
         call adios2_inquire_attribute(attribute, io, name, ierr)
         if(ierr == adios2_found) then
-            attribute%valid = .false.
-            attribute%name = ''
-            attribute%type = adios2_type_unknown
-            attribute%length = 0
+            call adios2_remove_attribute_f2c(io%f2c, &
+                                             TRIM(ADJUSTL(name))//char(0), ierr)
+            if( resultInt == 1) then
+                result = .true.
+            else
+                result = .false.
+            end if
         end if
 
-        call adios2_remove_attribute_f2c(io%f2c, TRIM(ADJUSTL(name))//char(0), &
-                                         ierr)
     end subroutine
 
 

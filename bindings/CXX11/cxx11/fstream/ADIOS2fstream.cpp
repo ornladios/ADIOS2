@@ -16,16 +16,11 @@
 namespace adios2
 {
 
+#ifdef ADIOS2_HAVE_MPI
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string engineType)
 : m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, engineType,
                                           "C++"))
-{
-}
-
-fstream::fstream(const std::string &name, const openmode mode,
-                 const std::string engineType)
-: fstream(name, mode, MPI_COMM_SELF, engineType)
 {
 }
 
@@ -37,54 +32,58 @@ fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
 {
 }
 
+#else
 fstream::fstream(const std::string &name, const openmode mode,
-                 const std::string &configFile,
-                 const std::string ioInConfigFile)
-: fstream(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile)
+                 const std::string engineType)
+: m_Stream(
+      std::make_shared<core::Stream>(name, ToMode(mode), engineType, "C++"))
 {
 }
 
-fstream::~fstream() = default;
+fstream::fstream(const std::string &name, const openmode mode,
+                 const std::string &configFile,
+                 const std::string ioInConfigFile)
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), configFile,
+                                          ioInConfigFile, "C++"))
+{
+}
+#endif
 
+#ifdef ADIOS2_HAVE_MPI
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                    const std::string engineType)
 {
-    if (m_Stream)
-    {
-        throw std::invalid_argument("ERROR: adios2::fstream with name " + name +
-                                    " is already opened, in call to open");
-    }
-
+    CheckOpen(name);
     m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), comm,
                                               engineType, "C++");
 }
 
-void fstream::open(const std::string &name, const openmode mode,
-                   const std::string engineType)
-{
-    open(name, mode, MPI_COMM_SELF, engineType);
-}
-
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                    const std::string configFile,
                    const std::string ioInConfigFile)
 {
-    if (m_Stream)
-    {
-        throw std::invalid_argument("ERROR: adios2::fstream with name " + name +
-                                    " is already opened, in call to open");
-    }
-
+    CheckOpen(name);
     m_Stream = std::make_shared<core::Stream>(
         name, ToMode(mode), comm, configFile, ioInConfigFile, "C++");
+}
+#else
+void fstream::open(const std::string &name, const openmode mode,
+                   const std::string engineType)
+{
+    CheckOpen(name);
+    m_Stream =
+        std::make_shared<core::Stream>(name, ToMode(mode), engineType, "C++");
 }
 
 void fstream::open(const std::string &name, const openmode mode,
                    const std::string configFile,
                    const std::string ioInConfigFile)
 {
-    open(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile);
+    CheckOpen(name);
+    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), configFile,
+                                              ioInConfigFile, "C++");
 }
+#endif
 
 fstream::operator bool() const noexcept
 {
@@ -126,6 +125,16 @@ adios2::Mode fstream::ToMode(const openmode mode) const noexcept
         break;
     }
     return modeCpp;
+}
+
+// PRIVATE
+void fstream::CheckOpen(const std::string name) const
+{
+    if (m_Stream)
+    {
+        throw std::invalid_argument("ERROR: adios2::fstream with name " + name +
+                                    " is already opened, in call to open");
+    }
 }
 
 #define declare_template_instantiation(T)                                      \

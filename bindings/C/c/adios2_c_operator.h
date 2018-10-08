@@ -20,12 +20,14 @@ extern "C" {
 #endif
 
 /**
- * Inspect adios2_operator type
+ * Retrieve operator type
+ * @param type (e.g. sz, zfp) must be a pre-allocated char (e.g. 50)
+ * @param size type char size
  * @param op operator handler to be inspected
- * @param length placeholder that gets filled with the type string length
- * @return type (e.g. sz, zfp, callback_signature1, etc.)
+ * @return adios2_error 0: success, see enum adios2_error for errors
  */
-const char *adios2_operator_type(const adios2_operator *op, size_t *length);
+adios2_error adios2_operator_type(char *type, size_t *size,
+                                  const adios2_operator *op);
 
 #ifdef __cplusplus
 } // end extern C

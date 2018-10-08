@@ -11,6 +11,8 @@
 
 #include <chrono> //system_clock, now
 #include <ctime>
+#include <iostream>  //std::cerr
+#include <stdexcept> // std::runtime_error, std::exception
 
 #include <adios2sys/SystemTools.hxx>
 
@@ -69,6 +71,38 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept
         isZeroIndexed = false;
     }
     return isZeroIndexed;
+}
+
+int ExceptionToError(const std::string function)
+{
+    try
+    {
+        throw;
+    }
+    catch (std::invalid_argument &e)
+    {
+        std::cerr << e.what() << "\n";
+        std::cerr << function << "\n";
+        return 1;
+    }
+    catch (std::system_error &e)
+    {
+        std::cerr << e.what() << "\n";
+        std::cerr << function << "\n";
+        return 2;
+    }
+    catch (std::runtime_error &e)
+    {
+        std::cerr << e.what() << "\n";
+        std::cerr << function << "\n";
+        return 3;
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        std::cerr << function << "\n";
+        return 4;
+    }
 }
 
 } // end namespace helper

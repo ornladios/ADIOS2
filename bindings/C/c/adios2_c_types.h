@@ -28,6 +28,39 @@ typedef struct adios2_operator adios2_operator;
 typedef struct adios2_FILE adios2_FILE;
 typedef adios2_FILE adios2_step;
 
+/**
+ * @brief adios2_error return types for all ADIOS2 C API functions
+ * Based on the library C++ standardized exceptions
+ * https://en.cppreference.com/w/cpp/error/exception
+ * Each error will issue a more detailed description in the standard error
+ * output, stderr
+ */
+typedef enum {
+    /** success */
+    adios2_error_none = 0,
+
+    /**
+     * user input error, on when adios2_debug_mode_on is passed to adios2_init
+     * or adios2_init_config
+     */
+    adios2_error_invalid_argument = 1,
+
+    /** low-level system error, e.g. system IO error */
+    adios2_error_system_error = 2,
+
+    /** runtime errors other than system errors, e.g. memory overflow */
+    adios2_error_runtime_error = 3,
+
+    /** any other error exception */
+    adios2_error_exception = 4
+
+} adios2_error;
+
+typedef enum {
+    adios2_false = 0,
+    adios2_true = 1,
+} adios2_bool;
+
 typedef enum {
     adios2_debug_mode_off = 0,
     adios2_debug_mode_on = 1,
