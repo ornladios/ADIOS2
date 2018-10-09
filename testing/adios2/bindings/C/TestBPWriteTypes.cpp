@@ -188,7 +188,7 @@ TEST_F(BPWriteTypes, ADIOS2BPWriteTypes)
         char **dataArray = new char *[4];
         for (auto i = 0; i < 4; ++i)
         {
-            dataArray[i] = new char[30];
+            dataArray[i] = new char[30]();
         }
 
         adios2_attribute_data(dataArray, &elements, attrArray);
