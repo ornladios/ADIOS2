@@ -84,7 +84,7 @@ contains
         call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
                                      TRIM(ADJUSTL(name))//char(0), &
                                      adios2_type_string, &
-                                     TRIM(ADJUSTL(value))//char(0), '', '', ierr)
+                                     TRIM(ADJUSTL(value))//char(0), char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .true.
@@ -103,7 +103,7 @@ contains
 
         call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
                                      TRIM(ADJUSTL(name))//char(0), &
-                                     adios2_type_real, value, '', '', ierr)
+                                     adios2_type_real, value, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .true.
@@ -122,7 +122,7 @@ contains
 
         call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
                                      TRIM(ADJUSTL(name))//char(0), &
-                                     adios2_type_dp, value, '', '', ierr)
+                                     adios2_type_dp, value, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .true.
@@ -141,7 +141,7 @@ contains
 
         call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
                                      TRIM(ADJUSTL(name))//char(0), &
-                                     adios2_type_integer1, value, '', '', ierr)
+                                     adios2_type_integer1, value, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .true.
@@ -160,7 +160,7 @@ contains
 
         call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
                                      TRIM(ADJUSTL(name))//char(0), &
-                                     adios2_type_integer2, value, '', '', ierr)
+                                     adios2_type_integer2, value, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .true.
@@ -179,7 +179,7 @@ contains
 
         call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
                                      TRIM(ADJUSTL(name))//char(0), &
-                                     adios2_type_integer4, value, '', '', ierr)
+                                     adios2_type_integer4, value, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .true.
@@ -198,7 +198,7 @@ contains
 
         call adios2_define_vattr_f2c(attribute%f2c, io%f2c, &
                                      TRIM(ADJUSTL(name))//char(0), &
-                                     adios2_type_integer8, value, '', '', ierr)
+                                     adios2_type_integer8, value, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .true.
@@ -231,7 +231,7 @@ contains
         call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
                                            TRIM(ADJUSTL(name))//char(0), &
                                            adios2_type_string, &
-                                           data_null_terminated, length, '', '', &
+                                           data_null_terminated, length, char(0), char(0), &
                                            ierr)
         if (ierr == 0) then
             attribute%valid = .true.
@@ -253,7 +253,7 @@ contains
 
         call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
                                            TRIM(ADJUSTL(name))//char(0), &
-                                           adios2_type_real, data, length, '', '', ierr)
+                                           adios2_type_real, data, length, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .false.
@@ -274,7 +274,7 @@ contains
 
         call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
                                            TRIM(ADJUSTL(name))//char(0), &
-                                           adios2_type_dp, data, length, '', '', ierr)
+                                           adios2_type_dp, data, length, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .false.
@@ -296,7 +296,7 @@ contains
         call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
                                            TRIM(ADJUSTL(name))//char(0), &
                                            adios2_type_integer1, &
-                                           data, length, '', '', ierr)
+                                           data, length, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .false.
@@ -318,7 +318,7 @@ contains
         call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
                                            TRIM(ADJUSTL(name))//char(0), &
                                            adios2_type_integer2, &
-                                           data, length, '', '', ierr)
+                                           data, length, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .false.
@@ -339,7 +339,7 @@ contains
 
         call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
                                            TRIM(ADJUSTL(name))//char(0), &
-                                           adios2_type_integer4, data, length, '', '', &
+                                           adios2_type_integer4, data, length, char(0), char(0), &
                                            ierr)
         if (ierr == 0) then
             attribute%valid = .true.
@@ -362,7 +362,7 @@ contains
         call adios2_define_vattr_array_f2c(attribute%f2c, io%f2c, &
                                            TRIM(ADJUSTL(name))//char(0), &
                                            adios2_type_integer8, &
-                                           data, length, '', '', ierr)
+                                           data, length, char(0), char(0), ierr)
         if (ierr == 0) then
             attribute%valid = .true.
             attribute%is_value = .false.
