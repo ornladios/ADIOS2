@@ -1,0 +1,63 @@
+{
+   Leak in bash
+   Memcheck:Leak
+   ...
+   obj:/usr/bin/bash
+}
+
+{
+   Leak in MPICH MPIEXE
+   Memcheck:Leak
+   ...
+   obj:/opt/ohpc/pub/mpi/mpich-gnu7-ohpc/3.2.1/bin/mpiexec.hydra
+}
+
+{
+   Leak in MPICH MPIEXE another attempt at suppression
+   Memcheck:Leak
+   ...
+   fun:HYD_pmci_*
+   ...
+}
+
+{
+   Conditional jump or move depends on uninitialised value(s) in mca_
+   Memcheck:Cond
+   ...
+   fun:mca_*
+}
+
+{
+   Conditional jump or move depends on uninitialised value(s) in MPI
+   Memcheck:Cond
+   ...
+   fun:MPI_*
+}
+
+{
+   Leak in MPI
+   Memcheck:Leak
+   fun:*alloc
+   obj:*
+   ...
+   fun:MPI_*
+}
+
+{
+   Leak in orte_
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:*alloc
+   obj:*
+   ...
+   fun:orte_*
+}
+
+{
+   Leak in ompi_
+   Memcheck:Leak
+   fun:*alloc
+   obj:*
+   ...
+   fun:ompi_*
+}
