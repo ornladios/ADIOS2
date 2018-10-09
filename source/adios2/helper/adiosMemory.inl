@@ -47,6 +47,11 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements,
                          const unsigned int threads) noexcept
 {
+    if (elements == 0)
+    {
+        return;
+    }
+
     if (threads == 1 || threads > elements)
     {
         CopyToBuffer(buffer, position, source, elements);

@@ -68,7 +68,7 @@ inline void BP3Serializer::PutVariablePayload(
     ProfilerStart("buffering");
     if (blockInfo.Operations.empty())
     {
-        PutPayloadInBuffer(variable, blockInfo.Data);
+        PutPayloadInBuffer(variable, blockInfo);
     }
     else
     {
@@ -745,21 +745,23 @@ void BP3Serializer::PutVariableCharacteristics(
 }
 
 template <>
-inline void
-BP3Serializer::PutPayloadInBuffer(const core::Variable<std::string> &variable,
-                                  const std::string *data) noexcept
+inline void BP3Serializer::PutPayloadInBuffer(
+    const core::Variable<std::string> &variable,
+    const typename core::Variable<std::string>::Info &blockInfo) noexcept
 {
-    PutNameRecord(*data, m_Data.m_Buffer, m_Data.m_Position);
-    m_Data.m_AbsolutePosition += data->size() + 2;
+    PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
+    m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
 }
 
 template <class T>
-void BP3Serializer::PutPayloadInBuffer(const core::Variable<T> &variable,
-                                       const T *data) noexcept
+void BP3Serializer::PutPayloadInBuffer(
+    const core::Variable<T> &variable,
+    const typename core::Variable<T>::Info &blockInfo) noexcept
 {
     ProfilerStart("memcpy");
-    helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position, data,
-                                variable.TotalSize(), m_Threads);
+    helper::CopyToBufferThreads(
+        m_Data.m_Buffer, m_Data.m_Position, blockInfo.Data,
+        helper::GetTotalSize(blockInfo.Count), m_Threads);
     ProfilerStop("memcpy");
     m_Data.m_AbsolutePosition += variable.PayloadSize();
 }

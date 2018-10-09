@@ -173,9 +173,17 @@ void Engine::CommonChecks(Variable<T> &variable, const T *data,
                           const std::string hint) const
 {
     helper::CheckForNullptr(&variable, "for variable argument, " + hint);
-    helper::CheckForNullptr(data, "for data argument, " + hint);
     variable.CheckDimensions(hint);
     CheckOpenModes(modes, " for variable " + variable.m_Name + ", " + hint);
+
+    const bool zeros =
+        std::all_of(variable.m_Count.begin(), variable.m_Count.end(),
+                    [](const size_t d) { return d == 0; });
+    if (!zeros)
+    {
+        helper::CheckForNullptr(
+            data, "for data argument in non-zero count block, " + hint);
+    }
 }
 
 } // end namespace core

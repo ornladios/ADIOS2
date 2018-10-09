@@ -65,6 +65,11 @@ template <class T>
 void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
                       const unsigned int threads) noexcept
 {
+    if (size == 0)
+    {
+        return;
+    }
+
     if (threads == 1 || threads > size)
     {
         GetMinMax(values, size, min, max);
@@ -116,6 +121,11 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size,
                       std::complex<T> &min, std::complex<T> &max,
                       const unsigned int threads) noexcept
 {
+    if (size == 0)
+    {
+        return;
+    }
+
     if (threads == 1)
     {
         GetMinMaxComplex(values, size, min, max);

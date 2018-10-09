@@ -387,8 +387,9 @@ private:
      * @param variable input from which Payload is taken
      */
     template <class T>
-    void PutPayloadInBuffer(const core::Variable<T> &variable,
-                            const T *data) noexcept;
+    void PutPayloadInBuffer(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo) noexcept;
 
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,

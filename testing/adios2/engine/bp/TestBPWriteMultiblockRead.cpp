@@ -1088,7 +1088,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
             bpWriter.Put(var_iString, currentTestData.S1);
 
             var_i8.SetSelection(selNull);
-            bpWriter.Put(var_i8, currentTestData.I8.data());
+            const int8_t *i8Null = nullptr;
+            bpWriter.Put(var_i8, i8Null);
             var_i8.SetSelection(sel2);
             bpWriter.Put(var_i8, currentTestData.I8.data() + Nx / 2);
 
