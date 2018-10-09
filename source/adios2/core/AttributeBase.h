@@ -30,10 +30,17 @@ public:
     const std::string m_Name;
     const std::string m_Type;
     const size_t m_Elements;
-    bool m_IsSingleValue = false;
+    const bool m_IsSingleValue;
 
     /**
-     * Unique constructor used by Attribute<T> derived class
+     * Single value constructor used by Attribute<T> derived class
+     * @param name
+     * @param type
+     */
+    AttributeBase(const std::string &name, const std::string type);
+
+    /**
+     * Array constructor used by Attribute<T> derived class
      * @param name
      * @param type
      * @param elements

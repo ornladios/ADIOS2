@@ -44,7 +44,16 @@ adios2_error adios2_attribute_type(adios2_type *type,
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_attribute_type_string(char *type, size_t *size,
-                                          const adios2_variable *attribute);
+                                          const adios2_attribute *attribute);
+
+/**
+ * Checks if attribute is a single value or an array
+ * @param result output, adios2_true: single value, adios2_false: array
+ * @param attribute handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_attribute_is_value(adios2_bool *result,
+                                       const adios2_attribute *attribute);
 
 /**
  * Retrieve attribute data pointer (read-only)

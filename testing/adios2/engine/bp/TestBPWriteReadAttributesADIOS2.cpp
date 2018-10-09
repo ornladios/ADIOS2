@@ -30,6 +30,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
+    const std::string s1_Array = std::string("s1_Array_") + zero;
     const std::string i8_Single = std::string("i8_Single_") + zero;
     const std::string i16_Single = std::string("i16_Single_") + zero;
     const std::string i32_Single = std::string("i32_Single_") + zero;
@@ -58,6 +59,10 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 
         // Declare Single Value Attributes
         io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
+        io.DefineAttribute<std::string>(s1_Array,
+                                        currentTestData.S1array.data(),
+                                        currentTestData.S1array.size());
+
         io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front());
         io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.front());
         io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.front());
@@ -87,6 +92,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Single);
+        auto attr_s1a = ioRead.InquireAttribute<std::string>(s1_Array);
         auto attr_i8 = ioRead.InquireAttribute<int8_t>(i8_Single);
         auto attr_i16 = ioRead.InquireAttribute<int16_t>(i16_Single);
         auto attr_i32 = ioRead.InquireAttribute<int32_t>(i32_Single);
@@ -105,6 +111,12 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         ASSERT_EQ(attr_s1.Data().size() == 1, true);
         ASSERT_EQ(attr_s1.Type(), adios2::GetType<std::string>());
         ASSERT_EQ(attr_s1.Data().front(), currentTestData.S1);
+
+        EXPECT_TRUE(attr_s1a);
+        ASSERT_EQ(attr_s1a.Name(), s1_Array);
+        ASSERT_EQ(attr_s1a.Data().size() == 1, true);
+        ASSERT_EQ(attr_s1a.Type(), adios2::GetType<std::string>());
+        ASSERT_EQ(attr_s1a.Data()[0], currentTestData.S1array[0]);
 
         EXPECT_TRUE(attr_i8);
         ASSERT_EQ(attr_i8.Name(), i8_Single);

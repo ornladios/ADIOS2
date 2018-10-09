@@ -29,7 +29,7 @@ module adios2_parameters_mod
     integer, parameter :: adios2_type_integer8 = 9
 
     integer, parameter :: adios2_type_string = 10
-    integer, parameter :: adios2_type_string_array = 11
+
 
     ! is_constant_dims
     logical, parameter :: adios2_constant_dims = .true.
@@ -98,9 +98,10 @@ module adios2_parameters_mod
     type adios2_attribute
         integer(kind=8):: f2c = 0_8
         logical :: valid = .false.
+        logical :: is_value = .false.
         character(len=4096):: name = ''
         integer :: type = -1
-        integer :: length = 0
+        integer :: length = -1
     end type
 
     type adios2_engine

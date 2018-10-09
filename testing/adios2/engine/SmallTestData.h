@@ -20,6 +20,7 @@
 struct SmallTestData
 {
     std::string S1 = "Testing ADIOS2 String type";
+    std::array<std::string, 1> S1array = {{"one"}};
     std::array<std::string, 3> S3 = {{"one", "two", "three"}};
 
     std::array<int8_t, 10> I8 = {{0, 1, -2, 3, -4, 5, -6, 7, -8, 9}};
