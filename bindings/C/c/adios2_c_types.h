@@ -92,7 +92,6 @@ typedef enum {
     adios2_type_int64_t = 9,
 
     adios2_type_string = 10,
-    adios2_type_string_array = 11,
 
     adios2_type_signed_char,
 

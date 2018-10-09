@@ -71,13 +71,13 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
         adios2_set_transport_parameter(*io, transport_indexC, key, value));
 }
 
+// needed due to lack of nullptr in Fortran
 void FC_GLOBAL(adios2_define_global_variable_f2c,
                ADIOS2_DEFINE_GLOBAL_VARIABLE_F2C)(adios2_variable **variable,
                                                   adios2_io **io,
                                                   const char *name,
                                                   const int *type, int *ierr)
 {
-
     *variable = adios2_define_variable(
         *io, name, static_cast<adios2_type>(*type), 0, nullptr, nullptr,
         nullptr, adios2_constant_dims_true);
@@ -189,21 +189,43 @@ void FC_GLOBAL(adios2_remove_all_variables_f2c,
     *ierr = static_cast<int>(adios2_remove_all_variables(*io));
 }
 
-void FC_GLOBAL(adios2_define_variable_attribute_f2c,
-               ADIOS2_DEFINE_VARIABLE_ATTRIBUTE_F2C)(
+void FC_GLOBAL(adios2_define_vattr_f2c,
+               ADIOS2_DEFINE_VATTR_F2C)(adios2_attribute **attribute,
+                                        adios2_io **io, const char *name,
+                                        const int *type, const void *value,
+                                        const char *variable_name,
+                                        const char *separator, int *ierr)
+{
+
+    *attribute = adios2_define_variable_attribute(
+        *io, name, static_cast<adios2_type>(*type), value, variable_name,
+        separator);
+    *ierr = (*attribute == NULL) ? static_cast<int>(adios2_error_exception)
+                                 : static_cast<int>(adios2_error_none);
+}
+
+void FC_GLOBAL(adios2_define_vattr_array_f2c, ADIOS2_DEFINE_VATTR_ARRAY_F2C)(
     adios2_attribute **attribute, adios2_io **io, const char *name,
-    const int *type, const void *data, const int *elements,
+    const int *type, const void *data, const int *size,
     const char *variable_name, const char *separator, int *ierr)
 {
     try
     {
-        if (*type == adios2_type_string_array)
+        if (*size < 1)
         {
-            char **char2D = new char *[*elements];
+            throw std::invalid_argument(
+                "ERROR: attribute " + std::string(name) +
+                " array size must be larger or equal to 1, in call to "
+                "adios2_define_attribute\n");
+        }
 
-            // need to covert to row-major char** style
-            std::vector<std::string> dataV(*elements);
-            for (auto i = 0; i < *elements; ++i)
+        if (*type == adios2_type_string)
+        {
+            char **char2D = new char *[*size];
+
+            // need to covert to row-major char** style, from Fortran large
+            // sequential array of character*(len=4096)
+            for (auto i = 0; i < *size; ++i)
             {
                 char2D[i] = new char[adios2_string_array_element_max_size];
 
@@ -215,18 +237,18 @@ void FC_GLOBAL(adios2_define_variable_attribute_f2c,
                     &fstringMemory[i * adios2_string_array_element_max_size]);
             }
 
-            *attribute = adios2_define_variable_attribute(
+            *attribute = adios2_define_variable_attribute_array(
                 *io, name, static_cast<adios2_type>(*type),
                 static_cast<const void *>(char2D),
-                static_cast<std::size_t>(*elements), variable_name, separator);
+                static_cast<std::size_t>(*size), variable_name, separator);
 
             delete[] char2D;
         }
         else
         {
-            *attribute = adios2_define_variable_attribute(
+            *attribute = adios2_define_variable_attribute_array(
                 *io, name, static_cast<adios2_type>(*type), data,
-                static_cast<std::size_t>(*elements), variable_name, separator);
+                static_cast<std::size_t>(*size), variable_name, separator);
         }
         *ierr = (*attribute == NULL) ? static_cast<int>(adios2_error_exception)
                                      : static_cast<int>(adios2_error_none);
@@ -235,17 +257,6 @@ void FC_GLOBAL(adios2_define_variable_attribute_f2c,
     {
         *ierr = adios2_error_exception;
     }
-}
-
-void FC_GLOBAL(adios2_define_attribute_f2c,
-               ADIOS2_DEFINE_ATTRIBUTE_F2C)(adios2_attribute **attribute,
-                                            adios2_io **io, const char *name,
-                                            const int *type, const void *data,
-                                            const int *elements, int *ierr)
-{
-    FC_GLOBAL(adios2_define_variable_attribute_f2c,
-              ADIOS2_DEFINE_VARIABLE_ATTRIBUTE_F2C)
-    (attribute, io, name, type, data, elements, "", "", ierr);
 }
 
 void FC_GLOBAL(adios2_inquire_attribute_f2c,

@@ -98,22 +98,25 @@ int main(int argc, char *argv[])
                            count2, adios2_constant_dims_true);
 
     // Define attributes in ioH
-    adios2_define_attribute(ioH, "name", adios2_type_string, "TestUtilsCWrite",
-                            1);
-    adios2_define_attribute(ioH, "strarray", adios2_type_string_array, strarray,
-                            sizeof(strarray) / sizeof(char *));
-    adios2_define_attribute(ioH, "nwriters", adios2_type_int, &nproc, 1);
+    adios2_define_attribute(ioH, "name", adios2_type_string, "TestUtilsCWrite");
+    adios2_define_attribute_array(ioH, "strarray", adios2_type_string, strarray,
+                                  sizeof(strarray) / sizeof(char *));
+    adios2_define_attribute_array(ioH, "nwriters", adios2_type_int, &nproc, 1);
     unsigned short shape2D[2] = {(unsigned short)d2_Nx, (unsigned short)d2_Ny};
-    adios2_define_attribute(ioH, "shape2D", adios2_type_unsigned_short, shape2D,
-                            2);
-    adios2_define_attribute(ioH, "aI8", adios2_type_int8_t, data_I8, 1);
-    adios2_define_attribute(ioH, "aI16", adios2_type_int16_t, data_I16, 1);
-    adios2_define_attribute(ioH, "aI32", adios2_type_int32_t, data_I32, 1);
-    adios2_define_attribute(ioH, "aU8", adios2_type_uint8_t, data_U8, 1);
-    adios2_define_attribute(ioH, "aU16", adios2_type_uint16_t, data_U16, 1);
-    adios2_define_attribute(ioH, "aU32", adios2_type_uint32_t, data_U32, 1);
-    adios2_define_attribute(ioH, "aR32", adios2_type_float, data_R32, 1);
-    adios2_define_attribute(ioH, "aR64", adios2_type_double, data_R64, 1);
+    adios2_define_attribute_array(ioH, "shape2D", adios2_type_unsigned_short,
+                                  shape2D, 2);
+    adios2_define_attribute_array(ioH, "aI8", adios2_type_int8_t, data_I8, 1);
+    adios2_define_attribute_array(ioH, "aI16", adios2_type_int16_t, data_I16,
+                                  1);
+    adios2_define_attribute_array(ioH, "aI32", adios2_type_int32_t, data_I32,
+                                  1);
+    adios2_define_attribute_array(ioH, "aU8", adios2_type_uint8_t, data_U8, 1);
+    adios2_define_attribute_array(ioH, "aU16", adios2_type_uint16_t, data_U16,
+                                  1);
+    adios2_define_attribute_array(ioH, "aU32", adios2_type_uint32_t, data_U32,
+                                  1);
+    adios2_define_attribute_array(ioH, "aR32", adios2_type_float, data_R32, 1);
+    adios2_define_attribute_array(ioH, "aR64", adios2_type_double, data_R64, 1);
 
     // inquire variables
     adios2_variable *varNproc = adios2_inquire_variable(ioH, "nproc");

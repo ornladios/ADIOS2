@@ -30,7 +30,6 @@ const std::map<std::string, std::vector<adios2_type>>
         {"long int", {adios2_type_int64_t, adios2_type_long_int}},
         {"long long int", {adios2_type_int64_t, adios2_type_long_long_int}},
         {"string", {adios2_type_string}},
-        {"string array", {adios2_type_string_array}},
         {"unsigned char", {adios2_type_unsigned_char, adios2_type_uint8_t}},
         {"unsigned short", {adios2_type_unsigned_short, adios2_type_uint16_t}},
         {"unsigned int", {adios2_type_unsigned_int, adios2_type_uint32_t}},
@@ -89,7 +88,7 @@ adios2_error adios2_attribute_type(adios2_type *type,
 }
 
 adios2_error adios2_attribute_type_string(char *type, size_t *size,
-                                          const adios2_variable *attribute)
+                                          const adios2_attribute *attribute)
 {
     try
     {
@@ -115,6 +114,26 @@ adios2_error adios2_attribute_type_string(char *type, size_t *size,
     }
 }
 
+adios2_error adios2_attribute_is_value(adios2_bool *result,
+                                       const adios2_attribute *attribute)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(attribute,
+                                        "in call to adios2_attribute_is_value");
+        const adios2::core::AttributeBase *attributeBase =
+            reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
+
+        *result = attributeBase->m_IsSingleValue ? adios2_true : adios2_false;
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_attribute_is_value"));
+    }
+}
+
 adios2_error adios2_attribute_data(void *data, size_t *size,
                                    const adios2_attribute *attribute)
 {
@@ -134,6 +153,30 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
         {
             // not supported
         }
+        else if (type == "string")
+        {
+            const adios2::core::Attribute<std::string> *attributeCpp =
+                dynamic_cast<const adios2::core::Attribute<std::string> *>(
+                    attributeBase);
+            if (attributeCpp->m_IsSingleValue)
+            {
+                char *dataT = reinterpret_cast<char *>(data);
+                attributeCpp->m_DataSingleValue.copy(
+                    dataT, attributeCpp->m_DataSingleValue.size());
+                *size = 1;
+            }
+            else
+            {
+                *size = attributeCpp->m_Elements;
+                char **dataT = reinterpret_cast<char **>(data);
+
+                for (auto e = 0; e < *size; ++e)
+                {
+                    attributeCpp->m_DataArray[e].copy(
+                        dataT[e], attributeCpp->m_DataArray[e].size());
+                }
+            }
+        }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
@@ -152,7 +195,8 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
             *size = attributeCpp->m_Elements;                                  \
         }                                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(
+            declare_template_instantiation)
 #undef declare_template_instantiation
 
         return adios2_error_none;

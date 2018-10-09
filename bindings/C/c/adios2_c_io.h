@@ -116,32 +116,60 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
                                           size_t *size, adios2_io *io);
 
 /**
- * @brief Define attribute inside io
+ * @brief Define an attribute value inside io
  * @param io handler that owns the attribute
  * @param name unique attribute name inside IO handler
  * @param type primitive type from enum adios2_type in adios2_c_types.h
- * @param data attribute data single value or array
- * @param size of data, if 1 it's a single value attribute, else accepts arrays
+ * @param value attribute single value
  * @return success: handler, failure: NULL
  */
 adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
                                           const adios2_type type,
-                                          const void *data, const size_t size);
+                                          const void *value);
 
 /**
- * Define an attribute associated to an existing variable by its name
+ * @brief Define an attribute array inside io
+ * @param io handler that owns the attribute
+ * @param name unique attribute name inside IO handler
+ * @param type primitive type from enum adios2_type in adios2_c_types.h
+ * @param data attribute data array
+ * @param size number of elements of data array
+ * @return success: handler, failure: NULL
+ */
+adios2_attribute *adios2_define_attribute_array(adios2_io *io, const char *name,
+                                                const adios2_type type,
+                                                const void *data,
+                                                const size_t size);
+
+/**
+ * Define an attribute single value associated to an existing variable by its
+ * name
+ * @param io handler that owns the variable and attribute
+ * @param name unique attribute name inside a variable in io handler
+ * @param type primitive type from enum adios2_type in adios2_c_types.h
+ * @param value attribute single value
+ * @param variable_name unique variable identifier in io handler. If variable
+ * doesn't exist adios2_error is adios2_error_invalid_argument.
+ * @param separator hierarchy separator (e.g. "/" in variable_name/name )
+ * @return success: handler, failure: NULL
+ */
+adios2_attribute *adios2_define_variable_attribute(
+    adios2_io *io, const char *name, const adios2_type type, const void *value,
+    const char *variable_name, const char *separator);
+
+/**
+ * Define an attribute array associated to an existing variable by its name
  * @param io handler that owns the variable and attribute
  * @param name unique attribute name inside a variable in io handler
  * @param type primitive type from enum adios2_type in adios2_c_types.h
  * @param data attribute data single value or array
- * @param size of data, if 1 it's a single value attribute, else
- * accepts arrays
+ * @param size number of elements of data array
  * @param variable_name unique variable identifier in io handler. If variable
  * doesn't exist adios2_error is true.
  * @param separator hierarchy separator (e.g. "/" in variable/attribute )
  * @return success: handler, failure: NULL
  */
-adios2_attribute *adios2_define_variable_attribute(
+adios2_attribute *adios2_define_variable_attribute_array(
     adios2_io *io, const char *name, const adios2_type type, const void *data,
     const size_t size, const char *variable_name, const char *separator);
 
