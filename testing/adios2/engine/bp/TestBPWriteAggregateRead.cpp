@@ -906,24 +906,21 @@ public:
 
 TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
 {
-
     WriteAggRead1D8(GetParam());
 }
 
 TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
 {
-
     WriteAggRead2D2x4(GetParam());
 }
 
 TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
 {
-
     WriteAggRead2D4x2(GetParam());
 }
 
 INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadTest,
-                        ::testing::Values("1", "2", "3", "4"));
+                        ::testing::Values("3"));
 
 int main(int argc, char **argv)
 {
