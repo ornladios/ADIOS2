@@ -146,6 +146,20 @@ namespace adios2
                 Operation{Operator(op.Op), op.Parameters, op.Info});           \
         }                                                                      \
         return operations;                                                     \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Min() const                                                 \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Min");    \
+        return m_Variable->m_Min;                                              \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Max() const                                                 \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Max");    \
+        return m_Variable->m_Max;                                              \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

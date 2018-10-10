@@ -175,6 +175,24 @@ adios2_error adios2_set_operation_parameter(adios2_variable *variable,
                                             const size_t operation_id,
                                             const char *key, const char *value);
 
+/**
+ * Read mode only: return the absolute minimum for current variable
+ * @param min output: variable minimum, must be of the same type as the variable
+ * handler
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_min(void *min, const adios2_variable *variable);
+
+/**
+ * Read mode only: return the absolute maximum for current variable
+ * @param max output: variable minimum, must be of the same type as the variable
+ * handler
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_max(void *max, const adios2_variable *variable);
+
 #ifdef __cplusplus
 } // end extern C
 #endif

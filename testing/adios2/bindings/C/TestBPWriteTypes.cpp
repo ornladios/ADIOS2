@@ -5,7 +5,7 @@
  * TestBPWriteTypes.c
  *
  *  Created on: Aug 9, 2017
- *      Author: Haocheng
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include <adios2_c.h>
@@ -199,6 +199,89 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
         EXPECT_EQ(dataVector[2], "third");
         EXPECT_EQ(dataVector[3], "fourth");
         EXPECT_EQ(elements, 4);
+
+        // compare min and max
+        auto mmI8 = std::minmax_element(&data_I8[0], &data_I8[data_Nx]);
+        auto mmI16 = std::minmax_element(&data_I16[0], &data_I16[data_Nx]);
+        auto mmI32 = std::minmax_element(&data_I32[0], &data_I32[data_Nx]);
+        auto mmI64 = std::minmax_element(&data_I64[0], &data_I64[data_Nx]);
+        auto mmU8 = std::minmax_element(&data_U8[0], &data_U8[data_Nx]);
+        auto mmU16 = std::minmax_element(&data_U16[0], &data_U16[data_Nx]);
+        auto mmU32 = std::minmax_element(&data_U32[0], &data_U32[data_Nx]);
+        auto mmU64 = std::minmax_element(&data_U64[0], &data_U64[data_Nx]);
+        auto mmR32 = std::minmax_element(&data_R32[0], &data_R32[data_Nx]);
+        auto mmR64 = std::minmax_element(&data_R64[0], &data_R64[data_Nx]);
+
+        // add min and max here
+        adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
+        adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
+        adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
+        adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
+
+        adios2_variable *varU8 = adios2_inquire_variable(ioH, "varU8");
+        adios2_variable *varU16 = adios2_inquire_variable(ioH, "varU16");
+        adios2_variable *varU32 = adios2_inquire_variable(ioH, "varU32");
+        adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
+
+        adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
+        adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
+
+        int8_t minI8, maxI8;
+        int16_t minI16, maxI16;
+        int32_t minI32, maxI32;
+        int64_t minI64, maxI64;
+
+        uint8_t minU8, maxU8;
+        uint16_t minU16, maxU16;
+        uint32_t minU32, maxU32;
+        uint64_t minU64, maxU64;
+
+        float minR32, maxR32;
+        double minR64, maxR64;
+
+        adios2_variable_min(&minI8, varI8);
+        adios2_variable_min(&minI16, varI16);
+        adios2_variable_min(&minI32, varI32);
+        adios2_variable_min(&minI64, varI64);
+        adios2_variable_min(&minU8, varU8);
+        adios2_variable_min(&minU16, varU16);
+        adios2_variable_min(&minU32, varU32);
+        adios2_variable_min(&minU64, varU64);
+        adios2_variable_min(&minR32, varR32);
+        adios2_variable_min(&minR64, varR64);
+
+        adios2_variable_max(&maxI8, varI8);
+        adios2_variable_max(&maxI16, varI16);
+        adios2_variable_max(&maxI32, varI32);
+        adios2_variable_max(&maxI64, varI64);
+        adios2_variable_max(&maxU8, varU8);
+        adios2_variable_max(&maxU16, varU16);
+        adios2_variable_max(&maxU32, varU32);
+        adios2_variable_max(&maxU64, varU64);
+        adios2_variable_max(&maxR32, varR32);
+        adios2_variable_max(&maxR64, varR64);
+
+        EXPECT_EQ(minI8, *mmI8.first);
+        EXPECT_EQ(minI16, *mmI16.first);
+        EXPECT_EQ(minI32, *mmI32.first);
+        EXPECT_EQ(minI64, *mmI64.first);
+        EXPECT_EQ(minU8, *mmU8.first);
+        EXPECT_EQ(minU16, *mmU16.first);
+        EXPECT_EQ(minU32, *mmU32.first);
+        EXPECT_EQ(minU64, *mmU64.first);
+        EXPECT_EQ(minR32, *mmR32.first);
+        EXPECT_EQ(minR64, *mmR64.first);
+
+        EXPECT_EQ(maxI8, *mmI8.second);
+        EXPECT_EQ(maxI16, *mmI16.second);
+        EXPECT_EQ(maxI32, *mmI32.second);
+        EXPECT_EQ(maxI64, *mmI64.second);
+        EXPECT_EQ(maxU8, *mmU8.second);
+        EXPECT_EQ(maxU16, *mmU16.second);
+        EXPECT_EQ(maxU32, *mmU32.second);
+        EXPECT_EQ(maxU64, *mmU64.second);
+        EXPECT_EQ(maxR32, *mmR32.second);
+        EXPECT_EQ(maxR64, *mmR64.second);
 
         adios2_close(engineH);
 
