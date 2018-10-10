@@ -14,24 +14,13 @@
 
 #include "../SmallTestData.h"
 
-class BPWriteAggregateReadTest : public ::testing::Test
-{
-public:
-    BPWriteAggregateReadTest() = default;
-
-    SmallTestData m_TestData;
-};
-
-//******************************************************************************
-// 1D 1x8 test data
-//******************************************************************************
-
 // ADIOS2 BP write
-TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
+void WriteAggRead1D8(const std::string substreams)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteAggregateRead1D8.bp");
+    const std::string fname("ADIOS2BPWriteAggregateRead1D8_" + substreams +
+                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -42,7 +31,6 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
 
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-
     // Write test data using BP
 
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -51,8 +39,7 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
 
         if (mpiSize > 1)
         {
-            const int subStreams = mpiSize / 2;
-            io.SetParameter("Substreams", std::to_string(subStreams));
+            io.SetParameter("Substreams", substreams);
         }
 
         // Declare 1D variables (NumOfProcesses * Nx)
@@ -88,12 +75,8 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
 
         io.AddTransport("file");
 
-        // QUESTION: It seems that BPFilterWriter cannot overwrite existing
-        // files
-        // Ex. if you tune Nx and NSteps, the test would fail. But if you clear
-        // the cache in
-        // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteAggregateRead1D8.bp.dir,
-        // then it works
+        SmallTestData m_TestData;
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -260,6 +243,8 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
 
+        SmallTestData m_TestData;
+
         for (size_t t = 0; t < NSteps; ++t)
         {
             var_i8.SetStepSelection({t, 1});
@@ -320,15 +305,12 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
     }
 }
 
-//******************************************************************************
-// 2D 2x4 test data
-//******************************************************************************
-
-TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
+void WriteAggRead2D4x2(const std::string substreams)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("ADIOS2BPWriteAggregateRead2D2x4Test.bp");
+    const std::string fname("ADIOS2BPWriteAggregateRead2D2x4_" + substreams +
+                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -356,7 +338,8 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
         }
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
-        // The local process' part (start, count) can be defined now or later
+        // The local process' part (start, count) can be defined now or
+        // later
         // before Write().
         {
             const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
@@ -386,6 +369,8 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
         // Create the BP Engine
         io.SetEngine("BPFile");
         io.AddTransport("file");
+
+        SmallTestData m_TestData;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -557,6 +542,8 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
 
+        SmallTestData m_TestData;
+
         for (size_t t = 0; t < NSteps; ++t)
         {
             var_i8.SetStepSelection({t, 1});
@@ -617,15 +604,12 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
     }
 }
 
-//******************************************************************************
-// 2D 4x2 test data
-//******************************************************************************
-
-TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
+void WriteAggRead2D2x4(const std::string substreams)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ADIOS2BPWriteAggregateRead2D4x2Test.bp");
+    const std::string fname("ADIOS2BPWriteAggregateRead2D4x2_" + substreams +
+                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -646,12 +630,12 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
 
         if (mpiSize > 1)
         {
-            const int subStreams = mpiSize / 2;
-            io.SetParameter("Substreams", std::to_string(subStreams));
+            io.SetParameter("Substreams", substreams);
         }
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
-        // The local process' part (start, count) can be defined now or later
+        // The local process' part (start, count) can be defined now or
+        // later
         // before Write().
         {
             adios2::Dims shape{static_cast<unsigned int>(Ny),
@@ -683,6 +667,8 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
         io.SetEngine("BPFile");
 
         io.AddTransport("file");
+
+        SmallTestData m_TestData;
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -849,6 +835,8 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
 
+        SmallTestData m_TestData;
+
         for (size_t t = 0; t < NSteps; ++t)
         {
             var_i8.SetStepSelection({t, 1});
@@ -905,23 +893,37 @@ TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
     }
 }
 
-TEST_F(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateSubStreamsException)
+class BPWriteAggregateReadTest : public ::testing::TestWithParam<std::string>
 {
-    // Each process would write a 4x2 array and all processes would
-    // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("dummy.bp");
+public:
+    BPWriteAggregateReadTest() = default;
 
-    int mpiSize = 1;
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    SmallTestData m_TestData;
 
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    adios2::IO io = adios.DeclareIO("TestIO");
-    io.SetParameter("Substreams", std::to_string(mpiSize + 1));
-    EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
+    virtual void SetUp() {}
+    virtual void TearDown() {}
+};
+
+TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
+{
+
+    WriteAggRead1D8(GetParam());
 }
-//******************************************************************************
-// main
-//******************************************************************************
+
+TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
+{
+
+    WriteAggRead2D2x4(GetParam());
+}
+
+TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
+{
+
+    WriteAggRead2D4x2(GetParam());
+}
+
+INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadTest,
+                        ::testing::Values("1", "2", "3", "4"));
 
 int main(int argc, char **argv)
 {
