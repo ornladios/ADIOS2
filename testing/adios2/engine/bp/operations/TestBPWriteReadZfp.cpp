@@ -87,12 +87,18 @@ void ZfpRate1D(const double rate)
         ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r32.Steps(), NSteps);
         ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+        auto mmR32 = std::minmax_element(r32s.begin(), r32s.end());
+        EXPECT_EQ(var_r32.Min(), *mmR32.first);
+        EXPECT_EQ(var_r32.Max(), *mmR32.second);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
         ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+        auto mmR64 = std::minmax_element(r64s.begin(), r64s.end());
+        EXPECT_EQ(var_r64.Min(), *mmR64.first);
+        EXPECT_EQ(var_r64.Max(), *mmR64.second);
 
         const adios2::Dims start{mpiRank * Nx};
         const adios2::Dims count{Nx};
@@ -201,6 +207,9 @@ void ZfpRate2D(const double rate)
         ASSERT_EQ(var_r32.Steps(), NSteps);
         ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
         ASSERT_EQ(var_r32.Shape()[1], Ny);
+        auto mmR32 = std::minmax_element(r32s.begin(), r32s.end());
+        EXPECT_EQ(var_r32.Min(), *mmR32.first);
+        EXPECT_EQ(var_r32.Max(), *mmR32.second);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
@@ -208,6 +217,9 @@ void ZfpRate2D(const double rate)
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
         ASSERT_EQ(var_r64.Shape()[1], Ny);
+        auto mmR64 = std::minmax_element(r64s.begin(), r64s.end());
+        EXPECT_EQ(var_r64.Min(), *mmR64.first);
+        EXPECT_EQ(var_r64.Max(), *mmR64.second);
 
         const adios2::Dims start{mpiRank * Nx, 0};
         const adios2::Dims count{Nx, Ny};
@@ -318,6 +330,9 @@ void ZfpRate3D(const double rate)
         ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
         ASSERT_EQ(var_r32.Shape()[1], Ny);
         ASSERT_EQ(var_r32.Shape()[2], Nz);
+        auto mmR32 = std::minmax_element(r32s.begin(), r32s.end());
+        EXPECT_EQ(var_r32.Min(), *mmR32.first);
+        EXPECT_EQ(var_r32.Max(), *mmR32.second);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
@@ -326,6 +341,9 @@ void ZfpRate3D(const double rate)
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
         ASSERT_EQ(var_r64.Shape()[1], Ny);
         ASSERT_EQ(var_r64.Shape()[2], Nz);
+        auto mmR64 = std::minmax_element(r64s.begin(), r64s.end());
+        EXPECT_EQ(var_r64.Min(), *mmR64.first);
+        EXPECT_EQ(var_r64.Max(), *mmR64.second);
 
         const adios2::Dims start{mpiRank * Nx, 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};

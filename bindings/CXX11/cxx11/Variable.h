@@ -56,14 +56,14 @@ public:
      * Count is the dimension from Start point
      * @param selection input {start, count}
      */
-    void SetSelection(const Box<Dims> &selection);
+    void SetSelection(const adios2::Box<adios2::Dims> &selection);
 
     /**
      * Sets a step selection modifying current startStep, countStep
      * countStep is the number of steps from startStep point
      * @param stepSelection input {startStep, countStep}
      */
-    void SetStepSelection(const Box<size_t> &stepSelection);
+    void SetStepSelection(const adios2::Box<size_t> &stepSelection);
 
     /**
      * Returns the number of elements required for pre-allocation based on
@@ -101,19 +101,19 @@ public:
      * Inspects current shape
      * @return shape vector
      */
-    Dims Shape() const;
+    adios2::Dims Shape() const;
 
     /**
      * Inspects current start point
      * @return start vector
      */
-    Dims Start() const;
+    adios2::Dims Start() const;
 
     /**
      * Inspects current count from start
      * @return count vector
      */
-    Dims Count() const;
+    adios2::Dims Count() const;
 
     /**
      * For read mode, inspect the number of available steps
@@ -134,8 +134,8 @@ public:
     struct Operation
     {
         const Operator Op;
-        const Params Parameters;
-        const Params Info;
+        const adios2::Params Parameters;
+        const adios2::Params Info;
     };
 
     /**
@@ -145,13 +145,26 @@ public:
      * be confused by op own parameters
      * @return operation index handler in Operations()
      */
-    size_t AddOperation(const Operator op, const Params &parameters = Params());
+    size_t AddOperation(const Operator op,
+                        const adios2::Params &parameters = adios2::Params());
 
     /**
      * EXPERIMENTAL: inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
     std::vector<Operation> Operations() const;
+
+    /**
+     * Read mode only: return the absolute minimum for current variable
+     * @return minimum
+     */
+    T Min() const;
+
+    /**
+     * Read mode only: return the absolute maximum for current variable
+     * @return maximum
+     */
+    T Max() const;
 
     /** Contains sub-block information for a particular Variable<T> */
     struct Info

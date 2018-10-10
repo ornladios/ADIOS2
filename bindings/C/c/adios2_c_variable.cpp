@@ -440,6 +440,80 @@ adios2_error adios2_set_operation_parameter(adios2_variable *variable,
     }
 }
 
+adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call "
+                                        "to adios2_variable_min");
+        adios2::helper::CheckForNullptr(
+            min, "for void* min, in call to adios2_variable_min");
+
+        const adios2::core::VariableBase *variableBase =
+            reinterpret_cast<const adios2::core::VariableBase *>(variable);
+        const std::string type(variableBase->m_Type);
+
+        if (type == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::helper::GetType<T>())                             \
+    {                                                                          \
+        T *minT = reinterpret_cast<T *>(min);                                  \
+        const adios2::core::Variable<T> *variableT =                           \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        *minT = variableT->m_Min;                                              \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_variable_min"));
+    }
+}
+
+adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call "
+                                        "to adios2_variable_max");
+        adios2::helper::CheckForNullptr(
+            max, "for void* max, in call to adios2_variable_max");
+
+        const adios2::core::VariableBase *variableBase =
+            reinterpret_cast<const adios2::core::VariableBase *>(variable);
+        const std::string type(variableBase->m_Type);
+
+        if (type == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (type == adios2::helper::GetType<T>())                             \
+    {                                                                          \
+        T *maxT = reinterpret_cast<T *>(max);                                  \
+        const adios2::core::Variable<T> *variableT =                           \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        *maxT = variableT->m_Max;                                              \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_variable_max"));
+    }
+}
+
 #ifdef __cplusplus
 } // end extern C
 #endif
