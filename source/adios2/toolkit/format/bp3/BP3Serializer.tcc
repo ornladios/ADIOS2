@@ -654,8 +654,11 @@ void BP3Serializer::PutVariableCharacteristics(
     PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
                             stats.FileIndex, buffer);
 
-    PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                    buffer);
+    if (blockInfo.Data != nullptr)
+    {
+        PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+                        buffer);
+    }
 
     uint8_t characteristicID = characteristic_dimensions;
     helper::InsertToBuffer(buffer, &characteristicID);
@@ -730,8 +733,11 @@ void BP3Serializer::PutVariableCharacteristics(
     ++characteristicsCounter;
 
     // VALUE for SCALAR or STAT min, max for ARRAY
-    PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                    buffer, position);
+    if (blockInfo.Data != nullptr)
+    {
+        PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+                        buffer, position);
+    }
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -758,12 +764,12 @@ void BP3Serializer::PutPayloadInBuffer(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo) noexcept
 {
+    const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     ProfilerStart("memcpy");
-    helper::CopyToBufferThreads(
-        m_Data.m_Buffer, m_Data.m_Position, blockInfo.Data,
-        helper::GetTotalSize(blockInfo.Count), m_Threads);
+    helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
+                                blockInfo.Data, blockSize, m_Threads);
     ProfilerStop("memcpy");
-    m_Data.m_AbsolutePosition += variable.PayloadSize();
+    m_Data.m_AbsolutePosition += blockSize * sizeof(T); // payload size
 }
 
 template <class T>

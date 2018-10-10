@@ -1094,17 +1094,20 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
             bpWriter.Put(var_i8, currentTestData.I8.data() + Nx / 2);
 
             var_i16.SetSelection(selNull);
-            bpWriter.Put(var_i16, currentTestData.I16.data());
+            const int16_t *i16Null = nullptr;
+            bpWriter.Put(var_i16, i16Null);
             var_i16.SetSelection(sel2);
             bpWriter.Put(var_i16, currentTestData.I16.data() + Nx / 2);
 
             var_i32.SetSelection(selNull);
-            bpWriter.Put(var_i32, currentTestData.I32.data());
+            const int32_t *i32Null = nullptr;
+            bpWriter.Put(var_i32, i32Null);
             var_i32.SetSelection(sel2);
             bpWriter.Put(var_i32, currentTestData.I32.data() + Nx / 2);
 
             var_i64.SetSelection(selNull);
-            bpWriter.Put(var_i64, currentTestData.I64.data());
+            const int64_t *i64Null = nullptr;
+            bpWriter.Put(var_i64, i64Null);
             var_i64.SetSelection(sel2);
             bpWriter.Put(var_i64, currentTestData.I64.data() + Nx / 2);
 

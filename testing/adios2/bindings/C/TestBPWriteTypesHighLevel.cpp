@@ -18,13 +18,13 @@
 
 #include "SmallTestData_c.h"
 
-class BPWriteTypesHighLevel : public ::testing::Test
+class BPWriteTypesHighLevelCC : public ::testing::Test
 {
 public:
-    BPWriteTypesHighLevel() = default;
+    BPWriteTypesHighLevelCC() = default;
 };
 
-TEST_F(BPWriteTypesHighLevel, ADIOS2BPWriteTypes)
+TEST_F(BPWriteTypesHighLevelCC, ADIOS2BPWriteTypes)
 {
     int rank = 0;
     int size = 1;
