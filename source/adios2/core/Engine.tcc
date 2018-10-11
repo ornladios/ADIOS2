@@ -184,6 +184,25 @@ void Engine::CommonChecks(Variable<T> &variable, const T *data,
         helper::CheckForNullptr(
             data, "for data argument in non-zero count block, " + hint);
     }
+
+    if (!variable.m_MemoryStart.empty() && !variable.m_MemoryCount.empty())
+    {
+        const Box<Dims> selectionBox =
+            helper::StartEndBox(variable.m_Start, variable.m_Count);
+        const Box<Dims> memoryBox =
+            helper::StartEndBox(variable.m_MemoryStart, variable.m_MemoryCount);
+
+        const Box<Dims> intersectionBox =
+            helper::IntersectionBox(selectionBox, memoryBox);
+        if (intersectionBox.first != selectionBox.first ||
+            intersectionBox.second != selectionBox.second)
+        {
+            throw std::invalid_argument(
+                "ERROR: variable start and count do not fall inside "
+                "SetMemorySelection start and count for variable " +
+                variable.m_Name + ", " + hint);
+        }
+    }
 }
 
 } // end namespace core

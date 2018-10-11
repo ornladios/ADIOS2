@@ -48,6 +48,9 @@ public:
     Dims m_Start;               ///< starting point (offsets) in global shape
     Dims m_Count;               ///< dimensions from m_Start in global shape
 
+    Dims m_MemoryStart; ///< offset of memory selection
+    Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
+
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
     /** Global array was written as Local value, so read accordingly */
@@ -135,7 +138,7 @@ public:
      * selection
      * Only bounding boxes are allowed
      */
-    void SetMemorySelection(const Box<Dims> &boxDims);
+    void SetMemorySelection(const Box<Dims> &selection);
 
     size_t GetAvailableStepsStart() const;
 
@@ -191,9 +194,6 @@ public:
 protected:
     const bool m_DebugMode = false;
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
-
-    Dims m_MemoryStart; ///< offset of memory selection
-    Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
 
     unsigned int m_DeferredCounter = 0;
 

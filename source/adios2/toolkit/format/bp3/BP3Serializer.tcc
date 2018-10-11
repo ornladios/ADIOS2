@@ -95,7 +95,6 @@ BP3Serializer::PutAttributeHeaderInData(const core::Attribute<T> &attribute,
     PutNameRecord(attribute.m_Name, buffer, position);
     position += 2; // skip path
 
-    // TODO: attribute from Variable??
     constexpr int8_t no = 'n';
     helper::CopyToBuffer(buffer, position,
                          &no); // not associated with a Variable
@@ -768,8 +767,23 @@ void BP3Serializer::PutPayloadInBuffer(
 {
     const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     ProfilerStart("memcpy");
-    helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
-                                blockInfo.Data, blockSize, m_Threads);
+    if (!blockInfo.MemoryStart.empty() && !blockInfo.MemoryCount.empty())
+    {
+        // TODO need a more robust ClipContiguousMemory solution
+
+        //        char *contiguousMemory = reinterpret_cast<char
+        //        *>(blockInfo.Data);
+        //
+        //        helper::ClipContiguousMemory(
+        //            m_Data.m_Buffer.data(), blockInfo.Start, blockInfo.Count,
+        //            contiguousMemory, memoryBox, selectionBox, m_IsRowMajor,
+        //            false);
+    }
+    else
+    {
+        helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
+                                    blockInfo.Data, blockSize, m_Threads);
+    }
     ProfilerStop("memcpy");
     m_Data.m_AbsolutePosition += blockSize * sizeof(T); // payload size
 }

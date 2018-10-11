@@ -38,6 +38,14 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::SetMemorySelection(const Box<Dims> &selection)           \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::SetMemorySelection"); \
+        m_Variable->SetMemorySelection(selection);                             \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     void Variable<T>::SetStepSelection(const Box<size_t> &stepSelection)       \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \

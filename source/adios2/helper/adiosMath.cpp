@@ -99,12 +99,52 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
     return box;
 }
 
+Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
+                                 const Dims &start2,
+                                 const Dims &count2) noexcept
+{
+    Box<Dims> intersectionStartCount;
+    const size_t dimensionsSize = start1.size();
+
+    for (auto d = 0; d < dimensionsSize; ++d)
+    {
+        // Don't intercept
+        const size_t end1 = start1[d] + count1[d] - 1;
+        const size_t end2 = start2[d] + count2[d] - 1;
+
+        if (start2 > end1 || end2 < start1)
+        {
+            return intersectionStartCount;
+        }
+    }
+
+    intersectionStartCount.first.reserve(dimensionsSize);
+    intersectionStartCount.second.reserve(dimensionsSize);
+
+    for (auto d = 0; d < dimensionsSize; ++d)
+    {
+        const size_t intersectionStart =
+            (start1[d] < start2[d]) ? start2[d] : start1[d];
+
+        // end, must be inclusive
+        const size_t end1 = start1[d] + count1[d] - 1;
+        const size_t end2 = start2[d] + count2[d] - 1;
+        const size_t intersectionEnd = (end1 > end2) ? end2 : end1;
+
+        intersectionStartCount.first.push_back(intersectionStart);
+        intersectionStartCount.second.push_back(intersectionEnd -
+                                                intersectionStart + 1);
+    }
+
+    return intersectionStartCount;
+}
+
 Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 {
     Box<Dims> intersectionBox;
     const size_t dimensionsSize = box1.first.size();
 
-    for (size_t d = 0; d < dimensionsSize; ++d)
+    for (auto d = 0; d < dimensionsSize; ++d)
     {
         // Don't intercept
         if (box2.first[d] > box1.second[d] || box2.second[d] < box1.first[d])
@@ -117,7 +157,7 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
     intersectionBox.first.reserve(dimensionsSize);
     intersectionBox.second.reserve(dimensionsSize);
 
-    for (size_t d = 0; d < dimensionsSize; ++d)
+    for (auto d = 0; d < dimensionsSize; ++d)
     {
         // start
         if (box1.first[d] < box2.first[d])

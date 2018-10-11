@@ -130,10 +130,10 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
     m_Count = count;
 }
 
-void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
+void VariableBase::SetMemorySelection(const Box<Dims> &selection)
 {
-    const Dims &start = boxDims.first;
-    const Dims &count = boxDims.second;
+    const Dims &memoryStart = selection.first;
+    const Dims &memoryCount = selection.second;
 
     if (m_DebugMode)
     {
@@ -145,17 +145,19 @@ void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
                                         ", in call to SetMemorySelection\n");
         }
 
-        if (m_Shape.size() != start.size() || m_Shape.size() != count.size())
+        if (m_Shape.size() != memoryStart.size() ||
+            m_Shape.size() != memoryCount.size())
         {
             throw std::invalid_argument(
                 "ERROR: selection Dims start, count sizes must be "
                 "the same as variable " +
                 m_Name + " m_Shape, in call to SetMemorySelction\n");
         }
+        // TODO add more checks if required
     }
 
-    m_MemoryStart = start;
-    m_MemoryCount = count;
+    m_MemoryStart = memoryStart;
+    m_MemoryCount = memoryCount;
 }
 
 size_t VariableBase::GetAvailableStepsStart() const

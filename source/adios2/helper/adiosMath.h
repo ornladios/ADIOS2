@@ -114,8 +114,13 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count,
 
 Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
 
+Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
+                                 const Dims &start2,
+                                 const Dims &count2) noexcept;
+
 /**
- * Returns the intersection box { start, end } where end is inclusive from box1
+ * Returns the intersection box { start, end } where end is inclusive from
+ * box1
  * and box2
  * @param box1 {start, end} input (end is exclusive)
  * @param box2 {start, end} input (end is exclusive)

@@ -85,7 +85,33 @@ template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
 
 /**
- * Clips the contiguous memory corresponding to an intersection and puts it in
+ * Copy memory between a source and a destination. Memory might not be
+ * contiguous in either source or destination if MemoryStart and MemoryCount are
+ * provided
+ * @param dest
+ * @param destStart
+ * @param destCount
+ * @param src
+ * @param srcStart
+ * @param srcCount
+ * @param destIsRowMajor
+ * @param srcIsRowMajor
+ * @param destMemoryStart
+ * @param destMemoryCount
+ * @param srcMemoryStart
+ * @param srcMemoryCount
+ */
+void CopyMemory(char *dest, const Dims &destStart, const Dims &destCount,
+                char *src, const Dims &srcStart, const Dims &srcCount,
+                const bool destIsRowMajor, const bool srcIsRowMajor,
+                const Dims &destMemoryStart = Dims(),
+                const Dims &destMemoryCount = Dims(),
+                const Dims &srcMemoryStart = Dims(),
+                const Dims &srcMemoryCount = Dims()) noexcept;
+
+/**
+ * Clips the contiguous memory corresponding to an intersection and puts it
+ * in
  * dest, where dest has a start and coun
  * @param dest to be populated (must be pre-allocated)
  * @param destStart offset selection for data pointer

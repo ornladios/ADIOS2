@@ -60,6 +60,14 @@ public:
     void SetSelection(const adios2::Box<adios2::Dims> &selection);
 
     /**
+     * Sets the description of the pointer or vector memory given at Put and Get
+     * for non-contiguous memory writes and reads. Most commonly used in I/O of
+     * non ghost-cells into a larger array containing ghost cells.
+     * @param selection input {start, count} of memory to be given at Put or Get
+     */
+    void SetMemorySelection(const adios2::Box<adios2::Dims> &selection);
+
+    /**
      * Sets a step selection modifying current startStep, countStep
      * countStep is the number of steps from startStep point
      * @param stepSelection input {startStep, countStep}

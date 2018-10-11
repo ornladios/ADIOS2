@@ -54,9 +54,12 @@ void BP3Serializer::PutProcessGroupIndex(
     // write name to metadata
     PutNameRecord(ioName, metadataBuffer);
 
+    // used if a variable sets memory selection only
+    // TODO: in a new format this should be at the constructor level
+    m_IsRowMajor = helper::IsRowMajor(hostLanguage);
     // write if data is column major in metadata and data
-    const char columnMajor =
-        (helper::IsRowMajor(hostLanguage) == false) ? 'y' : 'n';
+    const char columnMajor = m_IsRowMajor ? 'n' : 'y';
+
     helper::InsertToBuffer(metadataBuffer, &columnMajor);
     helper::CopyToBuffer(dataBuffer, dataPosition, &columnMajor);
 
