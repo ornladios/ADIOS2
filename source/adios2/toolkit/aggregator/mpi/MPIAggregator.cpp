@@ -41,6 +41,11 @@ std::vector<MPI_Request> MPIAggregator::IExchange(BufferSTL & /**bufferSTL*/,
 std::vector<MPI_Request>
 MPIAggregator::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
 {
+    if (m_Size == 1)
+    {
+        return std::vector<MPI_Request>();
+    }
+
     const int destination = (step != m_Size - 1) ? step + 1 : 0;
     std::vector<MPI_Request> requests(2);
 
@@ -75,6 +80,11 @@ MPIAggregator::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
 void MPIAggregator::WaitAbsolutePosition(std::vector<MPI_Request> &requests,
                                          const int step)
 {
+    if (m_Size == 1)
+    {
+        return;
+    }
+
     MPI_Status status;
     const int destination = (step != m_Size - 1) ? step + 1 : 0;
 
