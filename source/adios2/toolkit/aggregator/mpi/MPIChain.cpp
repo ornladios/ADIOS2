@@ -36,6 +36,11 @@ void MPIChain::Init(const size_t subStreams, MPI_Comm parentComm)
 std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
                                              const int step)
 {
+    if (m_Size == 1)
+    {
+        return std::vector<MPI_Request>();
+    }
+
     BufferSTL &sendBuffer = GetSender(bufferSTL);
     const int endRank = m_Size - 1 - step;
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
@@ -94,6 +99,11 @@ std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
 
 void MPIChain::Wait(std::vector<MPI_Request> &requests, const int step)
 {
+    if (m_Size == 1)
+    {
+        return;
+    }
+
     const int endRank = m_Size - 1 - step;
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
     const bool receiver = (m_Rank < endRank) ? true : false;

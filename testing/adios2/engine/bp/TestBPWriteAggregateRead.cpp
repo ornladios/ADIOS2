@@ -920,7 +920,7 @@ TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
 }
 
 INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadTest,
-                        ::testing::Values("3"));
+                        ::testing::Values("1", "2", "3", "4", "5"));
 
 int main(int argc, char **argv)
 {
