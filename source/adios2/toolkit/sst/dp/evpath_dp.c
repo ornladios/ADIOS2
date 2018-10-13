@@ -754,6 +754,12 @@ static FMStructDescRec EvpathTimestepInfoStructs[] = {
 
 static struct _CP_DP_Interface evpathDPInterface;
 
+static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream)
+{
+    /* The evpath DP should be a lower priority than any RDMA dp, so return 1 */
+    return 1;
+}
+
 extern CP_DP_Interface LoadEVpathDP()
 {
     memset(&evpathDPInterface, 0, sizeof(evpathDPInterface));
@@ -773,5 +779,7 @@ extern CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.destroyReader = EvpathDestroyReader;
     evpathDPInterface.destroyWriter = EvpathDestroyWriter;
     evpathDPInterface.destroyWriterPerReader = EvpathDestroyWriterPerReader;
+    evpathDPInterface.getPriority = EvpathGetPriority;
+    evpathDPInterface.unGetPriority = NULL;
     return &evpathDPInterface;
 }

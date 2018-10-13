@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <evpath.h>
@@ -6,6 +7,7 @@
 
 #include "SSTConfig.h"
 #include "dp_interface.h"
+#include "sst.h"
 #include "sst_data.h"
 
 #ifdef SST_HAVE_LIBFABRIC
@@ -13,21 +15,106 @@ extern CP_DP_Interface LoadRdmaDP();
 #endif /* SST_HAVE_LIBFABRIC */
 extern CP_DP_Interface LoadEVpathDP();
 
-CP_DP_Interface LoadDP(char *dp_name)
+typedef struct _DPElement
 {
-    if (strcmp(dp_name, "evpath") == 0)
+    const char *Name;
+    CP_DP_Interface Interface;
+    long Priority;
+} * DPlist;
+
+static DPlist AddDPPossibility(CP_Services Svcs, void *CP_Stream, DPlist List,
+                               CP_DP_Interface Interface, const char *Name)
+{
+    int Count = 0;
+    if (Interface == NULL)
+        return List;
+    if (List == NULL)
     {
-        return LoadEVpathDP();
+        List = malloc(2 * sizeof(*List));
     }
-#ifdef SST_HAVE_LIBFABRIC
-    else if (strcmp(dp_name, "rdma") == 0)
-    {
-        return LoadRdmaDP();
-    }
-#endif /* SST_HAVE_LIBFABRIC */
     else
     {
-        fprintf(stderr, "Unknown DP interface %s, load failed\n", dp_name);
-        return NULL;
+        printf("List count interface is %p\n", List[Count].Interface);
+        while (List[Count].Interface)
+        {
+            Count++;
+        }
+        printf("Count is %d\n", Count);
+        List = realloc(List, sizeof(*List) * (Count + 2));
     }
+    List[Count].Interface = Interface;
+    List[Count].Name = Name;
+    List[Count].Priority = Interface->getPriority(Svcs, CP_Stream);
+    List[Count + 1].Interface = NULL;
+    return List;
+}
+
+CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
+                         const char *PreferredDP)
+{
+    CP_DP_Interface Ret;
+    DPlist List = NULL;
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadEVpathDP(), "evpath");
+#ifdef SST_HAVE_LIBFABRIC
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma");
+#endif /* SST_HAVE_LIBFABRIC */
+
+    int SelectedDP = -1;
+    int BestPriority = -1;
+    int BestPrioDP = -1;
+    int i = 0;
+    if (PreferredDP)
+    {
+        Svcs->verbose(CP_Stream, "Prefered dataplane name is \"%s\"\n",
+                      PreferredDP);
+    }
+    while (List[i].Interface)
+    {
+        Svcs->verbose(
+            CP_Stream,
+            "Considering DataPlane \"%s\" for possible use, priority is %d\n",
+            List[i].Name, List[i].Priority);
+        if (PreferredDP)
+        {
+            if (strcasecmp(List[i].Name, PreferredDP) == 0)
+            {
+                SelectedDP = i;
+                break;
+            }
+        }
+        if (List[i].Priority > BestPriority)
+        {
+            BestPriority = List[i].Priority;
+            BestPrioDP = i;
+        }
+        i++;
+    }
+    if (SelectedDP != -1)
+    {
+        Svcs->verbose(CP_Stream,
+                      "Selecting DataPlane \"%s\" (preferred) for use\n",
+                      List[SelectedDP].Name);
+    }
+    else
+    {
+        Svcs->verbose(CP_Stream,
+                      "Selecting DataPlane \"%s\", priority %d for use\n",
+                      List[BestPrioDP].Name, List[BestPrioDP].Priority);
+        SelectedDP = BestPrioDP;
+    }
+    i = 0;
+    while (List[i].Interface)
+    {
+        if (i != SelectedDP)
+        {
+            if (List[i].Interface->unGetPriority)
+            {
+                List[i].Interface->unGetPriority(Svcs, CP_Stream);
+            }
+        }
+        i++;
+    }
+    Ret = List[SelectedDP].Interface;
+    free(List);
+    return Ret;
 }

@@ -704,8 +704,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->ConfigParams = Params;
 
     char *Filename = strdup(Name);
-    CP_verbose(Stream, "Loading DataPlane \"%s\"\n", Stream->DataTransport);
-    Stream->DP_Interface = LoadDP(Stream->DataTransport);
+    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->DataTransport);
 
     if (!Stream->DP_Interface)
     {

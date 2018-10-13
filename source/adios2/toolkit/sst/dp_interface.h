@@ -230,6 +230,28 @@ typedef void (*CP_DP_ProvideTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
 typedef void (*CP_DP_ReleaseTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
                                           long Timestep);
 
+/*!
+ * CP_DP_GetPriorityFunc is the type of a dataplane initialization
+ * function that returns the relative priority of this particular
+ * dataplane WRT other dataplanes.  Its return value is an integer
+ * where higher means higher priority (more desirable) and -1 means
+ * that the dataplane cannot be used.  The function is really indented
+ * to support dataplanes for which we cannot determine at compile-time
+ * whether or not the run-time conditions will support their use
+ * (libfabric is the primum exemplum).  The Svcs and CP_Stream
+ * parameters exist only to support verbosity in the DP-level
+ * function.
+ */
+typedef int (*CP_DP_GetPriorityFunc)(CP_Services Svcs, void *CP_Stream);
+
+/*!
+ * CP_DP_UnGetPriorityFunc is the type of a dataplane initialization
+ * function that undoes/deallocates anything that might have been done
+ * or allocated by the GetPriority function in the event that the
+ * dataplane in question is not used.
+ */
+typedef void (*CP_DP_UnGetPriorityFunc)(CP_Services Svcs, void *CP_Stream);
+
 struct _CP_DP_Interface
 {
     FMStructDescList ReaderContactFormats;
@@ -251,6 +273,9 @@ struct _CP_DP_Interface
     CP_DP_DestroyReaderFunc destroyReader;
     CP_DP_DestroyWriterFunc destroyWriter;
     CP_DP_DestroyWriterPerReaderFunc destroyWriterPerReader;
+
+    CP_DP_GetPriorityFunc getPriority;
+    CP_DP_UnGetPriorityFunc unGetPriority;
 };
 
 typedef void (*CP_VerboseFunc)(void *CP_Stream, char *Format, ...);
@@ -266,6 +291,7 @@ struct _CP_Services
     CP_GetMPICommFunc getMPIComm;
 };
 
-CP_DP_Interface LoadDP(char *dp_name);
+CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
+                         const char *prefered_dp);
 
 #endif
