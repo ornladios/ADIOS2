@@ -1041,10 +1041,11 @@ static struct _CP_DP_Interface RdmaDPInterface;
  */
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
 {
+    int Ret = -1;
     Svcs->verbose(
         CP_Stream,
-        "RDMA Dataplane evaluating viability, returning priority 1000\n");
-    return 1000;
+        "RDMA Dataplane evaluating viability, returning priority %d\n", Ret);
+    return Ret;
 }
 
 /* If RdmaGetPriority has allocated resources or initialized something
