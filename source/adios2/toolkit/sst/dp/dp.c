@@ -34,12 +34,10 @@ static DPlist AddDPPossibility(CP_Services Svcs, void *CP_Stream, DPlist List,
     }
     else
     {
-        printf("List count interface is %p\n", List[Count].Interface);
         while (List[Count].Interface)
         {
             Count++;
         }
-        printf("Count is %d\n", Count);
         List = realloc(List, sizeof(*List) * (Count + 2));
     }
     List[Count].Interface = Interface;
