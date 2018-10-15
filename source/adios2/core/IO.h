@@ -86,7 +86,7 @@ public:
 
     /** at read for file engines: true: in streaming (step-by-step) mode, or
      * false: random-access mode (files) */
-    bool m_Streaming = false;
+    bool m_ReadStreaming = false;
 
     /** used if m_Streaming is true by file reader engines */
     size_t m_EngineStep = 0;

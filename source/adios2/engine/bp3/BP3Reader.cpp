@@ -61,12 +61,12 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     // used to inquire for variables in streaming mode
-    m_IO.m_Streaming = true;
+    m_IO.m_ReadStreaming = true;
     m_IO.m_EngineStep = m_CurrentStep;
 
     if (m_CurrentStep >= m_BP3Deserializer.m_MetadataSet.StepsCount)
     {
-        m_IO.m_Streaming = false;
+        m_IO.m_ReadStreaming = false;
         return StepStatus::EndOfStream;
     }
 
