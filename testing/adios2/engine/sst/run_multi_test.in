@@ -41,7 +41,7 @@ my $result = 1;
 my $writer_exec_cmd = "@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_writers";
 my $reader_exec_cmd = "@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_readers";
 
-if ("@MPIEXEC@" eq "") {
+if (("@MPIEXEC@" eq "") or ("@MPIEXEC@" eq "MPIEXEC_EXECUTABLE-NOTFOUND")) {
     # NO MPI
     $writer_exec_cmd = "";
     $reader_exec_cmd = "";
