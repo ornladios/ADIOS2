@@ -79,6 +79,9 @@ rm -f *.sst
 if [ -z "@MPIEXEC@" ]; then
     write_spawn_cmd=""
     read_spawn_cmd=""
+elif [ "@MPIEXEC@" = "MPIEXEC_EXECUTABLE-NOTFOUND" ]; then
+    write_spawn_cmd=""
+    read_spawn_cmd=""
 else
     write_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw"
     read_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr"
