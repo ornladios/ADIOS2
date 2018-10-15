@@ -62,7 +62,7 @@ Operator ADIOS::DefineOperator(const std::string name, const std::string type,
     return Operator(&m_ADIOS->DefineOperator(name, type, parameters));
 }
 
-Operator ADIOS::InquireOperator(const std::string name) noexcept
+Operator ADIOS::InquireOperator(const std::string name)
 {
     CheckPointer("for operator name " + name + ", in call to InquireOperator");
     return Operator(m_ADIOS->InquireOperator(name));
@@ -95,7 +95,6 @@ Operator ADIOS::DefineCallBack(
 }
 
 // PRIVATE
-
 void ADIOS::CheckPointer(const std::string hint)
 {
     if (!m_ADIOS)
