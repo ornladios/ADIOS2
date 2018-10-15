@@ -17,97 +17,143 @@
 namespace adios2
 {
 
-bool IO::InConfigFile() const noexcept { return m_IO.InConfigFile(); }
+IO::operator bool() const noexcept { return (m_IO == nullptr) ? false : true; }
 
-void IO::SetEngine(const std::string engineType) noexcept
+bool IO::InConfigFile() const
 {
-    m_IO.SetEngine(engineType);
+    helper::CheckForNullptr(m_IO, "in call to IO::InConfigFile");
+    return m_IO->InConfigFile();
 }
 
-void IO::SetParameter(const std::string key, const std::string value) noexcept
+void IO::SetEngine(const std::string engineType)
 {
-    m_IO.SetParameter(key, value);
+    helper::CheckForNullptr(m_IO, "in call to IO::SetEngine");
+    m_IO->SetEngine(engineType);
 }
 
-void IO::SetParameters(const Params &parameters) noexcept
+void IO::SetParameter(const std::string key, const std::string value)
 {
-    m_IO.SetParameters(parameters);
+    helper::CheckForNullptr(m_IO, "in call to IO::SetParameter");
+    m_IO->SetParameter(key, value);
 }
 
-const Params &IO::GetParameters() const noexcept { return m_IO.m_Parameters; }
+void IO::SetParameters(const Params &parameters)
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::SetParameters");
+    m_IO->SetParameters(parameters);
+}
+
+Params IO::Parameters() const
+{
+    helper::CheckForNullptr(m_IO, "in call to IO:::Parameters");
+    return m_IO->m_Parameters;
+}
 
 size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
-    return m_IO.AddTransport(type, parameters);
+    helper::CheckForNullptr(m_IO, "in call to IO::AddTransport");
+    return m_IO->AddTransport(type, parameters);
 }
 
 void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
-    m_IO.SetTransportParameter(transportIndex, key, value);
+    helper::CheckForNullptr(m_IO, "in call to IO::SetTransportParameter");
+    m_IO->SetTransportParameter(transportIndex, key, value);
 }
 
-bool IO::RemoveVariable(const std::string &name) noexcept
+bool IO::RemoveVariable(const std::string &name)
 {
-    return m_IO.RemoveVariable(name);
+    helper::CheckForNullptr(m_IO, "in call to IO::RemoveVariable");
+    return m_IO->RemoveVariable(name);
 }
 
-void IO::RemoveAllVariables() noexcept { m_IO.RemoveAllVariables(); }
-
-bool IO::RemoveAttribute(const std::string &name) noexcept
+void IO::RemoveAllVariables()
 {
-    return m_IO.RemoveAttribute(name);
+    helper::CheckForNullptr(m_IO, "in call to IO::RemoveAllVariables");
+    m_IO->RemoveAllVariables();
 }
 
-void IO::RemoveAllAttributes() noexcept { m_IO.RemoveAllAttributes(); }
+bool IO::RemoveAttribute(const std::string &name)
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::RemoveAttribute");
+    return m_IO->RemoveAttribute(name);
+}
+
+void IO::RemoveAllAttributes()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::RemoveAllAttributes");
+    m_IO->RemoveAllAttributes();
+}
 
 #ifdef ADIOS2_HAVE_MPI
 Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
 {
-    return Engine(&m_IO.Open(name, mode, comm));
+    helper::CheckForNullptr(m_IO,
+                            "for engine " + name + ", in call to IO::Open");
+    return Engine(&m_IO->Open(name, mode, comm));
 }
 #endif
 
 Engine IO::Open(const std::string &name, const Mode mode)
 {
-    return Engine(&m_IO.Open(name, mode));
+    helper::CheckForNullptr(m_IO,
+                            "for engine " + name + ", in call to IO::Open");
+    return Engine(&m_IO->Open(name, mode));
 }
 
-void IO::FlushAll() { m_IO.FlushAll(); }
-
-void IO::LockDefinitions() noexcept { m_IO.LockDefinitions(); }
-
-std::map<std::string, Params> IO::AvailableVariables() noexcept
+void IO::FlushAll()
 {
-    return m_IO.GetAvailableVariables();
+    helper::CheckForNullptr(m_IO, "in call to IO::FlushAll");
+    m_IO->FlushAll();
+}
+
+void IO::LockDefinitions()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::LockDefinitions");
+    m_IO->LockDefinitions();
+}
+
+std::map<std::string, Params> IO::AvailableVariables()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::AvailableVariables");
+    return m_IO->GetAvailableVariables();
 }
 
 std::map<std::string, Params>
 IO::AvailableAttributes(const std::string &variableName,
-                        const std::string separator) noexcept
+                        const std::string separator)
 {
-    return m_IO.GetAvailableAttributes(variableName, separator);
+    helper::CheckForNullptr(m_IO, "in call to IO::AvailableAttributes");
+    return m_IO->GetAvailableAttributes(variableName, separator);
 }
 
-std::string IO::VariableType(const std::string &name) const noexcept
+std::string IO::VariableType(const std::string &name) const
 {
-    return m_IO.InquireVariableType(name);
+    helper::CheckForNullptr(m_IO, "in call to IO::VariableType");
+    return m_IO->InquireVariableType(name);
 }
 
-std::string IO::AttributeType(const std::string &name) const noexcept
+std::string IO::AttributeType(const std::string &name) const
 {
-    return m_IO.InquireAttributeType(name);
+    helper::CheckForNullptr(m_IO, "in call to IO::AttributeType");
+    return m_IO->InquireAttributeType(name);
 }
 
-size_t IO::AddOperation(const Operator op, const Params &parameters) noexcept
+size_t IO::AddOperation(const Operator op, const Params &parameters)
 {
-    return m_IO.AddOperation(*op.m_Operator, parameters);
+    helper::CheckForNullptr(m_IO, "in call to IO::AddOperation");
+    return m_IO->AddOperation(*op.m_Operator, parameters);
 }
 
-std::string IO::EngineType() const noexcept { return m_IO.m_EngineType; }
+std::string IO::EngineType() const
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::EngineType");
+    return m_IO->m_EngineType;
+}
 
 // PRIVATE
-IO::IO(core::IO &io) : m_IO(io) {}
+IO::IO(core::IO *io) : m_IO(io) {}
 
 // Explicit declaration of the public template methods
 // Limits the types
@@ -116,7 +162,7 @@ IO::IO(core::IO &io) : m_IO(io) {}
                                             const Dims &, const Dims &,        \
                                             const bool);                       \
                                                                                \
-    template Variable<T> IO::InquireVariable<T>(const std::string &) noexcept;
+    template Variable<T> IO::InquireVariable<T>(const std::string &);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -131,7 +177,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
                                               const std::string);              \
                                                                                \
     template Attribute<T> IO::InquireAttribute<T>(                             \
-        const std::string &, const std::string &, const std::string) noexcept;
+        const std::string &, const std::string &, const std::string);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

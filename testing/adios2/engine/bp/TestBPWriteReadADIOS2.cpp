@@ -54,7 +54,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
     EXPECT_TRUE(adios);
 #endif
     {
-        adios2::IO io = adios.DeclareIO("TestIO");
+        adios2::IO io;
+        EXPECT_FALSE(io);
+        io = adios.DeclareIO("TestIO");
+        EXPECT_TRUE(io);
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later

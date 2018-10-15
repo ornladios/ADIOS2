@@ -151,7 +151,7 @@ public:
      * @return object to an existing operator in current ADIOS object, Operator
      * object is false if name is not found, in debugMode only
      */
-    Operator InquireOperator(const std::string name) noexcept;
+    Operator InquireOperator(const std::string name);
 
     /**
      * Flushes all engines in write mode in all IOs created with the current
@@ -162,6 +162,8 @@ public:
 
 private:
     std::shared_ptr<core::ADIOS> m_ADIOS;
+
+    void CheckPointer(const std::string hint);
 
 /* CallBack1 signature */
 #define declare_type(T)                                                        \
