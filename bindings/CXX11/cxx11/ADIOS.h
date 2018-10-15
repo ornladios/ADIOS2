@@ -163,6 +163,8 @@ public:
 private:
     std::shared_ptr<core::ADIOS> m_ADIOS;
 
+    void CheckPointer(const std::string hint);
+
 /* CallBack1 signature */
 #define declare_type(T)                                                        \
     Operator DefineCallBack(                                                   \

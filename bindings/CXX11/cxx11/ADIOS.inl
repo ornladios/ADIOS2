@@ -24,6 +24,8 @@ Operator ADIOS::DefineOperator(const std::string name,
                                const std::function<R(Args...)> &function,
                                const Params &parameters)
 {
+    CheckPointer("for operator name " + name +
+                 ", in call to ADIOS::DefineOperator");
     return Operator(DefineCallBack(name, function, parameters));
 }
 

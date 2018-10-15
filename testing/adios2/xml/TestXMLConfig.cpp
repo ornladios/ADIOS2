@@ -39,7 +39,7 @@ TEST_F(XMLConfigTest, TwoIOs)
 
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 1");
-        const adios2::Params &params = io.GetParameters();
+        const adios2::Params params = io.Parameters();
         ASSERT_EQ(params.size(), 5);
         EXPECT_THROW(params.at("DoesNotExist"), std::out_of_range);
         EXPECT_EQ(params.at("Threads"), "1");
@@ -57,7 +57,7 @@ TEST_F(XMLConfigTest, TwoIOs)
                  std::invalid_argument);
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 2");
-        const adios2::Params &params = io.GetParameters();
+        const adios2::Params params = io.Parameters();
         ASSERT_EQ(params.size(), 0);
     });
     EXPECT_NO_THROW(adios.AtIO("Test IO 2"));

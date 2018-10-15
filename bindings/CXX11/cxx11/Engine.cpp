@@ -29,62 +29,62 @@ Engine::operator bool() const noexcept
 
 std::string Engine::Name() const
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Name");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Name");
     return m_Engine->m_Name;
 }
 
 std::string Engine::Type() const
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Type");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Type");
     return m_Engine->m_EngineType;
 }
 
 StepStatus Engine::BeginStep()
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");
     return m_Engine->BeginStep();
 }
 
 StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
-    adios2::helper::CheckForNullptr(
+    helper::CheckForNullptr(
         m_Engine, "in call to Engine::BeginStep(const StepMode, const float)");
     return m_Engine->BeginStep(mode, timeoutSeconds);
 }
 
 size_t Engine::CurrentStep() const
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::CurrentStep");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::CurrentStep");
     return m_Engine->CurrentStep();
 }
 
 void Engine::PerformPuts()
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::PerformPuts");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformPuts");
     m_Engine->PerformPuts();
 }
 
 void Engine::PerformGets()
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");
     m_Engine->PerformGets();
 }
 
 void Engine::EndStep()
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::EndStep");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::EndStep");
     m_Engine->EndStep();
 }
 
 void Engine::Flush(const int transportIndex)
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Flush");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Flush");
     m_Engine->Flush(transportIndex);
 }
 
 void Engine::Close(const int transportIndex)
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Close");
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Close");
     m_Engine->Close(transportIndex);
 }
 

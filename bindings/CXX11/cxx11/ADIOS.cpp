@@ -11,6 +11,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosFunctions.h" //CheckForNullptr
 
 namespace adios2
 {
@@ -37,21 +38,33 @@ ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
 IO ADIOS::DeclareIO(const std::string name)
 {
-    return IO(m_ADIOS->DeclareIO(name));
+    CheckPointer("for io name " + name + ", in call to ADIOS::DeclareIO");
+    return IO(&m_ADIOS->DeclareIO(name));
 }
 
-IO ADIOS::AtIO(const std::string name) { return IO(m_ADIOS->AtIO(name)); }
+IO ADIOS::AtIO(const std::string name)
+{
+    CheckPointer("for io name " + name + ", in call to ADIOS::AtIO");
+    return IO(&m_ADIOS->AtIO(name));
+}
 
-void ADIOS::FlushAll() { m_ADIOS->FlushAll(); }
+void ADIOS::FlushAll()
+{
+    CheckPointer("in call to ADIOS::FlushAll");
+    m_ADIOS->FlushAll();
+}
 
 Operator ADIOS::DefineOperator(const std::string name, const std::string type,
                                const Params &parameters)
 {
+    CheckPointer("for operator name " + name +
+                 ", in call to ADIOS::DefineOperator");
     return Operator(&m_ADIOS->DefineOperator(name, type, parameters));
 }
 
 Operator ADIOS::InquireOperator(const std::string name) noexcept
 {
+    CheckPointer("for operator name " + name + ", in call to InquireOperator");
     return Operator(m_ADIOS->InquireOperator(name));
 }
 
@@ -79,6 +92,19 @@ Operator ADIOS::DefineCallBack(
     const Params &parameters)
 {
     return Operator(&m_ADIOS->DefineCallBack(name, function, parameters));
+}
+
+// PRIVATE
+
+void ADIOS::CheckPointer(const std::string hint)
+{
+    if (!m_ADIOS)
+    {
+        throw std::invalid_argument("ERROR: invalid ADIOS object, did you call "
+                                    "any of the ADIOS explicit "
+                                    "constructors?, " +
+                                    hint + "\n");
+    }
 }
 
 } // end namespace adios2
