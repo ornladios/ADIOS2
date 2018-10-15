@@ -871,6 +871,107 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
     }
 }
 
+TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
+{
+    const std::string fnameFloat("BPReaderWriterDefineVariable_float.bp");
+    const std::string fname("BPReaderWriterDefineVariable_all.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const std::size_t Nx = 2;
+    // Number of cols
+    const std::size_t Ny = 4;
+
+    // Number of steps
+    const std::size_t NSteps = 3;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+// Write test data using ADIOS2
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+
+    const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
+    const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
+    const adios2::Dims count{Ny, Nx};
+    // simple writer to generate content
+    {
+        adios2::IO io = adios.DeclareIO("Writer");
+
+        io.DefineVariable<float>("r32", shape, start, count,
+                                 adios2::ConstantDims);
+
+        adios2::Engine bpWriter = io.Open(fnameFloat, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            bpWriter.BeginStep();
+            bpWriter.Put<float>("r32", currentTestData.R32.data());
+            bpWriter.EndStep();
+        }
+
+        bpWriter.Close();
+    }
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("ReaderWriter");
+
+        adios2::Engine reader = io.Open(fnameFloat, adios2::Mode::Read);
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            reader.BeginStep();
+            adios2::Variable<float> varR32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(varR32);
+            reader.EndStep();
+
+            if (step == 0)
+            {
+                adios2::Variable<double> varR64 = io.DefineVariable<double>(
+                    "r64", shape, start, count, adios2::ConstantDims);
+                EXPECT_TRUE(varR64);
+            }
+
+            SmallTestData currentTestData = generateNewSmallTestData(
+                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            writer.BeginStep();
+            writer.Put<float>("r32", currentTestData.R32.data());
+            writer.Put<double>("r64", currentTestData.R64.data());
+            writer.EndStep();
+        }
+
+        writer.Close();
+        reader.Close();
+    }
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("Reader");
+        adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+        while (reader.BeginStep() == adios2::StepStatus::OK)
+        {
+            adios2::Variable<float> varR32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(varR32);
+            adios2::Variable<double> varR64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(varR32);
+            reader.EndStep();
+        }
+        reader.Close();
+    }
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

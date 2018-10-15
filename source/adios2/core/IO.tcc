@@ -83,7 +83,7 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
     }
 
     Variable<T> *variable = &GetVariableMap<T>().at(itVariable->second.second);
-    if (m_Streaming)
+    if (m_ReadStreaming)
     {
         if (!variable->IsValidStep(m_EngineStep + 1))
         {

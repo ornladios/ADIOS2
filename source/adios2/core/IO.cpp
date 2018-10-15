@@ -332,7 +332,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
 
     const std::string type = itVariable->second.first;
 
-    if (m_Streaming)
+    if (m_ReadStreaming)
     {
         if (type == "compound")
         {
