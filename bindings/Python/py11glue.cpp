@@ -238,8 +238,7 @@ PYBIND11_MODULE(adios2, m)
         .def("SetParameters", &adios2::py11::IO::SetParameters,
              pybind11::arg("parameters") = adios2::Params())
         .def("SetParameter", &adios2::py11::IO::SetParameter)
-        .def("GetParameters", &adios2::py11::IO::GetParameters,
-             pybind11::return_value_policy::reference_internal)
+        .def("Parameters", &adios2::py11::IO::Parameters)
         .def("AddTransport", &adios2::py11::IO::AddTransport,
              pybind11::arg("type"),
              pybind11::arg("parameters") = adios2::Params())
@@ -281,13 +280,14 @@ PYBIND11_MODULE(adios2, m)
                                     const std::vector<std::string> &)) &
                  adios2::py11::IO::DefineAttribute,
              pybind11::return_value_policy::reference_internal)
-        .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
+        .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll)
-        .def("EngineType", &adios2::py11::IO::EngineType);
+        .def("EngineType", &adios2::py11::IO::EngineType)
+        .def("LockDefinitions", &adios2::py11::IO::LockDefinitions);
 
     pybind11::class_<adios2::py11::Engine>(m, "py11::Engine")
         .def("BeginStep", &adios2::py11::Engine::BeginStep,
@@ -394,23 +394,23 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("endl") = false)
 
         .def("readstring",
-             (std::string (adios2::py11::File::*)(const std::string &)) &
+             (std::string(adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"))
 
-        .def("readstring", (std::string (adios2::py11::File::*)(
+        .def("readstring", (std::string(adios2::py11::File::*)(
                                const std::string &, const size_t)) &
                                adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership)
 
         .def("read",
-             (pybind11::array (adios2::py11::File::*)(const std::string &)) &
+             (pybind11::array(adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"))
 
-        .def("read", (pybind11::array (adios2::py11::File::*)(
+        .def("read", (pybind11::array(adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
                          const adios2::Dims &)) &
                          adios2::py11::File::Read,
@@ -418,7 +418,7 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("name"), pybind11::arg("start"),
              pybind11::arg("count"))
 
-        .def("read", (pybind11::array (adios2::py11::File::*)(
+        .def("read", (pybind11::array(adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
                          const adios2::Dims &, const size_t, const size_t)) &
                          adios2::py11::File::Read,

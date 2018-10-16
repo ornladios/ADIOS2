@@ -37,7 +37,7 @@ public:
     void SetParameters(const Params &parameters) noexcept;
     void SetParameter(const std::string key, const std::string value) noexcept;
 
-    const Params &GetParameters() const noexcept;
+    Params Parameters() const noexcept;
 
     core::VariableBase *DefineVariable(const std::string &name,
                                        std::string &stringValue);

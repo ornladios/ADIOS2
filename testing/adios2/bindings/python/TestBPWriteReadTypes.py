@@ -85,6 +85,14 @@ if(engineType != "BPFile"):
 ioWriter.SetParameter("profileunits", "microseconds")
 ioWriter.AddTransport("file")
 
+
+ioParams = ioWriter.Parameters()
+print("Final IO parameters")
+for key, value in ioParams.items():
+    print("\t" + key + ": " + value)
+
+ioWriter.LockDefinitions()
+
 # ADIOS Engine
 writer = ioWriter.Open("npTypes.bp", adios2.Mode.Write)
 
