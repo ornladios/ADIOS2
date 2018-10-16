@@ -28,6 +28,20 @@ extern struct CMtrans_services_s CMstatic_trans_svcs;
 
 static transport_entry *global_transports = NULL;
 
+static void
+free_global_transports()
+{
+    int i = 0;
+    while (global_transports[i]) {
+        CMdlclose(global_transports[i]->dlhandle);
+	free(global_transports[i]->trans_name);
+	free(global_transports[i]);
+	i++;
+    }
+    free(global_transports);
+    CMdlclearsearchlist();
+}
+
 int
 find_transport_in_cm(CManager cm, const char *trans_name)
 {
@@ -66,6 +80,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 {
     transport_entry *trans_list = global_transports;
     transport_entry transport = NULL;
+    transport_entry transport_to_free = NULL;
     int i = 0;
 #if !NO_DYNAMIC_LINKING
     char *libname;
@@ -109,8 +124,10 @@ load_transport(CManager cm, const char *trans_name, int quiet)
     }
     INT_CMfree(libname);
     transport = INT_CMmalloc(sizeof(struct _transport_item));
+    transport_to_free = transport;
     transport->trans_name = strdup(trans_name);
     transport->cm = cm;
+    transport->dlhandle = handle;
     transport->data_available = CMDataAvailable;  /* callback pointer */
     transport->write_possible = CMWriteQueuedData;  /* callback pointer */
     transport->transport_init = (CMTransport_func)
@@ -144,6 +161,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	    transport->transport_init(cm, &CMstatic_trans_svcs, transport);
     }
     transport = add_transport_to_cm(cm, transport);
+    free(transport_to_free);   /* returned transport is a copy */
 #else
     if (strcmp(trans_name, "sockets") == 0) {
 	extern transport_entry cmsockets_add_static_transport(CManager cm, CMtrans_services svc);
@@ -204,6 +222,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 				    sizeof(global_transports) * (i + 2));
     } else {
         global_transports = INT_CMmalloc(sizeof(global_transports) * (i+2));
+	atexit(free_global_transports);
     }
     global_transports[i] = transport;
     global_transports[i+1] = NULL;
