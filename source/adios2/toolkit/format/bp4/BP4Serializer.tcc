@@ -69,7 +69,7 @@ inline void BP4Serializer::PutVariablePayload(
     ProfilerStart("buffering");
     if (blockInfo.Operations.empty())
     {
-        PutPayloadInBuffer(variable, blockInfo.Data);
+        PutPayloadInBuffer(variable, blockInfo);
     }
     else
     {
@@ -657,8 +657,11 @@ void BP4Serializer::PutVariableCharacteristics(
     PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
                             stats.FileIndex, buffer);
 
-    PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+    if (blockInfo.Data != nullptr)
+    {
+        PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                     buffer);
+    }
 
     uint8_t characteristicID = characteristic_dimensions;
     helper::InsertToBuffer(buffer, &characteristicID);
@@ -733,8 +736,11 @@ void BP4Serializer::PutVariableCharacteristics(
     ++characteristicsCounter;
 
     // VALUE for SCALAR or STAT min, max for ARRAY
-    PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+    if (blockInfo.Data != nullptr)
+    {
+        PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                     buffer, position);
+    }
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -748,23 +754,25 @@ void BP4Serializer::PutVariableCharacteristics(
 }
 
 template <>
-inline void
-BP4Serializer::PutPayloadInBuffer(const core::Variable<std::string> &variable,
-                                  const std::string *data) noexcept
+inline void BP4Serializer::PutPayloadInBuffer(
+    const core::Variable<std::string> &variable,
+    const typename core::Variable<std::string>::Info &blockInfo) noexcept
 {
-    PutNameRecord(*data, m_Data.m_Buffer, m_Data.m_Position);
-    m_Data.m_AbsolutePosition += data->size() + 2;
+    PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
+    m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
 }
 
 template <class T>
-void BP4Serializer::PutPayloadInBuffer(const core::Variable<T> &variable,
-                                       const T *data) noexcept
+void BP4Serializer::PutPayloadInBuffer(
+    const core::Variable<T> &variable,
+    const typename core::Variable<T>::Info &blockInfo) noexcept
 {
+    const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     ProfilerStart("memcpy");
-    helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position, data,
-                                variable.TotalSize(), m_Threads);
+    helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
+                                blockInfo.Data, blockSize, m_Threads);
     ProfilerStop("memcpy");
-    m_Data.m_AbsolutePosition += variable.PayloadSize();
+    m_Data.m_AbsolutePosition += blockSize * sizeof(T); // payload size
 }
 
 template <class T>
