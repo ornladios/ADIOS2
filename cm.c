@@ -3543,6 +3543,7 @@ INT_CMConnection_failed(CMConnection conn)
      SelectInitFunc select_free_function = (SelectInitFunc)task_data[0];
      CMtrace_out(cm, CMFreeVerbose, "calling select FREE function, %p\n", task_data[1]);
      select_free_function(&CMstatic_trans_svcs, cm, &task_data[1]);
+     CMdlclose(task_data[2]);
      free(task_data);
  }
 
@@ -3554,6 +3555,7 @@ INT_CMConnection_failed(CMConnection conn)
      SelectInitFunc init_function;
      SelectInitFunc shutdown_function;
      SelectInitFunc select_free_function;
+     void *dlhandle = NULL;
  #if !NO_DYNAMIC_LINKING
      char *libname;
      lt_dlhandle handle;	
@@ -3563,6 +3565,7 @@ INT_CMConnection_failed(CMConnection conn)
      strcpy(libname, "lib" CM_LIBRARY_PREFIX "cmselect");
      strcat(libname, MODULE_EXT);
      handle = CMdlopen(cm->CMTrace_file, libname, 0);
+     dlhandle = handle;
      free(libname);
      if (!handle) {
 	 fprintf(stderr, "Failed to load required select dll.\n");
@@ -3616,9 +3619,10 @@ INT_CMConnection_failed(CMConnection conn)
      CMtrace_out(cm, CMFreeVerbose, "CManager adding select shutdown function, %lx\n",(long)shutdown_function);
      internal_add_shutdown_task(cm, select_shutdown, (void*)shutdown_function, SHUTDOWN_TASK);
      {
-	 void ** data = malloc(2 * sizeof(void*));
+	 void ** data = malloc(3 * sizeof(void*));
 	 data[0] = select_free_function;
 	 data[1] = cm->control_list->select_data;
+	 data[2] = dlhandle;
 	 internal_add_shutdown_task(cm, select_free, (void*)data, FREE_TASK);
      }
  }
@@ -3651,13 +3655,20 @@ INT_CMConnection_failed(CMConnection conn)
      INT_CMCondition_wait(cm, cond);
  }
 
- typedef struct foreign_handler_struct {
-     int header;
-     CMNonCMHandler handler;
- } *handler_list;
+typedef struct foreign_handler_struct {
+    int header;
+    CMNonCMHandler handler;
+} *handler_list;
 
- static handler_list foreign_handler_list;
- static int foreign_handler_count = 0;
+static handler_list foreign_handler_list;
+static int foreign_handler_count = 0;
+
+static void
+clear_foreign_handlers()
+{
+    if (foreign_handler_count == 0) return;
+    free(foreign_handler_list);
+}
 
  extern void
  INT_CMregister_non_CM_message_handler(int header, CMNonCMHandler handler)
@@ -3668,6 +3679,7 @@ INT_CMConnection_failed(CMConnection conn)
 					  (foreign_handler_count + 1));
      } else {
 	 foreign_handler_list = INT_CMmalloc(sizeof(foreign_handler_list[0]));
+	 atexit(clear_foreign_handlers);
      }
      foreign_handler_list[foreign_handler_count].header = header;
      foreign_handler_list[foreign_handler_count].handler = handler;
