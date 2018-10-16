@@ -62,7 +62,7 @@ C++11: Should I pass adios2:: objects by value or by reference?
 Fortran: Can I pass slices and temporary arrays to adios2_put?
 --------------------------------------------------------------
 
-By definitions the lifetime of a temporary if the scope of the function is passed to. Therefore, 
+By definition the lifetime of a temporary if the scope of the function is passed to. Therefore, 
 you must use sync mode with adios2_put. Deferred mode will save garbage data since the memory location of a temporary is undefined after adios2_put, not able to reach adios2_end_step, adios2_close or adios2_perform_puts where the memory is actually used.   
 
 
