@@ -238,8 +238,7 @@ PYBIND11_MODULE(adios2, m)
         .def("SetParameters", &adios2::py11::IO::SetParameters,
              pybind11::arg("parameters") = adios2::Params())
         .def("SetParameter", &adios2::py11::IO::SetParameter)
-        .def("GetParameters", &adios2::py11::IO::GetParameters,
-             pybind11::return_value_policy::reference_internal)
+        .def("Parameters", &adios2::py11::IO::Parameters)
         .def("AddTransport", &adios2::py11::IO::AddTransport,
              pybind11::arg("type"),
              pybind11::arg("parameters") = adios2::Params())
@@ -287,7 +286,8 @@ PYBIND11_MODULE(adios2, m)
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll)
-        .def("EngineType", &adios2::py11::IO::EngineType);
+        .def("EngineType", &adios2::py11::IO::EngineType)
+        .def("LockDefinitions", &adios2::py11::IO::LockDefinitions);
 
     pybind11::class_<adios2::py11::Engine>(m, "py11::Engine")
         .def("BeginStep", &adios2::py11::Engine::BeginStep,

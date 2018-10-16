@@ -34,10 +34,7 @@ void IO::SetParameter(const std::string key, const std::string value) noexcept
     m_IO.SetParameter(key, value);
 }
 
-const Params &IO::GetParameters() const noexcept
-{
-    return m_IO.GetParameters();
-}
+Params IO::Parameters() const noexcept { return m_IO.GetParameters(); }
 
 unsigned int IO::AddTransport(const std::string type, const Params &parameters)
 {
