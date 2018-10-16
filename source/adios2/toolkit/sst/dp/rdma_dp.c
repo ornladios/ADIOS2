@@ -1031,6 +1031,32 @@ static FMStructDescRec RdmaTimestepInfoStructs[] = {
 
 static struct _CP_DP_Interface RdmaDPInterface;
 
+/* In RdmaGetPriority, the Rdma DP should do whatever is necessary to test to
+ * see if it
+ * *can* run, and then return -1 if it cannot run and a value
+ * greater than 1 if it can.  Eventually if we have more than one
+ * possible RDMA DP, we may need some better scheme, maybe where the
+ * "priority" return value represents some desirability measure
+ * (like expected bandwidth or something).
+ */
+static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
+{
+    int Ret = -1;
+    Svcs->verbose(
+        CP_Stream,
+        "RDMA Dataplane evaluating viability, returning priority %d\n", Ret);
+    return Ret;
+}
+
+/* If RdmaGetPriority has allocated resources or initialized something
+ *  that needs to be cleaned up, RdmaUnGetPriority should undo that
+ * operation.
+ */
+static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
+{
+    Svcs->verbose(CP_Stream, "RDMA Dataplane unloading\n");
+}
+
 extern CP_DP_Interface LoadRdmaDP()
 {
     memset(&RdmaDPInterface, 0, sizeof(RdmaDPInterface));
@@ -1049,5 +1075,7 @@ extern CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;
+    RdmaDPInterface.getPriority = RdmaGetPriority;
+    RdmaDPInterface.unGetPriority = RdmaUnGetPriority;
     return &RdmaDPInterface;
 }
