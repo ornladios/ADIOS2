@@ -41,7 +41,9 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #include "config.h"
 #include <stdio.h>      /* defines printf for tests */
 #include <inttypes.h>     /* defines uint32_t etc */
+#ifndef _MSC_VER
 #include <sys/param.h>  /* attempt to define endianness */
+#endif
 #ifdef linux
 # include <endian.h>    /* attempt to define endianness */
 #endif

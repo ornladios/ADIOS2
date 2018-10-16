@@ -116,6 +116,13 @@ extern int
 add_pattr(attr_list list, atom_t attr_id, attr_value_type val_type, 
 	  attr_union value);
 
+static void
+deallocate_global_atom_server()
+{
+  if (global_as) free_atom_server(global_as);
+  global_as = NULL;
+}
+
 static
 void
 init_global_atom_server(asp)
@@ -124,6 +131,10 @@ atom_server *asp;
     if (*asp != NULL) return;
 
     *asp = init_atom_server(prefill_atom_cache);
+
+    if (asp == &global_as) {
+      atexit(deallocate_global_atom_server);
+    }
 }
 
 attr_list

@@ -1,9 +1,12 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include <sys/types.h>
 #ifndef HAVE_WINDOWS_H
 #include <sys/socket.h>
