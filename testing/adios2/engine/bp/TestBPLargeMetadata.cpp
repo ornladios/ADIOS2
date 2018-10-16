@@ -92,6 +92,59 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
     }
 }
 
+TEST_F(BPLargeMetadata, ManyLongStrings)
+{
+    const std::string fname("BPWrite1D_LargeMetadataStrings.bp");
+    const std::string longString = "test_string "
+                                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                                   "aaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    const std::size_t NVars = 100;
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, true);
+#else
+    adios2::ADIOS adios(true);
+#endif
+
+    adios2::IO io = adios.DeclareIO("myIO");
+    {
+        adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t i = 0; i < NVars; ++i)
+        {
+            const std::string variableName = "string" + std::to_string(i);
+            auto variableString = io.DefineVariable<std::string>(variableName);
+            writer.Put(variableString, longString);
+        }
+
+        writer.Close();
+    }
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    // reader
+    {
+        io.RemoveAllVariables();
+        adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
+
+        std::string inString;
+
+        for (size_t i = 0; i < NVars; ++i)
+        {
+            const std::string variableName = "string" + std::to_string(i);
+            auto variableString = io.InquireVariable<std::string>(variableName);
+            EXPECT_TRUE(variableString);
+            reader.Get(variableString, inString);
+            EXPECT_EQ(inString, longString);
+        }
+
+        reader.Close();
+    }
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

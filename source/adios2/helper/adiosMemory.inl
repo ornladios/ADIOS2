@@ -869,6 +869,27 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
 }
 //*************** End of NdCopy() and its 8 helpers ***************
 
+template <class T>
+size_t PayloadSize(const T * /*data*/, const Dims &count) noexcept
+{
+    const bool isZeros = std::all_of(count.begin(), count.end(),
+                                     [](const size_t i) { return i == 0; });
+
+    if (isZeros)
+    {
+        return sizeof(T);
+    }
+
+    return GetTotalSize(count) * sizeof(T);
+}
+
+template <>
+inline size_t PayloadSize<std::string>(const std::string *data,
+                                       const Dims & /*count*/) noexcept
+{
+    return data->size() + 2; // 2 bytes for the string size
+}
+
 } // end namespace helper
 } // end namespace adios2
 

@@ -408,7 +408,8 @@ void BP3Serializer::PutVariableMetadataInData(
     // Back to varLength including payload size
     // not need to remove its own size (8) from length from bpdump
     const uint64_t varLength = static_cast<uint64_t>(
-        position - varLengthPosition + variable.PayloadSize());
+        position - varLengthPosition +
+        helper::PayloadSize(blockInfo.Data, blockInfo.Count));
 
     size_t backPosition = varLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &varLength);
@@ -455,7 +456,8 @@ inline void BP3Serializer::PutVariableMetadataInData(
     // Back to varLength including payload size
     // not need to remove its own size (8) from length from bpdump
     const uint64_t varLength = static_cast<uint64_t>(
-        position - varLengthPosition + blockInfo.Data->size() + 2);
+        position - varLengthPosition +
+        helper::PayloadSize(blockInfo.Data, blockInfo.Count));
 
     size_t backPosition = varLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &varLength);

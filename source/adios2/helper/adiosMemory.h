@@ -159,6 +159,9 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
            const bool outIsLittleEndian, const bool safeMode = false);
 
+template <class T>
+size_t PayloadSize(const T *data, const Dims &count) noexcept;
+
 } // end namespace helper
 } // end namespace adios2
 
