@@ -33,11 +33,6 @@ VariableBase::VariableBase(const std::string &name, const std::string type,
     InitShapeType();
 }
 
-size_t VariableBase::PayloadSize() const noexcept
-{
-    return helper::GetTotalSize(m_Count) * m_ElementSize;
-}
-
 size_t VariableBase::TotalSize() const noexcept
 {
     return helper::GetTotalSize(m_Count);

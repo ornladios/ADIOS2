@@ -105,12 +105,6 @@ public:
     virtual ~VariableBase() = default;
 
     /**
-     * Returns the payload size in bytes
-     * @return TotalSize * m_ElementSize
-     */
-    size_t PayloadSize() const noexcept;
-
-    /**
      * Returns the total number of elements
      * @return number of elements
      */

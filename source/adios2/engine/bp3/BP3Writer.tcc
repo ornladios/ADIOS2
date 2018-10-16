@@ -32,7 +32,7 @@ void BP3Writer::PutSyncCommon(Variable<T> &variable,
     }
 
     const size_t dataSize =
-        variable.PayloadSize() +
+        helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
         m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
 
     const format::BP3Base::ResizeResult resizeResult =
@@ -58,13 +58,14 @@ void BP3Writer::PutSyncCommon(Variable<T> &variable,
 template <class T>
 void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetBlockInfo(data, CurrentStep());
+    const typename Variable<T>::Info blockInfo =
+        variable.SetBlockInfo(data, CurrentStep());
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
-    m_BP3Serializer.m_DeferredVariablesDataSize +=
-        static_cast<size_t>(1.05 * variable.PayloadSize() +
-                            4 *
-                                m_BP3Serializer.GetBPIndexSizeInData(
-                                    variable.m_Name, variable.m_Count));
+    m_BP3Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(
+        1.05 * helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
+        4 *
+            m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
+                                                 blockInfo.Count));
 }
 
 } // end namespace engine
