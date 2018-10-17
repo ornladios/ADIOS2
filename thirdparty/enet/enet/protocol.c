@@ -2,6 +2,7 @@
  @file  protocol.c
  @brief ENet protocol functions
 */
+#include ENET_DEBUG
 #include <stdio.h>
 #include <string.h>
 #define ENET_BUILDING_LIB 1
@@ -1914,6 +1915,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
           switch (enet_protocol_dispatch_incoming_commands (host, event))
           {
           case 1:
+              if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf("Enet_host service, returning an event with type %d\n", event->type);
              return 1;
 
           case -1:
