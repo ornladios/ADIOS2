@@ -3,20 +3,20 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-# BPLS2
-add_executable(bpls2 ./bpls2/bpls2.cpp)
-target_link_libraries(bpls2 adios2 adios2sys_interface)
-install(TARGETS bpls2 EXPORT adios2
+# BPLS
+add_executable(bpls ./bpls/bpls.cpp)
+target_link_libraries(bpls adios2 adios2sys_interface)
+install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/bpls2/bpls2.cmake.gen.in
-  ${PROJECT_BINARY_DIR}/bpls2.cmake.gen
+  ${CMAKE_CURRENT_SOURCE_DIR}/bpls/bpls.cmake.gen.in
+  ${PROJECT_BINARY_DIR}/bpls.cmake.gen
   @ONLY
 )
 file(GENERATE
-  OUTPUT ${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake
-  INPUT ${PROJECT_BINARY_DIR}/bpls2.cmake.gen
+  OUTPUT ${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake
+  INPUT ${PROJECT_BINARY_DIR}/bpls.cmake.gen
 )
 
 # ADIOS2_REORGANIZE
