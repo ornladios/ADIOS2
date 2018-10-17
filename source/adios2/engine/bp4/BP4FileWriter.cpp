@@ -213,9 +213,8 @@ void BP4FileWriter::DoClose(const int transportIndex)
     {
         PerformPuts();
         
-        /*Lipeng*/
         DoFlush(false, transportIndex);
-        /*Lipeng*/
+
         if (m_BP4Serializer.m_CollectiveMetadata &&
             m_FileDataManager.AllTransportsClosed())
         {
@@ -223,15 +222,12 @@ void BP4FileWriter::DoClose(const int transportIndex)
         }
     }
 
-    /*Lipeng*/
     DoFlush(true, transportIndex);
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
         m_FileDataManager.CloseFiles(transportIndex);
     }
-
-    /*Lipeng*/
     
     if (m_BP4Serializer.m_CollectiveMetadata &&
         m_FileDataManager.AllTransportsClosed())
@@ -284,7 +280,7 @@ void BP4FileWriter::WriteProfilingJSONFile()
     }
 }
 
-/*Lipeng*/
+/*generate the header for the metadata index file*/
 void BP4FileWriter::PopulateMetadataIndexFileHeader(std::vector<char> &buffer, 
         size_t &position, const uint8_t version, const bool addSubfiles)
 {
@@ -332,7 +328,7 @@ void BP4FileWriter::PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
     position += 16;
 }
 
-/*Lipeng*/
+/*write the content of metadata index file*/
 void BP4FileWriter::PopulateMetadataIndexFileContent(const uint64_t currentStep, 
     const uint64_t mpirank, const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
     const uint64_t attributesIndexStart, const uint64_t currentStepEndPos, std::vector<char> &buffer, 
@@ -368,7 +364,6 @@ void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
         const std::vector<std::string> bpMetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
-        /*Lipeng*/
         /*
         m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
                                         m_IO.m_TransportsParameters,
@@ -384,7 +379,7 @@ void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
             m_BP4Serializer.m_Metadata.m_Position);
         m_FileMetadataManager.CloseFiles();
 
-        /*Lipeng*/
+        /*record the starting position of indices in metadata file*/
         const uint64_t pgIndexStartMetadataFile = m_BP4Serializer.m_MetadataSet.pgIndexStart + m_BP4Serializer.m_MetadataSet.metadataFileLength;
         const uint64_t varIndexStartMetadataFile = m_BP4Serializer.m_MetadataSet.varIndexStart + m_BP4Serializer.m_MetadataSet.metadataFileLength;
         const uint64_t attrIndexStartMetadataFile = m_BP4Serializer.m_MetadataSet.attrIndexStart + m_BP4Serializer.m_MetadataSet.metadataFileLength;
@@ -439,18 +434,17 @@ void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
         m_FileMetadataIndexManager.CloseFiles();
 
         m_BP4Serializer.m_MetadataSet.metadataFileLength += m_BP4Serializer.m_Metadata.m_Position;
-        /*Lipeng*/
 
         if (!isFinal)
         {
             m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true);
             m_FileMetadataManager.m_Transports.clear();
-            /*Lipeng*/
+            /*close the transports for metadata index file*/
             m_FileMetadataIndexManager.m_Transports.clear();
         }
 
     }
-    /*Lipeng*/
+    /*Clear the local indices buffer at the end of each step*/
     m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true);
     m_BP4Serializer.ResetIndicesBuffer();
 }
