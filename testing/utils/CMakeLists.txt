@@ -18,13 +18,13 @@ add_test(NAME Utils.C.Writer
 )
 # This test produces TestUtilsCWriter.bp
 
-# bpls2 -h
+# bpls -h
 add_test(NAME Utils.Bpls.h.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARGS=-h
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsh.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.h.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -45,25 +45,25 @@ set_property(TEST Utils.Bpls.h.Validate
 endif(ADIOS2_HAVE_MPI)
 
 
-# bpls2 -la to screen for testing
+# bpls -la to screen for testing
 add_test(NAME Utils.Bpls.la.Screen
   COMMAND ${CMAKE_COMMAND}
     -DARGS=-la
     -DINPUT_FILE=TestUtilsCWriter.bp
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.la.Screen
   PROPERTY DEPENDS Utils.C.Writer
 )
 
 
-# bpls2 -la
+# bpls -la
 add_test(NAME Utils.Bpls.la.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARGS=-la
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsla.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.la.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -84,13 +84,13 @@ set_property(TEST Utils.Bpls.la.Validate
 endif(ADIOS2_HAVE_MPI)
 
 
-# bpls2 -Al
+# bpls -Al
 add_test(NAME Utils.Bpls.Al.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARGS=-Al
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsAl.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.Al.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -110,13 +110,13 @@ set_property(TEST Utils.Bpls.Al.Validate
 
 endif(ADIOS2_HAVE_MPI)
 
-# bpls2 -ldDav
+# bpls -ldDav
 add_test(NAME Utils.Bpls.ldDav.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARGS='-ldDav'
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsldDav.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.ldDav.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -138,13 +138,13 @@ set_property(TEST Utils.Bpls.ldDav.Validate
 endif(ADIOS2_HAVE_MPI)
 
 
-# bpls2 -ldDavvv
+# bpls -ldDavvv
 add_test(NAME Utils.Bpls.ldDavvv.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARGS='-ldDavvv'
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsldDavvv.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.ldDavvv.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -166,13 +166,13 @@ set_property(TEST Utils.Bpls.ldDavvv.Validate
 endif(ADIOS2_HAVE_MPI)
 
 
-# bpls2 -ld varI16 -n 10
+# bpls -ld varI16 -n 10
 #add_test(NAME Utils.Bpls.ldvarI16.Dump
 #  COMMAND ${CMAKE_COMMAND}
 #    -DARGS=-ld varI16 -n 10
 #    -DINPUT_FILE=TestUtilsCWriter.bp
 #    -DOUTPUT_FILE=TestUtilsCWriter.bplsldvarI16.result.txt
-#    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+#    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
 #)
 #set_property(TEST Utils.Bpls.la.Dump
 #  PROPERTY DEPENDS Utils.C.Writer

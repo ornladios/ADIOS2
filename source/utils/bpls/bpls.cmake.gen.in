@@ -13,7 +13,7 @@ else()
   set(cmd_executor)
 endif()
 execute_process(
-  COMMAND ${cmd_executor} $<TARGET_FILE:bpls2> ${ARGS} ${INPUT_FILE}
+  COMMAND ${cmd_executor} $<TARGET_FILE:bpls> ${ARGS} ${INPUT_FILE}
   RESULT_VARIABLE result
   ${output_arg}
   ${error_arg}
