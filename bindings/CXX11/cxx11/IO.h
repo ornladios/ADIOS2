@@ -95,7 +95,7 @@ public:
      * supported by current EngineType().
      * @param type must be a supported transport type for a particular Engine.
      * CAN'T use the keywords "Transport" or "transport"
-     * @param params acceptable parameters for a particular transport
+     * @param parameters acceptable parameters for a particular transport
      * @return transportIndex handler
      * @exception std::invalid_argument if type=transport
      */
@@ -317,9 +317,12 @@ public:
      */
     struct Operation
     {
+        /** Operator associated with this operation */
         const Operator Op;
-        const Params Parameters;
-        const Params Info;
+        /** Parameters settings for this operation */
+        const adios2::Params Parameters;
+        /** Information associated with this operation */
+        const adios2::Params Info;
     };
 
     /**
