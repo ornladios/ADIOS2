@@ -508,13 +508,11 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
 {
     struct _WriterResponseMsg *Msg = (struct _WriterResponseMsg *)Msg_v;
     struct _WriterResponseMsg **response_ptr;
-    fprintf(stderr, "Received a writer_response message for condition
-                        %
-                        d\n ",
-                        Msg->WriterResponseCondition);
+    fprintf(stderr, "Received a writer_response message for condition %d\n",
+            Msg->WriterResponseCondition);
     fprintf(stderr, "The responding writer has cohort of size %d :\n",
-            Msg->writer_CohortSize);
-    for (int i = 0; i < Msg->writer_CohortSize; i++)
+            Msg->WriterCohortSize);
+    for (int i = 0; i < Msg->WriterCohortSize; i++)
     {
         fprintf(stderr, " rank %d CP contact info: %s, %p\n", i,
                 Msg->CP_WriterInfo[i]->ContactInfo,
