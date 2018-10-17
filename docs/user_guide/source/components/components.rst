@@ -8,3 +8,4 @@ ADIOS2 Interface Components
 .. include:: variable.rst
 .. include:: attribute.rst
 .. include:: engine.rst
+.. include:: runtime.rst

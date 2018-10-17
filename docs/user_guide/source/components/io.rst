@@ -107,7 +107,7 @@ The AddTransport function returns an unsigned int handler for each transport tha
 Defining, Inquiring and Removing Variables and Attributes
 ---------------------------------------------------------
 
-The template functions DefineVariable<T> allows subscribing self-describing data into ADIOS2 by returning a reference to a Variable class object whose scope is the same as the IO object that created it. The user must provide a unique name (among Variables), the dimensions: MPI global: shape, MPI local: start and offset, optionally a flag indicating that dimensions are to know to be constant and a data pointer if defined in the application. Note: actual data is not passed at this stage. This is done by the Engine functions Put/Get for Variables. See the :ref:`Variables` section for supported types and shapes.
+The template functions DefineVariable<T> allows subscribing self-describing data into ADIOS2 by returning a reference to a Variable class object whose scope is the same as the IO object that created it. The user must provide a unique name (among Variables), the dimensions: MPI global: shape, MPI local: start and offset, optionally a flag indicating that dimensions are to know to be constant and a data pointer if defined in the application. Note: actual data is not passed at this stage. This is done by the Engine functions Put/Get for Variables. See the :ref:`Variable` section for supported types and shapes.
 
 .. tip::
    ``adios2::Dims`` is an alias to ``std::vector<std::size_t>``, while ``adios2::ConstantDims`` is an alias to bool ``true``. Use them for code clarity.

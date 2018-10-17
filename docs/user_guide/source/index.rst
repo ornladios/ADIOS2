@@ -15,8 +15,8 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    installation/installation
    components/components
    engines/engines
-   runtime/runtime
-   bindings/bindings
+   api_full/api_full
+   api_simple/api_simple
    faq/faq
  
 * :ref:`search`

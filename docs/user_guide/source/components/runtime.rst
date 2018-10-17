@@ -1,10 +1,10 @@
-###########################
+***************************
 Runtime Configuration Files
-###########################
+***************************
 
 ADIOS2 supports passing an optional runtime configuration file to the :ref:`ADIOS` component constructor (``adios2_init`` in C, Fortran).
 
-This file contains key-value pairs equivalent to the compile time ``IO::SetParameters`` (``adios2_set_parameter`` in C, Fortran), and``IO::AddTransport`` (``adios2_set_transport_parameter`` in C, Fortran).
+This file contains key-value pairs equivalent to the compile time ``IO::SetParameters`` (``adios2_set_parameter`` in C, Fortran), and ``IO::AddTransport`` (``adios2_set_transport_parameter`` in C, Fortran).
 
 Each Engine should provide a set of available parameters as described in the :ref:`Supported Engines` section. Currently, only the XML format is supported. The typical format is as follows:
 

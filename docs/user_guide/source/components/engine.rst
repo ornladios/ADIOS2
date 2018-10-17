@@ -21,16 +21,20 @@ Recall that Engines are created through the ``IO::Open`` function which must con
 
 For Publishing data (Write, Append mode)
 
-   * **Put**  Default mode: deferred (lazy evaluation). Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. 
-                            Use sync mode to allow the pointer memory to be reusable immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
-   * **PerformsPuts**   Executes all pending Put calls in deferred mode until this line.
+* **Put**            
+   **Default mode: deferred (lazy evaluation).** Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. Use sync mode to allow the pointer memory to be reusable immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
+
+* **PerformsPuts**  
+   Executes all pending Put calls in deferred mode until this line.
 
 
 For Consuming data (Read mode)
 
-   * **Get**  Default mode: deferred (lazy evaluation). Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. 
-                            Use sync mode to populate the data pointer memory immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
-   * **PerformsGets**   Execute all pending deferred Get calls in deferred mode until this line.
+* **Get**                
+   **Default mode: deferred (lazy evaluation).** Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. Use sync mode to populate the data pointer memory immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
+
+* **PerformsGets**       
+   Executes all pending deferred Get calls in deferred mode until this line.
 
 Common Functionality (Write, Read, Append modes)
 
@@ -99,11 +103,6 @@ The following example illustrates the basic API usage in write mode for data gen
    The default behavior of adios2 Put and Get calls IS NOT synchronized, but rather deferred. It's actually the opposite of MPI_Put and more like MPI_rPut.
    Do not assume the data pointer is usable after a Put and Get, before EndStep, Close or the corresponding PerformPuts/PerformGets. 
    Be SAFE and use the adios2::Mode::Sync in the 3rd argument. 
-
-
-.. warning::
-
-   Currently ADIOS2 supports one variable per deferred "batch" (until PerformPuts/Gets, EndStep). Allowing multiple pieces in a "batch" is under progress. Use Sync functions (Put, Get with adios2::Mode::Sync in 3rd argument) in current version as a workaround.
 
 
 Available Engines

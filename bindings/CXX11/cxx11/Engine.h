@@ -70,7 +70,8 @@ public:
     /**
      * Begin a logical adios2 step, overloaded version for advanced stream
      * control
-     * @param mode how
+     * @param mode see enum adios2::StepMode for options, NextAvailable is the
+     * common use case
      * @param timeoutSeconds
      * @return current step status
      */
@@ -138,7 +139,7 @@ public:
      * variable data.
      * @param variableName find variable by name inside IO that created this
      * Engine with Open
-     * @param data user data to be associated with a variable r-value or single
+     * @param datum user data to be associated with a variable r-value or single
      * data value
      * @param launch mode policy, optional for API consistency, internally is
      * always sync

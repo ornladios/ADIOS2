@@ -1,6 +1,11 @@
-######################
-Language Bindings APIs
-######################
+###########################
+Full Language Bindings APIs
+###########################
+
+.. note::
+
+   Product Application Developers targeting finer-level control for their IO tasks for optimization should use the current full APIs. If you want to use adios in simple cases (*e.g.* reading a file for analysis, interactive Python, or saving some data for a small project) please refer to the :ref:`Simple Language Bindings APIs` for a flat learning curve.  
+
 
 Currently ADIOS2 support bindings for the following languages and their minimum standards:
 
