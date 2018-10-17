@@ -267,6 +267,10 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
                                         ReaderRegister.WriterResponseCondition,
                                         &response);
 
+            /* { */
+            /*     extern int enet_protocol_verbose; */
+            /*     enet_protocol_verbose = 1; */
+            /* } */
             if (CMwrite(conn, Stream->CPInfo->ReaderRegisterFormat,
                         &ReaderRegister) != 1)
             {
@@ -721,6 +725,8 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         Next = Stream->Timesteps;
         while (Next)
         {
+            CP_verbose(Stream, "examining queued timestep  %d\n",
+                       Next->MetadataMsg->Timestep);
             if (Next->MetadataMsg->Timestep >= LastTimestep)
             {
                 if ((FoundTS == NULL) &&
@@ -767,6 +773,10 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         /* wait until we get the timestep metadata or something else changes */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
+    /* { */
+    /*     extern int enet_protocol_verbose; */
+    /*     enet_protocol_verbose = 0; */
+    /* } */
     /* NOTREACHED */
     pthread_mutex_unlock(&Stream->DataLock);
 }

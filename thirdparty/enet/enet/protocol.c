@@ -9,6 +9,9 @@
 #include "enet/time.h"
 #include "enet/enet.h"
 
+int enet_protocol_verbose = 1;
+int enet_msg_count = 0;
+int enet_msg_limit = 50;
 static size_t commandSizes [ENET_PROTOCOL_COMMAND_COUNT] =
 {
     0,
@@ -99,6 +102,7 @@ enet_protocol_dispatch_incoming_commands (ENetHost * host, ENetEvent * event)
            event -> type = ENET_EVENT_TYPE_RECEIVE;
            event -> peer = peer;
 
+           if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("Enet incoming message, msg count %d\n", enet_msg_count);
            if (! enet_list_empty (& peer -> dispatchedCommands))
            {
               peer -> needsDispatch = 1;
@@ -1257,6 +1261,7 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        host -> totalReceivedData += receivedLength;
        host -> totalReceivedPackets ++;
 
+       if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("Enet socket_receive got something, msg count %d\n", enet_msg_count);
        if (host -> intercept != NULL)
        {
           switch (host -> intercept (host, event))
