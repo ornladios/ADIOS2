@@ -103,7 +103,7 @@ enet_protocol_dispatch_incoming_commands (ENetHost * host, ENetEvent * event)
            event -> type = ENET_EVENT_TYPE_RECEIVE;
            event -> peer = peer;
 
-           if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("Enet incoming message, msg count %d\n", enet_msg_count);
+           if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("(PID %x) Enet incoming message, msg count %d\n", getpid(), enet_msg_count);
            if (! enet_list_empty (& peer -> dispatchedCommands))
            {
               peer -> needsDispatch = 1;
@@ -1262,7 +1262,7 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        host -> totalReceivedData += receivedLength;
        host -> totalReceivedPackets ++;
 
-       if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("Enet socket_receive got something, msg count %d\n", enet_msg_count);
+       if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("(PID %x) Enet socket_receive got something, msg count %d\n", getpid(), enet_msg_count);
        if (host -> intercept != NULL)
        {
           switch (host -> intercept (host, event))
@@ -1915,7 +1915,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
           switch (enet_protocol_dispatch_incoming_commands (host, event))
           {
           case 1:
-              if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf("Enet_host service, returning an event with type %d\n", event->type);
+              if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf("(PID %x ) Enet_host service, returning an event with type %d\n", getpid(), event->type);
              return 1;
 
           case -1:
