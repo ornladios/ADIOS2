@@ -12,7 +12,10 @@
 
 int enet_protocol_verbose = 1;
 int enet_msg_count = 0;
-int enet_msg_limit = 50;
+int enet_msg_limit = 40;
+
+#define VERBOSE(...)  if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf(__VA_ARGS__);
+
 static size_t commandSizes [ENET_PROTOCOL_COMMAND_COUNT] =
 {
     0,
@@ -103,7 +106,7 @@ enet_protocol_dispatch_incoming_commands (ENetHost * host, ENetEvent * event)
            event -> type = ENET_EVENT_TYPE_RECEIVE;
            event -> peer = peer;
 
-           if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("(PID %x) Enet incoming message, msg count %d\n", getpid(), enet_msg_count);
+           VERBOSE("(PID %x) Enet incoming message, msg count %d\n", getpid(), enet_msg_count);
            if (! enet_list_empty (& peer -> dispatchedCommands))
            {
               peer -> needsDispatch = 1;
@@ -1129,11 +1132,13 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
        switch (commandNumber)
        {
        case ENET_PROTOCOL_COMMAND_ACKNOWLEDGE:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_ACKNOWLEDGE\n");
           if (enet_protocol_handle_acknowledge (host, event, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_CONNECT:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_CONNECT\n");
           if (peer != NULL)
             goto commandError;
           peer = enet_protocol_handle_connect (host, header, command);
@@ -1142,51 +1147,61 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
           break;
 
        case ENET_PROTOCOL_COMMAND_VERIFY_CONNECT:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_VERIFY_CONNECT\n");
           if (enet_protocol_handle_verify_connect (host, event, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_DISCONNECT:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_DISCONNECT\n");
           if (enet_protocol_handle_disconnect (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_PING:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_PING\n");
           if (enet_protocol_handle_ping (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_SEND_RELIABLE\n");
           if (enet_protocol_handle_send_reliable (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE\n");
           if (enet_protocol_handle_send_unreliable (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED\n");
           if (enet_protocol_handle_send_unsequenced (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_SEND_FRAGMENT\n");
           if (enet_protocol_handle_send_fragment (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT\n");
           if (enet_protocol_handle_bandwidth_limit (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE\n");
           if (enet_protocol_handle_throttle_configure (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT\n");
           if (enet_protocol_handle_send_unreliable_fragment (host, peer, command, & currentData))
             goto commandError;
           break;
@@ -1262,7 +1277,7 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        host -> totalReceivedData += receivedLength;
        host -> totalReceivedPackets ++;
 
-       if (enet_protocol_verbose && (enet_msg_count++ < enet_msg_limit)) printf("(PID %x) Enet socket_receive got something, msg count %d\n", getpid(), enet_msg_count);
+       VERBOSE("(PID %x) Enet socket_receive got something, msg count %d\n", getpid(), enet_msg_count++);
        if (host -> intercept != NULL)
        {
           switch (host -> intercept (host, event))
@@ -1915,7 +1930,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
           switch (enet_protocol_dispatch_incoming_commands (host, event))
           {
           case 1:
-              if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf("(PID %x ) Enet_host service, returning an event with type %d\n", getpid(), event->type);
+              VERBOSE("(PID %x ) Enet_host service, returning an event with type %d\n", getpid(), event->type);
              return 1;
 
           case -1:
