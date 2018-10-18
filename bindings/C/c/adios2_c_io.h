@@ -24,8 +24,9 @@ extern "C" {
 /**
  * @brief Check if io exists in a config file passed to the adios handler that
  * created this io
- * @param result adios2_true=1: in config file, adios2_false=0: not in config
- * file
+ * @param result output adios2_true=1: in config file, adios2_false=0: not in
+ * config file
+ * @param io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_in_config_file(adios2_bool *result, const adios2_io *io);

@@ -22,8 +22,8 @@ extern "C" {
  * @param engine handler
  * @param mode see enum adios2_step_mode in adios2_c_types.h for options,
  * next_available is the common use case
- * @param timeoutSeconds provide a time out in Engine opened in read mode
- * @param step status output from enum adios2_step_status in adios2_c_types.h
+ * @param timeout_seconds provide a time out in Engine opened in read mode
+ * @param status output from enum adios2_step_status in adios2_c_types.h
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_begin_step(adios2_engine *engine,
@@ -47,7 +47,7 @@ adios2_error adios2_current_step(size_t *current_step,
  * @param variable contains variable metadata information
  * @param data user data to be associated with a variable, must be the same type
  * passed to adios2_define_variable
- * @param mode launch policy from enum adios2_mode
+ * @param launch mode launch policy
  * <pre>
  * 		adios2_mode_deferred: lazy evaulation, do not use data until
  * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
@@ -58,7 +58,7 @@ adios2_error adios2_current_step(size_t *current_step,
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
-                        const void *data, const adios2_mode mode);
+                        const void *data, const adios2_mode launch);
 
 /**
  * Put data associated with a Variable in an engine, used for engines with
@@ -68,7 +68,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
  * opened the engine handler (1st parameter)
  * @param data user data to be associated with a variable, must be the same type
  * passed to adios2_define_variable
- * @param launch mode policy
+ * @param launch mode launch policy
  * <pre>
  * 		adios2_mode_deferred: lazy evaulation, do not use data until
  * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
@@ -80,7 +80,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
  */
 adios2_error adios2_put_by_name(adios2_engine *engine,
                                 const char *variable_name, const void *data,
-                                const adios2_mode mode);
+                                const adios2_mode launch);
 
 /**
  * Performs all the adios2_put and adios2_put_by_name called with mode
@@ -103,7 +103,7 @@ adios2_error adios2_perform_puts(adios2_engine *engine);
  * @param data user data to be associated with a variable, must be the same type
  * passed to adios2_define_variable. Must be pre-allocated for the required
  * variable selection.
- * @param launch mode policy
+ * @param launch mode launch policy
  * <pre>
  * 		adios2_mode_deferred: lazy evaluation, do not use data until
  * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
@@ -114,7 +114,7 @@ adios2_error adios2_perform_puts(adios2_engine *engine);
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
-                        void *data, const adios2_mode mode);
+                        void *data, const adios2_mode launch);
 
 /**
  * Gets data associated with a Variable from an engine, used for engines with
@@ -126,7 +126,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
  * @param data user data to be associated with a variable, must be the same type
  * passed to adios2_define_variable. Must be pre-allocated for the required
  * variable selection.
- * @param launch mode policy
+ * @param launch mode launch policy
  * <pre>
  * 		adios2_mode_deferred: lazy evaluation, do not use data until
  * first adios2_perform_puts, adios2_end_step, or adios2_close. This is the
@@ -139,7 +139,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
  */
 adios2_error adios2_get_by_name(adios2_engine *engine,
                                 const char *variable_name, void *data,
-                                const adios2_mode mode);
+                                const adios2_mode launch);
 
 /**
  * Performs all the adios2_get and adios2_get_by_name called with mode

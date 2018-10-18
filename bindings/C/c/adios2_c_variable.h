@@ -55,7 +55,6 @@ adios2_error adios2_variable_name(char *name, size_t *size,
 /**
  * Retrieve variable type
  * @param type output, from enum adios2_type
- * @param size output, type size without '\0'
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
@@ -154,6 +153,7 @@ adios2_error adios2_selection_size(size_t *size,
  * @param operation_index output handler to be used with
  adios2_add_operation_param
  * @param variable handler on which operation is applied to
+ * @param op handler to adios2_operator associated to current operation
  * @param key parameter key supported by the operation, empty if none
  * @param value parameter value supported by the operation, empty if none
  * @return adios2_error 0: success, see enum adios2_error for errors
