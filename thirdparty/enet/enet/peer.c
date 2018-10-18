@@ -819,6 +819,7 @@ enet_peer_dispatch_incoming_reliable_commands (ENetPeer * peer, ENetChannel * ch
     {
        enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
 
+       VERBOSE("(PID %x) setting needsDispatch in enet_peer_dispatch_incoming_reliable_commands\n", getpid());
        peer -> needsDispatch = 1;
     }
 

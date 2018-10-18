@@ -1848,6 +1848,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 {
     enet_uint32 waitCondition;
 
+    VERBOSE("(PID %x) Enet host_service called, timeout %d\n", getpid(), timeout);
     if (event != NULL)
     {
         event -> type = ENET_EVENT_TYPE_NONE;
