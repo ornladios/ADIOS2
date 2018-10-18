@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4FileReader.h
+ * BP4Reader.h
  *
  *  Created on: Aug 1, 2018
  *      Author: Lipeng Wan wanl@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_BP4_BP4FILEREADER_H_
-#define ADIOS2_ENGINE_BP4_BP4FILEREADER_H_
+#ifndef ADIOS2_ENGINE_BP4_BP4READER_H_
+#define ADIOS2_ENGINE_BP4_BP4READER_H_
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
@@ -23,7 +23,7 @@ namespace core
 namespace engine
 {
 
-class BP4FileReader : public Engine
+class BP4Reader : public Engine
 {
 
 public:
@@ -34,10 +34,10 @@ public:
      * @param openMode only read
      * @param mpiComm
      */
-    BP4FileReader(IO &io, const std::string &name, const Mode mode,
+    BP4Reader(IO &io, const std::string &name, const Mode mode,
                  MPI_Comm mpiComm);
 
-    virtual ~BP4FileReader() = default;
+    virtual ~BP4Reader() = default;
 
     StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
                          const float timeoutSeconds = 0.f) final;
@@ -95,4 +95,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_BP4_BP4FILEREADER_H_ */
+#endif /* ADIOS2_ENGINE_BP4_BP4READER_H_ */

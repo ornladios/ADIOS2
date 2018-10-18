@@ -20,6 +20,12 @@
 #include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
+
+
+/*BP4 engine headers*/
+#include "adios2/engine/bp4/BP4Reader.h"
+#include "adios2/engine/bp4/BP4Writer.h"
+
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
@@ -448,12 +454,12 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
         if (mode == Mode::Read)
         {
-            engine = std::make_shared<engine::BP4FileReader>(*this, name, mode,
+            engine = std::make_shared<engine::BP4Reader>(*this, name, mode,
                                                             mpiComm);
         }
         else
         {
-            engine = std::make_shared<engine::BP4FileWriter>(*this, name, mode,
+            engine = std::make_shared<engine::BP4Writer>(*this, name, mode,
                                                             mpiComm);
         }
 

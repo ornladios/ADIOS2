@@ -33,8 +33,8 @@ add_library(adios2
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc
   engine/bp3/BP3Writer.cpp engine/bp3/BP3Writer.tcc
 
-  engine/bp4/BP4FileReader.cpp engine/bp4/BP4FileReader.tcc
-  engine/bp4/BP4FileWriter.cpp engine/bp4/BP4FileWriter.tcc
+  engine/bp4/BP4Reader.cpp engine/bp4/BP4Reader.tcc
+  engine/bp4/BP4Writer.cpp engine/bp4/BP4Writer.tcc
 
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc

@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4FileReader.cpp
+ * BP4Reader.cpp
  *
  *  Created on: Aug 1, 2018
  *      Author: Lipeng Wan wanl@ornl.gov
  */
 
-#include "BP4FileReader.h"
-#include "BP4FileReader.tcc"
+#include "BP4Reader.h"
+#include "BP4Reader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 
@@ -20,16 +20,16 @@ namespace core
 namespace engine
 {
 
-BP4FileReader::BP4FileReader(IO &io, const std::string &name, const Mode mode,
+BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
-: Engine("BP4FileReader", io, name, mode, mpiComm),
+: Engine("BP4Reader", io, name, mode, mpiComm),
   m_BP4Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
   m_SubFileManager(mpiComm, m_DebugMode), m_FileMetadataIndexManager(mpiComm, m_DebugMode)
 {
     Init();
 }
 
-StepStatus BP4FileReader::BeginStep(StepMode mode, const float timeoutSeconds)
+StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     if (m_DebugMode)
     {
@@ -37,7 +37,7 @@ StepStatus BP4FileReader::BeginStep(StepMode mode, const float timeoutSeconds)
         {
             throw std::invalid_argument("ERROR: mode is not supported yet, "
                                         "only NextAvailable is valid for "
-                                        "engine BP4FileReader, in call to "
+                                        "engine BP4Reader, in call to "
                                         "BeginStep\n");
         }
 
@@ -98,11 +98,11 @@ StepStatus BP4FileReader::BeginStep(StepMode mode, const float timeoutSeconds)
     return StepStatus::OK;
 }
 
-size_t BP4FileReader::CurrentStep() const { return m_CurrentStep; }
+size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
 
-void BP4FileReader::EndStep() { PerformGets(); }
+void BP4Reader::EndStep() { PerformGets(); }
 
-void BP4FileReader::PerformGets()
+void BP4Reader::PerformGets()
 {
     if (m_BP4Deserializer.m_DeferredVariables.empty())
     {
@@ -136,7 +136,7 @@ void BP4FileReader::PerformGets()
 }
 
 // PRIVATE
-void BP4FileReader::Init()
+void BP4Reader::Init()
 {
     if (m_DebugMode)
     {
@@ -152,7 +152,7 @@ void BP4FileReader::Init()
     InitBuffer();
 }
 
-void BP4FileReader::InitTransports()
+void BP4Reader::InitTransports()
 {
     if (m_IO.m_TransportsParameters.empty())
     {
@@ -178,7 +178,7 @@ void BP4FileReader::InitTransports()
     }
 }
 
-void BP4FileReader::InitBuffer()
+void BP4Reader::InitBuffer()
 {
     // Put all metadata in buffer
     if (m_BP4Deserializer.m_RankMPI == 0)
@@ -186,7 +186,7 @@ void BP4FileReader::InitBuffer()
         const size_t fileSize = m_FileManager.GetFileSize(0);
         m_BP4Deserializer.m_Metadata.Resize(
             fileSize,
-            "allocating metadata buffer, in call to BP4FileReader Open");
+            "allocating metadata buffer, in call to BP4Reader Open");
 
         m_FileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(),
                                fileSize);
@@ -212,18 +212,18 @@ void BP4FileReader::InitBuffer()
 }
 
 #define declare_type(T)                                                        \
-    void BP4FileReader::DoGetSync(Variable<T> &variable, T *data)               \
+    void BP4Reader::DoGetSync(Variable<T> &variable, T *data)               \
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
-    void BP4FileReader::DoGetDeferred(Variable<T> &variable, T *data)           \
+    void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)           \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void BP4FileReader::DoClose(const int transportIndex)
+void BP4Reader::DoClose(const int transportIndex)
 {
     PerformGets();
     m_SubFileManager.CloseFiles();
@@ -232,12 +232,12 @@ void BP4FileReader::DoClose(const int transportIndex)
 
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
-    BP4FileReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
+    BP4Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
     {                                                                          \
         return m_BP4Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> BP4FileReader::DoBlocksInfo(        \
+    std::vector<typename Variable<T>::Info> BP4Reader::DoBlocksInfo(        \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         return m_BP4Deserializer.BlocksInfo(variable, step);                   \

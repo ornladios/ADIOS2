@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4FileReader.tcc
+ * BP4Reader.tcc
  *
  *  Created on: Aug 1, 2018
  *      Author: Lipeng Wan wanl@ornl.gov
  */
 
-#ifndef ADIOS2_ENGINE_BP4_BP4FILEREADER_TCC_
-#define ADIOS2_ENGINE_BP4_BP4FILEREADER_TCC_
+#ifndef ADIOS2_ENGINE_BP4_BP4READER_TCC_
+#define ADIOS2_ENGINE_BP4_BP4READER_TCC_
 
-#include "BP4FileReader.h"
+#include "BP4Reader.h"
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -23,14 +23,14 @@ namespace engine
 {
 
 template <>
-inline void BP4FileReader::GetSyncCommon(Variable<std::string> &variable,
+inline void BP4Reader::GetSyncCommon(Variable<std::string> &variable,
                                         std::string *data)
 {
     m_BP4Deserializer.GetValueFromMetadata(variable, data);
 }
 
 template <class T>
-inline void BP4FileReader::GetSyncCommon(Variable<T> &variable, T *data)
+inline void BP4Reader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     if (variable.m_SingleValue)
     {
@@ -46,7 +46,7 @@ inline void BP4FileReader::GetSyncCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-void BP4FileReader::GetDeferredCommon(Variable<T> &variable, T *data)
+void BP4Reader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     // cheap
     if (variable.m_SingleValue)
@@ -61,7 +61,7 @@ void BP4FileReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-void BP4FileReader::ReadVariableBlocks(Variable<T> &variable)
+void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
 {
     const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
 
@@ -152,4 +152,4 @@ void BP4FileReader::ReadVariableBlocks(Variable<T> &variable)
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_BP4_BP4FILEREADER_TCC_ */
+#endif /* ADIOS2_ENGINE_BP4_BP4READER_TCC_ */

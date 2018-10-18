@@ -2,15 +2,15 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4FileWriter.tcc implementation of template functions with known type
+ * BP4Writer.tcc implementation of template functions with known type
  *
  *  Created on: Aug 1, 2018
  *      Author: Lipeng Wan wanl@ornl.gov
  */
-#ifndef ADIOS2_ENGINE_BP4_BP4FILEWRITER_TCC_
-#define ADIOS2_ENGINE_BP4_BP4FILEWRITER_TCC_
+#ifndef ADIOS2_ENGINE_BP4_BP4WRITER_TCC_
+#define ADIOS2_ENGINE_BP4_BP4WRITER_TCC_
 
-#include "BP4FileWriter.h"
+#include "BP4Writer.h"
 
 namespace adios2
 {
@@ -20,7 +20,7 @@ namespace engine
 {
 
 template <class T>
-void BP4FileWriter::PutSyncCommon(Variable<T> &variable,
+void BP4Writer::PutSyncCommon(Variable<T> &variable,
                                  const typename Variable<T>::Info &blockInfo)
 {
     // if first timestep Write create a new pg index
@@ -56,7 +56,7 @@ void BP4FileWriter::PutSyncCommon(Variable<T> &variable,
 }
 
 template <class T>
-void BP4FileWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
+void BP4Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     const typename Variable<T>::Info blockInfo =
         variable.SetBlockInfo(data, CurrentStep());
@@ -72,4 +72,4 @@ void BP4FileWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_BP4_BP4FILEWRITER_TCC_ */
+#endif /* ADIOS2_ENGINE_BP4_BP4WRITER_TCC_ */

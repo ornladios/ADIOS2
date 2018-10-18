@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4FileWriter.cpp
+ * BP4Writer.cpp
  *
  *  Created on: Aug 1, 2018
  *      Author: Lipeng Wan wanl@ornl.gov
  */
 
-#include "BP4FileWriter.h"
-#include "BP4FileWriter.tcc"
+#include "BP4Writer.h"
+#include "BP4Writer.tcc"
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
@@ -24,33 +24,33 @@ namespace core
 namespace engine
 {
 
-BP4FileWriter::BP4FileWriter(IO &io, const std::string &name, const Mode mode,
+BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
                            MPI_Comm mpiComm)
-: Engine("BP4FileWriter", io, name, mode, mpiComm),
+: Engine("BP4Writer", io, name, mode, mpiComm),
   m_BP4Serializer(mpiComm, m_DebugMode),
   m_FileDataManager(mpiComm, m_DebugMode),
   m_FileMetadataManager(mpiComm, m_DebugMode),
   m_FileMetadataIndexManager(mpiComm, m_DebugMode)
 {
-    m_EndMessage = " in call to IO Open BP4FileWriter " + m_Name + "\n";
+    m_EndMessage = " in call to IO Open BP4Writer " + m_Name + "\n";
     Init();
 }
 
-BP4FileWriter::~BP4FileWriter() = default;
+BP4Writer::~BP4Writer() = default;
 
-StepStatus BP4FileWriter::BeginStep(StepMode mode, const float timeoutSeconds)
+StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_BP4Serializer.m_DeferredVariables.clear();
     m_BP4Serializer.m_DeferredVariablesDataSize = 0;
     return StepStatus::OK;
 }
 
-size_t BP4FileWriter::CurrentStep() const
+size_t BP4Writer::CurrentStep() const
 {
     return m_BP4Serializer.m_MetadataSet.CurrentStep;
 }
 
-void BP4FileWriter::PerformPuts()
+void BP4Writer::PerformPuts()
 {
     if (m_BP4Serializer.m_DeferredVariables.empty())
     {
@@ -86,7 +86,7 @@ void BP4FileWriter::PerformPuts()
     m_BP4Serializer.m_DeferredVariables.clear();
 }
 
-void BP4FileWriter::EndStep()
+void BP4Writer::EndStep()
 {
     if (m_BP4Serializer.m_DeferredVariables.size() > 0)
     {
@@ -105,7 +105,7 @@ void BP4FileWriter::EndStep()
     }
 }
 
-void BP4FileWriter::Flush(const int transportIndex)
+void BP4Writer::Flush(const int transportIndex)
 {
     DoFlush(false, transportIndex);
     m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data);
@@ -117,7 +117,7 @@ void BP4FileWriter::Flush(const int transportIndex)
 }
 
 // PRIVATE
-void BP4FileWriter::Init()
+void BP4Writer::Init()
 {
     InitParameters();
     InitTransports();
@@ -125,12 +125,12 @@ void BP4FileWriter::Init()
 }
 
 #define declare_type(T)                                                        \
-    void BP4FileWriter::DoPutSync(Variable<T> &variable, const T *data)         \
+    void BP4Writer::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
         variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
-    void BP4FileWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
+    void BP4Writer::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
@@ -138,12 +138,12 @@ void BP4FileWriter::Init()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void BP4FileWriter::InitParameters()
+void BP4Writer::InitParameters()
 {
     m_BP4Serializer.InitParameters(m_IO.m_Parameters);
 }
 
-void BP4FileWriter::InitTransports()
+void BP4Writer::InitTransports()
 {
     // TODO need to add support for aggregators here later
     if (m_IO.m_TransportsParameters.empty())
@@ -179,7 +179,7 @@ void BP4FileWriter::InitTransports()
     }
 }
 
-void BP4FileWriter::InitBPBuffer()
+void BP4Writer::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
@@ -195,7 +195,7 @@ void BP4FileWriter::InitBPBuffer()
     }
 }
 
-void BP4FileWriter::DoFlush(const bool isFinal, const int transportIndex)
+void BP4Writer::DoFlush(const bool isFinal, const int transportIndex)
 {
     if (m_BP4Serializer.m_Aggregator.m_IsActive)
     {
@@ -207,7 +207,7 @@ void BP4FileWriter::DoFlush(const bool isFinal, const int transportIndex)
     }
 }
 
-void BP4FileWriter::DoClose(const int transportIndex)
+void BP4Writer::DoClose(const int transportIndex)
 {
     if (m_BP4Serializer.m_DeferredVariables.size() > 0)
     {
@@ -247,7 +247,7 @@ void BP4FileWriter::DoClose(const int transportIndex)
     }
 }
 
-void BP4FileWriter::WriteProfilingJSONFile()
+void BP4Writer::WriteProfilingJSONFile()
 {
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
@@ -281,7 +281,7 @@ void BP4FileWriter::WriteProfilingJSONFile()
 }
 
 /*generate the header for the metadata index file*/
-void BP4FileWriter::PopulateMetadataIndexFileHeader(std::vector<char> &buffer, 
+void BP4Writer::PopulateMetadataIndexFileHeader(std::vector<char> &buffer, 
         size_t &position, const uint8_t version, const bool addSubfiles)
 {
     auto lf_CopyVersionChar = [](const std::string version,
@@ -329,7 +329,7 @@ void BP4FileWriter::PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
 }
 
 /*write the content of metadata index file*/
-void BP4FileWriter::PopulateMetadataIndexFileContent(const uint64_t currentStep, 
+void BP4Writer::PopulateMetadataIndexFileContent(const uint64_t currentStep, 
     const uint64_t mpirank, const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
     const uint64_t attributesIndexStart, const uint64_t currentStepEndPos, std::vector<char> &buffer, 
     size_t &position)
@@ -342,7 +342,7 @@ void BP4FileWriter::PopulateMetadataIndexFileContent(const uint64_t currentStep,
     helper::CopyToBuffer(buffer, position, &currentStepEndPos);
 }
 
-void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
+void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
 
     m_BP4Serializer.AggregateCollectiveMetadata(
@@ -449,7 +449,7 @@ void BP4FileWriter::WriteCollectiveMetadataFile(const bool isFinal)
     m_BP4Serializer.ResetIndicesBuffer();
 }
 
-void BP4FileWriter::WriteData(const bool isFinal, const int transportIndex)
+void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
 {
     size_t dataSize = m_BP4Serializer.m_Data.m_Position;
 
@@ -469,7 +469,7 @@ void BP4FileWriter::WriteData(const bool isFinal, const int transportIndex)
     m_FileDataManager.FlushFiles(transportIndex);
 }
 
-void BP4FileWriter::AggregateWriteData(const bool isFinal,
+void BP4Writer::AggregateWriteData(const bool isFinal,
                                       const int transportIndex)
 {
     m_BP4Serializer.CloseStream(m_IO, false);
