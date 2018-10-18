@@ -9,6 +9,7 @@
 #include "enet/utility.h"
 #include "enet/time.h"
 #include "enet/enet.h"
+#include <stdio.h>
 
 int enet_protocol_verbose = 1;
 int enet_msg_count = 0;
@@ -477,9 +478,11 @@ enet_protocol_handle_send_reliable (ENetHost * host, ENetPeer * peer, const ENet
     * currentData += dataLength;
     if (dataLength > host -> maximumPacketSize ||
         * currentData < host -> receivedData ||
-        * currentData > & host -> receivedData [host -> receivedDataLength])
+        * currentData > & host -> receivedData [host -> receivedDataLength]) {
+        VERBOSE("Send reliable returning -1\n");
       return -1;
-
+    }
+    VERBOSE(" Queueing incoming command, peer %p, *currentData = %ld\n", peer, *((long*)currentData));
     if (enet_peer_queue_incoming_command (peer, command, (const enet_uint8 *) command + sizeof (ENetProtocolSendReliable), dataLength, ENET_PACKET_FLAG_RELIABLE, 0) == NULL)
       return -1;
 
@@ -1165,7 +1168,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
-           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_SEND_RELIABLE\n");
+           VERBOSE("Incoming command was ENET_PROTOCOL_COMMAND_SEND_RELIABLE, received data length %ld\n", host -> receivedDataLength);
           if (enet_protocol_handle_send_reliable (host, peer, command, & currentData))
             goto commandError;
           break;
@@ -1277,7 +1280,7 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        host -> totalReceivedData += receivedLength;
        host -> totalReceivedPackets ++;
 
-       VERBOSE("(PID %x) Enet socket_receive got something, msg count %d\n", getpid(), enet_msg_count++);
+       VERBOSE("(PID %x) Enet socket_receive got something of length %d (receivedDataLength %ld), msg count %d\n", getpid(), receivedLength, host -> receivedDataLength, enet_msg_count++);
        if (host -> intercept != NULL)
        {
           switch (host -> intercept (host, event))

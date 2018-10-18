@@ -5,7 +5,13 @@
 #include <string.h>
 #define ENET_BUILDING_LIB 1
 #include "enet/enet.h"
+#include <stdio.h>
 
+extern int enet_protocol_verbose;
+extern int enet_msg_count;
+extern int enet_msg_limit;
+
+#define VERBOSE(...)  if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf(__VA_ARGS__);
 /** @defgroup peer ENet peer functions 
     @{
 */
@@ -975,6 +981,7 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
     {
     case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
     case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
+        VERBOSE("Dispatch send_reliable or send_fragment\n");
        enet_peer_dispatch_incoming_reliable_commands (peer, channel);
        break;
 
@@ -986,6 +993,7 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
     return incomingCommand;
 
 discardCommand:
+    VERBOSE("Discarding command\n");
     if (fragmentCount > 0)
       goto notifyError;
 
