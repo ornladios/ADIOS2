@@ -70,5 +70,4 @@ The following sections provide a summary of the API calls on each language and l
 .. include:: fortran.rst
 .. include:: c.rst
 .. include:: python.rst
-.. include:: matlab.rst
 

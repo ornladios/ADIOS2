@@ -2,4 +2,4 @@
 Python bindings
 ***************
 
-Here goes the Python API
+Here goes the full Python API

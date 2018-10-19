@@ -1,6 +1,6 @@
-***************
-Matlab bindings
-***************
+**********************
+Matlab simple bindings
+**********************
 
 The ADIOS Matlab API supports reading data from ADIOS BP files with a 
 simplified API that consists of three functions:
