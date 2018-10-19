@@ -1,5 +1,5 @@
 *****************
-C Simple bindings
+C simple bindings
 *****************
 
 Write example:

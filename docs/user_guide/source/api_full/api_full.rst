@@ -52,16 +52,16 @@ The current interaction flow for each language binding API with the ADIOS2 libra
       group{
          label = "C++11 Library"
          color = orange
-        "ADIOS2";
+        
+         "ADIOS2";
       }
       
       group{
          label = "Language bindings APIs"
          color = yellow
          
-        "C++11", C, Python, Fortran, Matlab;
+         "C++11", C, Python, Fortran, Matlab;
       }
-      
    }
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.

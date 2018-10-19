@@ -8,4 +8,5 @@ ADIOS2 Interface Components
 .. include:: variable.rst
 .. include:: attribute.rst
 .. include:: engine.rst
+.. include:: operator.rst
 .. include:: runtime.rst

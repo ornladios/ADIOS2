@@ -67,7 +67,7 @@ Read "stepping/streaming" example:
       adios2::fstep iStep;
       while (adios2::getstep(iStream, iStep))
       {
-          if( iStep.currentstep == 0 )
+          if( iStep.currentstep() == 0 )
           {
               const std::size_t sizeOriginal = iStep.read<std::size_t>("size");
           }

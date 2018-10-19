@@ -43,7 +43,7 @@ The following section provides a summary of the available functionality for each
    
    
 :ref:`IO` class
-------------------
+---------------
 
 .. doxygenclass:: adios2::IO
    :project: CXX11
