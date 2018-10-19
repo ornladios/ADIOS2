@@ -191,6 +191,7 @@ enet_service_network(CManager cm, void *void_trans)
             } else {
                 svc->trace_out(cm, "ENET  ====== virgin peer, address is %x, port %u.\n", event.peer->address.host, event.peer->address.port);
                 svc->trace_out(cm, "ENET  ====== DiSCARDING DATA\n");
+                printf("ENET DISCARDING DATA, pid %x\n", getpid());
             }
             break;
 	}           
