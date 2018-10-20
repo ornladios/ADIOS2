@@ -19,11 +19,7 @@ ADIOS >= 2.0 is licensed under the Apache License v2.0.  See the accompanying
 Copyright.txt for more details.
 
 ## Documentation
-Please find ADIOS2 software documentation for:
-
-1. [ADIOS2 User Guide at readthedocs](https://adios2-adaptable-io-system-version-2.readthedocs.io)
-
-2. Local user guide documentation generation [docs/ReadMe.md](docs/ReadMe.md)
+Please find [ADIOS2 User Guide at readthedocs](https://adios2.readthedocs.io)
 
 ## Directory layout
 * cmake - Project specific CMake modules
@@ -32,8 +28,8 @@ Please find ADIOS2 software documentation for:
 * source - ADIOS2 source  
     * adios2 - source directory for the ADIOS2 library to be installed under install-dir/lib/libadios2.  
     * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
-* bindings - public interface language bindings (C++11, C++98, C, Fortran and Python)
-* testing - Tests using gtest
+* bindings - public interface language bindings (C++11, C++98, C, Fortran, Python and Matlab)
+* testing - Tests using [gtest](https://github.com/google/googletest)
   
 
 ## Getting Started
@@ -42,7 +38,7 @@ ADIOS2 uses CMake for its build environment.  CMake expects projects
 to use "out-of-source" builds, which means keeping a separate build and source
 directory (different from autotools, which usually uses an in-source build).
 
-The following is a quick step-by-step build guide, find the full CMake-based install documentation [here](http://adios2-adaptable-io-system-version-2.readthedocs.io/en/latest/installation/installation.html)
+The following is a quick step-by-step build guide, find the full CMake-based install documentation [here](http://adios2.readthedocs.io/en/latest/installation/installation.html)
 
 Step-by-step build guide:
 

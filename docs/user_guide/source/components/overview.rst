@@ -2,13 +2,32 @@
 Components Overview
 *******************
 
-The simple way to understand the big picture for the ADIOS2 core components is to map each class to the actual definition of the ADIOS acronym.
+.. note::
 
-============== =========== ============== ============
- Acronym Word   ADaptable   Input/Output     System   
-============== =========== ============== ============
- Component      **ADIOS**      **IO**      **Engine** 
-============== =========== ============== ============
+   If you are doing simple tasks where performance is a non-critical aspect please go to the :ref:`Simple Language Bindings APIs` section for a quick start. If you are an HPC application developer or you want to use ADIOS2 functionality in full please read this chapter.
+
+
+The simple way to understand the big picture for the ADIOS2 unified user interface components is to map each class to the actual definition of the ADIOS acronym.
+
++------------+-----------+---------------------------+
+| Component  | Acronym   | Function                  |
++------------+-----------+---------------------------+
+|            |           | Set MPI comm domain       |
+|            |           |                           |
+| **ADIOS**  | ADaptable | Set runtime settings      |
+|            |           |                           |
+|            |           | Own other components      |
++------------+-----------+---------------------------+
+|            |           | Set engine                |
+|            |           |                           |
+| **IO**     | I/O       | Set variables/attributes  |
+|            |           |                           |
+|            |           | Set compile-time settings |
++------------+-----------+---------------------------+
+|            |           | Execute heavy IO tasks    |
+| **Engine** | System    |                           |
+|            |           | Manage system resources   |
++------------+-----------+---------------------------+
 
 
 ADIOS2's public APIs are based on the natural choice for each supported language to represent each ADIOS2 components and its interaction with application datatypes. Thus, 
