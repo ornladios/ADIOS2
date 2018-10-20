@@ -20,7 +20,7 @@ APIs
 Building on Titan
 *****************
 
-#. :ref:`My application uses PGI on Titan, can I link ADIOS 2?`
+#. :ref:`My application uses PGI compilers on Titan, can I link ADIOS 2?`
 #. :ref:`How do I enable the Python bindings on Titan?`
    
 
@@ -67,8 +67,8 @@ you must use sync mode with adios2_put. Deferred mode will save garbage data sin
 
 
 
-My application uses PGI on Titan, can I link ADIOS 2?
------------------------------------------------------
+My application uses PGI compilers on Titan, can I link ADIOS 2?
+---------------------------------------------------------------
 
 Follow directions at :ref:`Building on High Performance Computing, HPC, Systems` to setup support for PGI on Titan. PGI compilers depend on GNU headers, but they must point to a version greater than gcc 4.8.1 to support C++11 features. The gcc module doesn't need to be loaded, though. Example:
 

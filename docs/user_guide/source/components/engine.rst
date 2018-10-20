@@ -102,7 +102,7 @@ The following example illustrates the basic API usage in write mode for data gen
 .. danger::
    The default behavior of adios2 Put and Get calls IS NOT synchronized, but rather deferred. It's actually the opposite of MPI_Put and more like MPI_rPut.
    Do not assume the data pointer is usable after a Put and Get, before EndStep, Close or the corresponding PerformPuts/PerformGets. 
-   Be SAFE and use the adios2::Mode::Sync in the 3rd argument. 
+   Be SAFE and consider using the adios2::Mode::Sync in the 3rd argument. Avoid using TEMPORARIES, r-values, and out-of-scope variables in Deferred mode.
 
 
 Available Engines
