@@ -41,6 +41,15 @@ The following section provides a summary of the available functionality for each
    :path: ../../bindings/CXX11/cxx11/
    :members:
    
+   
+:ref:`IO` class
+---------------
+
+.. doxygenclass:: adios2::IO
+   :project: CXX11
+   :path: ../../bindings/CXX11/cxx11/
+   :members:
+   
 :ref:`Variable` <T> class
 -------------------------
 
@@ -57,6 +66,7 @@ The following section provides a summary of the available functionality for each
    :project: CXX11
    :path: ../../bindings/CXX11/cxx11/
    :members:
+
 
 :ref:`Engine` class
 -------------------

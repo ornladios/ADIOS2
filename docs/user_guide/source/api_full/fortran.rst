@@ -26,7 +26,7 @@ The following subsections describe the overall component representation and the 
 ADIOS2 typed handlers
 ---------------------
 
-ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components described in the :ref:`Application Programmer Interface` section. For convenience, each type handler contains descriptive components used for read-only inspection.
+ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components described in the :ref:`Components Overview` section. For convenience, each type handler contains descriptive components used for read-only inspection.
  
 .. code-block:: fortran
 
@@ -469,8 +469,8 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 
 
 
-:ref:`Variables` subroutines
-----------------------------
+:ref:`Variable` subroutines
+---------------------------
 
 * :f90:`subroutine adios2_set_shape` set new shape_dims if dims are variable in adios2_define_variable
    

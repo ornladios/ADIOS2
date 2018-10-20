@@ -42,11 +42,12 @@ class Stream;
 class fstream
 {
 public:
+    /** Available open modes for adios2::fstream constructor or open calls */
     enum openmode
     {
-        out,
-        in,
-        app
+        out, //!< write
+        in,  //!< read
+        app  //!< append, not yet supported
     };
 
 #ifdef ADIOS2_HAVE_MPI
@@ -58,11 +59,11 @@ public:
      * (Append)
      * @param comm MPI communicator establishing domain for fstream
      * @param engineType available adios2 engine
-     * @exception std::invalid_argument (user input error) or std::runtime_error
+     * @throws std::invalid_argument (user input error) or std::runtime_error
      * (system error)
      */
-    fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-            const std::string engineType = "BPFile");
+    fstream(const std::string &name, adios2::fstream::openmode mode,
+            MPI_Comm comm, const std::string engineType = "BPFile");
 
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for
@@ -73,12 +74,13 @@ public:
      * @param comm MPI communicator establishing domain for fstream
      * @param configFile adios2 runtime configuration file
      * @param ioInConfigFile specific io name in configFile
-     * @exception std::invalid_argument (user input error) or
+     * @throws std::invalid_argument (user input error) or
      * std::runtime_error
      * (system error)
      */
-    fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-            const std::string &configFile, const std::string ioInConfigFile);
+    fstream(const std::string &name, const adios2::fstream::openmode mode,
+            MPI_Comm comm, const std::string &configFile,
+            const std::string ioInConfigFile);
 #else
     /**
      * High-level API non-MPI constructor, based on C++11 fstream. Allows for
@@ -90,7 +92,7 @@ public:
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
-    fstream(const std::string &name, const openmode mode,
+    fstream(const std::string &name, const adios2::fstream::openmode mode,
             const std::string engineType = "BPFile");
 
     /**
@@ -104,12 +106,13 @@ public:
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
-    fstream(const std::string &name, const openmode mode,
+    fstream(const std::string &name, const adios2::fstream::openmode mode,
             const std::string &configFile, const std::string ioInConfigFile);
 #endif
     /** Empty constructor, allows the use of open later in the code */
     fstream() = default;
 
+    /** Using RAII STL containers only */
     ~fstream() = default;
 
     /**
@@ -122,8 +125,8 @@ public:
      * High-level API MPI open, based on C++11 fstream. Allows for
      * passing parameters in source code. Used after empty constructor.
      * @param name stream name
-     * @param mode fstream::in (Read), fstream::out (Write), fstream::app
-     * (Append)
+     * @param mode adios2::fstream::in (Read), adios2::fstream::out (Write),
+     * adios2::fstream::app (Append)
      * @param comm MPI communicator establishing domain for fstream
      * @param engineType available adios2 engine
      * @exception std::invalid_argument (user input error) or std::runtime_error
@@ -191,13 +194,15 @@ public:
      */
     template <class T>
     void write(const std::string &name, const T *values,
-               const Dims &shape = Dims{}, const Dims &start = Dims{},
-               const Dims &count = Dims{}, const bool endl = false);
+               const adios2::Dims &shape = adios2::Dims(),
+               const adios2::Dims &start = adios2::Dims(),
+               const adios2::Dims &count = adios2::Dims(),
+               const bool endl = false);
 
     /**
-     * writes a self-describing single-value variable
+     * Write a self-describing single-value variable
      * @param name variable name
-     * @param values variable data value (can be r-value)
+     * @param value variable data value (can be r-value)
      * @param endl similar to std::endl, end current step and flush (default).
      * Use adios2::endl for true.
      * @exception std::invalid_argument (user input error) or
@@ -208,155 +213,186 @@ public:
                const bool endl = false);
 
     /**
-     * Reads into a pre-allocated values pointer for current step (streaming
-     * mode: step by step)
+     * Reads into a pre-allocated pointer a selection piece in dimension. When
+     * used with adios2::getstep reads current step
      * @param name variable name
      * @param values pre-allocated pointer to hold read values, if variable is
      * not found (name and type don't match) it becomes nullptr
-     * @param endl end current step and moves forward to the next step
      */
     template <class T>
     void read(const std::string &name, T *values);
 
     /**
-     * Reads into a single value for current step (streaming
-     * mode: step by step)
+     * Reads a value. When used with adios2::getstep reads current step value
      * @param name variable name
-     * @param value filled with value,
-     * if variable is not found (name and type don't match) the returned address
-     * becomes nullptr
-     * @param endl true: end current step and moves forward to the next step
+     * @param value output value, if variable is not found (name and type don't
+     * match) the returned value address becomes nullptr
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
     void read(const std::string &name, T &value);
 
     /**
-     * Reads into an array variable for a range of steps
-     * @param name
+     * Read accessing steps in random access mode. Not be used with
+     * adios2::getstep as it throw an exception when reading in stepping mode.
+     * @param name variable name
      * @param values pre-allocated pointer to hold read values, if variable is
      * not found (name and type don't match) it becomes nullptr
-      * @param stepSelectionStart initial step point
-     * @param stepSelectionCount number of steps from stepSelectionStart
+     * @param stepsStart variable initial step (relative to the variable first
+     * appearance, not absolute step in stream)
+     * @param stepsCount variable number of steps form step_start, don't have to
+     * be contiguous, necessarily
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
-    void read(const std::string &name, T *values,
-              const size_t stepSelectionStart,
-              const size_t stepSelectionCount = 1);
+    void read(const std::string &name, T *values, const size_t stepsStart,
+              const size_t stepsCount = 1);
 
     /**
-     * Reads into a single value for a range of steps
+     * Reads into a single value for a single step. Not be used with
+     * adios2::getstep as it throws an exception when reading in stepping mode.
      * @param name variable name
      * @param value filled with value,
      * if variable is not found (name, type and step don't match) the returned
-     * address becomes nullptr
+     * value address becomes nullptr
      * @param step selected single step
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
     void read(const std::string &name, T &value, const size_t step);
 
     /**
-     * Reads into a pre-allocated pointer a selection piece in dimension for
-     * current step (streaming mode: step by step)
+     * Reads into a pre-allocated pointer a selection piece in dimension. When
+     * used with adios2::getstep reads current step
      * @param name variable name
      * @param values pre-allocated pointer to hold read values, if variable is
      * not found (name and type don't match) it becomes nullptr
-     * @param selectionStart dimension box selection start point
-     * @param selectionCount dimension box selection count (length) per
-     * direction
-     * @param endl true: end current step and moves forward to the next step
+     * @param start variable local offset selection
+     * @param count variable local dimension selection from start
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
-    void read(const std::string &name, T *values, const Dims &selectionStart,
-              const Dims &selectionCount);
+    void read(const std::string &name, T *values, const adios2::Dims &start,
+              const adios2::Dims &count);
 
     /**
      * Reads into a pre-allocated pointer a selection piece in dimensions and
-     * steps
+     * steps. Not be used with adios2::getstep as it throws an exception when
+     * reading in stepping mode.
      * @param name variable name
      * @param values pre-allocated pointer to hold read values, if variable is
-     * not found (name and type don't match) it becomes nullptr
-     * @param selectionStart dimension box selection start point
-     * @param selectionCount dimension box selection count (length) per
-     * direction
-     * @param stepSelectionStart initial step point
-     * @param stepSelectionCount number of steps from stepSelectionStart
+     * not found (name and type don't match) it becomes a nullptr
+     * @param start variable local offset selection
+     * @param count variable local dimension selection from start
+     * @param stepsStart variable initial step (relative to the variable first
+     * appearance, not absolute step in stream)
+     * @param stepsCount variable number of steps form step_start, don't have to
+     * be necessarily contiguous
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
-    void read(const std::string &name, T *values, const Dims &selectionStart,
-              const Dims &selectionCount, const size_t stepSelectionStart,
-              const size_t stepSelectionCount);
+    void read(const std::string &name, T *values, const adios2::Dims &start,
+              const adios2::Dims &count, const size_t stepsStart,
+              const size_t stepsCount);
 
     /**
      * Reads entire variable for current step (streaming mode: step by step)
      * @param name variable name
-     * @param endl true: end current step and moves forward to the next step
      * @return values of variable name for current step. Single values will have
      * a size=1 vector
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
     std::vector<T> read(const std::string &name);
 
     /**
-     * Return single value given name and size
+     * Return single value given name and step
      * @param name variable name
      * @param step input step
      * @return value if name and step are found
-     * @exception throws exception if variable not found for name and step
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
     T read(const std::string &name, const size_t step);
 
     /**
      * Returns a vector with full variable dimensions for the current step
-     * selection
+     * selection. Not be used with adios2::getstep as it throw an exception when
+     * reading in stepping mode.
      * @param name variable name
-     * @param stepSelectionStart initial step point
-     * @param stepSelectionCount number of steps from stepSelectionStart
-     * @return values of variable name for current step, empty if variable not
-     * found or selections are out of bounds
+     * @param stepsStart variable initial step (relative to the variable first
+     * appearance, not absolute step in stream)
+     * @param stepsCount variable number of steps form step_start, don't have to
+     * be contiguous, necessarily
+     * @return values of variable name for current step, empty if exception is
+     * thrown
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
-    std::vector<T> read(const std::string &name,
-                        const size_t stepSelectionStart,
-                        const size_t stepSelectionCount);
+    std::vector<T> read(const std::string &name, const size_t stepsStart,
+                        const size_t stepsCount);
 
     /**
      * Reads a selection piece in dimension for current step (streaming mode:
      * step by step)
      * @param name variable name
-     * @param selectionStart dimension box selection start point
-     * @param selectionCount dimension box selection count (length) per
-     * direction
-     * @param endl true: end current step and moves forward to the next step
-     * @return values of variable name for current step, empty if variable not
-     * found or selections are out of bounds
+     * @param start variable local offset selection
+     * @param count variable local dimension selection from start
+     * @return values of variable name for current step, empty if exception is
+     * thrown
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
-    std::vector<T> read(const std::string &name, const Dims &selectionStart,
-                        const Dims &selectionCount);
+    std::vector<T> read(const std::string &name, const Dims &start,
+                        const Dims &count);
 
     /**
      * Reads a selection piece in dimension and a selection piece in steps
-     * (non-streaming mode)
+     * (non-streaming mode). Not be used with adios2::getstep as it throw an
+     * exception when reading in stepping mode.
      * @param name variable name
-     * @param selectionStart dimension box selection start point
-     * @param selectionCount dimension box selection count (length) per
-     * direction
-     * @param stepSelectionStart initial step point
-     * @param stepSelectionCount number of steps from stepSelectionStart
-     * @return values of variable name and type<T> for current selection
+     * @param start variable local offset selection
+     * @param count variable local dimension selection from start
+     * @param stepsStart variable initial step (relative to the variable first
+     * appearance, not absolute step in stream)
+     * @param stepsCount variable number of steps form step_start, don't have to
+     * be contiguous, necessarily
+     * @return variable values, empty if exception is thrown
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
-    std::vector<T> read(const std::string &name, const Dims &selectionStart,
-                        const Dims &selectionCount,
-                        const size_t stepSelectionStart,
-                        const size_t stepSelectionCount);
+    std::vector<T> read(const std::string &name, const Dims &start,
+                        const Dims &count, const size_t stepsStart,
+                        const size_t stepsCount);
 
     /** close current stream becoming inaccessible */
     void close();
 
+    /**
+     * Gets step from stream
+     * Based on std::getline, enables reading on a step-by-step basis in a while
+     * or for loop. Read mode only
+     * @param stream input stream containing steps
+     * @param step output object current step, adios2::fstep in an alias to
+     * adios2::fstream with scope narrowed to one step
+     * @return true: step is valid, false: step is invalid (end of stream).
+     */
     friend bool getstep(adios2::fstream &stream, adios2::fstep &step);
 
+    /**
+     * Return current step when getstep is called in a loop, read mode only
+     * @return current step
+     */
     size_t currentstep() const noexcept;
 
 protected:

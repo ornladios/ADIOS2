@@ -1,6 +1,11 @@
-######################
-Language Bindings APIs
-######################
+###########################
+Full Language Bindings APIs
+###########################
+
+.. note::
+
+   Product Application Developers targeting finer-level control for their IO tasks for optimization should use the current full APIs. If you want to use ADIOS2 in simple use cases (*e.g.* reading a file for analysis, interactive Python, or saving some data for a small project) please refer to the :ref:`Simple Language Bindings APIs` for a flat learning curve.  
+
 
 Currently ADIOS2 support bindings for the following languages and their minimum standards:
 
@@ -47,16 +52,16 @@ The current interaction flow for each language binding API with the ADIOS2 libra
       group{
          label = "C++11 Library"
          color = orange
-        "ADIOS2";
+        
+         "ADIOS2";
       }
       
       group{
          label = "Language bindings APIs"
          color = yellow
          
-        "C++11", C, Python, Fortran, Matlab;
+         "C++11", C, Python, Fortran, Matlab;
       }
-      
    }
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
@@ -65,5 +70,4 @@ The following sections provide a summary of the API calls on each language and l
 .. include:: fortran.rst
 .. include:: c.rst
 .. include:: python.rst
-.. include:: matlab.rst
 

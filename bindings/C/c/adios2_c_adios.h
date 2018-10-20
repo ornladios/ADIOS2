@@ -24,7 +24,6 @@ extern "C" {
 #ifdef ADIOS2_HAVE_MPI
 /**
  * Starting point for MPI apps. Creates an ADIOS handler.
- * @param configFile runtime config file
  * @param comm defines domain scope from application
  * @param debug_mode true: extra user-input debugging information, false:
  * run without checking user-input (stable workflows)
@@ -35,7 +34,7 @@ adios2_adios *adios2_init(MPI_Comm comm, const adios2_debug_mode debug_mode);
 /**
  * Starting point for MPI apps. Creates an ADIOS handler allowing a runtime
  * config file.
- * @param configFile runtime config file
+ * @param config_file runtime configuration file in xml format
  * @param comm defines domain scope from application
  * @param debug_mode true: extra user-input debugging information, false:
  * run without checking user-input (stable workflows)
@@ -86,7 +85,6 @@ adios2_io *adios2_at_io(adios2_adios *adios, const char *name);
 
 /**
  * Defines an adios2 supported operator by its type.
- * @param op output: valid operator handler, NULL if operator is not supported
  * @param adios owner the op handler
  * @param name unique operator name identifier within current ADIOS object
  * @param type supported ADIOS2 operator type: zfp, sz

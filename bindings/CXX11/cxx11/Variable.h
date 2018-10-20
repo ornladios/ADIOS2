@@ -46,6 +46,7 @@ public:
      */
     Variable<T>() = default;
 
+    /** Default, using RAII STL containers */
     ~Variable<T>() = default;
 
     /** Checks if object is valid, e.g. if( variable ) { //..valid } */
@@ -133,8 +134,11 @@ public:
      */
     struct Operation
     {
-        const Operator Op;
+        /** Operator associated with this operation */
+        const adios2::Operator Op;
+        /** Parameters settings for this operation */
         const adios2::Params Parameters;
+        /** Information associated with this operation */
         const adios2::Params Info;
     };
 
@@ -169,12 +173,12 @@ public:
     /** Contains sub-block information for a particular Variable<T> */
     struct Info
     {
-        Dims Start;
-        Dims Count;
-        T Min = T();
-        T Max = T();
-        T Value = T();
-        bool IsValue;
+        adios2::Dims Start; ///< block start
+        adios2::Dims Count; ///< block count
+        T Min = T();        ///< block Min, if IsValue is false
+        T Max = T();        ///< block Max, if IsValue is false
+        T Value = T();      ///< block Value, if IsValue is true
+        bool IsValue;       ///< true: value, false: array
     };
 
 private:
