@@ -805,6 +805,8 @@ enet_protocol_handle_bandwidth_limit (ENetHost * host, ENetPeer * peer, const EN
     peer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> bandwidthLimit.incomingBandwidth);
     peer -> outgoingBandwidth = ENET_NET_TO_HOST_32 (command -> bandwidthLimit.outgoingBandwidth);
 
+    VERBOSE("Bandwith limit command sets peer to incoming limit %d, outgoing limit %d\n", peer -> incomingBandwidth, peer -> outgoingBandwidth);
+
     if (peer -> incomingBandwidth != 0)
       ++ host -> bandwidthLimitedPeers;
 
@@ -1135,13 +1137,13 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
        switch (commandNumber)
        {
        case ENET_PROTOCOL_COMMAND_ACKNOWLEDGE:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_ACKNOWLEDGE\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_ACKNOWLEDGE\n", getpid());
           if (enet_protocol_handle_acknowledge (host, event, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_CONNECT:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_CONNECT\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_CONNECT\n", getpid());
           if (peer != NULL)
             goto commandError;
           peer = enet_protocol_handle_connect (host, header, command);
@@ -1150,61 +1152,61 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
           break;
 
        case ENET_PROTOCOL_COMMAND_VERIFY_CONNECT:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_VERIFY_CONNECT\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_VERIFY_CONNECT\n", getpid());
           if (enet_protocol_handle_verify_connect (host, event, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_DISCONNECT:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_DISCONNECT\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_DISCONNECT\n", getpid());
           if (enet_protocol_handle_disconnect (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_PING:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_PING\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_PING\n", getpid());
           if (enet_protocol_handle_ping (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_SEND_RELIABLE, received data length %ld\n", getpid(), host -> receivedDataLength);
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_RELIABLE, received data length %ld\n", getpid(), host -> receivedDataLength);
           if (enet_protocol_handle_send_reliable (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE\n", getpid());
           if (enet_protocol_handle_send_unreliable (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED\n", getpid());
           if (enet_protocol_handle_send_unsequenced (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_SEND_FRAGMENT\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_FRAGMENT\n", getpid());
           if (enet_protocol_handle_send_fragment (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT\n", getpid());
           if (enet_protocol_handle_bandwidth_limit (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE\n", getpid());
           if (enet_protocol_handle_throttle_configure (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
-           VERBOSE("(PID %d) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT\n", getpid());
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT\n", getpid());
           if (enet_protocol_handle_send_unreliable_fragment (host, peer, command, & currentData))
             goto commandError;
           break;

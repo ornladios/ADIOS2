@@ -307,9 +307,10 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
 
         if (!reader->Connections[peer].CMconn)
         {
-            CP_error(
-                reader->ParentStream,
-                "Connection failed in SstInitWSReader! Contact list was:\n");
+            CP_error(reader->ParentStream, "Connection failed in "
+                                           "SstInitWSReader! Remote Stream id "
+                                           "%x, Contact list was:\n",
+                     reader->Connections[peer].RemoteStreamID);
             CP_error(
                 reader->ParentStream, "%s\n",
                 attr_list_to_string(reader->Connections[peer].ContactList));
