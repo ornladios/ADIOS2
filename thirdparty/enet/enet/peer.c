@@ -111,8 +111,10 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
 
    if (peer -> state != ENET_PEER_STATE_CONNECTED ||
        channelID >= peer -> channelCount ||
-       packet -> dataLength > peer -> host -> maximumPacketSize)
-     return -1;
+       packet -> dataLength > peer -> host -> maximumPacketSize) {
+       VERBOSE("PEER SEND FAILING!  Bad state, or channelID or packet size\n");
+       return -1;
+   }
 
    fragmentLength = peer -> mtu - sizeof (ENetProtocolHeader) - sizeof (ENetProtocolSendFragment);
    if (peer -> host -> checksum != NULL)
@@ -128,9 +130,10 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
       ENetList fragments;
       ENetOutgoingCommand * fragment;
 
-      if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT)
+      if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT) {
+       VERBOSE("PEER SEND FAILING!  Bad fragment count\n");
         return -1;
-
+      }
       if ((packet -> flags & (ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT)) == ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT &&
           channel -> outgoingUnreliableSequenceNumber < 0xFFFF)
       {
@@ -164,6 +167,7 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
                enet_free (fragment);
             }
             
+            VERBOSE("PEER SEND FAILING!  Malloc failed\n");
             return -1;
          }
          
@@ -213,8 +217,10 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
       command.sendUnreliable.dataLength = ENET_HOST_TO_NET_16 (packet -> dataLength);
    }
 
-   if (enet_peer_queue_outgoing_command (peer, & command, packet, 0, packet -> dataLength) == NULL)
-     return -1;
+   if (enet_peer_queue_outgoing_command (peer, & command, packet, 0, packet -> dataLength) == NULL) {
+       VERBOSE("PEER SEND FAILING!  queue outgoing command failed\n");
+       return -1;
+   }
 
    return 0;
 }
