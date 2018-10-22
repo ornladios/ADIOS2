@@ -129,6 +129,7 @@ handle_packet(CManager cm, CMtrans_services svc, transport_entry trans, enet_con
     CMbuffer cb;
     svc->trace_out(cm, "A packet of length %u was received.\n",
                    (unsigned int) packet->dataLength);
+    printf("(PID %x) Kicking data of length %d to handler.\n", getpid(), (unsigned int) packet->dataLength);
     econn_d->read_buffer_len = packet->dataLength;
     cb = svc->create_data_and_link_buffer(cm, 
                                           packet->data, 
@@ -159,6 +160,7 @@ enet_service_network(CManager cm, void *void_trans)
 
     while (ecd->pending_data) {
         svc->trace_out(cm, "ENET Handling pending data\n");
+        printf("(PID %x) Handle pending enet data\n", getpid());
         queued_data entry = ecd->pending_data;
         ecd->pending_data = entry->next;
         handle_packet(cm, svc, trans, entry->econn_d, entry->packet);
@@ -452,12 +454,15 @@ retry:
             entry->next = NULL;
             entry->econn_d = econn_d;
             entry->packet = event.packet;
+            printf("(PID %x) Queueing packet in wait for connection\n", getpid());
             /* add at the end */
             if (econn_d->sd->pending_data == NULL) {
                 econn_d->sd->pending_data = entry;
+                printf("(PID %x) Queue at first entry\n", getpid());
             } else {
                 queued_data last = econn_d->sd->pending_data;
                 while (last->next != NULL) {
+                    printf("(PID %x) Queue skipping\n", getpid());
                     last = last->next;
                 }
                 last->next = entry;
