@@ -141,6 +141,7 @@ handle_packet(CManager cm, CMtrans_services svc, transport_entry trans, enet_con
 
     /* kick this upstairs */
     trans->data_available(trans, econn_d->conn);
+    printf("(PID %x) Returned from handler.\n", getpid());
     svc->return_data_buffer(trans->cm, cb);
 }
 	    
