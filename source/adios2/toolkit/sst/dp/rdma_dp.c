@@ -111,26 +111,28 @@ static void init_fabric(struct fabric_state *fabric)
 
     originfo = info;
     useinfo = NULL;
-    while(info) {
-    	prov_name = info->fabric_attr->prov_name;
-    	domain_name = info->domain_attr->name;
-    	if (ifname && strcmp(ifname, domain_name) == 0) {
-    		useinfo = info;
-    		break;
-    	}
-    	if(strcmp(prov_name, "verbs") == 0
-    			|| strcmp(prov_name, "gni") == 0
-				|| strcmp(prov_name, "psm2") == 0) {
-    		useinfo = info;
-    	}
-    	info = info->next;
+    while (info)
+    {
+        prov_name = info->fabric_attr->prov_name;
+        domain_name = info->domain_attr->name;
+        if (ifname && strcmp(ifname, domain_name) == 0)
+        {
+            useinfo = info;
+            break;
+        }
+        if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
+            strcmp(prov_name, "psm2") == 0)
+        {
+            useinfo = info;
+        }
+        info = info->next;
     }
 
     info = useinfo;
 
     if (!info)
     {
-    	return;
+        return;
     }
 
     fabric->info = fi_dupinfo(info);
@@ -1059,50 +1061,61 @@ static struct _CP_DP_Interface RdmaDPInterface;
  */
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-	struct fi_info *hints, *info, *originfo, *useinfo;
-	char *prov_name, *domain_name;
-	char *ifname;
-	int Ret = -1;
+    struct fi_info *hints, *info, *originfo, *useinfo;
+    char *prov_name, *domain_name;
+    char *ifname;
+    int Ret = -1;
 
-	    hints = fi_allocinfo();
-	    hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |
-	                  FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
-	    hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
-	                  FI_ASYNC_IOV | FI_RX_CQ_DATA;
-	    hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints = fi_allocinfo();
+    hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |
+                  FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
+    hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
+                  FI_ASYNC_IOV | FI_RX_CQ_DATA;
+    hints->domain_attr->mr_mode = FI_MR_BASIC;
 
-	    ifname = getenv("FABRIC_IFACE");
+    ifname = getenv("FABRIC_IFACE");
 
-	    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
-	    fi_freeinfo(hints);
+    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
+    fi_freeinfo(hints);
 
-	    if(!info) {
-	    	Svcs->verbose(CP_Stream, "RDMA Dataplane could not find any viable fabrics.\n");
-	    }
+    if (!info)
+    {
+        Svcs->verbose(CP_Stream,
+                      "RDMA Dataplane could not find any viable fabrics.\n");
+    }
 
-	    while(info) {
-	    	prov_name = info->fabric_attr->prov_name;
-	    	domain_name = info->domain_attr->name;
-	    	if (ifname && strcmp(ifname, domain_name) == 0) {
-	    		Svcs->verbose(CP_Stream, "RDMA Dataplane found the requested interface %s, provider type %s.\n", ifname, prov_name);
-	    		Ret = 100;
-	    		break;
-	    	}
-	    	if(strcmp(prov_name, "verbs") == 0
-	    			|| strcmp(prov_name, "gni") == 0
-					|| strcmp(prov_name, "psm2") == 0) {
+    while (info)
+    {
+        prov_name = info->fabric_attr->prov_name;
+        domain_name = info->domain_attr->name;
+        if (ifname && strcmp(ifname, domain_name) == 0)
+        {
+            Svcs->verbose(CP_Stream, "RDMA Dataplane found the requested "
+                                     "interface %s, provider type %s.\n",
+                          ifname, prov_name);
+            Ret = 100;
+            break;
+        }
+        if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
+            strcmp(prov_name, "psm2") == 0)
+        {
 
-	    		Svcs->verbose(CP_Stream, "RDMA Dataplane sees interface %s, provider type %s, which should work.\n", domain_name, prov_name);
-	    		Ret = 10;
-	    	}
-	    	info = info->next;
-	    }
+            Svcs->verbose(CP_Stream, "RDMA Dataplane sees interface %s, "
+                                     "provider type %s, which should work.\n",
+                          domain_name, prov_name);
+            Ret = 10;
+        }
+        info = info->next;
+    }
 
-	        	if(Ret == -1) {
-	        		Svcs->verbose(CP_Stream, "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
-	        	}
+    if (Ret == -1)
+    {
+        Svcs->verbose(
+            CP_Stream,
+            "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
+    }
 
-	        	fi_freeinfo(originfo);
+    fi_freeinfo(originfo);
 
     Svcs->verbose(
         CP_Stream,
