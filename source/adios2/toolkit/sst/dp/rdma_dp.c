@@ -93,7 +93,6 @@ static void init_fabric(struct fabric_state *fabric)
     struct fi_av_attr av_attr = {0};
     struct fi_cq_attr cq_attr = {0};
     char *ifname;
-    char *domain_name, *prov_name;
 
     hints = fi_allocinfo();
     hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |
@@ -113,8 +112,9 @@ static void init_fabric(struct fabric_state *fabric)
     useinfo = NULL;
     while (info)
     {
-        prov_name = info->fabric_attr->prov_name;
-        domain_name = info->domain_attr->name;
+        char *prov_name = info->fabric_attr->prov_name;
+        char *domain_name = info->domain_attr->name;
+        
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
             useinfo = info;
@@ -1062,7 +1062,6 @@ static struct _CP_DP_Interface RdmaDPInterface;
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
 {
     struct fi_info *hints, *info, *originfo, *useinfo;
-    char *prov_name, *domain_name;
     char *ifname;
     int Ret = -1;
 
@@ -1084,8 +1083,12 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
                       "RDMA Dataplane could not find any viable fabrics.\n");
     }
 
+    originfo = info;
+
     while (info)
     {
+        char *prov_name, *domain_name;
+
         prov_name = info->fabric_attr->prov_name;
         domain_name = info->domain_attr->name;
         if (ifname && strcmp(ifname, domain_name) == 0)
