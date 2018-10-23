@@ -1041,7 +1041,70 @@ static struct _CP_DP_Interface RdmaDPInterface;
  */
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-    int Ret = -1;
+	struct fi_info *hints, *info, *originfo, *nextinfo;
+	char *ifname;
+	int foundreq = 0;
+	int Ret = -1;
+
+	    hints = fi_allocinfo();
+	    hints->caps = FI_MSG | FI_SEND | FI_RECV | FI_REMOTE_READ |
+	                  FI_REMOTE_WRITE | FI_RMA | FI_READ | FI_WRITE;
+	    hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
+	                  FI_ASYNC_IOV | FI_RX_CQ_DATA;
+	    hints->domain_attr->mr_mode = FI_MR_BASIC;
+
+	    ifname = getenv("FABRIC_IFACE");
+
+	    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
+	    fi_freeinfo(hints);
+
+	        if (!info)
+	        {
+	            Svcs->verbose(CP_Stream, "No viable fabric found for RDMA Dataplane.\n");
+	            Ret = -1;
+	        } else {
+	        	char *prov_name, *domain_name;
+
+
+	        	originfo = info;
+	        	while (info->next)
+	        	{
+	        			domain_name = info->domain_attr->name;
+	        	        if (ifname && strcmp(ifname, domain_name) == 0)
+	        	        {
+	        	        	prov_name = info->fabric_attr->prov_name;
+	        	        	Svcs->verbose(CP_Stream, "RDMA Dataplane found the requested interface, provider type %s.\n", ifname);
+	        	        	foundreq = 1;
+	        	        	Ret = 100;
+	        	            break;
+	        	        }
+	        	       info = info->next;
+	        	}
+
+	        	if(Ret == -1) {
+	        		info = originfo;
+	        		while(info->next) {
+	        			prov_name = info->fabric_attr->prov_name;
+	        			if(strcmp(prov_name, "verbs") == 0
+	        					|| strcmp(prov_name, "gni") == 0
+								|| strcmp(prov_name, "psm2") == 0) {
+	        				domain_name = info->domain_attr->name;
+	        				Svcs->verbose(CP_Stream, "RDMA Dataplane sees interface %s, provider type %s, which should work.", domain_name, prov_name);
+	        				Ret = 10;
+	        				break;
+	        			}
+	        			info = info->next;
+	        		}
+	        	}
+
+	        	if(Ret == -1) {
+	        		Svcs->verbose(CP_Stream, "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
+	        	}
+
+	        	fi_freeinfo(originfo);
+
+	        }
+
     Svcs->verbose(
         CP_Stream,
         "RDMA Dataplane evaluating viability, returning priority %d\n", Ret);
