@@ -114,7 +114,7 @@ static void init_fabric(struct fabric_state *fabric)
     {
         char *prov_name = info->fabric_attr->prov_name;
         char *domain_name = info->domain_attr->name;
-        
+
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
             useinfo = info;
