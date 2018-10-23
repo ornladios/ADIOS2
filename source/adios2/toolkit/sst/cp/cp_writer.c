@@ -704,7 +704,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->ConfigParams = Params;
 
     char *Filename = strdup(Name);
-    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->DataTransport);
+    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
 
     if (!Stream->DP_Interface)
     {

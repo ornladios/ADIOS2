@@ -23,7 +23,8 @@ typedef struct _DPElement
 } * DPlist;
 
 static DPlist AddDPPossibility(CP_Services Svcs, void *CP_Stream, DPlist List,
-                               CP_DP_Interface Interface, const char *Name)
+                               CP_DP_Interface Interface, const char *Name,
+                               struct _SstParams *Params)
 {
     int Count = 0;
     if (Interface == NULL)
@@ -42,29 +43,31 @@ static DPlist AddDPPossibility(CP_Services Svcs, void *CP_Stream, DPlist List,
     }
     List[Count].Interface = Interface;
     List[Count].Name = Name;
-    List[Count].Priority = Interface->getPriority(Svcs, CP_Stream);
+    List[Count].Priority = Interface->getPriority(Svcs, CP_Stream, Params);
     List[Count + 1].Interface = NULL;
     return List;
 }
 
 CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
-                         const char *PreferredDP)
+                         struct _SstParams *Params)
 {
     CP_DP_Interface Ret;
     DPlist List = NULL;
-    List = AddDPPossibility(Svcs, CP_Stream, List, LoadEVpathDP(), "evpath");
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadEVpathDP(), "evpath",
+                            Params);
 #ifdef SST_HAVE_LIBFABRIC
-    List = AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma");
+    List =
+        AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma", Params);
 #endif /* SST_HAVE_LIBFABRIC */
 
     int SelectedDP = -1;
     int BestPriority = -1;
     int BestPrioDP = -1;
     int i = 0;
-    if (PreferredDP)
+    if (Params->DataTransport)
     {
         Svcs->verbose(CP_Stream, "Prefered dataplane name is \"%s\"\n",
-                      PreferredDP);
+                      Params->DataTransport);
     }
     while (List[i].Interface)
     {
@@ -72,9 +75,9 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
             CP_Stream,
             "Considering DataPlane \"%s\" for possible use, priority is %d\n",
             List[i].Name, List[i].Priority);
-        if (PreferredDP)
+        if (Params->DataTransport)
         {
-            if (strcasecmp(List[i].Name, PreferredDP) == 0)
+            if (strcasecmp(List[i].Name, Params->DataTransport) == 0)
             {
                 SelectedDP = i;
                 break;
