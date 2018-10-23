@@ -1115,7 +1115,10 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
             "RDMA Dataplane could not find an RDMA-compatible fabric.\n");
     }
 
-    fi_freeinfo(originfo);
+    if (originfo)
+    {
+        fi_freeinfo(originfo);
+    }
 
     Svcs->verbose(
         CP_Stream,
