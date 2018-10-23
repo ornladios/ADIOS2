@@ -191,3 +191,6 @@ endif(ADIOS2_HAVE_MPI)
 
 
 
+if(ADIOS2_HAVE_MPI)
+  add_subdirectory(iotest)
+endif(ADIOS2_HAVE_MPI)

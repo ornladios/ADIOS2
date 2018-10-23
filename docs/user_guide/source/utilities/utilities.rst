@@ -13,9 +13,9 @@ manipulation that builds on top of the library. The are located in the inside th
 Currently supported tools are:
 
 * *bpls* : exploration of bp/hdf5 files data and metadata in human readable outputs   
-* *adios2_reorganize*
+* *adios_reorganize*
 * *adios2-config*
 
 .. include:: bpls.rst
-.. include:: adios2_reorganize.rst
+.. include:: adios_reorganize.rst
 .. include:: adios2-config.rst

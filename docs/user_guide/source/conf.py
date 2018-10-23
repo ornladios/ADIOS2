@@ -121,7 +121,7 @@ exclude_patterns = [
     'api_simple/c.rst',
     # 'api_simple/api_simple.rst',
     'utilities/adios2-config.rst',
-    'utilities/adios2_reorganize.rst',
+    'utilities/adios_reorganize.rst',
     # 'utilities/utilities.rst',
     'utilities/bpls.rst',
     'engines/dataman.rst',

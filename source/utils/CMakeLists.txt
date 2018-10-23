@@ -19,20 +19,22 @@ file(GENERATE
   INPUT ${PROJECT_BINARY_DIR}/bpls.cmake.gen
 )
 
-# ADIOS2_REORGANIZE
-add_executable(adios2_reorganize 
-               ./adios2_reorganize/main.cpp 
-               ./adios2_reorganize/Reorganize.cpp 
+# ADIOS_REORGANIZE
+add_executable(adios_reorganize 
+               ./adios_reorganize/main.cpp 
+               ./adios_reorganize/Reorganize.cpp 
                Utils.cpp)
-target_link_libraries(adios2_reorganize adios2)
-install(TARGETS adios2_reorganize EXPORT adios2
+target_link_libraries(adios_reorganize adios2)
+install(TARGETS adios_reorganize EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 # Add MPI dependency to parallel tools
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(adios2_reorganize MPI::MPI_C)
+  target_link_libraries(adios_reorganize MPI::MPI_C)
 endif()
 
-
+if(ADIOS2_HAVE_MPI)
+  add_subdirectory(adios_iotest)
+endif()
 

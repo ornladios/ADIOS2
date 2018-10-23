@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 #include "adios2/ADIOSMPI.h"
-#include "utils/adios2_reorganize/Reorganize.h"
+#include "utils/adios_reorganize/Reorganize.h"
 
 int main(int argc, char *argv[])
 {
