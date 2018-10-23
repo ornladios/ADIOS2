@@ -8,7 +8,6 @@ addons:
       - clang-format-3.8
       - clang-tidy-3.8
       - libmpich-dev
-      - libfabric-dev
 before_install:
   - pushd ${HOME}
   - wget http://releases.llvm.org/6.0.0/clang+llvm-6.0.0-x86_64-linux-gnu-ubuntu-14.04.tar.xz
