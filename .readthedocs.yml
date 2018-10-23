@@ -1,11 +1,5 @@
 # .readthedocs.yml
 
-formats: []
-
 requirements_file: docs/requirements.txt
-
-
-
-
-  
+ 
 
