@@ -578,6 +578,7 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
     char *host_name = NULL;
 
     (void) trans;
+    printf("(PID %x) CMENET Connection EQ\n", getpid());
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & host_name)) {
 	svc->trace_out(cm, "CMEnet transport found no CM_ENET_HOST attribute");
@@ -585,6 +586,7 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
     if (!query_attr(attrs, CM_ENET_PORT, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & int_port_num)) {
 	svc->trace_out(cm, "Conn Eq CMenet transport found no CM_ENET_PORT attribute");
+        printf("(PID %x) CMENET Connection EQ NO PORT, returning\n", getpid());
 	return 0;
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
@@ -599,6 +601,7 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
     }
     if (ecd->peer->state != ENET_PEER_STATE_CONNECTED) {
         svc->trace_out(cm, "ENET Conn_eq returning FALSE, peer not connected");
+        printf("(PID %x) CMENET Connection EQ PEER STATE NOT CONNECTED %d, returning\n", getpid(), ecd->peer->state);
         return 0;
     }
     svc->trace_out(cm, "ENET Conn_eq comparing IP/ports %x/%d and %x/%d",
@@ -607,9 +610,11 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
     if ((ecd->remote_IP == requested_IP) &&
 	(ecd->remote_contact_port == int_port_num)) {
 	svc->trace_out(cm, "ENET Conn_eq returning TRUE");
+        printf("(PID %x) CMENET Connection EQ, returning TRUE\n", getpid());
 	return 1;
     }
     svc->trace_out(cm, "ENET Conn_eq returning FALSE");
+    printf("(PID %x) CMENET Connection EQ, returning FALSE (remote IP %x, requested IP %x, remp %d, reqp %d\n", getpid(), ecd->remote_IP, requested_IP, ecd->remote_contact_port, int_port_num);
     return 0;
 }
 
