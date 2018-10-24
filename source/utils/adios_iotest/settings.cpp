@@ -12,6 +12,7 @@
 
 #include <getopt.h>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 
 struct option options[] = {{"help", no_argument, NULL, 'h'},

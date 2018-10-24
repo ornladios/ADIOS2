@@ -12,6 +12,7 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include <stdexcept>
 
 #include "decomp.h"
 #include "processConfig.h"

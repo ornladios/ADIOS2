@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <math.h>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
