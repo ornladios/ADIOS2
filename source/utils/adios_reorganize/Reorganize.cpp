@@ -41,7 +41,7 @@ namespace utils
 {
 
 Reorganize::Reorganize(int argc, char *argv[])
-: Utils("adios2_reorganize", argc, argv)
+: Utils("adios_reorganize", argc, argv)
 {
     MPI_Comm_split(MPI_COMM_WORLD, m_MPISplitColor, rank, &comm);
     MPI_Comm_rank(comm, &rank);
@@ -212,7 +212,7 @@ void Reorganize::ProcessParameters() const {}
 void Reorganize::PrintUsage() const noexcept
 {
     std::cout
-        << "Usage: adios2_reorganize input output rmethod \"params\" wmethod "
+        << "Usage: adios_reorganize input output rmethod \"params\" wmethod "
            "\"params\" "
            "<decomposition>\n"
            "    input   Input stream path\n"
