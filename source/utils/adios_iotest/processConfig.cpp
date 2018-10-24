@@ -644,7 +644,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     if (words.size() >= 4)
                     {
                         // next word is timeout
-                        double d = stringToDouble(words, 4, "read timeout");
+                        d = stringToDouble(words, 4, "read timeout");
                         if (d < 0.0)
                         {
                             d = FLT_MAX;
