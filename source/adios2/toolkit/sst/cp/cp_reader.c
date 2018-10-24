@@ -193,7 +193,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
 
-    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->DataTransport);
+    Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 

@@ -1039,7 +1039,8 @@ static struct _CP_DP_Interface RdmaDPInterface;
  * "priority" return value represents some desirability measure
  * (like expected bandwidth or something).
  */
-static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream)
+static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
+                           struct _SstParams *Params)
 {
     int Ret = -1;
     Svcs->verbose(

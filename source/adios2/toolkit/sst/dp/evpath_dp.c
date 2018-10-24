@@ -754,7 +754,8 @@ static FMStructDescRec EvpathTimestepInfoStructs[] = {
 
 static struct _CP_DP_Interface evpathDPInterface;
 
-static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream)
+static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream,
+                             struct _SstParams *Params)
 {
     /* The evpath DP should be a lower priority than any RDMA dp, so return 1 */
     return 1;

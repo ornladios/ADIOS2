@@ -235,14 +235,15 @@ typedef void (*CP_DP_ReleaseTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
  * function that returns the relative priority of this particular
  * dataplane WRT other dataplanes.  Its return value is an integer
  * where higher means higher priority (more desirable) and -1 means
- * that the dataplane cannot be used.  The function is really indented
+ * that the dataplane cannot be used.  The function is really intended
  * to support dataplanes for which we cannot determine at compile-time
  * whether or not the run-time conditions will support their use
  * (libfabric is the primum exemplum).  The Svcs and CP_Stream
  * parameters exist only to support verbosity in the DP-level
  * function.
  */
-typedef int (*CP_DP_GetPriorityFunc)(CP_Services Svcs, void *CP_Stream);
+typedef int (*CP_DP_GetPriorityFunc)(CP_Services Svcs, void *CP_Stream,
+                                     struct _SstParams *Params);
 
 /*!
  * CP_DP_UnGetPriorityFunc is the type of a dataplane initialization
@@ -292,6 +293,6 @@ struct _CP_Services
 };
 
 CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
-                         const char *prefered_dp);
+                         struct _SstParams *Params);
 
 #endif
