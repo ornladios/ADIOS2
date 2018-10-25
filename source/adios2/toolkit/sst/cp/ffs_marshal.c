@@ -382,36 +382,39 @@ extern void FFSFreeMarshalData(SstStream Stream)
     {
         /* reader side */
         struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
-        for (int i = 0; i < Stream->WriterCohortSize; i++)
+        if (Info)
         {
-            if (Info->WriterInfo[i].RawBuffer)
-                free(Info->WriterInfo[i].RawBuffer);
-        }
-        if (Info->WriterInfo)
-            free(Info->WriterInfo);
-        if (Info->MetadataBaseAddrs)
-            free(Info->MetadataBaseAddrs);
-        if (Info->MetadataFieldLists)
-            free(Info->MetadataFieldLists);
-        if (Info->DataBaseAddrs)
-            free(Info->DataBaseAddrs);
-        if (Info->DataFieldLists)
-            free(Info->DataFieldLists);
-        for (int i = 0; i < Info->VarCount; i++)
-        {
-            free(Info->VarList[i].VarName);
-            free(Info->VarList[i].PerWriterMetaFieldDesc);
-            free(Info->VarList[i].PerWriterDataFieldDesc);
-            free(Info->VarList[i].PerWriterStart);
-            free(Info->VarList[i].PerWriterCounts);
-            free(Info->VarList[i].PerWriterIncomingData);
-            free(Info->VarList[i].PerWriterIncomingSize);
-        }
-        if (Info->VarList)
-            free(Info->VarList);
+            for (int i = 0; i < Stream->WriterCohortSize; i++)
+            {
+                if (Info->WriterInfo[i].RawBuffer)
+                    free(Info->WriterInfo[i].RawBuffer);
+            }
+            if (Info->WriterInfo)
+                free(Info->WriterInfo);
+            if (Info->MetadataBaseAddrs)
+                free(Info->MetadataBaseAddrs);
+            if (Info->MetadataFieldLists)
+                free(Info->MetadataFieldLists);
+            if (Info->DataBaseAddrs)
+                free(Info->DataBaseAddrs);
+            if (Info->DataFieldLists)
+                free(Info->DataFieldLists);
+            for (int i = 0; i < Info->VarCount; i++)
+            {
+                free(Info->VarList[i].VarName);
+                free(Info->VarList[i].PerWriterMetaFieldDesc);
+                free(Info->VarList[i].PerWriterDataFieldDesc);
+                free(Info->VarList[i].PerWriterStart);
+                free(Info->VarList[i].PerWriterCounts);
+                free(Info->VarList[i].PerWriterIncomingData);
+                free(Info->VarList[i].PerWriterIncomingSize);
+            }
+            if (Info->VarList)
+                free(Info->VarList);
 
-        free(Info);
-        Stream->ReaderMarshalData = NULL;
+            free(Info);
+            Stream->ReaderMarshalData = NULL;
+        }
     }
 }
 
