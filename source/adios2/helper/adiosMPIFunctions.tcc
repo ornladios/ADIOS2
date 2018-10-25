@@ -128,8 +128,19 @@ void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,
         vector.resize(inputSize);
     }
 
-    MPI_Bcast(vector.data(), static_cast<int>(inputSize), MPI_CHAR, rankSource,
-              mpiComm);
+    const int MAXBCASTSIZE = 1073741824;
+    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    size_t sent = 0;
+    size_t pos = 0;
+    char *buffer = vector.data();
+    while (inputSize > 0)
+    {
+        MPI_Bcast(buffer, static_cast<int>(blockSize), MPI_CHAR, rankSource,
+                  mpiComm);
+        buffer += blockSize;
+        inputSize -= blockSize;
+        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    }
 }
 
 // GatherArrays specializations

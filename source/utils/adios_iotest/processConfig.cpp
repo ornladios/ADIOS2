@@ -55,7 +55,7 @@ std::vector<std::string> LineToWords(const std::string &line)
 bool isComment(std::string &s)
 {
     bool comment = false;
-    if (s[0] == '#' || s[0] == '%' || s[0] == '/')
+    if (!s.compare(0, 1, "#") || !s.compare(0, 1, "%"))
     {
         comment = true;
     }
