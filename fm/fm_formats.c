@@ -1700,21 +1700,20 @@ int format_count;
 		if (super_format->subformats[i] == sorted[j]) found++;
 	    }
 	    if (!found) {
-		/* printf("Didn't find this format %p:\n", super_format->subformats[i]); */
-		/*     print_format_ID(super_format->subformats[i]); */
-		/* dump_FMFormat(super_format->subformats[i]); */
+	        /* printf("Didn't find this format[%d] %p:\n", i, super_format->subformats[i]); */
+		/* printf("Name was %s\n", super_format->subformats[i]->format_name); */
 		/* printf("======= Choices were :\n"); */
 		/* for(j=0; j < sorted_count; j++) { */
 		/*     printf("Choice %d (%p):\n", j, sorted[j]); */
-		/*     print_format_ID(sorted[j]); */
-		/*     dump_FMFormat(sorted[j]); */
+		/*     printf(" %s\n", sorted[j]->format_name); */
 		/* } */
-//		free_FMformat(super_format->subformats[i]);
+		free_FMformat(super_format->subformats[i]);
+		super_format->subformats[i] = NULL;
 	    }
 	}
     }
     for (i=0; i< sorted_count-1; i++) {
-	super_format->subformats[i] = sorted[sorted_count - 2 - i];
+      super_format->subformats[i] = sorted[sorted_count - 2 - i];
     }
 
     return sorted_count;
@@ -1750,13 +1749,11 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 	 struct_count++) /* set struct_count */;
     
     formats = malloc(sizeof(formats[0]) * (struct_count+1));
-    master_struct_list = malloc(sizeof(struct_list[0]) * (struct_count+1));
     formats[struct_count] = NULL;
     for (i = 0 ; i < struct_count; i++ ) {
 	FMFormat fmformat = new_FMFormat();
 	FMFieldList new_field_list;
 	fmformat->format_name = strdup(struct_list[i].format_name);
-	master_struct_list[i].format_name = fmformat->format_name;
 	fmformat->pointer_size = context->native_pointer_size;
 	fmformat->column_major_arrays = context->native_column_major_arrays;
 	fmformat->float_format = context->native_float_format;
@@ -1774,9 +1771,6 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 	    free(formats);
 	    return NULL;
 	}
-	master_struct_list[i].field_list = fmformat->field_list;
-	master_struct_list[i].struct_size = struct_list[i].struct_size;
-	master_struct_list[i].opt_info = NULL;
 	if (struct_list[i].opt_info != NULL) {
 	    FMOptInfo *opt_info = struct_list[i].opt_info;
 	    int opt_info_count = 0;
@@ -1806,14 +1800,26 @@ register_data_format(FMContext context, FMStructDescList struct_list)
     formats[0]->subformats = malloc(sizeof(FMFormat) * struct_count);
     memcpy(formats[0]->subformats, &formats[1], sizeof(FMFormat) * struct_count);
     formats[0]->subformats[struct_count-1] = NULL;
+      
     new_struct_count = topo_order_subformats(formats[0], struct_count-1);
-    for (i=new_struct_count; i< struct_count; i++) {
-        free_FMformat(formats[i]);
-    }
     struct_count = new_struct_count;
     formats[0]->subformats[struct_count-1] = NULL;
+    /* after topo, build master_struct_list */
+    master_struct_list = malloc(sizeof(struct_list[0]) * (struct_count+1));
+    master_struct_list[0].format_name = formats[0]->format_name;
+    master_struct_list[0].field_list = formats[0]->field_list;
+    master_struct_list[0].struct_size = formats[0]->record_length;
+    master_struct_list[0].opt_info = formats[0]->opt_info;
+    for (i = 0; i < struct_count-1; i++) {
+      master_struct_list[i+1].format_name = formats[0]->subformats[i]->format_name;
+      master_struct_list[i+1].field_list = formats[0]->subformats[i]->field_list;
+      master_struct_list[i+1].struct_size = formats[0]->subformats[i]->record_length;
+      master_struct_list[i+1].opt_info = formats[0]->subformats[i]->opt_info;
+    }
+    
     for (i=struct_count-2; i>=0; i--) {
 	set_alignment(formats[0]->subformats[i]);
+	formats[i+1] = formats[0]->subformats[i];
     }
     set_alignment(formats[0]);
     /* bubble up the variant flags */
@@ -1870,9 +1876,9 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 		    fmformat->pointer_size;
 	    }
 	}
-	if (struct_list[i].struct_size < last_field_end) {
-	    (void) fprintf(stderr, "Structure size for structure %s is smaller than last field size + offset.  Format rejected.\n",
-			   fmformat->format_name);
+	if (master_struct_list[i].struct_size < last_field_end) {
+	    (void) fprintf(stderr, "Structure size for structure %s is smaller than last field size + offset.  Format rejected structsize %d, last end %d.\n",
+			   fmformat->format_name, master_struct_list[i].struct_size, last_field_end);
 	    free_format_list(formats);
 	    free(formats);
 	    return NULL;
