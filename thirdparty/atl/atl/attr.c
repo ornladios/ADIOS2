@@ -120,6 +120,7 @@ static void
 deallocate_global_atom_server()
 {
     if (global_as) {
+	   printf("dealloc Global as %p\n", global_as);
         atom_server tmp = global_as;
         global_as = NULL;
         free_atom_server(tmp);
