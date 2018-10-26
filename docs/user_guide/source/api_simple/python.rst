@@ -2,12 +2,10 @@
 Python simple bindings
 **********************
 
-.. autoclass:: adios2::File
-   :members:
-   
 Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, the rely on numpy and (optionally) on mpi4py.
 
-Write example:
+Write example
+-------------
 
 .. code-block:: python
    
@@ -38,7 +36,9 @@ Write example:
          # advances to next step
          fw.write("pressure", pressure, shape, start, count, endl=True)
 
-Read "stepping/streaming" example:
+
+Read "stepping/streaming" example
+---------------------------------
 
 .. code-block:: python
    
@@ -68,4 +68,10 @@ Read "stepping/streaming" example:
             physical_time = fh_step.read("physical_time")
             temperature = fh_step.read("temperature", start, count)
             pressure = fh_step.read("pressure", start, count)
-  
+
+
+File class API
+--------------
+
+.. autoclass:: adios2::File
+   :members:

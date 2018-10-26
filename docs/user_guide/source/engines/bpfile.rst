@@ -30,29 +30,32 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 1. **Profile**: turns ON/OFF profiling information right after a run
 
-2. **CollectiveMetadata**: turns ON/OFF forming collective metadata during run (used by large scale HPC applications)
+2. **ProfileUnits**: set profile units according to the required measurement scale for intensive operations
 
-3. **Threads**: number of threads provided from the application for buffering, use this for very large variables
+3. **CollectiveMetadata**: turns ON/OFF forming collective metadata during run (used by large scale HPC applications)
 
-4. **InitialBufferSize**: initial memory provided for buffering (minimum is 16Kb)
+4. **Threads**: number of threads provided from the application for buffering, use this for very large variables
 
-5. **BufferGrowthFactor**: exponential growth factor for initial buffer > 1, default = 1.05.
+5. **InitialBufferSize**: initial memory provided for buffering (minimum is 16Kb)
 
-6. **MaxBufferSize**: maximum allowable buffer size (must be larger than 16Kb). If to large adios2 will throw an exception.
+6. **BufferGrowthFactor**: exponential growth factor for initial buffer > 1, default = 1.05.
 
-7. **FlushStepsCount**: user can select how often to produce the more expensive collective metadata file in terms of steps: default is 1. Increase to reduce adios2 collective operations footprint, with the trade-off of reducing checkpoint frequency. Buffer size will increase until first steps count if MaxBufferSize is not set.
+7. **MaxBufferSize**: maximum allowable buffer size (must be larger than 16Kb). If to large adios2 will throw an exception.
 
-==================== ===================== ==============================
+8. **FlushStepsCount**: user can select how often to produce the more expensive collective metadata file in terms of steps: default is 1. Increase to reduce adios2 collective operations footprint, with the trade-off of reducing checkpoint frequency. Buffer size will increase until first steps count if MaxBufferSize is not set.
+
+==================== ===================== =========================================================
  **Key**              **Value Format**      **Default** and Examples 
-==================== ===================== ==============================
+==================== ===================== =========================================================
  Profile              string On/Off         **On**, Off
+ ProfileUnits         string                **Microseconds**, Milliseconds, Seconds, Minutes, Hours  
  CollectiveMetadata   string On/Off         **On**, Off 
  Threads              integer > 1           **1**, 2, 3, 4, 16, 32, 64 
  InitialBufferSize    float+units >= 16Kb   **16Kb**, 10Mb, 0.5Gb 
  MaxBufferSize        float+units >= 16Kb   **at EndStep**, 10Mb, 0.5Gb   
  BufferGrowthFactor   float > 1             **1.05**, 1.01, 1.5, 2 
- FlushStepsCount      integer > 1           **1** 5, 1000, 50000 
-==================== ===================== ==============================
+ FlushStepsCount      integer > 1           **1**, 5, 1000, 50000 
+==================== ===================== =========================================================
 
 
 Only file transport types are supported. Optional parameters for `IO::AddTransport` or in runtime config file transport field: 

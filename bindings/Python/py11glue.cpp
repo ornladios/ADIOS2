@@ -407,8 +407,8 @@ PYBIND11_MODULE(adios2, m)
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), R"md(
-                 Read function
-     	     )md")
+            Read function
+     	)md")
 
         .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
@@ -416,7 +416,23 @@ PYBIND11_MODULE(adios2, m)
                          adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("start"),
-             pybind11::arg("count"))
+             pybind11::arg("count"), R"md(
+             Reads a selection piece in dimension for current step 
+             (streaming mode step by step)
+			 
+             Parameters
+                 name 
+                        variable name
+                 start 
+                        variable local offset selection
+                 count  
+                        variable local dimension selection from start
+
+             Returns
+                 array: numpy array 
+                        values of variable name for current step
+                        empty if exception is thrown
+        )md")
 
         .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
@@ -426,24 +442,43 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("name"), pybind11::arg("start"),
              pybind11::arg("count"), pybind11::arg("stepstart"),
              pybind11::arg("stepcount"), R"md(
-             Random access read, only valid with File Engines
+            
+            Random access read allowed to select steps, 
+            only valid with File Engines
              
-             Args:
-			     name: variable name to read.
-                 start: variable offset dimensions.
-                 count: variable local dimensions from offset.
-                 stepstart: variable step start
-                 stepcount: variable number of steps to read  
+            Parameters
+                
+                name 
+                    variable to be read 
+                  
+                start 
+                    variable offset dimensions
+                
+                count 
+                    variable local dimensions from offset
+
+                stepstart 
+                    variable step start
+                
+                stepcount 
+                    variable number of steps to read 
                                                               
-             Returns:
-                 array (numpy) resulting array from selection 
+            Returns
+
+                array 
+                    resulting array from selection 
      	)md")
 
         .def("close", &adios2::py11::File::Close, R"md(
-        	    closes file
+            Closes file, thus becoming unreachable. 
+            Not required if using open in a with-as statement.  
+            Required in all other cases per-open to avoid resource leaks.
         )md")
 
         .def("currentstep", &adios2::py11::File::CurrentStep, R"md(
-        	    :return: current step
+            Return current step when using for-in loops, read mode only
+            Returns
+  
+                current step
         )md");
 }
