@@ -73,7 +73,11 @@ endif()
 # DataMan
 # DataMan currently breaks the PGI compiler
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
-  set(ADIOS2_HAVE_DataMan TRUE)
+    if(ADIOS2_USE_DataMan STREQUAL AUTO)
+        set(ADIOS2_HAVE_DataMan TRUE)
+    elseif(ADIOS2_USE_DataMan)
+        set(ADIOS2_HAVE_DataMan TRUE)
+    endif()
 endif()
 
 # ZeroMQ
