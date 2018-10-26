@@ -155,6 +155,7 @@ typedef void (*WritePossibleCallback)(transport_entry trans, CMConnection conn);
 struct _transport_item {
     char *trans_name;
     CManager cm;
+    void *dlhandle;
     DataAvailableCallback data_available;
     WritePossibleCallback write_possible;
     CMTransport_func  transport_init;
