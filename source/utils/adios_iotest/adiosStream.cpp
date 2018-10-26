@@ -142,6 +142,11 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
         }
         std::cout << std::endl;
     }
+    double timeStart, timeEnd;
+    double readTime;
+    double maxReadTime, minReadTime;
+    MPI_Barrier(MPI_COMM_WORLD);
+    timeStart = MPI_Wtime();
     adios2::StepStatus status =
         engine.BeginStep(cmdR->stepMode, cmdR->timeout_sec);
     if (status != adios2::StepStatus::OK)
@@ -169,6 +174,21 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
         getADIOSArray(ov);
     }
     engine.EndStep();
+    timeEnd = MPI_Wtime();
+    readTime = timeEnd-timeStart;
+    MPI_Allreduce(&readTime, &maxReadTime, 1, MPI_DOUBLE, MPI_MAX,
+		MPI_COMM_WORLD);
+    MPI_Allreduce(&readTime, &minReadTime, 1, MPI_DOUBLE, MPI_MIN,
+		MPI_COMM_WORLD);
+    if (settings.myRank == 0)
+    {
+        std::cout << "        Max read time = " << maxReadTime << std::endl;
+        std::cout << "        Min read time = " << minReadTime << std::endl;
+        std::ofstream rd_perf_log;
+        rd_perf_log.open("read_perf.txt", std::ios::app);
+        rd_perf_log << std::to_string(maxReadTime)+", "+std::to_string(minReadTime)+"\n";
+        rd_perf_log.close();
+    }
     return status;
 }
 
@@ -229,12 +249,32 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     {
         std::cout << "        Write data " << std::endl;
     }
+    double timeStart, timeEnd;
+    double writeTime;
+    double maxWriteTime, minWriteTime;
+    MPI_Barrier(MPI_COMM_WORLD);
+    timeStart = MPI_Wtime();
     engine.BeginStep();
     for (const auto ov : cmdW->variables)
     {
         putADIOSArray(ov);
     }
     engine.EndStep();
+    timeEnd = MPI_Wtime();
+    writeTime = timeEnd-timeStart;
+    MPI_Allreduce(&writeTime, &maxWriteTime, 1, MPI_DOUBLE, MPI_MAX,
+		MPI_COMM_WORLD);
+    MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE, MPI_MIN,
+		MPI_COMM_WORLD);
+    if (settings.myRank == 0)
+    {
+        std::cout << "        Max write time = " << maxWriteTime << std::endl;
+        std::cout << "        Min write time = " << minWriteTime << std::endl;
+        std::ofstream wr_perf_log;
+        wr_perf_log.open("write_perf.txt", std::ios::app);
+        wr_perf_log << std::to_string(maxWriteTime)+", "+std::to_string(minWriteTime)+"\n";
+        wr_perf_log.close();
+    }
 }
 
 void adiosStream::Write(CommandWrite *cmdW, Config &cfg,

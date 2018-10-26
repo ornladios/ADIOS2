@@ -6,6 +6,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <fstream>
 
 #include "adios2.h"
 #include "mpi.h"
