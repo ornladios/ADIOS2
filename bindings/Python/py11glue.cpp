@@ -143,8 +143,6 @@ PYBIND11_MODULE(adios2, m)
     }
 #endif
 
-    m.doc() = "ADIOS2 Python bindings powered by pybind11";
-
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
@@ -330,7 +328,7 @@ PYBIND11_MODULE(adios2, m)
         .def("Close", &adios2::py11::Engine::Close,
              pybind11::arg("transportIndex") = -1);
 
-    pybind11::class_<adios2::py11::File>(m, "py11::File")
+    pybind11::class_<adios2::py11::File>(m, "File")
         .def("__repr__",
              [](const adios2::py11::File &stream) {
                  return "<adios2.file named '" + stream.m_Name +
@@ -408,7 +406,9 @@ PYBIND11_MODULE(adios2, m)
              (pybind11::array (adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"))
+             pybind11::arg("name"), R"md(
+                 Read function
+     	     )md")
 
         .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
@@ -425,11 +425,25 @@ PYBIND11_MODULE(adios2, m)
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("start"),
              pybind11::arg("count"), pybind11::arg("stepstart"),
-             pybind11::arg("stepcount"))
+             pybind11::arg("stepcount"), R"md(
+             Random access read, only valid with File Engines
+             
+             Args:
+			     name: variable name to read.
+                 start: variable offset dimensions.
+                 count: variable local dimensions from offset.
+                 stepstart: variable step start
+                 stepcount: variable number of steps to read  
+                                                              
+             Returns:
+                 array (numpy) resulting array from selection 
+     	)md")
 
-        .def("close", &adios2::py11::File::Close)
+        .def("close", &adios2::py11::File::Close, R"md(
+        	    closes file
+        )md")
 
-        .def("getstep", &adios2::py11::File::GetStep)
-
-        .def("currentstep", &adios2::py11::File::CurrentStep);
+        .def("currentstep", &adios2::py11::File::CurrentStep, R"md(
+        	    :return: current step
+        )md");
 }

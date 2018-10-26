@@ -26,9 +26,14 @@
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 import subprocess
+import sys
+import os
+
+sys.path.insert(0,os.path.abspath('../../../../bindings/Python'))
 
 extensions = [
     'sphinx.ext.todo',
+    'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.autosectionlabel',

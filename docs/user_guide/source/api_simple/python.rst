@@ -2,6 +2,9 @@
 Python simple bindings
 **********************
 
+.. autoclass:: adios2::File
+   :members:
+   
 Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, the rely on numpy and (optionally) on mpi4py.
 
 Write example:
