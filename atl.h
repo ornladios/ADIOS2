@@ -34,6 +34,9 @@ extern
 atom_server
 init_atom_server (atom_cache_type cache_style);
 
+extern void
+free_atom_server(atom_server as);
+
 extern
 char *
 get_server_id (atom_server as);
