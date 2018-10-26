@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(ATL C)
-set(ATL_VERSION_MAJOR 2)
-set(ATL_VERSION_MINOR 2)
-set(ATL_VERSION_PATCH 1)
-set(ATL_VERSION
-  ${ATL_VERSION_MAJOR}.${ATL_VERSION_MINOR}.${ATL_VERSION_PATCH})
+project(ATL VERSION 2.2.1 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
 set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
@@ -95,23 +90,17 @@ mark_as_advanced(ATL_ATOM_SERVER_HOST)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
-# Set up include-directories
-include_directories(
-  "${PROJECT_SOURCE_DIR}"   # to find foo/foo.h
-  "${PROJECT_BINARY_DIR}")  # to find foo/config.h
- 
 set(ATL_LIBRARY_PREFIX "" CACHE STRING
   "Prefix to prepend to the output library name")
 mark_as_advanced(ATL_LIBRARY_PREFIX)
 
 add_library(atl atom.c attr.c lookup3.c tclHash.c)
+add_library(atl::atl ALIAS atl)
 set_target_properties(atl PROPERTIES
   OUTPUT_NAME ${ATL_LIBRARY_PREFIX}atl
   VERSION ${ATL_VERSION}
   SOVERSION ${ATL_VERSION_MAJOR}
   PUBLIC_HEADER atl.h)
-add_library(atl::atl ALIAS atl)
-
 target_include_directories(atl PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -174,24 +163,33 @@ if(BUILD_TESTING)
 endif()
 
 # Setup packaging and configs
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${PROJECT_BINARY_DIR}/atl-config-version.cmake"
+  COMPATIBILITY SameMajorVersion)
+configure_file(
+  atl-config.cmake.in
+  "${PROJECT_BINARY_DIR}/atl-config.cmake"
+  @ONLY)
  
 # Add all targets to the build-tree export set
 export(TARGETS atl NAMESPACE atl::
   FILE "${PROJECT_BINARY_DIR}/atl-targets.cmake")
-configure_file(atl-config.cmake.in
-  "${PROJECT_BINARY_DIR}/atl-config.cmake" @ONLY)
-configure_file(atl-config-version.cmake.in
-  "${PROJECT_BINARY_DIR}/atl-config-version.cmake" @ONLY)
  
 # Install the atl-config.cmake and atl-config-version.cmake
-install(FILES
-  "${PROJECT_BINARY_DIR}/atl-config.cmake"
-  "${PROJECT_BINARY_DIR}/atl-config-version.cmake"
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+install(
+  FILES
+    "${PROJECT_BINARY_DIR}/atl-config.cmake"
+    "${PROJECT_BINARY_DIR}/atl-config-version.cmake"
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
+  COMPONENT dev)
  
 # Install the export set for use with the install-tree
-install(EXPORT atl-targets NAMESPACE atl::
-  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+install(
+  EXPORT atl-targets
+  NAMESPACE atl::
+  DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
+  COMPONENT dev)
 
 set(CTEST_MEMORYCHECK_SUPPRESSIONS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/atl.supp)
 
