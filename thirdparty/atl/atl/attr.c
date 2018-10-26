@@ -119,11 +119,10 @@ add_pattr(attr_list list, atom_t attr_id, attr_value_type val_type,
 static void
 deallocate_global_atom_server()
 {
-  printf("Deallocat global atom server %p\n", global_as);
+  printf("Deallocat global atom server %p, pid %x\n", global_as, getpid());
   if (global_as) {
-    atom_server tmp = global_as;
-    global_as = NULL;
-    free_atom_server(tmp);
+    free_atom_server(global_as);
+	  global_as = NULL;
   }
   printf("Done with deallocatin\n");
 }
