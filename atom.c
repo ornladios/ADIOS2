@@ -9,7 +9,9 @@
 #    include <malloc.h>
 #  endif
 #  include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#endif
 #  include <errno.h>
 #  include <sys/types.h>
 #  ifndef HAVE_WINDOWS_H
@@ -573,6 +575,24 @@ preload_in_use_atoms(atom_server as)
 	(void) atom_from_string(as, in_use_values[i++]);
     }
 }
+
+void
+free_atom_server(atom_server as)
+{
+  Tcl_HashSearch search;
+  Tcl_HashEntry * entry = Tcl_FirstHashEntry(&as->string_hash_table, &search);
+  while (entry) {
+    send_get_atom_msg_ptr stored;
+    stored = Tcl_GetHashValue(entry);
+    free(stored->atom_string);
+    free(stored);
+    entry = Tcl_NextHashEntry(&search);
+  }
+  Tcl_DeleteHashTable(&as->string_hash_table);
+  Tcl_DeleteHashTable(&as->value_hash_table);
+  free(as);
+}
+
 atom_server
 init_atom_server(cache_style)
 atom_cache_type cache_style;
