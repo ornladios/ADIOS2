@@ -806,11 +806,12 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
             (ArrayRec *)((char *)BaseData + FieldList[i].field_offset);
         const char *ArrayName = FieldList[i + 1].field_name + 4;
         FFSVarRec VarRec = LookupVarByName(Stream, ArrayName);
-	if (VarRec) {
-	  VarRec->PerWriterIncomingData[Writer] = data_base->Array;
-	  VarRec->PerWriterIncomingSize[Writer] = data_base->ElemCount;
-	  VarRec->PerWriterDataFieldDesc[Writer] = &FieldList[i + 1];
-	}
+        if (VarRec)
+        {
+            VarRec->PerWriterIncomingData[Writer] = data_base->Array;
+            VarRec->PerWriterIncomingSize[Writer] = data_base->ElemCount;
+            VarRec->PerWriterDataFieldDesc[Writer] = &FieldList[i + 1];
+        }
         i += 2;
     }
 }
@@ -1437,12 +1438,13 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             char *Type;
             FFSVarRec VarRec = NULL;
             int ElementSize;
-	    if (!FFSBitfieldTest(BaseData, j)) {
-	      /* only work with fields that were written */
-	      i += 4;
-	      j++;
-	      continue;
-	    }
+            if (!FFSBitfieldTest(BaseData, j))
+            {
+                /* only work with fields that were written */
+                i += 4;
+                j++;
+                continue;
+            }
             BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
                                &ElementSize);
             if (WriterRank != 0)
@@ -1485,12 +1487,13 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             /* simple field */
             char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
             FFSVarRec VarRec = NULL;
-	    if (!FFSBitfieldTest(BaseData, j)) {
-	      /* only work with fields that were written */
-	      i++;
-	      j++;
-	      continue;
-	    }
+            if (!FFSBitfieldTest(BaseData, j))
+            {
+                /* only work with fields that were written */
+                i++;
+                j++;
+                continue;
+            }
             if (WriterRank != 0)
             {
                 VarRec = LookupVarByName(Stream, FieldName);
@@ -1508,8 +1511,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
             i++;
         }
-	/* real variable count is in j, i tracks the entries in the metadata */
-	j++;
+        /* real variable count is in j, i tracks the entries in the metadata */
+        j++;
     }
 }
 
@@ -1557,7 +1560,8 @@ static int FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
                (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
         MBase->BitFieldCount = Element + 1;
     }
-    return ((MBase->BitField[Element] & (1 << ElementBit)) == (1 << ElementBit));
+    return ((MBase->BitField[Element] & (1 << ElementBit)) ==
+            (1 << ElementBit));
 }
 
 extern void SstFFSSetZFPParams(SstStream Stream, attr_list Attrs)
