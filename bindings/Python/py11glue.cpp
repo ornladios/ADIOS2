@@ -26,10 +26,10 @@
 
 #ifdef ADIOS2_HAVE_MPI
 adios2::py11::ADIOS ADIOSInitConfig(const std::string configFile,
-                                    pybind11::object &object,
+                                    pybind11::object &comm,
                                     const bool debugMode)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
 
     if (import_mpi4py() < 0)
     {
@@ -46,9 +46,9 @@ adios2::py11::ADIOS ADIOSInitConfig(const std::string configFile,
     return adios2::py11::ADIOS(configFile, *mpiCommPtr, debugMode);
 }
 
-adios2::py11::ADIOS ADIOSInit(pybind11::object &object, const bool debugMode)
+adios2::py11::ADIOS ADIOSInit(pybind11::object &comm, const bool debugMode)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
 
     if (import_mpi4py() < 0)
     {
@@ -66,9 +66,9 @@ adios2::py11::ADIOS ADIOSInit(pybind11::object &object, const bool debugMode)
 }
 
 adios2::py11::File Open(const std::string &name, const std::string mode,
-                        pybind11::object &object, const std::string engineType)
+                        pybind11::object &comm, const std::string enginetype)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
 
     if (import_mpi4py() < 0)
     {
@@ -82,15 +82,15 @@ adios2::py11::File Open(const std::string &name, const std::string mode,
         throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
                                  "to ADIOS constructor\n");
     }
-    return adios2::py11::File(name, mode, *mpiCommPtr, engineType);
+    return adios2::py11::File(name, mode, *mpiCommPtr, enginetype);
 }
 
 adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
-                              pybind11::object &object,
-                              const std::string configFile,
-                              const std::string ioInConfigFile)
+                              pybind11::object &comm,
+                              const std::string configfile,
+                              const std::string ioinconfigfile)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(object.ptr());
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
 
     if (import_mpi4py() < 0)
     {
@@ -103,8 +103,8 @@ adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
         throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
                                  "to ADIOS constructor\n");
     }
-    return adios2::py11::File(name, mode, *mpiCommPtr, configFile,
-                              ioInConfigFile);
+    return adios2::py11::File(name, mode, *mpiCommPtr, configfile,
+                              ioinconfigfile);
 }
 
 #else
@@ -120,16 +120,16 @@ adios2::py11::ADIOS ADIOSInit(const bool debugMode)
 }
 
 adios2::py11::File Open(const std::string &name, const std::string mode,
-                        const std::string engineType)
+                        const std::string enginetype)
 {
-    return adios2::py11::File(name, mode, engineType);
+    return adios2::py11::File(name, mode, enginetype);
 }
 
 adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
-                              const std::string configFile,
-                              const std::string ioInConfigFile)
+                              const std::string configfile,
+                              const std::string ioinconfigfile)
 {
-    return adios2::py11::File(name, mode, configFile, ioInConfigFile);
+    return adios2::py11::File(name, mode, configfile, ioinconfigfile);
 }
 #endif
 
@@ -182,14 +182,58 @@ PYBIND11_MODULE(adios2, m)
           pybind11::arg("configFile") = "", pybind11::arg("object"),
           pybind11::arg("debugMode") = true);
 
-    m.def("open", &Open, "High-level API, file object open",
-          pybind11::arg("name"), pybind11::arg("mode"), pybind11::arg("object"),
-          pybind11::arg("engineType") = "BPFile");
+    m.def("open", &Open, pybind11::arg("name"), pybind11::arg("mode"),
+          pybind11::arg("comm"), pybind11::arg("enginetype") = "BPFile", R"md(
+          Simple API MPI open, based on python IO. 
+          Allows for passing parameters in source code.
 
-    m.def("open", &OpenConfig,
-          "High-level API, file object open with a runtime config file",
-          pybind11::arg("name"), pybind11::arg("mode"), pybind11::arg("object"),
-          pybind11::arg("configFile"), pybind11::arg("ioInConfigFile"));
+          Parameters
+              name 
+                    stream name
+              mode
+                    "w" : write, 
+                    "r" : read, 
+                    "a" : append (append not yet supported)
+              
+              comm  (mpi4py)
+                    MPI communicator
+              
+              enginetype
+                  adios2 engine type, default=BPFile
+
+          Returns 
+              file (adios2 stream)
+                  handler to adios File for the simple Python API
+    )md");
+
+    m.def("open", &OpenConfig, pybind11::arg("name"), pybind11::arg("mode"),
+          pybind11::arg("comm"), pybind11::arg("configfile"),
+          pybind11::arg("ioinconfigfile"), R"md(
+          Simple API MPI open, based on python IO. 
+          Allows for passing a runtime configuration file in xml format and the
+          name of the io element related to the returning File.
+
+          Parameters
+              name
+                    stream name
+              mode
+                    "w" : write, 
+                    "r" : read, 
+                    "a" : append (append not yet supported)
+              
+              comm  (mpi4py)
+                    MPI communicator
+              
+              configfile
+                    adios2 runtime configuration file name, in xml format
+
+              ioinconfigfile
+                    io element in configfile related to returning File
+
+          Returns 
+              file (adios2 stream)
+                  handler to adios File for the simple Python API
+    )md");
 
 #else
     m.def("ADIOS", &ADIOSInit,
@@ -211,7 +255,7 @@ PYBIND11_MODULE(adios2, m)
           pybind11::arg("configFile"), pybind11::arg("ioInConfigFile"));
 #endif
 
-    pybind11::class_<adios2::py11::ADIOS>(m, "py11::ADIOS")
+    pybind11::class_<adios2::py11::ADIOS>(m, "py11_ADIOS")
         .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
              "spawn IO object component returning a IO object with a unique "
              "name, throws an exception if IO with the same name is declared "
@@ -231,7 +275,7 @@ PYBIND11_MODULE(adios2, m)
 
     pybind11::class_<adios2::core::AttributeBase>(m, "Attribute");
 
-    pybind11::class_<adios2::py11::IO>(m, "py11::IO")
+    pybind11::class_<adios2::py11::IO>(m, "IO")
         .def("SetEngine", &adios2::py11::IO::SetEngine)
         .def("SetParameters", &adios2::py11::IO::SetParameters,
              pybind11::arg("parameters") = adios2::Params())
@@ -287,7 +331,7 @@ PYBIND11_MODULE(adios2, m)
         .def("EngineType", &adios2::py11::IO::EngineType)
         .def("LockDefinitions", &adios2::py11::IO::LockDefinitions);
 
-    pybind11::class_<adios2::py11::Engine>(m, "py11::Engine")
+    pybind11::class_<adios2::py11::Engine>(m, "Engine")
         .def("BeginStep", &adios2::py11::Engine::BeginStep,
              pybind11::arg("mode") = adios2::StepMode::NextAvailable,
              pybind11::arg("timeoutSeconds") = 0.f)
@@ -353,20 +397,74 @@ PYBIND11_MODULE(adios2, m)
              })
 
         .def("setparameter", &adios2::py11::File::SetParameter,
-             pybind11::arg("key"), pybind11::arg("value"))
+             pybind11::arg("key"), pybind11::arg("value"), R"md(
+             Sets a single parameter. Overwrites value if key exists.
+
+             Parameters
+                 key 
+                     input parameter key
+
+                 value
+                     parameter value
+        )md")
 
         .def("setparameters", &adios2::py11::File::SetParameters,
-             pybind11::arg("kwargs"))
+             pybind11::arg("parameters"), R"md(
+             Sets parameters using a dictionary. 
+             Removes any previous parameter.
+
+             Parameters
+                 parameters dictionary 
+                     input key/value parameters
+
+                 value
+                     parameter value
+        )md")
 
         .def("addtransport", &adios2::py11::File::AddTransport,
              pybind11::return_value_policy::move, pybind11::arg("type"),
-             pybind11::arg("kwargs") = adios2::Params())
+             pybind11::arg("parameters") = adios2::Params(), R"md(
+             Adds a transport and its parameters to current IO. Must be
+             supported by current engine type.
+
+             Parameters
+                 type
+                     must be a supported transport type for current engine. 
+                     
+                 parameters dictionary
+                     acceptable parameters for a particular transport
+                     CAN'T use the keywords "Transport" or "transport" in key
+
+             Returns
+                 transportindex 
+                     handler to added transport
+        )md")
 
         .def("availablevariables", &adios2::py11::File::AvailableVariables,
-             pybind11::return_value_policy::move)
+             pybind11::return_value_policy::move, R"md(
+             Returns a 2-level dictionary with variable information. 
+             Read mode only.
+             
+             Returns
+                 variables dictionary
+                     key 
+                         variable name
+                     value 
+                         variable information dictionary
+        )md")
 
         .def("availableattributes", &adios2::py11::File::AvailableAttributes,
-             pybind11::return_value_policy::move)
+             pybind11::return_value_policy::move, R"md(
+             Returns a 2-level dictionary with attribute information. 
+             Read mode only.
+             
+             Returns
+                 attributes dictionary
+                     key
+                         attribute name
+                     value 
+                         attribute information dictionary
+        )md")
 
         .def("write", (void (adios2::py11::File::*)(
                           const std::string &, const pybind11::array &,
@@ -375,40 +473,125 @@ PYBIND11_MODULE(adios2, m)
                           adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
              pybind11::arg("shape"), pybind11::arg("start"),
-             pybind11::arg("count"), pybind11::arg("endl") = false)
+             pybind11::arg("count"), pybind11::arg("endl") = false, R"md(
+             writes a self-describing array (numpy) variable
+
+             Parameters
+                 name 
+                     variable name
+
+                 array: numpy 
+                     variable data values
+
+                 shape 
+                     variable global MPI dimensions. 
+                     Pass empty numpy array for local variables.
+
+                 start 
+                     variable offset for current MPI rank. 
+                     Pass empty numpy array for local variables.
+
+                 count 
+                     variable dimension for current MPI rank. 
+                     Pass a numpy array for local variables.
+
+                 endl 
+                     end current step, begin next step and flush (default = false).
+        )md")
 
         .def("write", (void (adios2::py11::File::*)(const std::string &,
                                                     const pybind11::array &,
                                                     const bool endl)) &
                           adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
-             pybind11::arg("endl") = false)
+             pybind11::arg("endl") = false, R"md(
+             writes a self-describing single value array (numpy) variable
+
+             Parameters
+                 name
+                     variable name
+
+                 array: numpy 
+                     variable data single value
+
+                 endl 
+                     end current step, begin next step and flush 
+                     (default = false).
+        )md")
 
         .def("write",
              (void (adios2::py11::File::*)(
                  const std::string &, const std::string &, const bool endl)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("string"),
-             pybind11::arg("endl") = false)
+             pybind11::arg("endl") = false, R"md(
+             writes a self-describing single value string variable
+
+             Parameters
+                 name
+                     variable name
+
+                 string 
+                     variable data single value
+
+                 endl 
+                     end current step, begin next step and flush 
+                     (default = false).
+        )md")
 
         .def("readstring",
              (std::string (adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"))
+             pybind11::arg("name"), R"md(
+             Reads string value for current step 
+             (streaming mode step by step)
+
+             Parameters
+                 name
+                     string variable name
+
+             Returns
+                 string
+                     string value of variable name for current step.
+        )md")
 
         .def("readstring", (std::string (adios2::py11::File::*)(
                                const std::string &, const size_t)) &
                                adios2::py11::File::ReadString,
-             pybind11::return_value_policy::take_ownership)
+             pybind11::return_value_policy::take_ownership,
+             pybind11::arg("name"), pybind11::arg("step"), R"md(
+             Reads string value for a certain step 
+             (random access mode)
+
+             Parameters
+                 name
+                     string variable name
+                 step
+                     input step to be read
+
+             Returns
+                 string
+                     string value of variable name for a certain step.
+        )md")
 
         .def("read",
              (pybind11::array (adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), R"md(
-            Read function
-     	)md")
+             Reads entire variable for current step 
+             (streaming mode step by step)
+
+             Parameters
+                 name
+                        variable name
+
+             Returns
+                 array: numpy
+                        values of variable name for current step.
+                        Single values will have a shape={1} numpy array
+        )md")
 
         .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
@@ -419,19 +602,21 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("count"), R"md(
              Reads a selection piece in dimension for current step 
              (streaming mode step by step)
-			 
+
              Parameters
-                 name 
-                        variable name
-                 start 
-                        variable local offset selection
-                 count  
-                        variable local dimension selection from start
+                 name
+                     variable name
+
+                 start
+                     variable local offset selection
+
+                 count
+                     variable local dimension selection from start
 
              Returns
-                 array: numpy array 
-                        values of variable name for current step
-                        empty if exception is thrown
+                 array: numpy
+                     values of variable name for current step
+                     empty if exception is thrown
         )md")
 
         .def("read", (pybind11::array (adios2::py11::File::*)(
@@ -442,32 +627,29 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("name"), pybind11::arg("start"),
              pybind11::arg("count"), pybind11::arg("stepstart"),
              pybind11::arg("stepcount"), R"md(
-            
-            Random access read allowed to select steps, 
-            only valid with File Engines
-             
-            Parameters
-                
-                name 
-                    variable to be read 
-                  
-                start 
-                    variable offset dimensions
-                
-                count 
-                    variable local dimensions from offset
+             Random access read allowed to select steps, 
+             only valid with File Engines
 
-                stepstart 
-                    variable step start
-                
-                stepcount 
-                    variable number of steps to read 
-                                                              
-            Returns
+             Parameters
+                 name 
+                     variable to be read 
 
-                array 
+                 start 
+                     variable offset dimensions
+
+                 count 
+                     variable local dimensions from offset
+
+                 stepstart 
+                     variable step start
+
+                 stepcount 
+                     variable number of steps to read 
+
+             Returns
+                 array: numpy
                     resulting array from selection 
-     	)md")
+        )md")
 
         .def("close", &adios2::py11::File::Close, R"md(
             Closes file, thus becoming unreachable. 
@@ -477,8 +659,8 @@ PYBIND11_MODULE(adios2, m)
 
         .def("currentstep", &adios2::py11::File::CurrentStep, R"md(
             Return current step when using for-in loops, read mode only
+
             Returns
-  
                 current step
         )md");
 }
