@@ -4,6 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_executable(TestSstWrite TestSstWrite.cpp)
+add_executable(TestSstWriteModes TestSstWriteModes.cpp)
 add_executable(TestSstRead TestSstRead.cpp)
 add_executable(TestSstServer TestSstServer.cpp)
 add_executable(TestSstClient TestSstClient.cpp)
@@ -26,11 +27,13 @@ endif()
 # Workaround for multiple versions of FindSst
 if(SST_INCLUDE_DIRS)
   target_include_directories(TestSstWrite PRIVATE ${SST_INCLUDE_DIRS})
+  target_include_directories(TestSstWriteModes PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestSstRead PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestSstServer PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestSstClient PRIVATE ${SST_INCLUDE_DIRS})
 endif()
 target_link_libraries(TestSstWrite adios2 gtest_interface ${Sst_LIBRARY})
+target_link_libraries(TestSstWriteModes adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstRead adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstServer adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstClient adios2 gtest_interface ${Sst_LIBRARY})
@@ -39,6 +42,7 @@ target_link_libraries(TestSstWriterFails adios2 gtest)
 
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestSstWrite MPI::MPI_C)
+  target_link_libraries(TestSstWriteModes MPI::MPI_C)
   target_link_libraries(TestSstRead MPI::MPI_C)
   target_link_libraries(TestSstServer MPI::MPI_C)
   target_link_libraries(TestSstClient MPI::MPI_C)
@@ -80,6 +84,12 @@ add_test(
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
     -nw 1 -nr 0 -v -p TestSst -arg "RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard")
 set_tests_properties(ADIOSSstTest.NoReaderNoWait PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
+
+add_test(
+  NAME ADIOSSstTest.Modes
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+  -nw 1 -nr 1 -v -w TestSstWriteModes -r TestSstRead)
+  set_tests_properties(ADIOSSstTest.Modes PROPERTIES TIMEOUT 30  RUN_SERIAL 1) 
 
 if(ADIOS2_HAVE_Fortran)
   add_test(

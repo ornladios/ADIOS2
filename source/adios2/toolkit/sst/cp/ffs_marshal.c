@@ -320,6 +320,8 @@ struct FFSMetadataInfoStruct
     size_t DataBlockSize;
 };
 
+static int FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit);
+
 static void InitMarshalData(SstStream Stream)
 {
     struct FFSWriterMarshalBase *Info =
@@ -804,9 +806,12 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
             (ArrayRec *)((char *)BaseData + FieldList[i].field_offset);
         const char *ArrayName = FieldList[i + 1].field_name + 4;
         FFSVarRec VarRec = LookupVarByName(Stream, ArrayName);
-        VarRec->PerWriterIncomingData[Writer] = data_base->Array;
-        VarRec->PerWriterIncomingSize[Writer] = data_base->ElemCount;
-        VarRec->PerWriterDataFieldDesc[Writer] = &FieldList[i + 1];
+        if (VarRec)
+        {
+            VarRec->PerWriterIncomingData[Writer] = data_base->Array;
+            VarRec->PerWriterIncomingSize[Writer] = data_base->ElemCount;
+            VarRec->PerWriterDataFieldDesc[Writer] = &FieldList[i + 1];
+        }
         i += 2;
     }
 }
@@ -1249,6 +1254,8 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     FMfree_var_rec_elements(Info->MetaFormat, Stream->M);
     MBase->BitField = tmp;
     FMfree_var_rec_elements(Info->DataFormat, Stream->D);
+    memset(Stream->M, 0, Stream->MetadataSize);
+    memset(Stream->D, 0, Stream->DataSize);
 
     // Call SstInternalProvideStep with Metadata block, Data block and (any new)
     // formatID and formatBody
@@ -1420,7 +1427,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     while (strncmp(FieldList->field_name, "DataBlockSize", 8) == 0)
         FieldList++;
     int i = 0;
-
+    int j = 0;
     while (FieldList[i].field_name)
     {
         void *field_data = (char *)BaseData + FieldList[i].field_offset;
@@ -1431,6 +1438,13 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             char *Type;
             FFSVarRec VarRec = NULL;
             int ElementSize;
+            if (!FFSBitfieldTest(BaseData, j))
+            {
+                /* only work with fields that were written */
+                i += 4;
+                j++;
+                continue;
+            }
             BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
                                &ElementSize);
             if (WriterRank != 0)
@@ -1473,6 +1487,13 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             /* simple field */
             char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
             FFSVarRec VarRec = NULL;
+            if (!FFSBitfieldTest(BaseData, j))
+            {
+                /* only work with fields that were written */
+                i++;
+                j++;
+                continue;
+            }
             if (WriterRank != 0)
             {
                 VarRec = LookupVarByName(Stream, FieldName);
@@ -1490,6 +1511,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
             i++;
         }
+        /* real variable count is in j, i tracks the entries in the metadata */
+        j++;
     }
 }
 
@@ -1523,6 +1546,22 @@ static void FFSBitfieldSet(struct FFSMetadataInfoStruct *MBase, int Bit)
         MBase->BitFieldCount = Element + 1;
     }
     MBase->BitField[Element] |= (1 << ElementBit);
+}
+
+static int FFSBitfieldTest(struct FFSMetadataInfoStruct *MBase, int Bit)
+{
+    int Element = Bit / 64;
+    int ElementBit = Bit % 64;
+    if (Element >= MBase->BitFieldCount)
+    {
+        MBase->BitField =
+            realloc(MBase->BitField, sizeof(size_t) * (Element + 1));
+        memset(MBase->BitField + MBase->BitFieldCount * sizeof(size_t), 0,
+               (Element - MBase->BitFieldCount + 1) * sizeof(size_t));
+        MBase->BitFieldCount = Element + 1;
+    }
+    return ((MBase->BitField[Element] & (1 << ElementBit)) ==
+            (1 << ElementBit));
 }
 
 extern void SstFFSSetZFPParams(SstStream Stream, attr_list Attrs)
