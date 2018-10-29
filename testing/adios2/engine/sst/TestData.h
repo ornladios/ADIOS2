@@ -76,7 +76,7 @@ void generateSstTestData(int step, int rank, int size)
     }
 }
 
-int validateSstTestData(int start, int length, int step)
+int validateSstTestData(int start, int length, int step, int missing_end_data)
 {
     int failures = 0;
     if (in_scalar_R64 != 1.5 * (step + 1))
@@ -135,55 +135,62 @@ int validateSstTestData(int start, int length, int step)
                       << "](global[" << i + start << "])" << std::endl;
             failures++;
         }
-        if ((in_C32[i].imag() != (float)((i + start) * 10 + step)) ||
-            (in_C32[i].real() != -(float)((i + start) * 10 + step)))
+        if (!missing_end_data)
         {
-            std::cout << "Expected [" << (float)((i + start) * 10 + step)
-                      << ", " << -(float)((i + start) * 10 + step) << "], got "
-                      << in_C32[i] << " for in_C32[" << i << "](global["
-                      << i + start << "])" << std::endl;
-            failures++;
-        }
-        if ((in_C64[i].imag() != (double)((i + start) * 10 + step)) ||
-            (in_C64[i].real() != (-(double)((i + start) * 10 + step))))
-        {
-            std::cout << "Expected [" << (double)((i + start) * 10 + step)
-                      << ", " << -(double)((i + start) * 10 + step) << "], got "
-                      << in_C64[i] << " for in_C64[" << i << "](global["
-                      << i + start << "])" << std::endl;
-            failures++;
-        }
-        if (in_R64_2d[2 * i] != (double)((i + start) * 10 + step))
-        {
-            std::cout << "Expected " << (double)((i + start) * 10 + step)
-                      << ", got " << in_R64_2d[i] << " for in_R64_2d[" << i
-                      << "][0](global[" << i + start << "][0])" << std::endl;
-            failures++;
-        }
-        if (in_R64_2d[2 * i + 1] != (double)(10000 + (i + start) * 10 + step))
-        {
-            std::cout << "Expected "
-                      << (double)(10000 + (i + start) * 10 + step) << ", got "
-                      << in_R64_2d[i] << " for in_R64_2d[" << i
-                      << "][1](global[" << i + start << "][1])" << std::endl;
-            failures++;
-        }
-        if (in_R64_2d_rev[i] != (double)((i + start) * 10 + step))
-        {
-            std::cout << "Expected " << (double)((i + start) * 10 + step)
-                      << ", got " << in_R64_2d_rev[i]
-                      << " for in_R64_2d_rev[0][" << i << "](global[0]["
-                      << i + start << "])" << std::endl;
-            failures++;
-        }
-        if (in_R64_2d_rev[i + length] !=
-            (double)(10000 + (i + start) * 10 + step))
-        {
-            std::cout << "Expected "
-                      << (double)(10000 + (i + start) * 10 + step) << ", got "
-                      << in_R64_2d_rev[i + length] << " for in_R64_2d_rev[1]["
-                      << i << "](global[1][" << i + start << "])" << std::endl;
-            failures++;
+            if ((in_C32[i].imag() != (float)((i + start) * 10 + step)) ||
+                (in_C32[i].real() != -(float)((i + start) * 10 + step)))
+            {
+                std::cout << "Expected [" << (float)((i + start) * 10 + step)
+                          << ", " << -(float)((i + start) * 10 + step)
+                          << "], got " << in_C32[i] << " for in_C32[" << i
+                          << "](global[" << i + start << "])" << std::endl;
+                failures++;
+            }
+            if ((in_C64[i].imag() != (double)((i + start) * 10 + step)) ||
+                (in_C64[i].real() != (-(double)((i + start) * 10 + step))))
+            {
+                std::cout << "Expected [" << (double)((i + start) * 10 + step)
+                          << ", " << -(double)((i + start) * 10 + step)
+                          << "], got " << in_C64[i] << " for in_C64[" << i
+                          << "](global[" << i + start << "])" << std::endl;
+                failures++;
+            }
+            if (in_R64_2d[2 * i] != (double)((i + start) * 10 + step))
+            {
+                std::cout << "Expected " << (double)((i + start) * 10 + step)
+                          << ", got " << in_R64_2d[i] << " for in_R64_2d[" << i
+                          << "][0](global[" << i + start << "][0])"
+                          << std::endl;
+                failures++;
+            }
+            if (in_R64_2d[2 * i + 1] !=
+                (double)(10000 + (i + start) * 10 + step))
+            {
+                std::cout << "Expected "
+                          << (double)(10000 + (i + start) * 10 + step)
+                          << ", got " << in_R64_2d[i] << " for in_R64_2d[" << i
+                          << "][1](global[" << i + start << "][1])"
+                          << std::endl;
+                failures++;
+            }
+            if (in_R64_2d_rev[i] != (double)((i + start) * 10 + step))
+            {
+                std::cout << "Expected " << (double)((i + start) * 10 + step)
+                          << ", got " << in_R64_2d_rev[i]
+                          << " for in_R64_2d_rev[0][" << i << "](global[0]["
+                          << i + start << "])" << std::endl;
+                failures++;
+            }
+            if (in_R64_2d_rev[i + length] !=
+                (double)(10000 + (i + start) * 10 + step))
+            {
+                std::cout << "Expected "
+                          << (double)(10000 + (i + start) * 10 + step)
+                          << ", got " << in_R64_2d_rev[i + length]
+                          << " for in_R64_2d_rev[1][" << i << "](global[1]["
+                          << i + start << "])" << std::endl;
+                failures++;
+            }
         }
     }
     return failures;

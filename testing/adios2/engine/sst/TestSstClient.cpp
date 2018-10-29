@@ -235,7 +235,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         {
             engine.EndStep();
 
-            EXPECT_EQ(validateSstTestData(myStart, myLength, t), 0);
+            EXPECT_EQ(validateSstTestData(myStart, myLength, t, 0), 0);
             write_times.push_back(write_time);
         }
         catch (...)

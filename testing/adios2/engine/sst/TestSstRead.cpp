@@ -137,27 +137,36 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         ASSERT_EQ(var_r64.Shape()[0], writerSize * Nx);
 
         auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
-        EXPECT_TRUE(var_c32);
-        ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_c32.Shape()[0], writerSize * Nx);
-
         auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
-        EXPECT_TRUE(var_c64);
-        ASSERT_EQ(var_c64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_c64.Shape()[0], writerSize * Nx);
-
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
-        EXPECT_TRUE(var_r64_2d);
-        ASSERT_EQ(var_r64_2d.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64_2d.Shape()[0], writerSize * Nx);
-        ASSERT_EQ(var_r64_2d.Shape()[1], 2);
-
         auto var_r64_2d_rev = io.InquireVariable<double>("r64_2d_rev");
-        EXPECT_TRUE(var_r64_2d_rev);
-        ASSERT_EQ(var_r64_2d_rev.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64_2d_rev.Shape()[0], 2);
-        ASSERT_EQ(var_r64_2d_rev.Shape()[1], writerSize * Nx);
+        if (var_c32)
+        {
+            EXPECT_TRUE(var_c32);
+            ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c32.Shape()[0], writerSize * Nx);
 
+            EXPECT_TRUE(var_c64);
+            ASSERT_EQ(var_c64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c64.Shape()[0], writerSize * Nx);
+
+            EXPECT_TRUE(var_r64_2d);
+            ASSERT_EQ(var_r64_2d.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64_2d.Shape()[0], writerSize * Nx);
+            ASSERT_EQ(var_r64_2d.Shape()[1], 2);
+
+            EXPECT_TRUE(var_r64_2d_rev);
+            ASSERT_EQ(var_r64_2d_rev.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64_2d_rev.Shape()[0], 2);
+            ASSERT_EQ(var_r64_2d_rev.Shape()[1], writerSize * Nx);
+        }
+        else
+        {
+            EXPECT_FALSE(var_c32);
+            EXPECT_FALSE(var_c64);
+            EXPECT_FALSE(var_r64_2d);
+            EXPECT_FALSE(var_r64_2d_rev);
+        }
         auto var_time = io.InquireVariable<int64_t>("time");
         EXPECT_TRUE(var_time);
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -192,10 +201,14 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
 
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
-        var_c32.SetSelection(sel);
-        var_c64.SetSelection(sel);
-        var_r64_2d.SetSelection(sel2);
-        var_r64_2d_rev.SetSelection(sel3);
+        if (var_c32)
+            var_c32.SetSelection(sel);
+        if (var_c64)
+            var_c64.SetSelection(sel);
+        if (var_r64_2d)
+            var_r64_2d.SetSelection(sel2);
+        if (var_r64_2d_rev)
+            var_r64_2d_rev.SetSelection(sel3);
 
         var_time.SetSelection(sel_time);
 
@@ -218,15 +231,19 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
 
         engine.Get(var_r32, in_R32.data());
         engine.Get(var_r64, in_R64.data());
-        engine.Get(var_c32, in_C32.data());
-        engine.Get(var_c64, in_C64.data());
-        engine.Get(var_r64_2d, in_R64_2d.data());
-        engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
+        if (var_c32)
+            engine.Get(var_c32, in_C32.data());
+        if (var_c64)
+            engine.Get(var_c64, in_C64.data());
+        if (var_r64_2d)
+            engine.Get(var_r64_2d, in_R64_2d.data());
+        if (var_r64_2d_rev)
+            engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
         engine.Get(var_time, (int64_t *)&write_time);
         engine.EndStep();
 
-        EXPECT_EQ(validateSstTestData(myStart, myLength, t), 0);
+        EXPECT_EQ(validateSstTestData(myStart, myLength, t, !var_c32), 0);
         write_times.push_back(write_time);
         ++t;
     }
