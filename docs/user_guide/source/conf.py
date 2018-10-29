@@ -29,7 +29,7 @@ import subprocess
 import sys
 import os
 
-sys.path.insert(0,os.path.abspath('../../../../bindings/Python'))
+sys.path.insert(0, os.path.abspath('../../../../bindings/Python'))
 
 extensions = [
     'sphinx.ext.todo',
