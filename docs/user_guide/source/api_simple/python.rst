@@ -4,7 +4,8 @@ Python simple bindings
 
 Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, the rely on numpy and (optionally) on mpi4py.
 
-Write example:
+Write example
+-------------
 
 .. code-block:: python
    
@@ -35,7 +36,9 @@ Write example:
          # advances to next step
          fw.write("pressure", pressure, shape, start, count, endl=True)
 
-Read "stepping/streaming" example:
+
+Read "stepping/streaming" example
+---------------------------------
 
 .. code-block:: python
    
@@ -65,4 +68,19 @@ Read "stepping/streaming" example:
             physical_time = fh_step.read("physical_time")
             temperature = fh_step.read("temperature", start, count)
             pressure = fh_step.read("pressure", start, count)
-  
+
+.. caution::
+   
+   When reading in stepping mode with the for-in directive, as in the example above, use the step handler (fh_step) inside the loop rather than the global handler (fh) 
+
+
+
+
+File class API
+--------------
+
+.. automodule:: adios2
+    :members: open
+
+.. autoclass:: adios2::File
+    :members:
