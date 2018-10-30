@@ -60,12 +60,16 @@ public:
     void SetSelection(const adios2::Box<adios2::Dims> &selection);
 
     /**
-     * Sets the description of the pointer or vector memory given at Put and Get
-     * for non-contiguous memory writes and reads. Most commonly used in I/O of
-     * non ghost-cells into a larger array containing ghost cells.
-     * @param selection input {start, count} of memory to be given at Put or Get
+     * Set the local start (offset) point to the memory pointer passed at Put.
+     * Currently not working for calls to Get.
+     * Used for non-contiguous memory writes and reads (e.g. multidimensional
+     * ghost-cells).
+     * @param memoryStart relative local offset to the memory pointer passed at
+     * Put.
+     * e.g. if variable start = {0,0} and there is 1 ghost cell per dimension,
+     * then memoryStart = {1,1}
      */
-    void SetMemorySelection(const adios2::Box<adios2::Dims> &selection);
+    void SetMemoryStart(const adios2::Dims &memoryStart);
 
     /**
      * Sets a step selection modifying current startStep, countStep

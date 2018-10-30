@@ -63,12 +63,13 @@ inline void BP3Serializer::PutVariableMetadata(
 template <class T>
 inline void BP3Serializer::PutVariablePayload(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor) noexcept
 {
     ProfilerStart("buffering");
     if (blockInfo.Operations.empty())
     {
-        PutPayloadInBuffer(variable, blockInfo);
+        PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
     }
     else
     {
@@ -754,7 +755,8 @@ void BP3Serializer::PutVariableCharacteristics(
 template <>
 inline void BP3Serializer::PutPayloadInBuffer(
     const core::Variable<std::string> &variable,
-    const typename core::Variable<std::string>::Info &blockInfo) noexcept
+    const typename core::Variable<std::string>::Info &blockInfo,
+    const bool /* sourceRowMajor*/) noexcept
 {
     PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
     m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
@@ -763,21 +765,20 @@ inline void BP3Serializer::PutPayloadInBuffer(
 template <class T>
 void BP3Serializer::PutPayloadInBuffer(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor) noexcept
 {
     const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     ProfilerStart("memcpy");
-    if (!blockInfo.MemoryStart.empty() && !blockInfo.MemoryCount.empty())
+    if (!blockInfo.MemoryStart.empty())
     {
         // TODO need a more robust ClipContiguousMemory solution
-
-        //        char *contiguousMemory = reinterpret_cast<char
-        //        *>(blockInfo.Data);
-        //
-        //        helper::ClipContiguousMemory(
-        //            m_Data.m_Buffer.data(), blockInfo.Start, blockInfo.Count,
-        //            contiguousMemory, memoryBox, selectionBox, m_IsRowMajor,
-        //            false);
+        helper::CopyMemory(
+            reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
+            blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
+            blockInfo.Start, blockInfo.Count, sourceRowMajor, Dims(),
+            blockInfo.MemoryStart);
+        m_Data.m_Position += blockSize * sizeof(T);
     }
     else
     {

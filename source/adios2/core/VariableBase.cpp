@@ -130,34 +130,29 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
     m_Count = count;
 }
 
-void VariableBase::SetMemorySelection(const Box<Dims> &selection)
+void VariableBase::SetMemoryStart(const Dims &memoryStart)
 {
-    const Dims &memoryStart = selection.first;
-    const Dims &memoryCount = selection.second;
-
     if (m_DebugMode)
     {
         if (m_SingleValue)
         {
-            throw std::invalid_argument("ERROR: memory selection is not valid "
+            throw std::invalid_argument("ERROR: memory start is not valid "
                                         "for single value variable " +
                                         m_Name +
-                                        ", in call to SetMemorySelection\n");
+                                        ", in call to SetMemoryStart\n");
         }
 
-        if (m_Shape.size() != memoryStart.size() ||
-            m_Shape.size() != memoryCount.size())
+        if (m_Shape.size() != memoryStart.size())
         {
-            throw std::invalid_argument(
-                "ERROR: selection Dims start, count sizes must be "
-                "the same as variable " +
-                m_Name + " m_Shape, in call to SetMemorySelction\n");
+            throw std::invalid_argument("ERROR: memoryStart size must be "
+                                        "the same as variable " +
+                                        m_Name + " Shape size " +
+                                        std::to_string(m_Shape.size()) +
+                                        ", in call to SetMemoryStart\n");
         }
-        // TODO add more checks if required
     }
 
     m_MemoryStart = memoryStart;
-    m_MemoryCount = memoryCount;
 }
 
 size_t VariableBase::GetAvailableStepsStart() const

@@ -52,7 +52,8 @@ void BP3Writer::PutSyncCommon(Variable<T> &variable,
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     m_BP3Serializer.PutVariableMetadata(variable, blockInfo);
-    m_BP3Serializer.PutVariablePayload(variable, blockInfo);
+    m_BP3Serializer.PutVariablePayload(variable, blockInfo,
+                                       helper::IsRowMajor(m_IO.m_HostLanguage));
 }
 
 template <class T>

@@ -40,7 +40,6 @@ namespace core
         info.Start = m_Start;                                                  \
         info.Count = m_Count;                                                  \
         info.MemoryStart = m_MemoryStart;                                      \
-        info.MemoryCount = m_MemoryCount;                                      \
         info.StepsStart = stepsStart;                                          \
         info.StepsCount = stepsCount;                                          \
         info.Data = const_cast<T *>(data);                                     \

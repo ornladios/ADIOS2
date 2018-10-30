@@ -114,13 +114,8 @@ Box<Dims> StartEndBox(const Dims &start, const Dims &count,
 
 Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
 
-Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
-                                 const Dims &start2,
-                                 const Dims &count2) noexcept;
-
 /**
- * Returns the intersection box { start, end } where end is inclusive from
- * box1
+ * Returns the intersection box { start, end } where end is inclusive from box1
  * and box2
  * @param box1 {start, end} input (end is exclusive)
  * @param box2 {start, end} input (end is exclusive)
@@ -128,6 +123,10 @@ Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
  */
 Box<Dims> IntersectionBox(const Box<Dims> &box1,
                           const Box<Dims> &box2) noexcept;
+
+Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
+                                 const Dims &start2,
+                                 const Dims &count2) noexcept;
 
 /**
  * Returns true if the two boxes are identical
@@ -156,13 +155,25 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
 
 /**
  * Get a linear index for a point inside a localBox depending on data layout
- * @param localBox start and count
+ * Linear index start count version
+ * @param start
+ * @param count
+ * @param point
+ * @param isRowMajor
+ * @return
+ */
+size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
+                   const bool isRowMajor) noexcept;
+
+/**
+ * Get a linear index for a point inside a localBox depending on data layout
+ * @param startEndBox start (first) and end (second) box
  * @param point inside box
  * @param isRowMajor
  * @param isZeroIndex
  * @return linear index for contiguous memory
  */
-size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
+size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
                    const bool isRowMajor) noexcept;
 
 /**
@@ -186,6 +197,16 @@ bool LessThan(const T input1, const T input2) noexcept;
  */
 template <class T>
 bool GreaterThan(const T input1, const T input2) noexcept;
+
+/**
+ * Transform "typed" dimensions to payload dimensions based on ordering.
+ * Multiply fastest index by sizeof(T)
+ * Example: row major float { 4, 3, 4 } -> {4, 3, 4*sizeof(float)} = {4,3,16}
+ * @param dimensions
+ * @return
+ */
+template <class T>
+Dims PayloadDims(const Dims &dimensions, const bool isRowMajor) noexcept;
 
 } // end namespace helper
 } // end namespace adios2

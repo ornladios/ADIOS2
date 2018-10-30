@@ -99,6 +99,50 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept
     return box;
 }
 
+Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
+{
+    Box<Dims> intersectionBox;
+    const size_t dimensionsSize = box1.first.size();
+
+    for (size_t d = 0; d < dimensionsSize; ++d)
+    {
+        // Don't intercept
+        if (box2.first[d] > box1.second[d] || box2.second[d] < box1.first[d])
+        {
+            return intersectionBox;
+        }
+    }
+
+    // get the intersection box
+    intersectionBox.first.reserve(dimensionsSize);
+    intersectionBox.second.reserve(dimensionsSize);
+
+    for (size_t d = 0; d < dimensionsSize; ++d)
+    {
+        // start
+        if (box1.first[d] < box2.first[d])
+        {
+            intersectionBox.first.push_back(box2.first[d]);
+        }
+        else
+        {
+            intersectionBox.first.push_back(box1.first[d]);
+        }
+
+        // end, must be inclusive
+        if (box1.second[d] > box2.second[d])
+        {
+            intersectionBox.second.push_back(box2.second[d]);
+        }
+        else
+        {
+            intersectionBox.second.push_back(box1.second[d]);
+        }
+    }
+
+    return intersectionBox;
+}
+
 Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
                                  const Dims &start2,
                                  const Dims &count2) noexcept
@@ -112,7 +156,7 @@ Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
         const size_t end1 = start1[d] + count1[d] - 1;
         const size_t end2 = start2[d] + count2[d] - 1;
 
-        if (start2 > end1 || end2 < start1)
+        if (start2[d] > end1 || end2 < start1[d])
         {
             return intersectionStartCount;
         }
@@ -137,50 +181,6 @@ Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
     }
 
     return intersectionStartCount;
-}
-
-Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
-{
-    Box<Dims> intersectionBox;
-    const size_t dimensionsSize = box1.first.size();
-
-    for (auto d = 0; d < dimensionsSize; ++d)
-    {
-        // Don't intercept
-        if (box2.first[d] > box1.second[d] || box2.second[d] < box1.first[d])
-        {
-            return intersectionBox;
-        }
-    }
-
-    // get the intersection box
-    intersectionBox.first.reserve(dimensionsSize);
-    intersectionBox.second.reserve(dimensionsSize);
-
-    for (auto d = 0; d < dimensionsSize; ++d)
-    {
-        // start
-        if (box1.first[d] < box2.first[d])
-        {
-            intersectionBox.first.push_back(box2.first[d]);
-        }
-        else
-        {
-            intersectionBox.first.push_back(box1.first[d]);
-        }
-
-        // end, must be inclusive
-        if (box1.second[d] > box2.second[d])
-        {
-            intersectionBox.second.push_back(box2.second[d]);
-        }
-        else
-        {
-            intersectionBox.second.push_back(box1.second[d]);
-        }
-    }
-
-    return intersectionBox;
 }
 
 bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
@@ -240,7 +240,7 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
     return true;
 }
 
-size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
+size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
                    const bool isRowMajor) noexcept
 {
     auto lf_RowMajor = [](const Dims &count,
@@ -273,12 +273,6 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
         return linearIndex;
     };
 
-    const Box<Dims> localBoxStartCount =
-        StartCountBox(localBox.first, localBox.second);
-
-    const Dims &start = localBoxStartCount.first;
-    const Dims &count = localBoxStartCount.second;
-
     if (count.size() == 1)
     {
         return (point[0] - start[0]);
@@ -302,6 +296,18 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
     }
 
     return linearIndex;
+}
+
+size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
+                   const bool isRowMajor) noexcept
+{
+    const Box<Dims> localBoxStartCount =
+        StartCountBox(startEndBox.first, startEndBox.second);
+
+    const Dims &start = localBoxStartCount.first;
+    const Dims &count = localBoxStartCount.second;
+
+    return LinearIndex(start, count, point, isRowMajor);
 }
 
 } // end namespace helper

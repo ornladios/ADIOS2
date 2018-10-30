@@ -4,70 +4,96 @@
  *
  * adiosMemory.cpp
  *
- *  Created on: Oct 11, 2018
+ *  Created on: Oct 31, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include "adiosMemory.h"
 
-#include "adios2/helper/adiosFunctions.h"
+#include <algorithm>
 
 namespace adios2
 {
 namespace helper
 {
 
-void ClipContiguousMemoryRowMajor(char *destination,
-                                  const Box<Dims> &destinationBox,
-                                  const char *source,
-                                  const Box<Dims> &sourceBox,
-                                  const Box<Dims> &intersectionBox) noexcept
+namespace
 {
+
+Dims DestDimsFinal(const Dims &destDims, const bool destRowMajor,
+                   const bool srcRowMajor)
+{
+    Dims destDimsFinal = destDims;
+    if (srcRowMajor != destRowMajor)
+    {
+        std::reverse(destDimsFinal.begin(), destDimsFinal.end());
+    }
+    return destDimsFinal;
+}
+
+void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
+                  const bool destRowMajor, const char *src,
+                  const Dims &srcStart, const Dims &srcCount,
+                  const Dims &destMemStart, const Dims &srcMemStart)
+{
+    const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, true);
+    const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, true);
+    const Box<Dims> intersectionBox = IntersectionStartCount(
+        destStartFinal, destCountFinal, srcStart, srcCount);
+
     const Dims &interStart = intersectionBox.first;
-    const Dims &interEnd = intersectionBox.second;
-    const Dims &sourceStart = sourceBox.first;
-    const Dims &sourceEnd = sourceBox.second;
+    const Dims &interCount = intersectionBox.second;
+    // loop through intersection start and end and check if it's equal to the
+    // srcBox contiguous part
     const size_t dimensions = interStart.size();
 
-    // loop through intersection start and end and check if it's equal to the
-    // sourceBox
-    size_t stride = interEnd[dimensions - 1] - interStart[dimensions - 1] + 1;
-    size_t startCoord;
-    for (startCoord = dimensions - 2; startCoord >= 0; --startCoord)
-    {
-        // same as source
-        if (interStart[startCoord] == sourceStart[startCoord] &&
-            interEnd[startCoord] == sourceEnd[startCoord])
-        {
-            stride *= (interEnd[startCoord] - interStart[startCoord] + 1);
-        }
-        else
-        {
-            break;
-        }
-    }
+    size_t stride = interCount.back();
+    size_t startCoord = dimensions - 2;
+    //    bool isWholeCopy = false;
+    //
+    //    for (size_t i = dimensions - 1; i >= 0; --i)
+    //    {
+    //        // same as source
+    //        if (interCount[i] == srcCount[i])
+    //        {
+    //            stride *= interCount[i - 1];
+    //            if (startCoord > 0)
+    //            {
+    //                --startCoord;
+    //            }
+    //            if (startCoord == 0)
+    //            {
+    //                isWholeCopy = true;
+    //            }
+    //        }
+    //        else
+    //        {
+    //            break;
+    //        }
+    //    }
 
+    /// start iteration
     Dims currentPoint(interStart); // current point for memory copy
-    const size_t interOffset = helper::LinearIndex(sourceBox, interStart, true);
+    const size_t interOffset =
+        LinearIndex(srcStart, srcCount, interStart, true);
     bool run = true;
 
     while (run)
     {
         // here copy current linear memory between currentPoint and end
-        const size_t sourceOffset =
-            helper::LinearIndex(sourceBox, currentPoint, true) - interOffset;
+        const size_t srcOffset =
+            helper::LinearIndex(srcStart, srcCount, currentPoint, true) -
+            interOffset;
+        const size_t destOffset = helper::LinearIndex(
+            destStartFinal, destCountFinal, currentPoint, true);
 
-        const size_t destinationOffset =
-            helper::LinearIndex(destinationBox, currentPoint, true);
-
-        std::copy(source + sourceOffset, source + sourceOffset + stride,
-                  destination + destinationOffset);
+        std::copy(src + srcOffset, src + srcOffset + stride, dest + destOffset);
 
         size_t p = startCoord;
         while (true)
         {
             ++currentPoint[p];
-            if (currentPoint[p] > interEnd[p])
+            if (currentPoint[p] > interStart[p] + interCount[p] - 1)
             {
                 if (p == 0)
                 {
@@ -88,42 +114,116 @@ void ClipContiguousMemoryRowMajor(char *destination,
     }
 }
 
-void ClipContiguousMemory(char *destination, const Box<Dims> &destinationBox,
-                          const char *source, const Box<Dims> &sourceBox,
-                          const bool isRowMajor) noexcept
+void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
+                     const bool destRowMajor, const char *src,
+                     const Dims &srcStart, const Dims &srcCount,
+                     const Dims &destMemStart, const Dims &srcMemStart)
 {
-    const Box<Dims> intersectionBox =
-        helper::IntersectionBox(destinationBox, sourceBox);
-    if (intersectionBox.first.empty() && intersectionBox.second.empty())
+    const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, false);
+    const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, false);
+    const Box<Dims> intersectionBox = IntersectionStartCount(
+        destStartFinal, destCountFinal, srcStart, srcCount);
+
+    const Dims &interStart = intersectionBox.first;
+    const Dims &interCount = intersectionBox.second;
+    // loop through intersection start and end and check if it's equal to the
+    // srcBox contiguous part
+    const size_t dimensions = interStart.size();
+    size_t stride = interCount.front();
+    size_t startCoord = 1;
+    //    for (size_t i = 0; i < dimensions; ++i)
+    //    {
+    //        // same as source
+    //        if (interCount[i] == srcCount[i])
+    //        {
+    //            stride *= interCount[i];
+    //            // startCoord = i + 1;
+    //        }
+    //        else
+    //        {
+    //            break;
+    //        }
+    //    }
+
+    /// start iteration
+    Dims currentPoint(interStart); // current point for memory copy
+    const size_t interOffset =
+        LinearIndex(srcStart, srcCount, interStart, false);
+    bool run = true;
+
+    while (run)
     {
-        return;
+        // here copy current linear memory between currentPoint and end
+        const size_t srcOffset =
+            helper::LinearIndex(srcStart, srcCount, currentPoint, false) -
+            interOffset;
+        const size_t destOffset = helper::LinearIndex(
+            destStartFinal, destCountFinal, currentPoint, false);
+
+        std::copy(src + srcOffset, src + srcOffset + stride, dest + destOffset);
+        size_t p = startCoord;
+
+        while (true)
+        {
+            ++currentPoint[p];
+            if (currentPoint[p] > interStart[p] + interCount[p] - 1)
+            {
+                if (p == dimensions - 1)
+                {
+                    run = false; // we are done
+                    break;
+                }
+                else
+                {
+                    currentPoint[p] = interStart[p];
+                    ++p;
+                }
+            }
+            else
+            {
+                break; // break inner p loop
+            }
+        } // dimension index update
     }
 }
 
-void CopyMemory(char *dest, const Dims &destStart, const Dims &destCount,
-                char *src, const Dims &srcStart, const Dims &srcCount,
-                const bool destIsRowMajor, const bool srcIsRowMajor,
-                const Dims &destMemoryStart, const Dims &destMemoryCount,
-                const Dims &srcMemoryStart, const Dims &srcMemoryCount) noexcept
+} // end empty namespace
+
+void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
+                 const bool destRowMajor, const char *src, const Dims &srcStart,
+                 const Dims &srcCount, const bool srcRowMajor,
+                 const Dims &destMemStart, const Dims &srcMemStart) noexcept
 {
-    // 1D case
-    if (destStart.size() == 1)
+    if (srcStart.size() == 1) // 1D copy memory
     {
-        const size_t srcMemoryOffset =
-            srcMemoryStart.empty() ? 0 : srcMemoryStart[0];
-        const size_t destMemoryOffset =
-            destMemoryStart.empty() ? 0 : destMemoryStart[0];
+        const Box<Dims> intersectionBox =
+            IntersectionStartCount(destStart, destCount, srcStart, srcCount);
+        const Dims &interStart = intersectionBox.first;
+        const Dims &interCount = intersectionBox.second;
 
-        // need intersection
-        const Box<Dims> intersection = helper::IntersectionStartCount(
-            srcStart, srcCount, destStart, destCount);
+        const size_t srcBeginOffset =
+            srcMemStart.empty()
+                ? interStart.front() - srcStart.front()
+                : interStart.front() - srcStart.front() + srcMemStart.front();
 
-        const size_t destStart = intersection.first[0] - destMemoryOffset;
-        const size_t srcStart = intersection.first[0] - srcMemoryOffset;
-        const size_t srcCount = intersection.second[0];
+        const size_t srcEndOffset = srcBeginOffset + interCount.front();
 
-        std::copy(src + srcStart, src + srcStart + srcCount, dest + destStart);
+        const size_t destBeginOffset = interStart.front() - destStart.front();
+
+        std::copy(src + srcBeginOffset, src + srcEndOffset,
+                  dest + destBeginOffset);
         return;
+    }
+
+    if (srcRowMajor) // stored with C, C++, Python
+    {
+        ClipRowMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
+                     srcCount, destMemStart, srcMemStart);
+    }
+    else // stored with Fortran, R
+    {
+        ClipColumnMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
+                        srcCount, destMemStart, srcMemStart);
     }
 }
 

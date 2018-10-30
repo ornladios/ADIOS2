@@ -54,12 +54,9 @@ void BP3Serializer::PutProcessGroupIndex(
     // write name to metadata
     PutNameRecord(ioName, metadataBuffer);
 
-    // used if a variable sets memory selection only
-    // TODO: in a new format this should be at the constructor level
-    m_IsRowMajor = helper::IsRowMajor(hostLanguage);
     // write if data is column major in metadata and data
-    const char columnMajor = m_IsRowMajor ? 'n' : 'y';
-
+    const char columnMajor =
+        (helper::IsRowMajor(hostLanguage) == false) ? 'y' : 'n';
     helper::InsertToBuffer(metadataBuffer, &columnMajor);
     helper::CopyToBuffer(dataBuffer, dataPosition, &columnMajor);
 
@@ -1647,8 +1644,8 @@ size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
 #define declare_template_instantiation(T)                                      \
     template void BP3Serializer::PutVariablePayload(                           \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;                                                  \
                                                                                \
     template void BP3Serializer::PutVariableMetadata(                          \
         const core::Variable<T> &,                                             \

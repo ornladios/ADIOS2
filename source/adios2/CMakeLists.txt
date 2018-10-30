@@ -22,6 +22,7 @@ add_library(adios2
 #helper
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
+  helper/adiosMemory.cpp
   helper/adiosMPIFunctions.cpp
   helper/adiosString.cpp
   helper/adiosSystem.cpp

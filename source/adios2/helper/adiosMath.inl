@@ -222,6 +222,26 @@ inline bool GreaterThan(const T input1, const T input2) noexcept
     return false;
 }
 
+template <class T>
+Dims PayloadDims(const Dims &dimensions, const bool isRowMajor) noexcept
+{
+    if (dimensions.empty())
+    {
+        return dimensions;
+    }
+
+    Dims payloadDims = dimensions;
+    if (isRowMajor)
+    {
+        payloadDims.back() *= sizeof(T);
+    }
+    else
+    {
+        payloadDims.front() *= sizeof(T);
+    }
+    return payloadDims;
+}
+
 } // end namespace helper
 } // end namespace adios2
 

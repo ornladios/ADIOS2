@@ -85,33 +85,36 @@ template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
 
 /**
- * Copy memory between a source and a destination. Memory might not be
- * contiguous in either source or destination if MemoryStart and MemoryCount are
- * provided
+ * General function to copy memory between blocks of different type and start
+ * and count
  * @param dest
  * @param destStart
  * @param destCount
+ * @param destRowMajor
  * @param src
  * @param srcStart
  * @param srcCount
- * @param destIsRowMajor
- * @param srcIsRowMajor
- * @param destMemoryStart
- * @param destMemoryCount
- * @param srcMemoryStart
- * @param srcMemoryCount
+ * @param srcRowMajor
+ * @param destMemStart
+ * @param destMemCount
+ * @param srcMemStart
+ * @param srcMemCount
  */
-void CopyMemory(char *dest, const Dims &destStart, const Dims &destCount,
-                char *src, const Dims &srcStart, const Dims &srcCount,
-                const bool destIsRowMajor, const bool srcIsRowMajor,
-                const Dims &destMemoryStart = Dims(),
-                const Dims &destMemoryCount = Dims(),
-                const Dims &srcMemoryStart = Dims(),
-                const Dims &srcMemoryCount = Dims()) noexcept;
+template <class T, class U>
+void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                const bool destRowMajor, const U *src, const Dims &srcStart,
+                const Dims &srcCount, const bool srcRowMajor,
+                const Dims &destMemStart = Dims(),
+                const Dims &srcMemStart = Dims()) noexcept;
+
+void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
+                 const bool destRowMajor, const char *src, const Dims &srcStart,
+                 const Dims &srcCount, const bool srcRowMajor,
+                 const Dims &destMemStart = Dims(),
+                 const Dims &srcMemStart = Dims()) noexcept;
 
 /**
- * Clips the contiguous memory corresponding to an intersection and puts it
- * in
+ * Clips the contiguous memory corresponding to an intersection and puts it in
  * dest, where dest has a start and coun
  * @param dest to be populated (must be pre-allocated)
  * @param destStart offset selection for data pointer
