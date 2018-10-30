@@ -28,7 +28,7 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-with adios2.open("types_np.bp", "w", comm) as fw:
+with adios2.open("types_np.bp", "w", comm, "HDF5") as fw:
 
     for i in range(0, 5):
         
@@ -64,7 +64,7 @@ comm.Barrier()
 # Reader
 data = SmallTestData()
 
-with adios2.open("types_np.bp", "r", comm) as fr:
+with adios2.open("types_np.bp", "r", comm, "HDF5") as fr:
     
     for fr_step in fr:
 

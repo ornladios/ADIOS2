@@ -49,16 +49,15 @@ class SmallTestData:
 
     def update(self, rank, step, size):
 
-        j = rank + 1 + step * size
         self.I8 += 1
         self.I16 += 1
-        self.I32 += j
-        self.I64 += j
+        self.I32 += 1
+        self.I64 += 1
 
         self.U8 += 1
         self.U16 += 1
-        self.U32 += j
-        self.U64 += j
+        self.U32 += 1
+        self.U64 += 1
 
-        self.R32 += j
-        self.R64 += j
+        self.R32 += 1
+        self.R64 += 1
