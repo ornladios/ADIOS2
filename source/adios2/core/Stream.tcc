@@ -44,13 +44,18 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
     }
 
     CheckOpen();
+    if (!m_StepStatus)
+    {
+        m_Engine->BeginStep();
+        m_StepStatus = true;
+    }
 
     m_Engine->Put(*variable, data, adios2::Mode::Sync);
 
     if (endStep)
     {
         m_Engine->EndStep();
-        m_Engine->BeginStep();
+        m_StepStatus = false;
     }
 }
 

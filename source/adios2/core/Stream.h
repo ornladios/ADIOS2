@@ -114,6 +114,8 @@ private:
     /** internal flag to check if getstep was called */
     bool m_FirstStep = true;
 
+    bool m_StepStatus = false;
+
     template <class T>
     std::vector<T> GetCommon(Variable<T> &variable);
 

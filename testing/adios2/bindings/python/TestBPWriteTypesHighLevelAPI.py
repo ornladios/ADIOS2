@@ -10,6 +10,7 @@
 #      Author: William F Godoy godoywf@ornl.gov
 
 
+import sys
 from adios2NPTypes import SmallTestData
 from mpi4py import MPI
 import numpy as np
@@ -47,7 +48,7 @@ with adios2.open("types_np.bp", "w", comm) as fw:
             fw.write("gvarR32", np.array(data.R32[0]))
             fw.write("gvarR64", np.array(data.R64[0]))
 
-        print("i: " + str(i))
+        print("Write Step: " + str(i) + " rank: " + str(rank))
         fw.write("steps", "Step:" + str(i))
         fw.write("varI8", data.I8, shape, start, count)
         fw.write("varI16", data.I16, shape, start, count)
@@ -59,8 +60,10 @@ with adios2.open("types_np.bp", "w", comm) as fw:
         fw.write("varU64", data.U64, shape, start, count)
         fw.write("varR32", data.R32, shape, start, count)
         fw.write("varR64", data.R64, shape, start, count, endl=True)
-
+        
 comm.Barrier()
+sys.stdout.flush()
+
 # Reader
 data = SmallTestData()
 
@@ -71,7 +74,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
         step = fr_step.currentstep()
         data.update(rank, step, size)
         
-        print("Step: " + str(step))
+        print("Reader Step: " + str(step))
 
         step_vars = fr_step.availablevariables()
 

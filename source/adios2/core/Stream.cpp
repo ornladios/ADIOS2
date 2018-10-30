@@ -110,6 +110,7 @@ void Stream::CheckOpen()
         if (m_Mode == adios2::Mode::Write)
         {
             m_Engine->BeginStep();
+            m_StepStatus = true;
         }
     }
 }

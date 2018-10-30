@@ -9,7 +9,7 @@
 #  Created on: March 12, 2018
 #      Author: William F Godoy godoywf@ornl.gov
 
-
+import sys
 from adios2NPTypes import SmallTestData
 from mpi4py import MPI
 import numpy as np
@@ -28,7 +28,7 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-with adios2.open("types_np.bp", "w", comm, "HDF5") as fw:
+with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
 
     for i in range(0, 5):
         
@@ -47,7 +47,7 @@ with adios2.open("types_np.bp", "w", comm, "HDF5") as fw:
             fw.write("gvarR32", np.array(data.R32[0]))
             fw.write("gvarR64", np.array(data.R64[0]))
 
-        print("i: " + str(i))
+        print("Write Step: " + str(i) + " rank: " + str(rank))
         fw.write("steps", "Step:" + str(i))
         fw.write("varI8", data.I8, shape, start, count)
         fw.write("varI16", data.I16, shape, start, count)
@@ -61,17 +61,19 @@ with adios2.open("types_np.bp", "w", comm, "HDF5") as fw:
         fw.write("varR64", data.R64, shape, start, count, endl=True)
 
 comm.Barrier()
+sys.stdout.flush()
+
 # Reader
 data = SmallTestData()
 
-with adios2.open("types_np.bp", "r", comm, "HDF5") as fr:
+with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
     
     for fr_step in fr:
 
         step = fr_step.currentstep()
         data.update(rank, step, size)
         
-        print("Step: " + str(step))
+        print("Reader Step: " + str(step))
 
         step_vars = fr_step.availablevariables()
 
