@@ -1860,6 +1860,8 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
         switch (enet_protocol_dispatch_incoming_commands (host, event))
         {
         case 1:
+            VERBOSE("(PID %x) Enet return 1 after dispatch incoming\n", getpid());
+
             return 1;
 
         case -1:
@@ -1886,6 +1888,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        switch (enet_protocol_send_outgoing_commands (host, event, 1))
        {
        case 1:
+            VERBOSE("(PID %x) Enet return 1 after dispatch outgoing\n", getpid());
           return 1;
 
        case -1:
@@ -1902,6 +1905,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        switch (enet_protocol_receive_incoming_commands (host, event))
        {
        case 1:
+            VERBOSE("(PID %x) Enet return 1 after receive incoming\n", getpid());
           return 1;
 
        case -1:
@@ -1918,6 +1922,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        switch (enet_protocol_send_outgoing_commands (host, event, 1))
        {
        case 1:
+            VERBOSE("(PID %x) Enet return 1 after send outgoing\n", getpid());
           return 1;
 
        case -1:
@@ -1951,8 +1956,10 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
           }
        }
 
-       if (ENET_TIME_GREATER_EQUAL (host -> serviceTime, timeout))
+       if (ENET_TIME_GREATER_EQUAL (host -> serviceTime, timeout)) {
+           VERBOSE("(PID %x ) Enet_host service, returning on servicetime timeout\n", getpid());
          return 0;
+       }
 
        do
        {
@@ -1971,6 +1978,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        host -> serviceTime = enet_time_get ();
     } while (waitCondition & ENET_SOCKET_WAIT_RECEIVE);
 
+    VERBOSE("(PID %x ) Enet_host service, returning 0 at end\n", getpid());
     return 0; 
 }
 
