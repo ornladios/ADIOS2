@@ -51,7 +51,7 @@ typedef struct enet_client_data {
 
 typedef struct enet_connection_data {
     char *remote_host;
-    int remote_IP;
+    int remote_IP;     /* in host byte order */
     int remote_contact_port;
     ENetPeer *peer;
     CMbuffer read_buffer;
@@ -129,7 +129,6 @@ handle_packet(CManager cm, CMtrans_services svc, transport_entry trans, enet_con
     CMbuffer cb;
     svc->trace_out(cm, "A packet of length %u was received.\n",
                    (unsigned int) packet->dataLength);
-    printf("(PID %x) Kicking data of length %d to handler.\n", getpid(), (unsigned int) packet->dataLength);
     econn_d->read_buffer_len = packet->dataLength;
     cb = svc->create_data_and_link_buffer(cm, 
                                           packet->data, 
@@ -141,7 +140,6 @@ handle_packet(CManager cm, CMtrans_services svc, transport_entry trans, enet_con
 
     /* kick this upstairs */
     trans->data_available(trans, econn_d->conn);
-    printf("(PID %x) Returned from handler.\n", getpid());
     svc->return_data_buffer(trans->cm, cb);
 }
 	    
@@ -161,7 +159,6 @@ enet_service_network(CManager cm, void *void_trans)
 
     while (ecd->pending_data) {
         svc->trace_out(cm, "ENET Handling pending data\n");
-        printf("(PID %x) Handle pending enet data\n", getpid());
         queued_data entry = ecd->pending_data;
         ecd->pending_data = entry->next;
         handle_packet(cm, svc, trans, entry->econn_d, entry->packet);
@@ -174,8 +171,10 @@ enet_service_network(CManager cm, void *void_trans)
 	    break;
         case ENET_EVENT_TYPE_CONNECT: {
 	    void *enet_connection_data;
-	    svc->trace_out(cm, "A new client connected from %x:%u.\n", 
-			   event.peer->address.host,
+            struct in_addr addr;
+            addr.s_addr = event.peer->address.host;
+	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
+			   inet_ntoa(addr),
 			   event.peer->address.port);
 
 	    enet_connection_data = enet_accept_conn(ecd, trans, &event.peer->address);
@@ -192,9 +191,10 @@ enet_service_network(CManager cm, void *void_trans)
             if (econn_d) {
                 handle_packet(cm, svc, trans, event.peer->data, event.packet);
             } else {
-                svc->trace_out(cm, "ENET  ====== virgin peer, address is %x, port %u.\n", event.peer->address.host, event.peer->address.port);
+                struct in_addr addr;
+                addr.s_addr = event.peer->address.host;
+                svc->trace_out(cm, "ENET  ====== virgin peer, address is %s, port %u.\n", inet_ntoa(addr), event.peer->address.port);
                 svc->trace_out(cm, "ENET  ====== DiSCARDING DATA\n");
-                printf("ENET DISCARDING DATA, pid %x\n", getpid());
             }
             break;
 	}           
@@ -303,8 +303,8 @@ enet_accept_conn(enet_client_data_ptr sd, transport_entry trans,
     conn = svc->connection_create(trans, enet_conn_data, conn_attr_list);
     enet_conn_data->conn = conn;
 
-    add_attr(conn_attr_list, CM_PEER_IP, Attr_Int4, (void*)(long)address->host);
-    enet_conn_data->remote_IP = ntohl(address->host);
+    add_int_attr(conn_attr_list, CM_PEER_IP, ntohl(address->host));
+    enet_conn_data->remote_IP = ntohl(address->host);   /* remote_IP is in host byte order */
     enet_conn_data->remote_contact_port = address->port;
 
     if (enet_conn_data->remote_host != NULL) {
@@ -315,8 +315,10 @@ enet_accept_conn(enet_client_data_ptr sd, transport_entry trans,
     }
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
 	     (attr_value) (long)enet_conn_data->remote_contact_port);
-    svc->trace_out(trans->cm, "Remote host (IP %x) is listening at port %d\n",
-		   enet_conn_data->remote_IP,
+    struct in_addr addr;
+    addr.s_addr = htonl(enet_conn_data->remote_IP);
+    svc->trace_out(trans->cm, "Remote host (IP %s) is listening at port %d\n",
+		   inet_ntoa(addr),
 		   enet_conn_data->remote_contact_port);
     free_attr_list(conn_attr_list);
     return enet_conn_data;
@@ -359,6 +361,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     } else {
         svc->trace_out(cm, "CMEnet transport connect to host_IP %lx", host_ip);
     }
+    /* HOST_IP is in HOST BYTE ORDER */
     if ((host_name == NULL) && (host_ip == 0)) {
 	printf("No host no IP\n");
 	return 0;
@@ -383,11 +386,11 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     ENetAddress address;
     ENetEvent event;
     ENetPeer *peer;
-    sin_addr.s_addr = host_ip;
+    sin_addr.s_addr = htonl(host_ip);
 
     if (host_name) {
 	enet_address_set_host (& address, host_name);
-	sin_addr.s_addr = ntohl(address.host);
+	sin_addr.s_addr = address.host;
 	svc->trace_out(cm, "Attempting ENET RUDP connection, USING host=\"%s\", IP = %s, port %d",
 		       host_name == 0 ? "(unknown)" : host_name, 
 		       inet_ntoa(sin_addr),
@@ -424,8 +427,10 @@ retry:
         (event.type == ENET_EVENT_TYPE_CONNECT)) {
         if (event.peer != peer) {
             enet_conn_data_ptr enet_connection_data;
-	    svc->trace_out(cm, "A new client connected from %x:%u.\n", 
-			   event.peer->address.host,
+            struct in_addr addr;
+            addr.s_addr = event.peer->address.host;
+	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
+			   inet_ntoa(addr),
 			   event.peer->address.port);
 
 	    enet_connection_data = enet_accept_conn(sd, trans, &event.peer->address);
@@ -455,15 +460,12 @@ retry:
             entry->next = NULL;
             entry->econn_d = econn_d;
             entry->packet = event.packet;
-            printf("(PID %x) Queueing packet in wait for connection\n", getpid());
             /* add at the end */
             if (econn_d->sd->pending_data == NULL) {
                 econn_d->sd->pending_data = entry;
-                printf("(PID %x) Queue at first entry\n", getpid());
             } else {
                 queued_data last = econn_d->sd->pending_data;
                 while (last->next != NULL) {
-                    printf("(PID %x) Queue skipping\n", getpid());
                     last = last->next;
                 }
                 last->next = entry;
@@ -525,7 +527,7 @@ libcmenet_LTX_self_check(CManager cm, CMtrans_services svc,
     int int_port_num;
     char *host_name;
     char my_host_name[256];
-    static int IP = 0;
+    static int IP = 0;   /* always in host byte order */
 
     get_IP_config(my_host_name, sizeof(host_name), &IP, NULL, NULL, NULL,
 		  NULL, svc->trace_out, (void *)cm);
@@ -578,7 +580,6 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
     char *host_name = NULL;
 
     (void) trans;
-    printf("(PID %x) CMENET Connection EQ\n", getpid());
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & host_name)) {
 	svc->trace_out(cm, "CMEnet transport found no CM_ENET_HOST attribute");
@@ -586,7 +587,6 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
     if (!query_attr(attrs, CM_ENET_PORT, /* type pointer */ NULL,
     /* value pointer */ (attr_value *)(long) & int_port_num)) {
 	svc->trace_out(cm, "Conn Eq CMenet transport found no CM_ENET_PORT attribute");
-        printf("(PID %x) CMENET Connection EQ NO PORT, returning\n", getpid());
 	return 0;
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
@@ -596,25 +596,28 @@ libcmenet_LTX_connection_eq(CManager cm, CMtrans_services svc,
     if (requested_IP == -1) {
 	check_host(host_name, (void *) &requested_IP);
 	requested_IP = ntohl(requested_IP);
-	svc->trace_out(cm, "IP translation for hostname %s is %x", host_name,
-		       requested_IP);
+        struct in_addr addr;
+        addr.s_addr = htonl(requested_IP);
+	svc->trace_out(cm, "IP translation for hostname %s is %s", host_name,
+		       inet_ntoa(addr));
     }
+    /* requested IP is in host byte order */
     if (ecd->peer->state != ENET_PEER_STATE_CONNECTED) {
         svc->trace_out(cm, "ENET Conn_eq returning FALSE, peer not connected");
-        printf("(PID %x) CMENET Connection EQ PEER STATE NOT CONNECTED %d, returning\n", getpid(), ecd->peer->state);
         return 0;
     }
-    svc->trace_out(cm, "ENET Conn_eq comparing IP/ports %x/%d and %x/%d",
-		   ecd->remote_IP, ecd->remote_contact_port,
-		   requested_IP, int_port_num);
-    if ((ecd->remote_IP == requested_IP) &&
+    struct in_addr addr1, addr2;
+    addr1.s_addr = htonl(ecd->remote_IP);
+    addr2.s_addr = htonl(requested_IP);
+    svc->trace_out(cm, "ENET Conn_eq comparing IP/ports %s/%d and %s/%d",
+		   inet_ntoa(addr1), ecd->remote_contact_port,
+                   inet_ntoa(addr2), int_port_num);
+    if ((ecd->remote_IP == requested_IP) &&    /* both in host byte order */
 	(ecd->remote_contact_port == int_port_num)) {
 	svc->trace_out(cm, "ENET Conn_eq returning TRUE");
-        printf("(PID %x) CMENET Connection EQ, returning TRUE\n", getpid());
 	return 1;
     }
     svc->trace_out(cm, "ENET Conn_eq returning FALSE");
-    printf("(PID %x) CMENET Connection EQ, returning FALSE (remote IP %x, requested IP %x, remp %d, reqp %d\n", getpid(), ecd->remote_IP, requested_IP, ecd->remote_contact_port, int_port_num);
     return 0;
 }
 
