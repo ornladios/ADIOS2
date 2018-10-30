@@ -22,9 +22,12 @@ Building on Titan
 
 #. :ref:`My application uses PGI compilers on Titan, can I link ADIOS 2?`
 #. :ref:`How do I enable the Python bindings on Titan?`
-   
 
+Building and Running on Fujitsu FX100
+*************************************
 
+#. :ref:`How do I build ADIOS 2 on Fujitsu FX100?`
+#. :ref:`SST engine hangs on Fujitsu FX100. Why?`
 
 FAQs Answered
 *************
@@ -87,3 +90,28 @@ ADIOS 2 default configuration on Titan is to build the static library. Python bi
    .. code-block:: bash
 
       $ CRAYPE_LINK_TYPE=dynamic cmake -DBUILD_SHARED_LIBS=ON ..
+
+How do I build ADIOS 2 on Fujitsu FX100?
+----------------------------------------
+
+* Cross-compilation (building on the login node) is not recommended. Submit an
+  interactive job and build on the compute nodes.
+* Make sure CMake >= 3.6 is installed on the compute nodes. If not, you need
+  to build and install it from source since CMake does not provide SPARC V9
+  binaries.
+* Use gcc instead of the Fujitsu compiler. We tested with gcc 6.3.0
+* CMake fails to automatically find the correct MPI library on FX100. As a
+  workaround, set CC, CXX, and FC to the corresponding MPI compiler wrappers:
+
+   .. code-block:: bash
+
+      $ CC=mpigcc CXX=mpig++ FC=mpigfortran cmake  ..
+
+SST engine hangs on Fujitsu FX100. Why?
+---------------------------------------
+
+The communication thread of SST might have failed to start. FX100 requires
+users to set the maximum stack size manually when launching POSIX threads.
+One way to do this is through ulimit (*e.g.* ulimit -s 1024). You can
+also set the stack size when submitting the job. Please contact your system
+administrator for details.
