@@ -860,7 +860,13 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
     memset(CPInfo, 0, sizeof(*CPInfo));
 
     CPInfo->cm = CManager_create();
-    CMfork_comm_thread(CPInfo->cm);
+    if (CMfork_comm_thread(CPInfo->cm) == 0)
+    {
+        fprintf(stderr, "ADIOS2 SST Engine failed to fork a communication "
+                        "thread.\nThis is a fatal condition, please check "
+                        "resources or system settings.\nDying now.\n");
+        exit(1);
+    }
 
     CMlisten(CPInfo->cm);
 
