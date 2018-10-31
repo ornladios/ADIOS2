@@ -31,6 +31,11 @@ void HDF5ReaderP::GetSyncCommon(Variable<T> &variable, T *data)
     */
     hid_t h5Type = m_H5File.GetHDF5Type<T>();
     //    UseHDFRead(variable.m_Name, data, h5Type);
+    if (m_InStreamMode)
+    {
+        variable.m_StepsStart = m_StreamAt;
+        variable.m_StepsCount = 1;
+    }
     UseHDFRead(variable, data, h5Type);
 }
 

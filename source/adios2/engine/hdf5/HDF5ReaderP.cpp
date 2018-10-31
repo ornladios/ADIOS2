@@ -255,13 +255,16 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    // printf(".... in begin step: \n");
     m_InStreamMode = true;
     int ts = m_H5File.GetNumAdiosSteps();
+
     if (m_StreamAt >= ts)
     {
         return StepStatus::EndOfStream;
     }
+
+    m_IO.RemoveAllVariables();
+    m_H5File.ReadVariables(m_StreamAt, m_IO);
 
     return StepStatus::OK;
 }
