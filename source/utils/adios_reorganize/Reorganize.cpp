@@ -118,7 +118,7 @@ void Reorganize::Run()
     print0("Write method parameters = ", wmethodparams);
 
 #ifdef ADIOS2_HAVE_MPI
-    core::ADIOS adios(MPI_COMM_WORLD, true, "C++");
+    core::ADIOS adios(comm, true, "C++");
 #else
     core::ADIOS adios(true, "C++");
 #endif
