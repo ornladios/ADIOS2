@@ -964,7 +964,6 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
-            hdf5Reader.BeginStep();
             hdf5Reader.Get(var_iString, IString);
 
             hdf5Reader.Get(var_i8, I8.data());
@@ -979,8 +978,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read1D8)
 
             hdf5Reader.Get(var_r32, R32.data());
             hdf5Reader.Get(var_r64, R64.data());
-
-            hdf5Reader.EndStep();
+            hdf5Reader.PerformGets();
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -1207,7 +1205,6 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
-            hdf5Reader.BeginStep();
             hdf5Reader.Get(var_iString, IString);
 
             hdf5Reader.Get(var_i8, I8.data());
@@ -1223,7 +1220,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
             hdf5Reader.Get(var_r32, R32.data());
             hdf5Reader.Get(var_r64, R64.data());
 
-            hdf5Reader.EndStep();
+            hdf5Reader.PerformGets();
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -2588,7 +2585,6 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
             var_r32.SetStepSelection({t, 1});
             var_r64.SetStepSelection({t, 1});
 
-            hdf5Reader.BeginStep();
             hdf5Reader.Get(var_iString, IString);
 
             hdf5Reader.Get(var_i8, I8.data());
@@ -2603,8 +2599,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
 
             hdf5Reader.Get(var_r32, R32.data());
             hdf5Reader.Get(var_r64, R64.data());
-
-            hdf5Reader.EndStep();
+            hdf5Reader.PerformGets();
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
@@ -2840,7 +2835,6 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
             var_r32.SetStepSelection({t, 1});
             var_r64.SetStepSelection({t, 1});
 
-            hdf5Reader.BeginStep();
             hdf5Reader.Get(var_iString, IString);
 
             hdf5Reader.Get(var_i8, I8.data());
@@ -2855,7 +2849,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
 
             hdf5Reader.Get(var_r32, R32.data());
             hdf5Reader.Get(var_r64, R64.data());
-            hdf5Reader.EndStep();
+            hdf5Reader.PerformGets();
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(

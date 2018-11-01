@@ -21,7 +21,7 @@ namespace core
 Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
                const std::string engineType, const std::string hostLanguage)
 : m_Name(name), m_ADIOS(std::make_shared<ADIOS>(comm, DebugON, hostLanguage)),
-  m_IO(&m_ADIOS->DeclareIO(name)), m_Mode(mode)
+  m_IO(&m_ADIOS->DeclareIO(name)), m_Mode(mode), m_EngineType(engineType)
 {
     if (mode == adios2::Mode::Read)
     {
@@ -105,10 +105,12 @@ void Stream::CheckOpen()
 {
     if (m_Engine == nullptr)
     {
+        m_IO->SetEngine(m_EngineType);
         m_Engine = &m_IO->Open(m_Name, m_Mode);
         if (m_Mode == adios2::Mode::Write)
         {
             m_Engine->BeginStep();
+            m_StepStatus = true;
         }
     }
 }

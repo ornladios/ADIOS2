@@ -9,7 +9,6 @@
 #  Created on: March 12, 2018
 #      Author: William F Godoy godoywf@ornl.gov
 
-
 import sys
 from adios2NPTypes import SmallTestData
 from mpi4py import MPI
@@ -29,7 +28,7 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-with adios2.open("types_np.bp", "w", comm) as fw:
+with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
 
     for i in range(0, 5):
 
@@ -67,7 +66,7 @@ sys.stdout.flush()
 # Reader
 data = SmallTestData()
 
-with adios2.open("types_np.bp", "r", comm) as fr:
+with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
 
     for fr_step in fr:
 

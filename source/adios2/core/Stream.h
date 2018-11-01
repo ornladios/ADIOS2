@@ -108,8 +108,13 @@ private:
     /** mode to open engine at first read/write */
     Mode m_Mode;
 
+    /** Sets engine type to be opened at first read/write */
+    std::string m_EngineType = "BPFile";
+
     /** internal flag to check if getstep was called */
     bool m_FirstStep = true;
+
+    bool m_StepStatus = false;
 
     template <class T>
     std::vector<T> GetCommon(Variable<T> &variable);
