@@ -31,9 +31,9 @@ count = [nx]
 with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
 
     for i in range(0, 5):
-        
+
         data.update(rank, i, size)
-        
+
         if(rank == 0 and i == 0):
             fw.write("tag", "Testing ADIOS2 high-level API")
             fw.write("gvarI8", np.array(data.I8[0]))
@@ -67,12 +67,12 @@ sys.stdout.flush()
 data = SmallTestData()
 
 with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
-    
+
     for fr_step in fr:
 
         step = fr_step.currentstep()
         data.update(rank, step, size)
-        
+
         print("Reader Step: " + str(step))
 
         step_vars = fr_step.availablevariables()
@@ -114,13 +114,13 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
 
             if(inU8[0] != data.U8[0]):
                 raise ValueError('gvarU8 read failed')
-            
+
             if(inU16[0] != data.U16[0]):
                 raise ValueError('gvarU16 read failed')
 
             if(inU32[0] != data.U32[0]):
                 raise ValueError('gvarU32 read failed')
-            
+
             if(inU64[0] != data.U64[0]):
                 raise ValueError('gvarU64 read failed')
 
