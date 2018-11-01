@@ -538,6 +538,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     /*
      * Write all variables
      */
+    wStream.BeginStep();
     for (size_t varidx = 0; varidx < nvars; ++varidx)
     {
         const std::string &name = varinfo[varidx].v->m_Name;
