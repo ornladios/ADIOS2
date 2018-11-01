@@ -12,14 +12,14 @@ if(ADIOS2_HAVE_MPI)
       EXEC_WRAPPER
       ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS})
     python_add_test(NAME PythonBPWriteReadTypes ${test_parameters} 
-    				SCRIPT TestBPWriteReadTypes.py)
+                    SCRIPT TestBPWriteReadTypes.py)
     python_add_test(NAME PythonBPWriteReadHighLevelAPI ${test_parameters} 
-    				SCRIPT TestBPWriteTypesHighLevelAPI.py)
+                    SCRIPT TestBPWriteTypesHighLevelAPI.py)
     python_add_test(NAME PythonBPReadMultisteps ${test_parameters} 
-    				SCRIPT TestBPReadMultisteps.py)
+                    SCRIPT TestBPReadMultisteps.py)
+    if (ADIOS2_HAVE_HDF5)
+        python_add_test(NAME PythonBPWriteReadHighLevelAPI_HDF5 
+                        SCRIPT TestBPWriteTypesHighLevelAPI_HDF5.py)
+    endif(ADIOS2_HAVE_HDF5)
 endif()
 
-if (ADIOS2_HAVE_HDF5)
-    python_add_test(NAME PythonBPWriteReadHighLevelAPI_HDF5 
-    				SCRIPT TestBPWriteTypesHighLevelAPI_HDF5.py)
-endif()
