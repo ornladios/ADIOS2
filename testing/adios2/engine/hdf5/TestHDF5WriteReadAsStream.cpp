@@ -215,7 +215,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 EXPECT_FALSE(var_u64);
 
                 ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-		ASSERT_EQ(var_i8.Steps(), NSteps / 2 + NSteps % 2);
+                ASSERT_EQ(var_i8.Steps(), NSteps / 2 + NSteps % 2);
                 ASSERT_EQ(var_i8.Shape()[0], static_cast<size_t>(mpiSize * Nx));
 
                 ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -256,7 +256,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 EXPECT_TRUE(var_u64);
 
                 ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_u8.Steps(), NSteps / 2);		
+                ASSERT_EQ(var_u8.Steps(), NSteps / 2);
                 ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx);
 
                 ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -937,11 +937,12 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
             EXPECT_TRUE(varR32);
             reader.EndStep();
 
-	    if (step == 0) {
-	      adios2::Variable<double> varR64 = io.DefineVariable<double>(
-									  "r64", shape, start, count, adios2::ConstantDims);
-	      EXPECT_TRUE(varR64);
-	    }
+            if (step == 0)
+            {
+                adios2::Variable<double> varR64 = io.DefineVariable<double>(
+                    "r64", shape, start, count, adios2::ConstantDims);
+                EXPECT_TRUE(varR64);
+            }
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             writer.BeginStep();

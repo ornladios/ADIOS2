@@ -303,7 +303,7 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
                 int currType = H5Gget_objtype_by_idx(gid, k);
                 if (currType == H5G_GROUP)
                 {
-		    FindVarsFromH5(io, gid, name, "", ts);
+                    FindVarsFromH5(io, gid, name, "", ts);
                 }
                 else if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
                 {
@@ -321,7 +321,8 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
 }
 
 template <class T>
-void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, unsigned int ts)
+void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId,
+                        unsigned int ts)
 {
     core::Variable<T> *v = io.InquireVariable<T>(name);
     if (NULL == v)
@@ -356,9 +357,10 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, 
         {
             auto &foo = io.DefineVariable<T>(name, shape, zeros, shape);
 
-	    // 0 is a dummy holder. Just to make sure the ts entry is in there
-	    foo.m_AvailableStepBlockIndexOffsets[ts+1] = std::vector<size_t>({0}); 
-	    foo.m_AvailableStepsStart = ts;
+            // 0 is a dummy holder. Just to make sure the ts entry is in there
+            foo.m_AvailableStepBlockIndexOffsets[ts + 1] =
+                std::vector<size_t>({0});
+            foo.m_AvailableStepsStart = ts;
             // default was set to 0 while m_AvailabelStepsStart is 1.
             // correcting
 
@@ -382,7 +384,7 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, 
         }
         */
         v->m_AvailableStepsCount++;
-	v->m_AvailableStepBlockIndexOffsets[ts+1] = std::vector<size_t>({0}); 
+        v->m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
     }
 }
 
@@ -407,83 +409,83 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
     if (H5Tget_class(h5Type) == H5T_STRING)
     // if (H5Tequal(H5T_STRING, h5Type))
     {
-      AddVar<std::string>(io, name, datasetId, ts);
+        AddVar<std::string>(io, name, datasetId, ts);
         return;
     }
 
     if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
     {
-      AddVar<signed char>(io, name, datasetId, ts);
+        AddVar<signed char>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_CHAR, h5Type))
     {
-      AddVar<char>(io, name, datasetId, ts);
+        AddVar<char>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_UCHAR, h5Type))
     {
-      AddVar<unsigned char>(io, name, datasetId, ts);
+        AddVar<unsigned char>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_SHORT, h5Type))
     {
-      AddVar<short>(io, name, datasetId, ts);
+        AddVar<short>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_USHORT, h5Type))
     {
-      AddVar<unsigned short>(io, name, datasetId, ts);
+        AddVar<unsigned short>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_INT, h5Type))
     {
-      AddVar<int>(io, name, datasetId, ts);
+        AddVar<int>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_UINT, h5Type))
     {
-      AddVar<unsigned int>(io, name, datasetId, ts);
+        AddVar<unsigned int>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_STD_I64LE, h5Type))
     {
         /*
          */
-      AddVar<int64_t>(io, name, datasetId, ts);
+        AddVar<int64_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_STD_U64LE, h5Type))
     {
-      AddVar<uint64_t>(io, name, datasetId, ts);
+        AddVar<uint64_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_LONG, h5Type))
     {
-      AddVar<long>(io, name, datasetId, ts);
+        AddVar<long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_ULONG, h5Type))
     {
-      AddVar<unsigned long>(io, name, datasetId, ts);
+        AddVar<unsigned long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_LLONG, h5Type))
     {
-      AddVar<long long>(io, name, datasetId, ts);
+        AddVar<long long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_ULLONG, h5Type))
     {
-      AddVar<unsigned long long>(io, name, datasetId, ts);
+        AddVar<unsigned long long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_FLOAT, h5Type))
     {
-      AddVar<float>(io, name, datasetId, ts);
+        AddVar<float>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_DOUBLE, h5Type))
     {
-      AddVar<double>(io, name, datasetId, ts);
+        AddVar<double>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_LDOUBLE, h5Type))
     {
-      AddVar<long double>(io, name, datasetId, ts);
+        AddVar<long double>(io, name, datasetId, ts);
     }
     else if (H5Tequal(m_DefH5TypeComplexFloat, h5Type))
     {
-      AddVar<std::complex<float>>(io, name, datasetId, ts);
+        AddVar<std::complex<float>>(io, name, datasetId, ts);
     }
     else if (H5Tequal(m_DefH5TypeComplexDouble, h5Type))
     {
-      AddVar<std::complex<double>>(io, name, datasetId, ts);
+        AddVar<std::complex<double>>(io, name, datasetId, ts);
     }
 
     // H5Tclose(h5Type);
