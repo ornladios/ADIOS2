@@ -68,11 +68,13 @@ void HDF5ReaderP::Init()
     m_H5File.ReadAttrToIO(m_IO);
     if (!m_InStreamMode)
     {
+      //m_H5File.ReadVariables(0, m_IO);
         m_H5File.ReadAllVariables(m_IO);
     }
     else
     {
-        m_H5File.ReadAllVariables(m_IO);
+      //m_H5File.ReadVariables(0, m_IO);
+      m_H5File.ReadAllVariables(m_IO);
     }
 }
 
@@ -260,12 +262,12 @@ StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (m_StreamAt >= ts)
     {
+        m_IO.m_ReadStreaming = false;
         return StepStatus::EndOfStream;
     }
 
-    m_IO.RemoveAllVariables();
-    m_IO.RemoveAllAttributes();
-    m_H5File.ReadVariables(m_StreamAt, m_IO);
+    m_IO.m_ReadStreaming = true;
+    m_IO.m_EngineStep = m_StreamAt;
 
     return StepStatus::OK;
 }

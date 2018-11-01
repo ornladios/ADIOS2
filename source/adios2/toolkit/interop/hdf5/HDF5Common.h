@@ -145,15 +145,15 @@ public:
 
     void ReadVariables(unsigned int ts, core::IO &io);
     void FindVarsFromH5(core::IO &io, hid_t gid, const char *name,
-                        const char *heritage);
+                        const char *heritage, unsigned int ts);
     void ReadAllVariables(core::IO &io);
 
     void ReadStringScalarDataset(hid_t dataSetId, std::string &result);
     hid_t GetTypeStringScalar(const std::string &input);
-    void CreateVar(core::IO &io, hid_t h5Type, std::string const &name);
+    void CreateVar(core::IO &io, hid_t h5Type, std::string const &name, unsigned int ts);
 
     template <class T>
-    void AddVar(core::IO &io, std::string const &name, hid_t datasetId);
+      void AddVar(core::IO &io, std::string const &name, hid_t datasetId, unsigned int ts);
 
     template <class T>
     void AddNonStringAttribute(core::IO &io, std::string const &attrName,
