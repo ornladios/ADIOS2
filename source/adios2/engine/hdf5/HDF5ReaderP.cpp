@@ -264,6 +264,7 @@ StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_IO.RemoveAllVariables();
+    m_IO.RemoveAllAttributes();
     m_H5File.ReadVariables(m_StreamAt, m_IO);
 
     return StepStatus::OK;
