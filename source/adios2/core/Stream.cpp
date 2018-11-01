@@ -105,7 +105,10 @@ void Stream::CheckOpen()
 {
     if (m_Engine == nullptr)
     {
-        m_IO->SetEngine(m_EngineType);
+        if (!m_EngineType.empty())
+        {
+            m_IO->SetEngine(m_EngineType);
+        }
         m_Engine = &m_IO->Open(m_Name, m_Mode);
         if (m_Mode == adios2::Mode::Write)
         {
