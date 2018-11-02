@@ -62,6 +62,10 @@ void DataManWriter::EndStep()
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {
+            if (m_CurrentStep == 0)
+            {
+                m_DataManSerializer[i]->PutAttributes(m_IO, m_MPIRank);
+            }
             const std::shared_ptr<std::vector<char>> buf =
                 m_DataManSerializer[i]->Get();
             m_BufferSize = buf->size() * 2;
