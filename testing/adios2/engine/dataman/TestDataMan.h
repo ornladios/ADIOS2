@@ -240,6 +240,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
         "bpComplexes", shape, start, count);
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
+    dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter =
         dataManIO.Open("stream", adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
@@ -383,6 +384,9 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
             break;
         }
     }
+    auto attInt = dataManIO.InquireAttribute<int>("AttInt");
+    ASSERT_EQ(110, attInt.Data()[0]);
+    ASSERT_NE(111, attInt.Data()[0]);
     ASSERT_EQ(i, steps);
     dataManReader.Close();
     print_lines = 0;

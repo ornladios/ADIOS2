@@ -100,7 +100,16 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                 "[DataManReader::BeginStep] Step mode is not supported!"));
         }
 
-        vars = m_MetaDataMap[m_CurrentStep];
+        auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
+        if (currentStepIt != m_MetaDataMap.end())
+        {
+            vars = currentStepIt->second;
+        }
+    }
+
+    if (m_CurrentStep == 0)
+    {
+        m_DataManDeserializer.GetAttributes(m_IO);
     }
 
     for (const auto &i : *vars)

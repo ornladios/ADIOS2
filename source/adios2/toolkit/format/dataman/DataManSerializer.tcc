@@ -35,7 +35,7 @@ namespace format
 template <class T>
 void DataManSerializer::Put(const core::Variable<T> &variable,
                             const std::string &doid, const size_t step,
-                            const int rank, std::string address,
+                            const int rank, const std::string &address,
                             const Params &params)
 {
     Put(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
@@ -47,7 +47,7 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
                             const Dims &varShape, const Dims &varStart,
                             const Dims &varCount, const std::string &doid,
                             const size_t step, const int rank,
-                            std::string address, const Params &params)
+                            const std::string &address, const Params &params)
 {
 
     nlohmann::json metaj;
@@ -56,7 +56,6 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     metaj["O"] = varStart;
     metaj["C"] = varCount;
     metaj["S"] = varShape;
-    metaj["T"] = step;
     metaj["D"] = doid;
     metaj["M"] = m_IsRowMajor;
     metaj["E"] = m_IsLittleEndian;
@@ -126,7 +125,7 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
 
     if (m_Buffer->capacity() < m_Position + datasize)
     {
-        m_Buffer->reserve(m_Buffer->capacity() * 2);
+        m_Buffer->reserve((m_Position + datasize) * 2);
     }
 
     m_Buffer->resize(m_Position + datasize);
@@ -142,7 +141,7 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     }
     m_Position += datasize;
 
-    m_Metadata[std::to_string(step)][std::to_string(rank)].push_back(metaj);
+    m_Metadata[std::to_string(step)][std::to_string(rank)].emplace_back(metaj);
 }
 
 template <class T>
@@ -261,6 +260,25 @@ bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
         "BZip2 compression used but BZip2 library is not linked to ADIOS2"));
 #endif
     return false;
+}
+
+template <class T>
+void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute,
+                                     const int rank)
+{
+    m_Metadata["A"][std::to_string(rank)].emplace_back();
+    auto &j = m_Metadata["A"][std::to_string(rank)].back();
+    j["N"] = attribute.m_Name;
+    j["Y"] = attribute.m_Type;
+    j["V"] = attribute.m_IsSingleValue;
+    if (attribute.m_IsSingleValue)
+    {
+        j["G"] = attribute.m_DataSingleValue;
+    }
+    else
+    {
+        j["G"] = attribute.m_DataArray;
+    }
 }
 
 } // namespace format

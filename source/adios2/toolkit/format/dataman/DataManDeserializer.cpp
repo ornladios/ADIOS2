@@ -60,6 +60,18 @@ int DataManDeserializer::Put(
 
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
+        if (stepMapIt.key() == "G" || stepMapIt.key() == "A")
+        {
+            for (const auto &rankVec : stepMapIt.value())
+            {
+                for (const auto &gVar : rankVec)
+                {
+                    m_GlobalVars[gVar["N"].get<std::string>()] = gVar;
+                }
+            }
+            continue;
+        }
+
         for (auto rankMapIt = stepMapIt.value().begin();
              rankMapIt != stepMapIt.value().end(); ++rankMapIt)
         {
@@ -69,10 +81,10 @@ int DataManDeserializer::Put(
                 try
                 {
                     // compulsory properties
+                    var.step = stoull(stepMapIt.key());
                     var.name = varBlock["N"].get<std::string>();
                     var.start = varBlock["O"].get<Dims>();
                     var.count = varBlock["C"].get<Dims>();
-                    var.step = varBlock["T"].get<size_t>();
                     var.size = varBlock["I"].get<size_t>();
 
                     // optional properties
@@ -244,6 +256,35 @@ bool DataManDeserializer::HasOverlap(Dims in_start, Dims in_count,
         }
     }
     return true;
+}
+
+void DataManDeserializer::GetAttributes(core::IO &io)
+{
+    std::lock_guard<std::mutex> l(m_Mutex);
+    for (const auto &j : m_GlobalVars)
+    {
+        const std::string name(j["N"].get<std::string>());
+        const std::string type(j["Y"].get<std::string>());
+        const bool isSingleValue = j["V"].get<bool>();
+        if (type == "unknown")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        if (isSingleValue)                                                     \
+        {                                                                      \
+            io.DefineAttribute<T>(name, j["G"].get<T>());                      \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            io.DefineAttribute<T>(name, j["G"].get<std::vector<T>>().data(),   \
+                                  j["G"].get<std::vector<T>>().size());        \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
 }
 
 } // namespace format
