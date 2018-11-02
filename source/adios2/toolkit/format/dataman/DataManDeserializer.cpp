@@ -263,22 +263,21 @@ void DataManDeserializer::GetAttributes(core::IO &io)
     std::lock_guard<std::mutex> l(m_Mutex);
     for (const auto &j : m_GlobalVars)
     {
-        const std::string name(j["N"].get<std::string>());
         const std::string type(j["Y"].get<std::string>());
-        const bool isSingleValue = j["V"].get<bool>();
         if (type == "unknown")
         {
         }
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        if (isSingleValue)                                                     \
+        if (j["V"].get<bool>())                                                \
         {                                                                      \
-            io.DefineAttribute<T>(name, j["G"].get<T>());                      \
+            io.DefineAttribute<T>(j["N"].get<std::string>(), j["G"].get<T>()); \
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            io.DefineAttribute<T>(name, j["G"].get<std::vector<T>>().data(),   \
+            io.DefineAttribute<T>(j["N"].get<std::string>(),                   \
+                                  j["G"].get<std::vector<T>>().data(),         \
                                   j["G"].get<std::vector<T>>().size());        \
         }                                                                      \
     }
