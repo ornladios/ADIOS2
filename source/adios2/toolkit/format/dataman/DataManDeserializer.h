@@ -71,16 +71,6 @@ private:
     bool m_IsLittleEndian;
 
     std::mutex m_Mutex;
-
-    struct VarDefaults
-    {
-        std::string doid;
-        bool isRowMajor;
-        bool isLittleEndian;
-        std::string type;
-        Dims shape;
-    };
-    std::map<std::string, VarDefaults> m_VarDefaultsMap;
 };
 
 } // end namespace format
