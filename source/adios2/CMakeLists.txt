@@ -112,6 +112,27 @@ if(ADIOS2_HAVE_DataMan)
   target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
+if(ADIOS2_HAVE_Staging)
+  target_sources(adios2 PRIVATE
+      toolkit/format/dataman/DataManDeserializer.cpp
+      toolkit/format/dataman/DataManDeserializer.tcc
+      toolkit/format/dataman/DataManDeserializer.h
+      toolkit/format/dataman/DataManSerializer.cpp
+      toolkit/format/dataman/DataManSerializer.tcc
+      toolkit/format/dataman/DataManSerializer.h
+      toolkit/transportman/stagingman/StagingMan.cpp
+      toolkit/transportman/stagingman/StagingMan.h
+      engine/staging/StagingReader.cpp
+      engine/staging/StagingReader.h
+      engine/staging/StagingReader.tcc
+      engine/staging/StagingWriter.cpp
+      engine/staging/StagingWriter.h
+      engine/staging/StagingWriter.tcc
+  )
+  target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
+endif()
+
+
 if(ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/sst)
   target_sources(adios2 PRIVATE

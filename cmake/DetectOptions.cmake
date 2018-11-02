@@ -86,6 +86,13 @@ if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
     endif()
 endif()
 
+# Staging
+if(ADIOS2_USE_Staging STREQUAL AUTO)
+    set(ADIOS2_HAVE_Staging TRUE)
+elseif(ADIOS2_USE_Staging)
+    set(ADIOS2_HAVE_Staging TRUE)
+endif()
+
 # ZeroMQ
 if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
   find_package(ZeroMQ 4.1)
