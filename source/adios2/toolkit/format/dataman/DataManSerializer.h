@@ -19,6 +19,22 @@
 #include <mutex>
 #include <unordered_map>
 
+// A - Address
+// C - Count
+// D - Data Object ID or File Name
+// E - Endian
+// H - Meatadata Hash
+// I - Data Size
+// M - Major
+// N - Variable Name
+// O - Start
+// P - Position of Memory Block
+// S - Shape
+// X - Index (Used only in deserializer)
+// Y - Data Type
+// Z - Compression Method
+// ZP - Compression Parameters
+
 namespace adios2
 {
 namespace format
@@ -33,17 +49,18 @@ public:
     void Put(const T *inputData, const std::string &varName,
              const Dims &varShape, const Dims &varStart, const Dims &varCount,
              const std::string &doid, const size_t step, const int rank,
-             const Params &params, const bool optimizeMetadata);
+             std::string address, const Params &params);
     template <class T>
     void Put(const core::Variable<T> &variable, const std::string &doid,
-             const size_t step, const int rank, const Params &params,
-             const bool optimizeMetadata);
+             const size_t step, const int rank, std::string address,
+             const Params &params);
     const std::shared_ptr<std::vector<char>> Get();
     float GetMetaRatio();
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
 private:
     std::shared_ptr<std::vector<char>> m_Buffer;
+    nlohmann::json m_Metadata;
     std::vector<char> m_CompressBuffer;
     size_t m_Position = 0;
     bool m_IsRowMajor;
@@ -60,19 +77,6 @@ private:
 
     bool IsCompressionAvailable(const std::string &method,
                                 const std::string &type, const Dims &count);
-
-    size_t m_TotalDataSize;
-    size_t m_TotalMetadataSize;
-
-    struct VarDefaults
-    {
-        std::string doid;
-        bool isRowMajor;
-        bool isLittleEndian;
-        std::string type;
-        Dims shape;
-    };
-    std::map<std::string, VarDefaults> m_VarDefaultsMap;
 };
 
 } // end namespace format

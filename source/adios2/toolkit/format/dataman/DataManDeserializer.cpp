@@ -50,145 +50,102 @@ int DataManDeserializer::Put(
         key = rand();
     }
     m_BufferMap[key] = data;
-    size_t position = 0;
-    while (position < data->capacity())
+
+    uint64_t metaPosition =
+        (reinterpret_cast<const uint64_t *>(data->data()))[0];
+    uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
+
+    nlohmann::json metaJ =
+        nlohmann::json::from_msgpack(data->data() + metaPosition, metaSize);
+
+    for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
-        uint32_t metasize;
-        std::memcpy(&metasize, data->data() + position, sizeof(metasize));
-        position += sizeof(metasize);
-        if (position + metasize > data->size())
+        for (auto rankMapIt = stepMapIt.value().begin();
+             rankMapIt != stepMapIt.value().end(); ++rankMapIt)
         {
-            break;
-        }
-        DataManVar var;
-        try
-        {
-            nlohmann::json metaj =
-                nlohmann::json::from_msgpack(data->data() + position, metasize);
-            position += metasize;
-
-            // compulsory properties
-            var.name = metaj["N"].get<std::string>();
-            var.start = metaj["O"].get<Dims>();
-            var.count = metaj["C"].get<Dims>();
-            var.step = metaj["T"].get<size_t>();
-            var.size = metaj["I"].get<size_t>();
-
-            // optional properties
-
-            auto itMap = m_VarDefaultsMap.find(var.name);
-            auto itJson = metaj.find("D");
-            if (itJson != metaj.end())
+            for (const auto &varBlock : rankMapIt.value())
             {
-                var.doid = itJson->get<std::string>();
-                m_VarDefaultsMap[var.name].doid = var.doid;
-            }
-            else
-            {
-                if (itMap != m_VarDefaultsMap.end())
+                DataManVar var;
+                try
                 {
-                    var.doid = itMap->second.doid;
+                    // compulsory properties
+                    var.name = varBlock["N"].get<std::string>();
+                    var.start = varBlock["O"].get<Dims>();
+                    var.count = varBlock["C"].get<Dims>();
+                    var.step = varBlock["T"].get<size_t>();
+                    var.size = varBlock["I"].get<size_t>();
+
+                    // optional properties
+
+                    auto itJson = varBlock.find("D");
+                    if (itJson != varBlock.end())
+                    {
+                        var.doid = itJson->get<std::string>();
+                    }
+
+                    itJson = varBlock.find("M");
+                    if (itJson != varBlock.end())
+                    {
+                        var.isRowMajor = itJson->get<bool>();
+                    }
+
+                    itJson = varBlock.find("E");
+                    if (itJson != varBlock.end())
+                    {
+                        var.isLittleEndian = itJson->get<bool>();
+                    }
+
+                    itJson = varBlock.find("Y");
+                    if (itJson != varBlock.end())
+                    {
+                        var.type = itJson->get<std::string>();
+                    }
+
+                    itJson = varBlock.find("S");
+                    if (itJson != varBlock.end())
+                    {
+                        var.shape = itJson->get<Dims>();
+                    }
+
+                    var.position = varBlock["P"].get<size_t>();
+                    var.index = key;
+
+                    auto it = varBlock.find("Z");
+                    if (it != varBlock.end())
+                    {
+                        var.compression = it->get<std::string>();
+                    }
+
+                    for (auto i = varBlock.begin(); i != varBlock.end(); ++i)
+                    {
+                        auto pos = i.key().find(":");
+                        if (pos != std::string::npos)
+                        {
+                            var.params[i.key().substr(pos + 1)] = i.value();
+                        }
+                    }
+
+                    if (m_MetaDataMap[var.step] == nullptr)
+                    {
+                        m_MetaDataMap[var.step] =
+                            std::make_shared<std::vector<DataManVar>>();
+                    }
+                    m_MetaDataMap[var.step]->emplace_back(std::move(var));
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << e.what() << std::endl;
+                    return -1;
+                }
+                if (m_MaxStep < var.step)
+                {
+                    m_MaxStep = var.step;
+                }
+                if (m_MinStep > var.step)
+                {
+                    m_MinStep = var.step;
                 }
             }
-
-            itJson = metaj.find("M");
-            if (itJson != metaj.end())
-            {
-                var.isRowMajor = itJson->get<bool>();
-                m_VarDefaultsMap[var.name].isRowMajor = var.isRowMajor;
-            }
-            else
-            {
-                if (itMap != m_VarDefaultsMap.end())
-                {
-                    var.isRowMajor = itMap->second.isRowMajor;
-                }
-            }
-
-            itJson = metaj.find("E");
-            if (itJson != metaj.end())
-            {
-                var.isLittleEndian = itJson->get<bool>();
-                m_VarDefaultsMap[var.name].isLittleEndian = var.isLittleEndian;
-            }
-            else
-            {
-                if (itMap != m_VarDefaultsMap.end())
-                {
-                    var.isLittleEndian = itMap->second.isLittleEndian;
-                }
-            }
-
-            itJson = metaj.find("Y");
-            if (itJson != metaj.end())
-            {
-                var.type = itJson->get<std::string>();
-                m_VarDefaultsMap[var.name].type = var.type;
-            }
-            else
-            {
-                if (itMap != m_VarDefaultsMap.end())
-                {
-                    var.type = itMap->second.type;
-                }
-            }
-
-            itJson = metaj.find("S");
-            if (itJson != metaj.end())
-            {
-                var.shape = itJson->get<Dims>();
-                m_VarDefaultsMap[var.name].shape = var.shape;
-            }
-            else
-            {
-                if (itMap != m_VarDefaultsMap.end())
-                {
-                    var.shape = itMap->second.shape;
-                }
-            }
-
-            var.position = position;
-            var.index = key;
-
-            auto it = metaj.find("Z");
-            if (it != metaj.end())
-            {
-                var.compression = it->get<std::string>();
-            }
-
-            for (auto i = metaj.begin(); i != metaj.end(); ++i)
-            {
-                auto pos = i.key().find(":");
-                if (pos != std::string::npos)
-                {
-                    var.params[i.key().substr(pos + 1)] = i.value();
-                }
-            }
-
-            if (position + var.size > data->capacity())
-            {
-                break;
-            }
-            if (m_MetaDataMap[var.step] == nullptr)
-            {
-                m_MetaDataMap[var.step] =
-                    std::make_shared<std::vector<DataManVar>>();
-            }
-            m_MetaDataMap[var.step]->push_back(std::move(var));
-            position += var.size;
-        }
-        catch (std::exception &e)
-        {
-            std::cout << e.what() << std::endl;
-            return -1;
-        }
-        if (m_MaxStep < var.step)
-        {
-            m_MaxStep = var.step;
-        }
-        if (m_MinStep > var.step)
-        {
-            m_MinStep = var.step;
         }
     }
     return 0;

@@ -31,21 +31,24 @@ void DataManSerializer::New(size_t size)
     // still be alive and needed somewhere in the workflow, for example the
     // queue in transport manager. It will be automatically released when the
     // entire workflow finishes using it.
+    m_Metadata = nullptr;
     m_Buffer = std::make_shared<std::vector<char>>();
     m_Buffer->reserve(size);
-    m_Position = 0;
+    m_Position = sizeof(uint64_t) * 2;
 }
 
 const std::shared_ptr<std::vector<char>> DataManSerializer::Get()
 {
+    std::vector<uint8_t> metacbor = nlohmann::json::to_msgpack(m_Metadata);
+    size_t metasize = metacbor.size();
+    m_Buffer->resize(m_Position + metasize);
+    (reinterpret_cast<uint64_t *>(m_Buffer->data()))[0] = m_Position;
+    (reinterpret_cast<uint64_t *>(m_Buffer->data()))[1] = metasize;
+    std::memcpy(m_Buffer->data() + m_Position, metacbor.data(), metasize);
     return m_Buffer;
 }
 
-float DataManSerializer::GetMetaRatio()
-{
-    return static_cast<float>(m_TotalMetadataSize) /
-           static_cast<float>(m_TotalMetadataSize + m_TotalDataSize);
-}
+float DataManSerializer::GetMetaRatio() { return 0; }
 
 std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
 {
