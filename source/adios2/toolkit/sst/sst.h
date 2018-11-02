@@ -119,7 +119,7 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Save);
 
 #include "sst_data.h"
 
-#define SST_POSTFIX ".sst"
+#define SST_POSTFIX ""
 
 #ifdef __cplusplus
 }
