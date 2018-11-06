@@ -106,7 +106,7 @@ std::vector<std::string> AvailableIpAddresses() noexcept
             close(socket_handler);
             return ips;
         }
-        std::string ip =
+        const std::string ip =
             inet_ntoa(((struct sockaddr_in *)&req.ifr_addr)->sin_addr);
         if (ip != "127.0.0.1")
         {
