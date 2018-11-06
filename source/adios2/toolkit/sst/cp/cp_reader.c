@@ -871,6 +871,9 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         if (Stream->Rank == 0)
         {
             global_info = malloc(sizeof(my_info) * Stream->CohortSize);
+            CP_verbose(Stream, "In special case of advancestep, mode is %d, "
+                               "Timeout Sec is %g, flt_max is %g\n",
+                       mode, timeout_sec, FLT_MAX);
         }
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
         my_info.timeout_sec = timeout_sec;
