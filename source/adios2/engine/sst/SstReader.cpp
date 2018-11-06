@@ -127,6 +127,11 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
     {
         return StepStatus::EndOfStream;
     }
+    if (result == SstTimeout)
+    {
+        return StepStatus::NotReady;
+    }
+
     if (result != SstSuccess)
     {
         return StepStatus::OtherError;
