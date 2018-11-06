@@ -3,13 +3,14 @@
 use Getopt::Long;
 use List::Util qw(shuffle);
 use strict;
+use warnings;
 
 ##Parse Args
 my $verbose = 0;	# option variable with default value (false)
 my $writer_prog = "TestSstServer";
 my $reader_prog = "TestSstClient";
-my $writer_args = "";
-my $reader_args = "";
+my @writer_args = ();
+my @reader_args = ();
 my $num_writers = 3;
 my $num_readers = 2;
 my $max_readers = 3;
@@ -24,8 +25,8 @@ my $my_dirname = dirname(__FILE__);
 GetOptions ('verbose!' => \$verbose, 
 	    'writer=s' => \$writer_prog,
 	    'reader=s' => \$reader_prog,
-	    'warg=s@' => \$writer_args,
-	    'rarg=s@' => \$reader_args,
+	    'warg=s@' => \@writer_args,
+	    'rarg=s@' => \@reader_args,
 	    'nw=i' => \$num_writers,
 	    'nr=i' => \$num_readers,
 	    'duration=i' => \$duration,
@@ -34,6 +35,8 @@ GetOptions ('verbose!' => \$verbose,
 	    'test_protocol=s' => \$test_protocol)
   or die("Error in command line arguments\n");
 
+
+print "Test protocol is $test_protocol\n" if $verbose;
 
 my $writer_output = "";
 my $reader_output = "";
@@ -49,17 +52,19 @@ if (("@MPIEXEC@" eq "") or ("@MPIEXEC@" eq "MPIEXEC_EXECUTABLE-NOTFOUND")) {
 
 defined(my $writer_pid = fork) or die "Cannot fork $!";
 unless($writer_pid)
-  {
+{
     #Child process is here
     print "TestDriver: EXEC $my_dirname/$writer_prog writer PID $$\n" if $verbose;
-    exec ("$writer_exec_cmd $my_dirname/$writer_prog " . join(" ", @$writer_args));
+    my $writer_arg_str = "";
+    $writer_arg_str = join(" ", @writer_args) if (@writer_args);
+    exec ("$writer_exec_cmd $my_dirname/$writer_prog " . $writer_arg_str);
     die "Can't exec @MPIEXEC@! $!";
-  }
+}
 print "TestDriver: Writer PID: $writer_pid\n" if $verbose;
         
 my $endtime = time() + $duration;
 
-if ($test_protocol == "kill_readers") {
+if ($test_protocol eq "kill_readers") {
   
   my @ReaderPIDs;
   print "TestDriver: Duration at beginning is $duration\n" if $verbose;
@@ -75,7 +80,7 @@ if ($test_protocol == "kill_readers") {
 	{
 	  #Child process is here
 	  print "TestDriver: EXEC $my_dirname/$reader_prog\n" if $verbose;
-	  exec ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @$reader_args));
+	  exec ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @reader_args));
 	  die "Can't exec @MPIEXEC@! $!";
 	}
       print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
@@ -84,7 +89,7 @@ if ($test_protocol == "kill_readers") {
       # kill a reader 
       my $readerToKill;
       @ReaderPIDs = shuffle @ReaderPIDs;
-      my $readerToKill = shift @ReaderPIDs;
+      $readerToKill = shift @ReaderPIDs;
       kill 'KILL', $readerToKill;
       print "TestDriver: KILLED Reader PID: $readerToKill\n" if $verbose;
       waitpid($readerToKill, 0);
@@ -121,4 +126,33 @@ if ($test_protocol == "kill_readers") {
   }
   exit $exit_value;
 } # end kill_readers protocol
+
+if ($test_protocol eq "one_to_one") {
+  
+    defined(my $reader_pid = fork) or die "Cannot fork $!";
+    unless($reader_pid)
+    {
+	#Child process is here
+	print "TestDriver: EXEC $my_dirname/$reader_prog\n" if $verbose;
+	exec ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @reader_args));
+	die "Can't exec @MPIEXEC@! $!";
+    }
+    print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
+    waitpid($reader_pid, 0);
+    print "TestDriver: Status of one_to_one reader was $?\n" if $verbose;
+    if ($? != 0) {
+	$exit_value = 1; 
+	print "TestDriver: Setting failure return because of bad exit status ($?) on normal reader\n";
+    }
+    system("touch DieTest");
+    my $ret = waitpid($writer_pid, 0);
+    unlink("DieTest");
+    print "TestDriver: Status of writer was $? with return value $ret\n" if $verbose;
+    if ($? != 0) {
+	$exit_value = 1; #failure
+	print "TestDriver: Setting failure return because of bad exit status ($?) of writer\n";
+    }
+    exit $exit_value;
+
+} # end one_to_one protocol
 
