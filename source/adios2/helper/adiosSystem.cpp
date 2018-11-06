@@ -14,7 +14,7 @@
 #include <string.h>    //AvailableIpAddresses() strncp
 #include <sys/ioctl.h> //AvailableIpAddresses() ioctl
 #include <unistd.h>    //AvailableIpAddresses() close
-
+#endif
 #include <chrono> //system_clock, now
 #include <ctime>
 #include <iostream>  //std::cerr
