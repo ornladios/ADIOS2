@@ -119,7 +119,7 @@ std::vector<std::string> AvailableIpAddresses() noexcept
     close(socket_handler);
     return ips;
 }
-
+#endif
 int ExceptionToError(const std::string &function)
 {
     try
