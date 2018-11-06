@@ -584,6 +584,11 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
         end.tv_sec++;
         end.tv_usec -= 1000000;
     }
+    if (end.tv_sec < start.tv_sec)
+    {
+        // rollover
+        end.tv_sec = INT_MAX;
+    }
     // special case
     if (timeout_secs == 0.0)
     {
@@ -856,7 +861,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         Stream->CurrentMetadata = NULL;
     }
 
-    if ((timeout_sec != FLT_MAX) || (mode == 3 /* LatestAvailable*/))
+    if ((timeout_sec < 0.0) || (mode == 3 /* LatestAvailable*/))
     {
         struct _GlobalOpInfo
         {
@@ -916,7 +921,14 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
             if (Biggest == -1)
             {
                 // AllQueuesEmpty
-                waitForMetadataWithTimeout(Stream, timeout_sec);
+                if (timeout_sec > 0.0)
+                {
+                    waitForMetadataWithTimeout(Stream, timeout_sec);
+                }
+                else
+                {
+                    waitForMetadataWithTimeout(Stream, FLT_MAX);
+                }
                 NextTimestep =
                     MaxQueuedMetadata(Stream); /* might be -1 if we timed out */
                 MPI_Bcast(&NextTimestep, 1, MPI_INT, 0, Stream->mpiComm);

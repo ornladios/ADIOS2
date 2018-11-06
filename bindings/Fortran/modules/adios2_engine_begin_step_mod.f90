@@ -43,7 +43,7 @@ contains
         !local
         integer status
 
-        call adios2_begin_step_f2c(engine%f2c, step_mode, 0._4, status, ierr)
+        call adios2_begin_step_f2c(engine%f2c, step_mode, -1._4, status, ierr)
 
     end subroutine
 
@@ -55,11 +55,11 @@ contains
 
         if( engine%mode == adios2_mode_read ) then
             call adios2_begin_step_f2c(engine%f2c, &
-                                       adios2_step_mode_next_available, 0._4, &
+                                       adios2_step_mode_next_available, -1._4, &
                                        status, ierr)
         else
             call adios2_begin_step_f2c(engine%f2c, &
-                                       adios2_step_mode_append, 0._4, &
+                                       adios2_step_mode_append, -1.0_4, &
                                        status, ierr)
         end if
 
