@@ -80,6 +80,7 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept
     return isZeroIndexed;
 }
 
+#ifndef _WIN32
 std::vector<std::string> AvailableIpAddresses() noexcept
 {
     std::vector<std::string> ips;
