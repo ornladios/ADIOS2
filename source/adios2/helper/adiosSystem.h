@@ -63,7 +63,7 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept;
  */
  #ifndef _WIN32
 std::vector<std::string> AvailableIpAddresses() noexcept;
-
+#endif
 /**
  * Function to be called inside a catch(...) block to convert C++ exceptions to
  * error integers. Used by C, Fortran bindings.
