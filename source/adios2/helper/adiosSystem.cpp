@@ -8,7 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "adiosSystem.h"
-
+#ifndef _WIN32
 #include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
 #include <net/if.h>    //AvailableIpAddresses() struct if_nameindex
 #include <string.h>    //AvailableIpAddresses() strncp
