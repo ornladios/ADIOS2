@@ -130,8 +130,11 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
     m_Count = count;
 }
 
-void VariableBase::SetMemoryStart(const Dims &memoryStart)
+void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
 {
+    const Dims &memoryStart = memorySelection.first;
+    const Dims &memoryCount = memorySelection.second;
+
     if (m_DebugMode)
     {
         if (m_SingleValue)
@@ -139,20 +142,48 @@ void VariableBase::SetMemoryStart(const Dims &memoryStart)
             throw std::invalid_argument("ERROR: memory start is not valid "
                                         "for single value variable " +
                                         m_Name +
-                                        ", in call to SetMemoryStart\n");
+                                        ", in call to SetMemorySelection\n");
         }
 
-        if (m_Shape.size() != memoryStart.size())
+        if (m_Start.size() != memoryStart.size())
         {
             throw std::invalid_argument("ERROR: memoryStart size must be "
                                         "the same as variable " +
-                                        m_Name + " Shape size " +
-                                        std::to_string(m_Shape.size()) +
-                                        ", in call to SetMemoryStart\n");
+                                        m_Name + " start size " +
+                                        std::to_string(m_Start.size()) +
+                                        ", in call to SetMemorySelection\n");
+        }
+
+        if (m_Count.size() != memoryCount.size())
+        {
+            throw std::invalid_argument("ERROR: memoryCount size must be "
+                                        "the same as variable " +
+                                        m_Name + " count size " +
+                                        std::to_string(m_Count.size()) +
+                                        ", in call to SetMemorySelection\n");
+        }
+
+        // TODO might have to remove for reading
+        for (size_t i = 0; i < memoryCount.size(); ++i)
+        {
+            if (memoryCount[i] < m_Count[i])
+            {
+                const std::string indexStr = std::to_string(i);
+                const std::string memoryCountStr =
+                    std::to_string(memoryCount[i]);
+                const std::string countStr = std::to_string(m_Count[i]);
+
+                throw std::invalid_argument(
+                    "ERROR: memoyCount[" + indexStr + "]= " + memoryCountStr +
+                    " can not be smaller than variable count[" + indexStr +
+                    "]= " + countStr + " for variable " + m_Name +
+                    ", in call to SetMemorySelection\n");
+            }
         }
     }
 
-    m_MemoryStart = memoryStart;
+    m_MemoryStart = memorySelection.first;
+    m_MemoryCount = memorySelection.second;
 }
 
 size_t VariableBase::GetAvailableStepsStart() const

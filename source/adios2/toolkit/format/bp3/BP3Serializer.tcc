@@ -357,8 +357,12 @@ BP3Serializer::Stats<T> BP3Serializer::GetBPStats(
     if (m_StatsLevel == 0)
     {
         ProfilerStart("minmax");
-        helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
-                                 stats.Max, m_Threads);
+        if (blockInfo.MemoryStart.empty())
+        {
+            helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
+                                     stats.Max, m_Threads);
+        }
+        // TODO need to implement minmax for non-contiguous memory
         ProfilerStop("minmax");
     }
     stats.Step = m_MetadataSet.TimeStep;
@@ -776,8 +780,8 @@ void BP3Serializer::PutPayloadInBuffer(
         helper::CopyMemory(
             reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
             blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
-            blockInfo.Start, blockInfo.Count, sourceRowMajor, Dims(),
-            blockInfo.MemoryStart);
+            blockInfo.Start, blockInfo.Count, sourceRowMajor, Dims(), Dims(),
+            blockInfo.MemoryStart, blockInfo.MemoryCount);
         m_Data.m_Position += blockSize * sizeof(T);
     }
     else

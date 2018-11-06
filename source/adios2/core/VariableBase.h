@@ -48,7 +48,8 @@ public:
     Dims m_Start;               ///< starting point (offsets) in global shape
     Dims m_Count;               ///< dimensions from m_Start in global shape
 
-    Dims m_MemoryStart; ///< offset of memory selection
+    Dims m_MemoryStart; ///< start offset
+    Dims m_MemoryCount; ///< local dimensions
 
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
@@ -133,9 +134,9 @@ public:
     void SetStepSelection(const Box<size_t> &boxSteps);
 
     /**
-     * Set local offset to memory passed at Put
+     * Set local offset and dimensions to memory passed at Put
      */
-    void SetMemoryStart(const Dims &memoryStart);
+    void SetMemorySelection(const Box<Dims> &memorySelection);
 
     size_t GetAvailableStepsStart() const;
 

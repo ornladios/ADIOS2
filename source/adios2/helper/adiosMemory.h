@@ -105,13 +105,17 @@ void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 const bool destRowMajor, const U *src, const Dims &srcStart,
                 const Dims &srcCount, const bool srcRowMajor,
                 const Dims &destMemStart = Dims(),
-                const Dims &srcMemStart = Dims()) noexcept;
+                const Dims &destMemCount = Dims(),
+                const Dims &srcMemStart = Dims(),
+                const Dims &srcMemCount = Dims()) noexcept;
 
 void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const bool destRowMajor, const char *src, const Dims &srcStart,
                  const Dims &srcCount, const bool srcRowMajor,
                  const Dims &destMemStart = Dims(),
-                 const Dims &srcMemStart = Dims()) noexcept;
+                 const Dims &destMemCount = Dims(),
+                 const Dims &srcMemStart = Dims(),
+                 const Dims &srcMemCount = Dims()) noexcept;
 
 /**
  * Clips the contiguous memory corresponding to an intersection and puts it in

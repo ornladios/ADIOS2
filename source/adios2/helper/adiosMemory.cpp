@@ -34,7 +34,8 @@ Dims DestDimsFinal(const Dims &destDims, const bool destRowMajor,
 void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
                   const bool destRowMajor, const char *src,
                   const Dims &srcStart, const Dims &srcCount,
-                  const Dims &destMemStart, const Dims &srcMemStart)
+                  const Dims & /*destMemStart*/, const Dims & /*destMemCount*/,
+                  const Dims &srcMemStart, const Dims &srcMemCount)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, true);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, true);
@@ -76,18 +77,26 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
     Dims currentPoint(interStart); // current point for memory copy
     const size_t interOffset =
         LinearIndex(srcStart, srcCount, interStart, true);
+    const size_t memOffset =
+        srcMemStart.empty() ? 0 : LinearIndex(Dims(srcMemCount.size(), 0),
+                                              srcMemCount, srcMemStart, true);
+
     bool run = true;
 
     while (run)
     {
         // here copy current linear memory between currentPoint and end
-        const size_t srcOffset =
+        const size_t srcBeginOffset =
             helper::LinearIndex(srcStart, srcCount, currentPoint, true) -
-            interOffset;
-        const size_t destOffset = helper::LinearIndex(
+            interOffset + memOffset;
+
+        const size_t srcEndOffset = srcBeginOffset + stride;
+
+        const size_t destBeginOffset = helper::LinearIndex(
             destStartFinal, destCountFinal, currentPoint, true);
 
-        std::copy(src + srcOffset, src + srcOffset + stride, dest + destOffset);
+        std::copy(src + srcBeginOffset, src + srcEndOffset,
+                  dest + destBeginOffset);
 
         size_t p = startCoord;
         while (true)
@@ -117,7 +126,9 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
 void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
                      const bool destRowMajor, const char *src,
                      const Dims &srcStart, const Dims &srcCount,
-                     const Dims &destMemStart, const Dims &srcMemStart)
+                     const Dims & /*destMemStart*/,
+                     const Dims & /*destMemCount*/, const Dims &srcMemStart,
+                     const Dims &srcMemCount)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, false);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, false);
@@ -149,18 +160,25 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
     Dims currentPoint(interStart); // current point for memory copy
     const size_t interOffset =
         LinearIndex(srcStart, srcCount, interStart, false);
+    const size_t memOffset =
+        srcMemStart.empty() ? 0 : LinearIndex(Dims(srcMemCount.size(), 0),
+                                              srcMemCount, srcMemStart, false);
     bool run = true;
 
     while (run)
     {
         // here copy current linear memory between currentPoint and end
-        const size_t srcOffset =
+        const size_t srcBeginOffset =
             helper::LinearIndex(srcStart, srcCount, currentPoint, false) -
-            interOffset;
-        const size_t destOffset = helper::LinearIndex(
+            interOffset + memOffset;
+
+        const size_t srcEndOffset = srcBeginOffset + stride;
+
+        const size_t destBeginOffset = helper::LinearIndex(
             destStartFinal, destCountFinal, currentPoint, false);
 
-        std::copy(src + srcOffset, src + srcOffset + stride, dest + destOffset);
+        std::copy(src + srcBeginOffset, src + srcEndOffset,
+                  dest + destBeginOffset);
         size_t p = startCoord;
 
         while (true)
@@ -192,7 +210,8 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
 void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const bool destRowMajor, const char *src, const Dims &srcStart,
                  const Dims &srcCount, const bool srcRowMajor,
-                 const Dims &destMemStart, const Dims &srcMemStart) noexcept
+                 const Dims &destMemStart, const Dims &destMemCount,
+                 const Dims &srcMemStart, const Dims &srcMemCount) noexcept
 {
     if (srcStart.size() == 1) // 1D copy memory
     {
@@ -218,12 +237,14 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
     if (srcRowMajor) // stored with C, C++, Python
     {
         ClipRowMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
-                     srcCount, destMemStart, srcMemStart);
+                     srcCount, destMemStart, destMemCount, srcMemStart,
+                     srcMemCount);
     }
     else // stored with Fortran, R
     {
         ClipColumnMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
-                        srcCount, destMemStart, srcMemStart);
+                        srcCount, destMemStart, destMemCount, srcMemStart,
+                        srcMemCount);
     }
 }
 
