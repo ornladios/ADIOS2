@@ -23,8 +23,15 @@ public:
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
+int IncreasingDelay = 0;
+int NonBlockingBeginStep = 0;
+int Latest = 0;
+int Discard = 0;
+int BeginStepFailedPolls = 0;
+int SkippedSteps = 0;
+int DelayMS = 500;
 // Number of steps
-std::size_t NSteps = 200;
+std::size_t NSteps = 10;
 
 static std::string Trim(std::string &str)
 {
@@ -94,12 +101,51 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
     std::vector<std::time_t> write_times;
 
-    while (engine.BeginStep() == adios2::StepStatus::OK)
+    bool Continue = true;
+    while (Continue)
     {
+
+        adios2::StepStatus Status;
+
+        if (NonBlockingBeginStep)
+        {
+            Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
+
+            while (Status == adios2::StepStatus::NotReady)
+            {
+                BeginStepFailedPolls++;
+                usleep(1000 * 100);
+                Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
+            }
+        }
+        else if (Latest)
+        {
+            /* would like to do blocking, but API is inconvenient, so specify an
+             * hour timeout */
+            Status =
+                engine.BeginStep(adios2::StepMode::LatestAvailable, 60 * 60.0);
+        }
+        else
+        {
+            Status = engine.BeginStep();
+        }
+
+        if (Status == adios2::StepStatus::EndOfStream)
+        {
+            Continue = false;
+            break;
+        }
+
         const size_t currentStep = engine.CurrentStep();
 
-        if (t == -1)
+        if ((t == -1) || Latest || Discard)
+        {
+            if ((t != -1) && (t != currentStep))
+            {
+                SkippedSteps++;
+            }
             t = currentStep; // starting out
+        }
 
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
@@ -240,7 +286,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
         catch (...)
         {
-            std::cout << "Exception in EndStep, writer failed";
+            std::cout << "Exception in EndStep, client failed";
         }
 
         ++t;
@@ -251,6 +297,11 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             {
                 break;
             }
+        }
+        if (IncreasingDelay)
+        {
+            usleep(1000 * DelayMS); /* sleep for DelayMS milliseconds */
+            DelayMS += 200;
         }
     }
 
@@ -270,6 +321,18 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             EXPECT_FALSE(TimeGapDetected);
         }
     }
+    if (Latest || Discard)
+    {
+        std::cout << "Total Skipped Timesteps is " << SkippedSteps << std::endl;
+        EXPECT_TRUE(SkippedSteps);
+    }
+    if (NonBlockingBeginStep)
+    {
+        std::cout << "Number of BeginSteps where we failed timeout is "
+                  << BeginStepFailedPolls << std::endl;
+        EXPECT_TRUE(BeginStepFailedPolls);
+    }
+
     // Close the file
     engine.Close();
 }
@@ -296,8 +359,6 @@ int main(int argc, char **argv)
                 std::cerr << "Invalid number for num_steps " << argv[1] << '\n';
             argv++;
             argc--;
-            std::cout << "Done, Nsteps was " << NSteps << " argc now " << argc
-                      << std::endl;
         }
         else if (std::string(argv[1]) == "--expect_time_gap")
         {
@@ -308,6 +369,21 @@ int main(int argc, char **argv)
         {
             TimeGapExpected = 0;
             IgnoreTimeGap = 0;
+        }
+        else if (std::string(argv[1]) == "--non_blocking")
+        {
+            IncreasingDelay = 1;
+            NonBlockingBeginStep = 1;
+        }
+        else if (std::string(argv[1]) == "--latest")
+        {
+            IncreasingDelay = 1;
+            Latest = 1;
+        }
+        else if (std::string(argv[1]) == "--discard")
+        {
+            IncreasingDelay = 1;
+            Discard = 1;
         }
         else if (std::string(argv[1]) == "--ignore_time_gap")
         {

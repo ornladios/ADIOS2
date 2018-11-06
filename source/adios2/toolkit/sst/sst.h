@@ -28,7 +28,12 @@ typedef struct _SstStream *SstStream;
 typedef struct _SstFullMetadata *SstFullMetadata;
 typedef struct _SstData *SstData;
 
-typedef enum { SstSuccess, SstEndOfStream, SstFatalError } SstStatusValue;
+typedef enum {
+    SstSuccess,
+    SstEndOfStream,
+    SstFatalError,
+    SstTimeout
+} SstStatusValue;
 
 /*
  * Struct that represents statistics tracked by SST

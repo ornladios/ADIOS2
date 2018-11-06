@@ -1017,11 +1017,7 @@ static void DoStreamDiscard(SstStream Stream)
         free(Entry->MetadataArray);
         free(Entry->DP_TimestepInfo);
         free(Entry->DataBlockToFree);
-        free(Entry->Msg->Metadata);
-        if (Entry->Msg->DP_TimestepInfo)
-            free(Entry->Msg->DP_TimestepInfo);
         free(Entry->Msg);
-        free(Entry->DataBlockToFree);
         free(Entry);
         Stream->QueuedTimestepCount--;
     }
@@ -1199,7 +1195,7 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
         else
         {
             /* discard things */
-            if (ActiveReaderCount)
+            if (ActiveReaderCount == 0)
             {
                 DoStreamDiscard(Stream);
             }
