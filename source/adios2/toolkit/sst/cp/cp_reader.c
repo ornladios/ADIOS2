@@ -861,7 +861,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         Stream->CurrentMetadata = NULL;
     }
 
-    if ((timeout_sec < 0.0) || (mode == 3 /* LatestAvailable*/))
+    if ((timeout_sec <= 0.0) || (mode == 3 /* LatestAvailable*/))
     {
         struct _GlobalOpInfo
         {
@@ -921,7 +921,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
             if (Biggest == -1)
             {
                 // AllQueuesEmpty
-                if (timeout_sec > 0.0)
+                if (timeout_sec >= 0.0)
                 {
                     waitForMetadataWithTimeout(Stream, timeout_sec);
                 }
