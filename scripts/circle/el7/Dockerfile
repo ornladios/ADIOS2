@@ -5,6 +5,7 @@ RUN yum -y install gcc gcc-c++ gcc-gfortran git make curl file \
         gdb zlib zlib-devel bzip2 bzip2-libs bzip2-devel python-devel numpy \
 RUN yum -y install epel-release
 RUN yum -y install zeromq-devel hdf5 hdf5-devel
+RUN yum -y install valgrind vi
 
 # Cleanup headers and packages
 RUN yum clean all
