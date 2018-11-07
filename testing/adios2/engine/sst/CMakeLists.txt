@@ -144,7 +144,7 @@ set_tests_properties(ADIOSSstTimeoutReaderTest.1x1 PROPERTIES TIMEOUT 60 RUN_SER
 add_test(
   NAME ADIOSSstLatestReaderTest.1x1
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol one_to_one
-    -verbose -nw 1 -nr 1 -max_readers 1 -warg '--ms_delay' -warg '500' -rarg '--latest')
+    -verbose -nw 1 -nr 1 -max_readers 1 -warg '--ms_delay' -warg '250' -rarg '--latest')
 set_tests_properties(ADIOSSstLatestReaderTest.1x1 PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
 
 add_test(
