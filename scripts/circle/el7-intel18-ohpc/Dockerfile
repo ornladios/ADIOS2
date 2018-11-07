@@ -5,6 +5,7 @@ RUN yum -y install make curl file git \
         gdb zlib zlib-devel bzip2 bzip2-libs bzip2-devel python-devel
 RUN yum -y install epel-release
 RUN yum -y install zeromq-devel
+RUN yum -y install valgrind
 
 # Install Intel C++ compiler
 WORKDIR /tmp
