@@ -419,8 +419,22 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         CP_verbose(Stream, "Sending ReleaseTimestep message for PRIOR DISCARD "
                            "timestep %d, one to each writer\n",
                    tsm->Timestep);
-        sendOneToEachWriterRank(Stream, Stream->CPInfo->ReleaseTimestepFormat,
-                                &Msg, &Msg.WSR_Stream);
+        if (tsm->Metadata != NULL)
+        {
+            CP_verbose(Stream,
+                       "Sending ReleaseTimestep message for PRIOR DISCARD "
+                       "timestep %d, one to each writer\n",
+                       tsm->Timestep);
+            sendOneToEachWriterRank(Stream,
+                                    Stream->CPInfo->ReleaseTimestepFormat, &Msg,
+                                    &Msg.WSR_Stream);
+        }
+        else
+        {
+            CP_verbose(Stream, "Received discard notice for imestep %d, "
+                               "ignoring in PRIOR DISCARD\n",
+                       tsm->Timestep);
+        }
         CMreturn_buffer(Stream->CPInfo->cm, tsm);
         return;
     }
@@ -862,7 +876,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         Stream->CurrentMetadata = NULL;
     }
 
-    if ((timeout_sec <= 0.0) || (mode == 3 /* LatestAvailable*/))
+    if ((timeout_sec >= 0.0) || (mode == 3 /* LatestAvailable*/))
     {
         struct _GlobalOpInfo
         {
