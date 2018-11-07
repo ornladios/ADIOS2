@@ -32,16 +32,17 @@ public:
 
     ~StagingMan();
 
-    void OpenWANTransports(const std::vector<std::string> &streamNames,
-                           const std::vector<Params> &parametersVector,
-                           const Mode openMode, const std::string workflowMode,
-                           const bool profile);
+    void OpenStagingTransports(const std::vector<std::string> &streamNames,
+                               const std::vector<Params> &parametersVector,
+                               const Mode openMode,
+                               const std::string workflowMode,
+                               const bool profile);
 
-    void WriteWAN(const std::vector<char> &buffer, size_t transportId);
-    void WriteWAN(std::shared_ptr<std::vector<char>> buffer,
-                  size_t transportId);
+    void WriteStaging(const std::vector<char> &buffer, size_t transportId);
+    void WriteStaging(std::shared_ptr<std::vector<char>> buffer,
+                      size_t transportId);
 
-    std::shared_ptr<std::vector<char>> ReadWAN(size_t id);
+    std::shared_ptr<std::vector<char>> ReadStaging(size_t id);
 
     void SetMaxReceiveBuffer(size_t size);
 

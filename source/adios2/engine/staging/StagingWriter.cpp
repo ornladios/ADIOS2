@@ -12,6 +12,7 @@
 #include "StagingWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <iostream>
 
@@ -23,15 +24,17 @@ namespace engine
 {
 
 StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm mpiComm)
-: Engine("StagingWriter", io, name, mode, mpiComm)
+                             MPI_Comm mpiComm)
+: Engine("StagingWriter", io, name, mode, mpiComm),
+  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage),
+                      helper::IsLittleEndian())
 {
     m_EndMessage = " in call to StagingWriter " + m_Name + " Open\n";
-    MPI_Comm_rank(mpiComm, &m_WriterRank);
+    MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank << " Open(" << m_Name
+        std::cout << "Staging Writer " << m_MpiRank << " Open(" << m_Name
                   << ")." << std::endl;
     }
 }
@@ -39,9 +42,12 @@ StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_CurrentStep++; // 0 is the first step
+
+    m_DataManSerializer.New(1024);
+
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank
+        std::cout << "Staging Writer " << m_MpiRank
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
     }
     return StepStatus::OK;
@@ -51,51 +57,42 @@ size_t StagingWriter::CurrentStep() const
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank
+        std::cout << "Staging Writer " << m_MpiRank
                   << "   CurrentStep() returns " << m_CurrentStep << "\n";
     }
     return m_CurrentStep;
 }
 
 /* PutDeferred = PutSync, so nothing to be done in PerformPuts */
-void StagingWriter::PerformPuts()
-{
-    if (m_Verbosity == 5)
-    {
-        std::cout << "Staging Writer " << m_WriterRank
-                  << "     PerformPuts()\n";
-    }
-    m_NeedPerformPuts = false;
-}
+void StagingWriter::PerformPuts() {}
 
 void StagingWriter::EndStep()
 {
-    if (m_NeedPerformPuts)
-    {
-        PerformPuts();
-    }
+    auto aggregatedMetadata =
+        m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
+
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank << "   EndStep()\n";
+        std::cout << "Staging Writer " << m_MpiRank << "   EndStep()\n";
     }
 }
+
 void StagingWriter::Flush(const int transportIndex)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank << "   Flush()\n";
+        std::cout << "Staging Writer " << m_MpiRank << "   Flush()\n";
     }
 }
 
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void StagingWriter::DoPutSync(Variable<T> &variable, const T *data)       \
+    void StagingWriter::DoPutSync(Variable<T> &variable, const T *data)        \
     {                                                                          \
-        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        variable.m_BlocksInfo.clear();                                         \
+        PutSyncCommon(variable, data);                                         \
     }                                                                          \
-    void StagingWriter::DoPutDeferred(Variable<T> &variable, const T *data)   \
+    void StagingWriter::DoPutDeferred(Variable<T> &variable, const T *data)    \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
@@ -138,11 +135,13 @@ void StagingWriter::InitTransports()
     // Nothing to process from m_IO.m_TransportsParameters
 }
 
+void StagingWriter::Handshake() {}
+
 void StagingWriter::DoClose(const int transportIndex)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank << " Close(" << m_Name
+        std::cout << "Staging Writer " << m_MpiRank << " Close(" << m_Name
                   << ")\n";
     }
 }

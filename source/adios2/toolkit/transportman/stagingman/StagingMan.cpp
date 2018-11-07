@@ -76,10 +76,10 @@ StagingMan::~StagingMan()
 
 void StagingMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
-void StagingMan::OpenWANTransports(const std::vector<std::string> &streamNames,
-                                const std::vector<Params> &paramsVector,
-                                const Mode mode, const std::string workflowMode,
-                                const bool profile)
+void StagingMan::OpenStagingTransports(
+    const std::vector<std::string> &streamNames,
+    const std::vector<Params> &paramsVector, const Mode mode,
+    const std::string workflowMode, const bool profile)
 {
     m_TransportsParameters = paramsVector;
     m_BufferQueue.resize(streamNames.size());
@@ -145,8 +145,8 @@ void StagingMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             else if (mode == Mode::Write)
             {
                 m_Writing = true;
-                m_WriteThreads.emplace_back(
-                    std::thread(&StagingMan::WriteThread, this, wanTransport, i));
+                m_WriteThreads.emplace_back(std::thread(
+                    &StagingMan::WriteThread, this, wanTransport, i));
             }
 #else
             throw std::invalid_argument(
@@ -167,12 +167,14 @@ void StagingMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void StagingMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer, size_t id)
+void StagingMan::WriteStaging(std::shared_ptr<std::vector<char>> buffer,
+                              size_t id)
 {
     PushBufferQueue(buffer, id);
 }
 
-void StagingMan::WriteWAN(const std::vector<char> &buffer, size_t transportId)
+void StagingMan::WriteStaging(const std::vector<char> &buffer,
+                              size_t transportId)
 {
     if (transportId >= m_Transports.size())
     {
@@ -183,12 +185,13 @@ void StagingMan::WriteWAN(const std::vector<char> &buffer, size_t transportId)
     m_Transports[transportId]->Write(buffer.data(), buffer.size());
 }
 
-std::shared_ptr<std::vector<char>> StagingMan::ReadWAN(size_t id)
+std::shared_ptr<std::vector<char>> StagingMan::ReadStaging(size_t id)
 {
     return PopBufferQueue(id);
 }
 
-void StagingMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id)
+void StagingMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v,
+                                 size_t id)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
     m_BufferQueue[id].push(v);
@@ -259,7 +262,7 @@ bool StagingMan::GetBoolParameter(const Params &params, const std::string key)
 }
 
 bool StagingMan::GetStringParameter(const Params &params, const std::string key,
-                                 std::string &value)
+                                    std::string &value)
 {
     auto it = params.find(key);
     if (it != params.end())
@@ -271,7 +274,7 @@ bool StagingMan::GetStringParameter(const Params &params, const std::string key,
 }
 
 bool StagingMan::GetIntParameter(const Params &params, const std::string key,
-                              int &value)
+                                 int &value)
 {
     auto it = params.find(key);
     if (it != params.end())

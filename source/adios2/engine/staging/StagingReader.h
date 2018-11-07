@@ -38,7 +38,7 @@ public:
      * @param hostLanguage
      */
     StagingReader(IO &adios, const std::string &name, const Mode mode,
-                   MPI_Comm mpiComm);
+                  MPI_Comm mpiComm);
 
     ~StagingReader();
     StepStatus BeginStep(

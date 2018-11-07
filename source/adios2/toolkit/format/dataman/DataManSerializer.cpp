@@ -10,6 +10,8 @@
 
 #include "DataManSerializer.tcc"
 
+#include "adios2/helper/adiosMPIFunctions.h"
+
 #include <cstring>
 #include <iostream>
 
@@ -42,13 +44,60 @@ void DataManSerializer::New(size_t size)
 
 const std::shared_ptr<std::vector<char>> DataManSerializer::Get()
 {
-    std::vector<uint8_t> metacbor(nlohmann::json::to_msgpack(m_Metadata));
+    std::vector<char> metacbor;
+    nlohmann::json::to_msgpack(m_Metadata, metacbor);
     size_t metasize = metacbor.size();
     m_Buffer->resize(m_Position + metasize);
     (reinterpret_cast<uint64_t *>(m_Buffer->data()))[0] = m_Position;
     (reinterpret_cast<uint64_t *>(m_Buffer->data()))[1] = metasize;
     std::memcpy(m_Buffer->data() + m_Position, metacbor.data(), metasize);
     return m_Buffer;
+}
+
+std::shared_ptr<std::vector<char>>
+DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
+{
+
+    std::vector<char> localJsonCbor;
+    nlohmann::json::to_msgpack(m_Metadata, localJsonCbor);
+    unsigned int size = localJsonCbor.size();
+    unsigned int maxSize;
+    MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, mpiComm);
+    localJsonCbor.resize(maxSize, '\0');
+
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(mpiComm, &mpiSize);
+    MPI_Comm_rank(mpiComm, &mpiRank);
+
+    std::vector<char> globalJsonStr(mpiSize * maxSize);
+    helper::GatherArrays(localJsonCbor.data(), maxSize, globalJsonStr.data(),
+                         mpiComm);
+
+    nlohmann::json globalMetadata;
+    std::shared_ptr<std::vector<char>> globalJsonCbor = nullptr;
+    if (mpiRank == 0)
+    {
+        for (int i = 0; i < mpiSize; ++i)
+        {
+            nlohmann::json metaj = nlohmann::json::from_msgpack(
+                globalJsonStr.data() + i * maxSize, maxSize);
+            for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end();
+                 ++stepMapIt)
+            {
+                for (auto rankMapIt = stepMapIt.value().begin();
+                     rankMapIt != stepMapIt.value().end(); ++rankMapIt)
+                {
+                    globalMetadata[stepMapIt.key()][rankMapIt.key()] =
+                        rankMapIt.value();
+                }
+            }
+        }
+        globalJsonCbor = std::make_shared<std::vector<char>>();
+        nlohmann::json::to_msgpack(globalMetadata, *globalJsonCbor);
+    }
+
+    return globalJsonCbor;
 }
 
 float DataManSerializer::GetMetaRatio() { return 0; }

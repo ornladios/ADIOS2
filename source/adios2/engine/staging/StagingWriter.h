@@ -13,6 +13,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 
 namespace adios2
 {
@@ -34,7 +35,7 @@ public:
      * @param debugMode
      */
     StagingWriter(IO &adios, const std::string &name, const Mode mode,
-                   MPI_Comm mpiComm);
+                  MPI_Comm mpiComm);
 
     ~StagingWriter() = default;
 
@@ -47,16 +48,15 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
+    format::DataManSerializer m_DataManSerializer;
     int m_Verbosity = 0;
-    int m_WriterRank;       // my rank in the writers' comm
-    int m_CurrentStep = -1; // steps start from 0
-
-    // EndStep must call PerformPuts if necessary
-    bool m_NeedPerformPuts = false;
+    int64_t m_CurrentStep = -1; // steps start from 0
+    int m_MpiRank;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
+    void Handshake();
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -78,8 +78,7 @@ private:
      * @param values
      */
     template <class T>
-    void PutSyncCommon(Variable<T> &variable,
-                       const typename Variable<T>::Info &blockInfo);
+    void PutSyncCommon(Variable<T> &variable, const T *values);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);

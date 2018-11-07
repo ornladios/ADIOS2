@@ -67,6 +67,11 @@ public:
 
     const std::shared_ptr<std::vector<char>> Get();
 
+#ifdef ADIOS2_HAVE_MPI
+    std::shared_ptr<std::vector<char>>
+    GetAggregatedMetadata(const MPI_Comm mpiComm);
+#endif
+
     float GetMetaRatio();
 
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);

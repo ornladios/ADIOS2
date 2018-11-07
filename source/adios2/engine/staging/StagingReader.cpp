@@ -23,7 +23,7 @@ namespace engine
 {
 
 StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm mpiComm)
+                             MPI_Comm mpiComm)
 : Engine("StagingReader", io, name, mode, mpiComm)
 {
     m_EndMessage = " in call to IO Open StagingReader " + m_Name + "\n";
@@ -47,7 +47,7 @@ StagingReader::~StagingReader()
 }
 
 StepStatus StagingReader::BeginStep(const StepMode mode,
-                                     const float timeoutSeconds)
+                                    const float timeoutSeconds)
 {
     // step info should be received from the writer side in BeginStep()
     // so this forced increase should not be here
@@ -108,11 +108,11 @@ void StagingReader::EndStep()
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void StagingReader::DoGetSync(Variable<T> &variable, T *data)             \
+    void StagingReader::DoGetSync(Variable<T> &variable, T *data)              \
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
-    void StagingReader::DoGetDeferred(Variable<T> &variable, T *data)         \
+    void StagingReader::DoGetDeferred(Variable<T> &variable, T *data)          \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }

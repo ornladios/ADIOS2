@@ -24,7 +24,7 @@ namespace engine
 
 template <>
 inline void StagingReader::GetSyncCommon(Variable<std::string> &variable,
-                                          std::string *data)
+                                         std::string *data)
 {
     variable.m_Data = data;
     if (m_Verbosity == 5)

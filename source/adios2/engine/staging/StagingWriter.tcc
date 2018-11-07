@@ -23,12 +23,14 @@ namespace engine
 {
 
 template <class T>
-void StagingWriter::PutSyncCommon(Variable<T> &variable,
-                                   const typename Variable<T>::Info &blockInfo)
+void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
+
+    m_DataManSerializer.Put(variable, m_Name, CurrentStep(), m_MpiRank, "",
+                            m_IO.m_TransportsParameters[0]);
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank << "     PutSync("
+        std::cout << "Staging Writer " << m_MpiRank << "     PutSync("
                   << variable.m_Name << ")\n";
     }
 }
@@ -36,14 +38,12 @@ void StagingWriter::PutSyncCommon(Variable<T> &variable,
 template <class T>
 void StagingWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetBlockInfo(data, CurrentStep());
-
+    PutSyncCommon(variable, data);
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Writer " << m_WriterRank << "     PutDeferred("
+        std::cout << "Staging Writer " << m_MpiRank << "     PutDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_NeedPerformPuts = true;
 }
 
 } // end namespace engine
