@@ -931,7 +931,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
                 }
                 NextTimestep =
                     MaxQueuedMetadata(Stream); /* might be -1 if we timed out */
-                MPI_Bcast(&NextTimestep, 1, MPI_INT, 0, Stream->mpiComm);
+                MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
             }
             else
             {
@@ -959,12 +959,12 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
                                Smallest);
                     NextTimestep = Smallest;
                 }
-                MPI_Bcast(&NextTimestep, 1, MPI_INT, 0, Stream->mpiComm);
+                MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
             }
         }
         else
         {
-            MPI_Bcast(&NextTimestep, 1, MPI_INT, 0, Stream->mpiComm);
+            MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
         if (NextTimestep == -1)
         {
