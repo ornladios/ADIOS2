@@ -149,3 +149,12 @@ between applications running on different interconnects, the Wide Area
 Network (WAN) option should be chosen.  This value is interpreted by both
 SST Writer and Reader engines.
 
+====================   ===================== =========================================================
+ **Key**                **Value Format**      **Default** and Examples 
+====================   ===================== =========================================================
+ RendezvousReaderCount integer		     **1**
+ RegistrationMethod    string                **File**, Screen
+ QueueLimit            integer		     **0** (no queue limits)
+ QueueFullPolicy       string	             **Block**, Discard
+ DataTransport	       string		     **default varies by platform**, RDMA, WAN
+====================   ===================== =========================================================
