@@ -11,11 +11,22 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
+#include "adios2/ADIOSConfig.h"
+
 #include <fstream>
 #include <string>
 #include <vector>
 
 #include <mpi.h>
+
+enum class IOLib
+{
+    ADIOS
+#ifdef ADIOS2_HAVE_HDF5
+    ,
+    HDF5
+#endif
+};
 
 class Settings
 {
@@ -27,6 +38,7 @@ public:
     unsigned int verbose = 0;
     size_t appId = 0;
     bool isStrongScaling = true; // strong or weak scaling
+    IOLib iolib = IOLib::ADIOS;
     //   process decomposition
     std::vector<size_t> processDecomp = {1, 1, 1, 1, 1, 1, 1, 1,
                                          1, 1, 1, 1, 1, 1, 1, 1};
