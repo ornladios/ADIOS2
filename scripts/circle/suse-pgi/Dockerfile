@@ -5,6 +5,7 @@ RUN zypper ref
 RUN zypper in -y gcc gcc-c++ gcc-fortran git make curl tar f2c glibc-locale \
   glibc-devel libbz2-devel python-devel python-numpy pkg-config libzmq-devel \
   hdf5-devel zlib-devel
+RUN zypper in -y valgrind vim emacs gdb
 
 # Workaround so pgi can find g77
 WORKDIR /usr/bin
