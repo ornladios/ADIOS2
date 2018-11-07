@@ -422,6 +422,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         sendOneToEachWriterRank(Stream, Stream->CPInfo->ReleaseTimestepFormat,
                                 &Msg, &Msg.WSR_Stream);
         CMreturn_buffer(Stream->CPInfo->cm, tsm);
+        return;
     }
 
     pthread_mutex_lock(&Stream->DataLock);
