@@ -3,6 +3,7 @@
  * accompanying file Copyright.txt for details.
  */
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 
@@ -17,14 +18,15 @@
 
 #include "TestData.h"
 
-class SstWriteTest : public ::testing::Test
+class SstServerTest : public ::testing::Test
 {
 public:
-    SstWriteTest() = default;
+    SstServerTest() = default;
 };
 
 adios2::Params engineParams = {};         // parsed from command line
 int DurationSeconds = 60 * 60 * 24 * 365; // one year default
+int DelayMS = 1000;                       // one step per sec default
 static int MyCloseNow = 0;
 static int GlobalCloseNow = 0;
 
@@ -71,20 +73,21 @@ inline bool file_exists(const std::string &name)
 }
 
 // ADIOS2 SST write
-TEST_F(SstWriteTest, ADIOS2SstServer)
+TEST_F(SstServerTest, ADIOS2SstServer)
 {
     const std::string fname = "ADIOS2SstServer";
 
     int mpiRank = 0, mpiSize = 1;
 
-// Number of steps
+    // Number of steps
 
+    std::remove(shutdown_name.c_str());
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+// Server test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -193,7 +196,7 @@ TEST_F(SstWriteTest, ADIOS2SstServer)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
-        usleep(1000 * 1000); /* sleep for 1 seconds */
+        usleep(1000 * DelayMS); /* sleep for DelayMS milliseconds */
         step++;
 #ifdef ADIOS2_HAVE_MPI
         MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
@@ -239,9 +242,19 @@ int main(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--ms_delay")
+        {
+            std::istringstream ss(argv[2]);
+            if (!(ss >> DelayMS))
+                std::cerr << "Invalid number for ms_delay " << argv[1] << '\n';
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--engine_params")
         {
             engineParams = ParseEngineParams(argv[2]);
+            argv++;
+            argc--;
         }
         else
         {
