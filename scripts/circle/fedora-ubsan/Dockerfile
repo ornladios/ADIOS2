@@ -2,7 +2,7 @@ FROM fedora:latest
 
 # Install core dev packages
 RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file \
-        zlib zlib-devel bzip2-libs bzip2-devel hdf5 hdf5-devel \
+        zlib zlib-devel bzip2-libs bzip2-devel hdf5 hdf5-devel vim valgrind \
         python3-devel python3-numpy zeromq zeromq-devel libubsan
 
 # Cleanup headers and packages
