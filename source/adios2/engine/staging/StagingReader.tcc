@@ -26,10 +26,10 @@ template <>
 inline void StagingReader::GetSyncCommon(Variable<std::string> &variable,
                                          std::string *data)
 {
-    variable.m_Data = data;
+    variable.SetData(data);
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank << "     GetSync("
+        std::cout << "Staging Reader " << m_MpiRank << "     GetSync("
                   << variable.m_Name << ")\n";
     }
 }
@@ -37,10 +37,10 @@ inline void StagingReader::GetSyncCommon(Variable<std::string> &variable,
 template <class T>
 inline void StagingReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.m_Data = data;
+    variable.SetData(data);
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank << "     GetSync("
+        std::cout << "Staging Reader " << m_MpiRank << "     GetSync("
                   << variable.m_Name << ")\n";
     }
 }
@@ -48,13 +48,13 @@ inline void StagingReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void StagingReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    // returns immediately
+    GetSyncCommon(variable, data);
+
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank << "     GetDeferred("
+        std::cout << "Staging Reader " << m_MpiRank << "     GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    m_NeedPerformGets = true;
 }
 
 } // end namespace engine

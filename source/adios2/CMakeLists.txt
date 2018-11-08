@@ -82,10 +82,10 @@ endif()
 
 if(ADIOS2_HAVE_ZeroMQ)
     target_sources(adios2 PRIVATE
-        toolkit/transport/wan/WANZmqPubSub.cpp
-        toolkit/transport/wan/WANZmqPubSub.h
-        toolkit/transport/wan/WANZmqP2P.cpp
-        toolkit/transport/wan/WANZmqP2P.h
+        toolkit/transport/socket/SocketZmqPubSub.cpp
+        toolkit/transport/socket/SocketZmqPubSub.h
+        toolkit/transport/socket/SocketZmqP2P.cpp
+        toolkit/transport/socket/SocketZmqP2P.h
         )
     target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()

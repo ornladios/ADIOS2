@@ -50,7 +50,7 @@ public:
 private:
     format::DataManSerializer m_DataManSerializer;
     int m_Verbosity = 0;
-    int64_t m_CurrentStep = -1; // steps start from 0
+    int64_t m_CurrentStep = -1;
     int m_MpiRank;
 
     void Init() final;

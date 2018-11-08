@@ -17,8 +17,8 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-#include "adios2/toolkit/transport/wan/WANZmqP2P.h"
-#include "adios2/toolkit/transport/wan/WANZmqPubSub.h"
+#include "adios2/toolkit/transport/socket/SocketZmqP2P.h"
+#include "adios2/toolkit/transport/socket/SocketZmqPubSub.h"
 #endif
 
 namespace adios2
@@ -31,48 +31,7 @@ StagingMan::StagingMan(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-StagingMan::~StagingMan()
-{
-    auto start_time = std::chrono::system_clock::now();
-    while (true)
-    {
-        int s = 0;
-        m_Mutex.lock();
-        for (const auto &i : m_BufferQueue)
-        {
-            if (i.size() != 0)
-            {
-                ++s;
-            }
-        }
-        m_Mutex.unlock();
-        if (s == 0)
-        {
-            break;
-        }
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
-        if (duration.count() > m_Timeout)
-        {
-            break;
-        }
-        // add a sleep here because this loop is occupying the buffer queue
-        // lock, and this sleep would make time for reader or writer thread and
-        // help it finish sooner.
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
-    }
-    for (auto &readThread : m_ReadThreads)
-    {
-        m_Reading = false;
-        readThread.join();
-    }
-    for (auto &writeThread : m_WriteThreads)
-    {
-        m_Writing = false;
-        writeThread.join();
-    }
-}
+StagingMan::~StagingMan() {}
 
 void StagingMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
@@ -81,166 +40,28 @@ void StagingMan::OpenStagingTransports(
     const std::vector<Params> &paramsVector, const Mode mode,
     const std::string workflowMode, const bool profile)
 {
-    m_TransportsParameters = paramsVector;
-    m_BufferQueue.resize(streamNames.size());
-
-    for (size_t i = 0; i < streamNames.size(); ++i)
-    {
-        // Get parameters
-        std::string library;
-        GetStringParameter(paramsVector[i], "Library", library);
-        std::string ip;
-        GetStringParameter(paramsVector[i], "IPAddress", ip);
-        std::string port;
-        GetStringParameter(paramsVector[i], "Port", port);
-        GetIntParameter(paramsVector[i], "Timeout", m_Timeout);
-
-        // Calculate port number
-        int mpiRank, mpiSize;
-        MPI_Comm_rank(m_MPIComm, &mpiRank);
-        MPI_Comm_size(m_MPIComm, &mpiSize);
-        if (port.empty())
-        {
-            port = std::to_string(stoi(port) + i * mpiSize);
-        }
-        port = std::to_string(stoi(port) + mpiRank);
-
-        // Create transports
-        std::shared_ptr<Transport> wanTransport;
-
-        if (library == "zmq" || library == "ZMQ")
-        {
-#ifdef ADIOS2_HAVE_ZEROMQ
-            // Open transport
-            if (workflowMode == "subscribe")
-            {
-                wanTransport = std::make_shared<transport::WANZmqPubSub>(
-                    ip, port, m_MPIComm, m_DebugMode);
-            }
-            else if (workflowMode == "p2p")
-            {
-                wanTransport = std::make_shared<transport::WANZmqP2P>(
-                    ip, port, m_MPIComm, m_Timeout, m_DebugMode);
-            }
-            else if (workflowMode == "query")
-            {
-            }
-            else
-            {
-                throw(std::invalid_argument(
-                    "[StagingMan::OpenWANTransports] workflow mode " +
-                    workflowMode + " not supported."));
-            }
-
-            wanTransport->Open(streamNames[i], mode);
-            m_Transports.emplace(i, wanTransport);
-
-            // launch thread
-            if (mode == Mode::Read)
-            {
-                m_Reading = true;
-                m_ReadThreads.emplace_back(
-                    std::thread(&StagingMan::ReadThread, this, wanTransport));
-            }
-            else if (mode == Mode::Write)
-            {
-                m_Writing = true;
-                m_WriteThreads.emplace_back(std::thread(
-                    &StagingMan::WriteThread, this, wanTransport, i));
-            }
-#else
-            throw std::invalid_argument(
-                "ERROR: this version of ADIOS2 didn't compile with "
-                "ZMQ library, in call to Open\n");
-#endif
-        }
-        else
-        {
-            if (m_DebugMode)
-            {
-                throw std::invalid_argument("ERROR: wan transport " + library +
-                                            " not supported or not "
-                                            "provided in IO AddTransport, "
-                                            "in call to Open\n");
-            }
-        }
-    }
 }
 
 void StagingMan::WriteStaging(std::shared_ptr<std::vector<char>> buffer,
                               size_t id)
 {
-    PushBufferQueue(buffer, id);
 }
 
 void StagingMan::WriteStaging(const std::vector<char> &buffer,
                               size_t transportId)
 {
-    if (transportId >= m_Transports.size())
-    {
-        throw std::runtime_error(
-            "ERROR: No valid transports found, from StagingMan::WriteWAN()");
-    }
-
-    m_Transports[transportId]->Write(buffer.data(), buffer.size());
 }
 
-std::shared_ptr<std::vector<char>> StagingMan::ReadStaging(size_t id)
-{
-    return PopBufferQueue(id);
-}
+std::shared_ptr<std::vector<char>> StagingMan::ReadStaging(size_t id) {}
 
 void StagingMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v,
                                  size_t id)
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
-    m_BufferQueue[id].push(v);
 }
 
-std::shared_ptr<std::vector<char>> StagingMan::PopBufferQueue(size_t id)
-{
-    std::lock_guard<std::mutex> l(m_Mutex);
-    if (m_BufferQueue[id].size() > 0)
-    {
-        std::shared_ptr<std::vector<char>> vec = m_BufferQueue[id].front();
-        m_BufferQueue[id].pop();
-        return vec;
-    }
-    return nullptr;
-}
+std::shared_ptr<std::vector<char>> StagingMan::PopBufferQueue(size_t id) {}
 
-void StagingMan::WriteThread(std::shared_ptr<Transport> transport, size_t id)
-{
-    while (m_Writing)
-    {
-        Transport::Status status;
-        std::shared_ptr<std::vector<char>> buffer = PopBufferQueue(id);
-        if (buffer != nullptr)
-        {
-            if (buffer->size() > 0)
-            {
-                transport->IWrite(buffer->data(), buffer->size(), status);
-            }
-        }
-    }
-}
-
-void StagingMan::ReadThread(std::shared_ptr<Transport> transport)
-{
-    std::vector<char> buffer(m_MaxReceiveBuffer);
-    while (m_Reading)
-    {
-        Transport::Status status;
-        transport->IRead(buffer.data(), m_MaxReceiveBuffer, status);
-        if (status.Bytes > 0)
-        {
-            std::shared_ptr<std::vector<char>> bufferQ =
-                std::make_shared<std::vector<char>>(status.Bytes);
-            std::memcpy(bufferQ->data(), buffer.data(), status.Bytes);
-            PushBufferQueue(bufferQ, 0);
-        }
-    }
-}
+void StagingMan::WriteThread(std::shared_ptr<Transport> transport, size_t id) {}
 
 bool StagingMan::GetBoolParameter(const Params &params, const std::string key)
 {

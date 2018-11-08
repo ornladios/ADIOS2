@@ -24,7 +24,7 @@ namespace adios2
 namespace transportman
 {
 
-class DataMan : public TransportMan
+class DataMan
 {
 
 public:
@@ -32,20 +32,25 @@ public:
 
     ~DataMan();
 
-    void OpenWANTransports(const std::vector<std::string> &streamNames,
-                           const std::vector<Params> &parametersVector,
-                           const Mode openMode, const std::string workflowMode,
-                           const bool profile);
+    void OpenSocketTransports(const std::vector<std::string> &streamNames,
+                              const std::vector<Params> &parametersVector,
+                              const Mode openMode,
+                              const std::string workflowMode,
+                              const bool profile);
 
-    void WriteWAN(const std::vector<char> &buffer, size_t transportId);
-    void WriteWAN(std::shared_ptr<std::vector<char>> buffer,
-                  size_t transportId);
+    void WriteSocket(const std::vector<char> &buffer, size_t transportId);
+    void WriteSocket(std::shared_ptr<std::vector<char>> buffer,
+                     size_t transportId);
 
-    std::shared_ptr<std::vector<char>> ReadWAN(size_t id);
+    std::shared_ptr<std::vector<char>> ReadSocket(size_t id);
 
     void SetMaxReceiveBuffer(size_t size);
 
 private:
+    std::unordered_map<size_t, std::shared_ptr<Transport>> m_Transports;
+    MPI_Comm m_MpiComm;
+    bool m_DebugMode;
+
     // Objects for buffer queue
     std::vector<std::queue<std::shared_ptr<std::vector<char>>>> m_BufferQueue;
     void PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id);

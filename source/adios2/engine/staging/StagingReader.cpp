@@ -12,6 +12,7 @@
 #include "StagingReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <iostream>
 
@@ -27,11 +28,11 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
 : Engine("StagingReader", io, name, mode, mpiComm)
 {
     m_EndMessage = " in call to IO Open StagingReader " + m_Name + "\n";
-    MPI_Comm_rank(mpiComm, &m_ReaderRank);
+    MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank << " Open(" << m_Name
+        std::cout << "Staging Reader " << m_MpiRank << " Open(" << m_Name
                   << ") in constructor." << std::endl;
     }
 }
@@ -41,7 +42,7 @@ StagingReader::~StagingReader()
     /* m_Staging deconstructor does close and finalize */
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank << " deconstructor on "
+        std::cout << "Staging Reader " << m_MpiRank << " deconstructor on "
                   << m_Name << "\n";
     }
 }
@@ -55,19 +56,8 @@ StepStatus StagingReader::BeginStep(const StepMode mode,
 
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank
+        std::cout << "Staging Reader " << m_MpiRank
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
-    }
-
-    // If we reach the end of stream (writer is gone or explicitly tells the
-    // reader)
-    // we return EndOfStream to the reader application
-    if (m_CurrentStep == 2)
-    {
-        std::cout << "Staging Reader " << m_ReaderRank
-                  << "   forcefully returns End of Stream at this step\n";
-
-        return StepStatus::EndOfStream;
     }
 
     // We should block until a new step arrives or reach the timeout
@@ -82,26 +72,17 @@ void StagingReader::PerformGets()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank
-                  << "     PerformGets()\n";
+        std::cout << "Staging Reader " << m_MpiRank << "     PerformGets()\n";
     }
-    m_NeedPerformGets = false;
 }
 
 size_t StagingReader::CurrentStep() const { return m_CurrentStep; }
 
 void StagingReader::EndStep()
 {
-    // EndStep should call PerformGets() if there are unserved GetDeferred()
-    // requests
-    if (m_NeedPerformGets)
-    {
-        PerformGets();
-    }
-
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank << "   EndStep()\n";
+        std::cout << "Staging Reader " << m_MpiRank << "   EndStep()\n";
     }
 }
 
@@ -124,6 +105,7 @@ void StagingReader::Init()
 {
     InitParameters();
     InitTransports();
+    Handshake();
 }
 
 void StagingReader::InitParameters()
@@ -156,11 +138,23 @@ void StagingReader::InitTransports()
     // Nothing to process from m_IO.m_TransportsParameters
 }
 
+void StagingReader::Handshake()
+{
+    transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
+    ipstream.Open(".StagingHandshake", Mode::Read);
+    auto size = ipstream.GetSize();
+    std::vector<char> ip(size);
+    ipstream.Read(ip.data(), size);
+    ipstream.Close();
+    m_WriterMasterIP = std::string(ip.begin(), ip.end());
+    std::cout << m_WriterMasterIP << std::endl;
+}
+
 void StagingReader::DoClose(const int transportIndex)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_ReaderRank << " Close(" << m_Name
+        std::cout << "Staging Reader " << m_MpiRank << " Close(" << m_Name
                   << ")\n";
     }
 }

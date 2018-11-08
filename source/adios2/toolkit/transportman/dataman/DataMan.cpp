@@ -17,8 +17,8 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-#include "adios2/toolkit/transport/wan/WANZmqP2P.h"
-#include "adios2/toolkit/transport/wan/WANZmqPubSub.h"
+#include "adios2/toolkit/transport/socket/SocketZmqP2P.h"
+#include "adios2/toolkit/transport/socket/SocketZmqPubSub.h"
 #endif
 
 namespace adios2
@@ -27,7 +27,7 @@ namespace transportman
 {
 
 DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
-: TransportMan(mpiComm, debugMode)
+: m_MpiComm(mpiComm), m_DebugMode(debugMode)
 {
 }
 
@@ -76,10 +76,11 @@ DataMan::~DataMan()
 
 void DataMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
-void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
-                                const std::vector<Params> &paramsVector,
-                                const Mode mode, const std::string workflowMode,
-                                const bool profile)
+void DataMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
+                                   const std::vector<Params> &paramsVector,
+                                   const Mode mode,
+                                   const std::string workflowMode,
+                                   const bool profile)
 {
     m_TransportsParameters = paramsVector;
     m_BufferQueue.resize(streamNames.size());
@@ -97,8 +98,8 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
 
         // Calculate port number
         int mpiRank, mpiSize;
-        MPI_Comm_rank(m_MPIComm, &mpiRank);
-        MPI_Comm_size(m_MPIComm, &mpiSize);
+        MPI_Comm_rank(m_MpiComm, &mpiRank);
+        MPI_Comm_size(m_MpiComm, &mpiSize);
         if (port.empty())
         {
             port = std::to_string(stoi(port) + i * mpiSize);
@@ -106,7 +107,7 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
         port = std::to_string(stoi(port) + mpiRank);
 
         // Create transports
-        std::shared_ptr<Transport> wanTransport;
+        std::shared_ptr<transport::SocketZmq> wanTransport;
 
         if (library == "zmq" || library == "ZMQ")
         {
@@ -114,13 +115,13 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             // Open transport
             if (workflowMode == "subscribe")
             {
-                wanTransport = std::make_shared<transport::WANZmqPubSub>(
-                    ip, port, m_MPIComm, m_DebugMode);
+                wanTransport = std::make_shared<transport::SocketZmqPubSub>(
+                    m_MpiComm, m_DebugMode);
             }
             else if (workflowMode == "p2p")
             {
-                wanTransport = std::make_shared<transport::WANZmqP2P>(
-                    ip, port, m_MPIComm, m_Timeout, m_DebugMode);
+                wanTransport = std::make_shared<transport::SocketZmqP2P>(
+                    m_MpiComm, m_Timeout, m_DebugMode);
             }
             else if (workflowMode == "query")
             {
@@ -128,11 +129,11 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
             else
             {
                 throw(std::invalid_argument(
-                    "[DataMan::OpenWANTransports] workflow mode " +
+                    "[DataMan::OpenSocketTransports] workflow mode " +
                     workflowMode + " not supported."));
             }
 
-            wanTransport->Open(streamNames[i], mode);
+            wanTransport->Open(ip, port, streamNames[i], mode);
             m_Transports.emplace(i, wanTransport);
 
             // launch thread
@@ -167,23 +168,23 @@ void DataMan::OpenWANTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteWAN(std::shared_ptr<std::vector<char>> buffer, size_t id)
+void DataMan::WriteSocket(std::shared_ptr<std::vector<char>> buffer, size_t id)
 {
     PushBufferQueue(buffer, id);
 }
 
-void DataMan::WriteWAN(const std::vector<char> &buffer, size_t transportId)
+void DataMan::WriteSocket(const std::vector<char> &buffer, size_t transportId)
 {
     if (transportId >= m_Transports.size())
     {
         throw std::runtime_error(
-            "ERROR: No valid transports found, from DataMan::WriteWAN()");
+            "ERROR: No valid transports found, from DataMan::WriteSocket()");
     }
 
     m_Transports[transportId]->Write(buffer.data(), buffer.size());
 }
 
-std::shared_ptr<std::vector<char>> DataMan::ReadWAN(size_t id)
+std::shared_ptr<std::vector<char>> DataMan::ReadSocket(size_t id)
 {
     return PopBufferQueue(id);
 }

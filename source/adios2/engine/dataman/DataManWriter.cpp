@@ -78,7 +78,7 @@ void DataManWriter::EndStep()
             const std::shared_ptr<std::vector<char>> buf =
                 m_DataManSerializer[i]->Get();
             m_BufferSize = buf->size() * 2;
-            m_DataMan->WriteWAN(buf, i);
+            m_DataMan->WriteSocket(buf, i);
         }
     }
     else if (m_Format == "binary")
@@ -106,8 +106,8 @@ void DataManWriter::Init()
 
     // initialize transports
     m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                 Mode::Write, m_WorkflowMode, true);
+    m_DataMan->OpenSocketTransports(m_StreamNames, m_IO.m_TransportsParameters,
+                                    Mode::Write, m_WorkflowMode, true);
 
     // initialize serializer
     if (m_Format == "dataman")
@@ -153,8 +153,8 @@ void DataManWriter::DoClose(const int transportIndex)
 
     if (m_Format == "dataman")
     {
-        m_DataMan->WriteWAN(format::DataManSerializer::EndSignal(CurrentStep()),
-                            0);
+        m_DataMan->WriteSocket(
+            format::DataManSerializer::EndSignal(CurrentStep()), 0);
     }
 }
 

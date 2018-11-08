@@ -103,6 +103,7 @@ void StagingWriter::Init()
 {
     InitParameters();
     InitTransports();
+    Handshake();
 }
 
 void StagingWriter::InitParameters()
@@ -130,12 +131,22 @@ void StagingWriter::InitParameters()
     }
 }
 
-void StagingWriter::InitTransports()
-{
-    // Nothing to process from m_IO.m_TransportsParameters
-}
+void StagingWriter::InitTransports() {}
 
-void StagingWriter::Handshake() {}
+void StagingWriter::Handshake()
+{
+    auto ips = helper::AvailableIpAddresses();
+    if (ips.size() < 1)
+    {
+        throw(std::runtime_error("No network interface available"));
+        return;
+    }
+    int useIP = 0;
+    transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
+    ipstream.Open(".StagingHandshake", Mode::Write);
+    ipstream.Write(ips[0].data(), ips[0].size());
+    ipstream.Close();
+}
 
 void StagingWriter::DoClose(const int transportIndex)
 {

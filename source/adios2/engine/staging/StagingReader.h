@@ -50,18 +50,14 @@ public:
 
 private:
     int m_Verbosity = 0;
-    int m_ReaderRank; // my rank in the readers' comm
+    int64_t m_CurrentStep = -1;
+    int m_MpiRank;
+    std::string m_WriterMasterIP;
 
-    // step info should be received from the writer side in BeginStep()
-    int m_CurrentStep = -1;
-
-    // EndStep must call PerformGets if necessary
-    bool m_NeedPerformGets = false;
-
-    void Init() final; ///< called from constructor, gets the selected Staging
-                       /// transport method from settings
+    void Init() final;
     void InitParameters() final;
     void InitTransports() final;
+    void Handshake();
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
