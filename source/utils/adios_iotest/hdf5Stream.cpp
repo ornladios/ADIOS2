@@ -179,19 +179,30 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
 
 void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
 {
-    hid_t dataset = H5Dopen2(h5file, ov->name.c_str(), H5P_DEFAULT);
-    if (dataset == -1)
+    hid_t dataset;
+    hid_t filespace;
+    if (step == 1)
     {
-        std::cout << "        Variable " << ov->name
-                  << " is not in the file: " << std::endl;
-        ov->readFromInput = false;
-        return;
+        dataset = H5Dopen2(h5file, ov->name.c_str(), H5P_DEFAULT);
+        if (dataset == -1)
+        {
+            std::cout << "        Variable " << ov->name
+                      << " is not in the file: " << std::endl;
+            ov->readFromInput = false;
+            return;
+        }
+        filespace = H5Dget_space(dataset);
+        varmap.emplace(
+            std::make_pair(ov->name, hdf5VarInfo(dataset, filespace)));
     }
-    hid_t filespace = H5Dget_space(dataset);
-    // hsize_t dims[ov->ndim + 1];
-    int ndim = H5Sget_simple_extent_ndims(filespace);
-    // H5Sget_simple_extent_dims(filespace, dims, NULL);
-    /* ndim == var->ndim+1 */
+    else
+    {
+        const auto it = varmap.find(ov->name);
+        hdf5VarInfo &vi = it->second;
+        dataset = vi.dataset;
+        filespace = vi.dataspace;
+    }
+    int ndim = ov->ndim + 1;
 
     hsize_t start[ndim];
     hsize_t count[ndim];
@@ -211,9 +222,7 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
     H5Dread(dataset, hdf5Type(ov->type), memspace, filespace, dxpl_id, buf);
 
     H5Sclose(memspace);
-    H5Sclose(filespace);
     H5Pclose(dxpl_id);
-    H5Dclose(dataset);
     ov->readFromInput = true;
 }
 
