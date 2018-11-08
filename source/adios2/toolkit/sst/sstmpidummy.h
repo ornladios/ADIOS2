@@ -27,7 +27,6 @@ typedef int MPI_Op;
 #define MPI_SEEK_SET SEEK_SET
 #define MPI_SEEK_CUR SEEK_CUR
 #define MPI_SEEK_END SEEK_END
-#define MPI_BYTE 1 /* I need the size of the type here */
 #define MPI_INFO_NULL 0
 
 #define MPI_COMM_NULL 0
@@ -36,6 +35,7 @@ typedef int MPI_Op;
 
 #define MPI_INT 1
 #define MPI_CHAR 2
+#define MPI_BYTE 2
 #define MPI_DOUBLE 3
 #define MPI_UNSIGNED 4
 #define MPI_UNSIGNED_LONG 5
