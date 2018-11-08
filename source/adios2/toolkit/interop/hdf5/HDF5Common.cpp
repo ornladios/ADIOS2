@@ -27,6 +27,21 @@ namespace interop
 
 const std::string HDF5Common::ATTRNAME_NUM_STEPS = "NumSteps";
 const std::string HDF5Common::ATTRNAME_GIVEN_ADIOSNAME = "ADIOSName";
+const std::string HDF5Common::PREFIX_BLOCKINFO = "ADIOS_BLOCKINFO_";
+const std::string HDF5Common::PREFIX_STAT = "ADIOS_STAT_";
+
+/*
+   //need to know ndim before defining this.
+   //inconvenient
+class HDF5BlockStat
+{
+public:
+  size_t m_offset[ndim];
+  size_t m_Count[ndim];
+  double m_Min;
+  double m_Max;
+};
+*/
 
 HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
 {
@@ -41,6 +56,11 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
     H5Tinsert(m_DefH5TypeComplexDouble, "dreal", 0, H5T_NATIVE_DOUBLE);
     H5Tinsert(m_DefH5TypeComplexDouble, "dimg", H5Tget_size(H5T_NATIVE_DOUBLE),
               H5T_NATIVE_DOUBLE);
+
+    m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
+#ifdef ADIOS2_HAVE_MPI
+    H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+#endif
 }
 
 void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
@@ -50,6 +70,8 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
 
 #ifdef ADIOS2_HAVE_MPI
     H5Pset_fapl_mpio(m_PropertyListId, comm, MPI_INFO_NULL);
+    MPI_Comm_rank(comm, &m_CommRank);
+    MPI_Comm_size(comm, &m_CommSize);
 #endif
 
     // std::string ts0 = "/AdiosStep0";
@@ -211,25 +233,30 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
                 int currType = H5Gget_objtype_by_idx(gid, k);
                 if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
                 {
-                    // std::cout<<" ... handling native: "<<name<<" from
-                    // :"<<heritage<<"/"<<gname<<std::endl;
-                    hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
-                    HDF5TypeGuard d(datasetId, E_H5_DATASET);
-
-                    char longName[std::strlen(heritage) + std::strlen(gname) +
-                                  std::strlen(name) + 10];
-
-                    if (strcmp(gname, "/") == 0)
+                    std::string nameStr = name;
+                    if (!(0 == nameStr.find(PREFIX_BLOCKINFO)) &&
+                        !(0 == nameStr.find(PREFIX_STAT)))
                     {
-                        sprintf(longName, "/%s", name);
+                        hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+                        HDF5TypeGuard d(datasetId, E_H5_DATASET);
+
+                        char longName[std::strlen(heritage) +
+                                      std::strlen(gname) + std::strlen(name) +
+                                      10];
+
+                        if (strcmp(gname, "/") == 0)
+                        {
+                            sprintf(longName, "/%s", name);
+                        }
+                        else
+                        {
+                            sprintf(longName, "%s/%s/%s", heritage, gname,
+                                    name);
+                        }
+                        // CreateVar(io, datasetId, name);
+                        ReadNativeAttrToIO(io, datasetId, longName);
+                        CreateVar(io, datasetId, longName, ts);
                     }
-                    else
-                    {
-                        sprintf(longName, "%s/%s/%s", heritage, gname, name);
-                    }
-                    // CreateVar(io, datasetId, name);
-                    ReadNativeAttrToIO(io, datasetId, longName);
-                    CreateVar(io, datasetId, longName, ts);
                 }
                 else if (currType == H5G_GROUP)
                 {
@@ -307,11 +334,16 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
                 }
                 else if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
                 {
-                    hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+                    std::string nameStr = name;
+                    if (!(0 == nameStr.find(PREFIX_BLOCKINFO)) &&
+                        !(0 == nameStr.find(PREFIX_STAT)))
+                    {
+                        hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
 
-                    HDF5TypeGuard d(datasetId, E_H5_DATASET);
-                    ReadNativeAttrToIO(io, datasetId, name);
-                    CreateVar(io, datasetId, name, ts);
+                        HDF5TypeGuard d(datasetId, E_H5_DATASET);
+                        ReadNativeAttrToIO(io, datasetId, name);
+                        CreateVar(io, datasetId, name, ts);
+                    }
                 }
             }
         }
@@ -505,6 +537,7 @@ void HDF5Common::Close()
         H5Gclose(m_GroupId);
     }
 
+    H5Pclose(m_PropertyTxfID);
     H5Fclose(m_FileId);
     m_FileId = -1;
     m_GroupId = -1;

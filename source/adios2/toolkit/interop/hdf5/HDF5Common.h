@@ -112,6 +112,8 @@ public:
 
     static const std::string ATTRNAME_NUM_STEPS;
     static const std::string ATTRNAME_GIVEN_ADIOSNAME;
+    static const std::string PREFIX_BLOCKINFO;
+    static const std::string PREFIX_STAT;
 
     void Init(const std::string &name, MPI_Comm comm, bool toWrite);
 
@@ -164,11 +166,13 @@ public:
     static void StaticGetAdiosStepString(std::string &adiosStepName, int ts);
 
     hid_t m_PropertyListId = -1;
+    hid_t m_PropertyTxfID = -1;
     hid_t m_FileId = -1;
     hid_t m_GroupId = -1;
 
     hid_t m_DefH5TypeComplexDouble;
     hid_t m_DefH5TypeComplexFloat;
+    hid_t m_DefH5TypeBlockStat;
 
     unsigned int m_CurrentAdiosStep = 0;
 
@@ -197,13 +201,21 @@ private:
     const bool m_DebugMode;
     bool m_WriteMode = false;
     unsigned int m_NumAdiosSteps = 0;
+
+    int m_CommRank = 0;
+    int m_CommSize = 1;
+
+    template <class T>
+    void AddBlockInfo(const core::Variable<T> &varaible, hid_t parentId);
+    template <class T>
+    void AddStats(const core::Variable<T> &variable, hid_t parentId,
+                  std::vector<T> &stats);
 };
 
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
     extern template void HDF5Common::Write(core::Variable<T> &variable,        \
                                            const T *value);
-
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
