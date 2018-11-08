@@ -1,7 +1,7 @@
 FROM centos:centos7
 
 # Install core dev packages
-RUN yum -y install make curl file git \
+RUN yum -y install make curl file git valgrind vim \
         gdb zlib zlib-devel bzip2 bzip2-libs bzip2-devel
 RUN yum -y install epel-release
 RUN yum -y install zeromq-devel python34-devel

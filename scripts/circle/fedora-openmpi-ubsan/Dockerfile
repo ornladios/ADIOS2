@@ -2,7 +2,7 @@ FROM fedora:latest
 
 # Install core dev packages
 RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file patch \
-        zlib-devel bzip2-devel openmpi-devel hdf5-openmpi-devel \
+        zlib-devel bzip2-devel openmpi-devel hdf5-openmpi-devel vim valgrind \
         python3-devel python3-numpy python3-mpi4py-openmpi zeromq-devel libubsan
 
 # Patch the installed Lmod to properly deal with a CMake shell
