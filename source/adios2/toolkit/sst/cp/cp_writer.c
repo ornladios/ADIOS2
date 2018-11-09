@@ -562,12 +562,11 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (MyStartingTimestep != GlobalStartingTimestep)
     {
         CP_verbose(Stream, "In writer participate in reader open, releasing "
-                           "timesteps from %ld to %ld\n" MyStartingTimestep,
-                   GlobalStartingTimestep - 1);
+                           "timesteps from %ld to %ld\n",
+                   MyStartingTimestep, GlobalStartingTimestep - 1);
 
-                   CP_WSR_Stream->LastSentTimestep);
-                   SubRefRangeTimestep(Stream, MyStartingTimestep,
-                                       GlobalStartingTimestep - 1);
+        SubRefRangeTimestep(Stream, MyStartingTimestep,
+                            GlobalStartingTimestep - 1);
     }
     CP_verbose(Stream,
                "My oldest timestep was %ld, global oldest timestep was %ld\n",
@@ -818,7 +817,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
     if ((NewState == PeerClosed) || (NewState == Closed))
     {
-        CP_verbose(Stream,
+        CP_verbose(ParentStream,
                    "In PeerFailCloseWSReader, releasing timesteps from %ld to "
                    "%ld\n" CP_WSR_Stream->OldestUnreleasedTimestep,
                    CP_WSR_Stream->LastSentTimestep);
