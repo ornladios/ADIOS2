@@ -30,6 +30,7 @@ static char *readContactInfoFile(const char *Name, SstStream Stream)
     size_t len = strlen(Name) + strlen(SST_POSTFIX) + 1;
     char *FileName = malloc(len);
     FILE *WriterInfo;
+    long TotalSleepTime = 0;
     snprintf(FileName, len, "%s" SST_POSTFIX, Name);
 //    printf("Looking for writer contact in file %s\n", FileName);
 redo:
@@ -37,6 +38,14 @@ redo:
     while (!WriterInfo)
     {
         CMusleep(Stream->CPInfo->cm, 500);
+        TotalSleepTime += 500;
+        if (TotalSleepTime > 30 * 1000 * 1000)
+        {
+            fprintf(stderr, "ADIOS2 SST Engine waiting for contact information "
+                            "file %s to be created\n",
+                    Name);
+            TotalSleepTime = 0;
+        }
         WriterInfo = fopen(FileName, "r");
     }
     struct stat Buf;

@@ -35,9 +35,8 @@ public:
 
     virtual ~SstWriter();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;

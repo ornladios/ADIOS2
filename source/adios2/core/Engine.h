@@ -90,9 +90,8 @@ public:
      * @param timeoutSeconds (not yet implemented)
      * @return current step status
      */
-    virtual StepStatus
-    BeginStep(StepMode mode,
-              const float timeoutSeconds = std::numeric_limits<float>::max());
+    virtual StepStatus BeginStep(StepMode mode,
+                                 const float timeoutSeconds = -1.0);
 
     /**
      * Returns current step information for each engine.
