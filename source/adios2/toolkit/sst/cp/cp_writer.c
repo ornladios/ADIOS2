@@ -826,7 +826,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                             CP_WSR_Stream->OldestUnreleasedTimestep,
                             CP_WSR_Stream->LastSentTimestep);
         CP_WSR_Stream->OldestUnreleasedTimestep =
-            CP_WSR_Stream->LastSentTimestep++;
+            CP_WSR_Stream->LastSentTimestep + 1;
     }
     if (NewState == PeerFailed)
     {
@@ -1555,7 +1555,7 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     /* decrement the reference count for the released timestep */
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
     SubRefRangeTimestep(ParentStream, Msg->Timestep, Msg->Timestep);
-    Reader->OldestUnreleasedTimestep = Msg->Timestep++;
+    Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     pthread_cond_signal(&ParentStream->DataCondition);
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
 }
