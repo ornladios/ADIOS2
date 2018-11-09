@@ -58,7 +58,7 @@ unless($writer_pid)
     my $writer_arg_str = "";
     $writer_arg_str = join(" ", @writer_args) if (@writer_args);
     my $result = system("$writer_exec_cmd $my_dirname/$writer_prog " . $writer_arg_str);
-    print "TestDriver: System returns ", $result, " \n";
+    print "TestDriver: System for writer returns ", $result, " \n";
     exit $result;
 }
 print "TestDriver: Writer PID: $writer_pid\n" if $verbose;
@@ -82,7 +82,7 @@ if ($test_protocol eq "kill_readers") {
 	  #Child process is here
 	  print "TestDriver: System( $my_dirname/$reader_prog)\n" if $verbose;
 	  my $result = system ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @reader_args));
-	  print "TestDriver: System returns ", $result, " \n";
+	  print "TestDriver: System for kill_readers Reader returns ", $result, " \n";
 	  exit $result;
 	}
       print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
@@ -136,8 +136,9 @@ if ($test_protocol eq "one_to_one") {
     {
 	#Child process is here
 	print "TestDriver: EXEC $my_dirname/$reader_prog\n" if $verbose;
-	exec ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @reader_args));
-	die "Can't exec @MPIEXEC@! $!";
+	my $result = system ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @reader_args));
+	print "TestDriver: System() for one_to_one Reader returned $result\n" if $verbose;
+	exit $result;
     }
     print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
     waitpid($reader_pid, 0);
