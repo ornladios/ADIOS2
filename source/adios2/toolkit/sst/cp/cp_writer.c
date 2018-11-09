@@ -814,7 +814,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     if ((NewState == PeerClosed) || (NewState == Closed))
     {
         SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
-                            CP_WSR_Stream->StartingTimestep,
+                            CP_WSR_Stream->OldestUnreleasedTimestep,
                             CP_WSR_Stream->LastSentTimestep);
     }
     if (NewState == PeerFailed)
