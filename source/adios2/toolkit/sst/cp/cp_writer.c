@@ -819,7 +819,8 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     {
         CP_verbose(ParentStream,
                    "In PeerFailCloseWSReader, releasing timesteps from %ld to "
-                   "%ld\n" CP_WSR_Stream->OldestUnreleasedTimestep,
+                   "%ld\n",
+                   CP_WSR_Stream->OldestUnreleasedTimestep,
                    CP_WSR_Stream->LastSentTimestep);
         SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
                             CP_WSR_Stream->OldestUnreleasedTimestep,
