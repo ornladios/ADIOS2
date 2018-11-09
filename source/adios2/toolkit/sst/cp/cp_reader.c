@@ -637,6 +637,13 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
                        "Returning from wait with timeout, NO TIMEOUT\n");
             return;
         }
+        if (Stream->Status != Established)
+        {
+            pthread_mutex_unlock(&Stream->DataLock);
+            CP_verbose(Stream, "Returning from wait with timeout, STREAM NO "
+                               "LONGER ESTABLISHED\n");
+            return;
+        }
         gettimeofday(&now, NULL);
         CP_verbose(Stream, "timercmp, now is %ld.%06ld    end is %ld.%06ld \n",
                    now.tv_sec, now.tv_usec, end.tv_sec, end.tv_usec);
@@ -989,6 +996,13 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         else
         {
             MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+        }
+        if (Stream->Status == PeerClosed)
+        {
+            CP_verbose(Stream,
+                       "SstAdvanceStep returning EndOfStream at timestep %d\n",
+                       Stream->ReaderTimestep);
+            return SstEndOfStream;
         }
         if (NextTimestep == -1)
         {
