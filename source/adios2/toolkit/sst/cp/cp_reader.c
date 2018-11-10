@@ -997,7 +997,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         {
             MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
-        if (Stream->Status == PeerClosed)
+        if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
         {
             CP_verbose(Stream,
                        "SstAdvanceStep returning EndOfStream at timestep %d\n",
