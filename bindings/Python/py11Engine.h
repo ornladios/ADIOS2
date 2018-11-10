@@ -33,7 +33,8 @@ public:
 
     ~Engine() = default;
 
-    StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
+    StepStatus BeginStep(const StepMode mode,
+                         const float timeoutSeconds = -1.f);
 
     void Put(core::VariableBase *variable, const pybind11::array &array,
              const Mode launch = Mode::Deferred);

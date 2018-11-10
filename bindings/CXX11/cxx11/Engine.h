@@ -75,7 +75,8 @@ public:
      * @param timeoutSeconds
      * @return current step status
      */
-    StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
+    StepStatus BeginStep(const StepMode mode,
+                         const float timeoutSeconds = -1.f);
 
     /**
      * Inspect current logical step
