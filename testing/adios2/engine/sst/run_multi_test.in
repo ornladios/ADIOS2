@@ -31,7 +31,7 @@ GetOptions ('verbose!' => \$verbose,
 	    'nr=i' => \$num_readers,
 	    'duration=i' => \$duration,
 	    'interval=i' => \$interval,
-	    'max_readers=i' => \$num_readers,
+	    'max_readers=i' => \$max_readers,
 	    'test_protocol=s' => \$test_protocol)
   or die("Error in command line arguments\n");
 

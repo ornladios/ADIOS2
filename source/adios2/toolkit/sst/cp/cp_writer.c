@@ -1063,6 +1063,10 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
     {
         SendBlock[1] = 1; /* this rank is over stream limit */
     }
+    else
+    {
+        SendBlock[1] = 0; /* No problems here */
+    }
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
         SendBlock[i + 2] = Stream->Readers[i]->ReaderStatus;
