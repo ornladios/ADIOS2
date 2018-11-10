@@ -322,7 +322,7 @@ PYBIND11_MODULE(adios2, m)
                                     const std::vector<std::string> &)) &
                  adios2::py11::IO::DefineAttribute,
              pybind11::return_value_policy::reference_internal)
-        .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(
+        .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
@@ -540,7 +540,7 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("readstring",
-             (std::string(adios2::py11::File::*)(const std::string &)) &
+             (std::string (adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), R"md(
@@ -556,7 +556,7 @@ PYBIND11_MODULE(adios2, m)
                      string value of variable name for current step.
         )md")
 
-        .def("readstring", (std::string(adios2::py11::File::*)(
+        .def("readstring", (std::string (adios2::py11::File::*)(
                                const std::string &, const size_t)) &
                                adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
@@ -576,7 +576,7 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("read",
-             (pybind11::array(adios2::py11::File::*)(const std::string &)) &
+             (pybind11::array (adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), R"md(
@@ -593,7 +593,7 @@ PYBIND11_MODULE(adios2, m)
                         Single values will have a shape={1} numpy array
         )md")
 
-        .def("read", (pybind11::array(adios2::py11::File::*)(
+        .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
                          const adios2::Dims &)) &
                          adios2::py11::File::Read,
@@ -619,7 +619,7 @@ PYBIND11_MODULE(adios2, m)
                      empty if exception is thrown
         )md")
 
-        .def("read", (pybind11::array(adios2::py11::File::*)(
+        .def("read", (pybind11::array (adios2::py11::File::*)(
                          const std::string &, const adios2::Dims &,
                          const adios2::Dims &, const size_t, const size_t)) &
                          adios2::py11::File::Read,
