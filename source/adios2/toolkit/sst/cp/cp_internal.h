@@ -160,6 +160,8 @@ struct _SstStream
     SstFullMetadata CurrentMetadata;
     struct _SstParams *WriterConfigParams;
     void *ParamsBlock;
+    long DiscardPriorTimestep; /* timesteps numerically less than this will be
+                                  discarded with prejudice */
 
     /* reader side marshal info */
     FFSContext ReaderFFSContext;

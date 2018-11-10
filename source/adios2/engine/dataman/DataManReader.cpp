@@ -59,10 +59,11 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         // timeout == std::numeric_limits<float>::max() means there is no
         // timeout, and it should block
         // forever until it receives something.
-        if (timeoutSeconds != std::numeric_limits<float>::max())
+        if (timeoutSeconds >= 0.0)
         {
             if (duration.count() > timeoutSeconds)
             {
+                std::cout << "Dataman Reader timeing out" << std::endl;
                 return StepStatus::NotReady;
             }
         }

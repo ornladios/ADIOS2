@@ -248,8 +248,6 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         ++t;
     }
 
-    EXPECT_EQ(t, NSteps);
-
     if ((write_times.back() - write_times.front()) > 1)
     {
         TimeGapDetected++;
@@ -261,6 +259,8 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
     }
     else
     {
+        EXPECT_EQ(t, NSteps);
+
         EXPECT_FALSE(TimeGapDetected);
     }
     // Close the file

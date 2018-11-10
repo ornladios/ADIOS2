@@ -334,7 +334,7 @@ PYBIND11_MODULE(adios2, m)
     pybind11::class_<adios2::py11::Engine>(m, "Engine")
         .def("BeginStep", &adios2::py11::Engine::BeginStep,
              pybind11::arg("mode") = adios2::StepMode::NextAvailable,
-             pybind11::arg("timeoutSeconds") = 0.f)
+             pybind11::arg("timeoutSeconds") = -1.f)
 
         .def("Put", (void (adios2::py11::Engine::*)(
                         adios2::core::VariableBase *, const pybind11::array &,

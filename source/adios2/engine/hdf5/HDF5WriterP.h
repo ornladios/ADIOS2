@@ -42,9 +42,8 @@ public:
 
     ~HDF5WriterP();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     void EndStep() final;
 
     void PerformPuts() final;

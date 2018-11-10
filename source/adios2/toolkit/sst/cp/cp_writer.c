@@ -561,6 +561,10 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
      */
     if (MyStartingTimestep != GlobalStartingTimestep)
     {
+        CP_verbose(Stream, "In writer participate in reader open, releasing "
+                           "timesteps from %ld to %ld\n",
+                   MyStartingTimestep, GlobalStartingTimestep - 1);
+
         SubRefRangeTimestep(Stream, MyStartingTimestep,
                             GlobalStartingTimestep - 1);
     }
@@ -813,9 +817,16 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
     if ((NewState == PeerClosed) || (NewState == Closed))
     {
+        CP_verbose(ParentStream,
+                   "In PeerFailCloseWSReader, releasing timesteps from %ld to "
+                   "%ld\n",
+                   CP_WSR_Stream->OldestUnreleasedTimestep,
+                   CP_WSR_Stream->LastSentTimestep);
         SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
-                            CP_WSR_Stream->StartingTimestep,
+                            CP_WSR_Stream->OldestUnreleasedTimestep,
                             CP_WSR_Stream->LastSentTimestep);
+        CP_WSR_Stream->OldestUnreleasedTimestep =
+            CP_WSR_Stream->LastSentTimestep + 1;
     }
     if (NewState == PeerFailed)
     {
@@ -1017,11 +1028,7 @@ static void DoStreamDiscard(SstStream Stream)
         free(Entry->MetadataArray);
         free(Entry->DP_TimestepInfo);
         free(Entry->DataBlockToFree);
-        free(Entry->Msg->Metadata);
-        if (Entry->Msg->DP_TimestepInfo)
-            free(Entry->Msg->DP_TimestepInfo);
         free(Entry->Msg);
-        free(Entry->DataBlockToFree);
         free(Entry);
         Stream->QueuedTimestepCount--;
     }
@@ -1055,6 +1062,10 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
         (Stream->QueuedTimestepCount > Stream->QueueLimit))
     {
         SendBlock[1] = 1; /* this rank is over stream limit */
+    }
+    else
+    {
+        SendBlock[1] = 0; /* No problems here */
     }
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
@@ -1199,7 +1210,7 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
         else
         {
             /* discard things */
-            if (ActiveReaderCount)
+            if (ActiveReaderCount == 0)
             {
                 DoStreamDiscard(Stream);
             }
@@ -1548,7 +1559,7 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     /* decrement the reference count for the released timestep */
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
     SubRefRangeTimestep(ParentStream, Msg->Timestep, Msg->Timestep);
-    Reader->OldestUnreleasedTimestep = Msg->Timestep++;
+    Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     pthread_cond_signal(&ParentStream->DataCondition);
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
 }

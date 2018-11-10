@@ -1,6 +1,9 @@
 #include <assert.h>
 #include <ctype.h>
+#include <float.h>
 #include <limits.h>
+#include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +30,7 @@ static char *readContactInfoFile(const char *Name, SstStream Stream)
     size_t len = strlen(Name) + strlen(SST_POSTFIX) + 1;
     char *FileName = malloc(len);
     FILE *WriterInfo;
+    long TotalSleepTime = 0;
     snprintf(FileName, len, "%s" SST_POSTFIX, Name);
 //    printf("Looking for writer contact in file %s\n", FileName);
 redo:
@@ -34,6 +38,14 @@ redo:
     while (!WriterInfo)
     {
         CMusleep(Stream->CPInfo->cm, 500);
+        TotalSleepTime += 500;
+        if (TotalSleepTime > 30 * 1000 * 1000)
+        {
+            fprintf(stderr, "ADIOS2 SST Engine waiting for contact information "
+                            "file %s to be created\n",
+                    Name);
+            TotalSleepTime = 0;
+        }
         WriterInfo = fopen(FileName, "r");
     }
     struct stat Buf;
@@ -402,6 +414,40 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
                                        struct _TimestepMetadataMsg *tsm,
                                        CMConnection conn)
 {
+    if (tsm->Timestep < Stream->DiscardPriorTimestep)
+    {
+        struct _ReleaseTimestepMsg Msg;
+        memset(&Msg, 0, sizeof(Msg));
+        Msg.Timestep = tsm->Timestep;
+
+        /*
+         * send each writer rank a release for this timestep (actually goes to
+         * WSR
+         * Streams)
+         */
+        CP_verbose(Stream, "Sending ReleaseTimestep message for PRIOR DISCARD "
+                           "timestep %d, one to each writer\n",
+                   tsm->Timestep);
+        if (tsm->Metadata != NULL)
+        {
+            CP_verbose(Stream,
+                       "Sending ReleaseTimestep message for PRIOR DISCARD "
+                       "timestep %d, one to each writer\n",
+                       tsm->Timestep);
+            sendOneToEachWriterRank(Stream,
+                                    Stream->CPInfo->ReleaseTimestepFormat, &Msg,
+                                    &Msg.WSR_Stream);
+        }
+        else
+        {
+            CP_verbose(Stream, "Received discard notice for imestep %d, "
+                               "ignoring in PRIOR DISCARD\n",
+                       tsm->Timestep);
+        }
+        CMreturn_buffer(Stream->CPInfo->cm, tsm);
+        return;
+    }
+
     pthread_mutex_lock(&Stream->DataLock);
     struct _TimestepMetadataList *New = malloc(sizeof(struct _RequestQueue));
     New->MetadataMsg = tsm;
@@ -497,6 +543,168 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     Stream->Status = PeerClosed;
     /* wake anyone that might be waiting */
     pthread_cond_signal(&Stream->DataCondition);
+    pthread_mutex_unlock(&Stream->DataLock);
+}
+
+static long MaxQueuedMetadata(SstStream Stream)
+{
+    struct _TimestepMetadataList *Next;
+    long MaxTimestep = -1;
+    pthread_mutex_lock(&Stream->DataLock);
+    Next = Stream->Timesteps;
+    if (Next == NULL)
+    {
+        CP_verbose(Stream, "MaxQueued Timestep returning -1\n");
+        pthread_mutex_unlock(&Stream->DataLock);
+        return -1;
+    }
+    while (Next)
+    {
+        if (Next->MetadataMsg->Timestep >= MaxTimestep)
+        {
+            MaxTimestep = Next->MetadataMsg->Timestep;
+        }
+        Next = Next->Next;
+    }
+    pthread_mutex_unlock(&Stream->DataLock);
+    CP_verbose(Stream, "MaxQueued Timestep returning %ld\n", MaxTimestep);
+    return MaxTimestep;
+}
+
+static void triggerDataCondition(CManager cm, void *vStream)
+{
+    SstStream Stream = (SstStream)vStream;
+
+    pthread_mutex_lock(&Stream->DataLock);
+    /* wake the sleeping main thread for timeout */
+    pthread_cond_signal(&Stream->DataCondition);
+    pthread_mutex_unlock(&Stream->DataLock);
+}
+
+static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
+{
+    struct _TimestepMetadataList *Next;
+    struct timeval start, now, end;
+    int timeout_int_sec = floor(timeout_secs);
+    int timeout_int_usec = ((timeout_secs - floorf(timeout_secs)) * 1000000);
+    CMTaskHandle TimeoutTask = NULL;
+
+    pthread_mutex_lock(&Stream->DataLock);
+    gettimeofday(&start, NULL);
+    Next = Stream->Timesteps;
+    CP_verbose(
+        Stream,
+        "Wait for metadata with timeout %g secs starting at time %ld.%06ld \n",
+        timeout_secs, start.tv_sec, start.tv_usec);
+    if (Next)
+    {
+        pthread_mutex_unlock(&Stream->DataLock);
+        CP_verbose(Stream, "Returning from wait with timeout, NO TIMEOUT\n");
+    }
+    end.tv_sec = start.tv_sec + timeout_int_sec;
+    end.tv_usec = start.tv_usec + timeout_int_usec;
+    if (end.tv_usec > 1000000)
+    {
+        end.tv_sec++;
+        end.tv_usec -= 1000000;
+    }
+    if (end.tv_sec < start.tv_sec)
+    {
+        // rollover
+        end.tv_sec = INT_MAX;
+    }
+    // special case
+    if (timeout_secs == 0.0)
+    {
+        pthread_mutex_unlock(&Stream->DataLock);
+        CP_verbose(
+            Stream,
+            "Returning from wait With no data after zero timeout poll\n");
+        return;
+    }
+
+    TimeoutTask =
+        CMadd_delayed_task(Stream->CPInfo->cm, timeout_int_sec,
+                           timeout_int_usec, triggerDataCondition, Stream);
+    while (1)
+    {
+        Next = Stream->Timesteps;
+        if (Next)
+        {
+            CMremove_task(TimeoutTask);
+            pthread_mutex_unlock(&Stream->DataLock);
+            CP_verbose(Stream,
+                       "Returning from wait with timeout, NO TIMEOUT\n");
+            return;
+        }
+        if (Stream->Status != Established)
+        {
+            pthread_mutex_unlock(&Stream->DataLock);
+            CP_verbose(Stream, "Returning from wait with timeout, STREAM NO "
+                               "LONGER ESTABLISHED\n");
+            return;
+        }
+        gettimeofday(&now, NULL);
+        CP_verbose(Stream, "timercmp, now is %ld.%06ld    end is %ld.%06ld \n",
+                   now.tv_sec, now.tv_usec, end.tv_sec, end.tv_usec);
+        if (timercmp(&now, &end, >))
+        {
+            pthread_mutex_unlock(&Stream->DataLock);
+            CP_verbose(Stream, "Returning from wait after timing out\n");
+            return;
+        }
+        /* wait until we get the timestep metadata or something else changes */
+        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+    }
+    /* NOTREACHED */
+}
+
+static void releasePriorTimesteps(SstStream Stream, long Latest)
+{
+    struct _TimestepMetadataList *Next, *Last;
+    TSMetadataList FoundTS = NULL;
+    pthread_mutex_lock(&Stream->DataLock);
+    CP_verbose(Stream, "Releasing any timestep earlier than %d\n", Latest);
+    Next = Stream->Timesteps;
+    Last = NULL;
+    while (Next)
+    {
+        if (Next->MetadataMsg->Timestep < Latest)
+        {
+            struct _TimestepMetadataList *This = Next;
+            struct _ReleaseTimestepMsg Msg;
+            Next = This->Next;
+            memset(&Msg, 0, sizeof(Msg));
+            Msg.Timestep = This->MetadataMsg->Timestep;
+
+            /*
+             * send each writer rank a release for this timestep (actually goes
+             * to WSR
+             * Streams)
+             */
+            CP_verbose(Stream, "Sending ReleaseTimestep message for RELEASE "
+                               "PRIOR timestep %d, one to each writer\n",
+                       This->MetadataMsg->Timestep);
+            sendOneToEachWriterRank(Stream,
+                                    Stream->CPInfo->ReleaseTimestepFormat, &Msg,
+                                    &Msg.WSR_Stream);
+            CMreturn_buffer(Stream->CPInfo->cm, This->MetadataMsg);
+            if (Last == NULL)
+            {
+                Stream->Timesteps = Next;
+            }
+            else
+            {
+                Last->Next = Next;
+            }
+            free(This);
+        }
+        else
+        {
+            Last = Next;
+            Next = Next->Next;
+        }
+    }
     pthread_mutex_unlock(&Stream->DataLock);
 }
 
@@ -613,6 +821,7 @@ extern void SstReleaseStep(SstStream Stream)
     if (Stream->Timesteps->MetadataMsg->Timestep == Timestep)
     {
         Stream->Timesteps = List->Next;
+        CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
         free(List);
     }
     else
@@ -624,6 +833,7 @@ extern void SstReleaseStep(SstStream Stream)
             if (List->MetadataMsg->Timestep == Timestep)
             {
                 last->Next = List->Next;
+                CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
                 free(List);
                 break;
             }
@@ -680,6 +890,139 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
     {
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
+    }
+
+    if ((timeout_sec >= 0.0) || (mode == 3 /* LatestAvailable*/))
+    {
+        struct _GlobalOpInfo
+        {
+            float timeout_sec;
+            int mode;
+            long LatestTimestep;
+        };
+        struct _GlobalOpInfo my_info;
+        struct _GlobalOpInfo *global_info;
+        long NextTimestep;
+
+        if (Stream->Rank == 0)
+        {
+            global_info = malloc(sizeof(my_info) * Stream->CohortSize);
+            CP_verbose(Stream, "In special case of advancestep, mode is %d, "
+                               "Timeout Sec is %g, flt_max is %g\n",
+                       mode, timeout_sec, FLT_MAX);
+        }
+        my_info.LatestTimestep = MaxQueuedMetadata(Stream);
+        my_info.timeout_sec = timeout_sec;
+        my_info.mode = mode;
+        MPI_Gather(&my_info, sizeof(my_info), MPI_BYTE, global_info,
+                   sizeof(my_info), MPI_BYTE, 0, Stream->mpiComm);
+        if (Stream->Rank == 0)
+        {
+            long Biggest = -1;
+            long Smallest = LONG_MAX;
+            for (int i = 0; i < Stream->CohortSize; i++)
+            {
+                if (global_info[i].LatestTimestep > Biggest)
+                {
+                    Biggest = global_info[i].LatestTimestep;
+                }
+                if (global_info[i].LatestTimestep < Smallest)
+                {
+                    Smallest = global_info[i].LatestTimestep;
+                }
+            }
+
+            /*
+             * Several situations are possible here, depending upon
+             * whether or not a timeout is specified and/or
+             * LatestAvailable is specified, and whether or not we
+             * have timesteps queued anywhere.  If they want
+             * LatestAvailable and we have any Timesteps queued
+             * anywhere, we decide upon a timestep to return and
+             * assume that all ranks will get it soon (or else we're
+             * in failure mode).  If there are no timesteps queued
+             * anywhere, then we're going to wait for timeout seconds
+             * ON RANK 0.  RANK 0 AND ONLY RANK 0 WILL DECIDE IF WE
+             * TIMEOUT OR RETURN WITH DATA.  It is possible that other
+             * ranks get timestep metadata before the timeout expires,
+             * but we don't care.  Whatever would happen on rank 0 is
+             * what happens everywhere.
+             */
+
+            if (Biggest == -1)
+            {
+                // AllQueuesEmpty
+                if (timeout_sec >= 0.0)
+                {
+                    waitForMetadataWithTimeout(Stream, timeout_sec);
+                }
+                else
+                {
+                    waitForMetadataWithTimeout(Stream, FLT_MAX);
+                }
+                NextTimestep =
+                    MaxQueuedMetadata(Stream); /* might be -1 if we timed out */
+                MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            }
+            else
+            {
+                /*
+                 * we've actually got a choice here.  "Smallest" is
+                 * the LatestTimestep that everyone has.  "Biggest" is
+                 * the Latest that someone has seen, and presumably
+                 * others will see shortly.  I'm going to go with Biggest
+                 * until I have a reason to prefer one or the other.
+                */
+                if (mode == 3)
+                {
+                    // latest available
+                    CP_verbose(Stream, "Returning Biggest timestep available "
+                                       "%ld because LatestAvailable "
+                                       "specified\n",
+                               Biggest);
+                    NextTimestep = Biggest;
+                }
+                else
+                {
+                    // next available (take the oldest that everyone has)
+                    CP_verbose(Stream, "Returning Smallest timestep available "
+                                       "%ld because NextAvailable specified\n",
+                               Smallest);
+                    NextTimestep = Smallest;
+                }
+                MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            }
+        }
+        else
+        {
+            MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+        }
+        if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
+        {
+            CP_verbose(Stream,
+                       "SstAdvanceStep returning EndOfStream at timestep %d\n",
+                       Stream->ReaderTimestep);
+            return SstEndOfStream;
+        }
+        if (NextTimestep == -1)
+        {
+            CP_verbose(Stream, "Advancestep timing out on no data\n");
+            return SstTimeout;
+        }
+        if (mode == 3)
+        {
+            // latest available
+            /* release all timesteps from before NextTimestep, then fall
+             * through below */
+            /* Side note: It is possible that someone could get a "prior"
+             * timestep after this point.  It has to be released upon
+             * arrival */
+            CP_verbose(Stream,
+                       "timed or Latest timestep, determined NextTimestep %d\n",
+                       NextTimestep);
+            Stream->DiscardPriorTimestep = NextTimestep;
+            releasePriorTimesteps(Stream, NextTimestep);
+        }
     }
 
     Entry = waitForNextMetadata(Stream, Stream->ReaderTimestep);

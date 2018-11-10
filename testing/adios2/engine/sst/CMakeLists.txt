@@ -133,7 +133,26 @@ add_test(
   NAME ADIOSSstKillReadersTest.Serialized
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol kill_readers
     -verbose -nw 3 -nr 2 -max_readers 1 -warg 'RendezvousReaderCount:0' -rarg '--ignore_time_gap')
-set_tests_properties(ADIOSSstKillReadersTest.Serialized PROPERTIES TIMEOUT 240 RUN_SERIAL 1)
+set_tests_properties(ADIOSSstKillReadersTest.Serialized PROPERTIES TIMEOUT 300 RUN_SERIAL 1)
+
+add_test(
+  NAME ADIOSSstTimeoutReaderTest.1x1
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol one_to_one
+    -verbose -nw 1 -nr 1 -max_readers 1 -rarg '--non_blocking' -warg '--ms_delay' -warg '2000')
+set_tests_properties(ADIOSSstTimeoutReaderTest.1x1 PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
+
+add_test(
+  NAME ADIOSSstLatestReaderTest.1x1
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol one_to_one
+    -verbose -nw 1 -nr 1 -max_readers 1 -warg '--ms_delay' -warg '250' -rarg '--latest')
+set_tests_properties(ADIOSSstLatestReaderTest.1x1 PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
+
+add_test(
+  NAME ADIOSSstDiscardWriterTest.1x1
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol one_to_one
+    -verbose -nw 1 -nr 1 -max_readers 1 -warg "--engine_params" -warg "'QueueLimit:1,QueueFullPolicy:discard'" -warg '--ms_delay' -warg '500' -rarg '--discard')
+set_tests_properties(ADIOSSstDiscardWriterTest.1x1 PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
+
 
 gtest_add_tests(TARGET TestSstParamFails ${extra_test_args})
 gtest_add_tests(TARGET TestSstWriterFails ${extra_test_args})

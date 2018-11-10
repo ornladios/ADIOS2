@@ -40,8 +40,7 @@ program TestSstRead
   ! Open sstReader engine
   call adios2_open(sstReader, ioRead, "ADIOS2Sst", adios2_mode_read, ierr)
 
-  call adios2_begin_step(sstReader, adios2_step_mode_next_available, -1.0, &
-                         status, ierr)
+  call adios2_begin_step(sstReader, ierr)
 
   call adios2_inquire_variable(variables(1), ioRead, "i8", ierr)
   if (variables(1)%name /= 'i8') stop 'i8 not recognized'
