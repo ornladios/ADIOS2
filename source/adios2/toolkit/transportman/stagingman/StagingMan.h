@@ -24,7 +24,7 @@ namespace adios2
 namespace transportman
 {
 
-class StagingMan : public TransportMan
+class StagingMan
 {
 
 public:
@@ -39,8 +39,7 @@ public:
                                const bool profile);
 
     void WriteStaging(const std::vector<char> &buffer, size_t transportId);
-    void WriteStaging(std::shared_ptr<std::vector<char>> buffer,
-                      size_t transportId);
+    void WriteStaging(std::shared_ptr<std::vector<char>> buffer, size_t transportId);
 
     std::shared_ptr<std::vector<char>> ReadStaging(size_t id);
 

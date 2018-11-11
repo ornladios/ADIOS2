@@ -82,6 +82,9 @@ endif()
 
 if(ADIOS2_HAVE_ZeroMQ)
     target_sources(adios2 PRIVATE
+        toolkit/transport/socket/SocketZmq.h
+        toolkit/transport/socket/SocketZmqReqRep.cpp
+        toolkit/transport/socket/SocketZmqReqRep.h
         toolkit/transport/socket/SocketZmqPubSub.cpp
         toolkit/transport/socket/SocketZmqPubSub.h
         toolkit/transport/socket/SocketZmqP2P.cpp
@@ -98,8 +101,8 @@ if(ADIOS2_HAVE_DataMan)
       toolkit/format/dataman/DataManSerializer.cpp
       toolkit/format/dataman/DataManSerializer.tcc
       toolkit/format/dataman/DataManSerializer.h
-      toolkit/transportman/dataman/DataMan.cpp
-      toolkit/transportman/dataman/DataMan.h
+      toolkit/transportman/wanman/WANMan.cpp
+      toolkit/transportman/wanman/WANMan.h
       engine/dataman/DataManCommon.cpp
       engine/dataman/DataManCommon.h
       engine/dataman/DataManReader.cpp

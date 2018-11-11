@@ -11,9 +11,10 @@
 #ifndef ADIOS2_ENGINE_STAGINGWRITER_H_
 #define ADIOS2_ENGINE_STAGINGWRITER_H_
 
-#include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
+#include "adios2/toolkit/transportman/wanman/WANMan.h"
+#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
 
 namespace adios2
 {
@@ -49,9 +50,15 @@ public:
 
 private:
     format::DataManSerializer m_DataManSerializer;
+    transportman::WANMan m_MetadataTransport;
+    transportman::StagingMan m_DataTransport;
     int m_Verbosity = 0;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
+    int m_MpiSize;
+    std::string m_IP = "127.0.0.1";
+    std::string m_DataPort;
+    std::string m_MetadataPort;
 
     void Init() final;
     void InitParameters() final;

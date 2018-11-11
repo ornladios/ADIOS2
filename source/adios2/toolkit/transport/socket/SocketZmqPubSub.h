@@ -23,7 +23,7 @@ class SocketZmqPubSub : public SocketZmq
 
 public:
     SocketZmqPubSub(const MPI_Comm mpiComm, const bool debugMode);
-    ~SocketZmqPubSub();
+    virtual ~SocketZmqPubSub();
     void Open(const std::string &name, const Mode openMode) final;
     void Open(const std::string &ipAddress, const std::string &port,
               const std::string &name, const Mode openMode);

@@ -23,14 +23,15 @@ namespace core
 namespace engine
 {
 
-StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
-                             MPI_Comm mpiComm)
-: Engine("StagingWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage),
-                      helper::IsLittleEndian())
+StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode, MPI_Comm mpiComm)
+    : Engine("StagingWriter", io, name, mode, mpiComm),
+    m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), helper::IsLittleEndian()),
+    m_DataTransport(mpiComm, m_DebugMode),
+    m_MetadataTransport(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to StagingWriter " + m_Name + " Open\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
+    MPI_Comm_size(mpiComm, &m_MpiSize);
     Init();
     if (m_Verbosity == 5)
     {
@@ -102,8 +103,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 void StagingWriter::Init()
 {
     InitParameters();
-    InitTransports();
     Handshake();
+    InitTransports();
 }
 
 void StagingWriter::InitParameters()
@@ -146,6 +147,13 @@ void StagingWriter::Handshake()
     ipstream.Open(".StagingHandshake", Mode::Write);
     ipstream.Write(ips[0].data(), ips[0].size());
     ipstream.Close();
+
+    m_IP = ips[0];
+    int port = 12306 + m_MpiRank;
+    m_MetadataPort = std::to_string(port);
+    port = 12306+m_MpiSize + m_MpiRank;
+    m_DataPort = std::to_string(port);
+
 }
 
 void StagingWriter::DoClose(const int transportIndex)

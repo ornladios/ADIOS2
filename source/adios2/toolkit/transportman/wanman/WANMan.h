@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataMan.h
+ * WANMan.h
  *
  *  Created on: Jun 1, 2017
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_
-#define ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_
+#ifndef ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_
+#define ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_
 
 #include <queue>
 #include <thread>
@@ -24,13 +24,13 @@ namespace adios2
 namespace transportman
 {
 
-class DataMan
+class WANMan
 {
 
 public:
-    DataMan(MPI_Comm mpiComm, const bool debugMode);
+    WANMan(MPI_Comm mpiComm, const bool debugMode);
 
-    ~DataMan();
+    ~WANMan();
 
     void OpenSocketTransports(const std::vector<std::string> &streamNames,
                               const std::vector<Params> &parametersVector,
@@ -83,4 +83,4 @@ private:
 } // end namespace transportman
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_TRANSPORTMAN_DATAMAN_DATAMAN_H_ */
+#endif /* ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_ */

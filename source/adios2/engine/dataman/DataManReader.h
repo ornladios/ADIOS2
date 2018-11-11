@@ -47,7 +47,7 @@ private:
         m_MetaDataMap;
 
     void Init();
-    void IOThread(std::shared_ptr<transportman::DataMan> man);
+    void IOThread(std::shared_ptr<transportman::WANMan> man);
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \

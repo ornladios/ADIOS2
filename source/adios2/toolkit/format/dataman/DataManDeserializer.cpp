@@ -208,18 +208,6 @@ void DataManDeserializer::Erase(size_t step)
     m_MinStep = step + 1;
 }
 
-size_t DataManDeserializer::MaxStep()
-{
-    std::lock_guard<std::mutex> l(m_Mutex);
-    return m_MaxStep;
-}
-
-size_t DataManDeserializer::MinStep()
-{
-    std::lock_guard<std::mutex> l(m_Mutex);
-    return m_MinStep;
-}
-
 const std::unordered_map<
     size_t, std::shared_ptr<std::vector<DataManDeserializer::DataManVar>>>
 DataManDeserializer::GetMetaData()

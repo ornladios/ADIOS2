@@ -44,7 +44,7 @@ private:
     std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
 
     void Init();
-    void IOThread(std::shared_ptr<transportman::DataMan> man) final;
+    void IOThread(std::shared_ptr<transportman::WANMan> man) final;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \

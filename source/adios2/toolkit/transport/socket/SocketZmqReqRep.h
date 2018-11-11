@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * SocketZmqP2P.h
+ * SocketZmqReqRep.h
  *
  *  Created on: May 26, 2017
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_TRANSPORT_SOCKET_SOCKETZMQP2P_H_
-#define ADIOS2_TOOLKIT_TRANSPORT_SOCKET_SOCKETZMQP2P_H_
+#ifndef ADIOS2_TOOLKIT_TRANSPORT_SOCKET_SOCKETZMQREQREP_H_
+#define ADIOS2_TOOLKIT_TRANSPORT_SOCKET_SOCKETZMQREQREP_H_
 
 #include "adios2/toolkit/transport/socket/SocketZmq.h"
 
@@ -18,13 +18,13 @@ namespace adios2
 namespace transport
 {
 
-class SocketZmqP2P : public SocketZmq
+class SocketZmqReqRep : public SocketZmq
 {
 
 public:
-    SocketZmqP2P(const MPI_Comm mpiComm, const int timeout,
+    SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
                  const bool debugMode);
-    virtual ~SocketZmqP2P();
+    virtual ~SocketZmqReqRep();
     void Open(const std::string &name, const Mode openMode) final;
     void Open(const std::string &ipAddress, const std::string &port,
               const std::string &name, const Mode openMode);
@@ -47,4 +47,4 @@ private:
 } // end namespace transport
 } // end namespace adios
 
-#endif /* ADIOS2_TOOLKIT_TRANSPORT_SOCKET_SOCKETZMQP2P_H_ */
+#endif /* ADIOS2_TOOLKIT_TRANSPORT_SOCKET_SOCKETZMQREQREP_H_ */

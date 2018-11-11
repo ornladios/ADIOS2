@@ -26,6 +26,7 @@ public:
     : Transport("wan", "zmq", mpiComm, debugMode)
     {
     }
+    virtual ~SocketZmq() = default;
     virtual void Open(const std::string &ipAddress, const std::string &port,
                       const std::string &name, const Mode openMode) = 0;
 

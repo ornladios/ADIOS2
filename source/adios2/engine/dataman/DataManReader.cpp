@@ -157,17 +157,17 @@ void DataManReader::Init()
     }
 
     // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    m_DataMan->OpenSocketTransports(m_StreamNames, m_IO.m_TransportsParameters,
+    m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
+    m_WANMan->OpenSocketTransports(m_StreamNames, m_IO.m_TransportsParameters,
                                     Mode::Read, m_WorkflowMode, true);
 
     // start threads
     m_Listening = true;
     m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
-                                                 m_DataMan);
+                                                 m_WANMan);
 }
 
-void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
+void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
 {
     while (m_Listening)
     {
@@ -218,7 +218,7 @@ void DataManReader::DoClose(const int transportIndex)
             }
         }
     }
-    m_DataMan = nullptr;
+    m_WANMan = nullptr;
 }
 
 } // end namespace engine

@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataMan.cpp
+ * WANMan.cpp
  *
  *  Created on: Jun 1, 2017
  *      Author: Jason Wang wangr1@ornl.gov
@@ -11,7 +11,7 @@
 #include <fstream>  //TODO go away
 #include <iostream> //TODO go away
 
-#include "DataMan.h"
+#include "WANMan.h"
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
@@ -26,12 +26,12 @@ namespace adios2
 namespace transportman
 {
 
-DataMan::DataMan(MPI_Comm mpiComm, const bool debugMode)
+WANMan::WANMan(MPI_Comm mpiComm, const bool debugMode)
 : m_MpiComm(mpiComm), m_DebugMode(debugMode)
 {
 }
 
-DataMan::~DataMan()
+WANMan::~WANMan()
 {
     auto start_time = std::chrono::system_clock::now();
     while (true)
@@ -74,9 +74,9 @@ DataMan::~DataMan()
     }
 }
 
-void DataMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
+void WANMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
-void DataMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
+void WANMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
                                    const std::vector<Params> &paramsVector,
                                    const Mode mode,
                                    const std::string workflowMode,
@@ -106,13 +106,11 @@ void DataMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
         }
         port = std::to_string(stoi(port) + mpiRank);
 
-        // Create transports
-        std::shared_ptr<transport::SocketZmq> wanTransport;
 
         if (library == "zmq" || library == "ZMQ")
         {
 #ifdef ADIOS2_HAVE_ZEROMQ
-            // Open transport
+            std::shared_ptr<transport::SocketZmq> wanTransport;
             if (workflowMode == "subscribe")
             {
                 wanTransport = std::make_shared<transport::SocketZmqPubSub>(
@@ -129,7 +127,7 @@ void DataMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
             else
             {
                 throw(std::invalid_argument(
-                    "[DataMan::OpenSocketTransports] workflow mode " +
+                    "[WANMan::OpenSocketTransports] workflow mode " +
                     workflowMode + " not supported."));
             }
 
@@ -141,13 +139,13 @@ void DataMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
             {
                 m_Reading = true;
                 m_ReadThreads.emplace_back(
-                    std::thread(&DataMan::ReadThread, this, wanTransport));
+                    std::thread(&WANMan::ReadThread, this, wanTransport));
             }
             else if (mode == Mode::Write)
             {
                 m_Writing = true;
                 m_WriteThreads.emplace_back(
-                    std::thread(&DataMan::WriteThread, this, wanTransport, i));
+                    std::thread(&WANMan::WriteThread, this, wanTransport, i));
             }
 #else
             throw std::invalid_argument(
@@ -168,34 +166,34 @@ void DataMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void DataMan::WriteSocket(std::shared_ptr<std::vector<char>> buffer, size_t id)
+void WANMan::WriteSocket(std::shared_ptr<std::vector<char>> buffer, size_t id)
 {
     PushBufferQueue(buffer, id);
 }
 
-void DataMan::WriteSocket(const std::vector<char> &buffer, size_t transportId)
+void WANMan::WriteSocket(const std::vector<char> &buffer, size_t transportId)
 {
     if (transportId >= m_Transports.size())
     {
         throw std::runtime_error(
-            "ERROR: No valid transports found, from DataMan::WriteSocket()");
+            "ERROR: No valid transports found, from WANMan::WriteSocket()");
     }
 
     m_Transports[transportId]->Write(buffer.data(), buffer.size());
 }
 
-std::shared_ptr<std::vector<char>> DataMan::ReadSocket(size_t id)
+std::shared_ptr<std::vector<char>> WANMan::ReadSocket(size_t id)
 {
     return PopBufferQueue(id);
 }
 
-void DataMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id)
+void WANMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
     m_BufferQueue[id].push(v);
 }
 
-std::shared_ptr<std::vector<char>> DataMan::PopBufferQueue(size_t id)
+std::shared_ptr<std::vector<char>> WANMan::PopBufferQueue(size_t id)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
     if (m_BufferQueue[id].size() > 0)
@@ -207,7 +205,7 @@ std::shared_ptr<std::vector<char>> DataMan::PopBufferQueue(size_t id)
     return nullptr;
 }
 
-void DataMan::WriteThread(std::shared_ptr<Transport> transport, size_t id)
+void WANMan::WriteThread(std::shared_ptr<Transport> transport, size_t id)
 {
     while (m_Writing)
     {
@@ -223,7 +221,7 @@ void DataMan::WriteThread(std::shared_ptr<Transport> transport, size_t id)
     }
 }
 
-void DataMan::ReadThread(std::shared_ptr<Transport> transport)
+void WANMan::ReadThread(std::shared_ptr<Transport> transport)
 {
     std::vector<char> buffer(m_MaxReceiveBuffer);
     while (m_Reading)
@@ -240,7 +238,7 @@ void DataMan::ReadThread(std::shared_ptr<Transport> transport)
     }
 }
 
-bool DataMan::GetBoolParameter(const Params &params, const std::string key)
+bool WANMan::GetBoolParameter(const Params &params, const std::string key)
 {
     auto itKey = params.find(key);
     if (itKey != params.end())
@@ -259,7 +257,7 @@ bool DataMan::GetBoolParameter(const Params &params, const std::string key)
     return false;
 }
 
-bool DataMan::GetStringParameter(const Params &params, const std::string key,
+bool WANMan::GetStringParameter(const Params &params, const std::string key,
                                  std::string &value)
 {
     auto it = params.find(key);
@@ -271,7 +269,7 @@ bool DataMan::GetStringParameter(const Params &params, const std::string key,
     return false;
 }
 
-bool DataMan::GetIntParameter(const Params &params, const std::string key,
+bool WANMan::GetIntParameter(const Params &params, const std::string key,
                               int &value)
 {
     auto it = params.find(key);

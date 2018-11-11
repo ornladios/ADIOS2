@@ -8,13 +8,10 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include <fstream>  //TODO go away
-#include <iostream> //TODO go away
+#include <iostream>
 
 #include "StagingMan.h"
 
-#include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
 #include "adios2/toolkit/transport/socket/SocketZmqP2P.h"
@@ -27,7 +24,6 @@ namespace transportman
 {
 
 StagingMan::StagingMan(MPI_Comm mpiComm, const bool debugMode)
-: TransportMan(mpiComm, debugMode)
 {
 }
 

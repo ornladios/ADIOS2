@@ -2,13 +2,13 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * SocketZmqP2P.cpp
+ * SocketZmqReqRep.cpp
  *
  *  Created on: May 26, 2017
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include "SocketZmqP2P.h"
+#include "SocketZmqReqRep.h"
 
 #include <iostream>
 #include <zmq.h>
@@ -18,21 +18,24 @@ namespace adios2
 namespace transport
 {
 
-void *SocketZmqP2P::m_Context = nullptr;
+void *SocketZmqReqRep::m_Context = nullptr;
 
-SocketZmqP2P::SocketZmqP2P(const MPI_Comm mpiComm, const int timeout,
+SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
                            const bool debugMode)
-: SocketZmq("wan", "zmqp2p", mpiComm, debugMode), m_Timeout(timeout)
+: SocketZmq("socket", "zmqreqrep", mpiComm, debugMode), m_Timeout(timeout)
 {
-    m_Context = zmq_ctx_new();
+    if (m_Context == nullptr || m_Context == NULL)
+    {
+        m_Context = zmq_ctx_new();
+    }
     if (m_Context == nullptr || m_Context == NULL)
     {
         throw std::runtime_error(
-            "[SocketZmqP2P::SocketZmqP2P] Creating ZeroMQ context failed.");
+            "[SocketZmqReqRep::SocketZmqReqRep] Creating ZeroMQ context failed.");
     }
 }
 
-SocketZmqP2P::~SocketZmqP2P()
+SocketZmqReqRep::~SocketZmqReqRep()
 {
     if (m_Socket)
     {
@@ -40,42 +43,52 @@ SocketZmqP2P::~SocketZmqP2P()
     }
 }
 
-void SocketZmqP2P::Open(const std::string &name, const Mode openMode)
+void SocketZmqReqRep::Open(const std::string &name, const Mode openMode)
 {
-
-    Open("127.0.0.1", "12306", name, openMode);
-}
-
-void SocketZmqP2P::Open(const std::string &ipAddress, const std::string &port,
-                        const std::string &name, const Mode openMode)
-{
-    m_Name = name;
-    m_OpenMode = openMode;
-    const std::string fullIP("tcp://" + ipAddress + ":" + port);
-    std::string openModeStr;
-
-    int error = -1;
-    ProfilerStart("open");
-    if (m_OpenMode == Mode::Write)
+    int port = 12306 + m_RankMPI;
+    if (openMode == Mode::Write)
     {
-        openModeStr = "Write";
-        m_Socket = zmq_socket(m_Context, ZMQ_REQ);
-        error = zmq_connect(m_Socket, fullIP.c_str());
-        zmq_setsockopt(m_Socket, ZMQ_SNDTIMEO, &m_Timeout, sizeof(m_Timeout));
+        Open("0.0.0.0", std::to_string(port), name, openMode);
     }
-    else if (m_OpenMode == Mode::Read)
+    else if (openMode == Mode::Read)
     {
-        openModeStr = "Read";
-        m_Socket = zmq_socket(m_Context, ZMQ_REP);
-        error = zmq_bind(m_Socket, fullIP.c_str());
-        zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
+        Open("127.0.0.1", std::to_string(port), name, openMode);
     }
     else
     {
         throw std::invalid_argument(
-            "[SocketZmqP2P::Open] invalid OpenMode parameter");
+            "[SocketZmqReqRep::Open] invalid OpenMode parameter");
     }
-    ProfilerStop("open");
+}
+
+void SocketZmqReqRep::Open(const std::string &ipAddress, const std::string &port,
+                        const std::string &name, const Mode openMode)
+{
+    m_Name = name;
+    m_OpenMode = openMode;
+    const std::string fullAddress("tcp://" + ipAddress + ":" + port);
+    std::string openModeStr;
+
+    int error = -1;
+    if (m_OpenMode == Mode::Write)
+    {
+        openModeStr = "Write";
+        m_Socket = zmq_socket(m_Context, ZMQ_REP);
+        error = zmq_bind(m_Socket, fullAddress.c_str());
+        zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
+    }
+    else if (m_OpenMode == Mode::Read)
+    {
+        openModeStr = "Read";
+        m_Socket = zmq_socket(m_Context, ZMQ_REQ);
+        error = zmq_connect(m_Socket, fullAddress.c_str());
+        zmq_setsockopt(m_Socket, ZMQ_SNDTIMEO, &m_Timeout, sizeof(m_Timeout));
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "[SocketZmqReqRep::Open] invalid OpenMode parameter");
+    }
 
     if (m_DebugMode)
     {
@@ -91,25 +104,25 @@ void SocketZmqP2P::Open(const std::string &ipAddress, const std::string &port,
     if (error)
     {
         throw std::runtime_error(
-            "[SocketZmqP2P::Open] zmq_connect() failed with " +
+            "[SocketZmqReqRep::Open] zmq_connect() failed with " +
             std::to_string(error));
     }
 
     if (m_Socket == nullptr || m_Socket == NULL)
     {
         throw std::ios_base::failure(
-            "[SocketZmqP2P::Open] couldn't open socket for address " + fullIP);
+            "[SocketZmqReqRep::Open] couldn't open socket for address " + fullAddress);
     }
     m_IsOpen = true;
 }
 
-void SocketZmqP2P::SetBuffer(char *buffer, size_t size) {}
+void SocketZmqReqRep::SetBuffer(char *buffer, size_t size) {}
 
-void SocketZmqP2P::Write(const char *buffer, size_t size, size_t start) {}
+void SocketZmqReqRep::Write(const char *buffer, size_t size, size_t start) {}
 
-void SocketZmqP2P::Read(char *buffer, size_t size, size_t start) {}
+void SocketZmqReqRep::Read(char *buffer, size_t size, size_t start) {}
 
-void SocketZmqP2P::IWrite(const char *buffer, size_t size, Status &status,
+void SocketZmqReqRep::IWrite(const char *buffer, size_t size, Status &status,
                           size_t start)
 {
     int retInt = 0;
@@ -122,11 +135,11 @@ void SocketZmqP2P::IWrite(const char *buffer, size_t size, Status &status,
     if (retInt < 0 || retString != "OK")
     {
         throw std::ios_base::failure(
-            "[SocketZmqP2P::IWrite] couldn't send message " + m_Name);
+            "[SocketZmqReqRep::IWrite] couldn't send message " + m_Name);
     }
 }
 
-void SocketZmqP2P::IRead(char *buffer, size_t size, Status &status,
+void SocketZmqReqRep::IRead(char *buffer, size_t size, Status &status,
                          size_t start)
 {
     const std::string reply = "OK";
@@ -148,9 +161,9 @@ void SocketZmqP2P::IRead(char *buffer, size_t size, Status &status,
     }
 }
 
-void SocketZmqP2P::Flush() {}
+void SocketZmqReqRep::Flush() {}
 
-void SocketZmqP2P::Close()
+void SocketZmqReqRep::Close()
 {
     if (m_Socket)
     {
