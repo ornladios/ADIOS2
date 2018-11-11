@@ -586,6 +586,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 }
 
 atom_t CM_TRANSPORT_ATOM = 0;
+static atom_t IP_INTERFACE_ATOM = 0;
 static atom_t CM_ENET_CONN_TIMEOUT = -1;
 
 static void initAtomList()
@@ -594,6 +595,7 @@ static void initAtomList()
         return;
 
     CM_TRANSPORT_ATOM = attr_atom_from_string("CM_TRANSPORT");
+    IP_INTERFACE_ATOM = attr_atom_from_string("IP_INTERFACE");
     CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
 }
 
@@ -837,6 +839,11 @@ extern char *CP_GetContactString(SstStream Stream)
     attr_list ListenList = create_attr_list(), ContactList;
     set_string_attr(ListenList, CM_TRANSPORT_ATOM,
                     strdup(Stream->ConfigParams->ControlTransport));
+    if (Stream->ConfigParams->NetworkInterface)
+    {
+        set_string_attr(ListenList, IP_INTERFACE_ATOM,
+                        strdup(Stream->ConfigParams->NetworkInterface));
+    }
     ContactList = CMget_specific_contact_list(Stream->CPInfo->cm, ListenList);
     if (strcmp(Stream->ConfigParams->ControlTransport, "enet") == 0)
     {
