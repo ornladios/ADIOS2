@@ -839,7 +839,8 @@ extern char *CP_GetContactString(SstStream Stream)
     attr_list ListenList = create_attr_list(), ContactList;
     set_string_attr(ListenList, CM_TRANSPORT_ATOM,
                     strdup(Stream->ConfigParams->ControlTransport));
-    if (Stream->ConfigParams->NetworkInterface) {
+    if (Stream->ConfigParams->NetworkInterface)
+    {
         set_string_attr(ListenList, IP_INTERFACE_ATOM,
                         strdup(Stream->ConfigParams->NetworkInterface));
     }
