@@ -36,14 +36,12 @@ typedef enum {
 } SstStatusValue;
 
 /* The SST version of enum class StepMode in ADIOSTypes.h */
-typedef enum 
-{
+typedef enum {
     SstAppend, // writer modes ignored in SST
     SstUpdate, // writer modes ignored in SST
     SstNextAvailable,
     SstLatestAvailable // reader advance mode
 } SstStepMode;
-
 
 /*
  * Struct that represents statistics tracked by SST

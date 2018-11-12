@@ -50,7 +50,8 @@ enum StreamStatus
     Closed
 };
 
-static char *SSTStreamStatusStr[] = {"NotOpen", "Established", "PeerClosed", "PeerFailed", "Closed"};
+static char *SSTStreamStatusStr[] = {"NotOpen", "Established", "PeerClosed",
+                                     "PeerFailed", "Closed"};
 
 typedef struct _WS_ReaderInfo
 {

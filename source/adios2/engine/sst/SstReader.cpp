@@ -121,19 +121,21 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 
     SstStatusValue result;
     SstStepMode StepMode;
-    switch (Mode) {
+    switch (Mode)
+    {
     case StepMode::Append:
     case StepMode::Update:
-        throw std::invalid_argument("ERROR: SstReader::BeginStep inappropriate StepMode specified" +
-                                    m_EndMessage);
-	break;
+        throw std::invalid_argument(
+            "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
+            m_EndMessage);
+        break;
     case StepMode::NextAvailable:
-	StepMode = SstNextAvailable;
-	break;
+        StepMode = SstNextAvailable;
+        break;
     case StepMode::LatestAvailable:
-	StepMode = SstLatestAvailable;
-	break;
-    }	
+        StepMode = SstLatestAvailable;
+        break;
+    }
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
     result = SstAdvanceStep(m_Input, StepMode, timeout_sec);

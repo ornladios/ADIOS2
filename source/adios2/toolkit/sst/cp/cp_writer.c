@@ -833,9 +833,8 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0, CloseWSRStream,
                            CP_WSR_Stream);
     }
-    CP_verbose(ParentStream,
-               "Moving stream %p to status %s\n",
-               CP_WSR_Stream, SSTStreamStatusStr[NewState]);
+    CP_verbose(ParentStream, "Moving stream %p to status %s\n", CP_WSR_Stream,
+               SSTStreamStatusStr[NewState]);
     CP_WSR_Stream->ReaderStatus = NewState;
     /* main thread might be waiting on timesteps going away */
     pthread_cond_signal(&ParentStream->DataCondition);
