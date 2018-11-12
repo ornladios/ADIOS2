@@ -814,8 +814,11 @@ enet_peer_dispatch_incoming_reliable_commands (ENetPeer * peer, ENetChannel * ch
          channel -> incomingReliableSequenceNumber += incomingCommand -> fragmentCount - 1;
     } 
 
-    if (currentCommand == enet_list_begin (& channel -> incomingReliableCommands))
+    if (currentCommand == enet_list_begin (& channel -> incomingReliableCommands)) {
+               VERBOSE("(PID %x) early return in enet_peer_dispatch_incoming_reliable_commands\n", getpid());
+
       return;
+    }
 
     channel -> incomingUnreliableSequenceNumber = 0;
 
@@ -1010,6 +1013,7 @@ discardCommand:
     return & dummyCommand;
 
 notifyError:
+    VERBOSE("NOTIFIY ERROR\n");
     if (packet != NULL && packet -> referenceCount == 0)
       enet_packet_destroy (packet);
 
