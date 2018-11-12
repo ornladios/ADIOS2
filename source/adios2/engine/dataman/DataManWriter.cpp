@@ -76,7 +76,7 @@ void DataManWriter::EndStep()
                 m_DataManSerializer[i]->PutAttributes(m_IO, m_MPIRank);
             }
             const std::shared_ptr<std::vector<char>> buf =
-                m_DataManSerializer[i]->Get();
+                m_DataManSerializer[i]->GetPack();
             m_BufferSize = buf->size() * 2;
             m_WANMan->WriteSocket(buf, i);
         }
@@ -107,7 +107,7 @@ void DataManWriter::Init()
     // initialize transports
     m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
     m_WANMan->OpenSocketTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                    Mode::Write, m_WorkflowMode, true);
+                                   Mode::Write, m_WorkflowMode, true);
 
     // initialize serializer
     if (m_Format == "dataman")

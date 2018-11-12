@@ -77,10 +77,10 @@ WANMan::~WANMan()
 void WANMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
 void WANMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
-                                   const std::vector<Params> &paramsVector,
-                                   const Mode mode,
-                                   const std::string workflowMode,
-                                   const bool profile)
+                                  const std::vector<Params> &paramsVector,
+                                  const Mode mode,
+                                  const std::string workflowMode,
+                                  const bool profile)
 {
     m_TransportsParameters = paramsVector;
     m_BufferQueue.resize(streamNames.size());
@@ -105,7 +105,6 @@ void WANMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
             port = std::to_string(stoi(port) + i * mpiSize);
         }
         port = std::to_string(stoi(port) + mpiRank);
-
 
         if (library == "zmq" || library == "ZMQ")
         {
@@ -258,7 +257,7 @@ bool WANMan::GetBoolParameter(const Params &params, const std::string key)
 }
 
 bool WANMan::GetStringParameter(const Params &params, const std::string key,
-                                 std::string &value)
+                                std::string &value)
 {
     auto it = params.find(key);
     if (it != params.end())
@@ -270,7 +269,7 @@ bool WANMan::GetStringParameter(const Params &params, const std::string key,
 }
 
 bool WANMan::GetIntParameter(const Params &params, const std::string key,
-                              int &value)
+                             int &value)
 {
     auto it = params.find(key);
     if (it != params.end())

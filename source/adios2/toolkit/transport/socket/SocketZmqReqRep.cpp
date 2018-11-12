@@ -21,7 +21,7 @@ namespace transport
 void *SocketZmqReqRep::m_Context = nullptr;
 
 SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
-                           const bool debugMode)
+                                 const bool debugMode)
 : SocketZmq("socket", "zmqreqrep", mpiComm, debugMode), m_Timeout(timeout)
 {
     if (m_Context == nullptr || m_Context == NULL)
@@ -30,8 +30,8 @@ SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
     }
     if (m_Context == nullptr || m_Context == NULL)
     {
-        throw std::runtime_error(
-            "[SocketZmqReqRep::SocketZmqReqRep] Creating ZeroMQ context failed.");
+        throw std::runtime_error("[SocketZmqReqRep::SocketZmqReqRep] Creating "
+                                 "ZeroMQ context failed.");
     }
 }
 
@@ -61,8 +61,9 @@ void SocketZmqReqRep::Open(const std::string &name, const Mode openMode)
     }
 }
 
-void SocketZmqReqRep::Open(const std::string &ipAddress, const std::string &port,
-                        const std::string &name, const Mode openMode)
+void SocketZmqReqRep::Open(const std::string &ipAddress,
+                           const std::string &port, const std::string &name,
+                           const Mode openMode)
 {
     m_Name = name;
     m_OpenMode = openMode;
@@ -111,7 +112,8 @@ void SocketZmqReqRep::Open(const std::string &ipAddress, const std::string &port
     if (m_Socket == nullptr || m_Socket == NULL)
     {
         throw std::ios_base::failure(
-            "[SocketZmqReqRep::Open] couldn't open socket for address " + fullAddress);
+            "[SocketZmqReqRep::Open] couldn't open socket for address " +
+            fullAddress);
     }
     m_IsOpen = true;
 }
@@ -123,7 +125,7 @@ void SocketZmqReqRep::Write(const char *buffer, size_t size, size_t start) {}
 void SocketZmqReqRep::Read(char *buffer, size_t size, size_t start) {}
 
 void SocketZmqReqRep::IWrite(const char *buffer, size_t size, Status &status,
-                          size_t start)
+                             size_t start)
 {
     int retInt = 0;
     char retChar[10];
@@ -140,7 +142,7 @@ void SocketZmqReqRep::IWrite(const char *buffer, size_t size, Status &status,
 }
 
 void SocketZmqReqRep::IRead(char *buffer, size_t size, Status &status,
-                         size_t start)
+                            size_t start)
 {
     const std::string reply = "OK";
     ProfilerStart("read");

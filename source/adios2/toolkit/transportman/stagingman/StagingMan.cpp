@@ -12,7 +12,6 @@
 
 #include "StagingMan.h"
 
-
 #ifdef ADIOS2_HAVE_ZEROMQ
 #include "adios2/toolkit/transport/socket/SocketZmqP2P.h"
 #include "adios2/toolkit/transport/socket/SocketZmqPubSub.h"
@@ -23,9 +22,7 @@ namespace adios2
 namespace transportman
 {
 
-StagingMan::StagingMan(MPI_Comm mpiComm, const bool debugMode)
-{
-}
+StagingMan::StagingMan(MPI_Comm mpiComm, const bool debugMode) {}
 
 StagingMan::~StagingMan() {}
 

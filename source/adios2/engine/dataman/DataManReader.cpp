@@ -47,7 +47,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
+    std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>> vars =
         nullptr;
     auto start_time = std::chrono::system_clock::now();
 
@@ -68,7 +68,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
             }
         }
 
-        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+        m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
         if (stepMode == StepMode::NextAvailable)
         {
@@ -110,7 +110,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
     if (m_CurrentStep == 0)
     {
-        m_DataManDeserializer.GetAttributes(m_IO);
+        m_DataManSerializer.GetAttributes(m_IO);
     }
 
     for (const auto &i : *vars)
@@ -142,7 +142,7 @@ size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
 void DataManReader::PerformGets() {}
 
-void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+void DataManReader::EndStep() { m_DataManSerializer.Erase(m_CurrentStep); }
 
 void DataManReader::Flush(const int transportIndex) {}
 
@@ -159,12 +159,12 @@ void DataManReader::Init()
     // initialize transports
     m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
     m_WANMan->OpenSocketTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                    Mode::Read, m_WorkflowMode, true);
+                                   Mode::Read, m_WorkflowMode, true);
 
     // start threads
     m_Listening = true;
-    m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
-                                                 m_WANMan);
+    m_DataThread =
+        std::make_shared<std::thread>(&DataManReader::IOThread, this, m_WANMan);
 }
 
 void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
@@ -174,7 +174,7 @@ void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
         std::shared_ptr<std::vector<char>> buffer = man->ReadSocket(0);
         if (buffer != nullptr)
         {
-            int ret = m_DataManDeserializer.Put(buffer);
+            int ret = m_DataManSerializer.PutPack(buffer);
             if (ret > 0)
             {
                 m_FinalStep = ret;

@@ -23,7 +23,7 @@ class SocketZmqReqRep : public SocketZmq
 
 public:
     SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
-                 const bool debugMode);
+                    const bool debugMode);
     virtual ~SocketZmqReqRep();
     void Open(const std::string &name, const Mode openMode) final;
     void Open(const std::string &ipAddress, const std::string &port,

@@ -50,6 +50,10 @@ add_library(adios2
   toolkit/format/bp3/operation/BP3MGARD.cpp
   toolkit/format/bp3/operation/BP3MGARD.tcc
 
+  toolkit/format/dataman/DataManSerializer.cpp
+  toolkit/format/dataman/DataManSerializer.tcc
+  toolkit/format/dataman/DataManSerializer.h
+
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
@@ -95,12 +99,6 @@ endif()
 
 if(ADIOS2_HAVE_DataMan)
   target_sources(adios2 PRIVATE
-      toolkit/format/dataman/DataManDeserializer.cpp
-      toolkit/format/dataman/DataManDeserializer.tcc
-      toolkit/format/dataman/DataManDeserializer.h
-      toolkit/format/dataman/DataManSerializer.cpp
-      toolkit/format/dataman/DataManSerializer.tcc
-      toolkit/format/dataman/DataManSerializer.h
       toolkit/transportman/wanman/WANMan.cpp
       toolkit/transportman/wanman/WANMan.h
       engine/dataman/DataManCommon.cpp
@@ -117,12 +115,6 @@ endif()
 
 if(ADIOS2_HAVE_Staging)
   target_sources(adios2 PRIVATE
-      toolkit/format/dataman/DataManDeserializer.cpp
-      toolkit/format/dataman/DataManDeserializer.tcc
-      toolkit/format/dataman/DataManDeserializer.h
-      toolkit/format/dataman/DataManSerializer.cpp
-      toolkit/format/dataman/DataManSerializer.tcc
-      toolkit/format/dataman/DataManSerializer.h
       toolkit/transportman/stagingman/StagingMan.cpp
       toolkit/transportman/stagingman/StagingMan.h
       engine/staging/StagingReader.cpp
