@@ -5,6 +5,9 @@
  * helloBPReader.cpp: Simple self-descriptive example of how to read a variable
  * to a BP File.
  *
+ * Try running like this from the build directory:
+ *   mpirun -np 3 ./bin/hello_bpReader
+ *
  *  Created on: Feb 16, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
@@ -63,6 +66,8 @@ int main(int argc, char *argv[])
 
         if (bpFloats) // means found
         {
+            // read only the chunk corresponding to our rank
+            bpFloats.SetSelection({{Nx * rank}, {Nx}});
             // myFloats.data is pre-allocated
             bpReader.Get<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
 
@@ -76,6 +81,8 @@ int main(int argc, char *argv[])
 
         if (bpInts) // means not found
         {
+            // read only the chunk corresponding to our rank
+            bpInts.SetSelection({{Nx * rank}, {Nx}});
             // myInts.data is pre-allocated
             bpReader.Get<int>(bpInts, myInts.data(), adios2::Mode::Sync);
 
