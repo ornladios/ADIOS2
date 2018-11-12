@@ -123,16 +123,16 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     SstStepMode StepMode;
     switch (Mode)
     {
-    case StepMode::Append:
-    case StepMode::Update:
+    case adios2::StepMode::Append:
+    case adios2::StepMode::Update:
         throw std::invalid_argument(
             "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
             m_EndMessage);
         break;
-    case StepMode::NextAvailable:
+    case adios2::StepMode::NextAvailable:
         StepMode = SstNextAvailable;
         break;
-    case StepMode::LatestAvailable:
+    case adios2::StepMode::LatestAvailable:
         StepMode = SstLatestAvailable;
         break;
     }
