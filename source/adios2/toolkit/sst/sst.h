@@ -35,6 +35,14 @@ typedef enum {
     SstTimeout
 } SstStatusValue;
 
+/* The SST version of enum class StepMode in ADIOSTypes.h */
+typedef enum {
+    SstAppend, // writer modes ignored in SST
+    SstUpdate, // writer modes ignored in SST
+    SstNextAvailable,
+    SstLatestAvailable // reader advance mode
+} SstStepMode;
+
 /*
  * Struct that represents statistics tracked by SST
  */
@@ -84,7 +92,7 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
 extern void SstReleaseStep(SstStream stream);
-extern SstStatusValue SstAdvanceStep(SstStream stream, int mode,
+extern SstStatusValue SstAdvanceStep(SstStream stream, SstStepMode mode,
                                      const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
 extern long SstCurrentStep(SstStream s);

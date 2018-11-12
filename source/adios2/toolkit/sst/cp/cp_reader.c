@@ -153,8 +153,8 @@ static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
         fprintf(stderr, "Got an unexpected connection close event\n");
         CP_verbose(Stream, "Reader-side Rank received a "
                            "connection-close event in unexpected "
-                           "state %d\n",
-                   Stream->Status);
+                           "status %s\n",
+                   SSTStreamStatusStr[Stream->Status]);
     }
 }
 
@@ -762,7 +762,8 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         CP_verbose(Stream,
                    "Waiting for metadata for a Timestep later than TS %d\n",
                    LastTimestep);
-        CP_verbose(Stream, "Stream status is %d\n", Stream->Status);
+        CP_verbose(Stream, "(PID %x) Stream status is %s\n", getpid(),
+                   SSTStreamStatusStr[Stream->Status]);
         /* wait until we get the timestep metadata or something else changes */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
@@ -880,7 +881,7 @@ extern void SstReleaseStep(SstStream Stream)
  * wait for metadata for Timestep indicated to arrive, or fail with EndOfStream
  * or Error
  */
-extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
+extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
                                      const float timeout_sec)
 {
 
@@ -892,7 +893,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
         Stream->CurrentMetadata = NULL;
     }
 
-    if ((timeout_sec >= 0.0) || (mode == 3 /* LatestAvailable*/))
+    if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
     {
         struct _GlobalOpInfo
         {
@@ -973,7 +974,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
                  * others will see shortly.  I'm going to go with Biggest
                  * until I have a reason to prefer one or the other.
                 */
-                if (mode == 3)
+                if (mode == SstLatestAvailable)
                 {
                     // latest available
                     CP_verbose(Stream, "Returning Biggest timestep available "
@@ -1009,7 +1010,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, int mode,
             CP_verbose(Stream, "Advancestep timing out on no data\n");
             return SstTimeout;
         }
-        if (mode == 3)
+        if (mode == SstLatestAvailable)
         {
             // latest available
             /* release all timesteps from before NextTimestep, then fall

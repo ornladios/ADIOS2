@@ -116,13 +116,29 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
 SstReader::~SstReader() { SstStreamDestroy(m_Input); }
 
-StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
+StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {
 
     SstStatusValue result;
+    SstStepMode StepMode;
+    switch (Mode)
+    {
+    case adios2::StepMode::Append:
+    case adios2::StepMode::Update:
+        throw std::invalid_argument(
+            "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
+            m_EndMessage);
+        break;
+    case adios2::StepMode::NextAvailable:
+        StepMode = SstNextAvailable;
+        break;
+    case adios2::StepMode::LatestAvailable:
+        StepMode = SstLatestAvailable;
+        break;
+    }
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
-    result = SstAdvanceStep(m_Input, (int)mode, timeout_sec);
+    result = SstAdvanceStep(m_Input, StepMode, timeout_sec);
     if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;
