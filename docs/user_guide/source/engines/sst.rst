@@ -136,18 +136,34 @@ satisfying, but has a similar long-term effect upon the set of steps
 delivered to the readers.)  This value is interpreted by SST Writer engines
 only.
 
-5. **DataTransport**:  Default **"RDMA"**.   This string value specifies the
-underlying network communication mechanism to use for exchanging data in
-SST.  Current allowed values are **"RDMA"** and **"WAN"**.  (**ib** and
-**fabric** are accepted as equivalent to **RDMA** and **evpath** is
-equivalent to **WAN**.)  Generally both the reader and writer should be
-using the same network transport, and the network transport chosen may be
-dictated by the situation.  For example, the RDMA transport generally
-operates only between applications running on the same high-performance
-interconnect (e.g. on the same HPC machine).  If communication is desired
-between applications running on different interconnects, the Wide Area
-Network (WAN) option should be chosen.  This value is interpreted by both
-SST Writer and Reader engines.
+5. **DataTransport**: Default **varies**.  This string value specifies
+the underlying network communication mechanism to use for exchanging
+data in SST.  Generally this is chosen by SST based upon what is
+available on the current platform.  However, specifying this engine
+parameter allows overriding SST's choice.  Current allowed values are
+**"RDMA"** and **"WAN"**.  (**ib** and **fabric** are accepted as
+equivalent to **RDMA** and **evpath** is equivalent to **WAN**.)
+Generally both the reader and writer should be using the same network
+transport, and the network transport chosen may be dictated by the
+situation.  For example, the RDMA transport generally operates only
+between applications running on the same high-performance interconnect
+(e.g. on the same HPC machine).  If communication is desired between
+applications running on different interconnects, the Wide Area Network
+(WAN) option should be chosen.  This value is interpreted by both SST
+Writer and Reader engines.
+
+5. **NetworkInterface**: Default **NULL**.  In situations in which
+there are multiple possible network interfaces available to SST, this
+string value specifies which should be used to generate SST's contact
+information for writers.  Generally this should *NOT* be specified
+except for narrow sets of circumstances.  It has no effect if
+specified on Reader engines.  If specified, the string value should
+correspond to a name of a network interface, such as are listed by
+commands like "netstat -i".  For example, on most Unix systems,
+setting the NetworkInterface parameter to "lo" (or possibly "lo0")
+will result in SST generating contact information that uses the
+network address associated with the loopback interface (127.0.0.1).
+This value is interpreted by only by the SST Writer engine.
 
 ====================   ===================== =========================================================
  **Key**                **Value Format**      **Default** and Examples 
@@ -157,4 +173,5 @@ SST Writer and Reader engines.
  QueueLimit            integer		     **0** (no queue limits)
  QueueFullPolicy       string	             **Block**, Discard
  DataTransport	       string		     **default varies by platform**, RDMA, WAN
+ NetworkInterface      string		     **NULL**
 ====================   ===================== =========================================================

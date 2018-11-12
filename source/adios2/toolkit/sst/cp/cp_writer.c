@@ -230,8 +230,8 @@ static void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
         fprintf(stderr, "Got an unexpected connection close event\n");
         CP_verbose(ParentWriterStream, "Writer-side Rank received a "
                                        "connection-close event in unexpected "
-                                       "state %d\n",
-                   WSreader->ReaderStatus);
+                                       "state %s\n",
+                   SSTStreamStatusStr[WSreader->ReaderStatus]);
         PTHREAD_MUTEX_UNLOCK(&ParentWriterStream->DataLock);
         CP_PeerFailCloseWSReader(WSreader, PeerFailed);
         PTHREAD_MUTEX_LOCK(&ParentWriterStream->DataLock);
@@ -833,6 +833,9 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0, CloseWSRStream,
                            CP_WSR_Stream);
     }
+    CP_verbose(ParentStream,
+               "Moving stream %p to status %s\n",
+               CP_WSR_Stream, SSTStreamStatusStr[NewState]);
     CP_WSR_Stream->ReaderStatus = NewState;
     /* main thread might be waiting on timesteps going away */
     pthread_cond_signal(&ParentStream->DataCondition);
@@ -876,8 +879,8 @@ void SstWriterClose(SstStream Stream)
         CP_verbose(Stream, "Reader Count is %d\n", Stream->ReaderCount);
         for (int i = 0; i < Stream->ReaderCount; i++)
         {
-            CP_verbose(Stream, "Reader [%d] status is %d\n", i,
-                       Stream->Readers[i]->ReaderStatus);
+            CP_verbose(Stream, "Reader [%d] status is %s\n", i,
+                       SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus]);
         }
         /* NEED TO HANDLE FAILURE HERE */
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
