@@ -208,6 +208,17 @@ bool GreaterThan(const T input1, const T input2) noexcept;
 template <class T>
 Dims PayloadDims(const Dims &dimensions, const bool isRowMajor) noexcept;
 
+/**
+ * Returns the addition of two vector element by element. vector1 and vector2
+ * must be of the same size
+ * @param vector1 input
+ * @param vector2 input
+ * @return vector = vector1 + vector2
+ */
+template <class T, class BinaryOperation>
+std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
+                         const std::vector<T> &vector2) noexcept;
+
 } // end namespace helper
 } // end namespace adios2
 

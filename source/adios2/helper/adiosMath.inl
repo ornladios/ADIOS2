@@ -14,7 +14,8 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include <algorithm> //std::minmax_element, std::min_element, std::max_element
+#include <algorithm> // std::minmax_element, std::min_element, std::max_element
+                     // std::transform
 #include <thread>
 
 #include "adios2/ADIOSMacros.h"
@@ -240,6 +241,16 @@ Dims PayloadDims(const Dims &dimensions, const bool isRowMajor) noexcept
         payloadDims.front() *= sizeof(T);
     }
     return payloadDims;
+}
+
+template <class T, class BinaryOperation>
+std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
+                         const std::vector<T> &vector2) noexcept
+{
+    std::vector<T> result(vector1.size());
+    std::transform(vector1.begin(), vector1.end(), vector2.begin(),
+                   result.begin(), op);
+    return result;
 }
 
 } // end namespace helper

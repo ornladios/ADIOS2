@@ -67,9 +67,9 @@ void AssignStep2D(const size_t step, std::vector<std::complex<float>> &vector,
                   const size_t Nx, const size_t Ny, const size_t ghostCellsX,
                   const size_t ghostCellsY)
 {
-    for (size_t j = ghostCellsY; j < Ny; ++j)
+    for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
     {
-        for (size_t i = ghostCellsX; i < Nx; ++i)
+        for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
         {
             const size_t index = j * (Nx + 2 * ghostCellsX) + i;
             vector[index] = std::complex<float>(static_cast<float>(step),
@@ -83,9 +83,9 @@ void AssignStep2D(const size_t step, std::vector<std::complex<double>> &vector,
                   const size_t Nx, const size_t Ny, const size_t ghostCellsX,
                   const size_t ghostCellsY)
 {
-    for (size_t j = ghostCellsY; j < Ny; ++j)
+    for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
     {
-        for (size_t i = ghostCellsX; i < Nx; ++i)
+        for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
         {
             const size_t index = j * (Nx + 2 * ghostCellsX) + i;
             vector[index] = std::complex<double>(static_cast<double>(step),
@@ -346,8 +346,8 @@ void BPSteps2D2x4(const size_t ghostCells)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
-        const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
-        const adios2::Dims start{0, static_cast<size_t>(Nx * mpiRank)};
+        const adios2::Dims shape{static_cast<size_t>(Ny * mpiSize), Nx};
+        const adios2::Dims start{static_cast<size_t>(Ny * mpiRank), 0};
         const adios2::Dims count{Ny, Nx};
 
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
@@ -398,15 +398,14 @@ void BPSteps2D2x4(const size_t ghostCells)
             AssignStep2D(i, dataCR64, Nx, Ny, ghostCellsX, ghostCellsY);
 
             bpWriter.BeginStep();
-            bpWriter.Put(var_i8, dataI8.data(), adios2::Mode::Sync);
-            //            bpWriter.Put(var_i16, dataI16.data());
-            //            bpWriter.Put(var_i32, dataI32.data(),
-            //            adios2::Mode::Sync);
-            //            bpWriter.Put(var_i64, dataI64.data());
-            //            bpWriter.Put(var_r32, dataR32.data());
-            //            bpWriter.Put(var_r64, dataR64.data());
-            //            bpWriter.Put(var_cr32, dataCR32.data());
-            //            bpWriter.Put(var_cr64, dataCR64.data());
+            bpWriter.Put(var_i8, dataI8.data());
+            bpWriter.Put(var_i16, dataI16.data());
+            bpWriter.Put(var_i32, dataI32.data());
+            bpWriter.Put(var_i64, dataI64.data());
+            bpWriter.Put(var_r32, dataR32.data());
+            bpWriter.Put(var_r64, dataR64.data());
+            bpWriter.Put(var_cr32, dataCR32.data(), adios2::Mode::Sync);
+            bpWriter.Put(var_cr64, dataCR64.data(), adios2::Mode::Sync);
             bpWriter.EndStep();
         }
         bpWriter.Close();
@@ -424,57 +423,57 @@ void BPSteps2D2x4(const size_t ghostCells)
         EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_i8.Steps(), NSteps);
-        ASSERT_EQ(var_i8.Shape()[0], Ny);
-        ASSERT_EQ(var_i8.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i8.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_i8.Shape()[1], Nx);
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         EXPECT_TRUE(var_i16);
         ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_i16.Steps(), NSteps);
-        ASSERT_EQ(var_i16.Shape()[0], Ny);
-        ASSERT_EQ(var_i16.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i16.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_i16.Shape()[1], Nx);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
         ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_i32.Steps(), NSteps);
-        ASSERT_EQ(var_i32.Shape()[0], Ny);
-        ASSERT_EQ(var_i32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i32.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_i32.Shape()[1], Nx);
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         EXPECT_TRUE(var_i64);
         ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_i64.Steps(), NSteps);
-        ASSERT_EQ(var_i64.Shape()[0], Ny);
-        ASSERT_EQ(var_i64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_i64.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_i64.Shape()[1], Nx);
 
         auto var_r32 = io.InquireVariable<float>("r32");
         EXPECT_TRUE(var_r32);
         ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], Ny);
-        ASSERT_EQ(var_r32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_r32.Shape()[1], Nx);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
         ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], Ny);
-        ASSERT_EQ(var_r64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_r64.Shape()[1], Nx);
 
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         EXPECT_TRUE(var_cr32);
         ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], Ny);
-        ASSERT_EQ(var_cr32.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_cr32.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_cr32.Shape()[1], Nx);
 
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
         EXPECT_TRUE(var_cr64);
         ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], Ny);
-        ASSERT_EQ(var_cr64.Shape()[1], mpiSize * Nx);
+        ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Ny);
+        ASSERT_EQ(var_cr64.Shape()[1], Nx);
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
@@ -497,14 +496,15 @@ void BPSteps2D2x4(const size_t ghostCells)
             bpReader.Get(var_cr64, CR64);
             bpReader.EndStep();
 
-            EXPECT_EQ(I8.size(), mpiSize * Nx * Ny);
-            EXPECT_EQ(I16.size(), mpiSize * Nx * Ny);
-            EXPECT_EQ(I32.size(), mpiSize * Nx * Ny);
-            EXPECT_EQ(I64.size(), mpiSize * Nx * Ny);
-            EXPECT_EQ(R32.size(), mpiSize * Nx * Ny);
-            EXPECT_EQ(R64.size(), mpiSize * Nx * Ny);
-            EXPECT_EQ(CR32.size(), mpiSize * Nx * Ny);
-            EXPECT_EQ(CR64.size(), mpiSize * Nx * Ny);
+            const size_t dataSize = mpiSize * Ny * Nx;
+            EXPECT_EQ(I8.size(), dataSize);
+            EXPECT_EQ(I16.size(), dataSize);
+            EXPECT_EQ(I32.size(), dataSize);
+            EXPECT_EQ(I64.size(), dataSize);
+            EXPECT_EQ(R32.size(), dataSize);
+            EXPECT_EQ(R64.size(), dataSize);
+            EXPECT_EQ(CR32.size(), dataSize);
+            EXPECT_EQ(CR64.size(), dataSize);
 
             const size_t step = bpReader.CurrentStep();
             EXPECT_EQ(I8.front(), static_cast<int8_t>(step));
@@ -560,7 +560,7 @@ public:
     virtual void TearDown() {}
 };
 
-TEST_P(BPWriteMemSelReadVector, DISABLED_BPMemorySelectionSteps1D)
+TEST_P(BPWriteMemSelReadVector, BPMemorySelectionSteps1D)
 {
     BPSteps1D(GetParam());
 }

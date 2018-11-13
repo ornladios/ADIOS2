@@ -77,18 +77,23 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
     Dims currentPoint(interStart); // current point for memory copy
     const size_t interOffset =
         LinearIndex(srcStart, srcCount, interStart, true);
-    const size_t memOffset =
-        srcMemStart.empty() ? 0 : LinearIndex(Dims(srcMemCount.size(), 0),
-                                              srcMemCount, srcMemStart, true);
 
     bool run = true;
 
     while (run)
     {
+
         // here copy current linear memory between currentPoint and end
         const size_t srcBeginOffset =
-            helper::LinearIndex(srcStart, srcCount, currentPoint, true) -
-            interOffset + memOffset;
+            srcMemStart.empty()
+                ? LinearIndex(srcStart, srcCount, currentPoint, true) -
+                      interOffset
+                : LinearIndex(Dims(srcMemCount.size(), 0), srcMemCount,
+                              VectorsOp(std::plus<size_t>(),
+                                        VectorsOp(std::minus<size_t>(),
+                                                  currentPoint, interStart),
+                                        srcMemStart),
+                              true);
 
         const size_t srcEndOffset = srcBeginOffset + stride;
 
@@ -160,17 +165,22 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
     Dims currentPoint(interStart); // current point for memory copy
     const size_t interOffset =
         LinearIndex(srcStart, srcCount, interStart, false);
-    const size_t memOffset =
-        srcMemStart.empty() ? 0 : LinearIndex(Dims(srcMemCount.size(), 0),
-                                              srcMemCount, srcMemStart, false);
+
     bool run = true;
 
     while (run)
     {
         // here copy current linear memory between currentPoint and end
         const size_t srcBeginOffset =
-            helper::LinearIndex(srcStart, srcCount, currentPoint, false) -
-            interOffset + memOffset;
+            srcMemStart.empty()
+                ? LinearIndex(srcStart, srcCount, currentPoint, false) -
+                      interOffset
+                : LinearIndex(Dims(srcMemCount.size(), 0), srcMemCount,
+                              VectorsOp(std::plus<size_t>(),
+                                        VectorsOp(std::minus<size_t>(),
+                                                  currentPoint, interStart),
+                                        srcMemStart),
+                              false);
 
         const size_t srcEndOffset = srcBeginOffset + stride;
 
