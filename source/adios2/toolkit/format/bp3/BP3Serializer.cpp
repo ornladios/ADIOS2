@@ -811,12 +811,14 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
 
     if (addSubfiles)
     {
-        position += 1;
+        const uint8_t zeros1 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros1);
         helper::CopyToBuffer(buffer, position, &m_Version);
     }
     else
     {
-        position += 2;
+        const uint16_t zeros2 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros2);
     }
     helper::CopyToBuffer(buffer, position, &m_Version);
 }
