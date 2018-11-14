@@ -154,12 +154,12 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     {
         parentId = chain[chainSize - 2];
     }
-
+#ifdef NO_STAT
     AddBlockInfo(variable, parentId);
 
     std::vector<T> stats = {min, max};
     AddStats(variable, parentId, stats);
-
+#endif
     //    CloseDataset(dsetID);
     H5Sclose(fileSpace);
     H5Sclose(memSpace);
