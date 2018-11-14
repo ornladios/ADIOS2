@@ -337,9 +337,8 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
                     std::string nameStr = name;
                     if (!(0 == nameStr.find(PREFIX_BLOCKINFO)) &&
                         !(0 == nameStr.find(PREFIX_STAT)))
-                    {
+		    {		     
                         hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
-
                         HDF5TypeGuard d(datasetId, E_H5_DATASET);
                         ReadNativeAttrToIO(io, datasetId, name);
                         CreateVar(io, datasetId, name, ts);
@@ -386,9 +385,8 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId,
         Dims zeros(shape.size(), 0);
 
         try
-        {
+	  { 
             auto &foo = io.DefineVariable<T>(name, shape, zeros, shape);
-
             // 0 is a dummy holder. Just to make sure the ts entry is in there
             foo.m_AvailableStepBlockIndexOffsets[ts + 1] =
                 std::vector<size_t>({0});
@@ -713,8 +711,9 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
     hid_t dsetID = H5Dcreate(topId, list.back().c_str(), h5Type, filespaceID,
                              H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    StoreADIOSName(varName, dsetID);
-
+    if (list.back().compare(varName) != 0) {
+      StoreADIOSName(varName, dsetID); // only stores when not the same
+    }
     datasetChain.push_back(dsetID);
     // return dsetID;
 }
@@ -1273,9 +1272,14 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
     // herr_t ret = H5Gget_num_objs(m_FileId, &numObj);
     H5O_info_t oinfo;
     herr_t ret = H5Oget_info(datasetId, &oinfo);
+
     if (ret >= 0)
     {
         numAttrs = oinfo.num_attrs;
+
+	if (numAttrs <= 0) {
+	  return; 	  //warning: reading attrs at every var can be very time consuimg
+	}
         int k = 0;
         char name[50];
         int MAX_ATTR_NAME_SIZE = 100;
@@ -1292,16 +1296,17 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                 {
                     continue;
                 }
+                if (ATTRNAME_GIVEN_ADIOSNAME.compare(attrName) == 0)
+                {
+                    continue;
+                }
+
                 hid_t sid = H5Aget_space(attrId);
                 H5S_class_t stype = H5Sget_simple_extent_type(sid);
 
                 hid_t attrType = H5Aget_type(attrId);
                 bool isString = (H5Tget_class(attrType) == H5T_STRING);
 
-                if (ATTRNAME_GIVEN_ADIOSNAME.compare(attrName) == 0)
-                {
-                    continue;
-                }
                 std::string attrNameInAdios = pathFromRoot + "/" + attrName;
                 if (isString)
                 {
