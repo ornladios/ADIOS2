@@ -27,6 +27,21 @@ namespace interop
 
 const std::string HDF5Common::ATTRNAME_NUM_STEPS = "NumSteps";
 const std::string HDF5Common::ATTRNAME_GIVEN_ADIOSNAME = "ADIOSName";
+const std::string HDF5Common::PREFIX_BLOCKINFO = "ADIOS_BLOCKINFO_";
+const std::string HDF5Common::PREFIX_STAT = "ADIOS_STAT_";
+
+/*
+   //need to know ndim before defining this.
+   //inconvenient
+class HDF5BlockStat
+{
+public:
+  size_t m_offset[ndim];
+  size_t m_Count[ndim];
+  double m_Min;
+  double m_Max;
+};
+*/
 
 HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
 {
@@ -41,6 +56,11 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
     H5Tinsert(m_DefH5TypeComplexDouble, "dreal", 0, H5T_NATIVE_DOUBLE);
     H5Tinsert(m_DefH5TypeComplexDouble, "dimg", H5Tget_size(H5T_NATIVE_DOUBLE),
               H5T_NATIVE_DOUBLE);
+
+    m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
+#ifdef ADIOS2_HAVE_MPI
+    H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+#endif
 }
 
 void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
@@ -50,6 +70,8 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
 
 #ifdef ADIOS2_HAVE_MPI
     H5Pset_fapl_mpio(m_PropertyListId, comm, MPI_INFO_NULL);
+    MPI_Comm_rank(comm, &m_CommRank);
+    MPI_Comm_size(comm, &m_CommSize);
 #endif
 
     // std::string ts0 = "/AdiosStep0";
@@ -174,7 +196,7 @@ void HDF5Common::ReadAllVariables(core::IO &io)
 {
     if (!m_IsGeneratedByAdios)
     {
-        FindVarsFromH5(io, m_FileId, "/", "");
+        FindVarsFromH5(io, m_FileId, "/", "", 0);
         return;
     }
 
@@ -188,7 +210,7 @@ void HDF5Common::ReadAllVariables(core::IO &io)
 }
 
 void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
-                                const char *heritage)
+                                const char *heritage, unsigned int ts)
 {
     // int i = 0;
     // std::string stepStr;
@@ -211,25 +233,34 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
                 int currType = H5Gget_objtype_by_idx(gid, k);
                 if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
                 {
-                    // std::cout<<" ... handling native: "<<name<<" from
-                    // :"<<heritage<<"/"<<gname<<std::endl;
-                    hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
-                    HDF5TypeGuard d(datasetId, E_H5_DATASET);
-
-                    char longName[std::strlen(heritage) + std::strlen(gname) +
-                                  std::strlen(name) + 10];
-
-                    if (strcmp(gname, "/") == 0)
+                    std::string nameStr = name;
+                    // if (!(0 == nameStr.find(PREFIX_BLOCKINFO)) &&
+                    //  !(0 == nameStr.find(PREFIX_STAT)))
+                    // cave in to cadacity requirement to pass pull request.
+                    // This is odd
+                    if (std::string::npos == nameStr.find(PREFIX_BLOCKINFO) &&
+                        std::string::npos == nameStr.find(PREFIX_STAT))
                     {
-                        sprintf(longName, "/%s", name);
+                        hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+                        HDF5TypeGuard d(datasetId, E_H5_DATASET);
+
+                        char longName[std::strlen(heritage) +
+                                      std::strlen(gname) + std::strlen(name) +
+                                      10];
+
+                        if (strcmp(gname, "/") == 0)
+                        {
+                            sprintf(longName, "/%s", name);
+                        }
+                        else
+                        {
+                            sprintf(longName, "%s/%s/%s", heritage, gname,
+                                    name);
+                        }
+                        // CreateVar(io, datasetId, name);
+                        ReadNativeAttrToIO(io, datasetId, longName);
+                        CreateVar(io, datasetId, longName, ts);
                     }
-                    else
-                    {
-                        sprintf(longName, "%s/%s/%s", heritage, gname, name);
-                    }
-                    // CreateVar(io, datasetId, name);
-                    ReadNativeAttrToIO(io, datasetId, longName);
-                    CreateVar(io, datasetId, longName);
                 }
                 else if (currType == H5G_GROUP)
                 {
@@ -239,7 +270,7 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
                         heritageNext += "/";
                         heritageNext += gname;
                     }
-                    FindVarsFromH5(io, gid, name, heritageNext.c_str());
+                    FindVarsFromH5(io, gid, name, heritageNext.c_str(), ts);
                 }
             }
         }
@@ -303,15 +334,24 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
                 int currType = H5Gget_objtype_by_idx(gid, k);
                 if (currType == H5G_GROUP)
                 {
-                    FindVarsFromH5(io, gid, name, "");
+                    FindVarsFromH5(io, gid, name, "", ts);
                 }
                 else if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
                 {
-                    hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+                    std::string nameStr = name;
+                    // if (!(0 == nameStr.find(PREFIX_BLOCKINFO)) &&
+                    //  !(0 == nameStr.find(PREFIX_STAT)))
+                    // cave in to cadacity requirement to pass pull request.
+                    // This is odd
+                    if (std::string::npos == nameStr.find(PREFIX_BLOCKINFO) &&
+                        std::string::npos == nameStr.find(PREFIX_STAT))
 
-                    HDF5TypeGuard d(datasetId, E_H5_DATASET);
-                    ReadNativeAttrToIO(io, datasetId, name);
-                    CreateVar(io, datasetId, name);
+                    {
+                        hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
+                        HDF5TypeGuard d(datasetId, E_H5_DATASET);
+                        ReadNativeAttrToIO(io, datasetId, name);
+                        CreateVar(io, datasetId, name, ts);
+                    }
                 }
             }
         }
@@ -321,7 +361,8 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
 }
 
 template <class T>
-void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId)
+void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId,
+                        unsigned int ts)
 {
     core::Variable<T> *v = io.InquireVariable<T>(name);
     if (NULL == v)
@@ -355,9 +396,13 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId)
         try
         {
             auto &foo = io.DefineVariable<T>(name, shape, zeros, shape);
-
+            // 0 is a dummy holder. Just to make sure the ts entry is in there
+            foo.m_AvailableStepBlockIndexOffsets[ts + 1] =
+                std::vector<size_t>({0});
+            foo.m_AvailableStepsStart = ts;
             // default was set to 0 while m_AvailabelStepsStart is 1.
             // correcting
+
             if (0 == foo.m_AvailableStepsCount)
             {
                 foo.m_AvailableStepsCount++;
@@ -378,11 +423,12 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId)
         }
         */
         v->m_AvailableStepsCount++;
+        v->m_AvailableStepBlockIndexOffsets[ts + 1] = std::vector<size_t>({0});
     }
 }
 
 void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
-                           std::string const &nameSuggested)
+                           std::string const &nameSuggested, unsigned int ts)
 {
     std::string name;
     ReadADIOSName(datasetId, name);
@@ -402,83 +448,83 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
     if (H5Tget_class(h5Type) == H5T_STRING)
     // if (H5Tequal(H5T_STRING, h5Type))
     {
-        AddVar<std::string>(io, name, datasetId);
+        AddVar<std::string>(io, name, datasetId, ts);
         return;
     }
 
     if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
     {
-        AddVar<signed char>(io, name, datasetId);
+        AddVar<signed char>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_CHAR, h5Type))
     {
-        AddVar<char>(io, name, datasetId);
+        AddVar<char>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_UCHAR, h5Type))
     {
-        AddVar<unsigned char>(io, name, datasetId);
+        AddVar<unsigned char>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_SHORT, h5Type))
     {
-        AddVar<short>(io, name, datasetId);
+        AddVar<short>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_USHORT, h5Type))
     {
-        AddVar<unsigned short>(io, name, datasetId);
+        AddVar<unsigned short>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_INT, h5Type))
     {
-        AddVar<int>(io, name, datasetId);
+        AddVar<int>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_UINT, h5Type))
     {
-        AddVar<unsigned int>(io, name, datasetId);
+        AddVar<unsigned int>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_STD_I64LE, h5Type))
     {
         /*
          */
-        AddVar<int64_t>(io, name, datasetId);
+        AddVar<int64_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_STD_U64LE, h5Type))
     {
-        AddVar<uint64_t>(io, name, datasetId);
+        AddVar<uint64_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_LONG, h5Type))
     {
-        AddVar<long>(io, name, datasetId);
+        AddVar<long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_ULONG, h5Type))
     {
-        AddVar<unsigned long>(io, name, datasetId);
+        AddVar<unsigned long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_LLONG, h5Type))
     {
-        AddVar<long long>(io, name, datasetId);
+        AddVar<long long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_ULLONG, h5Type))
     {
-        AddVar<unsigned long long>(io, name, datasetId);
+        AddVar<unsigned long long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_FLOAT, h5Type))
     {
-        AddVar<float>(io, name, datasetId);
+        AddVar<float>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_DOUBLE, h5Type))
     {
-        AddVar<double>(io, name, datasetId);
+        AddVar<double>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_LDOUBLE, h5Type))
     {
-        AddVar<long double>(io, name, datasetId);
+        AddVar<long double>(io, name, datasetId, ts);
     }
     else if (H5Tequal(m_DefH5TypeComplexFloat, h5Type))
     {
-        AddVar<std::complex<float>>(io, name, datasetId);
+        AddVar<std::complex<float>>(io, name, datasetId, ts);
     }
     else if (H5Tequal(m_DefH5TypeComplexDouble, h5Type))
     {
-        AddVar<std::complex<double>>(io, name, datasetId);
+        AddVar<std::complex<double>>(io, name, datasetId, ts);
     }
 
     // H5Tclose(h5Type);
@@ -498,6 +544,7 @@ void HDF5Common::Close()
         H5Gclose(m_GroupId);
     }
 
+    H5Pclose(m_PropertyTxfID);
     H5Fclose(m_FileId);
     m_FileId = -1;
     m_GroupId = -1;
@@ -673,8 +720,10 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
     hid_t dsetID = H5Dcreate(topId, list.back().c_str(), h5Type, filespaceID,
                              H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    StoreADIOSName(varName, dsetID);
-
+    if (list.back().compare(varName) != 0)
+    {
+        StoreADIOSName(varName, dsetID); // only stores when not the same
+    }
     datasetChain.push_back(dsetID);
     // return dsetID;
 }
@@ -1233,9 +1282,16 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
     // herr_t ret = H5Gget_num_objs(m_FileId, &numObj);
     H5O_info_t oinfo;
     herr_t ret = H5Oget_info(datasetId, &oinfo);
+
     if (ret >= 0)
     {
         numAttrs = oinfo.num_attrs;
+
+        if (numAttrs <= 0)
+        {
+            return; // warning: reading attrs at every var can be very time
+                    // consuimg
+        }
         int k = 0;
         char name[50];
         int MAX_ATTR_NAME_SIZE = 100;
@@ -1252,16 +1308,17 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                 {
                     continue;
                 }
+                if (ATTRNAME_GIVEN_ADIOSNAME.compare(attrName) == 0)
+                {
+                    continue;
+                }
+
                 hid_t sid = H5Aget_space(attrId);
                 H5S_class_t stype = H5Sget_simple_extent_type(sid);
 
                 hid_t attrType = H5Aget_type(attrId);
                 bool isString = (H5Tget_class(attrType) == H5T_STRING);
 
-                if (ATTRNAME_GIVEN_ADIOSNAME.compare(attrName) == 0)
-                {
-                    continue;
-                }
                 std::string attrNameInAdios = pathFromRoot + "/" + attrName;
                 if (isString)
                 {
