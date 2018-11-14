@@ -65,6 +65,12 @@ if(ADIOS2_HAVE_MPI)
   add_executable(TestBPReadGlobalsByName_f TestBPReadGlobalsByName.f90)
   target_link_libraries(TestBPReadGlobalsByName_f adios2_f MPI::MPI_Fortran)
   
+  add_executable(TestBPMemorySelection2D_f TestBPWriteMemorySelectionRead2D.f90)
+  target_link_libraries(TestBPMemorySelection2D_f adios2_f MPI::MPI_Fortran)
+  
+  add_executable(TestBPMemorySelection3D_f TestBPWriteMemorySelectionRead3D.f90)
+  target_link_libraries(TestBPMemorySelection3D_f adios2_f MPI::MPI_Fortran)
+  
   # F2C 
   add_executable(TestBPReadFBlocks_f2c TestF2C_BPReadFBlocks.cpp)
   target_link_libraries(TestBPReadFBlocks_f2c adios2 gtest MPI::MPI_C)
@@ -161,6 +167,14 @@ if(ADIOS2_HAVE_MPI)
       COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadZfp2D_f>
     )
   endif()
+  
+  add_test(NAME BPMemorySelection2D_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPMemorySelection2D_f>
+  )
+  
+  add_test(NAME BPMemorySelection3D_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestBPMemorySelection3D_f>
+  )
   
 else()
   

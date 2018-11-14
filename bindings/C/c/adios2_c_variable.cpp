@@ -107,6 +107,37 @@ adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
     }
 }
 
+adios2_error adios2_set_memory_selection(adios2_variable *variable,
+                                         const size_t ndims,
+                                         const size_t *memory_start,
+                                         const size_t *memory_count)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call to "
+                                        "adios2_set_memory_selection");
+        adios2::helper::CheckForNullptr(memory_start,
+                                        "for start, in call to "
+                                        "adios2_set_memory_selection");
+        adios2::helper::CheckForNullptr(memory_count,
+                                        "for count, in call to "
+                                        "adios2_set_memory_selection");
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+
+        const adios2::Dims memoryStartV(memory_start, memory_start + ndims);
+        const adios2::Dims memoryCountV(memory_count, memory_count + ndims);
+        variableBase->SetMemorySelection({memoryStartV, memoryCountV});
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_memory_selection"));
+    }
+}
+
 adios2_error adios2_set_step_selection(adios2_variable *variable,
                                        const size_t step_start,
                                        const size_t step_count)

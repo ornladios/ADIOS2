@@ -31,6 +31,27 @@ adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
                                   const size_t *start, const size_t *count);
 
 /**
+ * Set the local start (offset) point to the memory pointer passed at Put
+ * and the memory local dimensions (count). Used for non-contiguous memory
+ * writes and reads (e.g. multidimensional ghost-cells).
+ * Currently not working for calls to Get.
+ * @param variable handler for which new memory selection will be applied to
+ * @param ndims number of dimensions for memory_start and memory_count
+ * @param memory_start relative local offset of variable.start to the
+ * contiguous memory pointer passed at Put from which data starts. e.g. if
+ * variable start = {rank*Ny,0} and there is 1 ghost cell per dimension,
+ * then memory_start = {1,1}
+ * @param memory_count local dimensions for the contiguous memory pointer
+ * passed at adios2_put, e.g. if there is 1 ghost cell per dimension and
+ * variable count = {Ny,Nx}, then memory_count = {Ny+2,Nx+2}
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_memory_selection(adios2_variable *variable,
+                                         const size_t ndims,
+                                         const size_t *memory_start,
+                                         const size_t *memory_count);
+
+/**
  * Set new step selection using step_start and step_count. Used mostly for
  * reading from file-based engines (e.g. bpfile, hdf5)
  * @param variable handler for which new selection will be applied to

@@ -81,6 +81,21 @@ contains
                                       count_dims, ierr)
     end subroutine
 
+    subroutine adios2_set_memory_selection(variable, ndims, &
+                                           memory_start_dims, &
+                                           memory_count_dims, &
+                                           ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(in) :: ndims
+        integer(kind=8), dimension(:), intent(in) :: memory_start_dims
+        integer(kind=8), dimension(:), intent(in) :: memory_count_dims
+        integer, intent(out) :: ierr
+
+        call adios2_set_memory_selection_f2c(variable%f2c, ndims, &
+                                             memory_start_dims, &
+                                             memory_count_dims, ierr)
+    end subroutine
+
     subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
         type(adios2_variable), intent(in) :: variable
         integer(kind=8), intent(in) :: step_start
