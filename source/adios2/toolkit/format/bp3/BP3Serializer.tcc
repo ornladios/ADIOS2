@@ -362,6 +362,17 @@ BP3Serializer::Stats<T> BP3Serializer::GetBPStats(
             helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
                                      stats.Max, m_Threads);
         }
+        else
+        {
+            // TODO: need RowMajor bool
+            //            helper::GetMinMaxSelection(blockInfo.Data,
+            //            blockInfo.MemoryCount,
+            //                                       blockInfo.MemoryStart,
+            //                                       blockInfo.Count,
+            //                                       true, stats.Min,
+            //                                       stats.Max);
+        }
+
         // TODO need to implement minmax for non-contiguous memory
         ProfilerStop("minmax");
     }

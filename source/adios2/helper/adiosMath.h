@@ -30,6 +30,20 @@ namespace helper
 size_t GetTotalSize(const Dims &dimensions) noexcept;
 
 /**
+ * Populates min and max for a selection region inside
+ * @param values
+ * @param shape
+ * @param start
+ * @param count
+ * @param min
+ * @param max
+ */
+template <class T>
+void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
+                        const Dims &count, const bool isRowMajor, T &min,
+                        T &max) noexcept;
+
+/**
  * Gets the min and max from a values array of primitive types (not including
  * complex)
  * @param values input array
