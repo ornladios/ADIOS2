@@ -746,72 +746,92 @@ void BPSteps3D8x2x4(const size_t ghostCells)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
-        auto var_i8 = io.InquireVariable<int8_t>("i8");
-        EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i8.Steps(), NSteps);
-        ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_i8.Shape()[1], Ny);
-        ASSERT_EQ(var_i8.Shape()[2], Nx);
-
-        auto var_i16 = io.InquireVariable<int16_t>("i16");
-        EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Steps(), NSteps);
-        ASSERT_EQ(var_i16.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_i16.Shape()[1], Ny);
-        ASSERT_EQ(var_i16.Shape()[2], Nx);
-
-        auto var_i32 = io.InquireVariable<int32_t>("i32");
-        EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Steps(), NSteps);
-        ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_i32.Shape()[1], Ny);
-        ASSERT_EQ(var_i32.Shape()[2], Nx);
-
-        auto var_i64 = io.InquireVariable<int64_t>("i64");
-        EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Steps(), NSteps);
-        ASSERT_EQ(var_i64.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_i64.Shape()[1], Ny);
-        ASSERT_EQ(var_i64.Shape()[2], Nx);
-
-        auto var_r32 = io.InquireVariable<float>("r32");
-        EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_r32.Shape()[1], Ny);
-        ASSERT_EQ(var_r32.Shape()[2], Nx);
-
-        auto var_r64 = io.InquireVariable<double>("r64");
-        EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_r64.Shape()[1], Ny);
-        ASSERT_EQ(var_r64.Shape()[2], Nx);
-
-        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-        EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_cr32.Shape()[1], Ny);
-        ASSERT_EQ(var_cr32.Shape()[2], Nx);
-
-        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
-        EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nz);
-        ASSERT_EQ(var_cr64.Shape()[1], Ny);
-        ASSERT_EQ(var_cr64.Shape()[2], Nx);
-
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            auto var_i8 = io.InquireVariable<int8_t>("i8");
+            EXPECT_TRUE(var_i8);
+            EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_i8.Steps(), NSteps);
+            EXPECT_EQ(var_i8.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_i8.Shape()[1], Ny);
+            EXPECT_EQ(var_i8.Shape()[2], Nx);
+            EXPECT_EQ(var_i8.Min(), 0);
+            EXPECT_EQ(var_i8.Max(), NSteps - 1);
+
+            auto var_i16 = io.InquireVariable<int16_t>("i16");
+            EXPECT_TRUE(var_i16);
+            EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_i16.Steps(), NSteps);
+            EXPECT_EQ(var_i16.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_i16.Shape()[1], Ny);
+            EXPECT_EQ(var_i16.Shape()[2], Nx);
+            EXPECT_EQ(var_i16.Min(), 0);
+            EXPECT_EQ(var_i16.Max(), NSteps - 1);
+
+            auto var_i32 = io.InquireVariable<int32_t>("i32");
+            EXPECT_TRUE(var_i32);
+            EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_i32.Steps(), NSteps);
+            EXPECT_EQ(var_i32.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_i32.Shape()[1], Ny);
+            EXPECT_EQ(var_i32.Shape()[2], Nx);
+            EXPECT_EQ(var_i32.Min(), 0);
+            EXPECT_EQ(var_i32.Max(), NSteps - 1);
+
+            auto var_i64 = io.InquireVariable<int64_t>("i64");
+            EXPECT_TRUE(var_i64);
+            EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_i64.Steps(), NSteps);
+            EXPECT_EQ(var_i64.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_i64.Shape()[1], Ny);
+            EXPECT_EQ(var_i64.Shape()[2], Nx);
+            EXPECT_EQ(var_i64.Min(), 0);
+            EXPECT_EQ(var_i64.Max(), NSteps - 1);
+
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_r32.Steps(), NSteps);
+            EXPECT_EQ(var_r32.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_r32.Shape()[1], Ny);
+            EXPECT_EQ(var_r32.Shape()[2], Nx);
+            EXPECT_EQ(var_r32.Min(), 0);
+            EXPECT_EQ(var_r32.Max(), NSteps - 1);
+
+            auto var_r64 = io.InquireVariable<double>("r64");
+            EXPECT_TRUE(var_r64);
+            EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_r64.Steps(), NSteps);
+            EXPECT_EQ(var_r64.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_r64.Shape()[1], Ny);
+            EXPECT_EQ(var_r64.Shape()[2], Nx);
+            EXPECT_EQ(var_r64.Min(), 0);
+            EXPECT_EQ(var_r64.Max(), NSteps - 1);
+
+            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
+            EXPECT_TRUE(var_cr32);
+            EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_cr32.Steps(), NSteps);
+            EXPECT_EQ(var_cr32.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_cr32.Shape()[1], Ny);
+            EXPECT_EQ(var_cr32.Shape()[2], Nx);
+            EXPECT_EQ(var_cr32.Min(), std::complex<float>(0, 0));
+            EXPECT_EQ(var_cr32.Max(),
+                      std::complex<float>(static_cast<float>(NSteps - 1),
+                                          static_cast<float>(NSteps - 1)));
+
+            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+            EXPECT_TRUE(var_cr64);
+            EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_cr64.Steps(), NSteps);
+            EXPECT_EQ(var_cr64.Shape()[0], mpiSize * Nz);
+            EXPECT_EQ(var_cr64.Shape()[1], Ny);
+            EXPECT_EQ(var_cr64.Shape()[2], Nx);
+            EXPECT_EQ(var_cr64.Min(), std::complex<double>(0, 0));
+            EXPECT_EQ(var_cr64.Max(),
+                      std::complex<double>(static_cast<double>(NSteps - 1),
+                                           static_cast<double>(NSteps - 1)));
+
             std::vector<int8_t> I8;
             std::vector<int16_t> I16;
             std::vector<int32_t> I32;

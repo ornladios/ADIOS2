@@ -117,7 +117,7 @@ contains
             write(0,*) 'ERROR: adios2 variable ', TRIM(variable%name)//char(0), &
                        ' type mismatch, in call to adios2_', TRIM(hint)//char(0)
 
-            ierr = -1
+            ierr = adios2_error_invalid_argument
         end if
 
     end subroutine

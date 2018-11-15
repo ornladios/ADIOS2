@@ -26,7 +26,6 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_attribute_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_begin_step_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_mod.f90 
@@ -34,6 +33,9 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_file_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fwrite_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fread_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_min_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_max_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})

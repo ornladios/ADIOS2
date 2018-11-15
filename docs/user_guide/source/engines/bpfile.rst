@@ -44,6 +44,8 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 8. **FlushStepsCount**: user can select how often to produce the more expensive collective metadata file in terms of steps: default is 1. Increase to reduce adios2 collective operations footprint, with the trade-off of reducing checkpoint frequency. Buffer size will increase until first steps count if MaxBufferSize is not set.
 
+9. **SubStreams**: (MPI-only) user can select how many sub-streams ("M" sub-files) are produced during a run, ranges between 1 and the number of mpi processes (N), adios2 will internally aggregate data buffers (N-to-M) to output the required number of files. Use for performance tuning.   
+
 ==================== ===================== =========================================================
  **Key**              **Value Format**      **Default** and Examples 
 ==================== ===================== =========================================================
@@ -54,7 +56,8 @@ This engine allows the user to fine tune the buffering operations through the fo
  InitialBufferSize    float+units >= 16Kb   **16Kb**, 10Mb, 0.5Gb 
  MaxBufferSize        float+units >= 16Kb   **at EndStep**, 10Mb, 0.5Gb   
  BufferGrowthFactor   float > 1             **1.05**, 1.01, 1.5, 2 
- FlushStepsCount      integer > 1           **1**, 5, 1000, 50000 
+ FlushStepsCount      integer > 1           **1**, 5, 1000, 50000
+ SubStreams           integer >= 1          **MPI_Size**, ... MPI_Size/2, ... , 2, 1  
 ==================== ===================== =========================================================
 
 
