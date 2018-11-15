@@ -137,9 +137,21 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
                                               payloadSize, payloadStart,
                                               subFileIndex);
                 }
-                m_BP3Deserializer.ClipContiguousMemory<T>(
-                    blockInfo, variable.m_RawMemory[0], subStreamInfo.BlockBox,
-                    subStreamInfo.IntersectionBox);
+                //                m_BP3Deserializer.ClipContiguousMemory<T>(
+                //                                       blockInfo,
+                //                                       variable.m_RawMemory[0],
+                //                                       subStreamInfo.BlockBox,
+                //                                       subStreamInfo.IntersectionBox);
+                const Box<Dims> sourceStartCount =
+                    helper::StartCountBox(subStreamInfo.BlockBox.first,
+                                          subStreamInfo.BlockBox.second);
+
+                helper::CopyMemory(
+                    blockInfo.Data, blockInfo.Start, blockInfo.Count,
+                    helper::IsRowMajor(m_IO.m_HostLanguage),
+                    reinterpret_cast<T *>(variable.m_RawMemory[0].data()),
+                    sourceStartCount.first, sourceStartCount.second,
+                    m_BP3Deserializer.m_IsRowMajor);
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);

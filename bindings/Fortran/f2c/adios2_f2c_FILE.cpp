@@ -135,9 +135,9 @@ void FC_GLOBAL(adios2_fwrite_value_f2c,
                                         const int *type, const void *data,
                                         const int *end_step, int *ierr)
 {
-    *ierr = adios2_fwrite(*fh, name, static_cast<adios2_type>(*type), data, 0,
-                          nullptr, nullptr, nullptr,
-                          static_cast<adios2_bool>(*end_step));
+    *ierr = static_cast<int>(adios2_fwrite(
+        *fh, name, static_cast<adios2_type>(*type), data, 0, nullptr, nullptr,
+        nullptr, static_cast<adios2_bool>(*end_step)));
 }
 
 void FC_GLOBAL(adios2_fwrite_f2c,
@@ -181,8 +181,9 @@ void FC_GLOBAL(adios2_fread_value_f2c,
                 "adios2_advance_no(0), in call to adios2_fread");
         }
 
-        *ierr = adios2_fread(*fh, name, static_cast<adios2_type>(*type), data,
-                             0, nullptr, nullptr);
+        *ierr = static_cast<int>(adios2_fread(*fh, name,
+                                              static_cast<adios2_type>(*type),
+                                              data, 0, nullptr, nullptr));
         if (*end_step == 1)
         {
             if (adios2_fgets(*fh, *fh) == nullptr)
@@ -224,9 +225,10 @@ void FC_GLOBAL(adios2_fread_f2c,
         const std::vector<std::size_t> countV =
             adios2_Int64ToSizeTVector(count, *ndims);
 
-        *ierr = adios2_fread(*fh, name, static_cast<adios2_type>(*type), data,
-                             static_cast<size_t>(*ndims), startV.data(),
-                             countV.data());
+        *ierr = static_cast<int>(adios2_fread(
+            *fh, name, static_cast<adios2_type>(*type), data,
+            static_cast<size_t>(*ndims), startV.data(), countV.data()));
+
         if (*end_step == 1)
         {
             if (adios2_fgets(*fh, *fh) == nullptr)
@@ -255,11 +257,11 @@ void FC_GLOBAL(adios2_fread_steps_f2c, adios2_FREAD_STEPS_F2C)(
         const std::vector<std::size_t> countV =
             adios2_Int64ToSizeTVector(count, *ndims);
 
-        *ierr = adios2_fread_steps(*fh, name, static_cast<adios2_type>(*type),
-                                   data, static_cast<std::size_t>(*ndims),
-                                   startV.data(), countV.data(),
-                                   static_cast<std::size_t>(*step_start),
-                                   static_cast<std::size_t>(*step_count));
+        *ierr = static_cast<int>(adios2_fread_steps(
+            *fh, name, static_cast<adios2_type>(*type), data,
+            static_cast<std::size_t>(*ndims), startV.data(), countV.data(),
+            static_cast<std::size_t>(*step_start),
+            static_cast<std::size_t>(*step_count)));
     }
     catch (std::exception &e)
     {
@@ -272,7 +274,7 @@ void FC_GLOBAL(adios2_fread_steps_f2c, adios2_FREAD_STEPS_F2C)(
 void FC_GLOBAL(adios2_fclose_f2c, adios2_FCLOSE_F2C)(adios2_FILE **fh,
                                                      int *ierr)
 {
-    *ierr = adios2_fclose(*fh);
+    *ierr = static_cast<int>(adios2_fclose(*fh));
 }
 
 #ifdef __cplusplus

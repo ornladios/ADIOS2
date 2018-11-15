@@ -1,6 +1,6 @@
-**********************************
+*********************************
 SST Sustainable Staging Transport
-**********************************
+*********************************
 
 In ADIOS2, the Sustainable Staging Transport (SST) is an engine that allows
 direct connection of data producers and consumers via the ADIOS2 write/read
@@ -165,13 +165,13 @@ will result in SST generating contact information that uses the
 network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
-====================   ===================== =========================================================
- **Key**                **Value Format**      **Default** and Examples 
-====================   ===================== =========================================================
- RendezvousReaderCount integer		     **1**
- RegistrationMethod    string                **File**, Screen
- QueueLimit            integer		     **0** (no queue limits)
- QueueFullPolicy       string	             **Block**, Discard
- DataTransport	       string		     **default varies by platform**, RDMA, WAN
- NetworkInterface      string		     **NULL**
-====================   ===================== =========================================================
+=======================  ===================== =========================================================
+ **Key**                  **Value Format**      **Default** and Examples 
+=======================  ===================== =========================================================
+ RendezvousReaderCount    integer		         **1**
+ RegistrationMethod       string                **File**, Screen
+ QueueLimit               integer		         **0** (no queue limits)
+ QueueFullPolicy          string	               **Block**, Discard
+ DataTransport	           string		            **default varies by platform**, RDMA, WAN
+ NetworkInterface         string		            **NULL**
+=======================  ===================== =========================================================

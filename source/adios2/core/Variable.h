@@ -58,6 +58,8 @@ public:
         T Value = T();
         bool IsValue = false;
         std::vector<Operation> Operations;
+        Dims MemoryStart;
+        Dims MemoryCount;
 
         /** Contains (seek) read information for available [step][blockID],
          *  used in Read mode only,

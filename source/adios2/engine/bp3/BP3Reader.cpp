@@ -22,7 +22,7 @@ namespace engine
 
 BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("BPFileReader", io, name, mode, mpiComm),
+: Engine("BP3", io, name, mode, mpiComm),
   m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
   m_SubFileManager(mpiComm, m_DebugMode)
 {

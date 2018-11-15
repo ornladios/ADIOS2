@@ -1644,12 +1644,12 @@ size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
 #define declare_template_instantiation(T)                                      \
     template void BP3Serializer::PutVariablePayload(                           \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;                                                  \
                                                                                \
     template void BP3Serializer::PutVariableMetadata(                          \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

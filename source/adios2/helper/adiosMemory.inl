@@ -20,6 +20,8 @@
 #include <thread>
 /// \endcond
 
+#include "adios2/helper/adiosMath.h"
+
 namespace adios2
 {
 namespace helper
@@ -136,6 +138,31 @@ void ClipVector(std::vector<T> &vec, const size_t start,
 {
     vec.resize(end);
     vec.erase(vec.begin(), vec.begin() + start);
+}
+
+template <class T, class U>
+void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                const bool destRowMajor, const U *src, const Dims &srcStart,
+                const Dims &srcCount, const bool srcRowMajor,
+                const Dims &destMemStart, const Dims &destMemCount,
+                const Dims &srcMemStart, const Dims &srcMemCount) noexcept
+{
+    // transform everything to payload dims
+    const Dims destStartPayload = PayloadDims<T>(destStart, destRowMajor);
+    const Dims destCountPayload = PayloadDims<T>(destCount, destRowMajor);
+    const Dims destMemStartPayload = PayloadDims<T>(destMemStart, destRowMajor);
+    const Dims destMemCountPayload = PayloadDims<T>(destMemCount, destRowMajor);
+
+    const Dims srcStartPayload = PayloadDims<U>(srcStart, srcRowMajor);
+    const Dims srcCountPayload = PayloadDims<U>(srcCount, srcRowMajor);
+    const Dims srcMemStartPayload = PayloadDims<U>(srcMemStart, srcRowMajor);
+    const Dims srcMemCountPayload = PayloadDims<U>(srcMemCount, srcRowMajor);
+
+    CopyPayload(reinterpret_cast<char *>(dest), destStartPayload,
+                destCountPayload, destRowMajor,
+                reinterpret_cast<const char *>(src), srcStartPayload,
+                srcCountPayload, srcRowMajor, destMemStartPayload,
+                destMemCountPayload, srcMemStartPayload, srcMemCountPayload);
 }
 
 template <class T>

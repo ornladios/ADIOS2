@@ -85,6 +85,39 @@ template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
 
 /**
+ * General function to copy memory between blocks of different type and start
+ * and count
+ * @param dest
+ * @param destStart
+ * @param destCount
+ * @param destRowMajor
+ * @param src
+ * @param srcStart
+ * @param srcCount
+ * @param srcRowMajor
+ * @param destMemStart
+ * @param destMemCount
+ * @param srcMemStart
+ * @param srcMemCount
+ */
+template <class T, class U>
+void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                const bool destRowMajor, const U *src, const Dims &srcStart,
+                const Dims &srcCount, const bool srcRowMajor,
+                const Dims &destMemStart = Dims(),
+                const Dims &destMemCount = Dims(),
+                const Dims &srcMemStart = Dims(),
+                const Dims &srcMemCount = Dims()) noexcept;
+
+void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
+                 const bool destRowMajor, const char *src, const Dims &srcStart,
+                 const Dims &srcCount, const bool srcRowMajor,
+                 const Dims &destMemStart = Dims(),
+                 const Dims &destMemCount = Dims(),
+                 const Dims &srcMemStart = Dims(),
+                 const Dims &srcMemCount = Dims()) noexcept;
+
+/**
  * Clips the contiguous memory corresponding to an intersection and puts it in
  * dest, where dest has a start and coun
  * @param dest to be populated (must be pre-allocated)

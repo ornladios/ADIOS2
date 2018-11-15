@@ -81,6 +81,21 @@ contains
                                       count_dims, ierr)
     end subroutine
 
+    subroutine adios2_set_memory_selection(variable, ndims, &
+                                           memory_start_dims, &
+                                           memory_count_dims, &
+                                           ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(in) :: ndims
+        integer(kind=8), dimension(:), intent(in) :: memory_start_dims
+        integer(kind=8), dimension(:), intent(in) :: memory_count_dims
+        integer, intent(out) :: ierr
+
+        call adios2_set_memory_selection_f2c(variable%f2c, ndims, &
+                                             memory_start_dims, &
+                                             memory_count_dims, ierr)
+    end subroutine
+
     subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
         type(adios2_variable), intent(in) :: variable
         integer(kind=8), intent(in) :: step_start
@@ -102,7 +117,7 @@ contains
             write(0,*) 'ERROR: adios2 variable ', TRIM(variable%name)//char(0), &
                        ' type mismatch, in call to adios2_', TRIM(hint)//char(0)
 
-            ierr = -1
+            ierr = adios2_error_invalid_argument
         end if
 
     end subroutine

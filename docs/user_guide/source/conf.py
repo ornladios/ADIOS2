@@ -131,7 +131,7 @@ exclude_patterns = [
     'utilities/bpls.rst',
     'engines/dataman.rst',
     'engines/hdf5.rst',
-    'engines/bpfile.rst',
+    'engines/bp3.rst',
     'engines/sst.rst',
     # 'engines/engines.rst',
     # 'faq/faq.rst',

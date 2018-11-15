@@ -184,6 +184,16 @@ void Engine::CommonChecks(Variable<T> &variable, const T *data,
         helper::CheckForNullptr(
             data, "for data argument in non-zero count block, " + hint);
     }
+
+    if (!variable.m_MemoryStart.empty() && m_OpenMode == adios2::Mode::Read)
+    {
+        throw std::invalid_argument("ERROR: from Engine " + m_Name +
+                                    " and Variable " + variable.m_Name +
+                                    ", Variable<T>::SetMemoryStart not yet "
+                                    "implemented for Engines in Open Read "
+                                    "mode, " +
+                                    hint + "\n");
+    }
 }
 
 } // end namespace core

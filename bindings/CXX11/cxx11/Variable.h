@@ -60,6 +60,24 @@ public:
     void SetSelection(const adios2::Box<adios2::Dims> &selection);
 
     /**
+     * Set the local start (offset) point to the memory pointer passed at Put
+     * and the memory local dimensions (count). Used for non-contiguous memory
+     * writes and reads (e.g. multidimensional ghost-cells).
+     * Currently not working for calls to Get.
+     * @param memorySelection {memoryStart, memoryCount}
+     * <pre>
+     * 		memoryStart: relative local offset of variable.start to the
+     * contiguous memory pointer passed at Put from which data starts. e.g. if
+     * variable.Start() = {rank*Ny,0} and there is 1 ghost cell per dimension,
+     * then memoryStart = {1,1}
+     * 		memoryCount: local dimensions for the contiguous memory pointer
+     * passed at Put, e.g. if there is 1 ghost cell per dimension and
+     * variable.Count() = {Ny,Nx}, then memoryCount = {Ny+2,Nx+2}
+     * </pre>
+     */
+    void SetMemorySelection(const adios2::Box<adios2::Dims> &memorySelection);
+
+    /**
      * Sets a step selection modifying current startStep, countStep
      * countStep is the number of steps from startStep point
      * @param stepSelection input {startStep, countStep}
