@@ -87,7 +87,7 @@
                                  adios2_type_dp,  ierr)
 
      write(*,*) "Engine type: ", ioWrite%engine_type
-     if( TRIM(ioWrite%engine_type) /= 'BPFile' ) stop 'Wrong engine_type'
+     if( TRIM(ioWrite%engine_type) /= 'BP3' ) stop 'Wrong engine_type'
 
      call adios2_set_engine(ioWrite, "SST", ierr)
      write(*,*) "Engine type: ", ioWrite%engine_type
@@ -97,7 +97,7 @@
      write(*,*) "Engine type: ", ioDummy%engine_type
      if( TRIM(ioDummy%engine_type) /= 'SST' ) stop 'Wrong engine_type'
 
-     call adios2_set_engine(ioWrite, "BPFile", ierr)
+     call adios2_set_engine(ioWrite, "BP3", ierr)
 
      ! Open myVector_f.bp in write mode, this launches an engine
      call adios2_open(bpWriter, ioWrite, "ftypes_local.bp", adios2_mode_write, &
