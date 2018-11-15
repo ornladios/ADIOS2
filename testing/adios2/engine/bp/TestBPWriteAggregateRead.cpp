@@ -118,7 +118,6 @@ void WriteAggRead1D8(const std::string substreams)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-
             bpWriter.Put(var_iString, currentTestData.S1);
             bpWriter.Put(var_i8, currentTestData.I8.data());
             bpWriter.Put(var_i16, currentTestData.I16.data());
