@@ -410,7 +410,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 
     /* Initiate the connection, allocating the two channels 0 and 1. */
     peer = enet_host_connect (sd->server, & address, 1, 0);    
-    enet_peer_ping_interval (peer, 10);
+//    enet_peer_ping_interval (peer, 10);
     peer->data = enet_conn_data;
     svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
     
@@ -439,7 +439,7 @@ retry:
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
-            enet_peer_ping_interval (event.peer, 10);
+//            enet_peer_ping_interval (event.peer, 10);
             goto retry;
         }
 	svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
