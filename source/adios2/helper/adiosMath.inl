@@ -42,9 +42,7 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
 
         Dims currentPoint(start); // current point for contiguous memory
         bool run = true;
-
-        min = std::numeric_limits<T>::max();
-        max = std::numeric_limits<T>::min();
+        bool firstStep = true;
 
         while (run)
         {
@@ -55,13 +53,23 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
             T minStride, maxStride;
             GetMinMax(values + startOffset, stride, minStride, maxStride);
 
-            if (minStride < min)
+            if (firstStep)
             {
                 min = minStride;
-            }
-            if (maxStride > max)
-            {
                 max = maxStride;
+                firstStep = false;
+            }
+            else
+            {
+                if (LessThan(minStride, min))
+                {
+                    min = minStride;
+                }
+
+                if (GreaterThan(maxStride, max))
+                {
+                    max = maxStride;
+                }
             }
 
             size_t p = startCoord;
@@ -100,9 +108,7 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
 
         Dims currentPoint(start); // current point for contiguous memory
         bool run = true;
-
-        min = std::numeric_limits<T>::max();
-        max = std::numeric_limits<T>::min();
+        bool firstStep = true;
 
         while (run)
         {
@@ -113,13 +119,23 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
             T minStride, maxStride;
             GetMinMax(values + startOffset, stride, minStride, maxStride);
 
-            if (minStride < min)
+            if (firstStep)
             {
                 min = minStride;
-            }
-            if (maxStride > max)
-            {
                 max = maxStride;
+                firstStep = false;
+            }
+            else
+            {
+                if (LessThan(minStride, min))
+                {
+                    min = minStride;
+                }
+
+                if (GreaterThan(maxStride, max))
+                {
+                    max = maxStride;
+                }
             }
 
             size_t p = startCoord;
@@ -169,11 +185,28 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
 }
 
 template <class T>
-void GetMinMax(const T *values, const size_t size, T &min, T &max) noexcept
+inline void GetMinMax(const T *values, const size_t size, T &min,
+                      T &max) noexcept
 {
     auto bounds = std::minmax_element(values, values + size);
     min = *bounds.first;
     max = *bounds.second;
+}
+
+template <>
+inline void GetMinMax(const std::complex<float> *values, const size_t size,
+                      std::complex<float> &min,
+                      std::complex<float> &max) noexcept
+{
+    GetMinMaxComplex(values, size, min, max);
+}
+
+template <>
+inline void GetMinMax(const std::complex<double> *values, const size_t size,
+                      std::complex<double> &min,
+                      std::complex<double> &max) noexcept
+{
+    GetMinMaxComplex(values, size, min, max);
 }
 
 template <class T>

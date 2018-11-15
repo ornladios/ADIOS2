@@ -25,7 +25,8 @@ namespace format
 template <class T>
 inline void BP3Serializer::PutVariableMetadata(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor) noexcept
 {
     auto lf_SetOffset = [&](uint64_t &offset) {
         if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
@@ -40,7 +41,7 @@ inline void BP3Serializer::PutVariableMetadata(
 
     ProfilerStart("buffering");
 
-    Stats<T> stats = GetBPStats<T>(blockInfo);
+    Stats<T> stats = GetBPStats<T>(blockInfo, sourceRowMajor);
 
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
@@ -339,7 +340,8 @@ void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
 
 template <>
 inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
-    const typename core::Variable<std::string>::Info & /*blockInfo*/) noexcept
+    const typename core::Variable<std::string>::Info & /*blockInfo*/,
+    const bool /*isRowMajor*/) noexcept
 {
     Stats<std::string> stats;
     stats.Step = m_MetadataSet.TimeStep;
@@ -348,8 +350,9 @@ inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
 }
 
 template <class T>
-BP3Serializer::Stats<T> BP3Serializer::GetBPStats(
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+BP3Serializer::Stats<T>
+BP3Serializer::GetBPStats(const typename core::Variable<T>::Info &blockInfo,
+                          const bool isRowMajor) noexcept
 {
     Stats<T> stats;
     const std::size_t valuesSize = helper::GetTotalSize(blockInfo.Count);
@@ -365,12 +368,9 @@ BP3Serializer::Stats<T> BP3Serializer::GetBPStats(
         else
         {
             // TODO: need RowMajor bool
-            //            helper::GetMinMaxSelection(blockInfo.Data,
-            //            blockInfo.MemoryCount,
-            //                                       blockInfo.MemoryStart,
-            //                                       blockInfo.Count,
-            //                                       true, stats.Min,
-            //                                       stats.Max);
+            helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
+                                       blockInfo.MemoryStart, blockInfo.Count,
+                                       isRowMajor, stats.Min, stats.Max);
         }
 
         // TODO need to implement minmax for non-contiguous memory
