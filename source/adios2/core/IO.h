@@ -81,8 +81,8 @@ public:
     /** From AddOperation, contains operators added to this IO */
     std::vector<Operation> m_Operations;
 
-    /** BPFileWriter engine default if unknown */
-    std::string m_EngineType = "BPFile";
+    /** BP3 engine default if unknown */
+    std::string m_EngineType = "BP3";
 
     /** at read for file engines: true: in streaming (step-by-step) mode, or
      * false: random-access mode (files) */

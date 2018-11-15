@@ -26,8 +26,7 @@ namespace engine
 
 BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("BPFileWriter", io, name, mode, mpiComm),
-  m_BP3Serializer(mpiComm, m_DebugMode),
+: Engine("BP3", io, name, mode, mpiComm), m_BP3Serializer(mpiComm, m_DebugMode),
   m_FileDataManager(mpiComm, m_DebugMode),
   m_FileMetadataManager(mpiComm, m_DebugMode)
 {
