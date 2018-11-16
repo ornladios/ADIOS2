@@ -47,6 +47,8 @@ add_library(adios2
   toolkit/format/bp3/operation/BP3Zfp.tcc
   toolkit/format/bp3/operation/BP3SZ.cpp
   toolkit/format/bp3/operation/BP3SZ.tcc
+  toolkit/format/bp3/operation/BP3MGARD.cpp
+  toolkit/format/bp3/operation/BP3MGARD.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 
@@ -134,6 +136,11 @@ endif()
 if(ADIOS2_HAVE_SZ)
   target_sources(adios2 PRIVATE operator/compress/CompressSZ.cpp)
   target_link_libraries(adios2 PRIVATE SZ::SZ)
+endif()
+
+if(ADIOS2_HAVE_MGARD)
+  target_sources(adios2 PRIVATE operator/compress/CompressMGARD.cpp)
+  target_link_libraries(adios2 PRIVATE MGARD::MGARD)
 endif()
 
 if(ADIOS2_HAVE_MPI)

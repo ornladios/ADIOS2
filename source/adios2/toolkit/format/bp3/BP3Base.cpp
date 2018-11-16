@@ -16,6 +16,7 @@
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
 
+#include "adios2/toolkit/format/bp3/operation/BP3MGARD.h"
 #include "adios2/toolkit/format/bp3/operation/BP3SZ.h"
 #include "adios2/toolkit/format/bp3/operation/BP3Zfp.h"
 
@@ -25,15 +26,12 @@ namespace format
 {
 
 const std::set<std::string> BP3Base::m_TransformTypes = {
-    {"unknown", "none", "identity", "sz", "zfp"}};
+    {"unknown", "none", "identity", "sz", "zfp", "mgard"}};
 
 const std::map<int, std::string> BP3Base::m_TransformTypesToNames = {
-    {transform_unknown, "unknown"},
-    {transform_none, "none"},
-    {transform_identity, "identity"},
-    {transform_sz, "sz"},
-    {transform_zfp, "zfp"}
-    //{transform_mgard, "mgard"},
+    {transform_unknown, "unknown"},   {transform_none, "none"},
+    {transform_identity, "identity"}, {transform_sz, "sz"},
+    {transform_zfp, "zfp"},           {transform_mgard, "mgard"},
     // {transform_zlib, "zlib"},
     //    {transform_bzip2, "bzip2"},
     //    {transform_szip, "szip"},
@@ -813,7 +811,7 @@ BP3Base::SetBP3Operation(const std::string type) const noexcept
     }
     else if (type == "mgard")
     {
-        // TODO
+        bp3Op = std::make_shared<BP3MGARD>();
     }
     else if (type == "bzip2")
     {

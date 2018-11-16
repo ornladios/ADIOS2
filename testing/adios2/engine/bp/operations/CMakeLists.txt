@@ -29,7 +29,6 @@ if(ADIOS2_HAVE_ZFP)
     "XML_CONFIG_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
   )
   
-  
   if(ADIOS2_HAVE_MPI)
     target_link_libraries(TestBPWriteReadZfp MPI::MPI_C)
     target_link_libraries(TestBPWriteReadZfpConfig MPI::MPI_C)
@@ -37,5 +36,16 @@ if(ADIOS2_HAVE_ZFP)
   
   gtest_add_tests(TARGET TestBPWriteReadZfp ${extra_test_args})
   gtest_add_tests(TARGET TestBPWriteReadZfpConfig ${extra_test_args})
+endif()
+
+if(ADIOS2_HAVE_MGARD)
+  add_executable(TestBPWriteReadMGARD TestBPWriteReadMGARD.cpp)
+  target_link_libraries(TestBPWriteReadMGARD adios2 gtest)
+  
+  if(ADIOS2_HAVE_MPI)
+    target_link_libraries(TestBPWriteReadMGARD MPI::MPI_C)
+  endif()
+  
+  gtest_add_tests(TARGET TestBPWriteReadMGARD ${extra_test_args})
 endif()
 
