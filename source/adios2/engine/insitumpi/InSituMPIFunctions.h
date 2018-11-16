@@ -65,6 +65,10 @@ int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
                        const bool IAmWriterRoot, const int globalRank,
                        const std::vector<int> &peers);
 
+// Wait for multiple MPI requests to complete and check errors
+void CompleteRequests(std::vector<MPI_Request> &requests, const bool IAmWriter,
+                      const int localRank);
+
 } // end namespace insitumpi
 
 } // end namespace adios2

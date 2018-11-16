@@ -212,6 +212,38 @@ int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
     return writeRootGlobalRank;
 }
 
+void CompleteRequests(std::vector<MPI_Request> &requests, const bool IAmWriter,
+                      const int localRank)
+{
+    int ierr;
+    std::vector<MPI_Status> statuses(requests.size());
+
+    ierr = MPI_Waitall(requests.size(), requests.data(), statuses.data());
+
+    if (ierr == MPI_ERR_IN_STATUS)
+    {
+        for (int i = 0; i < requests.size(); i++)
+        {
+            if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
+            {
+                std::cerr << "InSituMPI " << (IAmWriter ? "Writer" : "Reader")
+                          << " " << localRank
+                          << " Pending transfer error when waiting for all "
+                             "data transfers to complete. request id = "
+                          << i << std::endl;
+            }
+            else if (statuses[i].MPI_ERROR != MPI_SUCCESS)
+            {
+                std::cerr << "InSituMPI " << (IAmWriter ? "Writer" : "Reader")
+                          << " " << localRank
+                          << " MPI Error when waiting for all data transfers "
+                             "to complete. Error code = "
+                          << ierr << std::endl;
+            }
+        }
+    }
+}
+
 } // end namespace insitumpi
 
 } // end namespace adios2

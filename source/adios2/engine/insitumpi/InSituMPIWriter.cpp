@@ -213,32 +213,41 @@ void InSituMPIWriter::PerformPuts()
 
         if (m_CurrentStep == 0 || !m_RemoteDefinitionsLocked)
         {
-            // Collect the read requests from ALL readers
-            // FIXME: How do we make this Irecv from all readers
-            // std::vector<MPI_Request> requests(m_RankAllPeers.size());
-            std::vector<MPI_Status> statuses(m_RankAllPeers.size());
+            std::vector<MPI_Request> requests(m_RankAllPeers.size());
+
+            std::vector<int> rsLengths(m_RankAllPeers.size());
             std::vector<std::vector<char>> serializedSchedules(
                 m_RankAllPeers.size());
+
+            // Receive read schedule length from all readers
             for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
             {
-                int rsLen;
-                MPI_Recv(&rsLen, 1, MPI_INT, m_RankAllPeers[peerID],
-                         insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
-                         &statuses[peerID]);
-                serializedSchedules[peerID].resize(rsLen);
-                MPI_Recv(serializedSchedules[peerID].data(), rsLen, MPI_CHAR,
-                         m_RankAllPeers[peerID],
-                         insitumpi::MpiTags::ReadSchedule, m_CommWorld,
-                         &statuses[peerID]);
+                MPI_Irecv(&rsLengths[peerID], 1, MPI_INT,
+                          m_RankAllPeers[peerID],
+                          insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
+                          &requests[peerID]);
+            }
+            insitumpi::CompleteRequests(requests, true, m_WriterRank);
+
+            // Receive the actual read schedule from all readers
+            for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
+            {
+                serializedSchedules[peerID].resize(rsLengths[peerID]);
+                MPI_Irecv(serializedSchedules[peerID].data(), rsLengths[peerID],
+                          MPI_CHAR, m_RankAllPeers[peerID],
+                          insitumpi::MpiTags::ReadSchedule, m_CommWorld,
+                          &requests[peerID]);
+
                 if (m_Verbosity == 5)
                 {
                     std::cout << "InSituMPI Writer " << m_WriterRank
-                              << " received read schedule from Reader  "
+                              << " receiving read schedule from Reader  "
                               << peerID << " global rank "
-                              << m_RankAllPeers[peerID] << " length = " << rsLen
-                              << std::endl;
+                              << m_RankAllPeers[peerID]
+                              << " length = " << rsLengths[peerID] << std::endl;
                 }
             }
+            insitumpi::CompleteRequests(requests, true, m_WriterRank);
 
             // build (and remember for fixed schedule) the read request table
             // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>>
@@ -318,34 +327,7 @@ void InSituMPIWriter::EndStep()
         PerformPuts();
     }
 
-    // TODO: Blocking wait for all data transfers to finish
-    const int nRequests = m_MPIRequests.size();
-    std::vector<MPI_Status> statuses(nRequests);
-    int ierr;
-
-    ierr = MPI_Waitall(nRequests, m_MPIRequests.data(), statuses.data());
-
-    if (ierr == MPI_ERR_IN_STATUS)
-    {
-        for (int i = 0; i < nRequests; i++)
-        {
-            if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
-            {
-                std::cerr << "InSituMPI Writer " << m_WriterRank
-                          << " Pending transfer error when waiting for all "
-                             "data transfers to complete. request id = "
-                          << i << std::endl;
-            }
-            else if (statuses[i].MPI_ERROR != MPI_SUCCESS)
-            {
-                std::cerr << "InSituMPI Writer " << m_WriterRank
-                          << " MPI Error when waiting for all data transfers "
-                             "to complete. Error code = "
-                          << ierr << std::endl;
-            }
-        }
-    }
-
+    insitumpi::CompleteRequests(m_MPIRequests, true, m_WriterRank);
     m_MPIRequests.clear();
 
     // Wait for final acknowledgment from the readers
