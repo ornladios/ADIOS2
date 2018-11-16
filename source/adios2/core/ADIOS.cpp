@@ -32,6 +32,10 @@
 #include "adios2/operator/compress/CompressSZ.h"
 #endif
 
+#ifdef ADIOS2_HAVE_MGARD
+#include "adios2/operator/compress/CompressMGARD.h"
+#endif
+
 // callbacks
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
@@ -187,6 +191,19 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
         throw std::invalid_argument(
             "ERROR: this version of ADIOS2 didn't compile with the "
             "SZ library (minimum v2.0.2.0), in call to DefineOperator\n");
+#endif
+    }
+    else if (typeLowerCase == "mgard")
+    {
+#ifdef ADIOS2_HAVE_MGARD
+        auto itPair = m_Operators.emplace(
+            name,
+            std::make_shared<compress::CompressMGARD>(parameters, m_DebugMode));
+        operatorPtr = itPair.first->second;
+#else
+        throw std::invalid_argument(
+            "ERROR: this version of ADIOS2 didn't compile with the "
+            "MGARD library (minimum v0.0.0.1), in call to DefineOperator\n");
 #endif
     }
     else

@@ -83,10 +83,14 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     double tolerance = std::stod(itTolerance->second);
 
     int sizeOut = 0;
-    mgard_compress(mgardType, const_cast<void *>(dataIn), &sizeOut, r[0], r[1],
-                   &tolerance);
+    unsigned char *dataOutPtr =
+        mgard_compress(mgardType, const_cast<void *>(dataIn), &sizeOut, r[0],
+                       r[1], &tolerance);
 
-    return static_cast<size_t>(sizeOut);
+    const size_t sizeOutT = static_cast<size_t>(sizeOut);
+    std::memcpy(bufferOut, dataOutPtr, sizeOutT);
+
+    return sizeOutT;
 }
 
 size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,

@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP3SZ.h
+ * BP3MGARD.h
  *
- *  Created on: Jul 20, 2018
+ *  Created on: Nov 16, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3SZ_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3SZ_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3MGARD_H_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3MGARD_H_
 
 #include "adios2/toolkit/format/bp3/operation/BP3Operation.h"
 
@@ -18,12 +18,12 @@ namespace adios2
 namespace format
 {
 
-class BP3SZ : public BP3Operation
+class BP3MGARD : public BP3Operation
 {
 public:
-    BP3SZ() = default;
+    BP3MGARD() = default;
 
-    ~BP3SZ() = default;
+    ~BP3MGARD() = default;
 
 #define declare_type(T)                                                        \
     void SetData(const core::Variable<T> &variable,                            \
@@ -42,7 +42,7 @@ public:
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept final;
 
-    ADIOS2_FOREACH_SZ_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
 #undef declare_type
 
     void GetMetadata(const std::vector<char> &buffer, Params &info) const
@@ -82,4 +82,4 @@ private:
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3SZ_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3MGARD_H_ */
