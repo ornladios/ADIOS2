@@ -26,6 +26,7 @@ if(ADIOS2_HAVE_HDF5)
 endif()
 
 if(ADIOS2_HAVE_MPI)
+  add_subdirectory(inlineReaderWriter)
   add_subdirectory(insituMPI)
   add_subdirectory(bpFWriteCRead)
 endif()

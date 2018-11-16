@@ -40,8 +40,9 @@ int main(int argc, char *argv[])
         {
             /*** IO class object: settings and factory of Settings: Variables,
              * Parameters, Transports, and Execution: Engines */
-            adios2::IO bpIO = adios.DeclareIO("BPFile_N2N");
-            bpIO.SetParameters({{"Threads", "2"}});
+            adios2::IO bpIO = adios.DeclareIO("InlineWriter");
+            bpIO.SetEngine("Inline");
+            bpIO.SetParameters({{"verbose", "5"}});
 
             /** global array: name, { shape (total dimensions) }, { start
              * (local) },
@@ -76,7 +77,7 @@ int main(int argc, char *argv[])
 
             /** Engine derived class, spawned to start IO operations */
             adios2::Engine bpWriter =
-                bpIO.Open("myVector.bp", adios2::Mode::Write);
+                bpIO.Open("myInlineID", adios2::Mode::Write);
 
             for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
             {
@@ -89,11 +90,12 @@ int main(int argc, char *argv[])
                 // template type is optional, but recommended
                 for (unsigned int v = 0; v < variablesSize; ++v)
                 {
-                    myFloats[0] = static_cast<float>(v + timeStep);
                     // Note: Put is deferred, so all variables will see v == 9
                     // and myFloats[0] == 9, 10, or 11
-                    bpWriter.Put<float>(bpFloats[v], myFloats.data());
+                    myFloats[0] = static_cast<float>(v + timeStep);
+                    bpWriter.Put(bpFloats[v], myFloats.data());
                 }
+
                 const std::string myString(
                     "Hello from rank: " + std::to_string(rank) +
                     " and timestep: " + std::to_string(timeStep));
@@ -110,14 +112,16 @@ int main(int argc, char *argv[])
         }
         // MPI_Barrier(MPI_COMM_WORLD);
 
-        if (false)
+        if (true)
         { /////////////////////READ
             //            if (rank == 0)
             //            {
-            adios2::IO ioReader = adios.DeclareIO("bpReader");
+            adios2::IO ioReader = adios.DeclareIO("InlineReader");
+            ioReader.SetEngine("Inline");
+            ioReader.SetParameters({{"verbose", "5"}});
 
             adios2::Engine bpReader =
-                ioReader.Open("myVector.bp", adios2::Mode::Read);
+                ioReader.Open("myInlineID", adios2::Mode::Read);
 
             adios2::Variable<float> bpFloats000 =
                 ioReader.InquireVariable<float>("bpFloats000");
@@ -148,7 +152,7 @@ int main(int argc, char *argv[])
 
             if (bpString)
             {
-                bpString.SetStepSelection({3, 1});
+                bpString.SetStepSelection({rank, 1});
 
                 std::string myString;
                 bpReader.Get(bpString, myString, adios2::Mode::Sync);
