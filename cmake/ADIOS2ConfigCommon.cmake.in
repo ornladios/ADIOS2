@@ -24,6 +24,11 @@ if(NOT @BUILD_SHARED_LIBS@)
   if(ADIOS2_HAVE_ZFP)
     find_dependency(ZFP)
   endif()
+  
+  set(ADIOS2_HAVE_MGARD @ADIOS2_HAVE_MGARD@)
+  if(ADIOS2_HAVE_MGARD)
+    find_dependency(MGARD)
+  endif()
 
   set(ADIOS2_HAVE_ZeroMQ @ADIOS2_HAVE_ZeroMQ@)
   if(ADIOS2_HAVE_ZeroMQ)

@@ -47,16 +47,18 @@ public:
                     const Params &parameters = Params()) const final;
 
     /**
-     * Decompression signature for legacy libraries that use void*
+     *
      * @param bufferIn
      * @param sizeIn
      * @param dataOut
      * @param dimensions
-     * @param type
-     * @return size of decompressed buffer in bytes
+     * @param varType
+     * @param
+     * @return
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const size_t sizeOut) const final;
+                      const Dims &dimensions, const std::string varType,
+                      const Params & /*parameters*/) const final;
 };
 
 } // end namespace compress

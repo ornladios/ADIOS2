@@ -136,6 +136,11 @@ if(ADIOS2_HAVE_SZ)
   target_link_libraries(adios2 PRIVATE SZ::SZ)
 endif()
 
+if(ADIOS2_HAVE_MGARD)
+  target_sources(adios2 PRIVATE operator/compress/CompressMGARD.cpp)
+  target_link_libraries(adios2 PRIVATE MGARD::MGARD)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   target_sources(adios2 PRIVATE
     engine/insitumpi/InSituMPIWriter.cpp engine/insitumpi/InSituMPIWriter.tcc

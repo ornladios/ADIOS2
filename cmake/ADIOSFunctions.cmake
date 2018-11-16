@@ -184,6 +184,13 @@ function(GenerateADIOSPackageConfig)
       list(APPEND ADIOS2_CXX_LIBS ${ZFP_LIBRARIES})
       list(APPEND ADIOS2_CXX_INCS ${ZFP_INCLUDE_DIRS})
     endif()
+    if(ADIOS2_HAVE_MGARD)
+      install(FILES cmake/FindMGARD.cmake
+        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules
+      )
+      list(APPEND ADIOS2_CXX_LIBS ${MGARD_LIBRARIES})
+      list(APPEND ADIOS2_CXX_INCS ${MGARD_INCLUDE_DIRS})
+    endif()
     if(ADIOS2_HAVE_ZeroMQ)
       install(FILES cmake/FindZeroMQ.cmake
         DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules

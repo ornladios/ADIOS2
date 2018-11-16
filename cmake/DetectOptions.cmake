@@ -43,6 +43,16 @@ if(SZ_FOUND)
   set(ADIOS2_HAVE_SZ TRUE)
 endif()
 
+# MGARD
+if(ADIOS2_USE_MGARD STREQUAL AUTO)
+  find_package(MGARD)
+elseif(ADIOS2_USE_MGARD)
+  find_package(MGARD REQUIRED)
+endif()
+if(MGARD_FOUND)
+  set(ADIOS2_HAVE_MGARD TRUE)
+endif()
+
 set(mpi_find_components C)
 
 # Fortran
