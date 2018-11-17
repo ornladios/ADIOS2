@@ -57,6 +57,8 @@ private:
 
     // Global ranks of all the readers
     std::vector<int> m_RankAllPeers;
+    // Mapping from global ranks to peer ID
+    std::map<int, int> m_RankToPeerID;
     // Global ranks of the readers directly assigned to me
     std::vector<int> m_RankDirectPeers;
 

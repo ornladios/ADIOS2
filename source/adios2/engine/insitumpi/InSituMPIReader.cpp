@@ -337,24 +337,39 @@ void InSituMPIReader::SendReadSchedule(
         insitumpi::SerializeLocalReadSchedule(m_RankAllPeers.size(),
                                               variablesSubFileInfo);
 
-    std::vector<MPI_Request> request(m_RankAllPeers.size() * 2);
-    std::vector<int> mdLen(m_RankAllPeers.size());
-    for (int i = 0; i < m_RankAllPeers.size(); i++)
+    // Writer ID -> number of peer readers
+    std::vector<int> nReaderPerWriter(m_RankAllPeers.size());
+    for (const auto &schedulePair : serializedSchedules)
     {
-        mdLen[i] = serializedSchedules[i].size();
+        const auto peer = schedulePair.first;
+        nReaderPerWriter[peer] = 1;
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, nReaderPerWriter.data(),
+                  nReaderPerWriter.size(), MPI_INT, MPI_SUM, m_CommWorld);
+
+    std::vector<MPI_Request> request(serializedSchedules.size() * 2);
+    std::vector<int> mdLen(serializedSchedules.size());
+    int i = 0;
+
+    for (const auto &schedulePair : serializedSchedules)
+    {
+        mdLen[i] = schedulePair.second.size();
         if (m_Verbosity == 5)
         {
             std::cout << "InSituMPI Reader " << m_ReaderRank
                       << " Send Read Schedule len = " << mdLen[i]
-                      << " to Writer " << i << " global rank "
-                      << m_RankAllPeers[i] << std::endl;
+                      << " to Writer " << schedulePair.first << " global rank "
+                      << m_RankAllPeers[schedulePair.first] << std::endl;
         }
-        MPI_Isend(&(mdLen[i]), 1, MPI_INT, m_RankAllPeers[i],
+        MPI_Isend(&(mdLen[i]), 1, MPI_INT, m_RankAllPeers[schedulePair.first],
                   insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
                   &(request[i * 2]));
-        MPI_Isend(serializedSchedules[i].data(), mdLen[i], MPI_CHAR,
-                  m_RankAllPeers[i], insitumpi::MpiTags::ReadSchedule,
+        MPI_Isend(schedulePair.second.data(), mdLen[i], MPI_CHAR,
+                  m_RankAllPeers[schedulePair.first], insitumpi::MpiTags::ReadSchedule,
                   m_CommWorld, &(request[i * 2 + 1]));
+
+        i++;
     }
     insitumpi::CompleteRequests(request, false, m_ReaderRank);
 }

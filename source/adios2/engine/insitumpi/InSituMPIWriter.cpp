@@ -37,6 +37,10 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 
     m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, true, m_CommWorld);
+    for (int i = 0; i < m_RankAllPeers.size(); i++)
+    {
+        m_RankToPeerID[m_RankAllPeers[i]] = i;
+    }
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
     MPI_Comm_rank(mpiComm, &m_WriterRank);
@@ -211,31 +215,57 @@ void InSituMPIWriter::PerformPuts()
             }
         }
 
+        // Receive read schedule from readers
         if (m_CurrentStep == 0 || !m_RemoteDefinitionsLocked)
         {
-            std::vector<MPI_Request> requests(m_RankAllPeers.size());
-
-            std::vector<int> rsLengths(m_RankAllPeers.size());
+            // Reader ID -> length of serialized read schedule
+            std::map<int, int> rsLengths;
+            // Reader ID -> serialized read schedule
             std::map<int, std::vector<char>> serializedSchedules;
+            // Writer ID -> number of peer readers
+            std::vector<int> nReaderPerWriter(m_WriterNproc);
 
-            // Receive read schedule length from all readers
-            for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
+            // How many peer readers do I have?
+            MPI_Allreduce(MPI_IN_PLACE, nReaderPerWriter.data(),
+                          nReaderPerWriter.size(), MPI_INT, MPI_SUM,
+                          m_CommWorld);
+            int nPeerReaders = nReaderPerWriter[m_WriterRank];
+
+            std::vector<MPI_Request> requests(nPeerReaders);
+            std::vector<int> rsLengthsTmp(nPeerReaders);
+
+            // Receive read schedule length from peer readers
+            // We use MPI_ANY_SOURCE here because we don't know who our peer
+            // readers are at this point
+            for (int i = 0; i < nPeerReaders; i++)
             {
-                MPI_Irecv(&rsLengths[peerID], 1, MPI_INT,
-                          m_RankAllPeers[peerID],
+                MPI_Irecv(&rsLengthsTmp[i], 1, MPI_INT, MPI_ANY_SOURCE,
                           insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
-                          &requests[peerID]);
+                          &requests[i]);
             }
-            insitumpi::CompleteRequests(requests, true, m_WriterRank);
+            std::vector<MPI_Status> statuses =
+                insitumpi::CompleteRequests(requests, true, m_WriterRank);
 
-            // Receive the actual read schedule from all readers
-            for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
+            // Let's figure out who is our peer reader
+            // Also reorder rsLengths
+            for (int i = 0; i < nPeerReaders; i++)
             {
-                serializedSchedules[peerID].resize(rsLengths[peerID]);
-                MPI_Irecv(serializedSchedules[peerID].data(), rsLengths[peerID],
+                int peerID = m_RankToPeerID[statuses[i].MPI_SOURCE];
+                rsLengths[peerID] = rsLengthsTmp[i];
+            }
+
+            // Receive the actual read schedule from our peer readers
+            int i = 0;
+            for (const auto &rsLenPair : rsLengths)
+            {
+                int peerID = rsLenPair.first;
+                int rsLen = rsLenPair.second;
+
+                serializedSchedules[peerID].resize(rsLen);
+                MPI_Irecv(serializedSchedules[peerID].data(), rsLen,
                           MPI_CHAR, m_RankAllPeers[peerID],
                           insitumpi::MpiTags::ReadSchedule, m_CommWorld,
-                          &requests[peerID]);
+                          &requests[i++]);
 
                 if (m_Verbosity == 5)
                 {
