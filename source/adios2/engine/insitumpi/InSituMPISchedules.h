@@ -87,8 +87,8 @@ using LocalReadScheduleMap =
 int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept;
 
 // Deserialize buffers from all readers
-WriteScheduleMap
-DeserializeReadSchedule(const std::map<int, std::vector<char>> &buffers) noexcept;
+WriteScheduleMap DeserializeReadSchedule(
+    const std::map<int, std::vector<char>> &buffers) noexcept;
 
 // Deserialize buffer from one reader
 LocalReadScheduleMap

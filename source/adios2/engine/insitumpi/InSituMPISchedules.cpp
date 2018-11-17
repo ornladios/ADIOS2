@@ -120,7 +120,7 @@ SerializeLocalReadSchedule(const int nWriters,
     for (auto &bufferPair : buffers)
     {
         size_t pos = 0;
-        const int peerID = bufferPair.first;
+        const auto peerID = bufferPair.first;
         auto &buffer = bufferPair.second;
 
         helper::CopyToBuffer(buffer, pos, &nVarPerWriter[peerID]);
@@ -184,8 +184,8 @@ int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept
     return n;
 }
 
-WriteScheduleMap
-DeserializeReadSchedule(const std::map<int, std::vector<char>> &buffers) noexcept
+WriteScheduleMap DeserializeReadSchedule(
+    const std::map<int, std::vector<char>> &buffers) noexcept
 {
     WriteScheduleMap map;
 
@@ -193,8 +193,6 @@ DeserializeReadSchedule(const std::map<int, std::vector<char>> &buffers) noexcep
     {
         const auto peer = bufferPair.first;
         const auto &buffer = bufferPair.second;
-
-        if (buffer.size() == 0) continue;
 
         LocalReadScheduleMap lrsm = DeserializeReadSchedule(buffer);
         for (const auto &varSchedule : lrsm)

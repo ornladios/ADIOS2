@@ -354,20 +354,23 @@ void InSituMPIReader::SendReadSchedule(
 
     for (const auto &schedulePair : serializedSchedules)
     {
-        mdLen[i] = schedulePair.second.size();
+        const auto peer = schedulePair.first;
+        const auto &schedule = schedulePair.second;
+        mdLen[i] = schedule.size();
+
         if (m_Verbosity == 5)
         {
             std::cout << "InSituMPI Reader " << m_ReaderRank
                       << " Send Read Schedule len = " << mdLen[i]
-                      << " to Writer " << schedulePair.first << " global rank "
-                      << m_RankAllPeers[schedulePair.first] << std::endl;
+                      << " to Writer " << peer << " global rank "
+                      << m_RankAllPeers[peer] << std::endl;
         }
-        MPI_Isend(&(mdLen[i]), 1, MPI_INT, m_RankAllPeers[schedulePair.first],
+        MPI_Isend(&mdLen[i], 1, MPI_INT, m_RankAllPeers[peer],
                   insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
-                  &(request[i * 2]));
-        MPI_Isend(schedulePair.second.data(), mdLen[i], MPI_CHAR,
-                  m_RankAllPeers[schedulePair.first], insitumpi::MpiTags::ReadSchedule,
-                  m_CommWorld, &(request[i * 2 + 1]));
+                  &request[i * 2]);
+        MPI_Isend(schedule.data(), mdLen[i], MPI_CHAR, m_RankAllPeers[peer],
+                  insitumpi::MpiTags::ReadSchedule, m_CommWorld,
+                  &request[i * 2 + 1]);
 
         i++;
     }
