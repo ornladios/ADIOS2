@@ -80,12 +80,12 @@ void FixSeeksToZeroOffset(helper::SubFileInfo &record, bool isRowMajor) noexcept
     record.Seeks.second = pos + nElements - 1;
 }
 
-std::vector<std::vector<char>>
+std::map<int, std::vector<char>>
 SerializeLocalReadSchedule(const int nWriters,
                            const std::map<std::string, helper::SubFileInfoMap>
                                &variablesSubFileInfo) noexcept
 {
-    std::vector<std::vector<char>> buffers(nWriters);
+    std::map<int, std::vector<char>> buffers;
 
     // Create a buffer for each writer
     std::vector<int> nVarPerWriter(nWriters);
@@ -183,17 +183,19 @@ int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept
 }
 
 WriteScheduleMap
-DeserializeReadSchedule(const std::vector<std::vector<char>> &buffers) noexcept
+DeserializeReadSchedule(const std::map<int, std::vector<char>> &buffers) noexcept
 {
     WriteScheduleMap map;
 
-    for (int i = 0; i < buffers.size(); i++)
+    for (const auto &bufferPair : buffers)
     {
-        const auto &buffer = buffers[i];
+        const auto peer = bufferPair.first;
+        const auto &buffer = bufferPair.second;
+
         LocalReadScheduleMap lrsm = DeserializeReadSchedule(buffer);
         for (const auto &varSchedule : lrsm)
         {
-            map[varSchedule.first][i] = varSchedule.second;
+            map[varSchedule.first][peer] = varSchedule.second;
         }
     }
     return map;

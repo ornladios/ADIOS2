@@ -216,8 +216,7 @@ void InSituMPIWriter::PerformPuts()
             std::vector<MPI_Request> requests(m_RankAllPeers.size());
 
             std::vector<int> rsLengths(m_RankAllPeers.size());
-            std::vector<std::vector<char>> serializedSchedules(
-                m_RankAllPeers.size());
+            std::map<int, std::vector<char>> serializedSchedules;
 
             // Receive read schedule length from all readers
             for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
