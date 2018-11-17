@@ -212,8 +212,9 @@ int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
     return writeRootGlobalRank;
 }
 
-void CompleteRequests(std::vector<MPI_Request> &requests, const bool IAmWriter,
-                      const int localRank)
+std::vector<MPI_Status> CompleteRequests(std::vector<MPI_Request> &requests,
+                                         const bool IAmWriter,
+                                         const int localRank)
 {
     int ierr;
     std::vector<MPI_Status> statuses(requests.size());
@@ -242,6 +243,8 @@ void CompleteRequests(std::vector<MPI_Request> &requests, const bool IAmWriter,
             }
         }
     }
+
+    return statuses;
 }
 
 } // end namespace insitumpi
