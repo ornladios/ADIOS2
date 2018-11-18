@@ -76,16 +76,14 @@ WANMan::~WANMan()
 
 void WANMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
-void WANMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
-                                  const std::vector<Params> &paramsVector,
-                                  const Mode mode,
-                                  const std::string workflowMode,
-                                  const bool profile)
+void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
+                            const Mode mode, const std::string workflowMode,
+                            const bool profile)
 {
     m_TransportsParameters = paramsVector;
-    m_BufferQueue.resize(streamNames.size());
+    m_BufferQueue.resize(paramsVector.size());
 
-    for (size_t i = 0; i < streamNames.size(); ++i)
+    for (size_t i = 0; i < paramsVector.size(); ++i)
     {
         // Get parameters
         std::string library;
@@ -95,6 +93,8 @@ void WANMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
         GetIntParameter(paramsVector[i], "Timeout", m_Timeout);
+        std::string name;
+        GetStringParameter(paramsVector[i], "Name", name);
 
         // Calculate port number
         int mpiRank, mpiSize;
@@ -130,7 +130,7 @@ void WANMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
                     workflowMode + " not supported."));
             }
 
-            wanTransport->Open(ip, port, streamNames[i], mode);
+            wanTransport->Open(ip, port, name, mode);
             m_Transports.emplace(i, wanTransport);
 
             // launch thread
@@ -165,12 +165,12 @@ void WANMan::OpenSocketTransports(const std::vector<std::string> &streamNames,
     }
 }
 
-void WANMan::WriteSocket(std::shared_ptr<std::vector<char>> buffer, size_t id)
+void WANMan::Write(std::shared_ptr<std::vector<char>> buffer, size_t id)
 {
     PushBufferQueue(buffer, id);
 }
 
-void WANMan::WriteSocket(const std::vector<char> &buffer, size_t transportId)
+void WANMan::Write(const std::vector<char> &buffer, size_t transportId)
 {
     if (transportId >= m_Transports.size())
     {
@@ -181,7 +181,7 @@ void WANMan::WriteSocket(const std::vector<char> &buffer, size_t transportId)
     m_Transports[transportId]->Write(buffer.data(), buffer.size());
 }
 
-std::shared_ptr<std::vector<char>> WANMan::ReadSocket(size_t id)
+std::shared_ptr<std::vector<char>> WANMan::Read(size_t id)
 {
     return PopBufferQueue(id);
 }

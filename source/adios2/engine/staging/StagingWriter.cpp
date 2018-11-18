@@ -71,8 +71,8 @@ void StagingWriter::PerformPuts() {}
 
 void StagingWriter::EndStep()
 {
-    auto aggregatedMetadata =
-        m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
+    auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
+    m_MetadataTransport.Write(aggMetadata, 0);
 
     if (m_Verbosity == 5)
     {
@@ -134,7 +134,29 @@ void StagingWriter::InitParameters()
     }
 }
 
-void StagingWriter::InitTransports() {}
+void StagingWriter::InitTransports()
+{
+
+    if (m_MpiRank == 0)
+    {
+        Params params;
+        params["IPAddress"] = m_IP;
+        params["Port"] = m_MetadataPort;
+        params["Library"] = "zmq";
+        params["Name"] = m_Name;
+        std::vector<Params> paramsVec;
+        paramsVec.emplace_back(params);
+        m_MetadataTransport.OpenTransports(paramsVec, Mode::Write, "subscribe",
+                                           true);
+    }
+
+    Params params;
+    params["IPAddress"] = m_IP;
+    params["Port"] = m_DataPort;
+    std::vector<Params> paramsVec;
+    paramsVec.emplace_back(params);
+    m_DataTransport.OpenTransports(paramsVec, Mode::Write, true);
+}
 
 void StagingWriter::Handshake()
 {

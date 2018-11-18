@@ -36,22 +36,22 @@ void DataManSerializer::New(size_t size)
     // still be alive and needed somewhere in the workflow, for example the
     // queue in transport manager. It will be automatically released when the
     // entire workflow finishes using it.
-    m_Metadata = nullptr;
-    m_Buffer = std::make_shared<std::vector<char>>();
-    m_Buffer->reserve(size);
+    m_MetadataJson = nullptr;
+    m_Pack = std::make_shared<std::vector<char>>();
+    m_Pack->reserve(size);
     m_Position = sizeof(uint64_t) * 2;
 }
 
 const std::shared_ptr<std::vector<char>> DataManSerializer::GetPack()
 {
     std::vector<char> metacbor;
-    nlohmann::json::to_msgpack(m_Metadata, metacbor);
+    nlohmann::json::to_msgpack(m_MetadataJson, metacbor);
     size_t metasize = metacbor.size();
-    m_Buffer->resize(m_Position + metasize);
-    (reinterpret_cast<uint64_t *>(m_Buffer->data()))[0] = m_Position;
-    (reinterpret_cast<uint64_t *>(m_Buffer->data()))[1] = metasize;
-    std::memcpy(m_Buffer->data() + m_Position, metacbor.data(), metasize);
-    return m_Buffer;
+    m_Pack->resize(m_Position + metasize);
+    (reinterpret_cast<uint64_t *>(m_Pack->data()))[0] = m_Position;
+    (reinterpret_cast<uint64_t *>(m_Pack->data()))[1] = metasize;
+    std::memcpy(m_Pack->data() + m_Position, metacbor.data(), metasize);
+    return m_Pack;
 }
 
 std::shared_ptr<std::vector<char>>
@@ -59,7 +59,7 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
 {
 
     std::vector<char> localJsonCbor;
-    nlohmann::json::to_msgpack(m_Metadata, localJsonCbor);
+    nlohmann::json::to_msgpack(m_MetadataJson, localJsonCbor);
     unsigned int size = localJsonCbor.size();
     unsigned int maxSize;
     MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, mpiComm);
@@ -98,6 +98,21 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     }
 
     return globalJsonCbor;
+}
+
+void DataManSerializer::PutAggregatedMetadata(
+    const MPI_Comm mpiComm, std::shared_ptr<std::vector<char>> data)
+{
+    int mpiSize;
+    int mpiRank;
+    MPI_Comm_size(mpiComm, &mpiSize);
+    MPI_Comm_rank(mpiComm, &mpiRank);
+
+    helper::BroadcastVector(*data, mpiComm);
+
+    nlohmann::json metaJ =
+        nlohmann::json::from_msgpack(data->data(), data->size());
+    JsonToDataManVar(metaJ, 0);
 }
 
 std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
@@ -168,38 +183,8 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
     }
 }
 
-int DataManSerializer::PutPack(
-    const std::shared_ptr<const std::vector<char>> data)
+void DataManSerializer::JsonToDataManVar(nlohmann::json &metaJ, int key)
 {
-    // check if is control signal
-    if (data->size() < 128)
-    {
-        try
-        {
-            nlohmann::json metaj = nlohmann::json::parse(data->data());
-            size_t finalStep = metaj["FinalStep"];
-            return finalStep;
-        }
-        catch (std::exception)
-        {
-        }
-    }
-
-    // if not control signal then go through standard deserialization
-    int key = rand();
-    std::lock_guard<std::mutex> l(m_Mutex);
-    while (m_BufferMap.count(key) > 0)
-    {
-        key = rand();
-    }
-    m_BufferMap[key] = data;
-
-    uint64_t metaPosition =
-        (reinterpret_cast<const uint64_t *>(data->data()))[0];
-    uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
-
-    nlohmann::json metaJ =
-        nlohmann::json::from_msgpack(data->data() + metaPosition, metaSize);
 
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
@@ -280,17 +265,16 @@ int DataManSerializer::PutPack(
                         }
                     }
 
-                    if (m_MetaDataMap[var.step] == nullptr)
+                    if (m_DataManVarMap[var.step] == nullptr)
                     {
-                        m_MetaDataMap[var.step] =
+                        m_DataManVarMap[var.step] =
                             std::make_shared<std::vector<DataManVar>>();
                     }
-                    m_MetaDataMap[var.step]->emplace_back(std::move(var));
+                    m_DataManVarMap[var.step]->emplace_back(std::move(var));
                 }
                 catch (std::exception &e)
                 {
                     std::cout << e.what() << std::endl;
-                    return -1;
                 }
                 if (m_MaxStep < var.step)
                 {
@@ -303,15 +287,52 @@ int DataManSerializer::PutPack(
             }
         }
     }
+}
+
+int DataManSerializer::PutPack(
+    const std::shared_ptr<const std::vector<char>> data)
+{
+    // check if is control signal
+    if (data->size() < 128)
+    {
+        try
+        {
+            nlohmann::json metaj = nlohmann::json::parse(data->data());
+            size_t finalStep = metaj["FinalStep"];
+            return finalStep;
+        }
+        catch (std::exception)
+        {
+        }
+    }
+
+    // if not control signal then go through standard deserialization
+    int key = rand();
+    std::lock_guard<std::mutex> l(m_Mutex);
+    while (m_PackMap.count(key) > 0)
+    {
+        key = rand();
+    }
+    m_PackMap[key] = data;
+
+    uint64_t metaPosition =
+        (reinterpret_cast<const uint64_t *>(data->data()))[0];
+    uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
+
+    nlohmann::json metaJ =
+        nlohmann::json::from_msgpack(data->data() + metaPosition, metaSize);
+
+    JsonToDataManVar(metaJ, key);
+
     return 0;
 }
 
 void DataManSerializer::Erase(size_t step)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
-    const auto &varVec = m_MetaDataMap.find(step);
+    const auto &varVec = m_DataManVarMap.find(step);
     // if metadata map has this step
-    if (varVec != m_MetaDataMap.end())
+    if (varVec != m_DataManVarMap.end())
     {
         // loop for all vars in this step of metadata map
         for (const auto &var : *varVec->second)
@@ -323,8 +344,8 @@ void DataManSerializer::Erase(size_t step)
                  ++checkingStep)
             {
                 // find this step in metadata map
-                const auto &checkingVarVec = m_MetaDataMap.find(checkingStep);
-                if (checkingVarVec != m_MetaDataMap.end())
+                const auto &checkingVarVec = m_DataManVarMap.find(checkingStep);
+                if (checkingVarVec != m_DataManVarMap.end())
                 {
                     // loop for all vars in var vector
                     for (const auto &checkingVar : *checkingVarVec->second)
@@ -341,11 +362,11 @@ void DataManSerializer::Erase(size_t step)
             }
             if (toDelete)
             {
-                m_BufferMap.erase(var.index);
+                m_PackMap.erase(var.index);
             }
         }
     }
-    m_MetaDataMap.erase(step);
+    m_DataManVarMap.erase(step);
     m_MinStep = step + 1;
 }
 
@@ -357,36 +378,22 @@ DataManSerializer::GetMetaData()
     // This meta data map is supposed to be very light weight to return because
     // 1) it only holds shared pointers, and 2) the old steps are removed
     // regularly by the engine.
-    return m_MetaDataMap;
+    return m_DataManVarMap;
 }
 
 std::shared_ptr<const std::vector<DataManSerializer::DataManVar>>
 DataManSerializer::GetMetaData(const size_t step)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
-    const auto &i = m_MetaDataMap.find(step);
-    if (i != m_MetaDataMap.end())
+    const auto &i = m_DataManVarMap.find(step);
+    if (i != m_DataManVarMap.end())
     {
-        return m_MetaDataMap[step];
+        return m_DataManVarMap[step];
     }
     else
     {
         return nullptr;
     }
-}
-
-bool DataManSerializer::HasOverlap(Dims in_start, Dims in_count, Dims out_start,
-                                   Dims out_count) const
-{
-    for (size_t i = 0; i < in_start.size(); ++i)
-    {
-        if (in_start[i] > out_start[i] + out_count[i] ||
-            out_start[i] > in_start[i] + in_count[i])
-        {
-            return false;
-        }
-    }
-    return true;
 }
 
 void DataManSerializer::GetAttributes(core::IO &io)

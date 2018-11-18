@@ -125,25 +125,26 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     }
     metaj["I"] = datasize;
 
-    if (m_Buffer->capacity() < m_Position + datasize)
+    if (m_Pack->capacity() < m_Position + datasize)
     {
-        m_Buffer->reserve((m_Position + datasize) * 2);
+        m_Pack->reserve((m_Position + datasize) * 2);
     }
 
-    m_Buffer->resize(m_Position + datasize);
+    m_Pack->resize(m_Position + datasize);
 
     if (compressed)
     {
-        std::memcpy(m_Buffer->data() + m_Position, m_CompressBuffer.data(),
+        std::memcpy(m_Pack->data() + m_Position, m_CompressBuffer.data(),
                     datasize);
     }
     else
     {
-        std::memcpy(m_Buffer->data() + m_Position, inputData, datasize);
+        std::memcpy(m_Pack->data() + m_Position, inputData, datasize);
     }
     m_Position += datasize;
 
-    m_Metadata[std::to_string(step)][std::to_string(rank)].emplace_back(metaj);
+    m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
+        metaj);
 }
 
 template <class T>
@@ -268,8 +269,8 @@ template <class T>
 void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute,
                                      const int rank)
 {
-    m_Metadata["A"][std::to_string(rank)].emplace_back();
-    auto &j = m_Metadata["A"][std::to_string(rank)].back();
+    m_MetadataJson["A"][std::to_string(rank)].emplace_back();
+    auto &j = m_MetadataJson["A"][std::to_string(rank)].back();
     j["N"] = attribute.m_Name;
     j["Y"] = attribute.m_Type;
     j["V"] = attribute.m_IsSingleValue;
@@ -292,8 +293,8 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
     std::lock_guard<std::mutex> l(m_Mutex);
     std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
 
-    const auto &i = m_MetaDataMap.find(step);
-    if (i == m_MetaDataMap.end())
+    const auto &i = m_DataManVarMap.find(step);
+    if (i == m_DataManVarMap.end())
     {
         return -1; // step not found
     }
@@ -312,19 +313,14 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
         {
             if (j.name == varName)
             {
-                if (HasOverlap(j.start, j.count, varStart, varCount) == false)
-                {
-                    return -3; // step and variable found but variable does not
-                               // have desired part
-                }
                 // Get the shared pointer first and then copy memory. This is
                 // done in order to avoid expensive memory copy operations
                 // happening inside the lock. Once the shared pointer is
-                // assigned to k, its life cycle in m_BufferMap does not matter
-                // any more. So even if m_BufferMap[j.index] is modified
+                // assigned to k, its life cycle in m_PackMap does not matter
+                // any more. So even if m_PackMap[j.index] is modified
                 // somewhere else the memory that this shared pointer refers to
                 // is still valid until k runs out of scope.
-                auto k = m_BufferMap[j.index];
+                auto k = m_PackMap[j.index];
                 if (j.compression == "zfp")
                 {
 #ifdef ADIOS2_HAVE_ZFP

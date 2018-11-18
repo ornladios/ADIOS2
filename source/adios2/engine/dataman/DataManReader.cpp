@@ -158,8 +158,8 @@ void DataManReader::Init()
 
     // initialize transports
     m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
-    m_WANMan->OpenSocketTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                   Mode::Read, m_WorkflowMode, true);
+    m_WANMan->OpenTransports(m_IO.m_TransportsParameters, Mode::Read,
+                             m_WorkflowMode, true);
 
     // start threads
     m_Listening = true;
@@ -171,7 +171,7 @@ void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
 {
     while (m_Listening)
     {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadSocket(0);
+        std::shared_ptr<std::vector<char>> buffer = man->Read(0);
         if (buffer != nullptr)
         {
             int ret = m_DataManSerializer.PutPack(buffer);

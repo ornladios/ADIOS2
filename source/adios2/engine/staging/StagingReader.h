@@ -16,6 +16,10 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
+#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
+#include "adios2/toolkit/transportman/wanman/WANMan.h"
+
 namespace adios2
 {
 namespace core
@@ -49,10 +53,14 @@ public:
     void EndStep() final;
 
 private:
+    format::DataManSerializer m_DataManSerializer;
+    transportman::WANMan m_MetadataTransport;
+    transportman::StagingMan m_DataTransport;
     int m_Verbosity = 0;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     std::string m_WriterMasterIP;
+    std::string m_WriterMasterMetadataPort = "12306";
 
     void Init() final;
     void InitParameters() final;

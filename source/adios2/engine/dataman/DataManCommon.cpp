@@ -37,11 +37,12 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
         m_TransportChannels = 1;
         m_IO.m_TransportsParameters.push_back({{"Library", "ZMQ"},
                                                {"IPAddress", "127.0.0.1"},
-                                               {"Port", "12306"}});
+                                               {"Port", "12306"},
+                                               {"Name", m_Name}});
     }
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {
-        m_StreamNames.push_back(m_Name + std::to_string(i));
+        m_IO.m_TransportsParameters[i]["Name"] = m_Name + std::to_string(i);
     }
 }
 

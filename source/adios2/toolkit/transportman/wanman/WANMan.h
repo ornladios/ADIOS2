@@ -32,17 +32,14 @@ public:
 
     ~WANMan();
 
-    void OpenSocketTransports(const std::vector<std::string> &streamNames,
-                              const std::vector<Params> &parametersVector,
-                              const Mode openMode,
-                              const std::string workflowMode,
-                              const bool profile);
+    void OpenTransports(const std::vector<Params> &parametersVector,
+                        const Mode openMode, const std::string workflowMode,
+                        const bool profile);
 
-    void WriteSocket(const std::vector<char> &buffer, size_t transportId);
-    void WriteSocket(std::shared_ptr<std::vector<char>> buffer,
-                     size_t transportId);
+    void Write(const std::vector<char> &buffer, size_t transportId);
+    void Write(std::shared_ptr<std::vector<char>> buffer, size_t transportId);
 
-    std::shared_ptr<std::vector<char>> ReadSocket(size_t id);
+    std::shared_ptr<std::vector<char>> Read(size_t id);
 
     void SetMaxReceiveBuffer(size_t size);
 

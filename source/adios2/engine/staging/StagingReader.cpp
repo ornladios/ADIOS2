@@ -25,7 +25,11 @@ namespace engine
 
 StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("StagingReader", io, name, mode, mpiComm)
+: Engine("StagingReader", io, name, mode, mpiComm),
+  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage),
+                      helper::IsLittleEndian()),
+  m_DataTransport(mpiComm, m_DebugMode),
+  m_MetadataTransport(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open StagingReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
@@ -54,6 +58,29 @@ StepStatus StagingReader::BeginStep(const StepMode mode,
     // so this forced increase should not be here
     ++m_CurrentStep;
 
+    std::shared_ptr<std::vector<char>> buff = nullptr;
+
+    if (m_MpiRank == 0)
+    {
+        while (buff == nullptr)
+        {
+            buff = m_MetadataTransport.Read(0);
+        }
+    }
+    else
+    {
+        buff = std::make_shared<std::vector<char>>();
+    }
+
+    m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, buff);
+
+    auto metadata = m_DataManSerializer.GetMetaData();
+
+    for (auto &i : metadata)
+    {
+        std::cout << "BeginStep" << i.first << std::endl;
+    }
+
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Reader " << m_MpiRank
@@ -72,7 +99,7 @@ void StagingReader::PerformGets()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_MpiRank << "     PerformGets()\n";
+        std::cout << "Staging Reader " << m_MpiRank << " PerformGets()\n";
     }
 }
 
@@ -80,9 +107,10 @@ size_t StagingReader::CurrentStep() const { return m_CurrentStep; }
 
 void StagingReader::EndStep()
 {
+    m_DataManSerializer.Erase(CurrentStep());
     if (m_Verbosity == 5)
     {
-        std::cout << "Staging Reader " << m_MpiRank << "   EndStep()\n";
+        std::cout << "Staging Reader " << m_MpiRank << " EndStep()\n";
     }
 }
 
@@ -104,8 +132,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 void StagingReader::Init()
 {
     InitParameters();
-    InitTransports();
     Handshake();
+    InitTransports();
 }
 
 void StagingReader::InitParameters()
@@ -135,7 +163,18 @@ void StagingReader::InitParameters()
 
 void StagingReader::InitTransports()
 {
-    // Nothing to process from m_IO.m_TransportsParameters
+    if (m_MpiRank == 0)
+    {
+        Params params;
+        params["IPAddress"] = m_WriterMasterIP;
+        params["Port"] = m_WriterMasterMetadataPort;
+        params["Library"] = "zmq";
+        params["Name"] = m_Name;
+        std::vector<Params> paramsVec;
+        paramsVec.emplace_back(params);
+        m_MetadataTransport.OpenTransports(paramsVec, Mode::Read, "subscribe",
+                                           true);
+    }
 }
 
 void StagingReader::Handshake()
@@ -147,7 +186,6 @@ void StagingReader::Handshake()
     ipstream.Read(ip.data(), size);
     ipstream.Close();
     m_WriterMasterIP = std::string(ip.begin(), ip.end());
-    std::cout << m_WriterMasterIP << std::endl;
 }
 
 void StagingReader::DoClose(const int transportIndex)

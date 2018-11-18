@@ -28,24 +28,16 @@ StagingMan::~StagingMan() {}
 
 void StagingMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
-void StagingMan::OpenStagingTransports(
-    const std::vector<std::string> &streamNames,
-    const std::vector<Params> &paramsVector, const Mode mode,
-    const std::string workflowMode, const bool profile)
+void StagingMan::OpenTransports(const std::vector<Params> &paramsVector,
+                                const Mode mode, const bool profile)
 {
 }
 
-void StagingMan::WriteStaging(std::shared_ptr<std::vector<char>> buffer,
-                              size_t id)
-{
-}
+void StagingMan::Write(std::shared_ptr<std::vector<char>> buffer, size_t id) {}
 
-void StagingMan::WriteStaging(const std::vector<char> &buffer,
-                              size_t transportId)
-{
-}
+void StagingMan::Write(const std::vector<char> &buffer, size_t transportId) {}
 
-std::shared_ptr<std::vector<char>> StagingMan::ReadStaging(size_t id) {}
+std::shared_ptr<std::vector<char>> StagingMan::Read(size_t id) {}
 
 void StagingMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v,
                                  size_t id)

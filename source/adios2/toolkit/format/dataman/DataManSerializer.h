@@ -49,6 +49,8 @@ public:
     DataManSerializer(bool isRowMajor, const bool contiguousMajor,
                       bool isLittleEndian);
 
+    // Serializer functions
+
     void New(size_t size);
 
     template <class T>
@@ -67,14 +69,13 @@ public:
 
     const std::shared_ptr<std::vector<char>> GetPack();
 
-#ifdef ADIOS2_HAVE_MPI
     std::shared_ptr<std::vector<char>>
     GetAggregatedMetadata(const MPI_Comm mpiComm);
-#endif
 
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
-    // from deserializer
+    // Deserializer functions
+
     int PutPack(const std::shared_ptr<const std::vector<char>> data);
     template <class T>
     int GetVar(T *output_data, const std::string &varName, const Dims &varStart,
@@ -93,7 +94,8 @@ public:
         size_t step;
         size_t size;
         size_t position;
-        size_t index;
+        int index; // index in PackMap
+        int rank;
         std::string compression;
         Params params;
     };
@@ -102,8 +104,12 @@ public:
     const std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
     GetMetaData();
     void GetAttributes(core::IO &io);
+    void PutAggregatedMetadata(MPI_Comm mpiComm,
+                               std::shared_ptr<std::vector<char>>);
 
 private:
+    // Serializer functions
+
     template <class T>
     bool PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                 const Dims &varCount, const Params &params);
@@ -122,25 +128,23 @@ private:
     bool IsCompressionAvailable(const std::string &method,
                                 const std::string &type, const Dims &count);
 
-    std::shared_ptr<std::vector<char>> m_Buffer;
-    nlohmann::json m_Metadata;
+    std::shared_ptr<std::vector<char>> m_Pack;
+    nlohmann::json m_MetadataJson;
     std::vector<char> m_CompressBuffer;
     size_t m_Position = 0;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
 
-    // from deserializer
-    bool HasOverlap(Dims in_start, Dims in_count, Dims out_start,
-                    Dims out_count) const;
+    // Deserializer functions
 
+    void JsonToDataManVar(nlohmann::json &metaJ, int key);
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
-        m_MetaDataMap;
-    std::unordered_map<int, std::shared_ptr<const std::vector<char>>>
-        m_BufferMap;
+        m_DataManVarMap;
+    std::unordered_map<int, std::shared_ptr<const std::vector<char>>> m_PackMap;
     size_t m_MaxStep = std::numeric_limits<size_t>::min();
     size_t m_MinStep = std::numeric_limits<size_t>::max();
-    nlohmann::json m_GlobalVars;
+    nlohmann::json m_GlobalVars; // for global variables and attributes
 
     std::mutex m_Mutex;
 };

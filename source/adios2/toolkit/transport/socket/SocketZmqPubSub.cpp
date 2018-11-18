@@ -74,9 +74,8 @@ void SocketZmqPubSub::Open(const std::string &ipAddress,
 
     if (m_DebugMode)
     {
-        std::cout << "[SocketZmq Transport] ";
+        std::cout << "[SocketZmqPubSub Transport] ";
         std::cout << "OpenMode: " << openModeStr << ", ";
-        std::cout << "WorkflowMode: subscribe, ";
         std::cout << "IPAddress: " << ipAddress << ", ";
         std::cout << "Port: " << port << ", ";
         std::cout << std::endl;
