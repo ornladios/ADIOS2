@@ -62,7 +62,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     metaj["M"] = m_IsRowMajor;
     metaj["E"] = m_IsLittleEndian;
     metaj["Y"] = GetType<T>();
-    metaj["P"] = m_Position;
+    metaj["P"] = m_LocalBuffer->size();
 
     size_t datasize;
     bool compressed = false;
@@ -125,23 +125,22 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     }
     metaj["I"] = datasize;
 
-    if (m_Pack->capacity() < m_Position + datasize)
+    if (m_LocalBuffer->capacity() < m_LocalBuffer->size() + datasize)
     {
-        m_Pack->reserve((m_Position + datasize) * 2);
+        m_LocalBuffer->reserve((m_LocalBuffer->size() + datasize) * 2);
     }
 
-    m_Pack->resize(m_Position + datasize);
+    m_LocalBuffer->resize(m_LocalBuffer->size() + datasize);
 
     if (compressed)
     {
-        std::memcpy(m_Pack->data() + m_Position, m_CompressBuffer.data(),
+        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() -datasize, m_CompressBuffer.data(),
                     datasize);
     }
     else
     {
-        std::memcpy(m_Pack->data() + m_Position, inputData, datasize);
+        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size()-datasize, inputData, datasize);
     }
-    m_Position += datasize;
 
     m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
         metaj);
@@ -316,11 +315,11 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                 // Get the shared pointer first and then copy memory. This is
                 // done in order to avoid expensive memory copy operations
                 // happening inside the lock. Once the shared pointer is
-                // assigned to k, its life cycle in m_PackMap does not matter
-                // any more. So even if m_PackMap[j.index] is modified
+                // assigned to k, its life cycle in m_LocalBufferMap does not matter
+                // any more. So even if m_LocalBufferMap[j.index] is modified
                 // somewhere else the memory that this shared pointer refers to
                 // is still valid until k runs out of scope.
-                auto k = m_PackMap[j.index];
+                auto k = j.buffer;
                 if (j.compression == "zfp")
                 {
 #ifdef ADIOS2_HAVE_ZFP

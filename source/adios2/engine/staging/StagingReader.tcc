@@ -26,7 +26,8 @@ template <>
 inline void StagingReader::GetSyncCommon(Variable<std::string> &variable,
                                          std::string *data)
 {
-    variable.SetData(data);
+    GetDeferredCommon(variable, data);
+    PerformGets();
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << "     GetSync("
@@ -37,7 +38,8 @@ inline void StagingReader::GetSyncCommon(Variable<std::string> &variable,
 template <class T>
 inline void StagingReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    variable.SetData(data);
+    GetDeferredCommon(variable, data);
+    PerformGets();
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << "     GetSync("
@@ -48,7 +50,8 @@ inline void StagingReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void StagingReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    GetSyncCommon(variable, data);
+    std::cout << "StagingReader::GetDeferredCommon" << std::endl;
+    m_DataManSerializer.PutDeferredRequest(variable.m_Name, CurrentStep(), variable.m_Start, variable.m_Count, data);
 
     if (m_Verbosity == 5)
     {

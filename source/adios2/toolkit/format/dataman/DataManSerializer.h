@@ -32,8 +32,8 @@
 // O - Start
 // P - Position of Memory Block
 // S - Shape
+// T - Step
 // V - Is Single Value
-// X - Index (Used only in deserializer)
 // Y - Data Type
 // Z - Compression Method
 // ZP - Compression Parameters
@@ -48,6 +48,26 @@ class DataManSerializer
 public:
     DataManSerializer(bool isRowMajor, const bool contiguousMajor,
                       bool isLittleEndian);
+
+    struct DataManVar
+    {
+        bool isRowMajor;
+        bool isLittleEndian;
+        Dims shape;
+        Dims count;
+        Dims start;
+        std::string name;
+        std::string doid;
+        std::string type;
+        size_t step;
+        size_t size;
+        size_t position;
+        int rank;
+        std::string compression;
+        Params params;
+        std::shared_ptr<std::vector<char>> buffer = nullptr;
+    };
+
 
     // Serializer functions
 
@@ -67,7 +87,7 @@ public:
 
     void PutAttributes(core::IO &io, const int rank);
 
-    const std::shared_ptr<std::vector<char>> GetPack();
+    const std::shared_ptr<std::vector<char>> GetLocalPack();
 
     std::shared_ptr<std::vector<char>>
     GetAggregatedMetadata(const MPI_Comm mpiComm);
@@ -76,39 +96,28 @@ public:
 
     // Deserializer functions
 
-    int PutPack(const std::shared_ptr<const std::vector<char>> data);
+    int PutPack(const std::shared_ptr<std::vector<char>> data);
+
     template <class T>
     int GetVar(T *output_data, const std::string &varName, const Dims &varStart,
                const Dims &varCount, const size_t step);
+
     void Erase(const size_t step);
-    struct DataManVar
-    {
-        bool isRowMajor;
-        bool isLittleEndian;
-        Dims shape;
-        Dims count;
-        Dims start;
-        std::string name;
-        std::string doid;
-        std::string type;
-        size_t step;
-        size_t size;
-        size_t position;
-        int index; // index in PackMap
-        int rank;
-        std::string compression;
-        Params params;
-    };
+
     std::shared_ptr<const std::vector<DataManVar>>
     GetMetaData(const size_t step);
+
     const std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
     GetMetaData();
+
     void GetAttributes(core::IO &io);
+
     void PutAggregatedMetadata(MPI_Comm mpiComm,
                                std::shared_ptr<std::vector<char>>);
 
+    int PutDeferredRequest(const std::string &variable, const size_t step, const Dims &start, const Dims &count, void* data);
+    std::shared_ptr<std::unordered_map<int, std::vector<char>>> GetDeferredRequest();
 private:
-    // Serializer functions
 
     template <class T>
     bool PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
@@ -128,25 +137,46 @@ private:
     bool IsCompressionAvailable(const std::string &method,
                                 const std::string &type, const Dims &count);
 
-    std::shared_ptr<std::vector<char>> m_Pack;
+    void JsonToDataManVarMap(nlohmann::json &metaJ, std::shared_ptr<std::vector<char>> pack);
+
+    // local rank single step data and metadata pack buffer, used in writer, only accessed from writer app API thread, does not need mutex
+    std::shared_ptr<std::vector<char>> m_LocalBuffer;
+
+    // local rank single step JSON metadata, used in writer, only accessed from writer app API thread, do not need mutex
     nlohmann::json m_MetadataJson;
+
+    // temporary compression buffer, made class member only for saving costs for memory allocation
     std::vector<char> m_CompressBuffer;
+<<<<<<< HEAD
     size_t m_Position = 0;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
+=======
+>>>>>>> added deferred requests handling in staging engine
 
-    // Deserializer functions
+    // global aggregated buffer for metadata and data buffer, used in writer and reader, needs mutex for accessing
+    std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>> m_DataManVarMap;
 
-    void JsonToDataManVar(nlohmann::json &metaJ, int key);
-    std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
-        m_DataManVarMap;
-    std::unordered_map<int, std::shared_ptr<const std::vector<char>>> m_PackMap;
-    size_t m_MaxStep = std::numeric_limits<size_t>::min();
-    size_t m_MinStep = std::numeric_limits<size_t>::max();
-    nlohmann::json m_GlobalVars; // for global variables and attributes
+    // for global variables and attributes, needs mutex
+    nlohmann::json m_GlobalVars;
+
+    struct Request
+    {
+        std::string variable;
+        size_t step;
+        Dims start;
+        Dims count;
+        void *data;
+    };
+
+    std::vector<Request> m_DeferredRequests;
+    std::shared_ptr<std::unordered_map<int, std::vector<char>>> m_DeferredRequestsToSend;
 
     std::mutex m_Mutex;
+    bool m_IsRowMajor;
+    bool m_IsLittleEndian;
+
 };
 
 } // end namespace format

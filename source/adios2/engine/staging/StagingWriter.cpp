@@ -74,6 +74,8 @@ void StagingWriter::EndStep()
     auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
     m_MetadataTransport.Write(aggMetadata, 0);
 
+    m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
+
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << "   EndStep()\n";

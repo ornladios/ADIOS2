@@ -51,12 +51,9 @@ StagingReader::~StagingReader()
     }
 }
 
-StepStatus StagingReader::BeginStep(const StepMode mode,
+StepStatus StagingReader::BeginStep(const StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    // step info should be received from the writer side in BeginStep()
-    // so this forced increase should not be here
-    ++m_CurrentStep;
 
     std::shared_ptr<std::vector<char>> buff = nullptr;
 
@@ -76,10 +73,36 @@ StepStatus StagingReader::BeginStep(const StepMode mode,
 
     auto metadata = m_DataManSerializer.GetMetaData();
 
+    size_t maxStep = std::numeric_limits<size_t>::min();
+    size_t minStep = std::numeric_limits<size_t>::max();
+
     for (auto &i : metadata)
     {
-        std::cout << "BeginStep" << i.first << std::endl;
+        if(i.first > maxStep)
+        {
+            maxStep = i.first;
+        }
+        if(i.first < minStep)
+        {
+            minStep = i.first;
+        }
     }
+
+    if (stepMode == StepMode::NextAvailable)
+    {
+        m_CurrentStep = minStep;
+    }
+    else if (stepMode == StepMode::LatestAvailable)
+    {
+        m_CurrentStep = maxStep;
+    }
+    else
+    {
+        throw(std::invalid_argument(
+                    "[StagingReader::BeginStep] Step mode is not supported!"));
+    }
+
+    std::cout << m_CurrentStep << " === " << std::endl;
 
     if (m_Verbosity == 5)
     {
@@ -97,6 +120,9 @@ StepStatus StagingReader::BeginStep(const StepMode mode,
 
 void StagingReader::PerformGets()
 {
+
+    auto requests = m_DataManSerializer.GetDeferredRequest();
+
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " PerformGets()\n";

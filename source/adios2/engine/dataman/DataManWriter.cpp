@@ -76,7 +76,7 @@ void DataManWriter::EndStep()
                 m_DataManSerializer[i]->PutAttributes(m_IO, m_MPIRank);
             }
             const std::shared_ptr<std::vector<char>> buf =
-                m_DataManSerializer[i]->GetPack();
+                m_DataManSerializer[i]->GetLocalPack();
             m_BufferSize = buf->size() * 2;
             m_WANMan->Write(buf, i);
         }
