@@ -98,6 +98,38 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
                Params->ControlTransport);
 }
 
+static char *SstRegStr[] = {"File", "Screen", "Cloud"};
+static char *SstMarshalStr[] = {"FFS", "BP"};
+static char *SstQueueFullStr[] = {"Block", "Discard"};
+static char *SstCompressStr[] = {"None", "ZFP"};
+
+extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
+{
+    if (!Stream->Verbose)
+        return;
+
+    fprintf(stderr, "Param -   MarshalMethod:%s\n",
+            SstMarshalStr[Params->MarshalMethod]);
+    fprintf(stderr, "Param -   RegistrationMethod:%s\n",
+            SstRegStr[Params->RegistrationMethod]);
+    fprintf(stderr, "Param -   DataTransport:%s\n",
+            Params->DataTransport ? Params->DataTransport : "");
+    fprintf(stderr, "Param -   RendezvousReaderCount:%d\n",
+            Params->RendezvousReaderCount);
+    fprintf(stderr, "Param -   QueueLimit:%d %s\n", Params->QueueLimit,
+            (Params->QueueLimit == 0) ? "(unlimited)" : "");
+    fprintf(stderr, "Param -   QueueFullPolicy:%s\n",
+            SstQueueFullStr[Params->QueueFullPolicy]);
+    fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
+            Params->IsRowMajor);
+    fprintf(stderr, "Param -   ControlTransport:%s\n",
+            Params->ControlTransport);
+    fprintf(stderr, "Param -   NetworkInterface:%s\n",
+            Params->NetworkInterface ? Params->NetworkInterface : "");
+    fprintf(stderr, "Param -   CompressionMethod:%s\n",
+            SstCompressStr[Params->CompressionMethod]);
+}
+
 static FMField CP_SstParamsList_RAW[] = {
 #define declare_field(Param, Type, Typedecl, Default)                          \
     {#Param, #Typedecl, sizeof(Typedecl), FMOffset(struct _SstParams *, Param)},

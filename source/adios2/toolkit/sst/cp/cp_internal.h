@@ -393,3 +393,4 @@ extern void AddToLastCallFreeList(void *Block);
 extern void CP_verbose(SstStream Stream, char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
+extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params);
