@@ -61,6 +61,10 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements = 1,
                          const unsigned int threads = 1) noexcept;
 
+template <class T>
+void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+                           T *destination, const size_t elements = 1) noexcept;
+
 /**
  * Copy memory from a buffer at a certain input position
  * @param buffer data source

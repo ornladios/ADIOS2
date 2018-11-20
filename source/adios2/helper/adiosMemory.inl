@@ -15,7 +15,7 @@
 #endif
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <algorithm> //std::copy
+#include <algorithm> //std::copy, std::reverse_copy
 #include <cstring>   //std::memcpy
 #include <thread>
 /// \endcond
@@ -104,6 +104,16 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
         copyThread.join();
     }
 
+    position += elements * sizeof(T);
+}
+
+template <class T>
+void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+                           T *destination, const size_t elements = 1) noexcept
+{
+    std::reverse_copy(buffer.begin() + position,
+                      buffer.begin() + position + sizeof(T) * elements,
+                      reinterpret_cast<char *>(destination));
     position += elements * sizeof(T);
 }
 
