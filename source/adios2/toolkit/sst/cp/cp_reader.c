@@ -319,6 +319,13 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         return NULL;
     }
 
+    if (Stream->Rank == 0)
+    {
+        CP_verbose(Stream,
+                   "Opening Reader Stream.  Writer stream params are:\n");
+        CP_dumpParams(Stream, ReturnData->WriterConfigParams);
+    }
+
     //    printf("I am reader rank %d, my info on writers is:\n", Stream->Rank);
     //    FMdump_data(FMFormat_of_original(Stream->CPInfo->combined_writer_Format),
     //                ReturnData, 1024000);

@@ -743,6 +743,12 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     CP_verbose(Stream, "Opening Stream \"%s\"\n", Filename);
 
+    if (Stream->Rank == 0)
+    {
+        CP_verbose(Stream, "Writer stream params are:\n");
+        CP_dumpParams(Stream, Stream->ConfigParams);
+    }
+
     while (Stream->RendezvousReaderCount > 0)
     {
         WS_ReaderInfo reader;
