@@ -140,7 +140,7 @@ T ReadValue(const std::vector<char> &buffer, size_t &position,
 {
     T value;
 
-#ifdef ADIOS2_USE_ENDIAN_REVERSE
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (helper::IsLittleEndian() != isLittleEndian)
     {
         ReverseCopyFromBuffer(buffer, position, &value);

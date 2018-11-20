@@ -345,7 +345,7 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
             {
                 const size_t size = characteristics.Count[0];
                 characteristics.Statistics.Values.resize(size);
-#ifdef ADIOS2_USE_ENDIAN_REVERSE
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
 
                 if (helper::isLittleEndian() != isLittleEndian)
                 {
