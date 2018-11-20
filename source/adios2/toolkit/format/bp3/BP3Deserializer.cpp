@@ -82,33 +82,22 @@ void BP3Deserializer::GetPreOperatorBlockData(
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
-    auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
-
-        switch (endianness)
-        {
-        case 0:
-            isLittleEndian = true;
-            break;
-        case 1:
-            isLittleEndian = false;
-            break;
-        }
-    };
-
     const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
     size_t position = bufferSize - 4;
-    const uint8_t endianess = helper::ReadValue<uint8_t>(buffer, position);
-    lf_GetEndianness(endianess, m_Minifooter.IsLittleEndian);
+    const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
+    m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
     position += 1;
 
-    const uint8_t subFilesIndex = helper::ReadValue<uint8_t>(buffer, position);
+    const uint8_t subFilesIndex = helper::ReadValue<uint8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
     if (subFilesIndex > 0)
     {
         m_Minifooter.HasSubFiles = true;
     }
 
-    m_Minifooter.Version = helper::ReadValue<uint8_t>(buffer, position);
+    m_Minifooter.Version = helper::ReadValue<uint8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
     if (m_Minifooter.Version < 3)
     {
         throw std::runtime_error("ERROR: ADIOS2 only supports bp format "
@@ -122,10 +111,12 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     m_Minifooter.VersionTag.assign(&buffer[position], 28);
     position += 28;
 
-    m_Minifooter.PGIndexStart = helper::ReadValue<uint64_t>(buffer, position);
-    m_Minifooter.VarsIndexStart = helper::ReadValue<uint64_t>(buffer, position);
-    m_Minifooter.AttributesIndexStart =
-        helper::ReadValue<uint64_t>(buffer, position);
+    m_Minifooter.PGIndexStart = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    m_Minifooter.VarsIndexStart = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    m_Minifooter.AttributesIndexStart = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 }
 
 void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
@@ -134,8 +125,10 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.PGIndexStart;
 
-    m_MetadataSet.DataPGCount = helper::ReadValue<uint64_t>(buffer, position);
-    const size_t length = helper::ReadValue<uint64_t>(buffer, position);
+    m_MetadataSet.DataPGCount = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const size_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     size_t localPosition = 0;
 
@@ -144,7 +137,8 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
 
     while (localPosition < length)
     {
-        ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
+        ProcessGroupIndex index = ReadProcessGroupIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
         if (index.IsColumnMajor == 'y')
         {
             m_IsRowMajor = false;
@@ -173,8 +167,8 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndex = [&](
         core::IO &io, const std::vector<char> &buffer, size_t position) {
 
-        const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position);
+        const ElementIndexHeader header = ReadElementIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
@@ -271,8 +265,10 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -283,8 +279,9 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
         {
             lf_ReadElementIndex(io, buffer, position);
 
-            const size_t elementIndexSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(buffer, position));
+            const size_t elementIndexSize =
+                static_cast<size_t>(helper::ReadValue<uint32_t>(
+                    buffer, position, m_Minifooter.IsLittleEndian));
             position += elementIndexSize;
             localPosition = position - startPosition;
         }
@@ -303,8 +300,9 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
         for (unsigned int t = 0; t < m_Threads; ++t)
         {
             asyncPositions[t] = position;
-            const size_t elementIndexSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(buffer, position));
+            const size_t elementIndexSize =
+                static_cast<size_t>(helper::ReadValue<uint32_t>(
+                    buffer, position, m_Minifooter.IsLittleEndian));
             position += elementIndexSize;
             localPosition = position - startPosition;
 
@@ -338,8 +336,8 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndex = [&](
         core::IO &io, const std::vector<char> &buffer, size_t position) {
 
-        const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position);
+        const ElementIndexHeader header = ReadElementIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
@@ -428,8 +426,10 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.AttributesIndexStart;
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -439,7 +439,8 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     {
         lf_ReadElementIndex(io, buffer, position);
         const size_t elementIndexSize =
-            static_cast<size_t>(helper::ReadValue<uint32_t>(buffer, position));
+            static_cast<size_t>(helper::ReadValue<uint32_t>(
+                buffer, position, m_Minifooter.IsLittleEndian));
         position += elementIndexSize;
         localPosition = position - startPosition;
     }

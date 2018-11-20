@@ -109,7 +109,7 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
 
 template <class T>
 void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
-                           T *destination, const size_t elements = 1) noexcept
+                           T *destination, const size_t elements) noexcept
 {
     std::reverse_copy(buffer.begin() + position,
                       buffer.begin() + position + sizeof(T) * elements,
@@ -135,10 +135,23 @@ void InsertU64(std::vector<char> &buffer, const T element) noexcept
 }
 
 template <class T>
-T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept
+T ReadValue(const std::vector<char> &buffer, size_t &position,
+            const bool isLittleEndian) noexcept
 {
     T value;
+
+#ifdef ADIOS2_USE_ENDIAN_REVERSE
+    if (helper::IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, &value);
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, &value);
+    }
+#else
     CopyFromBuffer(buffer, position, &value);
+#endif
     return value;
 }
 

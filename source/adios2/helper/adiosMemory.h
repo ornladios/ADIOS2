@@ -86,7 +86,8 @@ template <class T>
 void InsertU64(std::vector<char> &buffer, const T element) noexcept;
 
 template <class T>
-T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
+T ReadValue(const std::vector<char> &buffer, size_t &position,
+            const bool isLittleEndian = true) noexcept;
 
 /**
  * General function to copy memory between blocks of different type and start

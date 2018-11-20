@@ -155,14 +155,16 @@ int8_t BP3Base::GetDataType<cdouble>() const noexcept
 template <class T>
 BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
-    const bool untilTimeStep) const
+    const bool untilTimeStep, const bool isLittleEndian) const
 {
     Characteristics<T> characteristics;
-    characteristics.EntryCount = helper::ReadValue<uint8_t>(buffer, position);
-    characteristics.EntryLength = helper::ReadValue<uint32_t>(buffer, position);
+    characteristics.EntryCount =
+        helper::ReadValue<uint8_t>(buffer, position, isLittleEndian);
+    characteristics.EntryLength =
+        helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
 
     ParseCharacteristics(buffer, position, dataType, untilTimeStep,
-                         characteristics);
+                         characteristics, isLittleEndian);
 
     return characteristics;
 }
@@ -170,8 +172,8 @@ BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
 template <>
 inline void BP3Base::ParseCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
-    const bool untilTimeStep,
-    Characteristics<std::string> &characteristics) const
+    const bool untilTimeStep, Characteristics<std::string> &characteristics,
+    const bool isLittleEndian) const
 {
     const size_t start = position;
     size_t localPosition = 0;
@@ -180,14 +182,15 @@ inline void BP3Base::ParseCharacteristics(
 
     while (localPosition < characteristics.EntryLength)
     {
-        const uint8_t id = helper::ReadValue<uint8_t>(buffer, position);
+        const uint8_t id =
+            helper::ReadValue<uint8_t>(buffer, position, isLittleEndian);
 
         switch (id)
         {
         case (characteristic_time_index):
         {
             characteristics.Statistics.Step =
-                helper::ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             foundTimeStep = true;
             break;
         }
@@ -195,7 +198,7 @@ inline void BP3Base::ParseCharacteristics(
         case (characteristic_file_index):
         {
             characteristics.Statistics.FileIndex =
-                helper::ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             break;
         }
 
@@ -204,14 +207,9 @@ inline void BP3Base::ParseCharacteristics(
             if (dataType == type_string)
             {
                 // first get the length of the string
-                const size_t length = static_cast<size_t>(
-                    helper::ReadValue<uint16_t>(buffer, position));
-
                 characteristics.Statistics.Value =
-                    std::string(&buffer[position], length);
-
+                    ReadBP3String(buffer, position, isLittleEndian);
                 characteristics.Statistics.IsValue = true;
-                position += length;
             }
             else if (dataType == type_string_array)
             {
@@ -226,8 +224,9 @@ inline void BP3Base::ParseCharacteristics(
 
                 for (size_t e = 0; e < elements; ++e)
                 {
-                    const size_t length = static_cast<size_t>(
-                        helper::ReadValue<uint16_t>(buffer, position));
+                    const size_t length =
+                        static_cast<size_t>(helper::ReadValue<uint16_t>(
+                            buffer, position, isLittleEndian));
 
                     characteristics.Statistics.Values.push_back(
                         std::string(&buffer[position], length));
@@ -242,37 +241,40 @@ inline void BP3Base::ParseCharacteristics(
         case (characteristic_offset):
         {
             characteristics.Statistics.Offset =
-                helper::ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
         case (characteristic_payload_offset):
         {
             characteristics.Statistics.PayloadOffset =
-                helper::ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
         case (characteristic_dimensions):
         {
-            const unsigned int dimensionsSize = static_cast<unsigned int>(
-                helper::ReadValue<uint8_t>(buffer, position));
+            const size_t dimensionsSize = static_cast<size_t>(
+                helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
             characteristics.Shape.reserve(dimensionsSize);
             characteristics.Start.reserve(dimensionsSize);
             characteristics.Count.reserve(dimensionsSize);
             position += 2; // skip length (not required)
 
-            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            for (size_t d = 0; d < dimensionsSize; ++d)
             {
-                characteristics.Count.push_back(static_cast<size_t>(
-                    helper::ReadValue<uint64_t>(buffer, position)));
+                characteristics.Count.push_back(
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
 
-                characteristics.Shape.push_back(static_cast<size_t>(
-                    helper::ReadValue<uint64_t>(buffer, position)));
+                characteristics.Shape.push_back(
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
 
-                characteristics.Start.push_back(static_cast<size_t>(
-                    helper::ReadValue<uint64_t>(buffer, position)));
+                characteristics.Start.push_back(
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
             }
             break;
         }
@@ -296,11 +298,12 @@ inline void BP3Base::ParseCharacteristics(
 }
 
 template <class T>
-inline void
-BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
-                              const DataTypes /*dataType*/,
-                              const bool untilTimeStep,
-                              Characteristics<T> &characteristics) const
+inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
+                                          size_t &position,
+                                          const DataTypes /*dataType*/,
+                                          const bool untilTimeStep,
+                                          Characteristics<T> &characteristics,
+                                          const bool isLittleEndian) const
 {
     const size_t start = position;
     size_t localPosition = 0;
@@ -310,14 +313,14 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
     while (localPosition < characteristics.EntryLength)
     {
         const CharacteristicID id = static_cast<CharacteristicID>(
-            helper::ReadValue<uint8_t>(buffer, position));
+            helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
         switch (id)
         {
         case (characteristic_time_index):
         {
             characteristics.Statistics.Step =
-                helper::ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             foundTimeStep = true;
             break;
         }
@@ -325,7 +328,7 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_file_index):
         {
             characteristics.Statistics.FileIndex =
-                helper::ReadValue<uint32_t>(buffer, position);
+                helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             break;
         }
 
@@ -335,16 +338,32 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
             if (characteristics.Count.empty() || characteristics.Count[0] == 1)
             {
                 characteristics.Statistics.Value =
-                    helper::ReadValue<T>(buffer, position);
+                    helper::ReadValue<T>(buffer, position, isLittleEndian);
                 characteristics.Statistics.IsValue = true;
             }
             else // used for attributes
             {
                 const size_t size = characteristics.Count[0];
                 characteristics.Statistics.Values.resize(size);
+#ifdef ADIOS2_USE_ENDIAN_REVERSE
+
+                if (helper::isLittleEndian() != isLittleEndian)
+                {
+                    helper::ReverseCopyFromBuffer(
+                        buffer, position,
+                        characteristics.Statistics.Values.data(), size);
+                }
+                else
+                {
+                    helper::CopyFromBuffer(
+                        buffer, position,
+                        characteristics.Statistics.Values.data(), size);
+                }
+#else
                 helper::CopyFromBuffer(buffer, position,
                                        characteristics.Statistics.Values.data(),
                                        size);
+#endif
             }
             break;
         }
@@ -352,51 +371,54 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_min):
         {
             characteristics.Statistics.Min =
-                helper::ReadValue<T>(buffer, position);
+                helper::ReadValue<T>(buffer, position, isLittleEndian);
             break;
         }
 
         case (characteristic_max):
         {
             characteristics.Statistics.Max =
-                helper::ReadValue<T>(buffer, position);
+                helper::ReadValue<T>(buffer, position, isLittleEndian);
             break;
         }
 
         case (characteristic_offset):
         {
             characteristics.Statistics.Offset =
-                helper::ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
         case (characteristic_payload_offset):
         {
             characteristics.Statistics.PayloadOffset =
-                helper::ReadValue<uint64_t>(buffer, position);
+                helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
         case (characteristic_dimensions):
         {
-            const unsigned int dimensionsSize = static_cast<unsigned int>(
-                helper::ReadValue<uint8_t>(buffer, position));
+            const size_t dimensionsSize = static_cast<size_t>(
+                helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
             characteristics.Shape.reserve(dimensionsSize);
             characteristics.Start.reserve(dimensionsSize);
             characteristics.Count.reserve(dimensionsSize);
             position += 2; // skip length (not required)
 
-            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            for (size_t d = 0; d < dimensionsSize; ++d)
             {
-                characteristics.Count.push_back(static_cast<size_t>(
-                    helper::ReadValue<uint64_t>(buffer, position)));
+                characteristics.Count.push_back(
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
 
-                characteristics.Shape.push_back(static_cast<size_t>(
-                    helper::ReadValue<uint64_t>(buffer, position)));
+                characteristics.Shape.push_back(
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
 
-                characteristics.Start.push_back(static_cast<size_t>(
-                    helper::ReadValue<uint64_t>(buffer, position)));
+                characteristics.Start.push_back(
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
             }
             // check for local variables (Start and Shape must be all zero)
             const bool emptyShape = std::all_of(
@@ -421,8 +443,8 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         }
         case (characteristic_bitmap):
         {
-            characteristics.Statistics.Bitmap =
-                std::bitset<32>(helper::ReadValue<uint32_t>(buffer, position));
+            characteristics.Statistics.Bitmap = std::bitset<32>(
+                helper::ReadValue<uint32_t>(buffer, position, isLittleEndian));
             break;
         }
         case (characteristic_stat):
@@ -447,33 +469,34 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
                 case (statistic_min):
                 {
                     characteristics.Statistics.Min =
-                        helper::ReadValue<typename TypeInfo<T>::ValueType>(
-                            buffer, position);
+                        helper::ReadValue<T>(buffer, position, isLittleEndian);
                     break;
                 }
                 case (statistic_max):
                 {
                     characteristics.Statistics.Max =
-                        helper::ReadValue<typename TypeInfo<T>::ValueType>(
-                            buffer, position);
+                        helper::ReadValue<T>(buffer, position, isLittleEndian);
                     break;
                 }
                 case (statistic_sum):
                 {
                     characteristics.Statistics.BitSum =
-                        helper::ReadValue<double>(buffer, position);
+                        helper::ReadValue<double>(buffer, position,
+                                                  isLittleEndian);
                     break;
                 }
                 case (statistic_sum_square):
                 {
                     characteristics.Statistics.BitSumSquare =
-                        helper::ReadValue<double>(buffer, position);
+                        helper::ReadValue<double>(buffer, position,
+                                                  isLittleEndian);
                     break;
                 }
                 case (statistic_finite):
                 {
                     characteristics.Statistics.BitFinite =
-                        helper::ReadValue<uint8_t>(buffer, position);
+                        helper::ReadValue<uint8_t>(buffer, position,
+                                                   isLittleEndian);
                     break;
                 }
                 case (statistic_hist):
@@ -496,39 +519,39 @@ BP3Base::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
         case (characteristic_transform_type):
         {
             const size_t typeLength = static_cast<size_t>(
-                helper::ReadValue<uint8_t>(buffer, position));
+                helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
             characteristics.Statistics.Op.Type =
                 std::string(&buffer[position], typeLength);
             position += typeLength;
 
             characteristics.Statistics.Op.PreDataType =
-                helper::ReadValue<uint8_t>(buffer, position);
+                helper::ReadValue<uint8_t>(buffer, position, isLittleEndian);
 
-            const unsigned int dimensionsSize = static_cast<unsigned int>(
-                helper::ReadValue<uint8_t>(buffer, position));
+            const size_t dimensionsSize = static_cast<size_t>(
+                helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
             characteristics.Statistics.Op.PreShape.reserve(dimensionsSize);
             characteristics.Statistics.Op.PreStart.reserve(dimensionsSize);
             characteristics.Statistics.Op.PreCount.reserve(dimensionsSize);
             position += 2; // skip length (not required)
 
-            for (unsigned int d = 0; d < dimensionsSize; ++d)
+            for (size_t d = 0; d < dimensionsSize; ++d)
             {
                 characteristics.Statistics.Op.PreCount.push_back(
-                    static_cast<size_t>(
-                        helper::ReadValue<uint64_t>(buffer, position)));
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
 
                 characteristics.Statistics.Op.PreShape.push_back(
-                    static_cast<size_t>(
-                        helper::ReadValue<uint64_t>(buffer, position)));
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
 
                 characteristics.Statistics.Op.PreStart.push_back(
-                    static_cast<size_t>(
-                        helper::ReadValue<uint64_t>(buffer, position)));
+                    static_cast<size_t>(helper::ReadValue<uint64_t>(
+                        buffer, position, isLittleEndian)));
             }
 
             const size_t metadataLength = static_cast<size_t>(
-                helper::ReadValue<uint16_t>(buffer, position));
+                helper::ReadValue<uint16_t>(buffer, position, isLittleEndian));
 
             characteristics.Statistics.Op.Metadata =
                 std::vector<char>(buffer.begin() + position,
