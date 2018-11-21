@@ -21,6 +21,7 @@
 /// \endcond
 
 #include "adios2/helper/adiosMath.h"
+#include "adios2/helper/adiosSystem.h"
 
 namespace adios2
 {
@@ -141,7 +142,7 @@ T ReadValue(const std::vector<char> &buffer, size_t &position,
     T value;
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
-    if (helper::IsLittleEndian() != isLittleEndian)
+    if (IsLittleEndian() != isLittleEndian)
     {
         ReverseCopyFromBuffer(buffer, position, &value);
     }
