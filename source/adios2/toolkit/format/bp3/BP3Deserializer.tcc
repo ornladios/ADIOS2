@@ -137,7 +137,8 @@ void BP3Deserializer::SetVariableBlockInfo(
 
             const Characteristics<T> blockCharacteristics =
                 ReadElementIndexCharacteristics<T>(
-                    buffer, position, static_cast<DataTypes>(GetDataType<T>()));
+                    buffer, position, static_cast<DataTypes>(GetDataType<T>()),
+                    false, m_Minifooter.IsLittleEndian);
 
             // check if they intersect
             helper::SubStreamBoxInfo subStreamInfo;
@@ -326,7 +327,8 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
 
     const Characteristics<std::string> characteristics =
         ReadElementIndexCharacteristics<std::string>(
-            buffer, position, static_cast<DataTypes>(header.DataType));
+            buffer, position, static_cast<DataTypes>(header.DataType), false,
+            m_Minifooter.IsLittleEndian);
 
     std::string variableName(header.Name);
     if (!header.Path.empty())
@@ -370,7 +372,7 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         const Characteristics<std::string> subsetCharacteristics =
             ReadElementIndexCharacteristics<std::string>(
                 buffer, position, static_cast<DataTypes>(header.DataType),
-                false);
+                false, m_Minifooter.IsLittleEndian);
 
         if (subsetCharacteristics.Statistics.Step > currentStep)
         {
@@ -399,7 +401,8 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
     const size_t initialPosition = position;
 
     Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
-        buffer, position, static_cast<DataTypes>(header.DataType));
+        buffer, position, static_cast<DataTypes>(header.DataType), false,
+        m_Minifooter.IsLittleEndian);
 
     std::string variableName(header.Name);
     if (!header.Path.empty())
@@ -455,7 +458,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         const Characteristics<T> subsetCharacteristics =
             ReadElementIndexCharacteristics<T>(
                 buffer, position, static_cast<DataTypes>(header.DataType),
-                false);
+                false, m_Minifooter.IsLittleEndian);
 
         if (helper::LessThan(subsetCharacteristics.Statistics.Min,
                              variable->m_Min))
@@ -495,7 +498,8 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
 {
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType));
+            buffer, position, static_cast<DataTypes>(header.DataType), false,
+            m_Minifooter.IsLittleEndian);
 
     std::string attributeName(header.Name);
     if (!header.Path.empty())
@@ -537,7 +541,8 @@ inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
             size_t localPosition = position;
             const Characteristics<std::string> characteristics =
                 ReadElementIndexCharacteristics<std::string>(
-                    buffer, localPosition, type_string, false);
+                    buffer, localPosition, type_string, false,
+                    m_Minifooter.IsLittleEndian);
 
             *(data + i) = characteristics.Statistics.Value;
         }
@@ -568,7 +573,7 @@ BP3Deserializer::GetValueFromMetadataCommon(core::Variable<T> &variable,
         const Characteristics<T> characteristics =
             ReadElementIndexCharacteristics<T>(
                 buffer, localPosition, static_cast<DataTypes>(GetDataType<T>()),
-                false);
+                false, m_Minifooter.IsLittleEndian);
 
         *data = characteristics.Statistics.Value;
     }
@@ -622,7 +627,8 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
             const Characteristics<T> blockCharacteristics =
                 ReadElementIndexCharacteristics<T>(
                     buffer, blockPosition,
-                    static_cast<DataTypes>(GetDataType<T>()));
+                    static_cast<DataTypes>(GetDataType<T>()), false,
+                    m_Minifooter.IsLittleEndian);
 
             // check if they intersect
             helper::SubFileInfo info;
@@ -677,7 +683,8 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         const Characteristics<T> blockCharacteristics =
             ReadElementIndexCharacteristics<T>(
                 m_Metadata.m_Buffer, position,
-                static_cast<DataTypes>(GetDataType<T>()));
+                static_cast<DataTypes>(GetDataType<T>()), false,
+                m_Minifooter.IsLittleEndian);
 
         typename core::Variable<T>::Info blockInfo;
         blockInfo.Start = blockCharacteristics.Start;
