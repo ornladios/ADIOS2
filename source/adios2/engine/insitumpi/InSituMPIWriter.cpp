@@ -215,6 +215,7 @@ void InSituMPIWriter::PerformPuts()
             }
         }
 
+        // Receive read schedule from writers
         if (m_CurrentStep == 0 || !m_RemoteDefinitionsLocked)
         {
             ReceiveReadSchedule(m_WriteScheduleMap);
@@ -382,7 +383,7 @@ void InSituMPIWriter::ReceiveReadSchedule(
     // Writer ID -> number of peer readers
     std::vector<int> nReaderPerWriter(m_WriterNproc);
 
-    // How many peer readers do I have?
+    // How many readers will send me their read schedule?
     MPI_Allreduce(MPI_IN_PLACE, nReaderPerWriter.data(),
                   nReaderPerWriter.size(), MPI_INT, MPI_SUM, m_CommWorld);
 
@@ -391,10 +392,10 @@ void InSituMPIWriter::ReceiveReadSchedule(
     // Reader global rank -> length of serialized read schedule
     std::vector<int> rsLengthsTmp(nPeerReaders);
 
-    // Receive the size of each read schedule from peer readers
-    // We use MPI_ANY_SOURCE here because we don't know who our peer
-    // readers are at this point
-    for (int i = 0; i < nPeerReaders; i++)
+    // Receive the size of each read schedule from readers
+    // We use MPI_ANY_SOURCE here because at this point, we don't know who our
+    // peer readers are
+    for (auto i = 0; i < nPeerReaders; i++)
     {
         MPI_Irecv(&rsLengthsTmp[i], 1, MPI_INT, MPI_ANY_SOURCE,
                   insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
@@ -404,14 +405,14 @@ void InSituMPIWriter::ReceiveReadSchedule(
         insitumpi::CompleteRequests(requests, true, m_WriterRank);
 
     // Now we can figure out who our peer readers are
-    for (int i = 0; i < nPeerReaders; i++)
+    for (auto i = 0; i < nPeerReaders; i++)
     {
         const auto peerID = m_RankToPeerID[statuses[i].MPI_SOURCE];
         rsLengths[peerID] = rsLengthsTmp[i];
     }
 
     // Fianlly, we receive the read schedules from our peer readers
-    int i = 0;
+    auto i = 0;
     for (const auto &rsLenPair : rsLengths)
     {
         const auto peerID = rsLenPair.first;
@@ -434,9 +435,7 @@ void InSituMPIWriter::ReceiveReadSchedule(
     }
     insitumpi::CompleteRequests(requests, true, m_WriterRank);
 
-    // build (and remember for fixed schedule) the read request table
-    // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>>
-    // map
+    // Build (and remember for fixed schedule) the read request table
     writeScheduleMap.clear();
     writeScheduleMap = insitumpi::DeserializeReadSchedule(serializedSchedules);
 }

@@ -216,14 +216,14 @@ std::vector<MPI_Status> CompleteRequests(std::vector<MPI_Request> &requests,
                                          const bool IAmWriter,
                                          const int localRank)
 {
-    int ierr;
     std::vector<MPI_Status> statuses(requests.size());
 
-    ierr = MPI_Waitall(requests.size(), requests.data(), statuses.data());
+    const auto ierr =
+        MPI_Waitall(requests.size(), requests.data(), statuses.data());
 
     if (ierr == MPI_ERR_IN_STATUS)
     {
-        for (int i = 0; i < requests.size(); i++)
+        for (auto i = 0; i < requests.size(); i++)
         {
             if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
             {

@@ -101,7 +101,7 @@ SerializeLocalReadSchedule(const int nWriters,
                 if (buffers.find(subFileIndex) == buffers.end())
                 {
                     nVarPerWriter[subFileIndex] = 0;
-                    // allocate first 4 bytes
+                    // allocate first 4 bytes (number of requested variables)
                     helper::InsertToBuffer(buffers[subFileIndex],
                                            &nVarPerWriter[subFileIndex], 1);
                 }
@@ -191,13 +191,13 @@ WriteScheduleMap DeserializeReadSchedule(
 
     for (const auto &bufferPair : buffers)
     {
-        const auto peer = bufferPair.first;
+        const auto peerID = bufferPair.first;
         const auto &buffer = bufferPair.second;
 
         LocalReadScheduleMap lrsm = DeserializeReadSchedule(buffer);
         for (const auto &varSchedule : lrsm)
         {
-            map[varSchedule.first][peer] = varSchedule.second;
+            map[varSchedule.first][peerID] = varSchedule.second;
         }
     }
     return map;

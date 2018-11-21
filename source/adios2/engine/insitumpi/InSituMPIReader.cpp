@@ -332,45 +332,50 @@ void InSituMPIReader::SendReadSchedule(
 {
     const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
 
-    // serialized schedules, one per-writer
+    // Serialized schedules, one per-writer
     std::map<int, std::vector<char>> serializedSchedules =
         insitumpi::SerializeLocalReadSchedule(m_RankAllPeers.size(),
                                               variablesSubFileInfo);
 
     // Writer ID -> number of peer readers
     std::vector<int> nReaderPerWriter(m_RankAllPeers.size());
+
+    // Fill nReaderPerWriter for this writer
     for (const auto &schedulePair : serializedSchedules)
     {
-        const auto peer = schedulePair.first;
-        nReaderPerWriter[peer] = 1;
+        const auto peerID = schedulePair.first;
+        nReaderPerWriter[peerID] = 1;
     }
 
+    // Allreduce nReaderPerWrite with other writers to build a global view
     MPI_Allreduce(MPI_IN_PLACE, nReaderPerWriter.data(),
                   nReaderPerWriter.size(), MPI_INT, MPI_SUM, m_CommWorld);
 
+    // *2 because we need two requests per writer (one for sending the length
+    // of the read schedule and another for the actual read schedule
     std::vector<MPI_Request> request(serializedSchedules.size() * 2);
-    std::vector<int> mdLen(serializedSchedules.size());
-    int i = 0;
+    std::vector<int> rsLengths(serializedSchedules.size());
+    auto i = 0;
 
     for (const auto &schedulePair : serializedSchedules)
     {
-        const auto peer = schedulePair.first;
+        const auto peerID = schedulePair.first;
         const auto &schedule = schedulePair.second;
-        mdLen[i] = schedule.size();
+        rsLengths[i] = schedule.size();
 
         if (m_Verbosity == 5)
         {
             std::cout << "InSituMPI Reader " << m_ReaderRank
-                      << " Send Read Schedule len = " << mdLen[i]
-                      << " to Writer " << peer << " global rank "
-                      << m_RankAllPeers[peer] << std::endl;
+                      << " Send Read Schedule len = " << rsLengths[i]
+                      << " to Writer " << peerID << " global rank "
+                      << m_RankAllPeers[peerID] << std::endl;
         }
-        MPI_Isend(&mdLen[i], 1, MPI_INT, m_RankAllPeers[peer],
+        MPI_Isend(&rsLengths[i], 1, MPI_INT, m_RankAllPeers[peerID],
                   insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
                   &request[i * 2]);
-        MPI_Isend(schedule.data(), mdLen[i], MPI_CHAR, m_RankAllPeers[peer],
-                  insitumpi::MpiTags::ReadSchedule, m_CommWorld,
-                  &request[i * 2 + 1]);
+        MPI_Isend(schedule.data(), rsLengths[i], MPI_CHAR,
+                  m_RankAllPeers[peerID], insitumpi::MpiTags::ReadSchedule,
+                  m_CommWorld, &request[i * 2 + 1]);
 
         i++;
     }
