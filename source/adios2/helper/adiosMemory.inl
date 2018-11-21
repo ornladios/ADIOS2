@@ -168,8 +168,9 @@ template <class T, class U>
 void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 const bool destRowMajor, const U *src, const Dims &srcStart,
                 const Dims &srcCount, const bool srcRowMajor,
-                const Dims &destMemStart, const Dims &destMemCount,
-                const Dims &srcMemStart, const Dims &srcMemCount) noexcept
+                const bool endianReverse, const Dims &destMemStart,
+                const Dims &destMemCount, const Dims &srcMemStart,
+                const Dims &srcMemCount) noexcept
 {
     // transform everything to payload dims
     const Dims destStartPayload = PayloadDims<T>(destStart, destRowMajor);
@@ -182,11 +183,11 @@ void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
     const Dims srcMemStartPayload = PayloadDims<U>(srcMemStart, srcRowMajor);
     const Dims srcMemCountPayload = PayloadDims<U>(srcMemCount, srcRowMajor);
 
-    CopyPayload(reinterpret_cast<char *>(dest), destStartPayload,
-                destCountPayload, destRowMajor,
-                reinterpret_cast<const char *>(src), srcStartPayload,
-                srcCountPayload, srcRowMajor, destMemStartPayload,
-                destMemCountPayload, srcMemStartPayload, srcMemCountPayload);
+    CopyPayload(
+        reinterpret_cast<char *>(dest), destStartPayload, destCountPayload,
+        destRowMajor, reinterpret_cast<const char *>(src), srcStartPayload,
+        srcCountPayload, srcRowMajor, destMemStartPayload, destMemCountPayload,
+        srcMemStartPayload, srcMemCountPayload, endianReverse, sizeof(T));
 }
 
 template <class T>
@@ -939,6 +940,12 @@ inline size_t PayloadSize<std::string>(const std::string *data,
                                        const Dims & /*count*/) noexcept
 {
     return data->size() + 2; // 2 bytes for the string size
+}
+
+template <class T>
+void EndianReverse(T *data, const size_t size) noexcept
+{
+    EndianReversePayload(reinterpret_cast<char *>(data), size, sizeof(T));
 }
 
 } // end namespace helper

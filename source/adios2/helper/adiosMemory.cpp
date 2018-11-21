@@ -35,7 +35,8 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
                   const bool destRowMajor, const char *src,
                   const Dims &srcStart, const Dims &srcCount,
                   const Dims & /*destMemStart*/, const Dims & /*destMemCount*/,
-                  const Dims &srcMemStart, const Dims &srcMemCount)
+                  const Dims &srcMemStart, const Dims &srcMemCount,
+                  const bool endianReverse, const size_t sizeofDest)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, true);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, true);
@@ -100,8 +101,21 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
         const size_t destBeginOffset = helper::LinearIndex(
             destStartFinal, destCountFinal, currentPoint, true);
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+        if (endianReverse && sizeofDest > 1)
+        {
+            std::reverse_copy(src + srcBeginOffset, src + srcEndOffset,
+                              dest + destBeginOffset);
+        }
+        else
+        {
+            std::copy(src + srcBeginOffset, src + srcEndOffset,
+                      dest + destBeginOffset);
+        }
+#else
         std::copy(src + srcBeginOffset, src + srcEndOffset,
                   dest + destBeginOffset);
+#endif
 
         size_t p = startCoord;
         while (true)
@@ -133,7 +147,8 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
                      const Dims &srcStart, const Dims &srcCount,
                      const Dims & /*destMemStart*/,
                      const Dims & /*destMemCount*/, const Dims &srcMemStart,
-                     const Dims &srcMemCount)
+                     const Dims &srcMemCount, const bool endianReverse,
+                     const size_t sizeofDest)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, false);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, false);
@@ -186,9 +201,21 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
 
         const size_t destBeginOffset = helper::LinearIndex(
             destStartFinal, destCountFinal, currentPoint, false);
-
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+        if (endianReverse && sizeofDest > 1)
+        {
+            std::reverse_copy(src + srcBeginOffset, src + srcEndOffset,
+                              dest + destBeginOffset);
+        }
+        else
+        {
+            std::copy(src + srcBeginOffset, src + srcEndOffset,
+                      dest + destBeginOffset);
+        }
+#else
         std::copy(src + srcBeginOffset, src + srcEndOffset,
                   dest + destBeginOffset);
+#endif
         size_t p = startCoord;
 
         while (true)
@@ -221,7 +248,8 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const bool destRowMajor, const char *src, const Dims &srcStart,
                  const Dims &srcCount, const bool srcRowMajor,
                  const Dims &destMemStart, const Dims &destMemCount,
-                 const Dims &srcMemStart, const Dims &srcMemCount) noexcept
+                 const Dims &srcMemStart, const Dims &srcMemCount,
+                 const bool endianReverse, const size_t sizeofDest) noexcept
 {
     if (srcStart.size() == 1) // 1D copy memory
     {
@@ -239,8 +267,22 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
 
         const size_t destBeginOffset = interStart.front() - destStart.front();
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+        if (endianReverse && sizeofDest > 1)
+        {
+            std::reverse_copy(src + srcBeginOffset, src + srcEndOffset,
+                              dest + destBeginOffset);
+        }
+        else
+        {
+            std::copy(src + srcBeginOffset, src + srcEndOffset,
+                      dest + destBeginOffset);
+        }
+#else
         std::copy(src + srcBeginOffset, src + srcEndOffset,
                   dest + destBeginOffset);
+#endif
+
         return;
     }
 
@@ -248,13 +290,30 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
     {
         ClipRowMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
                      srcCount, destMemStart, destMemCount, srcMemStart,
-                     srcMemCount);
+                     srcMemCount, endianReverse, sizeofDest);
     }
     else // stored with Fortran, R
     {
         ClipColumnMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
                         srcCount, destMemStart, destMemCount, srcMemStart,
-                        srcMemCount);
+                        srcMemCount, endianReverse, sizeofDest);
+    }
+}
+
+void EndianReversePayload(char *data, const size_t size,
+                          const size_t sizeofType) noexcept
+{
+    if (sizeofType == 1)
+    {
+        return;
+    }
+
+    for (auto i = 0; i < size; ++i)
+    {
+        // using payload
+        char *elementBegin = data + sizeofType * i;
+        char *elementEnd = elementBegin + sizeofType;
+        std::reverse(elementBegin, elementEnd);
     }
 }
 

@@ -109,6 +109,7 @@ template <class T, class U>
 void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 const bool destRowMajor, const U *src, const Dims &srcStart,
                 const Dims &srcCount, const bool srcRowMajor,
+                const bool endianReverse = false,
                 const Dims &destMemStart = Dims(),
                 const Dims &destMemCount = Dims(),
                 const Dims &srcMemStart = Dims(),
@@ -120,7 +121,9 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const Dims &destMemStart = Dims(),
                  const Dims &destMemCount = Dims(),
                  const Dims &srcMemStart = Dims(),
-                 const Dims &srcMemCount = Dims()) noexcept;
+                 const Dims &srcMemCount = Dims(),
+                 const bool endianReverse = false,
+                 const size_t sizeofDest = 1) noexcept;
 
 /**
  * Clips the contiguous memory corresponding to an intersection and puts it in
@@ -199,6 +202,18 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;
+
+template <class T>
+void EndianReverse(T *data, const size_t size) noexcept;
+
+/**
+ * Generic function to reverse endianness in raw data for a type size
+ * @param data raw data pointer
+ * @param size
+ * @param sizeofType
+ */
+void EndianReversePayload(char *data, const size_t size,
+                          const size_t sizeofType) noexcept;
 
 } // end namespace helper
 } // end namespace adios2
