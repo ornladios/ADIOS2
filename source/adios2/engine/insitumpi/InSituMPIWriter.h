@@ -121,6 +121,11 @@ private:
                            const typename Variable<T>::Info &blockInfo);
 
     void AsyncSendVariable(std::string variableName);
+
+    /**
+     * Receive read schedule from readers and build write schedule
+     */
+    void ReceiveReadSchedule(insitumpi::WriteScheduleMap &writeScheduleMap);
 };
 
 } // end namespace engine
