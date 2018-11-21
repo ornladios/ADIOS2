@@ -22,14 +22,38 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
     MPI_Info info = MPI_INFO_NULL;
     herr_t ret = H5Pset_fapl_mpio(acc_tpl, comm, info);
 
+    int myRank;
+    MPI_Comm_rank(comm, &myRank);
+    double timeStart, timeEnd;
+    double openTime;
+    double maxOpenTime, minOpenTime;
+
     if (mode == adios2::Mode::Write)
     {
+        timeStart = MPI_Wtime();
         h5file =
             H5Fcreate(streamName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
+        timeEnd = MPI_Wtime();
     }
     else
     {
+        timeStart = MPI_Wtime();
         h5file = H5Fopen(streamName.c_str(), H5F_ACC_RDONLY, acc_tpl);
+        timeEnd = MPI_Wtime();
+    }
+    openTime = timeEnd-timeStart;
+    MPI_Allreduce(&openTime, &maxOpenTime, 1, MPI_DOUBLE, MPI_MAX,
+		MPI_COMM_WORLD);
+    MPI_Allreduce(&openTime, &minOpenTime, 1, MPI_DOUBLE, MPI_MIN,
+		MPI_COMM_WORLD);
+    if (myRank == 0)
+    {
+        std::cout << "        Max open time = " << maxOpenTime << std::endl;
+        std::cout << "        Min open time = " << minOpenTime << std::endl;
+        std::ofstream open_perf_log;
+        open_perf_log.open("open_perf.txt", std::ios::app);
+        open_perf_log << std::to_string(maxOpenTime)+", "+std::to_string(minOpenTime)+"\n";
+        open_perf_log.close();
     }
     ret = H5Pclose(acc_tpl);
 }
