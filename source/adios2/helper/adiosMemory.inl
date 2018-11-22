@@ -22,6 +22,7 @@
 
 #include "adios2/helper/adiosMath.h"
 #include "adios2/helper/adiosSystem.h"
+#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
@@ -109,8 +110,9 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
 }
 
 template <class T>
-void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
-                           T *destination, const size_t elements) noexcept
+inline void ReverseCopyFromBuffer(const std::vector<char> &buffer,
+                                  size_t &position, T *destination,
+                                  const size_t elements) noexcept
 {
     std::reverse_copy(buffer.begin() + position,
                       buffer.begin() + position + sizeof(T) * elements,
@@ -136,8 +138,8 @@ void InsertU64(std::vector<char> &buffer, const T element) noexcept
 }
 
 template <class T>
-T ReadValue(const std::vector<char> &buffer, size_t &position,
-            const bool isLittleEndian) noexcept
+inline T ReadValue(const std::vector<char> &buffer, size_t &position,
+                   const bool isLittleEndian) noexcept
 {
     T value;
 
@@ -145,6 +147,54 @@ T ReadValue(const std::vector<char> &buffer, size_t &position,
     if (IsLittleEndian() != isLittleEndian)
     {
         ReverseCopyFromBuffer(buffer, position, &value);
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, &value);
+    }
+#else
+    CopyFromBuffer(buffer, position, &value);
+#endif
+    return value;
+}
+
+template <>
+inline std::complex<float>
+ReadValue<std::complex<float>>(const std::vector<char> &buffer,
+                               size_t &position,
+                               const bool isLittleEndian) noexcept
+{
+    std::complex<float> value;
+
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, &value);
+        return std::complex<float>(value.imag(), value.real());
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, &value);
+    }
+#else
+    CopyFromBuffer(buffer, position, &value);
+#endif
+    return value;
+}
+
+template <>
+inline std::complex<double>
+ReadValue<std::complex<double>>(const std::vector<char> &buffer,
+                                size_t &position,
+                                const bool isLittleEndian) noexcept
+{
+    std::complex<double> value;
+
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, &value);
+        return std::complex<double>(value.imag(), value.real());
     }
     else
     {
@@ -187,7 +237,7 @@ void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
         reinterpret_cast<char *>(dest), destStartPayload, destCountPayload,
         destRowMajor, reinterpret_cast<const char *>(src), srcStartPayload,
         srcCountPayload, srcRowMajor, destMemStartPayload, destMemCountPayload,
-        srcMemStartPayload, srcMemCountPayload, endianReverse, sizeof(T));
+        srcMemStartPayload, srcMemCountPayload, endianReverse, GetType<T>());
 }
 
 template <class T>
@@ -940,12 +990,6 @@ inline size_t PayloadSize<std::string>(const std::string *data,
                                        const Dims & /*count*/) noexcept
 {
     return data->size() + 2; // 2 bytes for the string size
-}
-
-template <class T>
-void EndianReverse(T *data, const size_t size) noexcept
-{
-    EndianReversePayload(reinterpret_cast<char *>(data), size, sizeof(T));
 }
 
 } // end namespace helper
