@@ -640,6 +640,16 @@ static void NdCopyIterDFDynamicRevEndian(const char *inBase, char *outBase,
 
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
+           const Dims &inMemStart, const Dims &inMemCount,
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const Dims &outStart, const Dims &outCount, const Dims &outMemStart,
+           const Dims &outMemCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const bool safeMode)
+{
+}
+
+template <class T>
+int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
            const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
            const bool outIsLittleEndian, const bool safeMode)
