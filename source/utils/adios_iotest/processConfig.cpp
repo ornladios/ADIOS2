@@ -241,13 +241,15 @@ VariableInfo processArray(std::vector<std::string> &words,
     {
         if (settings.isStrongScaling)
         {
-            ov.shape.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.shape.push_back(
+                stringToSizet(words, static_cast<int>(4 + i),
+                              "dimension " + std::to_string(i + 1)));
         }
         else
         {
-            ov.count.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.count.push_back(
+                stringToSizet(words, static_cast<int>(4 + i),
+                              "dimension " + std::to_string(i + 1)));
         }
     }
 
@@ -379,7 +381,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
             {
                 const auto f = cfg.condMap.at(cmd->conditionalStream);
             }
-            catch (std::exception &e)
+            catch (std::exception &)
             {
                 throw std::invalid_argument(
                     "Name used in conditional is not a read stream: '" +
@@ -393,7 +395,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
         {
             const auto f = cfg.condMap.at(it.first);
         }
-        catch (std::exception &e)
+        catch (std::exception &)
         {
             throw std::invalid_argument(
                 "Name used in step over command is not a read stream: '" +
@@ -718,10 +720,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 // process config line and get global array info
                 VariableInfo ov = processArray(words, settings);
                 ov.datasize = ov.elemsize;
-                size_t pos[ov.ndim]; // Position of rank in N-dim space
+                std::vector<size_t> pos(
+                    ov.ndim); // Position of rank in N-dim space
 
                 // Calculate rank's position in N-dim space
-                decompRowMajor(ov.ndim, settings.myRank, ov.decomp.data(), pos);
+                decompRowMajor(ov.ndim, settings.myRank, ov.decomp.data(),
+                               pos.data());
 
                 if (settings.isStrongScaling)
                 {

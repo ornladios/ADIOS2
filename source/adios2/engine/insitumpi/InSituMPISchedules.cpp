@@ -130,10 +130,10 @@ void SerializeLocalReadSchedule(std::vector<char> &buffer,
                                 const std::string varName,
                                 const LocalReadSchedule lrs) noexcept
 {
-    const int nameLen = varName.size();
+    const int nameLen = static_cast<int>(varName.size());
     helper::InsertToBuffer(buffer, &nameLen, 1);
     helper::InsertToBuffer(buffer, varName.data(), nameLen);
-    const int nSubFileInfos = lrs.size();
+    const int nSubFileInfos = static_cast<int>(lrs.size());
     helper::InsertToBuffer(buffer, &nSubFileInfos, 1);
     for (const auto &blockInfo : lrs)
     {
@@ -151,7 +151,7 @@ void SerializeSubFileInfo(std::vector<char> &buffer,
 
 void SerializeBox(std::vector<char> &buffer, const Box<Dims> box) noexcept
 {
-    const int nDims = box.first.size();
+    const int nDims = static_cast<int>(box.first.size());
     helper::InsertToBuffer(buffer, &nDims, 1);
     helper::InsertToBuffer(buffer, box.first.data(), nDims);
     helper::InsertToBuffer(buffer, box.second.data(), nDims);
@@ -208,9 +208,8 @@ DeserializeReadSchedule(const std::vector<char> &buffer) noexcept
     for (int i = 0; i < nVars; i++)
     {
         int nameLen = helper::ReadValue<int>(buffer, pos);
-        char name[nameLen + 1];
-        helper::CopyFromBuffer(buffer, pos, name, nameLen);
-        name[nameLen] = '\0';
+        std::vector<char> name(nameLen + 1, '\0');
+        helper::CopyFromBuffer(buffer, pos, name.data(), nameLen);
         int nSubFileInfos = helper::ReadValue<int>(buffer, pos);
         std::vector<helper::SubFileInfo> sfis;
         sfis.reserve(nSubFileInfos);
@@ -218,7 +217,7 @@ DeserializeReadSchedule(const std::vector<char> &buffer) noexcept
         {
             sfis.push_back(DeserializeSubFileInfo(buffer, pos));
         }
-        map[name] = sfis;
+        map[name.data()] = sfis;
     }
     return map;
 }
