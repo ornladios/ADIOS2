@@ -24,7 +24,7 @@ add_test(NAME Utils.Bpls.h.Dump
     -DARGS=-h
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsh.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.h.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -50,7 +50,7 @@ add_test(NAME Utils.Bpls.la.Screen
   COMMAND ${CMAKE_COMMAND}
     -DARGS=-la
     -DINPUT_FILE=TestUtilsCWriter.bp
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.la.Screen
   PROPERTY DEPENDS Utils.C.Writer
@@ -63,7 +63,7 @@ add_test(NAME Utils.Bpls.la.Dump
     -DARGS=-la
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsla.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.la.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -90,7 +90,7 @@ add_test(NAME Utils.Bpls.Al.Dump
     -DARGS=-Al
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsAl.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.Al.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -116,7 +116,7 @@ add_test(NAME Utils.Bpls.ldDav.Dump
     -DARGS='-ldDav'
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsldDav.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.ldDav.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -144,7 +144,7 @@ add_test(NAME Utils.Bpls.ldDavvv.Dump
     -DARGS='-ldDavvv'
     -DINPUT_FILE=TestUtilsCWriter.bp
     -DOUTPUT_FILE=TestUtilsCWriter.bplsldDavvv.result.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST Utils.Bpls.ldDavvv.Dump
   PROPERTY DEPENDS Utils.C.Writer
@@ -172,7 +172,7 @@ endif(ADIOS2_HAVE_MPI)
 #    -DARGS=-ld varI16 -n 10
 #    -DINPUT_FILE=TestUtilsCWriter.bp
 #    -DOUTPUT_FILE=TestUtilsCWriter.bplsldvarI16.result.txt
-#    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+#    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 #)
 #set_property(TEST Utils.Bpls.la.Dump
 #  PROPERTY DEPENDS Utils.C.Writer

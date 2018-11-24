@@ -15,7 +15,7 @@ configure_file(
   @ONLY
 )
 file(GENERATE
-  OUTPUT ${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake
+  OUTPUT ${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake
   INPUT ${PROJECT_BINARY_DIR}/bpls.cmake.gen
 )
 
