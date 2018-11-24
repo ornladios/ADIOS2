@@ -8,10 +8,10 @@
  *      Author: Jason Wang
  */
 
-#include <numeric>
-#include <thread>
 #include <adios2.h>
 #include <gtest/gtest.h>
+#include <numeric>
+#include <thread>
 
 using namespace adios2;
 int mpiRank = 0;
@@ -25,72 +25,82 @@ public:
 };
 
 template <class T>
-void GenData(std::vector<std::complex<T>> &data, const size_t step)
+void PrintData(const T *data, const size_t step, const Dims &start,
+               const Dims &count)
 {
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        data[i] = {static_cast<T>(i + mpiRank * 10000 + step * 100),
-                   static_cast<T>(i + mpiRank * 10000)};
-    }
-}
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
+    std::cout << "Rank: " << mpiRank << " Step: " << step << " Size:" << size
+              << "\n";
+    size_t printsize = 128;
 
-template <class T>
-void GenData(std::vector<T> &data, const size_t step)
-{
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        data[i] = i + mpiRank * 10000 + step * 100;
-    }
-}
-
-template <class T>
-void PrintData(const T *data, const size_t size, const size_t step)
-{
-    std::cout << "Rank: " << mpiRank << " Step: " << step << " [";
-    size_t printsize = 32;
     if (size < printsize)
     {
         printsize = size;
     }
+    int s = 0;
     for (size_t i = 0; i < printsize; ++i)
     {
+        ++s;
         std::cout << data[i] << " ";
+        if (s == count[1])
+        {
+            std::cout << std::endl;
+            s = 0;
+        }
     }
+
     std::cout << "]" << std::endl;
+}
+template <class T>
+void GenData(std::vector<T> &data, const size_t step, const Dims &start,
+             const Dims &count, const Dims &shape)
+{
+    for (size_t i = 0; i < count[0]; ++i)
+    {
+        for (size_t j = 0; j < count[1]; ++j)
+        {
+            data[i * count[1] + j] = (i + start[1]) * (shape[1]) + j + start[0];
+        }
+    }
+    std::cout << "GenData\n";
+
+    PrintData(data.data(), step, start, count);
 }
 
 template <class T>
-void VerifyData(const std::complex<T> *data, const size_t size, size_t step,
-                const std::vector<Params> &transParams)
+void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
+                const Dims &count, const Dims &shape)
 {
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
     std::vector<std::complex<T>> tmpdata(size);
-    GenData(tmpdata, step);
+    GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
         ASSERT_EQ(data[i], tmpdata[i]);
     }
     if (print_lines < 100)
     {
-        PrintData(data, size, step);
+        PrintData(data, step, start, count);
         ++print_lines;
     }
 }
 
 template <class T>
-void VerifyData(const T *data, const size_t size, size_t step,
-                const std::vector<Params> &transParams)
+void VerifyData(const T *data, size_t step, const Dims &start,
+                const Dims &count, const Dims &shape)
 {
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
     bool compressed = false;
-    for (const auto &i : transParams)
-    {
-        auto j = i.find("CompressionMethod");
-        if (j != i.end())
-        {
-            compressed = true;
-        }
-    }
     std::vector<T> tmpdata(size);
-    GenData(tmpdata, step);
+    if (print_lines < 100)
+    {
+        PrintData(data, step, start, count);
+        ++print_lines;
+    }
+    GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
         if (!compressed)
@@ -98,30 +108,16 @@ void VerifyData(const T *data, const size_t size, size_t step,
             ASSERT_EQ(data[i], tmpdata[i]);
         }
     }
-    if (print_lines < 100)
-    {
-        PrintData(data, size, step);
-        ++print_lines;
-    }
 }
 
-template <class T>
-void VerifyData(const std::vector<T> &data, const size_t step,
-                const std::vector<Params> &transParams)
-{
-    VerifyData(data.data(), data.size(), step, transParams);
-}
-void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count,
-                   const size_t steps, const adios2::Params &engineParams,
-                   const std::vector<adios2::Params> &transParams)
+void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
+                               const Dims &count, const size_t steps,
+                               const adios2::Params &engineParams,
+                               const std::vector<adios2::Params> &transParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
-#ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
-#else
-    adios2::ADIOS adios;
-#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -164,16 +160,16 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start, const Dims 
     for (int i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
-        GenData(myChars, i);
-        GenData(myUChars, i);
-        GenData(myShorts, i);
-        GenData(myUShorts, i);
-        GenData(myInts, i);
-        GenData(myUInts, i);
-        GenData(myFloats, i);
-        GenData(myDoubles, i);
-        GenData(myComplexes, i);
-        GenData(myDComplexes, i);
+        GenData(myChars, i, start, count, shape);
+        GenData(myUChars, i, start, count, shape);
+        GenData(myShorts, i, start, count, shape);
+        GenData(myUShorts, i, start, count, shape);
+        GenData(myInts, i, start, count, shape);
+        GenData(myUInts, i, start, count, shape);
+        GenData(myFloats, i, start, count, shape);
+        GenData(myDoubles, i, start, count, shape);
+        GenData(myComplexes, i, start, count, shape);
+        GenData(myDComplexes, i, start, count, shape);
         dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
         dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
@@ -190,12 +186,12 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start, const Dims 
     dataManWriter.Close();
 }
 
-void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count, const Dims &memStart, const Dims &memCount,
-                      const size_t steps, const adios2::Params &engineParams,
-                      const std::vector<adios2::Params> &transParams)
+void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
+                               const Dims &count, const Dims &memStart,
+                               const Dims &memCount, const size_t steps,
+                               const adios2::Params &engineParams,
+                               const std::vector<adios2::Params> &transParams)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
 #else
@@ -210,6 +206,8 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start, const Dims 
     }
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
+    size_t datasize = std::accumulate(memCount.begin(), memCount.end(), 1,
+                                      std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -223,6 +221,16 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start, const Dims 
     size_t i;
     for (i = 0; i < steps; ++i)
     {
+        GenData(myChars, i, memStart, memCount, shape);
+        GenData(myUChars, i, memStart, memCount, shape);
+        GenData(myShorts, i, memStart, memCount, shape);
+        GenData(myUShorts, i, memStart, memCount, shape);
+        GenData(myInts, i, memStart, memCount, shape);
+        GenData(myUInts, i, memStart, memCount, shape);
+        GenData(myFloats, i, memStart, memCount, shape);
+        GenData(myDoubles, i, memStart, memCount, shape);
+        GenData(myComplexes, i, memStart, memCount, shape);
+        GenData(myDComplexes, i, memStart, memCount, shape);
         adios2::StepStatus status =
             dataManReader.BeginStep(StepMode::NextAvailable, 5);
         if (status == adios2::StepStatus::OK)
@@ -296,16 +304,20 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start, const Dims 
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
-            VerifyData(myChars, currentStep, transParams);
-            VerifyData(myUChars, currentStep, transParams);
-            VerifyData(myShorts, currentStep, transParams);
-            VerifyData(myUShorts, currentStep, transParams);
-            VerifyData(myInts, currentStep, transParams);
-            VerifyData(myUInts, currentStep, transParams);
-            VerifyData(myFloats, currentStep, transParams);
-            VerifyData(myDoubles, currentStep, transParams);
-            VerifyData(myComplexes, currentStep, transParams);
-            VerifyData(myDComplexes, currentStep, transParams);
+            VerifyData(myChars.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myUChars.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myShorts.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myUShorts.data(), currentStep, memStart, memCount,
+                       shape);
+            VerifyData(myInts.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myUInts.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myFloats.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myDoubles.data(), currentStep, memStart, memCount,
+                       shape);
+            VerifyData(myComplexes.data(), currentStep, memStart, memCount,
+                       shape);
+            VerifyData(myDComplexes.data(), currentStep, memStart, memCount,
+                       shape);
             dataManReader.EndStep();
         }
         else
@@ -328,21 +340,24 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
 {
     // set parameters
     Dims shape = {10, 10};
-    Dims start = {3, 3};
-    Dims count = {7, 7};
-    Dims memstart = {1, 1};
-    Dims memcount = {9, 9};
-    size_t steps = 20;
+    Dims start = {2, 2};
+    Dims count = {5, 5};
+    Dims memstart = start;
+    Dims memcount = count;
+    memstart = {1, 1};
+    memcount = {7, 9};
+
+    size_t steps = 1;
     adios2::Params engineParams = {{"WorkflowMode", "p2p"}};
     std::vector<adios2::Params> transportParams = {{
-        {"Library", "ZMQ"},
-        {"IPAddress", "127.0.0.1"},
-        {"Port", "12322"},
+        {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12322"},
     }};
     // run workflow
-    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count, memstart, memcount, steps,
-                         engineParams, transportParams);
+    auto r =
+        std::thread(DataManReaderP2PMemSelect, shape, start, count, memstart,
+                    memcount, steps, engineParams, transportParams);
     std::cout << "Reader thread started" << std::endl;
+
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
                          engineParams, transportParams);
     std::cout << "Writer thread started" << std::endl;
@@ -356,7 +371,6 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
 
 int main(int argc, char **argv)
 {
-#ifdef ADIOS2_HAVE_MPI
     int mpi_provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
     std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
@@ -368,15 +382,12 @@ int main(int argc, char **argv)
     }
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
 
-#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
-#endif
 
     return result;
 }

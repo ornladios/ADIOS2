@@ -17,6 +17,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::copy
 #include <cstring>   //std::memcpy
+#include <iostream>
 #include <thread>
 /// \endcond
 
@@ -647,6 +648,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const Dims &outMemCount, const bool safeMode)
 
 {
+
     // use values of ioStart and ioCount if ioMemStart and ioMemCount are
     // left as default
     Dims inMemStartNC = inMemStart.empty() ? inStart : inMemStart;

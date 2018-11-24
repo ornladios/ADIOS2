@@ -59,9 +59,10 @@ void DataManWriter::PerformPuts() {}
 void DataManWriter::EndStep()
 {
 
-    if(m_WorkflowMode == "file")
+    if (m_WorkflowMode == "file")
     {
-        const std::shared_ptr<std::vector<char>> buf = m_DataManSerializer[0]->Get();
+        const std::shared_ptr<std::vector<char>> buf =
+            m_DataManSerializer[0]->Get();
         m_FileTransport.Write(buf->data(), buf->size());
         return;
     }
@@ -74,7 +75,8 @@ void DataManWriter::EndStep()
             {
                 m_DataManSerializer[i]->PutAttributes(m_IO, m_MPIRank);
             }
-            const std::shared_ptr<std::vector<char>> buf = m_DataManSerializer[i]->Get();
+            const std::shared_ptr<std::vector<char>> buf =
+                m_DataManSerializer[i]->Get();
             m_BufferSize = buf->size() * 2;
             m_DataMan->WriteWAN(buf, i);
         }
@@ -96,7 +98,7 @@ void DataManWriter::Flush(const int transportIndex) {}
 void DataManWriter::Init()
 {
 
-    if(m_WorkflowMode =="file")
+    if (m_WorkflowMode == "file")
     {
         m_FileTransport.Open(m_Name, Mode::Write);
         return;
@@ -143,7 +145,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
-    if(m_WorkflowMode == "file")
+    if (m_WorkflowMode == "file")
     {
         m_FileTransport.Close();
         return;

@@ -150,7 +150,7 @@ void DataManReader::Flush(const int transportIndex) {}
 
 void DataManReader::Init()
 {
-    if(m_WorkflowMode =="file")
+    if (m_WorkflowMode == "file")
     {
         m_FileTransport.Open(m_Name, Mode::Read);
         return;

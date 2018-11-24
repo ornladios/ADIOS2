@@ -44,7 +44,8 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
     {
         while (m_DataManDeserializer.Get(data, variable.m_Name,
                                          variable.m_Start, variable.m_Count,
-                                         m_CurrentStep, variable.m_MemoryStart, variable.m_MemoryCount) != 0)
+                                         m_CurrentStep, variable.m_MemoryStart,
+                                         variable.m_MemoryCount) != 0)
         {
         }
     }

@@ -480,4 +480,3 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
     }
     dataManReader.Close();
 }
-
