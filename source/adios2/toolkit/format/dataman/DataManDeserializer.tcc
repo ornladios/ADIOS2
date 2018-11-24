@@ -35,7 +35,7 @@ namespace format
 template <class T>
 int DataManDeserializer::Get(T *output_data, const std::string &varName,
                              const Dims &varStart, const Dims &varCount,
-                             const size_t step)
+                             const size_t step, const Dims varMemStart, const Dims varMemCount)
 {
 
     std::lock_guard<std::mutex> l(m_Mutex);

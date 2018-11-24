@@ -2,26 +2,27 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestDataMan.h
+ * TestDataManP2PSz2D.cpp
  *
- *  Created on: Jul 12, 2018
+ *  Created on: Aug 16, 2018
  *      Author: Jason Wang
  */
 
 #include <numeric>
 #include <thread>
-
 #include <adios2.h>
-#include <adios2/ADIOSMacros.h>
-#include <adios2/helper/adiosFunctions.h>
 #include <gtest/gtest.h>
 
 using namespace adios2;
-
 int mpiRank = 0;
 int mpiSize = 1;
-
 size_t print_lines = 0;
+
+class DataManEngineTest : public ::testing::Test
+{
+public:
+    DataManEngineTest() = default;
+};
 
 template <class T>
 void GenData(std::vector<std::complex<T>> &data, const size_t step)
@@ -110,90 +111,7 @@ void VerifyData(const std::vector<T> &data, const size_t step,
 {
     VerifyData(data.data(), data.size(), step, transParams);
 }
-
-void UserCallBack2(float *data, const std::string &doid, const std::string &var,
-                   const std::string &dtype, const size_t step,
-                   const adios2::Dims &varshape, const adios2::Dims &start,
-                   const adios2::Dims &count)
-{
-    std::cout << "Object : " << doid << ", ";
-    std::cout << "Variable :" << var << ", ";
-    std::cout << "Type : " << dtype << ", ";
-    std::cout << "Shape : [";
-    for (size_t i = 0; i < varshape.size(); ++i)
-    {
-        std::cout << varshape[i];
-        if (i != varshape.size() - 1)
-        {
-            std::cout << ", ";
-        }
-    }
-    std::cout << "]"
-              << ". ";
-
-    size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
-                                     std::multiplies<std::size_t>());
-
-    size_t dumpsize = 128;
-    if (varsize < dumpsize)
-    {
-        dumpsize = varsize;
-    }
-
-    std::cout << "Printing data for the first " << dumpsize << " elements: ";
-
-    for (size_t i = 0; i < dumpsize; ++i)
-    {
-        std::cout << data[i] << " ";
-    }
-    std::cout << std::endl;
-}
-
-void UserCallBack1(void *data, const std::string &doid, const std::string &var,
-                   const std::string &dtype, const size_t step,
-                   const adios2::Dims &varshape, const adios2::Dims &start,
-                   const adios2::Dims &count)
-{
-    std::cout << "Object : " << doid << ", ";
-    std::cout << "Variable :" << var << ", ";
-    std::cout << "Type : " << dtype << ", ";
-    std::cout << "Shape : [";
-    for (size_t i = 0; i < varshape.size(); ++i)
-    {
-        std::cout << varshape[i];
-        if (i != varshape.size() - 1)
-        {
-            std::cout << ", ";
-        }
-    }
-    std::cout << "]"
-              << ". ";
-
-    size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
-                                     std::multiplies<std::size_t>());
-
-    size_t dumpsize = 128;
-    if (varsize < dumpsize)
-    {
-        dumpsize = varsize;
-    }
-
-    std::cout << "Printing data for the first " << dumpsize << " elements: ";
-
-#define declare_type(T)                                                        \
-    if (dtype == adios2::helper::GetType<T>())                                 \
-    {                                                                          \
-        for (size_t i = 0; i < dumpsize; ++i)                                  \
-        {                                                                      \
-            std::cout << (reinterpret_cast<T *>(data))[i] << " ";              \
-        }                                                                      \
-        std::cout << std::endl;                                                \
-    }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-}
-
-void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
+void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count,
                    const size_t steps, const adios2::Params &engineParams,
                    const std::vector<adios2::Params> &transParams)
 {
@@ -272,7 +190,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     dataManWriter.Close();
 }
 
-void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
+void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count, const Dims &memStart, const Dims &memCount,
                       const size_t steps, const adios2::Params &engineParams,
                       const std::vector<adios2::Params> &transParams)
 {
@@ -343,6 +261,7 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
             adios2::Variable<std::complex<double>> bpDComplexes =
                 dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
             auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
+
             bpChars.SetSelection({start, count});
             bpUChars.SetSelection({start, count});
             bpShorts.SetSelection({start, count});
@@ -353,6 +272,18 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
             bpDoubles.SetSelection({start, count});
             bpComplexes.SetSelection({start, count});
             bpDComplexes.SetSelection({start, count});
+
+            bpChars.SetMemorySelection({memStart, memCount});
+            bpUChars.SetMemorySelection({memStart, memCount});
+            bpShorts.SetMemorySelection({memStart, memCount});
+            bpUShorts.SetMemorySelection({memStart, memCount});
+            bpInts.SetMemorySelection({memStart, memCount});
+            bpUInts.SetMemorySelection({memStart, memCount});
+            bpFloats.SetMemorySelection({memStart, memCount});
+            bpDoubles.SetMemorySelection({memStart, memCount});
+            bpComplexes.SetMemorySelection({memStart, memCount});
+            bpDComplexes.SetMemorySelection({memStart, memCount});
+
             dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
             dataManReader.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
@@ -391,93 +322,61 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
     dataManReader.Close();
     print_lines = 0;
 }
+#ifdef ADIOS2_HAVE_ZEROMQ
+#ifdef ADIOS2_HAVE_SZ
+TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
+{
+    // set parameters
+    Dims shape = {10, 10};
+    Dims start = {3, 3};
+    Dims count = {7, 7};
+    Dims memstart = {1, 1};
+    Dims memcount = {9, 9};
+    size_t steps = 20;
+    adios2::Params engineParams = {{"WorkflowMode", "p2p"}};
+    std::vector<adios2::Params> transportParams = {{
+        {"Library", "ZMQ"},
+        {"IPAddress", "127.0.0.1"},
+        {"Port", "12322"},
+    }};
+    // run workflow
+    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count, memstart, memcount, steps,
+                         engineParams, transportParams);
+    std::cout << "Reader thread started" << std::endl;
+    auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
+                         engineParams, transportParams);
+    std::cout << "Writer thread started" << std::endl;
+    w.join();
+    std::cout << "Writer thread ended" << std::endl;
+    r.join();
+    std::cout << "Reader thread ended" << std::endl;
+}
+#endif // SZ
+#endif // ZEROMQ
 
-void DataManReaderCallback(const Dims &shape, const Dims &start,
-                           const Dims &count, const size_t steps,
-                           const adios2::Params &engineParams,
-                           const std::vector<adios2::Params> &transParams,
-                           const size_t timeout)
+int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
-#else
-    adios2::ADIOS adios(adios2::DebugON);
-#endif
-    adios2::Operator callback = adios.DefineOperator(
-        "Print all variables callback void",
-        std::function<void(void *, const std::string &, const std::string &,
-                           const std::string &, const size_t,
-                           const adios2::Dims &, const adios2::Dims &,
-                           const adios2::Dims &)>(UserCallBack1));
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
+    int mpi_provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
+    std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
+              << " and provided Mode " << mpi_provided << std::endl;
+    if (mpi_provided != MPI_THREAD_MULTIPLE)
     {
-        dataManIO.AddTransport("WAN", params);
+        MPI_Finalize();
+        return 0;
     }
-    dataManIO.AddOperation(callback);
-    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
-    std::this_thread::sleep_for(std::chrono::seconds(timeout));
-    dataManReader.Close();
-}
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
 
-void DataManReaderSubscribe(const Dims &shape, const Dims &start,
-                            const Dims &count, const size_t steps,
-                            const adios2::Params &engineParams,
-                            const std::vector<adios2::Params> &transParams,
-                            const size_t timeout)
-{
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
-    std::vector<float> myFloats(datasize);
+    int result;
+    ::testing::InitGoogleTest(&argc, argv);
+    result = RUN_ALL_TESTS();
+
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
-#else
-    adios2::ADIOS adios(adios2::DebugON);
+    MPI_Finalize();
 #endif
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
-    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
-    adios2::Variable<float> bpFloats;
-    size_t i = 0;
-    auto start_time = std::chrono::system_clock::now();
-    while (i < steps - 1)
-    {
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
-        if (duration.count() > timeout)
-        {
-            std::cout << "DataMan Timeout. Last step received: " << i
-                      << std::endl;
-            ASSERT_GT(i, 0);
-            break;
-        }
-        adios2::StepStatus status = dataManReader.BeginStep();
-        if (status == adios2::StepStatus::OK)
-        {
-            while (not bpFloats)
-            {
-                bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            }
-            bpFloats.SetSelection({start, count});
-            dataManReader.Get<float>(bpFloats, myFloats.data(),
-                                     adios2::Mode::Sync);
-            i = dataManReader.CurrentStep();
-            VerifyData(myFloats, i, transParams);
-        }
-        else if (status == adios2::StepStatus::EndOfStream)
-        {
-            break;
-        }
-        dataManReader.EndStep();
-    }
-    dataManReader.Close();
-}
 
+    return result;
+}

@@ -14,6 +14,7 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transportman/dataman/DataMan.h"
 
 namespace adios2
@@ -44,6 +45,8 @@ protected:
 
     bool m_IsLittleEndian;
     bool m_IsRowMajor;
+
+    transport::FileFStream m_FileTransport;
 
     std::vector<std::string> m_StreamNames;
     std::vector<core::Operator *> m_Callbacks;

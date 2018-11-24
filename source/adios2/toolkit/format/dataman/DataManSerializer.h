@@ -53,6 +53,7 @@ public:
     template <class T>
     void Put(const T *inputData, const std::string &varName,
              const Dims &varShape, const Dims &varStart, const Dims &varCount,
+             const Dims &varMemStart, const Dims &varMemCount,
              const std::string &doid, const size_t step, const int rank,
              const std::string &address, const Params &params);
 

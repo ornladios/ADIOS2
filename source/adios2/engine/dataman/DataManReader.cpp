@@ -150,10 +150,10 @@ void DataManReader::Flush(const int transportIndex) {}
 
 void DataManReader::Init()
 {
-    if (m_WorkflowMode != "subscribe" && m_WorkflowMode != "p2p")
+    if(m_WorkflowMode =="file")
     {
-        throw(std::invalid_argument(
-            "[DataManReader::Init] invalid workflow mode " + m_WorkflowMode));
+        m_FileTransport.Open(m_Name, Mode::Read);
+        return;
     }
 
     // initialize transports
