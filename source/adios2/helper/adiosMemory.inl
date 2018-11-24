@@ -640,20 +640,20 @@ static void NdCopyIterDFDynamicRevEndian(const char *inBase, char *outBase,
 
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const Dims &outStart, const Dims &outCount,
+           const bool outIsRowMajor, const bool outIsLittleEndian,
            const Dims &inMemStart, const Dims &inMemCount,
-           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
-           const Dims &outStart, const Dims &outCount, const Dims &outMemStart,
-           const Dims &outMemCount, const bool outIsRowMajor,
-           const bool outIsLittleEndian, const bool safeMode)
-{
-}
+           const Dims &outMemStart,const Dims &outMemCount,
+           const bool safeMode)
 
-template <class T>
-int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
-           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
-           const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
-           const bool outIsLittleEndian, const bool safeMode)
 {
+
+    Dims inMemStartNC = inMemStart.empty()? inStart : inMemStart;
+    Dims inMemCountNC = inMemCount.empty()? inCount : inMemCount;
+    Dims outMemStartNC = outMemStart.empty()? outStart : outMemStart;
+    Dims outMemCountNC = outMemCount.empty()? outCount : outMemCount;
+
     Dims inEnd(inStart.size());
     Dims outEnd(inStart.size());
     Dims ovlpStart(inStart.size());
@@ -786,13 +786,13 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
         if (!HasOvlp(ovlpStart, ovlpEnd))
             return 1; // no overlap found
-        GetIoStrides(inStride, inCount, sizeof(T));
-        GetIoStrides(outStride, outCount, sizeof(T));
-        GetIoOvlpGapSize(inOvlpGapSize, inStride, inCount, ovlpCount);
-        GetIoOvlpGapSize(outOvlpGapSize, outStride, outCount, ovlpCount);
-        GetInOvlpBase(inOvlpBase, in, inStart, inStride, ovlpStart);
-        GetOutOvlpBase(outOvlpBase, out, outStart, outStride, ovlpStart);
-        minContDim = GetMinContDim(inCount, outCount, ovlpCount);
+        GetIoStrides(inStride, inMemCount, sizeof(T));
+        GetIoStrides(outStride, outMemCount, sizeof(T));
+        GetIoOvlpGapSize(inOvlpGapSize, inStride, inMemCount, ovlpCount);
+        GetIoOvlpGapSize(outOvlpGapSize, outStride, outMemCount, ovlpCount);
+        GetInOvlpBase(inOvlpBase, in, inMemStart, inStride, ovlpStart);
+        GetOutOvlpBase(outOvlpBase, out, outMemStart, outStride, ovlpStart);
+        minContDim = GetMinContDim(inMemCount, outMemCount, ovlpCount);
         blockSize = GetBlockSize(ovlpCount, minContDim, sizeof(T));
         // same endianess mode: most optimized, contiguous data copying
         // algorithm used.
