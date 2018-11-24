@@ -9,6 +9,9 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/iotest-config
 
 add_executable(adios_iotest settings.cpp decomp.cpp processConfig.cpp ioGroup.cpp stream.cpp adiosStream.cpp adios_iotest.cpp)
 target_link_libraries(adios_iotest adios2 MPI::MPI_C)
+if(WIN32)
+  target_link_libraries(adios_iotest getopt)
+endif()
 
 if(ADIOS2_HAVE_HDF5)
   if(HDF5_C_INCLUDE_DIRS)
