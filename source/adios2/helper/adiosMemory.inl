@@ -472,7 +472,7 @@ static void NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase,
 }
 
 // NdCopyRecurDFNonSeqDynamicRevEndian(): helper function
-// Copys n-dimensional Data from input to output in the reversed Endianess and
+// Copies n-dimensional Data from input to output in the reversed Endianess and
 // Major.
 // The memory address calculation complexity for copying each element is
 // minimized to average O(1), which is independent of the number of dimensions.
@@ -640,19 +640,19 @@ static void NdCopyIterDFDynamicRevEndian(const char *inBase, char *outBase,
 
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
-           const bool inIsRowMajor, const bool inIsLittleEndian,
-           char *out, const Dims &outStart, const Dims &outCount,
-           const bool outIsRowMajor, const bool outIsLittleEndian,
-           const Dims &inMemStart, const Dims &inMemCount,
-           const Dims &outMemStart,const Dims &outMemCount,
-           const bool safeMode)
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const Dims &inMemStart,
+           const Dims &inMemCount, const Dims &outMemStart,
+           const Dims &outMemCount, const bool safeMode)
 
 {
-
-    Dims inMemStartNC = inMemStart.empty()? inStart : inMemStart;
-    Dims inMemCountNC = inMemCount.empty()? inCount : inMemCount;
-    Dims outMemStartNC = outMemStart.empty()? outStart : outMemStart;
-    Dims outMemCountNC = outMemCount.empty()? outCount : outMemCount;
+    // use values of ioStart and ioCount if ioMemStart and ioMemCount are
+    // left as default
+    Dims inMemStartNC = inMemStart.empty() ? inStart : inMemStart;
+    Dims inMemCountNC = inMemCount.empty() ? inCount : inMemCount;
+    Dims outMemStartNC = outMemStart.empty() ? outStart : outMemStart;
+    Dims outMemCountNC = outMemCount.empty() ? outCount : outMemCount;
 
     Dims inEnd(inStart.size());
     Dims outEnd(inStart.size());

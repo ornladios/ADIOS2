@@ -177,10 +177,14 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
  * @param inIsRowMaj specifies major for input
  * @param inIsBigEndian specifies endianess for input
  * @param out pointer to destination memory buffer
- * @param outStart source data starting offset
- * @param outCount destination data structure
+ * @param outStart destination request data starting offset
+ * @param outCount destination request data structure
  * @param outIsRowMaj specifies major for output
  * @param outIsBigEndian specifies endianess for output
+ * @param inMemStart source memory starting offset
+ * @param inMemCount source memory structure
+ * @param outMemStart destination request data starting offset
+ * @param outMemCount destination request data structure
  * @param safeMode false:runs faster, the number of function stacks
  *                 used by recursive algm is equal to the number of dimensions.
  *                 true: runs a bit slower, same algorithm using the explicit
@@ -189,12 +193,11 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
 
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
-           const bool inIsRowMajor, const bool inIsLittleEndian,
-           char *out, const Dims &outStart, const Dims &outCount,
-           const bool outIsRowMajor, const bool outIsLittleEndian,
-           const Dims &inMemStart = Dims(), const Dims &inMemCount =Dims(),
-           const Dims &outMemStart=Dims(), const Dims &outMemCount=Dims(),
-           const bool safeMode = false);
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const Dims &inMemStart = Dims(),
+           const Dims &inMemCount = Dims(), const Dims &outMemStart = Dims(),
+           const Dims &outMemCount = Dims(), const bool safeMode = false);
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;
