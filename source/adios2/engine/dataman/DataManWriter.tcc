@@ -51,6 +51,17 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
+    if (m_IsRowMajor == false)
+    {
+        std::reverse(variable.m_Start.begin(), variable.m_Start.end());
+        std::reverse(variable.m_Count.begin(), variable.m_Count.end());
+        std::reverse(variable.m_Shape.begin(), variable.m_Shape.end());
+        std::reverse(variable.m_MemoryStart.begin(),
+                     variable.m_MemoryStart.end());
+        std::reverse(variable.m_MemoryCount.begin(),
+                     variable.m_MemoryCount.end());
+    }
+
     if (m_Format == "dataman")
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)

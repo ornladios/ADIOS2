@@ -185,7 +185,7 @@ void Engine::CommonChecks(Variable<T> &variable, const T *data,
             data, "for data argument in non-zero count block, " + hint);
     }
 
-    /*
+    /*  Commented out by Jason for allowing SetMemorySelection on reader
     if (!variable.m_MemoryStart.empty() && m_OpenMode == adios2::Mode::Read)
     {
         throw std::invalid_argument("ERROR: from Engine " + m_Name +
