@@ -25,7 +25,7 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : DataManCommon("DataManReader", io, name, mode, mpiComm),
-  m_DataManDeserializer(true, m_IsLittleEndian)
+  m_DataManDeserializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();

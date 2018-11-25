@@ -46,7 +46,8 @@ namespace format
 class DataManSerializer
 {
 public:
-    DataManSerializer(bool isRowMajor, bool isLittleEndian);
+    DataManSerializer(bool isRowMajor, const bool contiguousMajor,
+                      bool isLittleEndian);
 
     void New(size_t size);
 
@@ -95,6 +96,7 @@ private:
     size_t m_Position = 0;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
+    bool m_ContiguousMajor;
 };
 
 } // end namespace format

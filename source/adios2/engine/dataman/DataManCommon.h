@@ -45,6 +45,7 @@ protected:
 
     bool m_IsLittleEndian;
     bool m_IsRowMajor;
+    bool m_ContiguousMajor = true;
 
     transport::FileFStream m_FileTransport;
 

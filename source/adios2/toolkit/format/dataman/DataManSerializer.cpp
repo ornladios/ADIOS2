@@ -18,10 +18,13 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(bool isRowMajor, bool isLittleEndian)
+DataManSerializer::DataManSerializer(bool isRowMajor,
+                                     const bool contiguousMajor,
+                                     bool isLittleEndian)
 {
     m_IsRowMajor = isRowMajor;
     m_IsLittleEndian = isLittleEndian;
+    m_ContiguousMajor = contiguousMajor;
     New(1024);
 }
 

@@ -28,7 +28,8 @@ namespace format
 class DataManDeserializer
 {
 public:
-    DataManDeserializer(const bool isRowMajor, const bool isLittleEndian);
+    DataManDeserializer(const bool isRowMajor, const bool contiguousMajor,
+                        const bool isLittleEndian);
     size_t MaxStep();
     size_t MinStep();
     int Put(const std::shared_ptr<const std::vector<char>> data);
@@ -72,6 +73,7 @@ private:
     size_t m_MinStep = std::numeric_limits<size_t>::max();
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
+    bool m_ContiguousMajor;
     nlohmann::json m_GlobalVars;
 
     std::mutex m_Mutex;

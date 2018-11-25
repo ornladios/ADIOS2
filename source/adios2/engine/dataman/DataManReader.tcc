@@ -32,7 +32,7 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    if (m_IsRowMajor)
+    if (m_IsRowMajor || m_ContiguousMajor)
     {
         while (m_DataManDeserializer.Get(data, variable.m_Name,
                                          variable.m_Start, variable.m_Count,
@@ -43,7 +43,6 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
     }
     else
     {
-
         Dims start = variable.m_Start;
         Dims count = variable.m_Count;
         Dims memstart = variable.m_MemoryStart;

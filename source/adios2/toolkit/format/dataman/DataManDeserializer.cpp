@@ -19,10 +19,12 @@ namespace format
 {
 
 DataManDeserializer::DataManDeserializer(const bool isRowMajor,
+                                         const bool contiguousMajor,
                                          const bool isLittleEndian)
 {
     m_IsRowMajor = isRowMajor;
     m_IsLittleEndian = isLittleEndian;
+    m_ContiguousMajor = contiguousMajor;
 }
 
 int DataManDeserializer::Put(

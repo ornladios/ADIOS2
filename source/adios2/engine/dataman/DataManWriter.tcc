@@ -51,7 +51,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if (m_IsRowMajor)
+    if (m_IsRowMajor || m_ContiguousMajor)
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {

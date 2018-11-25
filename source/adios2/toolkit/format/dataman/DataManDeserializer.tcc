@@ -182,11 +182,24 @@ int DataManDeserializer::Get(T *output_data, const std::string &varName,
                 }
                 else
                 {
-                    helper::NdCopy<T>(
-                        k->data() + j.position, j.start, j.count, j.isRowMajor,
-                        j.isLittleEndian, reinterpret_cast<char *>(output_data),
-                        varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
-                        j.start, j.count, varMemStart, varMemCount);
+                    if (m_ContiguousMajor)
+                    {
+                        helper::NdCopy<T>(k->data() + j.position, j.start,
+                                          j.count, true, j.isLittleEndian,
+                                          reinterpret_cast<char *>(output_data),
+                                          varStart, varCount, true,
+                                          m_IsLittleEndian, j.start, j.count,
+                                          varMemStart, varMemCount);
+                    }
+                    else
+                    {
+                        helper::NdCopy<T>(
+                            k->data() + j.position, j.start, j.count,
+                            j.isRowMajor, j.isLittleEndian,
+                            reinterpret_cast<char *>(output_data), varStart,
+                            varCount, m_IsRowMajor, m_IsLittleEndian, j.start,
+                            j.count, varMemStart, varMemCount);
+                    }
                 }
             }
         }
