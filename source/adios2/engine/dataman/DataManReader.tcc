@@ -32,20 +32,29 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    if (m_WorkflowMode == "subscribe")
-    {
-        while (m_DataManDeserializer.Get(data, variable.m_Name,
-                                         variable.m_Start, variable.m_Count,
-                                         m_CurrentStep) != 0)
-        {
-        }
-    }
-    else if (m_WorkflowMode == "p2p")
+    if (m_IsRowMajor)
     {
         while (m_DataManDeserializer.Get(data, variable.m_Name,
                                          variable.m_Start, variable.m_Count,
                                          m_CurrentStep, variable.m_MemoryStart,
                                          variable.m_MemoryCount) != 0)
+        {
+        }
+    }
+    else
+    {
+
+        Dims start = variable.m_Start;
+        Dims count = variable.m_Count;
+        Dims memstart = variable.m_MemoryStart;
+        Dims memcount = variable.m_MemoryCount;
+        std::reverse(start.begin(), start.end());
+        std::reverse(count.begin(), count.end());
+        std::reverse(memstart.begin(), memstart.end());
+        std::reverse(memcount.begin(), memcount.end());
+        while (m_DataManDeserializer.Get(data, variable.m_Name, start, count,
+                                         m_CurrentStep, memstart,
+                                         memcount) != 0)
         {
         }
     }
