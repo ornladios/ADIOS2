@@ -52,20 +52,22 @@ void PrintData(const T *data, const size_t step, const Dims &start,
 
     std::cout << "]" << std::endl;
 }
+
 template <class T>
 void GenData(std::vector<T> &data, const size_t step, const Dims &start,
              const Dims &count, const Dims &shape)
 {
-    for (size_t i = 0; i < count[0]; ++i)
+    if (start.size() == 2)
     {
-        for (size_t j = 0; j < count[1]; ++j)
+        for (size_t i = 0; i < count[0]; ++i)
         {
-            data[i * count[1] + j] = (i + start[1]) * (shape[1]) + j + start[0];
+            for (size_t j = 0; j < count[1]; ++j)
+            {
+                data[i * count[1] + j] =
+                    (i + start[1]) * shape[1] + j + start[0];
+            }
         }
     }
-    std::cout << "GenData\n";
-
-    PrintData(data.data(), step, start, count);
 }
 
 template <class T>
@@ -334,8 +336,8 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     dataManReader.Close();
     print_lines = 0;
 }
+
 #ifdef ADIOS2_HAVE_ZEROMQ
-#ifdef ADIOS2_HAVE_SZ
 TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
 {
     // set parameters
@@ -366,7 +368,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
     r.join();
     std::cout << "Reader thread ended" << std::endl;
 }
-#endif // SZ
+
 #endif // ZEROMQ
 
 int main(int argc, char **argv)
