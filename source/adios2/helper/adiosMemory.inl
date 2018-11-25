@@ -779,7 +779,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
     // algrithm optimizations:
     // 1. contigous data copying
     // 2. mem pointer arithmetics by sequential padding. O(1) overhead/block
-    if (inIsRowMajor == true && outIsRowMajor == true)
+    if (inIsRowMajor && outIsRowMajor)
     {
         GetInEnd(inEnd, inStart, inCount);
         GetOutEnd(outEnd, outStart, outCount);
@@ -849,9 +849,13 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // col-major ==> col-major mode
         if (!inIsRowMajor && !outIsRowMajor)
         {
+            // reverse the inCount, calculate inStride with it and reverse the
+            // inStride
             std::reverse(revInCount.begin(), revInCount.end());
             GetIoStrides(inStride, revInCount, sizeof(T));
             std::reverse(inStride.begin(), inStride.end());
+            // reverse the outCount, calculate outStride with it and reverse the
+            // outStride
             std::reverse(revOutCount.begin(), revOutCount.end());
             GetIoStrides(outStride, revOutCount, sizeof(T));
             std::reverse(outStride.begin(), outStride.end());
