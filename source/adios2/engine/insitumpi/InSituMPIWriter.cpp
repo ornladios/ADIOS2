@@ -382,12 +382,21 @@ void InSituMPIWriter::ReceiveReadSchedule(
     std::map<int, std::vector<char>> serializedSchedules;
     // Writer ID -> number of peer readers
     std::vector<int> nReaderPerWriter(m_WriterNproc);
+    // Number of peer readers for this writer
+    int nPeerReaders;
 
-    // How many readers will send me their read schedule?
-    MPI_Allreduce(MPI_IN_PLACE, nReaderPerWriter.data(),
-                  nReaderPerWriter.size(), MPI_INT, MPI_SUM, m_CommWorld);
+    // Writer root receives nReaderPerWriter from reader root
+    if (m_WriterRank == 0)
+    {
+        MPI_Recv(nReaderPerWriter.data(), nReaderPerWriter.size(), MPI_INT,
+                 m_RankDirectPeers[0], insitumpi::MpiTags::NumReaderPerWriter,
+                 m_CommWorld, MPI_STATUS_IGNORE);
+    }
 
-    const auto nPeerReaders = nReaderPerWriter[m_WriterRank];
+    // Each writer receives the number of its peer readers
+    MPI_Scatter(nReaderPerWriter.data(), 1, MPI_INT, &nPeerReaders, 1, MPI_INT,
+                0, m_MPIComm);
+
     std::vector<MPI_Request> requests(nPeerReaders);
     // Reader global rank -> length of serialized read schedule
     std::vector<int> rsLengthsTmp(nPeerReaders);

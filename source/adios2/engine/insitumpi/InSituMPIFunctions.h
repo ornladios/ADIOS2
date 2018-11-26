@@ -35,6 +35,7 @@ enum MpiTags
     FixedRemoteSchedule,
     MetadataLength,
     Metadata,
+    NumReaderPerWriter,
     ReadScheduleLength,
     ReadSchedule,
     Data,

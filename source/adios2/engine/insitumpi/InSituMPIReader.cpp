@@ -347,12 +347,20 @@ void InSituMPIReader::SendReadSchedule(
         nReaderPerWriter[peerID] = 1;
     }
 
-    // Allreduce nReaderPerWrite with other writers to build a global view
+    // Allreduce nReaderPerWriter with other writers to build a global view
     MPI_Allreduce(MPI_IN_PLACE, nReaderPerWriter.data(),
-                  nReaderPerWriter.size(), MPI_INT, MPI_SUM, m_CommWorld);
+                  nReaderPerWriter.size(), MPI_INT, MPI_SUM, m_MPIComm);
+
+    // Reader root sends nReaderPerWriter to writer root
+    if (m_ReaderRootRank == m_ReaderRank)
+    {
+        MPI_Send(nReaderPerWriter.data(), nReaderPerWriter.size(), MPI_INT,
+                 m_WriteRootGlobalRank, insitumpi::MpiTags::NumReaderPerWriter,
+                 m_CommWorld);
+    }
 
     // *2 because we need two requests per writer (one for sending the length
-    // of the read schedule and another for the actual read schedule
+    // of the read schedule and another for the actual read schedule)
     std::vector<MPI_Request> request(serializedSchedules.size() * 2);
     std::vector<int> rsLengths(serializedSchedules.size());
     auto i = 0;
