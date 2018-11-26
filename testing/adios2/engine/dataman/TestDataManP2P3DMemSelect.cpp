@@ -106,7 +106,11 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
                                const adios2::Params &engineParams,
                                const std::vector<adios2::Params> &transParams)
 {
+#ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+#else
+    adios2::ADIOS adios(adios2::DebugON);
+#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
