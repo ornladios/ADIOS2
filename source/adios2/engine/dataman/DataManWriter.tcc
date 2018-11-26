@@ -51,7 +51,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
-    if (m_IsRowMajor || m_ContiguousMajor)
+    if (m_IsRowMajor)
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {
@@ -62,22 +62,34 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     }
     else
     {
-        Dims start = variable.m_Start;
-        Dims count = variable.m_Count;
-        Dims shape = variable.m_Shape;
-        Dims memstart = variable.m_MemoryStart;
-        Dims memcount = variable.m_MemoryCount;
-        std::reverse(start.begin(), start.end());
-        std::reverse(count.begin(), count.end());
-        std::reverse(shape.begin(), shape.end());
-        std::reverse(memstart.begin(), memstart.end());
-        std::reverse(memcount.begin(), memcount.end());
-        for (size_t i = 0; i < m_TransportChannels; ++i)
+        if (m_ContiguousMajor)
         {
-            m_DataManSerializer[i]->Put(variable.m_Data, variable.m_Name, shape,
-                                        start, count, memstart, memcount,
-                                        m_Name, CurrentStep(), m_MPIRank, "",
-                                        m_IO.m_TransportsParameters[i]);
+            Dims start = variable.m_Start;
+            Dims count = variable.m_Count;
+            Dims shape = variable.m_Shape;
+            Dims memstart = variable.m_MemoryStart;
+            Dims memcount = variable.m_MemoryCount;
+            std::reverse(start.begin(), start.end());
+            std::reverse(count.begin(), count.end());
+            std::reverse(shape.begin(), shape.end());
+            std::reverse(memstart.begin(), memstart.end());
+            std::reverse(memcount.begin(), memcount.end());
+            for (size_t i = 0; i < m_TransportChannels; ++i)
+            {
+                m_DataManSerializer[i]->Put(
+                    variable.m_Data, variable.m_Name, shape, start, count,
+                    memstart, memcount, m_Name, CurrentStep(), m_MPIRank, "",
+                    m_IO.m_TransportsParameters[i]);
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < m_TransportChannels; ++i)
+            {
+                m_DataManSerializer[i]->Put(variable, m_Name, CurrentStep(),
+                                            m_MPIRank, "",
+                                            m_IO.m_TransportsParameters[i]);
+            }
         }
     }
 }
