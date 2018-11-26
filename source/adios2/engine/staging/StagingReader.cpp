@@ -28,7 +28,7 @@ namespace engine
 StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : Engine("StagingReader", io, name, mode, mpiComm),
-  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage),
+  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian()),
   m_MetadataTransport(mpiComm, m_DebugMode),
   m_DataTransport(mpiComm, m_DebugMode)
@@ -193,7 +193,7 @@ void StagingReader::PerformGets()
     {                                                                          \
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \
-                                   m_CurrentStep);                             \
+                                   m_CurrentStep, req.start, req.count);       \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

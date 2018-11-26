@@ -27,7 +27,8 @@ DataManSerializer::DataManSerializer(bool isRowMajor,
     m_IsRowMajor = isRowMajor;
     m_IsLittleEndian = isLittleEndian;
     m_ContiguousMajor = contiguousMajor;
-    m_DeferredRequestsToSend = std::make_shared<std::unordered_map<int, std::vector<char>>>();
+    m_DeferredRequestsToSend =
+        std::make_shared<std::unordered_map<std::string, std::vector<char>>>();
     New(1024);
 }
 

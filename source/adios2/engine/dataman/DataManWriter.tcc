@@ -55,9 +55,9 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {
-            m_DataManSerializer[i]->Put(variable, m_Name, CurrentStep(),
-                                        m_MPIRank, "",
-                                        m_IO.m_TransportsParameters[i]);
+            m_DataManSerializer[i]->PutVar(variable, m_Name, CurrentStep(),
+                                           m_MPIRank, "",
+                                           m_IO.m_TransportsParameters[i]);
         }
     }
     else
@@ -76,7 +76,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
             std::reverse(memcount.begin(), memcount.end());
             for (size_t i = 0; i < m_TransportChannels; ++i)
             {
-                m_DataManSerializer[i]->Put(
+                m_DataManSerializer[i]->PutVar(
                     variable.m_Data, variable.m_Name, shape, start, count,
                     memstart, memcount, m_Name, CurrentStep(), m_MPIRank, "",
                     m_IO.m_TransportsParameters[i]);

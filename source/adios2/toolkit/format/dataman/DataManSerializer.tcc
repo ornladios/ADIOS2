@@ -38,18 +38,18 @@ void DataManSerializer::PutVar(const core::Variable<T> &variable,
                                const int rank, const std::string &address,
                                const Params &params)
 {
-    PutVar(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-        variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, doid,
-        step, rank, address, params);
+    PutVar(variable.GetData(), variable.m_Name, variable.m_Shape,
+           variable.m_Start, variable.m_Count, variable.m_MemoryStart,
+           variable.m_MemoryCount, doid, step, rank, address, params);
 }
 
 template <class T>
 void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
-                            const Dims &varShape, const Dims &varStart,
-                            const Dims &varCount, const Dims &varMemStart,
-                            const Dims &varMemCount, const std::string &doid,
-                            const size_t step, const int rank,
-                            const std::string &address, const Params &params)
+                               const Dims &varShape, const Dims &varStart,
+                               const Dims &varCount, const Dims &varMemStart,
+                               const Dims &varMemCount, const std::string &doid,
+                               const size_t step, const int rank,
+                               const std::string &address, const Params &params)
 {
 
     nlohmann::json metaj;
@@ -288,7 +288,8 @@ void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute,
 template <class T>
 int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                               const Dims &varStart, const Dims &varCount,
-                              const size_t step)
+                              const size_t step, const Dims &varMemStart,
+                              const Dims &varMemCount)
 {
 
     std::lock_guard<std::mutex> l(m_Mutex);
@@ -424,11 +425,23 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
             }
             else
             {
-                helper::NdCopy<T>(j.buffer->data() + j.position, j.start,
-                                  j.count, j.isRowMajor, j.isLittleEndian,
-                                  reinterpret_cast<char *>(output_data),
-                                  varStart, varCount, m_IsRowMajor,
-                                  m_IsLittleEndian);
+                if (m_ContiguousMajor)
+                {
+                    helper::NdCopy<T>(
+                        j.buffer->data() + j.position, j.start, j.count, true,
+                        j.isLittleEndian, reinterpret_cast<char *>(output_data),
+                        varStart, varCount, true, m_IsLittleEndian, j.start,
+                        j.count, varMemStart, varMemCount);
+                }
+                else
+                {
+                    helper::NdCopy<T>(j.buffer->data() + j.position, j.start,
+                                      j.count, j.isRowMajor, j.isLittleEndian,
+                                      reinterpret_cast<char *>(output_data),
+                                      varStart, varCount, m_IsRowMajor,
+                                      m_IsLittleEndian, j.start, j.count,
+                                      varMemStart, varMemCount);
+                }
             }
         }
     }

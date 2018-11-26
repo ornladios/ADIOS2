@@ -28,7 +28,7 @@ namespace engine
 StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : Engine("StagingWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage),
+  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian()),
   m_MetadataTransport(mpiComm, m_DebugMode),
   m_DataTransport(mpiComm, m_DebugMode)

@@ -34,10 +34,10 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     if (m_IsRowMajor)
     {
-        while (m_DataManDeserializer.GetVar(data, variable.m_Name,
-                                         variable.m_Start, variable.m_Count,
-                                         m_CurrentStep, variable.m_MemoryStart,
-                                         variable.m_MemoryCount) != 0)
+        while (m_DataManSerializer.GetVar(data, variable.m_Name,
+                                          variable.m_Start, variable.m_Count,
+                                          m_CurrentStep, variable.m_MemoryStart,
+                                          variable.m_MemoryCount) != 0)
         {
         }
     }
@@ -53,15 +53,15 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
             std::reverse(count.begin(), count.end());
             std::reverse(memstart.begin(), memstart.end());
             std::reverse(memcount.begin(), memcount.end());
-            while (m_DataManDeserializer.Get(data, variable.m_Name, start,
-                                             count, m_CurrentStep, memstart,
-                                             memcount) != 0)
+            while (m_DataManSerializer.GetVar(data, variable.m_Name, start,
+                                              count, m_CurrentStep, memstart,
+                                              memcount) != 0)
             {
             }
         }
         else
         {
-            while (m_DataManDeserializer.Get(
+            while (m_DataManSerializer.GetVar(
                        data, variable.m_Name, variable.m_Start,
                        variable.m_Count, m_CurrentStep, variable.m_MemoryStart,
                        variable.m_MemoryCount) != 0)

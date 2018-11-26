@@ -69,17 +69,16 @@ public:
         std::shared_ptr<std::vector<char>> buffer = nullptr;
     };
 
-
     // Serializer functions
 
     void New(size_t size);
 
     template <class T>
-    void PutVar(const T *inputData, const std::string &varName,
-             const Dims &varShape, const Dims &varStart, const Dims &varCount,
-             const Dims &varMemStart, const Dims &varMemCount,
-             const std::string &doid, const size_t step, const int rank,
-             const std::string &address, const Params &params);
+    void
+    PutVar(const T *inputData, const std::string &varName, const Dims &varShape,
+           const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
+           const Dims &varMemCount, const std::string &doid, const size_t step,
+           const int rank, const std::string &address, const Params &params);
 
     template <class T>
     void PutVar(const core::Variable<T> &variable, const std::string &doid,
@@ -101,7 +100,8 @@ public:
 
     template <class T>
     int GetVar(T *output_data, const std::string &varName, const Dims &varStart,
-               const Dims &varCount, const size_t step);
+               const Dims &varCount, const size_t step, const Dims &varMemStart,
+               const Dims &varMemCount);
 
     void Erase(const size_t step);
 
@@ -154,7 +154,6 @@ private:
     // temporary compression buffer, made class member only for saving costs for
     // memory allocation
     std::vector<char> m_CompressBuffer;
-    size_t m_Position = 0;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
@@ -171,8 +170,6 @@ private:
         m_DeferredRequestsToSend;
 
     std::mutex m_Mutex;
-    bool m_IsRowMajor;
-    bool m_IsLittleEndian;
 };
 
 } // end namespace format

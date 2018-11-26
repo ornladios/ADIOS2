@@ -14,12 +14,8 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
-<<<<<<< HEAD
 #include "adios2/toolkit/transport/file/FileFStream.h"
-#include "adios2/toolkit/transportman/dataman/DataMan.h"
-=======
 #include "adios2/toolkit/transportman/wanman/WANMan.h"
->>>>>>> restructured socket transports, added ZmqReqRep transport
 
 namespace adios2
 {
@@ -49,7 +45,7 @@ protected:
 
     bool m_IsLittleEndian;
     bool m_IsRowMajor;
-    bool m_ContiguousMajor = false;
+    bool m_ContiguousMajor = true;
 
     transport::FileFStream m_FileTransport;
 

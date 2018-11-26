@@ -62,7 +62,7 @@ void DataManWriter::EndStep()
     if (m_WorkflowMode == "file")
     {
         const std::shared_ptr<std::vector<char>> buf =
-            m_DataManSerializer[0]->Get();
+            m_DataManSerializer[0]->GetLocalPack();
         m_FileTransport.Write(buf->data(), buf->size());
         return;
     }
