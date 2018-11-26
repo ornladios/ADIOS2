@@ -852,17 +852,9 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             if (!HasOvlp(ovlpStart, ovlpEnd))
                 return 1; // no overlap found
 
-            //            std::reverse(revInCount.begin(), revInCount.end());
             GetIoStrides(inStride, inCount, sizeof(T));
-            //            std::reverse(inStride.begin(), inStride.end());
-
-            //            std::reverse(revOutCount.begin(), revOutCount.end());
             GetIoStrides(outStride, outCount, sizeof(T));
-            //            std::reverse(outStride.begin(), outStride.end());
 
-            //            Dims revOvlpStart(ovlpStart);
-            //            std::reverse(revOvlpStart.begin(),
-            //            revOvlpStart.end());
             GetRltvOvlpStartPos(inRltvOvlpStartPos, inMemStartNC, ovlpStart);
             GetRltvOvlpStartPos(outRltvOvlpStartPos, outMemStartNC, ovlpStart);
         }
@@ -871,8 +863,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         {
             Dims revOutStart(outStart);
             Dims revOutCount(outCount);
-            //            std::reverse(revOutStart.begin(), revOutStart.end());
-            //            std::reverse(revOutCount.begin(), revOutCount.end());
+
             std::reverse(outMemStartNC.begin(), outMemStartNC.end());
             std::reverse(outMemCountNC.begin(), outMemCountNC.end());
 
@@ -888,7 +879,6 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             GetIoStrides(inStride, inMemCountNC, sizeof(T));
 
             // calulate reversed order outStride
-            //            std::reverse(revOutCount.begin(), revOutCount.end());
             GetIoStrides(outStride, outMemCountNC, sizeof(T));
             // reverse outStride so that outStride aligns to inStride
             std::reverse(outStride.begin(), outStride.end());
@@ -907,8 +897,6 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         {
             Dims revInStart(inStart);
             Dims revInCount(inCount);
-            //            std::reverse(revInStart.begin(), revInStart.end());
-            //            std::reverse(revInCount.begin(), revInCount.end());
             std::reverse(inMemStartNC.begin(), inMemStartNC.end());
             std::reverse(inMemCountNC.begin(), inMemCountNC.end());
 
@@ -924,7 +912,6 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             GetIoStrides(outStride, outMemCountNC, sizeof(T));
 
             // calculate reversed inStride
-            //            std::reverse(revInCount.begin(), revInCount.end());
             GetIoStrides(inStride, inMemCountNC, sizeof(T));
             // reverse inStride so that inStride aligns to outStride
             std::reverse(inStride.begin(), inStride.end());
