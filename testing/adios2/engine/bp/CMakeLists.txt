@@ -5,6 +5,10 @@
 
 add_subdirectory(operations)
 
+if(ADIOS2_HAVE_Endian_Reverse)
+  add_subdirectory(endian_reverse)
+endif()
+
 add_executable(TestBPWriteReadADIOS2 TestBPWriteReadADIOS2.cpp)
 target_link_libraries(TestBPWriteReadADIOS2 adios2 gtest)
 
