@@ -10,6 +10,7 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
+#include <mpi.h>
 #include <numeric>
 #include <thread>
 
@@ -103,8 +104,6 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
                                const adios2::Params &engineParams,
                                const std::vector<adios2::Params> &transParams)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
     adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");

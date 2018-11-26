@@ -10,6 +10,7 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
+#include <mpi.h>
 #include <numeric>
 #include <thread>
 
