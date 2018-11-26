@@ -10,7 +10,9 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#endif
 #include <numeric>
 #include <thread>
 
@@ -374,6 +376,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
 
 int main(int argc, char **argv)
 {
+#ifdef ADIOS2_HAVE_MPI
     int mpi_provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
     std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
@@ -385,12 +388,13 @@ int main(int argc, char **argv)
     }
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-
+#endif
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return result;
 }

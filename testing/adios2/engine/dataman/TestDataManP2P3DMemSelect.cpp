@@ -10,7 +10,9 @@
 
 #include <adios2.h>
 #include <gtest/gtest.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#endif
 #include <numeric>
 #include <thread>
 
@@ -130,7 +132,11 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const adios2::Params &engineParams,
                                const std::vector<adios2::Params> &transParams)
 {
+#ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
+#else
+    adios2::ADIOS adios(adios2::DebugON);
+#endif
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
@@ -139,9 +145,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
         dataManIO.AddTransport("WAN", params);
     }
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
-
-    size_t datasize = std::accumulate(memCount.begin(), memCount.end(), 1,
-                                      std::multiplies<size_t>());
     std::vector<int> myInts = reader_data;
     size_t i;
     for (i = 0; i < steps; ++i)
@@ -214,6 +217,7 @@ TEST_F(DataManEngineTest, WriteRead_3D_MemSelect)
 
 int main(int argc, char **argv)
 {
+#ifdef ADIOS2_HAVE_MPI
     int mpi_provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
     std::cout << "MPI_Init_thread required Mode " << MPI_THREAD_MULTIPLE
@@ -225,12 +229,13 @@ int main(int argc, char **argv)
     }
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-
+#endif
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     result = RUN_ALL_TESTS();
-
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return result;
 }
