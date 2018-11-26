@@ -3,6 +3,21 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+
+add_executable(TestDataManP2P2DMemSelect TestDataManP2P2DMemSelect.cpp)
+target_link_libraries(TestDataManP2P2DMemSelect adios2 gtest)
+if(ADIOS2_HAVE_MPI)
+    target_link_libraries(TestDataManP2P2DMemSelect MPI::MPI_C)
+endif()
+gtest_add_tests(TARGET TestDataManP2P2DMemSelect)
+
+add_executable(TestDataManP2P3DMemSelect TestDataManP2P3DMemSelect.cpp)
+target_link_libraries(TestDataManP2P3DMemSelect adios2 gtest)
+if(ADIOS2_HAVE_MPI)
+    target_link_libraries(TestDataManP2P3DMemSelect MPI::MPI_C)
+endif()
+gtest_add_tests(TARGET TestDataManP2P3DMemSelect)
+
 add_executable(TestDataManP2P1D TestDataManP2P1D.cpp)
 target_link_libraries(TestDataManP2P1D adios2 gtest)
 if(ADIOS2_HAVE_MPI)

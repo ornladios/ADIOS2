@@ -17,6 +17,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::copy
 #include <cstring>   //std::memcpy
+#include <iostream>
 #include <thread>
 /// \endcond
 
@@ -472,7 +473,7 @@ static void NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase,
 }
 
 // NdCopyRecurDFNonSeqDynamicRevEndian(): helper function
-// Copys n-dimensional Data from input to output in the reversed Endianess and
+// Copies n-dimensional Data from input to output in the reversed Endianess and
 // Major.
 // The memory address calculation complexity for copying each element is
 // minimized to average O(1), which is independent of the number of dimensions.
@@ -642,8 +643,19 @@ template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
            const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
-           const bool outIsLittleEndian, const bool safeMode)
+           const bool outIsLittleEndian, const Dims &inMemStart,
+           const Dims &inMemCount, const Dims &outMemStart,
+           const Dims &outMemCount, const bool safeMode)
+
 {
+
+    // use values of ioStart and ioCount if ioMemStart and ioMemCount are
+    // left as default
+    Dims inMemStartNC = inMemStart.empty() ? inStart : inMemStart;
+    Dims inMemCountNC = inMemCount.empty() ? inCount : inMemCount;
+    Dims outMemStartNC = outMemStart.empty() ? outStart : outMemStart;
+    Dims outMemCountNC = outMemCount.empty() ? outCount : outMemCount;
+
     Dims inEnd(inStart.size());
     Dims outEnd(inStart.size());
     Dims ovlpStart(inStart.size());
@@ -767,7 +779,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
     // algrithm optimizations:
     // 1. contigous data copying
     // 2. mem pointer arithmetics by sequential padding. O(1) overhead/block
-    if (inIsRowMajor == true && outIsRowMajor == true)
+    if (inIsRowMajor && outIsRowMajor)
     {
         GetInEnd(inEnd, inStart, inCount);
         GetOutEnd(outEnd, outStart, outCount);
@@ -776,13 +788,13 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
         if (!HasOvlp(ovlpStart, ovlpEnd))
             return 1; // no overlap found
-        GetIoStrides(inStride, inCount, sizeof(T));
-        GetIoStrides(outStride, outCount, sizeof(T));
-        GetIoOvlpGapSize(inOvlpGapSize, inStride, inCount, ovlpCount);
-        GetIoOvlpGapSize(outOvlpGapSize, outStride, outCount, ovlpCount);
-        GetInOvlpBase(inOvlpBase, in, inStart, inStride, ovlpStart);
-        GetOutOvlpBase(outOvlpBase, out, outStart, outStride, ovlpStart);
-        minContDim = GetMinContDim(inCount, outCount, ovlpCount);
+        GetIoStrides(inStride, inMemCountNC, sizeof(T));
+        GetIoStrides(outStride, outMemCountNC, sizeof(T));
+        GetIoOvlpGapSize(inOvlpGapSize, inStride, inMemCountNC, ovlpCount);
+        GetIoOvlpGapSize(outOvlpGapSize, outStride, outMemCountNC, ovlpCount);
+        GetInOvlpBase(inOvlpBase, in, inMemStartNC, inStride, ovlpStart);
+        GetOutOvlpBase(outOvlpBase, out, outMemStartNC, outStride, ovlpStart);
+        minContDim = GetMinContDim(inMemCountNC, outMemCountNC, ovlpCount);
         blockSize = GetBlockSize(ovlpCount, minContDim, sizeof(T));
         // same endianess mode: most optimized, contiguous data copying
         // algorithm used.
@@ -825,43 +837,93 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
     // padding
     else
     {
-        Dims revInCount(inCount);
-        Dims revOutCount(outCount);
-        GetInEnd(inEnd, inStart, inCount);
-        GetOutEnd(outEnd, outStart, outCount);
-        GetOvlpStart(ovlpStart, inStart, outStart);
-        GetOvlpEnd(ovlpEnd, inEnd, outEnd);
-        GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
-        if (!HasOvlp(ovlpStart, ovlpEnd))
-            return 1; // no overlap found
+        //        Dims revInCount(inCount);
+        //        Dims revOutCount(outCount);
+        //
         // col-major ==> col-major mode
         if (!inIsRowMajor && !outIsRowMajor)
         {
-            std::reverse(revInCount.begin(), revInCount.end());
-            GetIoStrides(inStride, revInCount, sizeof(T));
-            std::reverse(inStride.begin(), inStride.end());
-            std::reverse(revOutCount.begin(), revOutCount.end());
-            GetIoStrides(outStride, revOutCount, sizeof(T));
-            std::reverse(outStride.begin(), outStride.end());
+
+            GetInEnd(inEnd, inStart, inCount);
+            GetOutEnd(outEnd, outStart, outCount);
+            GetOvlpStart(ovlpStart, inStart, outStart);
+            GetOvlpEnd(ovlpEnd, inEnd, outEnd);
+            GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
+            if (!HasOvlp(ovlpStart, ovlpEnd))
+                return 1; // no overlap found
+
+            GetIoStrides(inStride, inCount, sizeof(T));
+            GetIoStrides(outStride, outCount, sizeof(T));
+
+            GetRltvOvlpStartPos(inRltvOvlpStartPos, inMemStartNC, ovlpStart);
+            GetRltvOvlpStartPos(outRltvOvlpStartPos, outMemStartNC, ovlpStart);
         }
         // row-major ==> col-major mode
         else if (inIsRowMajor && !outIsRowMajor)
         {
-            GetIoStrides(inStride, inCount, sizeof(T));
-            std::reverse(revOutCount.begin(), revOutCount.end());
-            GetIoStrides(outStride, revOutCount, sizeof(T));
+            Dims revOutStart(outStart);
+            Dims revOutCount(outCount);
+
+            std::reverse(outMemStartNC.begin(), outMemStartNC.end());
+            std::reverse(outMemCountNC.begin(), outMemCountNC.end());
+
+            GetInEnd(inEnd, inStart, inCount);
+            GetOutEnd(outEnd, revOutStart, revOutCount);
+            GetOvlpStart(ovlpStart, inStart, revOutStart);
+            GetOvlpEnd(ovlpEnd, inEnd, outEnd);
+            GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
+            if (!HasOvlp(ovlpStart, ovlpEnd))
+                return 1; // no overlap found
+
+            // get normal order inStride
+            GetIoStrides(inStride, inMemCountNC, sizeof(T));
+
+            // calulate reversed order outStride
+            GetIoStrides(outStride, outMemCountNC, sizeof(T));
+            // reverse outStride so that outStride aligns to inStride
             std::reverse(outStride.begin(), outStride.end());
+
+            // get normal order inOvlpStart
+            GetRltvOvlpStartPos(inRltvOvlpStartPos, inMemStartNC, ovlpStart);
+
+            // get reversed order outOvlpStart
+            Dims revOvlpStart(ovlpStart);
+            std::reverse(revOvlpStart.begin(), revOvlpStart.end());
+            GetRltvOvlpStartPos(outRltvOvlpStartPos, outMemStartNC,
+                                revOvlpStart);
         }
         // col-major ==> row-major mode
         else if (!inIsRowMajor && outIsRowMajor)
         {
-            std::reverse(revInCount.begin(), revInCount.end());
-            GetIoStrides(inStride, revInCount, sizeof(T));
+            Dims revInStart(inStart);
+            Dims revInCount(inCount);
+            std::reverse(inMemStartNC.begin(), inMemStartNC.end());
+            std::reverse(inMemCountNC.begin(), inMemCountNC.end());
+
+            GetInEnd(inEnd, revInStart, revInCount);
+            GetOutEnd(outEnd, outStart, outCount);
+            GetOvlpStart(ovlpStart, revInStart, outStart);
+            GetOvlpEnd(ovlpEnd, inEnd, outEnd);
+            GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
+            if (!HasOvlp(ovlpStart, ovlpEnd))
+                return 1; // no overlap found
+
+            // get normal order outStride
+            GetIoStrides(outStride, outMemCountNC, sizeof(T));
+
+            // calculate reversed inStride
+            GetIoStrides(inStride, inMemCountNC, sizeof(T));
+            // reverse inStride so that inStride aligns to outStride
             std::reverse(inStride.begin(), inStride.end());
-            GetIoStrides(outStride, outCount, sizeof(T));
+
+            // get reversed order inOvlpStart
+            Dims revOvlpStart(ovlpStart);
+            std::reverse(revOvlpStart.begin(), revOvlpStart.end());
+            GetRltvOvlpStartPos(inRltvOvlpStartPos, inMemStartNC, revOvlpStart);
+            // get normal order outOvlpStart
+            GetRltvOvlpStartPos(outRltvOvlpStartPos, outMemStartNC, ovlpStart);
         }
-        GetRltvOvlpStartPos(inRltvOvlpStartPos, inStart, ovlpStart);
-        GetRltvOvlpStartPos(outRltvOvlpStartPos, outStart, ovlpStart);
+
         inOvlpBase = in;
         outOvlpBase = out;
         // Same Endian"

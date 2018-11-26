@@ -39,13 +39,15 @@ void DataManSerializer::Put(const core::Variable<T> &variable,
                             const Params &params)
 {
     Put(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-        variable.m_Count, doid, step, rank, address, params);
+        variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, doid,
+        step, rank, address, params);
 }
 
 template <class T>
 void DataManSerializer::Put(const T *inputData, const std::string &varName,
                             const Dims &varShape, const Dims &varStart,
-                            const Dims &varCount, const std::string &doid,
+                            const Dims &varCount, const Dims &varMemStart,
+                            const Dims &varMemCount, const std::string &doid,
                             const size_t step, const int rank,
                             const std::string &address, const Params &params)
 {

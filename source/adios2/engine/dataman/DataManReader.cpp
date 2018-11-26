@@ -25,7 +25,7 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : DataManCommon("DataManReader", io, name, mode, mpiComm),
-  m_DataManDeserializer(m_IsRowMajor, m_IsLittleEndian)
+  m_DataManDeserializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -150,10 +150,10 @@ void DataManReader::Flush(const int transportIndex) {}
 
 void DataManReader::Init()
 {
-    if (m_WorkflowMode != "subscribe" && m_WorkflowMode != "p2p")
+    if (m_WorkflowMode == "file")
     {
-        throw(std::invalid_argument(
-            "[DataManReader::Init] invalid workflow mode " + m_WorkflowMode));
+        m_FileTransport.Open(m_Name, Mode::Read);
+        return;
     }
 
     // initialize transports

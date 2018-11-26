@@ -28,7 +28,7 @@ TEST_F(DataManEngineTest, WriteRead_1D_P2P)
     std::vector<adios2::Params> transportParams = {{{"Library", "ZMQ"},
                                                     {"IPAddress", "127.0.0.1"},
                                                     {"Port", "12306"},
-                                                    {"Timeout", "2"}}};
+                                                    {"Timeout", "5"}}};
 
     // run workflow
     auto r = std::thread(DataManReaderP2P, shape, start, count, steps,

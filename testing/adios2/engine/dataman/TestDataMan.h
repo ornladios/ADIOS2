@@ -172,13 +172,18 @@ void UserCallBack1(void *data, const std::string &doid, const std::string &var,
     size_t varsize = std::accumulate(varshape.begin(), varshape.end(), 1,
                                      std::multiplies<std::size_t>());
 
+    size_t dumpsteps = 10;
     size_t dumpsize = 128;
     if (varsize < dumpsize)
     {
         dumpsize = varsize;
     }
 
-    std::cout << "Printing data for the first " << dumpsize << " elements: ";
+    if (step < dumpsteps)
+    {
+
+        std::cout << "Printing data for the first " << dumpsize
+                  << " elements: ";
 
 #define declare_type(T)                                                        \
     if (dtype == adios2::helper::GetType<T>())                                 \
@@ -189,8 +194,9 @@ void UserCallBack1(void *data, const std::string &doid, const std::string &var,
         }                                                                      \
         std::cout << std::endl;                                                \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+    }
 }
 
 void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
