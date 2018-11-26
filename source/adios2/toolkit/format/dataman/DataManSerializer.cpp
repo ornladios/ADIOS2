@@ -48,10 +48,12 @@ const std::shared_ptr<std::vector<char>> DataManSerializer::GetLocalPack()
     std::vector<char> metacbor;
     nlohmann::json::to_msgpack(m_MetadataJson, metacbor);
     size_t metasize = metacbor.size();
-    (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[0] = m_LocalBuffer->size();
+    (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[0] =
+        m_LocalBuffer->size();
     (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[1] = metasize;
     m_LocalBuffer->resize(m_LocalBuffer->size() + metasize);
-    std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - metasize, metacbor.data(), metasize);
+    std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - metasize,
+                metacbor.data(), metasize);
     return m_LocalBuffer;
 }
 
@@ -184,8 +186,8 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
     }
 }
 
-
-void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, std::shared_ptr<std::vector<char>> pack)
+void DataManSerializer::JsonToDataManVarMap(
+    nlohmann::json &metaJ, std::shared_ptr<std::vector<char>> pack)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
 
@@ -217,6 +219,8 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, std::shared_p
                     var.start = varBlock["O"].get<Dims>();
                     var.count = varBlock["C"].get<Dims>();
                     var.size = varBlock["I"].get<size_t>();
+                    var.rank = stoi(rankMapIt.key());
+                    var.address = varBlock["A"].get<std::string>();
 
                     // optional properties
 
@@ -284,8 +288,7 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, std::shared_p
     }
 }
 
-int DataManSerializer::PutPack(
-    const std::shared_ptr<std::vector<char>> data)
+int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
 {
     // check if is control signal
     if (data->size() < 128)
@@ -303,9 +306,11 @@ int DataManSerializer::PutPack(
 
     // if not control signal then go through standard deserialization
 
-    uint64_t metaPosition = (reinterpret_cast<const uint64_t *>(data->data()))[0];
+    uint64_t metaPosition =
+        (reinterpret_cast<const uint64_t *>(data->data()))[0];
     uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
-    nlohmann::json j = nlohmann::json::from_msgpack(data->data() + metaPosition, metaSize);
+    nlohmann::json j =
+        nlohmann::json::from_msgpack(data->data() + metaPosition, metaSize);
 
     JsonToDataManVarMap(j, data);
 
@@ -316,7 +321,6 @@ void DataManSerializer::Erase(size_t step)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
     m_DataManVarMap.erase(step);
-    m_DeferredRequests.clear();
 }
 
 const std::unordered_map<
@@ -345,31 +349,37 @@ DataManSerializer::GetMetaData(const size_t step)
     }
 }
 
-int DataManSerializer::PutDeferredRequest(const std::string &variable, const size_t step, const Dims &start, const Dims &count, void* data)
+int DataManSerializer::PutDeferredRequest(const std::string &variable,
+                                          const size_t step, const Dims &start,
+                                          const Dims &count, void *data)
 {
 
     auto stepVecIt = m_DataManVarMap.find(step);
-    if(stepVecIt == m_DataManVarMap.end())
+    if (stepVecIt == m_DataManVarMap.end())
     {
         // aggregated metadata does not have this step
-        std::cout << m_DataManVarMap.size() << "aggregated metadata does not have this step" << std::endl;
+        std::cout << m_DataManVarMap.size()
+                  << "aggregated metadata does not have this step" << std::endl;
         return -1;
     }
 
-    std::unordered_map<int, nlohmann::json> jmap;
+    std::unordered_map<std::string, nlohmann::json> jmap;
 
-    for(const auto &var : *stepVecIt->second)
+    for (const auto &var : *stepVecIt->second)
     {
-        if(var.name == variable)
+        if (var.name == variable)
         {
-            if(var.start.size() != start.size() || var.count.size() != count.size() || start.size() != count.size())
+            if (var.start.size() != start.size() ||
+                var.count.size() != count.size() ||
+                start.size() != count.size())
             {
                 // requested shape does not match metadata
                 continue;
             }
-            for(size_t i = 0; i<start.size(); ++i)
+            for (size_t i = 0; i < start.size(); ++i)
             {
-                if(start[i] > var.start[i] + var.count[i] || start[i] + count[i] < var.start[i])
+                if (start[i] > var.start[i] + var.count[i] ||
+                    start[i] + count[i] < var.start[i])
                 {
                     // current iteration does not have the desired part
                     continue;
@@ -377,36 +387,30 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable, const siz
             }
         }
 
-        std::cout << "found in rank " << var.rank << "\n";
-        nlohmann::json j;
+        jmap[var.address].emplace_back();
+        nlohmann::json &j = jmap[var.address].back();
         j["N"] = variable;
         j["T"] = step;
         j["O"] = start;
         j["C"] = count;
-        jmap[var.rank].emplace_back(j);
     }
 
-    for(const auto &i: jmap)
+    for (const auto &i : jmap)
     {
         std::vector<char> cbor;
         nlohmann::json::to_msgpack(i.second, cbor);
         (*m_DeferredRequestsToSend)[i.first] = cbor;
     }
 
-    m_DeferredRequests.emplace_back();
-    m_DeferredRequests.back().variable = variable;
-    m_DeferredRequests.back().step = step;
-    m_DeferredRequests.back().start = start;
-    m_DeferredRequests.back().count = count;
-    m_DeferredRequests.back().data = data;
-
     return 0;
 }
 
-std::shared_ptr<std::unordered_map<int, std::vector<char>>> DataManSerializer::GetDeferredRequest()
+std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
+DataManSerializer::GetDeferredRequest()
 {
     auto t = m_DeferredRequestsToSend;
-    m_DeferredRequestsToSend = std::make_shared<std::unordered_map<int, std::vector<char>>>();
+    m_DeferredRequestsToSend =
+        std::make_shared<std::unordered_map<std::string, std::vector<char>>>();
     return t;
 }
 

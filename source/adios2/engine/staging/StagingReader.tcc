@@ -50,13 +50,44 @@ inline void StagingReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void StagingReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    std::cout << "StagingReader::GetDeferredCommon" << std::endl;
-    m_DataManSerializer.PutDeferredRequest(variable.m_Name, CurrentStep(), variable.m_Start, variable.m_Count, data);
+    m_DataManSerializer.PutDeferredRequest(variable.m_Name, CurrentStep(),
+                                           variable.m_Start, variable.m_Count,
+                                           data);
+    m_DeferredRequests.emplace_back();
+    auto &req = m_DeferredRequests.back();
+    req.variable = variable.m_Name;
+    req.step = m_CurrentStep;
+    req.start = variable.m_Start;
+    req.count = variable.m_Count;
+    req.data = data;
+    req.type = helper::GetType<T>();
 
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << "     GetDeferred("
                   << variable.m_Name << ")\n";
+    }
+}
+
+template <typename T>
+void StagingReader::CheckIOVariable(const std::string &name, const Dims &shape,
+                                    const Dims &start, const Dims &count)
+{
+    auto v = m_IO.InquireVariable<T>(name);
+    if (v == nullptr)
+    {
+        m_IO.DefineVariable<T>(name, shape, start, count);
+    }
+    else
+    {
+        if (v->m_Shape != shape)
+        {
+            v->SetShape(shape);
+        }
+        if (v->m_Start != start || v->m_Count != count)
+        {
+            v->SetSelection({start, count});
+        }
     }
 }
 

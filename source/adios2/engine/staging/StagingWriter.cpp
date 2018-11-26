@@ -16,6 +16,8 @@
 
 #include <iostream>
 
+#include <zmq.h>
+
 namespace adios2
 {
 namespace core
@@ -28,8 +30,8 @@ StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("StagingWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage),
                       helper::IsLittleEndian()),
-  m_DataTransport(mpiComm, m_DebugMode),
-  m_MetadataTransport(mpiComm, m_DebugMode)
+  m_MetadataTransport(mpiComm, m_DebugMode),
+  m_DataTransport(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to StagingWriter " + m_Name + " Open\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
@@ -151,13 +153,6 @@ void StagingWriter::InitTransports()
         m_MetadataTransport.OpenTransports(paramsVec, Mode::Write, "subscribe",
                                            true);
     }
-
-    Params params;
-    params["IPAddress"] = m_IP;
-    params["Port"] = m_DataPort;
-    std::vector<Params> paramsVec;
-    paramsVec.emplace_back(params);
-    m_DataTransport.OpenTransports(paramsVec, Mode::Write, true);
 }
 
 void StagingWriter::Handshake()

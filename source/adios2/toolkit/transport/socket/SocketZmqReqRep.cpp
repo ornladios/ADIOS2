@@ -61,15 +61,10 @@ void SocketZmqReqRep::Open(const std::string &name, const Mode openMode)
     }
 }
 
-void SocketZmqReqRep::Open(const std::string &ipAddress,
-                           const std::string &port, const std::string &name,
-                           const Mode openMode)
+void SocketZmqReqRep::Open(const std::string &fullAddress,
+                           const std::string &name, const Mode openMode)
 {
-    m_Name = name;
-    m_OpenMode = openMode;
-    const std::string fullAddress("tcp://" + ipAddress + ":" + port);
     std::string openModeStr;
-
     int error = -1;
     if (m_OpenMode == Mode::Write)
     {
@@ -96,8 +91,7 @@ void SocketZmqReqRep::Open(const std::string &ipAddress,
         std::cout << "[SocketZmq Transport] ";
         std::cout << "OpenMode: " << openModeStr << ", ";
         std::cout << "WorkflowMode: p2p, ";
-        std::cout << "IPAddress: " << ipAddress << ", ";
-        std::cout << "Port: " << port << ", ";
+        std::cout << "Address: " << fullAddress << ", ";
         std::cout << "Timeout: " << m_Timeout << ", ";
         std::cout << std::endl;
     }
@@ -116,6 +110,16 @@ void SocketZmqReqRep::Open(const std::string &ipAddress,
             fullAddress);
     }
     m_IsOpen = true;
+}
+
+void SocketZmqReqRep::Open(const std::string &ipAddress,
+                           const std::string &port, const std::string &name,
+                           const Mode openMode)
+{
+    m_Name = name;
+    m_OpenMode = openMode;
+    const std::string fullAddress("tcp://" + ipAddress + ":" + port);
+    Open(fullAddress, name, openMode);
 }
 
 void SocketZmqReqRep::SetBuffer(char *buffer, size_t size) {}

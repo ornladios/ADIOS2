@@ -16,6 +16,8 @@
 
 #include <iostream>
 
+#include <zmq.h>
+
 namespace adios2
 {
 namespace core
@@ -28,8 +30,8 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
 : Engine("StagingReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage),
                       helper::IsLittleEndian()),
-  m_DataTransport(mpiComm, m_DebugMode),
-  m_MetadataTransport(mpiComm, m_DebugMode)
+  m_MetadataTransport(mpiComm, m_DebugMode),
+  m_DataTransport(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to IO Open StagingReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
@@ -55,6 +57,8 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
                                     const float timeoutSeconds)
 {
 
+    // Receive aggregated metadata from writer master rank
+
     std::shared_ptr<std::vector<char>> buff = nullptr;
 
     if (m_MpiRank == 0)
@@ -71,18 +75,23 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
 
     m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, buff);
 
-    auto metadata = m_DataManSerializer.GetMetaData();
+    if (m_CurrentStep == 0)
+    {
+        m_DataManSerializer.GetAttributes(m_IO);
+    }
+
+    auto m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
     size_t maxStep = std::numeric_limits<size_t>::min();
     size_t minStep = std::numeric_limits<size_t>::max();
 
-    for (auto &i : metadata)
+    for (auto &i : m_MetaDataMap)
     {
-        if(i.first > maxStep)
+        if (i.first > maxStep)
         {
             maxStep = i.first;
         }
-        if(i.first < minStep)
+        if (i.first < minStep)
         {
             minStep = i.first;
         }
@@ -99,10 +108,43 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
     else
     {
         throw(std::invalid_argument(
-                    "[StagingReader::BeginStep] Step mode is not supported!"));
+            "[StagingReader::BeginStep] Step mode is not supported!"));
     }
 
-    std::cout << m_CurrentStep << " === " << std::endl;
+    std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>> vars =
+        nullptr;
+    auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
+    if (currentStepIt != m_MetaDataMap.end())
+    {
+        vars = currentStepIt->second;
+    }
+
+    if (vars != nullptr)
+    {
+
+        for (const auto &i : *vars)
+        {
+            if (i.step == m_CurrentStep)
+            {
+                if (i.type == "compound")
+                {
+                    throw("Compound type is not supported yet.");
+                }
+#define declare_type(T)                                                        \
+    else if (i.type == helper::GetType<T>())                                   \
+    {                                                                          \
+        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
+    }
+                ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+                else
+                {
+                    throw("Unknown type caught in "
+                          "DataManReader::BeginStepSubscribe.");
+                }
+            }
+        }
+    }
 
     if (m_Verbosity == 5)
     {
@@ -122,6 +164,40 @@ void StagingReader::PerformGets()
 {
 
     auto requests = m_DataManSerializer.GetDeferredRequest();
+    for (const auto &i : *requests)
+    {
+        std::shared_ptr<std::vector<char>> reply =
+            std::make_shared<std::vector<char>>();
+        m_DataTransport.Request(i.second, reply, i.first);
+        m_DataManSerializer.PutPack(reply);
+    }
+
+    auto varsVec = m_MetaDataMap.find(m_CurrentStep);
+    if (varsVec == m_MetaDataMap.end())
+    {
+        return;
+    }
+    if (varsVec->second == nullptr)
+    {
+        return;
+    }
+
+    for (const auto &req : m_DeferredRequests)
+    {
+        if (req.type == "compound")
+        {
+            throw("Compound type is not supported yet.");
+        }
+#define declare_type(T)                                                        \
+    else if (req.type == helper::GetType<T>())                                 \
+    {                                                                          \
+        m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
+                                   req.variable, req.start, req.count,         \
+                                   m_CurrentStep);                             \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
 
     if (m_Verbosity == 5)
     {
@@ -133,6 +209,7 @@ size_t StagingReader::CurrentStep() const { return m_CurrentStep; }
 
 void StagingReader::EndStep()
 {
+    PerformGets();
     m_DataManSerializer.Erase(CurrentStep());
     if (m_Verbosity == 5)
     {

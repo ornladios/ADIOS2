@@ -54,6 +54,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     nlohmann::json metaj;
 
+    metaj["A"] = address;
     metaj["N"] = varName;
     metaj["O"] = varStart;
     metaj["C"] = varCount;
@@ -134,12 +135,13 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     if (compressed)
     {
-        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() -datasize, m_CompressBuffer.data(),
-                    datasize);
+        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - datasize,
+                    m_CompressBuffer.data(), datasize);
     }
     else
     {
-        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size()-datasize, inputData, datasize);
+        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - datasize,
+                    inputData, datasize);
     }
 
     m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
@@ -306,132 +308,127 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
     {
         return -2; // step found but variable not found
     }
-    else
+
+    for (const auto &j : *vec)
     {
-        for (const auto &j : *vec)
+        if (j.name == varName)
         {
-            if (j.name == varName)
+            if (j.buffer == nullptr)
             {
-                // Get the shared pointer first and then copy memory. This is
-                // done in order to avoid expensive memory copy operations
-                // happening inside the lock. Once the shared pointer is
-                // assigned to k, its life cycle in m_LocalBufferMap does not matter
-                // any more. So even if m_LocalBufferMap[j.index] is modified
-                // somewhere else the memory that this shared pointer refers to
-                // is still valid until k runs out of scope.
-                auto k = j.buffer;
-                if (j.compression == "zfp")
-                {
+                continue;
+            }
+            if (j.compression == "zfp")
+            {
 #ifdef ADIOS2_HAVE_ZFP
-                    core::compress::CompressZfp decompressor(j.params, true);
-                    std::vector<char> decompressBuffer;
-                    size_t datasize =
-                        std::accumulate(j.count.begin(), j.count.end(),
-                                        sizeof(T), std::multiplies<size_t>());
+                core::compress::CompressZfp decompressor(j.params, true);
+                std::vector<char> decompressBuffer;
+                size_t datasize =
+                    std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
+                                    std::multiplies<size_t>());
 
-                    decompressBuffer.reserve(datasize);
-                    try
-                    {
-                        decompressor.Decompress(k->data() + j.position, j.size,
-                                                decompressBuffer.data(),
-                                                j.count, j.type, j.params);
-                    }
-                    catch (std::exception &e)
-                    {
-                        std::cout << "[DataManDeserializer::Get] Zfp "
-                                     "decompression failed with exception: "
-                                  << e.what() << std::endl;
-                        return -4; // decompression failed
-                    }
-                    helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
-                                      true, true,
-                                      reinterpret_cast<char *>(output_data),
-                                      varStart, varCount, true, true);
-#else
-                    throw std::runtime_error(
-                        "Data received is compressed using ZFP. However, ZFP "
-                        "library is not found locally and as a result it "
-                        "cannot be decompressed.");
-                    return -101; // zfp library not found
-#endif
-                }
-                else if (j.compression == "sz")
+                decompressBuffer.reserve(datasize);
+                try
                 {
+                    decompressor.Decompress(j.buffer->data() + j.position,
+                                            j.size, decompressBuffer.data(),
+                                            j.count, j.type, j.params);
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << "[DataManDeserializer::Get] Zfp "
+                                 "decompression failed with exception: "
+                              << e.what() << std::endl;
+                    return -4; // decompression failed
+                }
+                helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
+                                  true, true,
+                                  reinterpret_cast<char *>(output_data),
+                                  varStart, varCount, true, true);
+#else
+                throw std::runtime_error(
+                    "Data received is compressed using ZFP. However, ZFP "
+                    "library is not found locally and as a result it "
+                    "cannot be decompressed.");
+                return -101; // zfp library not found
+#endif
+            }
+            else if (j.compression == "sz")
+            {
 #ifdef ADIOS2_HAVE_SZ
-                    core::compress::CompressSZ decompressor(j.params, true);
-                    std::vector<char> decompressBuffer;
-                    size_t datasize =
-                        std::accumulate(j.count.begin(), j.count.end(),
-                                        sizeof(T), std::multiplies<size_t>());
+                core::compress::CompressSZ decompressor(j.params, true);
+                std::vector<char> decompressBuffer;
+                size_t datasize =
+                    std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
+                                    std::multiplies<size_t>());
 
-                    decompressBuffer.reserve(datasize);
-                    try
-                    {
-                        decompressor.Decompress(k->data() + j.position, j.size,
-                                                decompressBuffer.data(),
-                                                j.count, j.type, j.params);
-                    }
-                    catch (std::exception &e)
-                    {
-                        std::cout << "[DataManDeserializer::Get] Zfp "
-                                     "decompression failed with exception: "
-                                  << e.what() << std::endl;
-                        return -4; // decompression failed
-                    }
-                    helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
-                                      true, true,
-                                      reinterpret_cast<char *>(output_data),
-                                      varStart, varCount, true, true);
-#else
-                    throw std::runtime_error(
-                        "Data received is compressed using SZ. However, SZ "
-                        "library is not found locally and as a result it "
-                        "cannot be decompressed.");
-                    return -102; // sz library not found
-#endif
-                }
-                else if (j.compression == "bzip2")
+                decompressBuffer.reserve(datasize);
+                try
                 {
+                    decompressor.Decompress(j.buffer->data() + j.position,
+                                            j.size, decompressBuffer.data(),
+                                            j.count, j.type, j.params);
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << "[DataManDeserializer::Get] Zfp "
+                                 "decompression failed with exception: "
+                              << e.what() << std::endl;
+                    return -4; // decompression failed
+                }
+                helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
+                                  true, true,
+                                  reinterpret_cast<char *>(output_data),
+                                  varStart, varCount, true, true);
+#else
+                throw std::runtime_error(
+                    "Data received is compressed using SZ. However, SZ "
+                    "library is not found locally and as a result it "
+                    "cannot be decompressed.");
+                return -102; // sz library not found
+#endif
+            }
+            else if (j.compression == "bzip2")
+            {
 #ifdef ADIOS2_HAVE_BZIP2
-                    core::compress::CompressBZip2 decompressor(j.params, true);
-                    std::vector<char> decompressBuffer;
-                    size_t datasize =
-                        std::accumulate(j.count.begin(), j.count.end(),
-                                        sizeof(T), std::multiplies<size_t>());
+                core::compress::CompressBZip2 decompressor(j.params, true);
+                std::vector<char> decompressBuffer;
+                size_t datasize =
+                    std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
+                                    std::multiplies<size_t>());
 
-                    decompressBuffer.reserve(datasize);
-                    try
-                    {
-                        decompressor.Decompress(k->data() + j.position, j.size,
-                                                decompressBuffer.data(),
-                                                datasize);
-                    }
-                    catch (std::exception &e)
-                    {
-                        std::cout << "[DataManDeserializer::Get] Zfp "
-                                     "decompression failed with exception: "
-                                  << e.what() << std::endl;
-                        return -4; // decompression failed
-                    }
-                    helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
-                                      true, true,
-                                      reinterpret_cast<char *>(output_data),
-                                      varStart, varCount, true, true);
-#else
-                    throw std::runtime_error(
-                        "Data received is compressed using BZip2. However, "
-                        "BZip2 library is not found locally and as a result it "
-                        "cannot be decompressed.");
-                    return -103; // bzip2 library not found
-#endif
-                }
-                else
+                decompressBuffer.reserve(datasize);
+                try
                 {
-                    helper::NdCopy<T>(
-                        k->data() + j.position, j.start, j.count, j.isRowMajor,
-                        j.isLittleEndian, reinterpret_cast<char *>(output_data),
-                        varStart, varCount, m_IsRowMajor, m_IsLittleEndian);
+                    decompressor.Decompress(j.buffer->data() + j.position,
+                                            j.size, decompressBuffer.data(),
+                                            datasize);
                 }
+                catch (std::exception &e)
+                {
+                    std::cout << "[DataManDeserializer::Get] Zfp "
+                                 "decompression failed with exception: "
+                              << e.what() << std::endl;
+                    return -4; // decompression failed
+                }
+                helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
+                                  true, true,
+                                  reinterpret_cast<char *>(output_data),
+                                  varStart, varCount, true, true);
+#else
+                throw std::runtime_error(
+                    "Data received is compressed using BZip2. However, "
+                    "BZip2 library is not found locally and as a result it "
+                    "cannot be decompressed.");
+                return -103; // bzip2 library not found
+#endif
+            }
+            else
+            {
+                helper::NdCopy<T>(j.buffer->data() + j.position, j.start,
+                                  j.count, j.isRowMajor, j.isLittleEndian,
+                                  reinterpret_cast<char *>(output_data),
+                                  varStart, varCount, m_IsRowMajor,
+                                  m_IsLittleEndian);
             }
         }
     }

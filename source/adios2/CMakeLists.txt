@@ -114,6 +114,7 @@ if(ADIOS2_HAVE_DataMan)
 endif()
 
 if(ADIOS2_HAVE_Staging)
+if(ADIOS2_HAVE_ZeroMQ)
   target_sources(adios2 PRIVATE
       toolkit/transportman/stagingman/StagingMan.cpp
       toolkit/transportman/stagingman/StagingMan.h
@@ -125,6 +126,7 @@ if(ADIOS2_HAVE_Staging)
       engine/staging/StagingWriter.tcc
   )
   target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
+endif()
 endif()
 
 

@@ -56,16 +56,34 @@ private:
     format::DataManSerializer m_DataManSerializer;
     transportman::WANMan m_MetadataTransport;
     transportman::StagingMan m_DataTransport;
+    std::unordered_map<
+        size_t,
+        std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>>>
+        m_MetaDataMap;
     int m_Verbosity = 0;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     std::string m_WriterMasterIP;
     std::string m_WriterMasterMetadataPort = "12306";
 
+    struct Request
+    {
+        std::string variable;
+        std::string type;
+        size_t step;
+        Dims start;
+        Dims count;
+        void *data;
+    };
+    std::vector<Request> m_DeferredRequests;
+
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     void Handshake();
+    template <typename T>
+    void CheckIOVariable(const std::string &name, const Dims &shape,
+                         const Dims &start, const Dims &count);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

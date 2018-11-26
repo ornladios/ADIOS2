@@ -28,6 +28,8 @@ public:
     void Open(const std::string &name, const Mode openMode) final;
     void Open(const std::string &ipAddress, const std::string &port,
               const std::string &name, const Mode openMode);
+    void Open(const std::string &fullAddress, const std::string &name,
+              const Mode openMode);
     void SetBuffer(char *buffer, size_t size) final;
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;

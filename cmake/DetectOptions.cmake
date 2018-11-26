@@ -88,9 +88,17 @@ endif()
 
 # Staging
 if(ADIOS2_USE_Staging STREQUAL AUTO)
+  find_package(ZeroMQ 4.1)
+  if(ZeroMQ_FOUND)
     set(ADIOS2_HAVE_Staging TRUE)
+  else()
+    set(ADIOS2_HAVE_Staging FALSE)
+  endif()
 elseif(ADIOS2_USE_Staging)
+  find_package(ZeroMQ 4.1 REQUIRED)
+  if(ZeroMQ_FOUND)
     set(ADIOS2_HAVE_Staging TRUE)
+  endif()
 endif()
 
 # ZeroMQ

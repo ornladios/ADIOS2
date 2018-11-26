@@ -63,6 +63,7 @@ public:
         size_t size;
         size_t position;
         int rank;
+        std::string address;
         std::string compression;
         Params params;
         std::shared_ptr<std::vector<char>> buffer = nullptr;
@@ -115,10 +116,12 @@ public:
     void PutAggregatedMetadata(MPI_Comm mpiComm,
                                std::shared_ptr<std::vector<char>>);
 
-    int PutDeferredRequest(const std::string &variable, const size_t step, const Dims &start, const Dims &count, void* data);
-    std::shared_ptr<std::unordered_map<int, std::vector<char>>> GetDeferredRequest();
-private:
+    int PutDeferredRequest(const std::string &variable, const size_t step,
+                           const Dims &start, const Dims &count, void *data);
+    std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
+    GetDeferredRequest();
 
+private:
     template <class T>
     bool PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                 const Dims &varCount, const Params &params);
@@ -137,46 +140,39 @@ private:
     bool IsCompressionAvailable(const std::string &method,
                                 const std::string &type, const Dims &count);
 
-    void JsonToDataManVarMap(nlohmann::json &metaJ, std::shared_ptr<std::vector<char>> pack);
+    void JsonToDataManVarMap(nlohmann::json &metaJ,
+                             std::shared_ptr<std::vector<char>> pack);
 
-    // local rank single step data and metadata pack buffer, used in writer, only accessed from writer app API thread, does not need mutex
+    // local rank single step data and metadata pack buffer, used in writer,
+    // only accessed from writer app API thread, does not need mutex
     std::shared_ptr<std::vector<char>> m_LocalBuffer;
 
-    // local rank single step JSON metadata, used in writer, only accessed from writer app API thread, do not need mutex
+    // local rank single step JSON metadata, used in writer, only accessed from
+    // writer app API thread, do not need mutex
     nlohmann::json m_MetadataJson;
 
-    // temporary compression buffer, made class member only for saving costs for memory allocation
+    // temporary compression buffer, made class member only for saving costs for
+    // memory allocation
     std::vector<char> m_CompressBuffer;
-<<<<<<< HEAD
     size_t m_Position = 0;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
-=======
->>>>>>> added deferred requests handling in staging engine
 
-    // global aggregated buffer for metadata and data buffer, used in writer and reader, needs mutex for accessing
-    std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>> m_DataManVarMap;
+    // global aggregated buffer for metadata and data buffer, used in writer and
+    // reader, needs mutex for accessing
+    std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
+        m_DataManVarMap;
 
     // for global variables and attributes, needs mutex
     nlohmann::json m_GlobalVars;
 
-    struct Request
-    {
-        std::string variable;
-        size_t step;
-        Dims start;
-        Dims count;
-        void *data;
-    };
-
-    std::vector<Request> m_DeferredRequests;
-    std::shared_ptr<std::unordered_map<int, std::vector<char>>> m_DeferredRequestsToSend;
+    std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
+        m_DeferredRequestsToSend;
 
     std::mutex m_Mutex;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
-
 };
 
 } // end namespace format

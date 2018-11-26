@@ -26,27 +26,17 @@ StagingMan::StagingMan(MPI_Comm mpiComm, const bool debugMode) {}
 
 StagingMan::~StagingMan() {}
 
-void StagingMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
-
 void StagingMan::OpenTransports(const std::vector<Params> &paramsVector,
-                                const Mode mode, const bool profile)
+                                const Mode openMode, const bool profile)
 {
 }
 
-void StagingMan::Write(std::shared_ptr<std::vector<char>> buffer, size_t id) {}
-
-void StagingMan::Write(const std::vector<char> &buffer, size_t transportId) {}
-
-std::shared_ptr<std::vector<char>> StagingMan::Read(size_t id) {}
-
-void StagingMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v,
-                                 size_t id)
+void StagingMan::Request(const std::vector<char> &request,
+                         std::shared_ptr<std::vector<char>> reply,
+                         const std::string &address)
 {
+    std::string ip;
 }
-
-std::shared_ptr<std::vector<char>> StagingMan::PopBufferQueue(size_t id) {}
-
-void StagingMan::WriteThread(std::shared_ptr<Transport> transport, size_t id) {}
 
 bool StagingMan::GetBoolParameter(const Params &params, const std::string key)
 {
