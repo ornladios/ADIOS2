@@ -200,7 +200,7 @@ TEST_F(DataManEngineTest, WriteRead_3D_MemSelect)
     size_t steps = 1;
     adios2::Params engineParams = {{"WorkflowMode", "p2p"}};
     std::vector<adios2::Params> transportParams = {{
-        {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12322"},
+        {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12313"},
     }};
     // run workflow
     auto r =
