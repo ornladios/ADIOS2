@@ -340,16 +340,21 @@ void InSituMPIReader::SendReadSchedule(
     // Writer ID -> number of peer readers
     std::vector<int> nReaderPerWriter(m_RankAllPeers.size());
 
-    // Fill nReaderPerWriter for this writer
+    // Fill nReaderPerWriter for this reader
     for (const auto &schedulePair : serializedSchedules)
     {
         const auto peerID = schedulePair.first;
         nReaderPerWriter[peerID] = 1;
     }
 
-    // Allreduce nReaderPerWriter with other writers to build a global view
-    MPI_Allreduce(MPI_IN_PLACE, nReaderPerWriter.data(),
-                  nReaderPerWriter.size(), MPI_INT, MPI_SUM, m_MPIComm);
+    // Accumulate nReaderPerWriter for all readers
+    void *sendBuf = nReaderPerWriter.data();
+    if (m_ReaderRootRank == m_ReaderRank)
+    {
+        sendBuf = MPI_IN_PLACE;
+    }
+    MPI_Reduce(sendBuf, nReaderPerWriter.data(), nReaderPerWriter.size(),
+               MPI_INT, MPI_SUM, m_ReaderRootRank, m_MPIComm);
 
     // Reader root sends nReaderPerWriter to writer root
     if (m_ReaderRootRank == m_ReaderRank)
