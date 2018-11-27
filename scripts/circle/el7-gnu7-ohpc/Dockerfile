@@ -26,9 +26,13 @@ RUN export uid=1001 gid=1001 && \
     echo "adios2:x:${uid}:" >> /etc/group && \
     chown ${uid}:${gid} -R /home/adios2
 
+# Install and initialize git-lfs
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash && \
+    yum install -y git-lfs && \
+    runuser -l adios2 -c 'git lfs install'
+
 # Misc cleanup of unneeded files
-RUN rm -rfv /tmp/* \
-  && rm -rf /var/cache/yum
+RUN rm -rfv /tmp/* /var/cache/yum
 
 USER adios2
 ENV HOME /home/adios2
