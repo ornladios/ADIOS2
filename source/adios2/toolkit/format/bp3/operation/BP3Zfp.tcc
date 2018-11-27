@@ -72,10 +72,13 @@ void BP3Zfp::SetMetadataCommon(
         {
             mode = static_cast<int32_t>(zfp_mode_precision);
         }
-        itMode = operation.Parameters.find("rate");
-        if (itMode != operation.Parameters.end())
+        else
         {
-            mode = static_cast<int32_t>(zfp_mode_rate);
+            itMode = operation.Parameters.find("rate");
+            if (itMode != operation.Parameters.end())
+            {
+                mode = static_cast<int32_t>(zfp_mode_rate);
+            }
         }
     }
     const std::string modeStr = itMode->second;
