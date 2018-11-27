@@ -220,8 +220,9 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
             size_t varsize = std::accumulate(ov->count.begin(), ov->count.end(), 1,
                                 std::multiplies<std::size_t>());
             std::cout << ov->name << ", " << varsize << std::endl;
+            const double *dd = reinterpret_cast<double *>(ov->data.data());
             for (int j = 0; j < varsize; j++)
-                std::cout << ov->data[j] << ", ";
+                std::cout << dd[j] << ", ";
             std::cout << std::endl;
         }
     }
