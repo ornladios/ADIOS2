@@ -53,10 +53,4 @@ if(ADIOS2_HAVE_MPI)
 endif()
 gtest_add_tests(TARGET TestDataManSubscribe1D)
 
-add_executable(TestDataManCallback1D TestDataManCallback1D.cpp)
-target_link_libraries(TestDataManCallback1D adios2 gtest)
-if(ADIOS2_HAVE_MPI)
-    target_link_libraries(TestDataManCallback1D MPI::MPI_C)
-endif()
-gtest_add_tests(TARGET TestDataManCallback1D)
 

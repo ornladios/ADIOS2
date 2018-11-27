@@ -180,66 +180,6 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
                 m_FinalStep = ret;
             }
         }
-        RunCallback();
-    }
-}
-
-void DataManReader::RunCallback()
-{
-    std::lock_guard<std::mutex> l(m_CallbackMutex);
-    if (m_Callbacks.empty() == false)
-    {
-        for (size_t step = m_DataManDeserializer.MinStep();
-             step <= m_DataManDeserializer.MaxStep(); ++step)
-        {
-            auto varList = m_DataManDeserializer.GetMetaData(step);
-            if (varList == nullptr)
-            {
-                continue;
-            }
-            for (const auto &i : *varList)
-            {
-                if (i.type == "compound")
-                {
-                    throw("Compound type is not supported yet.");
-                }
-#define declare_type(T)                                                        \
-    else if (i.type == helper::GetType<T>())                                   \
-    {                                                                          \
-        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
-        size_t datasize =                                                      \
-            std::accumulate(i.count.begin(), i.count.end(), sizeof(T),         \
-                            std::multiplies<size_t>());                        \
-        std::vector<T> varData(datasize, std::numeric_limits<T>::quiet_NaN()); \
-        m_DataManDeserializer.Get(varData.data(), i.name, i.start, i.count,    \
-                                  step);                                       \
-        for (auto &j : m_Callbacks)                                            \
-        {                                                                      \
-            if (j->m_Type == "Signature1")                                     \
-            {                                                                  \
-                j->RunCallback2(reinterpret_cast<T *>(varData.data()), i.doid, \
-                                i.name, i.type, step, i.shape, i.start,        \
-                                i.count);                                      \
-            }                                                                  \
-            else if (j->m_Type == "Signature2")                                \
-            {                                                                  \
-                j->RunCallback2(varData.data(), i.doid, i.name, i.type, step,  \
-                                i.shape, i.start, i.count);                    \
-            }                                                                  \
-            else                                                               \
-            {                                                                  \
-                throw(std::runtime_error(                                      \
-                    "[DataManReader::RunCallback] Callback funtion "           \
-                    "registered is not of Signatrue2. It might be modified "   \
-                    "from outside DataMan Engine."));                          \
-            }                                                                  \
-        }                                                                      \
-    }
-                ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-            }
-            m_DataManDeserializer.Erase(step);
-        }
     }
 }
 
@@ -270,12 +210,12 @@ void DataManReader::DoClose(const int transportIndex)
     if (transportIndex == -1)
     {
         m_Listening = false;
-        m_CallbackMutex.lock();
-        m_Callbacks.resize(0);
-        m_CallbackMutex.unlock();
         if (m_DataThread != nullptr)
         {
-            m_DataThread->join();
+            if (m_DataThread->joinable())
+            {
+                m_DataThread->join();
+            }
         }
     }
     m_DataMan = nullptr;
