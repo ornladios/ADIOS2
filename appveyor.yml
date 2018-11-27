@@ -45,7 +45,7 @@ install:
 before_build:
 #- del /q /f "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 - cd C:\projects\adios2
-- git lfs install --skip-smudge
+- git lfs pull
 - git reset --hard %APPVEYOR_PULL_REQUEST_HEAD_COMMIT%
 - ps: |
     if(Test-Path env:APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH) {

@@ -20,6 +20,7 @@ install:
   - export PATH="${PWD}/cmake-3.7.2-Linux-x86_64/bin:${PATH}"
   - popd
   - pip install --user flake8
+  - git lfs install --skip-smudge
   - git config --global clangformat.binary clang-format-3.8
   - ./scripts/travis/build-cppcheck.sh
 env:
@@ -28,5 +29,6 @@ env:
     - BUILD_MATRIX_ENTRY=analyze
     - BUILD_MATRIX_ENTRY=check
 script:
+  - git lfs pull
   - git reset --hard ${TRAVIS_PULL_REQUEST_SHA}
   - ${TRAVIS_BUILD_DIR}/scripts/travis/run.sh

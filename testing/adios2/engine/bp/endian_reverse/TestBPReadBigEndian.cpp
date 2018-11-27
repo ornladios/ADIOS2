@@ -71,7 +71,7 @@ TEST_F(BPReadBigEndian, BPReadBigEndian1D8)
         const adios2::Dims start{mpiRank * Nx};
         const adios2::Dims count{Nx};
 
-        const adios2::Box<adios2::Dims> sel(start, count);
+        const adios2::Box<adios2::Dims> sel({start, count});
 
         size_t t = 0;
 
@@ -396,7 +396,7 @@ TEST_F(BPReadBigEndian, BPReadBigEndian2D2x4)
             const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             const adios2::Dims count{Ny, Nx};
 
-            const adios2::Box<adios2::Dims> sel(start, count);
+            const adios2::Box<adios2::Dims> sel({start, count});
 
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
@@ -583,7 +583,7 @@ TEST_F(BPReadBigEndian, BPReadBigEndian2D4x2)
             const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             const adios2::Dims count{Ny, Nx};
 
-            const adios2::Box<adios2::Dims> sel(start, count);
+            const adios2::Box<adios2::Dims> sel({start, count});
 
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
