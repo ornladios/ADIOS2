@@ -257,7 +257,7 @@ if(dashboard_do_checkout)
   set(ctest_checkout_script ${CTEST_DASHBOARD_ROOT}/${_name}-init.cmake)
   file(WRITE ${ctest_checkout_script} "# git repo init script for ${_name}
 execute_process(
-  COMMAND \"${CTEST_GIT_COMMAND}\" clone -n -- \"${dashboard_git_url}\"
+  COMMAND \"${CTEST_GIT_COMMAND}\" lfs clone -n -- \"${dashboard_git_url}\"
           \"${CTEST_SOURCE_DIRECTORY}\"
   )
 if(EXISTS \"${CTEST_SOURCE_DIRECTORY}/.git\")
