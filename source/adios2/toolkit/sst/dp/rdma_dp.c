@@ -103,11 +103,14 @@ static void init_fabric(struct fabric_state *fabric)
 
     ifname = getenv("FABRIC_IFACE");
 
-    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
-    fi_freeinfo(hints);
-
     fabric->info = NULL;
 
+    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
+    if(!info) {
+        return;     
+    }
+    fi_freeinfo(hints);
+    
     originfo = info;
     useinfo = NULL;
     while (info)
@@ -121,7 +124,7 @@ static void init_fabric(struct fabric_state *fabric)
             break;
         }
         if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
-            strcmp(prov_name, "psm2") == 0)
+            strcmp(prov_name, "psm2") == 0 || !useinfo)
         {
             useinfo = info;
         }
