@@ -96,29 +96,17 @@ void adiosStream::putADIOSArray(const std::shared_ptr<VariableInfo> ov)
 
 void adiosStream::getADIOSArray(std::shared_ptr<VariableInfo> ov)
 {
-    int myRank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
     if (ov->type == "double")
     {
         adios2::Variable<double> v = io.InquireVariable<double>(ov->name);
         if (!v)
         {
-            std::cout << "v is null! wrong!" << std::endl;
             ov->readFromInput = false;
             return;
         }
         v.SetSelection({ov->start, ov->count});
         double *a = reinterpret_cast<double *>(ov->data.data());
         engine.Get<double>(v, a);
-        if (myRank == 1)
-        {
-            size_t varsize = std::accumulate(ov->count.begin(), ov->count.end(), 1,
-                                std::multiplies<std::size_t>());
-            std::cout << ov->name << ", " << varsize << std::endl;
-            for (int j = 0; j < varsize; j++)
-                std::cout << a[j] << ", ";
-            std::cout << std::endl;
-        }
         ov->readFromInput = true;
     }
     else if (ov->type == "float")
@@ -224,6 +212,18 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
         rd_perf_log.open("read_perf.txt", std::ios::app);
         rd_perf_log << std::to_string(maxReadTime)+", "+std::to_string(minReadTime)+"\n";
         rd_perf_log.close();
+    }
+    for (auto ov : cmdR->variables)
+    {
+        if (settings.myRank == 1)
+        {
+            size_t varsize = std::accumulate(ov->count.begin(), ov->count.end(), 1,
+                                std::multiplies<std::size_t>());
+            std::cout << ov->name << ", " << varsize << std::endl;
+            for (int j = 0; j < varsize; j++)
+                std::cout << ov->data[j] << ", ";
+            std::cout << std::endl;
+        }
     }
     return status;
 }
