@@ -177,5 +177,9 @@ else()
   set(ADIOS2_HAVE_SysVShMem OFF)
 endif()
 
+if(ADIOS2_USE_Endian_Reverse STREQUAL ON)
+  set(ADIOS2_HAVE_Endian_Reverse TRUE)
+endif()
+
 # Multithreading
 find_package(Threads REQUIRED)

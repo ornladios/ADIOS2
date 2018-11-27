@@ -662,41 +662,51 @@ size_t BP3Base::GetProcessGroupIndexSize(const std::string name,
 
 BP3Base::ProcessGroupIndex
 BP3Base::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
-                                     size_t &position) const noexcept
+                                     size_t &position,
+                                     const bool isLittleEndian) const noexcept
 {
     ProcessGroupIndex index;
-    index.Length = helper::ReadValue<uint16_t>(buffer, position);
-    index.Name = ReadBP3String(buffer, position);
-    index.IsColumnMajor = helper::ReadValue<char>(buffer, position);
-    index.ProcessID = helper::ReadValue<int32_t>(buffer, position);
-    index.StepName = ReadBP3String(buffer, position);
-    index.Step = helper::ReadValue<uint32_t>(buffer, position);
-    index.Offset = helper::ReadValue<uint64_t>(buffer, position);
+    index.Length =
+        helper::ReadValue<uint16_t>(buffer, position, isLittleEndian);
+    index.Name = ReadBP3String(buffer, position, isLittleEndian);
+    index.IsColumnMajor =
+        helper::ReadValue<char>(buffer, position, isLittleEndian);
+    index.ProcessID =
+        helper::ReadValue<int32_t>(buffer, position, isLittleEndian);
+    index.StepName = ReadBP3String(buffer, position, isLittleEndian);
+    index.Step = helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    index.Offset =
+        helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
     return index;
 }
 
 BP3Base::ElementIndexHeader
 BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer,
-                                size_t &position) const noexcept
+                                size_t &position,
+                                const bool isLittleEndian) const noexcept
 {
     ElementIndexHeader header;
-    header.Length = helper::ReadValue<uint32_t>(buffer, position);
-    header.MemberID = helper::ReadValue<uint32_t>(buffer, position);
-    header.GroupName = ReadBP3String(buffer, position);
-    header.Name = ReadBP3String(buffer, position);
-    header.Path = ReadBP3String(buffer, position);
-    header.DataType = helper::ReadValue<int8_t>(buffer, position);
+    header.Length =
+        helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    header.MemberID =
+        helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    header.GroupName = ReadBP3String(buffer, position, isLittleEndian);
+    header.Name = ReadBP3String(buffer, position, isLittleEndian);
+    header.Path = ReadBP3String(buffer, position, isLittleEndian);
+    header.DataType =
+        helper::ReadValue<int8_t>(buffer, position, isLittleEndian);
     header.CharacteristicsSetsCount =
-        helper::ReadValue<uint64_t>(buffer, position);
+        helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
 
     return header;
 }
 
 std::string BP3Base::ReadBP3String(const std::vector<char> &buffer,
-                                   size_t &position) const noexcept
+                                   size_t &position,
+                                   const bool isLittleEndian) const noexcept
 {
-    const size_t size =
-        static_cast<size_t>(helper::ReadValue<uint16_t>(buffer, position));
+    const size_t size = static_cast<size_t>(
+        helper::ReadValue<uint16_t>(buffer, position, isLittleEndian));
 
     if (size == 0)
     {
@@ -846,12 +856,12 @@ std::string BP3Base::GetBPSubStreamName(const std::string &name,
 #define declare_template_instantiation(T)                                      \
     template BP3Base::Characteristics<T>                                       \
     BP3Base::ReadElementIndexCharacteristics(                                  \
-        const std::vector<char> &buffer, size_t &position,                     \
-        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;    \
+        const std::vector<char> &, size_t &, const BP3Base::DataTypes,         \
+        const bool, const bool) const;                                         \
                                                                                \
     template std::map<size_t, std::shared_ptr<BP3Operation>>                   \
     BP3Base::SetBP3Operations<T>(                                              \
-        const std::vector<core::VariableBase::Operation> &operations) const;
+        const std::vector<core::VariableBase::Operation> &) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

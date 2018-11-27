@@ -12,6 +12,8 @@
 
 #include <algorithm>
 
+#include "adios2/helper/adiosType.h"
+
 namespace adios2
 {
 namespace helper
@@ -19,6 +21,65 @@ namespace helper
 
 namespace
 {
+
+template <class T>
+inline void CopyEndianReverse(const char *src, const size_t payloadStride,
+                              T *dest)
+{
+    if (sizeof(T) == 1)
+    {
+        std::copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+        return;
+    }
+
+    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+    std::reverse(dest, dest + payloadStride / sizeof(T));
+}
+
+template <>
+void CopyEndianReverse(const char *src, const size_t payloadStride,
+                       std::complex<float> *dest)
+{
+    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+    float *destF = reinterpret_cast<float *>(dest);
+    std::reverse(destF, destF + payloadStride / sizeof(float));
+}
+
+template <>
+void CopyEndianReverse(const char *src, const size_t payloadStride,
+                       std::complex<double> *dest)
+{
+    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+    double *destF = reinterpret_cast<double *>(dest);
+    std::reverse(destF, destF + payloadStride / sizeof(double));
+}
+
+void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
+                       const bool endianReverse, const std::string destType)
+{
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (endianReverse)
+    {
+        if (destType == "")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (destType == GetType<T>())                                         \
+    {                                                                          \
+        CopyEndianReverse<T>(src, payloadStride, reinterpret_cast<T *>(dest)); \
+    }
+
+        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+    else
+    {
+        std::copy(src, src + payloadStride, dest);
+    }
+#else
+    std::copy(src, src + payloadStride, dest);
+#endif
+}
 
 Dims DestDimsFinal(const Dims &destDims, const bool destRowMajor,
                    const bool srcRowMajor)
@@ -35,7 +96,8 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
                   const bool destRowMajor, const char *src,
                   const Dims &srcStart, const Dims &srcCount,
                   const Dims & /*destMemStart*/, const Dims & /*destMemCount*/,
-                  const Dims &srcMemStart, const Dims &srcMemCount)
+                  const Dims &srcMemStart, const Dims &srcMemCount,
+                  const bool endianReverse, const std::string destType)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, true);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, true);
@@ -95,13 +157,11 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
                                         srcMemStart),
                               true);
 
-        const size_t srcEndOffset = srcBeginOffset + stride;
-
         const size_t destBeginOffset = helper::LinearIndex(
             destStartFinal, destCountFinal, currentPoint, true);
 
-        std::copy(src + srcBeginOffset, src + srcEndOffset,
-                  dest + destBeginOffset);
+        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
+                          endianReverse, destType);
 
         size_t p = startCoord;
         while (true)
@@ -133,7 +193,8 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
                      const Dims &srcStart, const Dims &srcCount,
                      const Dims & /*destMemStart*/,
                      const Dims & /*destMemCount*/, const Dims &srcMemStart,
-                     const Dims &srcMemCount)
+                     const Dims &srcMemCount, const bool endianReverse,
+                     const std::string destType)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, false);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, false);
@@ -187,8 +248,8 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
         const size_t destBeginOffset = helper::LinearIndex(
             destStartFinal, destCountFinal, currentPoint, false);
 
-        std::copy(src + srcBeginOffset, src + srcEndOffset,
-                  dest + destBeginOffset);
+        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
+                          endianReverse, destType);
         size_t p = startCoord;
 
         while (true)
@@ -221,7 +282,8 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const bool destRowMajor, const char *src, const Dims &srcStart,
                  const Dims &srcCount, const bool srcRowMajor,
                  const Dims &destMemStart, const Dims &destMemCount,
-                 const Dims &srcMemStart, const Dims &srcMemCount) noexcept
+                 const Dims &srcMemStart, const Dims &srcMemCount,
+                 const bool endianReverse, const std::string destType) noexcept
 {
     if (srcStart.size() == 1) // 1D copy memory
     {
@@ -235,12 +297,11 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                 ? interStart.front() - srcStart.front()
                 : interStart.front() - srcStart.front() + srcMemStart.front();
 
-        const size_t srcEndOffset = srcBeginOffset + interCount.front();
-
+        const size_t stride = interCount.front();
         const size_t destBeginOffset = interStart.front() - destStart.front();
 
-        std::copy(src + srcBeginOffset, src + srcEndOffset,
-                  dest + destBeginOffset);
+        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
+                          endianReverse, destType);
         return;
     }
 
@@ -248,13 +309,13 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
     {
         ClipRowMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
                      srcCount, destMemStart, destMemCount, srcMemStart,
-                     srcMemCount);
+                     srcMemCount, endianReverse, destType);
     }
     else // stored with Fortran, R
     {
         ClipColumnMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
                         srcCount, destMemStart, destMemCount, srcMemStart,
-                        srcMemCount);
+                        srcMemCount, endianReverse, destType);
     }
 }
 

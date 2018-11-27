@@ -146,12 +146,22 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
                     helper::StartCountBox(subStreamInfo.BlockBox.first,
                                           subStreamInfo.BlockBox.second);
 
+// TODO: this should be a single BP3 deserializer function
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+                const bool endianReverse =
+                    (helper::IsLittleEndian() !=
+                     m_BP3Deserializer.m_Minifooter.IsLittleEndian)
+                        ? true
+                        : false;
+#else
+                constexpr bool endianReverse = false;
+#endif
                 helper::CopyMemory(
                     blockInfo.Data, blockInfo.Start, blockInfo.Count,
                     helper::IsRowMajor(m_IO.m_HostLanguage),
                     reinterpret_cast<T *>(variable.m_RawMemory[0].data()),
                     sourceStartCount.first, sourceStartCount.second,
-                    m_BP3Deserializer.m_IsRowMajor);
+                    m_BP3Deserializer.m_IsRowMajor, endianReverse);
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);

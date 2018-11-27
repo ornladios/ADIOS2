@@ -15,13 +15,15 @@
 #endif
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <algorithm> //std::copy
+#include <algorithm> //std::copy, std::reverse_copy
 #include <cstring>   //std::memcpy
 #include <iostream>
 #include <thread>
 /// \endcond
 
 #include "adios2/helper/adiosMath.h"
+#include "adios2/helper/adiosSystem.h"
+#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
@@ -109,6 +111,17 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
 }
 
 template <class T>
+inline void ReverseCopyFromBuffer(const std::vector<char> &buffer,
+                                  size_t &position, T *destination,
+                                  const size_t elements) noexcept
+{
+    std::reverse_copy(buffer.begin() + position,
+                      buffer.begin() + position + sizeof(T) * elements,
+                      reinterpret_cast<char *>(destination));
+    position += elements * sizeof(T);
+}
+
+template <class T>
 void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
                     T *destination, size_t elements) noexcept
 {
@@ -126,10 +139,71 @@ void InsertU64(std::vector<char> &buffer, const T element) noexcept
 }
 
 template <class T>
-T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept
+inline T ReadValue(const std::vector<char> &buffer, size_t &position,
+                   const bool isLittleEndian) noexcept
 {
     T value;
+
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, &value);
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, &value);
+    }
+#else
     CopyFromBuffer(buffer, position, &value);
+#endif
+    return value;
+}
+
+template <>
+inline std::complex<float>
+ReadValue<std::complex<float>>(const std::vector<char> &buffer,
+                               size_t &position,
+                               const bool isLittleEndian) noexcept
+{
+    std::complex<float> value;
+
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, &value);
+        return std::complex<float>(value.imag(), value.real());
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, &value);
+    }
+#else
+    CopyFromBuffer(buffer, position, &value);
+#endif
+    return value;
+}
+
+template <>
+inline std::complex<double>
+ReadValue<std::complex<double>>(const std::vector<char> &buffer,
+                                size_t &position,
+                                const bool isLittleEndian) noexcept
+{
+    std::complex<double> value;
+
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, &value);
+        return std::complex<double>(value.imag(), value.real());
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, &value);
+    }
+#else
+    CopyFromBuffer(buffer, position, &value);
+#endif
     return value;
 }
 
@@ -145,8 +219,9 @@ template <class T, class U>
 void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 const bool destRowMajor, const U *src, const Dims &srcStart,
                 const Dims &srcCount, const bool srcRowMajor,
-                const Dims &destMemStart, const Dims &destMemCount,
-                const Dims &srcMemStart, const Dims &srcMemCount) noexcept
+                const bool endianReverse, const Dims &destMemStart,
+                const Dims &destMemCount, const Dims &srcMemStart,
+                const Dims &srcMemCount) noexcept
 {
     // transform everything to payload dims
     const Dims destStartPayload = PayloadDims<T>(destStart, destRowMajor);
@@ -159,11 +234,11 @@ void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
     const Dims srcMemStartPayload = PayloadDims<U>(srcMemStart, srcRowMajor);
     const Dims srcMemCountPayload = PayloadDims<U>(srcMemCount, srcRowMajor);
 
-    CopyPayload(reinterpret_cast<char *>(dest), destStartPayload,
-                destCountPayload, destRowMajor,
-                reinterpret_cast<const char *>(src), srcStartPayload,
-                srcCountPayload, srcRowMajor, destMemStartPayload,
-                destMemCountPayload, srcMemStartPayload, srcMemCountPayload);
+    CopyPayload(
+        reinterpret_cast<char *>(dest), destStartPayload, destCountPayload,
+        destRowMajor, reinterpret_cast<const char *>(src), srcStartPayload,
+        srcCountPayload, srcRowMajor, destMemStartPayload, destMemCountPayload,
+        srcMemStartPayload, srcMemCountPayload, endianReverse, GetType<T>());
 }
 
 template <class T>

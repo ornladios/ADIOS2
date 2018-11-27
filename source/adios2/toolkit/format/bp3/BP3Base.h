@@ -539,12 +539,13 @@ protected:
                                     const std::string timeStepName,
                                     const size_t transportsSize) const noexcept;
 
-    ProcessGroupIndex
-    ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
-                                size_t &position) const noexcept;
+    ProcessGroupIndex ReadProcessGroupIndexHeader(
+        const std::vector<char> &buffer, size_t &position,
+        const bool isLittleEndian = true) const noexcept;
 
-    ElementIndexHeader ReadElementIndexHeader(const std::vector<char> &buffer,
-                                              size_t &position) const noexcept;
+    ElementIndexHeader
+    ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
+                           const bool isLittleEndian = true) const noexcept;
 
     /**
      * Read variable characteristics.
@@ -557,7 +558,8 @@ protected:
     Characteristics<T>
     ReadElementIndexCharacteristics(const std::vector<char> &buffer,
                                     size_t &position, const DataTypes dataType,
-                                    const bool untilTimeStep = false) const;
+                                    const bool untilTimeStep = false,
+                                    const bool isLittleEndian = true) const;
 
     /**
      * Common function to extract a bp string, 2 bytes for length + contents
@@ -565,8 +567,8 @@ protected:
      * @param position
      * @return
      */
-    std::string ReadBP3String(const std::vector<char> &buffer,
-                              size_t &position) const noexcept;
+    std::string ReadBP3String(const std::vector<char> &buffer, size_t &position,
+                              const bool isLittleEndian = true) const noexcept;
 
     // Transform related functions
     /**
@@ -588,18 +590,19 @@ private:
     void ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
                               const DataTypes dataType,
                               const bool untilTimeStep,
-                              Characteristics<T> &characteristics) const;
+                              Characteristics<T> &characteristics,
+                              const bool isLittleEndian = true) const;
 };
 
 #define declare_template_instantiation(T)                                      \
     extern template BP3Base::Characteristics<T>                                \
     BP3Base::ReadElementIndexCharacteristics(                                  \
-        const std::vector<char> &buffer, size_t &position,                     \
-        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;    \
+        const std::vector<char> &, size_t &, const BP3Base::DataTypes,         \
+        const bool, const bool) const;                                         \
                                                                                \
     extern template std::map<size_t, std::shared_ptr<BP3Operation>>            \
     BP3Base::SetBP3Operations<T>(                                              \
-        const std::vector<core::VariableBase::Operation> &operations) const;
+        const std::vector<core::VariableBase::Operation> &) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -61,6 +61,10 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements = 1,
                          const unsigned int threads = 1) noexcept;
 
+template <class T>
+void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+                           T *destination, const size_t elements = 1) noexcept;
+
 /**
  * Copy memory from a buffer at a certain input position
  * @param buffer data source
@@ -82,7 +86,8 @@ template <class T>
 void InsertU64(std::vector<char> &buffer, const T element) noexcept;
 
 template <class T>
-T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
+T ReadValue(const std::vector<char> &buffer, size_t &position,
+            const bool isLittleEndian = true) noexcept;
 
 /**
  * General function to copy memory between blocks of different type and start
@@ -104,6 +109,7 @@ template <class T, class U>
 void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 const bool destRowMajor, const U *src, const Dims &srcStart,
                 const Dims &srcCount, const bool srcRowMajor,
+                const bool endianReverse = false,
                 const Dims &destMemStart = Dims(),
                 const Dims &destMemCount = Dims(),
                 const Dims &srcMemStart = Dims(),
@@ -115,7 +121,9 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const Dims &destMemStart = Dims(),
                  const Dims &destMemCount = Dims(),
                  const Dims &srcMemStart = Dims(),
-                 const Dims &srcMemCount = Dims()) noexcept;
+                 const Dims &srcMemCount = Dims(),
+                 const bool endianReverse = false,
+                 const std::string destType = "") noexcept;
 
 /**
  * Clips the contiguous memory corresponding to an intersection and puts it in
