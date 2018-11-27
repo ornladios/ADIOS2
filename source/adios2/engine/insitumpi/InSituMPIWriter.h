@@ -57,6 +57,8 @@ private:
 
     // Global ranks of all the readers
     std::vector<int> m_RankAllPeers;
+    // Mapping from global ranks to peer IDs
+    std::map<int, int> m_RankToPeerID;
     // Global ranks of the readers directly assigned to me
     std::vector<int> m_RankDirectPeers;
 
@@ -119,6 +121,11 @@ private:
                            const typename Variable<T>::Info &blockInfo);
 
     void AsyncSendVariable(std::string variableName);
+
+    /**
+     * Receive read schedule from readers and build write schedule
+     */
+    void ReceiveReadSchedule(insitumpi::WriteScheduleMap &writeScheduleMap);
 };
 
 } // end namespace engine

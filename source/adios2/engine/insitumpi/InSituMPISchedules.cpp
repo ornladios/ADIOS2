@@ -80,21 +80,13 @@ void FixSeeksToZeroOffset(helper::SubFileInfo &record, bool isRowMajor) noexcept
     record.Seeks.second = pos + nElements - 1;
 }
 
-std::vector<std::vector<char>>
+std::map<int, std::vector<char>>
 SerializeLocalReadSchedule(const int nWriters,
                            const std::map<std::string, helper::SubFileInfoMap>
                                &variablesSubFileInfo) noexcept
 {
-    std::vector<std::vector<char>> buffers(nWriters);
-
-    // Create a buffer for each writer
-    std::vector<int> nVarPerWriter(nWriters);
-    for (size_t i = 0; i < nWriters; i++)
-    {
-        nVarPerWriter[i] = 0;
-        // allocate first 4 bytes
-        helper::InsertToBuffer(buffers[i], &nVarPerWriter[i], 1);
-    }
+    std::map<int, std::vector<char>> buffers;
+    std::map<int, int> nVarPerWriter;
 
     for (const auto &variableNamePair : variablesSubFileInfo)
     {
@@ -103,10 +95,17 @@ SerializeLocalReadSchedule(const int nWriters,
         for (const auto &subFileIndexPair : variableNamePair.second)
         {
             const size_t subFileIndex = subFileIndexPair.first; // writer
-            auto &lrs = buffers[subFileIndex];
             // <steps, <SubFileInfo>>  but there is only one step
             for (const auto &stepPair : subFileIndexPair.second)
             {
+                if (buffers.find(subFileIndex) == buffers.end())
+                {
+                    nVarPerWriter[subFileIndex] = 0;
+                    // allocate first 4 bytes (number of requested variables)
+                    helper::InsertToBuffer(buffers[subFileIndex],
+                                           &nVarPerWriter[subFileIndex], 1);
+                }
+
                 // LocalReadSchedule sfi = subFileIndexPair.second[0];
                 const std::vector<helper::SubFileInfo> &sfi = stepPair.second;
                 SerializeLocalReadSchedule(buffers[subFileIndex], variableName,
@@ -118,10 +117,13 @@ SerializeLocalReadSchedule(const int nWriters,
     }
 
     // Record the number of actually requested variables for each buffer
-    for (int i = 0; i < nWriters; i++)
+    for (auto &bufferPair : buffers)
     {
         size_t pos = 0;
-        helper::CopyToBuffer(buffers[i], pos, &nVarPerWriter[i]);
+        const auto peerID = bufferPair.first;
+        auto &buffer = bufferPair.second;
+
+        helper::CopyToBuffer(buffer, pos, &nVarPerWriter[peerID]);
     }
     return buffers;
 }
@@ -182,18 +184,20 @@ int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept
     return n;
 }
 
-WriteScheduleMap
-DeserializeReadSchedule(const std::vector<std::vector<char>> &buffers) noexcept
+WriteScheduleMap DeserializeReadSchedule(
+    const std::map<int, std::vector<char>> &buffers) noexcept
 {
     WriteScheduleMap map;
 
-    for (int i = 0; i < buffers.size(); i++)
+    for (const auto &bufferPair : buffers)
     {
-        const auto &buffer = buffers[i];
+        const auto peerID = bufferPair.first;
+        const auto &buffer = bufferPair.second;
+
         LocalReadScheduleMap lrsm = DeserializeReadSchedule(buffer);
         for (const auto &varSchedule : lrsm)
         {
-            map[varSchedule.first][i] = varSchedule.second;
+            map[varSchedule.first][peerID] = varSchedule.second;
         }
     }
     return map;
