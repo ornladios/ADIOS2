@@ -204,47 +204,7 @@ static void fini_fabric(struct fabric_state *fabric)
 
     do
     {
-        status = fi_close((struct fid *)fabric->signal);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
         status = fi_close((struct fid *)fabric->cq_signal);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
-        status = fi_close((struct fid *)fabric->av);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
-        status = fi_close((struct fid *)fabric->domain);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
-        status = fi_close((struct fid *)fabric->fabric);
     } while (status == FI_EBUSY);
 
     if (status)
