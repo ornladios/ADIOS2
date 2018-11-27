@@ -43,15 +43,6 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     {
         m_StreamNames.push_back(m_Name + std::to_string(i));
     }
-
-    // register callbacks
-    for (auto &j : m_IO.m_Operations)
-    {
-        if (j.Op->m_Type == "Signature2")
-        {
-            m_Callbacks.push_back(j.Op);
-        }
-    }
 }
 
 bool DataManCommon::GetStringParameter(Params &params, std::string key,

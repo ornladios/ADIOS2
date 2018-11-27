@@ -50,8 +50,6 @@ protected:
     transport::FileFStream m_FileTransport;
 
     std::vector<std::string> m_StreamNames;
-    std::vector<core::Operator *> m_Callbacks;
-    std::mutex m_CallbackMutex;
 
     std::shared_ptr<transportman::DataMan> m_DataMan;
     std::shared_ptr<std::thread> m_DataThread;
