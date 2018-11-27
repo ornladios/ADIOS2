@@ -110,7 +110,7 @@ void adiosStream::getADIOSArray(std::shared_ptr<VariableInfo> ov)
         v.SetSelection({ov->start, ov->count});
         double *a = reinterpret_cast<double *>(ov->data.data());
         engine.Get<double>(v, a);
-        if (myRank == 0)
+        if (myRank == 1)
         {
             size_t varsize = std::accumulate(ov->count.begin(), ov->count.end(), 1,
                                 std::multiplies<std::size_t>());
