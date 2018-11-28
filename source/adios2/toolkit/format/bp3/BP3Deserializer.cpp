@@ -518,10 +518,10 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
         core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
     template typename core::Variable<T>::Info &                                \
-    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *);          \
+    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *) const;    \
                                                                                \
     template void BP3Deserializer::SetVariableBlockInfo(                       \
-        core::Variable<T> &, typename core::Variable<T>::Info &);              \
+        core::Variable<T> &, typename core::Variable<T>::Info &) const;        \
                                                                                \
     template void BP3Deserializer::ClipContiguousMemory<T>(                    \
         typename core::Variable<T>::Info &, const std::vector<char> &,         \

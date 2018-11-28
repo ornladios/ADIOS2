@@ -50,7 +50,8 @@ void BP3Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
 
 template <class T>
 typename core::Variable<T>::Info &
-BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable, T *data)
+BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
+                                       T *data) const
 {
     const size_t stepsStart = variable.m_StepsStart;
     const size_t stepsCount = variable.m_StepsCount;
@@ -95,7 +96,8 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable, T *data)
 
 template <class T>
 void BP3Deserializer::SetVariableBlockInfo(
-    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo)
+    core::Variable<T> &variable,
+    typename core::Variable<T>::Info &blockInfo) const
 {
     auto lf_SetSubStreamInfoOperations =
         [&](const BP3OpInfo &bp3OpInfo, const size_t payloadOffset,
@@ -179,7 +181,6 @@ void BP3Deserializer::SetVariableBlockInfo(
 
                 for (auto i = 0; i < dimensions; ++i)
                 {
-
                     if (blockInfo.Start[i] + blockInfo.Count[i] >
                         readInShape[i])
                     {
@@ -255,7 +256,38 @@ template <class T>
 void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
                                            T *data) const
 {
-    GetValueFromMetadataCommon(variable, data);
+    const auto &buffer = m_Metadata.m_Buffer;
+
+    const typename core::Variable<T>::Info &blockInfo =
+        InitVariableBlockInfo(variable, data);
+
+    const size_t stepsStart = blockInfo.StepsStart;
+    const size_t stepsCount = blockInfo.StepsCount;
+    const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
+    auto itStep = std::next(indices.begin(), stepsStart);
+
+    size_t dataCounter = 0;
+    for (size_t s = 0; s < stepsCount; ++s)
+    {
+        const std::vector<size_t> &positions = itStep->second;
+        const size_t positionsSize = positions.size();
+
+        for (size_t b = 0; b < positionsSize; ++b)
+        {
+            size_t localPosition = positions[b];
+            const Characteristics<T> characteristics =
+                ReadElementIndexCharacteristics<T>(buffer, localPosition,
+                                                   type_string, false,
+                                                   m_Minifooter.IsLittleEndian);
+
+            data[dataCounter] = characteristics.Statistics.Value;
+            ++dataCounter;
+        }
+
+        ++itStep;
+    }
+
+    variable.m_Value = data[0];
 }
 
 template <class T>
@@ -341,6 +373,9 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         variable = &io.DefineVariable<std::string>(variableName);
         variable->m_Value =
             characteristics.Statistics.Value; // assigning first step
+        variable->m_Shape = {0};
+        variable->m_Start = {0};
+        variable->m_Count = {0};
     }
     else
     {
@@ -372,20 +407,29 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
                 buffer, position, static_cast<DataTypes>(header.DataType),
                 false, m_Minifooter.IsLittleEndian);
 
-        if (subsetCharacteristics.Statistics.Step > currentStep)
-        {
-            currentStep = subsetCharacteristics.Statistics.Step;
-        }
+        // if new step is inserted
         if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
         {
+            currentStep = subsetCharacteristics.Statistics.Step;
             ++variable->m_AvailableStepsCount;
+
+            // reset shape and count
+            variable->m_Shape[0] = 1;
+            variable->m_Count[0] = 1;
         }
+        else
+        {
+
+            ++variable->m_Shape[0];
+            ++variable->m_Count[0];
+        }
+
         variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
             subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
-    /* Update variable's starting step, which equals to the min value in the
-     * sorted map minus one */
+    /* Update variable's starting step, which equals to the min value in
+    the sorted map minus one */
     variable->m_StepsStart =
         variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
 }
@@ -556,66 +600,6 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
         io.DefineAttribute<T>(attributeName,
                               characteristics.Statistics.Values.data(),
                               characteristics.Statistics.Values.size());
-    }
-}
-
-template <>
-inline void BP3Deserializer::GetValueFromMetadataCommon<std::string>(
-    core::Variable<std::string> &variable, std::string *data) const
-{
-    const auto &buffer = m_Metadata.m_Buffer;
-
-    for (size_t i = 0; i < variable.m_StepsCount; ++i)
-    {
-        *(data + i) = "";
-        const size_t step = variable.m_StepsStart + i + 1;
-        auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step);
-
-        if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
-        {
-            continue;
-        }
-
-        for (const size_t position : itStep->second)
-        {
-            size_t localPosition = position;
-            const Characteristics<std::string> characteristics =
-                ReadElementIndexCharacteristics<std::string>(
-                    buffer, localPosition, type_string, false,
-                    m_Minifooter.IsLittleEndian);
-
-            *(data + i) = characteristics.Statistics.Value;
-        }
-
-        variable.m_Value = *(data + i);
-    }
-}
-
-template <class T>
-inline void
-BP3Deserializer::GetValueFromMetadataCommon(core::Variable<T> &variable,
-                                            T *data) const
-{
-    const auto &buffer = m_Metadata.m_Buffer;
-    const size_t step = variable.m_StepsStart + 1;
-    auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step);
-
-    if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
-    {
-        data = nullptr;
-        return;
-    }
-
-    for (const size_t position : itStep->second)
-    {
-        size_t localPosition = position;
-
-        const Characteristics<T> characteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, localPosition, static_cast<DataTypes>(GetDataType<T>()),
-                false, m_Minifooter.IsLittleEndian);
-
-        *data = characteristics.Statistics.Value;
     }
 }
 

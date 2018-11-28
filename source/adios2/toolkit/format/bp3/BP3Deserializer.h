@@ -63,7 +63,7 @@ public:
      */
     template <class T>
     typename core::Variable<T>::Info &
-    InitVariableBlockInfo(core::Variable<T> &variable, T *data);
+    InitVariableBlockInfo(core::Variable<T> &variable, T *data) const;
 
     /**
      * Sets read block information from the available metadata information
@@ -71,8 +71,9 @@ public:
      * @param blockInfo
      */
     template <class T>
-    void SetVariableBlockInfo(core::Variable<T> &variable,
-                              typename core::Variable<T>::Info &blockInfo);
+    void
+    SetVariableBlockInfo(core::Variable<T> &variable,
+                         typename core::Variable<T>::Info &blockInfo) const;
 
     // Operation related functions
     template <class T>
@@ -188,10 +189,10 @@ private:
         core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
     extern template typename core::Variable<T>::Info &                         \
-    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *);          \
+    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *) const;    \
                                                                                \
     extern template void BP3Deserializer::SetVariableBlockInfo(                \
-        core::Variable<T> &, typename core::Variable<T>::Info &);              \
+        core::Variable<T> &, typename core::Variable<T>::Info &) const;        \
                                                                                \
     extern template void BP3Deserializer::ClipContiguousMemory<T>(             \
         typename core::Variable<T>::Info &, const std::vector<char> &,         \

@@ -68,6 +68,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             const adios2::Dims count{Nx};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
+            auto var_iString = io.DefineVariable<std::string>(
+                "iString", {adios2::LocalValueDim});
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
@@ -112,6 +114,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
+
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             auto var_i16 = io.InquireVariable<int16_t>("i16");
             auto var_i32 = io.InquireVariable<int32_t>("i32");
@@ -148,7 +151,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             // starting index + count
             bpWriter.BeginStep();
 
-            bpWriter.Put(var_iString, currentTestData.S1);
+            bpWriter.Put(var_iString, std::to_string(mpiRank));
             bpWriter.Put(var_i8, currentTestData.I8.data());
             bpWriter.Put(var_i16, currentTestData.I16.data());
             bpWriter.Put(var_i32, currentTestData.I32.data());
@@ -177,7 +180,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
-        ASSERT_EQ(var_iString.Shape().size(), 0);
+        ASSERT_EQ(var_iString.Shape()[0], mpiSize);
         ASSERT_EQ(var_iString.Steps(), NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -256,7 +259,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         SmallTestData testData;
 
-        std::string IString;
+        std::vector<std::string> IString;
         std::array<int8_t, Nx> I8;
         std::array<int16_t, Nx> I16;
         std::array<int32_t, Nx> I32;
@@ -333,7 +336,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
             bpReader.PerformGets();
 
-            EXPECT_EQ(IString, currentTestData.S1);
+            for (size_t i = 0; i < static_cast<size_t>(mpiSize); ++i)
+            {
+                EXPECT_EQ(IString[i], std::to_string(i));
+            }
 
             for (size_t i = 0; i < Nx; ++i)
             {
@@ -506,7 +512,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
-        ASSERT_EQ(var_iString.Shape().size(), 0);
+        ASSERT_EQ(var_iString.Shape()[0], mpiSize);
         ASSERT_EQ(var_iString.Steps(), NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
