@@ -21,6 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WIN32
+#define strncasecmp _strnicmp
+#endif
+
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif

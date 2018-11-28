@@ -32,7 +32,7 @@ add_test(NAME Utils.IOTest.Pipe2.BP.DumpWrite
     -DARGS=-laD
     -DINPUT_FILE=pipe2_write.bp
     -DOUTPUT_FILE=IOTest.Pipe2.BP.Write.bpls.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
   WORKING_DIRECTORY ${WORKDIR} 
 )
 
@@ -63,7 +63,7 @@ add_test(NAME Utils.IOTest.Pipe2.BP.DumpRead
     -DARGS=-laD
     -DINPUT_FILE=pipe2_read.bp
     -DOUTPUT_FILE=IOTest.Pipe2.BP.Read.bpls.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
   WORKING_DIRECTORY ${WORKDIR} 
 )
 
@@ -103,7 +103,7 @@ if (${HAVE_2_PROCS})
       -DARGS=-laD
       -DINPUT_FILE=pipe2_read.bp
       -DOUTPUT_FILE=IOTest.Pipe2.InSituMPI.bpls.txt
-      -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
     WORKING_DIRECTORY ${WORKDIR} 
   )
 
@@ -140,7 +140,7 @@ if (${HAVE_2_PROCS})
 	    -DARGS=-laD
 	    -DINPUT_FILE=pipe2_read.bp
 	    -DOUTPUT_FILE=IOTest.Pipe2.SST.bpls.txt
-	    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+	    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 	  WORKING_DIRECTORY ${WORKDIR} 
 	)
 	
