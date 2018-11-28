@@ -106,11 +106,12 @@ static void init_fabric(struct fabric_state *fabric)
     fabric->info = NULL;
 
     fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
-    if(!info) {
-        return;     
+    if (!info)
+    {
+        return;
     }
     fi_freeinfo(hints);
-    
+
     originfo = info;
     useinfo = NULL;
     while (info)
@@ -596,10 +597,9 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     {
         WSR_Stream->ReaderContactInfo[i].RS_Stream =
             providedReaderInfo[i]->RS_Stream;
-        Svcs->verbose(
-            WS_Stream->CP_Stream,
-            "Received contact for RD_Stream %p, Reader Rank %d\n",
-            WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
+        Svcs->verbose(WS_Stream->CP_Stream,
+                      "Received contact for RD_Stream %p, Reader Rank %d\n",
+                      WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
     }
 
     WSR_Stream->ReaderCohortSize = readerCohortSize;
@@ -658,10 +658,9 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
             providedWriterInfo[i]->WS_Stream;
         fi_av_insert(Fabric->av, providedWriterInfo[i]->Address, 1,
                      &RS_Stream->WriterAddr[i], 0, NULL);
-        Svcs->verbose(
-            RS_Stream->CP_Stream,
-            "Received contact info for WS_stream %p, WSR Rank %d\n",
-            RS_Stream->WriterContactInfo[i].WS_Stream, i);
+        Svcs->verbose(RS_Stream->CP_Stream,
+                      "Received contact info for WS_stream %p, WSR Rank %d\n",
+                      RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
 }
 
