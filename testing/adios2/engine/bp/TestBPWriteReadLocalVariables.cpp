@@ -196,6 +196,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
                 ASSERT_EQ(var_Rank.ShapeID(), adios2::ShapeID::LocalValue);
                 ASSERT_EQ(var_Rank.Steps(), 1);
                 ASSERT_EQ(var_Rank.Shape()[0], mpiSize);
+                ASSERT_EQ(var_Rank.Min(), 0);
+                ASSERT_EQ(var_Rank.Max(), mpiSize - 1);
+
+                std::vector<int> rankData;
+                bpReader.Get(var_Rank, rankData, adios2::Mode::Sync);
             }
             else
             {

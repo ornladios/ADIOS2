@@ -330,11 +330,9 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
             buffer, position, static_cast<DataTypes>(header.DataType), false,
             m_Minifooter.IsLittleEndian);
 
-    std::string variableName(header.Name);
-    if (!header.Path.empty())
-    {
-        variableName = header.Path + PathSeparator + header.Name;
-    }
+    const std::string variableName =
+        header.Path.empty() ? header.Name
+                            : header.Path + PathSeparator + header.Name;
 
     core::Variable<std::string> *variable = nullptr;
     if (characteristics.Statistics.IsValue)
@@ -400,16 +398,14 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
 {
     const size_t initialPosition = position;
 
-    Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
-        buffer, position, static_cast<DataTypes>(header.DataType), false,
-        m_Minifooter.IsLittleEndian);
+    const Characteristics<T> characteristics =
+        ReadElementIndexCharacteristics<T>(
+            buffer, position, static_cast<DataTypes>(header.DataType), false,
+            m_Minifooter.IsLittleEndian);
 
-    std::string variableName(header.Name);
-    if (!header.Path.empty())
-    {
-        variableName = header.Path + PathSeparator + header.Name;
-    }
-    // define variable
+    const std::string variableName =
+        header.Path.empty() ? header.Name
+                            : header.Path + PathSeparator + header.Name;
 
     core::Variable<T> *variable = nullptr;
     {
@@ -417,38 +413,37 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         switch (characteristics.EntryShapeID)
         {
         case (ShapeID::GlobalValue):
+        {
             variable = &io.DefineVariable<T>(variableName);
             break;
-
+        }
         case (ShapeID::GlobalArray):
+        {
+            const Dims shape = m_ReverseDimensions
+                                   ? Dims(characteristics.Shape.rbegin(),
+                                          characteristics.Shape.rend())
+                                   : characteristics.Shape;
 
-            if (m_ReverseDimensions)
-            {
-                std::reverse(characteristics.Shape.begin(),
-                             characteristics.Shape.end());
-            }
-
-            variable = &io.DefineVariable<T>(
-                variableName, characteristics.Shape,
-                Dims(characteristics.Shape.size(), 0), characteristics.Shape);
+            variable = &io.DefineVariable<T>(variableName, shape,
+                                             Dims(shape.size(), 0), shape);
             break;
-
+        }
         case (ShapeID::LocalValue):
+        {
             variable = &io.DefineVariable<T>(variableName, {1}, {0}, {1});
             variable->m_ShapeID = ShapeID::LocalValue;
+            variable->m_SingleValue = true;
             break;
-
+        }
         case (ShapeID::LocalArray):
-
-            if (m_ReverseDimensions)
-            {
-                std::reverse(characteristics.Count.begin(),
-                             characteristics.Count.end());
-            }
-
-            variable = &io.DefineVariable<T>(variableName, {}, {},
-                                             characteristics.Count);
+        {
+            const Dims count = m_ReverseDimensions
+                                   ? Dims(characteristics.Count.rbegin(),
+                                          characteristics.Count.rend())
+                                   : characteristics.Count;
+            variable = &io.DefineVariable<T>(variableName, {}, {}, count);
             break;
+        }
         } // end switch
 
         if (characteristics.Statistics.IsValue)
@@ -487,16 +482,21 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                 buffer, position, static_cast<DataTypes>(header.DataType),
                 false, m_Minifooter.IsLittleEndian);
 
-        if (helper::LessThan(subsetCharacteristics.Statistics.Min,
-                             variable->m_Min))
+        const T blockMin = characteristics.Statistics.IsValue
+                               ? subsetCharacteristics.Statistics.Value
+                               : subsetCharacteristics.Statistics.Min;
+        const T blockMax = characteristics.Statistics.IsValue
+                               ? subsetCharacteristics.Statistics.Value
+                               : subsetCharacteristics.Statistics.Max;
+
+        if (helper::LessThan(blockMin, variable->m_Min))
         {
-            variable->m_Min = subsetCharacteristics.Statistics.Min;
+            variable->m_Min = blockMin;
         }
 
-        if (helper::GreaterThan(subsetCharacteristics.Statistics.Max,
-                                variable->m_Max))
+        if (helper::GreaterThan(blockMax, variable->m_Max))
         {
-            variable->m_Max = subsetCharacteristics.Statistics.Max;
+            variable->m_Max = blockMax;
         }
 
         // if new step is inserted
@@ -506,6 +506,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
             ++variable->m_AvailableStepsCount;
             if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
             {
+                // reset shape and count
                 variable->m_Shape[0] = 1;
                 variable->m_Count[0] = 1;
             }

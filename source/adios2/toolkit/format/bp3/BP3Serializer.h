@@ -224,7 +224,8 @@ private:
      * @return stats BP3 Stats
      */
     template <class T>
-    Stats<T> GetBPStats(const typename core::Variable<T>::Info &blockInfo,
+    Stats<T> GetBPStats(const bool singleValue,
+                        const typename core::Variable<T>::Info &blockInfo,
                         const bool isRowMajor) noexcept;
 
     template <class T>
@@ -291,7 +292,7 @@ private:
 
     /** Writes min max */
     template <class T>
-    void PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
+    void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
                          uint8_t &characteristicsCounter,
                          std::vector<char> &buffer) noexcept;
 

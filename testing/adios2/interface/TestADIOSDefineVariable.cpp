@@ -56,8 +56,8 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(localvalue.Shape().size(), 1);
     EXPECT_EQ(localvalue.Shape()[0], adios2::LocalValueDim);
-    EXPECT_EQ(localvalue.Start().size(), 0);
-    EXPECT_EQ(localvalue.Count().size(), 0);
+    EXPECT_EQ(localvalue.Start().size(), 1);
+    EXPECT_EQ(localvalue.Count().size(), 1);
     EXPECT_EQ(localvalue.Name(), "localvalue");
     EXPECT_EQ(localvalue.Type(), "int");
 }
