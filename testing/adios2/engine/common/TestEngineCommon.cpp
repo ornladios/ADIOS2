@@ -62,7 +62,7 @@ adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
-static unsigned int ParseUintParam(std::string optionName, char *arg)
+static unsigned int ParseUintParam(const std::string &optionName, char *arg)
 {
     char *end;
     int retval = std::strtoll(arg, &end, 10);
@@ -208,7 +208,6 @@ TEST_F(EngineCommon, NewAttributeEveryStep)
                                          std::to_string(step) +
                                          " to be available in Reader but "
                                          "BeginStep() returned not-OK");
-                break;
             }
 
             auto var = io.InquireVariable<double>("v");
