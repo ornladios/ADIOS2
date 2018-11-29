@@ -331,9 +331,22 @@ void HDF5ReaderP::PerformGets()
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
+                                                                               \
     void HDF5ReaderP::DoGetDeferred(Variable<T> &variable, T *data)            \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+                                                                               \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    HDF5ReaderP::DoAllStepsBlocksInfo(const Variable<T> &variable) const       \
+    {                                                                          \
+        return GetAllStepsBlocksInfo(variable);                                \
+    }                                                                          \
+                                                                               \
+    std::vector<typename Variable<T>::Info> HDF5ReaderP::DoBlocksInfo(         \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return GetBlocksInfo(variable, step);                                  \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

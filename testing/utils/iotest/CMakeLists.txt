@@ -16,7 +16,7 @@ set(mpicmd ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG})
 #------------------------------------------
 
 #
-#  Pipe2 InsituMPI version 
+#  Pipe2 BP version 
 #
   set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/Pipe2.BP)
   file(MAKE_DIRECTORY ${WORKDIR})
@@ -82,6 +82,76 @@ set_property(TEST Utils.IOTest.Pipe2.BP.ValidateRead
   PROPERTY DEPENDS Utils.IOTest.Pipe2.BP.DumpRead
 )
 
+
+if (ADIOS2_HAVE_HDF5)
+  #
+  #  Pipe2 HDF5 version 
+  #
+  set(WORKDIR ${CMAKE_CURRENT_BINARY_DIR}/Pipe2.HDF5)
+  file(MAKE_DIRECTORY ${WORKDIR})
+
+  #  HDF5 file version Write part
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.Write
+    COMMAND ${mpicmd} 2 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.xml -d 2 1 --strong-scaling
+    WORKING_DIRECTORY ${WORKDIR} 
+  )
+
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.DumpWrite
+    COMMAND ${CMAKE_COMMAND}
+      -DARGS=-la
+      -DINPUT_FILE=pipe2_write.h5
+      -DOUTPUT_FILE=IOTest.Pipe2.HDF5.Write.bpls.txt
+      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+    WORKING_DIRECTORY ${WORKDIR} 
+  )
+
+  set_property(TEST Utils.IOTest.Pipe2.HDF5.DumpWrite
+    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.Write
+  )
+
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.ValidateWrite
+    COMMAND ${CMAKE_COMMAND}
+      -E compare_files
+      ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Write.bpls.txt
+      ${WORKDIR}/IOTest.Pipe2.HDF5.Write.bpls.txt
+    WORKING_DIRECTORY ${WORKDIR} 
+  )
+  set_property(TEST Utils.IOTest.Pipe2.HDF5.ValidateWrite
+    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.DumpWrite
+  )
+
+  #  HDF5 file version Read part
+
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.Read
+    COMMAND ${mpicmd} 2 ${PROJECT_BINARY_DIR}/bin/adios_iotest -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.txt -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-HDF5.xml -d 2 1 --strong-scaling
+    WORKING_DIRECTORY ${WORKDIR} 
+  )
+
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.DumpRead
+    COMMAND ${CMAKE_COMMAND}
+      -DARGS=-lad
+      -DINPUT_FILE=pipe2_read.h5
+      -DOUTPUT_FILE=IOTest.Pipe2.HDF5.Read.bpls.txt
+      -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+    WORKING_DIRECTORY ${WORKDIR} 
+  )
+
+  set_property(TEST Utils.IOTest.Pipe2.HDF5.DumpRead
+    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.Read
+  )
+
+  add_test(NAME Utils.IOTest.Pipe2.HDF5.ValidateRead
+    COMMAND ${CMAKE_COMMAND}
+      -E compare_files
+      ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Read.bpls.txt
+      ${WORKDIR}/IOTest.Pipe2.HDF5.Read.bpls.txt
+    WORKING_DIRECTORY ${WORKDIR} 
+  )
+  set_property(TEST Utils.IOTest.Pipe2.HDF5.ValidateRead
+    PROPERTY DEPENDS Utils.IOTest.Pipe2.HDF5.DumpRead
+  )
+
+endif (ADIOS2_HAVE_HDF5)
 
 #
 math(EXPR HAVE_2_PROCS "${MPIEXEC_MAX_NUMPROCS} - 1")
