@@ -184,8 +184,8 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
 	    ioctl(ss, SIOCGIFFLAGS, ifr);
 	    sai = (struct sockaddr_in *) &(ifr->ifr_addr);
 	    if (ifr->ifr_flags & IFF_LOOPBACK) {
-		trace_func(trace_data, "CM<IP_CONFIG> - Get self IP addr %lx, rejected, loopback",
-			   ntohl(sai->sin_addr.s_addr));
+		trace_func(trace_data, "CM<IP_CONFIG> - Get self IP addr %s, rejected, loopback",
+			   inet_ntoa(sai->sin_addr));
 		continue;
 	    }
 	    if (!(ifr->ifr_flags & IFF_UP)) {
