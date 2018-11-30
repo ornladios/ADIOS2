@@ -450,6 +450,9 @@ retry:
 
 	    enet_connection_data = enet_accept_conn(sd, trans, &event.peer->address);
 
+            /* flush the connection Ack, just to see if this helps with some connection lockup problems */
+            enet_host_flush (sd->server);
+
             /* Store any relevant client information here. */
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
