@@ -89,10 +89,10 @@ HDF5ReaderP::GetAllStepsBlocksInfo(const Variable<T> &variable) const
     std::map<size_t, std::vector<typename core::Variable<T>::Info>>
         allStepsBlocksInfo;
 
-    for (size_t step = variable.m_StepsStart; step < variable.m_StepsCount;
-         ++step)
+    for (size_t step = variable.m_AvailableStepsStart;
+         step < variable.m_AvailableStepsCount; ++step)
     {
-        allStepsBlocksInfo[step - variable.m_StepsStart] =
+        allStepsBlocksInfo[step - variable.m_AvailableStepsStart] =
             BlocksInfoCommon(variable);
     }
     return allStepsBlocksInfo;
