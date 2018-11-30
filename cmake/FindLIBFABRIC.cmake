@@ -6,10 +6,10 @@
 #  LIBFABRIC_LIBRARIES - The libraries needed to use libfabric
 
 ######################################################
-set(LIBFABRIC_PREFIX "" CACHE STRING "Help cmake to find libfabric library (https://github.com/ofiwg/libfabric) into your system.")
-mark_as_advanced(LIBFABRIC_PREFIX)
+set(LIBFABRIC_ROOT "" CACHE STRING "Help cmake to find libfabric library (https://github.com/ofiwg/libfabric) into your system.")
+mark_as_advanced(LIBFABRIC_ROOT)
 if(NOT LIBFABRIC_ROOT AND "$ENV{LIBFABRIC_ROOT}" STREQUAL "")
-  set(LIBFABRIC_ROOT ${LIBFABRIC_PREFIX})
+  set(LIBFABRIC_ROOT ${LIBFABRIC_ROOT})
 endif()
 
 unset(_CMAKE_PREFIX_PATH)
