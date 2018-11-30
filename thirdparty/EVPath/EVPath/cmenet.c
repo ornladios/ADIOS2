@@ -318,8 +318,11 @@ enet_accept_conn(enet_client_data_ptr sd, transport_entry trans,
 
     add_int_attr(conn_attr_list, CM_PEER_IP, ntohl(address->host));
     enet_conn_data->remote_IP = ntohl(address->host);   /* remote_IP is in host byte order */
-    enet_conn_data->remote_contact_port = address->port;
-
+    if (getenv("CMEnetsReuseConnections") != NULL) {
+        enet_conn_data->remote_contact_port = address->port;
+    } else {
+        enet_conn_data->remote_contact_port = -1;
+    }
     if (enet_conn_data->remote_host != NULL) {
 	svc->trace_out(trans->cm, "Accepted ENET RUDP connection from host \"%s\"",
 		       enet_conn_data->remote_host);
