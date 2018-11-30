@@ -59,6 +59,52 @@ void HDF5ReaderP::GetDeferredCommon(Variable<T> &variable, T *data)
 #endif
 }
 
+template <class T>
+std::vector<typename core::Variable<T>::Info>
+HDF5ReaderP::BlocksInfoCommon(const core::Variable<T> &variable) const
+{
+    std::vector<typename core::Variable<T>::Info> blocksInfo;
+
+    typename core::Variable<T>::Info blockInfo;
+    blockInfo.Start = variable.m_Start;
+    blockInfo.Count = variable.m_Shape;
+    if (variable.m_ShapeID == ShapeID::GlobalValue ||
+        variable.m_ShapeID == ShapeID::LocalValue)
+    {
+        blockInfo.IsValue = true;
+    }
+    else
+    {
+        blockInfo.IsValue = false;
+    }
+    blocksInfo.push_back(blockInfo);
+
+    return blocksInfo;
+}
+
+template <class T>
+std::map<size_t, std::vector<typename Variable<T>::Info>>
+HDF5ReaderP::GetAllStepsBlocksInfo(const Variable<T> &variable) const
+{
+    std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+        allStepsBlocksInfo;
+
+    for (size_t step = variable.m_AvailableStepsStart;
+         step < variable.m_AvailableStepsCount; ++step)
+    {
+        allStepsBlocksInfo[step - variable.m_AvailableStepsStart] =
+            BlocksInfoCommon(variable);
+    }
+    return allStepsBlocksInfo;
+}
+
+template <class T>
+std::vector<typename Variable<T>::Info>
+HDF5ReaderP::GetBlocksInfo(const Variable<T> &variable, const size_t step) const
+{
+    BlocksInfoCommon(variable);
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
