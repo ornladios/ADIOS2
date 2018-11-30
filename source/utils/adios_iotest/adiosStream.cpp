@@ -213,19 +213,19 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
         rd_perf_log << std::to_string(maxReadTime)+", "+std::to_string(minReadTime)+"\n";
         rd_perf_log.close();
     }
-    for (auto ov : cmdR->variables)
-    {
-        if (settings.myRank == 1)
-        {
-            size_t varsize = std::accumulate(ov->count.begin(), ov->count.end(), 1,
-                                std::multiplies<std::size_t>());
-            std::cout << ov->name << ", " << varsize << std::endl;
-            const double *dd = reinterpret_cast<double *>(ov->data.data());
-            for (int j = 0; j < varsize; j++)
-                std::cout << dd[j] << ", ";
-            std::cout << std::endl;
-        }
-    }
+    // for (auto ov : cmdR->variables)
+    // {
+    //     if (settings.myRank == 1)
+    //     {
+    //         size_t varsize = std::accumulate(ov->count.begin(), ov->count.end(), 1,
+    //                             std::multiplies<std::size_t>());
+    //         std::cout << ov->name << ", " << varsize << std::endl;
+    //         const double *dd = reinterpret_cast<double *>(ov->data.data());
+    //         for (int j = 0; j < varsize; j++)
+    //             std::cout << dd[j] << ", ";
+    //         std::cout << std::endl;
+    //     }
+    // }
     return status;
 }
 
