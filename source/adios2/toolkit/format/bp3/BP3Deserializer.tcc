@@ -270,7 +270,10 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
     for (size_t s = 0; s < stepsCount; ++s)
     {
         const std::vector<size_t> &positions = itStep->second;
-        const size_t positionsSize = positions.size();
+
+        // global values only read one block per step
+        const size_t positionsSize =
+            (variable.m_ShapeID == ShapeID::LocalValue) ? positions.size() : 1;
 
         for (size_t b = 0; b < positionsSize; ++b)
         {
@@ -373,12 +376,18 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
         variable = &io.DefineVariable<std::string>(variableName);
         variable->m_Value =
             characteristics.Statistics.Value; // assigning first step
-        variable->m_Shape = {0};
-        variable->m_Start = {0};
-        variable->m_Count = {0};
+
+        if (characteristics.EntryShapeID == ShapeID::LocalValue)
+        {
+            variable->m_Shape = {1};
+            variable->m_Start = {0};
+            variable->m_Count = {1};
+            variable->m_ShapeID = ShapeID::LocalValue;
+        }
     }
     else
     {
+
         throw std::runtime_error("ERROR: variable " + variableName +
                                  " of type string can't be an array, when "
                                  "parsing metadata in call to Open");
@@ -397,6 +406,7 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     size_t currentStep = 0; // Starts at 1 in bp file
     std::set<uint32_t> stepsFound;
     variable->m_AvailableStepsCount = 0;
+
     while (position < endPosition)
     {
         const size_t subsetPosition = position;
@@ -407,21 +417,28 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
                 buffer, position, static_cast<DataTypes>(header.DataType),
                 false, m_Minifooter.IsLittleEndian);
 
+        const bool isNextStep =
+            stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
+
         // if new step is inserted
-        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        if (isNextStep)
         {
             currentStep = subsetCharacteristics.Statistics.Step;
             ++variable->m_AvailableStepsCount;
-
-            // reset shape and count
-            variable->m_Shape[0] = 1;
-            variable->m_Count[0] = 1;
+            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
+            {
+                // reset shape and count
+                variable->m_Shape[0] = 1;
+                variable->m_Count[0] = 1;
+            }
         }
         else
         {
-
-            ++variable->m_Shape[0];
-            ++variable->m_Count[0];
+            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
+            {
+                ++variable->m_Shape[0];
+                ++variable->m_Count[0];
+            }
         }
 
         variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
@@ -533,18 +550,26 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                                ? subsetCharacteristics.Statistics.Value
                                : subsetCharacteristics.Statistics.Max;
 
-        if (helper::LessThan(blockMin, variable->m_Min))
+        const bool isNextStep =
+            stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
+
+        // update min max for global values only if new step is found
+        if ((isNextStep &&
+             subsetCharacteristics.EntryShapeID == ShapeID::GlobalValue) ||
+            (subsetCharacteristics.EntryShapeID != ShapeID::GlobalValue))
         {
-            variable->m_Min = blockMin;
+            if (helper::LessThan(blockMin, variable->m_Min))
+            {
+                variable->m_Min = blockMin;
+            }
+
+            if (helper::GreaterThan(blockMax, variable->m_Max))
+            {
+                variable->m_Max = blockMax;
+            }
         }
 
-        if (helper::GreaterThan(blockMax, variable->m_Max))
-        {
-            variable->m_Max = blockMax;
-        }
-
-        // if new step is inserted
-        if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
+        if (isNextStep)
         {
             currentStep = subsetCharacteristics.Statistics.Step;
             ++variable->m_AvailableStepsCount;

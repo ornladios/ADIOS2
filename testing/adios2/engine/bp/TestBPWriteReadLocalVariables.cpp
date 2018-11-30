@@ -58,7 +58,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             const adios2::Dims start{};
             const adios2::Dims count{Nx};
 
-            io.DefineVariable<int>("rank", {adios2::LocalValueDim});
+            io.DefineVariable<int>("stepsGlobalValue");
+            io.DefineVariable<int>("ranksLocalValue", {adios2::LocalValueDim});
             io.DefineVariable<std::string>("iString");
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
@@ -104,10 +105,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
 
             bpWriter.BeginStep();
 
-            if (step == 0)
-            {
-                bpWriter.Put<int>("rank", mpiRank);
-            }
+            bpWriter.Put<int>("stepsGlobalValue", step);
+            bpWriter.Put<int>("ranksLocalValue", mpiRank);
 
             //            bpWriter.Put<std::string>("iString",
             //            currentTestData.S1);
@@ -175,7 +174,11 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
 
-            auto var_Rank = io.InquireVariable<int>("rank");
+            auto var_StepsGlobalValue =
+                io.InquireVariable<int>("stepsGlobalValue");
+            auto var_RanksLocalValue =
+                io.InquireVariable<int>("ranksLocalValue");
+
             auto var_iString = io.InquireVariable<std::string>("iString");
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -190,21 +193,35 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
             auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
-            if (currentStep == 0)
-            {
-                EXPECT_TRUE(var_Rank);
-                ASSERT_EQ(var_Rank.ShapeID(), adios2::ShapeID::LocalValue);
-                ASSERT_EQ(var_Rank.Steps(), 1);
-                ASSERT_EQ(var_Rank.Shape()[0], mpiSize);
-                ASSERT_EQ(var_Rank.Min(), 0);
-                ASSERT_EQ(var_Rank.Max(), mpiSize - 1);
+            // Global
+            EXPECT_TRUE(var_StepsGlobalValue);
+            ASSERT_EQ(var_StepsGlobalValue.ShapeID(),
+                      adios2::ShapeID::GlobalValue);
+            ASSERT_EQ(var_StepsGlobalValue.Steps(), NSteps);
+            ASSERT_EQ(var_StepsGlobalValue.Shape().size(), 0);
+            ASSERT_EQ(var_StepsGlobalValue.Min(), 0);
+            ASSERT_EQ(var_StepsGlobalValue.Max(), NSteps - 1);
 
-                std::vector<int> rankData;
-                bpReader.Get(var_Rank, rankData, adios2::Mode::Sync);
-            }
-            else
+            int rankGlobalValueData;
+            bpReader.Get(var_StepsGlobalValue, rankGlobalValueData);
+
+            // Local
+            EXPECT_TRUE(var_RanksLocalValue);
+            ASSERT_EQ(var_RanksLocalValue.ShapeID(),
+                      adios2::ShapeID::LocalValue);
+            ASSERT_EQ(var_RanksLocalValue.Steps(), NSteps);
+            ASSERT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
+            ASSERT_EQ(var_RanksLocalValue.Min(), 0);
+            ASSERT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
+
+            std::vector<int> rankLocalValueData;
+            bpReader.Get(var_RanksLocalValue, rankLocalValueData);
+
+            ASSERT_EQ(rankLocalValueData.size(), mpiSize);
+
+            for (auto i = 0; i < mpiSize; ++i)
             {
-                EXPECT_FALSE(var_Rank);
+                ASSERT_EQ(rankLocalValueData[i], i);
             }
 
             //            EXPECT_TRUE(var_iString);
