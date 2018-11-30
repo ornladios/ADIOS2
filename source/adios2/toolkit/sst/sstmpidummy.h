@@ -1,6 +1,8 @@
 #ifndef SSTMPIDUMMY_H_
 #define SSTMPIDUMMY_H_
 
+#include <sys/time.h>
+
 typedef int MPI_Comm;
 typedef int MPI_Status;
 typedef int MPI_request;
@@ -216,6 +218,19 @@ static int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
                      MPI_Comm comm)
 {
     return MPI_SUCCESS;
+}
+
+static double MPI_Wtime()
+{
+    struct timeval tv;
+
+    if (gettimeofday(&tv, NULL) < 0)
+    {
+        perror("could not get time");
+        return (0.);
+    }
+
+    return (tv.tv_sec + ((double)tv.tv_usec / 1000000.));
 }
 
 #endif
