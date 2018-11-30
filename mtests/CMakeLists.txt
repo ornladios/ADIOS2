@@ -49,6 +49,10 @@ if(RUN_NNTI_TESTS)
   file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/correctness_spec" 
     "\$test_set{\"nnti\"} = \"basic_size_list all_read_buffer_styles all_write_buffer_styles\";\n")
 endif()
+if(RUN_UDT4_TESTS)
+  file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/correctness_spec" 
+    "\$test_set{\"udt4\"} = \"basic_size_list all_read_buffer_styles all_write_buffer_styles\";\n")
+endif()
 if(RUN_ENET_TESTS)
   file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/correctness_spec" 
     "\$test_set{\"enet\"} = \"basic_size_list all_read_buffer_styles all_write_buffer_styles\";\n")
