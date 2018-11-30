@@ -98,7 +98,7 @@ if (ADIOS2_HAVE_HDF5)
 
   add_test(NAME Utils.IOTest.Pipe2.HDF5.DumpWrite
     COMMAND ${CMAKE_COMMAND}
-      -DARGS=-la
+      -DARGS=-laD
       -DINPUT_FILE=pipe2_write.h5
       -DOUTPUT_FILE=IOTest.Pipe2.HDF5.Write.bpls.txt
       -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
@@ -129,7 +129,7 @@ if (ADIOS2_HAVE_HDF5)
 
   add_test(NAME Utils.IOTest.Pipe2.HDF5.DumpRead
     COMMAND ${CMAKE_COMMAND}
-      -DARGS=-lad
+      -DARGS=-laD
       -DINPUT_FILE=pipe2_read.h5
       -DOUTPUT_FILE=IOTest.Pipe2.HDF5.Read.bpls.txt
       -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
