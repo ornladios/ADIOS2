@@ -3665,12 +3665,14 @@ typedef struct foreign_handler_struct {
 static handler_list foreign_handler_list;
 static int foreign_handler_count = 0;
 
+#ifdef NOT_DEF
 static void
 clear_foreign_handlers()
 {
     if (foreign_handler_count == 0) return;
     free(foreign_handler_list);
 }
+#endif
 
  extern void
  INT_CMregister_non_CM_message_handler(int header, CMNonCMHandler handler)
