@@ -30,8 +30,7 @@ StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("StagingWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian()),
-  m_MetadataTransport(mpiComm, m_DebugMode),
-  m_DataTransport(mpiComm, m_DebugMode)
+  m_MetadataTransport(mpiComm, m_DebugMode)
 {
     m_EndMessage = " in call to StagingWriter " + m_Name + " Open\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
@@ -68,7 +67,6 @@ size_t StagingWriter::CurrentStep() const
     return m_CurrentStep;
 }
 
-/* PutDeferred = PutSync, so nothing to be done in PerformPuts */
 void StagingWriter::PerformPuts() {}
 
 void StagingWriter::EndStep()
@@ -111,6 +109,8 @@ void StagingWriter::Init()
     InitParameters();
     Handshake();
     InitTransports();
+    m_Listening = true;
+    m_IOThread = std::thread(&StagingWriter::IOThread, this);
 }
 
 void StagingWriter::InitParameters()
@@ -140,7 +140,6 @@ void StagingWriter::InitParameters()
 
 void StagingWriter::InitTransports()
 {
-
     if (m_MpiRank == 0)
     {
         Params params;
@@ -170,14 +169,32 @@ void StagingWriter::Handshake()
     ipstream.Close();
 
     m_IP = ips[0];
-    int port = 12306 + m_MpiRank;
-    m_MetadataPort = std::to_string(port);
-    port = 12306 + m_MpiSize + m_MpiRank;
-    m_DataPort = std::to_string(port);
+    m_MetadataPort = "12306";
+    m_FullDataAddress =
+        "tcp://" + m_IP + ":" + std::to_string(12307 + m_MpiRank);
+}
+
+void StagingWriter::IOThread()
+{
+    transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout,
+                                 m_DebugMode);
+    tpm.OpenWriteTransport(m_FullDataAddress);
+    while (m_Listening)
+    {
+        std::vector<char> request;
+        tpm.ReceiveRequest(request);
+        if (request.size() > 0)
+        {
+            std::vector<char> reply;
+            // get reply from serializer
+            tpm.SendReply(reply);
+        }
+    }
 }
 
 void StagingWriter::DoClose(const int transportIndex)
 {
+    m_Listening = false;
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << " Close(" << m_Name

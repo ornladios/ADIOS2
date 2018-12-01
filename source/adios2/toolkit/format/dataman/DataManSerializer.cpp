@@ -291,6 +291,11 @@ void DataManSerializer::JsonToDataManVarMap(
 
 int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
 {
+    if (data->size() == 0)
+    {
+        return -1;
+    }
+
     // check if is control signal
     if (data->size() < 128)
     {

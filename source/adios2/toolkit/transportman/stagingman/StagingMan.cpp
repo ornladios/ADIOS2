@@ -12,30 +12,65 @@
 
 #include "StagingMan.h"
 
-#ifdef ADIOS2_HAVE_ZEROMQ
-#include "adios2/toolkit/transport/socket/SocketZmqP2P.h"
-#include "adios2/toolkit/transport/socket/SocketZmqPubSub.h"
-#endif
-
 namespace adios2
 {
 namespace transportman
 {
 
-StagingMan::StagingMan(MPI_Comm mpiComm, const bool debugMode) {}
-
-StagingMan::~StagingMan() {}
-
-void StagingMan::OpenTransports(const std::vector<Params> &paramsVector,
-                                const Mode openMode, const bool profile)
+StagingMan::StagingMan(MPI_Comm mpiComm, Mode openMode, const int timeout,
+                       const bool debugMode)
+: m_MpiComm(mpiComm), m_DebugMode(debugMode), m_Timeout(timeout),
+  m_OpenMode(openMode)
 {
 }
 
-void StagingMan::Request(const std::vector<char> &request,
-                         std::shared_ptr<std::vector<char>> reply,
-                         const std::string &address)
+StagingMan::~StagingMan() {}
+
+void StagingMan::OpenWriteTransport(std::string fullAddress)
 {
-    std::string ip;
+    m_Transport = std::make_shared<transport::SocketZmqReqRep>(
+        m_MpiComm, m_Timeout, m_DebugMode);
+    m_Transport->Open(fullAddress, Mode::Write);
+}
+
+std::shared_ptr<std::vector<char>>
+StagingMan::Request(const std::vector<char> &request,
+                    const std::string &address, const size_t maxReplySize)
+{
+    if (maxReplySize > 0)
+    {
+        m_MaxReplySize = maxReplySize;
+    }
+
+    transport::SocketZmqReqRep tp(m_MpiComm, m_Timeout, m_DebugMode);
+    tp.Open(address, m_OpenMode);
+    tp.Write(request.data(), request.size());
+    Transport::Status status;
+    auto reply = std::make_shared<std::vector<char>>();
+    reply->reserve(m_MaxReplySize);
+    tp.IRead(reply->data(), m_MaxReplySize, status);
+    reply->resize(status.Bytes);
+    tp.Close();
+    return reply;
+}
+
+void StagingMan::ReceiveRequest(std::vector<char> &request,
+                                const size_t maxRequestSize)
+{
+    if (maxRequestSize > 0)
+    {
+        m_MaxRequestSize = maxRequestSize;
+    }
+
+    request.reserve(m_MaxRequestSize);
+    Transport::Status status;
+    m_Transport->IRead(request.data(), m_MaxRequestSize, status);
+    request.resize(status.Bytes);
+}
+
+void StagingMan::SendReply(const std::vector<char> &reply)
+{
+    m_Transport->Write(reply.data(), reply.size());
 }
 
 bool StagingMan::GetBoolParameter(const Params &params, const std::string key)

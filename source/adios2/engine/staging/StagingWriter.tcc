@@ -26,7 +26,8 @@ template <class T>
 void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     variable.SetData(data);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, "",
+    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
+                               m_FullDataAddress,
                                m_IO.m_TransportsParameters[0]);
     if (m_Verbosity == 5)
     {

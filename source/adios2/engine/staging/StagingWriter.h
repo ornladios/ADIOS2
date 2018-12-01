@@ -51,19 +51,22 @@ public:
 private:
     format::DataManSerializer m_DataManSerializer;
     transportman::WANMan m_MetadataTransport;
-    transportman::StagingMan m_DataTransport;
     int m_Verbosity = 0;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     int m_MpiSize;
     std::string m_IP = "127.0.0.1";
-    std::string m_DataPort;
     std::string m_MetadataPort;
+    std::string m_FullDataAddress;
+    int m_Timeout = 5;
+    bool m_Listening = false;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     void Handshake();
+    void IOThread();
+    std::thread m_IOThread;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \

@@ -30,9 +30,10 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
 : Engine("StagingReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian()),
-  m_MetadataTransport(mpiComm, m_DebugMode),
-  m_DataTransport(mpiComm, m_DebugMode)
+  m_MetadataTransport(mpiComm, m_DebugMode)
 {
+    m_DataTransport = std::make_shared<transportman::StagingMan>(
+        mpiComm, Mode::Read, m_Timeout, m_DebugMode);
     m_EndMessage = " in call to IO Open StagingReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
@@ -166,9 +167,7 @@ void StagingReader::PerformGets()
     auto requests = m_DataManSerializer.GetDeferredRequest();
     for (const auto &i : *requests)
     {
-        std::shared_ptr<std::vector<char>> reply =
-            std::make_shared<std::vector<char>>();
-        m_DataTransport.Request(i.second, reply, i.first);
+        auto reply = m_DataTransport->Request(i.second, i.first);
         m_DataManSerializer.PutPack(reply);
     }
 

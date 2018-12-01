@@ -43,39 +43,29 @@ SocketZmqReqRep::~SocketZmqReqRep()
     }
 }
 
-void SocketZmqReqRep::Open(const std::string &name, const Mode openMode)
+void SocketZmqReqRep::Open(const std::string &ipAddress,
+                           const std::string &port, const std::string &name,
+                           const Mode openMode)
 {
-    int port = 12306 + m_RankMPI;
-    if (openMode == Mode::Write)
-    {
-        Open("0.0.0.0", std::to_string(port), name, openMode);
-    }
-    else if (openMode == Mode::Read)
-    {
-        Open("127.0.0.1", std::to_string(port), name, openMode);
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "[SocketZmqReqRep::Open] invalid OpenMode parameter");
-    }
+    m_Name = name;
+    Open("tcp://" + ipAddress + ":" + port, openMode);
 }
 
-void SocketZmqReqRep::Open(const std::string &fullAddress,
-                           const std::string &name, const Mode openMode)
+void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
 {
+    m_OpenMode = openMode;
     std::string openModeStr;
     int error = -1;
     if (m_OpenMode == Mode::Write)
     {
-        openModeStr = "Write";
+        openModeStr = "Write/ZMQ_REP";
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         error = zmq_bind(m_Socket, fullAddress.c_str());
         zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
     }
     else if (m_OpenMode == Mode::Read)
     {
-        openModeStr = "Read";
+        openModeStr = "Read/ZMQ_REQ";
         m_Socket = zmq_socket(m_Context, ZMQ_REQ);
         error = zmq_connect(m_Socket, fullAddress.c_str());
         zmq_setsockopt(m_Socket, ZMQ_SNDTIMEO, &m_Timeout, sizeof(m_Timeout));
@@ -88,9 +78,8 @@ void SocketZmqReqRep::Open(const std::string &fullAddress,
 
     if (m_DebugMode)
     {
-        std::cout << "[SocketZmq Transport] ";
+        std::cout << "[SocketZmqReqRep Transport] ";
         std::cout << "OpenMode: " << openModeStr << ", ";
-        std::cout << "WorkflowMode: p2p, ";
         std::cout << "Address: " << fullAddress << ", ";
         std::cout << "Timeout: " << m_Timeout << ", ";
         std::cout << std::endl;
@@ -112,46 +101,32 @@ void SocketZmqReqRep::Open(const std::string &fullAddress,
     m_IsOpen = true;
 }
 
-void SocketZmqReqRep::Open(const std::string &ipAddress,
-                           const std::string &port, const std::string &name,
-                           const Mode openMode)
-{
-    m_Name = name;
-    m_OpenMode = openMode;
-    const std::string fullAddress("tcp://" + ipAddress + ":" + port);
-    Open(fullAddress, name, openMode);
-}
-
 void SocketZmqReqRep::SetBuffer(char *buffer, size_t size) {}
 
-void SocketZmqReqRep::Write(const char *buffer, size_t size, size_t start) {}
-
-void SocketZmqReqRep::Read(char *buffer, size_t size, size_t start) {}
-
-void SocketZmqReqRep::IWrite(const char *buffer, size_t size, Status &status,
-                             size_t start)
+void SocketZmqReqRep::Write(const char *buffer, size_t size, size_t start)
 {
-    int retInt = 0;
-    char retChar[10];
     ProfilerStart("write");
-    retInt = zmq_send(m_Socket, buffer, size, 0);
-    zmq_recv(m_Socket, retChar, 4, 0);
+    int retInt = zmq_send(m_Socket, buffer, size, 0);
     ProfilerStop("write");
-    const std::string retString = retChar;
-    if (retInt < 0 || retString != "OK")
+    if (retInt < 0)
     {
         throw std::ios_base::failure(
             "[SocketZmqReqRep::IWrite] couldn't send message " + m_Name);
     }
 }
 
+void SocketZmqReqRep::Read(char *buffer, size_t size, size_t start) {}
+
+void SocketZmqReqRep::IWrite(const char *buffer, size_t size, Status &status,
+                             size_t start)
+{
+}
+
 void SocketZmqReqRep::IRead(char *buffer, size_t size, Status &status,
                             size_t start)
 {
-    const std::string reply = "OK";
     ProfilerStart("read");
     int bytes = zmq_recv(m_Socket, buffer, size, 0);
-    zmq_send(m_Socket, reply.c_str(), 4, 0);
     ProfilerStop("read");
     if (bytes > 0)
     {

@@ -310,6 +310,8 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
         return -2; // step found but variable not found
     }
 
+    char *input_data = nullptr;
+
     for (const auto &j : *vec)
     {
         if (j.name == varName)
@@ -317,6 +319,10 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
             if (j.buffer == nullptr)
             {
                 continue;
+            }
+            else
+            {
+                input_data = reinterpret_cast<char *>(j.buffer->data());
             }
             if (j.compression == "zfp")
             {
@@ -341,10 +347,8 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                               << e.what() << std::endl;
                     return -4; // decompression failed
                 }
-                helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
-                                  true, true,
-                                  reinterpret_cast<char *>(output_data),
-                                  varStart, varCount, true, true);
+
+                input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error(
                     "Data received is compressed using ZFP. However, ZFP "
@@ -376,10 +380,7 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                               << e.what() << std::endl;
                     return -4; // decompression failed
                 }
-                helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
-                                  true, true,
-                                  reinterpret_cast<char *>(output_data),
-                                  varStart, varCount, true, true);
+                input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error(
                     "Data received is compressed using SZ. However, SZ "
@@ -411,10 +412,7 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                               << e.what() << std::endl;
                     return -4; // decompression failed
                 }
-                helper::NdCopy<T>(decompressBuffer.data(), j.start, j.count,
-                                  true, true,
-                                  reinterpret_cast<char *>(output_data),
-                                  varStart, varCount, true, true);
+                input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error(
                     "Data received is compressed using BZip2. However, "
@@ -428,19 +426,18 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                 if (m_ContiguousMajor)
                 {
                     helper::NdCopy<T>(
-                        j.buffer->data() + j.position, j.start, j.count, true,
+                        input_data + j.position, j.start, j.count, true,
                         j.isLittleEndian, reinterpret_cast<char *>(output_data),
                         varStart, varCount, true, m_IsLittleEndian, j.start,
                         j.count, varMemStart, varMemCount);
                 }
                 else
                 {
-                    helper::NdCopy<T>(j.buffer->data() + j.position, j.start,
-                                      j.count, j.isRowMajor, j.isLittleEndian,
-                                      reinterpret_cast<char *>(output_data),
-                                      varStart, varCount, m_IsRowMajor,
-                                      m_IsLittleEndian, j.start, j.count,
-                                      varMemStart, varMemCount);
+                    helper::NdCopy<T>(
+                        input_data + j.position, j.start, j.count, j.isRowMajor,
+                        j.isLittleEndian, reinterpret_cast<char *>(output_data),
+                        varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
+                        j.start, j.count, varMemStart, varMemCount);
                 }
             }
         }

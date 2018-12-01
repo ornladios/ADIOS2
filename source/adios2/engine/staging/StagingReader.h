@@ -55,7 +55,7 @@ public:
 private:
     format::DataManSerializer m_DataManSerializer;
     transportman::WANMan m_MetadataTransport;
-    transportman::StagingMan m_DataTransport;
+    std::shared_ptr<transportman::StagingMan> m_DataTransport;
     std::unordered_map<
         size_t,
         std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>>>
@@ -65,6 +65,7 @@ private:
     int m_MpiRank;
     std::string m_WriterMasterIP;
     std::string m_WriterMasterMetadataPort = "12306";
+    int m_Timeout = 5;
 
     struct Request
     {
