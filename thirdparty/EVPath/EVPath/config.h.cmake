@@ -9,6 +9,9 @@
 /* Define to 1 if you have the enet header and libraries */
 #cmakedefine ENET_FOUND
 
+/* Define to 1 if you have the udt4 header and libraries */
+#cmakedefine UDT4_FOUND
+
 /* Define to 1 if you have the IB header and libraries */
 #cmakedefine IB_FOUND 
 
