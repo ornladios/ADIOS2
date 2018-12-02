@@ -37,7 +37,7 @@ typedef void (*CMAddSelectFunc)(void *svcs, void *select_data, int fd,
 typedef void (*CMTransport_fd_add_select)(CManager cm, int fd, select_list_func handler_func,
 					  void *param1, void *param2);
 typedef void (*CMTransport_fd_remove_select)(CManager cm, int fd);
-typedef void (*CMTransport_trace)(CManager cm, char *format, ...);
+typedef void (*CMTransport_trace)(CManager cm, const char *format, ...);
 typedef CMConnection (*CMTransport_conn_create)(transport_entry trans,
 						void *transport_data,
 						attr_list conn_attrs);
@@ -56,7 +56,7 @@ typedef void (*CMTransport_connection_close)(CMConnection conn);
 typedef void *(*CMTransport_get_transport_data)(CMConnection conn);
 typedef void (*CMTransport_action_pending_write)(CMConnection conn);
 typedef CMbuffer (*CMTransport_create_data_buffer)(CManager cm, void *buffer, int length);
-typedef int (*CMTransport_modify_global_lock)(CManager cm, char *file, int line);
+typedef int (*CMTransport_modify_global_lock)(CManager cm, const char *file, int line);
 typedef void (*CMTransport_add_buffer_to_pending_queue)(CManager cm, CMConnection conn, CMbuffer buf, long length);
 typedef void (*CMTransport_cond_wait_CM_lock)(CManager cm, void *cond, char *file, int line);
 
@@ -155,6 +155,7 @@ typedef void (*WritePossibleCallback)(transport_entry trans, CMConnection conn);
 struct _transport_item {
     char *trans_name;
     CManager cm;
+    void *dlhandle;
     DataAvailableCallback data_available;
     WritePossibleCallback write_possible;
     CMTransport_func  transport_init;
