@@ -72,6 +72,7 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
 		fprintf(CMTrace_file, "DLopen of %s succeeded\n", tmp);
 	    }
 	}
+	free(tmp);
  	list++;
 	if (handle) list = NULL; // fall out
     }
@@ -128,4 +129,28 @@ CMdlsym(void *vdlh, char *sym)
 	sym_val = dlsym(dlh->dlopen_handle, sym);
     return sym_val;
 #endif
+}
+
+void
+CMdlclose(void *vdlh)
+{
+#if NO_DYNAMIC_LINKING
+    return;
+#else
+    dlhandle dlh = (dlhandle)vdlh;
+    dlclose(dlh->dlopen_handle);
+    free(dlh->lib_prefix);
+    free(dlh);
+#endif
+}
+
+void
+CMdlclearsearchlist()
+{
+    int i = 0;
+    while(search_list[i]) {
+        free(search_list[i]);
+	i++;
+    }
+    free(search_list);
 }
