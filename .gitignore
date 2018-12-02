@@ -1,3 +1,5 @@
+# vi temp files
+*.s??
 
 # /
 /*.exp

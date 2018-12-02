@@ -6,5 +6,7 @@
 #define MODULE_EXT CMAKE_SHARED_MODULE_SUFFIX
 extern void CMdladdsearchdir(char *dir);
 extern void* CMdlopen(void *CMTrace_file, char *library, int mode);
+extern void CMdlclose(void *handle);
+extern void CMdlclearsearchlist();
 extern void* CMdlsym(void *handle, char *symbol);
 extern void CMset_dlopen_verbose(int verbose);

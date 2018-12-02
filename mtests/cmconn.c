@@ -62,7 +62,7 @@ msg_handler(CManager cm, CMConnection conn, void *vmsg, void *client_data,
 	    printf("Master received incoming message from client:\n  Initiating a new conn to him, writing a message and closing it.\n");
 	reply.message_id = 1;
 	client_contact_list = attr_list_from_string(msg->contact_list);
-	conn_to_client = CMinitiate_conn(cm, client_contact_list);
+	conn_to_client = CMget_conn(cm, client_contact_list);
 	if (conn != conn_to_client) printf("CONN_EQ MAY BE BROKEN\n");
 	free_attr_list(client_contact_list);
 	CMwrite(conn_to_client, msg_format, &reply);
@@ -146,11 +146,11 @@ main(int argc, char **argv)
 	do_master_stuff(cm);
     } else {
 	msgrec msg;
-	attr_list tmp;
+	attr_list tmp, listen_list = NULL;
 	if (argc == 2) {
 	    attr_list contact_list;
 	    contact_list = attr_list_from_string(argv[1]);
-	    conn_to_master = CMinitiate_conn(cm, contact_list);
+	    conn_to_master = CMget_conn(cm, contact_list);
 	    if (conn_to_master == NULL) {
 		printf("No connection, attr list was :");
 		dump_attr_list(contact_list);
@@ -163,8 +163,14 @@ main(int argc, char **argv)
 	CMregister_handler(msg_format, msg_handler, NULL);
 	memset(&msg, 0, sizeof(msg));
 	msg.message_id = 0;
+	if ((transport = getenv("CMTransport")) != NULL) {
+	    if (listen_list == NULL) listen_list = create_attr_list();
+	    add_attr(listen_list, CM_TRANSPORT, Attr_String,
+		     (attr_value) strdup(transport));
+	}
 	CMlisten(cm);
-	msg.contact_list = attr_list_to_string(tmp = CMget_contact_list(cm));
+	CMlisten_specific(cm, listen_list);
+	msg.contact_list = attr_list_to_string(tmp = CMget_specific_contact_list(cm, listen_list));
 	free_attr_list(tmp);
 	if (!quiet)
 	    printf("Contact list sent to client is \"%s\"\n", msg.contact_list);
