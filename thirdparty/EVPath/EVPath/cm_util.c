@@ -151,7 +151,7 @@ CMtrace_out(CManager cm, CMTraceType trace_type, char *format, ...)
 }
  */
 extern void
-CMtransport_trace(CManager cm, char *format, ...)
+CMtransport_trace(CManager cm, const char *format, ...)
 {
 #ifndef MODULE
     va_list ap;
