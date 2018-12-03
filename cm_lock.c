@@ -19,7 +19,7 @@
 #include "assert.h"
 
 extern void
-IntCManager_lock(CManager cm, char *file, int line)
+IntCManager_lock(CManager cm, const char *file, int line)
 {
     CMtrace_out(cm, CMLowLevelVerbose, "CManager Lock at \"%s\" line %d\n",
 		file, line);
@@ -31,7 +31,7 @@ IntCManager_lock(CManager cm, char *file, int line)
 }
 
 extern void
-IntCManager_unlock(CManager cm, char *file, int line)
+IntCManager_unlock(CManager cm, const char *file, int line)
 {
     CMtrace_out(cm, CMLowLevelVerbose, "CManager Unlock at \"%s\" line %d\n",
 		file, line);

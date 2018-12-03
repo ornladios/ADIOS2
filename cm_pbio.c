@@ -126,7 +126,7 @@ inet_ntoa(struct in_addr ina)
 static int
 CMpbio_send_format_request(char *format_ID, int format_ID_length,
 			   CMConnection conn, int cond);
-static int CM_pbio_query(CMConnection conn, CMTransport trans,
+extern int CM_pbio_query(CMConnection conn, CMTransport trans,
 			 char *buffer, long length);
 
 static int
@@ -495,8 +495,9 @@ CMinit_local_formats(CManager cm)
     if (cm->FFSserver_identifier == -1) {
 	CMself_hosted_formats = 1;
     }
-    INT_CMregister_non_CM_message_handler(0x5042494f, CM_pbio_query);
-    INT_CMregister_non_CM_message_handler(0x4f494250, CM_pbio_query);
+//   handle these natively to avoid foreign handlers     
+//    INT_CMregister_non_CM_message_handler(0x5042494f, CM_pbio_query);
+//    INT_CMregister_non_CM_message_handler(0x4f494250, CM_pbio_query);
 }
 
 static int
@@ -538,7 +539,7 @@ byte_swap(char *data, int size)
     }
 }
 
-static int
+extern int
 CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, long length)
 {
     struct pbio_exchange_msg tmp_msg;
