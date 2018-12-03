@@ -971,50 +971,6 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
         }
         reader.Close();
     }
-
-    {
-        adios2::IO io =
-            adios.DeclareIO("Reader for non-streaming deferred reading");
-        io.SetEngine("HDF5");
-        adios2::Engine reader2 = io.Open(fname, adios2::Mode::Read);
-        adios2::Variable<float> varR32 = io.InquireVariable<float>("r32");
-        adios2::Variable<double> varR64 = io.InquireVariable<double>("r64");
-
-        std::array<float, Nx * Ny> R32;
-        std::array<double, Nx * Ny> R64;
-
-        reader2.Get(varR32, R32.data());
-        reader2.Get(varR64, R64.data());
-
-        varR32.SetStepSelection({0, 1});
-        varR64.SetStepSelection({NSteps - 1, 1});
-
-        reader2.PerformGets();
-
-        SmallTestData currentTestData = generateNewSmallTestData(
-            m_TestData, static_cast<int>(0), mpiRank, mpiSize);
-
-        for (size_t i = 0; i < Nx * Ny; ++i)
-        {
-            std::stringstream ss;
-            ss << "t=" << 0 << " i=" << i << " rank=" << mpiRank;
-            std::string msg = ss.str();
-
-            EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
-        }
-        currentTestData = generateNewSmallTestData(
-            m_TestData, static_cast<int>(NSteps - 1), mpiRank, mpiSize);
-        for (size_t i = 0; i < Nx * Ny; ++i)
-        {
-            std::stringstream ss;
-            ss << "t=" << (NSteps - 1) << " i=" << i << " rank=" << mpiRank;
-            std::string msg = ss.str();
-
-            EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
-        }
-
-        reader2.Close();
-    }
 }
 
 int main(int argc, char **argv)
