@@ -29,7 +29,11 @@ HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
     Init();
 }
 
-HDF5ReaderP::~HDF5ReaderP() { DoClose(); }
+HDF5ReaderP::~HDF5ReaderP()
+{
+    if (IsValid())
+        DoClose();
+}
 
 bool HDF5ReaderP::IsValid()
 {
