@@ -138,7 +138,9 @@ CMdlclose(void *vdlh)
     return;
 #else
     dlhandle dlh = (dlhandle)vdlh;
+#ifdef ACTUALLY_DO_DLCLOSE
     dlclose(dlh->dlopen_handle);
+#endif
     free(dlh->lib_prefix);
     free(dlh);
 #endif
