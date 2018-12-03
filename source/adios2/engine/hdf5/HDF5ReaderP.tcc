@@ -102,7 +102,7 @@ template <class T>
 std::vector<typename Variable<T>::Info>
 HDF5ReaderP::GetBlocksInfo(const Variable<T> &variable, const size_t step) const
 {
-    BlocksInfoCommon(variable);
+    return BlocksInfoCommon(variable);
 }
 
 } // end namespace engine
