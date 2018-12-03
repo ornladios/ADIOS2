@@ -257,7 +257,6 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    m_InStreamMode = true;
     int ts = m_H5File.GetNumAdiosSteps();
 
     if (m_StreamAt >= ts)
@@ -265,6 +264,21 @@ StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
         m_IO.m_ReadStreaming = false;
         return StepStatus::EndOfStream;
     }
+
+    if (m_DeferredStack.size() > 0)
+    {
+        // EndStep was not called!
+        return StepStatus::NotReady;
+    }
+
+    if (m_InStreamMode && (m_StreamAt == m_IO.m_EngineStep))
+    {
+        // EndStep() was not called after BeginStep()
+        // otherwise m_StreamAt would have been increated by 1
+        return StepStatus::OtherError;
+    }
+
+    m_InStreamMode = true;
 
     m_IO.m_ReadStreaming = true;
     m_IO.m_EngineStep = m_StreamAt;
@@ -286,43 +300,33 @@ void HDF5ReaderP::EndStep()
 
 void HDF5ReaderP::PerformGets()
 {
-    // looks this this is not enforced to be specific to stream mode!!
-    if (!m_InStreamMode)
-    {
-#define declare_type(T)                                                        \
-    for (std::string variableName : m_DeferredStack)                           \
-    {                                                                          \
-        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
-        if (var != nullptr)                                                    \
-        {                                                                      \
-            hid_t h5Type = m_H5File.GetHDF5Type<T>();                          \
-            UseHDFRead(*var, var->GetData(), h5Type);                          \
-            break;                                                             \
-        }                                                                      \
-    }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
 
-        // throw std::runtime_error(
-        //  "PerformGets() needs to follow stream read sequeuences.");
-        return;
-    }
 #define declare_type(T)                                                        \
     for (std::string variableName : m_DeferredStack)                           \
     {                                                                          \
-        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
-        if (var != nullptr)                                                    \
+        const std::string type = m_IO.InquireVariableType(variableName);       \
+        if (type == helper::GetType<T>())                                      \
         {                                                                      \
-            var->m_StepsStart = m_StreamAt;                                    \
-            var->m_StepsCount = 1;                                             \
-            hid_t h5Type = m_H5File.GetHDF5Type<T>();                          \
-            UseHDFRead(*var, var->GetData(), h5Type);                          \
-            break;                                                             \
+            Variable<T> *var = m_IO.InquireVariable<T>(variableName);          \
+            if (var != nullptr)                                                \
+            {                                                                  \
+                if (m_InStreamMode)                                            \
+                {                                                              \
+                    var->m_StepsStart = m_StreamAt;                            \
+                    var->m_StepsCount = 1;                                     \
+                }                                                              \
+                hid_t h5Type = m_H5File.GetHDF5Type<T>();                      \
+                UseHDFRead(*var, var->GetData(), h5Type);                      \
+            }                                                                  \
         }                                                                      \
     }
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+    //
+    // clear the list here so only read the variables once
+    // (other functions like EndStep() will call PerformToGet() also)
+    //
     m_DeferredStack.clear();
 }
 
@@ -341,32 +345,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void HDF5ReaderP::DoClose(const int transportIndex)
 {
-    // printf("ReaderP::DoClose() %lu\n", m_DeferredStack.size());
-    if (m_DeferredStack.size() > 0)
-    {
-        if (m_InStreamMode)
-        {
-            PerformGets();
-        }
-        else
-        {
-#define declare_type(T)                                                        \
-    for (std::string variableName : m_DeferredStack)                           \
-    {                                                                          \
-        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
-        if (var != nullptr)                                                    \
-        {                                                                      \
-            hid_t h5Type = m_H5File.GetHDF5Type<T>();                          \
-            UseHDFRead(*var, var->GetData(), h5Type);                          \
-            break;                                                             \
-        }                                                                      \
-    }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
-#undef declare_type
-            m_DeferredStack.clear();
-        }
-    }
-
+    /*
+     */
+    EndStep();
+    /*
+     */
     m_H5File.Close();
 }
 
