@@ -146,7 +146,7 @@ namespace adios2
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
                                 "in call to Variable<T>::BlockID");            \
-        m_Variable->m_BlockID;                                                 \
+        return m_Variable->m_BlockID;                                          \
     }                                                                          \
                                                                                \
     template <>                                                                \

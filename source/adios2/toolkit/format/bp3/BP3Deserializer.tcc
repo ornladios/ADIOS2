@@ -90,6 +90,35 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         }
     }
 
+    if (variable.m_SelectionType == SelectionType::WriteBlock)
+    {
+        const std::vector<typename core::Variable<T>::Info> blocksInfo =
+            BlocksInfo(variable, stepsStart);
+
+        if (m_DebugMode)
+        {
+            if (variable.m_BlockID >= blocksInfo.size())
+            {
+                throw std::invalid_argument(
+                    "ERROR: invalid blockID " +
+                    std::to_string(variable.m_BlockID) + " from steps start " +
+                    std::to_string(stepsStart) + " in variable " +
+                    variable.m_Name +
+                    ", check argument to Variable<T>::SetBlockID, in call "
+                    "to Get\n");
+            }
+        }
+
+        // switch to bounding box for global array
+        if (variable.m_ShapeID == ShapeID::GlobalArray)
+        {
+            const Dims &start = blocksInfo[variable.m_BlockID].Start;
+            const Dims &count = blocksInfo[variable.m_BlockID].Count;
+            // TODO check if we need to reverse dimensions
+            variable.SetSelection({start, count});
+        }
+    }
+
     // create block info
     return variable.SetBlockInfo(data, stepsStart, stepsCount);
 }
@@ -127,116 +156,115 @@ void BP3Deserializer::SetVariableBlockInfo(
     auto lf_SetSubStreamInfo =
         [&](const std::string &variableName, const Box<Dims> &selectionBox,
             typename core::Variable<T>::Info &blockInfo, const size_t step,
-            const std::vector<size_t> &blockIndexOffsets,
-            const BufferSTL &bufferSTL, const bool isRowMajor)
+            const size_t blockIndexOffset, const BufferSTL &bufferSTL,
+            const bool isRowMajor)
 
     {
         const std::vector<char> &buffer = bufferSTL.m_Buffer;
 
-        for (const size_t blockIndexOffset : blockIndexOffsets)
+        // for (size_t b = 0; b < blockIndexOffsets.size(); ++b)
+        //{
+        size_t position = blockIndexOffset;
+
+        const Characteristics<T> blockCharacteristics =
+            ReadElementIndexCharacteristics<T>(
+                buffer, position, static_cast<DataTypes>(GetDataType<T>()),
+                false, m_Minifooter.IsLittleEndian);
+
+        // check if they intersect
+        helper::SubStreamBoxInfo subStreamInfo;
+
+        if (helper::GetTotalSize(blockCharacteristics.Count) == 0)
         {
-            size_t position = blockIndexOffset;
+            subStreamInfo.ZeroBlock = true;
+        }
 
-            const Characteristics<T> blockCharacteristics =
-                ReadElementIndexCharacteristics<T>(
-                    buffer, position, static_cast<DataTypes>(GetDataType<T>()),
-                    false, m_Minifooter.IsLittleEndian);
+        subStreamInfo.BlockBox = helper::StartEndBox(
+            blockCharacteristics.Start, blockCharacteristics.Count);
+        subStreamInfo.IntersectionBox =
+            helper::IntersectionBox(selectionBox, subStreamInfo.BlockBox);
 
-            // check if they intersect
-            helper::SubStreamBoxInfo subStreamInfo;
+        if (subStreamInfo.IntersectionBox.first.empty() ||
+            subStreamInfo.IntersectionBox.second.empty())
+        {
+            return;
+        }
 
-            if (helper::GetTotalSize(blockCharacteristics.Count) == 0)
+        if (m_DebugMode)
+        {
+            const size_t dimensions = blockCharacteristics.Shape.size();
+            if (dimensions != blockInfo.Shape.size())
             {
-                subStreamInfo.ZeroBlock = true;
+                throw std::invalid_argument(
+                    "ERROR: block Shape (available) and "
+                    "selection Shape (requested) dimensions, do not "
+                    "match "
+                    "when reading variable " +
+                    variableName + ", in call to Get");
             }
 
-            subStreamInfo.BlockBox = helper::StartEndBox(
-                blockCharacteristics.Start, blockCharacteristics.Count);
-            subStreamInfo.IntersectionBox =
-                helper::IntersectionBox(selectionBox, subStreamInfo.BlockBox);
-
-            if (subStreamInfo.IntersectionBox.first.empty() ||
-                subStreamInfo.IntersectionBox.second.empty())
+            Dims readInShape = blockCharacteristics.Shape;
+            if (m_ReverseDimensions)
             {
-                continue;
+                std::reverse(readInShape.begin(), readInShape.end());
             }
 
-            if (m_DebugMode)
+            for (auto i = 0; i < dimensions; ++i)
             {
-                const size_t dimensions = blockCharacteristics.Shape.size();
-                if (dimensions != blockInfo.Shape.size())
+                if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
                 {
                     throw std::invalid_argument(
-                        "ERROR: block Shape (available) and "
-                        "selection Shape (requested) dimensions, do not match "
-                        "when reading variable " +
-                        variableName + ", in call to Get");
-                }
-
-                Dims readInShape = blockCharacteristics.Shape;
-                if (m_ReverseDimensions)
-                {
-                    std::reverse(readInShape.begin(), readInShape.end());
-                }
-
-                for (auto i = 0; i < dimensions; ++i)
-                {
-                    if (blockInfo.Start[i] + blockInfo.Count[i] >
-                        readInShape[i])
-                    {
-                        throw std::invalid_argument(
-                            "ERROR: selection Start " +
-                            helper::DimsToString(blockInfo.Start) +
-                            " and Count " +
-                            helper::DimsToString(blockInfo.Count) +
-                            " (requested) is out of bounds of available "
-                            "Shape " +
-                            helper::DimsToString(blockCharacteristics.Shape) +
-                            " , when reading variable " + variableName +
-                            ", in call to Get");
-                    }
+                        "ERROR: selection Start " +
+                        helper::DimsToString(blockInfo.Start) + " and Count " +
+                        helper::DimsToString(blockInfo.Count) +
+                        " (requested) is out of bounds of available "
+                        "Shape " +
+                        helper::DimsToString(blockCharacteristics.Shape) +
+                        " , when reading variable " + variableName +
+                        ", in call to Get");
                 }
             }
-
-            // relative position
-            subStreamInfo.Seeks.first =
-                sizeof(T) *
-                helper::LinearIndex(subStreamInfo.BlockBox,
-                                    subStreamInfo.IntersectionBox.first,
-                                    isRowMajor);
-
-            subStreamInfo.Seeks.second =
-                sizeof(T) *
-                (helper::LinearIndex(subStreamInfo.BlockBox,
-                                     subStreamInfo.IntersectionBox.second,
-                                     isRowMajor) +
-                 1);
-
-            const size_t payloadOffset =
-                blockCharacteristics.Statistics.PayloadOffset;
-            const auto &bp3Op = blockCharacteristics.Statistics.Op;
-            // if they intersect get info Seeks (first: start, second:
-            // count) depending on operation info
-            if (bp3Op.IsActive)
-            {
-                lf_SetSubStreamInfoOperations(bp3Op, payloadOffset,
-                                              subStreamInfo, m_IsRowMajor);
-            }
-            else
-            {
-                // make it absolute if no operations
-                subStreamInfo.Seeks.first += payloadOffset;
-                subStreamInfo.Seeks.second += payloadOffset;
-            }
-            subStreamInfo.SubStreamID =
-                static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
-
-            blockInfo.StepBlockSubStreamsInfo[step].push_back(
-                std::move(subStreamInfo));
         }
+
+        // relative position
+        subStreamInfo.Seeks.first =
+            sizeof(T) * helper::LinearIndex(subStreamInfo.BlockBox,
+                                            subStreamInfo.IntersectionBox.first,
+                                            isRowMajor);
+
+        subStreamInfo.Seeks.second =
+            sizeof(T) * (helper::LinearIndex(
+                             subStreamInfo.BlockBox,
+                             subStreamInfo.IntersectionBox.second, isRowMajor) +
+                         1);
+
+        const size_t payloadOffset =
+            blockCharacteristics.Statistics.PayloadOffset;
+        const auto &bp3Op = blockCharacteristics.Statistics.Op;
+        // if they intersect get info Seeks (first: start, second:
+        // count) depending on operation info
+        if (bp3Op.IsActive)
+        {
+            lf_SetSubStreamInfoOperations(bp3Op, payloadOffset, subStreamInfo,
+                                          m_IsRowMajor);
+        }
+        else
+        {
+            // make it absolute if no operations
+            subStreamInfo.Seeks.first += payloadOffset;
+            subStreamInfo.Seeks.second += payloadOffset;
+        }
+        subStreamInfo.SubStreamID =
+            static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
+
+        blockInfo.StepBlockSubStreamsInfo[step].push_back(
+            std::move(subStreamInfo));
+        // } // end block loop
     };
 
-    const auto &indices = variable.m_AvailableStepBlockIndexOffsets;
+    // BODY OF FUNCTIONS STARTS HERE
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable.m_AvailableStepBlockIndexOffsets;
 
     const Box<Dims> selectionBox = helper::StartEndBox(
         blockInfo.Start, blockInfo.Count, m_ReverseDimensions);
@@ -245,9 +273,24 @@ void BP3Deserializer::SetVariableBlockInfo(
 
     for (auto i = 0; i < blockInfo.StepsCount; ++i)
     {
-        lf_SetSubStreamInfo(variable.m_Name, selectionBox, blockInfo,
-                            itStep->first, itStep->second, m_Metadata,
-                            m_IsRowMajor);
+        const size_t step = itStep->first;
+        const std::vector<size_t> &blockOffsets = itStep->second;
+
+        if (variable.m_ShapeID == ShapeID::GlobalArray)
+        {
+            for (const size_t blockOffset : blockOffsets)
+            {
+                lf_SetSubStreamInfo(variable.m_Name, selectionBox, blockInfo,
+                                    step, blockOffset, m_Metadata,
+                                    m_IsRowMajor);
+            }
+        }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            lf_SetSubStreamInfo(variable.m_Name, selectionBox, blockInfo, step,
+                                blockInfo.BlockID, m_Metadata, m_IsRowMajor);
+        }
+
         ++itStep;
     }
 }

@@ -44,6 +44,8 @@ public:
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
+    SelectionType m_SelectionType = SelectionType::BoundingBox;
+
     bool m_SingleValue = false; ///< true: single value, false: array
     Dims m_Shape;               ///< total dimensions across MPI
     Dims m_Start;               ///< starting point (offsets) in global shape

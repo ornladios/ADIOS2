@@ -869,12 +869,12 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_min):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_max):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_offset):

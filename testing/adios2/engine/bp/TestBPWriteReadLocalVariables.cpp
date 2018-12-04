@@ -142,7 +142,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
         bpWriter.Close();
     }
 
-    // if (false)
+    // if (false) Reader
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -174,9 +174,6 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(currentStep), mpiRank, mpiSize);
-
             auto var_StepsGlobalValue =
                 io.InquireVariable<int>("stepsGlobalValue");
             auto var_RanksLocalValue =
@@ -196,7 +193,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
             auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
-            // Global
+            // Global value
             EXPECT_TRUE(var_StepsGlobalValue);
             ASSERT_EQ(var_StepsGlobalValue.ShapeID(),
                       adios2::ShapeID::GlobalValue);
@@ -208,7 +205,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             int rankGlobalValueData;
             bpReader.Get(var_StepsGlobalValue, rankGlobalValueData);
 
-            // Local
+            // Local value
             EXPECT_TRUE(var_RanksLocalValue);
             ASSERT_EQ(var_RanksLocalValue.ShapeID(),
                       adios2::ShapeID::LocalValue);
@@ -221,11 +218,6 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             bpReader.Get(var_RanksLocalValue, rankLocalValueData);
 
             ASSERT_EQ(rankLocalValueData.size(), mpiSize);
-
-            for (auto i = 0; i < mpiSize; ++i)
-            {
-                ASSERT_EQ(rankLocalValueData[i], i);
-            }
 
             //            EXPECT_TRUE(var_iString);
             //            EXPECT_TRUE(var_i8);
@@ -251,7 +243,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             //
             ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::LocalArray);
             ASSERT_EQ(var_i32.Steps(), NSteps);
-            ASSERT_EQ(var_i32.Shape()[0], Nx);
+            ASSERT_EQ(var_i32.Shape().size(), 0);
+            ASSERT_EQ(var_i32.BlockID(), 0);
+
             //
             //            ASSERT_EQ(var_i64.ShapeID(),
             //            adios2::ShapeID::LocalArray);
@@ -306,57 +300,73 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             //            bpReader.Get(var_cr32, CR32.data());
             //            bpReader.Get(var_cr64, CR64.data());
 
+            for (size_t b = 0; b < mpiSize; ++b)
+            {
+                var_i32.SetBlockID(b);
+                bpReader.Get(var_i32, I32.data());
+                bpReader.PerformGets();
+
+                SmallTestData currentTestData = generateNewSmallTestData(
+                    m_TestData, static_cast<int>(currentStep),
+                    static_cast<int>(b), mpiSize);
+
+                for (size_t i = 0; i < Nx; ++i)
+                {
+                    std::stringstream ss;
+                    ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
+                    std::string msg = ss.str();
+
+                    if (var_i32)
+                        ASSERT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                }
+            }
+
             bpReader.EndStep();
 
-            for (size_t i = 0; i < Nx; ++i)
-            {
-                std::stringstream ss;
-                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
-                std::string msg = ss.str();
-                //
-                //                if (var_i8)
-                //                    EXPECT_EQ(I8[i], currentTestData.I8[i]) <<
-                //                    msg;
-                //                if (var_i16)
-                //                    EXPECT_EQ(I16[i], currentTestData.I16[i])
-                //                    << msg;
-                //                if (var_i32)
-                //                    EXPECT_EQ(I32[i], currentTestData.I32[i])
-                //                    << msg;
-                //                if (var_i64)
-                //                    EXPECT_EQ(I64[i], currentTestData.I64[i])
-                //                    << msg;
-                //
-                //                if (var_u8)
-                //                    EXPECT_EQ(U8[i], currentTestData.U8[i]) <<
-                //                    msg;
-                //                if (var_u16)
-                //                    EXPECT_EQ(U16[i], currentTestData.U16[i])
-                //                    << msg;
-                //                if (var_u32)
-                //                    EXPECT_EQ(U32[i], currentTestData.U32[i])
-                //                    << msg;
-                //                if (var_u64)
-                //                    EXPECT_EQ(U64[i], currentTestData.U64[i])
-                //                    << msg;
-                //                if (var_r32)
-                //                    EXPECT_EQ(R32[i], currentTestData.R32[i])
-                //                    << msg;
-                //                if (var_r64)
-                //                    EXPECT_EQ(R64[i], currentTestData.R64[i])
-                //                    << msg;
-                //
-                //                if (var_cr32)
-                //                    EXPECT_EQ(CR32[i],
-                //                    currentTestData.CR32[i]) << msg;
-                //                if (var_cr64)
-                //                    EXPECT_EQ(CR64[i],
-                //                    currentTestData.CR64[i]) << msg;
-            }
+            //
+            //                if (var_i8)
+            //                    EXPECT_EQ(I8[i], currentTestData.I8[i]) <<
+            //                    msg;
+            //                if (var_i16)
+            //                    EXPECT_EQ(I16[i], currentTestData.I16[i])
+            //                    << msg;
+            //                if (var_i32)
+            //                    EXPECT_EQ(I32[i], currentTestData.I32[i])
+            //                    << msg;
+            //                if (var_i64)
+            //                    EXPECT_EQ(I64[i], currentTestData.I64[i])
+            //                    << msg;
+            //
+            //                if (var_u8)
+            //                    EXPECT_EQ(U8[i], currentTestData.U8[i]) <<
+            //                    msg;
+            //                if (var_u16)
+            //                    EXPECT_EQ(U16[i], currentTestData.U16[i])
+            //                    << msg;
+            //                if (var_u32)
+            //                    EXPECT_EQ(U32[i], currentTestData.U32[i])
+            //                    << msg;
+            //                if (var_u64)
+            //                    EXPECT_EQ(U64[i], currentTestData.U64[i])
+            //                    << msg;
+            //                if (var_r32)
+            //                    EXPECT_EQ(R32[i], currentTestData.R32[i])
+            //                    << msg;
+            //                if (var_r64)
+            //                    EXPECT_EQ(R64[i], currentTestData.R64[i])
+            //                    << msg;
+            //
+            //                if (var_cr32)
+            //                    EXPECT_EQ(CR32[i],
+            //                    currentTestData.CR32[i]) << msg;
+            //                if (var_cr64)
+            //                    EXPECT_EQ(CR64[i],
+            //                    currentTestData.CR64[i]) << msg;
+
             ++t;
         }
 
-        // EXPECT_EQ(t, NSteps);
+        EXPECT_EQ(t, NSteps);
 
         bpReader.Close();
     }
