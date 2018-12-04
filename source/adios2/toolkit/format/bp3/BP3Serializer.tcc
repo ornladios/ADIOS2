@@ -334,8 +334,9 @@ void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     helper::CopyToBuffer(buffer, backPosition,
                          &characteristicsLength); // length
 
-    // Finish characteristic count length
+    // Remember this attribute and its serialized piece
     m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
+    m_SerializedAttributes.emplace(attribute.m_Name);
 }
 
 template <>

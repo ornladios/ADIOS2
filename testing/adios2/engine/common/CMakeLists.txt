@@ -19,9 +19,9 @@ endif()
 #   2nd arg: 1 for serialized execution, 0 for concurrent execution of Writer/Reader
 #   3rd arg: engine parameters
 
-#gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
-#                EXTRA_ARGS "BPFile" "1"
-#                TEST_SUFFIX _BPFile)
+gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
+                EXTRA_ARGS "BPFile" "1"
+                TEST_SUFFIX _BPFile)
                 
 if(ADIOS2_HAVE_HDF5)
 gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
@@ -38,11 +38,11 @@ gtest_add_tests(TARGET TestEngineCommon ${extra_test_args}
                 TEST_SUFFIX _SST_BP)
 endif()
 
-#if(ADIOS2_HAVE_MPI)
-#gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
-#                EXTRA_ARGS "InSituMPI" "0"
-#                TEST_SUFFIX _InSituMPI)
-#endif()
+if(ADIOS2_HAVE_MPI)
+gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
+                EXTRA_ARGS "InSituMPI" "0"
+                TEST_SUFFIX _InSituMPI)
+endif()
 
 #if(ADIOS2_HAVE_DataMan)
 #gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 

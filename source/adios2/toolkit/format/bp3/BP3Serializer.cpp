@@ -482,6 +482,14 @@ void BP3Serializer::PutAttributes(core::IO &io)
         const std::string name(attributePair.first);
         const std::string type(attributePair.second.first);
 
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(name);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
+
         if (type == "unknown")
         {
         }
@@ -635,20 +643,21 @@ void BP3Serializer::SerializeDataBuffer(core::IO &io) noexcept
     helper::CopyToBuffer(buffer, m_MetadataSet.DataPGVarsCountPosition,
                          &varsLength);
 
-    // attributes are only written once
-
-    if (!m_MetadataSet.AreAttributesWritten)
+    // each attribute is only written to output once
+    size_t attributesSizeInData = GetAttributesSizeInData(io);
+    if (attributesSizeInData)
     {
-        const size_t attributesSizeInData = GetAttributesSizeInData(io);
+        attributesSizeInData += 12; // count + length
         m_Data.Resize(position + attributesSizeInData,
                       "when writing Attributes in rank=0\n");
 
         PutAttributes(io);
-        m_MetadataSet.AreAttributesWritten = true;
     }
     else
     {
         m_Data.Resize(position + 12, "for empty Attributes\n");
+        // Attribute index header for zero attributes: 0, 0LL
+        // Resize() already takes care of this
         position += 12;
         absolutePosition += 12;
     }
@@ -1614,13 +1623,21 @@ uint32_t BP3Serializer::GetFileIndex() const noexcept
 
 size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 {
-    size_t attributesSizeInData = 12; // count + length
+    size_t attributesSizeInData = 0;
 
     auto &attributes = io.GetAttributesDataMap();
 
     for (const auto &attribute : attributes)
     {
         const std::string type = attribute.second.first;
+
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(attribute.first);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
 
         if (type == "compound")
         {
