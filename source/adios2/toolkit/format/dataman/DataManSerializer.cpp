@@ -455,20 +455,102 @@ void DataManSerializer::GenerateReply(const std::vector<char> &request,
     try
     {
         metaj = nlohmann::json::from_msgpack(request.data(), request.size());
-        for (const auto &req : metaj)
-        {
-            std::cout << req.dump(4) << std::endl;
-        }
     }
     catch (std::exception &e)
     {
         std::cout << "DataManSerializer received staging request but failed to "
                      "deserialize"
                   << std::endl;
+        return;
+    }
+
+    nlohmann::json replyMetaJ;
+
+    for (const auto &req : metaj)
+    {
+        std::lock_guard<std::mutex> l(m_Mutex);
+        std::string variable = req["N"].get<std::string>();
+        Dims start = req["O"].get<Dims>();
+        Dims count = req["C"].get<Dims>();
+        size_t step = req["T"].get<size_t>();
+        auto itVarVec = m_DataManVarMap.find(step);
+        if (itVarVec != m_DataManVarMap.end())
+        {
+            for (const auto &var : *(itVarVec->second))
+            {
+                if (var.name == variable)
+                {
+                    Dims ovlpStart, ovlpCount;
+                    bool ovlp = CalculateOverlap(var.start, var.count, start,
+                                                 count, ovlpStart, ovlpCount);
+
+                    std::cout << ovlp << std::endl;
+                    for (auto kkk : ovlpStart)
+                    {
+                        std::cout << kkk << " ";
+                    }
+                    std::cout << std::endl;
+                    for (auto kkk : ovlpCount)
+                    {
+                        std::cout << kkk << " ";
+                    }
+                    std::cout << std::endl;
+                }
+            }
+        }
     }
 }
 
 void DataManSerializer::PutReply(const std::vector<char> &reply) {}
+
+bool DataManSerializer::CalculateOverlap(const Dims &inStart,
+                                         const Dims &inCount,
+                                         const Dims &outStart,
+                                         const Dims &outCount, Dims &ovlpStart,
+                                         Dims &ovlpCount)
+{
+    if (inStart.size() != inCount.size() ||
+        outStart.size() != outCount.size() || inStart.size() != outStart.size())
+    {
+        return false;
+    }
+    if (ovlpStart.size() != inStart.size())
+    {
+        ovlpStart.resize(inStart.size());
+    }
+    if (ovlpCount.size() != inStart.size())
+    {
+        ovlpCount.resize(inStart.size());
+    }
+    for (size_t i = 0; i < inStart.size(); ++i)
+    {
+        if (inStart[i] + inCount[i] < outStart[i])
+        {
+            return false;
+        }
+        if (outStart[i] + outCount[i] < inStart[i])
+        {
+            return false;
+        }
+        if (inStart[i] < outStart[i])
+        {
+            ovlpStart[i] = outStart[i];
+        }
+        else
+        {
+            ovlpStart[i] = inStart[i];
+        }
+        if (inStart[i] + inCount[i] < outStart[i] + outCount[i])
+        {
+            ovlpCount[i] = inStart[i] + inCount[i] - ovlpStart[i];
+        }
+        else
+        {
+            ovlpCount[i] = outStart[i] + outCount[i] - ovlpStart[i];
+        }
+    }
+    return true;
+}
 
 } // namespace format
 } // namespace adios2

@@ -78,13 +78,17 @@ public:
     PutVar(const T *inputData, const std::string &varName, const Dims &varShape,
            const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
            const Dims &varMemCount, const std::string &doid, const size_t step,
-           const int rank, const std::string &address, const Params &params);
+           const int rank, const std::string &address, const Params &params,
+           std::shared_ptr<std::vector<char>> localBuffer = nullptr,
+           std::shared_ptr<nlohmann::json> metadataJson = nullptr);
 
     // another wrapper for PutVar which accepts adios2::core::Variable
     template <class T>
     void PutVar(const core::Variable<T> &variable, const std::string &doid,
                 const size_t step, const int rank, const std::string &address,
-                const Params &params);
+                const Params &params,
+                std::shared_ptr<std::vector<char>> localBuffer = nullptr,
+                std::shared_ptr<nlohmann::json> metadataJson = nullptr);
 
     // put attributes for writer
     void PutAttributes(core::IO &io, const int rank);
@@ -174,6 +178,10 @@ private:
 
     std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
         m_DeferredRequestsToSend;
+
+    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
+                          const Dims &outStart, const Dims &outCount,
+                          Dims &ovlpStart, Dims &ovlpCount);
 
     std::mutex m_Mutex;
     bool m_IsRowMajor;

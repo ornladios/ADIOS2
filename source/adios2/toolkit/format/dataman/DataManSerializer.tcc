@@ -36,11 +36,14 @@ template <class T>
 void DataManSerializer::PutVar(const core::Variable<T> &variable,
                                const std::string &doid, const size_t step,
                                const int rank, const std::string &address,
-                               const Params &params)
+                               const Params &params,
+                               std::shared_ptr<std::vector<char>> localBuffer,
+                               std::shared_ptr<nlohmann::json> metadataJson)
 {
     PutVar(variable.GetData(), variable.m_Name, variable.m_Shape,
            variable.m_Start, variable.m_Count, variable.m_MemoryStart,
-           variable.m_MemoryCount, doid, step, rank, address, params);
+           variable.m_MemoryCount, doid, step, rank, address, params,
+           localBuffer, metadataJson);
 }
 
 template <class T>
@@ -49,8 +52,14 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                                const Dims &varCount, const Dims &varMemStart,
                                const Dims &varMemCount, const std::string &doid,
                                const size_t step, const int rank,
-                               const std::string &address, const Params &params)
+                               const std::string &address, const Params &params,
+                               std::shared_ptr<std::vector<char>> localBuffer,
+                               std::shared_ptr<nlohmann::json> metadataJson)
 {
+    if (localBuffer == nullptr)
+    {
+        localBuffer = m_LocalBuffer;
+    }
 
     nlohmann::json metaj;
 
@@ -63,7 +72,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     metaj["M"] = m_IsRowMajor;
     metaj["E"] = m_IsLittleEndian;
     metaj["Y"] = GetType<T>();
-    metaj["P"] = m_LocalBuffer->size();
+    metaj["P"] = localBuffer->size();
 
     size_t datasize;
     bool compressed = false;
@@ -126,25 +135,30 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     }
     metaj["I"] = datasize;
 
-    if (m_LocalBuffer->capacity() < m_LocalBuffer->size() + datasize)
+    if (localBuffer->capacity() < localBuffer->size() + datasize)
     {
-        m_LocalBuffer->reserve((m_LocalBuffer->size() + datasize) * 2);
+        localBuffer->reserve((localBuffer->size() + datasize) * 2);
     }
 
-    m_LocalBuffer->resize(m_LocalBuffer->size() + datasize);
+    localBuffer->resize(localBuffer->size() + datasize);
 
     if (compressed)
     {
-        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - datasize,
+        std::memcpy(localBuffer->data() + localBuffer->size() - datasize,
                     m_CompressBuffer.data(), datasize);
     }
     else
     {
-        std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - datasize,
+        std::memcpy(localBuffer->data() + localBuffer->size() - datasize,
                     inputData, datasize);
     }
 
-    m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
+    nlohmann::json &metadataJsonOut = m_MetadataJson;
+    if (metadataJson != nullptr)
+    {
+        metadataJsonOut = *metadataJson;
+    }
+    metadataJsonOut[std::to_string(step)][std::to_string(rank)].emplace_back(
         metaj);
 }
 
