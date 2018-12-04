@@ -287,13 +287,19 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
             CP_verbose(Stream,
                        "finished wait writer response message in read_open\n");
 
-            assert(response);
-            WriterData.WriterCohortSize = response->WriterCohortSize;
-            WriterData.WriterConfigParams = response->WriterConfigParams;
-            WriterData.StartingStepNumber = response->NextStepNumber;
-            WriterData.CP_WriterInfo = response->CP_WriterInfo;
-            WriterData.DP_WriterInfo = response->DP_WriterInfo;
-            rank0_to_rank0_conn = conn;
+            if (response)
+            {
+                WriterData.WriterCohortSize = response->WriterCohortSize;
+                WriterData.WriterConfigParams = response->WriterConfigParams;
+                WriterData.StartingStepNumber = response->NextStepNumber;
+                WriterData.CP_WriterInfo = response->CP_WriterInfo;
+                WriterData.DP_WriterInfo = response->DP_WriterInfo;
+                rank0_to_rank0_conn = conn;
+            }
+            else
+            {
+                WriterData.WriterCohortSize = -1;
+            }
         }
         else
         {
