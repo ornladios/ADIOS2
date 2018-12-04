@@ -163,6 +163,7 @@ enet_service_network(CManager cm, void *void_trans)
     }
 
     while (ecd->pending_data) {
+        printf("We're calling handle packet on pending data first\n");
         svc->trace_out(cm, "ENET Handling pending data\n");
         queued_data entry = ecd->pending_data;
         ecd->pending_data = entry->next;
@@ -170,6 +171,7 @@ enet_service_network(CManager cm, void *void_trans)
         free(entry);
     }
 
+    printf("there's no more pending data\n");
     while (ecd->server && (enet_host_service (ecd->server, & event, 0) > 0)) {
         if (enet_host_service_warn_interval && 
             (enet_time_get() > (ecd->last_host_service_zero_return + enet_host_service_warn_interval))) {
@@ -177,13 +179,16 @@ enet_service_network(CManager cm, void *void_trans)
                     enet_time_get() - ecd->last_host_service_zero_return);
         }
 
+        printf("Enet hhost_service in service network returned 1, event type is %d\n", event.type);
         switch (event.type) {
 	case ENET_EVENT_TYPE_NONE:
+            printf("Enet got event type none \n");
 	    break;
         case ENET_EVENT_TYPE_CONNECT: {
 	    void *enet_connection_data;
             struct in_addr addr;
             addr.s_addr = event.peer->address.host;
+            printf("Enet got a connection \n");
 	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
 			   inet_ntoa(addr),
 			   event.peer->address.port);
@@ -200,10 +205,12 @@ enet_service_network(CManager cm, void *void_trans)
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = event.peer->data;
             if (econn_d) {
+                printf("Enet handling packet\n");
                 handle_packet(cm, svc, trans, event.peer->data, event.packet);
             } else {
                 struct in_addr addr;
                 addr.s_addr = event.peer->address.host;
+                printf("Enet throwing away data \n");
                 svc->trace_out(cm, "ENET  ====== virgin peer, address is %s, port %u.\n", inet_ntoa(addr), event.peer->address.port);
                 svc->trace_out(cm, "ENET  ====== DiSCARDING DATA\n");
             }
@@ -213,12 +220,17 @@ enet_service_network(CManager cm, void *void_trans)
 	    enet_conn_data_ptr enet_conn_data = event.peer->data;
 	    svc->trace_out(cm, "Got a disconnect on connection %p\n",
 		event.peer->data);
+            printf("Enet got a disconnect \n");
 
             enet_conn_data = event.peer->data;
 	    enet_conn_data->read_buffer_len = -1;
             svc->connection_fail(enet_conn_data->conn);
         }
+        default: {
+            printf("Enet got an unknown event \n");
 	}
+
+        }
     }
     ecd->last_host_service_zero_return = enet_time_get();
 }
@@ -475,6 +487,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
                 enet_conn_data_ptr enet_connection_data;
                 struct in_addr addr;
                 addr.s_addr = event.peer->address.host;
+                printf("(PID %x) Connect for a new client \n", getpid());
                 svc->trace_out(cm, "A new client connected from %s:%u.\n", 
                                inet_ntoa(addr),
                                event.peer->address.port);
@@ -485,9 +498,13 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
                 svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
                 event.peer->data = enet_connection_data;
                 ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
+                printf("(PID %x) Connect for new client doing with host flush\n", getpid());
                 enet_host_flush (ecd->server);
+                printf("(PID %x) Connect for new client done with host flush\n", getpid());
             } else {
+                printf("(PID %x) Connect for waiting client doing host flush\n", getpid());
                 enet_host_flush (ecd->server);
+                printf("(PID %x) Connect for waiting client done with host flush\n", getpid());
                 svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
                 finished = 1;
                 got_connection = 1;
@@ -499,11 +516,13 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_DISCONNECT:
             if (event.peer == peer) {
                 enet_peer_reset (peer);
+                printf("(PID %x) WE GOT A DISCONNECT for waiting peer\n", getpid());
                 
                 svc->trace_out(cm, "Connection to %s:%d failed   type was %d.\n", inet_ntoa(sin_addr), address.port, event.type);
                 return 0;
             } else {
                 enet_conn_data_ptr enet_conn_data = event.peer->data;
+                printf("(PID %x) WE GOT A DISCONNECT for random peer\n", getpid());
                 svc->trace_out(cm, "Got a disconnect on connection %p\n",
                                event.peer->data);
                 
@@ -515,6 +534,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = event.peer->data;
             queued_data entry = malloc(sizeof(*entry));
+            printf("WE GOT A DATA!   Queueing it\n");
             entry->next = NULL;
             entry->econn_d = econn_d;
             entry->packet = event.packet;
@@ -942,6 +962,7 @@ libcmenet_LTX_writev_func(CMtrans_services svc, enet_conn_data_ptr ecd,
     /* Send the packet to the peer over channel id 0. */
     if (enet_peer_send (ecd->peer, 0, packet) == -1) {
         enet_packet_destroy(packet);
+        printf("		PEER SEND FAILED!!!!!\n");
         svc->trace_out(ecd->ecd->cm, "ENET  ======  failed to send a packet to peer %p, state %d\n", ecd->peer, ecd->peer->state);
 	return -1;
     }

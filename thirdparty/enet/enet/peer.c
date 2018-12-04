@@ -5,7 +5,13 @@
 #include <string.h>
 #define ENET_BUILDING_LIB 1
 #include "enet/enet.h"
+#include <stdio.h>
 
+extern int enet_protocol_verbose;
+extern int enet_msg_count;
+extern int enet_msg_limit;
+
+#define VERBOSE(...)  if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf(__VA_ARGS__);
 /** @defgroup peer ENet peer functions 
     @{
 */
@@ -105,8 +111,10 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
 
    if (peer -> state != ENET_PEER_STATE_CONNECTED ||
        channelID >= peer -> channelCount ||
-       packet -> dataLength > peer -> host -> maximumPacketSize)
-     return -1;
+       packet -> dataLength > peer -> host -> maximumPacketSize) {
+       VERBOSE("PEER SEND FAILING!  Bad state, or channelID or packet size\n");
+       return -1;
+   }
 
    fragmentLength = peer -> mtu - sizeof (ENetProtocolHeader) - sizeof (ENetProtocolSendFragment);
    if (peer -> host -> checksum != NULL)
@@ -122,9 +130,10 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
       ENetList fragments;
       ENetOutgoingCommand * fragment;
 
-      if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT)
+      if (fragmentCount > ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT) {
+       VERBOSE("PEER SEND FAILING!  Bad fragment count\n");
         return -1;
-
+      }
       if ((packet -> flags & (ENET_PACKET_FLAG_RELIABLE | ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT)) == ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT &&
           channel -> outgoingUnreliableSequenceNumber < 0xFFFF)
       {
@@ -158,6 +167,7 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
                enet_free (fragment);
             }
             
+            VERBOSE("PEER SEND FAILING!  Malloc failed\n");
             return -1;
          }
          
@@ -207,8 +217,10 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
       command.sendUnreliable.dataLength = ENET_HOST_TO_NET_16 (packet -> dataLength);
    }
 
-   if (enet_peer_queue_outgoing_command (peer, & command, packet, 0, packet -> dataLength) == NULL)
-     return -1;
+   if (enet_peer_queue_outgoing_command (peer, & command, packet, 0, packet -> dataLength) == NULL) {
+       VERBOSE("PEER SEND FAILING!  queue outgoing command failed\n");
+       return -1;
+   }
 
    return 0;
 }
@@ -802,8 +814,11 @@ enet_peer_dispatch_incoming_reliable_commands (ENetPeer * peer, ENetChannel * ch
          channel -> incomingReliableSequenceNumber += incomingCommand -> fragmentCount - 1;
     } 
 
-    if (currentCommand == enet_list_begin (& channel -> incomingReliableCommands))
+    if (currentCommand == enet_list_begin (& channel -> incomingReliableCommands)) {
+               VERBOSE("(PID %x) early return in enet_peer_dispatch_incoming_reliable_commands\n", getpid());
+
       return;
+    }
 
     channel -> incomingUnreliableSequenceNumber = 0;
 
@@ -813,6 +828,7 @@ enet_peer_dispatch_incoming_reliable_commands (ENetPeer * peer, ENetChannel * ch
     {
        enet_list_insert (enet_list_end (& peer -> host -> dispatchQueue), & peer -> dispatchList);
 
+       VERBOSE("(PID %x) setting needsDispatch in enet_peer_dispatch_incoming_reliable_commands\n", getpid());
        peer -> needsDispatch = 1;
     }
 
@@ -975,6 +991,7 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
     {
     case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
     case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
+        VERBOSE("Dispatch send_reliable or send_fragment\n");
        enet_peer_dispatch_incoming_reliable_commands (peer, channel);
        break;
 
@@ -986,6 +1003,7 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
     return incomingCommand;
 
 discardCommand:
+    VERBOSE("Discarding command\n");
     if (fragmentCount > 0)
       goto notifyError;
 
@@ -995,6 +1013,7 @@ discardCommand:
     return & dummyCommand;
 
 notifyError:
+    VERBOSE("NOTIFIY ERROR\n");
     if (packet != NULL && packet -> referenceCount == 0)
       enet_packet_destroy (packet);
 

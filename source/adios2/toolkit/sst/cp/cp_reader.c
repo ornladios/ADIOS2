@@ -278,10 +278,10 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
             free(ReaderRegister.DP_ReaderInfo);
 
             /* wait for "go" from writer */
-            CP_verbose(
-                Stream,
-                "Waiting for writer response message in SstReadOpen(\"%s\")\n",
-                Filename, ReaderRegister.WriterResponseCondition);
+            CP_verbose(Stream, "(PID %x) Waiting for writer response message "
+                               "in SstReadOpen(\"%s\")\n",
+                       getpid(), Filename,
+                       ReaderRegister.WriterResponseCondition);
             CMCondition_wait(Stream->CPInfo->cm,
                              ReaderRegister.WriterResponseCondition);
             CP_verbose(Stream,

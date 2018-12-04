@@ -114,9 +114,9 @@ if ($test_protocol eq "kill_readers") {
       waitpid($readerPID, 0);
       print "TestDriver: Status of final reader was $?\n" if $verbose;
       if ($? != 0) {
-#	$exit_value = 1; #failure
+	$exit_value = 1; #failure
 	print "TestDriver: Setting failure return because of bad exit status ($?) on normal reader\n";
-	print "TestDriver: IGNORING THIS FAILURE!\n";
+#	print "TestDriver: IGNORING THIS FAILURE!\n";
       }
   }    
   my $ret = waitpid($writer_pid, 0);

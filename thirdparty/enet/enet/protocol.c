@@ -2,12 +2,20 @@
  @file  protocol.c
  @brief ENet protocol functions
 */
+#define ENET_DEBUG
 #include <stdio.h>
 #include <string.h>
 #define ENET_BUILDING_LIB 1
 #include "enet/utility.h"
 #include "enet/time.h"
 #include "enet/enet.h"
+#include <stdio.h>
+
+int enet_protocol_verbose = 1;
+int enet_msg_count = 0;
+int enet_msg_limit = 40;
+
+#define VERBOSE(...)  if (enet_protocol_verbose && (enet_msg_count < enet_msg_limit)) printf(__VA_ARGS__);
 
 static size_t commandSizes [ENET_PROTOCOL_COMMAND_COUNT] =
 {
@@ -99,6 +107,7 @@ enet_protocol_dispatch_incoming_commands (ENetHost * host, ENetEvent * event)
            event -> type = ENET_EVENT_TYPE_RECEIVE;
            event -> peer = peer;
 
+           VERBOSE("(PID %x) Enet incoming message, msg count %d\n", getpid(), enet_msg_count);
            if (! enet_list_empty (& peer -> dispatchedCommands))
            {
               peer -> needsDispatch = 1;
@@ -469,9 +478,11 @@ enet_protocol_handle_send_reliable (ENetHost * host, ENetPeer * peer, const ENet
     * currentData += dataLength;
     if (dataLength > host -> maximumPacketSize ||
         * currentData < host -> receivedData ||
-        * currentData > & host -> receivedData [host -> receivedDataLength])
+        * currentData > & host -> receivedData [host -> receivedDataLength]) {
+        VERBOSE("Send reliable returning -1\n");
       return -1;
-
+    }
+    VERBOSE(" Queueing incoming command, peer %p, *currentData = %ld\n", peer, *((long*)currentData));
     if (enet_peer_queue_incoming_command (peer, command, (const enet_uint8 *) command + sizeof (ENetProtocolSendReliable), dataLength, ENET_PACKET_FLAG_RELIABLE, 0) == NULL)
       return -1;
 
@@ -793,6 +804,8 @@ enet_protocol_handle_bandwidth_limit (ENetHost * host, ENetPeer * peer, const EN
 
     peer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> bandwidthLimit.incomingBandwidth);
     peer -> outgoingBandwidth = ENET_NET_TO_HOST_32 (command -> bandwidthLimit.outgoingBandwidth);
+
+    VERBOSE("Bandwith limit command sets peer to incoming limit %d, outgoing limit %d\n", peer -> incomingBandwidth, peer -> outgoingBandwidth);
 
     if (peer -> incomingBandwidth != 0)
       ++ host -> bandwidthLimitedPeers;
@@ -1124,11 +1137,13 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
        switch (commandNumber)
        {
        case ENET_PROTOCOL_COMMAND_ACKNOWLEDGE:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_ACKNOWLEDGE\n", getpid());
           if (enet_protocol_handle_acknowledge (host, event, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_CONNECT:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_CONNECT\n", getpid());
           if (peer != NULL)
             goto commandError;
           peer = enet_protocol_handle_connect (host, header, command);
@@ -1137,51 +1152,61 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
           break;
 
        case ENET_PROTOCOL_COMMAND_VERIFY_CONNECT:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_VERIFY_CONNECT\n", getpid());
           if (enet_protocol_handle_verify_connect (host, event, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_DISCONNECT:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_DISCONNECT\n", getpid());
           if (enet_protocol_handle_disconnect (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_PING:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_PING\n", getpid());
           if (enet_protocol_handle_ping (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_RELIABLE:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_RELIABLE, received data length %ld\n", getpid(), host -> receivedDataLength);
           if (enet_protocol_handle_send_reliable (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE\n", getpid());
           if (enet_protocol_handle_send_unreliable (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED\n", getpid());
           if (enet_protocol_handle_send_unsequenced (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_FRAGMENT:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_FRAGMENT\n", getpid());
           if (enet_protocol_handle_send_fragment (host, peer, command, & currentData))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_BANDWIDTH_LIMIT\n", getpid());
           if (enet_protocol_handle_bandwidth_limit (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_THROTTLE_CONFIGURE\n", getpid());
           if (enet_protocol_handle_throttle_configure (host, peer, command))
             goto commandError;
           break;
 
        case ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT:
+           VERBOSE("(PID %x) Incoming command was ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT\n", getpid());
           if (enet_protocol_handle_send_unreliable_fragment (host, peer, command, & currentData))
             goto commandError;
           break;
@@ -1257,6 +1282,7 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        host -> totalReceivedData += receivedLength;
        host -> totalReceivedPackets ++;
 
+       VERBOSE("(PID %x) Enet socket_receive got something of length %d (receivedDataLength %ld), msg count %d\n", getpid(), receivedLength, host -> receivedDataLength, enet_msg_count++);
        if (host -> intercept != NULL)
        {
           switch (host -> intercept (host, event))
@@ -1687,7 +1713,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
            enet_uint32 packetLoss = currentPeer -> packetsLost * ENET_PEER_PACKET_LOSS_SCALE / currentPeer -> packetsSent;
 
 #ifdef ENET_DEBUG
-           printf ("peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer -> incomingPeerID, currentPeer -> packetLoss / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> packetLossVariance / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> roundTripTime, currentPeer -> roundTripTimeVariance, currentPeer -> packetThrottle / (float) ENET_PEER_PACKET_THROTTLE_SCALE, enet_list_size (& currentPeer -> outgoingReliableCommands), enet_list_size (& currentPeer -> outgoingUnreliableCommands), currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingReliableCommands) : 0, currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingUnreliableCommands) : 0);
+           printf ("peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %lu/%lu outgoing, %lu/%lu incoming\n", currentPeer -> incomingPeerID, currentPeer -> packetLoss / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> packetLossVariance / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> roundTripTime, currentPeer -> roundTripTimeVariance, currentPeer -> packetThrottle / (float) ENET_PEER_PACKET_THROTTLE_SCALE, enet_list_size (& currentPeer -> outgoingReliableCommands), enet_list_size (& currentPeer -> outgoingUnreliableCommands), currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingReliableCommands) : 0, currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingUnreliableCommands) : 0);
 #endif
           
            currentPeer -> packetLossVariance -= currentPeer -> packetLossVariance / 4;
@@ -1824,6 +1850,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 {
     enet_uint32 waitCondition;
 
+    VERBOSE("(PID %x) Enet host_service called, timeout %d\n", getpid(), timeout);
     if (event != NULL)
     {
         event -> type = ENET_EVENT_TYPE_NONE;
@@ -1833,6 +1860,8 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
         switch (enet_protocol_dispatch_incoming_commands (host, event))
         {
         case 1:
+            VERBOSE("(PID %x) Enet return 1 after dispatch incoming\n", getpid());
+
             return 1;
 
         case -1:
@@ -1859,6 +1888,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        switch (enet_protocol_send_outgoing_commands (host, event, 1))
        {
        case 1:
+            VERBOSE("(PID %x) Enet return 1 after dispatch outgoing\n", getpid());
           return 1;
 
        case -1:
@@ -1875,6 +1905,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        switch (enet_protocol_receive_incoming_commands (host, event))
        {
        case 1:
+            VERBOSE("(PID %x) Enet return 1 after receive incoming\n", getpid());
           return 1;
 
        case -1:
@@ -1891,6 +1922,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        switch (enet_protocol_send_outgoing_commands (host, event, 1))
        {
        case 1:
+            VERBOSE("(PID %x) Enet return 1 after send outgoing\n", getpid());
           return 1;
 
        case -1:
@@ -1909,6 +1941,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
           switch (enet_protocol_dispatch_incoming_commands (host, event))
           {
           case 1:
+              VERBOSE("(PID %x ) Enet_host service, returning an event with type %d\n", getpid(), event->type);
              return 1;
 
           case -1:
@@ -1923,8 +1956,10 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
           }
        }
 
-       if (ENET_TIME_GREATER_EQUAL (host -> serviceTime, timeout))
+       if (ENET_TIME_GREATER_EQUAL (host -> serviceTime, timeout)) {
+           VERBOSE("(PID %x ) Enet_host service, returning on servicetime timeout\n", getpid());
          return 0;
+       }
 
        do
        {
@@ -1943,6 +1978,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        host -> serviceTime = enet_time_get ();
     } while (waitCondition & ENET_SOCKET_WAIT_RECEIVE);
 
+    VERBOSE("(PID %x ) Enet_host service, returning 0 at end\n", getpid());
     return 0; 
 }
 
