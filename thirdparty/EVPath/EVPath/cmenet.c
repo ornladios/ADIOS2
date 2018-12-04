@@ -68,6 +68,7 @@ static atom_t CM_ENET_PORT = -1;
 static atom_t CM_ENET_HOSTNAME = -1;
 static atom_t CM_ENET_ADDR = -1;
 static atom_t CM_ENET_CONN_TIMEOUT = -1;
+static atom_t CM_ENET_CONN_REUSE = -1;
 static atom_t CM_TRANSPORT = -1;
 
 extern attr_list
@@ -284,6 +285,8 @@ int fd;
 
 #endif
 
+static int conn_reuse = 1;
+
 /* 
  * Accept enet connection
  */
@@ -305,7 +308,11 @@ enet_accept_conn(enet_client_data_ptr sd, transport_entry trans,
 
     add_int_attr(conn_attr_list, CM_PEER_IP, ntohl(address->host));
     enet_conn_data->remote_IP = ntohl(address->host);   /* remote_IP is in host byte order */
-    enet_conn_data->remote_contact_port = address->port;
+    if (!conn_reuse) {
+        enet_conn_data->remote_contact_port = -1;
+    } else {
+        enet_conn_data->remote_contact_port = address->port;
+    }
 
     if (enet_conn_data->remote_host != NULL) {
 	svc->trace_out(trans->cm, "Accepted ENET RUDP connection from host \"%s\"",
@@ -388,6 +395,12 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     } else {
         svc->trace_out(cm, "CMEnet transport connection timeout set to %d msecs", timeout);
     }
+    if (!query_attr(attrs, CM_ENET_CONN_REUSE, /* type pointer */ NULL,
+    /* value pointer */ (attr_value *)(long) & conn_reuse)) {
+	svc->trace_out(cm, "CMEnet transport found no CM_ENET_CONN_REUSE attribute");
+    } else {
+        svc->trace_out(cm, "CMEnet transport connection reuse set to %d", conn_reuse);
+    }
 
     /* ENET connection, host_name is the machine name */
     ENetAddress address;
@@ -417,7 +430,6 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 
     /* Initiate the connection, allocating the two channels 0 and 1. */
     peer = enet_host_connect (sd->server, & address, 1, 0);    
-    enet_peer_ping_interval (peer, 10);
     peer->data = enet_conn_data;
     svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
     
@@ -446,7 +458,6 @@ retry:
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
-            enet_peer_ping_interval (event.peer, 10);
             goto retry;
         }
 	svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
@@ -962,6 +973,7 @@ libcmenet_LTX_initialize(CManager cm, CMtrans_services svc,
 	CM_PEER_LISTEN_PORT = attr_atom_from_string("PEER_LISTEN_PORT");
 	CM_NETWORK_POSTFIX = attr_atom_from_string("CM_NETWORK_POSTFIX");
 	CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
+	CM_ENET_CONN_REUSE = attr_atom_from_string("CM_ENET_CONN_REUSE");
 	atom_init++;
     }
     enet_data = svc->malloc_func(sizeof(struct enet_client_data));
