@@ -51,7 +51,7 @@ void SocketZmqP2P::Open(const std::string &ipAddress, const std::string &port,
 {
     m_Name = name;
     m_OpenMode = openMode;
-    const std::string fullIP("tcp://" + ipAddress + ":" + port);
+    const std::string fullIP("tcp://" + ipAddress + ":" + port + "\0");
     std::string openModeStr;
 
     int error = -1;

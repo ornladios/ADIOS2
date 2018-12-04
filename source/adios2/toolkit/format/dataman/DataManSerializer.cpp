@@ -355,6 +355,34 @@ DataManSerializer::GetMetaData(const size_t step)
     }
 }
 
+void DataManSerializer::GetAttributes(core::IO &io)
+{
+    std::lock_guard<std::mutex> l(m_Mutex);
+    for (const auto &j : m_GlobalVars)
+    {
+        const std::string type(j["Y"].get<std::string>());
+        if (type == "unknown")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        if (j["V"].get<bool>())                                                \
+        {                                                                      \
+            io.DefineAttribute<T>(j["N"].get<std::string>(), j["G"].get<T>()); \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            io.DefineAttribute<T>(j["N"].get<std::string>(),                   \
+                                  j["G"].get<std::vector<T>>().data(),         \
+                                  j["G"].get<std::vector<T>>().size());        \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+}
+
 int DataManSerializer::PutDeferredRequest(const std::string &variable,
                                           const size_t step, const Dims &start,
                                           const Dims &count, void *data)
@@ -396,9 +424,9 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
         jmap[var.address].emplace_back();
         nlohmann::json &j = jmap[var.address].back();
         j["N"] = variable;
-        j["T"] = step;
         j["O"] = start;
         j["C"] = count;
+        j["T"] = step;
     }
 
     for (const auto &i : jmap)
@@ -420,33 +448,27 @@ DataManSerializer::GetDeferredRequest()
     return t;
 }
 
-void DataManSerializer::GetAttributes(core::IO &io)
+void DataManSerializer::GenerateReply(const std::vector<char> &request,
+                                      std::vector<char> &reply)
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
-    for (const auto &j : m_GlobalVars)
+    nlohmann::json metaj;
+    try
     {
-        const std::string type(j["Y"].get<std::string>());
-        if (type == "unknown")
+        metaj = nlohmann::json::from_msgpack(request.data(), request.size());
+        for (const auto &req : metaj)
         {
+            std::cout << req.dump(4) << std::endl;
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        if (j["V"].get<bool>())                                                \
-        {                                                                      \
-            io.DefineAttribute<T>(j["N"].get<std::string>(), j["G"].get<T>()); \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            io.DefineAttribute<T>(j["N"].get<std::string>(),                   \
-                                  j["G"].get<std::vector<T>>().data(),         \
-                                  j["G"].get<std::vector<T>>().size());        \
-        }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
-#undef declare_type
+    catch (std::exception &e)
+    {
+        std::cout << "DataManSerializer received staging request but failed to "
+                     "deserialize"
+                  << std::endl;
     }
 }
+
+void DataManSerializer::PutReply(const std::vector<char> &reply) {}
 
 } // namespace format
 } // namespace adios2

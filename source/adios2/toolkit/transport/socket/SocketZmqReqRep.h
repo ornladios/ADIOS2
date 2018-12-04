@@ -39,7 +39,7 @@ public:
     void Close() final;
 
 private:
-    static void *m_Context;
+    void *m_Context = nullptr;
     void *m_Socket = nullptr;
     const int m_Timeout;
 };

@@ -33,6 +33,12 @@ void StagingMan::OpenWriteTransport(std::string fullAddress)
     m_Transport->Open(fullAddress, Mode::Write);
 }
 
+void StagingMan::OpenReadTransport()
+{
+    m_Transport = std::make_shared<transport::SocketZmqReqRep>(
+        m_MpiComm, m_Timeout, m_DebugMode);
+}
+
 std::shared_ptr<std::vector<char>>
 StagingMan::Request(const std::vector<char> &request,
                     const std::string &address, const size_t maxReplySize)
@@ -42,15 +48,14 @@ StagingMan::Request(const std::vector<char> &request,
         m_MaxReplySize = maxReplySize;
     }
 
-    transport::SocketZmqReqRep tp(m_MpiComm, m_Timeout, m_DebugMode);
-    tp.Open(address, m_OpenMode);
-    tp.Write(request.data(), request.size());
+    m_Transport->Open(address, m_OpenMode);
+    m_Transport->Write(request.data(), request.size());
     Transport::Status status;
     auto reply = std::make_shared<std::vector<char>>();
     reply->reserve(m_MaxReplySize);
-    tp.IRead(reply->data(), m_MaxReplySize, status);
+    m_Transport->IRead(reply->data(), m_MaxReplySize, status);
     reply->resize(status.Bytes);
-    tp.Close();
+    m_Transport->Close();
     return reply;
 }
 
@@ -62,7 +67,7 @@ void StagingMan::ReceiveRequest(std::vector<char> &request,
         m_MaxRequestSize = maxRequestSize;
     }
 
-    request.reserve(m_MaxRequestSize);
+    request.resize(m_MaxRequestSize);
     Transport::Status status;
     m_Transport->IRead(request.data(), m_MaxRequestSize, status);
     request.resize(status.Bytes);

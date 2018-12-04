@@ -35,6 +35,7 @@ public:
     ~StagingMan();
 
     void OpenWriteTransport(std::string fullAddress);
+    void OpenReadTransport();
 
     std::shared_ptr<std::vector<char>> Request(const std::vector<char> &request,
                                                const std::string &address,

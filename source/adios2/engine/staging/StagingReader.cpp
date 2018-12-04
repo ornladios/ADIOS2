@@ -46,7 +46,6 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
 
 StagingReader::~StagingReader()
 {
-    /* m_Staging deconstructor does close and finalize */
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " deconstructor on "
@@ -152,11 +151,6 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
         std::cout << "Staging Reader " << m_MpiRank
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
     }
-
-    // We should block until a new step arrives or reach the timeout
-
-    // m_IO Variables and Attributes should be defined at this point
-    // so that the application can inquire them and start getting data
 
     return StepStatus::OK;
 }
@@ -277,6 +271,7 @@ void StagingReader::InitTransports()
         m_MetadataTransport.OpenTransports(paramsVec, Mode::Read, "subscribe",
                                            true);
     }
+    m_DataTransport->OpenReadTransport();
 }
 
 void StagingReader::Handshake()

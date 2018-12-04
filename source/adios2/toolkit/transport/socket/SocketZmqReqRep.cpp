@@ -18,8 +18,6 @@ namespace adios2
 namespace transport
 {
 
-void *SocketZmqReqRep::m_Context = nullptr;
-
 SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
                                  const bool debugMode)
 : SocketZmq("socket", "zmqreqrep", mpiComm, debugMode), m_Timeout(timeout)
@@ -53,17 +51,16 @@ void SocketZmqReqRep::Open(const std::string &ipAddress,
 
 void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
 {
-    m_OpenMode = openMode;
     std::string openModeStr;
     int error = -1;
-    if (m_OpenMode == Mode::Write)
+    if (openMode == Mode::Write)
     {
         openModeStr = "Write/ZMQ_REP";
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         error = zmq_bind(m_Socket, fullAddress.c_str());
         zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
     }
-    else if (m_OpenMode == Mode::Read)
+    else if (openMode == Mode::Read)
     {
         openModeStr = "Read/ZMQ_REQ";
         m_Socket = zmq_socket(m_Context, ZMQ_REQ);

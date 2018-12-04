@@ -69,10 +69,10 @@ public:
         std::shared_ptr<std::vector<char>> buffer = nullptr;
     };
 
-    // Serializer functions
-
+    // clear and allocate new buffer for writer
     void New(size_t size);
 
+    // put a variable for writer
     template <class T>
     void
     PutVar(const T *inputData, const std::string &varName, const Dims &varShape,
@@ -80,21 +80,30 @@ public:
            const Dims &varMemCount, const std::string &doid, const size_t step,
            const int rank, const std::string &address, const Params &params);
 
+    // another wrapper for PutVar which accepts adios2::core::Variable
     template <class T>
     void PutVar(const core::Variable<T> &variable, const std::string &doid,
                 const size_t step, const int rank, const std::string &address,
                 const Params &params);
 
+    // put attributes for writer
     void PutAttributes(core::IO &io, const int rank);
 
+    // get the metadata incorporated local buffer for writer, usually called in
+    // EndStep
     const std::shared_ptr<std::vector<char>> GetLocalPack();
 
+    // aggregate metadata across all writer ranks and return the aggregated
+    // metadata, usually called from master rank of writer
     std::shared_ptr<std::vector<char>>
     GetAggregatedMetadata(const MPI_Comm mpiComm);
 
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
-    // Deserializer functions
+    void GenerateReply(const std::vector<char> &request,
+                       std::vector<char> &reply);
+
+    void PutReply(const std::vector<char> &reply);
 
     int PutPack(const std::shared_ptr<std::vector<char>> data);
 
@@ -154,12 +163,9 @@ private:
     // temporary compression buffer, made class member only for saving costs for
     // memory allocation
     std::vector<char> m_CompressBuffer;
-    bool m_IsRowMajor;
-    bool m_IsLittleEndian;
-    bool m_ContiguousMajor;
 
-    // global aggregated buffer for metadata and data buffer, used in writer and
-    // reader, needs mutex for accessing
+    // global aggregated buffer for metadata and data buffer, used in writer
+    // (Staging engine) and reader (all engines), needs mutex for accessing
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
         m_DataManVarMap;
 
@@ -170,6 +176,9 @@ private:
         m_DeferredRequestsToSend;
 
     std::mutex m_Mutex;
+    bool m_IsRowMajor;
+    bool m_IsLittleEndian;
+    bool m_ContiguousMajor;
 };
 
 } // end namespace format

@@ -171,7 +171,7 @@ void StagingWriter::Handshake()
     m_IP = ips[0];
     m_MetadataPort = "12306";
     m_FullDataAddress =
-        "tcp://" + m_IP + ":" + std::to_string(12307 + m_MpiRank);
+        "tcp://" + m_IP + ":" + std::to_string(12307 + m_MpiRank) + "\0";
 }
 
 void StagingWriter::IOThread()
@@ -186,7 +186,7 @@ void StagingWriter::IOThread()
         if (request.size() > 0)
         {
             std::vector<char> reply;
-            // get reply from serializer
+            m_DataManSerializer.GenerateReply(request, reply);
             tpm.SendReply(reply);
         }
     }
