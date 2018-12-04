@@ -182,7 +182,6 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
 
         // Parse metadata into Variables and Attributes maps
         m_IO.RemoveAllVariables();
-        m_IO.RemoveAllAttributes();
         m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
 
         if (m_Verbosity == 5)

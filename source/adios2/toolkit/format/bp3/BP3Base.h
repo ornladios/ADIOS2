@@ -17,6 +17,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 /// \endcond
 
@@ -86,8 +87,6 @@ public:
 
         /** @brief key: attribute name, value: bp metadata attribute index */
         std::unordered_map<std::string, SerialElementIndex> AttributesIndices;
-
-        bool AreAttributesWritten = false;
 
         /** Fixed size for mini footer, adding 28 bytes for ADIOS version */
         const unsigned int MiniFooterSize = 28 + 28;
@@ -175,6 +174,11 @@ public:
     std::set<std::string> m_DeferredVariables;
     /** tracks the overall size of deferred variables */
     size_t m_DeferredVariablesDataSize = 0;
+
+    /** attributes are serialized only once, this set contains the names of ones
+     * already serialized.
+     */
+    std::unordered_set<std::string> m_SerializedAttributes;
 
     /**
      * Unique constructor
