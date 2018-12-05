@@ -3,7 +3,9 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+add_executable(hello_inlineReaderWriter helloInlineReaderWriter.cpp)
+target_link_libraries(hello_inlineReaderWriter adios2)
+
 if(ADIOS2_HAVE_MPI)
-  add_executable(hello_inlineReaderWriter helloInlineReaderWriter.cpp)
-  target_link_libraries(hello_inlineReaderWriter adios2 MPI::MPI_C)
+  target_link_libraries(hello_inlineReaderWriter MPI::MPI_C)
 endif()

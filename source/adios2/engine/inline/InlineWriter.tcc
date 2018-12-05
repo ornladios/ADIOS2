@@ -4,8 +4,8 @@
  *
  * InlineWriter.tcc implementation of template functions with known type
  *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *  Created on: Nov 16, 2018
+ *      Author: Aron Helser aron.helser@kitware.com
  */
 #ifndef ADIOS2_ENGINE_INLINEWRITER_TCC_
 #define ADIOS2_ENGINE_INLINEWRITER_TCC_
@@ -25,6 +25,12 @@ template <class T>
 void InlineWriter::PutSyncCommon(Variable<T> &variable,
                                    const typename Variable<T>::Info &blockInfo)
 {
+    // passed in blockInfo has current blockInfo.data member.
+    if (blockInfo.Shape.size() == 0 && blockInfo.Count.size() == 0 && blockInfo.StepsCount == 1 ) {
+        auto &info = variable.m_BlocksInfo.back();
+        info.IsValue = true;
+        info.Value = blockInfo.Data[0];
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Writer " << m_WriterRank << "     PutSync("

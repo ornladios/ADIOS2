@@ -3,10 +3,9 @@
  * accompanying file Copyright.txt for details.
  *
  * InlineWriter.cpp
- * Inline engine from which any engine can be built.
  *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *  Created on: Nov 16, 2018
+ *      Author: Aron Helser aron.helser@kitware.com
  */
 
 #include "InlineWriter.h"
@@ -94,7 +93,7 @@ void InlineWriter::Flush(const int transportIndex)
     void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)       \
     {                                                                          \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        variable.m_BlocksInfo.clear();                                         \
+        /*reader uses: variable.m_BlocksInfo.clear();*/                                         \
     }                                                                          \
     void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)   \
     {                                                                          \

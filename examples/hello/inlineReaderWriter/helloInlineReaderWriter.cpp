@@ -2,29 +2,101 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloBPTimeWriter.cpp  example for writing a variable using the Advance
+ * helloInlineReaderWriter.cpp  example borrowed from helloBPTimeWriter, using the
+ * inline engine. Writes a variable using the Advance
  * function for time aggregation. Time step is saved as an additional (global)
  * single value variable, just for tracking purposes.
  *
- *  Created on: Feb 16, 2017
- *      Author: William F Godoy godoywf@ornl.gov
+ *  Created on: Nov 16, 2018
+ *      Author: Aron Helser aron.helser@kitware.com
  */
 
 #include <algorithm> //std::for_each
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout
-#include <mpi.h>
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
 #include <adios2.h>
 
+
+void DoAnalysis(adios2::IO& bpIO, adios2::Engine& bpReader, int rank, unsigned int step)
+{
+    // Application variable
+    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    const std::size_t Nx = myFloats.size();
+
+    try
+    {
+        bpReader.BeginStep();
+        /////////////////////READ
+        adios2::Variable<float> bpFloats000 =
+            bpIO.InquireVariable<float>("bpFloats000");
+
+        adios2::Variable<std::string> bpString =
+            bpIO.InquireVariable<std::string>("bpString");
+
+        if (bpFloats000)
+        {
+            bpFloats000.SetSelection({{rank * Nx}, {Nx}});
+            // bpFloats000.SetStepSelection({step, 1});
+
+            std::vector<float> data(bpFloats000.SelectionSize());
+            bpReader.Get(bpFloats000, data.data(), adios2::Mode::Sync);
+
+            std::cout << "Data timestep " << bpFloats000.StepsStart()
+                      << " from rank " << rank << ": ";
+            for (const auto datum : data)
+            {
+                std::cout << datum << " ";
+            }
+            std::cout << "\n";
+        }
+        else
+        {
+            std::cout << "Variable bpFloats000 not found\n";
+        }
+
+        if (bpString)
+        {
+            // bpString.SetStepSelection({step, 1});
+
+            std::string myString;
+            bpReader.Get(bpString, myString, adios2::Mode::Sync);
+            std::cout << "bpString: " << myString << "\n";
+        }
+        bpReader.EndStep();
+    }
+    catch (std::invalid_argument &e)
+    {
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
+                  << rank << "\n";
+        std::cout << e.what() << "\n";
+    }
+    catch (std::ios_base::failure &e)
+    {
+        std::cout << "IO System base failure exception, STOPPING PROGRAM "
+                     "from rank "
+                  << rank << "\n";
+        std::cout << e.what() << "\n";
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cout << e.what() << "\n";
+    }
+
+}
+
+
 int main(int argc, char *argv[])
 {
+    int rank = 0, size = 1;
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
-    int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
 
     // Application variable
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -34,13 +106,17 @@ int main(int argc, char *argv[])
     {
         /** ADIOS class factory of IO class objects, DebugON (default) is
          * recommended */
+#ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-
+#else
+        adios2::ADIOS adios(adios2::DebugON);
+#endif
+        /*** IO class object: settings and factory of Settings: Variables,
+         * Parameters, Transports, and Execution: Engines
+         * Inline uses single IO for write/read */
+        adios2::IO bpIO = adios.DeclareIO("InlineReadWrite");
         /// WRITE
         {
-            /*** IO class object: settings and factory of Settings: Variables,
-             * Parameters, Transports, and Execution: Engines */
-            adios2::IO bpIO = adios.DeclareIO("InlineWriter");
             bpIO.SetEngine("Inline");
             bpIO.SetParameters({{"verbose", "5"}});
 
@@ -68,7 +144,7 @@ int main(int argc, char *argv[])
 
                 bpFloats[v] =
                     bpIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
-                                               {Nx}, adios2::ConstantDims);
+                                               {Nx});
             }
 
             /** global single value variable: name */
@@ -77,7 +153,13 @@ int main(int argc, char *argv[])
 
             /** Engine derived class, spawned to start IO operations */
             adios2::Engine bpWriter =
-                bpIO.Open("myInlineID", adios2::Mode::Write);
+                bpIO.Open("myWriteID", adios2::Mode::Write);
+
+            bpIO.SetEngine("Inline");
+            bpIO.SetParameters({{"verbose", "5"}, {"writerID", "myWriteID"}});
+
+            adios2::Engine bpReader =
+                bpIO.Open("myReadID", adios2::Mode::Read);
 
             for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
             {
@@ -106,62 +188,16 @@ int main(int argc, char *argv[])
                 }
 
                 bpWriter.EndStep();
+
+                DoAnalysis(bpIO, bpReader, rank, timeStep);
             }
 
             bpWriter.Close();
+            bpReader.Close();
         }
         // MPI_Barrier(MPI_COMM_WORLD);
 
-        if (true)
-        { /////////////////////READ
-            //            if (rank == 0)
-            //            {
-            adios2::IO ioReader = adios.DeclareIO("InlineReader");
-            ioReader.SetEngine("Inline");
-            ioReader.SetParameters({{"verbose", "5"}});
-
-            adios2::Engine bpReader =
-                ioReader.Open("myInlineID", adios2::Mode::Read);
-
-            adios2::Variable<float> bpFloats000 =
-                ioReader.InquireVariable<float>("bpFloats000");
-
-            adios2::Variable<std::string> bpString =
-                ioReader.InquireVariable<std::string>("bpString");
-
-            if (bpFloats000)
-            {
-                bpFloats000.SetSelection({{rank * Nx}, {Nx}});
-                bpFloats000.SetStepSelection({2, 1});
-
-                std::vector<float> data(bpFloats000.SelectionSize());
-                bpReader.Get(bpFloats000, data.data(), adios2::Mode::Sync);
-
-                std::cout << "Data timestep " << bpFloats000.StepsStart()
-                          << " from rank " << rank << ": ";
-                for (const auto datum : data)
-                {
-                    std::cout << datum << " ";
-                }
-                std::cout << "\n";
-            }
-            else
-            {
-                std::cout << "Variable bpFloats000 not found\n";
-            }
-
-            if (bpString)
-            {
-                bpString.SetStepSelection({rank, 1});
-
-                std::string myString;
-                bpReader.Get(bpString, myString, adios2::Mode::Sync);
-                std::cout << myString << "\n";
-            }
-
-            bpReader.Close();
-        }
-    }
+     }
     catch (std::invalid_argument &e)
     {
         std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
@@ -181,7 +217,9 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return 0;
 }

@@ -3,10 +3,10 @@
  * accompanying file Copyright.txt for details.
  *
  * InlineWriter.h
- * Inline engine from which any engine can be built.
+ * An inline writer which implements zero-copy passing from writer to reader
  *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *  Created on: Nov 16, 2018
+ *      Author: Aron Helser aron.helser@kitware.com
  */
 
 #ifndef ADIOS2_ENGINE_INLINEMPIWRITER_H_

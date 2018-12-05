@@ -4,8 +4,8 @@
  *
  * InlineReader.tcc
  *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *  Created on: Nov 16, 2018
+ *      Author: Aron Helser aron.helser@kitware.com
  */
 
 #ifndef ADIOS2_ENGINE_INLINEREADER_TCC_
@@ -27,6 +27,12 @@ inline void InlineReader::GetSyncCommon(Variable<std::string> &variable,
                                           std::string *data)
 {
     variable.m_Data = data;
+    auto blockInfo = variable.m_BlocksInfo.back();
+    if (blockInfo.IsValue) {
+        *data = blockInfo.Value;
+    } else {
+        *data = blockInfo.Data[0];
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << "     GetSync("
@@ -38,6 +44,10 @@ template <class T>
 inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     variable.m_Data = data;
+    auto blockInfo = variable.m_BlocksInfo.back();
+    if (blockInfo.IsValue) {
+        *data = blockInfo.Value;
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << "     GetSync("

@@ -4,8 +4,8 @@
  *
  * InlineReader.cpp
  *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *  Created on: Nov 16, 2018
+ *      Author: Aron Helser aron.helser@kitware.com
  */
 
 #include "InlineReader.h"
@@ -29,10 +29,11 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
     m_EndMessage = " in call to IO Open InlineReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_ReaderRank);
     Init();
+    Engine &writer = io.GetEngine(m_WriterID);
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << " Open(" << m_Name
-                  << ") in constructor." << std::endl;
+                  << ") in constructor, with writer: " << writer.m_Name << std::endl;
     }
 }
 
@@ -62,13 +63,13 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
     // If we reach the end of stream (writer is gone or explicitly tells the
     // reader)
     // we return EndOfStream to the reader application
-    if (m_CurrentStep == 2)
-    {
-        std::cout << "Inline Reader " << m_ReaderRank
-                  << "   forcefully returns End of Stream at this step\n";
+    // if (m_CurrentStep == 2)
+    // {
+    //     std::cout << "Inline Reader " << m_ReaderRank
+    //               << "   forcefully returns End of Stream at this step\n";
 
-        return StepStatus::EndOfStream;
-    }
+    //     return StepStatus::EndOfStream;
+    // }
 
     // We should block until a new step arrives or reach the timeout
 
@@ -134,7 +135,7 @@ void InlineReader::InitParameters()
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
         std::string value(pair.second);
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+        // std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
         if (key == "verbose")
         {
@@ -146,6 +147,14 @@ void InlineReader::InitParameters()
                         "ERROR: Method verbose argument must be an "
                         "integer in the range [0,5], in call to "
                         "Open or Engine constructor\n");
+            }
+        }
+        else if (key == "writerid") {
+            m_WriterID = value;
+            if (m_Verbosity == 5)
+            {
+                std::cout << "Inline Reader " << m_ReaderRank << " Init() writerID " << m_WriterID
+                          << "\n";
             }
         }
     }

@@ -3,10 +3,10 @@
  * accompanying file Copyright.txt for details.
  *
  * InlineReader.h
- * An inline reader which implements zero-copy passing from reader to writer
+ * An inline reader which implements zero-copy passing from writer to reader
  *
- *  Created on: Jan 04, 2018
- *      Author: Norbert Podhorszki pnorbert@ornl.gov
+ *  Created on: Nov 16, 2018
+ *      Author: Aron Helser aron.helser@kitware.com
  */
 
 #ifndef ADIOS2_ENGINE_INLINEREADER_H_
@@ -57,6 +57,8 @@ private:
 
     // EndStep must call PerformGets if necessary
     bool m_NeedPerformGets = false;
+
+    std::string m_WriterID;
 
     void Init() final; ///< called from constructor, gets the selected Inline
                        /// transport method from settings
