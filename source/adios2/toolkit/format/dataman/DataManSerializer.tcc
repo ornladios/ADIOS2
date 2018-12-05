@@ -76,55 +76,58 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     size_t datasize;
     bool compressed = false;
-    const auto i = params.find("CompressionMethod");
-    if (i != params.end())
+    if (params.empty() == false)
     {
-        std::string compressionMethod = i->second;
-        std::transform(compressionMethod.begin(), compressionMethod.end(),
-                       compressionMethod.begin(), ::tolower);
-        if (compressionMethod == "zfp")
+        const auto i = params.find("CompressionMethod");
+        if (i != params.end())
         {
-            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
-                                       varCount))
+            std::string compressionMethod = i->second;
+            std::transform(compressionMethod.begin(), compressionMethod.end(),
+                           compressionMethod.begin(), ::tolower);
+            if (compressionMethod == "zfp")
             {
-                compressed =
-                    PutZfp<T>(metaj, datasize, inputData, varCount, params);
-                if (compressed)
+                if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                                           varCount))
                 {
-                    metaj["Z"] = "zfp";
+                    compressed =
+                        PutZfp<T>(metaj, datasize, inputData, varCount, params);
+                    if (compressed)
+                    {
+                        metaj["Z"] = "zfp";
+                    }
                 }
             }
-        }
-        else if (compressionMethod == "sz")
-        {
-            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
-                                       varCount))
+            else if (compressionMethod == "sz")
             {
-                compressed =
-                    PutSz<T>(metaj, datasize, inputData, varCount, params);
-                if (compressed)
+                if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                                           varCount))
                 {
-                    metaj["Z"] = "sz";
+                    compressed =
+                        PutSz<T>(metaj, datasize, inputData, varCount, params);
+                    if (compressed)
+                    {
+                        metaj["Z"] = "sz";
+                    }
                 }
             }
-        }
-        else if (compressionMethod == "bzip2")
-        {
-            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
-                                       varCount))
+            else if (compressionMethod == "bzip2")
             {
-                compressed =
-                    PutBZip2<T>(metaj, datasize, inputData, varCount, params);
-                if (compressed)
+                if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                                           varCount))
                 {
-                    metaj["Z"] = "bzip2";
+                    compressed = PutBZip2<T>(metaj, datasize, inputData,
+                                             varCount, params);
+                    if (compressed)
+                    {
+                        metaj["Z"] = "bzip2";
+                    }
                 }
             }
-        }
-        else
-        {
-            throw(std::invalid_argument("Compression method " + i->second +
-                                        " not supported."));
+            else
+            {
+                throw(std::invalid_argument("Compression method " + i->second +
+                                            " not supported."));
+            }
         }
     }
 

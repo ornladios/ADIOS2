@@ -72,7 +72,10 @@ void StagingWriter::PerformPuts() {}
 void StagingWriter::EndStep()
 {
     auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
-    m_MetadataTransport.Write(aggMetadata, 0);
+    if (m_MpiRank == 0)
+    {
+        m_MetadataTransport.Write(aggMetadata, 0);
+    }
 
     m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
 

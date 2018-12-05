@@ -27,8 +27,7 @@ void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     variable.SetData(data);
     m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
-                               m_FullDataAddress,
-                               m_IO.m_TransportsParameters[0]);
+                               m_FullDataAddress, Params());
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << "     PutSync("
