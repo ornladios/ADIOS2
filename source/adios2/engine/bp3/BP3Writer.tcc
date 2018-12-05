@@ -59,6 +59,12 @@ void BP3Writer::PutSyncCommon(Variable<T> &variable,
 template <class T>
 void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
+    if (variable.m_SingleValue)
+    {
+        DoPutSync(variable, data);
+        return;
+    }
+
     const typename Variable<T>::Info blockInfo =
         variable.SetBlockInfo(data, CurrentStep());
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
