@@ -254,6 +254,13 @@ inline void BP3Base::ParseCharacteristics(
 
         case (characteristic_dimensions):
         {
+            auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
+
+                return std::all_of(
+                    dimensions.begin(), dimensions.end(),
+                    [](const size_t dimension) { return dimension == 0; });
+            };
+
             const size_t dimensionsSize = static_cast<size_t>(
                 helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
@@ -276,6 +283,21 @@ inline void BP3Base::ParseCharacteristics(
                     static_cast<size_t>(helper::ReadValue<uint64_t>(
                         buffer, position, isLittleEndian)));
             }
+
+            // check for local variables
+            const bool emptyShape = lf_CheckEmpty(characteristics.Shape);
+
+            // check if it's a local value
+            if (!emptyShape && dimensionsSize == 1)
+            {
+                if (characteristics.Shape.front() == LocalValueDim)
+                {
+                    characteristics.Start.clear();
+                    characteristics.Count.clear();
+                    characteristics.EntryShapeID = ShapeID::LocalValue;
+                }
+            }
+
             break;
         }
         default:
@@ -402,7 +424,7 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
 
         case (characteristic_dimensions):
         {
-            auto lf_CheckEmpty = [](Dims &dimensions) -> bool {
+            auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
 
                 return std::all_of(
                     dimensions.begin(), dimensions.end(),

@@ -156,12 +156,25 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
 #else
                 constexpr bool endianReverse = false;
 #endif
-                helper::CopyMemory(
-                    blockInfo.Data, blockInfo.Start, blockInfo.Count,
-                    helper::IsRowMajor(m_IO.m_HostLanguage),
-                    reinterpret_cast<T *>(variable.m_RawMemory[0].data()),
-                    sourceStartCount.first, sourceStartCount.second,
-                    m_BP3Deserializer.m_IsRowMajor, endianReverse);
+                if (variable.m_ShapeID == ShapeID::GlobalArray)
+                {
+                    helper::CopyMemory(
+                        blockInfo.Data, blockInfo.Start, blockInfo.Count,
+                        helper::IsRowMajor(m_IO.m_HostLanguage),
+                        reinterpret_cast<T *>(variable.m_RawMemory[0].data()),
+                        sourceStartCount.first, sourceStartCount.second,
+                        m_BP3Deserializer.m_IsRowMajor, endianReverse);
+                }
+                else if (variable.m_ShapeID == ShapeID::LocalArray)
+                {
+                    helper::CopyMemory(
+                        blockInfo.Data, Dims(blockInfo.Count.size(), 0),
+                        blockInfo.Count,
+                        helper::IsRowMajor(m_IO.m_HostLanguage),
+                        reinterpret_cast<T *>(variable.m_RawMemory[0].data()),
+                        sourceStartCount.first, sourceStartCount.second,
+                        m_BP3Deserializer.m_IsRowMajor, endianReverse);
+                }
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
