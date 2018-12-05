@@ -37,6 +37,8 @@ public:
     void OpenWriteTransport(std::string fullAddress);
     void OpenReadTransport();
 
+    void CloseTransport();
+
     std::shared_ptr<std::vector<char>> Request(const std::vector<char> &request,
                                                const std::string &address,
                                                const size_t maxReplySize = 0);
@@ -47,12 +49,6 @@ public:
     void SendReply(std::shared_ptr<std::vector<char>> reply);
 
 private:
-    bool GetBoolParameter(const Params &params, const std::string key);
-    bool GetStringParameter(const Params &params, const std::string key,
-                            std::string &value);
-    bool GetIntParameter(const Params &params, const std::string key,
-                         int &value);
-
     MPI_Comm m_MpiComm;
     int m_Timeout;
     Mode m_OpenMode;

@@ -149,7 +149,9 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Reader " << m_MpiRank
-                  << "   BeginStep() new step " << m_CurrentStep << "\n";
+                  << "   BeginStep() new step " << m_CurrentStep
+                  << ". The minimum step is " << minStep
+                  << ". The maximum step is " << maxStep << "\n";
     }
 
     return StepStatus::OK;

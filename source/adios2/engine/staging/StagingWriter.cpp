@@ -197,6 +197,11 @@ void StagingWriter::IOThread()
 void StagingWriter::DoClose(const int transportIndex)
 {
     m_Listening = false;
+    if (m_IOThread.joinable())
+    {
+        m_IOThread.join();
+    }
+
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << " Close(" << m_Name

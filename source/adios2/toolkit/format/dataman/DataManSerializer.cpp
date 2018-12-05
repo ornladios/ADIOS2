@@ -67,7 +67,11 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     unsigned int size = localJsonCbor.size();
     unsigned int maxSize;
     MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, mpiComm);
+    maxSize += sizeof(uint64_t);
     localJsonCbor.resize(maxSize, '\0');
+    *(reinterpret_cast<uint64_t *>(localJsonCbor.data() +
+                                   localJsonCbor.size()) -
+      1) = size;
 
     int mpiSize;
     int mpiRank;
@@ -84,8 +88,12 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     {
         for (int i = 0; i < mpiSize; ++i)
         {
+            size_t deserializeSize =
+                *(reinterpret_cast<uint64_t *>(globalJsonStr.data() +
+                                               (i + 1) * maxSize) -
+                  1);
             nlohmann::json metaj = nlohmann::json::from_msgpack(
-                globalJsonStr.data() + i * maxSize, maxSize);
+                globalJsonStr.data() + i * maxSize, deserializeSize);
             for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end();
                  ++stepMapIt)
             {
@@ -111,12 +119,19 @@ void DataManSerializer::PutAggregatedMetadata(
     int mpiRank;
     MPI_Comm_size(mpiComm, &mpiSize);
     MPI_Comm_rank(mpiComm, &mpiRank);
-
     helper::BroadcastVector(*data, mpiComm);
-
     nlohmann::json metaJ =
         nlohmann::json::from_msgpack(data->data(), data->size());
     JsonToDataManVarMap(metaJ, nullptr);
+    if (m_Verbosity >= 5)
+    {
+        if (mpiRank == 0)
+        {
+            std::cout << "DataManSerializer::PutAggregatedMetadata: "
+                      << std::endl;
+            std::cout << metaJ.dump(4) << std::endl;
+        }
+    }
 }
 
 std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
@@ -190,6 +205,12 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
 void DataManSerializer::JsonToDataManVarMap(
     nlohmann::json &metaJ, std::shared_ptr<std::vector<char>> pack)
 {
+
+    // the mutex has to be locked here through the entire function. Otherwise
+    // reader engine could get incomplete step metadata. This function only
+    // deals with JSON metadata and data buffer already in allocated shared
+    // pointers, so it should be cheap to lock.
+    std::lock_guard<std::mutex> l(m_Mutex);
 
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
@@ -272,14 +293,12 @@ void DataManSerializer::JsonToDataManVarMap(
                         }
                     }
 
-                    m_Mutex.lock();
                     if (m_DataManVarMap[var.step] == nullptr)
                     {
                         m_DataManVarMap[var.step] =
                             std::make_shared<std::vector<DataManVar>>();
                     }
                     m_DataManVarMap[var.step]->emplace_back(std::move(var));
-                    m_Mutex.unlock();
                 }
                 catch (std::exception &e)
                 {

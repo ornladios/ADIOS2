@@ -60,12 +60,12 @@ private:
         size_t,
         std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>>>
         m_MetaDataMap;
-    int m_Verbosity = 0;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     std::string m_WriterMasterIP;
     std::string m_WriterMasterMetadataPort = "12306";
     int m_Timeout = 5;
+    int m_Verbosity = 0;
 
     struct Request
     {

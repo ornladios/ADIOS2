@@ -186,6 +186,8 @@ private:
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
+
+    int m_Verbosity = 0;
 };
 
 } // end namespace format
