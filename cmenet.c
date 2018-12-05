@@ -458,8 +458,11 @@ retry:
             svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
             event.peer->data = enet_connection_data;
 	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
+            enet_host_flush (sd->server);
+
             goto retry;
         }
+        enet_host_flush (sd->server);
 	svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
     } else {
         if ((event.type == ENET_EVENT_TYPE_DISCONNECT) ||
