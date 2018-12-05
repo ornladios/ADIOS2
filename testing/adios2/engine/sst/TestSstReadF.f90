@@ -47,7 +47,7 @@ program TestSstRead
   if (variables(1)%type /= adios2_type_integer1) stop 'i8 type not recognized'
   call adios2_variable_shape(shape_in, ndims, variables(1),  ierr)
   if (ndims /= 1) stop 'i8 ndims is not 1'
-  if (modulo(shape_in(1), nx) /= 0) stop 'i8 shape_in read failed'
+  if (modulo(shape_in(1), int(nx, 8)) /= 0) stop 'i8 shape_in read failed'
   writerSize = shape_in(1) / nx
 
   call adios2_inquire_variable(variables(2), ioRead, "i16", ierr)
