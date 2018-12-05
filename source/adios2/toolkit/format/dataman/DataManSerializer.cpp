@@ -190,7 +190,6 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
 void DataManSerializer::JsonToDataManVarMap(
     nlohmann::json &metaJ, std::shared_ptr<std::vector<char>> pack)
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
 
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
@@ -273,12 +272,14 @@ void DataManSerializer::JsonToDataManVarMap(
                         }
                     }
 
+                    m_Mutex.lock();
                     if (m_DataManVarMap[var.step] == nullptr)
                     {
                         m_DataManVarMap[var.step] =
                             std::make_shared<std::vector<DataManVar>>();
                     }
                     m_DataManVarMap[var.step]->emplace_back(std::move(var));
+                    m_Mutex.unlock();
                 }
                 catch (std::exception &e)
                 {
@@ -387,19 +388,26 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                                           const size_t step, const Dims &start,
                                           const Dims &count, void *data)
 {
+    std::shared_ptr<std::vector<DataManVar>> varVec;
 
+    m_Mutex.lock();
     auto stepVecIt = m_DataManVarMap.find(step);
     if (stepVecIt == m_DataManVarMap.end())
     {
         // aggregated metadata does not have this step
-        std::cout << m_DataManVarMap.size()
-                  << "aggregated metadata does not have this step" << std::endl;
+        std::cout << "aggregated metadata does not have Step " << step
+                  << std::endl;
         return -1;
     }
+    else
+    {
+        varVec = stepVecIt->second;
+    }
+    m_Mutex.unlock();
 
     std::unordered_map<std::string, nlohmann::json> jmap;
 
-    for (const auto &var : *stepVecIt->second)
+    for (const auto &var : *varVec)
     {
         if (var.name == variable)
         {
@@ -448,9 +456,12 @@ DataManSerializer::GetDeferredRequest()
     return t;
 }
 
-void DataManSerializer::GenerateReply(const std::vector<char> &request,
-                                      std::vector<char> &reply)
+std::shared_ptr<std::vector<char>>
+DataManSerializer::GenerateReply(const std::vector<char> &request)
 {
+    auto replyMetaJ = std::make_shared<nlohmann::json>();
+    auto replyLocalBuffer = std::make_shared<std::vector<char>>();
+
     nlohmann::json metaj;
     try
     {
@@ -461,47 +472,84 @@ void DataManSerializer::GenerateReply(const std::vector<char> &request,
         std::cout << "DataManSerializer received staging request but failed to "
                      "deserialize"
                   << std::endl;
-        return;
+        return replyLocalBuffer;
     }
 
-    nlohmann::json replyMetaJ;
+    replyLocalBuffer->resize(sizeof(uint64_t) * 2);
 
     for (const auto &req : metaj)
     {
-        std::lock_guard<std::mutex> l(m_Mutex);
         std::string variable = req["N"].get<std::string>();
         Dims start = req["O"].get<Dims>();
         Dims count = req["C"].get<Dims>();
         size_t step = req["T"].get<size_t>();
-        auto itVarVec = m_DataManVarMap.find(step);
-        if (itVarVec != m_DataManVarMap.end())
-        {
-            for (const auto &var : *(itVarVec->second))
-            {
-                if (var.name == variable)
-                {
-                    Dims ovlpStart, ovlpCount;
-                    bool ovlp = CalculateOverlap(var.start, var.count, start,
-                                                 count, ovlpStart, ovlpCount);
 
-                    std::cout << ovlp << std::endl;
-                    for (auto kkk : ovlpStart)
+        std::shared_ptr<std::vector<DataManVar>> varVec;
+
+        m_Mutex.lock();
+        auto itVarVec = m_DataManVarMap.find(step);
+        if (itVarVec == m_DataManVarMap.end())
+        {
+            return replyLocalBuffer;
+        }
+        else
+        {
+            varVec = itVarVec->second;
+            if (varVec == nullptr)
+            {
+                return replyLocalBuffer;
+            }
+        }
+        m_Mutex.unlock();
+
+        for (const auto &var : *varVec)
+        {
+            if (var.name == variable)
+            {
+                Dims ovlpStart, ovlpCount;
+                bool ovlp = CalculateOverlap(var.start, var.count, start, count,
+                                             ovlpStart, ovlpCount);
+                if (ovlp)
+                {
+                    std::vector<char> tmpBuffer;
+                    if (var.type == "compound")
                     {
-                        std::cout << kkk << " ";
+                        throw("Compound type is not supported yet.");
                     }
-                    std::cout << std::endl;
-                    for (auto kkk : ovlpCount)
-                    {
-                        std::cout << kkk << " ";
-                    }
-                    std::cout << std::endl;
+#define declare_type(T)                                                        \
+    else if (var.type == helper::GetType<T>())                                 \
+    {                                                                          \
+        tmpBuffer.reserve(std::accumulate(ovlpCount.begin(), ovlpCount.end(),  \
+                                          sizeof(T),                           \
+                                          std::multiplies<size_t>()));         \
+        GetVar(reinterpret_cast<T *>(tmpBuffer.data()), variable, ovlpStart,   \
+               ovlpCount, step);                                               \
+        PutVar(reinterpret_cast<T *>(tmpBuffer.data()), variable, var.shape,   \
+               ovlpStart, ovlpCount, ovlpStart, ovlpCount, var.doid, step,     \
+               var.rank, var.address, Params(), replyLocalBuffer, replyMetaJ); \
+    }
+                    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
+                    std::vector<char> metacbor;
+                    nlohmann::json::to_msgpack(*replyMetaJ, metacbor);
+                    size_t metasize = metacbor.size();
+                    (reinterpret_cast<uint64_t *>(
+                        replyLocalBuffer->data()))[0] =
+                        replyLocalBuffer->size();
+                    (reinterpret_cast<uint64_t *>(
+                        replyLocalBuffer->data()))[1] = metasize;
+                    replyLocalBuffer->resize(replyLocalBuffer->size() +
+                                             metasize);
+                    std::memcpy(replyLocalBuffer->data() +
+                                    replyLocalBuffer->size() - metasize,
+                                metacbor.data(), metasize);
                 }
             }
         }
     }
+    return replyLocalBuffer;
 }
-
-void DataManSerializer::PutReply(const std::vector<char> &reply) {}
 
 bool DataManSerializer::CalculateOverlap(const Dims &inStart,
                                          const Dims &inCount,

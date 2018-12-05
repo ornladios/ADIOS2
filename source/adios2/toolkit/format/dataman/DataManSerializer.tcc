@@ -153,13 +153,16 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                     inputData, datasize);
     }
 
-    nlohmann::json &metadataJsonOut = m_MetadataJson;
-    if (metadataJson != nullptr)
+    if (metadataJson == nullptr)
     {
-        metadataJsonOut = *metadataJson;
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
+            metaj);
     }
-    metadataJsonOut[std::to_string(step)][std::to_string(rank)].emplace_back(
-        metaj);
+    else
+    {
+        (*metadataJson)[std::to_string(step)][std::to_string(rank)]
+            .emplace_back(metaj);
+    }
 }
 
 template <class T>
@@ -306,17 +309,19 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                               const Dims &varMemCount)
 {
 
-    std::lock_guard<std::mutex> l(m_Mutex);
     std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
 
-    const auto &i = m_DataManVarMap.find(step);
-    if (i == m_DataManVarMap.end())
     {
-        return -1; // step not found
-    }
-    else
-    {
-        vec = i->second;
+        std::lock_guard<std::mutex> l(m_Mutex);
+        const auto &i = m_DataManVarMap.find(step);
+        if (i == m_DataManVarMap.end())
+        {
+            return -1; // step not found
+        }
+        else
+        {
+            vec = i->second;
+        }
     }
 
     if (vec == nullptr)

@@ -104,17 +104,16 @@ public:
 
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
-    void GenerateReply(const std::vector<char> &request,
-                       std::vector<char> &reply);
-
-    void PutReply(const std::vector<char> &reply);
+    std::shared_ptr<std::vector<char>>
+    GenerateReply(const std::vector<char> &request);
 
     int PutPack(const std::shared_ptr<std::vector<char>> data);
 
     template <class T>
     int GetVar(T *output_data, const std::string &varName, const Dims &varStart,
-               const Dims &varCount, const size_t step, const Dims &varMemStart,
-               const Dims &varMemCount);
+               const Dims &varCount, const size_t step,
+               const Dims &varMemStart = Dims(),
+               const Dims &varMemCount = Dims());
 
     void Erase(const size_t step);
 

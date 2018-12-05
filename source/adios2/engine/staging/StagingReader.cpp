@@ -80,7 +80,7 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
         m_DataManSerializer.GetAttributes(m_IO);
     }
 
-    auto m_MetaDataMap = m_DataManSerializer.GetMetaData();
+    m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
     size_t maxStep = std::numeric_limits<size_t>::min();
     size_t minStep = std::numeric_limits<size_t>::max();
@@ -177,6 +177,7 @@ void StagingReader::PerformGets()
 
     for (const auto &req : m_DeferredRequests)
     {
+
         if (req.type == "compound")
         {
             throw("Compound type is not supported yet.");
@@ -186,7 +187,7 @@ void StagingReader::PerformGets()
     {                                                                          \
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \
-                                   m_CurrentStep, req.start, req.count);       \
+                                   req.step);                                  \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

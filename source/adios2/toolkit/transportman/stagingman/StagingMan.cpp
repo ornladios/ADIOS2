@@ -52,7 +52,7 @@ StagingMan::Request(const std::vector<char> &request,
     m_Transport->Write(request.data(), request.size());
     Transport::Status status;
     auto reply = std::make_shared<std::vector<char>>();
-    reply->reserve(m_MaxReplySize);
+    reply->resize(m_MaxReplySize);
     m_Transport->IRead(reply->data(), m_MaxReplySize, status);
     reply->resize(status.Bytes);
     m_Transport->Close();
@@ -73,9 +73,9 @@ void StagingMan::ReceiveRequest(std::vector<char> &request,
     request.resize(status.Bytes);
 }
 
-void StagingMan::SendReply(const std::vector<char> &reply)
+void StagingMan::SendReply(std::shared_ptr<std::vector<char>> reply)
 {
-    m_Transport->Write(reply.data(), reply.size());
+    m_Transport->Write(reply->data(), reply->size());
 }
 
 bool StagingMan::GetBoolParameter(const Params &params, const std::string key)

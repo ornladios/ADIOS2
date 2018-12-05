@@ -44,7 +44,7 @@ public:
     void ReceiveRequest(std::vector<char> &request,
                         const size_t maxRequestSize = 0);
 
-    void SendReply(const std::vector<char> &reply);
+    void SendReply(std::shared_ptr<std::vector<char>> reply);
 
 private:
     bool GetBoolParameter(const Params &params, const std::string key);

@@ -185,8 +185,7 @@ void StagingWriter::IOThread()
         tpm.ReceiveRequest(request);
         if (request.size() > 0)
         {
-            std::vector<char> reply;
-            m_DataManSerializer.GenerateReply(request, reply);
+            auto reply = m_DataManSerializer.GenerateReply(request);
             tpm.SendReply(reply);
         }
     }
