@@ -30,41 +30,41 @@ The simple way to understand the big picture for the ADIOS2 unified user interfa
 +------------+-----------+---------------------------+
 
 
-ADIOS2's public APIs are based on the natural choice for each supported language to represent each ADIOS2 components and its interaction with application datatypes. Thus, 
+ADIOS2's public APIs are based on the natural choice for each supported language to represent each ADIOS2 components and its interaction with application datatypes. Thus,
 
 
 ============== ========================== ==================================
- **Language**      **Component API**       **Application Data**   
+ **Language**      **Component API**       **Application Data**
 ============== ========================== ==================================
  C++(11/newer)  objects/member functions    pointers/references/std::vector
- C              handler/functions           pointers 
- Fortran        handler/subroutines         arrays up to 6D 
- Python         objects/member functions    numpy arrays. 
+ C              handler/functions           pointers
+ Fortran        handler/subroutines         arrays up to 6D
+ Python         objects/member functions    numpy arrays.
 ============== ========================== ==================================
 
-The following section provides a common overview to all languages based on the C++11 APIs. For each specific language go to the `ref:Language Bindings APIs` section, but it's highly recommended to read this section as components map 1-to-1 in other languages. 
+The following section provides a common overview to all languages based on the C++11 APIs. For each specific language go to the :ref:`Full Language Bindings APIs` section, but it's highly recommended to read this section as components map 1-to-1 in other languages.
 
-The following figure depicts the components hierarchy from the application's point of view. 
+The following figure depicts the components hierarchy from the application's point of view.
 
-.. image:: http://i63.tinypic.com/33lfe3d.png : alt: my-picture2 
+.. image:: http://i63.tinypic.com/33lfe3d.png : alt: my-picture2
 
-* **ADIOS**: the ADIOS component is the starting point between an application and the ADIOS2 library. Applications provide:   
-    1. the scope of the ADIOS object through the MPI communicator, 
-    2. a debug mode option for extra exception checking 
-    3. an optional runtime configuration file (in XML format) to allow changing settings without recompiling. 
-    
-    The ADIOS component serves as a factory of adaptable IO components. Each IO must have a unique name within the scope of the ADIOS class object that created them with the DeclareIO function.  
+* **ADIOS**: the ADIOS component is the starting point between an application and the ADIOS2 library. Applications provide:
+    1. the scope of the ADIOS object through the MPI communicator,
+    2. a debug mode option for extra exception checking
+    3. an optional runtime configuration file (in XML format) to allow changing settings without recompiling.
 
-* **IO**: the IO component is the bridge between the application specific settings, transports. It also serves as a factory of: 
-    1. Variables 
+    The ADIOS component serves as a factory of adaptable IO components. Each IO must have a unique name within the scope of the ADIOS class object that created them with the DeclareIO function.
+
+* **IO**: the IO component is the bridge between the application specific settings, transports. It also serves as a factory of:
+    1. Variables
     2. Attributes
     3. Engines
 
 * **Variable**: Variables are the link between self-describing representation in the ADIOS2 library and data from applications. Variables are identified by unique names in the scope of the particular IO that created them. When the Engine API functions are called, a Variable must be provided along with the application data.
 
-* **Attribute**: an Attributes adds extra information to the overall variables dataset defined in the IO class. They can be single or array values.
+* **Attribute**: Attributes add extra information to the overall variables dataset defined in the IO class. They can be single or array values.
 
-* **Engine**: Engines define the actual system executing the heavy IO tasks at Open, BeginStep, Put, Get, EndStep and Close. Due to polymorphism, new IO system solutions can be developed quickly reusing internal components and reusing the same API. The default engine, if IO.SetEngine is not called, is the binary-pack bp file reader and writer: BPFile.
+* **Engine**: Engines define the actual system executing the heavy IO tasks at Open, BeginStep, Put, Get, EndStep and Close. Due to polymorphism, new IO system solutions can be developed quickly reusing internal components and reusing the same API. If IO.SetEngine is not called, the default engine is the binary-pack bp file reader and writer: **BPFile**.
 
-* **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support to: Callback functions, Transforms, Analytics funcions, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
-   
+* **Operator**: (under development) this component defines possible operations to be applied on adios2 self-describing data. This higher level abstraction is needed to provide support for: Callback functions, Transforms, Analytics funcions, Data Models functionality, etc. Any required task will be executed within the Engine. One or many operators can be associated with any of the adios2 objects or a group of them.
+

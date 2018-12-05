@@ -35,15 +35,15 @@ FAQs Answered
 Can I use the same library for MPI and non-MPI code?
 ----------------------------------------------------
 
-Short answer: No. Long answer: This created conflicts in the past, as the MPI APIs were mocked in the sequential version. If you need "sequencial" behavior with the MPI library, use MPI_COMM_SELF.
+Short answer: No. Long answer: This created conflicts in the past, as the MPI APIs were mocked in the sequential version. If you need "sequential" behavior with the MPI library, use MPI_COMM_SELF.
 Always pass a communicator in the MPI version
 
 
 Can I use ADIOS 2 C++11 library with C++98 codes?
 -------------------------------------------------
-   
+
 Use the :ref:`C bindings`. C++11 is a brand new language standard and many new (and old, *e.g.* std::string) might cause ABI conflicts.
-   
+
 Why are C and Fortran APIs missing functionality?
 -------------------------------------------------
 
@@ -53,20 +53,20 @@ Because language instrinsics are NOT THE SAME. For example, C++ and Python suppo
 C++11: Why are std::string arguments passed sometimes by value and sometimes by reference?
 ------------------------------------------------------------------------------------------
 
-C++11, provides mechanisms to optimize copying small objects, rather than passing by reference. The latter was always the rule for C++98. When a string is passed by value, it's assumed that the name will be short, <= 15 characters, most of the time. While passing by reference indicates that the string can be of any size. Check the `isocpp guidelines on this topic <http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f15-prefer-simple-and-conventional-ways-of-passing-information>`_ for more information.    
+C++11, provides mechanisms to optimize copying small objects, rather than passing by reference. The latter was always the rule for C++98. When a string is passed by value, it's assumed that the name will be short, <= 15 characters, most of the time. While passing by reference indicates that the string can be of any size. Check the `isocpp guidelines on this topic <http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#f15-prefer-simple-and-conventional-ways-of-passing-information>`_ for more information.
 
 
 C++11: Should I pass adios2:: objects by value or by reference?
 ---------------------------------------------------------------
 
-`adios2::ADIOS`: always pass by reference this is the only "large memory" object; all others: pass by reference or value depending on your coding standards and requirements, they are small objects that wrap around a pointer to an internal object inside `adios2::ADIOS`.    
+`adios2::ADIOS`: always pass by reference this is the only "large memory" object; all others: pass by reference or value depending on your coding standards and requirements, they are small objects that wrap around a pointer to an internal object inside `adios2::ADIOS`.
 
 
 Fortran: Can I pass slices and temporary arrays to adios2_put?
 --------------------------------------------------------------
 
-By definition the lifetime of a temporary if the scope of the function is passed to. Therefore, 
-you must use sync mode with adios2_put. Deferred mode will save garbage data since the memory location of a temporary is undefined after adios2_put, not able to reach adios2_end_step, adios2_close or adios2_perform_puts where the memory is actually used.   
+By definition the lifetime of a temporary if the scope of the function is passed to. Therefore,
+you must use sync mode with adios2_put. Deferred mode will save garbage data since the memory location of a temporary is undefined after adios2_put, not able to reach adios2_end_step, adios2_close or adios2_perform_puts where the memory is actually used.
 
 
 
@@ -80,8 +80,8 @@ Follow directions at :ref:`Building on High Performance Computing, HPC, Systems`
       $ module load gcc/7.2.0
       $ makelocalrc $(dirname $(which pgc++)) -gcc $(which gcc) -gpp $(which g++) -g77 $(which gfortran) -o -net 1>${HOME}/.mypgirc 2>/dev/null
       $ module unload gcc/7.2.0
-   
-   
+
+
 How do I enable the Python bindings on Titan?
 ---------------------------------------------
 
