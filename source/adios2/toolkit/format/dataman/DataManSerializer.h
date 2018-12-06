@@ -105,7 +105,8 @@ public:
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
     std::shared_ptr<std::vector<char>>
-    GenerateReply(const std::vector<char> &request);
+    GenerateReply(const std::vector<char> &request,
+                  bool autoEraseOldSteps = false);
 
     int PutPack(const std::shared_ptr<std::vector<char>> data);
 
@@ -115,7 +116,7 @@ public:
                const Dims &varMemStart = Dims(),
                const Dims &varMemCount = Dims());
 
-    void Erase(const size_t step);
+    void Erase(const size_t step, bool allPreviousSteps = false);
 
     std::shared_ptr<const std::vector<DataManVar>>
     GetMetaData(const size_t step);
@@ -132,6 +133,8 @@ public:
                            const Dims &start, const Dims &count, void *data);
     std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
     GetDeferredRequest();
+
+    int64_t MinStep();
 
 private:
     template <class T>
@@ -187,7 +190,7 @@ private:
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
 
-    int m_Verbosity = 0;
+    int m_Verbosity = 5;
 };
 
 } // end namespace format

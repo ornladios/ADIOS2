@@ -49,9 +49,9 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
+    int m_Verbosity = 5;
     format::DataManSerializer m_DataManSerializer;
     transportman::WANMan m_MetadataTransport;
-    int m_Verbosity = 0;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     int m_MpiSize;
@@ -60,6 +60,11 @@ private:
     std::string m_FullDataAddress;
     int m_Timeout = 5;
     bool m_Listening = false;
+    int64_t m_MaxBufferSteps = 10;
+    int64_t m_MaxStep = 0;
+    int64_t m_MinStep = 0;
+    size_t m_DefaultBufferSize = 1024;
+    bool m_IsActive = true;
 
     void Init() final;
     void InitParameters() final;

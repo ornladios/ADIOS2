@@ -25,9 +25,12 @@ namespace engine
 template <class T>
 void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
-    variable.SetData(data);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
-                               m_FullDataAddress, Params());
+    if (m_IsActive)
+    {
+        variable.SetData(data);
+        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
+                                   m_FullDataAddress, Params());
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << "     PutSync("
@@ -38,7 +41,10 @@ void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 template <class T>
 void StagingWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    PutSyncCommon(variable, data);
+    if (m_IsActive)
+    {
+        PutSyncCommon(variable, data);
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << "     PutDeferred("

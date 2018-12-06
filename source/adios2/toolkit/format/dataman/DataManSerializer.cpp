@@ -307,6 +307,12 @@ void DataManSerializer::JsonToDataManVarMap(
             }
         }
     }
+    if (m_Verbosity >= 5)
+    {
+        std::cout
+            << "DataManSerializer::JsonToDataManVarMap Total buffered steps = "
+            << m_DataManVarMap.size() << std::endl;
+    }
 }
 
 int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
@@ -343,10 +349,20 @@ int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
     return 0;
 }
 
-void DataManSerializer::Erase(size_t step)
+void DataManSerializer::Erase(size_t step, bool allPreviousSteps)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
-    m_DataManVarMap.erase(step);
+    if (allPreviousSteps)
+    {
+        for (size_t i = 0; i <= step; ++i)
+        {
+            m_DataManVarMap.erase(i);
+        }
+    }
+    else
+    {
+        m_DataManVarMap.erase(step);
+    }
 }
 
 const std::unordered_map<
@@ -476,7 +492,8 @@ DataManSerializer::GetDeferredRequest()
 }
 
 std::shared_ptr<std::vector<char>>
-DataManSerializer::GenerateReply(const std::vector<char> &request)
+DataManSerializer::GenerateReply(const std::vector<char> &request,
+                                 bool autoEraseOldSteps)
 {
     auto replyMetaJ = std::make_shared<nlohmann::json>();
     auto replyLocalBuffer = std::make_shared<std::vector<char>>();
@@ -496,31 +513,37 @@ DataManSerializer::GenerateReply(const std::vector<char> &request)
 
     replyLocalBuffer->resize(sizeof(uint64_t) * 2);
 
+    size_t stepToErase = std::numeric_limits<size_t>::max();
+
     for (const auto &req : metaj)
     {
         std::string variable = req["N"].get<std::string>();
         Dims start = req["O"].get<Dims>();
         Dims count = req["C"].get<Dims>();
         size_t step = req["T"].get<size_t>();
+        if (step < stepToErase)
+        {
+            stepToErase = step;
+        }
 
         std::shared_ptr<std::vector<DataManVar>> varVec;
 
-        m_Mutex.lock();
-        auto itVarVec = m_DataManVarMap.find(step);
-        if (itVarVec == m_DataManVarMap.end())
         {
-            return replyLocalBuffer;
-        }
-        else
-        {
-            varVec = itVarVec->second;
-            if (varVec == nullptr)
+            std::lock_guard<std::mutex> l(m_Mutex);
+            auto itVarVec = m_DataManVarMap.find(step);
+            if (itVarVec == m_DataManVarMap.end())
             {
                 return replyLocalBuffer;
             }
+            else
+            {
+                varVec = itVarVec->second;
+                if (varVec == nullptr)
+                {
+                    return replyLocalBuffer;
+                }
+            }
         }
-        m_Mutex.unlock();
-
         for (const auto &var : *varVec)
         {
             if (var.name == variable)
@@ -566,6 +589,10 @@ DataManSerializer::GenerateReply(const std::vector<char> &request)
                 }
             }
         }
+    }
+    if (autoEraseOldSteps)
+    {
+        Erase(stepToErase - 1, true);
     }
     return replyLocalBuffer;
 }
@@ -617,6 +644,24 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
         }
     }
     return true;
+}
+
+int64_t DataManSerializer::MinStep()
+{
+    std::lock_guard<std::mutex> l(m_Mutex);
+    int64_t minStep = std::numeric_limits<int64_t>::max();
+    for (const auto &i : m_DataManVarMap)
+    {
+        if (minStep > i.first)
+        {
+            minStep = i.first;
+        }
+    }
+    if (minStep == std::numeric_limits<int64_t>::max())
+    {
+        minStep = 0;
+    }
+    return minStep;
 }
 
 } // namespace format

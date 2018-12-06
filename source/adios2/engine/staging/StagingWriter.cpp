@@ -45,16 +45,32 @@ StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    m_CurrentStep++; // 0 is the first step
-
-    m_DataManSerializer.New(1024);
-
-    if (m_Verbosity == 5)
+    ++m_CurrentStep;
+    if (m_CurrentStep > m_MaxBufferSteps + m_DataManSerializer.MinStep())
     {
-        std::cout << "Staging Writer " << m_MpiRank
-                  << "   BeginStep() new step " << m_CurrentStep << "\n";
+        m_IsActive = false;
+        if (m_Verbosity >= 1)
+        {
+            std::cout << "Writer engine buffer is full, skip this step"
+                      << std::endl;
+        }
+        return StepStatus::NotReady;
     }
-    return StepStatus::OK;
+    else
+    {
+        std::cout << "active\n";
+        m_IsActive = true;
+
+        m_DataManSerializer.New(m_DefaultBufferSize);
+        m_MaxStep = m_CurrentStep;
+
+        if (m_Verbosity == 5)
+        {
+            std::cout << "Staging Writer " << m_MpiRank
+                      << "   BeginStep() new step " << m_CurrentStep << "\n";
+        }
+        return StepStatus::OK;
+    }
 }
 
 size_t StagingWriter::CurrentStep() const
@@ -71,14 +87,18 @@ void StagingWriter::PerformPuts() {}
 
 void StagingWriter::EndStep()
 {
-    auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
-    if (m_MpiRank == 0)
+    if (m_IsActive)
     {
-        m_MetadataTransport.Write(aggMetadata, 0);
+        auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
+        if (m_MpiRank == 0)
+        {
+            m_MetadataTransport.Write(aggMetadata, 0);
+        }
+        m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
     }
-
-    m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-
+    else
+    {
+    }
     if (m_Verbosity == 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << "   EndStep()\n";
@@ -188,7 +208,7 @@ void StagingWriter::IOThread()
         tpm.ReceiveRequest(request);
         if (request.size() > 0)
         {
-            auto reply = m_DataManSerializer.GenerateReply(request);
+            auto reply = m_DataManSerializer.GenerateReply(request, true);
             tpm.SendReply(reply);
         }
     }
