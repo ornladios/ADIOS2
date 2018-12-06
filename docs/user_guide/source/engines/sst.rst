@@ -6,45 +6,45 @@ In ADIOS2, the Sustainable Staging Transport (SST) is an engine that allows
 direct connection of data producers and consumers via the ADIOS2 write/read
 APIs.  This is a classic streaming data architecture where the data passed
 to ADIOS on the write side (via PutDeferred(), PutSync() and similar calls)
-is make directly available to a reader (via GetDeferred(), GetSync() and
+is made directly available to a reader (via GetDeferred(), GetSync() and
 similar calls).
 
-SST is designed for use in HPC environment and can take advantage of RDMA
+SST is designed for use in HPC environments and can take advantage of RDMA
 network interconnects to speed the transfer of data between communicating
-HPC applications, however it is also capable of operating in a Wide Area
+HPC applications; however, it is also capable of operating in a Wide Area
 Networking environment over standard sockets.  SST supports full MxN data
 distribution, where the number of reader ranks can differ from the number of
-writer ranks.  SST also allows multiple reader cohorts to get access to a writers
+writer ranks.  SST also allows multiple reader cohorts to get access to a writer's
 data simultaneously.
 
 To use this engine, you can either specify it in your xml config file, with
 tag ``<engine type=SST>`` or, set it in client code. For example, here is
-how to create an SST reader: 
+how to create an SST reader:
 
 .. code-block:: c++
 
  adios2::IO sstIO = adios.DeclareIO("SomeName");
- sstIO.SetEngine("SST");	
- adios2::Engine sstReader = sstIO.Open(filename, adios2::Mode::Read);	
+ sstIO.SetEngine("SST");
+ adios2::Engine sstReader = sstIO.Open(filename, adios2::Mode::Read);
 
 and a sample code for SST writer is:
 
 .. code-block:: c++
 
  adios2::IO sstIO = adios.DeclareIO("SomeName");
- sstIO.SetEngine("SST");	
- adios2::Engine sstWriter = sstIO.Open(filename, adios2::Mode::Write);	
+ sstIO.SetEngine("SST");
+ adios2::Engine sstWriter = sstIO.Open(filename, adios2::Mode::Write);
 
 The general goal of ADIOS2 is to ease the conversion of a file-based
 application to instead use a non-file streaming interconnect, for example,
 data producers such as computational physics codes and consumers such as
 analysis applications.  However, there are some uses of ADIOS2 APIs that
 work perfectly well with the ADIOS2 file engines, but which will not work or
-will perform badly.  For example, SST is based upon the *"step"* concept and
+will perform badly with streaming.  For example, SST is based upon the *"step"* concept and
 ADIOS2 applications that use SST must call BeginStep() and EndStep().  On
 the writer side, the Put() calls between BeginStep and EndStep are the unit
 of communication and represent the data that will be available between the
-corresponding Begin/EndStep calls on the reader.  
+corresponding Begin/EndStep calls on the reader.
 
 Also, it is recommended that SST-based applications not use the ADIOS2
 GetSync() method unless there is only one data item to be read per step.
@@ -95,7 +95,7 @@ create the file and the reader must be able to read it).  Generally the file
 so created will exist only for as long as the writer keeps the stream
 Open(), but abnormal process termination may leave "stale" files in those
 locations.  These stray ".sst" files should be deleted to avoid confusing
-future readers.   SST also offers a **"Screen"** registration method in which
+future readers.  SST also offers a **"Screen"** registration method in which
 writers and readers send their contact information to, and read it from,
 stdout and stdin respectively.  The "screen" registration method doesn't
 support batch mode operations in any way, but may be useful when manually
@@ -110,7 +110,7 @@ Writer and Reader engines.
 of steps which the writer will allow to be queued before taking specific
 action (such as discarding data or waiting for readers to consume the
 data).  The default value of 0 is interpreted as no limit.  This value is
-interpreted by SST Writer engines only. 
+interpreted by SST Writer engines only.
 
 4. **QueueFullPolicy**: Default **"Block"**.  This value controls what
 policy is invoked if a non-zero **QueueLimit** has been specified and new
@@ -166,12 +166,12 @@ network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
 =======================  ===================== =========================================================
- **Key**                  **Value Format**      **Default** and Examples 
+ **Key**                  **Value Format**      **Default** and Examples
 =======================  ===================== =========================================================
- RendezvousReaderCount    integer		         **1**
+ RendezvousReaderCount    integer               **1**
  RegistrationMethod       string                **File**, Screen
- QueueLimit               integer		         **0** (no queue limits)
- QueueFullPolicy          string	               **Block**, Discard
- DataTransport	           string		            **default varies by platform**, RDMA, WAN
- NetworkInterface         string		            **NULL**
+ QueueLimit               integer               **0** (no queue limits)
+ QueueFullPolicy          string                **Block**, Discard
+ DataTransport            string                **default varies by platform**, RDMA, WAN
+ NetworkInterface         string                **NULL**
 =======================  ===================== =========================================================
