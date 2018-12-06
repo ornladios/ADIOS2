@@ -100,9 +100,6 @@ public:
      * */
     std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
 
-    /** wildcard memory space used for contiguous memory read */
-    std::map<size_t, std::vector<char>> m_RawMemory;
-
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
                  const Dims &count, const bool constantShape,

@@ -42,10 +42,8 @@ void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
 }
 
 const helper::BlockOperationInfo &BP3Deserializer::InitPostOperatorBlockData(
-    const std::vector<helper::BlockOperationInfo> &blockOperationsInfo,
-    std::vector<char> &postOpData, const bool identity) const
+    const std::vector<helper::BlockOperationInfo> &blockOperationsInfo) const
 {
-
     size_t index = 0;
     for (const helper::BlockOperationInfo &blockOperationInfo :
          blockOperationsInfo)
@@ -53,30 +51,11 @@ const helper::BlockOperationInfo &BP3Deserializer::InitPostOperatorBlockData(
         const std::string type = blockOperationInfo.Info.at("Type");
         if (m_TransformTypes.count(type) == 1)
         {
-            if (!identity)
-            {
-                postOpData.resize(blockOperationInfo.PayloadSize);
-            }
             break;
         }
         ++index;
     }
     return blockOperationsInfo.at(index);
-}
-
-void BP3Deserializer::GetPreOperatorBlockData(
-    const std::vector<char> &postOpData,
-    const helper::BlockOperationInfo &blockOperationInfo,
-    std::vector<char> &preOpData) const
-{
-    // pre-allocate decompressed block
-    preOpData.resize(helper::GetTotalSize(blockOperationInfo.PreCount) *
-                     blockOperationInfo.PreSizeOf);
-
-    // get the right bp3Op
-    std::shared_ptr<BP3Operation> bp3Op =
-        SetBP3Operation(blockOperationInfo.Info.at("Type"));
-    bp3Op->GetData(postOpData.data(), blockOperationInfo, preOpData.data());
 }
 
 // PRIVATE
@@ -552,12 +531,17 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
                                                                                \
-    template bool BP3Deserializer::IdentityOperation<T>(                       \
-        const std::vector<typename core::Variable<T>::Operation> &)            \
-        const noexcept;
+    template void BP3Deserializer::PreDataRead(                                \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, char *&, size_t &, size_t &,         \
+        const size_t);                                                         \
+                                                                               \
+    template void BP3Deserializer::PostDataRead(                               \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, const bool, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace format
+} // end namespace formata
 } // end namespace adios2

@@ -454,19 +454,102 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 }
 
 template <class T>
-bool BP3Deserializer::IdentityOperation(
-    const std::vector<typename core::Variable<T>::Operation> &operations) const
-    noexcept
+void BP3Deserializer::PreDataRead(
+    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo,
+    const helper::SubStreamBoxInfo &subStreamBoxInfo, char *&buffer,
+    size_t &payloadSize, size_t &payloadOffset, const size_t threadID)
 {
-    bool identity = false;
-    for (const typename core::Variable<T>::Operation &op : operations)
+    if (subStreamBoxInfo.OperationsInfo.size() > 0)
     {
-        if (op.Op->m_Type == "identity")
+        const bool identity = IdentityOperation<T>(blockInfo.Operations);
+
+        // if identity is true, just read the entire block content as-is
+        const helper::BlockOperationInfo &blockOperationInfo =
+            InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
+
+        if (!identity)
         {
-            identity = true;
+            m_ThreadBuffers[threadID][1].resize(blockOperationInfo.PayloadSize,
+                                                '\0');
         }
+
+        buffer = identity ? reinterpret_cast<char *>(blockInfo.Data)
+                          : m_ThreadBuffers[threadID][1].data();
+
+        payloadSize = blockOperationInfo.PayloadSize;
+        payloadOffset = blockOperationInfo.PayloadOffset;
     }
-    return identity;
+    else
+    {
+        payloadOffset = subStreamBoxInfo.Seeks.first;
+        payloadSize = subStreamBoxInfo.Seeks.second - payloadOffset;
+        m_ThreadBuffers[threadID][0].resize(payloadSize);
+
+        buffer = m_ThreadBuffers[threadID][0].data();
+    }
+}
+
+template <class T>
+void BP3Deserializer::PostDataRead(
+    core::Variable<T> &variable, typename core::Variable<T>::Info &blockInfo,
+    const helper::SubStreamBoxInfo &subStreamBoxInfo,
+    const bool isRowMajorDestination, const size_t threadID)
+{
+    if (subStreamBoxInfo.OperationsInfo.size() > 0 &&
+        !IdentityOperation<T>(blockInfo.Operations))
+    {
+        const helper::BlockOperationInfo &blockOperationInfo =
+            InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
+
+        const size_t preOpPayloadSize =
+            helper::GetTotalSize(blockOperationInfo.PreCount) *
+            blockOperationInfo.PreSizeOf;
+        m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
+
+        // get the right bp3Op
+        std::shared_ptr<BP3Operation> bp3Op =
+            SetBP3Operation(blockOperationInfo.Info.at("Type"));
+
+        // get original block back
+        char *preOpData = m_ThreadBuffers[threadID][0].data();
+        const char *postOpData = m_ThreadBuffers[threadID][1].data();
+        bp3Op->GetData(postOpData, blockOperationInfo, preOpData);
+
+        // clip block to match selection
+        helper::ClipVector(m_ThreadBuffers[threadID][0],
+                           subStreamBoxInfo.Seeks.first,
+                           subStreamBoxInfo.Seeks.second);
+    }
+
+    const Box<Dims> sourceStartCount = helper::StartCountBox(
+        subStreamBoxInfo.BlockBox.first, subStreamBoxInfo.BlockBox.second);
+
+// TODO: this should be a single BP3 deserializer function
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    const bool endianReverse =
+        (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian) ? true
+                                                                  : false;
+#else
+    constexpr bool endianReverse = false;
+#endif
+    if (variable.m_ShapeID == ShapeID::GlobalArray)
+    {
+        helper::CopyMemory(
+            blockInfo.Data, blockInfo.Start, blockInfo.Count,
+            isRowMajorDestination,
+            reinterpret_cast<T *>(m_ThreadBuffers[threadID][0].data()),
+            sourceStartCount.first, sourceStartCount.second, m_IsRowMajor,
+            endianReverse);
+    }
+    else if (variable.m_ShapeID == ShapeID::LocalArray)
+    {
+        helper::CopyMemory(
+            blockInfo.Data, Dims(blockInfo.Count.size(), 0), blockInfo.Count,
+            isRowMajorDestination,
+            reinterpret_cast<T *>(m_ThreadBuffers[threadID][0].data()),
+            sourceStartCount.first, sourceStartCount.second, m_IsRowMajor,
+            endianReverse);
+    }
 }
 
 template <class T>
@@ -919,6 +1002,22 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         blocksInfo.push_back(blockInfo);
     }
     return blocksInfo;
+}
+
+template <class T>
+bool BP3Deserializer::IdentityOperation(
+    const std::vector<typename core::Variable<T>::Operation> &operations) const
+    noexcept
+{
+    bool identity = false;
+    for (const typename core::Variable<T>::Operation &op : operations)
+    {
+        if (op.Op->m_Type == "identity")
+        {
+            identity = true;
+        }
+    }
+    return identity;
 }
 
 } // end namespace format

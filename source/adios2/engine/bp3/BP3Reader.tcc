@@ -71,116 +71,46 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
 
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
         {
-            const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo =
-                stepPair.second;
-
-            for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
+            for (const helper::SubStreamBoxInfo &subStreamBoxInfo :
+                 stepPair.second)
             {
-                if (subStreamInfo.ZeroBlock)
+                if (subStreamBoxInfo.ZeroBlock)
                 {
                     continue;
                 }
 
-                const size_t subFileIndex = subStreamInfo.SubStreamID;
-
-                if (m_SubFileManager.m_Transports.count(subFileIndex) == 0)
+                // check if subfile is already opened
+                if (m_SubFileManager.m_Transports.count(
+                        subStreamBoxInfo.SubStreamID) == 0)
                 {
-                    const std::string subFile(
-                        m_BP3Deserializer.GetBPSubFileName(m_Name,
-                                                           subFileIndex));
+                    const std::string subFileName =
+                        m_BP3Deserializer.GetBPSubFileName(
+                            m_Name, subStreamBoxInfo.SubStreamID);
 
                     m_SubFileManager.OpenFileID(
-                        subFile, subFileIndex, Mode::Read,
+                        subFileName, subStreamBoxInfo.SubStreamID, Mode::Read,
                         {{"transport", "File"}}, profile);
                 }
 
-                // need to decompress before into m_Memory
-                if (subStreamInfo.OperationsInfo.size() > 0)
-                {
-                    const bool identity =
-                        m_BP3Deserializer.IdentityOperation<T>(
-                            blockInfo.Operations);
+                char *buffer = nullptr;
+                size_t payloadSize = 0, payloadStart = 0;
 
-                    const helper::BlockOperationInfo &blockOperationInfo =
-                        m_BP3Deserializer.InitPostOperatorBlockData(
-                            subStreamInfo.OperationsInfo,
-                            variable.m_RawMemory[1], identity);
+                m_BP3Deserializer.PreDataRead(variable, blockInfo,
+                                              subStreamBoxInfo, buffer,
+                                              payloadSize, payloadStart, 0);
 
-                    // if identity is true, just read the entire block content
-                    char *output =
-                        identity ? reinterpret_cast<char *>(blockInfo.Data)
-                                 : variable.m_RawMemory[1].data();
-                    m_SubFileManager.ReadFile(
-                        output, blockOperationInfo.PayloadSize,
-                        blockOperationInfo.PayloadOffset, subFileIndex);
-                    if (identity)
-                    {
-                        continue;
-                    }
-                    m_BP3Deserializer.GetPreOperatorBlockData(
-                        variable.m_RawMemory[1], blockOperationInfo,
-                        variable.m_RawMemory[0]);
+                m_SubFileManager.ReadFile(buffer, payloadSize, payloadStart,
+                                          subStreamBoxInfo.SubStreamID);
 
-                    helper::ClipVector(variable.m_RawMemory[0],
-                                       subStreamInfo.Seeks.first,
-                                       subStreamInfo.Seeks.second);
-                }
-                else
-                {
-                    const size_t payloadStart = subStreamInfo.Seeks.first;
-                    const size_t payloadSize =
-                        subStreamInfo.Seeks.second - subStreamInfo.Seeks.first;
-                    // a single m_Memory can prevent threading per variable,
-                    // need to think for later
-                    variable.m_RawMemory[0].resize(payloadSize);
-                    m_SubFileManager.ReadFile(variable.m_RawMemory[0].data(),
-                                              payloadSize, payloadStart,
-                                              subFileIndex);
-                }
-                //                m_BP3Deserializer.ClipContiguousMemory<T>(
-                //                                       blockInfo,
-                //                                       variable.m_RawMemory[0],
-                //                                       subStreamInfo.BlockBox,
-                //                                       subStreamInfo.IntersectionBox);
-                const Box<Dims> sourceStartCount =
-                    helper::StartCountBox(subStreamInfo.BlockBox.first,
-                                          subStreamInfo.BlockBox.second);
-
-// TODO: this should be a single BP3 deserializer function
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
-                const bool endianReverse =
-                    (helper::IsLittleEndian() !=
-                     m_BP3Deserializer.m_Minifooter.IsLittleEndian)
-                        ? true
-                        : false;
-#else
-                constexpr bool endianReverse = false;
-#endif
-                if (variable.m_ShapeID == ShapeID::GlobalArray)
-                {
-                    helper::CopyMemory(
-                        blockInfo.Data, blockInfo.Start, blockInfo.Count,
-                        helper::IsRowMajor(m_IO.m_HostLanguage),
-                        reinterpret_cast<T *>(variable.m_RawMemory[0].data()),
-                        sourceStartCount.first, sourceStartCount.second,
-                        m_BP3Deserializer.m_IsRowMajor, endianReverse);
-                }
-                else if (variable.m_ShapeID == ShapeID::LocalArray)
-                {
-                    helper::CopyMemory(
-                        blockInfo.Data, Dims(blockInfo.Count.size(), 0),
-                        blockInfo.Count,
-                        helper::IsRowMajor(m_IO.m_HostLanguage),
-                        reinterpret_cast<T *>(variable.m_RawMemory[0].data()),
-                        sourceStartCount.first, sourceStartCount.second,
-                        m_BP3Deserializer.m_IsRowMajor, endianReverse);
-                }
-            }
+                m_BP3Deserializer.PostDataRead(
+                    variable, blockInfo, subStreamBoxInfo,
+                    helper::IsRowMajor(m_IO.m_HostLanguage), 0);
+            } // substreams loop
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
-        }
+        } // steps loop
         blockInfo.Data = originalBlockData;
-    }
+    } // deferred blocks loop
 }
 
 } // end namespace engine

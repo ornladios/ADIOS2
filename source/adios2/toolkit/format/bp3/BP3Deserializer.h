@@ -75,20 +75,36 @@ public:
     SetVariableBlockInfo(core::Variable<T> &variable,
                          typename core::Variable<T>::Info &blockInfo) const;
 
-    // Operation related functions
+    /**
+     * Prepares the information to get raw data from the transport manager for a
+     * required substream box (block)
+     * @param variable input Variable
+     * @param blockInfo input blockInfo with information about Get request
+     * @param subStreamBoxInfo contains information (e.g. bounds, operation,
+     * etc.) about the available box (block) to be accessed by the Transport
+     * Manager.
+     * @param buffer output to be passed to Transport Manager for current box
+     * @param payloadSize output to be passed to Transport Manager for current
+     * box
+     * @param payloadStart output to be passed to Transport Manager for current
+     * box
+     * @param threadID assign different thread ID to have independent raw memory
+     * spaces per thread, default = 0
+     */
     template <class T>
-    bool IdentityOperation(
-        const std::vector<typename core::Variable<T>::Operation> &operations)
-        const noexcept;
+    void PreDataRead(core::Variable<T> &variable,
+                     typename core::Variable<T>::Info &blockInfo,
+                     const helper::SubStreamBoxInfo &subStreamBoxInfo,
+                     char *&buffer, size_t &payloadSize, size_t &payloadOffset,
+                     const size_t threadID = 0);
 
-    const helper::BlockOperationInfo &InitPostOperatorBlockData(
-        const std::vector<helper::BlockOperationInfo> &blockOperationsInfo,
-        std::vector<char> &postOpData, const bool identity) const;
+    template <class T>
+    void PostDataRead(core::Variable<T> &variable,
+                      typename core::Variable<T>::Info &blockInfo,
+                      const helper::SubStreamBoxInfo &subStreamBoxInfo,
+                      const bool isRowMajorDestination,
+                      const size_t threadID = 0);
 
-    void GetPreOperatorBlockData(
-        const std::vector<char> &postOpData,
-        const helper::BlockOperationInfo &blockOperationInfo,
-        std::vector<char> &preOpData) const;
     /**
      * Clips and assigns memory to blockInfo.Data from a contiguous memory
      * input
@@ -181,6 +197,15 @@ private:
     std::vector<typename core::Variable<T>::Info>
     BlocksInfoCommon(const core::Variable<T> &variable,
                      const std::vector<size_t> &blocksIndexOffsets) const;
+
+    template <class T>
+    bool IdentityOperation(
+        const std::vector<typename core::Variable<T>::Operation> &operations)
+        const noexcept;
+
+    const helper::BlockOperationInfo &InitPostOperatorBlockData(
+        const std::vector<helper::BlockOperationInfo> &blockOperationsInfo)
+        const;
 };
 
 // TODO: deprecate this
@@ -224,9 +249,14 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
                                                                                \
-    extern template bool BP3Deserializer::IdentityOperation<T>(                \
-        const std::vector<typename core::Variable<T>::Operation> &)            \
-        const noexcept;
+    extern template void BP3Deserializer::PreDataRead(                         \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, char *&, size_t &, size_t &,         \
+        const size_t);                                                         \
+                                                                               \
+    extern template void BP3Deserializer::PostDataRead(                        \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, const bool, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
