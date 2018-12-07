@@ -162,8 +162,7 @@ adios2_FILE *adios2_fopen_glue(const char *name, const char *mode,
     }
     catch (...)
     {
-        static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_fopen"));
+        adios2::helper::ExceptionToError("adios2_fopen");
     }
     return stream;
 }
@@ -187,8 +186,7 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const char *mode,
     }
     catch (...)
     {
-        static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_fopen_config"));
+        adios2::helper::ExceptionToError("adios2_fopen_config");
     }
     return stream;
 }

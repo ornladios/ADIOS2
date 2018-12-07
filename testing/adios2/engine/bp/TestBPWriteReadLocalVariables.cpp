@@ -138,8 +138,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::Read, MPI_COMM_SELF);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         std::string IString;
         std::array<int8_t, Nx> I8;
@@ -511,8 +510,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::Read, MPI_COMM_SELF);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         std::string IString;
         std::array<int8_t, Ny * Nx> I8;
@@ -892,8 +890,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::Read, MPI_COMM_SELF);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         std::string IString;
         std::array<int8_t, Ny * Nx> I8;
@@ -1273,8 +1270,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::Read, MPI_COMM_SELF);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         std::vector<int8_t> I8;
         std::vector<int16_t> I16;
@@ -1544,8 +1540,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::Read, MPI_COMM_SELF);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_StepsGlobalValue =
             io.InquireVariable<int32_t>("stepsGlobalValue");
