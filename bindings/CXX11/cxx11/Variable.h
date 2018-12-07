@@ -53,6 +53,13 @@ public:
     explicit operator bool() const noexcept;
 
     /**
+     * Set new shape, care must be taken when reading back the variable for
+     * different steps. Only applies to Global arrays.
+     * @param shape new shape dimensions array
+     */
+    void SetShape(const adios2::Dims &shape);
+
+    /**
      * Sets a variable selection modifying current {start, count}
      * Count is the dimension from Start point
      * @param selection input {start, count}
