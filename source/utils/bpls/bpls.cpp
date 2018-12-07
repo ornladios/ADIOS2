@@ -670,12 +670,21 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         fprintf(outf, "  ");
         if (nsteps > 1)
             fprintf(outf, "%zu*", nsteps);
-        if (variable->m_Shape.size() > 0)
+        if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
             fprintf(outf, "{%zu", variable->m_Shape[0]);
             for (size_t j = 1; j < variable->m_Shape.size(); j++)
             {
                 fprintf(outf, ", %zu", variable->m_Shape[j]);
+            }
+            fprintf(outf, "}");
+        }
+        else if (variable->m_ShapeID == ShapeID::LocalArray)
+        {
+            fprintf(outf, "{%zu", variable->m_Count[0]);
+            for (size_t j = 1; j < variable->m_Count.size(); j++)
+            {
+                fprintf(outf, ", %zu", variable->m_Count[j]);
             }
             fprintf(outf, "}");
         }
@@ -1522,8 +1531,15 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         }
 
         // read a slice finally
-        Dims startv = helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx);
-        Dims countv = helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx);
+        const Dims startv =
+            variable->m_ShapeID == ShapeID::GlobalArray
+                ? helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx)
+                : Dims();
+        const Dims countv =
+            variable->m_ShapeID == ShapeID::GlobalArray
+                ? helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx)
+                : Dims();
+
         if (verbose > 2)
         {
             printf("set selection: ");
@@ -1534,7 +1550,10 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
         if (!variable->m_SingleValue)
         {
-            variable->SetSelection({startv, countv});
+            if (variable->m_ShapeID == ShapeID::GlobalArray)
+            {
+                variable->SetSelection({startv, countv});
+            }
         }
 
         if (nsteps > 1)
@@ -2510,16 +2529,30 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
             fprintf(outf, "\n");
             ndigits_nblocks = ndigits(blocks.size() - 1);
-            for (size_t j = 0; j < blocks.size(); j++)
+
+            const size_t blocksSize = blocks.size();
+
+            for (size_t j = 0; j < blocksSize; j++)
             {
                 fprintf(outf, "          block %*zu: [", ndigits_nblocks, j);
+
+                const Dims blockCount =
+                    variable->m_ShapeID == ShapeID::LocalValue
+                        ? Dims(ndim, 1)
+                        : blocks[j].Count;
+
+                const Dims blockStart =
+                    variable->m_ShapeID == ShapeID::GlobalArray
+                        ? blocks[j].Start
+                        : Dims(blockCount.size(), 0);
+
                 for (size_t k = 0; k < ndim; k++)
                 {
-                    if (blocks[j].Count[k])
+                    if (blockCount[k])
                     {
                         fprintf(outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
-                                blocks[j].Start[k], ndigits_dims[k],
-                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                                blockStart[k], ndigits_dims[k],
+                                blockStart[k] + blockCount[k] - 1);
                     }
                     else
                     {
