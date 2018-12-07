@@ -323,7 +323,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
 
             for (size_t b = 0; b < mpiSize; ++b)
             {
-                var_i32.SetBlockID(b);
+                var_i32.SetBlockSelection(b);
                 ASSERT_EQ(var_i32.BlockID(), b);
 
                 bpReader.Get(var_i32, I32.data());

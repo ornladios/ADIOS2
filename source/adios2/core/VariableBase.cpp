@@ -74,7 +74,7 @@ void VariableBase::SetShape(const adios2::Dims &shape)
     m_Shape = shape;
 }
 
-void VariableBase::SetBlockID(const size_t blockID)
+void VariableBase::SetBlockSelection(const size_t blockID)
 {
     m_BlockID = blockID;
     m_SelectionType = SelectionType::WriteBlock;

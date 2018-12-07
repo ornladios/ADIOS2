@@ -60,12 +60,14 @@ public:
     void SetShape(const adios2::Dims &shape);
 
     /**
-    * Read mode only. Use only for local variables variable.ShapeID() =
-    * ShapeID::LocalArray or ShapeID::LocalValue
-    * @param localBlock: variable block index defined at write time. Can be
-    * inspected with bpls -D variableName
-    */
-    void SetBlockID(const size_t blockID);
+     * Read mode only. Required for reading local variables, ShapeID() =
+     * ShapeID::LocalArray or ShapeID::LocalValue. For Global Arrays it will Set
+     * the appropriate Start and Count Selection for the global array
+     * coordinates.
+     * @param blockID: variable block index defined at write time. Blocks can be
+     * inspected with bpls -D variableName
+     */
+    void SetBlockSelection(const size_t blockID);
 
     /**
      * Sets a variable selection modifying current {start, count}

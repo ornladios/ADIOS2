@@ -126,7 +126,7 @@ public:
      * Use at read only for local variables
      * @param blockID
      */
-    void SetBlockID(const size_t blockID);
+    void SetBlockSelection(const size_t blockID);
 
     /**
      * Set new start and count dimensions
