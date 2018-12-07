@@ -79,6 +79,31 @@ adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
 extern "C" {
 #endif
 
+adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
+                              const size_t *shape)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call to "
+                                        "adios2_set_shape");
+        adios2::helper::CheckForNullptr(shape, "for start, in call to "
+                                               "adios2_set_shape");
+
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+
+        const adios2::Dims shapeV(shape, shape + ndims);
+        variableBase->SetShape(shapeV);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_shape"));
+    }
+}
+
 adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
                                   const size_t *start, const size_t *count)
 {

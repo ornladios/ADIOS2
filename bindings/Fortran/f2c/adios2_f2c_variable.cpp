@@ -97,6 +97,43 @@ void FC_GLOBAL(adios2_variable_steps_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_set_shape_f2c,
+               ADIOS2_SET_SHAPE_F2C)(adios2_variable **variable,
+                                     const int *ndims, const int64_t *shape,
+                                     int *ierr)
+{
+    auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
+                            std::vector<std::size_t> &output) {
+
+        output.resize(size);
+
+        for (auto d = 0; d < size; ++d)
+        {
+            output[d] = dimensions[d];
+        }
+
+    };
+
+    try
+    {
+        if (shape == nullptr || ndims == nullptr)
+        {
+            throw std::invalid_argument(
+                "ERROR: either shape_dims, or ndims is a null pointer, in call "
+                "to adios2_set_shape\n");
+        }
+        std::vector<std::size_t> shapeV;
+        lf_IntToSizeT(shape, *ndims, shapeV);
+        *ierr = static_cast<int>(
+            adios2_set_shape(*variable, *ndims, shapeV.data()));
+    }
+    catch (...)
+    {
+        *ierr = static_cast<int>(
+            adios2::helper::ExceptionToError("adios2_set_shape"));
+    }
+}
+
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_variable **variable,
                                          const int *ndims, const int64_t *start,

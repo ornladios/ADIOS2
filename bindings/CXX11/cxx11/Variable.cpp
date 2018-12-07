@@ -30,6 +30,14 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::SetShape(const Dims &shape)                              \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::SetShape");           \
+        m_Variable->SetShape(shape);                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     void Variable<T>::SetSelection(const Box<Dims> &selection)                 \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \

@@ -20,6 +20,17 @@ extern "C" {
 #endif
 
 /**
+ * Set new shape, care must be taken when reading back the variable for
+ * different steps. Only applies to Global arrays.
+ * @param variable handler for which new selection will be applied to
+ * @param ndims number of dimensions for start and count
+ * @param shape new shape dimensions array
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
+                              const size_t *shape);
+
+/**
  * Set new start and count dimensions
  * @param variable handler for which new selection will be applied to
  * @param ndims number of dimensions for start and count
