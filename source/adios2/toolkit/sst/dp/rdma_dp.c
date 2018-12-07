@@ -708,8 +708,15 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     if (Fabric->local_mr_req)
     {
         // register dest buffer
-        fi_mr_reg(Fabric->domain, Buffer, Length, FI_READ, 0, 0, 0,
-                  &ret->LocalMR, Fabric->ctx);
+        rc = fi_mr_reg(Fabric->domain, Buffer, Length, FI_READ, 0, 0, 0,
+                       &ret->LocalMR, Fabric->ctx);
+        if (rc < 0)
+        {
+            Svcs->verbose(RS_Stream->CP_Stream,
+                          "fi_mr_reg failed with code %d.\n", rc);
+            free(ret);
+            return (NULL);
+        }
         LocalDesc = fi_mr_desc(ret->LocalMR);
     }
 
