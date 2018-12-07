@@ -461,8 +461,9 @@ protected:
         Dims Shape;
         Dims Start;
         Dims Count;
-        uint32_t EntryLength;
-        uint8_t EntryCount;
+        ShapeID EntryShapeID = ShapeID::Unknown;
+        uint32_t EntryLength = 0;
+        uint8_t EntryCount = 0;
     };
 
     struct ElementIndexHeader

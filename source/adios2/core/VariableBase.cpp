@@ -74,6 +74,21 @@ void VariableBase::SetShape(const adios2::Dims &shape)
     m_Shape = shape;
 }
 
+void VariableBase::SetBlockID(const size_t blockID)
+{
+    if (m_DebugMode)
+    {
+        if (m_ShapeID != ShapeID::LocalArray &&
+            m_ShapeID != ShapeID::LocalValue)
+        {
+            throw std::invalid_argument("ERROR: variable " + m_Name +
+                                        " is not a local variable, check "
+                                        "ShapeID(), in call to SetBlockID\n");
+        }
+    }
+    m_BlockID = blockID;
+}
+
 void VariableBase::SetSelection(const Box<Dims> &boxDims)
 {
     const Dims &start = boxDims.first;
@@ -325,6 +340,8 @@ void VariableBase::InitShapeType()
             if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
             {
                 m_ShapeID = ShapeID::LocalValue;
+                m_Start.resize(1);
+                m_Count.resize(1); // real count = 1
                 m_SingleValue = true;
             }
             else

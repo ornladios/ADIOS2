@@ -36,6 +36,7 @@ namespace adios2
  *  DefineVariable */
 enum class ShapeID
 {
+    Unknown,     ///< undefined shapeID
     GlobalValue, ///< single global value, common case
     GlobalArray, ///< global (across MPI_Comm) array, common case
     JoinedArray, ///< global array with a common (joinable) dimension

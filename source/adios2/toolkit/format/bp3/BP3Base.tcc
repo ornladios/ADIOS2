@@ -278,7 +278,6 @@ inline void BP3Base::ParseCharacteristics(
             }
             break;
         }
-        // TODO: implement compression and BP1 Stats characteristics
         default:
         {
             throw std::invalid_argument("ERROR: characteristic ID " +
@@ -340,6 +339,11 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
                 characteristics.Statistics.Value =
                     helper::ReadValue<T>(buffer, position, isLittleEndian);
                 characteristics.Statistics.IsValue = true;
+                // adding Min Max for global and local values
+                characteristics.Statistics.Min =
+                    characteristics.Statistics.Value;
+                characteristics.Statistics.Max =
+                    characteristics.Statistics.Value;
             }
             else // used for attributes
             {
@@ -398,6 +402,13 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
 
         case (characteristic_dimensions):
         {
+            auto lf_CheckEmpty = [](Dims &dimensions) -> bool {
+
+                return std::all_of(
+                    dimensions.begin(), dimensions.end(),
+                    [](const size_t dimension) { return dimension == 0; });
+            };
+
             const size_t dimensionsSize = static_cast<size_t>(
                 helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
@@ -421,22 +432,40 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
                         buffer, position, isLittleEndian)));
             }
             // check for local variables (Start and Shape must be all zero)
-            const bool emptyShape = std::all_of(
-                characteristics.Shape.begin(), characteristics.Shape.end(),
-                [](const size_t dimension) { return dimension == 0; });
+            const bool emptyShape = lf_CheckEmpty(characteristics.Shape);
 
-            if (emptyShape)
+            // check if it's a local value
+            if (!emptyShape && dimensionsSize == 1)
             {
-                characteristics.Shape.clear();
+                if (characteristics.Shape.front() == LocalValueDim)
+                {
+                    characteristics.Start.clear();
+                    characteristics.Count.clear();
+                    characteristics.EntryShapeID = ShapeID::LocalValue;
+                    break;
+                }
             }
 
-            const bool emptyStart = std::all_of(
-                characteristics.Start.begin(), characteristics.Start.end(),
-                [](const size_t dimension) { return dimension == 0; });
+            const bool emptyStart = lf_CheckEmpty(characteristics.Start);
+            const bool emptyCount = lf_CheckEmpty(characteristics.Count);
 
-            if (emptyShape && emptyStart)
+            if (emptyShape && emptyStart && !emptyCount) // local array
             {
+                characteristics.Shape.clear();
                 characteristics.Start.clear();
+                characteristics.EntryShapeID = ShapeID::LocalArray;
+            }
+            else if (emptyShape && emptyStart && emptyCount) // global value
+            {
+                characteristics.Shape.clear();
+                characteristics.Start.clear();
+                characteristics.Count.clear();
+                characteristics.EntryShapeID = ShapeID::GlobalValue;
+            }
+            else
+            {
+                // TODO joined dimension
+                characteristics.EntryShapeID = ShapeID::GlobalArray;
             }
 
             break;
@@ -502,13 +531,13 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
                 case (statistic_hist):
                 {
                     throw std::invalid_argument(
-                        "ERROR: ADIOS2 default BPFile engine doesn't support "
+                        "ERROR: ADIOS2 default BP3 engine doesn't support "
                         "histogram statistics\n");
                 }
                 case (statistic_cnt):
                 {
                     throw std::invalid_argument(
-                        "ERROR: ADIOS2 default BPfile engine doesn't support "
+                        "ERROR: ADIOS2 default BP3 engine doesn't support "
                         "count statistics\n");
                 }
 

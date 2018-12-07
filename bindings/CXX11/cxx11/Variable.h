@@ -60,6 +60,14 @@ public:
     void SetShape(const adios2::Dims &shape);
 
     /**
+    * Read mode only. Use only for local variables variable.ShapeID() =
+    * ShapeID::LocalArray or ShapeID::LocalValue
+    * @param localBlock: variable block index defined at write time. Can be
+    * inspected with bpls -D variableName
+    */
+    void SetBlockID(const size_t blockID);
+
+    /**
      * Sets a variable selection modifying current {start, count}
      * Count is the dimension from Start point
      * @param selection input {start, count}

@@ -38,6 +38,14 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::SetBlockID(const size_t blockID)                         \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::SetBlockID");         \
+        m_Variable->SetBlockID(blockID);                                       \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     void Variable<T>::SetSelection(const Box<Dims> &selection)                 \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \

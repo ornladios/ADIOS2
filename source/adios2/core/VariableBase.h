@@ -42,7 +42,8 @@ public:
      *  VariableCompound -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
 
-    ShapeID m_ShapeID;          ///< see shape types in ADIOSTypes.h
+    ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
+    size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
     bool m_SingleValue = false; ///< true: single value, false: array
     Dims m_Shape;               ///< total dimensions across MPI
     Dims m_Start;               ///< starting point (offsets) in global shape
@@ -118,6 +119,12 @@ public:
      * @param shape input shape to be applied to this variable
      */
     void SetShape(const adios2::Dims &shape);
+
+    /**
+     * Use at read only for local variables
+     * @param blockID
+     */
+    void SetBlockID(const size_t blockID);
 
     /**
      * Set new start and count dimensions

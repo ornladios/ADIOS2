@@ -362,7 +362,7 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     position = initialPosition;
 
     size_t currentStep = 0; // Starts at 1 in bp file
-    std::unordered_set<uint32_t> stepsFound;
+    std::set<uint32_t> stepsFound;
     variable->m_AvailableStepsCount = 0;
     while (position < endPosition)
     {
@@ -409,33 +409,60 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
     {
         variableName = header.Path + PathSeparator + header.Name;
     }
+    // define variable
 
     core::Variable<T> *variable = nullptr;
-    if (characteristics.Statistics.IsValue)
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        variable = &io.DefineVariable<T>(variableName);
-        variable->m_Value = characteristics.Statistics.Value;
-        variable->m_Min = characteristics.Statistics.Value;
-        variable->m_Max = characteristics.Statistics.Value;
-    }
-    else
-    {
-        std::lock_guard<std::mutex> lock(m_Mutex);
-
-        if (m_ReverseDimensions)
+        switch (characteristics.EntryShapeID)
         {
-            std::reverse(characteristics.Shape.begin(),
-                         characteristics.Shape.end());
+        case (ShapeID::GlobalValue):
+            variable = &io.DefineVariable<T>(variableName);
+            break;
+
+        case (ShapeID::GlobalArray):
+
+            if (m_ReverseDimensions)
+            {
+                std::reverse(characteristics.Shape.begin(),
+                             characteristics.Shape.end());
+            }
+
+            variable = &io.DefineVariable<T>(
+                variableName, characteristics.Shape,
+                Dims(characteristics.Shape.size(), 0), characteristics.Shape);
+            break;
+
+        case (ShapeID::LocalValue):
+            variable = &io.DefineVariable<T>(variableName, {1}, {0}, {1});
+            variable->m_ShapeID = ShapeID::LocalValue;
+            break;
+
+        case (ShapeID::LocalArray):
+
+            if (m_ReverseDimensions)
+            {
+                std::reverse(characteristics.Count.begin(),
+                             characteristics.Count.end());
+            }
+
+            variable = &io.DefineVariable<T>(variableName, {}, {},
+                                             characteristics.Count);
+            break;
+        } // end switch
+
+        if (characteristics.Statistics.IsValue)
+        {
+            variable->m_Value = characteristics.Statistics.Value;
+            variable->m_Min = characteristics.Statistics.Value;
+            variable->m_Max = characteristics.Statistics.Value;
         }
-
-        variable = &io.DefineVariable<T>(variableName, characteristics.Shape,
-                                         Dims(characteristics.Shape.size(), 0),
-                                         characteristics.Shape);
-
-        variable->m_Min = characteristics.Statistics.Min;
-        variable->m_Max = characteristics.Statistics.Max;
-    }
+        else
+        {
+            variable->m_Min = characteristics.Statistics.Min;
+            variable->m_Max = characteristics.Statistics.Max;
+        }
+    } // end mutex lock
 
     // going back to get variable index position
     variable->m_IndexStart =
@@ -448,7 +475,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
     position = initialPosition;
 
     size_t currentStep = 0; // Starts at 1 in bp file
-    std::unordered_set<uint32_t> stepsFound;
+    std::set<uint32_t> stepsFound;
     variable->m_AvailableStepsCount = 0;
     while (position < endPosition)
     {
@@ -472,14 +499,26 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
             variable->m_Max = subsetCharacteristics.Statistics.Max;
         }
 
-        if (subsetCharacteristics.Statistics.Step > currentStep)
-        {
-            currentStep = subsetCharacteristics.Statistics.Step;
-        }
+        // if new step is inserted
         if (stepsFound.insert(subsetCharacteristics.Statistics.Step).second)
         {
+            currentStep = subsetCharacteristics.Statistics.Step;
             ++variable->m_AvailableStepsCount;
+            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
+            {
+                variable->m_Shape[0] = 1;
+                variable->m_Count[0] = 1;
+            }
         }
+        else
+        {
+            if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
+            {
+                ++variable->m_Shape[0];
+                ++variable->m_Count[0];
+            }
+        }
+
         variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
             subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
