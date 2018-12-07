@@ -443,6 +443,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     /* Wait up to 'timeout' milliseconds for the connection attempt to succeed. */
     int finished = 0;
     int start = enet_time_get();
+    int success = 0;
     while (!finished) {
         int ret = enet_host_service (sd->server, & event, 100); 
         if ((start + timeout) > enet_time_get()) {
@@ -469,7 +470,9 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
             } else {
                 enet_host_flush (sd->server);
                 svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
+                printf("Connection to %s:%d succeeded. state %d\n", inet_ntoa(sin_addr), address.port, event.peer->state);
                 finished = 1;
+                success = 1;
             }
             break;
         }
@@ -512,8 +515,16 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         }            
     }
 
+    if (!success) {
+        enet_peer_reset (peer);
+                
+        svc->trace_out(cm, "Connection to %s:%d failed   type was %d.\n", inet_ntoa(sin_addr), address.port, event.type);
+        return 0;
+    }
+
     enet_host_flush (sd->server);
     svc->trace_out(cm, "--> Connection established, ENET PEER state %d", peer->state);
+    printf("--> Connection established, ENET PEER state %d", peer->state);
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
     enet_conn_data->remote_IP = htonl(host_ip);
     enet_conn_data->remote_contact_port = int_port_num;
