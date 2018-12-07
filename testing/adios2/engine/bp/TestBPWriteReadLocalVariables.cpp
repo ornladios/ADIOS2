@@ -58,8 +58,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             const adios2::Dims start{};
             const adios2::Dims count{Nx};
 
-            io.DefineVariable<int>("stepsGlobalValue");
-            io.DefineVariable<int>("ranksLocalValue", {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("stepsGlobalValue");
+            io.DefineVariable<int32_t>("ranksLocalValue",
+                                       {adios2::LocalValueDim});
+
             io.DefineVariable<std::string>("iString");
 
             io.DefineVariable<int8_t>("i8", shape, start, count,
@@ -107,6 +109,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
 
             bpWriter.Put<int>("stepsGlobalValue", step);
             bpWriter.Put<int>("ranksLocalValue", mpiRank);
+            bpWriter.Put<int32_t>("i32", currentTestData.I32.data());
 
             //            bpWriter.Put<std::string>("iString",
             //            currentTestData.S1);
@@ -227,7 +230,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             //            EXPECT_TRUE(var_iString);
             //            EXPECT_TRUE(var_i8);
             //            EXPECT_TRUE(var_i16);
-            //            EXPECT_TRUE(var_i32);
+            EXPECT_TRUE(var_i32);
             //            EXPECT_TRUE(var_i64);
             //            EXPECT_TRUE(var_u8);
             //            EXPECT_TRUE(var_u16);
@@ -246,10 +249,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
             //            ASSERT_EQ(var_i16.Steps(), NSteps);
             //            ASSERT_EQ(var_i16.Shape()[0], Nx);
             //
-            //            ASSERT_EQ(var_i32.ShapeID(),
-            //            adios2::ShapeID::LocalArray);
-            //            ASSERT_EQ(var_i32.Steps(), NSteps);
-            //            ASSERT_EQ(var_i32.Shape()[0], Nx);
+            ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::LocalArray);
+            ASSERT_EQ(var_i32.Steps(), NSteps);
+            ASSERT_EQ(var_i32.Shape()[0], Nx);
             //
             //            ASSERT_EQ(var_i64.ShapeID(),
             //            adios2::ShapeID::LocalArray);

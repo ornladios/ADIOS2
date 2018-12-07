@@ -162,6 +162,13 @@ public:
     size_t StepsStart() const;
 
     /**
+     * For read mode, retrieve current BlockID, default = 0 if not set with
+     * SetBlockID
+     * @return current block id
+     */
+    size_t BlockID() const;
+
+    /**
      * EXPERIMENTAL: carries information about an Operation added with
      * AddOperation
      */

@@ -142,6 +142,14 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    size_t Variable<T>::BlockID() const                                        \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::BlockID");            \
+        m_Variable->m_BlockID;                                                 \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     size_t Variable<T>::AddOperation(const Operator op,                        \
                                      const Params &parameters)                 \
     {                                                                          \
