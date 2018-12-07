@@ -512,7 +512,8 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         }            
     }
 
-    svc->trace_out(cm, "--> Connection established");
+    enet_host_flush (sd->server);
+    svc->trace_out(cm, "--> Connection established, ENET PEER state %d", peer->state);
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
     enet_conn_data->remote_IP = htonl(host_ip);
     enet_conn_data->remote_contact_port = int_port_num;
@@ -915,9 +916,11 @@ libcmenet_LTX_writev_func(CMtrans_services svc, enet_conn_data_ptr ecd,
     }
 
     /* Send the packet to the peer over channel id 0. */
+    int state = ecd->peer->state;
     if (enet_peer_send (ecd->peer, 0, packet) == -1) {
         enet_packet_destroy(packet);
-        svc->trace_out(ecd->sd->cm, "ENET  ======  failed to send a packet to peer %p, state %d\n", ecd->peer, ecd->peer->state);
+        svc->trace_out(ecd->sd->cm, "ENET  ======  failed to send a packet to peer %p, state %d, prior_state is %d\n", ecd->peer, ecd->peer->state, state);
+        printf("ENET  ======  failed to send a packet to peer %p, state %d\n", ecd->peer, ecd->peer->state);
 	return -1;
     }
 
