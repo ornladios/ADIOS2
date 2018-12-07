@@ -293,7 +293,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
     } else {
 	global_transports =
 	    INT_CMmalloc(sizeof(global_transports) * (i + 2));
-	atexit(free_global_transports);
+//	atexit(free_global_transports);
     }
     global_transports[i] = transport;
     global_transports[i + 1] = NULL;

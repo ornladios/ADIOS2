@@ -138,7 +138,7 @@ atom_server *asp;
 
     if ((asp == &global_as) && first) {
         first = 0;
-        atexit(deallocate_global_atom_server);
+//        atexit(deallocate_global_atom_server);
     }
 }
 
