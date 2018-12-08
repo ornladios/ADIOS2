@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <bitset>
+#include <map>
 #include <memory> //std::shared_ptr
 #include <set>
 #include <string>
@@ -179,6 +180,15 @@ public:
      * already serialized.
      */
     std::unordered_set<std::string> m_SerializedAttributes;
+
+    /**
+     * scratch memory buffers used for management of temporary memory buffers
+     * per thread.
+     * This allows thread-safety mostly is deserialization.
+     * Indices:
+     * [threadID][bufferID]
+     */
+    std::map<size_t, std::map<size_t, std::vector<char>>> m_ThreadBuffers;
 
     /**
      * Unique constructor
@@ -461,8 +471,9 @@ protected:
         Dims Shape;
         Dims Start;
         Dims Count;
-        uint32_t EntryLength;
-        uint8_t EntryCount;
+        ShapeID EntryShapeID = ShapeID::Unknown;
+        uint32_t EntryLength = 0;
+        uint8_t EntryCount = 0;
     };
 
     struct ElementIndexHeader

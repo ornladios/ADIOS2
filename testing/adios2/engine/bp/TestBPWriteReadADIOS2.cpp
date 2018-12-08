@@ -26,6 +26,7 @@ public:
 // 1D 1x8 test data
 //******************************************************************************
 
+// ADIOS2 BP write, native ADIOS1 read
 TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
@@ -48,16 +49,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    EXPECT_TRUE(adios);
 #else
     adios2::ADIOS adios(true);
-    EXPECT_TRUE(adios);
 #endif
     {
-        adios2::IO io;
-        EXPECT_FALSE(io);
-        io = adios.DeclareIO("TestIO");
-        EXPECT_TRUE(io);
+        adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
@@ -85,10 +81,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
         }
 
         // Create the BP Engine
@@ -100,7 +92,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         // files
         // Ex. if you tune Nx and NSteps, the test would fail. But if you clear
         // the cache in
-        // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteRead1D8.bp.dir,
+        // ${adios2Build}/testing/adios2/engine/bp/ADIOS2BPWriteADIOS1Read1D8.bp.dir,
         // then it works
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -122,8 +114,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
-            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -140,8 +130,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             var_u64.SetSelection(sel);
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
-            var_cr32.SetSelection(sel);
-            var_cr64.SetSelection(sel);
 
             // Write each one
             // fill in the variable with values from starting index to
@@ -159,8 +147,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             bpWriter.Put(var_u64, currentTestData.U64.data());
             bpWriter.Put(var_r32, currentTestData.R32.data());
             bpWriter.Put(var_r64, currentTestData.R64.data());
-            bpWriter.Put(var_cr32, currentTestData.CR32.data());
-            bpWriter.Put(var_cr64, currentTestData.CR64.data());
             bpWriter.PerformPuts();
 
             bpWriter.EndStep();
@@ -240,19 +226,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
-        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-        EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], mpiSize * Nx);
-
-        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
-        EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
-
-        // TODO: string arrays
+        // TODO: other types
 
         SmallTestData testData;
 
@@ -267,8 +241,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         std::array<uint64_t, Nx> U64;
         std::array<float, Nx> R32;
         std::array<double, Nx> R64;
-        std::array<std::complex<float>, Nx> CR32;
-        std::array<std::complex<double>, Nx> CR64;
 
         const adios2::Dims start{mpiRank * Nx};
         const adios2::Dims count{Nx};
@@ -288,9 +260,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
 
-        var_cr32.SetSelection(sel);
-        var_cr64.SetSelection(sel);
-
         for (size_t t = 0; t < NSteps; ++t)
         {
             var_i8.SetStepSelection({t, 1});
@@ -305,9 +274,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
             var_r32.SetStepSelection({t, 1});
             var_r64.SetStepSelection({t, 1});
-
-            var_cr32.SetStepSelection({t, 1});
-            var_cr64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
@@ -327,9 +293,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
             bpReader.Get(var_r32, R32.data());
             bpReader.Get(var_r64, R64.data());
-
-            bpReader.Get(var_cr32, CR32.data());
-            bpReader.Get(var_cr64, CR64.data());
 
             bpReader.PerformGets();
 
@@ -351,9 +314,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
-
-                EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
-                EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
             }
         }
         bpReader.Close();
@@ -364,6 +324,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 // 2D 2x4 test data
 //******************************************************************************
 
+// ADIOS2 BP write, native ADIOS1 read
 TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
@@ -389,10 +350,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    EXPECT_TRUE(adios);
 #else
     adios2::ADIOS adios(true);
-    EXPECT_TRUE(adios);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -423,10 +382,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
         }
 
         // Create the BP Engine
@@ -453,8 +408,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
-            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -470,8 +423,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             var_u64.SetSelection(sel);
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
-            var_cr32.SetSelection(sel);
-            var_cr64.SetSelection(sel);
 
             // Write each one
             // fill in the variable with values from starting index to
@@ -488,8 +439,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             bpWriter.Put(var_u64, currentTestData.U64.data());
             bpWriter.Put(var_r32, currentTestData.R32.data());
             bpWriter.Put(var_r64, currentTestData.R64.data());
-            bpWriter.Put(var_cr32, currentTestData.CR32.data());
-            bpWriter.Put(var_cr64, currentTestData.CR64.data());
             bpWriter.PerformPuts();
 
             bpWriter.EndStep();
@@ -579,20 +528,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         ASSERT_EQ(var_r64.Shape()[0], Ny);
         ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
-        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-        EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], Ny);
-        ASSERT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
-        EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], Ny);
-        ASSERT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
         std::string IString;
         std::array<int8_t, Nx * Ny> I8;
         std::array<int16_t, Nx * Ny> I16;
@@ -604,8 +539,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
         std::array<uint64_t, Nx * Ny> U64;
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
-        std::array<std::complex<float>, Nx * Ny> CR32;
-        std::array<std::complex<double>, Nx * Ny> CR64;
 
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
         const adios2::Dims count{Ny, Nx};
@@ -624,8 +557,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
-        var_cr32.SetSelection(sel);
-        var_cr64.SetSelection(sel);
 
         for (size_t t = 0; t < NSteps; ++t)
         {
@@ -642,9 +573,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             var_r32.SetStepSelection({t, 1});
             var_r64.SetStepSelection({t, 1});
 
-            var_cr32.SetStepSelection({t, 1});
-            var_cr64.SetStepSelection({t, 1});
-
             bpReader.Get(var_iString, IString);
 
             bpReader.Get(var_i8, I8.data());
@@ -659,9 +587,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
             bpReader.Get(var_r32, R32.data());
             bpReader.Get(var_r64, R64.data());
-
-            bpReader.Get(var_cr32, CR32.data());
-            bpReader.Get(var_cr64, CR64.data());
 
             bpReader.PerformGets();
 
@@ -687,8 +612,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
-                EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
-                EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
             }
         }
         bpReader.Close();
@@ -756,10 +679,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
         }
 
         // Create the BP Engine
@@ -786,8 +705,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
-            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -803,8 +720,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             var_u64.SetSelection(sel);
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
-            var_cr32.SetSelection(sel);
-            var_cr64.SetSelection(sel);
 
             // Write each one
             // fill in the variable with values from starting index to
@@ -820,8 +735,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             bpWriter.Put(var_u64, currentTestData.U64.data());
             bpWriter.Put(var_r32, currentTestData.R32.data());
             bpWriter.Put(var_r64, currentTestData.R64.data());
-            bpWriter.Put(var_cr32, currentTestData.CR32.data());
-            bpWriter.Put(var_cr64, currentTestData.CR64.data());
             bpWriter.EndStep();
         }
 
@@ -904,20 +817,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
         ASSERT_EQ(var_r64.Shape()[0], Ny);
         ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
-        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-        EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], Ny);
-        ASSERT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
-        EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], Ny);
-        ASSERT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get
         // completely garbage data
@@ -931,8 +830,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
         std::array<uint64_t, Nx * Ny> U64;
         std::array<float, Nx * Ny> R32;
         std::array<double, Nx * Ny> R64;
-        std::array<std::complex<float>, Nx * Ny> CR32;
-        std::array<std::complex<double>, Nx * Ny> CR64;
 
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
         const adios2::Dims count{Ny, Nx};
@@ -952,9 +849,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
 
-        var_cr32.SetSelection(sel);
-        var_cr64.SetSelection(sel);
-
         for (size_t t = 0; t < NSteps; ++t)
         {
             var_i8.SetStepSelection({t, 1});
@@ -970,9 +864,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             var_r32.SetStepSelection({t, 1});
             var_r64.SetStepSelection({t, 1});
 
-            var_cr32.SetStepSelection({t, 1});
-            var_cr64.SetStepSelection({t, 1});
-
             bpReader.Get(var_i8, I8.data());
             bpReader.Get(var_i16, I16.data());
             bpReader.Get(var_i32, I32.data());
@@ -985,9 +876,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
             bpReader.Get(var_r32, R32.data());
             bpReader.Get(var_r64, R64.data());
-
-            bpReader.Get(var_cr32, CR32.data());
-            bpReader.Get(var_cr64, CR64.data());
 
             bpReader.PerformGets();
 
@@ -1011,8 +899,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
-                EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
-                EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
             }
         }
         bpReader.Close();
@@ -1074,10 +960,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
         }
 
         // Create the BP Engine
@@ -1104,8 +986,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
-            auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-            auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -1121,8 +1001,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             var_u64.SetSelection(sel);
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
-            var_cr32.SetSelection(sel);
-            var_cr64.SetSelection(sel);
 
             // Write each one
             // fill in the variable with values from starting index to
@@ -1138,8 +1016,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             bpWriter.Put(var_u64, currentTestData.U64.data());
             bpWriter.Put(var_r32, currentTestData.R32.data());
             bpWriter.Put(var_r64, currentTestData.R64.data());
-            bpWriter.Put(var_cr32, currentTestData.CR32.data());
-            bpWriter.Put(var_cr64, currentTestData.CR64.data());
             bpWriter.EndStep();
         }
 
@@ -1222,20 +1098,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         ASSERT_EQ(var_r64.Shape()[0], Ny);
         ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
-        auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
-        EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], Ny);
-        ASSERT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
-        auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
-        EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], Ny);
-        ASSERT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
-
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get
         // completely garbage data
@@ -1249,8 +1111,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         std::array<uint64_t, NSteps * Nx * Ny> U64;
         std::array<float, NSteps * Nx * Ny> R32;
         std::array<double, NSteps * Nx * Ny> R64;
-        std::array<std::complex<float>, NSteps * Nx * Ny> CR32;
-        std::array<std::complex<double>, NSteps * Nx * Ny> CR64;
 
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
         const adios2::Dims count{Ny, Nx};
@@ -1270,9 +1130,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
 
-        var_cr32.SetSelection(sel);
-        var_cr64.SetSelection(sel);
-
         var_i8.SetStepSelection({tInitial, NSteps - tInitial});
         var_i16.SetStepSelection({tInitial, NSteps - tInitial});
         var_i32.SetStepSelection({tInitial, NSteps - tInitial});
@@ -1286,9 +1143,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         var_r32.SetStepSelection({tInitial, NSteps - tInitial});
         var_r64.SetStepSelection({tInitial, NSteps - tInitial});
 
-        var_cr32.SetStepSelection({tInitial, NSteps - tInitial});
-        var_cr64.SetStepSelection({tInitial, NSteps - tInitial});
-
         bpReader.Get(var_i8, I8.data());
         bpReader.Get(var_i16, I16.data());
         bpReader.Get(var_i32, I32.data());
@@ -1301,9 +1155,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 
         bpReader.Get(var_r32, R32.data());
         bpReader.Get(var_r64, R64.data());
-
-        bpReader.Get(var_cr32, CR32.data());
-        bpReader.Get(var_cr64, CR64.data());
 
         bpReader.PerformGets();
 
@@ -1330,8 +1181,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
                 EXPECT_EQ(U64[index], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[index], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[index], currentTestData.R64[i]) << msg;
-                EXPECT_EQ(CR32[index], currentTestData.CR32[i]) << msg;
-                EXPECT_EQ(CR64[index], currentTestData.CR64[i]) << msg;
             }
         }
 
@@ -1559,6 +1408,10 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
         EXPECT_THROW(io.Open(fname, adios2::Mode::Read), std::invalid_argument);
     }
 }
+
+//******************************************************************************
+// main
+//******************************************************************************
 
 int main(int argc, char **argv)
 {

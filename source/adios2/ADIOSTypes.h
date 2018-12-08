@@ -36,6 +36,7 @@ namespace adios2
  *  DefineVariable */
 enum class ShapeID
 {
+    Unknown,     ///< undefined shapeID
     GlobalValue, ///< single global value, common case
     GlobalArray, ///< global (across MPI_Comm) array, common case
     JoinedArray, ///< global array with a common (joinable) dimension
@@ -136,8 +137,8 @@ using std::uint64_t;
 using cfloat = std::complex<float>;
 using cdouble = std::complex<double>;
 
-// Limit
-constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
+// Limit, using uint64_t to make it portable
+constexpr uint64_t MaxSizeT = std::numeric_limits<uint64_t>::max();
 
 // adios defaults
 #ifdef _WIN32
@@ -153,7 +154,7 @@ constexpr size_t DefaultInitialBufferSize = 16 * 1024;
 
 /** default maximum bp buffer size, unlimited, in bytes.
  *  Needs to be studied for optimizing applications */
-constexpr size_t DefaultMaxBufferSize = MaxSizeT - 1;
+constexpr uint64_t DefaultMaxBufferSize = MaxSizeT - 1;
 
 /** default buffer growth factor. Needs to be studied
  * for optimizing applications*/
@@ -174,9 +175,9 @@ constexpr char PathSeparator =
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;
 constexpr size_t UnknownDim = 0;
-constexpr size_t JoinedDim = MaxSizeT - 1;
-constexpr size_t LocalValueDim = MaxSizeT - 2;
-constexpr size_t IrregularDim = MaxSizeT - 3;
+constexpr uint64_t JoinedDim = MaxSizeT - 1;
+constexpr uint64_t LocalValueDim = MaxSizeT - 2;
+constexpr uint64_t IrregularDim = MaxSizeT - 3;
 constexpr bool ConstantDims = true;
 constexpr bool endl = true;
 

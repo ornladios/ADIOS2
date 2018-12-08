@@ -39,6 +39,8 @@ namespace core
         info.Shape = m_Shape;                                                  \
         info.Start = m_Start;                                                  \
         info.Count = m_Count;                                                  \
+        info.BlockID = m_BlockID;                                              \
+        info.Selection = m_SelectionType;                                      \
         info.MemoryStart = m_MemoryStart;                                      \
         info.MemoryCount = m_MemoryCount;                                      \
         info.StepsStart = stepsStart;                                          \

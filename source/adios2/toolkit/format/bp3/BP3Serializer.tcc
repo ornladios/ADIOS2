@@ -41,7 +41,8 @@ inline void BP3Serializer::PutVariableMetadata(
 
     ProfilerStart("buffering");
 
-    Stats<T> stats = GetBPStats<T>(blockInfo, sourceRowMajor);
+    Stats<T> stats =
+        GetBPStats<T>(variable.m_SingleValue, blockInfo, sourceRowMajor);
 
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
@@ -341,6 +342,7 @@ void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
 
 template <>
 inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
+    const bool /*singleValue*/,
     const typename core::Variable<std::string>::Info & /*blockInfo*/,
     const bool /*isRowMajor*/) noexcept
 {
@@ -352,33 +354,41 @@ inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
 
 template <class T>
 BP3Serializer::Stats<T>
-BP3Serializer::GetBPStats(const typename core::Variable<T>::Info &blockInfo,
+BP3Serializer::GetBPStats(const bool singleValue,
+                          const typename core::Variable<T>::Info &blockInfo,
                           const bool isRowMajor) noexcept
 {
     Stats<T> stats;
-    const std::size_t valuesSize = helper::GetTotalSize(blockInfo.Count);
+    stats.Step = m_MetadataSet.TimeStep;
+    stats.FileIndex = GetFileIndex();
+
+    if (singleValue)
+    {
+        stats.Value = *blockInfo.Data;
+        stats.Min = stats.Value;
+        stats.Max = stats.Value;
+        return stats;
+    }
 
     if (m_StatsLevel == 0)
     {
         ProfilerStart("minmax");
         if (blockInfo.MemoryStart.empty())
         {
+            const std::size_t valuesSize =
+                helper::GetTotalSize(blockInfo.Count);
             helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
                                      stats.Max, m_Threads);
         }
-        else
+        else // non-contiguous memory min/max
         {
-            // TODO: need RowMajor bool
             helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
                                        blockInfo.MemoryStart, blockInfo.Count,
                                        isRowMajor, stats.Min, stats.Max);
         }
-
-        // TODO need to implement minmax for non-contiguous memory
         ProfilerStop("minmax");
     }
-    stats.Step = m_MetadataSet.TimeStep;
-    stats.FileIndex = GetFileIndex();
+
     return stats;
 }
 
@@ -522,11 +532,12 @@ void BP3Serializer::PutVariableMetadataInIndex(
 }
 
 template <class T>
-void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
+void BP3Serializer::PutBoundsRecord(const bool singleValue,
+                                    const Stats<T> &stats,
                                     uint8_t &characteristicsCounter,
                                     std::vector<char> &buffer) noexcept
 {
-    if (isScalar)
+    if (singleValue)
     {
         PutCharacteristicRecord(characteristic_value, characteristicsCounter,
                                 stats.Min, buffer);
@@ -858,12 +869,12 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_min):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_max):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_offset):

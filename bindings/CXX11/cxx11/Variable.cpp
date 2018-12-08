@@ -38,6 +38,14 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::SetBlockSelection(const size_t blockID)                  \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::SetBlockSelection");  \
+        m_Variable->SetBlockSelection(blockID);                                \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     void Variable<T>::SetSelection(const Box<Dims> &selection)                 \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
@@ -131,6 +139,14 @@ namespace adios2
         helper::CheckForNullptr(m_Variable,                                    \
                                 "in call to Variable<T>::StepsStart");         \
         return m_Variable->m_AvailableStepsStart;                              \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::BlockID() const                                        \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::BlockID");            \
+        return m_Variable->m_BlockID;                                          \
     }                                                                          \
                                                                                \
     template <>                                                                \

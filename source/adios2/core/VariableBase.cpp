@@ -74,6 +74,12 @@ void VariableBase::SetShape(const adios2::Dims &shape)
     m_Shape = shape;
 }
 
+void VariableBase::SetBlockSelection(const size_t blockID)
+{
+    m_BlockID = blockID;
+    m_SelectionType = SelectionType::WriteBlock;
+}
+
 void VariableBase::SetSelection(const Box<Dims> &boxDims)
 {
     const Dims &start = boxDims.first;
@@ -111,12 +117,14 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
                                         m_Name + ", in call to SetSelection\n");
         }
 
-        if (m_ShapeID == ShapeID::LocalArray && !start.empty())
-        {
-            throw std::invalid_argument("ERROR: start argument must be empty "
-                                        "for local array variable " +
-                                        m_Name + ", in call to SetSelection\n");
-        }
+        //        if (m_ShapeID == ShapeID::LocalArray && !start.empty())
+        //        {
+        //            throw std::invalid_argument("ERROR: start argument must be
+        //            empty "
+        //                                        "for local array variable " +
+        //                                        m_Name + ", in call to
+        //                                        SetSelection\n");
+        //        }
 
         if (m_ShapeID == ShapeID::JoinedArray && !start.empty())
         {
@@ -128,6 +136,7 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     m_Start = start;
     m_Count = count;
+    m_SelectionType = SelectionType::BoundingBox;
 }
 
 void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
@@ -305,6 +314,32 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 // PRIVATE
 void VariableBase::InitShapeType()
 {
+    if (m_DebugMode && m_Type == GetType<std::string>())
+    {
+        if (m_Shape.empty())
+        {
+            if (!m_Start.empty() || !m_Count.empty())
+            {
+                throw std::invalid_argument(
+                    "ERROR: GlobalValue string variable " + m_Name +
+                    " can't have Start and Count dimensions, string variables "
+                    "are always defined as a GlobalValue or LocalValue, "
+                    " in call to DefineVariable\n");
+            }
+        }
+        else
+        {
+            if (m_Shape != Dims{LocalValueDim})
+            {
+                throw std::invalid_argument(
+                    "ERROR: LocalValue string variable " + m_Name +
+                    " Shape must be equal to {LocalValueDim}, string variables "
+                    "are always defined as a GlobalValue or LocalValue, " +
+                    " in call to DefineVariable\n");
+            }
+        }
+    }
+
     if (!m_Shape.empty())
     {
         if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
@@ -325,6 +360,8 @@ void VariableBase::InitShapeType()
             if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
             {
                 m_ShapeID = ShapeID::LocalValue;
+                m_Start.resize(1);
+                m_Count.resize(1); // real count = 1
                 m_SingleValue = true;
             }
             else
@@ -414,11 +451,7 @@ void VariableBase::InitShapeType()
     }
 
     /* Extra checks for invalid settings */
-    if (m_DebugMode)
-    {
-        CheckDimensionsCommon(", in call to DefineVariable(\"" + m_Name +
-                              "\",...");
-    }
+    CheckDimensionsCommon(", in call to DefineVariable(\"" + m_Name + "\",...");
 }
 
 void VariableBase::CheckDimensionsCommon(const std::string hint) const
@@ -426,18 +459,6 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
     if (!m_DebugMode)
     {
         return;
-    }
-
-    if (m_Type == "string")
-    {
-        if (!(m_Shape.empty() && m_Start.empty() && m_Count.empty()))
-        {
-            throw std::invalid_argument("ERROR: string variable " + m_Name +
-                                        " can't have dimensions (shape, start, "
-                                        "count must be empty), string is "
-                                        "always defined as a LocalValue, " +
-                                        hint + "\n");
-        }
     }
 
     if (m_ShapeID != ShapeID::LocalValue)
@@ -451,8 +472,7 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
         {
             throw std::invalid_argument(
                 "ERROR: LocalValueDim parameter is only "
-                "allowed in a {LocalValueDim} "
-                "shape, " +
+                "allowed as {LocalValueDim} in Shape dimensions " +
                 hint + "\n");
         }
     }

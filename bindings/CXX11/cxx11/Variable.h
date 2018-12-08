@@ -60,6 +60,16 @@ public:
     void SetShape(const adios2::Dims &shape);
 
     /**
+     * Read mode only. Required for reading local variables, ShapeID() =
+     * ShapeID::LocalArray or ShapeID::LocalValue. For Global Arrays it will Set
+     * the appropriate Start and Count Selection for the global array
+     * coordinates.
+     * @param blockID: variable block index defined at write time. Blocks can be
+     * inspected with bpls -D variableName
+     */
+    void SetBlockSelection(const size_t blockID);
+
+    /**
      * Sets a variable selection modifying current {start, count}
      * Count is the dimension from Start point
      * @param selection input {start, count}
@@ -152,6 +162,13 @@ public:
      * @return available start step
      */
     size_t StepsStart() const;
+
+    /**
+     * For read mode, retrieve current BlockID, default = 0 if not set with
+     * SetBlockID
+     * @return current block id
+     */
+    size_t BlockID() const;
 
     /**
      * EXPERIMENTAL: carries information about an Operation added with
