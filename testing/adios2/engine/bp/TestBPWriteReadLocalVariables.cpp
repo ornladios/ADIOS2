@@ -106,7 +106,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
 
             bpWriter.BeginStep();
 
-            bpWriter.Put<int32_t>("stepsGlobalValue", step);
+            const int32_t step32 = static_cast<int32_t>(step);
+            bpWriter.Put<int32_t>("stepsGlobalValue", step32);
             bpWriter.Put<std::string>("stepsGlobalValueString",
                                       std::to_string(step));
 
@@ -478,7 +479,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
 
             bpWriter.BeginStep();
 
-            bpWriter.Put<int32_t>("stepsGlobalValue", step);
+            const int32_t step32 = static_cast<int32_t>(step);
+            bpWriter.Put<int32_t>("stepsGlobalValue", step32);
             bpWriter.Put<std::string>("stepsGlobalValueString",
                                       std::to_string(step));
 
@@ -857,8 +859,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
             bpWriter.BeginStep();
-
-            bpWriter.Put<int32_t>("stepsGlobalValue", step);
+            const int32_t step32 = static_cast<int32_t>(step);
+            bpWriter.Put<int32_t>("stepsGlobalValue", step32);
             bpWriter.Put<std::string>("stepsGlobalValueString",
                                       std::to_string(step));
 
@@ -1238,7 +1240,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
 
             bpWriter.BeginStep();
 
-            bpWriter.Put<int32_t>("stepsGlobalValue", step);
+            const int32_t step32 = static_cast<int32_t>(step);
+            bpWriter.Put<int32_t>("stepsGlobalValue", step32);
             bpWriter.Put<std::string>("stepsGlobalValueString",
                                       std::to_string(step));
 
@@ -1509,7 +1512,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
 
             bpWriter.BeginStep();
 
-            bpWriter.Put<int32_t>("stepsGlobalValue", step);
+            const int32_t step32 = static_cast<int32_t>(step);
+            bpWriter.Put<int32_t>("stepsGlobalValue", step32);
             bpWriter.Put<std::string>("stepsGlobalValueString",
                                       std::to_string(step));
 
