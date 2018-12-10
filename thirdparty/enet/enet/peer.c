@@ -3,6 +3,7 @@
  @brief ENet peer management functions
 */
 #include <string.h>
+#include <stdio.h>
 #define ENET_BUILDING_LIB 1
 #include "enet/enet.h"
 
@@ -103,6 +104,9 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
    ENetProtocol command;
    size_t fragmentLength;
 
+   if (peer -> state != ENET_PEER_STATE_CONNECTED) {
+       printf("Sending on unconnected peer, state %d\n", peer -> state);
+   }
    if (peer -> state != ENET_PEER_STATE_CONNECTED ||
        channelID >= peer -> channelCount ||
        packet -> dataLength > peer -> host -> maximumPacketSize)
