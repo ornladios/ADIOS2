@@ -444,10 +444,12 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     
     /* Wait up to 'timeout' milliseconds for the connection attempt to succeed. */
     int finished = 0;
+    int got_connection = 0;
     int start = enet_time_get();
     while (!finished) {
         int ret = enet_host_service (sd->server, & event, 100); 
         if ((start + timeout) > enet_time_get()) {
+            printf("(pid %x tid %lx)  TIMING OUT, start %d, timeout %d, now %d\n", getpid(), pthread_self(), start, timeout, enet_time_get());
             finished = 1;
         }
         if (ret <= 0) continue;
@@ -474,6 +476,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
                 printf("(pid %x tid %lx)  Got RIGHT Connect, PEER %p state %d\n", getpid(), pthread_self(), peer, peer->state);
                 svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
                 finished = 1;
+                got_connection = 1;
             }
             break;
         }
@@ -515,9 +518,14 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
             }
             break;
         }
-        }            
+        }
+        printf("(pid %x tid %lx)  After switch, finished is %d\n", getpid(), pthread_self(), finished);
     }
 
+    if (!got_connection) {
+        printf("(pid %x tid %lx)  Connecttion failed because of timeout, peer %p, state %d\n", getpid(), pthread_self(), peer, peer->state);
+        return 0;
+    }
     printf("(pid %x tid %lx)  Connecttion established, peer %p, state %d\n", getpid(), pthread_self(), peer, peer->state);
     if (peer->state != ENET_PEER_STATE_CONNECTED) {
         printf("(pid %x tid %lx)  WEIRD, PEER %p NOT CONNECTED\n", getpid(), pthread_self(), peer);
