@@ -116,15 +116,15 @@ extern int
 add_pattr(attr_list list, atom_t attr_id, attr_value_type val_type, 
 	  attr_union value);
 
-static void
-deallocate_global_atom_server()
-{
-    if (global_as) {
-        atom_server tmp = global_as;
-        global_as = NULL;
-        free_atom_server(tmp);
-    }
-}
+/* static void */
+/* deallocate_global_atom_server() */
+/* { */
+/*     if (global_as) { */
+/*         atom_server tmp = global_as; */
+/*         global_as = NULL; */
+/*         free_atom_server(tmp); */
+/*     } */
+/* } */
 
 static
 void

@@ -4,6 +4,7 @@
 */
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
 #define ENET_BUILDING_LIB 1
 #include "enet/enet.h"
 
@@ -105,7 +106,7 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
    size_t fragmentLength;
 
    if (peer -> state != ENET_PEER_STATE_CONNECTED) {
-       printf("Sending on unconnected peer, state %d\n", peer -> state);
+       printf("(pid %x tid %lx)  Sending on unconnected peer, state %d\n", getpid(), pthread_self(), peer -> state);
    }
    if (peer -> state != ENET_PEER_STATE_CONNECTED ||
        channelID >= peer -> channelCount ||

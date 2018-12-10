@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#include <pthread.h>
 
 #include <enet/enet.h>
 #include <arpa/inet.h>
@@ -190,6 +191,7 @@ enet_service_network(CManager cm, void *void_trans)
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = event.peer->data;
             if (econn_d) {
+                printf("(pid %x tid %lx)  handling\n", getpid(), pthread_self());
                 handle_packet(cm, svc, trans, event.peer->data, event.packet);
             } else {
                 struct in_addr addr;
@@ -432,7 +434,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     peer = enet_host_connect (sd->server, & address, 1, 0);    
     peer->data = enet_conn_data;
     svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
-    
+    printf("(pid %x tid %lx)  Did Connect\n", getpid(), pthread_self());
     if (peer == NULL)
     {
        fprintf (stderr, 
@@ -451,6 +453,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         if (ret <= 0) continue;
         switch(event.type) {
         case ENET_EVENT_TYPE_CONNECT: {
+            printf("(pid %x tid %lx)  Got random Connect\n", getpid(), pthread_self());
             if (event.peer != peer) {
                 enet_conn_data_ptr enet_connection_data;
                 struct in_addr addr;
@@ -468,6 +471,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
                 enet_host_flush (sd->server);
             } else {
                 enet_host_flush (sd->server);
+                printf("(pid %x tid %lx)  Got RIGHT Connect\n", getpid(), pthread_self());
                 svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
                 finished = 1;
             }
@@ -494,6 +498,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = event.peer->data;
             queued_data entry = malloc(sizeof(*entry));
+    printf("(pid %x tid %lx)  QUEUEING\n", getpid(), pthread_self());
             entry->next = NULL;
             entry->econn_d = econn_d;
             entry->packet = event.packet;
@@ -512,6 +517,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         }            
     }
 
+    printf("(pid %x tid %lx)  Connecttion established\n", getpid(), pthread_self());
     svc->trace_out(cm, "--> Connection established");
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
     enet_conn_data->remote_IP = htonl(host_ip);
