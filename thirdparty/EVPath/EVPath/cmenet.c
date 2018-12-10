@@ -434,7 +434,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     peer = enet_host_connect (sd->server, & address, 1, 0);    
     peer->data = enet_conn_data;
     svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
-    printf("(pid %x tid %lx)  Did Connect\n", getpid(), pthread_self());
+    printf("(pid %x tid %lx)  Did Connect for PEER %p\n", getpid(), pthread_self(), peer);
     if (peer == NULL)
     {
        fprintf (stderr, 
@@ -453,11 +453,11 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         if (ret <= 0) continue;
         switch(event.type) {
         case ENET_EVENT_TYPE_CONNECT: {
-            printf("(pid %x tid %lx)  Got random Connect\n", getpid(), pthread_self());
             if (event.peer != peer) {
                 enet_conn_data_ptr enet_connection_data;
                 struct in_addr addr;
                 addr.s_addr = event.peer->address.host;
+                printf("(pid %x tid %lx)  Got random Connect, PEER %p, state %d\n", getpid(), pthread_self(), peer, peer->state);
                 svc->trace_out(cm, "A new client connected from %s:%u.\n", 
                                inet_ntoa(addr),
                                event.peer->address.port);
@@ -480,7 +480,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_NONE:
             break;
         case ENET_EVENT_TYPE_DISCONNECT:
-                printf("(pid %x tid %lx)  DISCONNECT\n", getpid(), pthread_self());
+            printf("(pid %x tid %lx)  DISCONNECT, PEER %p\n", getpid(), pthread_self(), peer);
             if (event.peer == peer) {
                 enet_peer_reset (peer);
                 
@@ -499,7 +499,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = event.peer->data;
             queued_data entry = malloc(sizeof(*entry));
-    printf("(pid %x tid %lx)  QUEUEING\n", getpid(), pthread_self());
+            printf("(pid %x tid %lx)  QUEUEING, PEER %p, state %d\n", getpid(), pthread_self(), peer, peer->state);
             entry->next = NULL;
             entry->econn_d = econn_d;
             entry->packet = event.packet;
@@ -518,9 +518,9 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         }            
     }
 
-    printf("(pid %x tid %lx)  Connecttion established\n", getpid(), pthread_self());
+    printf("(pid %x tid %lx)  Connecttion established, peer %p, state %d\n", getpid(), pthread_self(), peer, peer->state);
     if (peer->state != ENET_PEER_STATE_CONNECTED) {
-        printf("(pid %x tid %lx)  WEIRD, PEER NOT CONNECTED\n", getpid(), pthread_self());
+        printf("(pid %x tid %lx)  WEIRD, PEER %p NOT CONNECTED\n", getpid(), pthread_self(), peer);
         
         return 0;
     }
