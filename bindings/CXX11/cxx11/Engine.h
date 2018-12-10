@@ -264,6 +264,11 @@ public:
     void Get(const std::string &variableName, std::vector<T> &dataV,
              const Mode launch = Mode::Deferred);
 
+    template <class T>
+    void GetBlock(Variable<T> variable, T **data, const Mode launch = Mode::Deferred);
+    template <class T>
+    void GetBlock(const std::string &variableName, T **data,
+             const Mode launch = Mode::Deferred);
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();
 
@@ -333,6 +338,9 @@ private:
                                         const Mode);                           \
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
+                                                                               \
+    extern template void Engine::GetBlock<T>(Variable<T>, T **, const Mode);   \
+    extern template void Engine::GetBlock<T>(const std::string &, T **, const Mode); \
                                                                                \
     extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \

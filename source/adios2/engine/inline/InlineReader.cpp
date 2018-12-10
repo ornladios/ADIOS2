@@ -109,13 +109,17 @@ void InlineReader::EndStep()
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void InlineReader::DoGetSync(Variable<T> &variable, T *data)             \
+    void InlineReader::DoGetSync(Variable<T> &variable, T *data)               \
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
-    void InlineReader::DoGetDeferred(Variable<T> &variable, T *data)         \
+    void InlineReader::DoGetDeferred(Variable<T> &variable, T *data)           \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    void InlineReader::DoGetBlockSync(Variable<T> &variable, T **data)         \
+    {                                                                          \
+        GetBlockSyncCommon(variable, data);                                    \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

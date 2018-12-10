@@ -125,6 +125,20 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 }
 
 template <class T>
+void Engine::GetBlock(Variable<T> variable, T **data, const Mode launch)
+{
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::GetBlock");
+    m_Engine->GetBlock<T>(*variable.m_Variable, data, launch);
+}
+
+template <class T>
+void Engine::GetBlock(const std::string &variableName, T **data, const Mode launch)
+{
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::GetBlock");
+    m_Engine->GetBlock<T>(variableName, data, launch);
+}
+
+template <class T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 Engine::AllStepsBlocksInfo(const Variable<T> variable) const
 {

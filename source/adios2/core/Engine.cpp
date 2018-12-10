@@ -94,7 +94,15 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 // DoGet*
 #define declare_type(T)                                                        \
     void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }       \
-    void Engine::DoGetDeferred(Variable<T> &, T *) { ThrowUp("DoGetDeferred"); }
+    void Engine::DoGetDeferred(Variable<T> &, T *) { ThrowUp("DoGetDeferred"); }\
+    void Engine::DoGetBlockSync(Variable<T> &v, T ** data) { \
+        if (data == nullptr || *data == nullptr) { \
+            throw std::invalid_argument("ERROR: Default GetBlock for " + m_EngineType + \
+                                " must have valid de-referenced data pointer \n"); \
+        } \
+        /* fallback to Get for most engines except Inline */ \
+        Get(v, *data); \
+    }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -153,6 +161,9 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Mode); \
     template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
                                  const Mode);                                  \
+                                                                               \
+    template void Engine::GetBlock<T>(Variable<T> &, T **, const Mode);        \
+    template void Engine::GetBlock<T>(const std::string &, T **, const Mode);  \
                                                                                \
     template Variable<T> &Engine::FindVariable(                                \
         const std::string &variableName, const std::string hint);              \

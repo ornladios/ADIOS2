@@ -279,6 +279,62 @@ public:
              const Mode launch = Mode::Deferred);
 
     /**
+     * @brief GetBlock retrieves an existing variable's last selections and
+     * sets the input data pointer
+     * from adios2 Engine Write mode directly to Read Mode. If the data is not
+     * available (likely for all Engines except Inline), fall back to Get()
+     *
+     * Polymorphic function.
+     * Check your Engine documentation for specific behavior.
+     * In general, it will register variable metadata and data for populating
+     * data values at Read.
+     * @param variable contains metadata and selections for getting the variable
+     * @param data changeable pointer, needs user pre-allocated memory space if fallback
+     * @param executeMode
+     * <pre>
+     * Deferred (default): lazy evaluation, data is not populated until EndStep
+     *      Close, or PerformPuts
+     * Sync: data is ready after this call
+     * </pre>
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user
+     * inputs
+     * std::runtime_error: always if system failures are caught
+     * </pre>
+     */
+    template <class T>
+    void GetBlock(Variable<T> &variable, T **data,
+             const Mode launch = Mode::Deferred);
+
+    /**
+     * @brief GetBlock version that accepts a variableName as input.
+     *
+     * Throws an exception if variable is not found in IO that created the
+     * current engine.
+     *
+     * @param variableName input variable name (Variable must exist in IO that
+     * created current Engine with Open)
+     * @param data changeable pointer, needs user pre-allocated memory space if fallback
+     * @param executeMode
+     * <pre>
+     * Deferred (default): lazy evaluation, data is not populated until EndStep
+     *      Close, or PerformPuts.
+     * Sync: data is ready after this call
+     * </pre>
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user
+     * inputs, also thrown if variable is not
+     * found.
+     * std::runtime_error: always if system failures are caught
+     * </pre>
+     */
+    template <class T>
+    void GetBlock(const std::string &variableName, T **data,
+             const Mode launch = Mode::Deferred);
+
+    /**
      * Reader application indicates that no more data will be read from the
      * current stream before advancing.
      * This is necessary to allow writers to advance as soon as possible.
@@ -375,7 +431,8 @@ protected:
 // Get
 #define declare_type(T)                                                        \
     virtual void DoGetSync(Variable<T> &, T *);                                \
-    virtual void DoGetDeferred(Variable<T> &, T *);
+    virtual void DoGetDeferred(Variable<T> &, T *);                            \
+    virtual void DoGetBlockSync(Variable<T> &, T **);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -449,6 +506,9 @@ private:
                                                                                \
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
+                                                                               \
+    extern template void Engine::GetBlock<T>(Variable<T> &, T **, const Mode); \
+    extern template void Engine::GetBlock<T>(const std::string &, T **, const Mode); \
                                                                                \
     extern template Variable<T> &Engine::FindVariable(                         \
         const std::string &variableName, const std::string hint);              \

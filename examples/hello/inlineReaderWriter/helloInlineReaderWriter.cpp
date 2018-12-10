@@ -42,12 +42,17 @@ void DoAnalysis(adios2::IO& bpIO, adios2::Engine& bpReader, int rank, unsigned i
             // bpFloats000.SetStepSelection({step, 1});
 
             std::vector<float> data(bpFloats000.SelectionSize());
-            bpReader.Get(bpFloats000, data.data(), adios2::Mode::Sync);
+            float *vectData = data.data();
+            float **blockData = &(vectData);
+
+            bpReader.GetBlock<float>(bpFloats000, blockData, adios2::Mode::Sync);
 
             std::cout << "Data timestep " << bpFloats000.StepsStart()
                       << " from rank " << rank << ": ";
-            for (const auto datum : data)
+            // for (const auto datum : data)
+            for(int i = 0; i < bpFloats000.SelectionSize(); ++i)
             {
+                float datum = (*blockData)[i];
                 std::cout << datum << " ";
             }
             std::cout << "\n";

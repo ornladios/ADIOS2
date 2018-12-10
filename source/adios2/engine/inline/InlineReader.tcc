@@ -67,6 +67,22 @@ void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
     m_NeedPerformGets = true;
 }
 
+template <class T>
+inline void InlineReader::GetBlockSyncCommon(Variable<T> &variable, T **data)
+{
+    // variable.m_Data = data;
+    auto blockInfo = variable.m_BlocksInfo.back();
+    if (blockInfo.Data) {
+        *data = blockInfo.Data;
+    }
+    if (m_Verbosity == 5)
+    {
+        std::cout << "Inline Reader " << m_ReaderRank << "     GetBlockSync("
+                  << variable.m_Name << ")\n";
+    }
+}
+
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
