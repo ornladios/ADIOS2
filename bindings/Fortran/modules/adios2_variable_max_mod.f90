@@ -15,7 +15,6 @@ module adios2_variable_max_mod
 
     interface adios2_variable_max
 
-        ! Single Value
         module procedure adios2_variable_max_real
         module procedure adios2_variable_max_dp
         module procedure adios2_variable_max_complex
@@ -37,7 +36,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_real, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
@@ -50,7 +49,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_dp, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
@@ -63,7 +62,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_complex, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
@@ -76,7 +75,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
@@ -89,7 +88,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_integer1, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
@@ -102,7 +101,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_integer2, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
@@ -115,7 +114,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_integer4, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
@@ -128,7 +127,7 @@ contains
         call adios2_variable_check_type(variable, adios2_type_integer8, &
                                         'variable_max', ierr)
         if (ierr == 0) then
-            call adios2_variable_max_f2c(maximum, variable, ierr)
+            call adios2_variable_max_f2c(maximum, variable%f2c, ierr)
         end if
 
     end subroutine
