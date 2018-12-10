@@ -445,11 +445,11 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     /* Wait up to 'timeout' milliseconds for the connection attempt to succeed. */
     int finished = 0;
     int got_connection = 0;
-    int start = enet_time_get();
+    enet_uint32 start = enet_time_get();
     while (!finished) {
         int ret = enet_host_service (sd->server, & event, 100); 
         if ((start + timeout) > enet_time_get()) {
-            printf("(pid %x tid %lx)  TIMING OUT, start %d, timeout %d, now %d\n", getpid(), pthread_self(), start, timeout, enet_time_get());
+            printf("(pid %x tid %lx)  TIMING OUT, start %u, timeout %u, now %u\n", getpid(), pthread_self(), start, timeout, enet_time_get());
             finished = 1;
         }
         if (ret <= 0) continue;
@@ -1003,6 +1003,7 @@ libcmenet_LTX_initialize(CManager cm, CMtrans_services svc,
 	    fprintf (stderr, "An error occurred while initializing ENet.\n");
 	    //return EXIT_FAILURE;
 	}
+        enet_time_set(0);   /* rollover in 50 days */
     }
     if (atom_init == 0) {
 	CM_ENET_HOSTNAME = attr_atom_from_string("CM_ENET_HOST");
