@@ -471,7 +471,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
                 enet_host_flush (sd->server);
             } else {
                 enet_host_flush (sd->server);
-                printf("(pid %x tid %lx)  Got RIGHT Connect\n", getpid(), pthread_self());
+                printf("(pid %x tid %lx)  Got RIGHT Connect, PEER %p state %d\n", getpid(), pthread_self(), peer, peer->state);
                 svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
                 finished = 1;
             }
@@ -480,6 +480,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
         case ENET_EVENT_TYPE_NONE:
             break;
         case ENET_EVENT_TYPE_DISCONNECT:
+                printf("(pid %x tid %lx)  DISCONNECT\n", getpid(), pthread_self());
             if (event.peer == peer) {
                 enet_peer_reset (peer);
                 
@@ -518,6 +519,11 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
 
     printf("(pid %x tid %lx)  Connecttion established\n", getpid(), pthread_self());
+    if (peer->state != ENET_PEER_STATE_CONNECTED) {
+        printf("(pid %x tid %lx)  WEIRD, PEER NOT CONNECTED\n", getpid(), pthread_self());
+        
+        return 0;
+    }
     svc->trace_out(cm, "--> Connection established");
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
     enet_conn_data->remote_IP = htonl(host_ip);
@@ -922,6 +928,7 @@ libcmenet_LTX_writev_func(CMtrans_services svc, enet_conn_data_ptr ecd,
 
     /* Send the packet to the peer over channel id 0. */
     if (enet_peer_send (ecd->peer, 0, packet) == -1) {
+        printf("(pid %x tid %lx)  PEER SEND FAILED, PEER %p state %d\n", getpid(), pthread_self(), ecd->peer, ecd->peer->state);
         enet_packet_destroy(packet);
         svc->trace_out(ecd->sd->cm, "ENET  ======  failed to send a packet to peer %p, state %d\n", ecd->peer, ecd->peer->state);
 	return -1;
