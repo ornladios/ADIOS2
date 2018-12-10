@@ -4,13 +4,16 @@ program TestBPWriteAttributes
     use adios2
     implicit none
 
-
     type(adios2_adios) :: adios
     type(adios2_io) :: ioWrite, ioRead
     type(adios2_engine) :: bpWriter, bpReader
     type(adios2_attribute), dimension(14) :: attributes
 
     integer :: ierr, i
+    integer(kind=2):: i16_value
+
+
+
 
     ! Launch MPI
     call MPI_Init(ierr)
@@ -74,12 +77,34 @@ program TestBPWriteAttributes
         if( attributes(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_attribute'
     end do
 
-
-
     call adios2_open(bpWriter, ioWrite, "fattr_types.bp", adios2_mode_write, &
                      ierr)
 
     call adios2_close(bpWriter, ierr)
+
+    call MPI_Barrier(MPI_COMM_WORLD, ierr)
+
+    !!!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    call adios2_declare_io(ioRead, adios, "ioRead", ierr)
+
+    call adios2_open(bpReader, ioRead, 'fattr_types.bp', adios2_mode_read, ierr)
+
+    call adios2_inquire_attribute(attributes(3), ioRead, 'att_i16', ierr)
+
+    if(attributes(3)%valid .eqv. .false.) stop 'attribute i16 not found'
+    if(attributes(3)%type /= adios2_type_integer2) stop 'attribute i16 wrong type'
+    if(attributes(3)%length /= 1) stop 'attribute i16 lenght is not 1'
+    if(attributes(3)%is_value .eqv. .false.) stop 'attribute i16 must be value'
+    call adios2_attribute_data( i16_value, attributes(3), ierr)
+    if( i16_value /=  data_I16(1) ) stop 'attribute i16 data error'
+
+
+
+    call adios2_close(bpReader, ierr)
+
+
+
+
 
     call adios2_finalize(adios, ierr)
 
