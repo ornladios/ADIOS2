@@ -28,30 +28,30 @@ extern struct CMtrans_services_s CMstatic_trans_svcs;
 
 static transport_entry *global_transports = NULL;
 
-static void
-free_global_transports()
-{
-    int i = 0;
-    transport_entry *tmp;
-    if (global_transports == NULL) {
-	return;
-    } else {
-	tmp = global_transports;
-	global_transports = NULL;
-    }
-    while (tmp[i]) {
-#if !NO_DYNAMIC_LINKING
-	CMdlclose(tmp[i]->dlhandle);
-#endif
-	free(tmp[i]->trans_name);
-	free(tmp[i]);
-	i++;
-    }
-    free(tmp);
-#if !NO_DYNAMIC_LINKING
-    CMdlclearsearchlist();
-#endif
-}
+/* static void */
+/* free_global_transports() */
+/* { */
+/*     int i = 0; */
+/*     transport_entry *tmp; */
+/*     if (global_transports == NULL) { */
+/* 	return; */
+/*     } else { */
+/* 	tmp = global_transports; */
+/* 	global_transports = NULL; */
+/*     } */
+/*     while (tmp[i]) { */
+/* #if !NO_DYNAMIC_LINKING */
+/* 	CMdlclose(tmp[i]->dlhandle); */
+/* #endif */
+/* 	free(tmp[i]->trans_name); */
+/* 	free(tmp[i]); */
+/* 	i++; */
+/*     } */
+/*     free(tmp); */
+/* #if !NO_DYNAMIC_LINKING */
+/*     CMdlclearsearchlist(); */
+/* #endif */
+/* } */
 
 int
 find_transport_in_cm(CManager cm, const char *trans_name)
@@ -293,7 +293,7 @@ load_transport(CManager cm, const char *trans_name, int quiet)
     } else {
 	global_transports =
 	    INT_CMmalloc(sizeof(global_transports) * (i + 2));
-	atexit(free_global_transports);
+//	atexit(free_global_transports);
     }
     global_transports[i] = transport;
     global_transports[i + 1] = NULL;
