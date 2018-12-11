@@ -516,7 +516,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
 
     if (!got_connection) {
-        svc->trace_out("--> Connection failed because of timeout", getpid(), pthread_self(), peer, peer->state);
+        svc->trace_out(cm, "--> Connection failed because of timeout");
         return 0;
     }
     svc->trace_out(cm, "--> Connection established\n");
