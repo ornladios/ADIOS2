@@ -449,7 +449,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     while (!finished) {
         int ret = enet_host_service (sd->server, & event, 100); 
         enet_uint32 now = enet_time_get();
-        if (end > now) {
+        if (now > end) {
             printf("(pid %x tid %lx)  TIMING OUT, end %u, timeout %u, now %u\n", getpid(), pthread_self(), end, timeout, now);
             finished = 1;
         }
