@@ -3677,12 +3677,12 @@ typedef struct foreign_handler_struct {
 static handler_list foreign_handler_list;
 static int foreign_handler_count = 0;
 
-static void
-clear_foreign_handlers()
-{
-    if (foreign_handler_count == 0) return;
-    free(foreign_handler_list);
-}
+/* static void */
+/* clear_foreign_handlers() */
+/* { */
+/*     if (foreign_handler_count == 0) return; */
+/*     free(foreign_handler_list); */
+/* } */
 
  extern void
  INT_CMregister_non_CM_message_handler(int header, CMNonCMHandler handler)
@@ -3693,7 +3693,7 @@ clear_foreign_handlers()
 					  (foreign_handler_count + 1));
      } else {
 	 foreign_handler_list = INT_CMmalloc(sizeof(foreign_handler_list[0]));
-	 atexit(clear_foreign_handlers);
+/*	 atexit(clear_foreign_handlers);*/
      }
      foreign_handler_list[foreign_handler_count].header = header;
      foreign_handler_list[foreign_handler_count].handler = handler;
