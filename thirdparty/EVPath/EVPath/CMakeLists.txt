@@ -302,6 +302,10 @@ endif()
 
 # udt4 transport
 set(RUN_UDT4_TESTS FALSE)
+if(NOT(DEFINED EVPATH_USE_UDT4))
+  #UDT4 not particularly functional, default to not building
+  set(EVPATH_USE_UDT4 FALSE)
+endif()
 if(DEFINED EVPATH_USE_UDT4)
   option(EVPATH_USE_UDT4 "Build the udt4 transport" "${EVPATH_USE_UDT4}")
   if(EVPATH_USE_UDT4)
