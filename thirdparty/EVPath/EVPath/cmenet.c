@@ -445,11 +445,12 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     /* Wait up to 'timeout' milliseconds for the connection attempt to succeed. */
     int finished = 0;
     int got_connection = 0;
-    enet_uint32 start = enet_time_get();
+    enet_uint32 end = enet_time_get() + timeout;
     while (!finished) {
         int ret = enet_host_service (sd->server, & event, 100); 
-        if ((start + timeout) > enet_time_get()) {
-            printf("(pid %x tid %lx)  TIMING OUT, start %u, timeout %u, now %u\n", getpid(), pthread_self(), start, timeout, enet_time_get());
+        enet_uint32 now = enet_time_get();
+        if (end > now) {
+            printf("(pid %x tid %lx)  TIMING OUT, end %u, timeout %u, now %u\n", getpid(), pthread_self(), end, timeout, now);
             finished = 1;
         }
         if (ret <= 0) continue;
