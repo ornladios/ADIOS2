@@ -15,7 +15,7 @@ module adios2_attribute_data_mod
     interface adios2_attribute_data
 
         ! Single Value
-        !module procedure adios2_attribute_data_string
+        module procedure adios2_attribute_data_string
         module procedure adios2_attribute_data_real
         module procedure adios2_attribute_data_dp
         module procedure adios2_attribute_data_integer1
@@ -37,6 +37,20 @@ module adios2_attribute_data_mod
 contains
 
     ! Single value
+    subroutine adios2_attribute_data_string(data, attribute, ierr)
+        character*(*), intent(out):: data
+        type(adios2_attribute), intent(in):: attribute
+        integer, intent(out):: ierr
+
+        call adios2_attribute_check_type(attribute, adios2_type_string, &
+                                        'attribute_data', ierr)
+        if (ierr == 0) then
+            call adios2_attribute_value_f2c(data, attribute%f2c, ierr)
+        end if
+
+    end subroutine
+
+
     subroutine adios2_attribute_data_real(data, attribute, ierr)
         real, intent(out):: data
         type(adios2_attribute), intent(in):: attribute

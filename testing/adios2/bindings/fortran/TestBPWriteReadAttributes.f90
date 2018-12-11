@@ -10,6 +10,7 @@ program TestBPWriteAttributes
     type(adios2_attribute), dimension(14) :: attributes, attributes_in
 
     integer :: ierr, i
+    character(len=23):: iString_value
     integer(kind=1):: i8_value
     integer(kind=2):: i16_value
     integer(kind=4):: i32_value
@@ -99,12 +100,20 @@ program TestBPWriteAttributes
 
     call adios2_open(bpReader, ioRead, 'fattr_types.bp', adios2_mode_read, ierr)
 
+    call adios2_inquire_attribute(attributes_in(1), ioRead, 'att_String', ierr)
     call adios2_inquire_attribute(attributes_in(2), ioRead, 'att_i8', ierr)
     call adios2_inquire_attribute(attributes_in(3), ioRead, 'att_i16', ierr)
     call adios2_inquire_attribute(attributes_in(4), ioRead, 'att_i32', ierr)
     call adios2_inquire_attribute(attributes_in(5), ioRead, 'att_i64', ierr)
     call adios2_inquire_attribute(attributes_in(6), ioRead, 'att_r32', ierr)
     call adios2_inquire_attribute(attributes_in(7), ioRead, 'att_r64', ierr)
+
+    if(attributes_in(1)%valid .eqv. .false.) stop 'attribute iString not found'
+    if(attributes_in(1)%type /= adios2_type_string) stop 'attribute iString wrong type'
+    if(attributes_in(1)%length /= 1) stop 'attribute iString lenght is not 1'
+    if(attributes_in(1)%is_value .eqv. .false.) stop 'attribute iString must be value'
+    call adios2_attribute_data( iString_value, attributes_in(1), ierr)
+    if( iString_value /=  'ADIOS2 String attribute' ) stop 'attribute iString data error'
 
     if(attributes_in(2)%valid .eqv. .false.) stop 'attribute i8 not found'
     if(attributes_in(2)%type /= adios2_type_integer1) stop 'attribute i8 wrong type'
