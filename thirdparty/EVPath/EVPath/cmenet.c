@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#include <pthread.h>
 
 #include <enet/enet.h>
 #include <arpa/inet.h>
@@ -432,7 +433,6 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     peer = enet_host_connect (sd->server, & address, 1, 0);    
     peer->data = enet_conn_data;
     svc->trace_out(cm, "ENET ========   On init Assigning peer %p has data %p\n", peer, enet_conn_data);
-    
     if (peer == NULL)
     {
        fprintf (stderr, 
@@ -441,38 +441,60 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
     
     /* Wait up to 'timeout' milliseconds for the connection attempt to succeed. */
-retry:
-    if ((enet_host_service (sd->server, & event, timeout) > 0) &&
-        (event.type == ENET_EVENT_TYPE_CONNECT)) {
-        if (event.peer != peer) {
-            enet_conn_data_ptr enet_connection_data;
-            struct in_addr addr;
-            addr.s_addr = event.peer->address.host;
-	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
-			   inet_ntoa(addr),
-			   event.peer->address.port);
-
-	    enet_connection_data = enet_accept_conn(sd, trans, &event.peer->address);
-
-            /* Store any relevant client information here. */
-            svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
-            event.peer->data = enet_connection_data;
-	    ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
-            goto retry;
+    int finished = 0;
+    int got_connection = 0;
+    enet_uint32 end = enet_time_get() + timeout;
+    while (!finished) {
+        int ret = enet_host_service (sd->server, & event, 100); 
+        enet_uint32 now = enet_time_get();
+        if (now > end) {
+            finished = 1;
         }
-	svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
-    } else {
-        if ((event.type == ENET_EVENT_TYPE_DISCONNECT) ||
-            (event.type == ENET_EVENT_TYPE_NONE)) {
-            /* Either the 5 seconds are up or a disconnect event was */
-            /* received. Reset the peer in the event the 5 seconds   */
-            /* had run out without any significant event.            */
-            enet_peer_reset (peer);
-
-            svc->trace_out(cm, "Connection to %s:%d failed   type was %d.\n", inet_ntoa(sin_addr), address.port, event.type);
-            return 0;
-
-        } else if (event.type == ENET_EVENT_TYPE_RECEIVE) {
+        if (ret <= 0) continue;
+        switch(event.type) {
+        case ENET_EVENT_TYPE_CONNECT: {
+            if (event.peer != peer) {
+                enet_conn_data_ptr enet_connection_data;
+                struct in_addr addr;
+                addr.s_addr = event.peer->address.host;
+                svc->trace_out(cm, "A new client connected from %s:%u.\n", 
+                               inet_ntoa(addr),
+                               event.peer->address.port);
+                
+                enet_connection_data = enet_accept_conn(sd, trans, &event.peer->address);
+                
+                /* Store any relevant client information here. */
+                svc->trace_out(cm, "ENET ========   Assigning peer %p has data %p\n", event.peer, enet_connection_data);
+                event.peer->data = enet_connection_data;
+                ((enet_conn_data_ptr)enet_connection_data)->peer = event.peer;
+                enet_host_flush (sd->server);
+            } else {
+                enet_host_flush (sd->server);
+                svc->trace_out(cm, "Connection to %s:%d succeeded.\n", inet_ntoa(sin_addr), address.port);
+                finished = 1;
+                got_connection = 1;
+            }
+            break;
+        }
+        case ENET_EVENT_TYPE_NONE:
+            break;
+        case ENET_EVENT_TYPE_DISCONNECT:
+            if (event.peer == peer) {
+                enet_peer_reset (peer);
+                
+                svc->trace_out(cm, "Connection to %s:%d failed   type was %d.\n", inet_ntoa(sin_addr), address.port, event.type);
+                return 0;
+            } else {
+                enet_conn_data_ptr enet_conn_data = event.peer->data;
+                svc->trace_out(cm, "Got a disconnect on connection %p\n",
+                               event.peer->data);
+                
+                enet_conn_data = event.peer->data;
+                enet_conn_data->read_buffer_len = -1;
+                svc->connection_fail(enet_conn_data->conn);
+            }
+            break;
+        case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = event.peer->data;
             queued_data entry = malloc(sizeof(*entry));
             entry->next = NULL;
@@ -488,12 +510,16 @@ retry:
                 }
                 last->next = entry;
             }
-            goto retry;
+            break;
         }
-            
+        }
     }
 
-    svc->trace_out(cm, "--> Connection established");
+    if (!got_connection) {
+        svc->trace_out(cm, "--> Connection failed because of timeout");
+        return 0;
+    }
+    svc->trace_out(cm, "--> Connection established\n");
     enet_conn_data->remote_host = host_name == NULL ? NULL : strdup(host_name);
     enet_conn_data->remote_IP = htonl(host_ip);
     enet_conn_data->remote_contact_port = int_port_num;
@@ -963,6 +989,7 @@ libcmenet_LTX_initialize(CManager cm, CMtrans_services svc,
 	    fprintf (stderr, "An error occurred while initializing ENet.\n");
 	    //return EXIT_FAILURE;
 	}
+        enet_time_set(0);   /* rollover in 50 days */
     }
     if (atom_init == 0) {
 	CM_ENET_HOSTNAME = attr_atom_from_string("CM_ENET_HOST");
