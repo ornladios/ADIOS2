@@ -294,7 +294,7 @@ void FC_GLOBAL(adios2_set_operation_parameter_f2c,
 }
 
 void FC_GLOBAL(adios2_variable_min_f2c,
-               adios2_variable_MIN_F2C)(void *min,
+               ADIOS2_VARIABLE_MIN_F2C)(void *min,
                                         const adios2_variable **variable,
                                         int *ierr)
 {
@@ -302,7 +302,7 @@ void FC_GLOBAL(adios2_variable_min_f2c,
 }
 
 void FC_GLOBAL(adios2_variable_max_f2c,
-               adios2_variable_MAX_F2C)(void *max,
+               ADIOS2_VARIABLE_MAX_F2C)(void *max,
                                         const adios2_variable **variable,
                                         int *ierr)
 {
