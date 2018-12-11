@@ -127,21 +127,17 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
     // FIXME: All processes should timeout or succeed together.
     // If some timeouts (and never checks back) and the others succeed,
     // the global metadata operation will hang
-    std::vector<MPI_Request> requests(m_RankDirectPeers.size());
-    std::vector<int> steps(m_RankDirectPeers.size());
-    for (int peerID = 0; peerID < m_RankDirectPeers.size(); peerID++)
-    {
-        MPI_Irecv(&steps[peerID], 1, MPI_INT, m_RankDirectPeers[peerID],
-                  insitumpi::MpiTags::Step, m_CommWorld, &requests[peerID]);
-    }
-    insitumpi::CompleteRequests(requests, false, m_ReaderRank);
+    int step;
+    MPI_Status status;
+    MPI_Recv(&step, 1, MPI_INT, m_RankDirectPeers[0], insitumpi::MpiTags::Step,
+             m_CommWorld, &status);
 
     if (m_Verbosity == 5)
     {
-        std::cout << "InSituMPI Reader " << m_ReaderRank << " new step "
-                  << steps[0] << " arrived for " << m_Name << std::endl;
+        std::cout << "InSituMPI Reader " << m_ReaderRank << " new step " << step
+                  << " arrived for " << m_Name << std::endl;
     }
-    m_CurrentStep = steps[0];
+    m_CurrentStep = step;
     // FIXME: missing test whether all writers sent the same step
 
     if (m_CurrentStep == -1)
@@ -158,7 +154,6 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
 
         if (m_ReaderRootRank == m_ReaderRank)
         {
-            MPI_Status status;
             MPI_Recv(&mdLen, 1, MPI_UNSIGNED_LONG, m_WriteRootGlobalRank,
                      insitumpi::MpiTags::MetadataLength, m_CommWorld, &status);
             if (m_Verbosity == 5)

@@ -55,9 +55,10 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
                   << " #appsize=" << m_GlobalNproc
                   << " #direct peers=" << m_RankDirectPeers.size() << std::endl;
     }
-    insitumpi::ConnectDirectPeers(m_CommWorld, true,
-                                  (m_BP3Serializer.m_RankMPI == 0),
-                                  m_GlobalRank, m_RankDirectPeers);
+    int primaryContact = insitumpi::ConnectDirectPeers(
+        m_CommWorld, true, (m_BP3Serializer.m_RankMPI == 0), m_GlobalRank,
+        m_RankDirectPeers);
+    m_AmIPrimaryContact = static_cast<bool>(primaryContact);
 }
 
 InSituMPIWriter::~InSituMPIWriter() {}
@@ -76,20 +77,33 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_CurrentStep++; // 0 is the first step
-    if (m_Verbosity == 5)
+    if (m_AmIPrimaryContact)
     {
-        std::cout << "InSituMPI Writer " << m_WriterRank << " new step "
-                  << m_CurrentStep << " for " << m_Name << ". Notify peers..."
-                  << std::endl;
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank << " new step "
+                      << m_CurrentStep << " for " << m_Name
+                      << ". Notify peers..." << std::endl;
+        }
+        // Send the step to all reader peers, asynchronously
+        // We need to call Wait on all Isend/Irecv calls at some point otherwise
+        // MPI_Comm_free() will never release the communicator
+        for (auto peerRank : m_RankDirectPeers)
+        {
+            m_MPIRequests.emplace_back();
+            MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
+                      insitumpi::MpiTags::Step, m_CommWorld,
+                      &m_MPIRequests.back());
+        }
     }
-    // Send the step to all reader peers, asynchronously
-    // We need to call Wait on all Isend/Irecv calls at some point otherwise
-    // MPI_Comm_free() will never release the communicator
-    for (auto peerRank : m_RankDirectPeers)
+    else
     {
-        m_MPIRequests.emplace_back();
-        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, m_CommWorld, &m_MPIRequests.back());
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank << " new step "
+                      << m_CurrentStep << " for " << m_Name
+                      << ". Notify nobody." << std::endl;
+        }
     }
 
     m_NCallsPerformPuts = 0;
