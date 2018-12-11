@@ -29,15 +29,16 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : Engine("StagingReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian()),
-  m_MetadataTransport(mpiComm, m_DebugMode)
+                      helper::IsLittleEndian())
 {
     m_DataTransport = std::make_shared<transportman::StagingMan>(
-        mpiComm, Mode::Read, m_Timeout, m_DebugMode);
+        mpiComm, Mode::Read, m_Timeout, 1e9);
+    m_MetadataTransport = std::make_shared<transportman::StagingMan>(
+        mpiComm, Mode::Read, m_Timeout, 1e6);
     m_EndMessage = " in call to IO Open StagingReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " Open(" << m_Name
                   << ") in constructor." << std::endl;
@@ -46,7 +47,7 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
 
 StagingReader::~StagingReader()
 {
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " deconstructor on "
                   << m_Name << "\n";
@@ -57,27 +58,20 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
                                     const float timeoutSeconds)
 {
 
-    // Receive aggregated metadata from writer master rank
-
-    std::shared_ptr<std::vector<char>> buff = nullptr;
-
-    if (m_MpiRank == 0)
-    {
-        while (buff == nullptr)
-        {
-            buff = m_MetadataTransport.Read(0);
-        }
-    }
-    else
-    {
-        buff = std::make_shared<std::vector<char>>();
-    }
-
-    m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, buff);
+    ++m_CurrentStep;
 
     if (m_CurrentStep == 0)
     {
+        MetadataReqThread();
         m_DataManSerializer.GetAttributes(m_IO);
+    }
+
+    if (m_MetadataReqThread != nullptr)
+    {
+        if (m_MetadataReqThread->joinable())
+        {
+            m_MetadataReqThread->join();
+        }
     }
 
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
@@ -146,7 +140,7 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
         }
     }
 
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Reader " << m_MpiRank
                   << "   BeginStep() new step " << m_CurrentStep
@@ -161,10 +155,28 @@ void StagingReader::PerformGets()
 {
 
     auto requests = m_DataManSerializer.GetDeferredRequest();
+    if (m_Verbosity >= 10)
+    {
+        std::cout << "Staging Reader " << m_MpiRank
+                  << " PerformGets() DeferredRequest from serializer, size = "
+                  << requests->size() << std::endl;
+    }
     for (const auto &i : *requests)
     {
         auto reply = m_DataTransport->Request(i.second, i.first);
-        m_DataManSerializer.PutPack(reply);
+        if (reply == nullptr)
+        {
+            std::cout << "Step " << m_CurrentStep
+                      << " received empty data package from writer " << i.first
+                      << ". This may be caused by a network failure. Data for "
+                         "this step may not be correct but application will "
+                         "continue running."
+                      << std::endl;
+        }
+        else
+        {
+            m_DataManSerializer.PutPack(reply);
+        }
     }
 
     auto varsVec = m_MetaDataMap.find(m_CurrentStep);
@@ -195,7 +207,7 @@ void StagingReader::PerformGets()
 #undef declare_type
     }
 
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " PerformGets()\n";
     }
@@ -207,10 +219,12 @@ void StagingReader::EndStep()
 {
     PerformGets();
     m_DataManSerializer.Erase(CurrentStep());
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " EndStep()\n";
     }
+    m_MetadataReqThread =
+        std::make_shared<std::thread>(&StagingReader::MetadataReqThread, this);
 }
 
 // PRIVATE
@@ -262,19 +276,7 @@ void StagingReader::InitParameters()
 
 void StagingReader::InitTransports()
 {
-    if (m_MpiRank == 0)
-    {
-        Params params;
-        params["IPAddress"] = m_WriterMasterIP;
-        params["Port"] = m_WriterMasterMetadataPort;
-        params["Library"] = "zmq";
-        params["Name"] = m_Name;
-        std::vector<Params> paramsVec;
-        paramsVec.emplace_back(params);
-        m_MetadataTransport.OpenTransports(paramsVec, Mode::Read, "subscribe",
-                                           true);
-    }
-    m_DataTransport->OpenReadTransport();
+    m_MetadataTransport->OpenTransport(m_FullMetadataAddress);
 }
 
 void StagingReader::Handshake()
@@ -282,15 +284,59 @@ void StagingReader::Handshake()
     transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
     ipstream.Open(".StagingHandshake", Mode::Read);
     auto size = ipstream.GetSize();
-    std::vector<char> ip(size);
-    ipstream.Read(ip.data(), size);
+    std::vector<char> address(size);
+    ipstream.Read(address.data(), size);
     ipstream.Close();
-    m_WriterMasterIP = std::string(ip.begin(), ip.end());
+    m_FullMetadataAddress = std::string(address.begin(), address.end());
+}
+
+void StagingReader::MetadataReqThread()
+{
+
+    std::shared_ptr<std::vector<char>> reply = nullptr;
+    if (m_MpiRank == 0)
+    {
+        std::vector<char> request(1, 'M');
+
+        auto start_time = std::chrono::system_clock::now();
+        while (reply == nullptr)
+        {
+            auto now_time = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                now_time - start_time);
+            if (duration.count() > m_Timeout)
+            {
+                break;
+            }
+            reply = m_MetadataTransport->Request(request);
+        }
+    }
+    else
+    {
+        reply = std::make_shared<std::vector<char>>();
+    }
+
+    if (m_Verbosity >= 100)
+    {
+        if (m_MpiRank == 0)
+        {
+            std::cout << "StagingReader::MetadataReqThread Cbor data, size =  "
+                      << reply->size() << std::endl;
+            std::cout << "========================" << std::endl;
+            for (auto i : *reply)
+            {
+                std::cout << i;
+            }
+            std::cout << std::endl << "========================" << std::endl;
+        }
+    }
+
+    m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
 }
 
 void StagingReader::DoClose(const int transportIndex)
 {
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " Close(" << m_Name
                   << ")\n";

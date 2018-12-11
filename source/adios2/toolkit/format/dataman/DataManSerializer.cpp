@@ -120,9 +120,11 @@ void DataManSerializer::PutAggregatedMetadata(
     MPI_Comm_size(mpiComm, &mpiSize);
     MPI_Comm_rank(mpiComm, &mpiRank);
     helper::BroadcastVector(*data, mpiComm);
+
     nlohmann::json metaJ =
         nlohmann::json::from_msgpack(data->data(), data->size());
     JsonToDataManVarMap(metaJ, nullptr);
+
     if (m_Verbosity >= 5)
     {
         if (mpiRank == 0)
@@ -349,7 +351,8 @@ int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
     return 0;
 }
 
-void DataManSerializer::Erase(size_t step, bool allPreviousSteps)
+void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps,
+                              const size_t reserveSteps)
 {
     std::lock_guard<std::mutex> l(m_Mutex);
     if (allPreviousSteps)
@@ -491,9 +494,9 @@ DataManSerializer::GetDeferredRequest()
     return t;
 }
 
-std::shared_ptr<std::vector<char>>
-DataManSerializer::GenerateReply(const std::vector<char> &request,
-                                 bool autoEraseOldSteps)
+std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(
+    std::shared_ptr<const std::vector<char>> request, bool autoEraseOldSteps,
+    size_t reserveSteps)
 {
     auto replyMetaJ = std::make_shared<nlohmann::json>();
     auto replyLocalBuffer = std::make_shared<std::vector<char>>();
@@ -501,7 +504,7 @@ DataManSerializer::GenerateReply(const std::vector<char> &request,
     nlohmann::json metaj;
     try
     {
-        metaj = nlohmann::json::from_msgpack(request.data(), request.size());
+        metaj = nlohmann::json::from_msgpack(request->data(), request->size());
     }
     catch (std::exception &e)
     {
@@ -592,7 +595,8 @@ DataManSerializer::GenerateReply(const std::vector<char> &request,
     }
     if (autoEraseOldSteps)
     {
-        Erase(stepToErase - 1, true);
+        if (stepToErase - reserveSteps - 1 >= 0)
+            Erase(stepToErase - reserveSteps - 1, true);
     }
     return replyLocalBuffer;
 }
@@ -657,11 +661,13 @@ int64_t DataManSerializer::MinStep()
             minStep = i.first;
         }
     }
-    if (minStep == std::numeric_limits<int64_t>::max())
-    {
-        minStep = 0;
-    }
     return minStep;
+}
+
+int64_t DataManSerializer::Steps()
+{
+    std::lock_guard<std::mutex> l(m_Mutex);
+    return m_DataManVarMap.size();
 }
 
 } // namespace format

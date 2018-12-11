@@ -31,7 +31,7 @@ void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
         m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
                                    m_FullDataAddress, Params());
     }
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << "     PutSync("
                   << variable.m_Name << ")\n";
@@ -45,7 +45,7 @@ void StagingWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     {
         PutSyncCommon(variable, data);
     }
-    if (m_Verbosity == 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "Staging Writer " << m_MpiRank << "     PutDeferred("
                   << variable.m_Name << ")\n";

@@ -29,22 +29,20 @@ class StagingMan
 {
 
 public:
-    StagingMan(MPI_Comm mpiComm, Mode openMode, const int timeout,
-               const bool debugMode);
+    StagingMan(const MPI_Comm mpiComm, const Mode openMode, const int timeout,
+               const size_t maxBufferSize);
 
     ~StagingMan();
 
-    void OpenWriteTransport(std::string fullAddress);
-    void OpenReadTransport();
+    void OpenTransport(const std::string fullAddress);
 
     void CloseTransport();
 
-    std::shared_ptr<std::vector<char>> Request(const std::vector<char> &request,
-                                               const std::string &address,
-                                               const size_t maxReplySize = 0);
+    std::shared_ptr<std::vector<char>>
+    Request(const std::vector<char> &request,
+            const std::string &address = std::string());
 
-    void ReceiveRequest(std::vector<char> &request,
-                        const size_t maxRequestSize = 0);
+    std::shared_ptr<std::vector<char>> ReceiveRequest();
 
     void SendReply(std::shared_ptr<std::vector<char>> reply);
 
@@ -52,12 +50,12 @@ private:
     MPI_Comm m_MpiComm;
     int m_Timeout;
     Mode m_OpenMode;
-    bool m_DebugMode;
 
-    size_t m_MaxRequestSize = 1000000;
-    size_t m_MaxReplySize = 1000000000;
+    size_t m_MaxBufferSize;
 
-    std::shared_ptr<transport::SocketZmqReqRep> m_Transport;
+    std::vector<char> m_Buffer;
+
+    transport::SocketZmqReqRep m_Transport;
 };
 
 } // end namespace transportman

@@ -18,9 +18,8 @@ namespace adios2
 namespace transport
 {
 
-SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
-                                 const bool debugMode)
-: SocketZmq("socket", "zmqreqrep", mpiComm, debugMode), m_Timeout(timeout)
+SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout)
+: SocketZmq("socket", "zmqreqrep", mpiComm, false), m_Timeout(timeout)
 {
     if (m_Context == nullptr || m_Context == NULL)
     {
@@ -47,6 +46,7 @@ void SocketZmqReqRep::Open(const std::string &ipAddress,
 {
     m_Name = name;
     Open("tcp://" + ipAddress + ":" + port, openMode);
+    m_IsOpen = true;
 }
 
 void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
@@ -73,7 +73,7 @@ void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
             "[SocketZmqReqRep::Open] invalid OpenMode parameter");
     }
 
-    if (m_DebugMode)
+    if (m_Verbosity >= 5)
     {
         std::cout << "[SocketZmqReqRep Transport] ";
         std::cout << "OpenMode: " << openModeStr << ", ";
@@ -110,6 +110,18 @@ void SocketZmqReqRep::Write(const char *buffer, size_t size, size_t start)
         throw std::ios_base::failure(
             "[SocketZmqReqRep::IWrite] couldn't send message " + m_Name);
     }
+
+    if (m_Verbosity >= 99)
+    {
+        std::cout << "SocketZmqReqRep::Write sent data, size =  " << size
+                  << std::endl;
+        std::cout << "========================" << std::endl;
+        for (size_t i = 0; i < size; ++i)
+        {
+            std::cout << buffer[i];
+        }
+        std::cout << std::endl << "========================" << std::endl;
+    }
 }
 
 void SocketZmqReqRep::Read(char *buffer, size_t size, size_t start) {}
@@ -137,16 +149,31 @@ void SocketZmqReqRep::IRead(char *buffer, size_t size, Status &status,
         status.Running = true;
         status.Successful = false;
     }
+
+    if (m_Verbosity >= 99)
+    {
+        std::cout << "SocketZmqReqRep::IRead received data, size =  "
+                  << status.Bytes << std::endl;
+        std::cout << "========================" << std::endl;
+        for (size_t i = 0; i < status.Bytes; ++i)
+        {
+            std::cout << buffer[i];
+        }
+        std::cout << std::endl << "========================" << std::endl;
+    }
 }
 
 void SocketZmqReqRep::Flush() {}
 
+bool SocketZmqReqRep::IsOpen() { return m_IsOpen; }
+
 void SocketZmqReqRep::Close()
 {
-    if (m_Socket)
+    if (m_Socket && m_IsOpen)
     {
         zmq_close(m_Socket);
     }
+    m_IsOpen = false;
 }
 
 } // end namespace transport

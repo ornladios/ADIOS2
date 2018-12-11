@@ -22,8 +22,7 @@ class SocketZmqReqRep : public SocketZmq
 {
 
 public:
-    SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout,
-                    const bool debugMode);
+    SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout);
     virtual ~SocketZmqReqRep();
     void Open(const std::string &fullAddress, const Mode openMode) final;
     void Open(const std::string &ipAddress, const std::string &port,
@@ -37,11 +36,14 @@ public:
                size_t start = MaxSizeT) final;
     void Flush() final;
     void Close() final;
+    bool IsOpen();
 
 private:
     void *m_Context = nullptr;
     void *m_Socket = nullptr;
     const int m_Timeout;
+    bool m_IsOpen = false;
+    int m_Verbosity = 0;
 };
 
 } // end namespace transport

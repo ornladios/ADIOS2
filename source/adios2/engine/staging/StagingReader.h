@@ -18,7 +18,6 @@
 
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/transportman/stagingman/StagingMan.h"
-#include "adios2/toolkit/transportman/wanman/WANMan.h"
 
 namespace adios2
 {
@@ -30,17 +29,6 @@ namespace engine
 class StagingReader : public Engine
 {
 public:
-    /**
-     * Constructor for single BP capsule engine, writes in BP format into a
-     * single
-     * heap capsule
-     * @param name unique name given to the engine
-     * @param accessMode
-     * @param mpiComm
-     * @param method
-     * @param debugMode
-     * @param hostLanguage
-     */
     StagingReader(IO &adios, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
@@ -53,19 +41,19 @@ public:
     void EndStep() final;
 
 private:
+    int m_Verbosity = 100;
     format::DataManSerializer m_DataManSerializer;
-    transportman::WANMan m_MetadataTransport;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
+    std::shared_ptr<transportman::StagingMan> m_MetadataTransport;
     std::unordered_map<
         size_t,
         std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>>>
         m_MetaDataMap;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
-    std::string m_WriterMasterIP;
-    std::string m_WriterMasterMetadataPort = "12306";
+    std::string m_FullMetadataAddress = "tcp::/127.0.0.1:12306";
     int m_Timeout = 5;
-    int m_Verbosity = 0;
+    std::shared_ptr<std::thread> m_MetadataReqThread = nullptr;
 
     struct Request
     {
@@ -85,6 +73,7 @@ private:
     template <typename T>
     void CheckIOVariable(const std::string &name, const Dims &shape,
                          const Dims &start, const Dims &count);
+    void MetadataReqThread();
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

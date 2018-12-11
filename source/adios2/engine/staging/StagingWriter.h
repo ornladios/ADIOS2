@@ -11,10 +11,11 @@
 #ifndef ADIOS2_ENGINE_STAGINGWRITER_H_
 #define ADIOS2_ENGINE_STAGINGWRITER_H_
 
+#include <queue>
+
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/transportman/stagingman/StagingMan.h"
-#include "adios2/toolkit/transportman/wanman/WANMan.h"
 
 namespace adios2
 {
@@ -27,14 +28,6 @@ class StagingWriter : public Engine
 {
 
 public:
-    /**
-     * Constructor for Writer
-     * @param name unique name given to the engine
-     * @param accessMode
-     * @param mpiComm
-     * @param method
-     * @param debugMode
-     */
     StagingWriter(IO &adios, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
@@ -49,15 +42,13 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_Verbosity = 5;
+    int m_Verbosity = 100;
     format::DataManSerializer m_DataManSerializer;
-    transportman::WANMan m_MetadataTransport;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     int m_MpiSize;
-    std::string m_IP = "127.0.0.1";
-    std::string m_MetadataPort;
     std::string m_FullDataAddress;
+    std::string m_FullMetadataAddress;
     int m_Timeout = 5;
     bool m_Listening = false;
     int64_t m_MaxBufferSteps = 10;
@@ -66,12 +57,21 @@ private:
     size_t m_DefaultBufferSize = 1024;
     bool m_IsActive = true;
 
+    std::shared_ptr<std::vector<char>> m_LockedAggregatedMetadata;
+    int64_t m_LockedStep;
+    std::queue<int64_t> m_ProtectedSteps;
+    std::mutex m_Mutex;
+
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     void Handshake();
-    void IOThread();
-    std::thread m_IOThread;
+
+    void MetadataRepThread();
+    std::shared_ptr<std::thread> m_MetadataRepThread;
+
+    void DataRepThread();
+    std::shared_ptr<std::thread> m_DataRepThread;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
