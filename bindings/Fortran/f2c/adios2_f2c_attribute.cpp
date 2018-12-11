@@ -10,6 +10,9 @@
 
 #include "adios2_f2c_common.h"
 
+#include "adios2/core/Attribute.h"
+#include <string.h> //strcpy
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -67,12 +70,37 @@ void FC_GLOBAL(adios2_attribute_data_f2c,
                                           const adios2_attribute **attribute,
                                           int *ierr)
 {
-    *size = -1;
-    size_t sizeC;
-    *ierr = static_cast<int>(adios2_attribute_data(data, &sizeC, *attribute));
-    if (*ierr == static_cast<int>(adios2_error_none))
+    try
     {
-        *size = static_cast<int>(sizeC);
+        int type;
+        FC_GLOBAL(adios2_attribute_type_f2c, ADIOS2_ATTRIBUTE_TYPE_F2C)
+        (&type, attribute, ierr);
+
+        if (type == adios2_type_string)
+        {
+            const adios2::core::Attribute<std::string> *attributeCpp =
+                reinterpret_cast<const adios2::core::Attribute<std::string> *>(
+                    *attribute);
+
+            char *dataT = reinterpret_cast<char *>(data);
+
+            for (auto e = 0; e < *size; ++e)
+            {
+                attributeCpp->m_DataArray[e].copy(
+                    &dataT[e * adios2_string_array_element_max_size],
+                    attributeCpp->m_DataArray[e].size());
+            }
+        }
+        else
+        {
+            size_t sizeC;
+            *ierr = static_cast<int>(
+                adios2_attribute_data(data, &sizeC, *attribute));
+        }
+    }
+    catch (...)
+    {
+        *ierr = adios2_error_exception;
     }
 }
 

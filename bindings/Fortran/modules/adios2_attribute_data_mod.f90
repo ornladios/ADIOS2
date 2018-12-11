@@ -24,7 +24,7 @@ module adios2_attribute_data_mod
         module procedure adios2_attribute_data_integer8
 
         ! 1D Array
-        !module procedure adios2_attribute_data_string_1d
+        module procedure adios2_attribute_data_string_1d
         module procedure adios2_attribute_data_real_1d
         module procedure adios2_attribute_data_dp_1d
         module procedure adios2_attribute_data_integer1_1d
@@ -130,6 +130,28 @@ contains
     end subroutine
 
     ! 1D Array
+    subroutine adios2_attribute_data_string_1D(data, attribute, ierr)
+        character*(*), dimension(:), intent(out):: data
+        type(adios2_attribute), intent(in):: attribute
+        integer, intent(out):: ierr
+        ! local
+        integer:: i
+        character(len=adios2_string_array_element_max_size), &
+            dimension(attribute%length):: dataMax
+
+        call adios2_attribute_check_type(attribute, adios2_type_string, &
+                                        'attribute_data', ierr)
+        if (ierr == 0) then
+            call adios2_attribute_data_f2c(dataMax, attribute%length, &
+                                           attribute%f2c, ierr)
+        end if
+
+        do i=1, attribute%length
+            data(i) = trim(dataMax(i))
+        end do
+
+    end subroutine
+
     subroutine adios2_attribute_data_real_1d(data, attribute, ierr)
         real, dimension(:), intent(out):: data
         type(adios2_attribute), intent(in):: attribute
