@@ -198,6 +198,7 @@ int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
     /* Writers send msg to each connected Reader, Writer Root sends different
      * value than others */
     int writeRootToken = (IAmWriterRoot ? 1 : 0);
+    retval = -1;
     for (const auto peerRank : peers)
     {
         if (IAmSender)
