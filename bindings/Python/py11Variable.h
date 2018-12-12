@@ -11,6 +11,8 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
 #define ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
 
+#include "adios2/core/VariableBase.h"
+
 namespace adios2
 {
 namespace py11
@@ -25,6 +27,8 @@ public:
     Variable() = default;
 
     ~Variable() = default;
+
+    explicit operator bool() const noexcept;
 
     void SetShape(const Dims &shape);
 
@@ -88,12 +92,12 @@ public:
      * EXPERIMENTAL: carries information about an Operation added with
      * AddOperation
      */
-    struct Operation
-    {
-        const Operator Op;
-        const Params Parameters;
-        const Params Info;
-    };
+    //    struct Operation
+    //    {
+    //        const Operator Op;
+    //        const Params Parameters;
+    //        const Params Info;
+    //    };
 
     /**
      * EXPERIMENTAL: Adds operation and parameters to current Variable object

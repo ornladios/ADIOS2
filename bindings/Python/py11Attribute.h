@@ -11,6 +11,10 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_ATTRIBUTE_H_
 #define ADIOS2_BINDINGS_PYTHON_ATTRIBUTE_H_
 
+#include <pybind11/numpy.h>
+
+#include "adios2/core/AttributeBase.h"
+
 namespace adios2
 {
 namespace py11
@@ -36,7 +40,7 @@ public:
     pybind11::array Data();
 
 private:
-    Attribute(core::Attribute *attribute);
+    Attribute(core::AttributeBase *attribute);
     core::AttributeBase *m_Attribute = nullptr;
 };
 

@@ -10,12 +10,19 @@
 
 #include "py11Variable.h"
 
+#include "adios2/helper/adiosFunctions.h"
+
 namespace adios2
 {
 namespace py11
 {
 
 Variable::Variable(core::VariableBase *variable) : m_Variable(variable) {}
+
+Variable::operator bool() const noexcept
+{
+    return (m_Variable == nullptr) ? false : true;
+}
 
 void Variable::SetShape(const Dims &shape)
 {

@@ -10,14 +10,19 @@
 
 #include "py11Attribute.h"
 
+#include "adios2/helper/adiosFunctions.h"
+
 namespace adios2
 {
 namespace py11
 {
 
-Attribute::Attribute(core::Attribute *attribute) : m_Attribute(attribute) {}
+Attribute::Attribute(core::AttributeBase *attribute) : m_Attribute(attribute) {}
 
-Attribute::operator bool() const noexcept {}
+Attribute::operator bool() const noexcept
+{
+    return (m_Attribute == nullptr) ? false : true;
+}
 
 std::string Attribute::Name() const
 {

@@ -16,7 +16,7 @@
 #include <memory> //std::shared_ptr
 #include <string>
 
-#include "adios2/core/IO.h"
+#include "adios2/core/Engine.h"
 
 #include "py11Variable.h"
 

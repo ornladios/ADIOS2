@@ -20,9 +20,7 @@ namespace adios2
 namespace py11
 {
 
-IO::IO(core::IO &io, const bool debugMode) : m_IO(&io), m_DebugMode(debugMode)
-{
-}
+IO::IO(core::IO *io, const bool debugMode) : m_IO(io), m_DebugMode(debugMode) {}
 
 IO::operator bool() const noexcept { return (m_IO == nullptr) ? false : true; }
 
@@ -152,9 +150,10 @@ Attribute IO::DefineAttribute(const std::string &name,
     else if (pybind11::isinstance<                                             \
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
-        attribute = &m_IO->DefineAttribute<T>(                                 \
-            name, reinterpret_cast<const T *>(array.data()), array.size(),     \
-            variableName, separator);                                          \
+        const T *data = reinterpret_cast<const T *>(array.data());             \
+        const size_t size = static_cast<size_t>(array.size());                 \
+        attribute = &m_IO->DefineAttribute<T>(name, data, size, variableName,  \
+                                              separator);                      \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type

@@ -106,7 +106,7 @@ public:
     std::string EngineType() const;
 
 private:
-    IO(core::IO &io, const bool debugMode);
+    IO(core::IO *io, const bool debugMode);
     core::IO *m_IO = nullptr;
     const bool m_DebugMode = true;
 };
