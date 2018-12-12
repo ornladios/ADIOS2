@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_BINDINGS_PYTHON_PY11ENGINE_H_
-#define ADIOS2_BINDINGS_PYTHON_PY11ENGINE_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_ENGINE_H_
+#define ADIOS2_BINDINGS_PYTHON_ENGINE_H_
 
 #include <pybind11/numpy.h>
 
@@ -25,13 +25,19 @@ namespace adios2
 namespace py11
 {
 
+// forward declare
+class IO; // friend
+
 class Engine
 {
+    friend class IO;
 
 public:
     Engine() = default;
 
     ~Engine() = default;
+
+    explicit operator bool() const noexcept;
 
     StepStatus BeginStep(const StepMode mode,
                          const float timeoutSeconds = -1.f);
@@ -56,15 +62,13 @@ public:
 
     size_t CurrentStep() const;
 
-    std::string Name() const noexcept;
-    std::string Type() const noexcept;
+    std::string Name() const;
+    std::string Type() const;
 
 private:
-    Engine(IO io, const std::string &name, const Mode openMode,
-           MPI_Comm mpiComm);
-
+    Engine(core::Engine *engine, const bool debugMode);
     core::Engine *m_Engine = nullptr;
-    const bool m_DebugMode;
+    const bool m_DebugMode = true;
 };
 
 } // end namespace py11

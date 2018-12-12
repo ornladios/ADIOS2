@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_BINDINGS_PYTHON_PY11VARIABLE_H_
-#define ADIOS2_BINDINGS_PYTHON_PY11VARIABLE_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
+#define ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
 
 namespace adios2
 {
@@ -18,10 +18,17 @@ namespace py11
 
 class Variable
 {
+    friend class IO;
+    friend class Engine;
+
 public:
     Variable() = default;
 
     ~Variable() = default;
+
+    void SetShape(const Dims &shape);
+
+    void SetBlockSelection(const size_t blockID);
 
     void SetSelection(const Box<Dims> &selection);
 
@@ -75,6 +82,8 @@ public:
      */
     size_t StepsStart() const;
 
+    size_t BlockID() const;
+
     /**
      * EXPERIMENTAL: carries information about an Operation added with
      * AddOperation
@@ -93,13 +102,14 @@ public:
      * be confused by op own parameters
      * @return operation index handler in Operations()
      */
-    size_t AddOperation(const Operator op, const Params &parameters = Params());
+    // size_t AddOperation(const Operator op, const Params &parameters =
+    // Params());
 
     /**
      * EXPERIMENTAL: inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
-    std::vector<Operation> Operations() const;
+    // std::vector<Operation> Operations() const;
 
     /** Contains sub-block information for a particular Variable<T> */
     struct Info
@@ -113,7 +123,9 @@ public:
     };
 
 private:
-    core::VariableBase *m_Variable;
+    Variable(core::VariableBase *variable);
+
+    core::VariableBase *m_Variable = nullptr;
 };
 
 } // end namespace py11

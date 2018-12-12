@@ -20,40 +20,70 @@ namespace adios2
 namespace py11
 {
 
-IO::IO(core::IO &io, const bool debugMode) : m_IO(io), m_DebugMode(debugMode) {}
-
-void IO::SetEngine(const std::string type) noexcept { m_IO.SetEngine(type); }
-
-void IO::SetParameters(const Params &parameters) noexcept
+IO::IO(core::IO &io, const bool debugMode) : m_IO(&io), m_DebugMode(debugMode)
 {
-    m_IO.SetParameters(parameters);
+}
+
+IO::operator bool() const noexcept { return (m_IO == nullptr) ? false : true; }
+
+bool IO::InConfigFile() const
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::InConfigFile");
+    return m_IO->InConfigFile();
+}
+
+void IO::SetEngine(const std::string type) noexcept
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::SetEngine");
+    m_IO->SetEngine(type);
 }
 
 void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
-    m_IO.SetParameter(key, value);
+    helper::CheckForNullptr(m_IO, "in call to IO::SetParameter");
+    m_IO->SetParameter(key, value);
 }
 
-Params IO::Parameters() const noexcept { return m_IO.GetParameters(); }
-
-unsigned int IO::AddTransport(const std::string type, const Params &parameters)
+void IO::SetParameters(const Params &parameters) noexcept
 {
-    return m_IO.AddTransport(type, parameters);
+    helper::CheckForNullptr(m_IO, "in call to IO::SetParameters");
+    m_IO->SetParameters(parameters);
 }
 
-core::VariableBase *IO::DefineVariable(const std::string &name,
-                                       std::string & /*stringValue*/)
+Params IO::Parameters() const noexcept
 {
-    return &m_IO.DefineVariable<std::string>(name, Dims(), Dims(), Dims(),
-                                             false);
+    helper::CheckForNullptr(m_IO, "in call to IO::Parameters");
+    return m_IO->GetParameters();
 }
 
-core::VariableBase *IO::DefineVariable(const std::string &name,
-                                       const Dims &shape, const Dims &start,
-                                       const Dims &count,
-                                       const bool isConstantDims,
-                                       pybind11::array &array)
+size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
+    helper::CheckForNullptr(m_IO, "in call to IO::AddTransport");
+    return m_IO->AddTransport(type, parameters);
+}
+
+void IO::SetTransportParameter(const size_t transportIndex,
+                               const std::string key, const std::string value)
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::SetTransportParameter");
+    m_IO->SetTransportParameter(transportIndex, key, value);
+}
+
+Variable IO::DefineVariable(const std::string &name,
+                            const std::string & /*stringValue*/)
+{
+    helper::CheckForNullptr(m_IO, "for variable " + name +
+                                      ", in call to IO::DefineVariable");
+    return Variable(&m_IO->DefineVariable<std::string>(name));
+}
+
+Variable IO::DefineVariable(const std::string &name,
+                            const pybind11::array &array, const Dims &shape,
+                            const Dims &start, const Dims &count,
+                            const bool isConstantDims)
+{
+    helper::CheckForNullptr(m_IO, "for variable " + name +
+                                      ", in call to IO::DefineVariable");
     core::VariableBase *variable = nullptr;
 
     if (false)
@@ -63,8 +93,8 @@ core::VariableBase *IO::DefineVariable(const std::string &name,
     else if (pybind11::isinstance<                                             \
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
-        variable = &m_IO.DefineVariable<T>(name, shape, start, count,          \
-                                           isConstantDims);                    \
+        variable = &m_IO->DefineVariable<T>(name, shape, start, count,         \
+                                            isConstantDims);                   \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -80,12 +110,15 @@ core::VariableBase *IO::DefineVariable(const std::string &name,
         }
     }
 
-    return variable;
+    return Variable(variable);
 }
 
-core::VariableBase *IO::InquireVariable(const std::string &name) noexcept
+Variable IO::InquireVariable(const std::string &name)
 {
-    const std::string type(m_IO.InquireVariableType(name));
+    helper::CheckForNullptr(m_IO, "for variable " + name +
+                                      ", in call to IO::InquireVariable");
+
+    const std::string type(m_IO->InquireVariableType(name));
     core::VariableBase *variable = nullptr;
 
     if (type == "unknown")
@@ -94,17 +127,22 @@ core::VariableBase *IO::InquireVariable(const std::string &name) noexcept
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        variable = m_IO.InquireVariable<T>(name);                              \
+        variable = m_IO->InquireVariable<T>(name);                             \
     }
     ADIOS2_FOREACH_PYTHON_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-    return variable;
+    return Variable(variable);
 }
 
-core::AttributeBase *IO::DefineAttribute(const std::string &name,
-                                         pybind11::array &array)
+Attribute IO::DefineAttribute(const std::string &name,
+                              const pybind11::array &array,
+                              const std::string &variableName,
+                              const std::string separator)
 {
+    helper::CheckForNullptr(m_IO, "for attribute " + name +
+                                      ", in call to IO::DefineAttribute");
+
     core::AttributeBase *attribute = nullptr;
 
     if (false)
@@ -114,8 +152,9 @@ core::AttributeBase *IO::DefineAttribute(const std::string &name,
     else if (pybind11::isinstance<                                             \
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
-        attribute = &m_IO.DefineAttribute<T>(                                  \
-            name, reinterpret_cast<const T *>(array.data()), array.size());    \
+        attribute = &m_IO->DefineAttribute<T>(                                 \
+            name, reinterpret_cast<const T *>(array.data()), array.size(),     \
+            variableName, separator);                                          \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -131,20 +170,40 @@ core::AttributeBase *IO::DefineAttribute(const std::string &name,
         }
     }
 
-    return attribute;
+    return Attribute(attribute);
 }
 
-core::AttributeBase *
-IO::DefineAttribute(const std::string &name,
-                    const std::vector<std::string> &strings)
+Attribute IO::DefineAttribute(const std::string &name,
+                              const std::string &stringValue,
+                              const std::string &variableName,
+                              const std::string separator)
 {
-    return &m_IO.DefineAttribute(name, strings.data(), strings.size());
+    helper::CheckForNullptr(m_IO, "for attribute " + name +
+                                      ", in call to IO::DefineAttribute");
+
+    return Attribute(&m_IO->DefineAttribute<std::string>(
+        name, stringValue, variableName, separator));
 }
 
-core::AttributeBase *IO::InquireAttribute(const std::string &name) noexcept
+Attribute IO::DefineAttribute(const std::string &name,
+                              const std::vector<std::string> &strings,
+                              const std::string &variableName,
+                              const std::string separator)
 {
-    const std::string type(m_IO.InquireAttributeType(name));
+    helper::CheckForNullptr(m_IO, "for attribute " + name +
+                                      ", in call to IO::DefineAttribute");
+
+    return Attribute(&m_IO->DefineAttribute<std::string>(
+        name, strings.data(), strings.size(), variableName, separator));
+}
+
+Attribute IO::InquireAttribute(const std::string &name)
+{
+    helper::CheckForNullptr(m_IO, "for attribute " + name +
+                                      ", in call to IO::InquireAttribute");
+
     core::AttributeBase *attribute = nullptr;
+    const std::string type(m_IO->InquireAttributeType(name));
 
     if (type == "unknown")
     {
@@ -152,35 +211,99 @@ core::AttributeBase *IO::InquireAttribute(const std::string &name) noexcept
 #define declare_template_instantiation(T)                                      \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        attribute = m_IO.InquireAttribute<T>(name);                            \
+        attribute = m_IO->InquireAttribute<T>(name);                           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-    return attribute;
+    return Attribute(attribute);
 }
 
-Engine IO::Open(const std::string &name, const int openMode)
+bool IO::RemoveVariable(const std::string &name)
 {
-    return Engine(m_IO, name, static_cast<adios2::Mode>(openMode),
-                  m_IO.m_MPIComm);
+    helper::CheckForNullptr(m_IO, "for variable " + name +
+                                      ", in call to IO::RemoveVariable");
+    return m_IO->RemoveVariable(name);
 }
 
-void IO::FlushAll() { m_IO.FlushAll(); }
-
-std::map<std::string, Params> IO::AvailableVariables() noexcept
+void IO::RemoveAllVariables()
 {
-    return m_IO.GetAvailableVariables();
+    helper::CheckForNullptr(m_IO, ", in call to IO::RemoveAllVariables");
+    m_IO->RemoveAllVariables();
 }
 
-std::map<std::string, Params> IO::AvailableAttributes() noexcept
+bool IO::RemoveAttribute(const std::string &name)
 {
-    return m_IO.GetAvailableAttributes();
+    helper::CheckForNullptr(m_IO, "for variable " + name +
+                                      ", in call to IO::RemoveAttribute");
+    return m_IO->RemoveAttribute(name);
 }
 
-void IO::LockDefinitions() noexcept { return m_IO.LockDefinitions(); }
+void IO::RemoveAllAttributes()
+{
+    helper::CheckForNullptr(m_IO, ", in call to IO::RemoveAllAttributes");
+    m_IO->RemoveAllAttributes();
+}
 
-std::string IO::EngineType() const noexcept { return m_IO.m_EngineType; }
+Engine IO::Open(const std::string &name, const int mode)
+{
+    helper::CheckForNullptr(m_IO,
+                            "for engine " + name + ", in call to IO::Open");
+    return Engine(m_IO, name, static_cast<adios2::Mode>(mode));
+}
+
+#ifdef ADIOS2_HAVE_MPI
+Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
+{
+    helper::CheckForNullptr(m_IO,
+                            "for engine " + name + ", in call to IO::Open");
+    return Engine(m_IO, name, static_cast<adios2::Mode>(mode), m_IO->m_MPIComm);
+}
+#endif
+
+void IO::FlushAll()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::FlushAll");
+    m_IO->FlushAll();
+}
+
+std::map<std::string, Params> IO::AvailableVariables()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::AvailableVariables");
+    return m_IO->GetAvailableVariables();
+}
+
+std::map<std::string, Params> IO::AvailableAttributes()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::AvailableAttributes");
+    return m_IO->GetAvailableAttributes();
+}
+
+void IO::LockDefinitions()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::LockDefinitions");
+    m_IO->LockDefinitions();
+}
+
+std::string IO::VariableType(const std::string &name) const
+{
+    helper::CheckForNullptr(m_IO, "for variable " + name +
+                                      " in call to IO::VariableType");
+    return m_IO->InquireVariableType(name);
+}
+
+std::string IO::AttributeType(const std::string &name) const
+{
+    helper::CheckForNullptr(m_IO, "for attribute " + name +
+                                      " in call to IO::AttributeType");
+    return m_IO->InquireAttributeType(name);
+}
+
+std::string IO::EngineType() const
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::EngineType");
+    return m_IO->m_EngineType;
+}
 
 } // end namespace py11
 } // end namespace adios2

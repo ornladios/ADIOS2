@@ -17,6 +17,7 @@ namespace adios2
 namespace py11
 {
 
+#ifdef ADIOS2_HAVE_MPI
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode)
 : m_DebugMode(debugMode), m_ADIOS(std::make_shared<adios2::core::ADIOS>(
@@ -28,13 +29,16 @@ ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode)
 : ADIOS("", mpiComm, debugMode)
 {
 }
-
+#else
 ADIOS::ADIOS(const std::string configFile, const bool debugMode)
-: ADIOS(configFile, MPI_COMM_SELF, debugMode)
+: ADIOS(configFile, debugMode)
 {
 }
 
-ADIOS::ADIOS(const bool debugMode) : ADIOS("", MPI_COMM_SELF, debugMode) {}
+ADIOS::ADIOS(const bool debugMode) : ADIOS("", debugMode) {}
+#endif
+
+ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
 IO ADIOS::DeclareIO(const std::string name)
 {

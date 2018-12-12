@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPY_H_
-#define ADIOS2_BINDINGS_PYTHON_SOURCE_ADIOSPY_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_ADIOS_H_
+#define ADIOS2_BINDINGS_PYTHON_ADIOS_H_
 
 #include "py11IO.h"
 
@@ -28,12 +28,17 @@ class ADIOS
 {
 
 public:
+#ifdef ADIOS2_HAVE_MPI
     ADIOS(const std::string configFile, MPI_Comm mpiComm, const bool debugMode);
     ADIOS(MPI_Comm mpiComm, const bool debugMode);
+#else
     ADIOS(const std::string configFile, const bool debugMode);
     ADIOS(const bool debugMode);
-
+#endif
     ~ADIOS() = default;
+
+    /** object inspection true: valid object, false: invalid object */
+    explicit operator bool() const noexcept;
 
     IO DeclareIO(const std::string name);
     IO AtIO(const std::string name);
@@ -48,4 +53,4 @@ private:
 } // end namespace py11
 } // end namespace adios2
 
-#endif /* BINDINGS_PYTHON_SOURCE_ADIOSPY_H_ */
+#endif /* ADIOS2_BINDINGS_PYTHON_ADIOS_H_ */
