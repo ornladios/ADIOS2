@@ -361,6 +361,7 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
                 characteristics.Statistics.Value =
                     helper::ReadValue<T>(buffer, position, isLittleEndian);
                 characteristics.Statistics.IsValue = true;
+                characteristics.EntryShapeID = ShapeID::GlobalValue;
                 // adding Min Max for global and local values
                 characteristics.Statistics.Min =
                     characteristics.Statistics.Value;

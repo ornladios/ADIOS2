@@ -195,9 +195,10 @@ BP3Base::GetBPSubStreamNames(const std::vector<std::string> &names) const
 }
 
 std::string BP3Base::GetBPSubFileName(const std::string &name,
-                                      const size_t subFileIndex) const noexcept
+                                      const size_t subFileIndex,
+                                      const bool hasSubFiles) const noexcept
 {
-    return GetBPSubStreamName(name, subFileIndex);
+    return GetBPSubStreamName(name, subFileIndex, hasSubFiles);
 }
 
 size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
@@ -832,8 +833,14 @@ BP3Base::SetBP3Operation(const std::string type) const noexcept
 
 // PRIVATE
 std::string BP3Base::GetBPSubStreamName(const std::string &name,
-                                        const size_t rank) const noexcept
+                                        const size_t rank,
+                                        const bool hasSubFiles) const noexcept
 {
+    if (!hasSubFiles)
+    {
+        return name;
+    }
+
     const std::string bpName = helper::AddExtension(name, ".bp");
 
     // path/root.bp.dir/root.bp.Index
