@@ -71,21 +71,26 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     {
         if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
         {
-            throw std::runtime_error("ERROR: reader found BigEndian bp file, "
-                                     "this version of ADIOS2 wasn't compiled "
-                                     "with -DADIOS2_USE_ENDIAN_REVERSE=ON "
-                                     "explicitly, in call to Open\n");
+            throw std::runtime_error(
+                "ERROR: reader found BigEndian bp file, "
+                "this version of ADIOS2 wasn't compiled "
+                "with the cmake flag -DADIOS2_USE_ENDIAN_REVERSE=ON "
+                "explicitly, in call to Open\n");
         }
     }
 #endif
 
     position += 1;
 
-    const uint8_t subFilesIndex = helper::ReadValue<uint8_t>(
+    const int8_t fileType = helper::ReadValue<int8_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
-    if (subFilesIndex > 0)
+    if (fileType == 3)
     {
         m_Minifooter.HasSubFiles = true;
+    }
+    else if (fileType == 0 || fileType == 2)
+    {
+        m_Minifooter.HasSubFiles = false;
     }
 
     m_Minifooter.Version = helper::ReadValue<uint8_t>(
