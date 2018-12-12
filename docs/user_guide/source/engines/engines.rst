@@ -18,6 +18,7 @@ Parameters are passed at:
 
 .. include:: bp3.rst
 .. include:: hdf5.rst
+.. include:: insitu_mpi.rst
 .. include:: dataman.rst
 .. include:: sst.rst
 

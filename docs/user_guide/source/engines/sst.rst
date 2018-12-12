@@ -5,8 +5,8 @@ SST Sustainable Staging Transport
 In ADIOS2, the Sustainable Staging Transport (SST) is an engine that allows
 direct connection of data producers and consumers via the ADIOS2 write/read
 APIs.  This is a classic streaming data architecture where the data passed
-to ADIOS on the write side (via PutDeferred(), PutSync() and similar calls)
-is made directly available to a reader (via GetDeferred(), GetSync() and
+to ADIOS on the write side (via Put() deferred and sync, and similar calls)
+is made directly available to a reader (via Get(), deferred and sync, and
 similar calls).
 
 SST is designed for use in HPC environments and can take advantage of RDMA
@@ -47,23 +47,23 @@ of communication and represent the data that will be available between the
 corresponding Begin/EndStep calls on the reader.
 
 Also, it is recommended that SST-based applications not use the ADIOS2
-GetSync() method unless there is only one data item to be read per step.
+Get() sync method unless there is only one data item to be read per step.
 This is because SST implements MxN data transfer (and avoids having to
 deliver all data to every reader), by queueing data on the writer ranks
 until it is known which reader rank requires it.  Normally this data fetch
 stage is initiated by PerformGets() or EndStep(), both of which fulfill any
-pending GetDeferred() operations.  However, unlike GetDeferred(), the
-semantics GetSync() require the requested data to be fetched from the
+pending Get() deferred operations.  However, unlike Get() deferred, the
+semantics of Get() sync require the requested data to be fetched from the
 writers before the call can return.   If there are multiple calls to
-GetSync() per step, each one may require a communication with many writers,
-something that would have only had to happen once if GetDeferred() were used
-instead.  Thus the use of GetSync() is likely to incur a substantial
+Get() sync per step, each one may require a communication with many writers,
+something that would have only had to happen once if Get() differed were used
+instead.  Thus the use of Get() sync is likely to incur a substantial
 performance penalty.
 
 On the writer side, depending upon the chosen data marshaling option there
-may be some (relatively small) performance differences between PutSync() and
-PutDeferred(), but they are unlikely to be as substantial as between
-GetSync() and GetDeferred().
+may be some (relatively small) performance differences between Put() sync and
+Put() deferred, but they are unlikely to be as substantial as between
+Get() sync and Get() deferred.
 
 Note that SST readers and writers do not necessarily move in lockstep, but
 depending upon the queue length parameters and queueing policies specified,

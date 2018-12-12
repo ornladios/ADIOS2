@@ -38,7 +38,7 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 3. **CollectiveMetadata**: turns ON/OFF forming collective metadata during run (used by large scale HPC applications)
 
-4. **Threads**: number of threads provided from the application for buffering, use this for very large variables
+4. **Threads**: number of threads provided from the application for buffering, use this for very large variables in data size
 
 5. **InitialBufferSize**: initial memory provided for buffering (minimum is 16Kb)
 
