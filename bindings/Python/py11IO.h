@@ -16,6 +16,7 @@
 #include <string>
 
 #include "py11Engine.h"
+#include "py11Variable.h"
 
 namespace adios2
 {
@@ -39,16 +40,13 @@ public:
 
     Params Parameters() const noexcept;
 
-    core::VariableBase *DefineVariable(const std::string &name,
-                                       std::string &stringValue);
+    Variable *DefineVariable(const std::string &name, std::string &stringValue);
 
-    core::VariableBase *DefineVariable(const std::string &name,
-                                       const Dims &shape, const Dims &start,
-                                       const Dims &count,
-                                       const bool isConstantDims,
-                                       pybind11::array &array);
+    Variable *DefineVariable(const std::string &name, const Dims &shape,
+                             const Dims &start, const Dims &count,
+                             const bool isConstantDims, pybind11::array &array);
 
-    core::VariableBase *InquireVariable(const std::string &name) noexcept;
+    Variable *InquireVariable(const std::string &name) noexcept;
 
     core::AttributeBase *DefineAttribute(const std::string &name,
                                          pybind11::array &array);

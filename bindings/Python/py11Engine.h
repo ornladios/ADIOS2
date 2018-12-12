@@ -17,7 +17,8 @@
 #include <string>
 
 #include "adios2/core/IO.h"
-#include "adios2/core/Variable.h"
+
+#include "py11Variable.h"
 
 namespace adios2
 {
@@ -28,22 +29,22 @@ class Engine
 {
 
 public:
-    Engine(core::IO &io, const std::string &name, const Mode openMode,
-           MPI_Comm mpiComm);
+    Engine() = default;
 
     ~Engine() = default;
 
     StepStatus BeginStep(const StepMode mode,
                          const float timeoutSeconds = -1.f);
+    StepStatus BeginStep();
 
-    void Put(core::VariableBase *variable, const pybind11::array &array,
+    void Put(Variable variable, const pybind11::array &array,
              const Mode launch = Mode::Deferred);
-    void Put(core::VariableBase *variable, const std::string &string);
+    void Put(Variable variable, const std::string &string);
     void PerformPuts();
 
-    void Get(core::VariableBase *variable, pybind11::array &array,
+    void Get(Variable variable, pybind11::array &array,
              const Mode launch = Mode::Deferred);
-    void Get(core::VariableBase *variable, std::string &string,
+    void Get(Variable variable, std::string &string,
              const Mode launch = Mode::Deferred);
     void PerformGets();
 
@@ -59,7 +60,10 @@ public:
     std::string Type() const noexcept;
 
 private:
-    core::Engine &m_Engine;
+    Engine(IO io, const std::string &name, const Mode openMode,
+           MPI_Comm mpiComm);
+
+    core::Engine *m_Engine = nullptr;
     const bool m_DebugMode;
 };
 
