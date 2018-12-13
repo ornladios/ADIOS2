@@ -39,6 +39,8 @@ public:
 
     pybind11::array Data();
 
+    std::vector<std::string> DataStrings();
+
 private:
     Attribute(core::AttributeBase *attribute);
     core::AttributeBase *m_Attribute = nullptr;

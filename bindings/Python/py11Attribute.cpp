@@ -39,6 +39,37 @@ std::string Attribute::Type() const
     return m_Attribute->m_Type;
 }
 
+std::vector<std::string> Attribute::DataStrings()
+{
+    helper::CheckForNullptr(m_Attribute, "in call to Attribute::DataStrings");
+    const std::string type = m_Attribute->m_Type;
+
+    std::vector<std::string> data;
+
+    if (type == "string")
+    {
+        const core::Attribute<std::string> *attribute =
+            dynamic_cast<core::Attribute<std::string> *>(m_Attribute);
+
+        data.reserve(attribute->m_Elements);
+        if (attribute->m_IsSingleValue)
+        {
+            data.push_back(attribute->m_DataSingleValue);
+        }
+        else
+        {
+            data = attribute->m_Elements;
+        }
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: data type for attribute " + m_Attribute->m_Name +
+            " is not string, in call to Attribute::DataStrings\n");
+    }
+    return data;
+}
+
 pybind11::array Attribute::Data()
 {
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::Data");
