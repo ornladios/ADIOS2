@@ -42,31 +42,31 @@ data = SmallTestData()
 
 # ADIOS Variable name, shape, start, offset, constant dims
 # All local variables
-varStr = ioWriter.DefineVariable("varStr", data.Str)
+varStr = ioWriter.DefineVariable("varStr")
 
 varI8 = ioWriter.DefineVariable(
-    "varI8", shape, start, count, adios2.ConstantDims, data.I8)
+    "varI8", data.I8, shape, start, count, adios2.ConstantDims)
 varI16 = ioWriter.DefineVariable(
-    "varI16", shape, start, count, adios2.ConstantDims, data.I16)
+    "varI16", data.I16, shape, start, count, adios2.ConstantDims)
 varI32 = ioWriter.DefineVariable(
-    "varI32", shape, start, count, adios2.ConstantDims, data.I32)
+    "varI32", data.I32, shape, start, count, adios2.ConstantDims)
 varI64 = ioWriter.DefineVariable(
-    "varI64", shape, start, count, adios2.ConstantDims, data.I64)
+    "varI64", data.I64, shape, start, count, adios2.ConstantDims)
 
 varU8 = ioWriter.DefineVariable(
-    "varU8", shape, start, count, adios2.ConstantDims, data.U8)
+    "varU8", data.U8, shape, start, count, adios2.ConstantDims)
 varU16 = ioWriter.DefineVariable(
-    "varU16", shape, start, count, adios2.ConstantDims, data.U16)
+    "varU16", data.U16, shape, start, count, adios2.ConstantDims)
 varU32 = ioWriter.DefineVariable(
-    "varU32", shape, start, count, adios2.ConstantDims, data.U32)
+    "varU32", data.U32, shape, start, count, adios2.ConstantDims)
 varU64 = ioWriter.DefineVariable(
-    "varU64", shape, start, count, adios2.ConstantDims, data.U64)
+    "varU64", data.U64, shape, start, count, adios2.ConstantDims)
 
 varR32 = ioWriter.DefineVariable(
-    "varR32", shape, start, count, adios2.ConstantDims, data.R32)
+    "varR32", data.R32, shape, start, count, adios2.ConstantDims)
 
 varR64 = ioWriter.DefineVariable(
-    "varR64", shape, start, count, adios2.ConstantDims, data.R64)
+    "varR64", data.R64, shape, start, count, adios2.ConstantDims)
 
 attString = ioWriter.DefineAttribute("attrString", ["hello attribute"])
 attI8 = ioWriter.DefineAttribute("attrI8", data.I8)

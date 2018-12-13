@@ -20,7 +20,7 @@ namespace adios2
 namespace py11
 {
 
-IO::IO(core::IO *io, const bool debugMode) : m_IO(io), m_DebugMode(debugMode) {}
+IO::IO(core::IO *io) : m_IO(io) {}
 
 IO::operator bool() const noexcept { return (m_IO == nullptr) ? false : true; }
 
@@ -30,25 +30,25 @@ bool IO::InConfigFile() const
     return m_IO->InConfigFile();
 }
 
-void IO::SetEngine(const std::string type) noexcept
+void IO::SetEngine(const std::string type)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::SetEngine");
     m_IO->SetEngine(type);
 }
 
-void IO::SetParameter(const std::string key, const std::string value) noexcept
+void IO::SetParameter(const std::string key, const std::string value)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::SetParameter");
     m_IO->SetParameter(key, value);
 }
 
-void IO::SetParameters(const Params &parameters) noexcept
+void IO::SetParameters(const Params &parameters)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::SetParameters");
     m_IO->SetParameters(parameters);
 }
 
-Params IO::Parameters() const noexcept
+Params IO::Parameters() const
 {
     helper::CheckForNullptr(m_IO, "in call to IO::Parameters");
     return m_IO->GetParameters();
@@ -67,8 +67,7 @@ void IO::SetTransportParameter(const size_t transportIndex,
     m_IO->SetTransportParameter(transportIndex, key, value);
 }
 
-Variable IO::DefineVariable(const std::string &name,
-                            const std::string & /*stringValue*/)
+Variable IO::DefineVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable " + name +
                                       ", in call to IO::DefineVariable");
@@ -98,14 +97,10 @@ Variable IO::DefineVariable(const std::string &name,
 #undef declare_type
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: variable " + name +
-                " can't be defined, either type is not "
-                "supported or is not memory "
-                "contiguous, in call to DefineVariable\n");
-        }
+        throw std::invalid_argument("ERROR: variable " + name +
+                                    " can't be defined, either type is not "
+                                    "supported or is not memory "
+                                    "contiguous, in call to DefineVariable\n");
     }
 
     return Variable(variable);
@@ -159,14 +154,10 @@ Attribute IO::DefineAttribute(const std::string &name,
 #undef declare_type
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: attribute " + name +
-                " can't be defined, either type is not "
-                "supported or is not memory "
-                "contiguous, in call to DefineAttribute\n");
-        }
+        throw std::invalid_argument("ERROR: attribute " + name +
+                                    " can't be defined, either type is not "
+                                    "supported or is not memory "
+                                    "contiguous, in call to DefineAttribute\n");
     }
 
     return Attribute(attribute);
@@ -248,7 +239,7 @@ Engine IO::Open(const std::string &name, const int mode)
 {
     helper::CheckForNullptr(m_IO,
                             "for engine " + name + ", in call to IO::Open");
-    return Engine(m_IO, name, static_cast<adios2::Mode>(mode));
+    return Engine(&m_IO->Open(name, static_cast<adios2::Mode>(mode)));
 }
 
 #ifdef ADIOS2_HAVE_MPI
@@ -256,7 +247,8 @@ Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
 {
     helper::CheckForNullptr(m_IO,
                             "for engine " + name + ", in call to IO::Open");
-    return Engine(m_IO, name, static_cast<adios2::Mode>(mode), m_IO->m_MPIComm);
+    return Engine(
+        &m_IO->Open(name, static_cast<adios2::Mode>(mode), m_IO->m_MPIComm));
 }
 #endif
 

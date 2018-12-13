@@ -50,8 +50,7 @@ public:
     void SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value);
 
-    Variable DefineVariable(const std::string &name,
-                            const std::string &stringValue);
+    Variable DefineVariable(const std::string &name);
 
     Variable DefineVariable(const std::string &name,
                             const pybind11::array &array, const Dims &shape,
@@ -106,9 +105,8 @@ public:
     std::string EngineType() const;
 
 private:
-    IO(core::IO *io, const bool debugMode);
+    IO(core::IO *io);
     core::IO *m_IO = nullptr;
-    const bool m_DebugMode = true;
 };
 
 } // end namespace py11

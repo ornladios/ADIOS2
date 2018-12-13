@@ -11,6 +11,10 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
 #define ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
 
+#include "py11Operator.h"
+
+#include <pybind11/numpy.h>
+
 #include "adios2/core/VariableBase.h"
 
 namespace adios2
@@ -92,12 +96,12 @@ public:
      * EXPERIMENTAL: carries information about an Operation added with
      * AddOperation
      */
-    //    struct Operation
-    //    {
-    //        const Operator Op;
-    //        const Params Parameters;
-    //        const Params Info;
-    //    };
+    struct Operation
+    {
+        const Operator Op;
+        const Params Parameters;
+        const Params Info;
+    };
 
     /**
      * EXPERIMENTAL: Adds operation and parameters to current Variable object
@@ -106,14 +110,13 @@ public:
      * be confused by op own parameters
      * @return operation index handler in Operations()
      */
-    // size_t AddOperation(const Operator op, const Params &parameters =
-    // Params());
+    size_t AddOperation(const Operator op, const Params &parameters = Params());
 
     /**
      * EXPERIMENTAL: inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
-    // std::vector<Operation> Operations() const;
+    std::vector<Operation> Operations() const;
 
     /** Contains sub-block information for a particular Variable<T> */
     struct Info

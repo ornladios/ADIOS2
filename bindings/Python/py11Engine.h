@@ -13,7 +13,6 @@
 
 #include <pybind11/numpy.h>
 
-#include <memory> //std::shared_ptr
 #include <string>
 
 #include "adios2/core/Engine.h"
@@ -66,9 +65,8 @@ public:
     std::string Type() const;
 
 private:
-    Engine(core::Engine *engine, const bool debugMode);
+    Engine(core::Engine *engine);
     core::Engine *m_Engine = nullptr;
-    const bool m_DebugMode = true;
 };
 
 } // end namespace py11

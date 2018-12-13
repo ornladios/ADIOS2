@@ -56,6 +56,26 @@ size_t Variable::SelectionSize() const
     return m_Variable->SelectionSize();
 }
 
+size_t Variable::AddOperation(const Operator op, const Params &parameters)
+{
+    helper::CheckForNullptr(m_Variable, "in call to Variable::AddOperation");
+    return m_Variable->AddOperation(*op.m_Operator, parameters);
+}
+
+std::vector<Variable::Operation> Variable::Operations() const
+{
+    helper::CheckForNullptr(m_Variable, "in call to Variable::Operations");
+    std::vector<Variable::Operation> operations;
+    operations.reserve(m_Variable->m_Operations.size());
+
+    for (const auto &op : m_Variable->m_Operations)
+    {
+        operations.push_back(
+            Operation{Operator(op.Op), op.Parameters, op.Info});
+    }
+    return operations;
+}
+
 std::string Variable::Name() const
 {
     helper::CheckForNullptr(m_Variable, "in call to Variable::Name");

@@ -18,10 +18,10 @@ namespace py11
 {
 
 #ifdef ADIOS2_HAVE_MPI
-ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
+ADIOS::ADIOS(const std::string &configFile, MPI_Comm mpiComm,
              const bool debugMode)
-: m_DebugMode(debugMode), m_ADIOS(std::make_shared<adios2::core::ADIOS>(
-                              configFile, mpiComm, debugMode, "Python"))
+: m_ADIOS(std::make_shared<adios2::core::ADIOS>(configFile, mpiComm, debugMode,
+                                                "Python"))
 {
 }
 
@@ -30,8 +30,9 @@ ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 #else
-ADIOS::ADIOS(const std::string configFile, const bool debugMode)
-: ADIOS(configFile, debugMode)
+ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
+: m_ADIOS(
+      std::make_shared<adios2::core::ADIOS>(configFile, debugMode, "Python"))
 {
 }
 
@@ -42,15 +43,47 @@ ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
 IO ADIOS::DeclareIO(const std::string name)
 {
-    return IO(m_ADIOS->DeclareIO(name), m_DebugMode);
+    CheckPointer("for io name " + name + ", in call to ADIOS::DeclareIO");
+    return IO(&m_ADIOS->DeclareIO(name));
 }
 
 IO ADIOS::AtIO(const std::string name)
 {
-    return IO(m_ADIOS->AtIO(name), m_DebugMode);
+    CheckPointer("for io name " + name + ", in call to ADIOS::AtIO");
+    return IO(&m_ADIOS->AtIO(name));
 }
 
-void ADIOS::FlushAll() { m_ADIOS->FlushAll(); }
+Operator ADIOS::DefineOperator(const std::string name, const std::string type,
+                               const Params &parameters)
+{
+    CheckPointer("for operator name " + name +
+                 ", in call to ADIOS::DefineOperator");
+    return Operator(&m_ADIOS->DefineOperator(name, type, parameters));
+}
+
+Operator ADIOS::InquireOperator(const std::string name)
+{
+    CheckPointer("for operator name " + name + ", in call to InquireOperator");
+    return Operator(m_ADIOS->InquireOperator(name));
+}
+
+void ADIOS::FlushAll()
+{
+    CheckPointer("in call to ADIOS::FlushAll");
+    m_ADIOS->FlushAll();
+}
+
+// PRIVATE
+void ADIOS::CheckPointer(const std::string hint)
+{
+    if (!m_ADIOS)
+    {
+        throw std::invalid_argument("ERROR: invalid ADIOS object, did you call "
+                                    "any of the ADIOS explicit "
+                                    "constructors?, " +
+                                    hint + "\n");
+    }
+}
 
 } // end namespace py11
 } // end namespace adios2

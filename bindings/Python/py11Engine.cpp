@@ -21,10 +21,7 @@ namespace adios2
 namespace py11
 {
 
-Engine::Engine(core::Engine *engine, const bool debugMode)
-: m_Engine(engine), m_DebugMode(debugMode)
-{
-}
+Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
 Engine::operator bool() const noexcept
 {
@@ -71,14 +68,10 @@ void Engine::Put(Variable variable, const pybind11::array &array,
 #undef declare_type
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument("ERROR: for variable " +
-                                        variable.Name() +
-                                        " numpy array type is not supported or "
-                                        "is not memory contiguous "
-                                        ", in call to Put\n");
-        }
+        throw std::invalid_argument("ERROR: for variable " + variable.Name() +
+                                    " numpy array type is not supported or "
+                                    "is not memory contiguous "
+                                    ", in call to Put\n");
     }
 }
 
@@ -96,8 +89,9 @@ void Engine::Put(Variable variable, const std::string &string)
             " is not of string type, in call to Engine::Put");
     }
 
-    m_Engine->Put(*dynamic_cast<core::Variable<std::string> *>(variable),
-                  string);
+    m_Engine->Put(
+        *dynamic_cast<core::Variable<std::string> *>(variable.m_Variable),
+        string);
 }
 
 void Engine::PerformPuts()
@@ -132,15 +126,12 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
 #undef declare_type
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: in variable " + variable.Name() + " of type " +
-                variable.Type() +
-                ", numpy array type is 1) not supported, 2) a type mismatch or"
-                "3) is not memory contiguous "
-                ", in call to Get\n");
-        }
+        throw std::invalid_argument(
+            "ERROR: in variable " + variable.Name() + " of type " +
+            variable.Type() +
+            ", numpy array type is 1) not supported, 2) a type mismatch or"
+            "3) is not memory contiguous "
+            ", in call to Get\n");
     }
 }
 
@@ -162,12 +153,9 @@ void Engine::Get(Variable variable, std::string &string, const Mode launch)
     }
     else
     {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: variable " + variable.Name() + " of type " +
-                variable.Type() + " is not string, in call to Engine::Get");
-        }
+        throw std::invalid_argument("ERROR: variable " + variable.Name() +
+                                    " of type " + variable.Type() +
+                                    " is not string, in call to Engine::Get");
     }
 }
 

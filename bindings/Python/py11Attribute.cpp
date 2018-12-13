@@ -9,6 +9,9 @@
  */
 
 #include "py11Attribute.h"
+#include "py11types.h"
+
+#include <string.h> //std::memcpy
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -39,8 +42,36 @@ std::string Attribute::Type() const
 pybind11::array Attribute::Data()
 {
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::Data");
-    // TODO
-    return m_Attribute->m_Name;
+    const std::string type = m_Attribute->m_Type;
+
+    if (type == "compound")
+    {
+        // not supported
+    }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        pybind11::array pyArray(pybind11::dtype::of<T>(),                      \
+                                m_Attribute->m_Elements);                      \
+        if (m_Attribute->m_IsSingleValue)                                      \
+        {                                                                      \
+            const T value = dynamic_cast<core::Attribute<T> *>(m_Attribute)    \
+                                ->m_DataSingleValue;                           \
+            std::memcpy(const_cast<void *>(pyArray.data()), &value,            \
+                        sizeof(T));                                            \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            const std::vector<T> &values =                                     \
+                dynamic_cast<core::Attribute<T> *>(m_Attribute)->m_DataArray;  \
+            std::memcpy(const_cast<void *>(pyArray.data()), values.data(),     \
+                        sizeof(T) * m_Attribute->m_Elements);                  \
+        }                                                                      \
+        return pyArray;                                                        \
+    }
+    ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    return pybind11::array();
 }
 
 } // end namespace py11

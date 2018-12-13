@@ -31,14 +31,14 @@ public:
     File(const std::string &name, const std::string mode, MPI_Comm comm,
          const std::string engineType = "BPFile");
 
+    File(const std::string &name, const std::string mode, MPI_Comm comm,
+         const std::string &configFile, const std::string ioInConfigFile);
+
     File(const std::string &name, const std::string mode,
          const std::string engineType = "BPFile");
 
-    File(const std::string &name, const std::string mode, MPI_Comm comm,
-         const std::string configFile, const std::string ioInConfigFile);
-
     File(const std::string &name, const std::string mode,
-         const std::string configFile, const std::string ioInConfigFile);
+         const std::string &configFile, const std::string ioInConfigFile);
 
     ~File() = default;
 
