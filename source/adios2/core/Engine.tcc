@@ -136,11 +136,11 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 
 // Get
 template <class T>
-void Engine::GetBlock(Variable<T> &variable, T **data, const Mode launch)
+void Engine::Get(Variable<T> &variable, const Mode launch)
 {
     if (m_DebugMode)
     {
-        CommonChecks(variable, data ? *data : nullptr, {{Mode::Read}}, "in call to GetBlock");
+        // CommonChecks<T>(variable, nullptr, {{Mode::Read}}, "in call to Get");
     }
 
     switch (launch)
@@ -149,7 +149,7 @@ void Engine::GetBlock(Variable<T> &variable, T **data, const Mode launch)
         // DoGetBlockDeferred(variable, data);
         break;
     case Mode::Sync:
-        DoGetBlockSync(variable, data);
+        DoGetBlockSync(variable);
         break;
     default:
         if (m_DebugMode)
@@ -163,9 +163,9 @@ void Engine::GetBlock(Variable<T> &variable, T **data, const Mode launch)
 }
 
 template <class T>
-void Engine::GetBlock(const std::string &variableName, T **data, const Mode launch)
+void Engine::Get(const std::string &variableName, const Mode launch)
 {
-    GetBlock(FindVariable<T>(variableName, "in call to Get"), data, launch);
+    Get(FindVariable<T>(variableName, "in call to Get"), launch);
 }
 
 template <class T>

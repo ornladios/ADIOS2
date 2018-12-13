@@ -20,7 +20,7 @@
 #include <adios2.h>
 
 
-void DoAnalysis(adios2::IO& bpIO, adios2::Engine& bpReader, int rank, unsigned int step)
+void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, unsigned int step)
 {
     // Application variable
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -28,49 +28,48 @@ void DoAnalysis(adios2::IO& bpIO, adios2::Engine& bpReader, int rank, unsigned i
 
     try
     {
-        bpReader.BeginStep();
+        inlineReader.BeginStep();
         /////////////////////READ
-        adios2::Variable<float> bpFloats000 =
-            bpIO.InquireVariable<float>("bpFloats000");
+        adios2::Variable<float> inlineFloats000 =
+            inlineIO.InquireVariable<float>("inlineFloats000");
 
-        adios2::Variable<std::string> bpString =
-            bpIO.InquireVariable<std::string>("bpString");
+        adios2::Variable<std::string> inlineString =
+            inlineIO.InquireVariable<std::string>("inlineString");
 
-        if (bpFloats000)
+        if (inlineFloats000)
         {
-            bpFloats000.SetSelection({{rank * Nx}, {Nx}});
-            // bpFloats000.SetStepSelection({step, 1});
+            inlineFloats000.SetBlockSelection(rank);
 
-            std::vector<float> data(bpFloats000.SelectionSize());
-            float *vectData = data.data();
-            float **blockData = &(vectData);
+            inlineReader.Get<float>(inlineFloats000, adios2::Mode::Sync);
+            auto blocksInfo = inlineReader.BlocksInfo(inlineFloats000, step);
 
-            bpReader.GetBlock<float>(bpFloats000, blockData, adios2::Mode::Sync);
-
-            std::cout << "Data timestep " << bpFloats000.StepsStart()
+            std::cout << "Data timestep " << inlineFloats000.StepsStart()
                       << " from rank " << rank << ": ";
-            // for (const auto datum : data)
-            for(int i = 0; i < bpFloats000.SelectionSize(); ++i)
-            {
-                float datum = (*blockData)[i];
-                std::cout << datum << " ";
+            for (const auto info : blocksInfo) {
+                adios2::Dims count = info.Count;
+                const float * vectData = info.Data.Ptr();
+                for(int i = 0; i < count[0]; ++i)
+                {
+                    float datum = vectData[i];
+                    std::cout << datum << " ";
+                }
+                std::cout << "\n";
             }
-            std::cout << "\n";
         }
         else
         {
-            std::cout << "Variable bpFloats000 not found\n";
+            std::cout << "Variable inlineFloats000 not found\n";
         }
 
-        if (bpString)
+        if (inlineString)
         {
-            // bpString.SetStepSelection({step, 1});
+            // inlineString.SetStepSelection({step, 1});
 
             std::string myString;
-            bpReader.Get(bpString, myString, adios2::Mode::Sync);
-            std::cout << "bpString: " << myString << "\n";
+            inlineReader.Get(inlineString, myString, adios2::Mode::Sync);
+            std::cout << "inlineString: " << myString << "\n";
         }
-        bpReader.EndStep();
+        inlineReader.EndStep();
     }
     catch (std::invalid_argument &e)
     {
@@ -119,24 +118,24 @@ int main(int argc, char *argv[])
         /*** IO class object: settings and factory of Settings: Variables,
          * Parameters, Transports, and Execution: Engines
          * Inline uses single IO for write/read */
-        adios2::IO bpIO = adios.DeclareIO("InlineReadWrite");
+        adios2::IO inlineIO = adios.DeclareIO("InlineReadWrite");
         /// WRITE
         {
-            bpIO.SetEngine("Inline");
-            bpIO.SetParameters({{"verbose", "5"}});
+            inlineIO.SetEngine("Inline");
+            inlineIO.SetParameters({{"verbose", "5"}});
 
             /** global array: name, { shape (total dimensions) }, { start
              * (local) },
              * { count (local) }, all are constant dimensions */
             const unsigned int variablesSize = 10;
-            std::vector<adios2::Variable<float>> bpFloats(variablesSize);
+            std::vector<adios2::Variable<float>> inlineFloats(variablesSize);
 
-            adios2::Variable<std::string> bpString =
-                bpIO.DefineVariable<std::string>("bpString");
+            adios2::Variable<std::string> inlineString =
+                inlineIO.DefineVariable<std::string>("inlineString");
 
             for (unsigned int v = 0; v < variablesSize; ++v)
             {
-                std::string namev("bpFloats");
+                std::string namev("inlineFloats");
                 if (v < 10)
                 {
                     namev += "00";
@@ -147,31 +146,31 @@ int main(int argc, char *argv[])
                 }
                 namev += std::to_string(v);
 
-                bpFloats[v] =
-                    bpIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
+                inlineFloats[v] =
+                    inlineIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
                                                {Nx});
             }
 
             /** global single value variable: name */
-            adios2::Variable<unsigned int> bpTimeStep =
-                bpIO.DefineVariable<unsigned int>("timeStep");
+            adios2::Variable<unsigned int> inlineTimeStep =
+                inlineIO.DefineVariable<unsigned int>("timeStep");
 
             /** Engine derived class, spawned to start IO operations */
-            adios2::Engine bpWriter =
-                bpIO.Open("myWriteID", adios2::Mode::Write);
+            adios2::Engine inlineWriter =
+                inlineIO.Open("myWriteID", adios2::Mode::Write);
 
-            bpIO.SetEngine("Inline");
-            bpIO.SetParameters({{"verbose", "5"}, {"writerID", "myWriteID"}});
+            inlineIO.SetEngine("Inline");
+            inlineIO.SetParameters({{"verbose", "5"}, {"writerID", "myWriteID"}});
 
-            adios2::Engine bpReader =
-                bpIO.Open("myReadID", adios2::Mode::Read);
+            adios2::Engine inlineReader =
+                inlineIO.Open("myReadID", adios2::Mode::Read);
 
             for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
             {
-                bpWriter.BeginStep();
+                inlineWriter.BeginStep();
                 if (rank == 0) // global single value, only saved by rank 0
                 {
-                    bpWriter.Put<unsigned int>(bpTimeStep, timeStep);
+                    inlineWriter.Put<unsigned int>(inlineTimeStep, timeStep);
                 }
 
                 // template type is optional, but recommended
@@ -180,7 +179,7 @@ int main(int argc, char *argv[])
                     // Note: Put is deferred, so all variables will see v == 9
                     // and myFloats[0] == 9, 10, or 11
                     myFloats[0] = static_cast<float>(v + timeStep);
-                    bpWriter.Put(bpFloats[v], myFloats.data());
+                    inlineWriter.Put(inlineFloats[v], myFloats.data());
                 }
 
                 const std::string myString(
@@ -189,16 +188,16 @@ int main(int argc, char *argv[])
 
                 if (rank == 0)
                 {
-                    bpWriter.Put(bpString, myString);
+                    inlineWriter.Put(inlineString, myString);
                 }
 
-                bpWriter.EndStep();
+                inlineWriter.EndStep();
 
-                DoAnalysis(bpIO, bpReader, rank, timeStep);
+                DoAnalysis(inlineIO, inlineReader, rank, timeStep);
             }
 
-            bpWriter.Close();
-            bpReader.Close();
+            inlineWriter.Close();
+            inlineReader.Close();
         }
         // MPI_Barrier(MPI_COMM_WORLD);
 

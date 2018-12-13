@@ -46,6 +46,7 @@ namespace core
         info.StepsStart = stepsStart;                                          \
         info.StepsCount = stepsCount;                                          \
         info.Data = const_cast<T *>(data);                                     \
+        info.Buffer = DataBuffer<T>(data);                                     \
         info.Operations = m_Operations;                                        \
         m_BlocksInfo.push_back(info);                                          \
         return m_BlocksInfo.back();                                            \

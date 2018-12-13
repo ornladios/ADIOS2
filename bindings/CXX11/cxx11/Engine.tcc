@@ -41,6 +41,7 @@ static std::vector<typename Variable<T>::Info> ToBlocksInfo(
         {
             blockInfo.Min = coreBlockInfo.Min;
             blockInfo.Max = coreBlockInfo.Max;
+            blockInfo.Data = coreBlockInfo.Buffer;
         }
         blocksInfo.push_back(blockInfo);
     }
@@ -125,17 +126,17 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 }
 
 template <class T>
-void Engine::GetBlock(Variable<T> variable, T **data, const Mode launch)
+void Engine::Get(Variable<T> variable, const Mode launch)
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::GetBlock");
-    m_Engine->GetBlock<T>(*variable.m_Variable, data, launch);
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    m_Engine->Get<T>(*variable.m_Variable, launch);
 }
 
 template <class T>
-void Engine::GetBlock(const std::string &variableName, T **data, const Mode launch)
+void Engine::Get(const std::string &variableName, const Mode launch)
 {
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::GetBlock");
-    m_Engine->GetBlock<T>(variableName, data, launch);
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    m_Engine->Get<T>(variableName, launch);
 }
 
 template <class T>

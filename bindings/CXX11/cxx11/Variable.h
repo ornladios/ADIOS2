@@ -14,6 +14,7 @@
 #include "Operator.h"
 
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/DataBuffer.h"
 
 namespace adios2
 {
@@ -221,6 +222,7 @@ public:
         T Max = T();        ///< block Max, if IsValue is false
         T Value = T();      ///< block Value, if IsValue is true
         bool IsValue;       ///< true: value, false: array
+        DataBuffer<T> Data;
     };
 
 private:

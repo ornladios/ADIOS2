@@ -25,7 +25,7 @@ template <class T>
 void InlineWriter::PutSyncCommon(Variable<T> &variable,
                                    const typename Variable<T>::Info &blockInfo)
 {
-    // passed in blockInfo has current blockInfo.data member.
+    // passed in blockInfo has current blockInfo.Data member.
     if (blockInfo.Shape.size() == 0 && blockInfo.Count.size() == 0 && blockInfo.StepsCount == 1 ) {
         auto &info = variable.m_BlocksInfo.back();
         info.IsValue = true;

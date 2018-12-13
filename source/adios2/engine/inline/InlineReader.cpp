@@ -117,13 +117,31 @@ void InlineReader::EndStep()
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
-    void InlineReader::DoGetBlockSync(Variable<T> &variable, T **data)         \
+    void InlineReader::DoGetBlockSync(Variable<T> &variable)                   \
     {                                                                          \
-        GetBlockSyncCommon(variable, data);                                    \
+        GetBlockSyncCommon(variable);                                          \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    InlineReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
+    {                                                                          \
+        return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
+    }                                                                          \
+                                                                               \
+    std::vector<typename Variable<T>::Info> InlineReader::DoBlocksInfo(           \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return variable.m_BlocksInfo;                   \
+    }
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+
 
 void InlineReader::Init()
 {

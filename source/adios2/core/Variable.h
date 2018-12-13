@@ -21,6 +21,7 @@
 
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
+#include "adios2/core/DataBuffer.h"
 #include "adios2/helper/adiosType.h"
 
 namespace adios2
@@ -70,6 +71,7 @@ public:
         T Min = T();
         T Max = T();
         T Value = T();
+        DataBuffer<T> Buffer;
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
     };

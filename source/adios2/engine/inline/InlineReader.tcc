@@ -31,7 +31,7 @@ inline void InlineReader::GetSyncCommon(Variable<std::string> &variable,
     if (blockInfo.IsValue) {
         *data = blockInfo.Value;
     } else {
-        *data = blockInfo.Data[0];
+        *data = blockInfo.Buffer.Ptr()[0];
     }
     if (m_Verbosity == 5)
     {
@@ -68,12 +68,12 @@ void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-inline void InlineReader::GetBlockSyncCommon(Variable<T> &variable, T **data)
+inline void InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
     // variable.m_Data = data;
     auto blockInfo = variable.m_BlocksInfo.back();
-    if (blockInfo.Data) {
-        *data = blockInfo.Data;
+    if (blockInfo.Buffer.Ptr()) {
+        // *data = blockInfo.Data.Ptr();
     }
     if (m_Verbosity == 5)
     {

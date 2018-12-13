@@ -279,10 +279,11 @@ public:
              const Mode launch = Mode::Deferred);
 
     /**
-     * @brief GetBlock retrieves an existing variable's last selections and
+     * @brief Get version retrieves an existing variable's block selections and
      * sets the input data pointer
      * from adios2 Engine Write mode directly to Read Mode. If the data is not
-     * available (likely for all Engines except Inline), fall back to Get()
+     * available (likely for all Engines except Inline), return null, or TODO
+     * allocate and fill in a buffer.
      *
      * Polymorphic function.
      * Check your Engine documentation for specific behavior.
@@ -304,11 +305,11 @@ public:
      * </pre>
      */
     template <class T>
-    void GetBlock(Variable<T> &variable, T **data,
+    void Get(Variable<T> &variable,
              const Mode launch = Mode::Deferred);
 
     /**
-     * @brief GetBlock version that accepts a variableName as input.
+     * @brief Get version for block selection that accepts a variableName as input.
      *
      * Throws an exception if variable is not found in IO that created the
      * current engine.
@@ -331,7 +332,7 @@ public:
      * </pre>
      */
     template <class T>
-    void GetBlock(const std::string &variableName, T **data,
+    void Get(const std::string &variableName,
              const Mode launch = Mode::Deferred);
 
     /**
@@ -432,7 +433,7 @@ protected:
 #define declare_type(T)                                                        \
     virtual void DoGetSync(Variable<T> &, T *);                                \
     virtual void DoGetDeferred(Variable<T> &, T *);                            \
-    virtual void DoGetBlockSync(Variable<T> &, T **);
+    virtual void DoGetBlockSync(Variable<T> &);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -507,8 +508,8 @@ private:
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
                                                                                \
-    extern template void Engine::GetBlock<T>(Variable<T> &, T **, const Mode); \
-    extern template void Engine::GetBlock<T>(const std::string &, T **, const Mode); \
+    extern template void Engine::Get<T>(Variable<T> &, const Mode);            \
+    extern template void Engine::Get<T>(const std::string &, const Mode);      \
                                                                                \
     extern template Variable<T> &Engine::FindVariable(                         \
         const std::string &variableName, const std::string hint);              \
