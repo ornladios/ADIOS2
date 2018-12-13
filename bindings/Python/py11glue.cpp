@@ -259,6 +259,17 @@ PYBIND11_MODULE(adios2, m)
 #endif
 
     pybind11::class_<adios2::py11::ADIOS>(m, "py11_ADIOS")
+        .def("__nonzero__",
+             [](const adios2::py11::ADIOS &adios) {
+                 if (adios)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 };
+             })
         .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
              "spawn IO object component returning a IO object with a unique "
              "name, throws an exception if IO with the same name is declared "
@@ -273,6 +284,17 @@ PYBIND11_MODULE(adios2, m)
              "flushes all engines in all spawned IO objects");
 
     pybind11::class_<adios2::py11::IO>(m, "IO")
+        .def("__nonzero__",
+             [](const adios2::py11::IO &io) {
+                 if (io)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 };
+             })
         .def("SetEngine", &adios2::py11::IO::SetEngine)
         .def("SetParameters", &adios2::py11::IO::SetParameters,
              pybind11::arg("parameters") = adios2::Params())
@@ -343,6 +365,17 @@ PYBIND11_MODULE(adios2, m)
         .def("LockDefinitions", &adios2::py11::IO::LockDefinitions);
 
     pybind11::class_<adios2::py11::Variable>(m, "Variable")
+        .def("__nonzero__",
+             [](const adios2::py11::Variable &variable) {
+                 if (variable)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 };
+             })
         .def("SetShape", &adios2::py11::Variable::SetShape)
         .def("SetBlockSelection", &adios2::py11::Variable::SetBlockSelection)
         .def("SetSelection", &adios2::py11::Variable::SetSelection)
@@ -362,12 +395,33 @@ PYBIND11_MODULE(adios2, m)
         .def("Operations", &adios2::py11::Variable::Operations);
 
     pybind11::class_<adios2::py11::Attribute>(m, "Attribute")
+        .def("__nonzero__",
+             [](const adios2::py11::Attribute &attribute) {
+                 if (attribute)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 };
+             })
         .def("Name", &adios2::py11::Attribute::Name)
         .def("Type", &adios2::py11::Attribute::Type)
         .def("Data", &adios2::py11::Attribute::Data);
 
     pybind11::class_<adios2::py11::Engine>(m, "Engine")
-
+        .def("__nonzero__",
+             [](const adios2::py11::Engine &engine) {
+                 if (engine)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 };
+             })
         .def("BeginStep", (adios2::StepStatus (adios2::py11::Engine::*)(
                               const adios2::StepMode, const float)) &
                               adios2::py11::Engine::BeginStep,
@@ -421,6 +475,17 @@ PYBIND11_MODULE(adios2, m)
         .def("Type", &adios2::py11::Engine::Type);
 
     pybind11::class_<adios2::py11::Operator>(m, "Operator")
+        .def("__nonzero__",
+             [](const adios2::py11::Operator &op) {
+                 if (op)
+                 {
+                     return true;
+                 }
+                 else
+                 {
+                     return false;
+                 };
+             })
         .def("Type", &adios2::py11::Operator::Type)
         .def("SetParameter", &adios2::py11::Operator::SetParameter)
         .def("Parameters", &adios2::py11::Operator::Parameters);
