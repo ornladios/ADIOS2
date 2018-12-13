@@ -4,8 +4,10 @@
 #------------------------------------------------------------------------------#
 
 add_executable(TestSstWrite TestSstWrite.cpp)
+add_executable(TestSstWriteAttrs TestSstWriteAttrs.cpp)
 add_executable(TestSstWriteModes TestSstWriteModes.cpp)
 add_executable(TestSstRead TestSstRead.cpp)
+add_executable(TestSstReadAttrs TestSstReadAttrs.cpp)
 add_executable(TestSstServer TestSstServer.cpp)
 add_executable(TestSstClient TestSstClient.cpp)
 add_executable(TestSstParamFails TestSstParamFails.cpp)
@@ -28,13 +30,16 @@ endif()
 if(SST_INCLUDE_DIRS)
   target_include_directories(TestSstWrite PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestSstWriteModes PRIVATE ${SST_INCLUDE_DIRS})
+  target_include_directories(TestSstWriteAttrs PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestSstRead PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestSstServer PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestSstClient PRIVATE ${SST_INCLUDE_DIRS})
 endif()
 target_link_libraries(TestSstWrite adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstWriteModes adios2 gtest_interface ${Sst_LIBRARY})
+target_link_libraries(TestSstWriteAttrs adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstRead adios2 gtest_interface ${Sst_LIBRARY})
+target_link_libraries(TestSstReadAttrs adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstServer adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstClient adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestSstParamFails adios2 gtest)
@@ -43,7 +48,9 @@ target_link_libraries(TestSstWriterFails adios2 gtest)
 if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestSstWrite MPI::MPI_C)
   target_link_libraries(TestSstWriteModes MPI::MPI_C)
+  target_link_libraries(TestSstWriteAttrs MPI::MPI_C)
   target_link_libraries(TestSstRead MPI::MPI_C)
+  target_link_libraries(TestSstReadAttrs MPI::MPI_C)
   target_link_libraries(TestSstServer MPI::MPI_C)
   target_link_libraries(TestSstClient MPI::MPI_C)
   target_link_libraries(TestSstParamFails MPI::MPI_C)
@@ -90,6 +97,12 @@ add_test(
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
   -nw 1 -nr 1 -v -w TestSstWriteModes -r TestSstRead)
   set_tests_properties(ADIOSSstTest.Modes PROPERTIES TIMEOUT 30  RUN_SERIAL 1) 
+
+add_test(
+  NAME ADIOSSstTest.Attrs
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+  -nw 1 -nr 1 -v -w TestSstWriteAttrs -r TestSstReadAttrs)
+  set_tests_properties(ADIOSSstTest.Attrs PROPERTIES TIMEOUT 30  RUN_SERIAL 1) 
 
 if(ADIOS2_HAVE_Fortran)
   add_test(
