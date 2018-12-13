@@ -39,7 +39,7 @@ std::string Attribute::Type() const
     return m_Attribute->m_Type;
 }
 
-std::vector<std::string> Attribute::DataStrings()
+std::vector<std::string> Attribute::DataString()
 {
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::DataStrings");
     const std::string type = m_Attribute->m_Type;
@@ -58,7 +58,7 @@ std::vector<std::string> Attribute::DataStrings()
         }
         else
         {
-            data = attribute->m_Elements;
+            data = attribute->m_DataArray;
         }
     }
     else

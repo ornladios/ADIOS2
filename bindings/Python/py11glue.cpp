@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * gluePyBind11.cpp
+ * py11glue.cpp
  *
  *  Created on: Mar 16, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -408,6 +408,7 @@ PYBIND11_MODULE(adios2, m)
              })
         .def("Name", &adios2::py11::Attribute::Name)
         .def("Type", &adios2::py11::Attribute::Type)
+        .def("DataString", &adios2::py11::Attribute::DataString)
         .def("Data", &adios2::py11::Attribute::Data);
 
     pybind11::class_<adios2::py11::Engine>(m, "Engine")

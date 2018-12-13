@@ -39,7 +39,7 @@ public:
 
     pybind11::array Data();
 
-    std::vector<std::string> DataStrings();
+    std::vector<std::string> DataString();
 
 private:
     Attribute(core::AttributeBase *attribute);

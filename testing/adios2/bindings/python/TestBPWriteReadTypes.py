@@ -24,11 +24,25 @@ def check_name(name, name_list):
         raise ValueError(str(name) + ' not found in list')
 
 
+def check_array(np1, np2, hint):
+    if((np1 == np2).all() is False):
+        print("InData: " + str(np1))
+        print("Data: " + str(np2))
+        raise ValueError('Array read failed ' + str(hint))
+
+
 # MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 Nx = 8
+
+# list of tested attributes and variables
+attr_names = ["attrString", "attrI8", "attrI16", "attrI32", "attrI64",
+              "attrU8", "attrU16", "attrU32", "attrU64", "attrR32", "attrR64"]
+var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
+             "varU8", "varU16", "varU32", "varU64",
+                      "varR32", "varR64"]
 
 # Start ADIOS
 adios = adios2.ADIOS(comm)
@@ -68,8 +82,17 @@ varR32 = ioWriter.DefineVariable(
 varR64 = ioWriter.DefineVariable(
     "varR64", data.R64, shape, start, count, adios2.ConstantDims)
 
-attString = ioWriter.DefineAttribute("attrString", ["hello attribute"])
+attString = ioWriter.DefineAttribute("attrString", ["one", "two", "three"])
 attI8 = ioWriter.DefineAttribute("attrI8", data.I8)
+attI16 = ioWriter.DefineAttribute("attrI16", data.I16)
+attI32 = ioWriter.DefineAttribute("attrI32", data.I32)
+attI64 = ioWriter.DefineAttribute("attrI64", data.I64)
+attU8 = ioWriter.DefineAttribute("attrU8", data.U8)
+attU16 = ioWriter.DefineAttribute("attrU16", data.U16)
+attU32 = ioWriter.DefineAttribute("attrU32", data.U32)
+attU64 = ioWriter.DefineAttribute("attrU64", data.U64)
+attR32 = ioWriter.DefineAttribute("attrR32", data.R32)
+attR64 = ioWriter.DefineAttribute("attrR64", data.R64)
 
 ioWriter.SetEngine("BPFile")
 ioParams = {}
@@ -84,7 +107,6 @@ if(engineType != "BPFile"):
 
 ioWriter.SetParameter("profileunits", "microseconds")
 ioWriter.AddTransport("file")
-
 
 ioParams = ioWriter.Parameters()
 print("Final IO parameters")
@@ -125,6 +147,66 @@ reader = ioReader.Open("npTypes.bp", adios2.Mode.Read)
 
 attrString = ioReader.InquireAttribute("attrString")
 attrI8 = ioReader.InquireAttribute("attrI8")
+attrI16 = ioReader.InquireAttribute("attrI16")
+attrI32 = ioReader.InquireAttribute("attrI32")
+attrI64 = ioReader.InquireAttribute("attrI64")
+attrU8 = ioReader.InquireAttribute("attrU8")
+attrU16 = ioReader.InquireAttribute("attrU16")
+attrU32 = ioReader.InquireAttribute("attrU32")
+attrU64 = ioReader.InquireAttribute("attrU64")
+attrR32 = ioReader.InquireAttribute("attrR32")
+attrR64 = ioReader.InquireAttribute("attrR64")
+
+check_object(attrString, "attrString")
+check_object(attrI8, "attrI8")
+check_object(attrI16, "attrI16")
+check_object(attrI32, "attrI32")
+check_object(attrI64, "attrI64")
+check_object(attrU8, "attrU8")
+check_object(attrU16, "attrU16")
+check_object(attrU32, "attrU32")
+check_object(attrU64, "attrU64")
+check_object(attrR32, "attrR32")
+check_object(attrR64, "attrR64")
+
+attrStringData = attrString.DataString()
+if(attrStringData[0] != "one"):
+    raise ValueError('attrStringData[0] failed')
+if(attrStringData[1] != "two"):
+    raise ValueError('attrStringData[1] failed')
+if(attrStringData[2] != "three"):
+    raise ValueError('attrStringData[2] failed')
+
+attrI8Data = attrI8.Data()
+attrI16Data = attrI16.Data()
+attrI32Data = attrI32.Data()
+attrI64Data = attrI64.Data()
+attrU8Data = attrU8.Data()
+attrU16Data = attrU16.Data()
+attrU32Data = attrU32.Data()
+attrU64Data = attrU64.Data()
+attrR32Data = attrR32.Data()
+attrR64Data = attrR64.Data()
+
+check_array(attrI8Data, data.I8, 'I8')
+check_array(attrI16Data, data.I16, 'I16')
+check_array(attrI32Data, data.I32, 'I32')
+check_array(attrI64Data, data.I64, 'I64')
+check_array(attrU8Data, data.U8, 'U8')
+check_array(attrU16Data, data.U16, 'U16')
+check_array(attrU32Data, data.U32, 'U32')
+check_array(attrU64Data, data.U64, 'U64')
+check_array(attrR32Data, data.R32, 'R32')
+check_array(attrR64Data, data.R64, 'R64')
+
+attributesInfo = ioReader.AvailableAttributes()
+for name, info in attributesInfo.items():
+    check_name(name, attr_names)
+    if rank == 0:
+        print("attribute_name: " + name)
+        for key, value in info.items():
+            print("\t" + key + ": " + value)
+        print("\n")
 
 varStr = ioReader.InquireVariable("varStr")
 varI8 = ioReader.InquireVariable("varI8")
@@ -138,9 +220,6 @@ varU64 = ioReader.InquireVariable("varU64")
 varR32 = ioReader.InquireVariable("varR32")
 varR64 = ioReader.InquireVariable("varR64")
 
-check_object(attrString, "attrString")
-check_object(attrString, "attrI8")
-
 check_object(varStr, "varStr")
 check_object(varI8, "varI8")
 check_object(varI16, "varI16")
@@ -152,21 +231,6 @@ check_object(varU32, "varU32")
 check_object(varU64, "varU64")
 check_object(varR32, "varR32")
 check_object(varR64, "varR64")
-
-
-attr_names = ["attrString", "attrI8"]
-var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
-             "varU8", "varU16", "varU32", "varU64",
-                      "varR32", "varR64"]
-
-attributesInfo = ioReader.AvailableAttributes()
-for name, info in attributesInfo.items():
-    check_name(name, attr_names)
-    if rank == 0:
-        print("attribute_name: " + name)
-        for key, value in info.items():
-            print("\t" + key + ": " + value)
-        print("\n")
 
 variablesInfo = ioReader.AvailableVariables()
 for name, info in variablesInfo.items():
