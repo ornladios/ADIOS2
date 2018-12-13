@@ -11,9 +11,9 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
 #define ADIOS2_BINDINGS_PYTHON_VARIABLE_H_
 
-#include "py11Operator.h"
-
 #include <pybind11/numpy.h>
+
+#include "py11Operator.h"
 
 #include "adios2/core/VariableBase.h"
 
@@ -21,6 +21,9 @@ namespace adios2
 {
 namespace py11
 {
+
+class IO;
+class Engine;
 
 class Variable
 {
