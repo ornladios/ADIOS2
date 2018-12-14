@@ -1,7 +1,10 @@
 pybind11_add_module(adios2py MODULE
   py11ADIOS.cpp
   py11IO.cpp
+  py11Variable.cpp
+  py11Attribute.cpp
   py11Engine.cpp
+  py11Operator.cpp
   py11File.cpp
   py11glue.cpp
 )
