@@ -1635,7 +1635,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
     const size_t elemsize = variable->m_ElementSize;
     const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
-    const int ndim = static_cast<int>(variable->m_Shape.size());
+    const int ndim = static_cast<int>(variable->m_Count.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
 
@@ -2464,7 +2464,6 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
     // size_t nsteps = variable->GetAvailableStepsCount();
-    size_t ndim = variable->m_Shape.size();
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
     std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
         fp->AllStepsBlocksInfo(*variable);
@@ -2474,7 +2473,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     }
     size_t laststep = allblocks.rbegin()->first;
     int ndigits_nsteps = ndigits(laststep);
-    if (ndim == 0)
+    if (variable->m_ShapeID == ShapeID::GlobalValue ||
+        variable->m_ShapeID == ShapeID::LocalValue)
     {
         // scalars
         for (auto &blockpair : allblocks)
@@ -2513,12 +2513,23 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     else
     {
         // arrays
+        size_t ndim = variable->m_Count.size();
         int ndigits_nblocks;
-        int ndigits_dims[32];
+        int ndigits_dims[32] = {
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        };
         for (size_t k = 0; k < ndim; k++)
         {
             // get digit lengths for each dimension
-            ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+            if (variable->m_ShapeID == ShapeID::GlobalArray)
+            {
+                ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+            }
+            else
+            {
+                ndigits_dims[k] = ndigits(variable->m_Count[k] - 1);
+            }
         }
 
         for (auto &blockpair : allblocks)
@@ -2526,33 +2537,35 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             size_t step = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
+            const size_t blocksSize = blocks.size();
             fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
             fprintf(outf, "\n");
-            ndigits_nblocks = ndigits(blocks.size() - 1);
-
-            const size_t blocksSize = blocks.size();
+            ndigits_nblocks = ndigits(blocksSize - 1);
 
             for (size_t j = 0; j < blocksSize; j++)
             {
                 fprintf(outf, "          block %*zu: [", ndigits_nblocks, j);
 
-                const Dims blockCount =
-                    variable->m_ShapeID == ShapeID::LocalValue
-                        ? Dims(ndim, 1)
-                        : blocks[j].Count;
-
-                const Dims blockStart =
-                    variable->m_ShapeID == ShapeID::GlobalArray
-                        ? blocks[j].Start
-                        : Dims(blockCount.size(), 0);
+                // just in case ndim for a block changes in LocalArrays:
+                ndim = variable->m_Count.size();
 
                 for (size_t k = 0; k < ndim; k++)
                 {
-                    if (blockCount[k])
+                    if (blocks[j].Count[k])
                     {
-                        fprintf(outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
-                                blockStart[k], ndigits_dims[k],
-                                blockStart[k] + blockCount[k] - 1);
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
+                        {
+                            fprintf(
+                                outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
+                                blocks[j].Start[k], ndigits_dims[k],
+                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                        }
+                        else
+                        {
+                            // blockStart is empty vector for LocalArrays
+                            fprintf(outf, "0:%*" PRIu64, ndigits_dims[k],
+                                    blocks[j].Count[k] - 1);
+                        }
                     }
                     else
                     {
@@ -2580,7 +2593,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     }
                 }
                 fprintf(outf, "\n");
-                if (dump)
+                if (dump && variable->m_ShapeID == ShapeID::GlobalArray)
                 {
                     readVarBlock(fp, io, variable, step, j, blocks[j]);
                 }
