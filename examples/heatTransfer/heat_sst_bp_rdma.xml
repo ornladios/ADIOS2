@@ -13,7 +13,7 @@
     <io name="writer">
         <engine type="SST">
             <parameter key="MarshalMethod" value="BP"/>
-            <parameter key="DataTransport" value="rdma" />
+            <!parameter key="DataTransport" value="rdma" />
         </engine>
     </io>
 
@@ -25,7 +25,7 @@
     <io name="readerInput">
         <engine type="SST">
             <parameter key="MarshalMethod" value="BP"/>
-            <parameter key="DataTransport" value="rdma" />
+            <!parameter key="DataTransport" value="rdma" />
         </engine>
     </io>
     
