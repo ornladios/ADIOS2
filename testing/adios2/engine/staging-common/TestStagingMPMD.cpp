@@ -360,13 +360,13 @@ TEST_P(TestStagingMPMD, MultipleSteps)
 TEST_P(TestStagingMPMD, SlowWriter)
 {
     RunParams p = GetParam();
-    TestCommon(p, 5, 500, 0);
+    TestCommon(p, 5, 100, 0);
 }
 
 TEST_P(TestStagingMPMD, SlowReader)
 {
     RunParams p = GetParam();
-    TestCommon(p, 5, 0, 500);
+    TestCommon(p, 5, 0, 100);
 }
 
 INSTANTIATE_TEST_CASE_P(NxM, TestStagingMPMD,
