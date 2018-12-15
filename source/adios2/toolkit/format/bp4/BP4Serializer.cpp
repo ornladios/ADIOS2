@@ -1008,6 +1008,36 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
         deserialized;
 
+    auto lf_Deserialize_no_mutex = [&](const int rankSource,
+                              const size_t serializedPosition,
+                              const bool isRankConstant) {
+
+        size_t localPosition = serializedPosition;
+        ElementIndexHeader header =
+            ReadElementIndexHeader(serialized, localPosition);
+
+        if (isRankConstant)
+        {
+            if (deserialized.count(header.Name) == 1)
+            {
+                return;
+            }
+        }
+
+        std::vector<BP4Base::SerialElementIndex> *deserializedIndexes;
+  
+        deserializedIndexes = &(deserialized.emplace(std::piecewise_construct,
+                               std::forward_as_tuple(header.Name),
+                               std::forward_as_tuple(
+                               m_SizeMPI, SerialElementIndex(header.MemberID, 0))).first->second);
+        
+
+        const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
+        SerialElementIndex &index = deserializedIndexes->at(rankSource);
+        helper::InsertToBuffer(index.Buffer, &serialized[serializedPosition],
+                               bufferSize);
+    };
+
     auto lf_Deserialize = [&](const int rankSource,
                               const size_t serializedPosition,
                               const bool isRankConstant) {
@@ -1065,7 +1095,7 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 
             if (serializedPosition <= serializedSize)
             {
-                lf_Deserialize(rankSource, serializedPosition, isRankConstant);
+                lf_Deserialize_no_mutex(rankSource, serializedPosition, isRankConstant);
             }
 
             const size_t bufferSize = static_cast<size_t>(
