@@ -1013,14 +1013,14 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
                               const bool isRankConstant) {
 
         size_t localPosition = serializedPosition;
-        std::chrono::high_resolution_clock::time_point t_start, t_end ;
-        t_start = std::chrono::high_resolution_clock::now();
+        double timeStart, timeEnd, duration;
+        timeStart = MPI_Wtime();
         ElementIndexHeader header =
             ReadElementIndexHeader(serialized, localPosition);
-        t_end = std::chrono::high_resolution_clock::now();
+        timeEnd = MPI_Wtime();
 
-        auto duration1 = std::chrono::duration_cast<std::chrono::seconds>(t_end - t_start).count();
-        std::cout << "ElementIndexHeader header = ReadElementIndexHeader(..., took " << duration1 << " seconds" << std::endl;
+        duration = timeEnd-timeStart;
+        std::cout << "ElementIndexHeader header = ReadElementIndexHeader(..., took " << duration << " seconds" << std::endl;
 
         if (isRankConstant)
         {
@@ -1032,15 +1032,15 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 
         std::vector<BP4Base::SerialElementIndex> *deserializedIndexes;
   
-        t_start = std::chrono::high_resolution_clock::now();
+        timeStart = MPI_Wtime();
         deserializedIndexes = &(deserialized.emplace(std::piecewise_construct,
                                std::forward_as_tuple(header.Name),
                                std::forward_as_tuple(
                                m_SizeMPI, SerialElementIndex(header.MemberID, 0))).first->second);
-        t_end = std::chrono::high_resolution_clock::now();
+        timeEnd = MPI_Wtime();
         
-        auto duration2 = std::chrono::duration_cast<std::chrono::seconds>(t_end - t_start).count();
-        std::cout << "deserializedIndexes = &(deserialized.emplace(..., took " << duration2 << " seconds" << std::endl;
+        duration = timeEnd-timeStart;
+        std::cout << "deserializedIndexes = &(deserialized.emplace(..., took " << duration << " seconds" << std::endl;
         
         const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
         SerialElementIndex &index = deserializedIndexes->at(rankSource);
