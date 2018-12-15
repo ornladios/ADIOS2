@@ -85,6 +85,7 @@ struct CMtrans_services_s CMstatic_trans_svcs = {INT_CMmalloc, INT_CMrealloc, IN
 						 CM_fd_write_select, 
 						 CM_fd_remove_select, 
 						 CMtransport_trace,
+						 CMtransport_verbose,
 						 CMConnection_create,
 						 INT_CMadd_shutdown_task,
 						 INT_CMadd_periodic_task,

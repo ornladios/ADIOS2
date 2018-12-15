@@ -821,7 +821,7 @@ libcmenet_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
     svc->fd_add_select(cm, enet_host_get_sock_fd (server), 
 		       (select_list_func) enet_service_network, (void*)cm, (void*)trans);
 
-    svc->add_periodic_task(cm, 1, 0, (CMPollFunc) enet_service_network_lock, (void*)trans);
+    svc->add_periodic_task(cm, 0, 100, (CMPollFunc) enet_service_network_lock, (void*)trans);
 
     svc->trace_out(enet_data->cm, "CMENET Adding read_wake_fd as action on fd %d",
 		   enet_data->wake_read_fd);
