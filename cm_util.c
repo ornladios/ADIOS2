@@ -52,7 +52,7 @@ extern int CMtrace_init(CManager cm, CMTraceType trace_type)
     CMtrace_val[CMAttrVerbose] = (getenv("CMAttrVerbose") != NULL);
     CMtrace_val[CMBufferVerbose] = (getenv("CMBufferVerbose") != NULL);
     CMtrace_val[EVerbose] = (getenv("EVerbose") != NULL);
-    CMtrace_val[CMIBTransportVerbose] = (getenv("CMIBTransportVerbose") != NULL);    
+    CMtrace_val[CMSelectVerbose] = (getenv("CMSelectVerbose") != NULL);    
     CMtrace_val[EVdfgVerbose] = (getenv("EVdfgVerbose") != NULL);
     CMtrace_timing = (getenv("CMTraceTiming") != NULL);
     CMtrace_PID = (getenv("CMTracePID") != NULL);
@@ -97,7 +97,7 @@ extern int CMtrace_init(CManager cm, CMTraceType trace_type)
 	    if (CMtrace_val[CMBufferVerbose]) fprintf(cm->CMTrace_file, "CMBufferVerbose, ");
 	    if (CMtrace_val[EVerbose]) fprintf(cm->CMTrace_file, "EVerbose, ");
 	    if (CMtrace_val[EVWarning]) fprintf(cm->CMTrace_file, "EVWarning, ");
-	    if (CMtrace_val[CMIBTransportVerbose]) fprintf(cm->CMTrace_file, "CMIBTransportVerbose, ");
+	    if (CMtrace_val[CMSelectVerbose]) fprintf(cm->CMTrace_file, "CMSelectVerbose, ");
 	    if (CMtrace_val[EVdfgVerbose]) fprintf(cm->CMTrace_file, "EVdfgVerbose, ");
 	    fprintf(cm->CMTrace_file, "\n");
 	}
@@ -150,6 +150,33 @@ CMtrace_out(CManager cm, CMTraceType trace_type, char *format, ...)
 #endif
 }
  */
+extern void
+CMtransport_verbose(CManager cm, CMTraceType trace, const char *format, ...)
+{
+#ifndef MODULE
+    va_list ap;
+    if (CMtrace_on(cm, trace)) {
+        if (CMtrace_PID) {
+            fprintf(cm->CMTrace_file, "P%lxT%lx - ", (long) getpid(), (long)thr_thread_self());
+        }
+        if (CMtrace_timing) {
+            TRACE_TIME_DECL;
+            TRACE_TIME_GET;
+            fprintf(cm->CMTrace_file, TRACE_TIME_PRINTDETAILS);
+        }
+#ifdef STDC_HEADERS
+	va_start(ap, format);
+#else
+	va_start(ap);
+#endif
+	vfprintf(cm->CMTrace_file, format, ap);
+	va_end(ap);
+	(void)cm;
+	fprintf(cm->CMTrace_file, "\n");
+    }
+#endif
+}
+
 extern void
 CMtransport_trace(CManager cm, const char *format, ...)
 {
