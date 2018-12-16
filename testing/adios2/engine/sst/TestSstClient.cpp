@@ -229,7 +229,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         const adios2::Dims count2{myLength, 2};
         const adios2::Dims start3{0, myStart};
         const adios2::Dims count3{2, myLength};
-        const adios2::Dims start_time{myStart};
+        const adios2::Dims start_time{0};
         const adios2::Dims count_time{1};
 
         const adios2::Box<adios2::Dims> sel(start, count);
