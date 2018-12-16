@@ -315,11 +315,6 @@ extern void IntCMConn_write_unlock(CMConnection cl, char *file,
 					 int line);
 extern int CMConn_write_locked(CMConnection cl);
 
-typedef enum _CMTraceType {
-    CMAlwaysTrace, CMControlVerbose, CMConnectionVerbose, CMLowLevelVerbose, CMDataVerbose, CMTransportVerbose, CMFormatVerbose, CMFreeVerbose, CMAttrVerbose, CMBufferVerbose, EVerbose, EVWarning, CMIBTransportVerbose, EVdfgVerbose, 
-    CMLastTraceType /* add before this one */
-} CMTraceType;
-
 extern void 
 CMtrace_out(CManager cm, CMTraceType trace_type, char *format, ...);
 
@@ -336,6 +331,7 @@ extern CMincoming_format_list
 CMidentify_CMformat(CManager cm, FFSTypeHandle format);
 
 extern void CMtransport_trace(CManager cm, const char *format, ...);
+extern void CMtransport_verbose(CManager cm, CMTraceType trace, const char *format, ...);
 
 extern void
 CM_fd_add_select(CManager cm, int fd, select_list_func handler_func,

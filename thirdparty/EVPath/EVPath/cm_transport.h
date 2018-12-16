@@ -23,6 +23,11 @@ typedef struct _CMbuffer {
     void *return_callback_data;
 } *CMbuffer;
 
+typedef enum _CMTraceType {
+    CMAlwaysTrace, CMControlVerbose, CMConnectionVerbose, CMLowLevelVerbose, CMDataVerbose, CMTransportVerbose, CMFormatVerbose, CMFreeVerbose, CMAttrVerbose, CMBufferVerbose, EVerbose, EVWarning, CMSelectVerbose, EVdfgVerbose, 
+    CMLastTraceType /* add before this one */
+} CMTraceType;
+
 typedef void *(*CMTransport_malloc_func)(int);
 typedef void *(*CMTransport_realloc_func)(void*, int);
 typedef void (*CMTransport_free_func)(void*);
@@ -38,6 +43,7 @@ typedef void (*CMTransport_fd_add_select)(CManager cm, int fd, select_list_func 
 					  void *param1, void *param2);
 typedef void (*CMTransport_fd_remove_select)(CManager cm, int fd);
 typedef void (*CMTransport_trace)(CManager cm, const char *format, ...);
+typedef void (*CMTransport_verbose)(CManager cm, CMTraceType trace, const char *format, ...);
 typedef CMConnection (*CMTransport_conn_create)(transport_entry trans,
 						void *transport_data,
 						attr_list conn_attrs);
@@ -68,6 +74,7 @@ typedef struct CMtrans_services_s {
     CMTransport_fd_add_select fd_write_select;
     CMTransport_fd_remove_select fd_remove_select;
     CMTransport_trace trace_out;
+    CMTransport_verbose verbose;
     CMTransport_conn_create connection_create;
     CMTransport_add_shut_task add_shutdown_task;
     CMTransport_add_period_task add_periodic_task;
