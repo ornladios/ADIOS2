@@ -1013,14 +1013,9 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
                               const bool isRankConstant) {
 
         size_t localPosition = serializedPosition;
-        double timeStart, timeEnd, duration;
-        timeStart = MPI_Wtime();
+
         ElementIndexHeader header =
             ReadElementIndexHeader(serialized, localPosition);
-        timeEnd = MPI_Wtime();
-
-        duration = timeEnd-timeStart;
-        std::cout << "ElementIndexHeader header = ReadElementIndexHeader(..., took " << duration << " seconds" << std::endl;
 
         if (isRankConstant)
         {
@@ -1032,15 +1027,27 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 
         std::vector<BP4Base::SerialElementIndex> *deserializedIndexes;
   
-        timeStart = MPI_Wtime();
-        deserializedIndexes = &(deserialized.emplace(std::piecewise_construct,
-                               std::forward_as_tuple(header.Name),
-                               std::forward_as_tuple(
-                               m_SizeMPI, SerialElementIndex(header.MemberID, 0))).first->second);
-        timeEnd = MPI_Wtime();
+        // deserializedIndexes = &(deserialized.emplace(std::piecewise_construct,
+        //                        std::forward_as_tuple(header.Name),
+        //                        std::forward_as_tuple(
+        //                        m_SizeMPI, SerialElementIndex(header.MemberID, 0))).first->second);
+
+        auto search = deserialized.find(header.Name);
+        if (search == deserialized.end())
+        {
+            // variable does not exist, we need to add it
+            deserializedIndexes = &(deserialized.emplace(std::piecewise_construct,
+                                   std::forward_as_tuple(header.Name),
+                                   std::forward_as_tuple(
+                                   m_SizeMPI, SerialElementIndex(header.MemberID, 0))).first->second);
+            //std::cout << "rank " << rankSource << ": did not find " << header.Name << ", added it" << std::endl;
+        }
+        else
+        {
+            deserializedIndexes = &(search->second);
+            //std::cout << "rank " << rankSource << ": found " << header.Name << std::endl;
+        }
         
-        duration = timeEnd-timeStart;
-        std::cout << "deserializedIndexes = &(deserialized.emplace(..., took " << duration << " seconds" << std::endl;
         
         const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
         SerialElementIndex &index = deserializedIndexes->at(rankSource);
