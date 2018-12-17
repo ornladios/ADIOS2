@@ -362,21 +362,9 @@ TEST_P(TestStagingMPMD, MultipleSteps)
 
 TEST_P(TestStagingMPMD, MultipleStepsWithTimeout)
 {
-    auto m = engineParams.find("MarshalMethod");
-    if (m != engineParams.end() && m->second == "BP")
-    {
-        if (!wrank)
-        {
-            std::cout << "Skip MultipleStepsWithTimeout test with BP marshaling"
-                      << std::endl;
-        }
-    }
-    else
-    {
-        RunParams p = GetParam();
-        // timeout in reader's BeginStep instead of blocking wait
-        TestCommon(p, 10, 0, 0, 2.0);
-    }
+    RunParams p = GetParam();
+    // timeout in reader's BeginStep instead of blocking wait
+    TestCommon(p, 10, 0, 0, 2.0);
 }
 
 TEST_P(TestStagingMPMD, SlowWriter)
