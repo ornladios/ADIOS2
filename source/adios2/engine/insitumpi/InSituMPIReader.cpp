@@ -16,9 +16,9 @@
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 
+#include <chrono>
 #include <iostream>
 #include <thread> // sleep_for
-#include <chrono>
 
 namespace adios2
 {
@@ -50,7 +50,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
                   << ". #readers=" << m_ReaderNproc
                   << " #writers=" << m_RankAllPeers.size()
                   << " #appsize=" << m_GlobalNproc
-                  << " #direct peers=" << m_RankDirectPeers.size() << std::endl;
+                  << " #direct_peers=" << m_RankDirectPeers.size() << std::endl;
     }
 
     m_WriteRootGlobalRank = insitumpi::ConnectDirectPeers(
@@ -137,18 +137,18 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         }
         m_CurrentStep = step;
         // FIXME: missing test whether all writers sent the same step
-    } 
+    }
     else
     {
         /* Have timeout: do a collective wait for a step within timeout.
            Make sure every writer comes to the same conclusion */
         int haveStepMsg = 0;
-        uint64_t nanoTO = timeoutSeconds*1000000000.0;
+        uint64_t nanoTO = timeoutSeconds * 1000000000.0;
         if (nanoTO < 1)
         {
-            nanoTO = 1; // avoid 0 
+            nanoTO = 1; // avoid 0
         }
-        uint64_t pollTime = nanoTO/10; // TO/100 seconds polling time
+        uint64_t pollTime = nanoTO / 1000; // TO/100 seconds polling time
         if (pollTime < 1)
         {
             pollTime = 1; // min 1 nanosecond polling time
@@ -159,22 +159,23 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         }
         if (m_Verbosity == 5 && !m_ReaderRank)
         {
-            std::cout << "InSituMPI Reader Polling for "
-                      << nanoTO << " nanosec with sleep time of " 
-                      << pollTime << " nanosec" << std::endl;
+            std::cout << "InSituMPI Reader Polling for " << nanoTO
+                      << " nanosec with sleep time of " << pollTime
+                      << " nanosec" << std::endl;
         }
         /* Poll */
         double waited = 0.0;
         double startTime, endTime;
-        while (waited < timeoutSeconds) 
+        while (waited < timeoutSeconds)
         {
             startTime = MPI_Wtime();
-            MPI_Iprobe(m_RankDirectPeers[0], insitumpi::MpiTags::Step, m_CommWorld, &haveStepMsg, &status);
+            MPI_Iprobe(m_RankDirectPeers[0], insitumpi::MpiTags::Step,
+                       m_CommWorld, &haveStepMsg, &status);
             if (haveStepMsg)
                 break;
             std::this_thread::sleep_for(std::chrono::nanoseconds(pollTime));
             endTime = MPI_Wtime();
-            waited += endTime-startTime;
+            waited += endTime - startTime;
         }
         /* Get step msg if available */
         const int NOT_A_STEP = -2; // must be less than any valid step
@@ -183,27 +184,26 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         {
 
             MPI_Recv(&step, 1, MPI_INT, m_RankDirectPeers[0],
-                 insitumpi::MpiTags::Step, m_CommWorld, &status);
-
+                     insitumpi::MpiTags::Step, m_CommWorld, &status);
         }
         /* Exchange steps */
         int maxstep;
         MPI_Allreduce(&step, &maxstep, 1, MPI_INT, MPI_MAX, m_MPIComm);
-        
+
         if (m_Verbosity == 5 && !m_ReaderRank)
         {
-            std::cout << "InSituMPI Reader Polling result is "
-                      << maxstep << std::endl;
+            std::cout << "InSituMPI Reader Polling result is " << maxstep
+                      << std::endl;
         }
-        
+
         /* Mutually agreed result */
         if (maxstep != NOT_A_STEP)
         {
             /* Receive my msg now if there was a message on other process */
-            if (step == NOT_A_STEP) 
+            if (step == NOT_A_STEP)
             {
                 MPI_Recv(&step, 1, MPI_INT, m_RankDirectPeers[0],
-                     insitumpi::MpiTags::Step, m_CommWorld, &status);
+                         insitumpi::MpiTags::Step, m_CommWorld, &status);
             }
             m_CurrentStep = step;
         }
@@ -211,9 +211,8 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         {
             return StepStatus::NotReady;
         }
-           
     }
-    
+
     if (m_CurrentStep == -1)
     {
         return StepStatus::EndOfStream;
