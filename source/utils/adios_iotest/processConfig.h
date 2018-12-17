@@ -74,7 +74,8 @@ public:
     const std::string groupName;
     const float timeout_sec;
     std::vector<std::shared_ptr<VariableInfo>> variables;
-    CommandRead(std::string stream, std::string group, const float timeoutSec=-1.0);
+    CommandRead(std::string stream, std::string group,
+                const float timeoutSec = -1.0);
     ~CommandRead();
 };
 

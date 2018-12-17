@@ -28,7 +28,8 @@ CommandWrite::CommandWrite(std::string stream, std::string group)
 : Command(Operation::Write), streamName(stream), groupName(group){};
 CommandWrite::~CommandWrite(){};
 
-CommandRead::CommandRead(std::string stream, std::string group, const float timeoutSec)
+CommandRead::CommandRead(std::string stream, std::string group,
+                         const float timeoutSec)
 : Command(Operation::Read), stepMode(adios2::StepMode::NextAvailable),
   streamName(stream), groupName(group), timeout_sec(timeoutSec){};
 CommandRead::~CommandRead(){};
