@@ -36,7 +36,7 @@ app 1
 app 2
   steps   over stream_T1.bp   
   # read a & b from stream_T1.bp using io_T2_in definition without blocking wait
-  read  next  stream_T1.bp    io_T2_in  0   a   b
+  read  next  stream_T1.bp    io_T2_in  1.0   a   b
 
   # Sleep and write only if read was successful:
   cond stream_T1.bp   sleep   2.0      

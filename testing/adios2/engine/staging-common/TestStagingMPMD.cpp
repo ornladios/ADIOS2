@@ -52,6 +52,7 @@ std::vector<RunParams> CreateRunParams()
     params.push_back(RunParams(1, 1, 2, 1));
     params.push_back(RunParams(1, 1, 1, 2));
     // 4 process tests
+    params.push_back(RunParams(1, 3, 1, 1));
     params.push_back(RunParams(2, 1, 2, 1));
     params.push_back(RunParams(2, 1, 1, 2));
     // 8 process tests
@@ -61,6 +62,7 @@ std::vector<RunParams> CreateRunParams()
     // 16 process tests
     params.push_back(RunParams(3, 5, 1, 1));
     params.push_back(RunParams(1, 1, 5, 3));
+    params.push_back(RunParams(4, 2, 2, 4));
     return params;
 }
 
@@ -201,7 +203,7 @@ public:
     }
 
     void MainReaders(MPI_Comm comm, size_t npx, size_t npy,
-                     unsigned int sleeptime)
+                     unsigned int sleeptime, float reader_timeout)
     {
         int rank, nproc;
         MPI_Comm_rank(comm, &rank);
@@ -227,8 +229,8 @@ public:
 
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable);
+            adios2::StepStatus status = reader.BeginStep(
+                adios2::StepMode::NextAvailable, reader_timeout);
             if (status != adios2::StepStatus::OK)
             {
                 break;
@@ -287,7 +289,7 @@ public:
     }
 
     void TestCommon(RunParams p, int steps, unsigned int writer_sleeptime,
-                    unsigned int reader_sleeptime)
+                    unsigned int reader_sleeptime, float reader_timeout)
     {
         std::cout << "test " << p.npx_w << "x" << p.npy_w << " writers "
                   << p.npx_r << "x" << p.npy_r << " readers " << std::endl;
@@ -334,7 +336,8 @@ public:
         {
             std::cout << "Process wrank " << wrank << " rank " << rank
                       << " calls MainReaders " << std::endl;
-            MainReaders(comm, p.npx_r, p.npy_r, reader_sleeptime);
+            MainReaders(comm, p.npx_r, p.npy_r, reader_sleeptime,
+                        reader_timeout);
         }
         std::cout << "Process wrank " << wrank << " rank " << rank
                   << " enters MPI barrier..." << std::endl;
@@ -348,25 +351,44 @@ public:
 TEST_P(TestStagingMPMD, SingleStep)
 {
     RunParams p = GetParam();
-    TestCommon(p, 1, 0, 0);
+    TestCommon(p, 1, 0, 0, -1.0);
 }
 
 TEST_P(TestStagingMPMD, MultipleSteps)
 {
     RunParams p = GetParam();
-    TestCommon(p, 10, 0, 0);
+    TestCommon(p, 10, 0, 0, -1.0);
+}
+
+TEST_P(TestStagingMPMD, MultipleStepsWithTimeout)
+{
+    auto m = engineParams.find("MarshalMethod");
+    if (m != engineParams.end() && m->second == "BP")
+    {
+        if (!wrank)
+        {
+            std::cout << "Skip MultipleStepsWithTimeout test with BP marshaling"
+                      << std::endl;
+        }
+    }
+    else
+    {
+        RunParams p = GetParam();
+        // timeout in reader's BeginStep instead of blocking wait
+        TestCommon(p, 10, 0, 0, 2.0);
+    }
 }
 
 TEST_P(TestStagingMPMD, SlowWriter)
 {
     RunParams p = GetParam();
-    TestCommon(p, 5, 100, 0);
+    TestCommon(p, 4, 100, 0, -1.0);
 }
 
 TEST_P(TestStagingMPMD, SlowReader)
 {
     RunParams p = GetParam();
-    TestCommon(p, 5, 0, 100);
+    TestCommon(p, 4, 0, 100, -1.0);
 }
 
 INSTANTIATE_TEST_CASE_P(NxM, TestStagingMPMD,

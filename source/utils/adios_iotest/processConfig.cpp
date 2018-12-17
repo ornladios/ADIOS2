@@ -28,9 +28,10 @@ CommandWrite::CommandWrite(std::string stream, std::string group)
 : Command(Operation::Write), streamName(stream), groupName(group){};
 CommandWrite::~CommandWrite(){};
 
-CommandRead::CommandRead(std::string stream, std::string group)
+CommandRead::CommandRead(std::string stream, std::string group,
+                         const float timeoutSec)
 : Command(Operation::Read), stepMode(adios2::StepMode::NextAvailable),
-  streamName(stream), groupName(group), timeout_sec(84600){};
+  streamName(stream), groupName(group), timeout_sec(timeoutSec){};
 CommandRead::~CommandRead(){};
 
 std::vector<std::string> FileToLines(std::ifstream &configfile)
@@ -642,14 +643,14 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                             "It must be either 'next' or 'latest'");
                     }
 
-                    double d = FLT_MAX;
+                    double d = -1.0;
                     if (words.size() >= 4)
                     {
                         // next word is timeout
                         d = stringToDouble(words, 4, "read timeout");
                         if (d < 0.0)
                         {
-                            d = FLT_MAX;
+                            d = -1.0;
                         }
                     }
 
@@ -658,7 +659,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         std::cout << "--> Command Read mode = " << mode
                                   << "  input = " << words[2]
                                   << "  group = " << groupName << " timeout = ";
-                        if (d == FLT_MAX)
+                        if (d < 0.0)
                         {
                             std::cout << "forever";
                         }
@@ -669,7 +670,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         std::cout << std::endl;
                     }
                     auto cmd =
-                        std::make_shared<CommandRead>(streamName, groupName);
+                        std::make_shared<CommandRead>(streamName, groupName, d);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                     cfg.condMap[streamName] = adios2::StepStatus::OK;

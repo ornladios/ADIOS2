@@ -129,7 +129,9 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
             std::cout << "latest step from ";
         }
 
-        std::cout << cmdR->streamName << " using the group " << cmdR->groupName;
+        std::cout << cmdR->streamName << " with timeout value "
+                  << cmdR->timeout_sec << " using the group "
+                  << cmdR->groupName;
         if (!cmdR->variables.empty())
         {
             std::cout << " with selected variables:  ";

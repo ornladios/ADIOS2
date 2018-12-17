@@ -61,6 +61,9 @@ private:
     std::map<int, int> m_RankToPeerID;
     // Global ranks of the readers directly assigned to me
     std::vector<int> m_RankDirectPeers;
+    // true: Reader(s) selected me as primary writer contact
+    // e.g. I need to send info to Readers in BeginStep()
+    bool m_AmIPrimaryContact;
 
     int m_CurrentStep = -1; // steps start from 0
 

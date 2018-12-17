@@ -15,8 +15,8 @@ endif()
 
 if(ADIOS2_HAVE_SST)
 gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                EXTRA_ARGS "SST"
-                TEST_SUFFIX _SST)
+                EXTRA_ARGS "SST" "MarshalMethod:FFS"
+                TEST_SUFFIX _SST_FFS)
 gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
                 EXTRA_ARGS "SST" "MarshalMethod:BP"
                 TEST_SUFFIX _SST_BP)
