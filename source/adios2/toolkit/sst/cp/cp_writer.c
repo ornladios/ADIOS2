@@ -898,11 +898,14 @@ void SstWriterClose(SstStream Stream)
         Stream->Stats->ValidTimeSecs = (double)Diff.tv_usec / 1e6 + Diff.tv_sec;
 
     CP_verbose(Stream, "All timesteps are released in WriterClose\n");
+
     /*
-     *  We'll go ahead and remove the contact info since multiple
-     *  readers is not yet implemented
+     *  Only rank 0 removes contact info, and only when everything is closed.
      */
-    removeContactInfo(Stream);
+    if (Stream->Rank == 0)
+    {
+        removeContactInfo(Stream);
+    }
 }
 
 #ifdef NOTDEF
