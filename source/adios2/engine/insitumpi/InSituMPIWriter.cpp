@@ -63,23 +63,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     }
 }
 
-InSituMPIWriter::~InSituMPIWriter()
-{
-    // The completion of the -1 step message (sent by primary contacts only) is
-    // waited upon here
-    if (m_MPIRequests.size())
-    {
-        if (m_Verbosity == 5)
-        {
-            std::cout << "InSituMPI Writer " << m_WriterRank
-                      << " needs to wait on " << m_MPIRequests.size()
-                      << " outstanding MPI async message request..."
-                      << std::endl;
-        }
-        insitumpi::CompleteRequests(m_MPIRequests, true, m_WriterRank);
-        m_MPIRequests.clear();
-    }
-}
+InSituMPIWriter::~InSituMPIWriter() {}
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -401,7 +385,6 @@ void InSituMPIWriter::DoClose(const int transportIndex)
         // Send -1 to all reader peers, asynchronously
         // We need to call Wait on all Isend/Irecv calls at some point otherwise
         // MPI_Comm_free() will never release the communicator
-        MPI_Request request;
         for (auto peerRank : m_RankDirectPeers)
         {
             m_MPIRequests.emplace_back();
@@ -409,6 +392,18 @@ void InSituMPIWriter::DoClose(const int transportIndex)
                       insitumpi::MpiTags::Step, m_CommWorld,
                       &m_MPIRequests.back());
         }
+        // The completion of the -1 step message is waited upon here
+        // because the destructor may be called after MPI_Finalize()
+        // so this is the last safe point to do this.
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank
+                      << " needs to wait on " << m_MPIRequests.size()
+                      << " outstanding MPI async message request..."
+                      << std::endl;
+        }
+        insitumpi::CompleteRequests(m_MPIRequests, true, m_WriterRank);
+        m_MPIRequests.clear();
     }
 }
 
