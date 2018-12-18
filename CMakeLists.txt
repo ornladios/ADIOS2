@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.3)
 
-project(ENET VERSION 1.3.13 LANGUAGES C)
+project(ENET VERSION 1.3.14 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
 set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
@@ -34,7 +34,7 @@ endif()
 
 include(CMakeDependentOption)
 
-# Setup shared library defaults.  If explicitly specified somehow, then default 
+# Setup shared library defaults.  If explicitly specified somehow, then default
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
@@ -43,24 +43,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS
   "SHARED_LIBS_SUPPORTED" OFF
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
-
-# Setup PIC defaults.  If explicitly specified somehow, then default 
-# to that.  Otherwise base the default on whether or not shared libs are even
-# supported.
-if(DEFINED ENET_ENABLE_PIC)
-  set(ENET_ENABLE_PIC_DEFAULT ${ENET_ENABLE_PIC})
-elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-  set(ENET_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
-else()
-  set(ENET_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(ENET_ENABLE_PIC
-  "Build with Position Independent Code" ${ENET_ENABLE_PIC_DEFAULT}
-  "SHARED_LIBS_SUPPORTED" OFF
-)
-mark_as_advanced(ENET_ENABLE_PIC)
-set(CMAKE_POSITION_INDEPENDENT_CODE ${ENET_ENABLE_PIC})
-mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
 
 include(CheckFunctionExists)
 check_function_exists(getaddrinfo HAS_GETADDRINFO)
@@ -152,21 +134,23 @@ install(TARGETS enet
 )
 
 # Setup packaging and configs
- 
+
 # Add all targets to the build-tree export set
-export(TARGETS enet NAMESPACE enet::
-  FILE "${PROJECT_BINARY_DIR}/enet-targets.cmake")
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${PROJECT_BINARY_DIR}/enet-config-version.cmake"
+  COMPATIBILITY SameMajorVersion)
 configure_file(enet-config.cmake.in
   "${PROJECT_BINARY_DIR}/enet-config.cmake" @ONLY)
-configure_file(enet-config-version.cmake.in
-  "${PROJECT_BINARY_DIR}/enet-config-version.cmake" @ONLY)
- 
+export(TARGETS enet NAMESPACE enet::
+  FILE "${PROJECT_BINARY_DIR}/enet-targets.cmake")
+
 # Install the enet-config.cmake and enet-config-version.cmake
 install(FILES
   "${PROJECT_BINARY_DIR}/enet-config.cmake"
   "${PROJECT_BINARY_DIR}/enet-config-version.cmake"
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
- 
+
 # Install the export set for use with the install-tree
 install(EXPORT enet-targets NAMESPACE enet::
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}")
