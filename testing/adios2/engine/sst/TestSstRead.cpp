@@ -22,6 +22,7 @@ public:
 
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
+int IgnoreTimeGap = 1;
 std::string fname = "ADIOS2Sst";
 
 static std::string Trim(std::string &str)
@@ -253,16 +254,20 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         TimeGapDetected++;
     }
 
-    if (TimeGapExpected)
+    if (!IgnoreTimeGap)
     {
-        EXPECT_TRUE(TimeGapDetected);
+        if (TimeGapExpected)
+        {
+            EXPECT_TRUE(TimeGapDetected);
+        }
+        else
+        {
+            EXPECT_FALSE(TimeGapDetected);
+        }
     }
-    else
-    {
-        EXPECT_EQ(t, NSteps);
 
-        EXPECT_FALSE(TimeGapDetected);
-    }
+    EXPECT_EQ(t, NSteps);
+
     // Close the file
     engine.Close();
 }
@@ -284,7 +289,14 @@ int main(int argc, char **argv)
     {
         if (std::string(argv[1]) == "--expect_time_gap")
         {
+
             TimeGapExpected++;
+            IgnoreTimeGap = 0;
+        }
+        else if (std::string(argv[1]) == "--expect_contiguous_time")
+        {
+            TimeGapExpected = 0;
+            IgnoreTimeGap = 0;
         }
         else if (std::string(argv[1]) == "--compress_sz")
         {
