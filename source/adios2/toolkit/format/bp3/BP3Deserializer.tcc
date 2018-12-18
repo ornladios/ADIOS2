@@ -756,6 +756,8 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
 
             variable = &io.DefineVariable<T>(variableName, shape,
                                              Dims(shape.size(), 0), shape);
+            variable->m_AvailableShapes[characteristics.Statistics.Step] =
+                variable->m_Shape;
             break;
         }
         case (ShapeID::LocalValue):
@@ -846,6 +848,15 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                 // reset shape and count
                 variable->m_Shape[0] = 1;
                 variable->m_Count[0] = 1;
+            }
+            else if (subsetCharacteristics.EntryShapeID == ShapeID::GlobalArray)
+            {
+                if (subsetCharacteristics.Shape !=
+                    variable->m_AvailableShapes.rbegin()->second)
+                {
+                    variable->m_AvailableShapes[currentStep] =
+                        subsetCharacteristics.Shape;
+                }
             }
         }
         else

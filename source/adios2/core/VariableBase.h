@@ -100,6 +100,8 @@ public:
      * */
     std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
 
+    std::map<size_t, Dims> m_AvailableShapes;
+
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
                  const Dims &count, const bool constantShape,
@@ -194,6 +196,12 @@ public:
      * @throws std::invalid_argument if random access and streaming are called
      */
     void CheckRandomAccessConflict(const std::string hint) const;
+
+    /**
+     * Dynamically update the shape of a global variable
+     * @return
+     */
+    Dims Shape() const;
 
 protected:
     const bool m_DebugMode = false;

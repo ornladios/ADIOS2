@@ -44,7 +44,7 @@ void write(adios2::ADIOS &adios)
     std::vector<double> buf(nstep, 0.0);
     for (int i = 0; i < buf.size(); i++)
     {
-        buf[i] = rank+(double)i/10.0;
+        buf[i] = rank + static_cast<double>(i) / 10.0;
     }
 
     if (!rank)
@@ -105,9 +105,9 @@ void read(adios2::ADIOS &adios)
             std::cout << "Step " << i << " shape (" << var.Shape()[0] << ", "
                       << var.Shape()[1] << ")" << std::endl;
         }
-        
-        EXPECT_EQ(var.Shape()[0], nproc); 
-        EXPECT_EQ(var.Shape()[1], expected_shape); 
+
+        EXPECT_EQ(var.Shape()[0], nproc);
+        EXPECT_EQ(var.Shape()[1], expected_shape);
 
         i++;
     }

@@ -109,7 +109,7 @@ namespace adios2
     Dims Variable<T>::Shape() const                                            \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");  \
-        return m_Variable->m_Shape;                                            \
+        return m_Variable->Shape();                                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
