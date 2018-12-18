@@ -16,7 +16,7 @@ enum
    ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE     = 65536,
    ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT   = 1,
    ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT   = 255,
-   ENET_PROTOCOL_MAXIMUM_PEER_ID         = 0xFFFFFF,
+   ENET_PROTOCOL_MAXIMUM_PEER_ID         = 0xFFF,
    ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT  = 1024 * 1024
 };
 
@@ -45,12 +45,12 @@ typedef enum _ENetProtocolFlag
    ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE = (1 << 7),
    ENET_PROTOCOL_COMMAND_FLAG_UNSEQUENCED = (1 << 6),
 
-   ENET_PROTOCOL_HEADER_FLAG_COMPRESSED = (1 << 26),
-   ENET_PROTOCOL_HEADER_FLAG_SENT_TIME  = (1 << 27),
+   ENET_PROTOCOL_HEADER_FLAG_COMPRESSED = (1 << 14),
+   ENET_PROTOCOL_HEADER_FLAG_SENT_TIME  = (1 << 15),
    ENET_PROTOCOL_HEADER_FLAG_MASK       = ENET_PROTOCOL_HEADER_FLAG_COMPRESSED | ENET_PROTOCOL_HEADER_FLAG_SENT_TIME,
 
-   ENET_PROTOCOL_HEADER_SESSION_MASK    = (3 << 24),
-   ENET_PROTOCOL_HEADER_SESSION_SHIFT   = 24
+   ENET_PROTOCOL_HEADER_SESSION_MASK    = (3 << 12),
+   ENET_PROTOCOL_HEADER_SESSION_SHIFT   = 12
 } ENetProtocolFlag;
 
 #ifdef _MSC_VER
@@ -64,7 +64,7 @@ typedef enum _ENetProtocolFlag
 
 typedef struct _ENetProtocolHeader
 {
-   enet_uint32 peerID;
+   enet_uint16 peerID;
    enet_uint16 sentTime;
 } ENET_PACKED ENetProtocolHeader;
 
@@ -85,7 +85,7 @@ typedef struct _ENetProtocolAcknowledge
 typedef struct _ENetProtocolConnect
 {
    ENetProtocolCommandHeader header;
-   enet_uint32 outgoingPeerID;
+   enet_uint16 outgoingPeerID;
    enet_uint8  incomingSessionID;
    enet_uint8  outgoingSessionID;
    enet_uint32 mtu;
@@ -103,7 +103,7 @@ typedef struct _ENetProtocolConnect
 typedef struct _ENetProtocolVerifyConnect
 {
    ENetProtocolCommandHeader header;
-   enet_uint32 outgoingPeerID;
+   enet_uint16 outgoingPeerID;
    enet_uint8  incomingSessionID;
    enet_uint8  outgoingSessionID;
    enet_uint32 mtu;

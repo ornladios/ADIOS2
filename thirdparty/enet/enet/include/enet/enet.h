@@ -259,8 +259,8 @@ typedef struct _ENetPeer
 { 
    ENetListNode  dispatchList;
    struct _ENetHost * host;
-   enet_uint32   outgoingPeerID;
-   enet_uint32   incomingPeerID;
+   enet_uint16   outgoingPeerID;
+   enet_uint16   incomingPeerID;
    enet_uint32   connectID;
    enet_uint8    outgoingSessionID;
    enet_uint8    incomingSessionID;
@@ -365,14 +365,14 @@ typedef struct _ENetHost
    enet_uint32          mtu;
    enet_uint32          randomSeed;
    int                  recalculateBandwidthLimits;
-   ENetPeer **           peer_list;                       /**< array of peers allocated for this host */
+   ENetPeer *           peers;                       /**< array of peers allocated for this host */
    size_t               peerCount;                   /**< number of peers allocated for this host */
    size_t               channelLimit;                /**< maximum number of channels allowed for connected peers */
    enet_uint32          serviceTime;
    ENetList             dispatchQueue;
    int                  continueSending;
    size_t               packetSize;
-   enet_uint32          headerFlags;
+   enet_uint16          headerFlags;
    ENetProtocol         commands [ENET_PROTOCOL_MAXIMUM_PACKET_COMMANDS];
    size_t               commandCount;
    ENetBuffer           buffers [ENET_BUFFER_MAXIMUM];
@@ -569,8 +569,8 @@ ENET_API int        enet_host_compress_with_range_coder (ENetHost * host);
 ENET_API void       enet_host_channel_limit (ENetHost *, size_t);
 ENET_API void       enet_host_bandwidth_limit (ENetHost *, enet_uint32, enet_uint32);
 extern   void       enet_host_bandwidth_throttle (ENetHost *);
-ENET_API int        enet_host_get_sock_fd (ENetHost *);
 extern  enet_uint32 enet_host_random_seed (void);
+ENET_API int        enet_host_get_sock_fd (ENetHost *);
 
 ENET_API int                 enet_peer_send (ENetPeer *, enet_uint8, ENetPacket *);
 ENET_API ENetPacket *        enet_peer_receive (ENetPeer *, enet_uint8 * channelID);

@@ -280,7 +280,6 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
     size_t channelCount, duplicatePeers = 0;
     ENetPeer * currentPeer, * peer = NULL;
     ENetProtocol verifyCommand;
-    int i;
 
     channelCount = ENET_NET_TO_HOST_32 (command -> connect.channelCount);
 
@@ -288,21 +287,10 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
         channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT)
       return NULL;
 
-    for (i = 0; i < host -> peerCount; i++ ) 
+    for (currentPeer = host -> peers;
+         currentPeer < & host -> peers [host -> peerCount];
+         ++ currentPeer)
     {
-	currentPeer = host -> peer_list[i];
-
-        if (currentPeer -> state != ENET_PEER_STATE_DISCONNECTED &&
-            currentPeer -> address.host == host -> receivedAddress.host &&
-            currentPeer -> address.port == host -> receivedAddress.port &&
-            currentPeer -> connectID == command -> connect.connectID)
-          return NULL;
-    }
-
-    for (i = 0; i < host -> peerCount; i++ )
-    {
-	currentPeer = host -> peer_list[i];
-
         if (currentPeer -> state == ENET_PEER_STATE_DISCONNECTED)
         {
             if (peer == NULL)
@@ -320,29 +308,6 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
         }
     }
 
-    if (i >= host -> peerCount)
-    {
-	if (i >= ENET_PROTOCOL_MAXIMUM_PEER_ID) 
-	    return NULL;
-	host -> peerCount++;
-	host -> peer_list[i] = enet_malloc (sizeof (ENetPeer));
-	memset (host -> peer_list[i], 0, sizeof (ENetPeer));
-	peer = host->peer_list[i];
-	peer -> host = host;
-	peer -> incomingPeerID = i;
-	peer -> outgoingSessionID = peer -> incomingSessionID = 0xFF;
-	peer -> data = NULL;
-
-	enet_list_clear (& peer -> acknowledgements);
-	enet_list_clear (& peer -> sentReliableCommands);
-	enet_list_clear (& peer -> sentUnreliableCommands);
-	enet_list_clear (& peer -> outgoingReliableCommands);
-	enet_list_clear (& peer -> outgoingUnreliableCommands);
-	enet_list_clear (& peer -> dispatchedCommands);
-
-	enet_peer_reset (peer);
-    }
-
     if (peer == NULL || duplicatePeers >= host -> duplicatePeers)
       return NULL;
 
@@ -355,7 +320,7 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
     peer -> state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
     peer -> connectID = command -> connect.connectID;
     peer -> address = host -> receivedAddress;
-    peer -> outgoingPeerID = ENET_NET_TO_HOST_32 (command -> connect.outgoingPeerID);
+    peer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> connect.outgoingPeerID);
     peer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.incomingBandwidth);
     peer -> outgoingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.outgoingBandwidth);
     peer -> packetThrottleInterval = ENET_NET_TO_HOST_32 (command -> connect.packetThrottleInterval);
@@ -438,7 +403,7 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
 
     verifyCommand.header.command = ENET_PROTOCOL_COMMAND_VERIFY_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
     verifyCommand.header.channelID = 0xFF;
-    verifyCommand.verifyConnect.outgoingPeerID = ENET_HOST_TO_NET_32 (peer -> incomingPeerID);
+    verifyCommand.verifyConnect.outgoingPeerID = ENET_HOST_TO_NET_16 (peer -> incomingPeerID);
     verifyCommand.verifyConnect.incomingSessionID = incomingSessionID;
     verifyCommand.verifyConnect.outgoingSessionID = outgoingSessionID;
     verifyCommand.verifyConnect.mtu = ENET_HOST_TO_NET_32 (peer -> mtu);
@@ -976,7 +941,7 @@ enet_protocol_handle_verify_connect (ENetHost * host, ENetEvent * event, ENetPee
     if (channelCount < peer -> channelCount)
       peer -> channelCount = channelCount;
 
-    peer -> outgoingPeerID = ENET_NET_TO_HOST_32 (command -> verifyConnect.outgoingPeerID);
+    peer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> verifyConnect.outgoingPeerID);
     peer -> incomingSessionID = command -> verifyConnect.incomingSessionID;
     peer -> outgoingSessionID = command -> verifyConnect.outgoingSessionID;
 
@@ -1017,7 +982,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     ENetPeer * peer;
     enet_uint8 * currentData;
     size_t headerSize;
-    enet_uint32 peerID, flags;
+    enet_uint16 peerID, flags;
     enet_uint8 sessionID;
 
     if (host -> receivedDataLength < (size_t) & ((ENetProtocolHeader *) 0) -> sentTime)
@@ -1025,7 +990,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
 
     header = (ENetProtocolHeader *) host -> receivedData;
 
-    peerID = ENET_NET_TO_HOST_32 (header -> peerID);
+    peerID = ENET_NET_TO_HOST_16 (header -> peerID);
     sessionID = (peerID & ENET_PROTOCOL_HEADER_SESSION_MASK) >> ENET_PROTOCOL_HEADER_SESSION_SHIFT;
     flags = peerID & ENET_PROTOCOL_HEADER_FLAG_MASK;
     peerID &= ~ (ENET_PROTOCOL_HEADER_FLAG_MASK | ENET_PROTOCOL_HEADER_SESSION_MASK);
@@ -1041,7 +1006,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
       return 0;
     else
     {
-       peer = host -> peer_list [peerID];
+       peer = & host -> peers [peerID];
 
        if (peer -> state == ENET_PEER_STATE_DISCONNECTED ||
            peer -> state == ENET_PEER_STATE_ZOMBIE ||
@@ -1630,15 +1595,15 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
     ENetPeer * currentPeer;
     int sentLength;
     size_t shouldCompress = 0;
-    int i;
-
+ 
     host -> continueSending = 1;
 
     while (host -> continueSending)
     for (host -> continueSending = 0,
-	     i = 0; i < host -> peerCount; i++ )
+           currentPeer = host -> peers;
+         currentPeer < & host -> peers [host -> peerCount];
+         ++ currentPeer)
     {
-	currentPeer = host -> peer_list[i];
         if (currentPeer -> state == ENET_PEER_STATE_DISCONNECTED ||
             currentPeer -> state == ENET_PEER_STATE_ZOMBIE)
           continue;
@@ -1739,7 +1704,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
 
         if (currentPeer -> outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID)
           host -> headerFlags |= currentPeer -> outgoingSessionID << ENET_PROTOCOL_HEADER_SESSION_SHIFT;
-        header -> peerID = ENET_HOST_TO_NET_32 (currentPeer -> outgoingPeerID | host -> headerFlags);
+        header -> peerID = ENET_HOST_TO_NET_16 (currentPeer -> outgoingPeerID | host -> headerFlags);
         if (host -> checksum != NULL)
         {
             enet_uint32 * checksum = (enet_uint32 *) & headerData [host -> buffers -> dataLength];
