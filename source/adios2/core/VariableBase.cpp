@@ -12,6 +12,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::count
+#include <iterator>  //std::next
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
@@ -309,6 +310,38 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
     {
         ++m_StepsStart;
     }
+}
+
+Dims VariableBase::Shape() const
+{
+    if (m_AvailableShapes.empty())
+    {
+        return m_Shape;
+    }
+
+    auto itStep = std::next(m_AvailableShapes.begin(), m_StepsStart);
+    const size_t step = itStep->first;
+
+    Dims shape;
+    auto itLowerBound = m_AvailableShapes.lower_bound(step);
+    if (itLowerBound->first == step) // it's found
+    {
+        shape = itLowerBound->second;
+    }
+    else
+    {
+        if (itLowerBound == m_AvailableShapes.begin()) // beginning
+        {
+            shape = itLowerBound->second;
+        }
+        else
+        {
+            --itLowerBound;
+            shape = itLowerBound->second;
+        }
+    }
+
+    return shape;
 }
 
 // PRIVATE
