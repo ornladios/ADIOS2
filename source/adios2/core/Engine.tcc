@@ -136,7 +136,7 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 
 // Get
 template <class T>
-void Engine::Get(Variable<T> &variable, const Mode launch)
+typename Variable<T>::Info* Engine::Get(Variable<T> &variable, const Mode launch)
 {
     if (m_DebugMode)
     {
@@ -146,10 +146,12 @@ void Engine::Get(Variable<T> &variable, const Mode launch)
     switch (launch)
     {
     case Mode::Deferred:
-        // DoGetBlockDeferred(variable, data);
+        // TODO different? Should use DoGetDeferred?
+        return DoGetBlockSync(variable);
         break;
     case Mode::Sync:
-        DoGetBlockSync(variable);
+        // TODO should use DoGetSync()?
+        return DoGetBlockSync(variable);
         break;
     default:
         if (m_DebugMode)
@@ -160,12 +162,13 @@ void Engine::Get(Variable<T> &variable, const Mode launch)
                 "GetBlock\n");
         }
     }
+    return nullptr;
 }
 
 template <class T>
-void Engine::Get(const std::string &variableName, const Mode launch)
+typename Variable<T>::Info* Engine::Get(const std::string &variableName, const Mode launch)
 {
-    Get(FindVariable<T>(variableName, "in call to Get"), launch);
+    return Get(FindVariable<T>(variableName, "in call to Get"), launch);
 }
 
 template <class T>

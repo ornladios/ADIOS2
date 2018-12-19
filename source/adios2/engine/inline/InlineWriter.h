@@ -46,6 +46,10 @@ public:
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
+    void AddReadVariable(const std::string &name) {
+        m_ReadVariables.insert(name);
+    }
+
 private:
     int m_Verbosity = 0;
     int m_WriterRank;       // my rank in the writers' comm
@@ -53,6 +57,9 @@ private:
 
     // EndStep must call PerformPuts if necessary
     bool m_NeedPerformPuts = false;
+
+    // track which variables have been read, so their blockinfo can be cleared.
+    std::set<std::string> m_ReadVariables;
 
     void Init() final;
     void InitParameters() final;

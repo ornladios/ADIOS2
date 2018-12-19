@@ -68,7 +68,7 @@ private:
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;                              \
-    void DoGetBlockSync(Variable<T> &) final;
+    typename Variable<T>::Info* DoGetBlockSync(Variable<T> &) final;
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -81,7 +81,7 @@ private:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
     template <class T>
-    void GetBlockSyncCommon(Variable<T> &variable);
+    typename Variable<T>::Info* GetBlockSyncCommon(Variable<T> &variable);
 
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \

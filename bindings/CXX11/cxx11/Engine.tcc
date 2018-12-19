@@ -30,6 +30,8 @@ static std::vector<typename Variable<T>::Info> ToBlocksInfo(
     for (const typename core::Variable<T>::Info &coreBlockInfo : coreBlocksInfo)
     {
         typename Variable<T>::Info blockInfo;
+        // doesn't work because coreBlockInfo is transient.
+        // blockInfo.m_Info = &coreBlockInfo;
         blockInfo.Start = coreBlockInfo.Start;
         blockInfo.Count = coreBlockInfo.Count;
         blockInfo.IsValue = coreBlockInfo.IsValue;
@@ -41,8 +43,8 @@ static std::vector<typename Variable<T>::Info> ToBlocksInfo(
         {
             blockInfo.Min = coreBlockInfo.Min;
             blockInfo.Max = coreBlockInfo.Max;
-            blockInfo.Data = coreBlockInfo.Buffer;
         }
+        blockInfo.BlockID = coreBlockInfo.BlockID;
         blocksInfo.push_back(blockInfo);
     }
 
@@ -126,17 +128,17 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 }
 
 template <class T>
-void Engine::Get(Variable<T> variable, const Mode launch)
+void Engine::Get(Variable<T> variable, typename Variable<T>::Info& info, const Mode launch)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    m_Engine->Get<T>(*variable.m_Variable, launch);
+    info.m_Info = m_Engine->Get<T>(*variable.m_Variable, launch);
 }
 
 template <class T>
-void Engine::Get(const std::string &variableName, const Mode launch)
+void Engine::Get(const std::string &variableName, typename Variable<T>::Info& info, const Mode launch)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    m_Engine->Get<T>(variableName, launch);
+    info.m_Info = m_Engine->Get<T>(variableName, launch);
 }
 
 template <class T>

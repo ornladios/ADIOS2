@@ -105,8 +105,10 @@ Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
     template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
                                  const Mode);                                  \
                                                                                \
-    template void Engine::Get<T>(Variable<T>, const Mode);                     \
-    template void Engine::Get<T>(const std::string &, const Mode);             \
+    template void Engine::Get<T>(Variable<T>,                                  \
+                                 typename Variable<T>::Info& info, const Mode);\
+    template void Engine::Get<T>(const std::string &,                          \
+                                 typename Variable<T>::Info& info, const Mode);\
                                                                                \
     template std::map<size_t, std::vector<typename Variable<T>::Info>>         \
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \

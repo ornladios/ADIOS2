@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_INLINEREADER_TCC_
 
 #include "InlineReader.h"
+#include "InlineWriter.h"
 
 #include <iostream>
 
@@ -31,7 +32,7 @@ inline void InlineReader::GetSyncCommon(Variable<std::string> &variable,
     if (blockInfo.IsValue) {
         *data = blockInfo.Value;
     } else {
-        *data = blockInfo.Buffer.Ptr()[0];
+        *data = blockInfo.Data[0];
     }
     if (m_Verbosity == 5)
     {
@@ -68,11 +69,13 @@ void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-inline void InlineReader::GetBlockSyncCommon(Variable<T> &variable)
+inline typename Variable<T>::Info* InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
+    InlineWriter &writer = dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    writer.AddReadVariable(variable.m_Name);
     // variable.m_Data = data;
     auto blockInfo = variable.m_BlocksInfo.back();
-    if (blockInfo.Buffer.Ptr()) {
+    if (blockInfo.Data) {
         // *data = blockInfo.Data.Ptr();
     }
     if (m_Verbosity == 5)
@@ -80,6 +83,7 @@ inline void InlineReader::GetBlockSyncCommon(Variable<T> &variable)
         std::cout << "Inline Reader " << m_ReaderRank << "     GetBlockSync("
                   << variable.m_Name << ")\n";
     }
+    return &variable.m_BlocksInfo.back();
 }
 
 

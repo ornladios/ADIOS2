@@ -60,19 +60,6 @@ StepStatus InlineReader::BeginStep(const StepMode mode,
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
     }
 
-    // If we reach the end of stream (writer is gone or explicitly tells the
-    // reader)
-    // we return EndOfStream to the reader application
-    // if (m_CurrentStep == 2)
-    // {
-    //     std::cout << "Inline Reader " << m_ReaderRank
-    //               << "   forcefully returns End of Stream at this step\n";
-
-    //     return StepStatus::EndOfStream;
-    // }
-
-    // We should block until a new step arrives or reach the timeout
-
     // m_IO Variables and Attributes should be defined at this point
     // so that the application can inquire them and start getting data
 
@@ -117,9 +104,9 @@ void InlineReader::EndStep()
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
-    void InlineReader::DoGetBlockSync(Variable<T> &variable)                   \
+    typename Variable<T>::Info* InlineReader::DoGetBlockSync(Variable<T> &variable)                   \
     {                                                                          \
-        GetBlockSyncCommon(variable);                                          \
+        return GetBlockSyncCommon(variable);                                   \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

@@ -22,10 +22,6 @@
 
 void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, unsigned int step)
 {
-    // Application variable
-    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myFloats.size();
-
     try
     {
         inlineReader.BeginStep();
@@ -38,16 +34,25 @@ void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, un
 
         if (inlineFloats000)
         {
-            inlineFloats000.SetBlockSelection(rank);
-
-            inlineReader.Get<float>(inlineFloats000, adios2::Mode::Sync);
             auto blocksInfo = inlineReader.BlocksInfo(inlineFloats000, step);
 
             std::cout << "Data timestep " << inlineFloats000.StepsStart()
                       << " from rank " << rank << ": ";
-            for (const auto info : blocksInfo) {
+            for (auto& info : blocksInfo) {
+                // bp file reader would see all blocks, inline only sees local writer's block(s).
+                size_t myBlock = info.BlockID;
+                inlineFloats000.SetBlockSelection(myBlock);
+
+                // info passed by reference
+                // engine must remember data pointer (or info) to fill it out at PerformGets()
+                inlineReader.Get<float>(inlineFloats000, info, adios2::Mode::Deferred);
+
+            }
+            inlineReader.PerformGets();
+
+            for (const auto& info : blocksInfo) {
                 adios2::Dims count = info.Count;
-                const float * vectData = info.Data.Ptr();
+                const float * vectData = info.Data();
                 for(int i = 0; i < count[0]; ++i)
                 {
                     float datum = vectData[i];
@@ -70,6 +75,7 @@ void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, un
             std::cout << "inlineString: " << myString << "\n";
         }
         inlineReader.EndStep();
+        // all deferred block info are now valid - need data pointers to be valid, filled with data
     }
     catch (std::invalid_argument &e)
     {
@@ -122,7 +128,7 @@ int main(int argc, char *argv[])
         /// WRITE
         {
             inlineIO.SetEngine("Inline");
-            inlineIO.SetParameters({{"verbose", "5"}});
+            inlineIO.SetParameters({{"verbose", "4"}});
 
             /** global array: name, { shape (total dimensions) }, { start
              * (local) },
@@ -148,7 +154,7 @@ int main(int argc, char *argv[])
 
                 inlineFloats[v] =
                     inlineIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
-                                               {Nx});
+                                               {Nx}, adios2::ConstantDims);
             }
 
             /** global single value variable: name */
@@ -160,7 +166,7 @@ int main(int argc, char *argv[])
                 inlineIO.Open("myWriteID", adios2::Mode::Write);
 
             inlineIO.SetEngine("Inline");
-            inlineIO.SetParameters({{"verbose", "5"}, {"writerID", "myWriteID"}});
+            inlineIO.SetParameters({{"verbose", "4"}, {"writerID", "myWriteID"}});
 
             adios2::Engine inlineReader =
                 inlineIO.Open("myReadID", adios2::Mode::Read);

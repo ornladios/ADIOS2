@@ -44,6 +44,33 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         std::cout << "Inline Writer " << m_WriterRank
                   << "   BeginStep() new step " << m_CurrentStep << "\n";
     }
+
+    // Need to clear block info from previous step at this point.
+    if (m_ReadVariables.empty())
+    {
+        return StepStatus::OK;
+    }
+
+    for (const std::string &name : m_ReadVariables)
+    {
+        const std::string type = m_IO.InquireVariableType(name);
+
+        if (type == "compound")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> &variable =                                                \
+            FindVariable<T>(name, "in call to BeginStep"); \
+        variable.m_BlocksInfo.clear();                                         \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+
+    m_ReadVariables.clear();
+
     return StepStatus::OK;
 }
 

@@ -14,7 +14,7 @@
 #include "Operator.h"
 
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/DataBuffer.h"
+#include "adios2/core/Variable.h"
 
 namespace adios2
 {
@@ -216,13 +216,21 @@ public:
     /** Contains sub-block information for a particular Variable<T> */
     struct Info
     {
+        // Info(const typename core::Variable<T>::Info *info = nullptr) : m_Info(info) { };
         adios2::Dims Start; ///< block start
         adios2::Dims Count; ///< block count
         T Min = T();        ///< block Min, if IsValue is false
         T Max = T();        ///< block Max, if IsValue is false
         T Value = T();      ///< block Value, if IsValue is true
-        bool IsValue;       ///< true: value, false: array
-        DataBuffer<T> Data;
+        bool IsValue = false; ///< true: value, false: array
+        size_t BlockID = -1;  ///< block ID for block selections
+        const T *Data() const {
+            return m_Info ? m_Info->BufferP : nullptr;
+        }; ///< block data for block selections. Provided by core Info.
+        // allow Engine to set m_Info
+        friend class Engine;
+    private:
+        const typename core::Variable<T>::Info *m_Info;
     };
 
 private:

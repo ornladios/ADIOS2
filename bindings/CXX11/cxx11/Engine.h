@@ -269,6 +269,8 @@ public:
      * associated with a block selection, and data is retrieved from
      * variable's BlockInfo
      * @param variable contains variable metadata information
+     * @param info block info struct associated with block selection,
+     *   call will link with implementation's block info.
      * @param launch mode policy
      * <pre>
      *      Mode::Deferred, lazy evaluation, do not use data until
@@ -280,13 +282,15 @@ public:
      * @exception std::invalid_argument for invalid variable or nullptr data
      */
     template <class T>
-    void Get(Variable<T> variable, const Mode launch = Mode::Deferred);
+    void Get(Variable<T> variable, typename Variable<T>::Info& info, const Mode launch = Mode::Deferred);
     /**
      * Get data associated with a Variable from the Engine. Data is
      * associated with a block selection, and data is retrieved from
      * variable's BlockInfo. Overloaded version
      * to get variable by name.
      * @param variable contains variable metadata information
+     * @param info block info struct associated with block selection,
+     *   call will link with implementation's block info.
      * @param launch mode policy
      * <pre>
      *      Mode::Deferred, lazy evaluation, do not use data until
@@ -298,7 +302,7 @@ public:
      * @exception std::invalid_argument for invalid variable or nullptr data
      */
     template <class T>
-    void Get(const std::string &variableName, const Mode launch = Mode::Deferred);
+    void Get(const std::string &variableName, typename Variable<T>::Info& info, const Mode launch = Mode::Deferred);
 
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();
@@ -370,8 +374,10 @@ private:
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
                                                                                \
-    extern template void Engine::Get<T>(Variable<T>, const Mode);              \
-    extern template void Engine::Get<T>(const std::string &, const Mode);      \
+    extern template void Engine::Get<T>(Variable<T>,                           \
+                                 typename Variable<T>::Info& info, const Mode);\
+    extern template void Engine::Get<T>(const std::string &,                   \
+                                 typename Variable<T>::Info& info, const Mode);\
                                                                                \
     extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \

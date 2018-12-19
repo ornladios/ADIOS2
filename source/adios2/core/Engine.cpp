@@ -95,9 +95,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #define declare_type(T)                                                        \
     void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }       \
     void Engine::DoGetDeferred(Variable<T> &, T *) { ThrowUp("DoGetDeferred"); }\
-    void Engine::DoGetBlockSync(Variable<T> &v) { \
-        /* fallback to Get for most engines except Inline */ \
-        Get(v); \
+    typename Variable<T>::Info* Engine::DoGetBlockSync(Variable<T> &v) { \
+        return nullptr; \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
@@ -158,8 +157,8 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
                                  const Mode);                                  \
                                                                                \
-    template void Engine::Get<T>(Variable<T> &, const Mode);                   \
-    template void Engine::Get<T>(const std::string &, const Mode);             \
+    template typename Variable<T>::Info* Engine::Get<T>(Variable<T> &, const Mode);                   \
+    template typename Variable<T>::Info* Engine::Get<T>(const std::string &, const Mode);             \
                                                                                \
     template Variable<T> &Engine::FindVariable(                                \
         const std::string &variableName, const std::string hint);              \
