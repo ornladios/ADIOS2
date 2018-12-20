@@ -945,17 +945,28 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 
             std::vector<BP3Base::SerialElementIndex> *deserializedIndexes =
                 nullptr;
-            // mutex portion
+            auto search = deserialized.find(header.Name);
+            if (search == deserialized.end())
             {
-                std::lock_guard<std::mutex> lock(m_Mutex);
-                deserializedIndexes =
-                    &(deserialized
-                          .emplace(std::piecewise_construct,
-                                   std::forward_as_tuple(header.Name),
-                                   std::forward_as_tuple(
-                                       size, SerialElementIndex(header.MemberID,
-                                                                bufferSize)))
-                          .first->second);
+                // key (variable name) is not in the map, add it
+                // mutex portion
+                {
+                    std::lock_guard<std::mutex> lock(m_Mutex);
+                    deserializedIndexes =
+                        &(deserialized
+                            .emplace(std::piecewise_construct,
+                                    std::forward_as_tuple(header.Name),
+                                    std::forward_as_tuple(
+                                        size, SerialElementIndex(header.MemberID,
+                                                                    bufferSize)))
+                            .first->second);
+                }
+            }
+            else
+            {
+                // variable name is already in the map, just get the pointer
+                // of the vector of metadata indices
+                deserializedIndexes = &(search->second);
             }
 
             SerialElementIndex &index =
