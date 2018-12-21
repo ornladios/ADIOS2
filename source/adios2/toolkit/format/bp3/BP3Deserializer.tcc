@@ -432,10 +432,30 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
         const std::vector<size_t> &positions = itStep->second;
 
         // global values only read one block per step
-        const size_t positionsSize =
-            (variable.m_ShapeID == ShapeID::LocalValue) ? positions.size() : 1;
+        const size_t blocksStart = (variable.m_ShapeID == ShapeID::GlobalArray)
+                                       ? variable.m_Start.front()
+                                       : 0;
 
-        for (size_t b = 0; b < positionsSize; ++b)
+        const size_t blocksCount = (variable.m_ShapeID == ShapeID::GlobalArray)
+                                       ? variable.m_Count.front()
+                                       : 1;
+
+        if (m_DebugMode)
+        {
+            if (blocksStart + blocksCount > positions.size())
+            {
+                throw std::invalid_argument(
+                    "ERROR: selection Start {" + std::to_string(blocksStart) +
+                    "} and Count {" + std::to_string(blocksCount) +
+                    "} (requested) is out of bounds of (available) Shape {" +
+                    std::to_string(positions.size()) + "} for relative step " +
+                    std::to_string(s) +
+                    " , when reading 1D global array variable " +
+                    variable.m_Name + ", in call to Get");
+            }
+        }
+
+        for (size_t b = blocksStart; b < blocksCount; ++b)
         {
             size_t localPosition = positions[b];
             const Characteristics<T> characteristics =
@@ -688,6 +708,12 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
             subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
+
+    if (variable->m_ShapeID == ShapeID::LocalValue)
+    {
+        variable->m_ShapeID = ShapeID::GlobalArray;
+        variable->m_SingleValue = true;
+    }
     /* Update variable's starting step, which equals to the min value in
     the sorted map minus one */
     variable->m_StepsStart =
@@ -736,7 +762,6 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         {
             variable = &io.DefineVariable<T>(variableName, {1}, {0}, {1});
             variable->m_ShapeID = ShapeID::LocalValue;
-            variable->m_SingleValue = true;
             break;
         }
         case (ShapeID::LocalArray):
@@ -836,6 +861,15 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
             subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
+
+    if (variable->m_ShapeID == ShapeID::LocalValue)
+    {
+        variable->m_ShapeID = ShapeID::GlobalArray;
+        // variable will be presented as a 1D global array, but contents exist
+        // in metadata
+        variable->m_SingleValue = true;
+    }
+
     /* Update variable's starting step, which equals to the min value in the
      * sorted map minus one */
     variable->m_StepsStart =
