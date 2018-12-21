@@ -55,6 +55,8 @@ template <class T>
 void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Put");
     m_Engine->Put<T>(*variable.m_Variable, data, launch);
 }
 
@@ -70,6 +72,8 @@ template <class T>
 void Engine::Put(Variable<T> variable, const T &datum, const Mode /*launch*/)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Put");
     m_Engine->Put(*variable.m_Variable, datum);
 }
 
@@ -85,6 +89,8 @@ template <class T>
 void Engine::Get(Variable<T> variable, T *data, const Mode launch)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
     m_Engine->Get<T>(*variable.m_Variable, data, launch);
 }
 
@@ -99,6 +105,8 @@ template <class T>
 void Engine::Get(Variable<T> variable, T &datum, const Mode /*launch*/)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
     m_Engine->Get<T>(*variable.m_Variable, datum);
 }
 
@@ -115,6 +123,8 @@ void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch)
 {
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
     m_Engine->Get<T>(*variable.m_Variable, dataV, launch);
 }
 
@@ -131,6 +141,8 @@ template <class T>
 void Engine::Get(Variable<T> variable, typename Variable<T>::Info& info, const Mode launch)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
     info.m_Info = m_Engine->Get<T>(*variable.m_Variable, launch);
 }
 
