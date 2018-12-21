@@ -963,11 +963,12 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
             EXPECT_EQ(stepsGlobalValueStringDataString,
                       std::to_string(currentStep));
 
-            // Local value
+            // Local values are read as 1D Global Arrays
             EXPECT_TRUE(var_RanksLocalValue);
             EXPECT_EQ(var_RanksLocalValue.ShapeID(),
-                      adios2::ShapeID::LocalValue);
+                      adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
+            EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             EXPECT_EQ(var_RanksLocalValue.Min(), 0);
             EXPECT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
@@ -981,8 +982,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
 
             EXPECT_TRUE(var_RanksLocalValueString);
             EXPECT_EQ(var_RanksLocalValueString.ShapeID(),
-                      adios2::ShapeID::LocalValue);
+                      adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
+            EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
             bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,

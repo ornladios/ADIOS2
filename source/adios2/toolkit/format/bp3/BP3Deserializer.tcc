@@ -445,10 +445,10 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
             if (blocksStart + blocksCount > positions.size())
             {
                 throw std::invalid_argument(
-                    "ERROR: selection Start " + std::to_string(blocksStart) +
-                    " and Count " + std::to_string(blocksCount) +
-                    " (requested) is out of bounds of (available) Shape " +
-                    positions.size() + " for relative step " +
+                    "ERROR: selection Start {" + std::to_string(blocksStart) +
+                    "} and Count {" + std::to_string(blocksCount) +
+                    "} (requested) is out of bounds of (available) Shape {" +
+                    std::to_string(positions.size()) + "} for relative step " +
                     std::to_string(s) +
                     " , when reading 1D global array variable " +
                     variable.m_Name + ", in call to Get");
