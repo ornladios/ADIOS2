@@ -73,17 +73,20 @@ inline typename Variable<T>::Info* InlineReader::GetBlockSyncCommon(Variable<T> 
 {
     InlineWriter &writer = dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
     writer.AddReadVariable(variable.m_Name);
-    // variable.m_Data = data;
-    auto blockInfo = variable.m_BlocksInfo.back();
-    if (blockInfo.Data) {
-        // *data = blockInfo.Data.Ptr();
+    if (m_DebugMode) {
+        if (variable.m_BlockID >= variable.m_BlocksInfo.size()) {
+            throw std::invalid_argument(
+                "ERROR: selected BlockID " + std::to_string(variable.m_BlockID) +
+                " is above range of available blocks in GetBlockSync\n"
+            );
+        }
     }
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << "     GetBlockSync("
                   << variable.m_Name << ")\n";
     }
-    return &variable.m_BlocksInfo.back();
+    return &variable.m_BlocksInfo[variable.m_BlockID];
 }
 
 

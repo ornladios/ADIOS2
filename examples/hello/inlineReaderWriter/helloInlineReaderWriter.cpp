@@ -36,7 +36,7 @@ void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, un
         {
             auto blocksInfo = inlineReader.BlocksInfo(inlineFloats000, step);
 
-            std::cout << "Data timestep " << inlineFloats000.StepsStart()
+            std::cout << "Data StepsStart " << inlineFloats000.StepsStart()
                       << " from rank " << rank << ": ";
             for (auto& info : blocksInfo) {
                 // bp file reader would see all blocks, inline only sees local writer's block(s).
@@ -66,7 +66,7 @@ void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, un
             std::cout << "Variable inlineFloats000 not found\n";
         }
 
-        if (inlineString)
+        if (inlineString && rank == 0)
         {
             // inlineString.SetStepSelection({step, 1});
 
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
                 {
                     // Note: Put is deferred, so all variables will see v == 9
                     // and myFloats[0] == 9, 10, or 11
-                    myFloats[0] = static_cast<float>(v + timeStep);
+                    myFloats[rank] = static_cast<float>(v + timeStep + rank);
                     inlineWriter.Put(inlineFloats[v], myFloats.data());
                 }
 

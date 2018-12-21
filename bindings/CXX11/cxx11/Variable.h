@@ -216,7 +216,6 @@ public:
     /** Contains sub-block information for a particular Variable<T> */
     struct Info
     {
-        // Info(const typename core::Variable<T>::Info *info = nullptr) : m_Info(info) { };
         adios2::Dims Start; ///< block start
         adios2::Dims Count; ///< block count
         T Min = T();        ///< block Min, if IsValue is false
@@ -225,7 +224,7 @@ public:
         bool IsValue = false; ///< true: value, false: array
         size_t BlockID = -1;  ///< block ID for block selections
         const T *Data() const {
-            return m_Info ? m_Info->BufferP : nullptr;
+            return m_Info ? (m_Info->BufferP ? m_Info->BufferP : m_Info->BufferV.data()) : nullptr;
         }; ///< block data for block selections. Provided by core Info.
         // allow Engine to set m_Info
         friend class Engine;
