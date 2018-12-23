@@ -1566,8 +1566,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                         "NULL for WriterRank = %d\n",
                 WriterRank);
     }
-    FFSformat = FFSTypeHandle_from_encode(
-        Stream->ReaderFFSContext, MetaData->Metadata[WriterRank].block);
+    FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,
+                                          MetaData->Metadata[WriterRank].block);
 
     if (!FFShas_conversion(FFSformat))
     {

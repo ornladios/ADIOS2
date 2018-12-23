@@ -1316,15 +1316,21 @@ extern void SstInternalProvideTimestep(
     int NullCount = 0;
     for (int i = 0; i < Stream->CohortSize; i++)
     {
-        if (pointers[i]->Metadata) {
+        if (pointers[i]->Metadata)
+        {
             Msg->Metadata[i] = *(pointers[i]->Metadata);
-        } else {
+        }
+        else
+        {
             Msg->Metadata[i].DataSize = 0;
             Msg->Metadata[i].block = NULL;
         }
-        if (pointers[i]->AttributeData) {
+        if (pointers[i]->AttributeData)
+        {
             Msg->AttributeData[i] = *(pointers[i]->AttributeData);
-        } else {
+        }
+        else
+        {
             Msg->AttributeData[i].DataSize = 0;
             Msg->AttributeData[i].block = NULL;
         }
