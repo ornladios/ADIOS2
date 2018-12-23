@@ -1050,7 +1050,10 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = Entry->MetadataMsg->CohortSize;
-        Mdata->WriterMetadata = Entry->MetadataMsg->Metadata;
+        Mdata->WriterMetadata = malloc(sizeof(Mdata->WriterMetadata[0]) * Mdata->WriterCohortSize);
+        for (int i = 0; i < Mdata->WriterCohortSize; i++) {
+            Mdata->WriterMetadata[i] = &Entry->MetadataMsg->Metadata[i];
+        }
         if (Stream->DP_Interface->TimestepInfoFormats == NULL)
         {
             // DP didn't provide struct info, no valid data

@@ -1309,15 +1309,20 @@ extern void SstInternalProvideTimestep(
     Msg->Timestep = Timestep;
 
     /* separate metadata and DP_info to separate arrays */
-    Msg->Metadata = malloc(Stream->CohortSize * sizeof(SstData));
-    Msg->AttributeData = malloc(Stream->CohortSize * sizeof(SstData));
+    Msg->Metadata = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
+    Msg->AttributeData = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
     Msg->DP_TimestepInfo =
         malloc(Stream->CohortSize * sizeof(Msg->DP_TimestepInfo[0]));
     int NullCount = 0;
     for (int i = 0; i < Stream->CohortSize; i++)
     {
-        Msg->Metadata[i] = pointers[i]->Metadata;
-        Msg->AttributeData[i] = pointers[i]->AttributeData;
+        Msg->Metadata[i] = *(pointers[i]->Metadata);
+        if (pointers[i]->AttributeData) {
+            Msg->AttributeData[i] = *(pointers[i]->AttributeData);
+        } else {
+            Msg->AttributeData[i].DataSize = 0;
+            Msg->AttributeData[i].block = NULL;
+        }
         Msg->DP_TimestepInfo[i] = pointers[i]->DP_TimestepInfo;
         if (pointers[i]->DP_TimestepInfo == NULL)
             NullCount++;

@@ -296,8 +296,8 @@ typedef struct _TimestepMetadataMsg
     int Timestep;
     int CohortSize;
     FFSFormatList Formats;
-    SstData *Metadata;
-    SstData *AttributeData;
+    SstData Metadata;
+    SstData AttributeData;
     void **DP_TimestepInfo;
 } * TSMetadataMsg;
 

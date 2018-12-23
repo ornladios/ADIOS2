@@ -1393,17 +1393,17 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
         void *BaseData;
         FFSTypeHandle FFSformat;
 
-        if (MetaData->AttributeData[WriterRank]->DataSize == 0)
+        if (MetaData->AttributeData[WriterRank].DataSize == 0)
             return;
 
         FFSformat = FFSTypeHandle_from_encode(
             Stream->ReaderFFSContext,
-            MetaData->AttributeData[WriterRank]->block);
+            MetaData->AttributeData[WriterRank].block);
         if (!FFShas_conversion(FFSformat))
         {
             FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
             FMFormat Format = FMformat_from_ID(
-                FMC, MetaData->AttributeData[WriterRank]->block);
+                FMC, MetaData->AttributeData[WriterRank].block);
             FMStructDescList List =
                 FMcopy_struct_list(format_list_of_FMFormat(Format));
             FMlocalize_structs(List);
@@ -1414,20 +1414,20 @@ static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
         if (FFSdecode_in_place_possible(FFSformat))
         {
             FFSdecode_in_place(Stream->ReaderFFSContext,
-                               MetaData->AttributeData[WriterRank]->block,
+                               MetaData->AttributeData[WriterRank].block,
                                &BaseData);
         }
         else
         {
             int DecodedLength = FFS_est_decode_length(
                 Stream->ReaderFFSContext,
-                MetaData->AttributeData[WriterRank]->block,
-                MetaData->AttributeData[WriterRank]->DataSize);
+                MetaData->AttributeData[WriterRank].block,
+                MetaData->AttributeData[WriterRank].DataSize);
             BaseData = malloc(DecodedLength);
             FFSBuffer decode_buf =
                 create_fixed_FFSBuffer(BaseData, DecodedLength);
             FFSdecode_to_buffer(Stream->ReaderFFSContext,
-                                MetaData->AttributeData[WriterRank]->block,
+                                MetaData->AttributeData[WriterRank].block,
                                 decode_buf);
         }
         if (DumpMetadata == -1)
@@ -1560,20 +1560,20 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
     }
 
-    if (!MetaData->Metadata[WriterRank]->block)
+    if (!MetaData->Metadata[WriterRank].block)
     {
         fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == "
                         "NULL for WriterRank = %d\n",
                 WriterRank);
     }
     FFSformat = FFSTypeHandle_from_encode(
-        Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block);
+        Stream->ReaderFFSContext, MetaData->Metadata[WriterRank].block);
 
     if (!FFShas_conversion(FFSformat))
     {
         FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
         FMFormat Format =
-            FMformat_from_ID(FMC, MetaData->Metadata[WriterRank]->block);
+            FMformat_from_ID(FMC, MetaData->Metadata[WriterRank].block);
         FMStructDescList List =
             FMcopy_struct_list(format_list_of_FMFormat(Format));
         FMlocalize_structs(List);
@@ -1584,17 +1584,17 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     if (FFSdecode_in_place_possible(FFSformat))
     {
         FFSdecode_in_place(Stream->ReaderFFSContext,
-                           MetaData->Metadata[WriterRank]->block, &BaseData);
+                           MetaData->Metadata[WriterRank].block, &BaseData);
     }
     else
     {
         int DecodedLength = FFS_est_decode_length(
-            Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block,
-            MetaData->Metadata[WriterRank]->DataSize);
+            Stream->ReaderFFSContext, MetaData->Metadata[WriterRank].block,
+            MetaData->Metadata[WriterRank].DataSize);
         BaseData = malloc(DecodedLength);
         FFSBuffer decode_buf = create_fixed_FFSBuffer(BaseData, DecodedLength);
         FFSdecode_to_buffer(Stream->ReaderFFSContext,
-                            MetaData->Metadata[WriterRank]->block, decode_buf);
+                            MetaData->Metadata[WriterRank].block, decode_buf);
     }
     if (DumpMetadata == -1)
     {
