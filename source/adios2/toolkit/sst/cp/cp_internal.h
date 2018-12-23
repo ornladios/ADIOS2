@@ -86,7 +86,7 @@ typedef struct _CPTimestepEntry
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
     void **DP_TimestepInfo;
-    SstData *MetadataArray;
+    SstData MetadataArray;
     DataFreeFunc FreeTimestep;
     void *FreeClientData;
     void *DataBlockToFree;
