@@ -1,50 +1,66 @@
 ######################################################
-# - Try to find Cray DRC library
+# - Try to find craydrc (http://directory.fsf.org/wiki/Libfabric)
 # Once done this will define
-#  CRAY_DRC_FOUND - System has Cray DRC
-#  CRAY_DRC_INCLUDE_DIRS - The Cray DRC include directories
-#  CRAY_DRC_LIBRARIES - The libraries needed to use Cray DRC
+#  CrayDRC_FOUND - System has craydrc
+#  CrayDRC_INCLUDE_DIRS - The craydrc include directories
+#  CrayDRC_LIBRARIES - The libraries needed to use craydrc
+#  CrayDRC_DEFINITIONS - The extra CFLAGS needed to use craydrc
 
 ######################################################
-set(CRAY_DRC_PREFIX "" CACHE STRING "Help cmake to find Cray DRC library on your system.")
-mark_as_advanced(CRAY_DRC_PREFIX)
-if(NOT CRAY_DRC_ROOT AND "$ENV{CRAY_DRC_ROOT}" STREQUAL "")
-  set(CRAY_DRC_ROOT ${CRAY_DRC_PREFIX})
-endif()
 
-unset(_CMAKE_PREFIX_PATH)
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-else()
-  if(NOT CRAY_DRC_ROOT)
-    set(CRAY_DRC_ROOT "$ENV{CRAY_DRC_ROOT}")
-  endif()
-  if(CRAY_DRC_ROOT)
+# This is a bit of a wierd pattern but it allows to bypass pkg-config and
+# manually specify library information
+if(NOT (PC_CrayDRC_FOUND STREQUAL "IGNORE"))
+  find_package(PkgConfig)
+  if(PKG_CONFIG_FOUND)
     set(_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
-    list(INSERT CMAKE_PREFIX_PATH 0 ${CRAY_DRC_ROOT})
+    if(CrayDRC_ROOT)
+      list(INSERT CMAKE_PREFIX_PATH 0 "${CrayDRC_ROOT}")
+    elseif(NOT ENV{CrayDRC_ROOT} STREQUAL "")
+      list(INSERT CMAKE_PREFIX_PATH 0 "$ENV{CrayDRC_ROOT}")
+    endif()
+    set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+
+    pkg_check_modules(PC_CrayDRC cray-drc)
+
+    set(CMAKE_PREFIX_PATH ${_CMAKE_PREFIX_PATH})
+    unset(_CMAKE_PREFIX_PATH)
+
+    if(PC_CrayDRC_FOUND)
+      if(BUILD_SHARED_LIBS)
+        set(_PC_TYPE)
+      else()
+        set(_PF_TYPE _STATIC)
+      endif()
+      set(CrayDRC_INCLUDE_DIRS ${PC_CrayDRC${_PC_TYPE}_INCLUDE_DIRS})
+      set(CrayDRC_LIBRARIES ${PC_CrayDRC${_PC_TYPE}_LDFLAGS})
+      set(CrayDRC_DEFINITIONS ${PC_CrayDRC${PC_TYPE}_CFLAGS_OTHER})
+    endif()
   endif()
 endif()
 
-find_package(PkgConfig)
-if(PKG_CONFIG_FOUND)
-  set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH TRUE)
-  pkg_check_modules(CRAY_DRC IMPORTED_TARGET "cray-drc")
-endif()
+include(FindPackageHandleStandardArgs)
+# handle the QUIETLY and REQUIRED arguments and set LIBXML2_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args(CrayDRC DEFAULT_MSG CrayDRC_LIBRARIES)
 
-if(_CMAKE_PREFIX_PATH)
-  set(CMAKE_PREFIX_PATH ${_CMAKE_PREFIX_PATH})
-  unset(_CMAKE_PREFIX_PATH)
-endif()
-
-if(CRAY_DRC_FOUND)
+if(CrayDRC_FOUND)
   if(NOT TARGET craydrc::craydrc)
     add_library(craydrc::craydrc INTERFACE IMPORTED)
-    if(NOT BUILD_SHARED_LIBS AND TARGET PkgConfig::CRAY_DRC-static)
+    if(CrayDRC_INCLUDE_DIRS)
       set_target_properties(craydrc::craydrc PROPERTIES
-        INTERFACE_LINK_LIBRARIES PkgConfig::CRAY_DRC-static)
-    else()
+        INTERFACE_INCLUDE_DIRECTORIES "${CrayDRC_INCLUDE_DIRS}"
+      )
+    endif()
+    if(CrayDRC_DEFINITIONS)
       set_target_properties(craydrc::craydrc PROPERTIES
-        INTERFACE_LINK_LIBRARIES PkgConfig::CRAY_DRC)
+        INTERFACE_COMPILE_OPTIONS     "${CrayDRC_DEFINITIONS}"
+      )
+    endif()
+    if(CrayDRC_LIBRARIES)
+      set_target_properties(craydrc::craydrc PROPERTIES
+        INTERFACE_LINK_LIBRARIES      "${CrayDRC_LIBRARIES}"
+      )
     endif()
   endif()
 endif()
