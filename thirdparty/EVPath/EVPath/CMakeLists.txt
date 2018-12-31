@@ -63,6 +63,24 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
+# Setup PIC defaults.  If explicitly specified somehow, then default 
+# to that.  Otherwise base the default on whether or not shared libs are even
+# supported.
+if(DEFINED EVPATH_ENABLE_PIC)
+  set(EVPATH_ENABLE_PIC_DEFAULT ${EVPATH_ENABLE_PIC})
+elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
+  set(EVPATH_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
+else()
+  set(EVPATH_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
+endif()
+cmake_dependent_option(EVPATH_ENABLE_PIC
+  "Build with Position Independent Code" ${EVPATH_ENABLE_PIC_DEFAULT}
+  "SHARED_LIBS_SUPPORTED" OFF
+)
+mark_as_advanced(EVPATH_ENABLE_PIC)
+set(CMAKE_POSITION_INDEPENDENT_CODE ${EVPATH_ENABLE_PIC})
+mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
+
 if(MSVC)
   # Force to always compile with W4
   if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
@@ -75,29 +93,6 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ")
 endif()
-
-# use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
-
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-
-# the RPATH to be used when installing, but only if it's not a system directory
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-  "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-if(isSystemDir EQUAL -1)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-endif()
-
-set(CMAKE_MACOSX_RPATH 1)
 
 add_library(EVPath
   cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c 
