@@ -135,7 +135,7 @@ if(ADIOS2_USE_Python)
   if(NOT (ADIOS2_USE_Python STREQUAL AUTO))
     set(python_find_args REQUIRED)
   endif()
-  if(SHARED_LIBS_SUPPORTED AND ADIOS2_ENABLE_PIC)
+  if(BUILD_SHARED_LIBS)
     set(Python_ADDITIONAL_VERSIONS "3;2.7"
       CACHE STRING "Python versions to search for"
     )

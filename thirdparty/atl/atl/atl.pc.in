@@ -8,4 +8,3 @@ URL: https://github.com/GTkorvo/atl.git
 Version: @ATL_VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} -l@ATL_LIBRARY_PREFIX@atl
-Libs.private: @CMAKE_THREADS_LIBS_INIT@
