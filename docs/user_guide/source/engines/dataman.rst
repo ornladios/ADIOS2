@@ -18,6 +18,9 @@ On the reader side you need to do instead:
  datamanIO.SetEngine("DataMan");
  adios2::Engine datamanReader = datamanIO.Open(filename, adios2::Mode::Read);
 
+.. note::
+ The DataMan engine currently does not support data staging within a cluster.
+
 The DataMan engine does not accept any parameters. However, users are allowed to specify the following transport parameters:
 
 1. **Library**: the underlying network / socket library used for data transfer.
