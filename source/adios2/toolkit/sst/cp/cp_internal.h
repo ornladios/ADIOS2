@@ -86,7 +86,7 @@ typedef struct _CPTimestepEntry
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
     void **DP_TimestepInfo;
-    SstData *MetadataArray;
+    SstData MetadataArray;
     DataFreeFunc FreeTimestep;
     void *FreeClientData;
     void *DataBlockToFree;
@@ -170,6 +170,7 @@ struct _SstStream
     FFSContext ReaderFFSContext;
     VarSetupUpcallFunc VarSetupUpcall;
     ArraySetupUpcallFunc ArraySetupUpcall;
+    AttrSetupUpcallFunc AttrSetupUpcall;
     void *SetupUpcallReader;
     void *ReaderMarshalData;
 
@@ -220,8 +221,8 @@ struct FFSFormatBlock
  */
 struct _MetadataPlusDPInfo
 {
-    int RequestGlobalOp;
     SstData Metadata;
+    SstData AttributeData;
     FFSFormatList Formats;
     void *DP_TimestepInfo;
 };
@@ -295,7 +296,8 @@ typedef struct _TimestepMetadataMsg
     int Timestep;
     int CohortSize;
     FFSFormatList Formats;
-    SstData *Metadata;
+    SstData Metadata;
+    SstData AttributeData;
     void **DP_TimestepInfo;
 } * TSMetadataMsg;
 
@@ -353,11 +355,11 @@ void CP_validateParams(SstStream stream, SstParams Params, int Writer);
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo);
 extern char *CP_GetContactString(SstStream s);
 extern SstStream CP_newStream();
-extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata,
-                                       SstData Data, long Timestep,
-                                       FFSFormatList Formats,
-                                       DataFreeFunc FreeTimestep,
-                                       void *FreeClientData);
+extern void SstInternalProvideTimestep(
+    SstStream s, SstData LocalMetadata, SstData Data, long Timestep,
+    FFSFormatList Formats, DataFreeFunc FreeTimestep, void *FreeClientData,
+    SstData AttributeData, DataFreeFunc FreeAttributeData,
+    void *FreeAttributeClientData);
 
 void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,
                                     FFSTypeHandle type, void **ret_data_block);

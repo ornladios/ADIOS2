@@ -30,9 +30,9 @@ gtest_add_tests(TARGET TestEngineCommon ${extra_test_args}
 endif()
 
 if(ADIOS2_HAVE_SST)
-#gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
-#                EXTRA_ARGS "SST" "0" "MarshalMethod:FFS"
-#                TEST_SUFFIX _SST_FFS) 
+gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
+                EXTRA_ARGS "SST" "0" "MarshalMethod:FFS"
+                TEST_SUFFIX _SST_FFS) 
 gtest_add_tests(TARGET TestEngineCommon ${extra_test_args} 
                 EXTRA_ARGS "SST" "0" "MarshalMethod:BP"
                 TEST_SUFFIX _SST_BP)

@@ -66,11 +66,11 @@ add_test(
     -nw 3 -nr 5 -v -p TestSst -arg 'RendezvousReaderCount:0,QueueLimit:3' -arg '--expect_time_gap')
 set_tests_properties(ADIOSSstDelayedReaderWithBlockingTest.3x5 PROPERTIES TIMEOUT 30 RUN_SERIAL 1) 
 
-add_test(
-  NAME ADIOSSstKillReadersTest.3ReaderMax
-  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol kill_readers
-    -verbose -nw 3 -nr 2 -max_readers 3 -warg 'RendezvousReaderCount:0' -rarg '--ignore_time_gap')
-set_tests_properties(ADIOSSstKillReadersTest.3ReaderMax PROPERTIES TIMEOUT 300 RUN_SERIAL 1)
+#add_test(
+#  NAME ADIOSSstKillReadersTest.3ReaderMax
+#  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol kill_readers
+#    -verbose -nw 3 -nr 2 -max_readers 3 -warg 'RendezvousReaderCount:0' -rarg '--ignore_time_gap')
+#set_tests_properties(ADIOSSstKillReadersTest.3ReaderMax PROPERTIES TIMEOUT 300 RUN_SERIAL 1)
 
 if(ADIOS2_HAVE_ZFP)
   add_test(

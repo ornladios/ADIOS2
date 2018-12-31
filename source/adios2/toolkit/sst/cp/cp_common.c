@@ -250,10 +250,10 @@ static FMStructDescRec CP_WriterResponseStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static FMField MetaDataPlusDPInfoList[] = {
-    {"RequestGlobalOp", "integer", sizeof(int),
-     FMOffset(struct _MetadataPlusDPInfo *, RequestGlobalOp)},
     {"Metadata", "*SstBlock", sizeof(struct _SstBlock),
      FMOffset(struct _MetadataPlusDPInfo *, Metadata)},
+    {"AttributeData", "*SstBlock", sizeof(struct _SstBlock),
+     FMOffset(struct _MetadataPlusDPInfo *, AttributeData)},
     {"Formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct _MetadataPlusDPInfo *, Formats)},
     {"DP_TimestepInfo", "*DP_STRUCT", 0,
@@ -295,8 +295,10 @@ static FMField TimestepMetadataList[] = {
      FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
     {"formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct _TimestepMetadataMsg *, Formats)},
-    {"metadata", "(*SstBlock)[cohort_size]", sizeof(struct _SstBlock),
+    {"metadata", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
      FMOffset(struct _TimestepMetadataMsg *, Metadata)},
+    {"attribute_data", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
+     FMOffset(struct _TimestepMetadataMsg *, AttributeData)},
     {"TP_TimestepInfo", "(*DP_STRUCT)[cohort_size]", 0,
      FMOffset(struct _TimestepMetadataMsg *, DP_TimestepInfo)},
     {NULL, NULL, 0, 0}};

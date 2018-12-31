@@ -73,6 +73,51 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         return (void *)NULL;
     };
 
+    auto attrFFSCallback = [](void *reader, const char *attrName,
+                              const char *type, void *data) {
+        class SstReader::SstReader *Reader =
+            reinterpret_cast<class SstReader::SstReader *>(reader);
+        if (attrName == NULL)
+        {
+            // if attrName is NULL, prepare for attr reinstallation
+            Reader->m_IO.RemoveAllAttributes();
+            return;
+        }
+        std::string Type(type);
+        try
+        {
+            if (Type == "compound")
+            {
+                return;
+            }
+            else if (Type == "string")
+            {
+                Reader->m_IO.DefineAttribute<std::string>(attrName,
+                                                          *(char **)data);
+            }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetType<T>())                                     \
+    {                                                                          \
+        std::cout << "Loading attribute matched type " << Type << std::endl;   \
+        Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
+    }
+
+            ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(declare_type)
+#undef declare_type
+            else
+            {
+                std::cout << "Loading attribute matched no type " << Type
+                          << std::endl;
+            }
+        }
+        catch (...)
+        {
+            std::cout << "Load failed" << std::endl;
+            return;
+        }
+        return;
+    };
+
     auto arrayFFSCallback = [](void *reader, const char *variableName,
                                const char *type, int DimCount, size_t *Shape,
                                size_t *Start, size_t *Count) {
@@ -109,7 +154,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         return (void *)NULL;
     };
 
-    SstReaderInitFFSCallback(m_Input, this, varFFSCallback, arrayFFSCallback);
+    SstReaderInitFFSCallback(m_Input, this, varFFSCallback, arrayFFSCallback,
+                             attrFFSCallback);
 
     delete[] cstr;
 }
@@ -202,7 +248,6 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
                     (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
 
         m_IO.RemoveAllVariables();
-        m_IO.RemoveAllAttributes();
         m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, m_IO);
         m_IO.ResetVariablesStepSelection(true,
                                          "in call to SST Reader BeginStep");

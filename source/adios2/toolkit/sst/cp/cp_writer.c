@@ -1236,11 +1236,11 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
     CP_verbose(Stream, "Finished with Writer side Global operations\n");
 }
 
-extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
-                                       SstData Data, long Timestep,
-                                       FFSFormatList Formats,
-                                       DataFreeFunc FreeTimestep,
-                                       void *FreeClientData)
+extern void SstInternalProvideTimestep(
+    SstStream Stream, SstData LocalMetadata, SstData Data, long Timestep,
+    FFSFormatList Formats, DataFreeFunc FreeTimestep, void *FreeClientData,
+    SstData AttributeData, DataFreeFunc FreeAttributeData,
+    void *FreeAttributelientData)
 {
     void *data_block;
     MetadataPlusDPInfo *pointers;
@@ -1299,6 +1299,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
 
     Md.Formats = Formats;
     Md.Metadata = (SstData)LocalMetadata;
+    Md.AttributeData = (SstData)AttributeData;
     Md.DP_TimestepInfo = DP_TimestepInfo;
 
     pointers = (MetadataPlusDPInfo *)CP_consolidateDataToAll(
@@ -1308,13 +1309,31 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
     Msg->Timestep = Timestep;
 
     /* separate metadata and DP_info to separate arrays */
-    Msg->Metadata = malloc(Stream->CohortSize * sizeof(SstData));
+    Msg->Metadata = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
+    Msg->AttributeData = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
     Msg->DP_TimestepInfo =
         malloc(Stream->CohortSize * sizeof(Msg->DP_TimestepInfo[0]));
     int NullCount = 0;
     for (int i = 0; i < Stream->CohortSize; i++)
     {
-        Msg->Metadata[i] = pointers[i]->Metadata;
+        if (pointers[i]->Metadata)
+        {
+            Msg->Metadata[i] = *(pointers[i]->Metadata);
+        }
+        else
+        {
+            Msg->Metadata[i].DataSize = 0;
+            Msg->Metadata[i].block = NULL;
+        }
+        if (pointers[i]->AttributeData)
+        {
+            Msg->AttributeData[i] = *(pointers[i]->AttributeData);
+        }
+        else
+        {
+            Msg->AttributeData[i].DataSize = 0;
+            Msg->AttributeData[i].block = NULL;
+        }
         Msg->DP_TimestepInfo[i] = pointers[i]->DP_TimestepInfo;
         if (pointers[i]->DP_TimestepInfo == NULL)
             NullCount++;
@@ -1417,11 +1436,15 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata,
 
 extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
                                SstData Data, long Timestep,
-                               DataFreeFunc FreeTimestep, void *FreeClientData)
+                               DataFreeFunc FreeTimestep, void *FreeClientData,
+                               SstData AttributeData,
+                               DataFreeFunc FreeAttributeData,
+                               void *FreeAttributeClientData)
 {
 
     SstInternalProvideTimestep(Stream, LocalMetadata, Data, Timestep, NULL,
-                               FreeTimestep, FreeClientData);
+                               FreeTimestep, FreeClientData, AttributeData,
+                               FreeAttributeData, FreeAttributeClientData);
 }
 
 void queueReaderRegisterMsgAndNotify(SstStream Stream,

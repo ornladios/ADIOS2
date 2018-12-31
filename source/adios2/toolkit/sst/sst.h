@@ -76,7 +76,10 @@ extern void SstStreamDestroy(SstStream Stream);
 typedef void (*DataFreeFunc)(void *Data);
 extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
                                SstData LocalData, long Timestep,
-                               DataFreeFunc FreeData, void *FreeClientData);
+                               DataFreeFunc FreeData, void *FreeClientData,
+                               SstData AttributeData,
+                               DataFreeFunc FreeAttribute,
+                               void *FreeAttributeClientData);
 extern void SstWriterClose(SstStream stream);
 
 /*
@@ -102,18 +105,24 @@ extern long SstCurrentStep(SstStream s);
  */
 typedef void *(*VarSetupUpcallFunc)(void *Reader, const char *Name,
                                     const char *Type, void *Data);
+typedef void (*AttrSetupUpcallFunc)(void *Reader, const char *Name,
+                                    const char *Type, void *Data);
 typedef void *(*ArraySetupUpcallFunc)(void *Reader, const char *Name,
                                       const char *Type, int DimsCount,
                                       size_t *Shape, size_t *Start,
                                       size_t *Count);
 extern void SstReaderInitFFSCallback(SstStream stream, void *Reader,
                                      VarSetupUpcallFunc VarCallback,
-                                     ArraySetupUpcallFunc ArrayCallback);
+                                     ArraySetupUpcallFunc ArrayCallback,
+                                     AttrSetupUpcallFunc AttrCallback);
 
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const char *Type, size_t ElemSize, size_t DimCount,
                           const size_t *Shape, const size_t *Count,
                           const size_t *Offsets, const void *data);
+extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
+                                   const char *Type, size_t ElemSize,
+                                   size_t ElemCount, const void *data);
 extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
                               const char *Name, size_t DimCount,
                               const size_t *Start, const size_t *Count,

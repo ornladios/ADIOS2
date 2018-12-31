@@ -62,11 +62,67 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
+void SstWriter::FFSMarshalAttributes()
+{
+    const auto attributesDataMap = m_IO.GetAttributesDataMap();
+
+    const uint32_t attributesCount =
+        static_cast<uint32_t>(attributesDataMap.size());
+
+    // if there are no new attributes, nothing to do
+    if (attributesCount == m_FFSMarshaledAttributesCount)
+        return;
+
+    for (const auto &attributePair : attributesDataMap)
+    {
+        const std::string name(attributePair.first);
+        const std::string type(attributePair.second.first);
+
+        if (type == "unknown")
+        {
+        }
+        else if (type == "string")
+        {
+            core::Attribute<std::string> &attribute =
+                *m_IO.InquireAttribute<std::string>(name);
+            int element_count = -1;
+            const char *data_addr = attribute.m_DataSingleValue.c_str();
+            if (!attribute.m_IsSingleValue)
+            {
+                //
+            }
+
+            SstFFSMarshalAttribute(m_Output, name.c_str(), type.c_str(),
+                                   sizeof(char *), element_count, data_addr);
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
+        int element_count = -1;                                                \
+        void *data_addr = &attribute.m_DataSingleValue;                        \
+        if (!attribute.m_IsSingleValue)                                        \
+        {                                                                      \
+            element_count = attribute.m_Elements;                              \
+            data_addr = attribute.m_DataArray.data();                          \
+        }                                                                      \
+        SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),             \
+                               type.c_str(), sizeof(T), element_count,         \
+                               data_addr);                                     \
+    }
+
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+}
+
 void SstWriter::EndStep()
 {
     m_BetweenStepPairs = false;
     if (m_MarshalMethod == SstMarshalFFS)
     {
+    SstWriter:
+        FFSMarshalAttributes();
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
     else if (m_MarshalMethod == SstMarshalBP)
@@ -102,7 +158,8 @@ void SstWriter::EndStep()
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
         newblock->serializer = m_BP3Serializer;
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
-                           m_WriterStep, lf_FreeBlocks, newblock);
+                           m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
+                           NULL);
     }
     else
     {
