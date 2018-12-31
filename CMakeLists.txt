@@ -126,6 +126,10 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
+# Various homebrew MPI fortran installations break rpath usage on OSX
+if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
+  set(CMAKE_MACOSX_RPATH OFF)
+endif()
 
 set(ADIOS2_CONFIG_OPTS
   BZip2 ZFP SZ MGARD MPI DataMan SST ZeroMQ HDF5 Python Fortran SysVShMem
