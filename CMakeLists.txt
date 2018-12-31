@@ -101,23 +101,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-# Setup PIC defaults.  If explicitly specified somehow, then default 
-# to that.  Otherwise base the default on whether or not shared libs are even
-# supported.
-if(DEFINED ADIOS2_ENABLE_PIC)
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${ADIOS2_ENABLE_PIC})
-elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
-else()
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(ADIOS2_ENABLE_PIC
-  "Build with Position Independent Code" ${ADIOS2_ENABLE_PIC_DEFAULT}
-  "SHARED_LIBS_SUPPORTED" OFF
-)
-set(CMAKE_POSITION_INDEPENDENT_CODE ${ADIOS2_ENABLE_PIC})
-mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
-
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
