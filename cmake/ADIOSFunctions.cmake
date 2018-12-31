@@ -153,73 +153,7 @@ function(GenerateADIOSPackageConfig)
     DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
   )
 
-  # Install helper find modules if needed
-  # Also build flags needed for non-cmake config generation
-  set(ADIOS2_CXX_LIBS ${CMAKE_THREAD_LIBS_INIT})
-  set(ADIOS2_CXX_OPTS ${CMAKE_CXX11_EXTENSION_COMPILE_OPTION})
-  set(ADIOS2_CXX_DEFS)
-  set(ADIOS2_CXX_INCS)
-  if(ADIOS2_HAVE_MPI)
-    list(APPEND ADIOS2_CXX_LIBS ${MPI_C_LIBRARIES})
-    list(APPEND ADIOS2_CXX_INCS ${MPI_C_INCLUDE_PATH})
-  endif()
-  if(NOT BUILD_SHARED_LIBS)
-    if(ADIOS2_HAVE_DataMan)
-    list(APPEND ADIOS2_CXX_LIBS -ldataman)
-    endif()
-    if(ADIOS2_HAVE_BZip2)
-      install(FILES cmake/FindBZip2.cmake
-        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules
-      )
-      install(FILES cmake/upstream/FindBZip2.cmake
-        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules/upstream
-      )
-      list(APPEND ADIOS2_CXX_LIBS ${BZIP2_LIBRARIES})
-      list(APPEND ADIOS2_CXX_INCS ${BZIP2_INCLUDE_DIR})
-    endif()
-    if(ADIOS2_HAVE_ZFP)
-      install(FILES cmake/FindZFP.cmake
-        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules
-      )
-      list(APPEND ADIOS2_CXX_LIBS ${ZFP_LIBRARIES})
-      list(APPEND ADIOS2_CXX_INCS ${ZFP_INCLUDE_DIRS})
-    endif()
-    if(ADIOS2_HAVE_MGARD)
-      install(FILES cmake/FindMGARD.cmake
-        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules
-      )
-      list(APPEND ADIOS2_CXX_LIBS ${MGARD_LIBRARIES})
-      list(APPEND ADIOS2_CXX_INCS ${MGARD_INCLUDE_DIRS})
-    endif()
-    if(ADIOS2_HAVE_ZeroMQ)
-      install(FILES cmake/FindZeroMQ.cmake
-        DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/Modules
-      )
-      list(APPEND ADIOS2_CXX_LIBS ${ZeroMQ_LIBRARIES})
-      list(APPEND ADIOS2_CXX_INCS ${ZeroMQ_INCLUDE_DIRS})
-    endif()
-    if(ADIOS2_HAVE_HDF5)
-      list(APPEND ADIOS2_CXX_LIBS ${HDF5_C_LIBRARIES})
-      if(HDF5_C_INCLUDE_DIRS)
-        list(APPEND ADIOS2_CXX_INCS ${HDF5_C_INCLUDE_DIRS})
-      else()
-        list(APPEND ADIOS2_CXX_INCS ${HDF5_INCLUDE_DIRS})
-      endif()
-    endif()
-  endif()
-
-  # Build the non-cmake config script
-  __adios2_list_make_link_args(ADIOS2_CXX_LIBS)
-  __adios2_list_cleanup_for_bash(ADIOS2_CXX_LIBS)
-  __adios2_list_cleanup_for_bash(ADIOS2_CXX_OPTS)
-  __adios2_list_cleanup_for_bash(ADIOS2_CXX_DEFS)
-  __adios2_list_cleanup_for_bash(ADIOS2_CXX_INCS)
-  configure_file(
-    ${ADIOS2_SOURCE_DIR}/cmake/adios2-config.in
-    ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/adios2-config
-    @ONLY
-  )
-  install(PROGRAMS ${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}/adios2-config
+  install(PROGRAMS ${ADIOS2_SOURCE_DIR}/cmake/adios2-config
     DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 endfunction()
