@@ -63,24 +63,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-# Setup PIC defaults.  If explicitly specified somehow, then default 
-# to that.  Otherwise base the default on whether or not shared libs are even
-# supported.
-if(DEFINED EVPATH_ENABLE_PIC)
-  set(EVPATH_ENABLE_PIC_DEFAULT ${EVPATH_ENABLE_PIC})
-elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-  set(EVPATH_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
-else()
-  set(EVPATH_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(EVPATH_ENABLE_PIC
-  "Build with Position Independent Code" ${EVPATH_ENABLE_PIC_DEFAULT}
-  "SHARED_LIBS_SUPPORTED" OFF
-)
-mark_as_advanced(EVPATH_ENABLE_PIC)
-set(CMAKE_POSITION_INDEPENDENT_CODE ${EVPATH_ENABLE_PIC})
-mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
-
 if(MSVC)
   # Force to always compile with W4
   if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
