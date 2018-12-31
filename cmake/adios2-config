@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import difflib
 import os
@@ -216,20 +216,20 @@ if __name__ == '__main__':
         dest='adios2_dir',
         help='Where to find ADIOS2Config.cmake')
     parser.add_argument(
-        '--cflags', action='store_true', default=False,
-        dest='cppflags',
-        help='Print C flags')
+        '--cxxflags', action='store_true', default=False,
+        dest='cxxflags',
+        help='Print C++ compiler flags')
     parser.add_argument(
-        '--libs', action='store_true', default=False,
-        dest='ldflags',
-        help='Print linker flags')
+        '--cxxlibs', action='store_true', default=False,
+        dest='cxxldflags',
+        help='Print C++ linker flags')
 
     opts = parser.parse_args()
     (compile_flags, link_flags) = \
         extract_adios2_flags(cmake=opts.cmake,
                                generator=opts.generator,
                                adios2_dir=opts.adios2_dir)
-    if opts.cppflags:
+    if opts.cxxflags:
         print(' '.join(compile_flags))
-    if opts.ldflags:
+    if opts.cxxldflags:
         print(' '.join(link_flags))
