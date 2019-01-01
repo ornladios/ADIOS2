@@ -23,12 +23,14 @@ namespace engine
 
 template <class T>
 void InlineWriter::PutSyncCommon(Variable<T> &variable,
-                                   const typename Variable<T>::Info &blockInfo)
+                                 const typename Variable<T>::Info &blockInfo)
 {
     auto &info = variable.m_BlocksInfo.back();
     info.BlockID = variable.m_BlocksInfo.size() - 1;
     // passed in blockInfo has current blockInfo.Data member.
-    if (blockInfo.Shape.size() == 0 && blockInfo.Count.size() == 0 && blockInfo.StepsCount == 1 ) {
+    if (blockInfo.Shape.size() == 0 && blockInfo.Count.size() == 0 &&
+        blockInfo.StepsCount == 1)
+    {
         info.IsValue = true;
         info.Value = blockInfo.Data[0];
     }

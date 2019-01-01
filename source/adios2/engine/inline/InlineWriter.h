@@ -35,7 +35,7 @@ public:
      * @param debugMode
      */
     InlineWriter(IO &adios, const std::string &name, const Mode mode,
-                   MPI_Comm mpiComm);
+                 MPI_Comm mpiComm);
 
     ~InlineWriter() = default;
 
@@ -46,7 +46,8 @@ public:
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
-    void AddReadVariable(const std::string &name) {
+    void AddReadVariable(const std::string &name)
+    {
         m_ReadVariables.insert(name);
     }
 

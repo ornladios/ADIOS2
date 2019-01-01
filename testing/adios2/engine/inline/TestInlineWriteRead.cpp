@@ -28,7 +28,10 @@ public:
 
 // helper
 template <class T>
-typename adios2::Variable<T>::Info setSelection(adios2::Variable<T>& var_i8, size_t step, adios2::Engine& inlineReader) {
+typename adios2::Variable<T>::Info setSelection(adios2::Variable<T> &var_i8,
+                                                size_t step,
+                                                adios2::Engine &inlineReader)
+{
     var_i8.SetStepSelection({step, 1});
     auto blocksInfo = inlineReader.BlocksInfo(var_i8, step);
     // ASSERT_EQ(blocksInfo.size(), 1);
@@ -56,8 +59,6 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
-
-// Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -102,11 +103,13 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
         // Create the Engine
         io.SetEngine("Inline");
 
-        adios2::Engine inlineWriter = io.Open(fname + "_write", adios2::Mode::Write);
+        adios2::Engine inlineWriter =
+            io.Open(fname + "_write", adios2::Mode::Write);
 
         // writerID parameter makes sure the reader can find the writer.
         io.SetParameters({{"verbose", "4"}, {"writerID", fname + "_write"}});
-        adios2::Engine inlineReader = io.Open(fname + "_read", adios2::Mode::Read);
+        adios2::Engine inlineReader =
+            io.Open(fname + "_read", adios2::Mode::Read);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -234,7 +237,6 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
             ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
             ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
 
-
             std::string IString;
 
             inlineReader.Get(var_iString, IString);
@@ -248,26 +250,28 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
             auto info_u64 = setSelection<uint64_t>(var_u64, step, inlineReader);
             auto info_r32 = setSelection<float>(var_r32, step, inlineReader);
             auto info_r64 = setSelection<double>(var_r64, step, inlineReader);
-            auto info_cr32 = setSelection<std::complex<float>>(var_cr32, step, inlineReader);
-            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step, inlineReader);
+            auto info_cr32 =
+                setSelection<std::complex<float>>(var_cr32, step, inlineReader);
+            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step,
+                                                                inlineReader);
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             inlineReader.PerformGets();
-            const int8_t*  I8  = info_i8.Data();
-            const int16_t* I16 = info_i16.Data();
-            const int32_t* I32 = info_i32.Data();
-            const int64_t* I64 = info_i64.Data();
-            const uint8_t* U8  = info_u8.Data();
-            const uint16_t* U16 = info_u16.Data();
-            const uint32_t* U32 = info_u32.Data();
-            const uint64_t* U64 = info_u64.Data();
-            const float*  R32 = info_r32.Data();
-            const double* R64 = info_r64.Data();
-            const std::complex<float>* CR32 = info_cr32.Data();
-            const std::complex<double>* CR64 = info_cr64.Data();
+            const int8_t *I8 = info_i8.Data();
+            const int16_t *I16 = info_i16.Data();
+            const int32_t *I32 = info_i32.Data();
+            const int64_t *I64 = info_i64.Data();
+            const uint8_t *U8 = info_u8.Data();
+            const uint16_t *U16 = info_u16.Data();
+            const uint32_t *U32 = info_u32.Data();
+            const uint64_t *U64 = info_u64.Data();
+            const float *R32 = info_r32.Data();
+            const double *R64 = info_r64.Data();
+            const std::complex<float> *CR32 = info_cr32.Data();
+            const std::complex<double> *CR64 = info_cr64.Data();
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -320,8 +324,6 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
-
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
@@ -365,11 +367,13 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
         // Create the Engine
         io.SetEngine("Inline");
 
-        adios2::Engine inlineWriter = io.Open(fname + "_write", adios2::Mode::Write);
+        adios2::Engine inlineWriter =
+            io.Open(fname + "_write", adios2::Mode::Write);
 
         // writerID parameter makes sure the reader can find the writer.
         io.SetParameters({{"verbose", "4"}, {"writerID", fname + "_write"}});
-        adios2::Engine inlineReader = io.Open(fname + "_read", adios2::Mode::Read);
+        adios2::Engine inlineReader =
+            io.Open(fname + "_read", adios2::Mode::Read);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
@@ -523,26 +527,28 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
             auto info_u64 = setSelection<uint64_t>(var_u64, step, inlineReader);
             auto info_r32 = setSelection<float>(var_r32, step, inlineReader);
             auto info_r64 = setSelection<double>(var_r64, step, inlineReader);
-            auto info_cr32 = setSelection<std::complex<float>>(var_cr32, step, inlineReader);
-            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step, inlineReader);
+            auto info_cr32 =
+                setSelection<std::complex<float>>(var_cr32, step, inlineReader);
+            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step,
+                                                                inlineReader);
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             inlineReader.PerformGets();
-            const int8_t*  I8  = info_i8.Data();
-            const int16_t* I16 = info_i16.Data();
-            const int32_t* I32 = info_i32.Data();
-            const int64_t* I64 = info_i64.Data();
-            const uint8_t* U8  = info_u8.Data();
-            const uint16_t* U16 = info_u16.Data();
-            const uint32_t* U32 = info_u32.Data();
-            const uint64_t* U64 = info_u64.Data();
-            const float*  R32 = info_r32.Data();
-            const double* R64 = info_r64.Data();
-            const std::complex<float>* CR32 = info_cr32.Data();
-            const std::complex<double>* CR64 = info_cr64.Data();
+            const int8_t *I8 = info_i8.Data();
+            const int16_t *I16 = info_i16.Data();
+            const int32_t *I32 = info_i32.Data();
+            const int64_t *I64 = info_i64.Data();
+            const uint8_t *U8 = info_u8.Data();
+            const uint16_t *U16 = info_u16.Data();
+            const uint32_t *U32 = info_u32.Data();
+            const uint64_t *U64 = info_u64.Data();
+            const float *R32 = info_r32.Data();
+            const double *R64 = info_r64.Data();
+            const std::complex<float> *CR32 = info_cr32.Data();
+            const std::complex<double> *CR64 = info_cr64.Data();
 
             EXPECT_EQ(IString, currentTestData.S1);
 

@@ -23,7 +23,7 @@ namespace engine
 {
 
 InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm mpiComm)
+                           MPI_Comm mpiComm)
 : Engine("InlineWriter", io, name, mode, mpiComm)
 {
     m_EndMessage = " in call to InlineWriter " + m_Name + " Open\n";
@@ -61,8 +61,7 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        Variable<T> &variable =                                                \
-            FindVariable<T>(name, "in call to BeginStep"); \
+        Variable<T> &variable = FindVariable<T>(name, "in call to BeginStep"); \
         variable.m_BlocksInfo.clear();                                         \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
@@ -89,8 +88,7 @@ void InlineWriter::PerformPuts()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank
-                  << "     PerformPuts()\n";
+        std::cout << "Inline Writer " << m_WriterRank << "     PerformPuts()\n";
     }
     m_NeedPerformPuts = false;
 }
@@ -117,12 +115,12 @@ void InlineWriter::Flush(const int transportIndex)
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)       \
+    void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)         \
     {                                                                          \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        /*reader uses: variable.m_BlocksInfo.clear();*/                                         \
+        /*reader uses: variable.m_BlocksInfo.clear();*/                        \
     }                                                                          \
-    void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)   \
+    void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }

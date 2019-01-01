@@ -305,11 +305,12 @@ public:
      * </pre>
      */
     template <class T>
-    typename Variable<T>::Info* Get(Variable<T> &variable,
-             const Mode launch = Mode::Deferred);
+    typename Variable<T>::Info *Get(Variable<T> &variable,
+                                    const Mode launch = Mode::Deferred);
 
     /**
-     * @brief Get version for block selection that accepts a variableName as input.
+     * @brief Get version for block selection that accepts a variableName as
+     * input.
      *
      * Throws an exception if variable is not found in IO that created the
      * current engine.
@@ -332,8 +333,8 @@ public:
      * </pre>
      */
     template <class T>
-    typename Variable<T>::Info* Get(const std::string &variableName,
-             const Mode launch = Mode::Deferred);
+    typename Variable<T>::Info *Get(const std::string &variableName,
+                                    const Mode launch = Mode::Deferred);
 
     /**
      * Reader application indicates that no more data will be read from the
@@ -433,7 +434,7 @@ protected:
 #define declare_type(T)                                                        \
     virtual void DoGetSync(Variable<T> &, T *);                                \
     virtual void DoGetDeferred(Variable<T> &, T *);                            \
-    virtual typename Variable<T>::Info* DoGetBlockSync(Variable<T> &);
+    virtual typename Variable<T>::Info *DoGetBlockSync(Variable<T> &);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -508,8 +509,10 @@ private:
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
                                                                                \
-    extern template typename Variable<T>::Info* Engine::Get<T>(Variable<T> &, const Mode);            \
-    extern template typename Variable<T>::Info* Engine::Get<T>(const std::string &, const Mode);      \
+    extern template typename Variable<T>::Info *Engine::Get<T>(Variable<T> &,  \
+                                                               const Mode);    \
+    extern template typename Variable<T>::Info *Engine::Get<T>(                \
+        const std::string &, const Mode);                                      \
                                                                                \
     extern template Variable<T> &Engine::FindVariable(                         \
         const std::string &variableName, const std::string hint);              \

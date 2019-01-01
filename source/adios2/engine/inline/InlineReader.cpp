@@ -23,7 +23,7 @@ namespace engine
 {
 
 InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm mpiComm)
+                           MPI_Comm mpiComm)
 : Engine("InlineReader", io, name, mode, mpiComm)
 {
     m_EndMessage = " in call to IO Open InlineReader " + m_Name + "\n";
@@ -33,7 +33,8 @@ InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
     if (m_Verbosity == 5)
     {
         std::cout << "Inline Reader " << m_ReaderRank << " Open(" << m_Name
-                  << ") in constructor, with writer: " << writer.m_Name << std::endl;
+                  << ") in constructor, with writer: " << writer.m_Name
+                  << std::endl;
     }
 }
 
@@ -48,7 +49,7 @@ InlineReader::~InlineReader()
 }
 
 StepStatus InlineReader::BeginStep(const StepMode mode,
-                                     const float timeoutSeconds)
+                                   const float timeoutSeconds)
 {
     // step info should be received from the writer side in BeginStep()
     // so this forced increase should not be here
@@ -70,8 +71,7 @@ void InlineReader::PerformGets()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Reader " << m_ReaderRank
-                  << "     PerformGets()\n";
+        std::cout << "Inline Reader " << m_ReaderRank << "     PerformGets()\n";
     }
     m_NeedPerformGets = false;
 }
@@ -104,14 +104,14 @@ void InlineReader::EndStep()
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
-    typename Variable<T>::Info* InlineReader::DoGetBlockSync(Variable<T> &variable)                   \
+    typename Variable<T>::Info *InlineReader::DoGetBlockSync(                  \
+        Variable<T> &variable)                                                 \
     {                                                                          \
         return GetBlockSyncCommon(variable);                                   \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-
 
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
@@ -128,7 +128,6 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
-
 
 void InlineReader::Init()
 {
@@ -158,12 +157,13 @@ void InlineReader::InitParameters()
                         "Open or Engine constructor\n");
             }
         }
-        else if (key == "writerid") {
+        else if (key == "writerid")
+        {
             m_WriterID = value;
             if (m_Verbosity == 5)
             {
-                std::cout << "Inline Reader " << m_ReaderRank << " Init() writerID " << m_WriterID
-                          << "\n";
+                std::cout << "Inline Reader " << m_ReaderRank
+                          << " Init() writerID " << m_WriterID << "\n";
             }
         }
     }

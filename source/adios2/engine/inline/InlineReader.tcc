@@ -25,13 +25,16 @@ namespace engine
 
 template <>
 inline void InlineReader::GetSyncCommon(Variable<std::string> &variable,
-                                          std::string *data)
+                                        std::string *data)
 {
     variable.m_Data = data;
     auto blockInfo = variable.m_BlocksInfo.back();
-    if (blockInfo.IsValue) {
+    if (blockInfo.IsValue)
+    {
         *data = blockInfo.Value;
-    } else {
+    }
+    else
+    {
         *data = blockInfo.Data[0];
     }
     if (m_Verbosity == 5)
@@ -46,7 +49,8 @@ inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     variable.m_Data = data;
     auto blockInfo = variable.m_BlocksInfo.back();
-    if (blockInfo.IsValue) {
+    if (blockInfo.IsValue)
+    {
         *data = blockInfo.Value;
     }
     if (m_Verbosity == 5)
@@ -69,16 +73,20 @@ void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-inline typename Variable<T>::Info* InlineReader::GetBlockSyncCommon(Variable<T> &variable)
+inline typename Variable<T>::Info *
+InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
-    InlineWriter &writer = dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
+    InlineWriter &writer =
+        dynamic_cast<InlineWriter &>(m_IO.GetEngine(m_WriterID));
     writer.AddReadVariable(variable.m_Name);
-    if (m_DebugMode) {
-        if (variable.m_BlockID >= variable.m_BlocksInfo.size()) {
+    if (m_DebugMode)
+    {
+        if (variable.m_BlockID >= variable.m_BlocksInfo.size())
+        {
             throw std::invalid_argument(
-                "ERROR: selected BlockID " + std::to_string(variable.m_BlockID) +
-                " is above range of available blocks in GetBlockSync\n"
-            );
+                "ERROR: selected BlockID " +
+                std::to_string(variable.m_BlockID) +
+                " is above range of available blocks in GetBlockSync\n");
         }
     }
     if (m_Verbosity == 5)
@@ -88,7 +96,6 @@ inline typename Variable<T>::Info* InlineReader::GetBlockSyncCommon(Variable<T> 
     }
     return &variable.m_BlocksInfo[variable.m_BlockID];
 }
-
 
 } // end namespace engine
 } // end namespace core

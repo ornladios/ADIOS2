@@ -282,7 +282,8 @@ public:
      * @exception std::invalid_argument for invalid variable or nullptr data
      */
     template <class T>
-    void Get(Variable<T> variable, typename Variable<T>::Info& info, const Mode launch = Mode::Deferred);
+    void Get(Variable<T> variable, typename Variable<T>::Info &info,
+             const Mode launch = Mode::Deferred);
     /**
      * Get data associated with a Variable from the Engine. Data is
      * associated with a block selection, and data is retrieved from
@@ -302,7 +303,8 @@ public:
      * @exception std::invalid_argument for invalid variable or nullptr data
      */
     template <class T>
-    void Get(const std::string &variableName, typename Variable<T>::Info& info, const Mode launch = Mode::Deferred);
+    void Get(const std::string &variableName, typename Variable<T>::Info &info,
+             const Mode launch = Mode::Deferred);
 
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();
@@ -374,10 +376,10 @@ private:
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
                                                                                \
-    extern template void Engine::Get<T>(Variable<T>,                           \
-                                 typename Variable<T>::Info& info, const Mode);\
-    extern template void Engine::Get<T>(const std::string &,                   \
-                                 typename Variable<T>::Info& info, const Mode);\
+    extern template void Engine::Get<T>(                                       \
+        Variable<T>, typename Variable<T>::Info & info, const Mode);           \
+    extern template void Engine::Get<T>(                                       \
+        const std::string &, typename Variable<T>::Info &info, const Mode);    \
                                                                                \
     extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \

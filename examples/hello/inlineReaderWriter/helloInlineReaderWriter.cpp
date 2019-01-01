@@ -2,10 +2,10 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * helloInlineReaderWriter.cpp  example borrowed from helloBPTimeWriter, using the
- * inline engine. Writes a variable using the Advance
- * function for time aggregation. Time step is saved as an additional (global)
- * single value variable, just for tracking purposes.
+ * helloInlineReaderWriter.cpp  example borrowed from helloBPTimeWriter, using
+ * the inline engine. Writes a variable using the Advance function for time
+ * aggregation. Time step is saved as an additional (global) single value
+ * variable, just for tracking purposes.
  *
  *  Created on: Nov 16, 2018
  *      Author: Aron Helser aron.helser@kitware.com
@@ -19,8 +19,8 @@
 
 #include <adios2.h>
 
-
-void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, unsigned int step)
+void DoAnalysis(adios2::IO &inlineIO, adios2::Engine &inlineReader, int rank,
+                unsigned int step)
 {
     try
     {
@@ -38,22 +38,26 @@ void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, un
 
             std::cout << "Data StepsStart " << inlineFloats000.StepsStart()
                       << " from rank " << rank << ": ";
-            for (auto& info : blocksInfo) {
-                // bp file reader would see all blocks, inline only sees local writer's block(s).
+            for (auto &info : blocksInfo)
+            {
+                // bp file reader would see all blocks, inline only sees local
+                // writer's block(s).
                 size_t myBlock = info.BlockID;
                 inlineFloats000.SetBlockSelection(myBlock);
 
                 // info passed by reference
-                // engine must remember data pointer (or info) to fill it out at PerformGets()
-                inlineReader.Get<float>(inlineFloats000, info, adios2::Mode::Deferred);
-
+                // engine must remember data pointer (or info) to fill it out at
+                // PerformGets()
+                inlineReader.Get<float>(inlineFloats000, info,
+                                        adios2::Mode::Deferred);
             }
             inlineReader.PerformGets();
 
-            for (const auto& info : blocksInfo) {
+            for (const auto &info : blocksInfo)
+            {
                 adios2::Dims count = info.Count;
-                const float * vectData = info.Data();
-                for(int i = 0; i < count[0]; ++i)
+                const float *vectData = info.Data();
+                for (int i = 0; i < count[0]; ++i)
                 {
                     float datum = vectData[i];
                     std::cout << datum << " ";
@@ -75,7 +79,8 @@ void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, un
             std::cout << "inlineString: " << myString << "\n";
         }
         inlineReader.EndStep();
-        // all deferred block info are now valid - need data pointers to be valid, filled with data
+        // all deferred block info are now valid - need data pointers to be
+        // valid, filled with data
     }
     catch (std::invalid_argument &e)
     {
@@ -95,9 +100,7 @@ void DoAnalysis(adios2::IO& inlineIO, adios2::Engine& inlineReader, int rank, un
         std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
-
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -114,9 +117,9 @@ int main(int argc, char *argv[])
 
     try
     {
+#ifdef ADIOS2_HAVE_MPI
         /** ADIOS class factory of IO class objects, DebugON (default) is
          * recommended */
-#ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
         adios2::ADIOS adios(adios2::DebugON);
@@ -152,9 +155,9 @@ int main(int argc, char *argv[])
                 }
                 namev += std::to_string(v);
 
-                inlineFloats[v] =
-                    inlineIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
-                                               {Nx}, adios2::ConstantDims);
+                inlineFloats[v] = inlineIO.DefineVariable<float>(
+                    namev, {size * Nx}, {rank * Nx}, {Nx},
+                    adios2::ConstantDims);
             }
 
             /** global single value variable: name */
@@ -166,7 +169,8 @@ int main(int argc, char *argv[])
                 inlineIO.Open("myWriteID", adios2::Mode::Write);
 
             inlineIO.SetEngine("Inline");
-            inlineIO.SetParameters({{"verbose", "4"}, {"writerID", "myWriteID"}});
+            inlineIO.SetParameters(
+                {{"verbose", "4"}, {"writerID", "myWriteID"}});
 
             adios2::Engine inlineReader =
                 inlineIO.Open("myReadID", adios2::Mode::Read);
@@ -206,8 +210,7 @@ int main(int argc, char *argv[])
             inlineReader.Close();
         }
         // MPI_Barrier(MPI_COMM_WORLD);
-
-     }
+    }
     catch (std::invalid_argument &e)
     {
         std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
