@@ -184,6 +184,8 @@ if(FFS_USE_DILL)
   list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
 endif()
 
+set(FFS_CONVERSION_GENERATION_DEFAULT 0)
+
 option(FFS_USE_ATL "Enable the use of ATL" ON)
 if(FFS_USE_ATL)
   find_package(atl 2.2.1 REQUIRED)
