@@ -1648,6 +1648,8 @@ enet_protocol_send_reliable_outgoing_commands (ENetHost * host, ENetPeer * peer)
     return canPing;
 }
 
+static int in_host_flush = 0;
+
 static int
 enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int checkForTimeouts)
 {
@@ -1785,6 +1787,9 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
 
         sentLength = enet_socket_send (host -> socket, & currentPeer -> address, host -> buffers, host -> bufferCount);
 
+        if (in_host_flush) {
+            VERBOSE("(PID %x) Enet_socket_send sent something, buffercount %ld, return value %d\n", getpid(), host->bufferCount, sentLength);
+        }
         enet_protocol_remove_sent_unreliable_commands (currentPeer);
 
         if (sentLength < 0)
@@ -1808,7 +1813,9 @@ enet_host_flush (ENetHost * host)
 {
     host -> serviceTime = enet_time_get ();
 
+    in_host_flush = 1;
     enet_protocol_send_outgoing_commands (host, NULL, 0);
+    in_host_flush = 0;
 }
 
 /** Checks for any queued events on the host and dispatches one if available.
