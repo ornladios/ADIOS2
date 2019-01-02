@@ -26,7 +26,7 @@ export SUPPRESSIONS="${SOURCE_DIR}/scripts/travis/cl_analyze_suppressions.txt"
 echo "CCC_ANALYZER=${CCC_ANALYZER}"
 echo "CXX_ANALYZER=${CXX_ANALYZER}"
 
-CUSTOM_BUILD_NAME="${TRAVIS_PULL_REQUEST_BRANCH}_${TRAVIS_BUILD_NUMBER}_clang-analyzer"
+CUSTOM_BUILD_NAME="${BUILD_LABEL}_clang-analyzer"
 CTEST_SCRIPT="${SOURCE_DIR}/scripts/travis/travis_clang-analyzer.cmake"
 
 extra_checkers=(
