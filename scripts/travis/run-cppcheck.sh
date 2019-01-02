@@ -16,7 +16,7 @@ export CPPCHECK_EXE=${CPPCHECK_EXE}
 
 cd ${BUILD_DIR}
 
-CUSTOM_BUILD_NAME="${TRAVIS_PULL_REQUEST_BRANCH}_${TRAVIS_BUILD_NUMBER}_cppcheck"
+CUSTOM_BUILD_NAME="${BUILD_LABEL}_cppcheck"
 CTEST_SCRIPT="${SOURCE_DIR}/scripts/travis/travis_cppcheck.cmake"
 
 ${CPPCHECK_EXE} --version
