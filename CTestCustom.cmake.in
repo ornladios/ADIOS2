@@ -18,3 +18,17 @@ list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/testing/.*"
   ".*/examples/.*"
 )
+
+# Exclude flaky tests for now
+list(APPEND CTEST_CUSTOM_TESTS_IGNORE
+  "ADIOSSstTest.3x5"
+  "ADIOSSstTest.3x5BP"
+  "ADIOSSstTest.5x3"
+  "ADIOSSstTest.FtoC_3x5"
+  "ADIOSSstTest.FtoC_3x5BP"
+  "ADIOSSstDelayedReaderTest.3x5"
+  "ADIOSSstDelayedReaderWithBlockingTest.3x5"
+  "ADIOSSstKillReadersTest.Multi"
+  ".*/TestStagingMPMD.MultipleStepsWithTimeout/.*_SST_BP"
+  ".*/TestStagingMPMD.MultipleStepsWithTimeout/.*_SST_FFS"
+)
