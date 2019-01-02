@@ -1857,7 +1857,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 {
     enet_uint32 waitCondition;
 
-    VERBOSE("(PID %x) Enet host_service called, timeout %d\n", getpid(), timeout);
+//    VERBOSE("(PID %x) Enet host_service called, timeout %d\n", getpid(), timeout);
     if (event != NULL)
     {
         event -> type = ENET_EVENT_TYPE_NONE;
@@ -1964,7 +1964,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        }
 
        if (ENET_TIME_GREATER_EQUAL (host -> serviceTime, timeout)) {
-           VERBOSE("(PID %x ) Enet_host service, returning on servicetime timeout\n", getpid());
+//           VERBOSE("(PID %x ) Enet_host service, returning on servicetime timeout\n", getpid());
          return 0;
        }
 
@@ -1985,7 +1985,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
        host -> serviceTime = enet_time_get ();
     } while (waitCondition & ENET_SOCKET_WAIT_RECEIVE);
 
-    VERBOSE("(PID %x ) Enet_host service, returning 0 at end\n", getpid());
+//    VERBOSE("(PID %x ) Enet_host service, returning 0 at end\n", getpid());
     return 0; 
 }
 

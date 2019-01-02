@@ -171,7 +171,7 @@ enet_service_network(CManager cm, void *void_trans)
         free(entry);
     }
 
-    printf("there's no more pending data\n");
+//    printf("there's no more pending data\n");
     while (ecd->server && (enet_host_service (ecd->server, & event, 0) > 0)) {
         if (enet_host_service_warn_interval && 
             (enet_time_get() > (ecd->last_host_service_zero_return + enet_host_service_warn_interval))) {
