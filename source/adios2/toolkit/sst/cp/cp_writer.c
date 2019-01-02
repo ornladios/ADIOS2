@@ -861,8 +861,10 @@ void SstWriterClose(SstStream Stream)
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
     while (Stream->QueuedTimesteps)
     {
-        CP_verbose(Stream,
-                   "(PID %x) Waiting for timesteps to be released in WriterClose\n", getpid());
+        CP_verbose(
+            Stream,
+            "(PID %x) Waiting for timesteps to be released in WriterClose\n",
+            getpid());
         if (Stream->Verbose)
         {
             CPTimestepList List = Stream->QueuedTimesteps;
