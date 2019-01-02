@@ -89,7 +89,73 @@ ADIOS 2 default configuration on Titan is to build the static library. Python bi
 
    .. code-block:: bash
 
-      $ CRAYPE_LINK_TYPE=dynamic cmake -DBUILD_SHARED_LIBS=ON ..
+      [atkins3@titan-ext4 code]$ mkdir adios
+      [atkins3@titan-ext4 code]$ cd adios
+      [atkins3@titan-ext4 adios]$ git clone https://github.com/ornladios/adios2.git source
+      [atkins3@titan-ext4 adios]$ module swap PrgEnv-pgi PrgEnv-gnu
+      [atkins3@titan-ext4 adios]$ module load cmake3/3.11.3
+      [atkins3@titan-ext4 adios]$ module load python python_numpy python_mpi4py
+      [atkins3@titan-ext4 adios]$ export CRAYPE_LINK_TYPE=dynamic CC=cc CXX=CC FC=ftn
+      [atkins3@titan-ext4 adios]$ mkdir build
+      [atkins3@titan-ext4 build]$ cd build
+      [atkins3@titan-ext4 build]$ cmake ../source
+      -- The C compiler identification is GNU 6.3.0
+      -- The CXX compiler identification is GNU 6.3.0
+      -- Cray Programming Environment 2.5.13 C
+      -- Check for working C compiler: /opt/cray/craype/2.5.13/bin/cc
+      -- Check for working C compiler: /opt/cray/craype/2.5.13/bin/cc -- works
+      -- Detecting C compiler ABI info
+      -- Detecting C compiler ABI info - done
+      -- Detecting C compile features
+      -- Detecting C compile features - done
+      -- Cray Programming Environment 2.5.13 CXX
+      -- Check for working CXX compiler: /opt/cray/craype/2.5.13/bin/CC
+      -- Check for working CXX compiler: /opt/cray/craype/2.5.13/bin/CC -- works
+      ...
+      -- Found PythonInterp: /sw/titan/.swci/0-login/opt/spack/20180315/linux-suse_linux11-x86_64/gcc-4.3.4/python-2.7.9-v6ctjewwdx6k2qs7ublexz7gnx457jo5/bin/python2.7 (found version "2.7.9") 
+      -- Found PythonLibs: /sw/titan/.swci/0-login/opt/spack/20180315/linux-suse_linux11-x86_64/gcc-4.3.4/python-2.7.9-v6ctjewwdx6k2qs7ublexz7gnx457jo5/lib/libpython2.7.so (found version "2.7.9") 
+      -- Found PythonModule_numpy: /sw/xk6/python_numpy/1.7.1/python2.7.9_craylibsci_gnu4.9.0/lib64/python2.7/site-packages/numpy  
+      -- Found PythonModule_mpi4py: /lustre/atlas/sw/xk7/python_mpi4py/2.0.0/cle5.2up04_python2.7.9/lib64/python2.7/site-packages/mpi4py  
+      -- Found PythonFull: /sw/titan/.swci/0-login/opt/spack/20180315/linux-suse_linux11-x86_64/gcc-4.3.4/python-2.7.9-v6ctjewwdx6k2qs7ublexz7gnx457jo5/bin/python2.7  found components:  Interp Libs numpy mpi4py 
+      ...
+      ADIOS2 build configuration:
+        ADIOS Version: 2.3.0
+        C++ Compiler : GNU 6.3.0 CrayPrgEnv
+          /opt/cray/craype/2.5.13/bin/CC
+
+        Fortran Compiler : GNU 6.3.0 CrayPrgEnv
+          /opt/cray/craype/2.5.13/bin/ftn
+
+        Installation prefix: /usr/local
+              bin: bin
+              lib: lib
+          include: include
+            cmake: lib/cmake/adios2
+           python: lib/python2.7/site-packages
+
+        Features:
+          Library Type: shared
+          Build Type:   Release
+          Testing: ON
+          Build Options:
+            BZip2    : ON
+            ZFP      : OFF
+            SZ       : OFF
+            MGARD    : OFF
+            MPI      : ON
+            DataMan  : ON
+            SST      : ON
+            ZeroMQ   : OFF
+            HDF5     : OFF
+            Python   : ON
+            Fortran  : ON
+            SysVShMem: ON
+            Endian_Reverse: OFF
+
+      -- Configuring done
+      -- Generating done
+      -- Build files have been written to: /ccs/home/atkins3/code/adios/build
+
 
 How do I build ADIOS 2 on Fujitsu FX100?
 ----------------------------------------
