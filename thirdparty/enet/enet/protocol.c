@@ -1033,9 +1033,10 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     enet_uint32 peerID, flags;
     enet_uint8 sessionID;
 
-    if (host -> receivedDataLength < (size_t) & ((ENetProtocolHeader *) 0) -> sentTime)
+    if (host -> receivedDataLength < (size_t) & ((ENetProtocolHeader *) 0) -> sentTime) {
+        VERBOSE("(PID %x) returning with receiveddatalength %ld and comparison %ld\n", getpid(), host -> receivedDataLength,  (size_t) & ((ENetProtocolHeader *) 0) -> sentTime);
       return 0;
-
+    }
     header = (ENetProtocolHeader *) host -> receivedData;
 
     peerID = ENET_NET_TO_HOST_32 (header -> peerID);
@@ -1050,8 +1051,10 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     if (peerID == ENET_PROTOCOL_MAXIMUM_PEER_ID)
       peer = NULL;
     else
-    if (peerID >= host -> peerCount)
+        if (peerID >= host -> peerCount) {
+            VERBOSE("(PID %x) bad peer  ID %d vs %ld\n", getpid(), peerID, host->peerCount);
       return 0;
+        }
     else
     {
        peer = host -> peer_list [peerID];
@@ -1062,24 +1065,30 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
              host -> receivedAddress.port != peer -> address.port) &&
              peer -> address.host != ENET_HOST_BROADCAST) ||
            (peer -> outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
-            sessionID != peer -> incomingSessionID))
+            sessionID != peer -> incomingSessionID)) {
+                       VERBOSE("(PID %x) returning for reasons\n", getpid());
+
          return 0;
+       }
     }
  
     if (flags & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED)
     {
         size_t originalSize;
-        if (host -> compressor.context == NULL || host -> compressor.decompress == NULL)
+        if (host -> compressor.context == NULL || host -> compressor.decompress == NULL) {
+                       VERBOSE("(PID %x) returning compression\n", getpid());
           return 0;
+        }
 
         originalSize = host -> compressor.decompress (host -> compressor.context,
                                     host -> receivedData + headerSize, 
                                     host -> receivedDataLength - headerSize, 
                                     host -> packetData [1] + headerSize, 
                                     sizeof (host -> packetData [1]) - headerSize);
-        if (originalSize <= 0 || originalSize > sizeof (host -> packetData [1]) - headerSize)
+        if (originalSize <= 0 || originalSize > sizeof (host -> packetData [1]) - headerSize) {
+                       VERBOSE("(PID %x) returning compression original\n", getpid());
           return 0;
-
+        }
         memcpy (host -> packetData [1], header, headerSize);
         host -> receivedData = host -> packetData [1];
         host -> receivedDataLength = headerSize + originalSize;
@@ -1096,8 +1105,11 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
         buffer.data = host -> receivedData;
         buffer.dataLength = host -> receivedDataLength;
 
-        if (host -> checksum (& buffer, 1) != desiredChecksum)
+        if (host -> checksum (& buffer, 1) != desiredChecksum) {
+                                   VERBOSE("(PID %x) returning checksum\n", getpid());
+
           return 0;
+        }
     }
        
     if (peer != NULL)
@@ -1116,22 +1128,26 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
 
        command = (ENetProtocol *) currentData;
 
-       if (currentData + sizeof (ENetProtocolCommandHeader) > & host -> receivedData [host -> receivedDataLength])
-         break;
+       if (currentData + sizeof (ENetProtocolCommandHeader) > & host -> receivedData [host -> receivedDataLength]) {
+                       VERBOSE("(PID %x) first break\n", getpid());
+           break;}
 
        commandNumber = command -> header.command & ENET_PROTOCOL_COMMAND_MASK;
-       if (commandNumber >= ENET_PROTOCOL_COMMAND_COUNT) 
+       if (commandNumber >= ENET_PROTOCOL_COMMAND_COUNT)  {
+                                  VERBOSE("(PID %x) second break\n", getpid());
          break;
-       
+       }       
        commandSize = commandSizes [commandNumber];
-       if (commandSize == 0 || currentData + commandSize > & host -> receivedData [host -> receivedDataLength])
+       if (commandSize == 0 || currentData + commandSize > & host -> receivedData [host -> receivedDataLength]) {
+                       VERBOSE("(PID %x) third break\n", getpid());
          break;
-
+       }
        currentData += commandSize;
 
-       if (peer == NULL && commandNumber != ENET_PROTOCOL_COMMAND_CONNECT)
+       if (peer == NULL && commandNumber != ENET_PROTOCOL_COMMAND_CONNECT) {
+           VERBOSE("(PID %x) fourth break\n", getpid());
          break;
-         
+       }
        command -> header.reliableSequenceNumber = ENET_NET_TO_HOST_16 (command -> header.reliableSequenceNumber);
 
        switch (commandNumber)
@@ -1212,6 +1228,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
           break;
 
        default:
+           VERBOSE("(PID %x) Incoming command was ERROR?\n", getpid());
           goto commandError;
        }
 

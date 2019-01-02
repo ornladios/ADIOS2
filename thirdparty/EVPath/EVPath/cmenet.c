@@ -159,11 +159,11 @@ enet_service_network(CManager cm, void *void_trans)
     
     if (!ecd->server) return;
     if (!(CM_LOCKED(svc, ecd->cm))) {
-	printf("Enet service network, CManager not locked\n");
+	printf("(PID %x) Enet service network, CManager not locked\n", getpid());
     }
 
     while (ecd->pending_data) {
-        printf("We're calling handle packet on pending data first\n");
+        printf("(PID %x) We're calling handle packet on pending data first\n", getpid());
         svc->trace_out(cm, "ENET Handling pending data\n");
         queued_data entry = ecd->pending_data;
         ecd->pending_data = entry->next;
@@ -171,7 +171,7 @@ enet_service_network(CManager cm, void *void_trans)
         free(entry);
     }
 
-//    printf("there's no more pending data\n");
+//    printf("(PID %x) there's no more pending data\n", getpid());
     while (ecd->server && (enet_host_service (ecd->server, & event, 0) > 0)) {
         if (enet_host_service_warn_interval && 
             (enet_time_get() > (ecd->last_host_service_zero_return + enet_host_service_warn_interval))) {
@@ -179,16 +179,16 @@ enet_service_network(CManager cm, void *void_trans)
                     enet_time_get() - ecd->last_host_service_zero_return);
         }
 
-        printf("Enet hhost_service in service network returned 1, event type is %d\n", event.type);
+        printf("(PID %x) Enet hhost_service in service network returned 1, event type is %d\n", getpid(), event.type);
         switch (event.type) {
 	case ENET_EVENT_TYPE_NONE:
-            printf("Enet got event type none \n");
+            printf("(PID %x) Enet got event type none \n", getpid());
 	    break;
         case ENET_EVENT_TYPE_CONNECT: {
 	    void *enet_connection_data;
             struct in_addr addr;
             addr.s_addr = event.peer->address.host;
-            printf("Enet got a connection \n");
+            printf("(PID %x) Enet got a connection \n", getpid());
 	    svc->trace_out(cm, "A new client connected from %s:%u.\n", 
 			   inet_ntoa(addr),
 			   event.peer->address.port);
@@ -205,12 +205,12 @@ enet_service_network(CManager cm, void *void_trans)
         case ENET_EVENT_TYPE_RECEIVE: {
 	    enet_conn_data_ptr econn_d = event.peer->data;
             if (econn_d) {
-                printf("Enet handling packet\n");
+                printf("(PID %x) Enet handling packet\n", getpid());
                 handle_packet(cm, svc, trans, event.peer->data, event.packet);
             } else {
                 struct in_addr addr;
                 addr.s_addr = event.peer->address.host;
-                printf("Enet throwing away data \n");
+                printf("(PID %x) Enet throwing away data \n", getpid());
                 svc->trace_out(cm, "ENET  ====== virgin peer, address is %s, port %u.\n", inet_ntoa(addr), event.peer->address.port);
                 svc->trace_out(cm, "ENET  ====== DiSCARDING DATA\n");
             }
