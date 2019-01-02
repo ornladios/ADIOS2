@@ -10,8 +10,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6eeb5a8ac3e34d2599cfdea5bdc3390f)](https://www.codacy.com/app/chuckatkins/ADIOS2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ornladios/ADIOS2&amp;utm_campaign=Badge_Grade)
 
 
-# Adaptable Input / Output System (ADIOS) v2.2.0
-This is v2.2.0 of the ADIOS I/O system, developed as part of the
+# Adaptable Input / Output System (ADIOS) v2.3.0
+This is v2.3.0 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
 
 ## License
@@ -70,7 +70,7 @@ $ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.0/gnu/openmpi ../source
 ...
 
 ADIOS2 build configuration:
-  ADIOS Version: 2.2.0
+  ADIOS Version: 2.3.0
   C++ Compiler : GNU 7.3.0 
     /opt/ohpc/pub/compiler/gcc/7.3.0/bin/g++
 

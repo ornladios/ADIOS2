@@ -24,5 +24,5 @@ Or if you're not using CMake then you can manually get the necessary compile and
 -isystem /home/khq.kitware.com/chuck.atkins/Code/adios2/install/master/include -isystem /opt/ohpc/pub/mpi/openmpi3-gnu7/3.1.0/include -pthread -std=gnu++11
     $ /path/to/install-prefix/bin/adios2-config --cxxlibs
     ADIOS2_DIR: /home/khq.kitware.com/chuck.atkins/Code/adios2/install/master
--Wl,-rpath,/home/khq.kitware.com/chuck.atkins/Code/adios2/install/master/lib:/opt/ohpc/pub/mpi/openmpi3-gnu7/3.1.0/lib /home/khq.kitware.com/chuck.atkins/Code/adios2/install/master/lib/libadios2.so.2.2.0 -pthread -Wl,-rpath -Wl,/opt/ohpc/pub/mpi/openmpi3-gnu7/3.1.0/lib -Wl,--enable-new-dtags -pthread /opt/ohpc/pub/mpi/openmpi3-gnu7/3.1.0/lib/libmpi.so -Wl,-rpath-link,/home/khq.kitware.com/chuck.atkins/Code/adios2/install/master/lib
+-Wl,-rpath,/home/khq.kitware.com/chuck.atkins/Code/adios2/install/master/lib:/opt/ohpc/pub/mpi/openmpi3-gnu7/3.1.0/lib /home/khq.kitware.com/chuck.atkins/Code/adios2/install/master/lib/libadios2.so.2.3.0 -pthread -Wl,-rpath -Wl,/opt/ohpc/pub/mpi/openmpi3-gnu7/3.1.0/lib -Wl,--enable-new-dtags -pthread /opt/ohpc/pub/mpi/openmpi3-gnu7/3.1.0/lib/libmpi.so -Wl,-rpath-link,/home/khq.kitware.com/chuck.atkins/Code/adios2/install/master/lib
 
