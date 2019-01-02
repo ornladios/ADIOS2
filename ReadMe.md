@@ -111,7 +111,7 @@ ADIOS2 build configuration:
 The following options can be specified with CMake's `-DVAR=VALUE` syntax to control which features get enabled or disabled:
 
 | CMake Option         | Values                    | Description                                                              |
-| :------------------: | :-----------------------: | :----------------------------------------------------------------------- |
+| :------------------- | :------------------------ | :----------------------------------------------------------------------- |
 | `ADIOS2_USE_BZip2`   | **`AUTO`**/``ON``/``OFF`` | Enable [BZip2](http://www.bzip.org/) compression (not implemented).      |
 | `ADIOS2_USE_ZFP`     | **`AUTO`**/``ON``/``OFF`` | Enable [ZFP](https://github.com/LLNL/zfp) compression (not implemented). |
 | `ADIOS2_USE_MPI`     | **`AUTO`**/``ON``/``OFF`` | Enable MPI.                                                              |
@@ -126,13 +126,13 @@ Note: The `ADIOS2_USE_HDF5` option requires the use of a matching serial or para
 
 In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library get's built:
 
-| CMake Options           | Values                                                    | Description                                |
-| :---------------------: | :-------------------------------------------------------: | :----------------------------------------: |
-| `BUILD_SHARED_LIBS`     | **`ON`**/`OFF`                                            | Build shared libraries.                    |
-| `ADIOS2_BUILD_EXAMPLE   | **`ON`**/`OFF`                                            | Build examples.                            |
-| `ADIOS2_BUILD_TESTING   | **`ON`**/`OFF`                                            | Build test code.                           |
-| `CMAKE_INSTALL_PREFIX   | /path/to/install (`/usr/local`)                           | Install location.                          |
-| `CMAKE_BUILD_TYPE`      | **`Debug`** / `Release` / `RelWithDebInfo` / `MinSizeRel` | The level of compiler optimization to use. |
+| CMake Options          | Values                                                    | Description                                |
+| :--------------------- | :-------------------------------------------------------- | :----------------------------------------- |
+| `BUILD_SHARED_LIBS`    | **`ON`**/`OFF`                                            | Build shared libraries.                    |
+| `ADIOS2_BUILD_EXAMPLE` | **`ON`**/`OFF`                                            | Build examples.                            |
+| `ADIOS2_BUILD_TESTING` | **`ON`**/`OFF`                                            | Build test code.                           |
+| `CMAKE_INSTALL_PREFIX` | /path/to/install (`/usr/local`)                           | Install location.                          |
+| `CMAKE_BUILD_TYPE`     | **`Debug`** / `Release` / `RelWithDebInfo` / `MinSizeRel` | The level of compiler optimization to use. |
 
 4. Compile:
 
