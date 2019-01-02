@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.2)
 project(EVPath VERSION 4.4.0 LANGUAGES C CXX)
 
+# Enable <PackageName>_ROOT variables for dependency searching
+# CMake v3.12
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
+endif()
+
+# Let option(...) setings work with non-cache variables.  Useful for including
+# EVPath as a third party dependency in another project.
+# CMake v3.13
+if(POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
 endif()
 
 # Some boilerplate to setup nice output directories
