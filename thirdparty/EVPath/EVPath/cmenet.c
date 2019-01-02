@@ -220,7 +220,7 @@ enet_service_network(CManager cm, void *void_trans)
 	    enet_conn_data_ptr enet_conn_data = event.peer->data;
 	    svc->trace_out(cm, "Got a disconnect on connection %p\n",
 		event.peer->data);
-            printf("Enet got a disconnect \n");
+            printf("(PID %x) Enet got a disconnect \n", getpid());
 
             enet_conn_data = event.peer->data;
 	    enet_conn_data->read_buffer_len = -1;
