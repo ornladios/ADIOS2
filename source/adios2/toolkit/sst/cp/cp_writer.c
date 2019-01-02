@@ -862,7 +862,7 @@ void SstWriterClose(SstStream Stream)
     while (Stream->QueuedTimesteps)
     {
         CP_verbose(Stream,
-                   "Waiting for timesteps to be released in WriterClose\n");
+                   "(PID %x) Waiting for timesteps to be released in WriterClose\n", getpid());
         if (Stream->Verbose)
         {
             CPTimestepList List = Stream->QueuedTimesteps;

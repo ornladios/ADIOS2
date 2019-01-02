@@ -227,7 +227,7 @@ enet_service_network(CManager cm, void *void_trans)
             svc->connection_fail(enet_conn_data->conn);
         }
         default: {
-            printf("Enet got an unknown event \n");
+            printf("Enet got an unknown event, type %d \n", event.type);
 	}
 
         }
