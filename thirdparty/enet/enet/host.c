@@ -4,6 +4,7 @@
 */
 #define ENET_BUILDING_LIB 1
 #include <string.h>
+#include <stdio.h>
 #include "enet/enet.h"
 
 /** @defgroup host ENet host functions
@@ -192,6 +193,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     if (channelCount > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT)
       channelCount = ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT;
 
+    printf("(pid %x) Doing enet_host_connect\n", getpid());
     for (i = 0; i < host -> peerCount; i++ )
     {
        currentPeer = host -> peer_list[i];
@@ -202,6 +204,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
 
     if (i >= host -> peerCount)
     {
+        printf("(pid %x)  Using NEW Peer ID %d\n", getpid(), i);
 	if (i >= ENET_PROTOCOL_MAXIMUM_PEER_ID) 
 	    return NULL;
 	host -> peerCount++;
@@ -221,6 +224,8 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
 	enet_list_clear (& currentPeer -> dispatchedCommands);
 
 	enet_peer_reset (currentPeer);
+    } else {
+        printf("(pid %x)  REUsing Peer ID %d\n", getpid(), i);
     }
 
     currentPeer -> channels = (ENetChannel *) enet_malloc (channelCount * sizeof (ENetChannel));
