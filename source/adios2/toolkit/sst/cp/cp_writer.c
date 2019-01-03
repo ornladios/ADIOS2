@@ -200,6 +200,7 @@ static void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
     WS_ReaderInfo WSreader = (WS_ReaderInfo)client_data;
     SstStream ParentWriterStream = WSreader->ParentStream;
 
+    CP_verbose(ParentWriterStream, "Entering WriterConnCloseHandler\n");
     PTHREAD_MUTEX_LOCK(&ParentWriterStream->DataLock);
     if (WSreader->ReaderStatus == Established)
     {
@@ -883,7 +884,8 @@ void SstWriterClose(SstStream Stream)
                        StringList);
             free(StringList);
         }
-        CP_verbose(Stream, "Reader Count is %d\n", Stream->ReaderCount);
+        CP_verbose(Stream, "(PID %x) Reader Count is %d\n", getpid(),
+                   Stream->ReaderCount);
         for (int i = 0; i < Stream->ReaderCount; i++)
         {
             CP_verbose(Stream, "Reader [%d] status is %s\n", i,
