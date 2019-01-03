@@ -63,7 +63,7 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios(adios2::DebugON);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");

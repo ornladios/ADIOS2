@@ -9,6 +9,7 @@ target_link_libraries(TestInlineWriteRead adios2 gtest)
 if(ADIOS2_HAVE_MPI)
 
   target_link_libraries(TestInlineWriteRead MPI::MPI_C)
+  set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
 
 endif()
 
