@@ -34,15 +34,15 @@ jobs:
     docker:
       - image: ornladios/adios2-auto:el7
 
-  "el7-gnu7":
+  "el7-gnu8":
     <<: *defaults
     docker:
-      - image: ornladios/adios2-auto:el7-gnu7-ohpc
+      - image: ornladios/adios2-auto:el7-gnu8-ohpc
 
-  "el7-gnu7-openmpi":
+  "el7-gnu8-openmpi":
     <<: *defaults
     docker:
-      - image: ornladios/adios2-auto:el7-gnu7-openmpi-ohpc
+      - image: ornladios/adios2-auto:el7-gnu8-openmpi-ohpc
 
   "el7-intel18":
     <<: *defaults
@@ -79,8 +79,8 @@ workflows:
   build:
     jobs:
       - "el7"
-      - "el7-gnu7"
-      - "el7-gnu7-openmpi"
+      - "el7-gnu8"
+      - "el7-gnu8-openmpi"
       - "el7-intel18"
       - "el7-intel18-openmpi"
       - "suse-pgi"

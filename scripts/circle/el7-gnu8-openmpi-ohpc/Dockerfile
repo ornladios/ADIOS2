@@ -1,15 +1,19 @@
 FROM centos:centos7
 
 # Install core dev packages
-RUN yum -y install make curl file git valgrind vim \
+RUN yum -y install make curl file git gcc pkg-config valgrind vim \
         gdb zlib zlib-devel bzip2 bzip2-libs bzip2-devel
 RUN yum -y install epel-release
-RUN yum -y install zeromq-devel python34-devel
+RUN yum -y install zeromq-devel python34-devel libfabric-devel
 
-# Install OpenHPC packages
+# Install extra repos
 RUN yum -y install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohpc-release-1.3-1.el7.x86_64.rpm
+
+# Install intel OpenHPC packages
 RUN yum -y install lmod-ohpc \
-        gnu7-compilers-ohpc python34-numpy-gnu7-ohpc hdf5-gnu7-ohpc
+  gnu8-compilers-ohpc python34-numpy-gnu8-ohpc openmpi-gnu8-ohpc \
+  python34-mpi4py-gnu8-openmpi3-ohpc \
+  phdf5-gnu8-openmpi3-ohpc netcdf-gnu8-openmpi3-ohpc adios-gnu8-openmpi3-ohpc
 
 # Cleanup headers and packages
 RUN yum clean all
@@ -17,7 +21,7 @@ RUN yum clean all
 # Install the CMake binary
 WORKDIR /opt/cmake/3.6.3
 RUN curl -L https://cmake.org/files/v3.6/cmake-3.6.3-Linux-x86_64.tar.gz | \
-        tar --strip-components=1 -xz
+  tar --strip-components=1 -xz
 
 # Create a non-root user to run the builds/tests
 RUN export uid=1001 gid=1001 && \
