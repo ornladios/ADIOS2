@@ -11,12 +11,7 @@ readonly repo="https://github.com/nlohmann/json.git"
 readonly tag="master"
 readonly shortlog="true"
 readonly paths="
-  CMakeLists.txt
-  LICENSE.MIT
-  nlohmann_json.natvis
-  cmake
-  include
-  single_include
+  single_include/nlohmann/json.hpp
 "
 
 extract_source () {
