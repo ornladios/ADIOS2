@@ -109,7 +109,7 @@ if(ADIOS2_HAVE_DataMan)
       engine/dataman/DataManWriter.h
       engine/dataman/DataManWriter.tcc
   )
-  target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
+  target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_SST)

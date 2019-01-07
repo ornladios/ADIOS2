@@ -145,6 +145,13 @@ configure_file(
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
+)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/upstream/FindMPI
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/upstream
+)
 
 #------------------------------------------------------------------------------#
 # Third party libraries

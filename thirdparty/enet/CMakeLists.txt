@@ -1,6 +1,6 @@
 message_start_thirdparty()
 
-set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/deps")
+set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_CMAKEDIR}/thirdparty")
 set(ENET_LIBRARY_PREFIX adios2_ CACHE INTERNAL "")
 
 add_subdirectory(enet)

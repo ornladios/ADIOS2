@@ -3,10 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-# We'll need to install the private find modules to ensure our import libs
-# are properly resovled
-set(adios2_find_modules)
-
 # This file contains the option and dependency logic.  The configuration
 # options are designed to be tertiary: ON, OFF, or AUTO.  If AUTO, we try to
 # determine if dependencies are available and enable the option if we find
@@ -159,7 +155,7 @@ if(ADIOS2_USE_SST AND NOT MSVC)
     set(ADIOS2_SST_HAVE_LIBFABRIC TRUE)
     find_package(CrayDRC)
     if(CRAY_DRC_FOUND)
-        set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
+      set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
   endif()
 endif()
