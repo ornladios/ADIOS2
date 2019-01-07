@@ -1,0 +1,42 @@
+trigger:
+  - master
+  - release
+  
+pr:
+  - master
+  - release
+
+resources:
+  containers:
+  - container: el7-gnu8-openmpi
+    image: ornladios/adios2-auto:el7-gnu8-openmpi
+
+  - container: el7-intel18-openmpi
+    image: ornladios/adios2-auto:el7-intel18-openmpi
+
+  - container: suse-pgi-openmpi
+    image: ornladios/adios2-auto:suse-pgi-openmpi
+
+pool:
+  vmImage: 'ubuntu-16.04'
+
+strategy:
+  matrix:
+    el7-gnu8-openmpi:
+      containerResource: el7-gnu8-openmpi
+    el7-intel18-openmpi:
+      containerResource: el7-intel18-openmpi
+    suse-pgi-openmpi:
+      containerResource: suse-pgi-openmpi
+
+container: $[ variables['containerResource'] ]
+
+steps:
+  - script: bash source/scripts/azure/runOnAzurePipelines.sh update
+    displayName: Update
+  - script: bash source/scripts/azure/runOnAzurePipelines.sh configure
+    displayName: Configure
+  - script: bash source/scripts/azure/runOnAzurePipelines.sh build
+    displayName: Build
+  - script: bash source/scripts/azure/runOnAzurePipelines.sh test
+    displayName: Test
