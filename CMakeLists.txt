@@ -147,7 +147,7 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
 )
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
-  FILES_MATCHING PATTERN "Find*.cmake"
+  PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
 )
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/upstream/FindMPI
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/upstream
