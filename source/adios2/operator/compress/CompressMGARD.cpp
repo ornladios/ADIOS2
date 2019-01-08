@@ -37,11 +37,11 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     const size_t ndims = dimensions.size();
     if (m_DebugMode)
     {
-        if (ndims != 2)
+        if (ndims > 3)
         {
             throw std::invalid_argument(
                 "ERROR: ADIOS2 MGARD compression: no more "
-                "than 2-dimensions is supported.\n");
+                "than 3-dimensions is supported.\n");
         }
     }
 
@@ -85,7 +85,7 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     int sizeOut = 0;
     unsigned char *dataOutPtr =
         mgard_compress(mgardType, const_cast<void *>(dataIn), &sizeOut, r[0],
-                       r[1], &tolerance);
+                       r[1], r[2], &tolerance);
 
     const size_t sizeOutT = static_cast<size_t>(sizeOut);
     std::memcpy(bufferOut, dataOutPtr, sizeOutT);
@@ -136,7 +136,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
     void *dataPtr = mgard_decompress(
         mgardType,
         reinterpret_cast<unsigned char *>(const_cast<void *>(bufferIn)),
-        static_cast<int>(sizeIn), r[0], r[1]);
+        static_cast<int>(sizeIn), r[0], r[1], r[2]);
 
     const size_t dataSizeBytes = helper::GetTotalSize(dimensions) * elementSize;
     std::memcpy(dataOut, dataPtr, dataSizeBytes);
