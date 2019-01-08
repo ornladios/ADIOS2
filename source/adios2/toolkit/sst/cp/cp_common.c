@@ -317,6 +317,15 @@ static FMField ReleaseTimestepList[] = {
      FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
+static FMField PeerSetupList[] = {
+    {"RS_Stream", "integer", sizeof(void *),
+     FMOffset(struct _PeerSetupMsg *, RS_Stream)},
+    {"WriterRank", "integer", sizeof(int),
+     FMOffset(struct _PeerSetupMsg *, WriterRank)},
+    {"WriterCohortSize", "integer", sizeof(int),
+     FMOffset(struct _PeerSetupMsg *, WriterCohortSize)},
+    {NULL, NULL, 0, 0}};
+
 static FMField ReaderActivateList[] = {
     {"WSR_Stream", "integer", sizeof(void *),
      FMOffset(struct _ReaderActivateMsg *, WSR_Stream)},
@@ -729,6 +738,10 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
                        CP_TimestepMetadataHandler, NULL);
     AddCustomStruct(CPInfo, CombinedTimestepMetadataStructs);
 
+    CPInfo->PeerSetupFormat = CMregister_simple_format(
+        CPInfo->cm, "PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg));
+    CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
+
     CPInfo->ReaderActivateFormat = CMregister_simple_format(
         CPInfo->cm, "ReaderActivate", ReaderActivateList,
         sizeof(struct _ReaderActivateMsg));
@@ -995,7 +1008,7 @@ struct _CP_Services Svcs = {
     (CP_VerboseFunc)DP_verbose, (CP_GetCManagerFunc)CP_getCManager,
     (CP_SendToPeerFunc)CP_sendToPeer, (CP_GetMPICommFunc)CP_getMPIComm};
 
-extern int *setupPeerArray(int MySize, int MyRank, int PeerSize)
+static int *PeerArray(int MySize, int MyRank, int PeerSize)
 {
     int PortionSize = PeerSize / MySize;
     int Leftovers = PeerSize - PortionSize * MySize;
@@ -1015,6 +1028,65 @@ extern int *setupPeerArray(int MySize, int MyRank, int PeerSize)
     MyPeers[PortionSize] = -1;
 
     return MyPeers;
+}
+
+static int *reversePeerArray(int MySize, int MyRank, int PeerSize)
+{
+    int PeerCount = 0;
+    int *ReversePeers = malloc(sizeof(int));
+
+    for (int i = 0; i < PeerSize; i++)
+    {
+        int *their_peers = PeerArray(PeerSize, i, MySize);
+        int j;
+        j = 0;
+        while (their_peers[j] != -1)
+        {
+            if (their_peers[j] == MyRank)
+            {
+                ReversePeers = malloc((PeerCount + 2) * sizeof(int));
+                ReversePeers[PeerCount] = i;
+                PeerCount++;
+            }
+            j++;
+        }
+        free(their_peers);
+    }
+    ReversePeers[PeerCount] = -1;
+    return ReversePeers;
+}
+
+extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
+                          int **forwardArray, int **reverseArray)
+{
+    if (MySize < PeerSize)
+    {
+        /* more of them than me.  I will have at least one entry in my forward
+         * array. */
+        *forwardArray = PeerArray(MySize, MyRank, PeerSize);
+        /* all need to be notified, but I'm only the forward peer to one of them
+         * (the first), so send reverse peer entry only to zeroth entry */
+        if (reverseArray)
+        {
+            *reverseArray = malloc(sizeof(int) * 2);
+            (*reverseArray)[0] = (*forwardArray)[0];
+            (*reverseArray)[1] = -1;
+        }
+    }
+    else
+    {
+        /* More of me than of them, there may be 0 or 1 entries in my forward
+         * array, but there must be one opposing peer that I should notify so
+         * that I am in his forward array */
+        int *reverse = reversePeerArray(MySize, MyRank, PeerSize);
+        *forwardArray = malloc(sizeof(int) * 2);
+        (*forwardArray)[0] = reverse[0];
+        (*forwardArray)[1] = -1;
+        if (reverseArray)
+        {
+            *reverseArray = reverse;
+        }
+    }
 }
 
 extern void SstSetStatsSave(SstStream Stream, SstStats Stats)

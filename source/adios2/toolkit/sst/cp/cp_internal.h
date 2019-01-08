@@ -15,6 +15,7 @@ typedef struct _CP_GlobalInfo
     CMFormat WriterResponseFormat;
     FFSTypeHandle PerRankMetadataFormat;
     CMFormat DeliverTimestepMetadataFormat;
+    CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
     CMFormat ReleaseTimestepFormat;
     CMFormat WriterCloseFormat;
@@ -277,6 +278,17 @@ struct _WriterResponseMsg
 };
 
 /*
+ * The timestepMetadata message carries the metadata from all writer ranks.
+ * One is sent to each reader.
+ */
+typedef struct _PeerSetupMsg
+{
+    void *RS_Stream;
+    int WriterRank;
+    int WriterCohortSize;
+} * PeerSetupMsg;
+
+/*
  * The ReaderActivate message informs the writer that this reader is now ready
  * to receive data/timesteps.
  * One is sent to each writer rank.
@@ -373,6 +385,8 @@ extern void CP_ReaderRegisterHandler(CManager cm, CMConnection conn,
 extern void CP_WriterResponseHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_data,
                                      attr_list attrs);
+extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v,
+                                void *client_data, attr_list attrs);
 extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_data,
                                      attr_list attrs);
@@ -390,7 +404,8 @@ extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
 extern void FFSClearTimestepData(SstStream Stream);
 extern void FFSFreeMarshalData(SstStream Stream);
-extern int *setupPeerArray(int MySize, int MyRank, int PeerSize);
+extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
+                          int **forwardArray, int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
 extern void CP_verbose(SstStream Stream, char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);

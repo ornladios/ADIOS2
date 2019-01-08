@@ -185,6 +185,33 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream,
     return (void **)pointers;
 }
 
+static int HasAllPeers(SstStream Stream)
+{
+    int i, StillWaiting = 0;
+    if (!Stream->ConnectionsToWriter)
+        return 0;
+    i = 0;
+    while (Stream->Peers[i] != -1)
+    {
+        int peer = Stream->Peers[i];
+        if (Stream->ConnectionsToWriter[peer].CMconn == NULL)
+            StillWaiting++;
+        i++;
+    }
+    if (StillWaiting == 0)
+    {
+        CP_verbose(Stream, "Rank %d has all forward peer connections\n",
+                   Stream->Rank);
+        return 1;
+    }
+    else
+    {
+        CP_verbose(Stream, "Rank %d waiting for %d forward peer connections\n",
+                   Stream->Rank, StillWaiting);
+        return 0;
+    }
+}
+
 SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 {
     SstStream Stream;
@@ -348,8 +375,21 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         CP_verbose(Stream, "Writer is doing BP-based marshalling\n");
     }
     Stream->ReaderTimestep = ReturnData->StartingStepNumber - 1;
-    Stream->ConnectionsToWriter =
-        calloc(sizeof(CP_PeerConnection), ReturnData->WriterCohortSize);
+
+    /*
+     *  Wait for connections and messages from writer side peers
+     */
+    getPeerArrays(Stream->CohortSize, Stream->Rank, Stream->WriterCohortSize,
+                  &Stream->Peers, NULL);
+
+    pthread_mutex_lock(&Stream->DataLock);
+    while (!HasAllPeers(Stream))
+    {
+        /* wait until we get the timestep metadata or something else changes */
+        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
+    }
+    pthread_mutex_unlock(&Stream->DataLock);
+
     for (i = 0; i < ReturnData->WriterCohortSize; i++)
     {
         attr_list attrs =
@@ -357,33 +397,6 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         Stream->ConnectionsToWriter[i].ContactList = attrs;
         Stream->ConnectionsToWriter[i].RemoteStreamID =
             ReturnData->CP_WriterInfo[i]->WriterID;
-    }
-
-    Stream->Peers = setupPeerArray(Stream->CohortSize, Stream->Rank,
-                                   ReturnData->WriterCohortSize);
-    i = 0;
-    while (Stream->Peers[i] != -1)
-    {
-        int peer = Stream->Peers[i];
-        int ReaderRank = Stream->Rank;
-        if (Stream->ConnectionUsleepMultiplier != 0)
-            usleep(ReaderRank * Stream->ConnectionUsleepMultiplier);
-        CMConnection Conn = CMget_conn(
-            Stream->CPInfo->cm, Stream->ConnectionsToWriter[peer].ContactList);
-        if (!Conn)
-        {
-            CP_error(
-                Stream,
-                "Connection failed in SstReaderOpen! Contact list was: \n");
-            fdump_attr_list(stderr,
-                            Stream->ConnectionsToWriter[peer].ContactList);
-            /* fail the stream */
-            return NULL;
-        }
-        Stream->ConnectionsToWriter[peer].CMconn = Conn;
-        CMconn_register_close_handler(Conn, ReaderConnCloseHandler,
-                                      (void *)Stream);
-        i++;
     }
 
     // Deref the original connection to writer rank 0 (might still be open as a
@@ -421,6 +434,33 @@ extern void SstReaderGetParams(SstStream Stream,
                                SstMarshalMethod *WriterMarshalMethod)
 {
     *WriterMarshalMethod = Stream->WriterConfigParams->MarshalMethod;
+}
+
+/*
+ * CP_PeerSetupHandler receives incoming PeerSetup messages to setup the
+ * reader-side Peer list
+ */
+extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
+                                void *client_data, attr_list attrs)
+{
+    SstStream Stream;
+    struct _PeerSetupMsg *Msg = (struct _PeerSetupMsg *)Msg_v;
+    Stream = (SstStream)Msg->RS_Stream;
+    pthread_mutex_lock(&Stream->DataLock);
+    if (!Stream->ConnectionsToWriter)
+    {
+        Stream->ConnectionsToWriter =
+            calloc(sizeof(CP_PeerConnection), Msg->WriterCohortSize);
+    }
+    CP_verbose(Stream, "Received peer setup from rank %d, conn %p\n",
+               Msg->WriterRank, conn);
+    if (Msg->WriterRank != -1)
+    {
+        Stream->ConnectionsToWriter[Msg->WriterRank].CMconn = conn;
+        CMConnection_add_reference(conn);
+    }
+    CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
+    pthread_mutex_unlock(&Stream->DataLock);
 }
 
 void queueTimestepMetadataMsgAndNotify(SstStream Stream,
