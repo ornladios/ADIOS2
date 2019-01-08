@@ -241,12 +241,29 @@ static void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
     PTHREAD_MUTEX_UNLOCK(&ParentWriterStream->DataLock);
 }
 
+static void SendPeerSetupMsg(WS_ReaderInfo reader, int reversePeer, int myRank)
+{
+    CMConnection conn = reader->Connections[reversePeer].CMconn;
+    SstStream Stream = reader->ParentStream;
+    struct _PeerSetupMsg setup;
+    setup.RS_Stream = reader->Connections[reversePeer].RemoteStreamID;
+    setup.WriterRank = myRank;
+    setup.WriterCohortSize = Stream->CohortSize;
+    if (CMwrite(conn, Stream->CPInfo->PeerSetupFormat, &setup) != 1)
+    {
+        CP_verbose(Stream,
+                   "Message failed to send to reader in sendPeerSetup in "
+                   "reader open\n");
+    }
+}
+
 static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
                         CP_ReaderInitInfo *reader_info)
 {
     int WriterSize = reader->ParentStream->CohortSize;
     int WriterRank = reader->ParentStream->Rank;
     int i;
+    int *reverseArray;
     reader->ReaderCohortSize = ReaderSize;
     if (!reader->Connections)
     {
@@ -263,41 +280,53 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
         reader->Connections[i].RemoteStreamID = reader_info[i]->ReaderID;
         reader->Connections[i].CMconn = NULL;
     }
-    reader->Peers = setupPeerArray(WriterSize, WriterRank, ReaderSize);
+    /*
+     *   Peering.
+     *   We use peering for two things:
+     *     - failure awareness (each rank needs a close handler on one
+     connection to some opposite rank so they can detect failure)
+     *     - notification (how info gets sent from reader to writer and vice
+     versa)
+     *
+     *   A connection that exists for notification is also useful for
+     *   failure awareness, but where not are necessary for
+     *   notification, we still may make some for failure
+     *   notification.
+
+     *   In this code, all connections are made by the writing side,
+     *   but the reader side must be sent notifications so that it is
+     *   aware of what connections are made for it and what they are
+     *   to be used for (I.E. notification, or only existing passively
+     *   for failure notification).
+     *
+     *   Connections that are used for notification from writer to
+     *   reader will be in the Peer list and we'll send messages down
+     *   them later.  If there are many more writers than readers
+     *   (presumed normal case), the peer list will have 0 or 1
+     *   entries.  Connections in the reverseArray are for failure
+     *   awareness and/or notification from reader to writer.  If
+     *   there are many more readers than writers, the reverseArray
+     *   will have one entry (to the one reader that will send us
+     *   notifications and which we will use for failure awareness).
+
+     *   If there are equal numbers of readers and writers, then each
+     *   rank is peered only with the same rank in the opposing.
+
+     *   If there happen to be many more readers than writers, then
+     *   the Peer list will contain a lot of entries (all those that
+     *   get notifications from us.  The reverseArray will also
+     *   contain a lot of entries, but only the first will send us
+     *   notifications.  The others will just use the connections for
+     *   failure awareness.
+
+     */
+    getPeerArrays(WriterSize, WriterRank, ReaderSize, &reader->Peers,
+                  &reverseArray);
+
     i = 0;
-    if (reader->Peers[0] == -1)
+    while (reverseArray[i] != -1)
     {
-        /* we would have no peers.  Contact someone at the CP level anyway so we
-         * can hope for failure notification */
-        int SoloPeer = WriterRank / ((double)WriterSize / (double)ReaderSize);
-        if (SoloPeer >= ReaderSize)
-            SoloPeer--;
-
-        if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
-            usleep(WriterRank *
-                   reader->ParentStream->ConnectionUsleepMultiplier);
-        reader->Connections[SoloPeer].CMconn =
-            CMget_conn(reader->ParentStream->CPInfo->cm,
-                       reader->Connections[SoloPeer].ContactList);
-
-        if (!reader->Connections[SoloPeer].CMconn)
-        {
-            CP_error(
-                reader->ParentStream,
-                "Connection failed in SstInitWSReader! Contact list was:\n");
-            CP_error(
-                reader->ParentStream, "%s\n",
-                attr_list_to_string(reader->Connections[SoloPeer].ContactList));
-            /* fail the stream */
-            return 0;
-        }
-
-        CMconn_register_close_handler(reader->Connections[SoloPeer].CMconn,
-                                      WriterConnCloseHandler, (void *)reader);
-    }
-    while (reader->Peers[i] != -1)
-    {
-        int peer = reader->Peers[i];
+        int peer = reverseArray[i];
         if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
             usleep(WriterRank *
                    reader->ParentStream->ConnectionUsleepMultiplier);
@@ -319,6 +348,58 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize,
 
         CMconn_register_close_handler(reader->Connections[peer].CMconn,
                                       WriterConnCloseHandler, (void *)reader);
+        if (i == 0)
+        {
+            /* failure awareness for reader rank */
+            CP_verbose(reader->ParentStream, "Sending peer setup to rank %d\n",
+                       peer);
+            SendPeerSetupMsg(reader, peer, reader->ParentStream->Rank);
+        }
+        else
+        {
+            CP_verbose(reader->ParentStream, "Sending peer setup to rank %d\n",
+                       peer);
+            /* failure awareness for reader rank */
+            SendPeerSetupMsg(reader, peer, -1);
+        }
+        i++;
+    }
+    free(reverseArray);
+    i = 0;
+    while (reader->Peers[i] != -1)
+    {
+        int peer = reader->Peers[i];
+        if (reader->Connections[peer].CMconn)
+        {
+            /* already made this above */
+            i++;
+            continue;
+        }
+        if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
+            usleep(WriterRank *
+                   reader->ParentStream->ConnectionUsleepMultiplier);
+        reader->Connections[peer].CMconn =
+            CMget_conn(reader->ParentStream->CPInfo->cm,
+                       reader->Connections[peer].ContactList);
+
+        if (!reader->Connections[peer].CMconn)
+        {
+            CP_error(
+                reader->ParentStream,
+                "Connection failed in SstInitWSReader! Contact list was:\n");
+            CP_error(
+                reader->ParentStream, "%s\n",
+                attr_list_to_string(reader->Connections[peer].ContactList));
+            /* fail the stream */
+            return 0;
+        }
+
+        CMconn_register_close_handler(reader->Connections[peer].CMconn,
+                                      WriterConnCloseHandler, (void *)reader);
+        /* failure awareness for reader rank */
+        CP_verbose(reader->ParentStream, "Sending peer setup to rank %d\n",
+                   peer);
+        SendPeerSetupMsg(reader, peer, reader->ParentStream->Rank);
         i++;
     }
     return 1;
@@ -538,6 +619,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 
     struct _CP_DP_PairInfo **pointers = NULL;
 
+    memset(&cpInfo, 0, sizeof(cpInfo));
     cpInfo.ContactInfo = CP_GetContactString(Stream);
     cpInfo.WriterID = CP_WSR_Stream;
 
