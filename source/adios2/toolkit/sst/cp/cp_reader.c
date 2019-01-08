@@ -189,7 +189,10 @@ static int HasAllPeers(SstStream Stream)
 {
     int i, StillWaiting = 0;
     if (!Stream->ConnectionsToWriter)
+    {
+        CP_verbose(Stream, "Waiting for first Peer notification\n");
         return 0;
+    }
     i = 0;
     while (Stream->Peers[i] != -1)
     {
@@ -460,6 +463,7 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
         CMConnection_add_reference(conn);
     }
     CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
+    pthread_cond_signal(&Stream->DataCondition);
     pthread_mutex_unlock(&Stream->DataLock);
 }
 
