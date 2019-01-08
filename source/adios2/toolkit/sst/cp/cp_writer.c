@@ -619,6 +619,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 
     struct _CP_DP_PairInfo **pointers = NULL;
 
+    memset(&cpInfo, 0, sizeof(cpInfo));
     cpInfo.ContactInfo = CP_GetContactString(Stream);
     cpInfo.WriterID = CP_WSR_Stream;
 

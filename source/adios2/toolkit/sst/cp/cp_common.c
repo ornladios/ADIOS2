@@ -1030,11 +1030,13 @@ static int *PeerArray(int MySize, int MyRank, int PeerSize)
     return MyPeers;
 }
 
-static int *reversePeerArray(int MySize, int MyRank, int PeerSize)
+static int *reversePeerArray(int MySize, int MyRank, int PeerSize,
+                             int *forward_entry)
 {
     int PeerCount = 0;
     int *ReversePeers = malloc(sizeof(int));
 
+    *forward_entry = -1;
     for (int i = 0; i < PeerSize; i++)
     {
         int *their_peers = PeerArray(PeerSize, i, MySize);
@@ -1047,6 +1049,8 @@ static int *reversePeerArray(int MySize, int MyRank, int PeerSize)
                 ReversePeers = malloc((PeerCount + 2) * sizeof(int));
                 ReversePeers[PeerCount] = i;
                 PeerCount++;
+                if (j == 0)
+                    *forward_entry = i;
             }
             j++;
         }
@@ -1078,10 +1082,11 @@ extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
         /* More of me than of them, there may be 0 or 1 entries in my forward
          * array, but there must be one opposing peer that I should notify so
          * that I am in his forward array */
-        int *reverse = reversePeerArray(MySize, MyRank, PeerSize);
+        int *reverse;
         *forwardArray = malloc(sizeof(int) * 2);
-        (*forwardArray)[0] = reverse[0];
         (*forwardArray)[1] = -1;
+        reverse =
+            reversePeerArray(MySize, MyRank, PeerSize, &((*forwardArray)[0]));
         if (reverseArray)
         {
             *reverseArray = reverse;
