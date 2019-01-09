@@ -22,7 +22,7 @@ void MGARDAccuracy1D(const double tolerance)
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
-    const size_t Nx = 1000;
+    const size_t Nx = 100;
 
     // Number of steps
     const size_t NSteps = 1;
@@ -30,7 +30,7 @@ void MGARDAccuracy1D(const double tolerance)
     std::vector<float> r32s(Nx);
     std::vector<double> r64s(Nx);
 
-    // range 0 to 999
+    // range 0 to 100*50
     std::iota(r32s.begin(), r32s.end(), 0.f);
     std::iota(r64s.begin(), r64s.end(), 0.);
 
@@ -51,10 +51,10 @@ void MGARDAccuracy1D(const double tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        adios2::Variable<float> var_r32 = io.DefineVariable<float>(
-            "r32", shape, start, count, adios2::ConstantDims);
-        adios2::Variable<double> var_r64 = io.DefineVariable<double>(
-            "r64", shape, start, count, adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
+                                                adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
+                                                 adios2::ConstantDims);
 
         // add operations
         adios2::Operator mgardOp =
@@ -67,7 +67,7 @@ void MGARDAccuracy1D(const double tolerance)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (size_t step = 0; step < NSteps; ++step)
+        for (auto step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             // bpWriter.Put<float>("r32", r32s.data());
@@ -88,6 +88,7 @@ void MGARDAccuracy1D(const double tolerance)
         //        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
         //        ASSERT_EQ(var_r32.Steps(), NSteps);
         //        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+        //        ASSERT_EQ(var_r32.Shape()[1], Ny);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
@@ -111,19 +112,29 @@ void MGARDAccuracy1D(const double tolerance)
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
 
+            double maxDiff = 0;
+
             for (size_t i = 0; i < Nx; ++i)
             {
                 std::stringstream ss;
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                //                ASSERT_LT(std::abs(decompressedR32s[i] -
-                //                r32s[i]), tolerance)
-                //                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), tolerance)
-                    << msg;
+                double diff = std::abs(r64s[i] - decompressedR64s[i]);
+
+                if (diff > maxDiff)
+                {
+                    maxDiff = diff;
+                }
             }
             ++t;
+
+            auto itMax = std::max_element(r64s.begin(), r64s.end());
+
+            const double relativeMaxDiff = maxDiff / *itMax;
+            ASSERT_LT(relativeMaxDiff, tolerance);
+            std::cout << "Relative Max Diff " << relativeMaxDiff
+                      << " tolerance " << tolerance << "\n";
         }
 
         EXPECT_EQ(t, NSteps);
@@ -273,8 +284,8 @@ void MGARDAccuracy3D(const double tolerance)
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
-    const size_t Nx = 10;
-    const size_t Ny = 20;
+    const size_t Nx = 100;
+    const size_t Ny = 50;
     const size_t Nz = 15;
 
     // Number of steps
@@ -368,19 +379,29 @@ void MGARDAccuracy3D(const double tolerance)
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
 
-            for (auto i = 0; i < Nx * Ny * Nz; ++i)
+            double maxDiff = 0;
+
+            for (size_t i = 0; i < Nx * Ny * Nz; ++i)
             {
                 std::stringstream ss;
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                //                ASSERT_LT(std::abs(decompressedR32s[i] -
-                //                r32s[i]), tolerance)
-                //                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), tolerance)
-                    << msg;
+                double diff = std::abs(r64s[i] - decompressedR64s[i]);
+
+                if (diff > maxDiff)
+                {
+                    maxDiff = diff;
+                }
             }
             ++t;
+
+            auto itMax = std::max_element(r64s.begin(), r64s.end());
+
+            const double relativeMaxDiff = maxDiff / *itMax;
+            ASSERT_LT(relativeMaxDiff, tolerance);
+            std::cout << "Relative Max Diff " << relativeMaxDiff
+                      << " tolerance " << tolerance << "\n";
         }
 
         EXPECT_EQ(t, NSteps);
@@ -906,6 +927,11 @@ public:
 TEST_P(BPWriteReadMGARD, ADIOS2BPWriteReadMGARD2D)
 {
     MGARDAccuracy2D(GetParam());
+}
+
+TEST_P(BPWriteReadMGARD, ADIOS2BPWriteReadMGARD3D)
+{
+    MGARDAccuracy3D(GetParam());
 }
 
 INSTANTIATE_TEST_CASE_P(MGARDAccuracy, BPWriteReadMGARD,
