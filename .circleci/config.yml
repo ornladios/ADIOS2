@@ -16,7 +16,6 @@ defaults: &defaults
         name: Test
         command: |
           ulimit -c unlimited
-          export SstVerbose=1
           bash source/scripts/circle/runOnCircle.sh test
     - run:
         command: |
