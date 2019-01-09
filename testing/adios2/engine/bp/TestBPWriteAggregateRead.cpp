@@ -10,8 +10,9 @@
 
 #include <adios2.h>
 #include <adios2_c.h>
-#include <chrono> // std::chrono::seconds
-#include <thread> // std::this_thread::sleep_for
+#include <chrono>   // std::chrono::seconds
+#include <stdlib.h> // rand
+#include <thread>   // std::this_thread::sleep_for
 
 #include <gtest/gtest.h>
 
@@ -49,10 +50,7 @@ void PGIndexAggregate1D(const std::string substreams)
     adios2_engine *bpWriter =
         adios2_open(ioH, fname.c_str(), adios2_mode_write);
 
-    if (mpiRank == 1)
-    {
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-    }
+    std::this_thread::sleep_for(std::chrono::seconds(rand() % 5));
 
     adios2_close(bpWriter);
     bpWriter = NULL;
