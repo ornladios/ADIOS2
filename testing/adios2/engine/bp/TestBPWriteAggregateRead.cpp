@@ -10,7 +10,8 @@
 
 #include <adios2.h>
 #include <adios2_c.h>
-#include <chrono>   // std::chrono::seconds
+#include <chrono> // std::chrono::seconds
+#include <numeric>
 #include <stdlib.h> // rand
 #include <thread>   // std::this_thread::sleep_for
 
@@ -34,10 +35,29 @@ void PGIndexAggregate1D(const std::string substreams)
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     // Write test data using BP
+    // data
+    std::vector<int> numbers(100);
+    std::iota(numbers.begin(), numbers.end(), mpiRank);
+
+    std::vector<float> fnumbers(50);
+    const float randomStart = rand() % mpiSize;
+    std::iota(fnumbers.begin(), fnumbers.end(), randomStart);
 
     // adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
     adios2_io *ioH = adios2_declare_io(adiosH, "TestIO");
+
+    size_t countNumbers[1];
+    countNumbers[0] = numbers.size();
+    adios2_variable *varNumbers =
+        adios2_define_variable(ioH, "ints", adios2_type_int, 1, NULL, NULL,
+                               countNumbers, adios2_constant_dims_true);
+
+    size_t countfNumbers[1];
+    countfNumbers[0] = fnumbers.size();
+    adios2_variable *varfNumbers =
+        adios2_define_variable(ioH, "floats", adios2_type_float, 1, NULL, NULL,
+                               countfNumbers, adios2_constant_dims_true);
 
     adios2_set_parameter(ioH, "CollectiveMetadata", "Off");
     adios2_set_parameter(ioH, "Profile", "Off");
@@ -51,12 +71,13 @@ void PGIndexAggregate1D(const std::string substreams)
         adios2_open(ioH, fname.c_str(), adios2_mode_write);
 
     adios2_step_status step_status;
-    for (size_t i = 0; i < 3; ++i)
+    for (size_t i = 0; i < 2; ++i)
     {
         adios2_begin_step(bpWriter, adios2_step_mode_next_available, 0,
                           &step_status);
+        adios2_put(bpWriter, varNumbers, numbers.data(), adios2_mode_sync);
         std::this_thread::sleep_for(std::chrono::seconds(rand() % 5));
-
+        adios2_put(bpWriter, varfNumbers, fnumbers.data(), adios2_mode_sync);
         adios2_end_step(bpWriter);
     }
 
