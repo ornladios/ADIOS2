@@ -309,7 +309,6 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 void BP3Serializer::UpdateOffsetsInMetadata()
 {
     auto lf_UpdatePGIndexOffsets = [&]() {
-
         auto &buffer = m_MetadataSet.PGIndex.Buffer;
         size_t &currentPosition = m_MetadataSet.PGIndex.LastUpdatedPosition;
 
@@ -327,7 +326,6 @@ void BP3Serializer::UpdateOffsetsInMetadata()
     };
 
     auto lf_UpdateIndexOffsets = [&](SerialElementIndex &index) {
-
         auto &buffer = index.Buffer;
 
         // First get the type:
@@ -677,7 +675,6 @@ void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
            uint32_t &count, uint64_t &length) {
-
             count = static_cast<uint32_t>(indices.size());
             length = 0;
             for (auto &indexPair : indices) // set each index length
@@ -697,7 +694,6 @@ void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
         [](const uint32_t count, const uint64_t length,
            const std::unordered_map<std::string, SerialElementIndex> &indices,
            std::vector<char> &buffer, size_t &position) {
-
             helper::CopyToBuffer(buffer, position, &count);
             helper::CopyToBuffer(buffer, position, &length);
 
@@ -883,7 +879,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     };
 
     auto lf_SerializeAllIndices = [&](MPI_Comm comm, const int rank) {
-
         const size_t pgIndicesSize = m_MetadataSet.PGIndex.Buffer.size();
         const size_t variablesIndicesSize =
             lf_IndicesSize(m_MetadataSet.VarsIndices);
@@ -954,12 +949,13 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
                     std::lock_guard<std::mutex> lock(m_Mutex);
                     deserializedIndexes =
                         &(deserialized
-                            .emplace(std::piecewise_construct,
-                                    std::forward_as_tuple(header.Name),
-                                    std::forward_as_tuple(
-                                        size, SerialElementIndex(header.MemberID,
-                                                                    bufferSize)))
-                            .first->second);
+                              .emplace(
+                                  std::piecewise_construct,
+                                  std::forward_as_tuple(header.Name),
+                                  std::forward_as_tuple(
+                                      size, SerialElementIndex(header.MemberID,
+                                                               bufferSize)))
+                              .first->second);
                 }
             }
             else
@@ -1010,27 +1006,27 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
                               localPosition, endPosition, true);
     };
 
-    auto lf_SortMergeIndices = [&](
-        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &deserializedIndices) {
+    auto lf_SortMergeIndices =
+        [&](const std::unordered_map<std::string,
+                                     std::vector<SerialElementIndex>>
+                &deserializedIndices) {
+            auto &position = bufferSTL.m_Position;
+            auto &buffer = bufferSTL.m_Buffer;
 
-        auto &position = bufferSTL.m_Position;
-        auto &buffer = bufferSTL.m_Buffer;
+            size_t countPosition = position;
 
-        size_t countPosition = position;
+            const uint32_t totalCountU32 =
+                static_cast<uint32_t>(deserializedIndices.size());
+            helper::CopyToBuffer(buffer, countPosition, &totalCountU32);
+            position += 12; // skip for length
 
-        const uint32_t totalCountU32 =
-            static_cast<uint32_t>(deserializedIndices.size());
-        helper::CopyToBuffer(buffer, countPosition, &totalCountU32);
-        position += 12; // skip for length
+            MergeSerializeIndices(deserializedIndices, comm, bufferSTL);
 
-        MergeSerializeIndices(deserializedIndices, comm, bufferSTL);
-
-        // Write length
-        const uint64_t totalLengthU64 =
-            static_cast<uint64_t>(position - countPosition - 8);
-        helper::CopyToBuffer(buffer, countPosition, &totalLengthU64);
-    };
+            // Write length
+            const uint64_t totalLengthU64 =
+                static_cast<uint64_t>(position - countPosition - 8);
+            helper::CopyToBuffer(buffer, countPosition, &totalLengthU64);
+        };
 
     // BODY of function starts here
     std::vector<size_t> indexPositions(3);
@@ -1270,136 +1266,134 @@ void BP3Serializer::MergeSerializeIndices(
                 " not supported in BP3 Metadata Merge\n");
 
         } // end switch
-
     };
 
-    auto lf_MergeRankSerial = [&](
-        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
+    auto lf_MergeRankSerial =
+        [&](const std::vector<SerialElementIndex> &indices,
+            BufferSTL &bufferSTL) {
+            auto &bufferOut = bufferSTL.m_Buffer;
+            auto &positionOut = bufferSTL.m_Position;
 
-        auto &bufferOut = bufferSTL.m_Buffer;
-        auto &positionOut = bufferSTL.m_Position;
+            // extract header
+            ElementIndexHeader header;
+            // index non-empty buffer
+            size_t firstRank = 0;
+            // index positions per rank
+            std::vector<size_t> positions(indices.size(), 0);
+            // merge index length
+            size_t headerSize = 0;
 
-        // extract header
-        ElementIndexHeader header;
-        // index non-empty buffer
-        size_t firstRank = 0;
-        // index positions per rank
-        std::vector<size_t> positions(indices.size(), 0);
-        // merge index length
-        size_t headerSize = 0;
-
-        for (size_t r = 0; r < indices.size(); ++r)
-        {
-            const auto &buffer = indices[r].Buffer;
-            if (buffer.empty())
-            {
-                continue;
-            }
-            size_t &position = positions[r];
-
-            header = ReadElementIndexHeader(buffer, position);
-            firstRank = r;
-
-            headerSize = position;
-            break;
-        }
-
-        if (m_DebugMode)
-        {
-            if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
-            {
-                throw std::runtime_error(
-                    "ERROR: invalid data type for variable " + header.Name +
-                    "when writing metadata index\n");
-            }
-        }
-
-        // move all positions to headerSize
-        for (size_t r = 0; r < indices.size(); ++r)
-        {
-            const auto &buffer = indices[r].Buffer;
-            if (buffer.empty())
-            {
-                continue;
-            }
-            positions[r] = headerSize;
-        }
-
-        uint64_t setsCount = 0;
-        unsigned int currentTimeStep = 1;
-        bool marching = true;
-
-        const size_t entryLengthPosition = positionOut;
-        positionOut += headerSize;
-
-        while (marching)
-        {
-            marching = false;
-
-            for (size_t r = firstRank; r < indices.size(); ++r)
+            for (size_t r = 0; r < indices.size(); ++r)
             {
                 const auto &buffer = indices[r].Buffer;
                 if (buffer.empty())
                 {
                     continue;
                 }
+                size_t &position = positions[r];
 
-                auto &position = positions[r];
-                if (position < buffer.size())
+                header = ReadElementIndexHeader(buffer, position);
+                firstRank = r;
+
+                headerSize = position;
+                break;
+            }
+
+            if (m_DebugMode)
+            {
+                if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
                 {
-                    marching = true;
+                    throw std::runtime_error(
+                        "ERROR: invalid data type for variable " + header.Name +
+                        "when writing metadata index\n");
                 }
-                else
+            }
+
+            // move all positions to headerSize
+            for (size_t r = 0; r < indices.size(); ++r)
+            {
+                const auto &buffer = indices[r].Buffer;
+                if (buffer.empty())
                 {
                     continue;
                 }
+                positions[r] = headerSize;
+            }
 
-                uint8_t count = 0;
-                uint32_t length = 0;
-                uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+            uint64_t setsCount = 0;
+            unsigned int currentTimeStep = 1;
+            bool marching = true;
 
-                while (timeStep == currentTimeStep)
+            const size_t entryLengthPosition = positionOut;
+            positionOut += headerSize;
+
+            while (marching)
+            {
+                marching = false;
+
+                for (size_t r = firstRank; r < indices.size(); ++r)
                 {
-                    size_t localPosition = position;
-                    lf_GetCharacteristics(buffer, localPosition,
-                                          header.DataType, count, length,
-                                          timeStep);
-
-                    if (timeStep != currentTimeStep)
+                    const auto &buffer = indices[r].Buffer;
+                    if (buffer.empty())
                     {
-                        break;
+                        continue;
                     }
 
-                    ++setsCount;
-
-                    helper::CopyToBuffer(bufferOut, positionOut,
-                                         &buffer[position], length + 5);
-
-                    position += length + 5;
-
-                    if (position >= buffer.size())
+                    auto &position = positions[r];
+                    if (position < buffer.size())
                     {
-                        break;
+                        marching = true;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+                    uint8_t count = 0;
+                    uint32_t length = 0;
+                    uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+
+                    while (timeStep == currentTimeStep)
+                    {
+                        size_t localPosition = position;
+                        lf_GetCharacteristics(buffer, localPosition,
+                                              header.DataType, count, length,
+                                              timeStep);
+
+                        if (timeStep != currentTimeStep)
+                        {
+                            break;
+                        }
+
+                        ++setsCount;
+
+                        helper::CopyToBuffer(bufferOut, positionOut,
+                                             &buffer[position], length + 5);
+
+                        position += length + 5;
+
+                        if (position >= buffer.size())
+                        {
+                            break;
+                        }
                     }
                 }
+                ++currentTimeStep;
             }
-            ++currentTimeStep;
-        }
 
-        const uint32_t entryLength =
-            static_cast<uint32_t>(positionOut - entryLengthPosition - 4);
+            const uint32_t entryLength =
+                static_cast<uint32_t>(positionOut - entryLengthPosition - 4);
 
-        size_t backPosition = entryLengthPosition;
-        helper::CopyToBuffer(bufferOut, backPosition, &entryLength);
-        helper::CopyToBuffer(bufferOut, backPosition,
-                             &indices[firstRank].Buffer[4], headerSize - 8 - 4);
-        helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
-
-    };
+            size_t backPosition = entryLengthPosition;
+            helper::CopyToBuffer(bufferOut, backPosition, &entryLength);
+            helper::CopyToBuffer(bufferOut, backPosition,
+                                 &indices[firstRank].Buffer[4],
+                                 headerSize - 8 - 4);
+            helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
+        };
 
     auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
                             BufferSTL &bufferSTL) {
-
         ElementIndexHeader header;
         size_t firstRank = 0;
         // index positions per rank
@@ -1522,11 +1516,11 @@ void BP3Serializer::MergeSerializeIndices(
         }
     };
 
-    auto lf_MergeRankRange = [&](
-        const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &nameRankIndices,
-        const std::vector<std::string> &names, const size_t start,
-        const size_t end, BufferSTL &bufferSTL)
+    auto lf_MergeRankRange =
+        [&](const std::unordered_map<
+                std::string, std::vector<SerialElementIndex>> &nameRankIndices,
+            const std::vector<std::string> &names, const size_t start,
+            const size_t end, BufferSTL &bufferSTL)
 
     {
         for (auto i = start; i < end; ++i)
