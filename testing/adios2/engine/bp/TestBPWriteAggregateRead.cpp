@@ -75,9 +75,16 @@ void PGIndexAggregate1D(const std::string substreams)
     {
         adios2_begin_step(bpWriter, adios2_step_mode_next_available, 0,
                           &step_status);
-        adios2_put(bpWriter, varNumbers, numbers.data(), adios2_mode_sync);
+        if (mpiRank % 3 == 0)
+        {
+            adios2_put(bpWriter, varNumbers, numbers.data(), adios2_mode_sync);
+        }
         std::this_thread::sleep_for(std::chrono::seconds(rand() % 5));
-        adios2_put(bpWriter, varfNumbers, fnumbers.data(), adios2_mode_sync);
+        if (mpiRank % 3 == 1)
+        {
+            adios2_put(bpWriter, varfNumbers, fnumbers.data(),
+                       adios2_mode_sync);
+        }
         adios2_end_step(bpWriter);
     }
 
