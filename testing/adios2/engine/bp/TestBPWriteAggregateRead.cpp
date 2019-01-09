@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include <adios2.h>
+#include <adios2_c.h>
 #include <chrono> // std::chrono::seconds
 #include <thread> // std::this_thread::sleep_for
 
@@ -33,25 +34,30 @@ void PGIndexAggregate1D(const std::string substreams)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     // Write test data using BP
 
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-    adios2::IO io = adios.DeclareIO("TestIO");
+    // adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_io *ioH = adios2_declare_io(adiosH, "TestIO");
 
-    io.SetParameter("CollectiveMetadata", "Off");
-    io.SetParameter("Profile", "Off");
+    adios2_set_parameter(ioH, "CollectiveMetadata", "Off");
+    adios2_set_parameter(ioH, "Profile", "Off");
 
     if (mpiSize > 1)
     {
-        io.SetParameter("Substreams", substreams);
+        adios2_set_parameter(ioH, "substreams", substreams.c_str());
     }
 
-    adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+    adios2_engine *bpWriter =
+        adios2_open(ioH, fname.c_str(), adios2_mode_write);
 
     if (mpiRank == 1)
     {
         std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
-    bpWriter.Close();
+    adios2_close(bpWriter);
+    bpWriter = NULL;
+
+    adios2_finalize(adiosH);
 }
 
 void WriteAggRead1D8(const std::string substreams)
