@@ -50,7 +50,15 @@ void PGIndexAggregate1D(const std::string substreams)
     adios2_engine *bpWriter =
         adios2_open(ioH, fname.c_str(), adios2_mode_write);
 
-    std::this_thread::sleep_for(std::chrono::seconds(rand() % 5));
+    adios2_step_status step_status;
+    for (size_t i = 0; i < 3; ++i)
+    {
+        adios2_begin_step(bpWriter, adios2_step_mode_next_available, 0,
+                          &step_status);
+        std::this_thread::sleep_for(std::chrono::seconds(rand() % 5));
+
+        adios2_end_step(bpWriter);
+    }
 
     adios2_close(bpWriter);
     bpWriter = NULL;
