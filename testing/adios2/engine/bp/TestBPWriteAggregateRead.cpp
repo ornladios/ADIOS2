@@ -9,12 +9,51 @@
 #include <stdexcept>
 
 #include <adios2.h>
+#include <chrono> // std::chrono::seconds
+#include <thread> // std::this_thread::sleep_for
 
 #include <gtest/gtest.h>
 
 #include "../SmallTestData.h"
 
-// ADIOS2 BP write
+void PGIndexAggregate1D(const std::string substreams)
+{
+    // Each process would write a 1x8 array and all processes would
+    // form a mpiSize * Nx 1D array
+    const std::string fname("PGIndexAggregate1D_" + substreams + ".bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    // const size_t Nx = 8;
+
+    // Number of steps
+    // const size_t NSteps = 2;
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    // Write test data using BP
+
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::IO io = adios.DeclareIO("TestIO");
+
+    io.SetParameter("CollectiveMetadata", "Off");
+    io.SetParameter("Profile", "Off");
+
+    if (mpiSize > 1)
+    {
+        io.SetParameter("Substreams", substreams);
+    }
+
+    adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+    if (mpiRank == 1)
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+    }
+
+    bpWriter.Close();
+}
+
 void WriteAggRead1D8(const std::string substreams)
 {
     // Each process would write a 1x8 array and all processes would
@@ -903,23 +942,13 @@ public:
     virtual void TearDown() {}
 };
 
-TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
+TEST_P(BPWriteAggregateReadTest, PGIndexAggregate1D)
 {
-    WriteAggRead1D8(GetParam());
-}
-
-TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
-{
-    WriteAggRead2D2x4(GetParam());
-}
-
-TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
-{
-    WriteAggRead2D4x2(GetParam());
+    PGIndexAggregate1D(GetParam());
 }
 
 INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadTest,
-                        ::testing::Values("1", "2", "3", "4", "5"));
+                        ::testing::Values("1", "9"));
 
 int main(int argc, char **argv)
 {
