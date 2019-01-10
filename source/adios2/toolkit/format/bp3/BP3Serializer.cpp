@@ -309,7 +309,6 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 void BP3Serializer::UpdateOffsetsInMetadata()
 {
     auto lf_UpdatePGIndexOffsets = [&]() {
-
         auto &buffer = m_MetadataSet.PGIndex.Buffer;
         size_t &currentPosition = m_MetadataSet.PGIndex.LastUpdatedPosition;
 
@@ -327,7 +326,6 @@ void BP3Serializer::UpdateOffsetsInMetadata()
     };
 
     auto lf_UpdateIndexOffsets = [&](SerialElementIndex &index) {
-
         auto &buffer = index.Buffer;
 
         // First get the type:
@@ -677,7 +675,6 @@ void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
            uint32_t &count, uint64_t &length) {
-
             count = static_cast<uint32_t>(indices.size());
             length = 0;
             for (auto &indexPair : indices) // set each index length
@@ -697,7 +694,6 @@ void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
         [](const uint32_t count, const uint64_t length,
            const std::unordered_map<std::string, SerialElementIndex> &indices,
            std::vector<char> &buffer, size_t &position) {
-
             helper::CopyToBuffer(buffer, position, &count);
             helper::CopyToBuffer(buffer, position, &length);
 
@@ -883,7 +879,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     };
 
     auto lf_SerializeAllIndices = [&](MPI_Comm comm, const int rank) {
-
         const size_t pgIndicesSize = m_MetadataSet.PGIndex.Buffer.size();
         const size_t variablesIndicesSize =
             lf_IndicesSize(m_MetadataSet.VarsIndices);
@@ -945,17 +940,29 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 
             std::vector<BP3Base::SerialElementIndex> *deserializedIndexes =
                 nullptr;
-            // mutex portion
+            auto search = deserialized.find(header.Name);
+            if (search == deserialized.end())
             {
-                std::lock_guard<std::mutex> lock(m_Mutex);
-                deserializedIndexes =
-                    &(deserialized
-                          .emplace(std::piecewise_construct,
-                                   std::forward_as_tuple(header.Name),
-                                   std::forward_as_tuple(
-                                       size, SerialElementIndex(header.MemberID,
-                                                                bufferSize)))
-                          .first->second);
+                // key (variable name) is not in the map, add it
+                // mutex portion
+                {
+                    std::lock_guard<std::mutex> lock(m_Mutex);
+                    deserializedIndexes =
+                        &(deserialized
+                              .emplace(
+                                  std::piecewise_construct,
+                                  std::forward_as_tuple(header.Name),
+                                  std::forward_as_tuple(
+                                      size, SerialElementIndex(header.MemberID,
+                                                               bufferSize)))
+                              .first->second);
+                }
+            }
+            else
+            {
+                // variable name is already in the map, just get the pointer
+                // of the vector of metadata indices
+                deserializedIndexes = &(search->second);
             }
 
             SerialElementIndex &index =
@@ -1002,7 +1009,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     auto lf_SortMergeIndices = [&](
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
             &deserializedIndices) {
-
         auto &position = bufferSTL.m_Position;
         auto &buffer = bufferSTL.m_Buffer;
 
@@ -1259,12 +1265,10 @@ void BP3Serializer::MergeSerializeIndices(
                 " not supported in BP3 Metadata Merge\n");
 
         } // end switch
-
     };
 
     auto lf_MergeRankSerial = [&](
         const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
-
         auto &bufferOut = bufferSTL.m_Buffer;
         auto &positionOut = bufferSTL.m_Position;
 
@@ -1383,12 +1387,10 @@ void BP3Serializer::MergeSerializeIndices(
         helper::CopyToBuffer(bufferOut, backPosition,
                              &indices[firstRank].Buffer[4], headerSize - 8 - 4);
         helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
-
     };
 
     auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
                             BufferSTL &bufferSTL) {
-
         ElementIndexHeader header;
         size_t firstRank = 0;
         // index positions per rank
