@@ -37,21 +37,21 @@ BP4Deserializer::BP4Deserializer(MPI_Comm mpiComm, const bool debugMode)
 
 void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
 {
-    //ParseMinifooter(bufferSTL);
-    //ParsePGIndex(bufferSTL, io);
-    //ParseVariablesIndex(bufferSTL, io);
-    //ParseAttributesIndex(bufferSTL, io);
+    // ParseMinifooter(bufferSTL);
+    // ParsePGIndex(bufferSTL, io);
+    // ParseVariablesIndex(bufferSTL, io);
+    // ParseAttributesIndex(bufferSTL, io);
     size_t steps;
     steps = m_MetadataIndexTable[0].size();
     m_MetadataSet.StepsCount = steps;
-    m_MetadataSet.CurrentStep = steps-1;
+    m_MetadataSet.CurrentStep = steps - 1;
     /* parse the metadata step by step using the pointers saved in the metadata
     index table */
     for (int i = 0; i < steps; i++)
     {
-        ParsePGIndexPerStep(bufferSTL, io, 0, i+1);
-        ParseVariablesIndexPerStep(bufferSTL, io, 0, i+1);
-        ParseAttributesIndexPerStep(bufferSTL, io, 0, i+1);
+        ParsePGIndexPerStep(bufferSTL, io, 0, i + 1);
+        ParseVariablesIndexPerStep(bufferSTL, io, 0, i + 1);
+        ParseAttributesIndexPerStep(bufferSTL, io, 0, i + 1);
     }
 }
 
@@ -62,17 +62,22 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
     size_t position = 0;
     position += 48;
     while (position < bufferSize)
-    {   
+    {
         std::vector<uint64_t> ptrs;
-        const uint64_t currentStep = helper::ReadValue<uint64_t>(buffer, position);
+        const uint64_t currentStep =
+            helper::ReadValue<uint64_t>(buffer, position);
         const uint64_t mpiRank = helper::ReadValue<uint64_t>(buffer, position);
-        const uint64_t pgIndexStart = helper::ReadValue<uint64_t>(buffer, position);
+        const uint64_t pgIndexStart =
+            helper::ReadValue<uint64_t>(buffer, position);
         ptrs.push_back(pgIndexStart);
-        const uint64_t variablesIndexStart = helper::ReadValue<uint64_t>(buffer, position);
+        const uint64_t variablesIndexStart =
+            helper::ReadValue<uint64_t>(buffer, position);
         ptrs.push_back(variablesIndexStart);
-        const uint64_t attributesIndexStart = helper::ReadValue<uint64_t>(buffer, position);
+        const uint64_t attributesIndexStart =
+            helper::ReadValue<uint64_t>(buffer, position);
         ptrs.push_back(attributesIndexStart);
-        const uint64_t currentStepEndPos = helper::ReadValue<uint64_t>(buffer, position);
+        const uint64_t currentStepEndPos =
+            helper::ReadValue<uint64_t>(buffer, position);
         ptrs.push_back(currentStepEndPos);
         m_MetadataIndexTable[mpiRank][currentStep] = ptrs;
     }
@@ -120,7 +125,6 @@ void BP4Deserializer::GetPreOperatorBlockData(
 void BP4Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
     auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
-
         switch (endianness)
         {
         case 0:
@@ -165,16 +169,15 @@ void BP4Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
         helper::ReadValue<uint64_t>(buffer, position);
 }
 
-
 void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
-                                   const core::IO &io, 
-                                   size_t submetadatafileId,
-                                   size_t step)
+                                          const core::IO &io,
+                                          size_t submetadatafileId, size_t step)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][0];
-    //std::cout << step << ", " << position << std::endl;
-    m_MetadataSet.DataPGCount = m_MetadataSet.DataPGCount+helper::ReadValue<uint64_t>(buffer, position);
+    // std::cout << step << ", " << position << std::endl;
+    m_MetadataSet.DataPGCount = m_MetadataSet.DataPGCount +
+                                helper::ReadValue<uint64_t>(buffer, position);
 
     ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
     if (index.IsColumnMajor == 'y')
@@ -185,7 +188,6 @@ void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
     {
         m_ReverseDimensions = true;
     }
-
 }
 
 void BP4Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
@@ -227,15 +229,14 @@ void BP4Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
     }
 }
 
-
 void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
-                                          core::IO &io,
-                                          size_t submetadatafileId,
-                                          size_t step)
+                                                 core::IO &io,
+                                                 size_t submetadatafileId,
+                                                 size_t step)
 {
-    auto lf_ReadElementIndexPerStep = [&](
-        core::IO &io, const std::vector<char> &buffer, size_t position, size_t step) {
-
+    auto lf_ReadElementIndexPerStep = [&](core::IO &io,
+                                          const std::vector<char> &buffer,
+                                          size_t position, size_t step) {
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
 
@@ -244,19 +245,22 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_string):
         {
-            DefineVariableInIOPerStep<std::string>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<std::string>(header, io, buffer, position,
+                                                   step);
             break;
         }
 
         case (type_byte):
         {
-            DefineVariableInIOPerStep<signed char>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<signed char>(header, io, buffer, position,
+                                                   step);
             break;
         }
 
         case (type_short):
         {
-            DefineVariableInIOPerStep<short>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<short>(header, io, buffer, position,
+                                             step);
             break;
         }
 
@@ -268,73 +272,80 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_long):
         {
-            DefineVariableInIOPerStep<int64_t>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<int64_t>(header, io, buffer, position,
+                                               step);
             break;
         }
 
         case (type_unsigned_byte):
         {
-            DefineVariableInIOPerStep<unsigned char>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<unsigned char>(header, io, buffer,
+                                                     position, step);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineVariableInIOPerStep<unsigned short>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<unsigned short>(header, io, buffer,
+                                                      position, step);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineVariableInIOPerStep<unsigned int>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<unsigned int>(header, io, buffer,
+                                                    position, step);
             break;
         }
 
         case (type_unsigned_long):
         {
-            DefineVariableInIOPerStep<uint64_t>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<uint64_t>(header, io, buffer, position,
+                                                step);
             break;
         }
 
         case (type_real):
         {
-            DefineVariableInIOPerStep<float>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<float>(header, io, buffer, position,
+                                             step);
             break;
         }
 
         case (type_double):
         {
-            DefineVariableInIOPerStep<double>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<double>(header, io, buffer, position,
+                                              step);
             break;
         }
 
         case (type_long_double):
         {
-            DefineVariableInIOPerStep<long double>(header, io, buffer, position, step);
+            DefineVariableInIOPerStep<long double>(header, io, buffer, position,
+                                                   step);
             break;
         }
 
         case (type_complex):
         {
             DefineVariableInIOPerStep<std::complex<float>>(header, io, buffer,
-                                                    position, step);
+                                                           position, step);
             break;
         }
 
         case (type_double_complex):
         {
             DefineVariableInIOPerStep<std::complex<double>>(header, io, buffer,
-                                                     position, step);
+                                                            position, step);
             break;
         }
-
 
         } // end switch
     };
 
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][1];
-    
+
     const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
     const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
 
@@ -354,16 +365,14 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
         }
         return;
     }
-
 }
-
 
 void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
                                           core::IO &io)
 {
-    auto lf_ReadElementIndex = [&](
-        core::IO &io, const std::vector<char> &buffer, size_t position) {
-
+    auto lf_ReadElementIndex = [&](core::IO &io,
+                                   const std::vector<char> &buffer,
+                                   size_t position) {
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
 
@@ -456,7 +465,6 @@ void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
             break;
         }
 
-
         } // end switch
     };
 
@@ -526,13 +534,13 @@ void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
 
 /* Parse the attributes index at each step */
 void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
-                                            core::IO &io,
-                                            size_t submetadatafileId,
-                                            size_t step)
+                                                  core::IO &io,
+                                                  size_t submetadatafileId,
+                                                  size_t step)
 {
-    auto lf_ReadElementIndex = [&](
-        core::IO &io, const std::vector<char> &buffer, size_t position) {
-
+    auto lf_ReadElementIndex = [&](core::IO &io,
+                                   const std::vector<char> &buffer,
+                                   size_t position) {
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
 
@@ -643,9 +651,9 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 void BP4Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
                                            core::IO &io)
 {
-    auto lf_ReadElementIndex = [&](
-        core::IO &io, const std::vector<char> &buffer, size_t position) {
-
+    auto lf_ReadElementIndex = [&](core::IO &io,
+                                   const std::vector<char> &buffer,
+                                   size_t position) {
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
 

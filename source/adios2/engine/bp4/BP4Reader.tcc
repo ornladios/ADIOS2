@@ -24,7 +24,7 @@ namespace engine
 
 template <>
 inline void BP4Reader::GetSyncCommon(Variable<std::string> &variable,
-                                        std::string *data)
+                                     std::string *data)
 {
     m_BP4Deserializer.GetValueFromMetadata(variable, data);
 }
@@ -120,7 +120,7 @@ void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
                     m_BP4Deserializer.GetPreOperatorBlockData(
                         variable.m_RawMemory[1], blockOperationInfo,
                         variable.m_RawMemory[0]);
-                    
+
                     helper::ClipVector(variable.m_RawMemory[0],
                                        subStreamInfo.Seeks.first,
                                        subStreamInfo.Seeks.second);

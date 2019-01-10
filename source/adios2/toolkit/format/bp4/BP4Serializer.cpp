@@ -204,7 +204,7 @@ void BP4Serializer::ResetIndices()
 }
 
 /* Reset the local metadata buffer at the end of each step */
-void BP4Serializer::ResetIndicesBuffer() 
+void BP4Serializer::ResetIndicesBuffer()
 {
     m_MetadataSet.PGIndex.Buffer.resize(0);
     m_MetadataSet.PGIndex.LastUpdatedPosition = 0;
@@ -212,8 +212,8 @@ void BP4Serializer::ResetIndicesBuffer()
     m_MetadataSet.DataPGLengthPosition = 0;
     m_MetadataSet.DataPGVarsCount = 0;
     m_MetadataSet.DataPGVarsCountPosition = 0;
-    
-    for( auto& variableIndexPair : m_MetadataSet.VarsIndices)
+
+    for (auto &variableIndexPair : m_MetadataSet.VarsIndices)
     {
         const std::string &variableName = variableIndexPair.first;
         SerialElementIndex &index = variableIndexPair.second;
@@ -221,18 +221,20 @@ void BP4Serializer::ResetIndicesBuffer()
         index.Buffer.resize(headersize);
         index.Count = 0;
         index.LastUpdatedPosition = headersize;
-        index.Valid = false;  // reset the flag to indicate the variable is not valid after the "endstep" call
-    } 
+        index.Valid = false; // reset the flag to indicate the variable is not
+                             // valid after the "endstep" call
+    }
 
-    for( auto& attributesIndexPair : m_MetadataSet.AttributesIndices)
+    for (auto &attributesIndexPair : m_MetadataSet.AttributesIndices)
     {
         const std::string &attributesName = attributesIndexPair.first;
         SerialElementIndex &index = attributesIndexPair.second;
         const size_t headersize = 15 + 8 + attributesName.size();
         index.Buffer.resize(headersize);
         index.Count = 0;
-        index.Valid = false; // reset the flag to indicate the variable is not valid after the "endstep" call
-    } 
+        index.Valid = false; // reset the flag to indicate the variable is not
+                             // valid after the "endstep" call
+    }
 }
 
 std::string BP4Serializer::GetRankProfilingJSON(
@@ -310,7 +312,7 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 
     auto &position = bufferSTL.m_Position;
 
-    //const uint64_t pgIndexStart =
+    // const uint64_t pgIndexStart =
     //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     /* save the starting position of the pgindex in the metadata file*/
     m_MetadataSet.pgIndexStart =
@@ -318,14 +320,14 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
                    bufferSTL);
 
-    //const uint64_t variablesIndexStart =
+    // const uint64_t variablesIndexStart =
     //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     /* save the starting position of the varindex in the metadata file*/
     m_MetadataSet.varIndexStart =
         inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     AggregateMergeIndex(m_MetadataSet.VarsIndices, comm, bufferSTL);
 
-    //const uint64_t attributesIndexStart =
+    // const uint64_t attributesIndexStart =
     //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
     /* save the starting position of the attrindex in the metadata file*/
     m_MetadataSet.attrIndexStart =
@@ -337,7 +339,8 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     if (rank == 0)
     {
         /* no more minifooter in the global metadata*/
-        //PutMinifooter(pgIndexStart, variablesIndexStart, attributesIndexStart,
+        // PutMinifooter(pgIndexStart, variablesIndexStart,
+        // attributesIndexStart,
         //              bufferSTL.m_Buffer, bufferSTL.m_Position,
         //              inMetadataBuffer);
 
@@ -358,7 +361,6 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 void BP4Serializer::UpdateOffsetsInMetadata()
 {
     auto lf_UpdatePGIndexOffsets = [&]() {
-
         auto &buffer = m_MetadataSet.PGIndex.Buffer;
         size_t &currentPosition = m_MetadataSet.PGIndex.LastUpdatedPosition;
 
@@ -376,7 +378,6 @@ void BP4Serializer::UpdateOffsetsInMetadata()
     };
 
     auto lf_UpdateIndexOffsets = [&](SerialElementIndex &index) {
-
         auto &buffer = index.Buffer;
 
         // First get the type:
@@ -717,7 +718,6 @@ void BP4Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
            uint32_t &count, uint64_t &length) {
-
             count = static_cast<uint32_t>(indices.size());
             length = 0;
             for (auto &indexPair : indices) // set each index length
@@ -737,7 +737,6 @@ void BP4Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
         [](const uint32_t count, const uint64_t length,
            const std::unordered_map<std::string, SerialElementIndex> &indices,
            std::vector<char> &buffer, size_t &position) {
-
             helper::CopyToBuffer(buffer, position, &count);
             helper::CopyToBuffer(buffer, position, &length);
 
@@ -946,7 +945,7 @@ void BP4Serializer::AggregateMergeIndex(
             static_cast<uint32_t>(nameRankIndices.size());
         helper::CopyToBuffer(buffer, countPosition, &totalCountU32);
 
-        //MergeSerializeIndices(nameRankIndices, comm, bufferSTL);
+        // MergeSerializeIndices(nameRankIndices, comm, bufferSTL);
         /* merge and serialize all the indeices at each step */
         MergeSerializeIndicesPerStep(nameRankIndices, comm, bufferSTL);
 
@@ -968,7 +967,8 @@ std::vector<char> BP4Serializer::SerializeIndices(
         const SerialElementIndex &index = indexPair.second;
         if (!index.Valid)
         {
-            continue;  // if the variable is not put (not valid) at current step, skip
+            continue; // if the variable is not put (not valid) at current step,
+                      // skip
         }
         serializedIndicesSize += 4 + index.Buffer.size();
     }
@@ -985,7 +985,8 @@ std::vector<char> BP4Serializer::SerializeIndices(
 
         if (!index.Valid)
         {
-            continue; // if the variable is not put (not valid) at current step, skip
+            continue; // if the variable is not put (not valid) at current step,
+                      // skip
         }
 
         // add rank at the beginning
@@ -1009,9 +1010,8 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
         deserialized;
 
     auto lf_Deserialize_no_mutex = [&](const int rankSource,
-                              const size_t serializedPosition,
-                              const bool isRankConstant) {
-
+                                       const size_t serializedPosition,
+                                       const bool isRankConstant) {
         size_t localPosition = serializedPosition;
 
         ElementIndexHeader header =
@@ -1026,29 +1026,36 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
         }
 
         std::vector<BP4Base::SerialElementIndex> *deserializedIndexes;
-  
-        // deserializedIndexes = &(deserialized.emplace(std::piecewise_construct,
+
+        // deserializedIndexes =
+        // &(deserialized.emplace(std::piecewise_construct,
         //                        std::forward_as_tuple(header.Name),
         //                        std::forward_as_tuple(
-        //                        m_SizeMPI, SerialElementIndex(header.MemberID, 0))).first->second);
+        //                        m_SizeMPI, SerialElementIndex(header.MemberID,
+        //                        0))).first->second);
 
         auto search = deserialized.find(header.Name);
         if (search == deserialized.end())
         {
             // variable does not exist, we need to add it
-            deserializedIndexes = &(deserialized.emplace(std::piecewise_construct,
-                                   std::forward_as_tuple(header.Name),
-                                   std::forward_as_tuple(
-                                   m_SizeMPI, SerialElementIndex(header.MemberID, 0))).first->second);
-            //std::cout << "rank " << rankSource << ": did not find " << header.Name << ", added it" << std::endl;
+            deserializedIndexes =
+                &(deserialized
+                      .emplace(std::piecewise_construct,
+                               std::forward_as_tuple(header.Name),
+                               std::forward_as_tuple(
+                                   m_SizeMPI,
+                                   SerialElementIndex(header.MemberID, 0)))
+                      .first->second);
+            // std::cout << "rank " << rankSource << ": did not find " <<
+            // header.Name << ", added it" << std::endl;
         }
         else
         {
             deserializedIndexes = &(search->second);
-            //std::cout << "rank " << rankSource << ": found " << header.Name << std::endl;
+            // std::cout << "rank " << rankSource << ": found " << header.Name
+            // << std::endl;
         }
-        
-        
+
         const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
         SerialElementIndex &index = deserializedIndexes->at(rankSource);
         helper::InsertToBuffer(index.Buffer, &serialized[serializedPosition],
@@ -1058,7 +1065,6 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     auto lf_Deserialize = [&](const int rankSource,
                               const size_t serializedPosition,
                               const bool isRankConstant) {
-
         size_t localPosition = serializedPosition;
         ElementIndexHeader header =
             ReadElementIndexHeader(serialized, localPosition);
@@ -1112,7 +1118,8 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 
             if (serializedPosition <= serializedSize)
             {
-                lf_Deserialize_no_mutex(rankSource, serializedPosition, isRankConstant);
+                lf_Deserialize_no_mutex(rankSource, serializedPosition,
+                                        isRankConstant);
             }
 
             const size_t bufferSize = static_cast<size_t>(
@@ -1345,12 +1352,10 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
                 " not supported in BP4 Metadata Merge\n");
 
         } // end switch
-
     };
 
     auto lf_MergeRankSerial = [&](
         const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
-
         auto &bufferOut = bufferSTL.m_Buffer;
         auto &positionOut = bufferSTL.m_Position;
 
@@ -1401,13 +1406,13 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
         }
 
         uint64_t setsCount = 0;
-        //unsigned int currentTimeStep = 1;
+        // unsigned int currentTimeStep = 1;
         bool marching = true;
 
         const size_t entryLengthPosition = positionOut;
         positionOut += headerSize;
 
-        for (size_t r = firstRank; r < indices.size(); ++r) 
+        for (size_t r = firstRank; r < indices.size(); ++r)
         {
             const auto &buffer = indices[r].Buffer;
             if (buffer.empty())
@@ -1415,15 +1420,17 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
                 continue;
             }
             auto &position = positions[r];
-            //std::cout << "rank: " << r << ", positions[r]: " << positions[r] << ", position: " << position << ", buffer.size(): " << buffer.size() << std::endl;
-            if (position >= buffer.size()) 
+            // std::cout << "rank: " << r << ", positions[r]: " <<
+            // positions[r] << ", position: " << position << ",
+            // buffer.size(): " << buffer.size() << std::endl;
+            if (position >= buffer.size())
             {
                 continue;
             }
 
             uint8_t count = 0;
             uint32_t length = 0;
-            //uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+            // uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
             uint32_t timeStep = 1;
 
             while (true)
@@ -1433,20 +1440,23 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
                     break;
                 }
                 size_t localPosition = position;
-                lf_GetCharacteristics(buffer, localPosition,
-                                        header.DataType, count, length,
-                                        timeStep);
-                //std::cout << "rank: " << r << ", timeStep: " << timeStep<< std::endl;
+                lf_GetCharacteristics(buffer, localPosition, header.DataType,
+                                      count, length, timeStep);
+                // std::cout << "rank: " << r << ", timeStep: " <<
+                // timeStep<< std::endl;
 
                 ++setsCount;
 
-                //std::cout << "setsCount: " << setsCount << ", positionOut: " << positionOut << ", position: " << position<< std::endl;   
+                // std::cout << "setsCount: " << setsCount << ",
+                // positionOut: " << positionOut << ", position: " <<
+                // position<< std::endl;
                 helper::CopyToBuffer(bufferOut, positionOut, &buffer[position],
-                                    length + 5);
+                                     length + 5);
 
                 position += length + 5;
-                //std::cout << "length: " << length << ", position: " << position << ", positions[r]: " << positions[r] << std::endl; 
-
+                // std::cout << "length: " << length << ", position: " <<
+                // position << ", positions[r]: " << positions[r] <<
+                // std::endl;
             }
         }
 
@@ -1458,12 +1468,10 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
         helper::CopyToBuffer(bufferOut, backPosition,
                              &indices[firstRank].Buffer[4], headerSize - 8 - 4);
         helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
-
     };
 
     auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
                             BufferSTL &bufferSTL) {
-
         ElementIndexHeader header;
         size_t firstRank = 0;
         // index positions per rank
@@ -1531,16 +1539,13 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
             uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
 
             size_t localPosition = position;
-            lf_GetCharacteristics(buffer, localPosition,
-                                  header.DataType, count, length,
-                                  timeStep);
+            lf_GetCharacteristics(buffer, localPosition, header.DataType, count,
+                                  length, timeStep);
             ++setsCount;
 
             // here copy to sorted buffer
-            helper::InsertToBuffer(sorted, &buffer[position],
-                                           length + 5);
+            helper::InsertToBuffer(sorted, &buffer[position], length + 5);
             position += length + 5;
-                
         }
 
         const uint32_t entryLength =
@@ -1772,12 +1777,10 @@ void BP4Serializer::MergeSerializeIndices(
                 " not supported in BP4 Metadata Merge\n");
 
         } // end switch
-
     };
 
     auto lf_MergeRankSerial = [&](
         const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
-
         auto &bufferOut = bufferSTL.m_Buffer;
         auto &positionOut = bufferSTL.m_Position;
 
@@ -1896,12 +1899,10 @@ void BP4Serializer::MergeSerializeIndices(
         helper::CopyToBuffer(bufferOut, backPosition,
                              &indices[firstRank].Buffer[4], headerSize - 8 - 4);
         helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
-
     };
 
     auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
                             BufferSTL &bufferSTL) {
-
         ElementIndexHeader header;
         size_t firstRank = 0;
         // index positions per rank

@@ -34,7 +34,9 @@ public:
     Minifooter m_Minifooter;
 
     /* metadata index table*/
-    std::unordered_map<uint64_t, std::unordered_map<uint64_t, std::vector<uint64_t>>> m_MetadataIndexTable;
+    std::unordered_map<uint64_t,
+                       std::unordered_map<uint64_t, std::vector<uint64_t>>>
+        m_MetadataIndexTable;
 
     BufferSTL m_MetadataIndex;
 
@@ -160,16 +162,16 @@ private:
     void ParseMinifooter(const BufferSTL &bufferSTL);
 
     void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
-    void ParsePGIndexPerStep(const BufferSTL &bufferSTL, const core::IO &io, 
-                                    size_t submetadatafileId, size_t step);
+    void ParsePGIndexPerStep(const BufferSTL &bufferSTL, const core::IO &io,
+                             size_t submetadatafileId, size_t step);
 
     void ParseVariablesIndex(const BufferSTL &bufferSTL, core::IO &io);
-    void ParseVariablesIndexPerStep(const BufferSTL &bufferSTL, core::IO &io, 
-                                                size_t submetadatafileId, size_t step);
+    void ParseVariablesIndexPerStep(const BufferSTL &bufferSTL, core::IO &io,
+                                    size_t submetadatafileId, size_t step);
 
     void ParseAttributesIndex(const BufferSTL &bufferSTL, core::IO &io);
     void ParseAttributesIndexPerStep(const BufferSTL &bufferSTL, core::IO &io,
-                                            size_t submetadatafileId, size_t step);
+                                     size_t submetadatafileId, size_t step);
 
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
@@ -186,9 +188,9 @@ private:
 
     template <class T>
     void DefineVariableInIOPerStep(const ElementIndexHeader &header,
-                                    core::IO &io, 
-                                    const std::vector<char> &buffer,
-                                    size_t position, size_t step) const;
+                                   core::IO &io,
+                                   const std::vector<char> &buffer,
+                                   size_t position, size_t step) const;
 
     template <class T>
     void DefineAttributeInIO(const ElementIndexHeader &header, core::IO &io,

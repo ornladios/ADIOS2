@@ -34,7 +34,7 @@ public:
      * @param mpiComm MPI communicator
      */
     BP4Writer(IO &io, const std::string &name, const Mode mode,
-                 MPI_Comm mpiComm);
+              MPI_Comm mpiComm);
 
     ~BP4Writer();
 
@@ -93,12 +93,14 @@ private:
      * profilers*/
     void WriteProfilingJSONFile();
 
-    void PopulateMetadataIndexFileHeader(std::vector<char> &buffer, 
-        size_t &position, const uint8_t, const bool addSubfiles);
+    void PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
+                                         size_t &position, const uint8_t,
+                                         const bool addSubfiles);
 
-    void PopulateMetadataIndexFileContent(const uint64_t currentStep, const uint64_t mpirank,
+    void PopulateMetadataIndexFileContent(
+        const uint64_t currentStep, const uint64_t mpirank,
         const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
-        const uint64_t attributesIndexStart, const uint64_t currentStepEndPos, 
+        const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
         std::vector<char> &buffer, size_t &position);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);

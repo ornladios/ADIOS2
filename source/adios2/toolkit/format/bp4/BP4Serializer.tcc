@@ -46,7 +46,8 @@ inline void BP4Serializer::PutVariableMetadata(
     bool isNew = true; // flag to check if variable is new
     SerialElementIndex &variableIndex = GetSerialElementIndex(
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
-    variableIndex.Valid = true;  // flag to indicate this variable is put at current step
+    variableIndex.Valid =
+        true; // flag to indicate this variable is put at current step
     stats.MemberID = variableIndex.MemberID;
 
     lf_SetOffset(stats.Offset);
@@ -411,7 +412,7 @@ void BP4Serializer::PutVariableMetadataInData(
     // Back to varLength including payload size
     // not need to remove its own size (8) from length from bpdump
     const uint64_t varLength = static_cast<uint64_t>(
-        position - varLengthPosition + 
+        position - varLengthPosition +
         helper::PayloadSize(blockInfo.Data, blockInfo.Count));
 
     size_t backPosition = varLengthPosition;
@@ -661,7 +662,7 @@ void BP4Serializer::PutVariableCharacteristics(
     if (blockInfo.Data != nullptr)
     {
         PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                    buffer);
+                        buffer);
     }
 
     uint8_t characteristicID = characteristic_dimensions;
@@ -740,7 +741,7 @@ void BP4Serializer::PutVariableCharacteristics(
     if (blockInfo.Data != nullptr)
     {
         PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                    buffer, position);
+                        buffer, position);
     }
     // END OF CHARACTERISTICS
 

@@ -130,9 +130,7 @@ public:
         size_t attrIndexStart;
 
         /* length of metadata file to which we append*/
-        size_t metadataFileLength = 0;    
-
-
+        size_t metadataFileLength = 0;
     };
 
     struct Minifooter
@@ -228,14 +226,17 @@ public:
         noexcept;
 
     std::vector<std::string>
-    GetBPMetadataFileNames(const std::vector<std::string> &names) const noexcept;
+    GetBPMetadataFileNames(const std::vector<std::string> &names) const
+        noexcept;
 
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 
     std::vector<std::string>
-    GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const noexcept;
+    GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const
+        noexcept;
 
-    std::string GetBPMetadataIndexFileName(const std::string &name) const noexcept;
+    std::string GetBPMetadataIndexFileName(const std::string &name) const
+        noexcept;
 
     std::string GetBPSubFileName(const std::string &name,
                                  const size_t subFileIndex) const noexcept;
@@ -359,10 +360,10 @@ protected:
         type_double = 6,      //!< type_double
         type_long_double = 7, //!< type_long_double
 
-        type_string = 9,              //!< type_string
-        type_complex = 10,            //!< type_complex
-        type_double_complex = 11,     //!< type_double_complex
-        type_string_array = 12,       //!< type_string_array
+        type_string = 9,          //!< type_string
+        type_complex = 10,        //!< type_complex
+        type_double_complex = 11, //!< type_double_complex
+        type_string_array = 12,   //!< type_string_array
     };
 
     /**

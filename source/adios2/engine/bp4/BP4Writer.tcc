@@ -21,7 +21,7 @@ namespace engine
 
 template <class T>
 void BP4Writer::PutSyncCommon(Variable<T> &variable,
-                                 const typename Variable<T>::Info &blockInfo)
+                              const typename Variable<T>::Info &blockInfo)
 {
     // if first timestep Write create a new pg index
     if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
@@ -63,8 +63,7 @@ void BP4Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
     m_BP4Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP4Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(
         1.05 * helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-        4 *
-            m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name,
+        4 * m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name,
                                                  blockInfo.Count));
 }
 

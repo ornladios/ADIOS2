@@ -35,7 +35,7 @@ public:
      * @param mpiComm
      */
     BP4Reader(IO &io, const std::string &name, const Mode mode,
-                 MPI_Comm mpiComm);
+              MPI_Comm mpiComm);
 
     virtual ~BP4Reader() = default;
 

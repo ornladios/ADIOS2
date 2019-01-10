@@ -21,10 +21,11 @@ namespace engine
 {
 
 BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
-                           MPI_Comm mpiComm)
+                     MPI_Comm mpiComm)
 : Engine("BP4Reader", io, name, mode, mpiComm),
   m_BP4Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
-  m_SubFileManager(mpiComm, m_DebugMode), m_FileMetadataIndexManager(mpiComm, m_DebugMode)
+  m_SubFileManager(mpiComm, m_DebugMode),
+  m_FileMetadataIndexManager(mpiComm, m_DebugMode)
 {
     Init();
 }
@@ -170,11 +171,13 @@ void BP4Reader::InitTransports()
         const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
         m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
-        
+
         /* Open file to save the metadata index table */
-        const std::string metadataIndexFile(m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
-        m_FileMetadataIndexManager.OpenFiles({metadataIndexFile}, adios2::Mode::Read,
-                                m_IO.m_TransportsParameters, profile);
+        const std::string metadataIndexFile(
+            m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
+        m_FileMetadataIndexManager.OpenFiles(
+            {metadataIndexFile}, adios2::Mode::Read,
+            m_IO.m_TransportsParameters, profile);
     }
 }
 
@@ -185,24 +188,26 @@ void BP4Reader::InitBuffer()
     {
         const size_t fileSize = m_FileManager.GetFileSize(0);
         m_BP4Deserializer.m_Metadata.Resize(
-            fileSize,
-            "allocating metadata buffer, in call to BP4Reader Open");
+            fileSize, "allocating metadata buffer, in call to BP4Reader Open");
 
         m_FileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(),
                                fileSize);
 
-        const size_t metadataIndexFileSize = m_FileMetadataIndexManager.GetFileSize(0);
+        const size_t metadataIndexFileSize =
+            m_FileMetadataIndexManager.GetFileSize(0);
         m_BP4Deserializer.m_MetadataIndex.Resize(
             metadataIndexFileSize,
             "allocating metadata index buffer, in call to BPFileReader Open");
-        m_FileMetadataIndexManager.ReadFile(m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(),
-                               metadataIndexFileSize);
+        m_FileMetadataIndexManager.ReadFile(
+            m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(),
+            metadataIndexFileSize);
     }
     // broadcast buffer to all ranks from zero
     helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // broadcast metadata index buffer to all ranks from zero
-    helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer, m_MPIComm);
+    helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer,
+                            m_MPIComm);
 
     /* Parse metadata index table */
     m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex);
@@ -212,11 +217,11 @@ void BP4Reader::InitBuffer()
 }
 
 #define declare_type(T)                                                        \
-    void BP4Reader::DoGetSync(Variable<T> &variable, T *data)               \
+    void BP4Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
-    void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)           \
+    void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }
@@ -232,12 +237,12 @@ void BP4Reader::DoClose(const int transportIndex)
 
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
-    BP4Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
+    BP4Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
         return m_BP4Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
-    std::vector<typename Variable<T>::Info> BP4Reader::DoBlocksInfo(        \
+    std::vector<typename Variable<T>::Info> BP4Reader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         return m_BP4Deserializer.BlocksInfo(variable, step);                   \

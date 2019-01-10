@@ -14,8 +14,8 @@
 #include "BP4Deserializer.h"
 
 #include <algorithm> //std::reverse
-#include <unordered_set>
 #include <iostream>
+#include <unordered_set>
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -390,7 +390,6 @@ inline void BP4Deserializer::DefineVariableInIO<std::string>(
         variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
 }
 
-
 template <>
 inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
     const ElementIndexHeader &header, core::IO &io,
@@ -412,12 +411,16 @@ inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
     variable = io.InquireVariable<std::string>(variableName);
     if (variable)
     {
-        size_t endPositionCurrentStep = initialPosition - (header.Name.size() + header.GroupName.size() + header.Path.size() + 23) 
-                                        + static_cast<size_t>(header.Length) + 4;
+        size_t endPositionCurrentStep =
+            initialPosition -
+            (header.Name.size() + header.GroupName.size() + header.Path.size() +
+             23) +
+            static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
-        //variable->m_AvailableStepsCount = step;
+        // variable->m_AvailableStepsCount = step;
         ++variable->m_AvailableStepsCount;
-        //std::cout << variable->m_Name << ", " << variable->m_AvailableStepsCount << std::endl;
+        // std::cout << variable->m_Name << ", " <<
+        // variable->m_AvailableStepsCount << std::endl;
         while (position < endPositionCurrentStep)
         {
             const size_t subsetPosition = position;
@@ -439,8 +442,9 @@ inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
             {
                 variable->m_Max = subsetCharacteristics.Statistics.Max;
             }
-            variable->m_AvailableStepBlockIndexOffsets[step].push_back(subsetPosition);
-            position = subsetPosition + subsetCharacteristics.EntryLength + 5;                        
+            variable->m_AvailableStepBlockIndexOffsets[step].push_back(
+                subsetPosition);
+            position = subsetPosition + subsetCharacteristics.EntryLength + 5;
         }
         return;
     }
@@ -502,11 +506,9 @@ inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
 
 /* Define the variable of each step when parsing the metadata */
 template <class T>
-void BP4Deserializer::DefineVariableInIOPerStep(const ElementIndexHeader &header,
-                                         core::IO &io,
-                                         const std::vector<char> &buffer,
-                                         size_t position,
-                                         size_t step) const
+void BP4Deserializer::DefineVariableInIOPerStep(
+    const ElementIndexHeader &header, core::IO &io,
+    const std::vector<char> &buffer, size_t position, size_t step) const
 {
     const size_t initialPosition = position;
 
@@ -519,14 +521,17 @@ void BP4Deserializer::DefineVariableInIOPerStep(const ElementIndexHeader &header
         variableName = header.Path + PathSeparator + header.Name;
     }
 
-    core::Variable<T> *variable = nullptr;    
+    core::Variable<T> *variable = nullptr;
     variable = io.InquireVariable<T>(variableName);
     if (variable)
     {
-        size_t endPositionCurrentStep = initialPosition - (header.Name.size() + header.GroupName.size() + header.Path.size() + 23) 
-                                        + static_cast<size_t>(header.Length) + 4;
+        size_t endPositionCurrentStep =
+            initialPosition -
+            (header.Name.size() + header.GroupName.size() + header.Path.size() +
+             23) +
+            static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
-        //variable->m_AvailableStepsCount = step;
+        // variable->m_AvailableStepsCount = step;
         ++variable->m_AvailableStepsCount;
         while (position < endPositionCurrentStep)
         {
@@ -549,8 +554,9 @@ void BP4Deserializer::DefineVariableInIOPerStep(const ElementIndexHeader &header
             {
                 variable->m_Max = subsetCharacteristics.Statistics.Max;
             }
-            variable->m_AvailableStepBlockIndexOffsets[step].push_back(subsetPosition);
-            position = subsetPosition + subsetCharacteristics.EntryLength + 5;                        
+            variable->m_AvailableStepBlockIndexOffsets[step].push_back(
+                subsetPosition);
+            position = subsetPosition + subsetCharacteristics.EntryLength + 5;
         }
         return;
     }
