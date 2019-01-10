@@ -49,11 +49,17 @@ MPIAggregator::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
     const int destination = (step != m_Size - 1) ? step + 1 : 0;
     std::vector<MPI_Request> requests(2);
 
+    if (step == 0)
+    {
+        m_SizeSend =
+            (m_Rank == 0) ? bufferSTL.m_AbsolutePosition : bufferSTL.m_Position;
+    }
+
     if (m_Rank == step)
     {
-        const size_t position =
-            (m_Rank == 0) ? bufferSTL.m_AbsolutePosition
-                          : bufferSTL.m_AbsolutePosition + bufferSTL.m_Position;
+        const size_t position = (m_Rank == 0)
+                                    ? m_SizeSend
+                                    : m_SizeSend + bufferSTL.m_AbsolutePosition;
 
         // While the MPI_Isend function should take a const void* as it's first
         // argument, some MPICH implementations provide a broken signature

@@ -26,18 +26,15 @@ void PGIndexAggregate1D(const std::string substreams)
     const std::string fname("PGIndexAggregate1D_" + substreams + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
-    // Number of rows
-    // const size_t Nx = 8;
-
     // Number of steps
-    // const size_t NSteps = 2;
+    const size_t NSteps = 3;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
     // Write test data using BP
     // data
-    std::vector<int> numbers(100);
-    std::iota(numbers.begin(), numbers.end(), mpiRank);
+    std::vector<int32_t> inumbers(100);
+    std::iota(inumbers.begin(), inumbers.end(), mpiRank);
 
     std::vector<float> fnumbers(50);
     const float randomStart = rand() % mpiSize;
@@ -45,51 +42,86 @@ void PGIndexAggregate1D(const std::string substreams)
 
     // adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
-    adios2_io *ioH = adios2_declare_io(adiosH, "TestIO");
-
-    size_t countNumbers[1];
-    countNumbers[0] = numbers.size();
-    adios2_variable *varNumbers =
-        adios2_define_variable(ioH, "ints", adios2_type_int, 1, NULL, NULL,
-                               countNumbers, adios2_constant_dims_true);
-
-    size_t countfNumbers[1];
-    countfNumbers[0] = fnumbers.size();
-    adios2_variable *varfNumbers =
-        adios2_define_variable(ioH, "floats", adios2_type_float, 1, NULL, NULL,
-                               countfNumbers, adios2_constant_dims_true);
-
-    adios2_set_parameter(ioH, "CollectiveMetadata", "Off");
-    adios2_set_parameter(ioH, "Profile", "Off");
-
-    if (mpiSize > 1)
     {
-        adios2_set_parameter(ioH, "substreams", substreams.c_str());
+        adios2_io *ioH = adios2_declare_io(adiosH, "TestIO");
+
+        size_t countNumbers[1];
+        countNumbers[0] = inumbers.size();
+        adios2_variable *variNumbers = adios2_define_variable(
+            ioH, "ints", adios2_type_int32_t, 1, NULL, NULL, countNumbers,
+            adios2_constant_dims_true);
+
+        size_t countfNumbers[1];
+        countfNumbers[0] = fnumbers.size();
+        adios2_variable *varfNumbers = adios2_define_variable(
+            ioH, "floats", adios2_type_float, 1, NULL, NULL, countfNumbers,
+            adios2_constant_dims_true);
+
+        // adios2_set_parameter(ioH, "CollectiveMetadata", "Off");
+        adios2_set_parameter(ioH, "Profile", "Off");
+
+        if (mpiSize > 1)
+        {
+            adios2_set_parameter(ioH, "substreams", substreams.c_str());
+        }
+
+        adios2_engine *bpWriter =
+            adios2_open(ioH, fname.c_str(), adios2_mode_write);
+
+        adios2_step_status step_status;
+        for (size_t i = 0; i < NSteps; ++i)
+        {
+            adios2_begin_step(bpWriter, adios2_step_mode_append, 0,
+                              &step_status);
+            if (mpiRank % 3 == 0)
+            {
+                adios2_put(bpWriter, variNumbers, inumbers.data(),
+                           adios2_mode_sync);
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(rand() % 2));
+            if (mpiRank % 3 == 1)
+            {
+                adios2_put(bpWriter, varfNumbers, fnumbers.data(),
+                           adios2_mode_sync);
+            }
+            adios2_end_step(bpWriter);
+        }
+
+        adios2_close(bpWriter);
+        bpWriter = NULL;
     }
 
-    adios2_engine *bpWriter =
-        adios2_open(ioH, fname.c_str(), adios2_mode_write);
-
-    adios2_step_status step_status;
-    for (size_t i = 0; i < 2; ++i)
+    MPI_Barrier(MPI_COMM_WORLD);
+    // Reader TODO, might need to generate metadata file
+    if (false)
     {
-        adios2_begin_step(bpWriter, adios2_step_mode_next_available, 0,
-                          &step_status);
-        if (mpiRank % 3 == 0)
-        {
-            adios2_put(bpWriter, varNumbers, numbers.data(), adios2_mode_sync);
-        }
-        std::this_thread::sleep_for(std::chrono::seconds(rand() % 5));
-        if (mpiRank % 3 == 1)
-        {
-            adios2_put(bpWriter, varfNumbers, fnumbers.data(),
-                       adios2_mode_sync);
-        }
-        adios2_end_step(bpWriter);
-    }
+        adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
+        adios2_engine *bpReader =
+            adios2_open(ioH, fname.c_str(), adios2_mode_read);
 
-    adios2_close(bpWriter);
-    bpWriter = NULL;
+        adios2_step_status step_status;
+        while (true)
+        {
+            adios2_begin_step(bpReader, adios2_step_mode_next_available, 0,
+                              &step_status);
+
+            if (step_status == adios2_step_status_end_of_stream)
+            {
+                break;
+            }
+
+            adios2_variable *varInts = adios2_inquire_variable(ioH, "ints");
+            adios2_variable *varFloats = adios2_inquire_variable(ioH, "floats");
+
+            EXPECT_NE(varInts, nullptr);
+            EXPECT_NE(varFloats, nullptr);
+
+            adios2_end_step(bpReader);
+        }
+
+        adios2_close(bpReader);
+        bpReader = NULL;
+    }
 
     adios2_finalize(adiosH);
 }
@@ -982,13 +1014,28 @@ public:
     virtual void TearDown() {}
 };
 
+TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead1D8)
+{
+    WriteAggRead1D8(GetParam());
+}
+
+TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D2x4)
+{
+    WriteAggRead2D2x4(GetParam());
+}
+
+TEST_P(BPWriteAggregateReadTest, ADIOS2BPWriteAggregateRead2D4x2)
+{
+    WriteAggRead2D4x2(GetParam());
+}
+
 TEST_P(BPWriteAggregateReadTest, PGIndexAggregate1D)
 {
     PGIndexAggregate1D(GetParam());
 }
 
 INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadTest,
-                        ::testing::Values("1", "9"));
+                        ::testing::Values("1", "2", "3", "4", "5"));
 
 int main(int argc, char **argv)
 {

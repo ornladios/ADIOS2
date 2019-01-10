@@ -51,6 +51,8 @@ public:
      *  corresponds to m_Rank = 0 */
     int m_ConsumerRank = -1;
 
+    size_t m_SizeSend = 0;
+
     MPIAggregator();
 
     virtual ~MPIAggregator();
