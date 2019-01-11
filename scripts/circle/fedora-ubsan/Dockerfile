@@ -3,7 +3,20 @@ FROM fedora:latest
 # Install core dev packages
 RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file \
         zlib zlib-devel bzip2-libs bzip2-devel hdf5 hdf5-devel vim valgrind \
-        python3-devel python3-numpy zeromq zeromq-devel libubsan
+        python3-devel python3-numpy zeromq zeromq-devel libubsan \
+        libfabric-devel
+
+# Install MGARD
+RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
+WORKDIR /opt/mgard/build
+RUN /opt/cmake/3.6.3/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
+  make install
+
+# Install ZFP
+RUN git clone https://github.com/llnl/zfp /opt/zfp/source
+WORKDIR /opt/zfp/build
+RUN /opt/cmake/3.6.3/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
+  make install
 
 # Cleanup headers and packages
 RUN dnf clean all
@@ -21,7 +34,7 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.r
     runuser -l adios2 -c 'git lfs install'
 
 # Misc cleanup of unneeded files
-RUN rm -rfv /tmp/* /var/cache/dnf
+RUN rm -rfv /opt/mgard/source /opt/mgard/build /opt/zfp/source /opt/zfp/build /tmp/* /var/cache/dnf
 
 USER adios2
 ENV HOME /home/adios2

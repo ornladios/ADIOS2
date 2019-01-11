@@ -3,21 +3,11 @@ FROM opensuse:42.3
 # Install core dev packages
 RUN zypper ref
 RUN zypper in -y gcc gcc-c++ gcc-fortran git make curl tar f2c glibc-locale \
-  glibc-devel libbz2-devel python-devel python-numpy pkg-config libzmq-devel \
-  hdf5-devel zlib-devel vim valgrind gdb
+  glibc-devel libbz2-devel pkg-config libzmq-devel zlib-devel vim valgrind gdb
 
 # Workaround so pgi can find g77
 WORKDIR /usr/bin
 RUN ln -s gfortran g77
-
-# Install the CMake binary
-WORKDIR /opt/cmake/3.13.1
-RUN curl -L https://cmake.org/files/v3.13/cmake-3.13.1-Linux-x86_64.tar.gz | \
-     tar --strip-components=1 -xz \
-  && pushd /usr/local/bin \
-  && ln -s /opt/cmake/3.13.1/bin/ctest \
-  && ln -s /opt/cmake/3.13.1/bin/cmake \
-  && ln -s /opt/cmake/3.13.1/bin/cpack
 
 # Install PGI compiler
 WORKDIR /tmp/pgi-install
@@ -36,6 +26,33 @@ RUN zypper in -y environment-modules \
   && echo 'export MODULEPATH=/opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.sh \
   && echo 'setenv MODULEPATH /opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.csh
 
+ENV CC=pgcc CXX=pgc++ FC=pgfortran
+
+# Install the CMake binary
+WORKDIR /opt/cmake/3.13.1
+RUN curl -L https://cmake.org/files/v3.13/cmake-3.13.1-Linux-x86_64.tar.gz | \
+     tar --strip-components=1 -xz \
+  && pushd /usr/local/bin \
+  && ln -s /opt/cmake/3.13.1/bin/ctest \
+  && ln -s /opt/cmake/3.13.1/bin/cmake \
+  && ln -s /opt/cmake/3.13.1/bin/cpack
+
+# Install MGARD
+RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
+WORKDIR /opt/mgard/build
+RUN . /etc/profile >/dev/null && \
+  module load pgi && \
+  /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
+  make install
+
+# Install ZFP
+RUN git clone https://github.com/llnl/zfp /opt/zfp/source
+WORKDIR /opt/zfp/build
+RUN . /etc/profile >/dev/null && \
+  module load pgi && \
+  /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
+  make install
+
 # Create a non-root user to run the builds/tests
 RUN export uid=1001 gid=1001 && \
     mkdir -p /home/adios2 && \
@@ -50,6 +67,9 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.r
 
 # Misc cleanup of unneeded files
 RUN rm -rf /tmp/* \
+       /opt/fabric/source \
+       /opt/mgard/source /opt/mgard/build \
+       /opt/zfp/source /opt/zfp/build /tmp/* \
   && zypper clean
 
 USER adios2

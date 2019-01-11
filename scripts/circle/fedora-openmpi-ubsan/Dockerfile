@@ -4,10 +4,19 @@ FROM fedora:latest
 RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file patch \
         zlib-devel bzip2-devel openmpi-devel hdf5-openmpi-devel vim valgrind \
         python3-devel python3-numpy python3-mpi4py-openmpi zeromq-devel \
-        libubsan
+        libubsan libfabric-devel
 
-# Patch the installed Lmod to properly deal with a CMake shell
-RUN curl https://github.com/TACC/Lmod/commit/516a986322ac462876218ce140214824f47f5887.patch | patch -p 2 /usr/share/lmod/7.5.16/libexec/tcl2lua.tcl
+# Install MGARD
+RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
+WORKDIR /opt/mgard/build
+RUN /opt/cmake/3.6.3/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
+  make install
+
+# Install ZFP
+RUN git clone https://github.com/llnl/zfp /opt/zfp/source
+WORKDIR /opt/zfp/build
+RUN /opt/cmake/3.6.3/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
+  make install
 
 # Cleanup headers and packages
 RUN dnf clean all
@@ -25,7 +34,7 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.r
     runuser -l adios2 -c 'git lfs install'
 
 # Misc cleanup of unneeded files
-RUN rm -rfv /tmp/* /var/cache/dnf
+RUN rm -rfv /opt/mgard/source /opt/mgard/build /opt/zfp/source /opt/zfp/build /tmp/* /var/cache/dnf
 
 USER adios2
 ENV HOME /home/adios2

@@ -68,6 +68,8 @@ check_var CIRCLE_BRANCH
 check_var CIRCLE_JOB
 check_var CIRCLE_BUILD_NUM
 
+export CMAKE_PREFIX_PATH=/opt/mgard/latest:/opt/zfp/latest:${CMAKE_PREFIX_PATH}
+
 if [ ! "${CUSTOM_BUILD_NAME}" ]
 then
   get_real_branch_name
@@ -106,11 +108,6 @@ esac
 
 # Manually source the bash env setup, freeing up $BASH_ENV used by circleci
 . /etc/profile >/dev/null
-
-if [ -d /opt/libfabric/1.6.0 ]
-then
-  export PKG_CONFIG_PATH=$(dirname $(find /opt/libfabric/1.6.0 -name libfabric.pc))
-fi
 
 if [ -x /opt/cmake/3.6.3/bin/ctest ]
 then
