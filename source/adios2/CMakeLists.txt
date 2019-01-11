@@ -140,7 +140,7 @@ endif()
 
 if(ADIOS2_HAVE_MGARD)
   target_sources(adios2 PRIVATE operator/compress/CompressMGARD.cpp)
-  target_link_libraries(adios2 PRIVATE MGARD::MGARD)
+  target_link_libraries(adios2 PRIVATE mgard::mgard)
 endif()
 
 if(ADIOS2_HAVE_MPI)
