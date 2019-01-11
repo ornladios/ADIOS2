@@ -429,15 +429,11 @@ else()
   set(EVPATH_USE_NNTI FALSE "Build the nnti transport" FORCE)
 endif()
 
-# Extra find module dependencies
-foreach(P ${EXTRA_INSTALL_PACKAGES})
-  configure_file(
-    ${EVPath_SOURCE_DIR}/cmake/Find${P}.cmake
-    ${EVPath_BINARY_DIR}/Find${P}.cmake
-    COPYONLY)
-  install(FILES ${EVPath_BINARY_DIR}/Find${P}.cmake
-    DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
-endforeach()
+# Install extra find module dependencies
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  FILES_MATCHING PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
+)
 
 add_custom_command(
   OUTPUT "cm_interface.c" "revp.c" "revpath.h"
@@ -614,6 +610,11 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfig.cmake
   @ONLY
 )
+configure_file(
+  EVPathConfigCommon.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfigCommon.cmake
+  @ONLY
+)
 
 # Additionally, when cmake has found a EVPathConfig.cmake, it can check for a
 # EVPathConfigVersion.cmake in the same directory when figuring out the version
@@ -628,10 +629,15 @@ configure_file(
 # Install these two files into the same directory as the generated exports-file.
 install(
   FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfigCommon.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfigVersion.cmake
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 )
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/EVPathConfigInstall.cmake
+  RENAME EVPathConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+)
+
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake

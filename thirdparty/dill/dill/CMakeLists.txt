@@ -303,11 +303,6 @@ void main()
   check_function_exists(print_insn_little_arm     HAVE_PRINT_INSN_LITTLE_ARM)
 
   cmake_pop_check_state()
-
-  if(NOT BUILD_SHARED_LIBS)
-    install(FILES ${PROJECT_SOURCE_DIR}/cmake/FindBinUtils.cmake
-      DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
-  endif()
 endif()
 
 set(DILL_LIBRARY_PREFIX "" CACHE STRING
@@ -414,6 +409,12 @@ install(
 # Install the export set for use with the install-tree
 install(EXPORT dill-targets NAMESPACE dill::
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
+
+# Install extra find module dependencies
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  FILES_MATCHING PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
+)
 
 # display status message for important variables
 include(CTest)

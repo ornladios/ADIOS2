@@ -44,7 +44,11 @@ def diff_commands(a, b):
 
     a_flags = []
     b_flags = []
-    differ = difflib.SequenceMatcher(a=a_args, b=b_args, autojunk=False)
+    if sys.version_info[0] > 2 or (sys.version_info[0] == 2 and sys.version_info[1] >= 7):
+        differ = difflib.SequenceMatcher(a=a_args, b=b_args, autojunk=False)
+    else:
+        differ = difflib.SequenceMatcher(a=a_args, b=b_args)
+
     for tag, i1, i2, j1, j2 in differ.get_opcodes():
         if tag in ('delete', 'replace'):
             a_flags.extend(a_args[i1:i2])
@@ -101,7 +105,7 @@ def extract_adios2_flags(cmake='cmake',
     cmake_format = {}
 
     def tempdir():
-        if sys.version_info.major == 3:
+        if sys.version_info[0] == 3:
             return tempfile.TemporaryDirectory()
         else:
             class DummyTemporaryDirectory:
@@ -137,18 +141,26 @@ def extract_adios2_flags(cmake='cmake',
         ]
 
         if adios2_dir is not None:
-            configure_cmd.append('-DADIOS2_DIR:PATH=' + ADIOS2_dir)
+            configure_cmd.append('-DADIOS2_DIR:PATH=' + adios2_dir)
+            print('ADIOS2_DIR:  ' + adios2_dir)
         elif 'ADIOS2_DIR' not in os.environ and 'ADIOS2_ROOT' not in os.environ:
             os.environ['ADIOS2_DIR'] = \
                 os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
-        if sys.version_info.major == 3:
+            print('ADIOS2_DIR:  ' + os.environ['ADIOS2_DIR'])
+        else:
+            if 'ADIOS2_ROOT' in os.environ:
+                print('ADIOS2_ROOT: ' + os.environ['ADIOS2_ROOT'])
+            if 'ADIOS2_DIR' in os.environ:
+                print('ADIOS2_DIR:  ' + os.environ['ADIOS2_DIR'])
+
+        if sys.version_info[0] == 3:
             stdout = subprocess.DEVNULL
         else:
             stdout = open('/dev/null', 'w')
-        print("ADIOS2_DIR: " + os.environ['ADIOS2_DIR'])
+
         subprocess.check_call(configure_cmd, cwd=builddir,
                               stdout=stdout)
-        if sys.version_info.major == 2:
+        if sys.version_info[0] == 2:
             stdout.close()
 
         # Run the build tool.
@@ -186,7 +198,10 @@ def extract_adios2_flags(cmake='cmake',
                 lines[key] = line
 
         for line in build_output.stdout:
-            line = line.strip().decode('utf-8')
+            if sys.version_info[0] > 2 or (sys.version_info[0] == 2 and sys.version_info[1] >= 7):
+              line = line.decode('utf-8')
+            line = line.strip()
+
             check_line(lines, line, '-DWITH_ADIOS2', 'compile_with')
             check_line(lines, line, '-LWITH_ADIOS2', 'link_with')
             check_line(lines, line, '-DWITHOUT_ADIOS2', 'compile_without')
@@ -199,32 +214,32 @@ def extract_adios2_flags(cmake='cmake',
 
 
 if __name__ == '__main__':
-    import argparse
+    import optparse
 
-    parser = argparse.ArgumentParser(
+    parser = optparse.OptionParser(
         description='Extract required flags for linking to ParaView')
-    parser.add_argument(
+    parser.add_option(
         '-C', '--cmake', metavar='CMAKE', default='cmake',
         dest='cmake',
         help='Path to CMake to use')
-    parser.add_argument(
+    parser.add_option(
         '-G', '--generator', metavar='GENERATOR', default='Unix Makefiles',
         choices=('Unix Makefiles', 'Ninja'), dest='generator',
         help='The CMake generator to use')
-    parser.add_argument(
+    parser.add_option(
         '-a', '--adios2', metavar='ADIOS2 DIR', default=None,
         dest='adios2_dir',
         help='Where to find ADIOS2Config.cmake')
-    parser.add_argument(
+    parser.add_option(
         '--cxxflags', action='store_true', default=False,
         dest='cxxflags',
         help='Print C++ compiler flags')
-    parser.add_argument(
+    parser.add_option(
         '--cxxlibs', action='store_true', default=False,
         dest='cxxldflags',
         help='Print C++ linker flags')
 
-    opts = parser.parse_args()
+    (opts, args) = parser.parse_args()
     (compile_flags, link_flags) = \
         extract_adios2_flags(cmake=opts.cmake,
                                generator=opts.generator,
