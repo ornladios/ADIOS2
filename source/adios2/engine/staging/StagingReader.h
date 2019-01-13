@@ -41,7 +41,7 @@ public:
     void EndStep() final;
 
 private:
-    int m_Verbosity = 100;
+    int m_Verbosity = 55;
     format::DataManSerializer m_DataManSerializer;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
     std::shared_ptr<transportman::StagingMan> m_MetadataTransport;
@@ -51,9 +51,8 @@ private:
         m_MetaDataMap;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
-    std::string m_FullMetadataAddress = "tcp::/127.0.0.1:12306";
+    std::vector<std::string> m_FullAddresses;
     int m_Timeout = 5;
-    std::shared_ptr<std::thread> m_MetadataReqThread = nullptr;
 
     struct Request
     {
@@ -73,7 +72,6 @@ private:
     template <typename T>
     void CheckIOVariable(const std::string &name, const Dims &shape,
                          const Dims &start, const Dims &count);
-    void MetadataReqThread();
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -88,6 +86,8 @@ private:
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    void Log(const int level, const std::string &message);
 };
 
 } // end namespace engine

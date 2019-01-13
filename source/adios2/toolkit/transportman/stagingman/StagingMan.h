@@ -40,7 +40,7 @@ public:
 
     std::shared_ptr<std::vector<char>>
     Request(const std::vector<char> &request,
-            const std::string &address = std::string());
+            const std::string &address);
 
     std::shared_ptr<std::vector<char>> ReceiveRequest();
 
@@ -50,6 +50,7 @@ private:
     MPI_Comm m_MpiComm;
     int m_Timeout;
     Mode m_OpenMode;
+    int m_Verbosity = 0;
 
     size_t m_MaxBufferSize;
 

@@ -45,10 +45,6 @@ StagingMan::Request(const std::vector<char> &request,
     m_Transport.Write(request.data(), request.size());
     Transport::Status status;
     m_Transport.IRead(m_Buffer.data(), m_MaxBufferSize, status);
-    if (status.Bytes <= 1)
-    {
-        return nullptr;
-    }
     auto reply = std::make_shared<std::vector<char>>(status.Bytes);
     std::memcpy(reply->data(), m_Buffer.data(), status.Bytes);
     if (address.empty() == false)

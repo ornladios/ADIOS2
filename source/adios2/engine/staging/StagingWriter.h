@@ -42,36 +42,31 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_Verbosity = 100;
+    int m_Verbosity = 11;
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     int m_MpiSize;
-    std::string m_FullDataAddress;
-    std::string m_FullMetadataAddress;
+    int m_Channels = 4;
+    std::vector<std::string> m_FullAddresses;
     int m_Timeout = 5;
     bool m_Listening = false;
-    int64_t m_MaxBufferSteps = 10;
-    int64_t m_MaxStep = 0;
-    int64_t m_MinStep = 0;
+    int64_t m_MaxBufferSteps = 30000;
     size_t m_DefaultBufferSize = 1024;
     bool m_IsActive = true;
 
-    std::shared_ptr<std::vector<char>> m_LockedAggregatedMetadata;
-    int64_t m_LockedStep;
-    std::queue<int64_t> m_ProtectedSteps;
-    std::mutex m_Mutex;
+    // metadata for current step being written.
+    std::pair<int64_t, std::shared_ptr<std::vector<char>>> m_LockedAggregatedMetadata;
+    std::mutex m_LockedAggregatedMetadataMutex;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     void Handshake();
 
-    void MetadataRepThread();
-    std::shared_ptr<std::thread> m_MetadataRepThread;
 
-    void DataRepThread();
-    std::shared_ptr<std::thread> m_DataRepThread;
+    void ReplyThread(std::string address);
+    std::vector<std::thread> m_ReplyThreads;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
@@ -97,6 +92,8 @@ private:
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
+
+    void Log(const int level, const std::string &message);
 };
 
 } // end namespace engine

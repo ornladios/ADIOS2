@@ -25,31 +25,25 @@ namespace engine
 template <class T>
 void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
+    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " PutSync(" + variable.m_Name + ") start. Current step " + std::to_string(m_CurrentStep));
     if (m_IsActive)
     {
         variable.SetData(data);
-        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
-                                   m_FullDataAddress, Params());
+        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
     }
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Writer " << m_MpiRank << "     PutSync("
-                  << variable.m_Name << ")\n";
-    }
+    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " PutSync(" + variable.m_Name + ") end. Current step " + std::to_string(m_CurrentStep));
 }
 
 template <class T>
 void StagingWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
+    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " PutDeferred(" + variable.m_Name + ") start. Current step " + std::to_string(m_CurrentStep));
     if (m_IsActive)
     {
-        PutSyncCommon(variable, data);
+        variable.SetData(data);
+        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
     }
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Writer " << m_MpiRank << "     PutDeferred("
-                  << variable.m_Name << ")\n";
-    }
+    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " PutDeferred(" + variable.m_Name + ") end. Current step " + std::to_string(m_CurrentStep));
 }
 
 } // end namespace engine

@@ -104,9 +104,7 @@ public:
 
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
-    std::shared_ptr<std::vector<char>>
-    GenerateReply(std::shared_ptr<const std::vector<char>> request,
-                  bool autoEraseOldSteps = false, size_t reserveSteps = 0);
+    std::shared_ptr<std::vector<char>> GenerateReply(const std::vector<char> &request, size_t &step);
 
     int PutPack(const std::shared_ptr<std::vector<char>> data);
 
@@ -116,8 +114,7 @@ public:
                const Dims &varMemStart = Dims(),
                const Dims &varMemCount = Dims());
 
-    void Erase(const size_t step, const bool allPreviousSteps = false,
-               const size_t reserveSteps = 0);
+    void Erase(const size_t step, const bool allPreviousSteps = false);
 
     std::shared_ptr<const std::vector<DataManVar>>
     GetMetaData(const size_t step);
@@ -187,12 +184,20 @@ private:
                           const Dims &outStart, const Dims &outCount,
                           Dims &ovlpStart, Dims &ovlpCount);
 
+    std::vector<char> SerializeJson(const nlohmann::json &message);
+    nlohmann::json DeserializeJson(const char* start, size_t size);
+
+    void Log(const int level, const std::string &message);
+
     std::mutex m_Mutex;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
 
-    int m_Verbosity = 0;
+    // string, msgpack, cbor, ubjson
+    std::string m_UseJsonSerialization = "string";
+
+    int m_Verbosity = 10;
 };
 
 } // end namespace format

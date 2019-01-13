@@ -58,21 +58,44 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
                                     const float timeoutSeconds)
 {
 
+    Log(5, "Staging Reader " + std::to_string( m_MpiRank) + " BeginStep() start. Last step " + std::to_string(m_CurrentStep));
+
     ++m_CurrentStep;
 
-    if (m_CurrentStep == 0)
+    std::shared_ptr<std::vector<char>> reply = std::make_shared<std::vector<char>>();
+    if (m_MpiRank == 0)
     {
-        MetadataReqThread();
-        m_DataManSerializer.GetAttributes(m_IO);
-    }
-
-    if (m_MetadataReqThread != nullptr)
-    {
-        if (m_MetadataReqThread->joinable())
+        std::vector<char> request(1, 'M');
+        auto start_time = std::chrono::system_clock::now();
+        while (reply->size() <=1 )
         {
-            m_MetadataReqThread->join();
+            reply = m_MetadataTransport->Request(request, m_FullAddresses[rand()%m_FullAddresses.size()]);
+            auto now_time = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                now_time - start_time);
+            if (duration.count() > m_Timeout)
+            {
+                return StepStatus::EndOfStream;
+            }
         }
     }
+
+    if (m_Verbosity >= 100)
+    {
+        if (m_MpiRank == 0)
+        {
+            std::cout << "StagingReader::MetadataReqThread Cbor data, size =  "
+                      << reply->size() << std::endl;
+            std::cout << "========================" << std::endl;
+            for (auto i : *reply)
+            {
+                std::cout << i;
+            }
+            std::cout << std::endl << "========================" << std::endl;
+        }
+    }
+
+    m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
 
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
@@ -140,19 +163,15 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
         }
     }
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Reader " << m_MpiRank
-                  << "   BeginStep() new step " << m_CurrentStep
-                  << ". The minimum step is " << minStep
-                  << ". The maximum step is " << maxStep << "\n";
-    }
+    Log(5, "Staging Reader " + std::to_string( m_MpiRank) + " BeginStep() start. Last step " + std::to_string(m_CurrentStep));
 
     return StepStatus::OK;
 }
 
 void StagingReader::PerformGets()
 {
+
+    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() start");
 
     auto requests = m_DataManSerializer.GetDeferredRequest();
     if (m_Verbosity >= 10)
@@ -164,7 +183,7 @@ void StagingReader::PerformGets()
     for (const auto &i : *requests)
     {
         auto reply = m_DataTransport->Request(i.second, i.first);
-        if (reply == nullptr)
+        if (reply->size() <= 16)
         {
             std::cout << "Step " << m_CurrentStep
                       << " received empty data package from writer " << i.first
@@ -172,9 +191,11 @@ void StagingReader::PerformGets()
                          "this step may not be correct but application will "
                          "continue running."
                       << std::endl;
+            throw(std::runtime_error("aaaaaaaaaaaaaaaaaa"));
         }
         else
         {
+            Log(6, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() put reply of size "+ std::to_string(reply->size()) +" into serializer");
             m_DataManSerializer.PutPack(reply);
         }
     }
@@ -191,7 +212,6 @@ void StagingReader::PerformGets()
 
     for (const auto &req : m_DeferredRequests)
     {
-
         if (req.type == "compound")
         {
             throw("Compound type is not supported yet.");
@@ -202,29 +222,27 @@ void StagingReader::PerformGets()
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \
                                    req.step);                                  \
+        Log(6, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() get variable "+ req.variable +" from serializer");\
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
     }
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Reader " << m_MpiRank << " PerformGets()\n";
-    }
+    m_DeferredRequests.clear();
+
+    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() end");
 }
 
 size_t StagingReader::CurrentStep() const { return m_CurrentStep; }
 
 void StagingReader::EndStep()
 {
+    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " EndStep() start. Step " + std::to_string(m_CurrentStep));
+
     PerformGets();
     m_DataManSerializer.Erase(CurrentStep());
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Reader " << m_MpiRank << " EndStep()\n";
-    }
-    m_MetadataReqThread =
-        std::make_shared<std::thread>(&StagingReader::MetadataReqThread, this);
+
+    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " EndStep() end. Step " + std::to_string(m_CurrentStep));
 }
 
 // PRIVATE
@@ -244,9 +262,9 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void StagingReader::Init()
 {
+    srand (time(NULL));
     InitParameters();
     Handshake();
-    InitTransports();
 }
 
 void StagingReader::InitParameters()
@@ -276,7 +294,6 @@ void StagingReader::InitParameters()
 
 void StagingReader::InitTransports()
 {
-    m_MetadataTransport->OpenTransport(m_FullMetadataAddress);
 }
 
 void StagingReader::Handshake()
@@ -287,51 +304,8 @@ void StagingReader::Handshake()
     std::vector<char> address(size);
     ipstream.Read(address.data(), size);
     ipstream.Close();
-    m_FullMetadataAddress = std::string(address.begin(), address.end());
-}
-
-void StagingReader::MetadataReqThread()
-{
-
-    std::shared_ptr<std::vector<char>> reply = nullptr;
-    if (m_MpiRank == 0)
-    {
-        std::vector<char> request(1, 'M');
-
-        auto start_time = std::chrono::system_clock::now();
-        while (reply == nullptr)
-        {
-            auto now_time = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                now_time - start_time);
-            if (duration.count() > m_Timeout)
-            {
-                break;
-            }
-            reply = m_MetadataTransport->Request(request);
-        }
-    }
-    else
-    {
-        reply = std::make_shared<std::vector<char>>();
-    }
-
-    if (m_Verbosity >= 100)
-    {
-        if (m_MpiRank == 0)
-        {
-            std::cout << "StagingReader::MetadataReqThread Cbor data, size =  "
-                      << reply->size() << std::endl;
-            std::cout << "========================" << std::endl;
-            for (auto i : *reply)
-            {
-                std::cout << i;
-            }
-            std::cout << std::endl << "========================" << std::endl;
-        }
-    }
-
-    m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
+    nlohmann::json j = nlohmann::json::parse(address);
+    m_FullAddresses = j.get<std::vector<std::string>>();
 }
 
 void StagingReader::DoClose(const int transportIndex)
@@ -340,6 +314,14 @@ void StagingReader::DoClose(const int transportIndex)
     {
         std::cout << "Staging Reader " << m_MpiRank << " Close(" << m_Name
                   << ")\n";
+    }
+}
+
+void StagingReader::Log(const int level, const std::string &message)
+{
+    if (m_Verbosity >= level)
+    {
+        std::cout << message << std::endl;
     }
 }
 
