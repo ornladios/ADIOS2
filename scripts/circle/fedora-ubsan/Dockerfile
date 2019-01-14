@@ -9,13 +9,13 @@ RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file \
 # Install MGARD
 RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
 WORKDIR /opt/mgard/build
-RUN /opt/cmake/3.6.3/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
+RUN cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
   make install
 
 # Install ZFP
 RUN git clone https://github.com/llnl/zfp /opt/zfp/source
 WORKDIR /opt/zfp/build
-RUN /opt/cmake/3.6.3/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
+RUN cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
   make install
 
 # Cleanup headers and packages

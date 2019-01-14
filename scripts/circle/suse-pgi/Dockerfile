@@ -26,39 +26,30 @@ RUN zypper in -y environment-modules \
   && echo 'export MODULEPATH=/opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.sh \
   && echo 'setenv MODULEPATH /opt/pgi/modulefiles:${MODULEPATH}' > /etc/profile.d/pgi-modules.csh
 
-ENV CC=pgcc CXX=pgc++ FC=pgfortran
-
 # Install the CMake binary
 WORKDIR /opt/cmake/3.13.1
 RUN curl -L https://cmake.org/files/v3.13/cmake-3.13.1-Linux-x86_64.tar.gz | \
      tar --strip-components=1 -xz \
-  && pushd /usr/local/bin \
-  && ln -s /opt/cmake/3.13.1/bin/ctest \
-  && ln -s /opt/cmake/3.13.1/bin/cmake \
-  && ln -s /opt/cmake/3.13.1/bin/cpack
+  && ln -t /usr/local/bin -s /opt/cmake/3.13.1/bin/cmake \
+  && ln -t /usr/local/bin -s /opt/cmake/3.13.1/bin/ctest \
+  && ln -t /usr/local/bin -s /opt/cmake/3.13.1/bin/cpack
 
 # Install libfabric
 WORKDIR /opt/libfabric/source
-RUN . /etc/profile >/dev/null && \
-  module load pgi && \
-  curl -L https://github.com/ofiwg/libfabric/releases/download/v1.6.0/libfabric-1.6.0.tar.bz2 | tar --strip-components=1 -xj \
+RUN curl -L https://github.com/ofiwg/libfabric/releases/download/v1.6.0/libfabric-1.6.0.tar.bz2 | tar --strip-components=1 -xj \
   && ./configure --prefix=/opt/libfabric/1.6.0 --libdir=/opt/libfabric/1.6.0/lib64 \
   && make -j8 install
 
 # Install MGARD
 RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
 WORKDIR /opt/mgard/build
-RUN . /etc/profile >/dev/null && \
-  module load pgi && \
-  /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
+RUN /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
   make install
 
 # Install ZFP
 RUN git clone https://github.com/llnl/zfp /opt/zfp/source
 WORKDIR /opt/zfp/build
-RUN . /etc/profile >/dev/null && \
-  module load pgi && \
-  /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
+RUN /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
   make install
 
 # Create a non-root user to run the builds/tests
@@ -78,7 +69,7 @@ RUN rm -rf /tmp/* \
        /opt/fabric/source \
        /opt/mgard/source /opt/mgard/build \
        /opt/zfp/source /opt/zfp/build && \
-  && zypper clean
+    zypper clean
 
 USER adios2
 ENV HOME /home/adios2
