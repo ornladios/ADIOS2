@@ -819,7 +819,7 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     // ---------------------------------------------------------------------------------------------------
     Info->Key = Entry->Key;
     pthread_mutex_unlock(&ts_mutex);
-    Info->Block = Data->block;
+    Info->Block = (uint8_t *)Data->block;
 
     Svcs->verbose(Stream->CP_Stream,
                   "Providing timestep data with block %p and access key %d\n",

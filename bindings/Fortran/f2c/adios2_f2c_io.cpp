@@ -61,9 +61,6 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
         throw std::invalid_argument("ERROR: transport_index can't be negative, "
                                     "in call to "
                                     "adios2_set_transport_parameter");
-        *ierr = static_cast<int>(
-            adios2::helper::ExceptionToError("adios2_set_transport_parameter"));
-        return;
     }
     const std::size_t transport_indexC =
         static_cast<std::size_t>(*transport_index);

@@ -1629,7 +1629,6 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                   // data)
     uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
-    int status;
     bool incdim;          // used in incremental reading in
     int ndigits_dims[32]; // # of digits (to print) of each dimension
 
@@ -2039,7 +2038,6 @@ int print_data_as_string(const void *data, int maxlen,
                         "for type \"%d\"\n",
                 adiosvartype);
         return -1;
-        break;
     }
     return 0;
 }

@@ -155,7 +155,7 @@ unsigned int HDF5Common::GetNumAdiosSteps()
 {
     if (m_WriteMode)
     {
-        return -1;
+        return static_cast<unsigned int>(-1);
     }
 
     if (m_FileId < 0)
@@ -313,7 +313,6 @@ type:[0=G/1=D/2=T/3=L/4=UDL]"<<currType<<std::endl;
 // read variables from the input timestep
 void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
 {
-    int i = 0;
     std::string stepStr;
     hsize_t numObj;
 
@@ -1234,7 +1233,6 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
     {
         numAttrs = oinfo.num_attrs;
         int k = 0;
-        char name[50];
         int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {
@@ -1293,7 +1291,6 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                     // consuimg
         }
         int k = 0;
-        char name[50];
         int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {

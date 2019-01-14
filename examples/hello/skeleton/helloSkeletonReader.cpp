@@ -11,10 +11,10 @@
 
 int main(int argc, char *argv[])
 {
-    int wrank = 0, wnproc = 1;
     int rank = 0, nproc = 1;
 
 #ifdef ADIOS2_HAVE_MPI
+    int wrank = 0, wnproc = 1;
     MPI_Comm mpiReaderComm;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);

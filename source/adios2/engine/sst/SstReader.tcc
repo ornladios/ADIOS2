@@ -124,30 +124,29 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                 stepPair.second;
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
-                const size_t rank = subStreamInfo.SubStreamID;
                 // if remote data buffer is compressed
                 if (subStreamInfo.OperationsInfo.size() > 0)
                 {
-                    //                    const bool identity =
-                    //                        m_BP3Deserializer->IdentityOperation<T>(
-                    //                            blockInfo.Operations);
-                    //                    const helper::BlockOperationInfo
-                    //                    &blockOperationInfo =
-                    //                        m_BP3Deserializer->InitPostOperatorBlockData(
-                    //                            subStreamInfo.OperationsInfo,
-                    //                            variable.m_RawMemory[1],
-                    //                            identity);
-                    //                    m_BP3Deserializer->GetPreOperatorBlockData(
-                    //                        buffers[iter], blockOperationInfo,
-                    //                        variable.m_RawMemory[0]);
-                    //                    helper::ClipVector(variable.m_RawMemory[0],
-                    //                                       subStreamInfo.Seeks.first,
-                    //                                       subStreamInfo.Seeks.second);
-                    //                    m_BP3Deserializer->ClipContiguousMemory<T>(
-                    //                        blockInfo,
-                    //                        variable.m_RawMemory[0],
-                    //                        subStreamInfo.BlockBox,
-                    //                        subStreamInfo.IntersectionBox);
+                    //const bool identity =
+                    //    m_BP3Deserializer->IdentityOperation<T>(
+                    //        blockInfo.Operations);
+                    //const helper::BlockOperationInfo
+                    //    &blockOperationInfo =
+                    //        m_BP3Deserializer->InitPostOperatorBlockData(
+                    //            subStreamInfo.OperationsInfo,
+                    //            variable.m_RawMemory[1],
+                    //            identity);
+                    //m_BP3Deserializer->GetPreOperatorBlockData(
+                    //    buffers[iter], blockOperationInfo,
+                    //    variable.m_RawMemory[0]);
+                    //helper::ClipVector(variable.m_RawMemory[0],
+                    //    subStreamInfo.Seeks.first,
+                    //    subStreamInfo.Seeks.second);
+                    //m_BP3Deserializer->ClipContiguousMemory<T>(
+                    //    blockInfo,
+                    //    variable.m_RawMemory[0],
+                    //    subStreamInfo.BlockBox,
+                    //    subStreamInfo.IntersectionBox);
 
                     m_BP3Deserializer->PostDataRead(
                         variable, blockInfo, subStreamInfo,
