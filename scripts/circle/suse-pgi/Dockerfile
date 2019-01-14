@@ -37,6 +37,14 @@ RUN curl -L https://cmake.org/files/v3.13/cmake-3.13.1-Linux-x86_64.tar.gz | \
   && ln -s /opt/cmake/3.13.1/bin/cmake \
   && ln -s /opt/cmake/3.13.1/bin/cpack
 
+# Install libfabric
+WORKDIR /opt/libfabric/source
+RUN . /etc/profile >/dev/null && \
+  module load pgi && \
+  curl -L https://github.com/ofiwg/libfabric/releases/download/v1.6.0/libfabric-1.6.0.tar.bz2 | tar --strip-components=1 -xj \
+  && ./configure --prefix=/opt/libfabric/1.6.0 --libdir=/opt/libfabric/1.6.0/lib64 \
+  && make -j8 install
+
 # Install MGARD
 RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
 WORKDIR /opt/mgard/build
@@ -69,7 +77,7 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.r
 RUN rm -rf /tmp/* \
        /opt/fabric/source \
        /opt/mgard/source /opt/mgard/build \
-       /opt/zfp/source /opt/zfp/build /tmp/* \
+       /opt/zfp/source /opt/zfp/build && \
   && zypper clean
 
 USER adios2
