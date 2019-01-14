@@ -18,7 +18,7 @@ RUN export \
       PGI_INSTALL_DIR=/opt/pgi \
       PGI_INSTALL_NVIDIA=false \
       PGI_INSTALL_JAVA=false \
-      PGI_INSTALL_MPI=false \
+      PGI_INSTALL_MPI=true \
       PGI_MPI_GPU_SUPPORT=false \
   && ./install
 

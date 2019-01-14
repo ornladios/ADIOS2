@@ -17,7 +17,7 @@ RUN yum -y install https://github.com/openhpc/ohpc/releases/download/v1.3.GA/ohp
 
 # Install intel OpenHPC packages
 RUN yum -y install \
-  lmod-ohpc intel-compilers-devel-ohpc python-numpy-intel-ohpc \
+  lmod-ohpc intel-compilers-devel-ohpc python-devel python-numpy-intel-ohpc \
   openmpi3-intel-ohpc python-mpi4py-intel-openmpi3-ohpc \
   phdf5-intel-openmpi3-ohpc netcdf-intel-openmpi3-ohpc adios-intel-openmpi3-ohpc
 
