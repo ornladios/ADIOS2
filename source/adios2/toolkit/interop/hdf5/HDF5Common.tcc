@@ -54,17 +54,15 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
                 H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
         #endif
         */
-        herr_t status;
         if (std::is_same<T, std::string>::value)
         {
-            status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID,
-                              ((std::string *)values)->data());
+            H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID,
+                     ((std::string *)values)->data());
             H5Tclose(h5Type);
         }
         else
         {
-            status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID,
-                              values);
+            H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID, values);
         }
         H5Sclose(filespaceID);
         //	CloseDataset(dsetID);
@@ -148,13 +146,13 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     T min, max;
     adios2::helper::GetMinMaxThreads(values, valuesSize, min, max, 1);
 
+#ifdef NO_STAT
     int chainSize = chain.size();
     hid_t parentId = m_GroupId;
     if (chainSize > 1)
     {
         parentId = chain[chainSize - 2];
     }
-#ifdef NO_STAT
     AddBlockInfo(variable, parentId);
 
     std::vector<T> stats = {min, max};

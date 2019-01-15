@@ -22,6 +22,7 @@ namespace helper
 namespace
 {
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
 template <class T>
 inline void CopyEndianReverse(const char *src, const size_t payloadStride,
                               T *dest)
@@ -53,6 +54,7 @@ void CopyEndianReverse(const char *src, const size_t payloadStride,
     double *destF = reinterpret_cast<double *>(dest);
     std::reverse(destF, destF + payloadStride / sizeof(double));
 }
+#endif
 
 void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
                        const bool endianReverse, const std::string destType)
@@ -242,8 +244,6 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
                                                   currentPoint, interStart),
                                         srcMemStart),
                               false);
-
-        const size_t srcEndOffset = srcBeginOffset + stride;
 
         const size_t destBeginOffset = helper::LinearIndex(
             destStartFinal, destCountFinal, currentPoint, false);

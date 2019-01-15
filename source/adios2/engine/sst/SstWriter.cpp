@@ -121,7 +121,6 @@ void SstWriter::EndStep()
     m_BetweenStepPairs = false;
     if (m_MarshalMethod == SstMarshalFFS)
     {
-    SstWriter:
         FFSMarshalAttributes();
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }

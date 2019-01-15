@@ -25,22 +25,25 @@ public:
 
     ~BP3MGARD() = default;
 
+    using BP3Operation::SetData;
+    using BP3Operation::SetMetadata;
+    using BP3Operation::UpdateMetadata;
 #define declare_type(T)                                                        \
     void SetData(const core::Variable<T> &variable,                            \
                  const typename core::Variable<T>::Info &blockInfo,            \
                  const typename core::Variable<T>::Operation &operation,       \
-                 BufferSTL &bufferSTL) const noexcept final;                   \
+                 BufferSTL &bufferSTL) const noexcept override;                \
                                                                                \
     void SetMetadata(const core::Variable<T> &variable,                        \
                      const typename core::Variable<T>::Info &blockInfo,        \
                      const typename core::Variable<T>::Operation &operation,   \
-                     std::vector<char> &buffer) const noexcept final;          \
+                     std::vector<char> &buffer) const noexcept override;       \
                                                                                \
     void UpdateMetadata(                                                       \
         const core::Variable<T> &variable,                                     \
         const typename core::Variable<T>::Info &blockInfo,                     \
         const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept final;
+        std::vector<char> &buffer) const noexcept override;
 
     ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
 #undef declare_type

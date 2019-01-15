@@ -240,11 +240,9 @@ adios2_error adios2_fwrite(adios2_FILE *stream, const char *name,
 
         adios2::core::Stream &streamCpp =
             *reinterpret_cast<adios2::core::Stream *>(stream);
-        const bool endStep = (end_step == adios2_true) ? true : false;
 
         switch (type)
         {
-
         case (adios2_type_string):
         {
             const std::string stringCpp(reinterpret_cast<const char *>(data));

@@ -97,7 +97,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
-    unsigned int t = -1;
+    unsigned int t = static_cast<unsigned int>(-1);
 
     std::vector<std::time_t> write_times;
 
@@ -138,9 +138,9 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
         const size_t currentStep = engine.CurrentStep();
 
-        if ((t == -1) || Latest || Discard)
+        if ((t == static_cast<unsigned int>(-1)) || Latest || Discard)
         {
-            if ((t != -1) && (t != currentStep))
+            if ((t != static_cast<unsigned int>(-1)) && (t != currentStep))
             {
                 SkippedSteps++;
             }
@@ -290,7 +290,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
 
         ++t;
-        if (NSteps != -1)
+        if (NSteps != static_cast<unsigned int>(-1))
         {
             NSteps--;
             if (NSteps == 0)
