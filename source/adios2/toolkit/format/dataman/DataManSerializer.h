@@ -132,8 +132,11 @@ public:
     std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
     GetDeferredRequest();
 
-    int64_t MinStep();
-    int64_t Steps();
+    size_t MinStep();
+    size_t Steps();
+
+    void ProtectStep(const size_t step);
+    void UnprotectStep(const size_t step, const bool allPreviousSteps);
 
 private:
     template <class T>
@@ -157,6 +160,15 @@ private:
     void JsonToDataManVarMap(nlohmann::json &metaJ,
                              std::shared_ptr<std::vector<char>> pack);
 
+    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
+                          const Dims &outStart, const Dims &outCount,
+                          Dims &ovlpStart, Dims &ovlpCount);
+
+    std::vector<char> SerializeJson(const nlohmann::json &message);
+    nlohmann::json DeserializeJson(const char* start, size_t size);
+
+    void Log(const int level, const std::string &message, const bool mpi = false);
+
     // local rank single step data and metadata pack buffer, used in writer,
     // only accessed from writer app API thread, does not need mutex
     std::shared_ptr<std::vector<char>> m_LocalBuffer;
@@ -173,31 +185,31 @@ private:
     // (Staging engine) and reader (all engines), needs mutex for accessing
     std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
         m_DataManVarMap;
+    std::mutex m_DataManVarMapMutex;
+
+    size_t m_CurrentStepBeingRequested;
+    std::mutex m_CurrentStepBeingRequestedMutex;
 
     // for global variables and attributes, needs mutex
     nlohmann::json m_GlobalVars;
+    std::mutex m_GlobalVarsMutex;
 
+    // for generating deferred requests, only accessed from reader app thread, does not need mutex
     std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
         m_DeferredRequestsToSend;
-
-    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
-                          const Dims &outStart, const Dims &outCount,
-                          Dims &ovlpStart, Dims &ovlpCount);
-
-    std::vector<char> SerializeJson(const nlohmann::json &message);
-    nlohmann::json DeserializeJson(const char* start, size_t size);
-
-    void Log(const int level, const std::string &message);
-
-    std::mutex m_Mutex;
-    bool m_IsRowMajor;
-    bool m_IsLittleEndian;
-    bool m_ContiguousMajor;
 
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
 
-    int m_Verbosity = 10;
+    // steps being prevented from erasing, accessed from multiple writer IO threads, needs mutex
+    std::vector<size_t> m_ProtectedSteps;
+    std::mutex m_ProtectedStepsMutex;
+
+    bool m_IsRowMajor;
+    bool m_IsLittleEndian;
+    bool m_ContiguousMajor;
+
+    int m_Verbosity = 1;
 };
 
 } // end namespace format

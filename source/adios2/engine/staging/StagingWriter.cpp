@@ -48,7 +48,7 @@ StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     ++m_CurrentStep;
 
-    int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps;
+    int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps - 1;
 
     if(stepToErase > 0)
     {
@@ -86,13 +86,13 @@ void StagingWriter::EndStep()
     if (m_IsActive)
     {
         Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " EndStep() Step " + std::to_string(m_CurrentStep) + " is active");
+        m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
         auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
         {
             std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
             m_LockedAggregatedMetadata.first = m_CurrentStep;
             m_LockedAggregatedMetadata.second = aggMetadata;
         }
-        m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
     }
     else
     {
@@ -235,6 +235,7 @@ void StagingWriter::ReplyThread(std::string address)
                 aggStep =  m_LockedAggregatedMetadata.first;
                 m_LockedAggregatedMetadata.second = nullptr;
             }
+            m_DataManSerializer.ProtectStep(aggStep);
             tpm.SendReply(aggMetadata);
 
             if (m_Verbosity >= 100)
@@ -255,17 +256,18 @@ void StagingWriter::ReplyThread(std::string address)
         {
             size_t step;
             auto reply = m_DataManSerializer.GenerateReply(*request, step);
+            tpm.SendReply(reply);
             if(reply->size() <= 16)
             {
-                throw(std::runtime_error("StagingWriter::DataRepThread received request but data step is already erased."));
+                throw(std::runtime_error("sending empty package"));
             }
-            tpm.SendReply(reply);
         }
     }
 }
 
 void StagingWriter::DoClose(const int transportIndex)
 {
+    MPI_Barrier(m_MPIComm);
     m_Listening = false;
     for (auto &i : m_ReplyThreads)
     {

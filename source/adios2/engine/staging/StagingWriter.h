@@ -47,7 +47,7 @@ private:
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     int m_MpiSize;
-    int m_Channels = 4;
+    int m_Channels = 1;
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 5;
     bool m_Listening = false;
@@ -58,6 +58,7 @@ private:
     // metadata for current step being written.
     std::pair<int64_t, std::shared_ptr<std::vector<char>>> m_LockedAggregatedMetadata;
     std::mutex m_LockedAggregatedMetadataMutex;
+
 
     void Init() final;
     void InitParameters() final;

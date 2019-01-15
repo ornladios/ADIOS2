@@ -65,6 +65,11 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     MPI_Comm_size(mpiComm, &mpiSize);
     MPI_Comm_rank(mpiComm, &mpiRank);
 
+    {
+        std::lock_guard<std::mutex> l(m_CurrentStepBeingRequestedMutex);
+        m_MetadataJson["C"] = m_CurrentStepBeingRequested;
+    }
+
     std::vector<char> localJsonPack = SerializeJson(m_MetadataJson);
     unsigned int size = localJsonPack.size();
     unsigned int maxSize;
@@ -73,29 +78,41 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     localJsonPack.resize(maxSize, '\0');
     *(reinterpret_cast<uint64_t *>(localJsonPack.data() + localJsonPack.size()) - 1) = size;
 
-
     std::vector<char> globalJsonStr(mpiSize * maxSize);
     MPI_Allgather(localJsonPack.data(), maxSize, MPI_CHAR, globalJsonStr.data(), maxSize, MPI_CHAR, mpiComm);
 
     nlohmann::json globalMetadata;
     std::shared_ptr<std::vector<char>> globalJsonPack = nullptr;
 
+    size_t minCurrentStep = std::numeric_limits<size_t>::max();
     for (int i = 0; i < mpiSize; ++i)
     {
         size_t deserializeSize = *(reinterpret_cast<uint64_t *>(globalJsonStr.data() + (i + 1) * maxSize) - 1);
         nlohmann::json metaj = DeserializeJson( globalJsonStr.data() + i * maxSize, deserializeSize);
-        for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end();
-                ++stepMapIt)
+        auto c = metaj.find("C");
+        if(c != metaj.end())
         {
-            for (auto rankMapIt = stepMapIt.value().begin();
-                    rankMapIt != stepMapIt.value().end(); ++rankMapIt)
+            if(*c < minCurrentStep)
             {
-                globalMetadata[stepMapIt.key()][rankMapIt.key()] =
-                    rankMapIt.value();
+                minCurrentStep = *c;
+            }
+            metaj.erase(c);
+        }
+        for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end(); ++stepMapIt)
+        {
+            for (auto rankMapIt = stepMapIt.value().begin(); rankMapIt != stepMapIt.value().end(); ++rankMapIt)
+            {
+                globalMetadata[stepMapIt.key()][rankMapIt.key()] = rankMapIt.value();
             }
         }
     }
     globalJsonPack = std::make_shared<std::vector<char>>(std::move(SerializeJson(globalMetadata)));
+
+    m_MetadataJson.erase("C");
+    if(minCurrentStep >=1)
+    {
+        UnprotectStep(minCurrentStep - 1, true);
+    }
 
     if(m_Verbosity >=1)
     {
@@ -107,7 +124,6 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
             }
         }
     }
-
     return globalJsonPack;
 }
 
@@ -218,12 +234,13 @@ void DataManSerializer::JsonToDataManVarMap(
     // reader engine could get incomplete step metadata. This function only
     // deals with JSON metadata and data buffer already in allocated shared
     // pointers, so it should be cheap to lock.
-    std::lock_guard<std::mutex> l(m_Mutex);
+    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
 
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {
         if (stepMapIt.key() == "G" || stepMapIt.key() == "A")
         {
+            std::lock_guard<std::mutex> l(m_GlobalVarsMutex);
             for (const auto &rankVec : stepMapIt.value())
             {
                 for (const auto &gVar : rankVec)
@@ -356,9 +373,37 @@ int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
     return 0;
 }
 
+void DataManSerializer::ProtectStep(const size_t step)
+{
+    std::lock_guard<std::mutex> l(m_ProtectedStepsMutex);
+    m_ProtectedSteps.push_back(step);
+}
+
+void DataManSerializer::UnprotectStep(const size_t step, const bool allPreviousSteps)
+{
+    std::lock_guard<std::mutex> l(m_ProtectedStepsMutex);
+    for(size_t i=0; i<m_ProtectedSteps.size(); ++i)
+    {
+        if(allPreviousSteps)
+        {
+            if(m_ProtectedSteps[i] <= step)
+            {
+                m_ProtectedSteps.erase(m_ProtectedSteps.begin() + i);
+            }
+        }
+        else
+        {
+            if(m_ProtectedSteps[i] == step)
+            {
+                m_ProtectedSteps.erase(m_ProtectedSteps.begin() + i);
+            }
+        }
+    }
+}
+
 void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
+    std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
     if (allPreviousSteps)
     {
         std::vector<std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator> its;
@@ -386,7 +431,7 @@ const std::unordered_map<
     size_t, std::shared_ptr<std::vector<DataManSerializer::DataManVar>>>
 DataManSerializer::GetMetaData()
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
+    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     // This meta data map is supposed to be very light weight to return because
     // 1) it only holds shared pointers, and 2) the old steps are removed
     // regularly by the engine.
@@ -396,7 +441,7 @@ DataManSerializer::GetMetaData()
 std::shared_ptr<const std::vector<DataManSerializer::DataManVar>>
 DataManSerializer::GetMetaData(const size_t step)
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
+    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     const auto &i = m_DataManVarMap.find(step);
     if (i != m_DataManVarMap.end())
     {
@@ -410,7 +455,7 @@ DataManSerializer::GetMetaData(const size_t step)
 
 void DataManSerializer::GetAttributes(core::IO &io)
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
+    std::lock_guard<std::mutex> l(m_GlobalVarsMutex);
     for (const auto &j : m_GlobalVars)
     {
         const std::string type(j["Y"].get<std::string>());
@@ -442,7 +487,7 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
 {
     std::shared_ptr<std::vector<DataManVar>> varVec;
 
-    m_Mutex.lock();
+    m_DataManVarMapMutex.lock();
     auto stepVecIt = m_DataManVarMap.find(step);
     if (stepVecIt == m_DataManVarMap.end())
     {
@@ -455,7 +500,7 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
     {
         varVec = stepVecIt->second;
     }
-    m_Mutex.unlock();
+    m_DataManVarMapMutex.unlock();
 
     std::unordered_map<std::string, nlohmann::json> jmap;
 
@@ -530,13 +575,26 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
         Dims count = req["C"].get<Dims>();
         step = req["T"].get<size_t>();
 
+        {
+            std::lock_guard<std::mutex> l(m_CurrentStepBeingRequestedMutex);
+            m_CurrentStepBeingRequested = step;
+        }
+
         std::shared_ptr<std::vector<DataManVar>> varVec;
 
         {
-            std::lock_guard<std::mutex> l(m_Mutex);
+            std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
             auto itVarVec = m_DataManVarMap.find(step);
             if (itVarVec == m_DataManVarMap.end())
             {
+                std::string msg= "Current steps are ";
+                for(auto s : m_DataManVarMap)
+                {
+                    msg += std::to_string(s.first) + ", ";
+                }
+                Log(1, msg);
+                Log(1, "DataManSerializer received staging request but DataManVarMap does not have Step " + std::to_string(step));
+                throw(std::runtime_error("!"));
                 step = -2;
                 return replyLocalBuffer;
             }
@@ -545,6 +603,9 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
                 varVec = itVarVec->second;
                 if (varVec == nullptr)
                 {
+                    Log(1, "DataManSerializer received staging request but DataManVarMap contains a nullptr for Step " + std::to_string(step));
+                    throw(std::runtime_error("!"));
+                    step = -3;
                     return replyLocalBuffer;
                 }
             }
@@ -592,6 +653,7 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
     {
         if(replyLocalBuffer->size() <=16 )
         {
+            throw(std::runtime_error("!"));
             std::cout << "DataManSerializer::GenerateReply returns a buffer with size " << replyLocalBuffer->size()
                 << ", which means no data is contained in the buffer. This will cause the deserializer to unpack incorrect data for Step "  << step << "."<< std::endl;
         }
@@ -648,10 +710,10 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
     return true;
 }
 
-int64_t DataManSerializer::MinStep()
+size_t DataManSerializer::MinStep()
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
-    int64_t minStep = std::numeric_limits<int64_t>::max();
+    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+    size_t minStep = std::numeric_limits<size_t>::max();
     for (const auto &i : m_DataManVarMap)
     {
         if (minStep > i.first)
@@ -662,9 +724,9 @@ int64_t DataManSerializer::MinStep()
     return minStep;
 }
 
-int64_t DataManSerializer::Steps()
+size_t DataManSerializer::Steps()
 {
-    std::lock_guard<std::mutex> l(m_Mutex);
+    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     return m_DataManVarMap.size();
 }
 
@@ -736,11 +798,31 @@ nlohmann::json DataManSerializer::DeserializeJson(const char* start, size_t size
     return message;
 }
 
-void DataManSerializer::Log(const int level, const std::string &message)
+void DataManSerializer::Log(const int level, const std::string &message, const bool mpi)
 {
-    if (m_Verbosity >= level)
+    int rank;
+    int size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if(mpi)
     {
-        std::cout << message << std::endl;
+        for(int i=0; i<size; ++i)
+        {
+            MPI_Barrier(MPI_COMM_WORLD);
+            if(i == rank)
+            {
+                std::cout << message << std::endl;
+            }
+            MPI_Barrier(MPI_COMM_WORLD);
+        }
+
+    }
+    else
+    {
+        if (m_Verbosity >= level)
+        {
+            std::cout << "From Rank " << rank << ": " << message << std::endl;
+        }
     }
 }
 

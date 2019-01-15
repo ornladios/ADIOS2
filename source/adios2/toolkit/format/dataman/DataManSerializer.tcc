@@ -56,6 +56,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                                std::shared_ptr<std::vector<char>> localBuffer,
                                std::shared_ptr<nlohmann::json> metadataJson)
 {
+    Log(1, "DataManSerializer::PutVar begin with Step " + std::to_string(step) + " Var " + varName);
     if (localBuffer == nullptr)
     {
         localBuffer = m_LocalBuffer;
@@ -158,14 +159,14 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     if (metadataJson == nullptr)
     {
-        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
-            metaj);
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(metaj);
     }
     else
     {
         (*metadataJson)[std::to_string(step)][std::to_string(rank)]
             .emplace_back(metaj);
     }
+    Log(1, "DataManSerializer::PutVar end with Step " + std::to_string(step) + " Var " + varName);
 }
 
 template <class T>
@@ -315,7 +316,7 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
     std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
 
     {
-        std::lock_guard<std::mutex> l(m_Mutex);
+        std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
         const auto &i = m_DataManVarMap.find(step);
         if (i == m_DataManVarMap.end())
         {
