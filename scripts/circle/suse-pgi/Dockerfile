@@ -3,7 +3,8 @@ FROM opensuse:42.3
 # Install core dev packages
 RUN zypper ref
 RUN zypper in -y gcc gcc-c++ gcc-fortran git make curl tar f2c glibc-locale \
-  glibc-devel libbz2-devel pkg-config libzmq-devel zlib-devel vim valgrind gdb
+        glibc-devel libbz2-devel pkg-config libzmq-devel zlib-devel vim \
+        valgrind gdb autoconf automake libtool
 
 # Workaround so pgi can find g77
 WORKDIR /usr/bin
@@ -36,21 +37,38 @@ RUN curl -L https://cmake.org/files/v3.13/cmake-3.13.1-Linux-x86_64.tar.gz | \
 
 # Install libfabric
 WORKDIR /opt/libfabric/source
-RUN curl -L https://github.com/ofiwg/libfabric/releases/download/v1.6.0/libfabric-1.6.0.tar.bz2 | tar --strip-components=1 -xj \
-  && ./configure --prefix=/opt/libfabric/1.6.0 --libdir=/opt/libfabric/1.6.0/lib64 \
-  && make -j8 install
+RUN git clone https://github.com/ofiwg/libfabric.git $PWD && \
+    ./autogen.sh && \
+    ./configure --prefix=/opt/libfabric/latest && \
+    make install && \
+    echo 'export CMAKE_PREFIX_PATH=/opt/libfabric/latest:${CMAKE_PREFIX_PATH}' >> /etc/profile.d/libfabric.sh && \
+    echo 'export LD_LIBRARY_PATH=/opt/libfabric/latest/lib:${LD_LIBRARY_PATH_PATH}' >> /etc/profile.d/libfabric.sh
 
 # Install MGARD
 RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
 WORKDIR /opt/mgard/build
-RUN /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
-  make install
+RUN /opt/cmake/3.13.1/bin/cmake \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest \
+        /opt/mgard/source && \
+    make install && \
+    echo 'export MGARD_ROOT=/opt/mgard/latest' >> /etc/profile.d/mgard.sh && \
+    echo 'export CMAKE_PREFIX_PATH=/opt/mgard/latest:${CMAKE_PREFIX_PATH}' >> /etc/profile.d/mgard.sh && \
+    echo 'export LD_LIBRARY_PATH=/opt/mgard/latest/lib:${LD_LIBRARY_PATH_PATH}' >> /etc/profile.d/mgard.sh
 
 # Install ZFP
 RUN git clone https://github.com/llnl/zfp /opt/zfp/source
 WORKDIR /opt/zfp/build
-RUN /opt/cmake/3.13.1/bin/cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
-  make install
+RUN /opt/cmake/3.13.1/bin/cmake \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest \
+        /opt/zfp/source && \
+    make install && \
+    echo 'export ZFP_ROOT=/opt/zfp/latest' >> /etc/profile.d/zfp.sh && \
+    echo 'export CMAKE_PREFIX_PATH=/opt/zfp/latest:${CMAKE_PREFIX_PATH}' >> /etc/profile.d/zfp.sh && \
+    echo 'export LD_LIBRARY_PATH=/opt/zfp/latest/lib64:${LD_LIBRARY_PATH_PATH}' >> /etc/profile.d/zfp.sh
 
 # Create a non-root user to run the builds/tests
 RUN export uid=1001 gid=1001 && \

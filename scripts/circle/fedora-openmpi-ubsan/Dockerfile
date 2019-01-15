@@ -9,17 +9,28 @@ RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file patch \
 # Install MGARD
 RUN git clone -b cmake-cleanup https://github.com/chuckatkins/mgard /opt/mgard/source
 WORKDIR /opt/mgard/build
-RUN cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest /opt/mgard/source && \
-  make install
+RUN cmake \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_PREFIX=/opt/mgard/latest \
+        /opt/mgard/source && \
+    make install && \
+    echo 'export MGARD_ROOT=/opt/mgard/latest' >> /etc/profile.d/mgard.sh && \
+    echo 'export CMAKE_PREFIX_PATH=/opt/mgard/latest:${CMAKE_PREFIX_PATH}' >> /etc/profile.d/mgard.sh && \
+    echo 'export LD_LIBRARY_PATH=/opt/mgard/latest/lib:${LD_LIBRARY_PATH_PATH}' >> /etc/profile.d/mgard.sh
 
 # Install ZFP
 RUN git clone https://github.com/llnl/zfp /opt/zfp/source
 WORKDIR /opt/zfp/build
-RUN cmake -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest /opt/zfp/source && \
-  make install
-
-# Cleanup headers and packages
-RUN dnf clean all
+RUN cmake \
+        -DBUILD_TESTING=OFF \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_PREFIX=/opt/zfp/latest \
+        /opt/zfp/source && \
+    make install && \
+    echo 'export ZFP_ROOT=/opt/zfp/latest' >> /etc/profile.d/zfp.sh && \
+    echo 'export CMAKE_PREFIX_PATH=/opt/zfp/latest:${CMAKE_PREFIX_PATH}' >> /etc/profile.d/zfp.sh && \
+    echo 'export LD_LIBRARY_PATH=/opt/zfp/latest/lib64:${LD_LIBRARY_PATH_PATH}' >> /etc/profile.d/zfp.sh
 
 # Create a non-root user to run the builds/tests
 RUN export uid=1001 gid=1001 && \
@@ -34,7 +45,11 @@ RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.r
     runuser -l adios2 -c 'git lfs install'
 
 # Misc cleanup of unneeded files
-RUN rm -rfv /opt/mgard/source /opt/mgard/build /opt/zfp/source /opt/zfp/build /tmp/* /var/cache/dnf
+RUN rm -rfv \
+        /opt/mgard/source /opt/mgard/build \
+        /opt/zfp/source /opt/zfp/build \
+        /tmp/* && \
+    dnf clean all
 
 USER adios2
 ENV HOME /home/adios2
