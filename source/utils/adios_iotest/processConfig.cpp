@@ -585,11 +585,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument(
-                                "Group '" + groupName + "' used in 'write' "
+                            throw std::invalid_argument("Group '" + groupName +
+                                                        "' used in 'write' "
                                                         "command has no "
                                                         "variable '" +
-                                words[widx] + "' defined.");
+                                                        words[widx] +
+                                                        "' defined.");
                         }
                         cmd->variables.push_back(vIt->second);
                         ++widx;
@@ -682,11 +683,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument(
-                                "Group '" + groupName + "' used in 'write' "
+                            throw std::invalid_argument("Group '" + groupName +
+                                                        "' used in 'write' "
                                                         "command has no "
                                                         "variable '" +
-                                words[widx] + "' defined.");
+                                                        words[widx] +
+                                                        "' defined.");
                         }
                         if (verbose0)
                         {
@@ -830,11 +832,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument(
-                                "Group '" + groupName + "' used in 'link' "
+                            throw std::invalid_argument("Group '" + groupName +
+                                                        "' used in 'link' "
                                                         "command has no "
                                                         "variable '" +
-                                words[widx] + "' defined.");
+                                                        words[widx] +
+                                                        "' defined.");
                         }
                         if (verbose0)
                         {

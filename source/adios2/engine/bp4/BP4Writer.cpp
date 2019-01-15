@@ -177,6 +177,27 @@ void BP4Writer::InitTransports()
                                     m_IO.m_TransportsParameters,
                                     m_BP4Serializer.m_Profiler.IsActive);
     }
+
+    if (m_BP4Serializer.m_RankMPI == 0)
+    {
+        const std::vector<std::string> transportsNames =
+            m_FileMetadataManager.GetFilesBaseNames(
+                m_Name, m_IO.m_TransportsParameters);
+
+        const std::vector<std::string> bpMetadataFileNames =
+            m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
+
+        m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
+                                        m_IO.m_TransportsParameters,
+                                        m_BP4Serializer.m_Profiler.IsActive);
+
+        std::vector<std::string> metadataIndexFileNames =
+            m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
+
+        m_FileMetadataIndexManager.OpenFiles(
+            metadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
+            m_BP4Serializer.m_Profiler.IsActive);
+    }
 }
 
 void BP4Writer::InitBPBuffer()
@@ -238,11 +259,21 @@ void BP4Writer::DoClose(const int transportIndex)
     if (m_BP4Serializer.m_Profiler.IsActive &&
         m_FileDataManager.AllTransportsClosed())
     {
+        // std::cout << "write profiling file!" << std::endl;
         WriteProfilingJSONFile();
     }
     if (m_BP4Serializer.m_Aggregator.m_IsActive)
     {
         m_BP4Serializer.m_Aggregator.Close();
+    }
+
+    if (m_BP4Serializer.m_RankMPI == 0)
+    {
+        // close metadata file
+        m_FileMetadataManager.CloseFiles();
+
+        // close metadata index file
+        m_FileMetadataIndexManager.CloseFiles();
     }
 }
 
@@ -270,6 +301,7 @@ void BP4Writer::WriteProfilingJSONFile()
 
     if (m_BP4Serializer.m_RankMPI == 0)
     {
+        // std::cout << "write profiling file!" << std::endl;
         transport::FileFStream profilingJSONStream(m_MPIComm, m_DebugMode);
         auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_Name});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
@@ -359,12 +391,12 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
             return;
         }
         // first init metadata files
-        const std::vector<std::string> transportsNames =
-            m_FileMetadataManager.GetFilesBaseNames(
-                m_Name, m_IO.m_TransportsParameters);
+        // const std::vector<std::string> transportsNames =
+        //     m_FileMetadataManager.GetFilesBaseNames(
+        //         m_Name, m_IO.m_TransportsParameters);
 
-        const std::vector<std::string> bpMetadataFileNames =
-            m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
+        // const std::vector<std::string> bpMetadataFileNames =
+        //     m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
 
         /*
         m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
@@ -372,14 +404,15 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
                                         m_BP4Serializer.m_Profiler.IsActive);
         */
 
-        m_FileMetadataManager.OpenFiles(
-            bpMetadataFileNames, adios2::Mode::Append,
-            m_IO.m_TransportsParameters, m_BP4Serializer.m_Profiler.IsActive);
+        // m_FileMetadataManager.OpenFiles(
+        //     bpMetadataFileNames, adios2::Mode::Append,
+        //     m_IO.m_TransportsParameters,
+        //     m_BP4Serializer.m_Profiler.IsActive);
 
         m_FileMetadataManager.WriteFiles(
             m_BP4Serializer.m_Metadata.m_Buffer.data(),
             m_BP4Serializer.m_Metadata.m_Position);
-        m_FileMetadataManager.CloseFiles();
+        m_FileMetadataManager.FlushFiles();
 
         /*record the starting position of indices in metadata file*/
         const uint64_t pgIndexStartMetadataFile =
@@ -402,12 +435,15 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         // std::vector<std::string> metadataIndexFileNames;
         // metadataIndexFileNames.push_back(bpMetadataFileNames[0]+".mdx."+std::to_string(m_BP4Serializer.m_RankMPI));
-        std::vector<std::string> metadataIndexFileNames =
-            m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
+        /*
+        // std::vector<std::string> metadataIndexFileNames =
+        //     m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
 
-        m_FileMetadataIndexManager.OpenFiles(
-            metadataIndexFileNames, adios2::Mode::Append,
-            m_IO.m_TransportsParameters, m_BP4Serializer.m_Profiler.IsActive);
+        // m_FileMetadataIndexManager.OpenFiles(
+        //     metadataIndexFileNames, adios2::Mode::Append,
+        //     m_IO.m_TransportsParameters,
+        m_BP4Serializer.m_Profiler.IsActive);
+        */
         // metadataIndexFileNames.pop_back();
 
         uint64_t currentStep;
@@ -421,6 +457,8 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
                           1; // The current TimeStep has already been increased
                              // by 1 at this point, so decrease it by 1
         }
+
+        // std::cout << "currentStep: " << currentStep << std::endl;
 
         if (currentStep == 1) // TimeStep starts from 1
         {
@@ -442,7 +480,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
         m_FileMetadataIndexManager.WriteFiles(metadataIndex.m_Buffer.data(),
                                               metadataIndex.m_Position);
-        m_FileMetadataIndexManager.CloseFiles();
+        m_FileMetadataIndexManager.FlushFiles();
 
         m_BP4Serializer.m_MetadataSet.metadataFileLength +=
             m_BP4Serializer.m_Metadata.m_Position;
@@ -450,9 +488,9 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
         if (!isFinal)
         {
             m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true);
-            m_FileMetadataManager.m_Transports.clear();
+            // m_FileMetadataManager.m_Transports.clear();
             /*close the transports for metadata index file*/
-            m_FileMetadataIndexManager.m_Transports.clear();
+            // m_FileMetadataIndexManager.m_Transports.clear();
         }
     }
     /*Clear the local indices buffer at the end of each step*/

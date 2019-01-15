@@ -40,10 +40,10 @@ void FileFStream::Open(const std::string &name, const Mode openMode)
 
     case (Mode::Append):
         ProfilerStart("open");
-        //m_FileStream.open(name, std::fstream::in | std::fstream::out |
+        // m_FileStream.open(name, std::fstream::in | std::fstream::out |
         //                            std::fstream::binary);
         m_FileStream.open(name, std::fstream::in | std::fstream::out |
-                  std::fstream::app | std::fstream::binary);
+                                    std::fstream::app | std::fstream::binary);
         ProfilerStop("open");
         break;
 
@@ -73,7 +73,6 @@ void FileFStream::SetBuffer(char *buffer, size_t size)
 void FileFStream::Write(const char *buffer, size_t size, size_t start)
 {
     auto lf_Write = [&](const char *buffer, size_t size) {
-
         ProfilerStart("write");
         m_FileStream.write(buffer, static_cast<std::streamsize>(size));
         ProfilerStop("write");

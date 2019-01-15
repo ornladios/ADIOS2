@@ -370,9 +370,8 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
                                           core::IO &io)
 {
-    auto lf_ReadElementIndex = [&](core::IO &io,
-                                   const std::vector<char> &buffer,
-                                   size_t position) {
+    auto lf_ReadElementIndex = [&](
+        core::IO &io, const std::vector<char> &buffer, size_t position) {
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
 
@@ -538,9 +537,8 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
                                                   size_t submetadatafileId,
                                                   size_t step)
 {
-    auto lf_ReadElementIndex = [&](core::IO &io,
-                                   const std::vector<char> &buffer,
-                                   size_t position) {
+    auto lf_ReadElementIndex = [&](
+        core::IO &io, const std::vector<char> &buffer, size_t position) {
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
 
@@ -651,9 +649,8 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 void BP4Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
                                            core::IO &io)
 {
-    auto lf_ReadElementIndex = [&](core::IO &io,
-                                   const std::vector<char> &buffer,
-                                   size_t position) {
+    auto lf_ReadElementIndex = [&](
+        core::IO &io, const std::vector<char> &buffer, size_t position) {
         const ElementIndexHeader header =
             ReadElementIndexHeader(buffer, position);
 

@@ -11,9 +11,9 @@
 #include <iostream>
 #include <map>
 #include <math.h>
+#include <numeric>
 #include <stdexcept>
 #include <string>
-#include <numeric>
 
 adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
                          const adios2::Mode mode, MPI_Comm comm)
@@ -24,7 +24,7 @@ adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
     double timeStart, timeEnd;
     double openTime;
     double maxOpenTime, minOpenTime;
-    
+
     if (mode == adios2::Mode::Write)
     {
         timeStart = MPI_Wtime();
@@ -37,18 +37,19 @@ adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
         engine = io.Open(streamName, adios2::Mode::Read, comm);
         timeEnd = MPI_Wtime();
     }
-    openTime = timeEnd-timeStart;
+    openTime = timeEnd - timeStart;
     MPI_Allreduce(&openTime, &maxOpenTime, 1, MPI_DOUBLE, MPI_MAX,
-		MPI_COMM_WORLD);
+                  MPI_COMM_WORLD);
     MPI_Allreduce(&openTime, &minOpenTime, 1, MPI_DOUBLE, MPI_MIN,
-		MPI_COMM_WORLD);
+                  MPI_COMM_WORLD);
     if (myRank == 0)
     {
         std::cout << "        Max open time = " << maxOpenTime << std::endl;
         std::cout << "        Min open time = " << minOpenTime << std::endl;
         std::ofstream open_perf_log;
         open_perf_log.open("open_perf.txt", std::ios::app);
-        open_perf_log << std::to_string(maxOpenTime)+", "+std::to_string(minOpenTime)+"\n";
+        open_perf_log << std::to_string(maxOpenTime) + ", " +
+                             std::to_string(minOpenTime) + "\n";
         open_perf_log.close();
     }
 }
@@ -199,25 +200,27 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
     }
     engine.EndStep();
     timeEnd = MPI_Wtime();
-    readTime = timeEnd-timeStart;
+    readTime = timeEnd - timeStart;
     MPI_Allreduce(&readTime, &maxReadTime, 1, MPI_DOUBLE, MPI_MAX,
-		MPI_COMM_WORLD);
+                  MPI_COMM_WORLD);
     MPI_Allreduce(&readTime, &minReadTime, 1, MPI_DOUBLE, MPI_MIN,
-		MPI_COMM_WORLD);
+                  MPI_COMM_WORLD);
     if (settings.myRank == 0)
     {
         std::cout << "        Max read time = " << maxReadTime << std::endl;
         std::cout << "        Min read time = " << minReadTime << std::endl;
         std::ofstream rd_perf_log;
         rd_perf_log.open("read_perf.txt", std::ios::app);
-        rd_perf_log << std::to_string(maxReadTime)+", "+std::to_string(minReadTime)+"\n";
+        rd_perf_log << std::to_string(maxReadTime) + ", " +
+                           std::to_string(minReadTime) + "\n";
         rd_perf_log.close();
     }
     // for (auto ov : cmdR->variables)
     // {
     //     if (settings.myRank == 1)
     //     {
-    //         size_t varsize = std::accumulate(ov->count.begin(), ov->count.end(), 1,
+    //         size_t varsize = std::accumulate(ov->count.begin(),
+    //         ov->count.end(), 1,
     //                             std::multiplies<std::size_t>());
     //         std::cout << ov->name << ", " << varsize << std::endl;
     //         const double *dd = reinterpret_cast<double *>(ov->data.data());
@@ -298,18 +301,19 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     }
     engine.EndStep();
     timeEnd = MPI_Wtime();
-    writeTime = timeEnd-timeStart;
+    writeTime = timeEnd - timeStart;
     MPI_Allreduce(&writeTime, &maxWriteTime, 1, MPI_DOUBLE, MPI_MAX,
-		MPI_COMM_WORLD);
+                  MPI_COMM_WORLD);
     MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE, MPI_MIN,
-		MPI_COMM_WORLD);
+                  MPI_COMM_WORLD);
     if (settings.myRank == 0)
     {
         std::cout << "        Max write time = " << maxWriteTime << std::endl;
         std::cout << "        Min write time = " << minWriteTime << std::endl;
         std::ofstream wr_perf_log;
         wr_perf_log.open("write_perf.txt", std::ios::app);
-        wr_perf_log << std::to_string(maxWriteTime)+", "+std::to_string(minWriteTime)+"\n";
+        wr_perf_log << std::to_string(maxWriteTime) + ", " +
+                           std::to_string(minWriteTime) + "\n";
         wr_perf_log.close();
     }
 }
