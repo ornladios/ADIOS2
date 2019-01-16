@@ -41,7 +41,8 @@ public:
     void EndStep() final;
 
 private:
-    int m_Verbosity = 55;
+    int m_Verbosity = 11;
+    bool m_Tolerance = false;
     format::DataManSerializer m_DataManSerializer;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
     std::shared_ptr<transportman::StagingMan> m_MetadataTransport;

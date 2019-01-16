@@ -485,6 +485,7 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                                           const size_t step, const Dims &start,
                                           const Dims &count, void *data)
 {
+
     std::shared_ptr<std::vector<DataManVar>> varVec;
 
     m_DataManVarMapMutex.lock();
@@ -529,8 +530,8 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
         jmap[var.address].emplace_back();
         nlohmann::json &j = jmap[var.address].back();
         j["N"] = variable;
-        j["O"] = start;
-        j["C"] = count;
+        j["O"] = var.start;
+        j["C"] = var.count;
         j["T"] = step;
     }
 

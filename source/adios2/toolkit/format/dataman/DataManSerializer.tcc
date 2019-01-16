@@ -446,6 +446,30 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
             }
             else
             {
+                if(m_Verbosity >=5)
+                {
+                    std::cout << "DataManSerializer calling NdCopy with input start ";
+                    for(auto s : j.start)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << "count ";
+                    for(auto s : j.count)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << "output start ";
+                    for(auto s : varStart)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << "count ";
+                    for(auto s : varCount)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << std::endl;
+                }
                 if (m_ContiguousMajor)
                 {
                     helper::NdCopy<T>(

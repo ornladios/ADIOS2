@@ -177,21 +177,32 @@ void StagingReader::PerformGets()
     if (m_Verbosity >= 10)
     {
         std::cout << "Staging Reader " << m_MpiRank
-                  << " PerformGets() DeferredRequest from serializer, size = "
+                  << " PerformGets() DeferredRequests from serializer, size = "
                   << requests->size() << std::endl;
+        for(const auto &i : *requests)
+        {
+            std::cout << i.first << ": ";
+            for(auto j : i.second)
+            {
+                std::cout << j;
+            }
+            std::cout << std::endl;
+        }
     }
     for (const auto &i : *requests)
     {
         auto reply = m_DataTransport->Request(i.second, i.first);
         if (reply->size() <= 16)
         {
-            std::cout << "Step " << m_CurrentStep
-                      << " received empty data package from writer " << i.first
-                      << ". This may be caused by a network failure. Data for "
-                         "this step may not be correct but application will "
-                         "continue running."
-                      << std::endl;
-            throw(std::runtime_error("aaaaaaaaaaaaaaaaaa"));
+            std::string msg = "Step " + std::to_string( m_CurrentStep) + " received empty data package from writer " +  i.first + ". This may be caused by a network failure.";
+            if(m_Tolerance)
+            {
+                Log(1, msg);
+            }
+            else
+            {
+                throw(std::runtime_error(msg));
+            }
         }
         else
         {

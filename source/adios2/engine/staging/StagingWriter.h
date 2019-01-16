@@ -42,12 +42,12 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_Verbosity = 11;
+    int m_Verbosity = 0;
+    int m_Channels = 5;
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     int m_MpiSize;
-    int m_Channels = 1;
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 5;
     bool m_Listening = false;
