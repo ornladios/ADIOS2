@@ -31,20 +31,13 @@ StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian())
 {
-    m_EndMessage = " in call to StagingWriter " + m_Name + " Open\n";
-    MPI_Comm_rank(mpiComm, &m_MpiRank);
-    MPI_Comm_size(mpiComm, &m_MpiSize);
+    Log(5, "StagingWriter::StagingWriter()", true, true);
     Init();
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Writer " << m_MpiRank << " Open(" << m_Name
-                  << ")." << std::endl;
-    }
 }
 
 StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " BeginStep() start. Last step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
 
     ++m_CurrentStep;
 
@@ -58,7 +51,7 @@ StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_DataManSerializer.Steps() >= m_MaxBufferSteps)
     {
         m_IsActive = false;
-        Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " BeginStep() buffer full skipping step " + std::to_string(m_CurrentStep));
+        Log(5, "StagingWriter::BeginStep() buffer full skipping step " + std::to_string(m_CurrentStep), true, true);
         return StepStatus::NotReady;
     }
     else
@@ -67,8 +60,9 @@ StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_DataManSerializer.New(m_DefaultBufferSize);
+    m_DataManSerializer.PutAttributes(m_IO, m_MpiRank);
 
-    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " BeginStep() end. New step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep), true,true);
     return StepStatus::OK;
 }
 
@@ -81,14 +75,15 @@ void StagingWriter::PerformPuts() {}
 
 void StagingWriter::EndStep()
 {
-    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " EndStep() start. Step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep), true, false);
 
     if (m_IsActive)
     {
-        Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " EndStep() Step " + std::to_string(m_CurrentStep) + " is active");
+        Log(5, " is active", false, true);
         m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
         auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
         {
+            // TODO: this is subject to test at scale, without a barrier there is possibility that different ranks reply with different newest steps to the readers, because on some ranks a request may be received before this mutex is locked, while on other ranks the request for the current step may be received after this locked metadata is updated.
             std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
             m_LockedAggregatedMetadata.first = m_CurrentStep;
             m_LockedAggregatedMetadata.second = aggMetadata;
@@ -96,18 +91,14 @@ void StagingWriter::EndStep()
     }
     else
     {
-        Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " EndStep() Step " + std::to_string(m_CurrentStep) + " is not active");
+        Log(5, " is not active", false, true);
     }
 
-    Log(5, "Staging Writer " + std::to_string( m_MpiRank) + " EndStep() end. Step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingWriter::EndStep() end. Step " + std::to_string(m_CurrentStep), true, true);
 }
 
 void StagingWriter::Flush(const int transportIndex)
 {
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Writer " << m_MpiRank << "   Flush()\n";
-    }
 }
 
 // PRIVATE
@@ -126,6 +117,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 void StagingWriter::Init()
 {
+    MPI_Comm_rank(m_MPIComm, &m_MpiRank);
+    MPI_Comm_size(m_MPIComm, &m_MpiSize);
     srand (time(NULL));
     InitParameters();
     Handshake();
@@ -178,7 +171,7 @@ void StagingWriter::Handshake()
     }
     else
     {
-        Log(1, "Staging Writer " + std::to_string( m_MpiRank) + "Cound not find any available IP address. Using local address 127.0.0.1");
+        Log(1, "StagingWriter::Handshake() Cound not find any available IP address. Using local address 127.0.0.1", true, true);
     }
 
     for(int i=0; i<m_Channels; ++i)
@@ -240,16 +233,8 @@ void StagingWriter::ReplyThread(std::string address)
 
             if (m_Verbosity >= 100)
             {
-                if (m_MpiRank == 0)
-                {
-                    std::cout << "StagingWriter::MetadataRepThread metadata pack, size =  " << aggMetadata->size() << std::endl;
-                    std::cout << "========================" << std::endl;
-                    for (auto i : *aggMetadata)
-                    {
-                        std::cout << i;
-                    }
-                    std::cout << std::endl << "========================" << std::endl;
-                }
+                Log(100,"StagingWriter::MetadataRepThread() sending metadata pack, size =  " + std::to_string( aggMetadata->size()), true, true) ;
+                std::cout << nlohmann::json::parse(*aggMetadata).dump(4) << std::endl;
             }
         }
         else if (request->size() > 1)
@@ -277,16 +262,22 @@ void StagingWriter::DoClose(const int transportIndex)
         }
     }
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "Staging Writer " << m_MpiRank << " Close(" << m_Name << ")" << std::endl;
-    }
+    Log(5, "StagingWriter::DoClose(" + m_Name + ")", true, true);
+
 }
-void StagingWriter::Log(const int level, const std::string &message)
+void StagingWriter::Log(const int level, const std::string &message, const bool mpi, const bool endline)
 {
     if (m_Verbosity >= level)
     {
-        std::cout << message << std::endl;
+        if(mpi)
+        {
+            std::cout << "[Rank " << m_MpiRank << "] ";
+        }
+        std::cout << message;
+        if(endline)
+        {
+            std::cout << std::endl;
+        }
     }
 }
 

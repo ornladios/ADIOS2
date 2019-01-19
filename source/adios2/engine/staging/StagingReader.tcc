@@ -26,29 +26,29 @@ template <>
 inline void StagingReader::GetSyncCommon(Variable<std::string> &variable,
                                          std::string *data)
 {
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " GetSync(" + variable.m_Name + ") start");
+    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") begin", true, true);
 
     GetDeferredCommon(variable, data);
     PerformGets();
 
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " GetSync(" + variable.m_Name + ") end");
+    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") end", true, true);
 }
 
 template <class T>
 inline void StagingReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " GetSync(" + variable.m_Name + ") start");
+    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") begin", true, true);
 
     GetDeferredCommon(variable, data);
     PerformGets();
 
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " GetSync(" + variable.m_Name + ") end");
+    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") end", true, true);
 }
 
 template <class T>
 void StagingReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " GetDeferred(" + variable.m_Name + ") start");
+    Log(5, "StagingReader::GetDeferred(" + variable.m_Name + ") begin", true, true);
 
     m_DataManSerializer.PutDeferredRequest(variable.m_Name, CurrentStep(),
                                            variable.m_Start, variable.m_Count,
@@ -62,7 +62,7 @@ void StagingReader::GetDeferredCommon(Variable<T> &variable, T *data)
     req.data = data;
     req.type = helper::GetType<T>();
 
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " GetDeferred(" + variable.m_Name + ") end");
+    Log(5, "StagingReader::GetDeferred(" + variable.m_Name + ") end", true, true);
 }
 
 template <typename T>

@@ -58,41 +58,34 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
                                     const float timeoutSeconds)
 {
 
-    Log(5, "Staging Reader " + std::to_string( m_MpiRank) + " BeginStep() start. Last step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingReader::BeginStep() start. Last step " + std::to_string(m_CurrentStep), true, true);
 
     ++m_CurrentStep;
 
     std::shared_ptr<std::vector<char>> reply = std::make_shared<std::vector<char>>();
-    if (m_MpiRank == 0)
+    std::vector<char> request(1, 'M');
+    auto start_time = std::chrono::system_clock::now();
+    while (reply->size() <=1 )
     {
-        std::vector<char> request(1, 'M');
-        auto start_time = std::chrono::system_clock::now();
-        while (reply->size() <=1 )
-        {
-            reply = m_MetadataTransport->Request(request, m_FullAddresses[rand()%m_FullAddresses.size()]);
-            auto now_time = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+        reply = m_MetadataTransport->Request(request, m_FullAddresses[rand()%m_FullAddresses.size()]);
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
                 now_time - start_time);
-            if (duration.count() > m_Timeout)
-            {
-                return StepStatus::EndOfStream;
-            }
+        if (duration.count() > m_Timeout)
+        {
+            return StepStatus::EndOfStream;
         }
     }
 
     if (m_Verbosity >= 100)
     {
-        if (m_MpiRank == 0)
-        {
-            std::cout << "StagingReader::MetadataReqThread Cbor data, size =  "
-                      << reply->size() << std::endl;
+            std::cout << "StagingReader::MetadataReqThread Cbor data, size =  " << reply->size() << std::endl;
             std::cout << "========================" << std::endl;
             for (auto i : *reply)
             {
                 std::cout << i;
             }
             std::cout << std::endl << "========================" << std::endl;
-        }
     }
 
     m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
@@ -163,7 +156,7 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
         }
     }
 
-    Log(5, "Staging Reader " + std::to_string( m_MpiRank) + " BeginStep() start. Last step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingReader::BeginStep() start. Last step " + std::to_string(m_CurrentStep), true, true);
 
     return StepStatus::OK;
 }
@@ -171,14 +164,13 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
 void StagingReader::PerformGets()
 {
 
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() start");
+    Log(5, "StagingReader::PerformGets() begin", true, true);
 
     auto requests = m_DataManSerializer.GetDeferredRequest();
+
     if (m_Verbosity >= 10)
     {
-        std::cout << "Staging Reader " << m_MpiRank
-                  << " PerformGets() DeferredRequests from serializer, size = "
-                  << requests->size() << std::endl;
+        Log(10, "StagingReader::PerformGets() processing deferred requests ",true,false);
         for(const auto &i : *requests)
         {
             std::cout << i.first << ": ";
@@ -189,6 +181,7 @@ void StagingReader::PerformGets()
             std::cout << std::endl;
         }
     }
+
     for (const auto &i : *requests)
     {
         auto reply = m_DataTransport->Request(i.second, i.first);
@@ -197,7 +190,7 @@ void StagingReader::PerformGets()
             std::string msg = "Step " + std::to_string( m_CurrentStep) + " received empty data package from writer " +  i.first + ". This may be caused by a network failure.";
             if(m_Tolerance)
             {
-                Log(1, msg);
+                Log(1, msg, true, true);
             }
             else
             {
@@ -206,7 +199,7 @@ void StagingReader::PerformGets()
         }
         else
         {
-            Log(6, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() put reply of size "+ std::to_string(reply->size()) +" into serializer");
+            Log(6, "StagingReader::PerformGets() put reply of size "+ std::to_string(reply->size()) +" into serializer", true, true);
             m_DataManSerializer.PutPack(reply);
         }
     }
@@ -233,7 +226,7 @@ void StagingReader::PerformGets()
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \
                                    req.step);                                  \
-        Log(6, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() get variable "+ req.variable +" from serializer");\
+        Log(6, "StagingReader::PerformGets() get variable "+ req.variable +" from serializer", true, true);\
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -241,19 +234,19 @@ void StagingReader::PerformGets()
 
     m_DeferredRequests.clear();
 
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " PerformGets() end");
+    Log(5, "StagingReader::PerformGets() end", true, true);
 }
 
 size_t StagingReader::CurrentStep() const { return m_CurrentStep; }
 
 void StagingReader::EndStep()
 {
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " EndStep() start. Step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingReader::EndStep() start. Step " + std::to_string(m_CurrentStep), true, true);
 
     PerformGets();
     m_DataManSerializer.Erase(CurrentStep());
 
-    Log(5, "Staging Reader " + std::to_string(m_MpiRank) + " EndStep() end. Step " + std::to_string(m_CurrentStep));
+    Log(5, "StagingReader::EndStep() end. Step " + std::to_string(m_CurrentStep),true ,true);
 }
 
 // PRIVATE
@@ -328,11 +321,19 @@ void StagingReader::DoClose(const int transportIndex)
     }
 }
 
-void StagingReader::Log(const int level, const std::string &message)
+void StagingReader::Log(const int level, const std::string &message, const bool mpi, const bool endline)
 {
     if (m_Verbosity >= level)
     {
-        std::cout << message << std::endl;
+        if(mpi)
+        {
+            std::cout << "[Rank " << m_MpiRank << "] ";
+        }
+        std::cout << message;
+        if(endline)
+        {
+            std::cout << std::endl;
+        }
     }
 }
 

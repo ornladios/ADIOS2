@@ -41,7 +41,7 @@ public:
     void EndStep() final;
 
 private:
-    int m_Verbosity = 11;
+    int m_Verbosity = 111;
     bool m_Tolerance = false;
     format::DataManSerializer m_DataManSerializer;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
@@ -88,7 +88,7 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    void Log(const int level, const std::string &message);
+    void Log(const int level, const std::string &message, const bool mpi, const bool endline);
 };
 
 } // end namespace engine

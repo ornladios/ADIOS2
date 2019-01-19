@@ -42,8 +42,8 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_Verbosity = 0;
-    int m_Channels = 5;
+    int m_Verbosity = 111;
+    int m_Channels = 1;
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
@@ -94,7 +94,7 @@ private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
-    void Log(const int level, const std::string &message);
+    void Log(const int level, const std::string &message, const bool mpi, const bool endline);
 };
 
 } // end namespace engine

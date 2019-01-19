@@ -167,7 +167,7 @@ private:
     std::vector<char> SerializeJson(const nlohmann::json &message);
     nlohmann::json DeserializeJson(const char* start, size_t size);
 
-    void Log(const int level, const std::string &message, const bool mpi = false);
+    void Log(const int level, const std::string &message, const bool mpi, const bool endline);
 
     // local rank single step data and metadata pack buffer, used in writer,
     // only accessed from writer app API thread, does not need mutex
@@ -209,7 +209,7 @@ private:
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
 
-    int m_Verbosity = 22;
+    int m_Verbosity = 0;
 };
 
 } // end namespace format

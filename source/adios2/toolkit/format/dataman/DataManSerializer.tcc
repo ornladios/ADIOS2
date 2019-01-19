@@ -56,7 +56,9 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                                std::shared_ptr<std::vector<char>> localBuffer,
                                std::shared_ptr<nlohmann::json> metadataJson)
 {
-    Log(1, "DataManSerializer::PutVar begin with Step " + std::to_string(step) + " Var " + varName);
+    Log(1, "DataManSerializer::PutVar begin with Step " + std::to_string(step) + " Var " + varName, true, true);
+
+
     if (localBuffer == nullptr)
     {
         localBuffer = m_LocalBuffer;
@@ -166,7 +168,18 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
         (*metadataJson)[std::to_string(step)][std::to_string(rank)]
             .emplace_back(metaj);
     }
-    Log(1, "DataManSerializer::PutVar end with Step " + std::to_string(step) + " Var " + varName);
+
+    if(m_Verbosity >=100)
+    {
+        Log(100, "DataManSerializer::PutVar printing data", true, true);
+        for(size_t i =0; i<datasize/sizeof(T); ++i)
+        {
+            std::cout << inputData[i] << "  " ;
+        }
+        std::cout << std::endl;
+    }
+
+    Log(1, "DataManSerializer::PutVar end with Step " + std::to_string(step) + " Var " + varName, true, true);
 }
 
 template <class T>
@@ -307,7 +320,7 @@ void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute,
 }
 
 template <class T>
-int DataManSerializer::GetVar(T *output_data, const std::string &varName,
+int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                               const Dims &varStart, const Dims &varCount,
                               const size_t step, const Dims &varMemStart,
                               const Dims &varMemCount)
@@ -474,7 +487,7 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                 {
                     helper::NdCopy<T>(
                         input_data + j.position, j.start, j.count, true,
-                        j.isLittleEndian, reinterpret_cast<char *>(output_data),
+                        j.isLittleEndian, reinterpret_cast<char *>(outputData),
                         varStart, varCount, true, m_IsLittleEndian, j.start,
                         j.count, varMemStart, varMemCount);
                 }
@@ -482,12 +495,22 @@ int DataManSerializer::GetVar(T *output_data, const std::string &varName,
                 {
                     helper::NdCopy<T>(
                         input_data + j.position, j.start, j.count, j.isRowMajor,
-                        j.isLittleEndian, reinterpret_cast<char *>(output_data),
+                        j.isLittleEndian, reinterpret_cast<char *>(outputData),
                         varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
                         j.start, j.count, varMemStart, varMemCount);
                 }
             }
         }
+    }
+    if(m_Verbosity >=100)
+    {
+        size_t datasize = std::accumulate(varCount.begin(), varCount.end(), sizeof(T), std::multiplies<size_t>());
+        Log(100, "DataManSerializer::GetVar printing data", true, true);
+        for(size_t i =0; i<datasize/sizeof(T); ++i)
+        {
+            std::cout << outputData[i] << "  " ;
+        }
+        std::cout << std::endl;
     }
     return 0;
 }
