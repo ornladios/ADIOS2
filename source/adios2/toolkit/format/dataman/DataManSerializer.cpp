@@ -452,6 +452,7 @@ DataManSerializer::GetMetaData(const size_t step)
 void DataManSerializer::GetAttributes(core::IO &io)
 {
     std::lock_guard<std::mutex> l(m_GlobalVarsMutex);
+    const auto attributesDataMap = io.GetAttributesDataMap();
     for (const auto &j : m_GlobalVars)
     {
         const std::string type(j["Y"].get<std::string>());
@@ -459,19 +460,23 @@ void DataManSerializer::GetAttributes(core::IO &io)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        if (j["V"].get<bool>())                                                \
-        {                                                                      \
-            io.DefineAttribute<T>(j["N"].get<std::string>(), j["G"].get<T>()); \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            io.DefineAttribute<T>(j["N"].get<std::string>(),                   \
-                                  j["G"].get<std::vector<T>>().data(),         \
-                                  j["G"].get<std::vector<T>>().size());        \
-        }                                                                      \
-    }
+        else if (type == helper::GetType<T>())                                     \
+        {                                                                          \
+            auto it = attributesDataMap.find(j["N"].get<std::string>()); \
+            if(it == attributesDataMap.end())\
+            {\
+                if (j["V"].get<bool>())                                                \
+                {                                                                      \
+                    io.DefineAttribute<T>(j["N"].get<std::string>(), j["G"].get<T>()); \
+                }                                                                      \
+                else                                                                   \
+                {                                                                      \
+                    io.DefineAttribute<T>(j["N"].get<std::string>(),                   \
+                            j["G"].get<std::vector<T>>().data(),         \
+                            j["G"].get<std::vector<T>>().size());        \
+                }                                                                      \
+            }\
+        }
         ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
     }

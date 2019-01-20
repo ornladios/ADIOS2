@@ -89,6 +89,7 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
     }
 
     m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
+    m_DataManSerializer.GetAttributes(m_IO);
 
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
