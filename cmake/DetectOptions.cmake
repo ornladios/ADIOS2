@@ -21,9 +21,9 @@ endif()
 
 # ZFP
 if(ADIOS2_USE_ZFP STREQUAL AUTO)
-  find_package(ZFP)
+  find_package(ZFP CONFIG)
 elseif(ADIOS2_USE_ZFP)
-  find_package(ZFP REQUIRED)
+  find_package(ZFP CONFIG REQUIRED)
 endif()
 if(ZFP_FOUND)
   set(ADIOS2_HAVE_ZFP TRUE)
@@ -41,9 +41,9 @@ endif()
 
 # MGARD
 if(ADIOS2_USE_MGARD STREQUAL AUTO)
-  find_package(MGARD)
+  find_package(MGARD CONFIG)
 elseif(ADIOS2_USE_MGARD)
-  find_package(MGARD REQUIRED)
+  find_package(MGARD CONFIG REQUIRED)
 endif()
 if(MGARD_FOUND)
   set(ADIOS2_HAVE_MGARD TRUE)
