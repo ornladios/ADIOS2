@@ -37,6 +37,7 @@ StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+
     Log(5, "StagingWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
 
     ++m_CurrentStep;
@@ -46,6 +47,13 @@ StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if(stepToErase > 0)
     {
         m_DataManSerializer.Erase(stepToErase);
+    }
+
+    if(m_QueueFullPolicy == "Block")
+    {
+        while (m_DataManSerializer.Steps() >= m_MaxBufferSteps + 1)
+        {
+        }
     }
 
     if (m_DataManSerializer.Steps() >= m_MaxBufferSteps)
@@ -83,7 +91,6 @@ void StagingWriter::EndStep()
         m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
         auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
         {
-            // TODO: this is subject to test at scale, without a barrier there is possibility that different ranks reply with different newest steps to the readers, because on some ranks a request may be received before this mutex is locked, while on other ranks the request for the current step may be received after this locked metadata is updated.
             std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
             m_LockedAggregatedMetadata.first = m_CurrentStep;
             m_LockedAggregatedMetadata.second = aggMetadata;

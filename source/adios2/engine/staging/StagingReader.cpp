@@ -63,17 +63,19 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
     ++m_CurrentStep;
 
     std::shared_ptr<std::vector<char>> reply = std::make_shared<std::vector<char>>();
-    std::vector<char> request(1, 'M');
-    auto start_time = std::chrono::system_clock::now();
-    while (reply->size() <=1 )
+    if(m_MpiRank == 0)
     {
-        reply = m_MetadataTransport->Request(request, m_FullAddresses[rand()%m_FullAddresses.size()]);
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                now_time - start_time);
-        if (duration.count() > m_Timeout)
+        std::vector<char> request(1, 'M');
+        auto start_time = std::chrono::system_clock::now();
+        while (reply->size() <=1 )
         {
-            return StepStatus::EndOfStream;
+            reply = m_MetadataTransport->Request(request, m_FullAddresses[rand()%m_FullAddresses.size()]);
+            auto now_time = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
+            if (duration.count() > m_Timeout)
+            {
+                return StepStatus::EndOfStream;
+            }
         }
     }
 

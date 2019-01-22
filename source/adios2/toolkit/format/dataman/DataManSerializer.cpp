@@ -134,7 +134,7 @@ void DataManSerializer::PutAggregatedMetadata(
     int mpiRank;
     MPI_Comm_size(mpiComm, &mpiSize);
     MPI_Comm_rank(mpiComm, &mpiRank);
-//    helper::BroadcastVector(*data, mpiComm);
+    helper::BroadcastVector(*data, mpiComm);
 
     if(data->empty())
     {
@@ -599,7 +599,7 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
                     }
                     Log(1, msg, true, true);
                 }
-                throw(std::runtime_error("!"));
+                throw(std::runtime_error("DataManSerializer::GenerateReply() received staging request but DataManVarMap does not have Step "));
                 step = -2;
                 return replyLocalBuffer;
             }
@@ -609,7 +609,7 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
                 if (varVec == nullptr)
                 {
                     Log(1, "DataManSerializer::GenerateReply() received staging request but DataManVarMap contains a nullptr for Step " + std::to_string(step), true, true);
-                    throw(std::runtime_error("!"));
+                    throw(std::runtime_error("DataManSerializer::GenerateReply() received staging request but DataManVarMap contains a nullptr for Step"));
                     step = -3;
                     return replyLocalBuffer;
                 }
@@ -658,7 +658,7 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
     {
         if(replyLocalBuffer->size() <=16 )
         {
-            throw(std::runtime_error("!"));
+            throw(std::runtime_error("DataManSerializer::GenerateReply returns a buffer with size < 16, which means no data is contained in the buffer. This will cause the deserializer to unpack incorrect data for Step"));
             std::cout << "DataManSerializer::GenerateReply returns a buffer with size " << replyLocalBuffer->size()
                 << ", which means no data is contained in the buffer. This will cause the deserializer to unpack incorrect data for Step "  << step << "."<< std::endl;
         }

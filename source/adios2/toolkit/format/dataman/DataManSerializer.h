@@ -209,7 +209,7 @@ private:
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
 
-    int m_Verbosity = 0;
+    int m_Verbosity = 1;
 };
 
 } // end namespace format
