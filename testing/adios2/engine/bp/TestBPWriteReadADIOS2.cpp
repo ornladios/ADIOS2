@@ -1409,6 +1409,33 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
     }
 }
 
+TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
+{
+    // Each process would write a 4x2 array and all processes would
+    // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
+    const std::string fname("ReadStartCount.bp");
+
+    std::vector<int64_t> localData(10);
+    std::iota(localData.begin(), localData.end(), mpiRank * 10);
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("StartCount");
+        io.DefineVariable<int64_t>("range", {10 * mpiSize}, {10 * mpiRank},
+                                   {10});
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        bpWriter.Put("range", localData.data());
+        bpWriter.Close();
+    }
+    // TODO write the reader for selections
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
