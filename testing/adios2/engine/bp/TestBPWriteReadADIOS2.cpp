@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include <iostream>
+#include <numeric> //std::iota
 #include <stdexcept>
 
 #include <adios2.h>
@@ -1415,8 +1416,17 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
     const std::string fname("ReadStartCount.bp");
 
-    std::vector<int64_t> localData(10);
-    std::iota(localData.begin(), localData.end(), mpiRank * 10);
+    int mpiRank = 0, mpiSize = 1;
+
+    const std::size_t Nx = 10;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    std::vector<int64_t> localData(Nx);
+    std::iota(localData.begin(), localData.end(), mpiRank * Nx);
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -1424,16 +1434,45 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
     adios2::ADIOS adios(true);
 #endif
     {
-        adios2::IO io = adios.DeclareIO("StartCount");
-        io.DefineVariable<int64_t>("range", {10 * mpiSize}, {10 * mpiRank},
-                                   {10});
+        adios2::IO io = adios.DeclareIO("StartCountWrite");
+        io.DefineVariable<int64_t>(
+            "range", {static_cast<std::size_t>(Nx * mpiSize)},
+            {static_cast<std::size_t>(Nx * mpiRank)}, {Nx});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        bpWriter.Put("range", localData.data());
+        bpWriter.Put<int64_t>("range", localData.data());
         bpWriter.Close();
     }
-    // TODO write the reader for selections
+    // Reader
+    {
+        adios2::IO io = adios.DeclareIO("StartCountRead");
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        adios2::Variable<int64_t> varRange =
+            io.InquireVariable<int64_t>("range");
+
+        const std::size_t gNx = static_cast<std::size_t>(Nx * mpiSize);
+        std::vector<int64_t> globalData(gNx);
+        bpReader.Get(varRange, globalData);
+        bpReader.PerformGets();
+
+        std::vector<int64_t> iStartEndData;
+        iStartEndData.reserve(gNx); // maximum possible
+
+        for (size_t i = 1; i < gNx; ++i)
+        {
+            varRange.SetSelection({{i}, {gNx - i}});
+
+            bpReader.Get("range", iStartEndData);
+            bpReader.PerformGets();
+
+            for (size_t j = i; j < gNx; ++j)
+            {
+                EXPECT_EQ(globalData[j], iStartEndData[j - i]);
+            }
+        }
+        bpReader.Close();
+    }
 }
 
 //******************************************************************************

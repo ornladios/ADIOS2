@@ -24,6 +24,11 @@ namespace adios2
 namespace helper
 {
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+template <class T>
+void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);
+#endif
+
 /**
  * Inserts source at the end of a buffer updating buffer.size()
  * @param buffer data destination calls insert()
@@ -142,11 +147,25 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
  */
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                          const char *contiguousMemory,
+                          const Box<Dims> &blockBox,
+                          const Box<Dims> &intersectionBox,
+                          const bool isRowMajor = true,
+                          const bool reverseDimensions = false,
+                          const bool endianReverse = false);
+
+template <class T>
+void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const std::vector<char> &contiguousMemory,
                           const Box<Dims> &blockBox,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor = true,
-                          const bool reverseDimensions = false);
+                          const bool reverseDimensions = false,
+                          const bool endianReverse = false);
+
+template <class T>
+void CopyContiguousMemory(const char *src, const size_t stride, T *dest,
+                          const bool endianReverse = false);
 
 /**
  * Clips a vector returning the sub-vector between start and end (end is
