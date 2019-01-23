@@ -243,16 +243,17 @@ void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
 
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                          const std::vector<char> &contiguousMemory,
+                          const char *contiguousMemory,
                           const Box<Dims> &blockBox,
                           const Box<Dims> &intersectionBox,
-                          const bool isRowMajor, const bool reverseDimensions)
+                          const bool isRowMajor, const bool reverseDimensions,
+                          const bool endianReverse)
 {
     auto lf_ClipRowMajor = [](
         T *dest, const Dims &destStart, const Dims &destCount,
-        const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+        const char *contiguousMemory, const Box<Dims> &blockBox,
         const Box<Dims> &intersectionBox, const bool isRowMajor,
-        const bool reverseDimensions) {
+        const bool reverseDimensions, const bool endianReverse) {
 
         const Dims &start = intersectionBox.first;
         const Dims &end = intersectionBox.second;
@@ -282,9 +283,13 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
 
             char *rawVariableData = reinterpret_cast<char *>(dest);
 
-            std::copy(contiguousMemory.begin() + contiguousStart,
-                      contiguousMemory.begin() + contiguousStart + stride,
-                      rawVariableData + variableStart);
+            CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
+                                 rawVariableData + variableStart,
+                                 endianReverse);
+
+            //            std::copy(contiguousMemory + contiguousStart,
+            //                      contiguousMemory + contiguousStart + stride,
+            //                      rawVariableData + variableStart);
 
             // here update each index recursively, always starting from the 2nd
             // fastest changing index, since fastest changing index is the
@@ -317,9 +322,9 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
 
     auto lf_ClipColumnMajor =
         [](T *dest, const Dims &destStart, const Dims &destCount,
-           const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+           const char *contiguousMemory, const Box<Dims> &blockBox,
            const Box<Dims> &intersectionBox, const bool isRowMajor,
-           const bool reverseDimensions)
+           const bool reverseDimensions, const bool endianReverse)
 
     {
         const Dims &start = intersectionBox.first;
@@ -351,9 +356,13 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
 
             char *rawVariableData = reinterpret_cast<char *>(dest);
 
-            std::copy(contiguousMemory.begin() + contiguousStart,
-                      contiguousMemory.begin() + contiguousStart + stride,
-                      rawVariableData + variableStart);
+            CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
+                                 rawVariableData + variableStart,
+                                 endianReverse);
+
+            //            std::copy(contiguousMemory + contiguousStart,
+            //                      contiguousMemory + contiguousStart + stride,
+            //                      rawVariableData + variableStart);
 
             // here update each index recursively, always starting from the 2nd
             // fastest changing index, since fastest changing index is the
@@ -388,22 +397,62 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
             (start.front() - destStart.front()) * sizeof(T);
         char *rawVariableData = reinterpret_cast<char *>(dest);
 
-        std::copy(contiguousMemory.begin(), contiguousMemory.end(),
-                  rawVariableData + normalizedStart);
+        const Dims &start = intersectionBox.first;
+        const Dims &end = intersectionBox.second;
+        const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
+
+        CopyContiguousMemory(contiguousMemory, stride,
+                             rawVariableData + normalizedStart);
+
+        //        std::copy(contiguousMemory, contiguousMemory + stride,
+        //                  rawVariableData + normalizedStart);
         return;
     }
 
     if (isRowMajor) // stored with C, C++, Python
     {
         lf_ClipRowMajor(dest, destStart, destCount, contiguousMemory, blockBox,
-                        intersectionBox, isRowMajor, reverseDimensions);
+                        intersectionBox, isRowMajor, reverseDimensions,
+                        endianReverse);
     }
     else // stored with Fortran, R
     {
         lf_ClipColumnMajor(dest, destStart, destCount, contiguousMemory,
                            blockBox, intersectionBox, isRowMajor,
-                           reverseDimensions);
+                           reverseDimensions, endianReverse);
     }
+}
+
+template <class T>
+void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                          const std::vector<char> &contiguousMemory,
+                          const Box<Dims> &blockBox,
+                          const Box<Dims> &intersectionBox,
+                          const bool isRowMajor, const bool reverseDimensions,
+                          const bool endianReverse)
+{
+
+    ClipContiguousMemory(dest, destStart, destCount, contiguousMemory.data(),
+                         blockBox, intersectionBox, isRowMajor,
+                         reverseDimensions, endianReverse);
+}
+
+template <class T>
+void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
+                          const bool endianReverse)
+{
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (endianReverse)
+    {
+        CopyEndianReverse<T>(src, payloadStride, dest);
+    }
+    else
+    {
+        std::copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+    }
+#else
+    std::copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+#endif
 }
 
 template <class T>

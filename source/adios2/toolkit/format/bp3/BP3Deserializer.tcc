@@ -541,10 +541,6 @@ void BP3Deserializer::PostDataRead(
                            subStreamBoxInfo.Seeks.second);
     }
 
-    const Box<Dims> sourceStartCount = helper::StartCountBox(
-        subStreamBoxInfo.BlockBox.first, subStreamBoxInfo.BlockBox.second);
-
-// TODO: this should be a single BP3 deserializer function
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse =
         (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian) ? true
@@ -554,21 +550,42 @@ void BP3Deserializer::PostDataRead(
 #endif
     if (variable.m_ShapeID == ShapeID::GlobalArray)
     {
-        helper::CopyMemory(
+        helper::ClipContiguousMemory(
             blockInfo.Data, blockInfo.Start, blockInfo.Count,
-            isRowMajorDestination,
-            reinterpret_cast<T *>(m_ThreadBuffers[threadID][0].data()),
-            sourceStartCount.first, sourceStartCount.second, m_IsRowMajor,
+            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
             endianReverse);
+
+        //    	helper::CopyMemory(
+        //            blockInfo.Data, blockInfo.Start, blockInfo.Count,
+        //            isRowMajorDestination,
+        //            reinterpret_cast<T
+        //            *>(m_ThreadBuffers[threadID][0].data()),
+        //            intersectionStartCount.first,
+        //            intersectionStartCount.second,
+        //            m_IsRowMajor, endianReverse, Dims(), Dims(),
+        //            sourceMemoryStart,
+        //            blockStartCount.second);
     }
     else if (variable.m_ShapeID == ShapeID::LocalArray)
     {
-        helper::CopyMemory(
+        helper::ClipContiguousMemory(
             blockInfo.Data, Dims(blockInfo.Count.size(), 0), blockInfo.Count,
-            isRowMajorDestination,
-            reinterpret_cast<T *>(m_ThreadBuffers[threadID][0].data()),
-            sourceStartCount.first, sourceStartCount.second, m_IsRowMajor,
+            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
             endianReverse);
+
+        //        helper::CopyMemory(
+        //            blockInfo.Data, Dims(blockInfo.Count.size(), 0),
+        //            blockInfo.Count,
+        //            isRowMajorDestination,
+        //            reinterpret_cast<T
+        //            *>(m_ThreadBuffers[threadID][0].data()),
+        //            intersectionStartCount.first,
+        //            intersectionStartCount.second,
+        //            m_IsRowMajor, endianReverse, Dims(), Dims(),
+        //            sourceMemoryStart,
+        //            blockStartCount.second);
     }
 }
 

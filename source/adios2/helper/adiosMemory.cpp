@@ -9,6 +9,7 @@
  */
 
 #include "adiosMemory.h"
+#include "adiosMemory.tcc"
 
 #include <algorithm>
 
@@ -21,40 +22,6 @@ namespace helper
 
 namespace
 {
-
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
-template <class T>
-inline void CopyEndianReverse(const char *src, const size_t payloadStride,
-                              T *dest)
-{
-    if (sizeof(T) == 1)
-    {
-        std::copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
-        return;
-    }
-
-    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
-    std::reverse(dest, dest + payloadStride / sizeof(T));
-}
-
-template <>
-void CopyEndianReverse(const char *src, const size_t payloadStride,
-                       std::complex<float> *dest)
-{
-    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
-    float *destF = reinterpret_cast<float *>(dest);
-    std::reverse(destF, destF + payloadStride / sizeof(float));
-}
-
-template <>
-void CopyEndianReverse(const char *src, const size_t payloadStride,
-                       std::complex<double> *dest)
-{
-    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
-    double *destF = reinterpret_cast<double *>(dest);
-    std::reverse(destF, destF + payloadStride / sizeof(double));
-}
-#endif
 
 void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
                        const bool endianReverse, const std::string destType)
