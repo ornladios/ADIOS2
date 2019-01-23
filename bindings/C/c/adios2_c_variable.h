@@ -31,6 +31,19 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
                               const size_t *shape);
 
 /**
+ * Read mode only. Required for reading local variables. For Global Arrays it
+ * will Set
+ * the appropriate Start and Count Selection for the global array
+ * coordinates.
+ * @param variable handler for which new selection will be applied to
+ * @param blockID variable block index defined at write time. Blocks can be
+ * inspected with bpls -D variableName
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_block_selection(adios2_variable *variable,
+                                        const size_t blockID);
+
+/**
  * Set new start and count dimensions
  * @param variable handler for which new selection will be applied to
  * @param ndims number of dimensions for start and count

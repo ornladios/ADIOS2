@@ -104,6 +104,27 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
     }
 }
 
+adios2_error adios2_set_block_selection(adios2_variable *variable,
+                                        const size_t blockID)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call to "
+                                        "adios2_set_block_selection");
+
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+        variableBase->SetBlockSelection(blockID);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_block_selection"));
+    }
+}
+
 adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
                                   const size_t *start, const size_t *count)
 {
