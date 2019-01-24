@@ -16,9 +16,8 @@
 
 #include <gtest/gtest.h>
 
-#include <numeric>
-
-#include "SmallTestData_c.h"
+#include <numeric> //std::iota
+#include <thread>
 
 void LocalAggregate1D(const std::string substreams)
 {
@@ -28,37 +27,33 @@ void LocalAggregate1D(const std::string substreams)
 
     int mpiRank = 0, mpiSize = 1;
     // Number of steps
-    const size_t NSteps = 2;
+    constexpr size_t NSteps = 5;
+    constexpr size_t Nx = 20;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    // Write test data using BP
-    // data
-    std::vector<int> inumbers(5);
-    std::iota(inumbers.begin(), inumbers.end(), mpiRank);
 
-    std::vector<float> fnumbers(5);
-    const float randomStart = rand() % mpiSize;
-    std::iota(fnumbers.begin(), fnumbers.end(), randomStart);
+    std::vector<int32_t> inumbers(NSteps * Nx);
+    std::vector<float> fnumbers(NSteps * Nx);
 
-    // adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
     adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+
+    // writer
     {
         adios2_io *ioH = adios2_declare_io(adiosH, "TestIO");
 
-        size_t countiNumbers[1];
-        countiNumbers[0] = inumbers.size();
+        size_t count[1];
+        count[0] = Nx;
+
         adios2_variable *variNumbers =
-            adios2_define_variable(ioH, "ints", adios2_type_int, 1, NULL, NULL,
-                                   countiNumbers, adios2_constant_dims_true);
+            adios2_define_variable(ioH, "ints", adios2_type_int32_t, 1, NULL,
+                                   NULL, count, adios2_constant_dims_true);
 
-        size_t countfNumbers[1];
-        countfNumbers[0] = fnumbers.size();
-        adios2_variable *varfNumbers = adios2_define_variable(
-            ioH, "floats", adios2_type_float, 1, NULL, NULL, countfNumbers,
-            adios2_constant_dims_true);
+        adios2_variable *varfNumbers =
+            adios2_define_variable(ioH, "floats", adios2_type_float, 1, NULL,
+                                   NULL, count, adios2_constant_dims_true);
 
-        // adios2_set_parameter(ioH, "CollectiveMetadata", "Off");
+        // TODO adios2_set_parameter(ioH, "CollectiveMetadata", "Off");
         adios2_set_parameter(ioH, "Profile", "Off");
 
         if (mpiSize > 1)
@@ -72,22 +67,27 @@ void LocalAggregate1D(const std::string substreams)
         adios2_step_status step_status;
         for (size_t i = 0; i < NSteps; ++i)
         {
-            adios2_begin_step(bpWriter, adios2_step_mode_next_available, 0,
+            adios2_begin_step(bpWriter, adios2_step_mode_next_available, 0.,
                               &step_status);
-            if (mpiRank % 3 == 1)
-            {
-                adios2_put(bpWriter, variNumbers, inumbers.data(),
-                           adios2_mode_sync);
-            }
 
-            std::this_thread::sleep_for(std::chrono::seconds(rand() % 2));
+            std::iota(inumbers.begin() + i * Nx, inumbers.begin() + i * Nx + Nx,
+                      mpiRank);
 
-            if (mpiRank % 3 == 1)
-            {
-                //                adios2_put(bpWriter, varfNumbers,
-                //                fnumbers.data(),
-                //                           adios2_mode_sync);
-            }
+            const float randomStart = static_cast<float>(rand() % mpiSize);
+            std::iota(fnumbers.begin() + i * Nx, fnumbers.begin() + i * Nx + Nx,
+                      randomStart);
+
+            //            if (mpiRank % 3 == 0)
+            //            {
+            adios2_put(bpWriter, variNumbers, &inumbers[i * Nx],
+                       adios2_mode_sync);
+            //}
+
+            //            if (mpiRank % 3 == 1)
+            //            {
+            adios2_put(bpWriter, varfNumbers, &fnumbers[i * Nx],
+                       adios2_mode_sync);
+            //}
             adios2_end_step(bpWriter);
         }
 
@@ -95,9 +95,8 @@ void LocalAggregate1D(const std::string substreams)
         bpWriter = NULL;
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
     // Reader TODO, might need to generate metadata file
-    if (false)
+    // if (false)
     {
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
         adios2_engine *bpReader =
@@ -114,11 +113,40 @@ void LocalAggregate1D(const std::string substreams)
                 break;
             }
 
+            size_t currentStep;
+            adios2_current_step(&currentStep, bpReader);
+
             adios2_variable *varInts = adios2_inquire_variable(ioH, "ints");
             adios2_variable *varFloats = adios2_inquire_variable(ioH, "floats");
 
+            //            if (mpiRank % 3 == 0)
+            //            {
             EXPECT_NE(varInts, nullptr);
+            std::vector<int32_t> inVarInts(Nx);
+
+            adios2_set_block_selection(varInts, mpiRank);
+            adios2_get(bpReader, varInts, inVarInts.data(), adios2_mode_sync);
+
+            for (size_t i = 0; i < Nx; ++i)
+            {
+                ASSERT_EQ(inVarInts[i], inumbers[currentStep * Nx + i]);
+            }
+            //}
+
+            //            if (mpiRank % 3 == 1)
+            //            {
             EXPECT_NE(varFloats, nullptr);
+            std::vector<float> inVarFloats(Nx);
+
+            adios2_set_block_selection(varFloats, mpiRank);
+            adios2_get(bpReader, varFloats, inVarFloats.data(),
+                       adios2_mode_sync);
+
+            for (size_t i = 0; i < Nx; ++i)
+            {
+                ASSERT_EQ(inVarFloats[i], fnumbers[currentStep * Nx + i]);
+            }
+            //}
 
             adios2_end_step(bpReader);
         }
@@ -136,8 +164,6 @@ class BPWriteAggregateReadLocalTest
 public:
     BPWriteAggregateReadLocalTest() = default;
 
-    SmallTestData m_TestData;
-
     virtual void SetUp() {}
     virtual void TearDown() {}
 };
@@ -148,7 +174,7 @@ TEST_P(BPWriteAggregateReadLocalTest, Aggregate1D)
 }
 
 INSTANTIATE_TEST_CASE_P(Substreams, BPWriteAggregateReadLocalTest,
-                        ::testing::Values("1", "2", "4"));
+                        ::testing::Values("1", "2", "3", "4"));
 
 int main(int argc, char **argv)
 {
