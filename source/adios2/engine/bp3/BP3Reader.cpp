@@ -141,11 +141,11 @@ void BP3Reader::InitTransports()
 
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
-        const std::string metadataFile(
-            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
+        //        const std::string metadataFile(
+        //            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
 
         const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-        m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
+        m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
     }
 }

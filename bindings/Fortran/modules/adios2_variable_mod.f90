@@ -78,6 +78,14 @@ contains
         call adios2_set_shape_f2c(variable%f2c, ndims, shape_dims, ierr)
     end subroutine
 
+    subroutine adios2_set_block_selection(variable, block_id, ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer(kind=8), intent(in) :: block_id
+        integer, intent(out) :: ierr
+
+        call adios2_set_block_selection_f2c(variable%f2c, block_id, ierr)
+    end subroutine
+
     subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, &
                                     ierr)
         type(adios2_variable), intent(in) :: variable

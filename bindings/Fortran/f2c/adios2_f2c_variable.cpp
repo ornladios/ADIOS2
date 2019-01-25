@@ -134,6 +134,14 @@ void FC_GLOBAL(adios2_set_shape_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_set_block_selection_f2c,
+               ADIOS2_SET_BLOCK_SELECTION_F2C)(adios2_variable **variable,
+                                               const int64_t *block_id,
+                                               int *ierr)
+{
+    *ierr = static_cast<int>(adios2_set_block_selection(*variable, *block_id));
+}
+
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_variable **variable,
                                          const int *ndims, const int64_t *start,
@@ -148,7 +156,6 @@ void FC_GLOBAL(adios2_set_selection_f2c,
         {
             output[d] = dimensions[d];
         }
-
     };
 
     try

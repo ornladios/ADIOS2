@@ -256,8 +256,8 @@ BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
                                             const std::string hint)
 {
     ProfilerStart("buffering");
-    const size_t currentCapacity = m_Data.m_Buffer.capacity();
-    const size_t requiredCapacity = dataIn + m_Data.m_Position;
+    const size_t currentSize = m_Data.m_Buffer.size();
+    const size_t requiredSize = dataIn + m_Data.m_Position;
 
     ResizeResult result = ResizeResult::Unchanged;
 
@@ -273,13 +273,13 @@ BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
             hint + "\n");
     }
 
-    if (requiredCapacity <= currentCapacity)
+    if (requiredSize <= currentSize)
     {
         // do nothing, unchanged is default
     }
-    else if (requiredCapacity > m_MaxBufferSize)
+    else if (requiredSize > m_MaxBufferSize)
     {
-        if (currentCapacity < m_MaxBufferSize)
+        if (currentSize < m_MaxBufferSize)
         {
             m_Data.Resize(m_MaxBufferSize, " when resizing buffer to " +
                                                std::to_string(m_MaxBufferSize) +
@@ -289,12 +289,12 @@ BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
     }
     else // buffer must grow
     {
-        if (currentCapacity < m_MaxBufferSize)
+        if (currentSize < m_MaxBufferSize)
         {
-            const size_t nextSize = std::min(
-                m_MaxBufferSize,
-                helper::NextExponentialSize(requiredCapacity, currentCapacity,
-                                            m_GrowthFactor));
+            const size_t nextSize =
+                std::min(m_MaxBufferSize,
+                         helper::NextExponentialSize(requiredSize, currentSize,
+                                                     m_GrowthFactor));
             m_Data.Resize(nextSize, " when resizing buffer to " +
                                         std::to_string(nextSize) + "bytes, " +
                                         hint);
