@@ -36,12 +36,12 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
  * the appropriate Start and Count Selection for the global array
  * coordinates.
  * @param variable handler for which new selection will be applied to
- * @param blockID variable block index defined at write time. Blocks can be
+ * @param block_id variable block index defined at write time. Blocks can be
  * inspected with bpls -D variableName
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_set_block_selection(adios2_variable *variable,
-                                        const size_t blockID);
+                                        const size_t block_id);
 
 /**
  * Set new start and count dimensions

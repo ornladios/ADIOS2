@@ -105,7 +105,7 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
 }
 
 adios2_error adios2_set_block_selection(adios2_variable *variable,
-                                        const size_t blockID)
+                                        const size_t block_id)
 {
     try
     {
@@ -115,7 +115,7 @@ adios2_error adios2_set_block_selection(adios2_variable *variable,
 
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
-        variableBase->SetBlockSelection(blockID);
+        variableBase->SetBlockSelection(block_id);
         return adios2_error_none;
     }
     catch (...)
