@@ -548,45 +548,17 @@ void BP3Deserializer::PostDataRead(
 #else
     constexpr bool endianReverse = false;
 #endif
-    if (variable.m_ShapeID == ShapeID::GlobalArray)
-    {
-        helper::ClipContiguousMemory(
-            blockInfo.Data, blockInfo.Start, blockInfo.Count,
-            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
-            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
-            endianReverse);
 
-        //    	helper::CopyMemory(
-        //            blockInfo.Data, blockInfo.Start, blockInfo.Count,
-        //            isRowMajorDestination,
-        //            reinterpret_cast<T
-        //            *>(m_ThreadBuffers[threadID][0].data()),
-        //            intersectionStartCount.first,
-        //            intersectionStartCount.second,
-        //            m_IsRowMajor, endianReverse, Dims(), Dims(),
-        //            sourceMemoryStart,
-        //            blockStartCount.second);
-    }
-    else if (variable.m_ShapeID == ShapeID::LocalArray)
-    {
-        helper::ClipContiguousMemory(
-            blockInfo.Data, Dims(blockInfo.Count.size(), 0), blockInfo.Count,
-            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
-            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
-            endianReverse);
+    const Dims blockInfoStart =
+        (variable.m_ShapeID == ShapeID::LocalArray && blockInfo.Start.empty())
+            ? Dims(blockInfo.Count.size(), 0)
+            : blockInfo.Start;
 
-        //        helper::CopyMemory(
-        //            blockInfo.Data, Dims(blockInfo.Count.size(), 0),
-        //            blockInfo.Count,
-        //            isRowMajorDestination,
-        //            reinterpret_cast<T
-        //            *>(m_ThreadBuffers[threadID][0].data()),
-        //            intersectionStartCount.first,
-        //            intersectionStartCount.second,
-        //            m_IsRowMajor, endianReverse, Dims(), Dims(),
-        //            sourceMemoryStart,
-        //            blockStartCount.second);
-    }
+    helper::ClipContiguousMemory(
+        blockInfo.Data, blockInfoStart, blockInfo.Count,
+        m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+        subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
+        endianReverse);
 }
 
 template <class T>

@@ -56,6 +56,9 @@ target_link_libraries(TestBPWriteMemorySelectionRead adios2 gtest)
 add_executable(TestBPWriteReadLocalVariables TestBPWriteReadLocalVariables.cpp)
 target_link_libraries(TestBPWriteReadLocalVariables adios2 gtest)
 
+add_executable(TestBPWriteReadLocalVariablesSel TestBPWriteReadLocalVariablesSel.cpp)
+target_link_libraries(TestBPWriteReadLocalVariablesSel adios2 gtest)
+
 if(ADIOS2_HAVE_MPI)
 
   target_link_libraries(TestBPWriteReadADIOS2 MPI::MPI_C)
@@ -73,6 +76,7 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPLargeMetadata MPI::MPI_C)
   target_link_libraries(TestBPWriteMemorySelectionRead MPI::MPI_C)
   target_link_libraries(TestBPWriteReadLocalVariables MPI::MPI_C)
+  target_link_libraries(TestBPWriteReadLocalVariablesSel MPI::MPI_C)
   
   add_executable(TestBPWriteAggregateRead TestBPWriteAggregateRead.cpp)
   target_link_libraries(TestBPWriteAggregateRead
@@ -99,3 +103,4 @@ gtest_add_tests(TARGET TestBPWriteReadAttributesMultirank ${extra_test_args})
 gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteMemorySelectionRead ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args})
+gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args})
