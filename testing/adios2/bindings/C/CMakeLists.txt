@@ -25,9 +25,10 @@ if(ADIOS2_HAVE_MPI)
     EXEC_WRAPPER
     ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
   )
+  
+  gtest_add_tests(TARGET TestBPWriteAggregateReadLocal_c ${extra_test_args})
 endif()
 
 gtest_add_tests(TARGET TestBPWriteTypes_c ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteReadMultiblock_c ${extra_test_args})
 gtest_add_tests(TARGET TestBPWriteTypesHighLevel_c ${extra_test_args})
-gtest_add_tests(TARGET TestBPWriteAggregateReadLocal_c ${extra_test_args})
