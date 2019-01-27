@@ -267,7 +267,8 @@ public:
     /**
      * Get data associated with a Variable from the Engine. Data is
      * associated with a block selection, and data is retrieved from
-     * variable's BlockInfo
+     * variable's BlockInfo.
+     * @note Preliminary, experimental API, may change soon.
      * @param variable contains variable metadata information
      * @param info block info struct associated with block selection,
      *   call will link with implementation's block info.
@@ -289,6 +290,7 @@ public:
      * associated with a block selection, and data is retrieved from
      * variable's BlockInfo. Overloaded version
      * to get variable by name.
+     * @note Preliminary, experimental API, may change soon.
      * @param variable contains variable metadata information
      * @param info block info struct associated with block selection,
      *   call will link with implementation's block info.

@@ -181,6 +181,11 @@ Engine::AllStepsBlocksInfo(const Variable<T> variable) const
     return allStepsBlocksInfo;
 }
 
+// Design Node: All Info structs are copied. This prevents Engine::Get() from
+// connecting the Core Info struct to Binding Info struct when this method is
+// called. Instead of returning a vector, BlocksInfo could populate a vector member
+// of the Variable, and those could contain pointers to the Core Info structs,
+// enabling users of the Inline engine to do Info.Data()
 template <class T>
 std::vector<typename Variable<T>::Info>
 Engine::BlocksInfo(const Variable<T> variable, const size_t step) const

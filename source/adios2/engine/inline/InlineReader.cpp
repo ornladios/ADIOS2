@@ -113,6 +113,10 @@ void InlineReader::EndStep()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+// Design note: Returns a copy. Instead, could return a reference, then
+// Engine::Get() would not need an Info parameter passed in - binding could
+// retrieve the current Core Info object at a later time.
+// See note on binding Engine::BlocksInfo
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     InlineReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const      \
