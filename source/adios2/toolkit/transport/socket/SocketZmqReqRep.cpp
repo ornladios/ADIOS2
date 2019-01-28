@@ -19,7 +19,7 @@ namespace transport
 {
 
 SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout)
-: SocketZmq("socket", "zmqreqrep", mpiComm, false), m_Timeout(timeout)
+: m_Timeout(timeout)
 {
     if (m_Context == nullptr || m_Context == NULL)
     {
@@ -40,14 +40,6 @@ SocketZmqReqRep::~SocketZmqReqRep()
     }
 }
 
-void SocketZmqReqRep::Open(const std::string &ipAddress,
-                           const std::string &port, const std::string &name,
-                           const Mode openMode)
-{
-    m_Name = name;
-    Open("tcp://" + ipAddress + ":" + port, openMode);
-    m_IsOpen = true;
-}
 
 void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
 {
@@ -95,85 +87,27 @@ void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
             "[SocketZmqReqRep::Open] couldn't open socket for address " +
             fullAddress);
     }
-    m_IsOpen = true;
 }
 
-void SocketZmqReqRep::SetBuffer(char *buffer, size_t size) {}
 
-void SocketZmqReqRep::Write(const char *buffer, size_t size, size_t start)
+int SocketZmqReqRep::Write(const char *buffer, size_t size)
 {
-    ProfilerStart("write");
-    int retInt = zmq_send(m_Socket, buffer, size, 0);
-    ProfilerStop("write");
-    if (retInt < 0)
-    {
-        throw std::ios_base::failure(
-            "[SocketZmqReqRep::IWrite] couldn't send message " + m_Name);
-    }
-
-    if (m_Verbosity >= 99)
-    {
-        std::cout << "SocketZmqReqRep::Write sent data, size =  " << size
-                  << std::endl;
-        std::cout << "========================" << std::endl;
-        for (size_t i = 0; i < size; ++i)
-        {
-            std::cout << buffer[i];
-        }
-        std::cout << std::endl << "========================" << std::endl;
-    }
+    return zmq_send(m_Socket, buffer, size, 0);
 }
 
-void SocketZmqReqRep::Read(char *buffer, size_t size, size_t start) {}
 
-void SocketZmqReqRep::IWrite(const char *buffer, size_t size, Status &status,
-                             size_t start)
+int SocketZmqReqRep::Read(char *buffer, size_t size)
 {
+    return zmq_recv(m_Socket, buffer, size, 0);
 }
 
-void SocketZmqReqRep::IRead(char *buffer, size_t size, Status &status,
-                            size_t start)
-{
-    ProfilerStart("read");
-    int bytes = zmq_recv(m_Socket, buffer, size, 0);
-    ProfilerStop("read");
-    if (bytes > 0)
-    {
-        status.Bytes = bytes;
-        status.Running = true;
-        status.Successful = true;
-    }
-    else
-    {
-        status.Bytes = 0;
-        status.Running = true;
-        status.Successful = false;
-    }
-
-    if (m_Verbosity >= 99)
-    {
-        std::cout << "SocketZmqReqRep::IRead received data, size =  "
-                  << status.Bytes << std::endl;
-        std::cout << "========================" << std::endl;
-        for (size_t i = 0; i < status.Bytes; ++i)
-        {
-            std::cout << buffer[i];
-        }
-        std::cout << std::endl << "========================" << std::endl;
-    }
-}
-
-void SocketZmqReqRep::Flush() {}
-
-bool SocketZmqReqRep::IsOpen() { return m_IsOpen; }
 
 void SocketZmqReqRep::Close()
 {
-    if (m_Socket && m_IsOpen)
+    if (m_Socket)
     {
         zmq_close(m_Socket);
     }
-    m_IsOpen = false;
 }
 
 } // end namespace transport

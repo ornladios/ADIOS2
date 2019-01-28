@@ -18,31 +18,21 @@ namespace adios2
 namespace transport
 {
 
-class SocketZmqReqRep : public SocketZmq
+class SocketZmqReqRep
 {
 
 public:
     SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout);
     virtual ~SocketZmqReqRep();
-    void Open(const std::string &fullAddress, const Mode openMode) final;
-    void Open(const std::string &ipAddress, const std::string &port,
-              const std::string &name, const Mode openMode) final;
-    void SetBuffer(char *buffer, size_t size) final;
-    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
-    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
-    void IWrite(const char *buffer, size_t size, Status &status,
-                size_t start = MaxSizeT) final;
-    void IRead(char *buffer, size_t size, Status &status,
-               size_t start = MaxSizeT) final;
-    void Flush() final;
-    void Close() final;
-    bool IsOpen();
+    void Open(const std::string &fullAddress, const Mode openMode) ;
+    int Write(const char *buffer, size_t size) ;
+    int Read(char *buffer, size_t size) ;
+    void Close() ;
 
 private:
     void *m_Context = nullptr;
     void *m_Socket = nullptr;
     const int m_Timeout;
-    bool m_IsOpen = false;
     int m_Verbosity = 0;
 };
 

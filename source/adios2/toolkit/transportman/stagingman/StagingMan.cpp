@@ -43,10 +43,9 @@ StagingMan::Request(const std::vector<char> &request,
         m_Transport.Open(address, m_OpenMode);
     }
     m_Transport.Write(request.data(), request.size());
-    Transport::Status status;
-    m_Transport.IRead(m_Buffer.data(), m_MaxBufferSize, status);
-    auto reply = std::make_shared<std::vector<char>>(status.Bytes);
-    std::memcpy(reply->data(), m_Buffer.data(), status.Bytes);
+    int bytes = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
+    auto reply = std::make_shared<std::vector<char>>(bytes);
+    std::memcpy(reply->data(), m_Buffer.data(), bytes);
     if (address.empty() == false)
     {
         m_Transport.Close();
@@ -56,10 +55,13 @@ StagingMan::Request(const std::vector<char> &request,
 
 std::shared_ptr<std::vector<char>> StagingMan::ReceiveRequest()
 {
-    Transport::Status status;
-    m_Transport.IRead(m_Buffer.data(), m_MaxBufferSize, status);
-    auto request = std::make_shared<std::vector<char>>(status.Bytes);
-    std::memcpy(request->data(), m_Buffer.data(), status.Bytes);
+    int bytes = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
+    if(bytes < 0)
+    {
+        bytes = 0;
+    }
+    auto request = std::make_shared<std::vector<char>>(bytes);
+    std::memcpy(request->data(), m_Buffer.data(), bytes);
     return request;
 }
 
