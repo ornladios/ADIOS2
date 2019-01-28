@@ -16,6 +16,7 @@
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
 
+#include "adios2/toolkit/format/bp4/operation/BP4MGARD.h"
 #include "adios2/toolkit/format/bp4/operation/BP4SZ.h"
 #include "adios2/toolkit/format/bp4/operation/BP4Zfp.h"
 
@@ -25,14 +26,12 @@ namespace format
 {
 
 const std::set<std::string> BP4Base::m_TransformTypes = {
-    {"unknown", "none", "identity", "sz", "zfp"}};
+    {"unknown", "none", "identity", "sz", "zfp", "mgard"}};
 
 const std::map<int, std::string> BP4Base::m_TransformTypesToNames = {
-    {transform_unknown, "unknown"},
-    {transform_none, "none"},
-    {transform_identity, "identity"},
-    {transform_sz, "sz"},
-    {transform_zfp, "zfp"}
+    {transform_unknown, "unknown"},   {transform_none, "none"},
+    {transform_identity, "identity"}, {transform_sz, "sz"},
+    {transform_zfp, "zfp"},           {transform_mgard, "mgard"},
     //{transform_mgard, "mgard"},
     // {transform_zlib, "zlib"},
     //    {transform_bzip2, "bzip2"},
@@ -67,7 +66,8 @@ void BP4Base::InitParameters(const Params &parameters)
         std::string key(pair.first);
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
-        const std::string value(pair.second);
+        std::string value(pair.second);
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
 
         if (key == "profile")
         {
@@ -117,6 +117,7 @@ void BP4Base::InitParameters(const Params &parameters)
     if (m_Profiler.IsActive && useDefaultProfileUnits)
     {
         auto lf_EmplaceTimer = [&](const std::string process) {
+
             m_Profiler.Timers.emplace(
                 process,
                 profiling::Timer(process, DefaultTimeUnitEnum, m_DebugMode));
@@ -261,9 +262,10 @@ BP4Base::GetBPSubStreamNames(const std::vector<std::string> &names) const
 }
 
 std::string BP4Base::GetBPSubFileName(const std::string &name,
-                                      const size_t subFileIndex) const noexcept
+                                      const size_t subFileIndex,
+                                      const bool hasSubFiles) const noexcept
 {
-    return GetBPSubStreamName(name, subFileIndex);
+    return GetBPSubStreamName(name, subFileIndex, hasSubFiles);
 }
 
 size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
@@ -403,6 +405,7 @@ void BP4Base::InitParameterProfileUnits(const std::string value)
 {
     auto lf_EmplaceTimer = [&](const std::string process,
                                const TimeUnit timeUnit) {
+
         if (m_Profiler.Timers.count(process) == 1)
         {
             m_Profiler.Timers.erase(process);
@@ -676,6 +679,7 @@ BP4Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
+
         int id = METHOD_UNKNOWN;
         if (method == "File_NULL")
         {
@@ -726,41 +730,51 @@ size_t BP4Base::GetProcessGroupIndexSize(const std::string name,
 
 BP4Base::ProcessGroupIndex
 BP4Base::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
-                                     size_t &position) const noexcept
+                                     size_t &position,
+                                     const bool isLittleEndian) const noexcept
 {
     ProcessGroupIndex index;
-    index.Length = helper::ReadValue<uint16_t>(buffer, position);
-    index.Name = ReadBP4String(buffer, position);
-    index.IsColumnMajor = helper::ReadValue<char>(buffer, position);
-    index.ProcessID = helper::ReadValue<int32_t>(buffer, position);
-    index.StepName = ReadBP4String(buffer, position);
-    index.Step = helper::ReadValue<uint32_t>(buffer, position);
-    index.Offset = helper::ReadValue<uint64_t>(buffer, position);
+    index.Length =
+        helper::ReadValue<uint16_t>(buffer, position, isLittleEndian);
+    index.Name = ReadBP4String(buffer, position, isLittleEndian);
+    index.IsColumnMajor =
+        helper::ReadValue<char>(buffer, position, isLittleEndian);
+    index.ProcessID =
+        helper::ReadValue<int32_t>(buffer, position, isLittleEndian);
+    index.StepName = ReadBP4String(buffer, position, isLittleEndian);
+    index.Step = helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    index.Offset =
+        helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
     return index;
 }
 
 BP4Base::ElementIndexHeader
 BP4Base::ReadElementIndexHeader(const std::vector<char> &buffer,
-                                size_t &position) const noexcept
+                                size_t &position,
+                                const bool isLittleEndian) const noexcept
 {
     ElementIndexHeader header;
-    header.Length = helper::ReadValue<uint32_t>(buffer, position);
-    header.MemberID = helper::ReadValue<uint32_t>(buffer, position);
-    header.GroupName = ReadBP4String(buffer, position);
-    header.Name = ReadBP4String(buffer, position);
-    header.Path = ReadBP4String(buffer, position);
-    header.DataType = helper::ReadValue<int8_t>(buffer, position);
+    header.Length =
+        helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    header.MemberID =
+        helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    header.GroupName = ReadBP4String(buffer, position, isLittleEndian);
+    header.Name = ReadBP4String(buffer, position, isLittleEndian);
+    header.Path = ReadBP4String(buffer, position, isLittleEndian);
+    header.DataType =
+        helper::ReadValue<int8_t>(buffer, position, isLittleEndian);
     header.CharacteristicsSetsCount =
-        helper::ReadValue<uint64_t>(buffer, position);
+        helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
 
     return header;
 }
 
 std::string BP4Base::ReadBP4String(const std::vector<char> &buffer,
-                                   size_t &position) const noexcept
+                                   size_t &position,
+                                   const bool isLittleEndian) const noexcept
 {
-    const size_t size =
-        static_cast<size_t>(helper::ReadValue<uint16_t>(buffer, position));
+    const size_t size = static_cast<size_t>(
+        helper::ReadValue<uint16_t>(buffer, position, isLittleEndian));
 
     if (size == 0)
     {
@@ -875,7 +889,7 @@ BP4Base::SetBP4Operation(const std::string type) const noexcept
     }
     else if (type == "mgard")
     {
-        // TODO
+        bp4Op = std::make_shared<BP4MGARD>();
     }
     else if (type == "bzip2")
     {
@@ -886,8 +900,14 @@ BP4Base::SetBP4Operation(const std::string type) const noexcept
 
 // PRIVATE
 std::string BP4Base::GetBPSubStreamName(const std::string &name,
-                                        const size_t rank) const noexcept
+                                        const size_t rank,
+                                        const bool hasSubFiles) const noexcept
 {
+    if (!hasSubFiles)
+    {
+        return name;
+    }
+
     const std::string bpName = helper::AddExtension(name, ".bp");
 
     // path/root.bp.dir/root.bp.Index
@@ -913,12 +933,12 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
 #define declare_template_instantiation(T)                                      \
     template BP4Base::Characteristics<T>                                       \
     BP4Base::ReadElementIndexCharacteristics(                                  \
-        const std::vector<char> &buffer, size_t &position,                     \
-        const BP4Base::DataTypes dataType, const bool untilTimeStep) const;    \
+        const std::vector<char> &, size_t &, const BP4Base::DataTypes,         \
+        const bool, const bool) const;                                         \
                                                                                \
     template std::map<size_t, std::shared_ptr<BP4Operation>>                   \
     BP4Base::SetBP4Operations<T>(                                              \
-        const std::vector<core::VariableBase::Operation> &operations) const;
+        const std::vector<core::VariableBase::Operation> &) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

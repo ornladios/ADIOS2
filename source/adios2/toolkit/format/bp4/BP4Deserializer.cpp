@@ -60,34 +60,75 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
     const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
     size_t position = 0;
+    position += 28;
+    const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
+    m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
+#ifndef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (m_DebugMode)
+    {
+        if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
+        {
+            throw std::runtime_error(
+                "ERROR: reader found BigEndian bp file, "
+                "this version of ADIOS2 wasn't compiled "
+                "with the cmake flag -DADIOS2_USE_ENDIAN_REVERSE=ON "
+                "explicitly, in call to Open\n");
+        }
+    }
+#endif
+
+    position += 1;
+
+    const int8_t fileType = helper::ReadValue<int8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    if (fileType >= 3)
+    {
+        m_Minifooter.HasSubFiles = true;
+    }
+    else if (fileType == 0 || fileType == 2)
+    {
+        m_Minifooter.HasSubFiles = false;
+    }
+
+    m_Minifooter.Version = helper::ReadValue<uint8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    if (m_Minifooter.Version < 3)
+    {
+        throw std::runtime_error("ERROR: ADIOS2 only supports bp format "
+                                 "version 3 and above, found " +
+                                 std::to_string(m_Minifooter.Version) +
+                                 " version \n");
+    }
+    
+    position = 0;
+    m_Minifooter.VersionTag.assign(&buffer[position], 28);
+
     position += 48;
     while (position < bufferSize)
     {
         std::vector<uint64_t> ptrs;
         const uint64_t currentStep =
-            helper::ReadValue<uint64_t>(buffer, position);
-        const uint64_t mpiRank = helper::ReadValue<uint64_t>(buffer, position);
+            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t mpiRank = helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t pgIndexStart =
-            helper::ReadValue<uint64_t>(buffer, position);
+            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(pgIndexStart);
         const uint64_t variablesIndexStart =
-            helper::ReadValue<uint64_t>(buffer, position);
+            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(variablesIndexStart);
         const uint64_t attributesIndexStart =
-            helper::ReadValue<uint64_t>(buffer, position);
+            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(attributesIndexStart);
         const uint64_t currentStepEndPos =
-            helper::ReadValue<uint64_t>(buffer, position);
+            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(currentStepEndPos);
         m_MetadataIndexTable[mpiRank][currentStep] = ptrs;
     }
 }
 
 const helper::BlockOperationInfo &BP4Deserializer::InitPostOperatorBlockData(
-    const std::vector<helper::BlockOperationInfo> &blockOperationsInfo,
-    std::vector<char> &postOpData, const bool identity) const
+    const std::vector<helper::BlockOperationInfo> &blockOperationsInfo) const
 {
-
     size_t index = 0;
     for (const helper::BlockOperationInfo &blockOperationInfo :
          blockOperationsInfo)
@@ -95,10 +136,6 @@ const helper::BlockOperationInfo &BP4Deserializer::InitPostOperatorBlockData(
         const std::string type = blockOperationInfo.Info.at("Type");
         if (m_TransformTypes.count(type) == 1)
         {
-            if (!identity)
-            {
-                postOpData.resize(blockOperationInfo.PayloadSize);
-            }
             break;
         }
         ++index;
@@ -106,7 +143,7 @@ const helper::BlockOperationInfo &BP4Deserializer::InitPostOperatorBlockData(
     return blockOperationsInfo.at(index);
 }
 
-void BP4Deserializer::GetPreOperatorBlockData(
+/* void BP4Deserializer::GetPreOperatorBlockData(
     const std::vector<char> &postOpData,
     const helper::BlockOperationInfo &blockOperationInfo,
     std::vector<char> &preOpData) const
@@ -119,10 +156,10 @@ void BP4Deserializer::GetPreOperatorBlockData(
     std::shared_ptr<BP4Operation> bp4Op =
         SetBP4Operation(blockOperationInfo.Info.at("Type"));
     bp4Op->GetData(postOpData.data(), blockOperationInfo, preOpData.data());
-}
+} */
 
 // PRIVATE
-void BP4Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
+/* void BP4Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
     auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
         switch (endianness)
@@ -167,7 +204,7 @@ void BP4Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     m_Minifooter.VarsIndexStart = helper::ReadValue<uint64_t>(buffer, position);
     m_Minifooter.AttributesIndexStart =
         helper::ReadValue<uint64_t>(buffer, position);
-}
+} */
 
 void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
                                           const core::IO &io,
@@ -177,9 +214,9 @@ void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
     size_t position = m_MetadataIndexTable[submetadatafileId][step][0];
     // std::cout << step << ", " << position << std::endl;
     m_MetadataSet.DataPGCount = m_MetadataSet.DataPGCount +
-                                helper::ReadValue<uint64_t>(buffer, position);
+                                helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
-    ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
+    ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
     if (index.IsColumnMajor == 'y')
     {
         m_IsRowMajor = false;
@@ -190,7 +227,7 @@ void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
     }
 }
 
-void BP4Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
+/* void BP4Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
                                    const core::IO &io)
 {
     const auto &buffer = bufferSTL.m_Buffer;
@@ -227,7 +264,7 @@ void BP4Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
     {
         m_ReverseDimensions = true;
     }
-}
+} */
 
 void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
                                                  core::IO &io,
@@ -238,7 +275,7 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
                                           const std::vector<char> &buffer,
                                           size_t position, size_t step) {
         const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position);
+            ReadElementIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
@@ -346,8 +383,8 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][1];
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -359,15 +396,57 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
             lf_ReadElementIndexPerStep(io, buffer, position, step);
 
             const size_t elementIndexSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(buffer, position));
+                helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian));
             position += elementIndexSize;
             localPosition = position - startPosition;
         }
         return;
     }
+
+    // threads for reading Variables
+    std::vector<std::future<void>> asyncs(m_Threads);
+    std::vector<size_t> asyncPositions(m_Threads);
+
+    bool launched = false;
+
+    while (localPosition < length)
+    {
+        // extract async positions
+        for (unsigned int t = 0; t < m_Threads; ++t)
+        {
+            asyncPositions[t] = position;
+            const size_t elementIndexSize =
+                static_cast<size_t>(helper::ReadValue<uint32_t>(
+                    buffer, position, m_Minifooter.IsLittleEndian));
+            position += elementIndexSize;
+            localPosition = position - startPosition;
+
+            if (launched)
+            {
+                asyncs[t].get();
+            }
+
+            if (localPosition <= length)
+            {
+                asyncs[t] = std::async(std::launch::async, lf_ReadElementIndexPerStep,
+                                       std::ref(io), std::ref(buffer),
+                                       asyncPositions[t], step);
+            }
+        }
+        launched = true;
+    }
+
+    for (auto &async : asyncs)
+    {
+        if (async.valid())
+        {
+            async.wait();
+        }
+    }
+
 }
 
-void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
+/* void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
                                           core::IO &io)
 {
     auto lf_ReadElementIndex = [&](
@@ -529,7 +608,7 @@ void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
             async.wait();
         }
     }
-}
+} */
 
 /* Parse the attributes index at each step */
 void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
@@ -540,7 +619,7 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndex = [&](
         core::IO &io, const std::vector<char> &buffer, size_t position) {
         const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position);
+            ReadElementIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
@@ -629,8 +708,8 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][2];
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -640,13 +719,13 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
     {
         lf_ReadElementIndex(io, buffer, position);
         const size_t elementIndexSize =
-            static_cast<size_t>(helper::ReadValue<uint32_t>(buffer, position));
+            static_cast<size_t>(helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian));
         position += elementIndexSize;
         localPosition = position - startPosition;
     }
 }
 
-void BP4Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
+/* void BP4Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
                                            core::IO &io)
 {
     auto lf_ReadElementIndex = [&](
@@ -756,7 +835,7 @@ void BP4Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
         position += elementIndexSize;
         localPosition = position - startPosition;
     }
-}
+} */
 
 std::map<std::string, helper::SubFileInfoMap>
 BP4Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
@@ -817,10 +896,10 @@ void BP4Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
         core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
     template typename core::Variable<T>::Info &                                \
-    BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *);          \
+    BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *) const;    \
                                                                                \
     template void BP4Deserializer::SetVariableBlockInfo(                       \
-        core::Variable<T> &, typename core::Variable<T>::Info &);              \
+        core::Variable<T> &, typename core::Variable<T>::Info &) const;        \
                                                                                \
     template void BP4Deserializer::ClipContiguousMemory<T>(                    \
         typename core::Variable<T>::Info &, const std::vector<char> &,         \
@@ -851,9 +930,14 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     BP4Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
                                                                                \
-    template bool BP4Deserializer::IdentityOperation<T>(                       \
-        const std::vector<typename core::Variable<T>::Operation> &)            \
-        const noexcept;
+    template void BP4Deserializer::PreDataRead(                                \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, char *&, size_t &, size_t &,         \
+        const size_t);                                                         \
+                                                                               \
+    template void BP4Deserializer::PostDataRead(                               \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, const bool, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

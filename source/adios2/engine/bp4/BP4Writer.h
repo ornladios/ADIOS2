@@ -38,7 +38,8 @@ public:
 
     ~BP4Writer();
 
-    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;

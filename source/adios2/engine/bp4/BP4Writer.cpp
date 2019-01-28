@@ -32,6 +32,7 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
   m_FileMetadataManager(mpiComm, m_DebugMode),
   m_FileMetadataIndexManager(mpiComm, m_DebugMode)
 {
+    m_IO.m_ReadStreaming = false;
     m_EndMessage = " in call to IO Open BP4Writer " + m_Name + "\n";
     Init();
 }
@@ -42,6 +43,7 @@ StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_BP4Serializer.m_DeferredVariables.clear();
     m_BP4Serializer.m_DeferredVariablesDataSize = 0;
+    m_IO.m_ReadStreaming = false;
     return StepStatus::OK;
 }
 
@@ -350,12 +352,14 @@ void BP4Writer::PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
 
     if (addSubfiles)
     {
-        position += 1;
+        const uint8_t zeros1 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros1);
         helper::CopyToBuffer(buffer, position, &version);
     }
     else
     {
-        position += 2;
+        const uint16_t zeros2 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros2);
     }
     helper::CopyToBuffer(buffer, position, &version);
     position += 16;

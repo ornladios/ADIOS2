@@ -117,6 +117,10 @@ TEST_F(BPLargeMetadata, ManyLongStrings)
 #endif
 
     adios2::IO io = adios.DeclareIO("myIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
     {
         adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
 

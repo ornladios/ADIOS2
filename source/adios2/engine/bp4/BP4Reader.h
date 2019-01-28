@@ -13,7 +13,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
-#include "adios2/toolkit/format/bp4/BP4.h" //format::BP1Deserializer
+#include "adios2/toolkit/format/bp4/BP4.h" //format::BP4Deserializer
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 namespace adios2
@@ -40,7 +40,7 @@ public:
     virtual ~BP4Reader() = default;
 
     StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
-                         const float timeoutSeconds = 0.f) final;
+                         const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
 

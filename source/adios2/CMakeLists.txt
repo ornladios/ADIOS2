@@ -64,6 +64,8 @@ add_library(adios2
   toolkit/format/bp4/operation/BP4Zfp.tcc
   toolkit/format/bp4/operation/BP4SZ.cpp
   toolkit/format/bp4/operation/BP4SZ.tcc
+  toolkit/format/bp4/operation/BP4MGARD.cpp
+  toolkit/format/bp4/operation/BP4MGARD.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 

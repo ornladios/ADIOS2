@@ -532,6 +532,14 @@ void BP4Serializer::PutAttributes(core::IO &io)
         const std::string name(attributePair.first);
         const std::string type(attributePair.second.first);
 
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(name);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
+
         if (type == "unknown")
         {
         }
@@ -685,20 +693,21 @@ void BP4Serializer::SerializeDataBuffer(core::IO &io) noexcept
     helper::CopyToBuffer(buffer, m_MetadataSet.DataPGVarsCountPosition,
                          &varsLength);
 
-    // attributes are only written once
-
-    if (!m_MetadataSet.AreAttributesWritten)
+    // each attribute is only written to output once
+    size_t attributesSizeInData = GetAttributesSizeInData(io);
+    if (attributesSizeInData)
     {
-        const size_t attributesSizeInData = GetAttributesSizeInData(io);
+        attributesSizeInData += 12; // count + length
         m_Data.Resize(position + attributesSizeInData,
                       "when writing Attributes in rank=0\n");
 
         PutAttributes(io);
-        m_MetadataSet.AreAttributesWritten = true;
     }
     else
     {
         m_Data.Resize(position + 12, "for empty Attributes\n");
+        // Attribute index header for zero attributes: 0, 0LL
+        // Resize() already takes care of this
         position += 12;
         absolutePosition += 12;
     }
@@ -859,12 +868,14 @@ void BP4Serializer::PutMinifooter(const uint64_t pgIndexStart,
 
     if (addSubfiles)
     {
-        position += 1;
+        const uint8_t zeros1 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros1);
         helper::CopyToBuffer(buffer, position, &m_Version);
     }
     else
     {
-        position += 2;
+        const uint16_t zeros2 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros2);
     }
     helper::CopyToBuffer(buffer, position, &m_Version);
 }
@@ -2143,13 +2154,21 @@ uint32_t BP4Serializer::GetFileIndex() const noexcept
 
 size_t BP4Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 {
-    size_t attributesSizeInData = 12; // count + length
+    size_t attributesSizeInData = 0;
 
     auto &attributes = io.GetAttributesDataMap();
 
     for (const auto &attribute : attributes)
     {
         const std::string type = attribute.second.first;
+
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(attribute.first);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
 
         if (type == "compound")
         {
@@ -2173,12 +2192,12 @@ size_t BP4Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
 #define declare_template_instantiation(T)                                      \
     template void BP4Serializer::PutVariablePayload(                           \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;                                                  \
                                                                                \
     template void BP4Serializer::PutVariableMetadata(                          \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

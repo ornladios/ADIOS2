@@ -154,5 +154,5 @@ gtest_add_tests(TARGET TestBPWriteReadAttributesMultirank ${extra_test_args} WOR
 gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteMemorySelectionRead ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
-gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args}) WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 

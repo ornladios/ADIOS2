@@ -51,13 +51,20 @@ void BP4Writer::PutSyncCommon(Variable<T> &variable,
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
-    m_BP4Serializer.PutVariableMetadata(variable, blockInfo);
-    m_BP4Serializer.PutVariablePayload(variable, blockInfo);
+    const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+    m_BP4Serializer.PutVariableMetadata(variable, blockInfo, sourceRowMajor);
+    m_BP4Serializer.PutVariablePayload(variable, blockInfo, sourceRowMajor);
 }
 
 template <class T>
 void BP4Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
+    if (variable.m_SingleValue)
+    {
+        DoPutSync(variable, data);
+        return;
+    }
+    
     const typename Variable<T>::Info blockInfo =
         variable.SetBlockInfo(data, CurrentStep());
     m_BP4Serializer.m_DeferredVariables.insert(variable.m_Name);
