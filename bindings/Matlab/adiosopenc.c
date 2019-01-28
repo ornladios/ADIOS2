@@ -235,7 +235,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         const adios2_variable *avar = adios_vars[vi];
         /* field NAME */
         size_t namelen;
-        const char varname[adios2_string_array_element_max_size];
+        char varname[adios2_string_array_element_max_size];
 
         adios2_variable_name(varname, &namelen, avar);
         mxSetFieldByNumber(vars, vi, var_field_Name, mxCreateString(varname));
@@ -316,14 +316,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         const adios2_attribute *aa = adios_attrs[ai];
         /* field NAME */
         size_t namelen;
-        const char attrname[adios2_string_array_element_max_size];
+        char attrname[adios2_string_array_element_max_size];
         adios2_attribute_name(attrname, &namelen, aa);
 
         mxSetFieldByNumber(attrs, ai, attr_field_Name,
                            mxCreateString(attrname));
         /* field TYPE */
         size_t typelen;
-        const char atype[adios2_string_array_element_max_size];
+        char atype[adios2_string_array_element_max_size];
         adios2_attribute_type_string(atype, &typelen, aa);
 
         mxtype = adiostypestringToMatlabClass(atype, &complexFlag);
@@ -334,7 +334,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mxDestroyArray(arr);
         /* field VALUE */
         size_t asize;
-        const void *data;
+        void *data;
         adios2_attribute_data(data, &asize, aa);
         arr = valueToMatlabValue(data, mxtype, complexFlag);
         mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
@@ -447,7 +447,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
         return mxINT8_CLASS;
 
     case adios2_type_string:
-    case adios2_type_string_array:
+    /* case adios2_type_string_array: */
         return mxCHAR_CLASS;
 
     case adios2_type_unsigned_short:

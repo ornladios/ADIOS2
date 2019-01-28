@@ -343,7 +343,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
         return mxINT8_CLASS;
 
     case adios2_type_string:
-    case adios2_type_string_array:
+    /* case adios2_type_string_array: */
         return mxCHAR_CLASS;
 
     case adios2_type_unsigned_short:
