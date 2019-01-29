@@ -589,6 +589,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         Variable<T> *variable = InquireVariable<T>(name);                      \
         variable->CheckRandomAccessConflict(hint);                             \
         variable->ResetStepsSelection(zeroStart);                              \
+        variable->m_RandomAccess = false;                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

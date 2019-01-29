@@ -168,6 +168,9 @@ void BP3Reader::InitBuffer()
 
     // fills IO with Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
+
+    // associate engine with IO variables
+    SetVariablesEngine();
 }
 
 #define declare_type(T)                                                        \

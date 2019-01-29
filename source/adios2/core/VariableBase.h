@@ -27,6 +27,9 @@ namespace adios2
 namespace core
 {
 
+// forward declaration for reading streaming mode
+class Engine;
+
 /** Base class for Variable<T> (primitives) and VariableCompound classes */
 class VariableBase
 {
@@ -90,6 +93,8 @@ public:
 
     /** Index Metadata Position in a serial metadata buffer */
     size_t m_IndexStart = 0;
+
+    Engine *m_Engine = nullptr;
 
     /** Index to Step and blocks' (inside a step) characteristics position in a
      * serial metadata buffer

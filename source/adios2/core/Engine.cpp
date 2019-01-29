@@ -81,6 +81,29 @@ void Engine::Init() {}
 void Engine::InitParameters() {}
 void Engine::InitTransports() {}
 
+void Engine::SetVariablesEngine()
+{
+    const DataMap &variablesMap = m_IO.GetVariablesDataMap();
+
+    for (const auto &variablePair : variablesMap)
+    {
+        const std::string name = variablePair.first;
+        const std::string type = variablePair.second.first;
+
+        if (type == "")
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
+        variable->m_Engine = this;                                             \
+    }
+        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+#undef declare_type
+    }
+}
+
 // DoPut*
 #define declare_type(T)                                                        \
     void Engine::DoPutSync(Variable<T> &, const T *) { ThrowUp("DoPutSync"); } \

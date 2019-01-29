@@ -366,6 +366,9 @@ protected:
     /** From IO AddTransport */
     virtual void InitTransports();
 
+    /** Set Engine pointer inside existing variables in IO to this */
+    void SetVariablesEngine();
+
 #define declare_type(T)                                                        \
     virtual void DoPutSync(Variable<T> &, const T *);                          \
     virtual void DoPutDeferred(Variable<T> &, const T *);

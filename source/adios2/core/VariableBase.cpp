@@ -16,6 +16,7 @@
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 
 namespace adios2
@@ -208,7 +209,7 @@ size_t VariableBase::GetAvailableStepsCount() const
 
 void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 {
-    if (boxSteps.second == 0)
+    if (m_DebugMode && boxSteps.second == 0)
     {
         throw std::invalid_argument("ERROR: boxSteps.second count argument "
                                     " can't be zero, from variable " +
@@ -314,34 +315,11 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 
 Dims VariableBase::Shape() const
 {
-    if (m_AvailableShapes.empty())
+    if (m_RandomAccess)
     {
         return m_Shape;
     }
-
-    auto itStep = std::next(m_AvailableShapes.begin(), m_StepsStart);
-    const size_t step = itStep->first;
-
-    Dims shape;
-    auto itLowerBound = m_AvailableShapes.lower_bound(step);
-    if (itLowerBound->first == step) // it's found
-    {
-        shape = itLowerBound->second;
-    }
-    else
-    {
-        if (itLowerBound == m_AvailableShapes.begin()) // beginning
-        {
-            shape = itLowerBound->second;
-        }
-        else
-        {
-            --itLowerBound;
-            shape = itLowerBound->second;
-        }
-    }
-
-    return shape;
+    return m_Shape;
 }
 
 // PRIVATE
