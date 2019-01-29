@@ -38,18 +38,50 @@ std::shared_ptr<std::vector<char>>
 StagingMan::Request(const std::vector<char> &request,
                     const std::string &address)
 {
-    if (address.empty() == false)
+    auto reply = std::make_shared<std::vector<char>>();
+
+    int ret = m_Transport.Open(address, m_OpenMode);;
+    auto start_time = std::chrono::system_clock::now();
+    while(ret)
     {
-        m_Transport.Open(address, m_OpenMode);
+        ret = m_Transport.Open(address, m_OpenMode);
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
+        if (duration.count() > m_Timeout)
+        {
+            return reply;
+        }
     }
-    m_Transport.Write(request.data(), request.size());
-    int bytes = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
-    auto reply = std::make_shared<std::vector<char>>(bytes);
-    std::memcpy(reply->data(), m_Buffer.data(), bytes);
-    if (address.empty() == false)
+
+    ret = m_Transport.Write(request.data(), request.size());
+    start_time = std::chrono::system_clock::now();
+    while(ret < 1)
     {
-        m_Transport.Close();
+        ret = m_Transport.Write(request.data(), request.size());
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
+        if (duration.count() > m_Timeout)
+        {
+            return reply;
+        }
     }
+
+    ret = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
+    start_time = std::chrono::system_clock::now();
+    while(ret < 1)
+    {
+        ret = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
+        if (duration.count() > m_Timeout)
+        {
+            return reply;
+        }
+    }
+
+    reply->resize(ret);
+    std::memcpy(reply->data(), m_Buffer.data(), ret);
+    m_Transport.Close();
     return reply;
 }
 

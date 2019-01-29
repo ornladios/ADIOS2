@@ -130,12 +130,6 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
 void DataManSerializer::PutAggregatedMetadata(
     const MPI_Comm mpiComm, std::shared_ptr<std::vector<char>> data)
 {
-    int mpiSize;
-    int mpiRank;
-    MPI_Comm_size(mpiComm, &mpiSize);
-    MPI_Comm_rank(mpiComm, &mpiRank);
-    helper::BroadcastVector(*data, mpiComm);
-
     if(data->empty())
     {
         Log(1,"DataManSerializer::PutAggregatedMetadata tries to deserialize an empty json pack", true, true);

@@ -41,7 +41,7 @@ SocketZmqReqRep::~SocketZmqReqRep()
 }
 
 
-void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
+int SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
 {
     std::string openModeStr;
     int error = -1;
@@ -58,6 +58,7 @@ void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
         m_Socket = zmq_socket(m_Context, ZMQ_REQ);
         error = zmq_connect(m_Socket, fullAddress.c_str());
         zmq_setsockopt(m_Socket, ZMQ_SNDTIMEO, &m_Timeout, sizeof(m_Timeout));
+        zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
     }
     else
     {
@@ -74,19 +75,7 @@ void SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
         std::cout << std::endl;
     }
 
-    if (error)
-    {
-        throw std::runtime_error(
-            "[SocketZmqReqRep::Open] zmq_connect() failed with " +
-            std::to_string(error));
-    }
-
-    if (m_Socket == nullptr || m_Socket == NULL)
-    {
-        throw std::ios_base::failure(
-            "[SocketZmqReqRep::Open] couldn't open socket for address " +
-            fullAddress);
-    }
+    return error;
 }
 
 

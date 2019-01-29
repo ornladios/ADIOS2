@@ -62,37 +62,23 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
-    std::shared_ptr<std::vector<char>> reply = std::make_shared<std::vector<char>>();
+    auto reply = std::make_shared<std::vector<char>>();
     if(m_MpiRank == 0)
     {
         std::vector<char> request(1, 'M');
-        auto start_time = std::chrono::system_clock::now();
-        while (reply->size() <=1 )
-        {
-            reply = m_MetadataTransport->Request(request, m_FullAddresses[rand()%m_FullAddresses.size()]);
-            auto now_time = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
-            if (duration.count() > m_Timeout)
-            {
-                return StepStatus::EndOfStream;
-            }
-        }
+        reply = m_MetadataTransport->Request(request, m_FullAddresses[rand()%m_FullAddresses.size()]);
     }
 
-    if (m_Verbosity >= 100)
+    helper::BroadcastVector(*reply, m_MPIComm);
+
+    if(reply->empty())
     {
-            std::cout << "StagingReader::MetadataReqThread Cbor data, size =  " << reply->size() << std::endl;
-            std::cout << "========================" << std::endl;
-            for (auto i : *reply)
-            {
-                std::cout << i;
-            }
-            std::cout << std::endl << "========================" << std::endl;
+        Log(1, "StagingReader::BeginStep() lost connection to writer. End of stream.", true, true);
+        return StepStatus::EndOfStream;
     }
 
     m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
     m_DataManSerializer.GetAttributes(m_IO);
-
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
     size_t maxStep = std::numeric_limits<size_t>::min();
@@ -188,6 +174,11 @@ void StagingReader::PerformGets()
     for (const auto &i : *requests)
     {
         auto reply = m_DataTransport->Request(i.second, i.first);
+        if(reply->empty())
+        {
+            Log(1, "Lost connection to writer. Data for the final step is corrupted!", true, true);
+            return;
+        }
         if (reply->size() <= 16)
         {
             std::string msg = "Step " + std::to_string( m_CurrentStep) + " received empty data package from writer " +  i.first + ". This may be caused by a network failure.";
