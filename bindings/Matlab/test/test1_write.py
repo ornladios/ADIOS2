@@ -19,7 +19,7 @@ NRows = 5
 NCols = 6 
 
 shape = [NRows, NCols]
-start = [NRows, 0]
+start = [0, 0]
 count = [NRows, NCols]
 
 temperatures = numpy.zeros(NRows * NCols, dtype=numpy.int16)
