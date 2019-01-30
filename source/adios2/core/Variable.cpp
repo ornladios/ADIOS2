@@ -11,6 +11,7 @@
 #include "Variable.h"
 
 #include "adios2/ADIOSMacros.h"
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
 
 namespace adios2
@@ -61,6 +62,67 @@ namespace core
     T *Variable<T>::GetData() const noexcept                                   \
     {                                                                          \
         return m_Data;                                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    Dims Variable<T>::Shape(const size_t step) const                           \
+    {                                                                          \
+        if (!m_RandomAccess && m_Engine != nullptr)                            \
+        {                                                                      \
+            const size_t stepInput =                                           \
+                (step == EngineCurrentStep) ? m_Engine->CurrentStep() : step;  \
+            const std::vector<typename Variable<T>::Info> blocksInfo =         \
+                m_Engine->BlocksInfo<T>(*this, stepInput);                     \
+            if (blocksInfo.size() == 0)                                        \
+            {                                                                  \
+                return Dims();                                                 \
+            }                                                                  \
+            return blocksInfo.front().Shape;                                   \
+        }                                                                      \
+        return m_Shape;                                                        \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
+    {                                                                          \
+        std::pair<T, T> minMax;                                                \
+        minMax.first = {};                                                     \
+        minMax.second = {};                                                    \
+                                                                               \
+        if (!m_RandomAccess && m_Engine != nullptr)                            \
+        {                                                                      \
+            const size_t stepInput =                                           \
+                (step == EngineCurrentStep) ? m_Engine->CurrentStep() : step;  \
+            const std::vector<typename Variable<T>::Info> blocksInfo =         \
+                m_Engine->BlocksInfo<T>(*this, step);                          \
+            if (blocksInfo.size() == 0)                                        \
+            {                                                                  \
+                return minMax;                                                 \
+            }                                                                  \
+                                                                               \
+            minMax.first = blocksInfo.front().Min;                             \
+            minMax.second = blocksInfo.front().Max;                            \
+                                                                               \
+            for (const typename Variable<T>::Info &blockInfo : blocksInfo)     \
+            {                                                                  \
+                if (helper::LessThan<T>(blockInfo.Min, minMax.first))          \
+                {                                                              \
+                    minMax.first = blockInfo.Min;                              \
+                    continue;                                                  \
+                }                                                              \
+                                                                               \
+                if (helper::GreaterThan<T>(blockInfo.Max, minMax.second))      \
+                {                                                              \
+                    minMax.second = blockInfo.Max;                             \
+                }                                                              \
+            }                                                                  \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            minMax.first = m_Min;                                              \
+            minMax.second = m_Max;                                             \
+        }                                                                      \
+        return minMax;                                                         \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

@@ -134,10 +134,13 @@ public:
     adios2::ShapeID ShapeID() const;
 
     /**
-     * Inspects current shape
+     * Inspects shape in global variables
+     * @param step input for a particular Shape if changing over time. If
+     * default, either return absolute or in streaming mode it returns the shape
+     * for the current engine step
      * @return shape vector
      */
-    adios2::Dims Shape() const;
+    adios2::Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
 
     /**
      * Inspects current start point

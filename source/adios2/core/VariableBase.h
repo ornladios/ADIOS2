@@ -202,12 +202,6 @@ public:
      */
     void CheckRandomAccessConflict(const std::string hint) const;
 
-    /**
-     * Dynamically update the shape of a global variable
-     * @return
-     */
-    Dims Shape() const;
-
 protected:
     const bool m_DebugMode = false;
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count

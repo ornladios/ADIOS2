@@ -91,6 +91,10 @@ public:
     T *GetData() const noexcept;
 
     size_t SubStreamsInfoSize();
+
+    Dims Shape(const size_t step) const;
+
+    std::pair<T, T> MinMax(const size_t step) const;
 };
 
 } // end namespace core

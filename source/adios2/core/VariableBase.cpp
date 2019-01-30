@@ -313,15 +313,6 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
     }
 }
 
-Dims VariableBase::Shape() const
-{
-    if (m_RandomAccess)
-    {
-        return m_Shape;
-    }
-    return m_Shape;
-}
-
 // PRIVATE
 void VariableBase::InitShapeType()
 {
