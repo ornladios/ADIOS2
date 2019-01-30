@@ -48,6 +48,9 @@ public:
     /** from derived class */
     const std::string m_EngineType;
 
+    /** IO class object that creates this Engine at Open */
+    IO &m_IO;
+
     /** Unique name for this Engine within m_IO */
     const std::string m_Name;
 
@@ -338,9 +341,6 @@ public:
     BlocksInfo(const Variable<T> &variable, const size_t step) const;
 
 protected:
-    /** IO class object that creates this Engine at Open */
-    IO &m_IO;
-
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
     MPI_Comm m_MPIComm;
@@ -365,9 +365,6 @@ protected:
 
     /** From IO AddTransport */
     virtual void InitTransports();
-
-    /** Set Engine pointer inside existing variables in IO to this */
-    void SetVariablesEngine();
 
 #define declare_type(T)                                                        \
     virtual void DoPutSync(Variable<T> &, const T *);                          \
