@@ -421,6 +421,10 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         // Declare Single Value Attributes
         auto var = io.DefineVariable<int>("myVar");
@@ -457,6 +461,10 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
+        if (!engineName.empty())
+        {
+            ioRead.SetEngine(engineName);
+        }
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
@@ -620,7 +628,15 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         io.DefineAttribute<double>(r64_Array, currentTestData.R64.data(),
                                    currentTestData.R64.size(), var.Name());
 
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BPFile");
+        }
+
         io.AddTransport("file");
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
@@ -630,6 +646,10 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
+        if (!engineName.empty())
+        {
+            ioRead.SetEngine(engineName);
+        }
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 

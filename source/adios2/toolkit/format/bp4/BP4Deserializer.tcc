@@ -542,10 +542,6 @@ void BP4Deserializer::PostDataRead(
                            subStreamBoxInfo.Seeks.second);
     }
 
-    const Box<Dims> sourceStartCount = helper::StartCountBox(
-        subStreamBoxInfo.BlockBox.first, subStreamBoxInfo.BlockBox.second);
-
-// TODO: this should be a single BP4 deserializer function
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse =
         (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian) ? true
@@ -553,24 +549,17 @@ void BP4Deserializer::PostDataRead(
 #else
     constexpr bool endianReverse = false;
 #endif
-    if (variable.m_ShapeID == ShapeID::GlobalArray)
-    {
-        helper::CopyMemory(
-            blockInfo.Data, blockInfo.Start, blockInfo.Count,
-            isRowMajorDestination,
-            reinterpret_cast<T *>(m_ThreadBuffers[threadID][0].data()),
-            sourceStartCount.first, sourceStartCount.second, m_IsRowMajor,
-            endianReverse);
-    }
-    else if (variable.m_ShapeID == ShapeID::LocalArray)
-    {
-        helper::CopyMemory(
-            blockInfo.Data, Dims(blockInfo.Count.size(), 0), blockInfo.Count,
-            isRowMajorDestination,
-            reinterpret_cast<T *>(m_ThreadBuffers[threadID][0].data()),
-            sourceStartCount.first, sourceStartCount.second, m_IsRowMajor,
-            endianReverse);
-    }
+
+    const Dims blockInfoStart =
+        (variable.m_ShapeID == ShapeID::LocalArray && blockInfo.Start.empty())
+            ? Dims(blockInfo.Count.size(), 0)
+            : blockInfo.Start;
+
+    helper::ClipContiguousMemory(
+        blockInfo.Data, blockInfoStart, blockInfo.Count,
+        m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+        subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
+        endianReverse);
 }
 
 template <class T>
@@ -659,8 +648,17 @@ inline void BP4Deserializer::DefineVariableInIOPerStep<std::string>(
 
             if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
             {
-                ++variable->m_Shape[0];
-                ++variable->m_Count[0];
+                if (subsetPosition == initialPosition)
+                {
+                    // reset shape and count
+                    variable->m_Shape[0] = 1;
+                    variable->m_Count[0] = 1;
+                }
+                else
+                {
+                    ++variable->m_Shape[0];
+                    ++variable->m_Count[0];
+                }
             }
 
             variable->m_AvailableStepBlockIndexOffsets[step].push_back(
@@ -813,8 +811,17 @@ void BP4Deserializer::DefineVariableInIOPerStep(
 
             if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
             {
-                ++variable->m_Shape[0];
-                ++variable->m_Count[0];
+                if (subsetPosition == initialPosition)
+                {
+                    // reset shape and count
+                    variable->m_Shape[0] = 1;
+                    variable->m_Count[0] = 1;
+                }
+                else
+                {
+                    ++variable->m_Shape[0];
+                    ++variable->m_Count[0];
+                }
             }
 
             variable->m_AvailableStepBlockIndexOffsets[step].push_back(

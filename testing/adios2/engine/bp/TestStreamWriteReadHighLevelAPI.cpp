@@ -14,6 +14,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName;  // comes from command line
+
 class StreamWriteReadHighLevelAPI : public ::testing::Test
 {
 public:
@@ -47,9 +49,11 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
     // write test data using BP
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD);
+
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
+        
 #else
-        adios2::fstream oStream(fname, adios2::fstream::out);
+        adios2::fstream oStream(fname, adios2::fstream::out, engineName);
 #endif
 
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
@@ -182,9 +186,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
         EXPECT_FALSE(iStream);
 
 #ifdef ADIOS2_HAVE_MPI
-        iStream.open(fname, adios2::fstream::in, MPI_COMM_WORLD);
+        iStream.open(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
 #else
-        iStream.open(fname, adios2::fstream::in);
+        iStream.open(fname, adios2::fstream::in, engineName);
 #endif
 
         EXPECT_TRUE(iStream);
@@ -469,9 +473,11 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
     // write test data using ADIOS2
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD);
+
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
+
 #else
-        adios2::fstream oStream(fname, adios2::fstream::out);
+        adios2::fstream oStream(fname, adios2::fstream::out, engineName);
 #endif
 
         const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
@@ -505,9 +511,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
     // READ
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD);
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
 #else
-        adios2::fstream iStream(fname, adios2::fstream::in);
+        adios2::fstream iStream(fname, adios2::fstream::in, engineName);
 #endif
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
         const adios2::Dims count{Ny, Nx};
@@ -586,9 +592,11 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
     // write test data using ADIOS2
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD);
+
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
+
 #else
-        adios2::fstream oStream(fname, adios2::fstream::out);
+        adios2::fstream oStream(fname, adios2::fstream::out, engineName);
 #endif
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
@@ -625,9 +633,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD);
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
 #else
-        adios2::fstream iStream(fname, adios2::fstream::in);
+        adios2::fstream iStream(fname, adios2::fstream::in, engineName);
 #endif
 
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
@@ -688,13 +696,14 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
 
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD);
-        EXPECT_THROW(
-            oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD),
-            std::invalid_argument);
+
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
+        EXPECT_THROW(oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD, engineName),
+                     std::invalid_argument);
+
 #else
         adios2::fstream oStream(fname, adios2::fstream::out);
-        EXPECT_THROW(oStream.open("second", adios2::fstream::out),
+        EXPECT_THROW(oStream.open("second", adios2::fstream::out, engineName),
                      std::invalid_argument);
 #endif
     }
@@ -708,6 +717,10 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

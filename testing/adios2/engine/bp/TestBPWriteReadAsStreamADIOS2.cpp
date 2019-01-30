@@ -945,6 +945,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
     // simple writer to generate content
     {
         adios2::IO io = adios.DeclareIO("Writer");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         io.DefineVariable<float>("r32", shape, start, count,
                                  adios2::ConstantDims);
@@ -967,6 +971,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 #endif
     {
         adios2::IO io = adios.DeclareIO("ReaderWriter");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine reader = io.Open(fnameFloat, adios2::Mode::Read);
         adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
@@ -1000,6 +1008,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 #endif
     {
         adios2::IO io = adios.DeclareIO("Reader");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
         while (reader.BeginStep() == adios2::StepStatus::OK)
         {

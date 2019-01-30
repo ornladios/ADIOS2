@@ -1517,6 +1517,11 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
 #endif
     {
         adios2::IO io = adios.DeclareIO("StartCountWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.DefineVariable<int64_t>(
             "range", {static_cast<std::size_t>(Nx * mpiSize)},
             {static_cast<std::size_t>(Nx * mpiRank)}, {Nx});
@@ -1529,6 +1534,11 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
     // Reader
     {
         adios2::IO io = adios.DeclareIO("StartCountRead");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
         adios2::Variable<int64_t> varRange =
             io.InquireVariable<int64_t>("range");
