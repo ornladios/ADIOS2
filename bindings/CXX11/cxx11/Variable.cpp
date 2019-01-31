@@ -181,17 +181,24 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    T Variable<T>::Min() const                                                 \
+    std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Min");    \
-        return m_Variable->m_Min;                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::MinMax"); \
+        return m_Variable->MinMax(step);                                       \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    T Variable<T>::Max() const                                                 \
+    T Variable<T>::Min(const size_t step) const                                \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Min");    \
+        return m_Variable->Min(step);                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Max(const size_t step) const                                \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Max");    \
-        return m_Variable->m_Max;                                              \
+        return m_Variable->Max(step);                                          \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

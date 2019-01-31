@@ -11,7 +11,7 @@ add_library(adios2
   core/IO.cpp core/IO.tcc
   core/Operator.cpp
   core/Stream.cpp core/Stream.tcc
-  core/Variable.cpp 
+  core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
 

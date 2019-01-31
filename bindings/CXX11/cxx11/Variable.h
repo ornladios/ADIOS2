@@ -204,16 +204,34 @@ public:
     std::vector<Operation> Operations() const;
 
     /**
-     * Read mode only: return the absolute minimum for current variable
-     * @return minimum
+     * Read mode only: return minimum and maximum values for current variable at
+     * a step. For streaming mode (BeginStep/EndStep): use default (leave empty)
+     * for current Engine Step
+     * At random access mode (File Engines only): default = absolute MinMax
+     * @param step input step
+     * @return pair.first = min pair.second = max
      */
-    T Min() const;
+    std::pair<T, T> MinMax(const size_t step = adios2::DefaultSizeT) const;
 
     /**
-     * Read mode only: return the absolute maximum for current variable
-     * @return maximum
+     * Read mode only: return minimum values for current variable at
+     * a step. For streaming mode (within BeginStep/EndStep): use default (leave
+     * empty) for current Engine Step
+     * At random access mode (File Engines only): default = absolute MinMax
+     * @param step input step
+     * @return variable minimum
      */
-    T Max() const;
+    T Min(const size_t step = adios2::DefaultSizeT) const;
+
+    /**
+     * Read mode only: return minimum values for current variable at
+     * a step. For streaming mode (within BeginStep/EndStep): use default
+     * (leave empty) for current Engine Step
+     * At random access mode (File Engines only): default = absolute MinMax
+     * @param step input step
+     * @return variable minimum
+     */
+    T Max(const size_t step = adios2::DefaultSizeT) const;
 
     /** Contains sub-block information for a particular Variable<T> */
     struct Info

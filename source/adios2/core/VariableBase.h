@@ -59,12 +59,12 @@ public:
 
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
+
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
 
-    /** For read mode. true: SetStepSelection was used, only valid in File based
-     * engines, false: streaming */
-    bool m_RandomAccess = false;
+    /** For read mode, false: streaming */
+    bool m_RandomAccess = true;
 
     /** used in streaming mode, true: first variable encounter, false: variable
      * already encountered in previous step */

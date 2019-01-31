@@ -109,7 +109,7 @@ void read(adios2::ADIOS &adios)
         EXPECT_EQ(var.Shape()[0], nproc);
         EXPECT_EQ(var.Shape()[1], expected_shape);
 
-        i++;
+        ++i;
     }
 
     reader.Close();

@@ -283,10 +283,10 @@ bool VariableBase::IsValidStep(const size_t step) const noexcept
 
 void VariableBase::CheckRandomAccessConflict(const std::string hint) const
 {
-    if (m_DebugMode && m_RandomAccess)
+    if (m_DebugMode && m_RandomAccess && !m_FirstStreamingStep)
     {
         throw std::invalid_argument("ERROR: can't mix streaming and "
-                                    "random-access (call to StepStepSelection)"
+                                    "random-access (call to SetStepSelection)"
                                     "for variable " +
                                     m_Name + ", " + hint);
     }

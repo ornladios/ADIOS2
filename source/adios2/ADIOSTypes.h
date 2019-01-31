@@ -138,8 +138,10 @@ using cfloat = std::complex<float>;
 using cdouble = std::complex<double>;
 
 // Limit, using uint64_t to make it portable
-constexpr uint64_t MaxSizeT = std::numeric_limits<uint64_t>::max();
-constexpr uint64_t EngineCurrentStep = std::numeric_limits<size_t>::max();
+constexpr uint64_t MaxU64 = std::numeric_limits<uint64_t>::max();
+constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
+constexpr size_t DefaultSizeT = std::numeric_limits<size_t>::max();
+constexpr size_t EngineCurrentStep = std::numeric_limits<size_t>::max();
 
 // adios defaults
 #ifdef _WIN32
@@ -176,9 +178,9 @@ constexpr char PathSeparator =
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;
 constexpr size_t UnknownDim = 0;
-constexpr uint64_t JoinedDim = MaxSizeT - 1;
-constexpr uint64_t LocalValueDim = MaxSizeT - 2;
-constexpr uint64_t IrregularDim = MaxSizeT - 3;
+constexpr uint64_t JoinedDim = MaxU64 - 1;
+constexpr uint64_t LocalValueDim = MaxU64 - 2;
+constexpr uint64_t IrregularDim = MaxU64 - 3;
 constexpr bool ConstantDims = true;
 constexpr bool endl = true;
 
