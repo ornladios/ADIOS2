@@ -23,6 +23,8 @@ start = [0, 0]
 count = [NRows, NCols]
 
 temperatures = numpy.zeros(NRows * NCols, dtype=numpy.int16)
+npcols = numpy.array([NCols])
+nprows = numpy.array([NRows])
 
 value = (NRows * NCols) + 1
 for i in range(0, NRows):
@@ -30,11 +32,28 @@ for i in range(0, NRows):
         temperatures[i * NCols + j] = value
         value = value + 1
 
-# ADIOS2 high-level API for Write
-fw = adios2.open("test1.bp", "w")
-fw.write("note", 'This is an ADIOS2 output')
-fw.write("temperature2D", temperatures, shape, start, count)
-fw.write("nrows", numpy.array([NRows]))
-fw.write("ncols", numpy.array([NCols]))
-fw.close()
+# ADIOS2 low-level API for Write
+adios = adios2.ADIOS()
+io = adios.DeclareIO("writer")
+
+varStr = io.DefineVariable("note")
+varCols = io.DefineVariable("ncols", npcols)
+varRows = io.DefineVariable("nrows", nprows)
+varT = io.DefineVariable(
+    "temperature2D", temperatures, shape, start, count, adios2.ConstantDims)
+
+io.DefineAttribute("anote", "just a string")
+io.DefineAttribute("adimnames", ["rows", "cols"])
+npdims = numpy.array([NRows,NCols], dtype=numpy.int32)
+io.DefineAttribute("adims", npdims)
+
+
+fw = io.Open("test1.bp", adios2.Mode.Write)
+fw.Put(varStr, "This is an ADIOS2 output")
+fw.Put(varCols, npcols)
+fw.Put(varRows, nprows)
+fw.Put(varT, temperatures)
+fw.Close()
+
+
 

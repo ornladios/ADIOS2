@@ -14,23 +14,48 @@ import numpy
 import adios2
 import sys
 
+adios = adios2.ADIOS()
+io = adios.DeclareIO("reader")
+
+
 # ADIOS2 high-level API for Reading
-fr = adios2.open("test1.bp", "r")
+fr = io.Open("test1.bp", adios2.Mode.Read)
 
-inNRows = fr.read("nrows")
-print("# of rows = {0}".format(inNRows[0]))
 
-inNCols = fr.read("ncols")
-print("# of cols = {0}".format(inNCols[0]))
+anote = io.InquireAttribute("anote")
+adimnames = io.InquireAttribute("adimnames")
+adims = io.InquireAttribute("adims")
 
-inNote = fr.readstring("note")
-print("Note = {0}".format(inNote))
+dimNames = adimnames.DataString()
+dims = adims.Data()
 
-inTemperatures = fr.read("temperature2D")
-print("temperature2d array size =  " + str(inTemperatures.size))
+print("Info based on attributes in file:")
+print("  Dimensions  {0}  {1}".format(dimNames[0], dimNames[1]))
+print("               {0}     {1}".format(dims[0], dims[1]))
 
-for row in inTemperatures:
-    print(''.join(['{:4}'.format(item) for item in row]))
+nrows = numpy.zeros(1, dtype=numpy.int64)
+varRows = io.InquireVariable("nrows")
+fr.Get(varRows, nrows)
 
-fr.close()
+ncols = numpy.zeros(1, dtype=numpy.int64)
+varCols = io.InquireVariable("ncols")
+fr.Get(varCols, ncols)
+
+note="_______________________________________"
+varNote = io.InquireVariable("note")
+fr.Get(varNote, note, adios2.Mode.Sync)
+
+fr.PerformGets()
+
+print("# of rows = {0}".format(nrows[0]))
+print("# of cols = {0}".format(ncols[0]))
+print("Note = {0}".format(note))
+#
+#inTemperatures = fr.read("temperature2D")
+#print("temperature2d array size = " + str(inTemperatures.size))
+#
+#for row in inTemperatures:
+#    print(''.join(['{:7}'.format(item) for item in row]))
+#
+fr.Close()
 
