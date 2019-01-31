@@ -42,29 +42,15 @@ StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     ++m_CurrentStep;
 
-    int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps - 1;
 
-    if(stepToErase > 0)
+    if (m_DataManSerializer.Steps() > m_MaxBufferSteps)
     {
-        m_DataManSerializer.Erase(stepToErase);
-    }
-
-    if(m_QueueFullPolicy == "Block")
-    {
-        while (m_DataManSerializer.Steps() >= m_MaxBufferSteps + 1)
+        int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps;
+        if(stepToErase > 0)
         {
+            Log(5, "StagingWriter::BeginStep() reaching max buffer steps, removing Step " + std::to_string(stepToErase), true, true);
+            m_DataManSerializer.Erase(stepToErase);
         }
-    }
-
-    if (m_DataManSerializer.Steps() >= m_MaxBufferSteps)
-    {
-        m_IsActive = false;
-        Log(5, "StagingWriter::BeginStep() buffer full skipping step " + std::to_string(m_CurrentStep), true, true);
-        return StepStatus::NotReady;
-    }
-    else
-    {
-        m_IsActive = true;
     }
 
     m_DataManSerializer.New(m_DefaultBufferSize);
@@ -85,20 +71,12 @@ void StagingWriter::EndStep()
 {
     Log(5, "StagingWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep), true, false);
 
-    if (m_IsActive)
+    m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
+    auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
     {
-        Log(5, " is active", false, true);
-        m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-        auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
-        {
-            std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
-            m_LockedAggregatedMetadata.first = m_CurrentStep;
-            m_LockedAggregatedMetadata.second = aggMetadata;
-        }
-    }
-    else
-    {
-        Log(5, " is not active", false, true);
+        std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
+        m_LockedAggregatedMetadata.first = m_CurrentStep;
+        m_LockedAggregatedMetadata.second = aggMetadata;
     }
 
     Log(5, "StagingWriter::EndStep() end. Step " + std::to_string(m_CurrentStep), true, true);
@@ -235,7 +213,6 @@ void StagingWriter::ReplyThread(std::string address)
                 aggStep =  m_LockedAggregatedMetadata.first;
                 m_LockedAggregatedMetadata.second = nullptr;
             }
-            m_DataManSerializer.ProtectStep(aggStep);
             tpm.SendReply(aggMetadata);
 
             if (m_Verbosity >= 100)
@@ -251,7 +228,14 @@ void StagingWriter::ReplyThread(std::string address)
             tpm.SendReply(reply);
             if(reply->size() <= 16)
             {
-                throw(std::runtime_error("sending empty package"));
+                if(m_Tolerance)
+                {
+                    Log(1, "StagingWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again.",true, true);
+                }
+                else
+                {
+                    throw(std::runtime_error("StagingWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again."));
+                }
             }
         }
     }

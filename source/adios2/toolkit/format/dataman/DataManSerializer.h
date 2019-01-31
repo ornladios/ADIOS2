@@ -135,8 +135,6 @@ public:
     size_t MinStep();
     size_t Steps();
 
-    void ProtectStep(const size_t step);
-    void UnprotectStep(const size_t step, const bool allPreviousSteps);
 
 private:
     template <class T>
@@ -187,9 +185,6 @@ private:
         m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
 
-    size_t m_CurrentStepBeingRequested;
-    std::mutex m_CurrentStepBeingRequestedMutex;
-
     // for global variables and attributes, needs mutex
     nlohmann::json m_GlobalVars;
     std::mutex m_GlobalVarsMutex;
@@ -201,15 +196,11 @@ private:
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
 
-    // steps being prevented from erasing, accessed from multiple writer IO threads, needs mutex
-    std::vector<size_t> m_ProtectedSteps;
-    std::mutex m_ProtectedStepsMutex;
-
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
 
-    int m_Verbosity = 1;
+    int m_Verbosity = 0;
 };
 
 } // end namespace format

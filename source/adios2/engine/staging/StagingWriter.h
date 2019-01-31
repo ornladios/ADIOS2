@@ -44,10 +44,9 @@ public:
 private:
 
     // API parameters
-    int m_Channels = 10;
-    int64_t m_MaxBufferSteps = 300;
+    int m_Channels = 1;
+    int64_t m_MaxBufferSteps = 3000;
     size_t m_DefaultBufferSize = 1024;
-    std::string m_QueueFullPolicy = "Discard"; // Discard / Block
 
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;
@@ -56,7 +55,7 @@ private:
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 5;
     bool m_Listening = false;
-    bool m_IsActive = true;
+    bool m_Tolerance = false;
 
     // metadata for current step being written.
     std::pair<int64_t, std::shared_ptr<std::vector<char>>> m_LockedAggregatedMetadata;
@@ -97,7 +96,7 @@ private:
 
     void Log(const int level, const std::string &message, const bool mpi, const bool endline);
 
-    int m_Verbosity = 5;
+    int m_Verbosity = 11;
 };
 
 } // end namespace engine

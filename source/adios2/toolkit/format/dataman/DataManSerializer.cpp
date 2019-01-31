@@ -65,11 +65,6 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     MPI_Comm_size(mpiComm, &mpiSize);
     MPI_Comm_rank(mpiComm, &mpiRank);
 
-    {
-        std::lock_guard<std::mutex> l(m_CurrentStepBeingRequestedMutex);
-        m_MetadataJson["C"] = m_CurrentStepBeingRequested;
-    }
-
     std::vector<char> localJsonPack = SerializeJson(m_MetadataJson);
     unsigned int size = localJsonPack.size();
     unsigned int maxSize;
@@ -89,15 +84,6 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     {
         size_t deserializeSize = *(reinterpret_cast<uint64_t *>(globalJsonStr.data() + (i + 1) * maxSize) - 1);
         nlohmann::json metaj = DeserializeJson( globalJsonStr.data() + i * maxSize, deserializeSize);
-        auto c = metaj.find("C");
-        if(c != metaj.end())
-        {
-            if(*c < minCurrentStep)
-            {
-                minCurrentStep = *c;
-            }
-            metaj.erase(c);
-        }
         for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end(); ++stepMapIt)
         {
             for (auto rankMapIt = stepMapIt.value().begin(); rankMapIt != stepMapIt.value().end(); ++rankMapIt)
@@ -107,12 +93,6 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
         }
     }
     globalJsonPack = std::make_shared<std::vector<char>>(std::move(SerializeJson(globalMetadata)));
-
-    m_MetadataJson.erase("C");
-    if(minCurrentStep >=1)
-    {
-        UnprotectStep(minCurrentStep - 1, true);
-    }
 
     if(m_Verbosity >=1)
     {
@@ -363,34 +343,6 @@ int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
     return 0;
 }
 
-void DataManSerializer::ProtectStep(const size_t step)
-{
-    std::lock_guard<std::mutex> l(m_ProtectedStepsMutex);
-    m_ProtectedSteps.push_back(step);
-}
-
-void DataManSerializer::UnprotectStep(const size_t step, const bool allPreviousSteps)
-{
-    std::lock_guard<std::mutex> l(m_ProtectedStepsMutex);
-    for(size_t i=0; i<m_ProtectedSteps.size(); ++i)
-    {
-        if(allPreviousSteps)
-        {
-            if(m_ProtectedSteps[i] <= step)
-            {
-                m_ProtectedSteps.erase(m_ProtectedSteps.begin() + i);
-            }
-        }
-        else
-        {
-            if(m_ProtectedSteps[i] == step)
-            {
-                m_ProtectedSteps.erase(m_ProtectedSteps.begin() + i);
-            }
-        }
-    }
-}
-
 void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 {
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
@@ -571,11 +523,6 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
         Dims count = req["C"].get<Dims>();
         step = req["T"].get<size_t>();
 
-        {
-            std::lock_guard<std::mutex> l(m_CurrentStepBeingRequestedMutex);
-            m_CurrentStepBeingRequested = step;
-        }
-
         std::shared_ptr<std::vector<DataManVar>> varVec;
 
         {
@@ -593,7 +540,6 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
                     }
                     Log(1, msg, true, true);
                 }
-                throw(std::runtime_error("DataManSerializer::GenerateReply() received staging request but DataManVarMap does not have Step "));
                 step = -2;
                 return replyLocalBuffer;
             }

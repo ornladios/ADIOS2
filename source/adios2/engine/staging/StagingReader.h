@@ -41,7 +41,7 @@ public:
     void EndStep() final;
 
 private:
-    bool m_Tolerance = false;
+    bool m_Tolerance = true;
     format::DataManSerializer m_DataManSerializer;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
     std::shared_ptr<transportman::StagingMan> m_MetadataTransport;
@@ -52,7 +52,7 @@ private:
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     std::vector<std::string> m_FullAddresses;
-    int m_Timeout = 5;
+    int m_Timeout = 3;
 
     struct Request
     {

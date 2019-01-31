@@ -26,11 +26,8 @@ template <class T>
 void StagingWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     Log(5, "StagingWriter::PutSync(" + variable.m_Name + ") begin. Current step " + std::to_string(m_CurrentStep), true, true);
-    if (m_IsActive)
-    {
-        variable.SetData(data);
-        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
-    }
+    variable.SetData(data);
+    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
     Log(5, "StagingWriter::PutSync(" + variable.m_Name + ") end. Current step " + std::to_string(m_CurrentStep), true, true);
 }
 
@@ -38,11 +35,8 @@ template <class T>
 void StagingWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     Log(5, "StagingWriter::PutDeferred(" + variable.m_Name + ") start. Current step " + std::to_string(m_CurrentStep), true,true);
-    if (m_IsActive)
-    {
-        variable.SetData(data);
-        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
-    }
+    variable.SetData(data);
+    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
     Log(5, "StagingWriter::PutDeferred(" + variable.m_Name + ") end. Current step " + std::to_string(m_CurrentStep), true,true);
 }
 
