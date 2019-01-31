@@ -238,11 +238,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         char varname[adios2_string_array_element_max_size];
 
         adios2_variable_name(varname, &namelen, avar);
+        varname[namelen] = '\0';
         mxSetFieldByNumber(vars, vi, var_field_Name, mxCreateString(varname));
         /* field TYPE */
-        adios2_type *adiostype;
-        adios2_variable_type(adiostype, avar);
-        mxtype = adiostypeToMatlabClass(*adiostype, &complexFlag);
+        adios2_type adiostype;
+        adios2_variable_type(&adiostype, avar);
+        mxtype = adiostypeToMatlabClass(adiostype, &complexFlag);
         arr = mxCreateNumericMatrix(1, 1, mxtype, complexFlag);
         mxSetFieldByNumber(vars, vi, var_field_Type,
                            mxCreateString(mxGetClassName(arr)));
