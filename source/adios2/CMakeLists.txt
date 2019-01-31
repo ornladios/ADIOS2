@@ -113,17 +113,17 @@ if(ADIOS2_HAVE_DataMan)
   target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
-if(ADIOS2_HAVE_Staging)
+if(ADIOS2_HAVE_WDM)
 if(ADIOS2_HAVE_ZeroMQ)
   target_sources(adios2 PRIVATE
       toolkit/transportman/stagingman/StagingMan.cpp
       toolkit/transportman/stagingman/StagingMan.h
-      engine/staging/StagingReader.cpp
-      engine/staging/StagingReader.h
-      engine/staging/StagingReader.tcc
-      engine/staging/StagingWriter.cpp
-      engine/staging/StagingWriter.h
-      engine/staging/StagingWriter.tcc
+      engine/wdm/WdmReader.cpp
+      engine/wdm/WdmReader.h
+      engine/wdm/WdmReader.tcc
+      engine/wdm/WdmWriter.cpp
+      engine/wdm/WdmWriter.h
+      engine/wdm/WdmWriter.tcc
   )
   target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
 endif()

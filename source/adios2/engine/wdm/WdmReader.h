@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * StagingReader.h
+ * WdmReader.h
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
@@ -26,13 +26,13 @@ namespace core
 namespace engine
 {
 
-class StagingReader : public Engine
+class WdmReader : public Engine
 {
 public:
-    StagingReader(IO &adios, const std::string &name, const Mode mode,
+    WdmReader(IO &adios, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
-    ~StagingReader();
+    ~WdmReader();
     StepStatus BeginStep(
         StepMode mode = StepMode::NextAvailable,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;

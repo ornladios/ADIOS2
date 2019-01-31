@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * StagingReader.tcc
+ * WdmReader.tcc
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_STAGINGREADER_TCC_
 #define ADIOS2_ENGINE_STAGINGREADER_TCC_
 
-#include "StagingReader.h"
+#include "WdmReader.h"
 
 #include <iostream>
 
@@ -23,32 +23,32 @@ namespace engine
 {
 
 template <>
-inline void StagingReader::GetSyncCommon(Variable<std::string> &variable,
+inline void WdmReader::GetSyncCommon(Variable<std::string> &variable,
                                          std::string *data)
 {
-    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") begin", true, true);
+    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") begin", true, true);
 
     GetDeferredCommon(variable, data);
     PerformGets();
 
-    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") end", true, true);
+    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") end", true, true);
 }
 
 template <class T>
-inline void StagingReader::GetSyncCommon(Variable<T> &variable, T *data)
+inline void WdmReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") begin", true, true);
+    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") begin", true, true);
 
     GetDeferredCommon(variable, data);
     PerformGets();
 
-    Log(5, "StagingReader::GetSync(" + variable.m_Name + ") end", true, true);
+    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") end", true, true);
 }
 
 template <class T>
-void StagingReader::GetDeferredCommon(Variable<T> &variable, T *data)
+void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "StagingReader::GetDeferred(" + variable.m_Name + ") begin", true, true);
+    Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") begin", true, true);
 
     m_DataManSerializer.PutDeferredRequest(variable.m_Name, CurrentStep(),
                                            variable.m_Start, variable.m_Count,
@@ -62,11 +62,11 @@ void StagingReader::GetDeferredCommon(Variable<T> &variable, T *data)
     req.data = data;
     req.type = helper::GetType<T>();
 
-    Log(5, "StagingReader::GetDeferred(" + variable.m_Name + ") end", true, true);
+    Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") end", true, true);
 }
 
 template <typename T>
-void StagingReader::CheckIOVariable(const std::string &name, const Dims &shape,
+void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
                                     const Dims &start, const Dims &count)
 {
     auto v = m_IO.InquireVariable<T>(name);

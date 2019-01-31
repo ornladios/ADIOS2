@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * StagingWriter.h
+ * WdmWriter.h
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
@@ -24,14 +24,14 @@ namespace core
 namespace engine
 {
 
-class StagingWriter : public Engine
+class WdmWriter : public Engine
 {
 
 public:
-    StagingWriter(IO &adios, const std::string &name, const Mode mode,
+    WdmWriter(IO &adios, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
 
-    ~StagingWriter() = default;
+    ~WdmWriter() = default;
 
     StepStatus BeginStep(
         StepMode mode,

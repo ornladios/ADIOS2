@@ -26,9 +26,9 @@
 #include "adios2/engine/dataman/DataManWriter.h"
 #endif
 
-#ifdef ADIOS2_HAVE_STAGING // external dependencies
-#include "adios2/engine/staging/WdmReader.h"
-#include "adios2/engine/staging/WdmWriter.h"
+#ifdef ADIOS2_HAVE_WDM // external dependencies
+#include "adios2/engine/wdm/WdmReader.h"
+#include "adios2/engine/wdm/WdmWriter.h"
 #endif
 
 #ifdef ADIOS2_HAVE_SST // external dependencies

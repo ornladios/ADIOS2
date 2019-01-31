@@ -107,7 +107,7 @@ adios_option(SZ        "Enable support for SZ transforms" AUTO)
 adios_option(MGARD     "Enable support for MGARD transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
-adios_option(Staging   "Enable support for Staging" AUTO)
+adios_option(WDM       "Enable support for WDM" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
@@ -133,8 +133,7 @@ if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-    BZip2 ZFP SZ MGARD MPI DataMan WDM SST ZeroMQ HDF5 Python Fortran SysVShMem
-  Endian_Reverse
+    BZip2 ZFP SZ MGARD MPI DataMan WDM SST ZeroMQ HDF5 Python Fortran SysVShMem Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(

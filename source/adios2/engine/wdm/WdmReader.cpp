@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * StagingReader.cpp
+ * WdmReader.cpp
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#include "StagingReader.h"
-#include "StagingReader.tcc"
+#include "WdmReader.h"
+#include "WdmReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -25,9 +25,9 @@ namespace core
 namespace engine
 {
 
-StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
+WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("StagingReader", io, name, mode, mpiComm),
+: Engine("WdmReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian())
 {
@@ -35,7 +35,7 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
         mpiComm, Mode::Read, m_Timeout, 1e9);
     m_MetadataTransport = std::make_shared<transportman::StagingMan>(
         mpiComm, Mode::Read, m_Timeout, 1e6);
-    m_EndMessage = " in call to IO Open StagingReader " + m_Name + "\n";
+    m_EndMessage = " in call to IO Open WdmReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
     if (m_Verbosity >= 5)
@@ -45,7 +45,7 @@ StagingReader::StagingReader(IO &io, const std::string &name, const Mode mode,
     }
 }
 
-StagingReader::~StagingReader()
+WdmReader::~WdmReader()
 {
     if (m_Verbosity >= 5)
     {
@@ -54,11 +54,11 @@ StagingReader::~StagingReader()
     }
 }
 
-StepStatus StagingReader::BeginStep(const StepMode stepMode,
+StepStatus WdmReader::BeginStep(const StepMode stepMode,
                                     const float timeoutSeconds)
 {
 
-    Log(5, "StagingReader::BeginStep() start. Last step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmReader::BeginStep() start. Last step " + std::to_string(m_CurrentStep), true, true);
 
     ++m_CurrentStep;
 
@@ -73,7 +73,7 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
 
     if(reply->empty())
     {
-        Log(1, "StagingReader::BeginStep() lost connection to writer. End of stream.", true, true);
+        Log(1, "WdmReader::BeginStep() lost connection to writer. End of stream.", true, true);
         return StepStatus::EndOfStream;
     }
 
@@ -107,7 +107,7 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
     else
     {
         throw(std::invalid_argument(
-            "[StagingReader::BeginStep] Step mode is not supported!"));
+            "[WdmReader::BeginStep] Step mode is not supported!"));
     }
 
     std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>> vars =
@@ -145,21 +145,21 @@ StepStatus StagingReader::BeginStep(const StepMode stepMode,
         }
     }
 
-    Log(5, "StagingReader::BeginStep() start. Last step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmReader::BeginStep() start. Last step " + std::to_string(m_CurrentStep), true, true);
 
     return StepStatus::OK;
 }
 
-void StagingReader::PerformGets()
+void WdmReader::PerformGets()
 {
 
-    Log(5, "StagingReader::PerformGets() begin", true, true);
+    Log(5, "WdmReader::PerformGets() begin", true, true);
 
     auto requests = m_DataManSerializer.GetDeferredRequest();
 
     if (m_Verbosity >= 10)
     {
-        Log(10, "StagingReader::PerformGets() processing deferred requests ",true,false);
+        Log(10, "WdmReader::PerformGets() processing deferred requests ",true,false);
         for(const auto &i : *requests)
         {
             std::cout << i.first << ": ";
@@ -193,7 +193,7 @@ void StagingReader::PerformGets()
         }
         else
         {
-            Log(6, "StagingReader::PerformGets() put reply of size "+ std::to_string(reply->size()) +" into serializer", true, true);
+            Log(6, "WdmReader::PerformGets() put reply of size "+ std::to_string(reply->size()) +" into serializer", true, true);
             m_DataManSerializer.PutPack(reply);
         }
     }
@@ -220,7 +220,7 @@ void StagingReader::PerformGets()
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \
                                    req.step);                                  \
-        Log(6, "StagingReader::PerformGets() get variable "+ req.variable +" from serializer", true, true);\
+        Log(6, "WdmReader::PerformGets() get variable "+ req.variable +" from serializer", true, true);\
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -228,29 +228,29 @@ void StagingReader::PerformGets()
 
     m_DeferredRequests.clear();
 
-    Log(5, "StagingReader::PerformGets() end", true, true);
+    Log(5, "WdmReader::PerformGets() end", true, true);
 }
 
-size_t StagingReader::CurrentStep() const { return m_CurrentStep; }
+size_t WdmReader::CurrentStep() const { return m_CurrentStep; }
 
-void StagingReader::EndStep()
+void WdmReader::EndStep()
 {
-    Log(5, "StagingReader::EndStep() start. Step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmReader::EndStep() start. Step " + std::to_string(m_CurrentStep), true, true);
 
     PerformGets();
     m_DataManSerializer.Erase(CurrentStep());
 
-    Log(5, "StagingReader::EndStep() end. Step " + std::to_string(m_CurrentStep),true ,true);
+    Log(5, "WdmReader::EndStep() end. Step " + std::to_string(m_CurrentStep),true ,true);
 }
 
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void StagingReader::DoGetSync(Variable<T> &variable, T *data)              \
+    void WdmReader::DoGetSync(Variable<T> &variable, T *data)              \
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
-    void StagingReader::DoGetDeferred(Variable<T> &variable, T *data)          \
+    void WdmReader::DoGetDeferred(Variable<T> &variable, T *data)          \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }
@@ -258,14 +258,14 @@ void StagingReader::EndStep()
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void StagingReader::Init()
+void WdmReader::Init()
 {
     srand (time(NULL));
     InitParameters();
     Handshake();
 }
 
-void StagingReader::InitParameters()
+void WdmReader::InitParameters()
 {
     for (const auto &pair : m_IO.m_Parameters)
     {
@@ -290,11 +290,11 @@ void StagingReader::InitParameters()
     }
 }
 
-void StagingReader::InitTransports()
+void WdmReader::InitTransports()
 {
 }
 
-void StagingReader::Handshake()
+void WdmReader::Handshake()
 {
     transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
     ipstream.Open(".StagingHandshake", Mode::Read);
@@ -306,7 +306,7 @@ void StagingReader::Handshake()
     m_FullAddresses = j.get<std::vector<std::string>>();
 }
 
-void StagingReader::DoClose(const int transportIndex)
+void WdmReader::DoClose(const int transportIndex)
 {
     if (m_Verbosity >= 5)
     {
@@ -315,7 +315,7 @@ void StagingReader::DoClose(const int transportIndex)
     }
 }
 
-void StagingReader::Log(const int level, const std::string &message, const bool mpi, const bool endline)
+void WdmReader::Log(const int level, const std::string &message, const bool mpi, const bool endline)
 {
     if (m_Verbosity >= level)
     {

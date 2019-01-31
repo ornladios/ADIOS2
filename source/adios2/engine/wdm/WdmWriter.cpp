@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * StagingWriter.cpp
+ * WdmWriter.cpp
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#include "StagingWriter.h"
-#include "StagingWriter.tcc"
+#include "WdmWriter.h"
+#include "WdmWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -25,20 +25,20 @@ namespace core
 namespace engine
 {
 
-StagingWriter::StagingWriter(IO &io, const std::string &name, const Mode mode,
+WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine("StagingWriter", io, name, mode, mpiComm),
+: Engine("WdmWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian())
 {
-    Log(5, "StagingWriter::StagingWriter()", true, true);
+    Log(5, "WdmWriter::WdmWriter()", true, true);
     Init();
 }
 
-StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
+StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
 
-    Log(5, "StagingWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
 
     ++m_CurrentStep;
 
@@ -48,7 +48,7 @@ StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps;
         if(stepToErase > 0)
         {
-            Log(5, "StagingWriter::BeginStep() reaching max buffer steps, removing Step " + std::to_string(stepToErase), true, true);
+            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing Step " + std::to_string(stepToErase), true, true);
             m_DataManSerializer.Erase(stepToErase);
         }
     }
@@ -56,20 +56,20 @@ StepStatus StagingWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     m_DataManSerializer.New(m_DefaultBufferSize);
     m_DataManSerializer.PutAttributes(m_IO, m_MpiRank);
 
-    Log(5, "StagingWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep), true,true);
+    Log(5, "WdmWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep), true,true);
     return StepStatus::OK;
 }
 
-size_t StagingWriter::CurrentStep() const
+size_t WdmWriter::CurrentStep() const
 {
     return m_CurrentStep;
 }
 
-void StagingWriter::PerformPuts() {}
+void WdmWriter::PerformPuts() {}
 
-void StagingWriter::EndStep()
+void WdmWriter::EndStep()
 {
-    Log(5, "StagingWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep), true, false);
+    Log(5, "WdmWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep), true, false);
 
     m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
     auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
@@ -79,28 +79,28 @@ void StagingWriter::EndStep()
         m_LockedAggregatedMetadata.second = aggMetadata;
     }
 
-    Log(5, "StagingWriter::EndStep() end. Step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep), true, true);
 }
 
-void StagingWriter::Flush(const int transportIndex)
+void WdmWriter::Flush(const int transportIndex)
 {
 }
 
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void StagingWriter::DoPutSync(Variable<T> &variable, const T *data)        \
+    void WdmWriter::DoPutSync(Variable<T> &variable, const T *data)        \
     {                                                                          \
         PutSyncCommon(variable, data);                                         \
     }                                                                          \
-    void StagingWriter::DoPutDeferred(Variable<T> &variable, const T *data)    \
+    void WdmWriter::DoPutDeferred(Variable<T> &variable, const T *data)    \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void StagingWriter::Init()
+void WdmWriter::Init()
 {
     MPI_Comm_rank(m_MPIComm, &m_MpiRank);
     MPI_Comm_size(m_MPIComm, &m_MpiSize);
@@ -110,7 +110,7 @@ void StagingWriter::Init()
     InitTransports();
 }
 
-void StagingWriter::InitParameters()
+void WdmWriter::InitParameters()
 {
     for (const auto &pair : m_IO.m_Parameters)
     {
@@ -135,16 +135,16 @@ void StagingWriter::InitParameters()
     }
 }
 
-void StagingWriter::InitTransports()
+void WdmWriter::InitTransports()
 {
     m_Listening = true;
     for(const auto &address : m_FullAddresses)
     {
-        m_ReplyThreads.emplace_back( std::thread(&StagingWriter::ReplyThread, this, address));
+        m_ReplyThreads.emplace_back( std::thread(&WdmWriter::ReplyThread, this, address));
     }
 }
 
-void StagingWriter::Handshake()
+void WdmWriter::Handshake()
 {
     auto ips = helper::AvailableIpAddresses();
 
@@ -156,7 +156,7 @@ void StagingWriter::Handshake()
     }
     else
     {
-        Log(1, "StagingWriter::Handshake() Cound not find any available IP address. Using local address 127.0.0.1", true, true);
+        Log(1, "WdmWriter::Handshake() Cound not find any available IP address. Using local address 127.0.0.1", true, true);
     }
 
     for(int i=0; i<m_Channels; ++i)
@@ -194,7 +194,7 @@ void StagingWriter::Handshake()
     }
 }
 
-void StagingWriter::ReplyThread(std::string address)
+void WdmWriter::ReplyThread(std::string address)
 {
     transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
     tpm.OpenTransport(address);
@@ -217,7 +217,7 @@ void StagingWriter::ReplyThread(std::string address)
 
             if (m_Verbosity >= 100)
             {
-                Log(100,"StagingWriter::MetadataRepThread() sending metadata pack, size =  " + std::to_string( aggMetadata->size()), true, true) ;
+                Log(100,"WdmWriter::MetadataRepThread() sending metadata pack, size =  " + std::to_string( aggMetadata->size()), true, true) ;
                 std::cout << nlohmann::json::parse(*aggMetadata).dump(4) << std::endl;
             }
         }
@@ -230,18 +230,18 @@ void StagingWriter::ReplyThread(std::string address)
             {
                 if(m_Tolerance)
                 {
-                    Log(1, "StagingWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again.",true, true);
+                    Log(1, "WdmWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again.",true, true);
                 }
                 else
                 {
-                    throw(std::runtime_error("StagingWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again."));
+                    throw(std::runtime_error("WdmWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again."));
                 }
             }
         }
     }
 }
 
-void StagingWriter::DoClose(const int transportIndex)
+void WdmWriter::DoClose(const int transportIndex)
 {
     MPI_Barrier(m_MPIComm);
     m_Listening = false;
@@ -253,10 +253,10 @@ void StagingWriter::DoClose(const int transportIndex)
         }
     }
 
-    Log(5, "StagingWriter::DoClose(" + m_Name + ")", true, true);
+    Log(5, "WdmWriter::DoClose(" + m_Name + ")", true, true);
 
 }
-void StagingWriter::Log(const int level, const std::string &message, const bool mpi, const bool endline)
+void WdmWriter::Log(const int level, const std::string &message, const bool mpi, const bool endline)
 {
     if (m_Verbosity >= level)
     {
