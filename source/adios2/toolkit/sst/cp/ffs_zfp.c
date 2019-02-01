@@ -182,9 +182,8 @@ void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount, char *Type,
     int status = zfp_decompress(stream, out_field);
 
     if (!status)
-        fprintf(stderr,
-                "ERROR: zfp failed with status %d, in call to "
-                "CompressZfp Decompress\n",
+        fprintf(stderr, "ERROR: zfp failed with status %d, in call to "
+                        "CompressZfp Decompress\n",
                 status);
 
     zfp_field_free(out_field);
