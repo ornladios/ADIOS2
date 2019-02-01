@@ -27,6 +27,9 @@ namespace adios2
 namespace core
 {
 
+// forward declaration for reading streaming mode
+class Engine;
+
 /** Base class for Variable<T> (primitives) and VariableCompound classes */
 class VariableBase
 {
@@ -56,12 +59,12 @@ public:
 
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
+
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
 
-    /** For read mode. true: SetStepSelection was used, only valid in File based
-     * engines, false: streaming */
-    bool m_RandomAccess = false;
+    /** For read mode, false: streaming */
+    bool m_RandomAccess = true;
 
     /** used in streaming mode, true: first variable encounter, false: variable
      * already encountered in previous step */
@@ -91,6 +94,8 @@ public:
     /** Index Metadata Position in a serial metadata buffer */
     size_t m_IndexStart = 0;
 
+    Engine *m_Engine = nullptr;
+
     /** Index to Step and blocks' (inside a step) characteristics position in a
      * serial metadata buffer
      * <pre>
@@ -99,6 +104,8 @@ public:
      * </pre>
      * */
     std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
+
+    std::map<size_t, Dims> m_AvailableShapes;
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,

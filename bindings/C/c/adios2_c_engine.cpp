@@ -199,7 +199,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
                   "in call to adios2_put_by_name");
 
         const std::string type(
-            engineCpp.GetIO().InquireVariableType(variable_name));
+            engineCpp.m_IO.InquireVariableType(variable_name));
 
         if (type == "compound")
         {
@@ -298,7 +298,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
             mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
                   "in call to adios2_get_by_name");
         const std::string type(
-            engineCpp.GetIO().InquireVariableType(variable_name));
+            engineCpp.m_IO.InquireVariableType(variable_name));
 
         if (type == "compound")
         {

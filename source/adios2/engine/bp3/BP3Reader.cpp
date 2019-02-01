@@ -167,7 +167,7 @@ void BP3Reader::InitBuffer()
     helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
-    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
+    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);
 }
 
 #define declare_type(T)                                                        \

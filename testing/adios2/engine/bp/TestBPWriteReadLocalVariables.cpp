@@ -190,12 +190,14 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
                       adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Min(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Max(), NSteps - 1);
+            EXPECT_EQ(var_StepsGlobalValue.Min(),
+                      static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Max(),
+                      static_cast<int32_t>(currentStep));
             int32_t stepsGlobalValueData;
             bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData,
                          adios2::Mode::Sync);
-            EXPECT_EQ(stepsGlobalValueData, currentStep);
+            EXPECT_EQ(stepsGlobalValueData, static_cast<int32_t>(currentStep));
 
             EXPECT_TRUE(var_StepsGlobalValueString);
             EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
@@ -565,12 +567,14 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
                       adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Min(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Max(), NSteps - 1);
+            EXPECT_EQ(var_StepsGlobalValue.Min(),
+                      static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Max(),
+                      static_cast<int32_t>(currentStep));
             int32_t stepsGlobalValueData;
             bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData,
                          adios2::Mode::Sync);
-            EXPECT_EQ(stepsGlobalValueData, currentStep);
+            EXPECT_EQ(stepsGlobalValueData, static_cast<int32_t>(currentStep));
 
             EXPECT_TRUE(var_StepsGlobalValueString);
             EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
@@ -945,12 +949,14 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
                       adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.Steps(), NSteps);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Min(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Max(), NSteps - 1);
+            EXPECT_EQ(var_StepsGlobalValue.Min(),
+                      static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Max(),
+                      static_cast<int32_t>(currentStep));
             int32_t stepsGlobalValueData;
             bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData,
                          adios2::Mode::Sync);
-            EXPECT_EQ(stepsGlobalValueData, currentStep);
+            EXPECT_EQ(stepsGlobalValueData, static_cast<int32_t>(currentStep));
 
             EXPECT_TRUE(var_StepsGlobalValueString);
             EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
@@ -1315,6 +1321,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
         auto var_r64 = io.InquireVariable<double>("r64");
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
+
+        EXPECT_EQ(var_StepsGlobalValue.Min(), 0);
+        EXPECT_EQ(var_StepsGlobalValue.Max(), static_cast<int32_t>(NSteps - 1));
 
         // Read all steps at once
         var_StepsGlobalValue.SetStepSelection(

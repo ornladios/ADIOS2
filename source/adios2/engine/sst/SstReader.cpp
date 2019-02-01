@@ -247,7 +247,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
                     (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
 
         m_IO.RemoveAllVariables();
-        m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, m_IO);
+        m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, *this);
         m_IO.ResetVariablesStepSelection(true,
                                          "in call to SST Reader BeginStep");
     }

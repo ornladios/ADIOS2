@@ -606,8 +606,8 @@ void BP3Deserializer::ClipContiguousMemory(
 
 // PRIVATE
 template <>
-inline void BP3Deserializer::DefineVariableInIO<std::string>(
-    const ElementIndexHeader &header, core::IO &io,
+inline void BP3Deserializer::DefineVariableInEngineIO<std::string>(
+    const ElementIndexHeader &header, core::Engine &engine,
     const std::vector<char> &buffer, size_t position) const
 {
     const size_t initialPosition = position;
@@ -625,7 +625,7 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     if (characteristics.Statistics.IsValue)
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
-        variable = &io.DefineVariable<std::string>(variableName);
+        variable = &engine.m_IO.DefineVariable<std::string>(variableName);
         variable->m_Value =
             characteristics.Statistics.Value; // assigning first step
 
@@ -707,13 +707,16 @@ inline void BP3Deserializer::DefineVariableInIO<std::string>(
     the sorted map minus one */
     variable->m_StepsStart =
         variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
+
+    // update variable Engine for read streaming functions
+    variable->m_Engine = &engine;
 }
 
 template <class T>
-void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
-                                         core::IO &io,
-                                         const std::vector<char> &buffer,
-                                         size_t position) const
+void BP3Deserializer::DefineVariableInEngineIO(const ElementIndexHeader &header,
+                                               core::Engine &engine,
+                                               const std::vector<char> &buffer,
+                                               size_t position) const
 {
     const size_t initialPosition = position;
 
@@ -733,7 +736,7 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
         {
         case (ShapeID::GlobalValue):
         {
-            variable = &io.DefineVariable<T>(variableName);
+            variable = &engine.m_IO.DefineVariable<T>(variableName);
             break;
         }
         case (ShapeID::GlobalArray):
@@ -743,13 +746,16 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                                           characteristics.Shape.rend())
                                    : characteristics.Shape;
 
-            variable = &io.DefineVariable<T>(variableName, shape,
-                                             Dims(shape.size(), 0), shape);
+            variable = &engine.m_IO.DefineVariable<T>(
+                variableName, shape, Dims(shape.size(), 0), shape);
+            variable->m_AvailableShapes[characteristics.Statistics.Step] =
+                variable->m_Shape;
             break;
         }
         case (ShapeID::LocalValue):
         {
-            variable = &io.DefineVariable<T>(variableName, {1}, {0}, {1});
+            variable =
+                &engine.m_IO.DefineVariable<T>(variableName, {1}, {0}, {1});
             variable->m_ShapeID = ShapeID::LocalValue;
             break;
         }
@@ -759,9 +765,14 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                                    ? Dims(characteristics.Count.rbegin(),
                                           characteristics.Count.rend())
                                    : characteristics.Count;
-            variable = &io.DefineVariable<T>(variableName, {}, {}, count);
+            variable =
+                &engine.m_IO.DefineVariable<T>(variableName, {}, {}, count);
             break;
         }
+        default:
+            throw std::runtime_error(
+                "ERROR: invalid ShapeID or not yet supported for variable " +
+                variableName + ", in call to Open\n");
         } // end switch
 
         if (characteristics.Statistics.IsValue)
@@ -836,6 +847,15 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
                 variable->m_Shape[0] = 1;
                 variable->m_Count[0] = 1;
             }
+            else if (subsetCharacteristics.EntryShapeID == ShapeID::GlobalArray)
+            {
+                if (subsetCharacteristics.Shape !=
+                    variable->m_AvailableShapes.rbegin()->second)
+                {
+                    variable->m_AvailableShapes[currentStep] =
+                        subsetCharacteristics.Shape;
+                }
+            }
         }
         else
         {
@@ -863,13 +883,15 @@ void BP3Deserializer::DefineVariableInIO(const ElementIndexHeader &header,
      * sorted map minus one */
     variable->m_StepsStart =
         variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
+
+    // update variable Engine for read streaming functions
+    variable->m_Engine = &engine;
 }
 
 template <class T>
-void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
-                                          core::IO &io,
-                                          const std::vector<char> &buffer,
-                                          size_t position) const
+void BP3Deserializer::DefineAttributeInEngineIO(
+    const ElementIndexHeader &header, core::Engine &engine,
+    const std::vector<char> &buffer, size_t position) const
 {
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(
@@ -884,13 +906,14 @@ void BP3Deserializer::DefineAttributeInIO(const ElementIndexHeader &header,
 
     if (characteristics.Statistics.IsValue)
     {
-        io.DefineAttribute<T>(attributeName, characteristics.Statistics.Value);
+        engine.m_IO.DefineAttribute<T>(attributeName,
+                                       characteristics.Statistics.Value);
     }
     else
     {
-        io.DefineAttribute<T>(attributeName,
-                              characteristics.Statistics.Values.data(),
-                              characteristics.Statistics.Values.size());
+        engine.m_IO.DefineAttribute<T>(
+            attributeName, characteristics.Statistics.Values.data(),
+            characteristics.Statistics.Values.size());
     }
 }
 
@@ -1002,11 +1025,13 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
                 m_Minifooter.IsLittleEndian);
 
         typename core::Variable<T>::Info blockInfo;
+        blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
 
         if (m_ReverseDimensions)
         {
+            std::reverse(blockInfo.Shape.begin(), blockInfo.Shape.end());
             std::reverse(blockInfo.Start.begin(), blockInfo.Start.end());
             std::reverse(blockInfo.Count.begin(), blockInfo.Count.end());
         }

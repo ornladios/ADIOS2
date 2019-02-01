@@ -748,6 +748,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
+            const size_t currentStep = bpReader.CurrentStep();
+
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
             EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -755,8 +757,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_i8.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_i8.Shape()[1], Ny);
             EXPECT_EQ(var_i8.Shape()[2], Nx);
-            EXPECT_EQ(var_i8.Min(), 0);
-            EXPECT_EQ(var_i8.Max(), NSteps - 1);
+            EXPECT_EQ(var_i8.Min(), static_cast<int8_t>(currentStep));
+            EXPECT_EQ(var_i8.Max(), static_cast<int8_t>(currentStep));
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
             EXPECT_TRUE(var_i16);
@@ -765,8 +767,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_i16.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_i16.Shape()[1], Ny);
             EXPECT_EQ(var_i16.Shape()[2], Nx);
-            EXPECT_EQ(var_i16.Min(), 0);
-            EXPECT_EQ(var_i16.Max(), NSteps - 1);
+            EXPECT_EQ(var_i16.Min(), static_cast<int16_t>(currentStep));
+            EXPECT_EQ(var_i16.Max(), static_cast<int16_t>(currentStep));
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
             EXPECT_TRUE(var_i32);
@@ -775,8 +777,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_i32.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_i32.Shape()[1], Ny);
             EXPECT_EQ(var_i32.Shape()[2], Nx);
-            EXPECT_EQ(var_i32.Min(), 0);
-            EXPECT_EQ(var_i32.Max(), NSteps - 1);
+            EXPECT_EQ(var_i32.Min(), static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_i32.Max(), static_cast<int32_t>(currentStep));
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
             EXPECT_TRUE(var_i64);
@@ -785,8 +787,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_i64.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_i64.Shape()[1], Ny);
             EXPECT_EQ(var_i64.Shape()[2], Nx);
-            EXPECT_EQ(var_i64.Min(), 0);
-            EXPECT_EQ(var_i64.Max(), NSteps - 1);
+            EXPECT_EQ(var_i64.Min(), static_cast<int64_t>(currentStep));
+            EXPECT_EQ(var_i64.Max(), static_cast<int64_t>(currentStep));
 
             auto var_r32 = io.InquireVariable<float>("r32");
             EXPECT_TRUE(var_r32);
@@ -795,8 +797,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_r32.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_r32.Shape()[1], Ny);
             EXPECT_EQ(var_r32.Shape()[2], Nx);
-            EXPECT_EQ(var_r32.Min(), 0);
-            EXPECT_EQ(var_r32.Max(), NSteps - 1);
+            EXPECT_EQ(var_r32.Min(), static_cast<float>(currentStep));
+            EXPECT_EQ(var_r32.Max(), static_cast<float>(currentStep));
 
             auto var_r64 = io.InquireVariable<double>("r64");
             EXPECT_TRUE(var_r64);
@@ -805,8 +807,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_r64.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_r64.Shape()[1], Ny);
             EXPECT_EQ(var_r64.Shape()[2], Nx);
-            EXPECT_EQ(var_r64.Min(), 0);
-            EXPECT_EQ(var_r64.Max(), NSteps - 1);
+            EXPECT_EQ(var_r64.Min(), static_cast<double>(currentStep));
+            EXPECT_EQ(var_r64.Max(), static_cast<double>(currentStep));
 
             auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
             EXPECT_TRUE(var_cr32);
@@ -815,10 +817,12 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_cr32.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_cr32.Shape()[1], Ny);
             EXPECT_EQ(var_cr32.Shape()[2], Nx);
-            EXPECT_EQ(var_cr32.Min(), std::complex<float>(0, 0));
+            EXPECT_EQ(var_cr32.Min(),
+                      std::complex<float>(static_cast<float>(currentStep),
+                                          static_cast<float>(currentStep)));
             EXPECT_EQ(var_cr32.Max(),
-                      std::complex<float>(static_cast<float>(NSteps - 1),
-                                          static_cast<float>(NSteps - 1)));
+                      std::complex<float>(static_cast<float>(currentStep),
+                                          static_cast<float>(currentStep)));
 
             auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
             EXPECT_TRUE(var_cr64);
@@ -827,10 +831,12 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_cr64.Shape()[0], mpiSize * Nz);
             EXPECT_EQ(var_cr64.Shape()[1], Ny);
             EXPECT_EQ(var_cr64.Shape()[2], Nx);
-            EXPECT_EQ(var_cr64.Min(), std::complex<double>(0, 0));
+            EXPECT_EQ(var_cr64.Min(),
+                      std::complex<double>(static_cast<double>(currentStep),
+                                           static_cast<double>(currentStep)));
             EXPECT_EQ(var_cr64.Max(),
-                      std::complex<double>(static_cast<double>(NSteps - 1),
-                                           static_cast<double>(NSteps - 1)));
+                      std::complex<double>(static_cast<double>(currentStep),
+                                           static_cast<double>(currentStep)));
 
             std::vector<int8_t> I8;
             std::vector<int16_t> I16;

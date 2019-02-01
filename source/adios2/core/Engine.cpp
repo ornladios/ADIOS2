@@ -13,6 +13,8 @@
 
 #include <stdexcept>
 
+#include "adios2/core/IO.h"
+
 namespace adios2
 {
 namespace core

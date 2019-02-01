@@ -16,7 +16,6 @@
 #include <utility> //std::pair
 #include <vector>
 
-#include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //VariablesSubFileInfo, BlockOperation
 #include "adios2/toolkit/format/bp3/BP3Base.h"
@@ -42,7 +41,7 @@ public:
 
     ~BP3Deserializer() = default;
 
-    void ParseMetadata(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine);
 
     /**
      * Used to get the variable payload data for the current selection (dims and
@@ -168,9 +167,10 @@ private:
     static std::mutex m_Mutex;
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
-    void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
-    void ParseVariablesIndex(const BufferSTL &bufferSTL, core::IO &io);
-    void ParseAttributesIndex(const BufferSTL &bufferSTL, core::IO &io);
+    void ParsePGIndex(const BufferSTL &bufferSTL,
+                      const std::string hostLanguage);
+    void ParseVariablesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
+    void ParseAttributesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
 
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
@@ -181,14 +181,16 @@ private:
      * @param position
      */
     template <class T>
-    void DefineVariableInIO(const ElementIndexHeader &header, core::IO &io,
-                            const std::vector<char> &buffer,
-                            size_t position) const;
+    void DefineVariableInEngineIO(const ElementIndexHeader &header,
+                                  core::Engine &engine,
+                                  const std::vector<char> &buffer,
+                                  size_t position) const;
 
     template <class T>
-    void DefineAttributeInIO(const ElementIndexHeader &header, core::IO &io,
-                             const std::vector<char> &buffer,
-                             size_t position) const;
+    void DefineAttributeInEngineIO(const ElementIndexHeader &header,
+                                   core::Engine &engine,
+                                   const std::vector<char> &buffer,
+                                   size_t position) const;
 
     template <class T>
     void GetValueFromMetadataCommon(core::Variable<T> &variable, T *data) const;

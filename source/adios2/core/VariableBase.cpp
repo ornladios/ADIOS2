@@ -12,9 +12,11 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::count
+#include <iterator>  //std::next
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 
 namespace adios2
@@ -207,7 +209,7 @@ size_t VariableBase::GetAvailableStepsCount() const
 
 void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 {
-    if (boxSteps.second == 0)
+    if (m_DebugMode && boxSteps.second == 0)
     {
         throw std::invalid_argument("ERROR: boxSteps.second count argument "
                                     " can't be zero, from variable " +
@@ -281,10 +283,10 @@ bool VariableBase::IsValidStep(const size_t step) const noexcept
 
 void VariableBase::CheckRandomAccessConflict(const std::string hint) const
 {
-    if (m_DebugMode && m_RandomAccess)
+    if (m_DebugMode && m_RandomAccess && !m_FirstStreamingStep)
     {
         throw std::invalid_argument("ERROR: can't mix streaming and "
-                                    "random-access (call to StepStepSelection)"
+                                    "random-access (call to SetStepSelection)"
                                     "for variable " +
                                     m_Name + ", " + hint);
     }
