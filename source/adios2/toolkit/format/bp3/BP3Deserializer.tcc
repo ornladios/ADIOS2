@@ -769,6 +769,10 @@ void BP3Deserializer::DefineVariableInEngineIO(const ElementIndexHeader &header,
                 &engine.m_IO.DefineVariable<T>(variableName, {}, {}, count);
             break;
         }
+        default:
+            throw std::runtime_error(
+                "ERROR: invalid ShapeID or not yet supported for variable " +
+                variableName + ", in call to Open\n");
         } // end switch
 
         if (characteristics.Statistics.IsValue)
