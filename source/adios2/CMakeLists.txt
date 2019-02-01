@@ -125,7 +125,7 @@ if(ADIOS2_HAVE_ZeroMQ)
       engine/wdm/WdmWriter.h
       engine/wdm/WdmWriter.tcc
   )
-  target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
+  target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 endif()
 
