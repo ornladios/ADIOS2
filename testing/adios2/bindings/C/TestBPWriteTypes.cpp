@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * TestBPWriteTypes.c
+ * TestBPWriteTypes.cpp : test the C bindings
  *
  *  Created on: Aug 9, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -72,6 +72,8 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
 
         // Define variables in ioH
         {
+            adios2_define_variable(ioH, "varStr", adios2_type_string, 0, NULL,
+                                   NULL, NULL, adios2_constant_dims_true);
             adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape,
                                    start, count, adios2_constant_dims_true);
             adios2_define_variable(ioH, "varI16", adios2_type_int16_t, 1, shape,
@@ -99,6 +101,7 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
                                    start, count, adios2_constant_dims_true);
         }
         // inquire variables
+        adios2_variable *varStr = adios2_inquire_variable(ioH, "varStr");
         adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
         adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
         adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
@@ -114,6 +117,8 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
         adios2_engine *engineH =
             adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
+        adios2_put(engineH, varStr, dataStr, adios2_mode_sync);
+        adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
         adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
         adios2_put(engineH, varI16, data_I16, adios2_mode_deferred);
         adios2_put(engineH, varI32, data_I32, adios2_mode_deferred);
@@ -213,6 +218,7 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
         auto mmR64 = std::minmax_element(&data_R64[0], &data_R64[data_Nx]);
 
         // add min and max here
+        adios2_variable *varStr = adios2_inquire_variable(ioH, "varStr");
         adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
         adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
         adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
@@ -225,6 +231,11 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
 
         adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
         adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
+
+        char inString[30] = {};
+        adios2_get(engineH, varStr, inString, adios2_mode_sync);
+
+        EXPECT_EQ(dataStr, std::string(inString));
 
         int8_t minI8, maxI8;
         int16_t minI16, maxI16;

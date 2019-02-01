@@ -10,7 +10,7 @@
 module small_test_data
     implicit none
 
-    character(len=16), parameter, dimension(3) :: data_Strings = &
+    character(len=15), parameter, dimension(3) :: data_Strings = &
                                                   (/'Attribute oneXX', 'Attribute twoXX', 'Attribute three'/)
 
     integer(kind=1), parameter, dimension(10) :: data_I8 = &

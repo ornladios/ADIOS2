@@ -9,6 +9,22 @@
 !
 
 ! Single data
+subroutine adios2_put_string(engine, variable, data, launch, ierr)
+    type(adios2_engine), intent(in):: engine
+    type(adios2_variable), intent(in):: variable
+    character*(*), intent(in):: data
+    integer, intent(in):: launch
+    integer, intent(out):: ierr
+
+    call adios2_variable_check_type(variable, adios2_type_string, &
+                                    'put string', ierr)
+    if (ierr == 0) then
+        call adios2_put_f2c(engine%f2c, variable%f2c, &
+                            TRIM(ADJUSTL(data))//char(0), launch, ierr)
+    end if
+
+end subroutine
+
 subroutine adios2_put_real(engine, variable, data, launch, ierr)
     type(adios2_engine), intent(in):: engine
     type(adios2_variable), intent(in):: variable

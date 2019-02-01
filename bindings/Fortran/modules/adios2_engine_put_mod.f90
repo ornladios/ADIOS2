@@ -17,6 +17,7 @@ module adios2_engine_put_mod
     interface adios2_put
 
         ! Single Value
+        module procedure adios2_put_string
         module procedure adios2_put_real
         module procedure adios2_put_dp
         module procedure adios2_put_complex
@@ -87,6 +88,7 @@ module adios2_engine_put_mod
         module procedure adios2_put_integer8_6d
 
         ! Single Value
+        module procedure adios2_put_by_name_string
         module procedure adios2_put_by_name_real
         module procedure adios2_put_by_name_dp
         module procedure adios2_put_by_name_complex
@@ -157,6 +159,7 @@ module adios2_engine_put_mod
         module procedure adios2_put_by_name_integer8_6d
 
         ! Single Value
+        module procedure adios2_put_deferred_string
         module procedure adios2_put_deferred_real
         module procedure adios2_put_deferred_dp
         module procedure adios2_put_deferred_complex
@@ -228,6 +231,7 @@ module adios2_engine_put_mod
 
         ! Deferred Signature
         ! Single Value
+        module procedure adios2_put_deferred_by_name_string
         module procedure adios2_put_deferred_by_name_real
         module procedure adios2_put_deferred_by_name_dp
         module procedure adios2_put_deferred_by_name_complex
