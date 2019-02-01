@@ -10,6 +10,17 @@
 !
 
 ! Single Value
+subroutine adios2_get_deferred_by_name_string(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    character*(*), intent(out):: data
+    integer, intent(out):: ierr
+
+    call adios2_get_by_name_f2c(engine%f2c, TRIM(ADJUSTL(name))//char(0), &
+                                data, adios2_mode_sync, ierr)
+
+end subroutine
+
 subroutine adios2_get_deferred_by_name_real(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name

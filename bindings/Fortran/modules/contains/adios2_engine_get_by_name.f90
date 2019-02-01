@@ -10,8 +10,19 @@
 !
 
 ! Single values
-subroutine adios2_get_by_name_real(engine, name, data, &
-                                      launch, ierr)
+subroutine adios2_get_by_name_string(engine, name, data, launch, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    character*(*), intent(out):: data
+    integer, intent(in):: launch
+    integer, intent(out):: ierr
+
+    call adios2_get_by_name_f2c(engine%f2c, TRIM(ADJUSTL(name))//char(0), &
+                                data, launch, ierr)
+
+end subroutine
+
+subroutine adios2_get_by_name_real(engine, name, data, launch, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name
     real,  intent(out):: data

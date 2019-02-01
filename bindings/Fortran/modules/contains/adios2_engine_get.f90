@@ -9,6 +9,21 @@
 !
 
 ! Single data
+subroutine adios2_get_string(engine, variable, data, launch, ierr)
+    type(adios2_engine), intent(in):: engine
+    type(adios2_variable), intent(in):: variable
+    character*(*), intent(out):: data
+    integer, intent(in):: launch
+    integer, intent(out):: ierr
+
+    call adios2_variable_check_type(variable, adios2_type_string, &
+                                    'get string', ierr)
+    if (ierr == 0) then
+        call adios2_get_f2c(engine%f2c, variable%f2c, data, launch, ierr)
+    end if
+
+end subroutine
+
 subroutine adios2_get_real(engine, variable, data, launch, ierr)
     type(adios2_engine), intent(in):: engine
     type(adios2_variable), intent(in):: variable

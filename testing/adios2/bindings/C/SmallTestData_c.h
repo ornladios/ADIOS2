@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+const char dataStr[] = "A string variable";
+
 size_t data_Nx = 10;
 
 int8_t data_I8[10] = {0, 1, -2, 3, -4, 5, -6, 7, -8, 9};

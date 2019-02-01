@@ -17,6 +17,7 @@ module adios2_engine_get_mod
     interface adios2_get
 
         ! Single Value
+        module procedure adios2_get_string
         module procedure adios2_get_real
         module procedure adios2_get_dp
         module procedure adios2_get_complex
@@ -87,6 +88,7 @@ module adios2_engine_get_mod
         module procedure adios2_get_integer8_6d
 
         ! Single Value
+        module procedure adios2_get_by_name_string
         module procedure adios2_get_by_name_real
         module procedure adios2_get_by_name_dp
         module procedure adios2_get_by_name_complex
@@ -157,6 +159,7 @@ module adios2_engine_get_mod
         module procedure adios2_get_by_name_integer8_6d
 
         ! Single Value
+        module procedure adios2_get_deferred_string
         module procedure adios2_get_deferred_real
         module procedure adios2_get_deferred_dp
         module procedure adios2_get_deferred_complex
@@ -228,6 +231,7 @@ module adios2_engine_get_mod
 
         ! Deferred Signature
         ! Single Value
+        module procedure adios2_get_deferred_by_name_string
         module procedure adios2_get_deferred_by_name_real
         module procedure adios2_get_deferred_by_name_dp
         module procedure adios2_get_deferred_by_name_complex
