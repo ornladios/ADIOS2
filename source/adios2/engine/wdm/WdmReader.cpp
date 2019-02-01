@@ -297,7 +297,19 @@ void WdmReader::InitTransports()
 void WdmReader::Handshake()
 {
     transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
-    ipstream.Open(".StagingHandshake", Mode::Read);
+    bool opened = false;
+    while(opened == false)
+    {
+        try
+        {
+            ipstream.Open(".StagingHandshake", Mode::Read);
+            opened = true;
+        }
+        catch (...)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
     auto size = ipstream.GetSize();
     std::vector<char> address(size);
     ipstream.Read(address.data(), size);
