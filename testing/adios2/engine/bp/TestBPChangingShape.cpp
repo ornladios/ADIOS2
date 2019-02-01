@@ -28,20 +28,31 @@ public:
     SmallTestData m_TestData;
 };
 
-const std::string fname("BPChangingShape.bp");
-const int nstep = 10;
-int rank = 0, nproc = 1;
-
-void write(adios2::ADIOS &adios)
+TEST_F(BPChangingShape, BPWriteReadShape2D)
 {
+    // Each process would write a 4x2 array and all processes would
+    // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
+
+    const std::string fname("BPChangingShape.bp");
+    const int nsteps = 10;
+    int rank = 0, nproc = 1;
+
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    // Writer
     adios2::IO outIO = adios.DeclareIO("Output");
     adios2::Engine writer = outIO.Open(fname, adios2::Mode::Write);
 
-    size_t dim0 = static_cast<size_t>(nproc);
-    size_t off0 = static_cast<size_t>(rank);
+    const size_t dim0 = static_cast<size_t>(nproc);
+    const size_t off0 = static_cast<size_t>(rank);
     auto var = outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
 
-    std::vector<double> buf(nstep, 0.0);
+    std::vector<double> buf(nsteps, 0.0);
     for (int i = 0; i < buf.size(); i++)
     {
         buf[i] = rank + static_cast<double>(i) / 10.0;
@@ -51,7 +62,7 @@ void write(adios2::ADIOS &adios)
     {
         std::cout << "Writing:" << std::endl;
     }
-    for (size_t i = 1; i <= 10; i++)
+    for (size_t i = 1; i <= nsteps; i++)
     {
         writer.BeginStep();
 
@@ -70,10 +81,9 @@ void write(adios2::ADIOS &adios)
     }
 
     writer.Close();
-}
 
-void read(adios2::ADIOS &adios)
-{
+    // Reader
+
     adios2::IO inIO = adios.DeclareIO("Input");
     adios2::Engine reader = inIO.Open(fname, adios2::Mode::Read);
 
@@ -113,23 +123,6 @@ void read(adios2::ADIOS &adios)
     }
 
     reader.Close();
-}
-
-TEST_F(BPChangingShape, BPWrite1D_LargeMetadata)
-{
-// Each process would write a 4x2 array and all processes would
-// form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-#else
-    adios2::ADIOS adios(true);
-#endif
-
-    write(adios);
-    read(adios);
 }
 
 int main(int argc, char **argv)

@@ -818,7 +818,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_cr32.Shape()[1], Ny);
             EXPECT_EQ(var_cr32.Shape()[2], Nx);
             EXPECT_EQ(var_cr32.Min(),
-                      std::complex<float>(currentStep, currentStep));
+                      std::complex<float>(static_cast<float>(currentStep),
+                                          static_cast<float>(currentStep)));
             EXPECT_EQ(var_cr32.Max(),
                       std::complex<float>(static_cast<float>(currentStep),
                                           static_cast<float>(currentStep)));
@@ -831,7 +832,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(var_cr64.Shape()[1], Ny);
             EXPECT_EQ(var_cr64.Shape()[2], Nx);
             EXPECT_EQ(var_cr64.Min(),
-                      std::complex<double>(currentStep, currentStep));
+                      std::complex<double>(static_cast<double>(currentStep),
+                                           static_cast<double>(currentStep)));
             EXPECT_EQ(var_cr64.Max(),
                       std::complex<double>(static_cast<double>(currentStep),
                                            static_cast<double>(currentStep)));
