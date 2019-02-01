@@ -2,7 +2,6 @@
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
-#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,8 +40,9 @@ redo:
         TotalSleepTime += 500;
         if (TotalSleepTime > 30 * 1000 * 1000)
         {
-            fprintf(stderr, "ADIOS2 SST Engine waiting for contact information "
-                            "file %s to be created\n",
+            fprintf(stderr,
+                    "ADIOS2 SST Engine waiting for contact information "
+                    "file %s to be created\n",
                     Name);
             TotalSleepTime = 0;
         }
@@ -73,8 +73,9 @@ static char *readContactInfoScreen(const char *Name, SstStream Stream)
 {
     char Input[10240];
     char *Skip = Input;
-    fprintf(stdout, "Please enter the contact information associated with SST "
-                    "input stream \"%s\":\n",
+    fprintf(stdout,
+            "Please enter the contact information associated with SST "
+            "input stream \"%s\":\n",
             Name);
     if (fgets(Input, sizeof(Input), stdin) == NULL)
     {
@@ -151,9 +152,10 @@ static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
     else
     {
         fprintf(stderr, "Got an unexpected connection close event\n");
-        CP_verbose(Stream, "Reader-side Rank received a "
-                           "connection-close event in unexpected "
-                           "status %s\n",
+        CP_verbose(Stream,
+                   "Reader-side Rank received a "
+                   "connection-close event in unexpected "
+                   "status %s\n",
                    SSTStreamStatusStr[Stream->Status]);
     }
 }
@@ -477,13 +479,24 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         memset(&Msg, 0, sizeof(Msg));
         Msg.Timestep = tsm->Timestep;
 
+        pthread_mutex_lock(&Stream->DataLock);
+        /*
+         * before discarding, install any precious metadata from this message
+         */
+        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+        {
+            FFSMarshalInstallPreciousMetadata(Stream, tsm);
+        }
+        pthread_mutex_unlock(&Stream->DataLock);
+
         /*
          * send each writer rank a release for this timestep (actually goes to
          * WSR
          * Streams)
          */
-        CP_verbose(Stream, "Sending ReleaseTimestep message for PRIOR DISCARD "
-                           "timestep %d, one to each writer\n",
+        CP_verbose(Stream,
+                   "Sending ReleaseTimestep message for PRIOR DISCARD "
+                   "timestep %d, one to each writer\n",
                    tsm->Timestep);
         if (tsm->Metadata != NULL)
         {
@@ -497,8 +510,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         }
         else
         {
-            CP_verbose(Stream, "Received discard notice for imestep %d, "
-                               "ignoring in PRIOR DISCARD\n",
+            CP_verbose(Stream,
+                       "Received discard notice for imestep %d, "
+                       "ignoring in PRIOR DISCARD\n",
                        tsm->Timestep);
         }
         CMreturn_buffer(Stream->CPInfo->cm, tsm);
@@ -522,8 +536,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
     {
         Stream->Timesteps = New;
     }
-    CP_verbose(Stream, "Received a Timestep metadata message for timestep %d, "
-                       "signaling condition\n",
+    CP_verbose(Stream,
+               "Received a Timestep metadata message for timestep %d, "
+               "signaling condition\n",
                tsm->Timestep);
 
     pthread_cond_signal(&Stream->DataCondition);
@@ -541,7 +556,17 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
         CP_verbose(Stream,
                    "Received a message that timestep %d has been discarded\n",
                    Msg->Timestep);
-        /* Nothing to do with this */
+
+        pthread_mutex_lock(&Stream->DataLock);
+        /*
+         * before discarding, install any precious metadata from this message
+         */
+        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+        {
+            FFSMarshalInstallPreciousMetadata(Stream, Msg);
+        }
+        pthread_mutex_unlock(&Stream->DataLock);
+
         return;
     }
     else
@@ -591,8 +616,9 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     WriterCloseMsg Msg = (WriterCloseMsg)Msg_v;
     SstStream Stream = (SstStream)Msg->RS_Stream;
 
-    CP_verbose(Stream, "Received a writer close message. "
-                       "Timestep %d was the final timestep.\n",
+    CP_verbose(Stream,
+               "Received a writer close message. "
+               "Timestep %d was the final timestep.\n",
                Msg->FinalTimestep);
 
     pthread_mutex_lock(&Stream->DataLock);
@@ -731,6 +757,16 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
             struct _TimestepMetadataList *This = Next;
             struct _ReleaseTimestepMsg Msg;
             Next = This->Next;
+
+            /*
+             * before discarding, install any precious metadata from this
+             * message
+             */
+            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+            {
+                FFSMarshalInstallPreciousMetadata(Stream, This->MetadataMsg);
+            }
+
             memset(&Msg, 0, sizeof(Msg));
             Msg.Timestep = This->MetadataMsg->Timestep;
 
@@ -739,8 +775,9 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
              * to WSR
              * Streams)
              */
-            CP_verbose(Stream, "Sending ReleaseTimestep message for RELEASE "
-                               "PRIOR timestep %d, one to each writer\n",
+            CP_verbose(Stream,
+                       "Sending ReleaseTimestep message for RELEASE "
+                       "PRIOR timestep %d, one to each writer\n",
                        This->MetadataMsg->Timestep);
             sendOneToEachWriterRank(Stream,
                                     Stream->CPInfo->ReleaseTimestepFormat, &Msg,
@@ -965,8 +1002,9 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
         if (Stream->Rank == 0)
         {
             global_info = malloc(sizeof(my_info) * Stream->CohortSize);
-            CP_verbose(Stream, "In special case of advancestep, mode is %d, "
-                               "Timeout Sec is %g, flt_max is %g\n",
+            CP_verbose(Stream,
+                       "In special case of advancestep, mode is %d, "
+                       "Timeout Sec is %g, flt_max is %g\n",
                        mode, timeout_sec, FLT_MAX);
         }
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
@@ -1030,21 +1068,23 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
                  * the Latest that someone has seen, and presumably
                  * others will see shortly.  I'm going to go with Biggest
                  * until I have a reason to prefer one or the other.
-                */
+                 */
                 if (mode == SstLatestAvailable)
                 {
                     // latest available
-                    CP_verbose(Stream, "Returning Biggest timestep available "
-                                       "%ld because LatestAvailable "
-                                       "specified\n",
+                    CP_verbose(Stream,
+                               "Returning Biggest timestep available "
+                               "%ld because LatestAvailable "
+                               "specified\n",
                                Biggest);
                     NextTimestep = Biggest;
                 }
                 else
                 {
                     // next available (take the oldest that everyone has)
-                    CP_verbose(Stream, "Returning Smallest timestep available "
-                                       "%ld because NextAvailable specified\n",
+                    CP_verbose(Stream,
+                               "Returning Smallest timestep available "
+                               "%ld because NextAvailable specified\n",
                                Smallest);
                     NextTimestep = Smallest;
                 }

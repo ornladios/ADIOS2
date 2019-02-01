@@ -147,9 +147,10 @@ static void writeContactInfoScreen(const char *Name, SstStream Stream)
     /*
      * write the contact information file to the screen
      */
-    fprintf(stdout, "The next line of output is the contact information "
-                    "associated with SST output stream \"%s\".  Please make it "
-                    "available to the reader.\n",
+    fprintf(stdout,
+            "The next line of output is the contact information "
+            "associated with SST output stream \"%s\".  Please make it "
+            "available to the reader.\n",
             Name);
     fprintf(stdout, "\t%s\n", Contact);
     free(Contact);
@@ -228,9 +229,10 @@ static void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
     else
     {
         fprintf(stderr, "Got an unexpected connection close event\n");
-        CP_verbose(ParentWriterStream, "Writer-side Rank received a "
-                                       "connection-close event in unexpected "
-                                       "state %s\n",
+        CP_verbose(ParentWriterStream,
+                   "Writer-side Rank received a "
+                   "connection-close event in unexpected "
+                   "state %s\n",
                    SSTStreamStatusStr[WSreader->ReaderStatus]);
         PTHREAD_MUTEX_UNLOCK(&ParentWriterStream->DataLock);
         CP_PeerFailCloseWSReader(WSreader, PeerFailed);
@@ -417,8 +419,9 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
         {
             List->ReferenceCount++;
             Ret = List->Timestep;
-            CP_verbose(Stream, "Earliest available : Writer-side Timestep %ld "
-                               "now has reference count %d\n",
+            CP_verbose(Stream,
+                       "Earliest available : Writer-side Timestep %ld "
+                       "now has reference count %d\n",
                        List->Timestep, List->ReferenceCount);
         }
         List = List->Next;
@@ -437,8 +440,9 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount--;
-            CP_verbose(Stream, "SubRef : Writer-side Timestep %ld now has "
-                               "reference count %d\n",
+            CP_verbose(Stream,
+                       "SubRef : Writer-side Timestep %ld now has "
+                       "reference count %d\n",
                        List->Timestep, List->ReferenceCount);
         }
         if (List->ReferenceCount == 0)
@@ -453,8 +457,9 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
             {
                 Last->Next = List->Next;
             }
-            CP_verbose(Stream, "Step %d reference count reached zero, "
-                               "releasing from DP and freeing\n",
+            CP_verbose(Stream,
+                       "Step %d reference count reached zero, "
+                       "releasing from DP and freeing\n",
                        ItemToFree->Timestep);
             Stream->DP_Interface->releaseTimestep(&Svcs, Stream->DP_Stream,
                                                   List->Timestep);
@@ -502,8 +507,9 @@ static void KillZeroRefTimesteps(SstStream Stream)
             {
                 Last->Next = List->Next;
             }
-            CP_verbose(Stream, "Step %d reference count is zero, "
-                               "releasing from DP and freeing\n",
+            CP_verbose(Stream,
+                       "Step %d reference count is zero, "
+                       "releasing from DP and freeing\n",
                        List->Timestep);
             Stream->DP_Interface->releaseTimestep(&Svcs, Stream->DP_Stream,
                                                   List->Timestep);
@@ -643,8 +649,9 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
      */
     if (MyStartingTimestep != GlobalStartingTimestep)
     {
-        CP_verbose(Stream, "In writer participate in reader open, releasing "
-                           "timesteps from %ld to %ld\n",
+        CP_verbose(Stream,
+                   "In writer participate in reader open, releasing "
+                   "timesteps from %ld to %ld\n",
                    MyStartingTimestep, GlobalStartingTimestep - 1);
 
         SubRefRangeTimestep(Stream, MyStartingTimestep,
@@ -693,8 +700,9 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (pointers)
         free(pointers);
     Stream->NewReaderPresent = 1;
-    CP_verbose(Stream, "Finish writer-side reader open protocol for reader %p, "
-                       "reader ready response pending\n",
+    CP_verbose(Stream,
+               "Finish writer-side reader open protocol for reader %p, "
+               "reader ready response pending\n",
                CP_WSR_Stream);
     return CP_WSR_Stream;
 }
@@ -763,7 +771,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                      *  TENTATIVE!  TRYING TO SEE IF THIS MIGHT IMPACT RARE
                      *  STUCK READER PROBLEM.
                      *  Add  a short delay between consecutive messages
-                    */
+                     */
                     usleep(10 * Stream->ConnectionUsleepMultiplier);
                 }
                 sendOneToWSRCohort(
@@ -1192,9 +1200,10 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
         if (Stream->Readers[i]->ReaderStatus == PeerFailed)
         {
             // If we see PeerFailed now, everyone does, move to Fail
-            CP_verbose(Stream, "Reader %d now determined to have failed, "
-                               "dereferencing the timesteps it was sent, %d to "
-                               "%d\n",
+            CP_verbose(Stream,
+                       "Reader %d now determined to have failed, "
+                       "dereferencing the timesteps it was sent, %d to "
+                       "%d\n",
                        i, Stream->Readers[i]->StartingTimestep,
                        Stream->Readers[i]->LastSentTimestep);
             PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
@@ -1362,13 +1371,16 @@ extern void SstInternalProvideTimestep(
         DoWriterSideGlobalOp(Stream, &IncomingTimestepDiscarded);
         if (IncomingTimestepDiscarded)
         {
-            CP_verbose(Stream, "Discarding incoming timestep %d because of "
-                               "queue full condition\n",
+            CP_verbose(Stream,
+                       "Discarding incoming timestep %d because of "
+                       "queue full condition\n",
                        Timestep);
             FreeTimestep(FreeClientData);
-            Formats = NULL;
             LocalMetadata = NULL;
             Data = NULL;
+            /*
+             * DON'T NULL Formats!  READER WILL NEED THOSE FOR FUTURE TIMESTEPS!
+             */
         }
     }
 
@@ -1454,9 +1466,10 @@ extern void SstInternalProvideTimestep(
 
         Msg->Metadata = NULL;
         Msg->DP_TimestepInfo = NULL;
-        Msg->Formats = NULL;
-        CP_verbose(Stream, "Sending Empty TimestepMetadata for Discarded "
-                           "timestep %d, one to each reader\n",
+        Msg->Formats = Formats;
+        CP_verbose(Stream,
+                   "Sending Empty TimestepMetadata for Discarded "
+                   "timestep %d, one to each reader\n",
                    Timestep);
 
         sendOneToEachReaderRank(Stream,
@@ -1497,8 +1510,9 @@ extern void SstInternalProvideTimestep(
 
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 
-    CP_verbose(Stream, "Sending TimestepMetadata for timestep %d (ref count "
-                       "%d), one to each reader\n",
+    CP_verbose(Stream,
+               "Sending TimestepMetadata for timestep %d (ref count "
+               "%d), one to each reader\n",
                Timestep, Entry->ReferenceCount);
 
     /*
@@ -1600,9 +1614,10 @@ void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderActivateMsg *Msg = (struct _ReaderActivateMsg *)Msg_v;
 
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
-    CP_verbose(CP_WSR_Stream->ParentStream, "Reader Activate message received "
-                                            "for Stream %p.  Setting state to "
-                                            "Established.\n",
+    CP_verbose(CP_WSR_Stream->ParentStream,
+               "Reader Activate message received "
+               "for Stream %p.  Setting state to "
+               "Established.\n",
                CP_WSR_Stream);
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Parent stream reader count is now %d.\n",
@@ -1668,8 +1683,9 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     SstStream ParentStream = Reader->ParentStream;
     CPTimestepList Entry = NULL;
 
-    CP_verbose(ParentStream, "Received a release timestep message "
-                             "for timestep %d\n",
+    CP_verbose(ParentStream,
+               "Received a release timestep message "
+               "for timestep %d\n",
                Msg->Timestep);
 
     /* decrement the reference count for the released timestep */

@@ -26,8 +26,9 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     else
     {
-        fprintf(stderr, "Invalid RendezvousReaderCount parameter value (%d) "
-                        "for SST Stream %s\n",
+        fprintf(stderr,
+                "Invalid RendezvousReaderCount parameter value (%d) "
+                "for SST Stream %s\n",
                 Params->RendezvousReaderCount, Stream->Filename);
     }
     if (Params->QueueLimit >= 0)

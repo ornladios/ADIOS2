@@ -1562,8 +1562,9 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
 
     if (!MetaData->Metadata[WriterRank].block)
     {
-        fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == "
-                        "NULL for WriterRank = %d\n",
+        fprintf(stderr,
+                "FAILURE!   MetaData->Metadata[WriterRank]->block == "
+                "NULL for WriterRank = %d\n",
                 WriterRank);
     }
     FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,
@@ -1704,7 +1705,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     }
 }
 
-extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
+extern void FFSMarshalInstallPreciousMetadata(SstStream Stream,
+                                              TSMetadataMsg MetaData)
 {
     if (!Stream->ReaderFFSContext)
     {
@@ -1716,6 +1718,11 @@ extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
     LoadFormats(Stream, MetaData->Formats);
 
     LoadAttributes(Stream, MetaData);
+}
+
+extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
+{
+    FFSMarshalInstallPreciousMetadata(Stream, MetaData);
 
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
