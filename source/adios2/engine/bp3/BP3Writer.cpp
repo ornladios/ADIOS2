@@ -168,7 +168,8 @@ void BP3Writer::InitTransports()
     }
 
     m_BP3Serializer.ProfilerStart("mkdir");
-    m_FileDataManager.MkDirsBarrier(bpSubStreamNames);
+    m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
+                                    m_BP3Serializer.m_NodeLocal);
     m_BP3Serializer.ProfilerStop("mkdir");
 
     if (m_BP3Serializer.m_Aggregator.m_IsConsumer)

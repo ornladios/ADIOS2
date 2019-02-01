@@ -191,6 +191,9 @@ public:
      */
     std::map<size_t, std::map<size_t, std::vector<char>>> m_ThreadBuffers;
 
+    /** true: NVMex each rank creates its own directory */
+    bool m_NodeLocal = false;
+
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator
@@ -530,6 +533,10 @@ protected:
 
     /** set number of substreams, turns on aggregation if less < MPI_Size */
     void InitParameterSubStreams(const std::string value);
+
+    /** Sets if IO is node-local so each rank creates its own IO directory and
+     * stream */
+    void InitParameterNodeLocal(const std::string value);
 
     /**
      * Returns data type index from enum Datatypes

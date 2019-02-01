@@ -110,6 +110,10 @@ void BP3Base::InitParameters(const Params &parameters)
         {
             InitParameterSubStreams(value);
         }
+        else if (key == "node-local")
+        {
+            InitParameterNodeLocal(value);
+        }
     }
 
     // default timer for buffering
@@ -310,11 +314,14 @@ BP3Base::ResizeResult BP3Base::ResizeBuffer(const size_t dataIn,
 void BP3Base::InitOnOffParameter(const std::string value, bool &parameter,
                                  const std::string hint)
 {
-    if (value == "off" || value == "Off")
+    std::string valueLC(value);
+    std::transform(valueLC.begin(), valueLC.end(), valueLC.begin(), ::tolower);
+
+    if (valueLC == "off")
     {
         parameter = false;
     }
-    else if (value == "on" || value == "On")
+    else if (valueLC == "on")
     {
         parameter = true;
     }
@@ -605,6 +612,11 @@ void BP3Base::InitParameterFlushStepsCount(const std::string value)
     }
 
     m_FlushStepsCount = static_cast<size_t>(flushStepsCount);
+}
+
+void BP3Base::InitParameterNodeLocal(const std::string value)
+{
+    InitOnOffParameter(value, m_NodeLocal, "valid: node-local On or Off");
 }
 
 std::vector<uint8_t>

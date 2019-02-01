@@ -34,13 +34,11 @@ TransportMan::TransportMan(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames)
+void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
+                                 const bool nodeLocal)
 {
-    int rank;
-    MPI_Comm_rank(m_MPIComm, &rank);
+    auto lf_CreateDirectories = [&](const std::vector<std::string> &fileNames) {
 
-    if (rank == 0)
-    {
         for (const std::string fileName : fileNames)
         {
             const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
@@ -52,9 +50,24 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames)
             const std::string path(fileName.substr(0, lastPathSeparator));
             helper::CreateDirectory(path);
         }
+    };
+
+    if (nodeLocal)
+    {
+        lf_CreateDirectories(fileNames);
     }
-    helper::CheckMPIReturn(MPI_Barrier(m_MPIComm),
-                           "Barrier in TransportMan.MkDirsBarrier");
+    else
+    {
+        int rank;
+        MPI_Comm_rank(m_MPIComm, &rank);
+        if (rank == 0)
+        {
+            lf_CreateDirectories(fileNames);
+        }
+
+        helper::CheckMPIReturn(MPI_Barrier(m_MPIComm),
+                               "Barrier in TransportMan.MkDirsBarrier");
+    }
 }
 
 void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
