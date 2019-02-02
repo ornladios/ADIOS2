@@ -155,10 +155,16 @@ add_test(
 set_tests_properties(ADIOSSstTimeoutReaderTest.1x1 PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
 
 add_test(
-  NAME ADIOSSstLatestReaderTest.1x1
+  NAME ADIOSSstLatestReaderTest.1x1FFS
   COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol one_to_one
-    -verbose -nw 1 -nr 1 -max_readers 1 -warg '--ms_delay' -warg '250' -rarg '--latest')
-set_tests_properties(ADIOSSstLatestReaderTest.1x1 PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
+    -verbose -nw 1 -nr 1 -max_readers 1 -warg '--ms_delay' -warg '250' -warg "--engine_params" -warg "MarshalMethod:FFS" -rarg '--latest' -rarg '--long_first_delay')
+set_tests_properties(ADIOSSstLatestReaderTest.1x1FFS PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
+
+add_test(
+  NAME ADIOSSstLatestReaderTest.1x1BP
+  COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test -test_protocol one_to_one
+    -verbose -nw 1 -nr 1 -max_readers 1 -warg '--ms_delay' -warg '250' -warg "--engine_params" -warg "MarshalMethod:BP" '-rarg '--latest' -rarg '--long_first_delay')
+set_tests_properties(ADIOSSstLatestReaderTest.1x1BP PROPERTIES TIMEOUT 60 RUN_SERIAL 1)
 
 add_test(
   NAME ADIOSSstDiscardWriterTest.1x1

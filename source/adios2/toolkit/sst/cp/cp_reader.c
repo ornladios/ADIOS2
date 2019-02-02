@@ -2,7 +2,6 @@
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
-#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -477,6 +476,16 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         memset(&Msg, 0, sizeof(Msg));
         Msg.Timestep = tsm->Timestep;
 
+        pthread_mutex_lock(&Stream->DataLock);
+        /*
+         * before discarding, install any precious metadata from this message
+         */
+        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+        {
+            FFSMarshalInstallPreciousMetadata(Stream, tsm);
+        }
+        pthread_mutex_unlock(&Stream->DataLock);
+
         /*
          * send each writer rank a release for this timestep (actually goes to
          * WSR
@@ -541,7 +550,17 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
         CP_verbose(Stream,
                    "Received a message that timestep %d has been discarded\n",
                    Msg->Timestep);
-        /* Nothing to do with this */
+
+        pthread_mutex_lock(&Stream->DataLock);
+        /*
+         * before discarding, install any precious metadata from this message
+         */
+        if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+        {
+            FFSMarshalInstallPreciousMetadata(Stream, Msg);
+        }
+        pthread_mutex_unlock(&Stream->DataLock);
+
         return;
     }
     else
@@ -731,6 +750,16 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
             struct _TimestepMetadataList *This = Next;
             struct _ReleaseTimestepMsg Msg;
             Next = This->Next;
+
+            /*
+             * before discarding, install any precious metadata from this
+             * message
+             */
+            if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+            {
+                FFSMarshalInstallPreciousMetadata(Stream, This->MetadataMsg);
+            }
+
             memset(&Msg, 0, sizeof(Msg));
             Msg.Timestep = This->MetadataMsg->Timestep;
 
@@ -1030,7 +1059,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
                  * the Latest that someone has seen, and presumably
                  * others will see shortly.  I'm going to go with Biggest
                  * until I have a reason to prefer one or the other.
-                */
+                 */
                 if (mode == SstLatestAvailable)
                 {
                     // latest available

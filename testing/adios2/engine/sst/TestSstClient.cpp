@@ -30,6 +30,7 @@ int Discard = 0;
 int BeginStepFailedPolls = 0;
 int SkippedSteps = 0;
 int DelayMS = 500;
+int LongFirstDelay = 0;
 // Number of steps
 std::size_t NSteps = 10;
 
@@ -120,6 +121,11 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
         else if (Latest)
         {
+            if (LongFirstDelay)
+            {
+                LongFirstDelay = 0;
+                usleep(3 * 1000 * 1000); /* sleep for 3 seconds */
+            }
             /* would like to do blocking, but API is inconvenient, so specify an
              * hour timeout */
             Status =
@@ -379,6 +385,10 @@ int main(int argc, char **argv)
         {
             IncreasingDelay = 1;
             Latest = 1;
+        }
+        else if (std::string(argv[1]) == "--long_first_delay")
+        {
+            LongFirstDelay = 1;
         }
         else if (std::string(argv[1]) == "--discard")
         {

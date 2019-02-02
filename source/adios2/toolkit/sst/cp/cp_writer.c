@@ -763,7 +763,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                      *  TENTATIVE!  TRYING TO SEE IF THIS MIGHT IMPACT RARE
                      *  STUCK READER PROBLEM.
                      *  Add  a short delay between consecutive messages
-                    */
+                     */
                     usleep(10 * Stream->ConnectionUsleepMultiplier);
                 }
                 sendOneToWSRCohort(
@@ -1366,9 +1366,11 @@ extern void SstInternalProvideTimestep(
                                "queue full condition\n",
                        Timestep);
             FreeTimestep(FreeClientData);
-            Formats = NULL;
             LocalMetadata = NULL;
             Data = NULL;
+            /*
+             * DON'T NULL Formats!  READER WILL NEED THOSE FOR FUTURE TIMESTEPS!
+             */
         }
     }
 
@@ -1454,7 +1456,7 @@ extern void SstInternalProvideTimestep(
 
         Msg->Metadata = NULL;
         Msg->DP_TimestepInfo = NULL;
-        Msg->Formats = NULL;
+        Msg->Formats = Formats;
         CP_verbose(Stream, "Sending Empty TimestepMetadata for Discarded "
                            "timestep %d, one to each reader\n",
                    Timestep);
