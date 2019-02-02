@@ -113,6 +113,7 @@ if(ADIOS2_HAVE_DataMan)
   target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
+if(ADIOS2_HAVE_MPI)
 if(ADIOS2_HAVE_WDM)
 if(ADIOS2_HAVE_ZeroMQ)
   target_sources(adios2 PRIVATE
@@ -126,6 +127,8 @@ if(ADIOS2_HAVE_ZeroMQ)
       engine/wdm/WdmWriter.tcc
   )
   target_link_libraries(adios2 PRIVATE nlohmann_json)
+  target_link_libraries(adios2 PUBLIC MPI::MPI_C)
+endif()
 endif()
 endif()
 

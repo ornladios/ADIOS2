@@ -638,10 +638,6 @@ DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
     {
         if (replyLocalBuffer->size() <= 16)
         {
-            throw(std::runtime_error(
-                "DataManSerializer::GenerateReply returns a buffer with size < "
-                "16, which means no data is contained in the buffer. This will "
-                "cause the deserializer to unpack incorrect data for Step"));
             std::cout << "DataManSerializer::GenerateReply returns a buffer "
                          "with size "
                       << replyLocalBuffer->size()
