@@ -187,10 +187,16 @@ void WdmWriter::Handshake()
 
         std::string globalAddressesStr = globalAddressesJson.dump();
 
+        transport::FileFStream lockstream(m_MPIComm, m_DebugMode);
+        lockstream.Open(".StagingHandshakeLock", Mode::Write);
+
         transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
         ipstream.Open(".StagingHandshake", Mode::Write);
         ipstream.Write(globalAddressesStr.data(), globalAddressesStr.size());
         ipstream.Close();
+
+        lockstream.Close();
+        remove(".StagingHandshakeLock");
     }
 }
 
@@ -252,6 +258,8 @@ void WdmWriter::DoClose(const int transportIndex)
             i.join();
         }
     }
+
+    remove(".StagingHandshake");
 
     Log(5, "WdmWriter::DoClose(" + m_Name + ")", true, true);
 
