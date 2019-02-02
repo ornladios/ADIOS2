@@ -51,7 +51,7 @@ public:
 
     void ParseMetadataIndex(const BufferSTL &bufferSTL);
 
-    void ParseMetadata(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine);
 
     /**
      * Used to get the variable payload data for the current selection (dims and
@@ -178,16 +178,16 @@ private:
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
 
-    void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
-    void ParsePGIndexPerStep(const BufferSTL &bufferSTL, const core::IO &io,
+    //void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
+    void ParsePGIndexPerStep(const BufferSTL &bufferSTL, const std::string hostLanguage,
                              size_t submetadatafileId, size_t step);
 
-    void ParseVariablesIndex(const BufferSTL &bufferSTL, core::IO &io);
-    void ParseVariablesIndexPerStep(const BufferSTL &bufferSTL, core::IO &io,
+    //void ParseVariablesIndex(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseVariablesIndexPerStep(const BufferSTL &bufferSTL, core::Engine &engine,
                                     size_t submetadatafileId, size_t step);
 
-    void ParseAttributesIndex(const BufferSTL &bufferSTL, core::IO &io);
-    void ParseAttributesIndexPerStep(const BufferSTL &bufferSTL, core::IO &io,
+    //void ParseAttributesIndex(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseAttributesIndexPerStep(const BufferSTL &bufferSTL, core::Engine &engine,
                                      size_t submetadatafileId, size_t step);
 
     /**
@@ -200,13 +200,13 @@ private:
      */
 
     template <class T>
-    void DefineVariableInIOPerStep(const ElementIndexHeader &header,
-                                   core::IO &io,
+    void DefineVariableInEngineIOPerStep(const ElementIndexHeader &header,
+                                   core::Engine &engine,
                                    const std::vector<char> &buffer,
                                    size_t position, size_t step) const;
 
     template <class T>
-    void DefineAttributeInIO(const ElementIndexHeader &header, core::IO &io,
+    void DefineAttributeInEngineIO(const ElementIndexHeader &header, core::Engine &engine,
                              const std::vector<char> &buffer,
                              size_t position) const;
 

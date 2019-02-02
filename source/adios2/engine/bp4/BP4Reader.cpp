@@ -213,7 +213,7 @@ void BP4Reader::InitBuffer()
     m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex);
 
     // fills IO with Variables and Attributes
-    m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, m_IO);
+    m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this);
 }
 
 #define declare_type(T)                                                        \

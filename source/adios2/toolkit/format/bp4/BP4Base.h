@@ -26,6 +26,7 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/Engine.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/BufferSTL.h"
