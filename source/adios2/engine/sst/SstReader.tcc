@@ -127,22 +127,22 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                 // if remote data buffer is compressed
                 if (subStreamInfo.OperationsInfo.size() > 0)
                 {
-                    //const bool identity =
+                    // const bool identity =
                     //    m_BP3Deserializer->IdentityOperation<T>(
                     //        blockInfo.Operations);
-                    //const helper::BlockOperationInfo
+                    // const helper::BlockOperationInfo
                     //    &blockOperationInfo =
                     //        m_BP3Deserializer->InitPostOperatorBlockData(
                     //            subStreamInfo.OperationsInfo,
                     //            variable.m_RawMemory[1],
                     //            identity);
-                    //m_BP3Deserializer->GetPreOperatorBlockData(
+                    // m_BP3Deserializer->GetPreOperatorBlockData(
                     //    buffers[iter], blockOperationInfo,
                     //    variable.m_RawMemory[0]);
-                    //helper::ClipVector(variable.m_RawMemory[0],
+                    // helper::ClipVector(variable.m_RawMemory[0],
                     //    subStreamInfo.Seeks.first,
                     //    subStreamInfo.Seeks.second);
-                    //m_BP3Deserializer->ClipContiguousMemory<T>(
+                    // m_BP3Deserializer->ClipContiguousMemory<T>(
                     //    blockInfo,
                     //    variable.m_RawMemory[0],
                     //    subStreamInfo.BlockBox,

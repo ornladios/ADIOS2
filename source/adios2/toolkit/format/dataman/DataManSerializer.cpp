@@ -14,6 +14,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <mpi.h>
 
 namespace adios2
 {
@@ -23,12 +24,12 @@ namespace format
 DataManSerializer::DataManSerializer(bool isRowMajor,
                                      const bool contiguousMajor,
                                      bool isLittleEndian)
+: m_IsRowMajor(isRowMajor), m_IsLittleEndian(isLittleEndian),
+  m_ContiguousMajor(contiguousMajor),
+  m_DeferredRequestsToSend(
+      std::make_shared<std::unordered_map<std::string, std::vector<char>>>())
+
 {
-    m_IsRowMajor = isRowMajor;
-    m_IsLittleEndian = isLittleEndian;
-    m_ContiguousMajor = contiguousMajor;
-    m_DeferredRequestsToSend =
-        std::make_shared<std::unordered_map<std::string, std::vector<char>>>();
     New(1024);
 }
 
@@ -71,36 +72,48 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
     MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, mpiComm);
     maxSize += sizeof(uint64_t);
     localJsonPack.resize(maxSize, '\0');
-    *(reinterpret_cast<uint64_t *>(localJsonPack.data() + localJsonPack.size()) - 1) = size;
+    *(reinterpret_cast<uint64_t *>(localJsonPack.data() +
+                                   localJsonPack.size()) -
+      1) = size;
 
     std::vector<char> globalJsonStr(mpiSize * maxSize);
-    MPI_Allgather(localJsonPack.data(), maxSize, MPI_CHAR, globalJsonStr.data(), maxSize, MPI_CHAR, mpiComm);
+    MPI_Allgather(localJsonPack.data(), maxSize, MPI_CHAR, globalJsonStr.data(),
+                  maxSize, MPI_CHAR, mpiComm);
 
     nlohmann::json globalMetadata;
     std::shared_ptr<std::vector<char>> globalJsonPack = nullptr;
 
-    size_t minCurrentStep = std::numeric_limits<size_t>::max();
     for (int i = 0; i < mpiSize; ++i)
     {
-        size_t deserializeSize = *(reinterpret_cast<uint64_t *>(globalJsonStr.data() + (i + 1) * maxSize) - 1);
-        nlohmann::json metaj = DeserializeJson( globalJsonStr.data() + i * maxSize, deserializeSize);
-        for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end(); ++stepMapIt)
+        size_t deserializeSize =
+            *(reinterpret_cast<uint64_t *>(globalJsonStr.data() +
+                                           (i + 1) * maxSize) -
+              1);
+        nlohmann::json metaj = DeserializeJson(
+            globalJsonStr.data() + i * maxSize, deserializeSize);
+        for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end();
+             ++stepMapIt)
         {
-            for (auto rankMapIt = stepMapIt.value().begin(); rankMapIt != stepMapIt.value().end(); ++rankMapIt)
+            for (auto rankMapIt = stepMapIt.value().begin();
+                 rankMapIt != stepMapIt.value().end(); ++rankMapIt)
             {
-                globalMetadata[stepMapIt.key()][rankMapIt.key()] = rankMapIt.value();
+                globalMetadata[stepMapIt.key()][rankMapIt.key()] =
+                    rankMapIt.value();
             }
         }
     }
-    globalJsonPack = std::make_shared<std::vector<char>>(std::move(SerializeJson(globalMetadata)));
+    globalJsonPack = std::make_shared<std::vector<char>>(
+        std::move(SerializeJson(globalMetadata)));
 
-    if(m_Verbosity >=1)
+    if (m_Verbosity >= 1)
     {
         if (mpiRank == 0)
         {
-            if(globalJsonPack->empty())
+            if (globalJsonPack->empty())
             {
-                std::cout << "DataManSerializer::GetAggregatedMetadata resulted in empty json pack"<< std::endl;
+                std::cout << "DataManSerializer::GetAggregatedMetadata "
+                             "resulted in empty json pack"
+                          << std::endl;
             }
         }
     }
@@ -110,9 +123,11 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
 void DataManSerializer::PutAggregatedMetadata(
     const MPI_Comm mpiComm, std::shared_ptr<std::vector<char>> data)
 {
-    if(data->empty())
+    if (data->empty())
     {
-        Log(1,"DataManSerializer::PutAggregatedMetadata tries to deserialize an empty json pack", true, true);
+        Log(1, "DataManSerializer::PutAggregatedMetadata tries to deserialize "
+               "an empty json pack",
+            true, true);
     }
 
     nlohmann::json metaJ = DeserializeJson(data->data(), data->size());
@@ -174,7 +189,7 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
 
 void DataManSerializer::PutAttributes(core::IO &io, const int rank)
 {
-    if(rank ==0)
+    if (rank == 0)
     {
         const auto attributesDataMap = io.GetAttributesDataMap();
         for (const auto &attributePair : attributesDataMap)
@@ -185,11 +200,11 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
             {
             }
 #define declare_type(T)                                                        \
-            else if (type == helper::GetType<T>())                                     \
-            {                                                                          \
-                core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
-                PutAttribute(attribute, rank);                                         \
-            }
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
+        PutAttribute(attribute, rank);                                         \
+    }
             ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
         }
@@ -348,23 +363,31 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
     if (allPreviousSteps)
     {
-        std::vector<std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator> its;
-        for(auto it = m_DataManVarMap.begin(); it!=m_DataManVarMap.end(); ++it)
+        std::vector<std::unordered_map<
+            size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator>
+            its;
+        for (auto it = m_DataManVarMap.begin(); it != m_DataManVarMap.end();
+             ++it)
         {
-            if(it->first < step)
+            if (it->first < step)
             {
                 its.push_back(it);
             }
         }
-        for(auto it : its)
+        for (auto it : its)
         {
-            Log(5, "DataManSerializer::Erase() trying to erase step " + std::to_string(it->first) + ". This is one of multiple steps being erased.", true, true );
+            Log(5, "DataManSerializer::Erase() trying to erase step " +
+                       std::to_string(it->first) +
+                       ". This is one of multiple steps being erased.",
+                true, true);
             m_DataManVarMap.erase(it);
         }
     }
     else
     {
-        Log(5, "DataManSerializer::Erase() trying to erase step " + std::to_string(step), true, true );
+        Log(5, "DataManSerializer::Erase() trying to erase step " +
+                   std::to_string(step),
+            true, true);
         m_DataManVarMap.erase(step);
     }
 }
@@ -406,23 +429,24 @@ void DataManSerializer::GetAttributes(core::IO &io)
         {
         }
 #define declare_type(T)                                                        \
-        else if (type == helper::GetType<T>())                                     \
-        {                                                                          \
-            auto it = attributesDataMap.find(j["N"].get<std::string>()); \
-            if(it == attributesDataMap.end())\
-            {\
-                if (j["V"].get<bool>())                                                \
-                {                                                                      \
-                    io.DefineAttribute<T>(j["N"].get<std::string>(), j["G"].get<T>()); \
-                }                                                                      \
-                else                                                                   \
-                {                                                                      \
-                    io.DefineAttribute<T>(j["N"].get<std::string>(),                   \
-                            j["G"].get<std::vector<T>>().data(),         \
-                            j["G"].get<std::vector<T>>().size());        \
-                }                                                                      \
-            }\
-        }
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        auto it = attributesDataMap.find(j["N"].get<std::string>());           \
+        if (it == attributesDataMap.end())                                     \
+        {                                                                      \
+            if (j["V"].get<bool>())                                            \
+            {                                                                  \
+                io.DefineAttribute<T>(j["N"].get<std::string>(),               \
+                                      j["G"].get<T>());                        \
+            }                                                                  \
+            else                                                               \
+            {                                                                  \
+                io.DefineAttribute<T>(j["N"].get<std::string>(),               \
+                                      j["G"].get<std::vector<T>>().data(),     \
+                                      j["G"].get<std::vector<T>>().size());    \
+            }                                                                  \
+        }                                                                      \
+    }
         ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
     }
@@ -499,10 +523,12 @@ DataManSerializer::GetDeferredRequest()
     return t;
 }
 
-std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
+std::shared_ptr<std::vector<char>>
+DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
 {
     auto replyMetaJ = std::make_shared<nlohmann::json>();
-    auto replyLocalBuffer = std::make_shared<std::vector<char>>(sizeof(uint64_t) * 2);
+    auto replyLocalBuffer =
+        std::make_shared<std::vector<char>>(sizeof(uint64_t) * 2);
 
     nlohmann::json metaj;
     try
@@ -511,7 +537,10 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
     }
     catch (std::exception &e)
     {
-        Log(1, "DataManSerializer::GenerateReply() received staging request but failed to deserialize due to " + std::string(e.what()),true,true );
+        Log(1, "DataManSerializer::GenerateReply() received staging request "
+               "but failed to deserialize due to " +
+                   std::string(e.what()),
+            true, true);
         step = -1;
         return replyLocalBuffer;
     }
@@ -530,17 +559,20 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
             auto itVarVec = m_DataManVarMap.find(step);
             if (itVarVec == m_DataManVarMap.end())
             {
-                Log(1, "DataManSerializer::GenerateReply() received staging request but DataManVarMap does not have Step " + std::to_string(step), true, true);
-                if(m_Verbosity >=1)
+                Log(1, "DataManSerializer::GenerateReply() received staging "
+                       "request but DataManVarMap does not have Step " +
+                           std::to_string(step),
+                    true, true);
+                if (m_Verbosity >= 1)
                 {
-                    std::string msg= "DataManSerializer::GenerateReply() current steps are ";
-                    for(auto s : m_DataManVarMap)
+                    std::string msg =
+                        "DataManSerializer::GenerateReply() current steps are ";
+                    for (auto s : m_DataManVarMap)
                     {
                         msg += std::to_string(s.first) + ", ";
                     }
                     Log(1, msg, true, true);
                 }
-                step = -2;
                 return replyLocalBuffer;
             }
             else
@@ -548,9 +580,11 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
                 varVec = itVarVec->second;
                 if (varVec == nullptr)
                 {
-                    Log(1, "DataManSerializer::GenerateReply() received staging request but DataManVarMap contains a nullptr for Step " + std::to_string(step), true, true);
-                    throw(std::runtime_error("DataManSerializer::GenerateReply() received staging request but DataManVarMap contains a nullptr for Step"));
-                    step = -3;
+                    Log(1, "DataManSerializer::GenerateReply() received "
+                           "staging request but DataManVarMap contains a "
+                           "nullptr for Step " +
+                               std::to_string(step),
+                        true, true);
                     return replyLocalBuffer;
                 }
             }
@@ -586,21 +620,35 @@ std::shared_ptr<std::vector<char>> DataManSerializer::GenerateReply(const std::v
 
                     std::vector<char> metapack = SerializeJson(*replyMetaJ);
                     size_t metasize = metapack.size();
-                    (reinterpret_cast<uint64_t *>( replyLocalBuffer->data()))[0] = replyLocalBuffer->size();
-                    (reinterpret_cast<uint64_t *>( replyLocalBuffer->data()))[1] = metasize;
-                    replyLocalBuffer->resize(replyLocalBuffer->size() + metasize);
-                    std::memcpy(replyLocalBuffer->data() + replyLocalBuffer->size() - metasize, metapack.data(), metasize);
+                    (reinterpret_cast<uint64_t *>(
+                        replyLocalBuffer->data()))[0] =
+                        replyLocalBuffer->size();
+                    (reinterpret_cast<uint64_t *>(
+                        replyLocalBuffer->data()))[1] = metasize;
+                    replyLocalBuffer->resize(replyLocalBuffer->size() +
+                                             metasize);
+                    std::memcpy(replyLocalBuffer->data() +
+                                    replyLocalBuffer->size() - metasize,
+                                metapack.data(), metasize);
                 }
             }
         }
     }
-    if(m_Verbosity >=1)
+    if (m_Verbosity >= 1)
     {
-        if(replyLocalBuffer->size() <=16 )
+        if (replyLocalBuffer->size() <= 16)
         {
-            throw(std::runtime_error("DataManSerializer::GenerateReply returns a buffer with size < 16, which means no data is contained in the buffer. This will cause the deserializer to unpack incorrect data for Step"));
-            std::cout << "DataManSerializer::GenerateReply returns a buffer with size " << replyLocalBuffer->size()
-                << ", which means no data is contained in the buffer. This will cause the deserializer to unpack incorrect data for Step "  << step << "."<< std::endl;
+            throw(std::runtime_error(
+                "DataManSerializer::GenerateReply returns a buffer with size < "
+                "16, which means no data is contained in the buffer. This will "
+                "cause the deserializer to unpack incorrect data for Step"));
+            std::cout << "DataManSerializer::GenerateReply returns a buffer "
+                         "with size "
+                      << replyLocalBuffer->size()
+                      << ", which means no data is contained in the buffer. "
+                         "This will cause the deserializer to unpack incorrect "
+                         "data for Step "
+                      << step << "." << std::endl;
         }
     }
     return replyLocalBuffer;
@@ -675,90 +723,100 @@ size_t DataManSerializer::Steps()
     return m_DataManVarMap.size();
 }
 
-std::vector<char> DataManSerializer::SerializeJson(const nlohmann::json &message){
+std::vector<char>
+DataManSerializer::SerializeJson(const nlohmann::json &message)
+{
     std::vector<char> pack;
-    if(m_UseJsonSerialization == "msgpack")
+    if (m_UseJsonSerialization == "msgpack")
     {
         nlohmann::json::to_msgpack(message, pack);
     }
-    else if(m_UseJsonSerialization == "cbor")
+    else if (m_UseJsonSerialization == "cbor")
     {
         nlohmann::json::to_cbor(message, pack);
     }
-    else if(m_UseJsonSerialization == "ubjson")
+    else if (m_UseJsonSerialization == "ubjson")
     {
         nlohmann::json::to_ubjson(message, pack);
     }
-    else if(m_UseJsonSerialization == "string")
+    else if (m_UseJsonSerialization == "string")
     {
         std::string pack_str = message.dump();
         pack.resize(pack_str.size() + 1);
         std::memcpy(pack.data(), pack_str.data(), pack_str.size());
         pack.back() = '\0';
-        if(m_Verbosity >=5)
+        if (m_Verbosity >= 5)
         {
-            std::cout << "DataManSerializer::SerializeJson Json = " ;
+            std::cout << "DataManSerializer::SerializeJson Json = ";
             std::cout << nlohmann::json::parse(pack).dump(4);
             std::cout << std::endl;
         }
     }
     else
     {
-        throw(std::invalid_argument( m_UseJsonSerialization + " is not a valid method. DataManSerializer only uses string, msgpack, cbor or ubjson"));
+        throw(std::invalid_argument(m_UseJsonSerialization +
+                                    " is not a valid method. DataManSerializer "
+                                    "only uses string, msgpack, cbor or "
+                                    "ubjson"));
     }
     return pack;
 }
 
-nlohmann::json DataManSerializer::DeserializeJson(const char* start, size_t size)
+nlohmann::json DataManSerializer::DeserializeJson(const char *start,
+                                                  size_t size)
 {
     nlohmann::json message;
-    if(m_UseJsonSerialization == "msgpack")
+    if (m_UseJsonSerialization == "msgpack")
     {
         message = nlohmann::json::from_msgpack(start, size);
     }
-    else if(m_UseJsonSerialization == "cbor")
+    else if (m_UseJsonSerialization == "cbor")
     {
         message = nlohmann::json::from_cbor(start, size);
     }
-    else if(m_UseJsonSerialization == "ubjson")
+    else if (m_UseJsonSerialization == "ubjson")
     {
         message = nlohmann::json::from_ubjson(start, size);
     }
-    else if(m_UseJsonSerialization == "string")
+    else if (m_UseJsonSerialization == "string")
     {
         message = nlohmann::json::parse(start);
     }
     else
     {
-        throw(std::invalid_argument( m_UseJsonSerialization + " is not a valid method. DataManSerializer only uses string, msgpack, cbor or ubjson"));
+        throw(std::invalid_argument(m_UseJsonSerialization +
+                                    " is not a valid method. DataManSerializer "
+                                    "only uses string, msgpack, cbor or "
+                                    "ubjson"));
     }
 
-    if(m_Verbosity >=5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "DataManSerializer::DeserializeJson Json = " << message.dump() << std::endl;
+        std::cout << "DataManSerializer::DeserializeJson Json = "
+                  << message.dump() << std::endl;
     }
     return message;
 }
 
-void DataManSerializer::Log(const int level, const std::string &message, const bool mpi, const bool endline)
+void DataManSerializer::Log(const int level, const std::string &message,
+                            const bool mpi, const bool endline)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     if (m_Verbosity >= level)
     {
-        if(mpi)
+        if (mpi)
         {
             std::cout << "[Rank " << rank << "] ";
         }
         std::cout << message;
-        if(endline)
+        if (endline)
         {
             std::cout << std::endl;
         }
     }
 }
-
 
 } // namespace format
 } // namespace adios2

@@ -26,7 +26,7 @@ namespace engine
 {
 
 WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
-                             MPI_Comm mpiComm)
+                     MPI_Comm mpiComm)
 : Engine("WdmWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian())
@@ -38,17 +38,21 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
 
-    Log(5, "WdmWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmWriter::BeginStep() begin. Last step " +
+               std::to_string(m_CurrentStep),
+        true, true);
 
     ++m_CurrentStep;
-
 
     if (m_DataManSerializer.Steps() > m_MaxBufferSteps)
     {
         int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps;
-        if(stepToErase > 0)
+        if (stepToErase > 0)
         {
-            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing Step " + std::to_string(stepToErase), true, true);
+            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing "
+                   "Step " +
+                       std::to_string(stepToErase),
+                true, true);
             m_DataManSerializer.Erase(stepToErase);
         }
     }
@@ -56,20 +60,20 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     m_DataManSerializer.New(m_DefaultBufferSize);
     m_DataManSerializer.PutAttributes(m_IO, m_MpiRank);
 
-    Log(5, "WdmWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep), true,true);
+    Log(5,
+        "WdmWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep),
+        true, true);
     return StepStatus::OK;
 }
 
-size_t WdmWriter::CurrentStep() const
-{
-    return m_CurrentStep;
-}
+size_t WdmWriter::CurrentStep() const { return m_CurrentStep; }
 
 void WdmWriter::PerformPuts() {}
 
 void WdmWriter::EndStep()
 {
-    Log(5, "WdmWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep), true, false);
+    Log(5, "WdmWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep),
+        true, false);
 
     m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
     auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
@@ -79,21 +83,20 @@ void WdmWriter::EndStep()
         m_LockedAggregatedMetadata.second = aggMetadata;
     }
 
-    Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
+        true, true);
 }
 
-void WdmWriter::Flush(const int transportIndex)
-{
-}
+void WdmWriter::Flush(const int transportIndex) {}
 
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void WdmWriter::DoPutSync(Variable<T> &variable, const T *data)        \
+    void WdmWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PutSyncCommon(variable, data);                                         \
     }                                                                          \
-    void WdmWriter::DoPutDeferred(Variable<T> &variable, const T *data)    \
+    void WdmWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
@@ -104,7 +107,7 @@ void WdmWriter::Init()
 {
     MPI_Comm_rank(m_MPIComm, &m_MpiRank);
     MPI_Comm_size(m_MPIComm, &m_MpiSize);
-    srand (time(NULL));
+    srand(time(NULL));
     InitParameters();
     Handshake();
     InitTransports();
@@ -138,9 +141,10 @@ void WdmWriter::InitParameters()
 void WdmWriter::InitTransports()
 {
     m_Listening = true;
-    for(const auto &address : m_FullAddresses)
+    for (const auto &address : m_FullAddresses)
     {
-        m_ReplyThreads.emplace_back( std::thread(&WdmWriter::ReplyThread, this, address));
+        m_ReplyThreads.emplace_back(
+            std::thread(&WdmWriter::ReplyThread, this, address));
     }
 }
 
@@ -156,30 +160,37 @@ void WdmWriter::Handshake()
     }
     else
     {
-        Log(1, "WdmWriter::Handshake() Cound not find any available IP address. Using local address 127.0.0.1", true, true);
+        Log(1, "WdmWriter::Handshake() Cound not find any available IP "
+               "address. Using local address 127.0.0.1",
+            true, true);
     }
 
-    for(int i=0; i<m_Channels; ++i)
+    for (int i = 0; i < m_Channels; ++i)
     {
-        std::string addr = "tcp://" + ip + ":" + std::to_string(12307 + (m_MpiRank % 1000)*m_Channels + i) + "\0";
+        std::string addr =
+            "tcp://" + ip + ":" +
+            std::to_string(12307 + (m_MpiRank % 1000) * m_Channels + i) + "\0";
         m_FullAddresses.push_back(addr);
     }
 
     nlohmann::json localAddressesJson = m_FullAddresses;
     std::string localAddressesStr = localAddressesJson.dump();
-    std::vector<char> localAddressesChar(64*m_Channels, '\0');
-    std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(), localAddressesStr.size());
-    std::vector<char> globalAddressesChar(64*m_Channels*m_MpiSize, '\0');
+    std::vector<char> localAddressesChar(64 * m_Channels, '\0');
+    std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(),
+                localAddressesStr.size());
+    std::vector<char> globalAddressesChar(64 * m_Channels * m_MpiSize, '\0');
 
-    helper::GatherArrays(localAddressesChar.data(), 64*m_Channels, globalAddressesChar.data(), m_MPIComm);
+    helper::GatherArrays(localAddressesChar.data(), 64 * m_Channels,
+                         globalAddressesChar.data(), m_MPIComm);
 
-    if(m_MpiRank == 0)
+    if (m_MpiRank == 0)
     {
         nlohmann::json globalAddressesJson;
-        for(int i=0; i<m_MpiSize; ++i)
+        for (int i = 0; i < m_MpiSize; ++i)
         {
-            auto j = nlohmann::json::parse(&globalAddressesChar[i*64*m_Channels]);
-            for(auto &i : j)
+            auto j = nlohmann::json::parse(
+                &globalAddressesChar[i * 64 * m_Channels]);
+            for (auto &i : j)
             {
                 globalAddressesJson.push_back(i);
             }
@@ -210,21 +221,22 @@ void WdmWriter::ReplyThread(std::string address)
         if (request->size() == 1)
         {
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
-            int64_t aggStep;
-
-            while(aggMetadata == nullptr)
+            while (aggMetadata == nullptr)
             {
                 std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
                 aggMetadata = m_LockedAggregatedMetadata.second;
-                aggStep =  m_LockedAggregatedMetadata.first;
                 m_LockedAggregatedMetadata.second = nullptr;
             }
             tpm.SendReply(aggMetadata);
 
             if (m_Verbosity >= 100)
             {
-                Log(100,"WdmWriter::MetadataRepThread() sending metadata pack, size =  " + std::to_string( aggMetadata->size()), true, true) ;
-                std::cout << nlohmann::json::parse(*aggMetadata).dump(4) << std::endl;
+                Log(100, "WdmWriter::MetadataRepThread() sending metadata "
+                         "pack, size =  " +
+                             std::to_string(aggMetadata->size()),
+                    true, true);
+                std::cout << nlohmann::json::parse(*aggMetadata).dump(4)
+                          << std::endl;
             }
         }
         else if (request->size() > 1)
@@ -232,15 +244,21 @@ void WdmWriter::ReplyThread(std::string address)
             size_t step;
             auto reply = m_DataManSerializer.GenerateReply(*request, step);
             tpm.SendReply(reply);
-            if(reply->size() <= 16)
+            if (reply->size() <= 16)
             {
-                if(m_Tolerance)
+                if (m_Tolerance)
                 {
-                    Log(1, "WdmWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again.",true, true);
+                    Log(1, "WdmWriter::ReplyThread received data request but "
+                           "the step is already removed from buffer. Increased "
+                           "buffer size to prevent this from happening again.",
+                        true, true);
                 }
                 else
                 {
-                    throw(std::runtime_error("WdmWriter::ReplyThread received data request but the step is already removed from buffer. Increased buffer size to prevent this from happening again."));
+                    throw(std::runtime_error(
+                        "WdmWriter::ReplyThread received data request but the "
+                        "step is already removed from buffer. Increased buffer "
+                        "size to prevent this from happening again."));
                 }
             }
         }
@@ -262,24 +280,23 @@ void WdmWriter::DoClose(const int transportIndex)
     remove(".StagingHandshake");
 
     Log(5, "WdmWriter::DoClose(" + m_Name + ")", true, true);
-
 }
-void WdmWriter::Log(const int level, const std::string &message, const bool mpi, const bool endline)
+void WdmWriter::Log(const int level, const std::string &message, const bool mpi,
+                    const bool endline)
 {
     if (m_Verbosity >= level)
     {
-        if(mpi)
+        if (mpi)
         {
             std::cout << "[Rank " << m_MpiRank << "] ";
         }
         std::cout << message;
-        if(endline)
+        if (endline)
         {
             std::cout << std::endl;
         }
     }
 }
-
 
 } // end namespace engine
 } // end namespace core

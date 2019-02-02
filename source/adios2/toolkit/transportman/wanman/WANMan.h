@@ -33,7 +33,7 @@ public:
     ~WANMan();
 
     void OpenTransports(const std::vector<Params> &parametersVector,
-                        const Mode openMode, const std::string workflowMode,
+                        const Mode openMode, const std::string &workflowMode,
                         const bool profile);
 
     void Write(const std::vector<char> &buffer, size_t transportId);
@@ -55,10 +55,10 @@ private:
     std::mutex m_Mutex;
 
     // Functions for parsing parameters
-    bool GetBoolParameter(const Params &params, const std::string key);
-    bool GetStringParameter(const Params &params, const std::string key,
+    bool GetBoolParameter(const Params &params, const std::string &key);
+    bool GetStringParameter(const Params &params, const std::string &key,
                             std::string &value);
-    bool GetIntParameter(const Params &params, const std::string key,
+    bool GetIntParameter(const Params &params, const std::string &key,
                          int &value);
 
     // For read thread

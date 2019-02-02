@@ -479,11 +479,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_WDM
         if (mode == Mode::Read)
-            engine = std::make_shared<engine::WdmReader>(*this, name, mode,
-                                                             mpiComm);
+            engine =
+                std::make_shared<engine::WdmReader>(*this, name, mode, mpiComm);
         else
-            engine = std::make_shared<engine::WdmWriter>(*this, name, mode,
-                                                             mpiComm);
+            engine =
+                std::make_shared<engine::WdmWriter>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument(
             "ERROR: this version didn't compile with "

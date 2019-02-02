@@ -25,19 +25,31 @@ namespace engine
 template <class T>
 void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
-    Log(5, "WdmWriter::PutSync(" + variable.m_Name + ") begin. Current step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
+               std::to_string(m_CurrentStep),
+        true, true);
     variable.SetData(data);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
-    Log(5, "WdmWriter::PutSync(" + variable.m_Name + ") end. Current step " + std::to_string(m_CurrentStep), true, true);
+    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
+                               m_FullAddresses[rand() % m_FullAddresses.size()],
+                               Params());
+    Log(5, "WdmWriter::PutSync(" + variable.m_Name + ") end. Current step " +
+               std::to_string(m_CurrentStep),
+        true, true);
 }
 
 template <class T>
 void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    Log(5, "WdmWriter::PutDeferred(" + variable.m_Name + ") start. Current step " + std::to_string(m_CurrentStep), true,true);
+    Log(5, "WdmWriter::PutDeferred(" + variable.m_Name +
+               ") start. Current step " + std::to_string(m_CurrentStep),
+        true, true);
     variable.SetData(data);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_FullAddresses[rand()%m_FullAddresses.size()], Params());
-    Log(5, "WdmWriter::PutDeferred(" + variable.m_Name + ") end. Current step " + std::to_string(m_CurrentStep), true,true);
+    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
+                               m_FullAddresses[rand() % m_FullAddresses.size()],
+                               Params());
+    Log(5, "WdmWriter::PutDeferred(" + variable.m_Name +
+               ") end. Current step " + std::to_string(m_CurrentStep),
+        true, true);
 }
 
 } // end namespace engine

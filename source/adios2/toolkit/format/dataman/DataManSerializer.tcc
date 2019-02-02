@@ -56,8 +56,9 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                                std::shared_ptr<std::vector<char>> localBuffer,
                                std::shared_ptr<nlohmann::json> metadataJson)
 {
-    Log(1, "DataManSerializer::PutVar begin with Step " + std::to_string(step) + " Var " + varName, true, true);
-
+    Log(1, "DataManSerializer::PutVar begin with Step " + std::to_string(step) +
+               " Var " + varName,
+        true, true);
 
     if (localBuffer == nullptr)
     {
@@ -161,7 +162,8 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     if (metadataJson == nullptr)
     {
-        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(metaj);
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
+            metaj);
     }
     else
     {
@@ -169,17 +171,19 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
             .emplace_back(metaj);
     }
 
-    if(m_Verbosity >=100)
+    if (m_Verbosity >= 100)
     {
         Log(100, "DataManSerializer::PutVar printing data", true, true);
-        for(size_t i =0; i<datasize/sizeof(T); ++i)
+        for (size_t i = 0; i < datasize / sizeof(T); ++i)
         {
-            std::cout << inputData[i] << "  " ;
+            std::cout << inputData[i] << "  ";
         }
         std::cout << std::endl;
     }
 
-    Log(1, "DataManSerializer::PutVar end with Step " + std::to_string(step) + " Var " + varName, true, true);
+    Log(1, "DataManSerializer::PutVar end with Step " + std::to_string(step) +
+               " Var " + varName,
+        true, true);
 }
 
 template <class T>
@@ -459,25 +463,26 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
             }
             else
             {
-                if(m_Verbosity >=5)
+                if (m_Verbosity >= 5)
                 {
-                    std::cout << "DataManSerializer calling NdCopy with input start ";
-                    for(auto s : j.start)
+                    std::cout
+                        << "DataManSerializer calling NdCopy with input start ";
+                    for (auto s : j.start)
                     {
                         std::cout << s << ", ";
                     }
                     std::cout << "count ";
-                    for(auto s : j.count)
+                    for (auto s : j.count)
                     {
                         std::cout << s << ", ";
                     }
                     std::cout << "output start ";
-                    for(auto s : varStart)
+                    for (auto s : varStart)
                     {
                         std::cout << s << ", ";
                     }
                     std::cout << "count ";
-                    for(auto s : varCount)
+                    for (auto s : varCount)
                     {
                         std::cout << s << ", ";
                     }
@@ -502,13 +507,14 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
             }
         }
     }
-    if(m_Verbosity >=100)
+    if (m_Verbosity >= 100)
     {
-        size_t datasize = std::accumulate(varCount.begin(), varCount.end(), sizeof(T), std::multiplies<size_t>());
+        size_t datasize = std::accumulate(varCount.begin(), varCount.end(),
+                                          sizeof(T), std::multiplies<size_t>());
         Log(100, "DataManSerializer::GetVar printing data", true, true);
-        for(size_t i =0; i<datasize/sizeof(T); ++i)
+        for (size_t i = 0; i < datasize / sizeof(T); ++i)
         {
-            std::cout << outputData[i] << "  " ;
+            std::cout << outputData[i] << "  ";
         }
         std::cout << std::endl;
     }

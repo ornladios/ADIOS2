@@ -34,13 +34,12 @@ public:
 
     ~StagingMan();
 
-    void OpenTransport(const std::string fullAddress);
+    void OpenTransport(const std::string &fullAddress);
 
     void CloseTransport();
 
-    std::shared_ptr<std::vector<char>>
-    Request(const std::vector<char> &request,
-            const std::string &address);
+    std::shared_ptr<std::vector<char>> Request(const std::vector<char> &request,
+                                               const std::string &address);
 
     std::shared_ptr<std::vector<char>> ReceiveRequest();
 

@@ -29,7 +29,7 @@ class WdmWriter : public Engine
 
 public:
     WdmWriter(IO &adios, const std::string &name, const Mode mode,
-                  MPI_Comm mpiComm);
+              MPI_Comm mpiComm);
 
     ~WdmWriter() = default;
 
@@ -42,7 +42,6 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-
     // API parameters
     int m_Channels = 1;
     int64_t m_MaxBufferSteps = 3000;
@@ -58,7 +57,8 @@ private:
     bool m_Tolerance = false;
 
     // metadata for current step being written.
-    std::pair<int64_t, std::shared_ptr<std::vector<char>>> m_LockedAggregatedMetadata;
+    std::pair<int64_t, std::shared_ptr<std::vector<char>>>
+        m_LockedAggregatedMetadata;
     std::mutex m_LockedAggregatedMetadataMutex;
 
     void Init() final;
@@ -94,7 +94,8 @@ private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
-    void Log(const int level, const std::string &message, const bool mpi, const bool endline);
+    void Log(const int level, const std::string &message, const bool mpi,
+             const bool endline);
 
     int m_Verbosity = 11;
 };

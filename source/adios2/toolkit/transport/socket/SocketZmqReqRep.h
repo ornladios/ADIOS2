@@ -24,10 +24,10 @@ class SocketZmqReqRep
 public:
     SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout);
     virtual ~SocketZmqReqRep();
-    int Open(const std::string &fullAddress, const Mode openMode) ;
-    int Write(const char *buffer, size_t size) ;
-    int Read(char *buffer, size_t size) ;
-    void Close() ;
+    int Open(const std::string &fullAddress, const Mode openMode);
+    int Write(const char *buffer, size_t size);
+    int Read(char *buffer, size_t size);
+    void Close();
 
 private:
     void *m_Context = nullptr;

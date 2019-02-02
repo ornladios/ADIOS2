@@ -77,7 +77,7 @@ WANMan::~WANMan()
 void WANMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
 void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
-                            const Mode mode, const std::string workflowMode,
+                            const Mode mode, const std::string &workflowMode,
                             const bool profile)
 {
     m_TransportsParameters = paramsVector;
@@ -237,7 +237,7 @@ void WANMan::ReadThread(std::shared_ptr<Transport> transport)
     }
 }
 
-bool WANMan::GetBoolParameter(const Params &params, const std::string key)
+bool WANMan::GetBoolParameter(const Params &params, const std::string &key)
 {
     auto itKey = params.find(key);
     if (itKey != params.end())
@@ -256,7 +256,7 @@ bool WANMan::GetBoolParameter(const Params &params, const std::string key)
     return false;
 }
 
-bool WANMan::GetStringParameter(const Params &params, const std::string key,
+bool WANMan::GetStringParameter(const Params &params, const std::string &key,
                                 std::string &value)
 {
     auto it = params.find(key);
@@ -268,7 +268,7 @@ bool WANMan::GetStringParameter(const Params &params, const std::string key,
     return false;
 }
 
-bool WANMan::GetIntParameter(const Params &params, const std::string key,
+bool WANMan::GetIntParameter(const Params &params, const std::string &key,
                              int &value)
 {
     auto it = params.find(key);

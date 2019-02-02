@@ -27,7 +27,7 @@ StagingMan::StagingMan(const MPI_Comm mpiComm, const Mode openMode,
 
 StagingMan::~StagingMan() {}
 
-void StagingMan::OpenTransport(const std::string fullAddress)
+void StagingMan::OpenTransport(const std::string &fullAddress)
 {
     m_Transport.Open(fullAddress, m_OpenMode);
 }
@@ -40,13 +40,15 @@ StagingMan::Request(const std::vector<char> &request,
 {
     auto reply = std::make_shared<std::vector<char>>();
 
-    int ret = m_Transport.Open(address, m_OpenMode);;
+    int ret = m_Transport.Open(address, m_OpenMode);
+    ;
     auto start_time = std::chrono::system_clock::now();
-    while(ret)
+    while (ret)
     {
         ret = m_Transport.Open(address, m_OpenMode);
         auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
         if (duration.count() > m_Timeout)
         {
             return reply;
@@ -55,11 +57,12 @@ StagingMan::Request(const std::vector<char> &request,
 
     ret = m_Transport.Write(request.data(), request.size());
     start_time = std::chrono::system_clock::now();
-    while(ret < 1)
+    while (ret < 1)
     {
         ret = m_Transport.Write(request.data(), request.size());
         auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
         if (duration.count() > m_Timeout)
         {
             return reply;
@@ -68,11 +71,12 @@ StagingMan::Request(const std::vector<char> &request,
 
     ret = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
     start_time = std::chrono::system_clock::now();
-    while(ret < 1)
+    while (ret < 1)
     {
         ret = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
         auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>( now_time - start_time);
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
         if (duration.count() > m_Timeout)
         {
             return reply;
@@ -88,7 +92,7 @@ StagingMan::Request(const std::vector<char> &request,
 std::shared_ptr<std::vector<char>> StagingMan::ReceiveRequest()
 {
     int bytes = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
-    if(bytes < 0)
+    if (bytes < 0)
     {
         bytes = 0;
     }

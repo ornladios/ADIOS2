@@ -30,7 +30,7 @@ class WdmReader : public Engine
 {
 public:
     WdmReader(IO &adios, const std::string &name, const Mode mode,
-                  MPI_Comm mpiComm);
+              MPI_Comm mpiComm);
 
     ~WdmReader();
     StepStatus BeginStep(
@@ -87,7 +87,8 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    void Log(const int level, const std::string &message, const bool mpi, const bool endline);
+    void Log(const int level, const std::string &message, const bool mpi,
+             const bool endline);
 
     int m_Verbosity = 5;
 };

@@ -104,7 +104,8 @@ public:
 
     static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
 
-    std::shared_ptr<std::vector<char>> GenerateReply(const std::vector<char> &request, size_t &step);
+    std::shared_ptr<std::vector<char>>
+    GenerateReply(const std::vector<char> &request, size_t &step);
 
     int PutPack(const std::shared_ptr<std::vector<char>> data);
 
@@ -135,7 +136,6 @@ public:
     size_t MinStep();
     size_t Steps();
 
-
 private:
     template <class T>
     bool PutZfp(nlohmann::json &metaj, size_t &datasize, const T *inputData,
@@ -163,9 +163,10 @@ private:
                           Dims &ovlpStart, Dims &ovlpCount);
 
     std::vector<char> SerializeJson(const nlohmann::json &message);
-    nlohmann::json DeserializeJson(const char* start, size_t size);
+    nlohmann::json DeserializeJson(const char *start, size_t size);
 
-    void Log(const int level, const std::string &message, const bool mpi, const bool endline);
+    void Log(const int level, const std::string &message, const bool mpi,
+             const bool endline);
 
     // local rank single step data and metadata pack buffer, used in writer,
     // only accessed from writer app API thread, does not need mutex
@@ -189,7 +190,8 @@ private:
     nlohmann::json m_GlobalVars;
     std::mutex m_GlobalVarsMutex;
 
-    // for generating deferred requests, only accessed from reader app thread, does not need mutex
+    // for generating deferred requests, only accessed from reader app thread,
+    // does not need mutex
     std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
         m_DeferredRequestsToSend;
 

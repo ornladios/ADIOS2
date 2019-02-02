@@ -40,7 +40,6 @@ SocketZmqReqRep::~SocketZmqReqRep()
     }
 }
 
-
 int SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
 {
     std::string openModeStr;
@@ -78,18 +77,15 @@ int SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
     return error;
 }
 
-
 int SocketZmqReqRep::Write(const char *buffer, size_t size)
 {
     return zmq_send(m_Socket, buffer, size, 0);
 }
 
-
 int SocketZmqReqRep::Read(char *buffer, size_t size)
 {
     return zmq_recv(m_Socket, buffer, size, 0);
 }
-
 
 void SocketZmqReqRep::Close()
 {

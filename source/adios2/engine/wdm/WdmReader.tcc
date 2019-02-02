@@ -24,7 +24,7 @@ namespace engine
 
 template <>
 inline void WdmReader::GetSyncCommon(Variable<std::string> &variable,
-                                         std::string *data)
+                                     std::string *data)
 {
     Log(5, "WdmReader::GetSync(" + variable.m_Name + ") begin", true, true);
 
@@ -67,7 +67,7 @@ void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
 
 template <typename T>
 void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
-                                    const Dims &start, const Dims &count)
+                                const Dims &start, const Dims &count)
 {
     auto v = m_IO.InquireVariable<T>(name);
     if (v == nullptr)
