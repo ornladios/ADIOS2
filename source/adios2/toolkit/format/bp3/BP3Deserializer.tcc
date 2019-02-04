@@ -701,7 +701,7 @@ inline void BP3Deserializer::DefineVariableInEngineIO<std::string>(
     if (variable->m_ShapeID == ShapeID::LocalValue)
     {
         variable->m_ShapeID = ShapeID::GlobalArray;
-        variable->m_SingleValue = false;
+        variable->m_SingleValue = true;
     }
     /* Update variable's starting step, which equals to the min value in
     the sorted map minus one */
@@ -876,7 +876,7 @@ void BP3Deserializer::DefineVariableInEngineIO(const ElementIndexHeader &header,
         variable->m_ShapeID = ShapeID::GlobalArray;
         // variable will be presented as a 1D global array, but contents exist
         // in metadata
-        variable->m_SingleValue = false;
+        variable->m_SingleValue = true;
     }
 
     /* Update variable's starting step, which equals to the min value in the
@@ -1014,11 +1014,7 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
     std::vector<typename core::Variable<T>::Info> blocksInfo;
     blocksInfo.reserve(blocksIndexOffsets.size());
 
-    // special case to be handled:
-    //    local values turned Global Array
-    bool isLocalValue = false;
-    std::vector<T> localValues;
-    localValues.reserve(blocksIndexOffsets.size());
+    size_t n = 0;
 
     for (const size_t blockIndexOffset : blocksIndexOffsets)
     {
@@ -1056,22 +1052,13 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         if (blockInfo.Shape.size() == 1 &&
             blockInfo.Shape.front() == LocalValueDim)
         {
-            isLocalValue = true;
-            localValues.push_back(blockCharacteristics.Statistics.Value);
-            break;
+            blockInfo.Shape = Dims{blocksIndexOffsets.size()};
+            blockInfo.Count = Dims{1};
+            blockInfo.Start = Dims{n};
+            blockInfo.Min = blockCharacteristics.Statistics.Value;
+            blockInfo.Max = blockCharacteristics.Statistics.Value;
+            ++n;
         }
-        blocksInfo.push_back(blockInfo);
-    }
-
-    if (isLocalValue)
-    {
-        // Create a single block for the entire array of local values
-        typename core::Variable<T>::Info blockInfo;
-        blockInfo.Shape = Dims{blocksIndexOffsets.size()};
-        blockInfo.Count = Dims{blocksIndexOffsets.size()};
-        blockInfo.Start = Dims{0};
-        helper::GetMinMax(localValues.data(), localValues.size(), blockInfo.Min,
-                          blockInfo.Max);
         blocksInfo.push_back(blockInfo);
     }
 
