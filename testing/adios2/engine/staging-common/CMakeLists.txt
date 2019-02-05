@@ -23,7 +23,6 @@ gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args}
 endif()
 
 if(ADIOS2_HAVE_MPI)
-add_compile_definitions(ADIOS2_HAVE_MPI_F=1)
 gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
                 EXTRA_ARGS "InSituMPI"
                 TEST_SUFFIX _InSituMPI)
@@ -72,6 +71,8 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestCommonClient MPI::MPI_C)
   set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
   if(ADIOS2_HAVE_Fortran)
+    target_compile_definitions(TestCommonWrite_f PRIVATE ADIOS2_HAVE_MPI_F=1)
+    target_compile_definitions(TestCommonRead_f PRIVATE ADIOS2_HAVE_MPI_F=1)
     target_link_libraries(TestCommonWrite_f MPI::MPI_Fortran)
     target_link_libraries(TestCommonRead_f MPI::MPI_Fortran)
   endif()
