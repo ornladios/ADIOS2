@@ -109,7 +109,7 @@ endif()
  
 set (ZFP_TESTS "")
 if (ADIOS2_HAVE_ZFP)
-   set (ZFP_TESTS "ZFPCompression_1x1;ZFPCompression_3x5")
+   set (ZFP_TESTS "ZFPCompression.1x1;ZFPCompression.3x5")
 endif()
 
 set (1x1.FFS_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg MarshalMethod:FFS")
@@ -133,6 +133,7 @@ set (CtoF.1x1.FFS_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWrite -r Tes
 set (CtoF.1x1.BP_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWrite -r TestCommonRead_f -arg MarshalMethod:BP")
 set (FtoF.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWrite_f -r TestCommonRead_f")
 set (ZFPCompression.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg CompressionMethod:zfp" )
+set (ZFPCompression.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -p TestCommon -arg CompressionMethod:zfp" )
 set (KillReadersSerialized_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 1 -warg RendezvousReaderCount:0 -rarg --ignore_time_gap")
 set (KillReadersSerialized_TIMEOUT "300")
 set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 3 -warg RendezvousReaderCount:0 -rarg --ignore_time_gap")
