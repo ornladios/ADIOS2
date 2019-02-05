@@ -216,7 +216,10 @@ void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
     // std::cout << step << ", " << position << std::endl;
     m_MetadataSet.DataPGCount = m_MetadataSet.DataPGCount +
                                 helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
-
+    
+    const size_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    
     ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
     if (index.IsColumnMajor == 'y')
     {
