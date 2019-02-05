@@ -235,7 +235,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexPrintf("    Variables\n");
     for (vi = 0; vi < nvars; vi++)
     {
-        const adios2_variable *avar = adios_vars[vi];
+        adios2_variable *avar = adios_vars[vi];
         /* field NAME */
         size_t namelen;
         char varname[adios2_string_array_element_max_size];
@@ -296,16 +296,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         arr = valueToMatlabValue((void *)(&stepsCount), mxINT64_CLASS, mxREAL);
         mxSetFieldByNumber(vars, vi, var_field_StepsCount, arr);
 
-        /* field GLOBALMIN */
-        // FIXME arr = valueToMatlabValue(vinfo->gmin, mxtype, complexFlag);
-        double fakemin = 0.0;
-        arr = valueToMatlabValue(&fakemin, mxDOUBLE_CLASS, complexFlag);
-        mxSetFieldByNumber(vars, vi, var_field_GlobalMin, arr);
+        /* fields GLOBALMIN and GLOBALMAX */
+        if (adiostype == adios2_type_string)
+        {
+            char data[4096];
+            adios2_get(fp, avar, data, adios2_mode_sync);
+            arr = valueToMatlabValue(data, mxtype, complexFlag);
+            mxSetFieldByNumber(vars, vi, var_field_GlobalMin, arr);
+            mxSetFieldByNumber(vars, vi, var_field_GlobalMax, arr);
+        }
+        else
+        {
+            size_t typesize =  adiostypeToMemSize(adiostype);
+            char value[typesize];
+            adios2_variable_min(value, avar);
+            arr = valueToMatlabValue(value, mxtype, complexFlag);
+            mxSetFieldByNumber(vars, vi, var_field_GlobalMin, arr);
 
-        /* field GLOBALMAX */
-        // FIXME arr = valueToMatlabValue(vinfo->gmax, mxtype, complexFlag);
-        arr = valueToMatlabValue(&fakemin, mxDOUBLE_CLASS, complexFlag);
-        mxSetFieldByNumber(vars, vi, var_field_GlobalMax, arr);
+            adios2_variable_max(value, avar);
+            arr = valueToMatlabValue(value, mxtype, complexFlag);
+            mxSetFieldByNumber(vars, vi, var_field_GlobalMax, arr);
+        }
 
         free(dims);
     }
@@ -397,6 +408,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (verbose > 1)
             mexPrintf("      %s: adios type=%s size=%zu\n", attrname, mxGetClassName(arr),
                       aelems);
+        mxFree(data);
     }
 
     if (verbose)
@@ -452,13 +464,7 @@ mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxt
     }
     else if (mxtype == mxCHAR_CLASS)
     {
-        mwSize dims[2] = {1, nelems};
-        arr = mxCreateCharArray(2, dims);
-        size_t i;
-        for (i = 0; i < nelems; ++i)
-        {
-            ((char **)mxGetData(arr))[i] = ((char **)data)[i];
-        }
+        arr = mxCreateCharMatrixFromStrings(nelems, (const char**)data);
     }
     else if (complexFlag == mxCOMPLEX)
     {
