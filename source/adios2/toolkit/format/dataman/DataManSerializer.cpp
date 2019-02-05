@@ -14,7 +14,6 @@
 
 #include <cstring>
 #include <iostream>
-#include <mpi.h>
 
 namespace adios2
 {

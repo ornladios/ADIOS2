@@ -11,14 +11,14 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_DATAMAN_DATAMANSERIALIZER_H_
 #define ADIOS2_TOOLKIT_FORMAT_DATAMAN_DATAMANSERIALIZER_H_
 
-#include <nlohmann/json.hpp>
-
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 
 #include <mutex>
 #include <unordered_map>
+
+#include <nlohmann/json.hpp>
 
 // A - Address
 // C - Count

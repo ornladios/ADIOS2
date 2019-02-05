@@ -78,7 +78,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     metaj["Y"] = GetType<T>();
     metaj["P"] = localBuffer->size();
 
-    size_t datasize;
+    size_t datasize = 0;
     bool compressed = false;
     if (params.empty() == false)
     {
