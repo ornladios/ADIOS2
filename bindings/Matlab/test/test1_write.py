@@ -44,7 +44,7 @@ varT = io.DefineVariable(
 
 io.DefineAttribute("aaa", numpy.array([3.1415]))
 io.DefineAttribute("anote", "just a string")
-io.DefineAttribute("adimnames", ["rows", "cols"])
+io.DefineAttribute("adimnames", ["rows", "columns"])
 npdims = numpy.array([NRows,NCols], dtype=numpy.int32)
 io.DefineAttribute("adims", npdims)
 
