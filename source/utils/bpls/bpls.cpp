@@ -1629,8 +1629,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                   // data)
     uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
-    bool incdim;          // used in incremental reading in
-    int ndigits_dims[32]; // # of digits (to print) of each dimension
+    bool incdim;              // used in incremental reading in
+    int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
     const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
