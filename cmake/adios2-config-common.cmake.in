@@ -60,12 +60,11 @@ if(NOT @BUILD_SHARED_LIBS@)
 
 endif()
 
-include("${CMAKE_CURRENT_LIST_DIR}/ADIOS2ConfigVersion.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/adios2-config-version.cmake")
 
 include(FindPackageHandleStandardArgs)
-set(ADIOS2_CONFIG "${CMAKE_CURRENT_LIST_FILE}")
-find_package_handle_standard_args(ADIOS2 CONFIG_MODE)
+find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME} CONFIG_MODE)
 
 if(NOT TARGET adios2::adios2)
-  include("${CMAKE_CURRENT_LIST_DIR}/ADIOS2Targets.cmake")
+  include("${CMAKE_CURRENT_LIST_DIR}/adios2-targets.cmake")
 endif()
