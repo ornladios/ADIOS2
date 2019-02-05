@@ -119,6 +119,21 @@ void Stream::CheckOpen()
 }
 
 #define declare_template_instantiation(T)                                      \
+    template void Stream::WriteAttribute<T>(const std::string &, const T &,    \
+                                            const std::string &,               \
+                                            const std::string);                \
+                                                                               \
+    template void Stream::WriteAttribute<T>(const std::string &, const T *,    \
+                                            const size_t, const std::string &, \
+                                            const std::string);                \
+                                                                               \
+    template std::vector<T> Stream::ReadAttribute<T>(                          \
+        const std::string &, const std::string &, const std::string);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
     template void Stream::Write<T>(const std::string &, const T *,             \
                                    const Dims &, const Dims &, const Dims &,   \
                                    const bool);                                \

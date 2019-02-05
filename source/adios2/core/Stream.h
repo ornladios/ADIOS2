@@ -64,6 +64,15 @@ public:
     ~Stream() = default;
 
     template <class T>
+    void WriteAttribute(const std::string &name, const T &value,
+                        const std::string &variableName,
+                        const std::string separator);
+    template <class T>
+    void WriteAttribute(const std::string &name, const T *array,
+                        const size_t elements, const std::string &variableName,
+                        const std::string separator);
+
+    template <class T>
     void Write(const std::string &name, const T *values,
                const Dims &shape = Dims{}, const Dims &start = Dims{},
                const Dims &count = Dims{}, const bool endl = false);
@@ -97,6 +106,11 @@ public:
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
                         const Box<size_t> &stepSelection);
 
+    template <class T>
+    std::vector<T> ReadAttribute(const std::string &name,
+                                 const std::string &variableName,
+                                 const std::string separator);
+
     void Close();
 
     size_t CurrentStep() const;
@@ -128,8 +142,24 @@ private:
     void CheckOpen();
 };
 
+#define declare_template_instantiation(T)                                      \
+    extern template void Stream::WriteAttribute<T>(                            \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string);                                                    \
+                                                                               \
+    extern template void Stream::WriteAttribute<T>(                            \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string);                                                    \
+                                                                               \
+    extern template std::vector<T> Stream::ReadAttribute<T>(                   \
+        const std::string &, const std::string &, const std::string);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
+                                                                               \
     extern template void Stream::Write<T>(const std::string &, const T *,      \
                                           const Dims &, const Dims &,          \
                                           const Dims &, const bool);           \

@@ -177,6 +177,43 @@ public:
     void open(const std::string &name, const openmode mode,
               const std::string configFile, const std::string ioInConfigFile);
 #endif
+
+    /**
+     * @brief Define attribute inside fstream or for a variable after write.
+     * Single value input version
+     * @param name unique attribute identifier IO object or for a Variable if
+     * variableName is not empty (associated to a variable)
+     * @param value single data value
+     * @param variableName default is empty, if not empty attributes is
+     * associated to a variable after a write
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     */
+    template <class T>
+    void write_attribute(const std::string &name, const T &value,
+                         const std::string &variableName = "",
+                         const std::string separator = "/");
+
+    /**
+     * @brief Define attribute inside fstream or for a variable after write.
+     * Array input version
+     * @param name unique attribute identifier IO object or for a Variable if
+     * variableName is not empty (associated to a variable)
+     * @param data pointer to user data
+     * @param size number of data elements
+     * @param variableName default is empty, if not empty attributes is
+     * associated to a variable after a write
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     */
+    template <class T>
+    void write_attribute(const std::string &name, const T *data,
+                         const size_t elements,
+                         const std::string &variableName = "",
+                         const std::string separator = "/");
+
     /**
      * writes a self-describing array variable
      * @param name variable name
@@ -375,6 +412,11 @@ public:
                         const Dims &count, const size_t stepsStart,
                         const size_t stepsCount);
 
+    template <class T>
+    std::vector<T> read_attribute(const std::string &name,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/");
+
     /** close current stream becoming inaccessible */
     void close();
 
@@ -405,6 +447,21 @@ private:
 
     void CheckOpen(const std::string &name) const;
 };
+
+#define declare_template_instantiation(T)                                      \
+    extern template void fstream::write_attribute<T>(                          \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string);                                                    \
+                                                                               \
+    extern template void fstream::write_attribute<T>(                          \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string);                                                    \
+                                                                               \
+    extern template std::vector<T> fstream::read_attribute<T>(                 \
+        const std::string &, const std::string &, const std::string);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
     extern template void fstream::write<T>(const std::string &, const T *,     \

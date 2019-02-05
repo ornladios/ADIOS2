@@ -21,6 +21,23 @@ namespace core
 {
 
 template <class T>
+void Stream::WriteAttribute(const std::string &name, const T &value,
+                            const std::string &variableName,
+                            const std::string separator)
+{
+    m_IO->DefineAttribute<T>(name, value, variableName, separator);
+}
+
+template <class T>
+void Stream::WriteAttribute(const std::string &name, const T *array,
+                            const size_t elements,
+                            const std::string &variableName,
+                            const std::string separator)
+{
+    m_IO->DefineAttribute<T>(name, array, elements, variableName, separator);
+}
+
+template <class T>
 void Stream::Write(const std::string &name, const T *data, const Dims &shape,
                    const Dims &start, const Dims &count, const bool endStep)
 {
@@ -170,6 +187,31 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
     variable->SetSelection(selection);
     variable->SetStepSelection(stepSelection);
     return GetCommon(*variable);
+}
+
+template <class T>
+std::vector<T> Stream::ReadAttribute(const std::string &name,
+                                     const std::string &variableName,
+                                     const std::string separator)
+{
+    Attribute<T> *attribute =
+        m_IO->InquireAttribute<T>(name, variableName, separator);
+
+    std::vector<T> data;
+    if (attribute == nullptr)
+    {
+        return data;
+    }
+
+    if (attribute->m_IsSingleValue)
+    {
+        data.push_back(attribute->m_DataSingleValue);
+    }
+    else
+    {
+        data = attribute->m_DataArray;
+    }
+    return data;
 }
 
 // PRIVATE
