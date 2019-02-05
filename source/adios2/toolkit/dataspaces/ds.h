@@ -1,0 +1,44 @@
+/*
+ * ds.h
+ *
+ *  Created on: Jan 4, 2019
+ *      Author: subedip
+ */
+
+#ifndef SOURCE_ADIOS2_TOOLKIT_DATASPACES_DS_H_
+#define SOURCE_ADIOS2_TOOLKIT_DATASPACES_DS_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stddef.h>
+#include "ds_data.h"
+
+typedef struct adios_ds_data_struct DsData;
+
+extern void adios_dataspaces_init (void *comm, DsData * md);
+extern int adios_read_dataspaces_init (void *comm, DsData * data);
+
+extern void adios_dataspaces_open (char* fname, DsData* md);
+extern void globals_adios_set_dataspaces_connected_from_reader();
+extern void globals_adios_set_dataspaces_disconnected_from_reader();
+extern void globals_adios_set_dataspaces_connected_from_writer();
+extern void globals_adios_set_dataspaces_disconnected_from_writer();
+extern int  globals_adios_is_dataspaces_connected(); // from any
+extern int  globals_adios_is_dataspaces_connected_from_reader();
+extern int  globals_adios_is_dataspaces_connected_from_writer();
+extern int  globals_adios_is_dataspaces_connected_from_both();
+extern void globals_adios_set_application_id (int id);
+extern int globals_adios_get_application_id (int *was_set);
+
+//extern void adios_read_dataspaces_open (char* fname, DsData md);
+//extern static struct adios_dspaces_stream_info* lookup_dspaces_stream_info(const char* fname);
+#ifdef __cplusplus
+}
+#endif
+
+
+
+
+#endif /* SOURCE_ADIOS2_TOOLKIT_DATASPACES_DS_H_ */

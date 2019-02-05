@@ -119,6 +119,15 @@ if(ADIOS2_HAVE_SST)
   target_link_libraries(adios2 PRIVATE sst)
 endif()
 
+if(ADIOS2_HAVE_DATASPACES)
+  target_sources(adios2 PRIVATE
+     toolkit/dataspaces/ds_writer.c
+     engine/dataspaces/DataSpacesWriter.cpp engine/dataspaces/DataSpacesWriter.tcc 
+     engine/dataspaces/DataSpacesReader.cpp engine/dataspaces/DataSpacesReader.tcc 
+  )
+  target_link_libraries(adios2 PRIVATE DataSpaces::DataSpaces)
+endif()
+
 
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZip2.cpp)
