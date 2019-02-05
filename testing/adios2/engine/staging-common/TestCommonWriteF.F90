@@ -1,13 +1,34 @@
+subroutine usage()
+    print *, "Usage: TestCommonWriteF engine filename"
+end subroutine usage
+
+
 program TestSstWrite
   use sst_test_data
+#ifdef ADIOS2_HAVE_MPI_F
+  use mpi
+#endif
   use adios2
   implicit none
+
+#ifndef __GFORTRAN__
+#ifndef __GNUC__
+  interface
+     integer function iargc()
+     end function iargc
+  end interface
+#endif
+#endif
+
+  integer :: numargs
 
   integer(kind = 8), dimension(1)::shape_dims, start_dims, count_dims
   integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
   integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
   integer(kind = 8), dimension(1)::shape_time, start_time, count_time
   integer::inx, irank, isize, ierr, i, insteps, status
+
+  character(len=256) :: filename, engine
 
   type(adios2_adios)::adios
   type(adios2_io)::ioWrite, ioRead
@@ -20,9 +41,26 @@ program TestSstWrite
   integer(kind = 8), dimension(:), allocatable::shape_in
   integer(kind = 8)::localtime
 
+  numargs = iargc()
+  if ( numargs < 2 ) then
+     call usage()
+     call exit(1)
+  endif
+
+
+  call getarg(1, engine)
+  call getarg(2, filename)
+
+#ifdef ADIOS2_HAVE_MPI_F
+  !Launch MPI
+  call MPI_Init(ierr) 
+  call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr) 
+  call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
+#else
   ! No MPI
   irank = 0;
   isize = 1;
+#endif
 
   !Application variables 
   insteps = 10;
@@ -44,14 +82,18 @@ program TestSstWrite
   start_time = (/ irank /)
   count_time = (/ 1 /)
 
+#ifdef ADIOS2_HAVE_MPI_F
   !Create adios handler passing the communicator, debug mode and error flag
+  call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+#else
   call adios2_init_nompi(adios, adios2_debug_mode_on, ierr)
+#endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!WRITER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!Declare an IO process configuration inside adios 
   call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
 
-  call adios2_set_engine(ioWrite, "Sst", ierr)
+  call adios2_set_engine(ioWrite, engine, ierr)
 
   !Defines a variable to be written 
   call adios2_define_variable(variables(12), ioWrite, "scalar_r64", &
@@ -112,13 +154,13 @@ program TestSstWrite
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
 
-  call adios2_open(sstWriter, ioWrite, "ADIOS2Sst", adios2_mode_write, ierr)
+  call adios2_open(sstWriter, ioWrite, filename, adios2_mode_write, ierr)
 
   !Put array contents to bp buffer, based on var1 metadata
   do i = 1, insteps
      call GenerateTestData(i - 1, irank, isize)
-     call adios2_begin_step(sstWriter, adios2_step_mode_append, 0.0, status, &
-                            ierr)
+     call adios2_begin_step(sstWriter, adios2_step_mode_append, 0.0, &
+                            status, ierr)
      call adios2_put(sstWriter, variables(12), data_scalar_r64, ierr)
      call adios2_put(sstWriter, variables(1), data_I8, ierr)
      call adios2_put(sstWriter, variables(2), data_I16, ierr)
@@ -140,5 +182,9 @@ program TestSstWrite
 
    !Deallocates adios and calls its destructor 
    call adios2_finalize(adios, ierr)
+
+#ifdef ADIOS2_HAVE_MPI_F
+  call MPI_Finalize(ierr)
+#endif
 
  end program TestSstWrite

@@ -3,10 +3,13 @@
  * accompanying file Copyright.txt for details.
  */
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 
 #include <iostream>
+#include <signal.h>
+#include <sstream>
 #include <stdexcept>
 
 #include <adios2.h>
@@ -15,17 +18,19 @@
 
 #include "TestData.h"
 
-class SstWriteTest : public ::testing::Test
+class CommonServerTest : public ::testing::Test
 {
 public:
-    SstWriteTest() = default;
+    CommonServerTest() = default;
 };
 
-adios2::Params engineParams = {}; // parsed from command line
-std::string fname = "ADIOS2Sst";
-
-int CompressSz = 0;
-int CompressZfp = 0;
+adios2::Params engineParams = {};         // parsed from command line
+int DurationSeconds = 60 * 60 * 24 * 365; // one year default
+int DelayMS = 1000;                       // one step per sec default
+static int MyCloseNow = 0;
+static int GlobalCloseNow = 0;
+std::string fname = "ADIOS2CommonServer";
+std::string engine = "SST";
 
 static std::string Trim(std::string &str)
 {
@@ -61,21 +66,28 @@ static adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
-// ADIOS2 SST write
-TEST_F(SstWriteTest, ADIOS2SstWrite)
+std::string shutdown_name = "DieTest";
+
+inline bool file_exists(const std::string &name)
 {
-    // form a mpiSize * Nx 1D array
+    struct stat buffer;
+    return (stat(name.c_str(), &buffer) == 0);
+}
+
+// ADIOS2 COMMON write
+TEST_F(CommonServerTest, ADIOS2CommonServer)
+{
     int mpiRank = 0, mpiSize = 1;
 
     // Number of steps
-    const std::size_t NSteps = 10;
 
+    std::remove(shutdown_name.c_str());
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+// Server test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -100,51 +112,34 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         adios2::Dims time_shape{static_cast<unsigned int>(mpiSize)};
         adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
         adios2::Dims time_count{1};
-
-        auto scalar_r64 = io.DefineVariable<double>("scalar_r64");
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
-        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_c32 =
-            io.DefineVariable<std::complex<float>>("c32", shape, start, count);
-        auto var_c64 =
-            io.DefineVariable<std::complex<double>>("c64", shape, start, count);
-        auto var_r64_2d =
-            io.DefineVariable<double>("r64_2d", shape2, start2, count2);
-        auto var_r64_2d_rev =
-            io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
-        auto var_time = io.DefineVariable<int64_t>("time", time_shape,
-                                                   time_start, time_count);
-        if (CompressSz)
-        {
-            adios2::Operator SzOp = adios.DefineOperator("szCompressor", "sz");
-            // TODO: Add a large dataset for SZ test.
-            // var_r32.AddOperation(SzOp, {{"accuracy", "0.001"}});
-        }
-        if (CompressZfp)
-        {
-            adios2::Operator ZfpOp =
-                adios.DefineOperator("zfpCompressor", "zfp");
-            var_r32.AddOperation(ZfpOp, {{"rate", "20"}});
-            var_r64.AddOperation(ZfpOp, {{"rate", "20"}});
-            var_r64_2d.AddOperation(ZfpOp, {{"rate", "20"}});
-            var_r64_2d_rev.AddOperation(ZfpOp, {{"rate", "20"}});
-        }
+        io.DefineVariable<double>("scalar_r64");
+        io.DefineVariable<int8_t>("i8", shape, start, count);
+        io.DefineVariable<int16_t>("i16", shape, start, count);
+        io.DefineVariable<int32_t>("i32", shape, start, count);
+        io.DefineVariable<int64_t>("i64", shape, start, count);
+        io.DefineVariable<float>("r32", shape, start, count);
+        io.DefineVariable<double>("r64", shape, start, count);
+        io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+        io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+        io.DefineVariable<double>("r64_2d", shape2, start2, count2);
+        io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
+        io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
     }
 
     // Create the Engine
-    io.SetEngine("Sst");
+    io.SetEngine(engine);
     io.SetParameters(engineParams);
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-    for (size_t step = 0; step < NSteps; ++step)
+    // Advance to the next time step
+    std::time_t EndTime = std::time(NULL) + DurationSeconds;
+    size_t step = 0;
+
+    while ((std::time(NULL) < EndTime) && !GlobalCloseNow)
     {
         // Generate test data for each process uniquely
-        generateSstTestData(step, mpiRank, mpiSize);
+        generateCommonTestData(step, mpiRank, mpiSize);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -186,8 +181,7 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         // starting index + count
         const adios2::Mode sync = adios2::Mode::Sync;
 
-        if (mpiRank == 0)
-            engine.Put(scalar_r64, data_scalar_R64);
+        engine.Put(scalar_r64, data_scalar_R64, sync);
         engine.Put(var_i8, data_I8.data(), sync);
         engine.Put(var_i16, data_I16.data(), sync);
         engine.Put(var_i32, data_I32.data(), sync);
@@ -202,8 +196,23 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
+        usleep(1000 * DelayMS); /* sleep for DelayMS milliseconds */
+        step++;
+#ifdef ADIOS2_HAVE_MPI
+        MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
+                      MPI_COMM_WORLD);
+        if (file_exists(shutdown_name))
+        {
+            MyCloseNow = GlobalCloseNow = 1;
+        }
+#else
+        GlobalCloseNow = MyCloseNow;
+        if (file_exists(shutdown_name))
+        {
+            MyCloseNow = GlobalCloseNow = 1;
+        }
+#endif
     }
-
     // Close the file
     engine.Close();
 }
@@ -214,22 +223,32 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
-    int result;
+    int result, bare_args = 0;
     ::testing::InitGoogleTest(&argc, argv);
 
-    while ((argc > 1) && (argv[1][0] == '-'))
+    while (argc > 1)
     {
-        if (std::string(argv[1]) == "--expect_time_gap")
+        if (std::string(argv[1]) == "--duration")
         {
-            //  TimeGapExpected++;   Nothing on write side
+            std::istringstream ss(argv[2]);
+            if (!(ss >> DurationSeconds))
+                std::cerr << "Invalid number for duration " << argv[1] << '\n';
+            argv++;
+            argc--;
         }
-        else if (std::string(argv[1]) == "--compress_sz")
+        else if (std::string(argv[1]) == "--shutdown_filename")
         {
-            CompressSz++;
+            shutdown_name = std::string(argv[2]);
+            argv++;
+            argc--;
         }
-        else if (std::string(argv[1]) == "--compress_zfp")
+        else if (std::string(argv[1]) == "--ms_delay")
         {
-            CompressZfp++;
+            std::istringstream ss(argv[2]);
+            if (!(ss >> DelayMS))
+                std::cerr << "Invalid number for ms_delay " << argv[1] << '\n';
+            argv++;
+            argc--;
         }
         else if (std::string(argv[1]) == "--filename")
         {
@@ -237,17 +256,46 @@ int main(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--engine")
+        {
+            engine = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
+        else if (std::string(argv[1]) == "--engine_params")
+        {
+            std::cout << "PArsing engineparams in -- " << argv[2] << std::endl;
+
+            engineParams = ParseEngineParams(argv[2]);
+            argv++;
+            argc--;
+        }
         else
         {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
+            if (bare_args == 0)
+            {
+                /* first arg without -- is engine */
+                engine = std::string(argv[1]);
+            }
+            if (bare_args == 1)
+            {
+                /* second arg without -- is filename */
+                fname = std::string(argv[1]);
+            }
+            if (bare_args == 2)
+            {
+                /* third arg without -- is engine params */
+                engineParams = ParseEngineParams(argv[1]);
+            }
+            if (bare_args > 2)
+            {
+                throw std::invalid_argument("Unknown argument \"" +
+                                            std::string(argv[1]) + "\"");
+            }
+            bare_args++;
         }
         argv++;
         argc--;
-    }
-    if (argc > 1)
-    {
-        engineParams = ParseEngineParams(argv[1]);
     }
 
     result = RUN_ALL_TESTS();

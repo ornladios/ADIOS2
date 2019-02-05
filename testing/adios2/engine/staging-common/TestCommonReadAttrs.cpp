@@ -14,15 +14,16 @@
 
 #include "TestData.h"
 
-class SstReadTest : public ::testing::Test
+class CommonReadTest : public ::testing::Test
 {
 public:
-    SstReadTest() = default;
+    CommonReadTest() = default;
 };
 
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
-std::string fname = "ADIOS2Sst";
+std::string fname = "ADIOS2Common";
+std::string engine = "sst";
 
 static std::string Trim(std::string &str)
 {
@@ -58,8 +59,8 @@ static adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
-// ADIOS2 Sst read
-TEST_F(SstReadTest, ADIOS2SstRead1D8)
+// ADIOS2 Common read
+TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -83,7 +84,7 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
     adios2::IO io = adios.DeclareIO("TestIO");
 
     // Create the Engine
-    io.SetEngine("Sst");
+    io.SetEngine(engine);
     io.SetParameters(engineParams);
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
@@ -344,7 +345,7 @@ TEST_F(SstReadTest, ADIOS2SstRead1D8)
         engine.Get(var_time, (int64_t *)&write_time);
         engine.EndStep();
 
-        EXPECT_EQ(validateSstTestData(myStart, myLength, t, !var_c32), 0);
+        EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32), 0);
         write_times.push_back(write_time);
         ++t;
     }
@@ -401,12 +402,32 @@ int main(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--engine")
+        {
+            engine = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
         else
 
         {
             throw std::invalid_argument("Unknown argument \"" +
                                         std::string(argv[1]) + "\"");
         }
+        argv++;
+        argc--;
+    }
+    if (argc > 1)
+    {
+        /* first arg without -- is engine */
+        engine = std::string(argv[1]);
+        argv++;
+        argc--;
+    }
+    if (argc > 1)
+    {
+        /* second arg without -- is filename */
+        fname = std::string(argv[1]);
         argv++;
         argc--;
     }

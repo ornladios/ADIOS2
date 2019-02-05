@@ -14,25 +14,17 @@
 
 #include "TestData.h"
 
-class SstReadTest : public ::testing::Test
+class CommonReadTest : public ::testing::Test
 {
 public:
-    SstReadTest() = default;
+    CommonReadTest() = default;
 };
 
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
-int IncreasingDelay = 0;
-int NonBlockingBeginStep = 0;
-int Latest = 0;
-int Discard = 0;
-int BeginStepFailedPolls = 0;
-int SkippedSteps = 0;
-int DelayMS = 500;
-int LongFirstDelay = 0;
-// Number of steps
-std::size_t NSteps = 10;
+std::string fname = "ADIOS2Common";
+std::string engine = "SST";
 
 static std::string Trim(std::string &str)
 {
@@ -68,15 +60,15 @@ static adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
-// ADIOS2 Sst read
-TEST_F(SstReadTest, ADIOS2SstRead)
+// ADIOS2 Common read
+TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname = "ADIOS2SstServer";
-
     int mpiRank = 0, mpiSize = 1;
 
+    // Number of steps
+    const std::size_t NSteps = 10;
     int TimeGapDetected = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -93,66 +85,18 @@ TEST_F(SstReadTest, ADIOS2SstRead)
     adios2::IO io = adios.DeclareIO("TestIO");
 
     // Create the Engine
-    io.SetEngine("Sst");
+    io.SetEngine(engine);
     io.SetParameters(engineParams);
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
-    unsigned int t = static_cast<unsigned int>(-1);
+    unsigned int t = 0;
 
     std::vector<std::time_t> write_times;
 
-    bool Continue = true;
-    while (Continue)
+    while (engine.BeginStep() == adios2::StepStatus::OK)
     {
-
-        adios2::StepStatus Status;
-
-        if (NonBlockingBeginStep)
-        {
-            Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
-
-            while (Status == adios2::StepStatus::NotReady)
-            {
-                BeginStepFailedPolls++;
-                usleep(1000 * 100);
-                Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
-            }
-        }
-        else if (Latest)
-        {
-            if (LongFirstDelay)
-            {
-                LongFirstDelay = 0;
-                usleep(3 * 1000 * 1000); /* sleep for 3 seconds */
-            }
-            /* would like to do blocking, but API is inconvenient, so specify an
-             * hour timeout */
-            Status =
-                engine.BeginStep(adios2::StepMode::LatestAvailable, 60 * 60.0);
-        }
-        else
-        {
-            Status = engine.BeginStep();
-        }
-
-        if (Status == adios2::StepStatus::EndOfStream)
-        {
-            Continue = false;
-            break;
-        }
-
         const size_t currentStep = engine.CurrentStep();
-
-        if ((t == static_cast<unsigned int>(-1)) || Latest || Discard)
-        {
-            if ((t != static_cast<unsigned int>(-1)) && (t != currentStep))
-            {
-                SkippedSteps++;
-            }
-            t = currentStep; // starting out
-        }
-
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
         int writerSize;
@@ -195,27 +139,36 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         ASSERT_EQ(var_r64.Shape()[0], writerSize * Nx);
 
         auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
-        EXPECT_TRUE(var_c32);
-        ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_c32.Shape()[0], writerSize * Nx);
-
         auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
-        EXPECT_TRUE(var_c64);
-        ASSERT_EQ(var_c64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_c64.Shape()[0], writerSize * Nx);
-
         auto var_r64_2d = io.InquireVariable<double>("r64_2d");
-        EXPECT_TRUE(var_r64_2d);
-        ASSERT_EQ(var_r64_2d.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64_2d.Shape()[0], writerSize * Nx);
-        ASSERT_EQ(var_r64_2d.Shape()[1], 2);
-
         auto var_r64_2d_rev = io.InquireVariable<double>("r64_2d_rev");
-        EXPECT_TRUE(var_r64_2d_rev);
-        ASSERT_EQ(var_r64_2d_rev.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64_2d_rev.Shape()[0], 2);
-        ASSERT_EQ(var_r64_2d_rev.Shape()[1], writerSize * Nx);
+        if (var_c32)
+        {
+            EXPECT_TRUE(var_c32);
+            ASSERT_EQ(var_c32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c32.Shape()[0], writerSize * Nx);
 
+            EXPECT_TRUE(var_c64);
+            ASSERT_EQ(var_c64.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_c64.Shape()[0], writerSize * Nx);
+
+            EXPECT_TRUE(var_r64_2d);
+            ASSERT_EQ(var_r64_2d.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64_2d.Shape()[0], writerSize * Nx);
+            ASSERT_EQ(var_r64_2d.Shape()[1], 2);
+
+            EXPECT_TRUE(var_r64_2d_rev);
+            ASSERT_EQ(var_r64_2d_rev.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r64_2d_rev.Shape()[0], 2);
+            ASSERT_EQ(var_r64_2d_rev.Shape()[1], writerSize * Nx);
+        }
+        else
+        {
+            EXPECT_FALSE(var_c32);
+            EXPECT_FALSE(var_c64);
+            EXPECT_FALSE(var_r64_2d);
+            EXPECT_FALSE(var_r64_2d_rev);
+        }
         auto var_time = io.InquireVariable<int64_t>("time");
         EXPECT_TRUE(var_time);
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -250,10 +203,14 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
-        var_c32.SetSelection(sel);
-        var_c64.SetSelection(sel);
-        var_r64_2d.SetSelection(sel2);
-        var_r64_2d_rev.SetSelection(sel3);
+        if (var_c32)
+            var_c32.SetSelection(sel);
+        if (var_c64)
+            var_c64.SetSelection(sel);
+        if (var_r64_2d)
+            var_r64_2d.SetSelection(sel2);
+        if (var_r64_2d_rev)
+            var_r64_2d_rev.SetSelection(sel3);
 
         var_time.SetSelection(sel_time);
 
@@ -267,48 +224,30 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         in_C64.reserve(myLength);
         in_R64_2d.reserve(myLength * 2);
         in_R64_2d_rev.reserve(myLength * 2);
-
-        engine.Get(scalar_r64, in_scalar_R64);
-
         engine.Get(var_i8, in_I8.data());
         engine.Get(var_i16, in_I16.data());
         engine.Get(var_i32, in_I32.data());
         engine.Get(var_i64, in_I64.data());
 
+        engine.Get(scalar_r64, in_scalar_R64);
+
         engine.Get(var_r32, in_R32.data());
         engine.Get(var_r64, in_R64.data());
-        engine.Get(var_c32, in_C32.data());
-        engine.Get(var_c64, in_C64.data());
-        engine.Get(var_r64_2d, in_R64_2d.data());
-        engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
+        if (var_c32)
+            engine.Get(var_c32, in_C32.data());
+        if (var_c64)
+            engine.Get(var_c64, in_C64.data());
+        if (var_r64_2d)
+            engine.Get(var_r64_2d, in_R64_2d.data());
+        if (var_r64_2d_rev)
+            engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
         engine.Get(var_time, (int64_t *)&write_time);
-        try
-        {
-            engine.EndStep();
+        engine.EndStep();
 
-            EXPECT_EQ(validateSstTestData(myStart, myLength, t, 0), 0);
-            write_times.push_back(write_time);
-        }
-        catch (...)
-        {
-            std::cout << "Exception in EndStep, client failed";
-        }
-
+        EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32), 0);
+        write_times.push_back(write_time);
         ++t;
-        if (NSteps != static_cast<unsigned int>(-1))
-        {
-            NSteps--;
-            if (NSteps == 0)
-            {
-                break;
-            }
-        }
-        if (IncreasingDelay)
-        {
-            usleep(1000 * DelayMS); /* sleep for DelayMS milliseconds */
-            DelayMS += 200;
-        }
     }
 
     if ((write_times.back() - write_times.front()) > 1)
@@ -327,17 +266,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             EXPECT_FALSE(TimeGapDetected);
         }
     }
-    if (Latest || Discard)
-    {
-        std::cout << "Total Skipped Timesteps is " << SkippedSteps << std::endl;
-        EXPECT_TRUE(SkippedSteps);
-    }
-    if (NonBlockingBeginStep)
-    {
-        std::cout << "Number of BeginSteps where we failed timeout is "
-                  << BeginStepFailedPolls << std::endl;
-        EXPECT_TRUE(BeginStepFailedPolls);
-    }
+
+    EXPECT_EQ(t, NSteps);
 
     // Close the file
     engine.Close();
@@ -358,16 +288,9 @@ int main(int argc, char **argv)
 
     while ((argc > 1) && (argv[1][0] == '-'))
     {
-        if (std::string(argv[1]) == "--num_steps")
+        if (std::string(argv[1]) == "--expect_time_gap")
         {
-            std::istringstream ss(argv[2]);
-            if (!(ss >> NSteps))
-                std::cerr << "Invalid number for num_steps " << argv[1] << '\n';
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--expect_time_gap")
-        {
+
             TimeGapExpected++;
             IgnoreTimeGap = 0;
         }
@@ -376,34 +299,46 @@ int main(int argc, char **argv)
             TimeGapExpected = 0;
             IgnoreTimeGap = 0;
         }
-        else if (std::string(argv[1]) == "--non_blocking")
+        else if (std::string(argv[1]) == "--compress_sz")
         {
-            IncreasingDelay = 1;
-            NonBlockingBeginStep = 1;
+            // CompressSz++;     Nothing on read side
         }
-        else if (std::string(argv[1]) == "--latest")
+        else if (std::string(argv[1]) == "--compress_zfp")
         {
-            IncreasingDelay = 1;
-            Latest = 1;
+            // CompressZfp++;    Nothing on read side
         }
-        else if (std::string(argv[1]) == "--long_first_delay")
+        else if (std::string(argv[1]) == "--filename")
         {
-            LongFirstDelay = 1;
+            fname = std::string(argv[2]);
+            argv++;
+            argc--;
         }
-        else if (std::string(argv[1]) == "--discard")
+        else if (std::string(argv[1]) == "--engine")
         {
-            IncreasingDelay = 1;
-            Discard = 1;
-        }
-        else if (std::string(argv[1]) == "--ignore_time_gap")
-        {
-            IgnoreTimeGap++;
+            engine = std::string(argv[2]);
+            argv++;
+            argc--;
         }
         else
+
         {
             throw std::invalid_argument("Unknown argument \"" +
                                         std::string(argv[1]) + "\"");
         }
+        argv++;
+        argc--;
+    }
+    if (argc > 1)
+    {
+        /* first arg without -- is engine */
+        engine = std::string(argv[1]);
+        argv++;
+        argc--;
+    }
+    if (argc > 1)
+    {
+        /* second arg without -- is filename */
+        fname = std::string(argv[1]);
         argv++;
         argc--;
     }
