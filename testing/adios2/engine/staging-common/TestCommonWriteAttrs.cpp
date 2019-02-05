@@ -15,14 +15,15 @@
 
 #include "TestData.h"
 
-class SstWriteTest : public ::testing::Test
+class CommonWriteTest : public ::testing::Test
 {
 public:
-    SstWriteTest() = default;
+    CommonWriteTest() = default;
 };
 
 adios2::Params engineParams = {}; // parsed from command line
-std::string fname = "ADIOS2Sst";
+std::string fname = "ADIOS2Common";
+std::string engine = "sst";
 
 int CompressSz = 0;
 int CompressZfp = 0;
@@ -62,7 +63,7 @@ static adios2::Params ParseEngineParams(std::string Input)
 }
 
 // ADIOS2 SST write
-TEST_F(SstWriteTest, ADIOS2SstWrite)
+TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 {
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
@@ -135,17 +136,48 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         }
     }
 
+    const std::string zero = std::to_string(0);
+    const std::string s1_Single = std::string("s1_Single_") + zero;
+    const std::string s1_Array = std::string("s1_Array_") + zero;
+    const std::string i8_Single = std::string("i8_Single_") + zero;
+    const std::string i16_Single = std::string("i16_Single_") + zero;
+    const std::string i32_Single = std::string("i32_Single_") + zero;
+    const std::string i64_Single = std::string("i64_Single_") + zero;
+    const std::string u8_Single = std::string("u8_Single_") + zero;
+    const std::string u16_Single = std::string("u16_Single_") + zero;
+    const std::string u32_Single = std::string("u32_Single_") + zero;
+    const std::string u64_Single = std::string("u64_Single_") + zero;
+    const std::string r32_Single = std::string("r32_Single_") + zero;
+    const std::string r64_Single = std::string("r64_Single_") + zero;
+
+    io.DefineAttribute<std::string>(s1_Single, data_S1);
+    //        io.DefineAttribute<std::string>(s1_Array,
+    //                                        data_S1array.data(),
+    //                                        data_S1array.size());
+
+    io.DefineAttribute<int8_t>(i8_Single, data_I8.front());
+    io.DefineAttribute<int16_t>(i16_Single, data_I16.front());
+    io.DefineAttribute<int32_t>(i32_Single, data_I32.front());
+    io.DefineAttribute<int64_t>(i64_Single, data_I64.front());
+
+    io.DefineAttribute<uint8_t>(u8_Single, data_U8.front());
+    io.DefineAttribute<uint16_t>(u16_Single, data_U16.front());
+    io.DefineAttribute<uint32_t>(u32_Single, data_U32.front());
+    io.DefineAttribute<uint64_t>(u64_Single, data_U64.front());
+
+    io.DefineAttribute<float>(r32_Single, data_R32.front());
+    io.DefineAttribute<double>(r64_Single, data_R64.front());
+
     // Create the Engine
-    io.SetEngine("Sst");
+    io.SetEngine(engine);
     io.SetParameters(engineParams);
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
     for (size_t step = 0; step < NSteps; ++step)
     {
-        adios2::Mode WriteMode;
         // Generate test data for each process uniquely
-        generateSstTestData(step, mpiRank, mpiSize);
+        generateCommonTestData(step, mpiRank, mpiSize);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -185,37 +217,20 @@ TEST_F(SstWriteTest, ADIOS2SstWrite)
         // Write each one
         // fill in the variable with values from starting index to
         // starting index + count
+        const adios2::Mode sync = adios2::Mode::Sync;
 
         if (mpiRank == 0)
             engine.Put(scalar_r64, data_scalar_R64);
-        if (step % 2 == 0)
-        {
-            WriteMode = adios2::Mode::Sync;
-        }
-        else
-        {
-            WriteMode = adios2::Mode::Deferred;
-        }
-
-        engine.Put(var_i8, data_I8.data(), WriteMode);
-        if (WriteMode == adios2::Mode::Sync)
-        {
-            // trash the data since it's a Sync, this should be OK.
-            data_I8.fill(0);
-        }
-        engine.Put(var_i16, data_I16.data(), adios2::Mode::Sync);
-        engine.Put(var_i32, data_I32.data(), WriteMode);
-        engine.Put(var_i64, data_I64.data(), adios2::Mode::Sync);
-        engine.Put(var_r32, data_R32.data(), adios2::Mode::Deferred);
-        engine.Put(var_r64, data_R64.data(), WriteMode);
-        if (step < 2)
-        {
-            engine.Put(var_c32, data_C32.data(), adios2::Mode::Sync);
-            engine.Put(var_c64, data_C64.data(), adios2::Mode::Deferred);
-            engine.Put(var_r64_2d, &data_R64_2d[0][0], WriteMode);
-            engine.Put(var_r64_2d_rev, &data_R64_2d_rev[0][0],
-                       adios2::Mode::Sync);
-        }
+        engine.Put(var_i8, data_I8.data(), sync);
+        engine.Put(var_i16, data_I16.data(), sync);
+        engine.Put(var_i32, data_I32.data(), sync);
+        engine.Put(var_i64, data_I64.data(), sync);
+        engine.Put(var_r32, data_R32.data(), sync);
+        engine.Put(var_r64, data_R64.data(), sync);
+        engine.Put(var_c32, data_C32.data(), sync);
+        engine.Put(var_c64, data_C64.data(), sync);
+        engine.Put(var_r64_2d, &data_R64_2d[0][0], sync);
+        engine.Put(var_r64_2d_rev, &data_R64_2d_rev[0][0], sync);
         // Advance to the next time step
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
@@ -255,11 +270,31 @@ int main(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--engine")
+        {
+            engine = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
         else
         {
             throw std::invalid_argument("Unknown argument \"" +
                                         std::string(argv[1]) + "\"");
         }
+        argv++;
+        argc--;
+    }
+    if (argc > 1)
+    {
+        /* first arg without -- is engine */
+        engine = std::string(argv[1]);
+        argv++;
+        argc--;
+    }
+    if (argc > 1)
+    {
+        /* second arg without -- is filename */
+        fname = std::string(argv[1]);
         argv++;
         argc--;
     }

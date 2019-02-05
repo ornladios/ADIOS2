@@ -35,6 +35,8 @@ PROGNAME=${0##*/}
 
 reader_prog="UNSET"
 writer_prog="UNSET"
+engine="sst"
+filename="StagingTest"
 
 reader_delay=0
 args=""
@@ -50,6 +52,8 @@ do
     (-v) vflag=yes;;
     (-r) reader_prog="$2"; shift;;
     (-w) writer_prog="$2"; shift;;
+    (-e) engine="$2"; shift;;
+    (-f) filename="$2"; shift;;
     (-n) nw="$2"; nr="$2"; shift;;
     (-p) prefix="$2"; shift;;
     (-nw) nw="$2"; shift;;
@@ -91,19 +95,19 @@ if [ $nr -eq "0" ]; then
 fi
 
 if [ $vflag == "yes" ]; then
-    echo "Doing        ($write_spawn_cmd ./$writer_prog $args) & writer_pid=$!"
+    echo "Doing        ($write_spawn_cmd ./$writer_prog $engine $filename $args) & writer_pid=$!"
 fi
 
-($write_spawn_cmd ./$writer_prog $args ) & writer_pid=$!
+($write_spawn_cmd ./$writer_prog  $engine $filename $args ) & writer_pid=$!
 
 # Spawn the reader
 if [ "$reader_delay" -ne 0 ]; then
     sleep $reader_delay
 fi
 if [ $vflag == "yes" ]; then
-    echo "Doing ($read_spawn_smd ./$reader_prog $args ) & reader_pid=$!"
+    echo "Doing ($read_spawn_cmd ./$reader_prog  $engine $filename $args ) & reader_pid=$!"
 fi
-($read_spawn_cmd ./$reader_prog $args) & reader_pid=$!
+($read_spawn_cmd ./$reader_prog  $engine $filename $args) & reader_pid=$!
 
 
 

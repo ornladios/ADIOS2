@@ -2,8 +2,8 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  */
-#ifndef TESTING_ADIOS2_ENGINE_SST_TESTDATA_H_
-#define TESTING_ADIOS2_ENGINE_SST_TESTDATA_H_
+#ifndef TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_
+#define TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_
 
 #include <cstdint>
 
@@ -60,7 +60,7 @@ std::complex<double> in_scalar_C64;
 
 double data_scalar_R64;
 
-void generateSstTestData(int step, int rank, int size)
+void generateCommonTestData(int step, int rank, int size)
 {
     int64_t j = rank * Nx * 10 + step;
 
@@ -84,7 +84,8 @@ void generateSstTestData(int step, int rank, int size)
     }
 }
 
-int validateSstTestData(int start, int length, int step, int missing_end_data)
+int validateCommonTestData(int start, int length, int step,
+                           int missing_end_data)
 {
     int failures = 0;
     if (in_scalar_R64 != 1.5 * (step + 1))
@@ -204,4 +205,4 @@ int validateSstTestData(int start, int length, int step, int missing_end_data)
     return failures;
 }
 
-#endif // TESTING_ADIOS2_ENGINE_SST_TESTDATA_H_
+#endif // TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_

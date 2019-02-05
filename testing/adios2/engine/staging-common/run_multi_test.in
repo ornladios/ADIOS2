@@ -7,8 +7,8 @@ use warnings;
 
 ##Parse Args
 my $verbose = 0;	# option variable with default value (false)
-my $writer_prog = "TestSstServer";
-my $reader_prog = "TestSstClient";
+my $writer_prog = "TestCommonServer";
+my $reader_prog = "TestCommonClient";
 my @writer_args = ();
 my @reader_args = ();
 my $num_writers = 3;
@@ -18,6 +18,8 @@ my $test_protocol = 'kill_readers';
 my $duration = 60;
 my $interval = 5;
 my $exit_value = 0;
+my $engine = "SST";
+my $filename = "CommonStaging";
 
 use File::Basename;
 my $my_dirname = dirname(__FILE__);
@@ -25,6 +27,8 @@ my $my_dirname = dirname(__FILE__);
 GetOptions ('verbose!' => \$verbose, 
 	    'writer=s' => \$writer_prog,
 	    'reader=s' => \$reader_prog,
+	    'e=s' => \$engine,
+	    'f=s' => \$filename,
 	    'warg=s@' => \@writer_args,
 	    'rarg=s@' => \@reader_args,
 	    'nw=i' => \$num_writers,
@@ -54,10 +58,11 @@ defined(my $writer_pid = fork) or die "Cannot fork $!";
 unless($writer_pid)
 {
     #Child process is here
-    print "TestDriver: EXEC $my_dirname/$writer_prog writer PID $$\n" if $verbose;
     my $writer_arg_str = "";
     $writer_arg_str = join(" ", @writer_args) if (@writer_args);
-    my $result = system("$writer_exec_cmd $my_dirname/$writer_prog " . $writer_arg_str);
+    my $command = "$writer_exec_cmd $my_dirname/$writer_prog $engine $filename " . $writer_arg_str;
+    print "TestDriver: EXECwriter $command writer PID $$\n" if $verbose;
+    my $result = system (split / /,$command);
     print "TestDriver: System for writer returns ", $result, " \n";
     exit $result;
 }
@@ -81,7 +86,8 @@ if ($test_protocol eq "kill_readers") {
 	{
 	  #Child process is here
 	  print "TestDriver: System( $my_dirname/$reader_prog)\n" if $verbose;
-	  my $result = system ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @reader_args));
+	  my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
+	  my $result = system (split / /,$command);
 	  print "TestDriver: System for kill_readers Reader returns ", $result, " \n";
 	  exit $result;
 	}
@@ -135,8 +141,9 @@ if ($test_protocol eq "one_to_one") {
     unless($reader_pid)
     {
 	#Child process is here
-	print "TestDriver: EXEC $my_dirname/$reader_prog\n" if $verbose;
-	my $result = system ("$reader_exec_cmd $my_dirname/$reader_prog " . join(" ", @reader_args));
+	my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
+	print "TestDriver: EXECreader $command\n" if $verbose;
+	my $result = system (split / /,$command);
 	print "TestDriver: System() for one_to_one Reader returned $result\n" if $verbose;
 	exit $result;
     }

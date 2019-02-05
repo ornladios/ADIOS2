@@ -1,13 +1,34 @@
+!!***************************
+subroutine usage()
+    print *, "Usage: TestCommonReadF engine filename"
+end subroutine usage
+
+
 program TestSstRead
   use sst_test_data
+#ifdef ADIOS2_HAVE_MPI_F
   use mpi
+#endif
   use adios2
   implicit none
+
+#ifndef __GFORTRAN__
+#ifndef __GNUC__
+  interface
+     integer function iargc()
+     end function iargc
+  end interface
+#endif
+#endif
+
+  integer :: numargs
 
   integer(kind = 8), dimension(1)::shape_dims, start_dims, count_dims
   integer(kind = 8), dimension(2)::shape_dims2, start_dims2, count_dims2
   integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
   integer:: irank, isize, ierr, i, insteps, status
+
+  character(len=256) :: filename, engine
 
   integer :: writerSize, myStart, myLength
 
@@ -21,24 +42,42 @@ program TestSstRead
   integer::variable_type, ndims
   integer(kind = 8), dimension(:), allocatable::shape_in
   
+  numargs = iargc()
+
+  if ( numargs < 2 ) then
+     call usage()
+     call exit(1)
+  endif
+
+
+  call getarg(1, engine)
+  call getarg(2, filename)
+
+  insteps = 1;
+
+#ifdef ADIOS2_HAVE_MPI_F
   !Launch MPI
   call MPI_Init(ierr) 
   call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr) 
   call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
 
-  insteps = 1;
-
   !Create adios handler passing the communicator, debug mode and error flag
   call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+#else
+  irank = 0;
+  isize = 1;
 
+  !Create adios handler passing the communicator, debug mode and error flag
+  call adios2_init_nompi(adios, adios2_debug_mode_on, ierr)
+#endif
   !!!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Declare io reader
   call adios2_declare_io(ioRead, adios, "ioRead", ierr)
 
-  call adios2_set_engine(ioRead, "Sst", ierr)
+  call adios2_set_engine(ioRead, engine, ierr)
 
   ! Open sstReader engine
-  call adios2_open(sstReader, ioRead, "ADIOS2Sst", adios2_mode_read, ierr)
+  call adios2_open(sstReader, ioRead, filename, adios2_mode_read, ierr)
 
   call adios2_begin_step(sstReader, ierr)
 
@@ -183,7 +222,9 @@ program TestSstRead
   if( adios%valid .eqv. .true. ) stop 'Invalid adios2_finalize'
 
 
+#ifdef ADIOS2_HAVE_MPI_F
   call MPI_Finalize(ierr)
+#endif
 
 
  end program TestSstRead
