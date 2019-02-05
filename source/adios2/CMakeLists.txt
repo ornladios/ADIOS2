@@ -50,10 +50,6 @@ add_library(adios2
   toolkit/format/bp3/operation/BP3MGARD.cpp
   toolkit/format/bp3/operation/BP3MGARD.tcc
 
-  toolkit/format/dataman/DataManSerializer.cpp
-  toolkit/format/dataman/DataManSerializer.tcc
-  toolkit/format/dataman/DataManSerializer.h
-
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
@@ -93,14 +89,26 @@ if(ADIOS2_HAVE_ZeroMQ)
         toolkit/transport/socket/SocketZmqPubSub.h
         toolkit/transport/socket/SocketZmqP2P.cpp
         toolkit/transport/socket/SocketZmqP2P.h
+        toolkit/transportman/wanman/WANMan.cpp
+        toolkit/transportman/wanman/WANMan.h
+        toolkit/transportman/stagingman/StagingMan.cpp
+        toolkit/transportman/stagingman/StagingMan.h
         )
     target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()
 
+if(ADIOS2_HAVE_MPI)
+    target_sources(adios2 PRIVATE
+        toolkit/format/dataman/DataManSerializer.cpp
+        toolkit/format/dataman/DataManSerializer.tcc
+        toolkit/format/dataman/DataManSerializer.h
+        )
+    target_link_libraries(adios2 PUBLIC MPI::MPI_C)
+    target_link_libraries(adios2 PRIVATE nlohmann_json)
+endif()
+
 if(ADIOS2_HAVE_DataMan)
   target_sources(adios2 PRIVATE
-      toolkit/transportman/wanman/WANMan.cpp
-      toolkit/transportman/wanman/WANMan.h
       engine/dataman/DataManCommon.cpp
       engine/dataman/DataManCommon.h
       engine/dataman/DataManReader.cpp
@@ -110,15 +118,13 @@ if(ADIOS2_HAVE_DataMan)
       engine/dataman/DataManWriter.h
       engine/dataman/DataManWriter.tcc
   )
-  target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
-if(ADIOS2_HAVE_MPI)
 if(ADIOS2_HAVE_WDM)
-if(ADIOS2_HAVE_ZeroMQ)
   target_sources(adios2 PRIVATE
-      toolkit/transportman/stagingman/StagingMan.cpp
-      toolkit/transportman/stagingman/StagingMan.h
+      toolkit/format/dataman/DataManSerializer.cpp
+      toolkit/format/dataman/DataManSerializer.tcc
+      toolkit/format/dataman/DataManSerializer.h
       engine/wdm/WdmReader.cpp
       engine/wdm/WdmReader.h
       engine/wdm/WdmReader.tcc
@@ -126,10 +132,6 @@ if(ADIOS2_HAVE_ZeroMQ)
       engine/wdm/WdmWriter.h
       engine/wdm/WdmWriter.tcc
   )
-  target_link_libraries(adios2 PRIVATE nlohmann_json)
-  target_link_libraries(adios2 PUBLIC MPI::MPI_C)
-endif()
-endif()
 endif()
 
 
