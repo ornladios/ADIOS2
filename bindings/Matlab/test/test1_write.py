@@ -42,6 +42,7 @@ varRows = io.DefineVariable("nrows", nprows)
 varT = io.DefineVariable(
     "temperature2D", temperatures, shape, start, count, adios2.ConstantDims)
 
+io.DefineAttribute("aaa", numpy.array([3.1415]))
 io.DefineAttribute("anote", "just a string")
 io.DefineAttribute("adimnames", ["rows", "cols"])
 npdims = numpy.array([NRows,NCols], dtype=numpy.int32)

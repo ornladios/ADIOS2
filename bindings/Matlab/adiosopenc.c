@@ -49,9 +49,12 @@
 static int verbose = 0;
 
 mxClassID adiostypeToMatlabClass(int adiostype, mxComplexity *complexity);
+size_t adiostypeToMemSize(adios2_type adiostype);
 mxClassID adiostypestringToMatlabClass(const char *type,
                                        mxComplexity *complexity);
 mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
+                            mxComplexity complexFlag);
+mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxtype,
                             mxComplexity complexFlag);
 void errorCheck(int nlhs, int nrhs, const mxArray *prhs[]);
 char *getString(const mxArray *mxstr);
@@ -319,29 +322,81 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         size_t namelen;
         char attrname[adios2_string_array_element_max_size];
         adios2_attribute_name(attrname, &namelen, aa);
+        attrname[namelen] = '\0';
 
         mxSetFieldByNumber(attrs, ai, attr_field_Name,
                            mxCreateString(attrname));
         /* field TYPE */
         size_t typelen;
-        char atype[adios2_string_array_element_max_size];
-        adios2_attribute_type_string(atype, &typelen, aa);
+        adios2_type adiostype;
+        adios2_attribute_type(&adiostype, aa);
 
-        mxtype = adiostypestringToMatlabClass(atype, &complexFlag);
-        // mxtype = adiostypeToMatlabClass(adiostype, &complexFlag);
+        /*char atype[adios2_string_array_element_max_size];
+        adios2_attribute_type_string(atype, &typelen, aa);
+        atype[namelen] = '\0';*/
+
+        mxtype = adiostypeToMatlabClass(adiostype, &complexFlag);
         arr = mxCreateNumericMatrix(1, 1, mxtype, complexFlag);
         mxSetFieldByNumber(attrs, ai, attr_field_Type,
                            mxCreateString(mxGetClassName(arr)));
         mxDestroyArray(arr);
         /* field VALUE */
-        size_t asize;
+        size_t aelems;
+        mexPrintf("     get field Data\n");
+        adios2_attribute_size(&aelems, aa);
+        size_t atypesize =  adiostypeToMemSize(adiostype);
+        mexPrintf("     field Data nelems = %zu, type size=%zu\n", aelems, atypesize);
         void *data;
-        adios2_attribute_data(data, &asize, aa);
-        arr = valueToMatlabValue(data, mxtype, complexFlag);
-        mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
+        if (adiostype == adios2_type_string)
+        {
+            if (aelems == 1)
+            {
+                /* single string attribute */
+                /* FIXME: get the size of string from ADIOS first */
+                data = mxCalloc(4096, 1);
+                size_t nelems;
+                adios2_attribute_data(data, &nelems, aa);
+                mexPrintf("     field Data ptr=%p  data=%s\n", data, data);
+                arr = valueToMatlabValue(data, mxtype, complexFlag);
+            }
+            else
+            {
+                /* string array attribute */
+                char **dataArray = mxCalloc(aelems, sizeof(char*));
+                size_t i;
+                for (i = 0; i < aelems; ++i)
+                {
+                    dataArray[i] = mxCalloc(4096, 1);
+                }
+                size_t nelems;
+                data = (void *) dataArray;
+                adios2_attribute_data(data, &nelems, aa);
+                mexPrintf("     field Data ptr=%p  data[0]=%s\n", data, *(char**)data);
+                arr = arrayToMatlabArray(data, aelems, mxtype, complexFlag);
+            }
+            mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
+        }
+        else
+        {
+            data = mxCalloc(atypesize, aelems);
+            size_t nelems;
+            adios2_attribute_data(data, &nelems, aa);
+            mexPrintf("     field Data ptr=%p  nelems=%zu\n", data, nelems);
+            if (aelems == 1)
+            {
+                /* single element attribute */
+                arr = valueToMatlabValue(data, mxtype, complexFlag);
+            }
+            else
+            {
+                /* array attribute */
+                arr = arrayToMatlabArray(data, aelems, mxtype, complexFlag);
+            }
+            mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
+        }
         if (verbose > 1)
-            mexPrintf("      %s: adios type=%s size=%zu\n", attrname, atype,
-                      asize);
+            mexPrintf("      %s: adios type=%s size=%zu\n", attrname, mxGetClassName(arr),
+                      aelems);
     }
 
     if (verbose)
@@ -382,6 +437,51 @@ mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
     {
         arr = mxCreateNumericMatrix(1, 1, mxtype, mxREAL);
         memcpy(mxGetData(arr), data, mxGetElementSize(arr));
+    }
+    return arr;
+}
+
+mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxtype,
+                            mxComplexity complexFlag)
+{
+    /* copies values in all cases, so one can free(data) later */
+    mxArray *arr;
+    if (data == NULL)
+    {
+        arr = mxCreateString("undefined");
+    }
+    else if (mxtype == mxCHAR_CLASS)
+    {
+        mwSize dims[2] = {1, nelems};
+        arr = mxCreateCharArray(2, dims);
+        size_t i;
+        for (i = 0; i < nelems; ++i)
+        {
+            ((char **)mxGetData(arr))[i] = ((char **)data)[i];
+        }
+    }
+    else if (complexFlag == mxCOMPLEX)
+    {
+        arr = mxCreateDoubleMatrix(1, nelems, mxCOMPLEX);
+        size_t i;
+        for (i = 0; i < nelems; ++i)
+        {
+            if (mxtype == mxSINGLE_CLASS)
+            {
+                ((float *)mxGetPr(arr))[i] = ((const float *)data)[2*i];
+                ((float *)mxGetPi(arr))[i] = ((const float *)data)[2*i+1];
+            }
+            else
+            {
+                ((double *)mxGetPr(arr))[i] = ((const double *)data)[2*i];
+                ((double *)mxGetPi(arr))[i] = ((const double *)data)[2*i+1];
+            }
+        }
+    }
+    else
+    {
+        arr = mxCreateNumericMatrix(1, nelems, mxtype, mxREAL);
+        memcpy(mxGetData(arr), data, nelems*mxGetElementSize(arr));
     }
     return arr;
 }
@@ -494,6 +594,66 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
     case adios2_type_double_complex: /*  16 bytes */
         *complexity = mxCOMPLEX;
         return mxDOUBLE_CLASS;
+
+    default:
+        mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",
+                          "Adios type id=%d not supported in matlab.\n",
+                          adiostype);
+        break;
+    }
+    return 0; /* just to avoid warnings. never executed */
+}
+
+/** return the appropriate class for an adios type (and complexity too) */
+size_t adiostypeToMemSize(adios2_type adiostype)
+{
+    switch (adiostype)
+    {
+    case adios2_type_unsigned_char:
+    case adios2_type_uint8_t:
+    case adios2_type_char:
+    case adios2_type_signed_char:
+    case adios2_type_int8_t:
+        return sizeof(char);
+
+    case adios2_type_string:
+    /* case adios2_type_string_array: */
+        return sizeof(char);
+
+    case adios2_type_unsigned_short:
+    case adios2_type_uint16_t:
+    case adios2_type_short:
+    case adios2_type_int16_t:
+        return sizeof(int16_t);
+
+    case adios2_type_unsigned_int:
+    case adios2_type_uint32_t:
+    case adios2_type_int:
+    case adios2_type_int32_t:
+        return sizeof(int32_t);
+
+    case adios2_type_unsigned_long_int:
+    case adios2_type_long_int:
+        if (sizeof(long int) == 4)
+            return sizeof(int32_t);
+        else
+            return sizeof(int64_t);
+
+    case adios2_type_unsigned_long_long_int:
+    case adios2_type_uint64_t:
+    case adios2_type_long_long_int:
+    case adios2_type_int64_t:
+        return sizeof(int64_t);
+
+    case adios2_type_float:
+        return sizeof(float);
+    case adios2_type_double:
+        return sizeof(double);
+
+    case adios2_type_float_complex: /* 8 bytes */
+        return 2*sizeof(float);
+    case adios2_type_double_complex: /*  16 bytes */
+        return 2*sizeof(double);
 
     default:
         mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",
