@@ -470,7 +470,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             "DataMan library, can't use DataMan engine\n");
 #endif
     }
-    else if (engineTypeLC == "sst")
+    else if (engineTypeLC == "sst" || engineTypeLC == "effis")
     {
 #ifdef ADIOS2_HAVE_SST
         if (mode == Mode::Read)
