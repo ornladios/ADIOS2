@@ -106,12 +106,13 @@ public:
     /**
      * copy assignment is forbidden for the same reason as copy constructor
      */
-    ADIOS& operator=(const ADIOS &) = delete;
+    ADIOS &operator=(const ADIOS &) = delete;
 
     /**
-     * move assignment is allowed, though, to be consistent with move constructor
+     * move assignment is allowed, though, to be consistent with move
+     * constructor
      */
-    ADIOS& operator=(ADIOS &&) = default;
+    ADIOS &operator=(ADIOS &&) = default;
 
     /**
      * Declares a new IO class object
