@@ -12,11 +12,10 @@
 
 import numpy
 import adios2
-import sys
 
 # User data
 NRows = 5
-NCols = 6 
+NCols = 6
 
 shape = [NRows, NCols]
 start = [0, 0]

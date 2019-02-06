@@ -12,7 +12,6 @@
 
 import numpy
 import adios2
-import sys
 
 adios = adios2.ADIOS()
 io = adios.DeclareIO("reader")

@@ -10,9 +10,7 @@
 #      Author: Norbert Podhorszki, pnorbert@ornl.gov
 #
 
-import numpy
 import adios2
-import sys
 
 # ADIOS2 high-level API for Reading
 fr = adios2.open("test1.bp", "r")
