@@ -246,7 +246,6 @@ void DataSpacesReader::DoClose(const int transportIndex){
 			!globals_adios_is_dataspaces_connected_from_writer())
 	{
 		MPI_Barrier (m_data.mpi_comm);
-		dspaces_finalize();
 	}
 	globals_adios_set_dataspaces_disconnected_from_reader();
 }
