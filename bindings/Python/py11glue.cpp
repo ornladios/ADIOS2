@@ -618,6 +618,95 @@ PYBIND11_MODULE(adios2, m)
                      end current step, begin next step and flush (default = false).
         )md")
 
+        .def("writeattribute",
+             (void (adios2::py11::File::*)(
+                 const std::string &, const pybind11::array &,
+                 const std::string &, const std::string, const bool endl)) &
+                 adios2::py11::File::WriteAttribute,
+             pybind11::arg("name"), pybind11::arg("array"),
+             pybind11::arg("variablename") = "",
+             pybind11::arg("separator") = "/", pybind11::arg("endl") = false,
+             R"md(
+		             writes a self-describing single value array (numpy) variable
+
+		             Parameters
+		                 name
+		                     attribute name
+
+		                 array: numpy 
+		                     attribute numpy array data
+
+						 variablename:
+                             if attribute is associated with a variable
+
+                         separator:
+                             concatenation string between variablename and attribute
+                             e.g. variablename + separator + name
+                                  var/units. Not used if variablename is empty 
+		                 endl 
+		                     end current step, begin next step and flush 
+		                     (default = false).
+		        )md")
+        .def("writeattribute",
+             (void (adios2::py11::File::*)(
+                 const std::string &, const std::string &, const std::string &,
+                 const std::string, const bool endl)) &
+                 adios2::py11::File::WriteAttribute,
+             pybind11::arg("name"), pybind11::arg("stringvalue"),
+             pybind11::arg("variablename") = "",
+             pybind11::arg("separator") = "/", pybind11::arg("endl") = false,
+             R"md(
+				 writes a self-describing single value array (numpy) variable
+
+				 Parameters
+					 name
+						 attribute name
+
+					 stringvalue:  
+						 attribute single string
+
+					 variablename:
+						 if attribute is associated with a variable
+
+					 separator:
+						 concatenation string between variablename and attribute
+						 e.g. variablename + separator + name
+							  var/units. Not used if variablename is empty 
+					 endl 
+						 end current step, begin next step and flush 
+						 (default = false).
+			)md")
+
+        .def("writeattribute",
+             (void (adios2::py11::File::*)(
+                 const std::string &, const std::vector<std::string> &,
+                 const std::string &, const std::string, const bool endl)) &
+                 adios2::py11::File::WriteAttribute,
+             pybind11::arg("name"), pybind11::arg("stringarray"),
+             pybind11::arg("variablename") = "",
+             pybind11::arg("separator") = "/", pybind11::arg("endl") = false,
+             R"md(
+				 writes a self-describing single value array (numpy) variable
+
+				 Parameters
+					 name
+						 attribute name
+
+					 stringarray:  
+						 attribute string array
+
+					 variablename:
+						 if attribute is associated with a variable
+
+					 separator:
+						 concatenation string between variablename and attribute
+						 e.g. variablename + separator + name
+							  var/units. Not used if variablename is empty 
+					 endl 
+						 end current step, begin next step and flush 
+						 (default = false).
+			)md")
+
         .def("write", (void (adios2::py11::File::*)(const std::string &,
                                                     const pybind11::array &,
                                                     const bool endl)) &
@@ -769,6 +858,63 @@ PYBIND11_MODULE(adios2, m)
                  array: numpy
                     resulting array from selection 
         )md")
+
+        .def("readattribute",
+             (pybind11::array (adios2::py11::File::*)(
+                 const std::string &, const std::string &, const std::string)) &
+                 adios2::py11::File::ReadAttribute,
+             pybind11::arg("name"), pybind11::arg("variablename") = "",
+             pybind11::arg("separator") = "/",
+             R"md(
+				 Reads a numpy based attribute
+
+				 Parameters
+					 name
+						 attribute name
+					 
+					 variablename:
+						 if attribute is associated with a variable
+
+					 separator:
+						 concatenation string between variablename and attribute
+						 e.g. variablename + separator + name
+							  var/units. Not used if variablename is empty 
+				Returns
+		 			 array: numpy
+						 resulting array attribute data
+	    )md")
+
+        .def("readattributestring",
+             (std::vector<std::string> (adios2::py11::File::*)(
+                 const std::string &, const std::string &, const std::string)) &
+                 adios2::py11::File::ReadAttributeString,
+             pybind11::arg("name"), pybind11::arg("variablename") = "",
+             pybind11::arg("separator") = "/",
+             R"md(
+				 Read a string attribute
+
+				 Parameters
+					 name
+						 attribute name
+					 
+					 variablename:
+						 if attribute is associated with a variable
+
+					 separator:
+						 concatenation string between variablename and attribute
+						 e.g. variablename + separator + name
+							  var/units. Not used if variablename is empty 
+				Returns
+					 list: 
+						 resulting string list attribute data 
+		)md")
+
+        .def("endl", &adios2::py11::File::Endl, R"md(
+			Write mode only: advances to the next step.
+			Similar to endl=True in a write call.
+			Convenient when declaring variable attributes as advancing to the
+			step is not attached to any variable.
+		)md")
 
         .def("close", &adios2::py11::File::Close, R"md(
             Closes file, thus becoming unreachable. 

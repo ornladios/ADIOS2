@@ -95,6 +95,8 @@ fstream::operator bool() const noexcept
     return true;
 }
 
+void fstream::endl() { m_Stream->NextStep(); }
+
 void fstream::close()
 {
     m_Stream->Close();
@@ -140,11 +142,11 @@ void fstream::CheckOpen(const std::string &name) const
 #define declare_template_instantiation(T)                                      \
     template void fstream::write_attribute<T>(const std::string &, const T &,  \
                                               const std::string &,             \
-                                              const std::string);              \
+                                              const std::string, const bool);  \
                                                                                \
     template void fstream::write_attribute<T>(                                 \
         const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     template std::vector<T> fstream::read_attribute<T>(                        \
         const std::string &, const std::string &, const std::string);

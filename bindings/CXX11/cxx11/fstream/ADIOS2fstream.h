@@ -189,11 +189,14 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
+     * @param endl similar to std::endl, end current step and flush (default).
+     * Use adios2::endl for true.
      */
     template <class T>
     void write_attribute(const std::string &name, const T &value,
                          const std::string &variableName = "",
-                         const std::string separator = "/");
+                         const std::string separator = "/",
+                         const bool endl = false);
 
     /**
      * @brief Define attribute inside fstream or for a variable after write.
@@ -207,12 +210,14 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
+     * @param endl similar to std::endl, end current step and flush (default).
+     * Use adios2::endl for true.
      */
     template <class T>
-    void write_attribute(const std::string &name, const T *data,
-                         const size_t elements,
-                         const std::string &variableName = "",
-                         const std::string separator = "/");
+    void
+    write_attribute(const std::string &name, const T *data,
+                    const size_t elements, const std::string &variableName = "",
+                    const std::string separator = "/", const bool endl = false);
 
     /**
      * writes a self-describing array variable
@@ -417,6 +422,8 @@ public:
                                   const std::string &variableName = "",
                                   const std::string separator = "/");
 
+    void endl();
+
     /** close current stream becoming inaccessible */
     void close();
 
@@ -451,11 +458,11 @@ private:
 #define declare_template_instantiation(T)                                      \
     extern template void fstream::write_attribute<T>(                          \
         const std::string &, const T &, const std::string &,                   \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     extern template void fstream::write_attribute<T>(                          \
         const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     extern template std::vector<T> fstream::read_attribute<T>(                 \
         const std::string &, const std::string &, const std::string);

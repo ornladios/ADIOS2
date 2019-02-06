@@ -21,18 +21,19 @@ namespace adios2
 template <class T>
 void fstream::write_attribute(const std::string &name, const T &value,
                               const std::string &variableName,
-                              const std::string separator)
+                              const std::string separator, const bool endl)
 {
-    m_Stream->WriteAttribute(name, value, variableName, separator);
+    m_Stream->WriteAttribute(name, value, variableName, separator, endl);
 }
 
 template <class T>
 void fstream::write_attribute(const std::string &name, const T *data,
                               const size_t elements,
                               const std::string &variableName,
-                              const std::string separator)
+                              const std::string separator, const bool endl)
 {
-    m_Stream->WriteAttribute(name, data, elements, variableName, separator);
+    m_Stream->WriteAttribute(name, data, elements, variableName, separator,
+                             endl);
 }
 
 template <class T>
@@ -114,7 +115,17 @@ std::vector<T> fstream::read_attribute(const std::string &name,
                                        const std::string &variableName,
                                        const std::string separator)
 {
-    return m_Stream->ReadAttribute<T>(name, variableName, separator);
+    std::vector<T> data;
+    core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(name);
+
+    if (attribute == nullptr)
+    {
+        return data;
+    }
+
+    data.resize(attribute->m_Elements);
+    m_Stream->ReadAttribute<T>(name, data.data(), variableName, separator);
+    return data;
 }
 
 // template <class T>

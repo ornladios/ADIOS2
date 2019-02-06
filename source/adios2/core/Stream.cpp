@@ -74,6 +74,18 @@ bool Stream::GetStep()
     return true;
 }
 
+void Stream::NextStep()
+{
+    if (!m_StepStatus)
+    {
+        m_Engine->BeginStep();
+        m_StepStatus = true;
+    }
+
+    m_Engine->EndStep();
+    m_StepStatus = false;
+}
+
 void Stream::Close()
 {
     if (m_Engine != nullptr)
@@ -121,14 +133,14 @@ void Stream::CheckOpen()
 #define declare_template_instantiation(T)                                      \
     template void Stream::WriteAttribute<T>(const std::string &, const T &,    \
                                             const std::string &,               \
-                                            const std::string);                \
+                                            const std::string, const bool);    \
                                                                                \
     template void Stream::WriteAttribute<T>(const std::string &, const T *,    \
                                             const size_t, const std::string &, \
-                                            const std::string);                \
+                                            const std::string, const bool);    \
                                                                                \
-    template std::vector<T> Stream::ReadAttribute<T>(                          \
-        const std::string &, const std::string &, const std::string);
+    template void Stream::ReadAttribute(                                       \
+        const std::string &, T *, const std::string &, const std::string);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

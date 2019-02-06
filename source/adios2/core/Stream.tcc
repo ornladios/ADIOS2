@@ -23,23 +23,47 @@ namespace core
 template <class T>
 void Stream::WriteAttribute(const std::string &name, const T &value,
                             const std::string &variableName,
-                            const std::string separator)
+                            const std::string separator, const bool nextStep)
 {
     m_IO->DefineAttribute<T>(name, value, variableName, separator);
+    CheckOpen();
+    if (!m_StepStatus)
+    {
+        m_Engine->BeginStep();
+        m_StepStatus = true;
+    }
+
+    if (nextStep)
+    {
+        m_Engine->EndStep();
+        m_StepStatus = false;
+    }
 }
 
 template <class T>
 void Stream::WriteAttribute(const std::string &name, const T *array,
                             const size_t elements,
                             const std::string &variableName,
-                            const std::string separator)
+                            const std::string separator, const bool nextStep)
 {
     m_IO->DefineAttribute<T>(name, array, elements, variableName, separator);
+    CheckOpen();
+    if (!m_StepStatus)
+    {
+        m_Engine->BeginStep();
+        m_StepStatus = true;
+    }
+
+    if (nextStep)
+    {
+        m_Engine->EndStep();
+        m_StepStatus = false;
+    }
 }
 
 template <class T>
 void Stream::Write(const std::string &name, const T *data, const Dims &shape,
-                   const Dims &start, const Dims &count, const bool endStep)
+                   const Dims &start, const Dims &count, const bool nextStep)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
 
@@ -69,7 +93,7 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
 
     m_Engine->Put(*variable, data, adios2::Mode::Sync);
 
-    if (endStep)
+    if (nextStep)
     {
         m_Engine->EndStep();
         m_StepStatus = false;
@@ -77,10 +101,10 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
 }
 
 template <class T>
-void Stream::Write(const std::string &name, const T &datum, const bool endStep)
+void Stream::Write(const std::string &name, const T &datum, const bool nextStep)
 {
     const T datumLocal = datum;
-    Write(name, &datumLocal, {}, {}, {}, endStep);
+    Write(name, &datumLocal, {}, {}, {}, nextStep);
 }
 
 template <class T>
@@ -190,28 +214,27 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
 }
 
 template <class T>
-std::vector<T> Stream::ReadAttribute(const std::string &name,
-                                     const std::string &variableName,
-                                     const std::string separator)
+void Stream::ReadAttribute(const std::string &name, T *data,
+                           const std::string &variableName,
+                           const std::string separator)
 {
     Attribute<T> *attribute =
         m_IO->InquireAttribute<T>(name, variableName, separator);
 
-    std::vector<T> data;
     if (attribute == nullptr)
     {
-        return data;
+        return;
     }
 
     if (attribute->m_IsSingleValue)
     {
-        data.push_back(attribute->m_DataSingleValue);
+        data[0] = attribute->m_DataSingleValue;
     }
     else
     {
-        data = attribute->m_DataArray;
+        std::copy(attribute->m_DataArray.begin(), attribute->m_DataArray.end(),
+                  data);
     }
-    return data;
 }
 
 // PRIVATE

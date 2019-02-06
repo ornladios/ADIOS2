@@ -66,20 +66,20 @@ public:
     template <class T>
     void WriteAttribute(const std::string &name, const T &value,
                         const std::string &variableName,
-                        const std::string separator);
+                        const std::string separator, const bool nextStep);
     template <class T>
     void WriteAttribute(const std::string &name, const T *array,
                         const size_t elements, const std::string &variableName,
-                        const std::string separator);
+                        const std::string separator, const bool nextStep);
 
     template <class T>
     void Write(const std::string &name, const T *values,
                const Dims &shape = Dims{}, const Dims &start = Dims{},
-               const Dims &count = Dims{}, const bool endl = false);
+               const Dims &count = Dims{}, const bool nextStep = false);
 
     template <class T>
     void Write(const std::string &name, const T &value,
-               const bool endl = false);
+               const bool nextStep = false);
 
     bool GetStep();
 
@@ -107,9 +107,11 @@ public:
                         const Box<size_t> &stepSelection);
 
     template <class T>
-    std::vector<T> ReadAttribute(const std::string &name,
-                                 const std::string &variableName,
-                                 const std::string separator);
+    void ReadAttribute(const std::string &name, T *data,
+                       const std::string &variableName,
+                       const std::string separator);
+
+    void NextStep();
 
     void Close();
 
@@ -145,14 +147,14 @@ private:
 #define declare_template_instantiation(T)                                      \
     extern template void Stream::WriteAttribute<T>(                            \
         const std::string &, const T &, const std::string &,                   \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
     extern template void Stream::WriteAttribute<T>(                            \
         const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string);                                                    \
+        const std::string, const bool);                                        \
                                                                                \
-    extern template std::vector<T> Stream::ReadAttribute<T>(                   \
-        const std::string &, const std::string &, const std::string);
+    extern template void Stream::ReadAttribute(                                \
+        const std::string &, T *, const std::string &, const std::string);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

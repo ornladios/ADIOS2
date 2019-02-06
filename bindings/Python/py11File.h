@@ -53,6 +53,22 @@ public:
 
     std::map<std::string, adios2::Params> AvailableAttributes() noexcept;
 
+    void WriteAttribute(const std::string &name, const pybind11::array &array,
+                        const std::string &variableName = "",
+                        const std::string separator = "/",
+                        const bool endl = false);
+
+    void WriteAttribute(const std::string &name, const std::string &stringValue,
+                        const std::string &variableName = "",
+                        const std::string separator = "/",
+                        const bool endl = false);
+
+    void WriteAttribute(const std::string &name,
+                        const std::vector<std::string> &stringArray,
+                        const std::string &variableName = "",
+                        const std::string separator = "/",
+                        const bool endl = false);
+
     void Write(const std::string &name, const pybind11::array &array,
                const Dims &shape, const Dims &start, const Dims &count,
                const bool endl = false);
@@ -78,6 +94,18 @@ public:
                          const Dims &selectionCount,
                          const size_t stepSelectionStart,
                          const size_t stepSelectionCount);
+
+    pybind11::array ReadAttribute(const std::string &name,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/");
+
+    std::vector<std::string>
+    ReadAttributeString(const std::string &name,
+                        const std::string &variableName = "",
+                        const std::string separator = "/");
+
+    void Endl();
+
     void Close();
 
     size_t CurrentStep() const;

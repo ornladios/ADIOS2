@@ -77,6 +77,49 @@ std::map<std::string, adios2::Params> File::AvailableAttributes() noexcept
     return m_Stream->m_IO->GetAvailableAttributes();
 }
 
+void File::WriteAttribute(const std::string &name, const pybind11::array &array,
+                          const std::string &variableName,
+                          const std::string separator, const bool endl)
+{
+    if (false)
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (pybind11::isinstance<                                             \
+                 pybind11::array_t<T, pybind11::array::c_style>>(array))       \
+    {                                                                          \
+        m_Stream->WriteAttribute(                                              \
+            name, reinterpret_cast<const T *>(array.data()),                   \
+            static_cast<size_t>(array.size()), variableName, separator, endl); \
+    }
+    ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: adios2 file write attribute " + name +
+            ", either numpy type is not supported or is not "
+            "c_style memory contiguous, in call to write\n");
+    }
+}
+
+void File::WriteAttribute(const std::string &name,
+                          const std::string &stringValue,
+                          const std::string &variableName,
+                          const std::string separator, const bool endl)
+{
+    m_Stream->WriteAttribute(name, stringValue, variableName, separator, endl);
+}
+
+void File::WriteAttribute(const std::string &name,
+                          const std::vector<std::string> &stringArray,
+                          const std::string &variableName,
+                          const std::string separator, const bool endl)
+{
+    m_Stream->WriteAttribute(name, stringArray.data(), stringArray.size(),
+                             variableName, separator, endl);
+}
+
 void File::Write(const std::string &name, const pybind11::array &array,
                  const Dims &shape, const Dims &start, const Dims &count,
                  const bool endl)
@@ -97,7 +140,7 @@ void File::Write(const std::string &name, const pybind11::array &array,
     {
         throw std::invalid_argument(
             "ERROR: adios2 file write variable " + name +
-            ", either numpy type is not supported or is"
+            ", either numpy type is not supported or is not "
             "c_style memory contiguous, in call to write\n");
     }
 }
@@ -239,6 +282,62 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
     }
     return pybind11::array();
 }
+
+pybind11::array File::ReadAttribute(const std::string &name,
+                                    const std::string &variableName,
+                                    const std::string separator)
+{
+    const std::string type =
+        m_Stream->m_IO->InquireAttributeType(name, variableName, separator);
+
+    if (type.empty())
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(   \
+            name, variableName, separator);                                    \
+        pybind11::array pyArray(pybind11::dtype::of<T>(),                      \
+                                attribute->m_Elements);                        \
+        m_Stream->ReadAttribute<T>(                                            \
+            name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
+            variableName, separator);                                          \
+        return pyArray;                                                        \
+    }
+    ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: adios2 file read attribute " + name +
+            ", type can't be mapped to a numpy type, in call to read\n");
+    }
+    return pybind11::array();
+}
+
+std::vector<std::string>
+File::ReadAttributeString(const std::string &name,
+                          const std::string &variableName,
+                          const std::string separator)
+{
+    std::vector<std::string> data;
+    core::Attribute<std::string> *attribute =
+        m_Stream->m_IO->InquireAttribute<std::string>(name, variableName,
+                                                      separator);
+
+    if (attribute == nullptr)
+    {
+        return data;
+    }
+
+    data.resize(attribute->m_Elements);
+    m_Stream->ReadAttribute<std::string>(name, data.data(), variableName,
+                                         separator);
+    return data;
+}
+
+void File::Endl() { m_Stream->NextStep(); }
 
 void File::Close()
 {
