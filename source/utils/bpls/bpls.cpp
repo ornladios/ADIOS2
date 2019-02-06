@@ -665,9 +665,9 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
     int retval = 0;
 
-    bool isGlobalValue = (nsteps == 0);
+    bool isGlobalValue = (nsteps == 1);
     isGlobalValue &= variable->m_SingleValue;
-    isGlobalValue &= !(variable->m_ShapeID == ShapeID::GlobalArray);
+    isGlobalValue &= (variable->m_ShapeID != ShapeID::GlobalArray);
 
     if (!isGlobalValue)
     {
