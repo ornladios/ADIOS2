@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * DataSpacesWriter.tcc
  *
  *  Created on: Dec 5, 2018
- *      Author: pradeep.subedi@rutgers.edu
+ *      Author: Pradeep Subedi
+ *				pradeep.subedi@rutgers.edu
  */
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESWRITER_TCC_
 #define ADIOS2_ENGINE_DATASPACES_DATASPACESWRITER_TCC_
@@ -28,18 +32,13 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 
 
 	 uint64_t lb_in[MAX_DS_NDIM], ub_in[MAX_DS_NDIM], gdims_in[MAX_DS_NDIM];
-	//Lock is acquired in BeginStep() and will be released in EndStep()
-	//For clients the lock is acquired in f_name type;
+
 	 std::vector<uint64_t> dims_vec;
 
 	unsigned int version;
-	char *cstr = new char[f_Name.length() + 1];
-	strcpy(cstr, f_Name.c_str());
-	//struct adios_dspaces_stream_info *info = lookup_dspaces_stream_info(cstr);
 	version = m_CurrentStep;
 	int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
 	ndim_vector.push_back(ndims);
-
 	bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
 	/* Order of dimensions: in DataSpaces: fast --> slow --> slowest
 	       For example:
@@ -77,26 +76,31 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 	    auto itType = varType_to_ds.find(variable.m_Type);
 	    if(itType == varType_to_ds.end()){
 	    	varType = 2;
-	    	fprintf(stderr, "variable not found. Using Integer as data type");
-	    	//TO DO fix for complex data type
+	    	fprintf(stderr, "variable Type not found. Using Integer as data type");
+	    	//Might have to fix for complex data types
 	    }else{
 	    	varType = itType->second;
 
 	    }
 	    elemSize_vector.push_back(varType);
-
-	    dspaces_define_gdim(cstr, ndims, gdims_in);
 	    std::string ds_in_name = f_Name;
 	    ds_in_name +=  variable.m_Name;
-	    v_name_vector.push_back(ds_in_name);
-
+	    v_name_vector.push_back(variable.m_Name);
 	    char *var_str = new char[ds_in_name.length() + 1];
 	    strcpy(var_str, ds_in_name.c_str());
 	    variable.SetData(values);
+	    
+	    std::string l_Name= ds_in_name + std::to_string(version);
+		char *cstr = new char[l_Name.length() + 1];
+		strcpy(cstr, l_Name.c_str());
+		
+		dspaces_lock_on_write (cstr, &m_data.mpi_comm);
+	    dspaces_define_gdim(var_str, ndims, gdims_in);
 	    dspaces_put(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, values);
 	    dspaces_put_sync();
+	    dspaces_unlock_on_write (cstr, &m_data.mpi_comm);
 	    delete[] cstr;
-	    //written_variables.push_back(variable);
+	    delete[] var_str;
 
 }
 

@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * DataSpacesReader.tcc
  *
  *  Created on: Dec 5, 2018
- *      Author: pradeep.subedi@rutgers.edu
+ *      Author: Pradeep Subedi
+ *				pradeep.subedi@rutgers.edu
  */
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_TCC_
 #define ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_TCC_
@@ -81,16 +85,23 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version){
 					ub_in[i] = static_cast<uint64_t>(variable.m_Start[i]+variable.m_Count[i]-1);
 				}
 		    }
-		    char *cstr = new char[f_Name.length() + 1];
-		    strcpy(cstr, f_Name.c_str());
-		    dspaces_define_gdim(cstr, ndims, gdims_in);
-		    delete []cstr;
+
 		    std::string ds_in_name = f_Name;
 		    ds_in_name +=  variable.m_Name;
 		    char *var_str = new char[ds_in_name.length() + 1];
 		    strcpy(var_str, ds_in_name.c_str());
+		    
+		    std::string l_Name= ds_in_name + std::to_string(version);
+			char *cstr = new char[l_Name.length() + 1];
+			strcpy(cstr, l_Name.c_str());
+			
+			dspaces_lock_on_read (cstr, &m_data.mpi_comm);
+		    
+		    dspaces_define_gdim(var_str, ndims, gdims_in);
 		    dspaces_get(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, (void*)data);
-		    delete []var_str;
+		    dspaces_unlock_on_read (cstr, &m_data.mpi_comm);
+		    delete[] cstr;
+		    delete[] var_str;
 }
 
 

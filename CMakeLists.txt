@@ -12,7 +12,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.2.0)
+project(ADIOS2 VERSION 2.3.1)
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
@@ -20,15 +20,9 @@ endif()
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
   CACHE STRING "Installation CMake subdirectory")
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
@@ -62,6 +56,11 @@ if(MSVC)
 endif()
 
 #------------------------------------------------------------------------------#
+# Deal with any pre-installation cleanup tasks
+#------------------------------------------------------------------------------#
+add_subdirectory(cmake/install/pre)
+
+#------------------------------------------------------------------------------#
 # Top level options
 #------------------------------------------------------------------------------#
 include(ADIOSFunctions)
@@ -81,17 +80,22 @@ endif()
 
 # Use meta-compile features if available, otherwise use specific language
 # features
-if(NOT (CMAKE_VERSION VERSION_LESS 3.9))
-  set(ADIOS2_CXX11_FEATURES cxx_std_11)
-  set(ADIOS2_C99_FEATURES c_std_99)
-else()
+if(CMAKE_VERSION VERSION_LESS 3.9 OR
+   CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_CXX11_FEATURES cxx_auto_type cxx_nullptr)
+else()
+  set(ADIOS2_CXX11_FEATURES cxx_std_11)
+endif()
+if(CMAKE_VERSION VERSION_LESS 3.9 OR
+   CMAKE_C_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_C99_FEATURES c_restrict)
+else()
+  set(ADIOS2_C99_FEATURES c_std_99)
 endif()
 
 include(CMakeDependentOption)
 
-# Setup shared library defaults.  If explicitly specified somehow, then default 
+# Setup shared library defaults.  If explicitly specified somehow, then default
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
@@ -101,35 +105,22 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-# Setup PIC defaults.  If explicitly specified somehow, then default 
-# to that.  Otherwise base the default on whether or not shared libs are even
-# supported.
-if(DEFINED ADIOS2_ENABLE_PIC)
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${ADIOS2_ENABLE_PIC})
-elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
-else()
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(ADIOS2_ENABLE_PIC
-  "Build with Position Independent Code" ${ADIOS2_ENABLE_PIC_DEFAULT}
-  "SHARED_LIBS_SUPPORTED" OFF
-)
-set(CMAKE_POSITION_INDEPENDENT_CODE ${ADIOS2_ENABLE_PIC})
-mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
-
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
+adios_option(MGARD     "Enable support for MGARD transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
 adios_option(DATASPACES       "Enable support for DATASPACES" AUTO)
+adios_option(SSC       "Enable support for SSC" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
+adios_option(Profiling "Enable support for profiling" AUTO)
+adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoprability" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
@@ -143,7 +134,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-  BZip2 ZFP SZ MPI DataMan SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem
+    BZip2 ZFP SZ MGARD MPI DataMan SSC SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
@@ -155,6 +146,31 @@ configure_file(
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
+
+#------------------------------------------------------------------------------#
+# Some specialized shared library and RPATH handling
+#------------------------------------------------------------------------------#
+if(BUILD_SHARED_LIBS)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+  if(APPLE)
+    # On Mac OS X, set the dir included as part of the installed library's path:
+    if(NOT DEFINED CMAKE_INSTALL_NAME_DIR)
+      set(CMAKE_INSTALL_NAME_DIR
+        "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    endif ()
+
+    # Various homebrew MPI fortran installations break rpath usage on OSX
+    if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
+      set(CMAKE_MACOSX_RPATH OFF)
+    endif()
+
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    # Linux needs some specialized RPATH handling
+    string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+  endif()
+endif()
 
 #------------------------------------------------------------------------------#
 # Third party libraries
@@ -174,15 +190,6 @@ add_subdirectory(source)
 add_subdirectory(bindings)
 
 #------------------------------------------------------------------------------#
-# Examples
-#------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
-option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
-if(ADIOS2_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif()
-
-#------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
 if(DEFINED BUILD_TESTING)
@@ -197,14 +204,33 @@ option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree"
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
+  find_program(DIFF_EXECUTABLE diff)
+  if(NOT DIFF_EXECUTABLE)
+    message(FATAL_ERROR "diff command is required for testing")
+  endif()
+
   enable_testing()
   add_subdirectory(testing)
 endif()
 
 #------------------------------------------------------------------------------#
+# Examples
+#------------------------------------------------------------------------------#
+option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
+option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
+if(ADIOS2_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
+
+#------------------------------------------------------------------------------#
 # Generating package configs
 #------------------------------------------------------------------------------#
-GenerateADIOSPackageConfig()
+add_subdirectory(cmake/install/packaging)
+
+#------------------------------------------------------------------------------#
+# Generating static adios-config
+#------------------------------------------------------------------------------#
+add_subdirectory(cmake/install/post)
 
 #------------------------------------------------------------------------------#
 # Configuration summary

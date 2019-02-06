@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * ds.h
  *
  *  Created on: Jan 4, 2019
- *      Author: subedip
+ *      Author: Pradeep Subedi
+ *      		pradeep.subedi@rutgers.edu
  */
 
 #ifndef SOURCE_ADIOS2_TOOLKIT_DATASPACES_DS_H_
@@ -17,7 +21,7 @@ extern "C" {
 
 typedef struct adios_ds_data_struct DsData;
 
-extern void adios_dataspaces_init (void *comm, DsData * md);
+extern int adios_dataspaces_init (void *comm, DsData * md);
 extern int adios_read_dataspaces_init (void *comm, DsData * data);
 
 extern void adios_dataspaces_open (char* fname, DsData* md);
@@ -32,8 +36,7 @@ extern int  globals_adios_is_dataspaces_connected_from_both();
 extern void globals_adios_set_application_id (int id);
 extern int globals_adios_get_application_id (int *was_set);
 
-//extern void adios_read_dataspaces_open (char* fname, DsData md);
-//extern static struct adios_dspaces_stream_info* lookup_dspaces_stream_info(const char* fname);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * DataSpacesReader.h
  *
  *  Created on: Dec 5, 2018
- *      Author: subedip
+ *      Author: Pradeep Subedi
+ *      		pradee.subedi@rutgers.edu
  */
 
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_H_
@@ -45,29 +49,49 @@ private:
     int latestStep;
     int nVars;
     int m_CurrentStep;
+    bool m_ProvideLatest;
+    /*
     const std::map<int, std::string>ds_to_varType = {
                 {1, "char"},
-                {2, "int"},
-                {3, "float"},
-                {4, "double"},
-                {5, "float complex"},
-                {6, "double complex"},
-                {7, "signed char"},
-                {8, "short"},
-                {9, "long int"},
-                {10, "long long int"},
-                {11, "string"},
-                {12, "unsigned char"},
-                {13, "unsigned short"},
-                {14, "unsigned int"},
-                {15, "unsigned long int"},
-                {16, "unsigned long long int"},
+                {2, "signed char"},
+                {3, "unsigned char"},
+                {4, "short"},
+                {5, "unsigned short"},
+                {6, "int"},
+                {7, "unsigned int"},
+                {8, "long int"},
+                {9, "long long int"},
+                {10, "unsigned long int"},
+                {11, "unsigned long long int"},
+                {12, "float"},
+                {13, "double"},
+                {14, "long double"},
+                {15, "complex float"},
+                {16, "complex double"},
+				{17, "string"},
         };
+        */
+    const std::map<int, std::string>ds_to_varType = {
+                    {1, "int8_t"},
+                    {2, "uint8_t"},
+                    {3, "int16_t"},
+                    {4, "uint16_t"},
+                    {5, "int32_t"},
+                    {6, "uint32_t"},
+                    {7, "int64_t"},
+                    {8, "uint64_t"},
+                    {9, "float"},
+                    {10, "double"},
+                    {11, "long double"},
+                    {12, "complex float"},
+                    {13, "complex double"},
+    				{14, "string"},
+            };
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     void DoClose(const int transportIndex = -1) final;

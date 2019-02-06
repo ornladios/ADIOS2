@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * DataSpacesWriter.h
  *
  *  Created on: Dec 5, 2018
- *      Author: subedip
+ *      Author: Pradeep Subedi
+ *      		pradeep.subedi@rutgers.edu
  */
 
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESWRITER_H_
@@ -58,28 +62,47 @@ private:
     std::vector<std::string> v_name_vector;
     std::vector<int> elemSize_vector;
     const std::map<std::string, int>varType_to_ds = {
-            {"char", 1},
-            {"int", 2},
-            {"float", 3},
-            {"double", 4},
-            {"float complex", 5},
-            {"double complex", 6},
-            {"signed char", 7},
-            {"short", 8},
-            {"long int", 9},
-            {"long long int", 10},
-            {"string", 11},
-            {"unsigned char", 12},
-            {"unsigned short", 13},
-            {"unsigned int", 14},
-            {"unsigned long int",15},
-            {"unsigned long long int",16},
+    		{"int8_t", 1},
+			{"uint8_t", 2},
+			{"int16_t", 3},
+			{"uint16_t", 4},
+			{"int32_t", 5},
+			{"uint32_t", 6},
+			{"int64_t", 7},
+			{"uint64_t", 8},
+			{"float", 9},
+			{"double", 10},
+			{"long double", 11},
+			{"complex float", 12},
+			{"complex double", 13},
+			{"string", 14},
     };
+    /*
+    const std::map<std::string, int>varType_to_ds = {
+        		{"char", 1},
+    			{"signed char", 2},
+    			{"unsigned char", 3},
+    			{"short", 4},
+    			{"unsigned short", 5},
+    			{"int", 6},
+    			{"unsigned int", 7},
+    			{"long int", 8},
+    			{"long long int", 9},
+    			{ "unsigned long int", 10},
+    			{"unsigned long long int", 11},
+    			{"float", 12},
+    			{"double", 13},
+    			{"long double", 14},
+    			{"complex float", 15},
+    			{"complex double", 16},
+    			{"string", 17},
+        };
+        */
 
 #define declare_type(T)                                                          \
     void DoPutSync(Variable<T> &variable, const T *values) final;              \
     void DoPutDeferred(Variable<T> &variable, const T *values) final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
