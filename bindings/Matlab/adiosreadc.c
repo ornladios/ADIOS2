@@ -208,7 +208,8 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
     if (adiostype == adios2_type_string)
     {
         /* Matlab string != char array of C, so handle separately */
-        data = (void *)mxCalloc(varDim[0], sizeof(char));
+        data = (void *)mxCalloc(65536, sizeof(char));
+        mexPrintf("Create C string reading in a string with ptr %p\n", data);
     }
     else
     {
@@ -237,7 +238,11 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
         mexPrintf("Set step-selection for variable: start = %zu  count = %zu\n",
                   qstepstart, qstepcount);
     }
-    adios2_set_selection(avar, varNdim, qoffsets, qcounts);
+
+    if (varNdim > 0)
+    {
+        adios2_set_selection(avar, varNdim, qoffsets, qcounts);
+    }
     adios2_set_step_selection(avar, qstepstart, qstepcount);
 
     /* read in data */
@@ -248,6 +253,7 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
 
     if (adiostype == adios2_type_string)
     {
+        mexPrintf("Create Matlab string from C string [%s]\n", (char*)data);
         out = mxCreateString((char *)data);
         mxFree(data);
     }
@@ -343,7 +349,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
         return mxINT8_CLASS;
 
     case adios2_type_string:
-    case adios2_type_string_array:
+    /* case adios2_type_string_array: */
         return mxCHAR_CLASS;
 
     case adios2_type_unsigned_short:
