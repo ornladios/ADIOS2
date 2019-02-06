@@ -29,7 +29,7 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name, const Mode m
     int ret = 0;
     latestStep = 0;
     nVars = 0;
-    m_CurrentStep=0;
+    m_CurrentStep=-1;
     ret = adios_read_dataspaces_init(&mpiComm, &m_data);
     if(ret < 0){
     	fprintf(stderr, "DataSpaces did not initialize properly %d\n", ret);
@@ -51,9 +51,9 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	char *cstr = new char[f_Name.length() + 1];
 	strcpy(cstr, f_Name.c_str());
 
-	fprintf (stderr, "adios_dataspaces_open: rank=%d call write lock...\n", m_data.rank);
+	fprintf (stderr, "rank=%d call read lock...\n", m_data.rank);
 	dspaces_lock_on_read (cstr, &m_data.mpi_comm);
-	fprintf (stderr, "adios_dataspaces_open: rank=%d got write lock\n", m_data.rank);
+	fprintf (stderr, "rank=%d got read lock\n", m_data.rank);
 
 	//read the version and nvars from dataspaces
 	int l_version_no[2] = {0,0};
@@ -68,6 +68,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	dspaces_define_gdim(cstr, ndim, gdims);
 	dspaces_get(cstr, 0, elemsize, ndim, lb, ub, l_version_no);
 	latestStep = l_version_no[0];
+	fprintf(stderr,"LatestStep Read from DSpaces %d\n", latestStep);
 
 	if(mode == StepMode::NextAvailable){
 		m_CurrentStep++;
@@ -101,7 +102,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	char *buffer;
 	buffer = (char*) malloc(buf_len);
 	memset(buffer, 0, buf_len);
-
+	fprintf(stderr, "Num Vars: %d, BufLen: %d\n", nVars, buf_len);
 	char * local_str;
 	local_file_var = "VARMETA@"+f_Name;
 	local_str = new char[local_file_var.length() + 1];
@@ -116,16 +117,32 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	dspaces_get(local_str, latestStep, elemsize, ndim, lb, ub, buffer);
 
 	//now populate data from the buffer
+	fprintf(stderr, "After receipt of long buffer\n");
+
+	int *dim_meta;
+	dim_meta = (int*) malloc(nVars* sizeof(int));
+	int *elemSize_meta;
+	elemSize_meta = (int*) malloc(nVars*sizeof(int));
+	uint64_t *gdim_meta;
+	gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * nVars * sizeof(uint64_t));
+	memset(gdim_meta, 0, MAX_DS_NDIM * nVars * sizeof(uint64_t));
+
+	memcpy(dim_meta, buffer,  nVars* sizeof(int));
+	memcpy(elemSize_meta, &buffer[nVars* sizeof(int)], nVars* sizeof(int));
+	memcpy(gdim_meta, &buffer[2*nVars* sizeof(int)], MAX_DS_NDIM * nVars * sizeof(uint64_t));
 
 	for (int var = 0; var < nVars; ++var) {
 
-		int var_dim_size = *(int*)buffer[var*sizeof(int)];
-		int varType = *(int*)buffer[nVars* sizeof(int)+var*sizeof(int)];
-		uint64_t* gdim = (uint64_t*) buffer[nVars* sizeof(int) + nVars *sizeof(int) + var*MAX_DS_NDIM*sizeof(uint64_t)];
+		int var_dim_size = dim_meta[var];
+		fprintf(stderr, "NDim: %d", var_dim_size);
+		int varType = elemSize_meta[var];
+		fprintf(stderr, " Type: %d", varType);
+		fprintf(stderr, " Gdim: %llu\n", gdim_meta[0]);
 
 		std::string adiosName;
 		char *val = (char *)(calloc(var_name_max_length, sizeof(char)));
 		memcpy(val, &buffer[nVars* sizeof(int) + nVars *sizeof(int) + nVars*MAX_DS_NDIM*sizeof(uint64_t) + var * var_name_max_length], var_name_max_length*sizeof(char));
+		fprintf(stderr, "VarName: %s\n", val);
 		adiosName.assign(val);
 		free(val);
 
@@ -139,11 +156,11 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 				if (isOrderC)
 				{
 					//uint64_t gdim_value = *(uint64_t*)buffer[]
-					shape[var_dim_size - i - 1] = static_cast<int>(gdim[i]);
+					shape[var_dim_size - i - 1] = static_cast<int>(gdim_meta[var*MAX_DS_NDIM+i]);
 				}
 				else
 				{
-					shape[i] = static_cast<int>(gdim[i]);;
+					shape[i] = static_cast<int>(gdim_meta[var*MAX_DS_NDIM+i]);;
 				}
 			}
 		}
@@ -226,11 +243,10 @@ void DataSpacesReader::DoClose(const int transportIndex){
 	fprintf(stderr, "%s: Disconnect from DATASPACES server now, rank= ...\n", __func__);
 	// disconnect from dataspaces if we are connected from writer but not anymore from reader
 	if (globals_adios_is_dataspaces_connected_from_reader() &&
-			!globals_adios_is_dataspaces_connected_from_both())
+			!globals_adios_is_dataspaces_connected_from_writer())
 	{
 		MPI_Barrier (m_data.mpi_comm);
 		dspaces_finalize();
-
 	}
 	globals_adios_set_dataspaces_disconnected_from_reader();
 }

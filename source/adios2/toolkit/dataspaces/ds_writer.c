@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 #include "adios2/ADIOSConfig.h"
-#include "mpi.h"
+#include <mpi.h>
 #include "dataspaces.h"
 #include "ds.h"
 
@@ -96,82 +96,19 @@ int  globals_adios_is_dataspaces_connected_from_both()
 }
 
 
-// Save data for each adios group using this method (multiple ones may exist)
-
-
-/**********************************************************************************
-* Functions to manage the set of "files" or streams opened for all ADIOS groups
-* We store all names (with version info, and responsible "rank 0" master process id
-* to be used in adios_dataspaces_finalize().
-**********************************************************************************/
-//#define MAX_NUM_OF_STREAMS 20
-//static struct adios_dspaces_stream_info stream_info[MAX_NUM_OF_STREAMS];
-//static int  num_of_streams = 0; // how many files do we have with this method (in total for entire run)
-                                // i.e. this variable never decreases
-/*
-static void free_dspaces_stream_info()
-{
-    int i;
-    struct adios_dspaces_stream_info *info;
-    for (i = 0; i < num_of_streams; i++) {
-        info = &stream_info[i];
-        if (info->name) {
-            free(info->name);
-        }
-        info->name = NULL;
-        info->time_index = -1; // time_index (dataspaces versioning) starts from 0
-        info->iam_rank0 = 0;
-    }
-    return;
-}
-
-static struct adios_dspaces_stream_info* lookup_dspaces_stream_info(const char* fname)
-{
-    int i;
-    // search from last to first
-    for (i = num_of_streams-1; i >= 0; i--)
-    {
-        if (stream_info[i].name != NULL &&
-            strcmp(stream_info[i].name, fname) == 0)
-        {
-            fprintf (stderr, "Stream %s is going to be continued... num_of_streams=%d\n",
-                fname, num_of_streams);
-            return &stream_info[i];
-        }
-    }
-    // not found, add new opened stream to list
-    if (num_of_streams < MAX_NUM_OF_STREAMS)
-    {
-        fprintf (stderr, "New stream %s added.  num_of_streams=%d\n",
-                fname, num_of_streams);
-        i = num_of_streams;
-        num_of_streams++;
-        stream_info[i].name = strdup(fname);
-        stream_info[i].time_index = -1;
-        return &stream_info[i];
-    }
-    else
-    {
-        // we cannot add more
-        fprintf (stderr,
-                     "ERROR: Max %d different files can be written by one application "
-                     "using the same ADIOS group when using the DATASPACES method.\n",
-                     MAX_NUM_OF_STREAMS);
-    }
-
-    return NULL;
-}
-*/
-
 static int connect_to_dspaces (struct adios_ds_data_struct * md, MPI_Comm comm)
 {
     int ret = 0;
     int num_peers;
+    fprintf(stderr, "Before checking if dspaces is connected\n");
 
     if (!globals_adios_is_dataspaces_connected()) {
 
+    	 fprintf(stderr, "DataSpaces is not connected\n");
         MPI_Comm_rank (comm, &(md->rank));
+        fprintf(stderr, "After rank copy\n");
         MPI_Comm_size (comm, &num_peers);
+        fprintf(stderr, "After MPI functions\n");
 
         // Application ID should be set by the application calling adios_set_application_id()
         int was_set;
@@ -179,11 +116,9 @@ static int connect_to_dspaces (struct adios_ds_data_struct * md, MPI_Comm comm)
         if (!was_set)
             md->appid = 1;
 
-        fprintf (stderr, "adios_dataspaces: rank=%d connect to DATASPACES, peers=%d, appid=%d \n",
-                md->rank, num_peers, md->appid);
-
         //Init the dart client
         ret = dspaces_init (num_peers, md->appid, &md->mpi_comm_init, NULL);
+        fprintf(stderr, "After dspaces_init");
         if (ret) {
             fprintf (stderr, "adios_dataspaces: rank=%d Failed to connect to DATASPACES: err=%d,  rank=%d\n", ret, md->rank);
             return ret;
@@ -218,11 +153,12 @@ void adios_dataspaces_init (void* comm, DsData* md)
     md->peers = 1;
     md->appid = -1;
     md->n_writes = 0;
+    md->rank = 0;
     md->mpi_comm = *(MPI_Comm *)comm;
     md->mpi_comm_init = *(MPI_Comm *)comm;
 
 
-    connect_to_dspaces (md, comm);
+    connect_to_dspaces (md, *(MPI_Comm *)comm);
     number_of_inits++;
     fprintf (stderr,"adios_dataspaces_init: called the %d. time\n", number_of_inits);
 
@@ -256,7 +192,7 @@ int adios_read_dataspaces_init (void* comm, DsData* md)
 	            appid = 2;
 	        fprintf(stderr, "-- %s, rank %d: connect to dataspaces with nproc=%d and appid=%d\n",
 	                    __func__, rank, nproc, appid);
-	        err = dspaces_init(nproc, appid, &comm, NULL);
+	        err = dspaces_init(nproc, appid, (MPI_Comm *)comm, NULL);
 	        if (err < 0) {
 	            fprintf (stderr, "Failed to connect with DATASPACES\n");
 	            return err;
@@ -264,7 +200,7 @@ int adios_read_dataspaces_init (void* comm, DsData* md)
 	    }
 	    globals_adios_set_dataspaces_connected_from_reader();
 	    md->rank = rank;
-	    md->mpi_comm = comm;
+	    md->mpi_comm = *(MPI_Comm *)comm;
 	    md->appid = appid;
 
 	    fprintf(stderr, "Connected to DATASPACES\n");

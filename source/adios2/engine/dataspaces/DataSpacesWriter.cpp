@@ -28,6 +28,7 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name, const Mode m
 
 	f_Name=name;
     int ret = 0;
+    fprintf(stderr, "Before dspaces_init in writer constructor\n");
     adios_dataspaces_init(&mpiComm, &m_data);
 
 }
@@ -60,6 +61,7 @@ void DataSpacesWriter::EndStep()
 	char *cstr = new char[f_Name.length() + 1];
 	strcpy(cstr, f_Name.c_str());
     MPI_Barrier(m_data.mpi_comm);
+    fprintf(stderr,"Writer wrote data. Calling unlock on write\n");
     dspaces_unlock_on_write(cstr, &m_data.mpi_comm);
 
 }
@@ -69,10 +71,10 @@ void DataSpacesWriter::DoClose(const int transportIndex){
 	fprintf(stderr, "%s: Disconnect from DATASPACES server now, rank= ...\n", __func__);
 	// disconnect from dataspaces if we are connected from writer but not anymore from reader
 	if (globals_adios_is_dataspaces_connected_from_writer() &&
-			!globals_adios_is_dataspaces_connected_from_both())
+			!globals_adios_is_dataspaces_connected_from_reader())
 	{
+		fprintf(stderr, "Before MPI Finalize\n");
 		MPI_Barrier (m_data.mpi_comm);
-		dspaces_finalize();
 
 	}
 	globals_adios_set_dataspaces_disconnected_from_writer();
@@ -100,6 +102,7 @@ void DataSpacesWriter::WriteVarInfo()
 	int elemsize, ndim;
 	int nvars;
 	int var_num = ndim_vector.size();
+	fprintf(stderr, "Var num: %d\n", var_num);
 	int var_name_max_length = 128;
 	int buf_len = var_num * sizeof(int) +var_num * sizeof(int)+ MAX_DS_NDIM * var_num * sizeof(uint64_t) + var_num * var_name_max_length * sizeof(char);
 	int *dim_meta;
@@ -134,15 +137,26 @@ void DataSpacesWriter::WriteVarInfo()
 
 	}
 	//copy all the data into payload buffer
-	char *b = buffer;
-	memcpy(b, dim_meta, var_num* sizeof(int));
-	b += var_num* sizeof(int);
-	memcpy(b, elemSize_meta, var_num* sizeof(int));
-	b += var_num* sizeof(int);
-	memcpy(b, gdim_meta, MAX_DS_NDIM * var_num * sizeof(uint64_t));
-	b += MAX_DS_NDIM * var_num * sizeof(uint64_t);
-	memcpy(b, name_string, var_num * var_name_max_length * sizeof(char));
+	fprintf(stderr, "Ndim:%d, varType:%d, Gdim:%llu\n", dim_meta[0], elemSize_meta[0], gdim_meta[0]);
+	memcpy(buffer, dim_meta, var_num* sizeof(int));
+	memcpy(&buffer[var_num* sizeof(int)], elemSize_meta, var_num* sizeof(int));
+	memcpy(&buffer[2*var_num* sizeof(int)], gdim_meta, MAX_DS_NDIM * var_num * sizeof(uint64_t));
+	memcpy(&buffer[2*var_num* sizeof(int)+MAX_DS_NDIM * var_num * sizeof(uint64_t)], name_string, var_num * var_name_max_length * sizeof(char));
 
+	//debug
+	/*
+	int *var_dim_buf;
+	var_dim_buf=(int*) calloc(var_num, sizeof(int));
+	memcpy(var_dim_buf, buffer, var_num*sizeof(int));
+	int *var_type_buf;
+	var_type_buf=(int*) calloc(var_num, sizeof(int));
+	memcpy(var_dim_buf, &buffer[var_num* sizeof(int)], var_num*sizeof(int));
+	uint64_t *var_gdim_buf;
+	var_gdim_buf=(uint64_t*) calloc(var_num, sizeof(uint64_t));
+	memcpy(var_dim_buf, &buffer[2*var_num* sizeof(int)], var_num*MAX_DS_NDIM*sizeof(uint64_t));
+
+	fprintf(stderr, "After copy Ndim:%d, varType:%d, Gdim:%llu\n", dim_meta[0], elemSize_meta[0], gdim_meta[0]);
+	 */
 	//store metadata in DataSoaces
 	char * local_str;
 	local_file_var = "VARMETA@"+f_Name;
@@ -178,12 +192,13 @@ void DataSpacesWriter::WriteVarInfo()
 	dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
 	dspaces_put_sync(); //wait on previous put to finish
 
-	memset(lb, 0, MAX_DS_NDIM * sizeof(uint64_t));
-	memset(ub, 0, MAX_DS_NDIM * sizeof(uint64_t));
-	memset(gdims, 0, MAX_DS_NDIM * sizeof(uint64_t));
+	//memset(lb, 0, MAX_DS_NDIM * sizeof(uint64_t));
+	//memset(ub, 0, MAX_DS_NDIM * sizeof(uint64_t));
+	//memset(gdims, 0, MAX_DS_NDIM * sizeof(uint64_t));
 	//store the latest version or step information for the file and how many variables are there in the file
 
 	int l_version_buf[2] = {m_CurrentStep,0}; /* Put the latest version number to dataspaces*/
+	fprintf(stderr, "Writing value %d\n", m_CurrentStep);
 	local_file_var = "LATESTVERSION@"+f_Name;
 	local_str = new char[local_file_var.length() + 1];
 	strcpy(local_str, local_file_var.c_str());

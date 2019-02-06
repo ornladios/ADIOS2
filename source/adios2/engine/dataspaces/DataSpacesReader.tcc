@@ -81,14 +81,16 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version){
 					ub_in[i] = static_cast<uint64_t>(variable.m_Start[i]+variable.m_Count[i]-1);
 				}
 		    }
-		    char *cstr = new char[f_Name.length() + 1];
-		    strcpy(cstr, f_Name.c_str());
-		    dspaces_define_gdim(cstr, ndims, gdims_in);
-		    delete []cstr;
+		    //char *cstr = new char[f_Name.length() + 1];
+		    //strcpy(cstr, f_Name.c_str());
+		    
+		    //delete []cstr;
 		    std::string ds_in_name = f_Name;
 		    ds_in_name +=  variable.m_Name;
 		    char *var_str = new char[ds_in_name.length() + 1];
 		    strcpy(var_str, ds_in_name.c_str());
+		    dspaces_define_gdim(var_str, ndims, gdims_in);
+		    fprintf(stderr, "Reader Varname: %s, Gdim: %llu, lb: %llu, ub: %llu\n", var_str, gdims_in[0], lb_in[0], ub_in[0]);
 		    dspaces_get(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, (void*)data);
 		    delete []var_str;
 }
