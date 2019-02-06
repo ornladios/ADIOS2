@@ -40,7 +40,7 @@ ncols = numpy.zeros(1, dtype=numpy.int64)
 varCols = io.InquireVariable("ncols")
 fr.Get(varCols, ncols)
 
-note="_______________________________________"
+note = "_______________________________________"
 varNote = io.InquireVariable("note")
 fr.Get(varNote, note, adios2.Mode.Sync)
 
@@ -50,11 +50,10 @@ print("# of rows = {0}".format(nrows[0]))
 print("# of cols = {0}".format(ncols[0]))
 print("Note = {0}".format(note))
 #
-#inTemperatures = fr.read("temperature2D")
-#print("temperature2d array size = " + str(inTemperatures.size))
+# inTemperatures = fr.read("temperature2D")
+# print("temperature2d array size = " + str(inTemperatures.size))
 #
-#for row in inTemperatures:
-#    print(''.join(['{:7}'.format(item) for item in row]))
+# for row in inTemperatures:
+#     print(''.join(['{:7}'.format(item) for item in row]))
 #
 fr.Close()
-

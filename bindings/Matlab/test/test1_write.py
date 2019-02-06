@@ -44,7 +44,7 @@ varT = io.DefineVariable(
 io.DefineAttribute("aaa", numpy.array([3.1415]))
 io.DefineAttribute("anote", "just a string")
 io.DefineAttribute("adimnames", ["rows", "columns"])
-npdims = numpy.array([NRows,NCols], dtype=numpy.int32)
+npdims = numpy.array([NRows, NCols], dtype=numpy.int32)
 io.DefineAttribute("adims", npdims)
 
 
@@ -54,6 +54,3 @@ fw.Put(varCols, npcols)
 fw.Put(varRows, nprows)
 fw.Put(varT, temperatures)
 fw.Close()
-
-
-

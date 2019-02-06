@@ -31,4 +31,3 @@ for row in inTemperatures:
     print(''.join(['{:7}'.format(item) for item in row]))
 
 fr.close()
-

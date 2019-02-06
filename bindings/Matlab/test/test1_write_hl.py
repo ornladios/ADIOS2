@@ -36,4 +36,3 @@ fw.write("temperature2D", temperatures, shape, start, count)
 fw.write("nrows", numpy.array([NRows]))
 fw.write("ncols", numpy.array([NCols]))
 fw.close()
-
