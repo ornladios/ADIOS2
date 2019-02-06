@@ -582,7 +582,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
 
 TEST_F(ADIOSInterfaceWriteTest, Exceptions)
 {
-    EXPECT_EQ(io.EngineType(), "BPFile");
+    EXPECT_EQ(io.EngineType(), "BP3");
 
     adios2::Operator invalidOp = adios.InquireOperator("InvalidOp");
     EXPECT_FALSE(invalidOp);

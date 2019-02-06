@@ -8,7 +8,13 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "adiosSystem.h"
-
+#ifndef _WIN32
+#include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
+#include <net/if.h>    //AvailableIpAddresses() struct if_nameindex
+#include <string.h>    //AvailableIpAddresses() strncp
+#include <sys/ioctl.h> //AvailableIpAddresses() ioctl
+#include <unistd.h>    //AvailableIpAddresses() close
+#endif
 #include <chrono> //system_clock, now
 #include <ctime>
 #include <iostream>  //std::cerr
@@ -74,6 +80,46 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept
     return isZeroIndexed;
 }
 
+#ifndef _WIN32
+std::vector<std::string> AvailableIpAddresses() noexcept
+{
+    std::vector<std::string> ips;
+    int socket_handler = -1;
+    struct if_nameindex *p = 0;
+    struct if_nameindex *head = 0;
+    if ((socket_handler = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
+    {
+        return ips;
+    }
+    head = if_nameindex();
+    p = if_nameindex();
+    while ((p != NULL) && (p->if_name != NULL))
+    {
+        struct ifreq req;
+        strncpy(req.ifr_name, p->if_name, IFNAMSIZ);
+        if (ioctl(socket_handler, SIOCGIFADDR, &req) < 0)
+        {
+            if (errno == EADDRNOTAVAIL)
+            {
+                ++p;
+                continue;
+            }
+            close(socket_handler);
+            return ips;
+        }
+        const std::string ip =
+            inet_ntoa(((struct sockaddr_in *)&req.ifr_addr)->sin_addr);
+        if (ip != "127.0.0.1")
+        {
+            ips.emplace_back(ip);
+        }
+        ++p;
+    }
+    if_freenameindex(head);
+    close(socket_handler);
+    return ips;
+}
+#endif
 int ExceptionToError(const std::string &function)
 {
     try

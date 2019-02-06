@@ -225,8 +225,6 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8)
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
-        // TODO: other types
-
         SmallTestData testData;
 
         std::string IString;
@@ -280,8 +278,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8)
 
             bpReader.Get(var_iString, IString);
 
-            bpReader.Get(var_i8, I8);
-            bpReader.Get(var_i16, I16);
+            bpReader.Get(var_i8, I8, adios2::Mode::Sync);
+            bpReader.Get(var_i16, I16, adios2::Mode::Sync);
             bpReader.Get(var_i32, I32);
             bpReader.Get(var_i64, I64);
 
@@ -355,7 +353,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D2x4)
         adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
-        // The local process' part (start, count) can be defined now or later
+        // The local process' part (start, count) can be defined now or
+        // later
         // before Write().
         {
             const adios2::Dims shape{Ny, static_cast<size_t>(Nx * mpiSize)};
@@ -411,6 +410,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D2x4)
             // variable we write and its offsets in the global spaces
             adios2::Box<adios2::Dims> sel(
                 {0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
+
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -573,8 +573,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D2x4)
 
             bpReader.Get(var_iString, IString);
 
-            bpReader.Get(var_i8, I8);
-            bpReader.Get(var_i16, I16);
+            bpReader.Get(var_i8, I8, adios2::Mode::Sync);
+            bpReader.Get(var_i16, I16, adios2::Mode::Sync);
             bpReader.Get(var_i32, I32);
             bpReader.Get(var_i64, I64);
 
@@ -601,7 +601,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D2x4)
                 std::string msg = ss.str();
 
                 EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
-                EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                ASSERT_EQ(I16[i], currentTestData.I16[i]) << msg;
                 EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
                 EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
                 EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
@@ -651,7 +651,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead2D4x2)
         adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
-        // The local process' part (start, count) can be defined now or later
+        // The local process' part (start, count) can be defined now or
+        // later
         // before Write().
         {
             adios2::Dims shape{static_cast<unsigned int>(Ny),
@@ -935,7 +936,8 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteReadVector2D4x2_MultiSteps)
         adios2::IO io = adios.DeclareIO("TestIO");
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
-        // The local process' part (start, count) can be defined now or later
+        // The local process' part (start, count) can be defined now or
+        // later
         // before Write().
         {
             adios2::Dims shape{Ny, static_cast<size_t>(mpiSize * Nx)};

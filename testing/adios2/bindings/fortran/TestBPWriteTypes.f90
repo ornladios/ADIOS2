@@ -9,8 +9,9 @@
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead
-     type(adios2_variable), dimension(12) :: variables
+     type(adios2_variable), dimension(13) :: variables
      type(adios2_engine) :: bpWriter, bpReader
+     character(len=15) :: inString
 
      ! read handlers
      integer :: ndims
@@ -103,7 +104,10 @@
      call adios2_define_variable(variables(12), ioWrite, "gvar_R64", &
                                  adios2_type_dp,  ierr)
 
-     do i=1,12
+     call adios2_define_variable(variables(13), ioWrite, "gvar_Str", &
+                                 adios2_type_string, ierr)
+
+     do i=1,13
         if( variables(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_variable'
      end do
 
@@ -135,6 +139,7 @@
            call adios2_put(bpWriter, variables(10), data_I64(1), ierr)
            call adios2_put(bpWriter, variables(11), data_R32(1), ierr)
            call adios2_put(bpWriter, variables(12), data_R64(1), ierr)
+           call adios2_put(bpWriter, variables(13), data_Strings(1), ierr)
          end if
 
          call adios2_put(bpWriter, variables(1), data_I8, ierr)
@@ -198,6 +203,11 @@
      call adios2_variable_shape(shape_in, ndims, variables(6), ierr)
      if (ndims /= 1) stop 'var_R64 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_R64 shape_in read failed'
+
+     call adios2_inquire_variable(variables(13), ioRead, "gvar_Str", ierr)
+     call adios2_get(bpReader, variables(13), inString, ierr)
+     call adios2_perform_gets(bpReader, ierr)
+     if( inString /= data_Strings(1) ) stop 'gvar_Str read failed'
 
      call adios2_close(bpReader, ierr)
 

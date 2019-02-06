@@ -25,7 +25,7 @@ struct _SstBlock
 };
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
-    MACRO(MarshalMethod, MarshalMethod, size_t, 1)                             \
+    MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP)                  \
     MACRO(RegistrationMethod, RegMethod, size_t, 0)                            \
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
@@ -33,6 +33,7 @@ struct _SstBlock
     MACRO(QueueFullPolicy, QueueFullPolicy, size_t, 0)                         \
     MACRO(IsRowMajor, IsRowMajor, int, 0)                                      \
     MACRO(ControlTransport, String, char *, NULL)                              \
+    MACRO(NetworkInterface, String, char *, NULL)                              \
     MACRO(CompressionMethod, CompressionMethod, size_t, 0)
 
 typedef enum {

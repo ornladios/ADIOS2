@@ -14,7 +14,9 @@
 #error "Inline file should only be included from it's header, never on it's own"
 #endif
 
-#include <algorithm> //std::minmax_element, std::min_element, std::max_element
+#include <algorithm> // std::minmax_element, std::min_element, std::max_element
+                     // std::transform
+#include <limits>    //std::numeri_limits
 #include <thread>
 
 #include "adios2/ADIOSMacros.h"
@@ -25,11 +27,186 @@ namespace helper
 {
 
 template <class T>
-void GetMinMax(const T *values, const size_t size, T &min, T &max) noexcept
+void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
+                        const Dims &count, const bool isRowMajor, T &min,
+                        T &max) noexcept
+{
+    auto lf_MinMaxRowMajor = [](const T *values, const Dims &shape,
+                                const Dims &start, const Dims &count, T &min,
+                                T &max) {
+
+        // loop through selection box contiguous part
+        const size_t dimensions = shape.size();
+        const size_t stride = count.back();
+        const size_t startCoord = dimensions - 2;
+
+        Dims currentPoint(start); // current point for contiguous memory
+        bool run = true;
+        bool firstStep = true;
+
+        while (run)
+        {
+            // here copy current linear memory between currentPoint and end
+            const size_t startOffset = helper::LinearIndex(
+                Dims(shape.size(), 0), shape, currentPoint, true);
+
+            T minStride, maxStride;
+            GetMinMax(values + startOffset, stride, minStride, maxStride);
+
+            if (firstStep)
+            {
+                min = minStride;
+                max = maxStride;
+                firstStep = false;
+            }
+            else
+            {
+                if (LessThan(minStride, min))
+                {
+                    min = minStride;
+                }
+
+                if (GreaterThan(maxStride, max))
+                {
+                    max = maxStride;
+                }
+            }
+
+            size_t p = startCoord;
+            while (true)
+            {
+                ++currentPoint[p];
+                if (currentPoint[p] > start[p] + count[p] - 1)
+                {
+                    if (p == 0)
+                    {
+                        run = false; // we are done
+                        break;
+                    }
+                    else
+                    {
+                        currentPoint[p] = start[p];
+                        --p;
+                    }
+                }
+                else
+                {
+                    break; // break inner p loop
+                }
+            } // dimension index update
+        }     // end while stride loop
+    };
+
+    auto lf_MinMaxColumnMajor = [](const T *values, const Dims &shape,
+                                   const Dims &start, const Dims &count, T &min,
+                                   T &max) {
+
+        // loop through selection box contiguous part
+        const size_t dimensions = shape.size();
+        const size_t stride = count.front();
+        const size_t startCoord = 1;
+
+        Dims currentPoint(start); // current point for contiguous memory
+        bool run = true;
+        bool firstStep = true;
+
+        while (run)
+        {
+            // here copy current linear memory between currentPoint and end
+            const size_t startOffset = helper::LinearIndex(
+                Dims(shape.size(), 0), shape, currentPoint, false);
+
+            T minStride, maxStride;
+            GetMinMax(values + startOffset, stride, minStride, maxStride);
+
+            if (firstStep)
+            {
+                min = minStride;
+                max = maxStride;
+                firstStep = false;
+            }
+            else
+            {
+                if (LessThan(minStride, min))
+                {
+                    min = minStride;
+                }
+
+                if (GreaterThan(maxStride, max))
+                {
+                    max = maxStride;
+                }
+            }
+
+            size_t p = startCoord;
+
+            while (true)
+            {
+                ++currentPoint[p];
+                if (currentPoint[p] > start[p] + count[p] - 1)
+                {
+                    if (p == dimensions - 1)
+                    {
+                        run = false; // we are done
+                        break;
+                    }
+                    else
+                    {
+                        currentPoint[p] = start[p];
+                        ++p;
+                    }
+                }
+                else
+                {
+                    break; // break inner p loop
+                }
+            } // dimension index update
+
+        } // end while stride loop
+    };
+
+    if (shape.size() == 1)
+    {
+        const size_t startOffset =
+            helper::LinearIndex(Dims(1, 0), shape, start, isRowMajor);
+        const size_t totalSize = helper::GetTotalSize(count);
+        GetMinMax(values + startOffset, totalSize, min, max);
+        return;
+    }
+
+    if (isRowMajor)
+    {
+        lf_MinMaxRowMajor(values, shape, start, count, min, max);
+    }
+    else
+    {
+        lf_MinMaxColumnMajor(values, shape, start, count, min, max);
+    }
+}
+
+template <class T>
+inline void GetMinMax(const T *values, const size_t size, T &min,
+                      T &max) noexcept
 {
     auto bounds = std::minmax_element(values, values + size);
     min = *bounds.first;
     max = *bounds.second;
+}
+
+template <>
+inline void GetMinMax(const std::complex<float> *values, const size_t size,
+                      std::complex<float> &min,
+                      std::complex<float> &max) noexcept
+{
+    GetMinMaxComplex(values, size, min, max);
+}
+
+template <>
+inline void GetMinMax(const std::complex<double> *values, const size_t size,
+                      std::complex<double> &min,
+                      std::complex<double> &max) noexcept
+{
+    GetMinMaxComplex(values, size, min, max);
 }
 
 template <class T>
@@ -220,6 +397,36 @@ inline bool GreaterThan(const T input1, const T input2) noexcept
         return true;
     }
     return false;
+}
+
+template <class T>
+Dims PayloadDims(const Dims &dimensions, const bool isRowMajor) noexcept
+{
+    if (dimensions.empty())
+    {
+        return dimensions;
+    }
+
+    Dims payloadDims = dimensions;
+    if (isRowMajor)
+    {
+        payloadDims.back() *= sizeof(T);
+    }
+    else
+    {
+        payloadDims.front() *= sizeof(T);
+    }
+    return payloadDims;
+}
+
+template <class T, class BinaryOperation>
+std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
+                         const std::vector<T> &vector2) noexcept
+{
+    std::vector<T> result(vector1.size());
+    std::transform(vector1.begin(), vector1.end(), vector2.begin(),
+                   result.begin(), op);
+    return result;
 }
 
 } // end namespace helper

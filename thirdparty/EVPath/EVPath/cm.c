@@ -74,9 +74,9 @@ void wait_for_pending_write(CMConnection conn);
 static void cm_wake_any_pending_write(CMConnection conn);
 static void transport_wake_any_pending_write(CMConnection conn);
 static void cm_set_pending_write(CMConnection conn);
-static int drop_CM_lock(CManager cm, char *file, int line);
-static int acquire_CM_lock(CManager cm, char *file, int line);
-static int return_CM_lock_status(CManager cm, char *file, int line);
+static int drop_CM_lock(CManager cm, const char *file, int line);
+static int acquire_CM_lock(CManager cm, const char *file, int line);
+static int return_CM_lock_status(CManager cm, const char *file, int line);
 static void add_buffer_to_pending_queue(CManager cm, CMConnection conn, CMbuffer buf, long length);
 static void cond_wait_CM_lock(CManager cm, void *cond, char *file, int line);
 
@@ -85,6 +85,7 @@ struct CMtrans_services_s CMstatic_trans_svcs = {INT_CMmalloc, INT_CMrealloc, IN
 						 CM_fd_write_select, 
 						 CM_fd_remove_select, 
 						 CMtransport_trace,
+						 CMtransport_verbose,
 						 CMConnection_create,
 						 INT_CMadd_shutdown_task,
 						 INT_CMadd_periodic_task,
@@ -130,20 +131,20 @@ static void cond_wait_CM_lock(CManager cm, void *vcond, char *file, int line)
     cm->locked++;
 }
 
-static int drop_CM_lock(CManager cm, char *file, int line)
+static int drop_CM_lock(CManager cm, const char *file, int line)
 {
     int ret = cm->locked;
     IntCManager_unlock(cm, file, line);
     return ret;
 }
 
-static int acquire_CM_lock(CManager cm, char *file, int line)
+static int acquire_CM_lock(CManager cm, const char *file, int line)
 {
     IntCManager_lock(cm, file, line);
     return cm->locked;
 }
 
-static int return_CM_lock_status(CManager cm, char *file, int line)
+static int return_CM_lock_status(CManager cm, const char *file, int line)
 {
     (void) file;
     (void) line;
@@ -2214,6 +2215,18 @@ INT_CMConnection_failed(CMConnection conn)
 	   }
  #endif
 	   CManager_unlock(cm);
+	   switch (*(int*)buffer) {
+	   case 0x5042494f:
+	   case 0x4f494250:  /* incoming FFS format protocol message */
+	     {
+	       extern int CM_pbio_query(CMConnection conn, CMTransport trans,
+					char *buffer, long length);
+	       
+	       int ret = CM_pbio_query(conn, conn->trans, buffer, length);
+	       CManager_lock(cm);
+	       return ret;
+	     }
+	   }
 	   ret = CMdo_non_CM_handler(conn, *(int*)buffer, buffer, length);
 	   CManager_lock(cm);
 	   if (local) cm_return_data_buf(cm, local);
@@ -3543,6 +3556,9 @@ INT_CMConnection_failed(CMConnection conn)
      SelectInitFunc select_free_function = (SelectInitFunc)task_data[0];
      CMtrace_out(cm, CMFreeVerbose, "calling select FREE function, %p\n", task_data[1]);
      select_free_function(&CMstatic_trans_svcs, cm, &task_data[1]);
+#if !NO_DYNAMIC_LINKING
+     CMdlclose(task_data[2]);
+#endif
      free(task_data);
  }
 
@@ -3554,6 +3570,7 @@ INT_CMConnection_failed(CMConnection conn)
      SelectInitFunc init_function;
      SelectInitFunc shutdown_function;
      SelectInitFunc select_free_function;
+     void *dlhandle = NULL;
  #if !NO_DYNAMIC_LINKING
      char *libname;
      lt_dlhandle handle;	
@@ -3563,6 +3580,7 @@ INT_CMConnection_failed(CMConnection conn)
      strcpy(libname, "lib" CM_LIBRARY_PREFIX "cmselect");
      strcat(libname, MODULE_EXT);
      handle = CMdlopen(cm->CMTrace_file, libname, 0);
+     dlhandle = handle;
      free(libname);
      if (!handle) {
 	 fprintf(stderr, "Failed to load required select dll.\n");
@@ -3616,9 +3634,10 @@ INT_CMConnection_failed(CMConnection conn)
      CMtrace_out(cm, CMFreeVerbose, "CManager adding select shutdown function, %lx\n",(long)shutdown_function);
      internal_add_shutdown_task(cm, select_shutdown, (void*)shutdown_function, SHUTDOWN_TASK);
      {
-	 void ** data = malloc(2 * sizeof(void*));
+	 void ** data = malloc(3 * sizeof(void*));
 	 data[0] = select_free_function;
 	 data[1] = cm->control_list->select_data;
+	 data[2] = dlhandle;
 	 internal_add_shutdown_task(cm, select_free, (void*)data, FREE_TASK);
      }
  }
@@ -3651,13 +3670,20 @@ INT_CMConnection_failed(CMConnection conn)
      INT_CMCondition_wait(cm, cond);
  }
 
- typedef struct foreign_handler_struct {
-     int header;
-     CMNonCMHandler handler;
- } *handler_list;
+typedef struct foreign_handler_struct {
+    int header;
+    CMNonCMHandler handler;
+} *handler_list;
 
- static handler_list foreign_handler_list;
- static int foreign_handler_count = 0;
+static handler_list foreign_handler_list;
+static int foreign_handler_count = 0;
+
+/* static void */
+/* clear_foreign_handlers() */
+/* { */
+/*     if (foreign_handler_count == 0) return; */
+/*     free(foreign_handler_list); */
+/* } */
 
  extern void
  INT_CMregister_non_CM_message_handler(int header, CMNonCMHandler handler)
@@ -3668,6 +3694,7 @@ INT_CMConnection_failed(CMConnection conn)
 					  (foreign_handler_count + 1));
      } else {
 	 foreign_handler_list = INT_CMmalloc(sizeof(foreign_handler_list[0]));
+/*	 atexit(clear_foreign_handlers);*/
      }
      foreign_handler_list[foreign_handler_count].header = header;
      foreign_handler_list[foreign_handler_count].handler = handler;

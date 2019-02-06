@@ -10,7 +10,7 @@ add_library(sst
   cp/cp_common.c
   cp/ffs_marshal.c
 )
-if(ADIOS2_SST_HAVE_LIBFABRIC AND ADIOS2_HAVE_MPI)
+if(ADIOS2_SST_HAVE_LIBFABRIC)
   target_sources(sst PRIVATE dp/rdma_dp.c)
   target_link_libraries(sst PRIVATE libfabric::libfabric)
   set(CMAKE_REQUIRED_INCLUDES ${LIBFABRIC_INCLUDE_DIRS})

@@ -43,9 +43,8 @@ public:
 
     ~InSituMPIWriter();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     void PerformPuts() final;
     void EndStep() final;
 
@@ -58,8 +57,13 @@ private:
 
     // Global ranks of all the readers
     std::vector<int> m_RankAllPeers;
+    // Mapping from global ranks to peer IDs
+    std::map<int, int> m_RankToPeerID;
     // Global ranks of the readers directly assigned to me
     std::vector<int> m_RankDirectPeers;
+    // true: Reader(s) selected me as primary writer contact
+    // e.g. I need to send info to Readers in BeginStep()
+    bool m_AmIPrimaryContact;
 
     int m_CurrentStep = -1; // steps start from 0
 
@@ -120,6 +124,11 @@ private:
                            const typename Variable<T>::Info &blockInfo);
 
     void AsyncSendVariable(std::string variableName);
+
+    /**
+     * Receive read schedule from readers and build write schedule
+     */
+    void ReceiveReadSchedule(insitumpi::WriteScheduleMap &writeScheduleMap);
 };
 
 } // end namespace engine

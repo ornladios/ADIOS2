@@ -48,6 +48,7 @@ public:
                     void *bufferOut,
                     const Params &parameters = Params()) const final;
 
+    using Operator::Decompress;
     /**
      * Decompression signature for legacy libraries that use void*
      * @param bufferIn
@@ -58,7 +59,7 @@ public:
      * @return size of decompressed buffer in bytes
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const size_t sizeOut) const final;
+                      const size_t sizeOut) const override;
 
 private:
     /**

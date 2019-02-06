@@ -1,27 +1,40 @@
 #
-#  BINUTILS_FOUND - system has the BinUtils library BINUTILS_INCLUDE_DIR - the BinUtils include directory BINUTILS_LIBRARIES - The libraries needed
-#  to use BinUtils
+#  BinUtils_FOUND - system has the BinUtils library
+#  BinUtils_INCLUDE_DIRS - the BinUtils include directory
+#  BinUtils_LIBRARIES - The libraries needed to use BinUtils
+#
+#  Targets:
+#    binutils::opcodes
+#    binutils::bfd
+#
 
-IF (NOT DEFINED BINUTILS_FOUND)
-    if (NOT (DEFINED CercsArch))
-        execute_process(COMMAND cercs_arch OUTPUT_VARIABLE CercsArch ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-	MARK_AS_ADVANCED(CercsArch)
-    endif()
-    IF(EXISTS /users/c/chaos)
-        FIND_LIBRARY  (BINUTILS_LIBRARIES opcodes NAMES libopcodes.so opcodes PATHS /users/c/chaos/lib /users/c/chaos/${CercsArch}/binutils/lib /users/c/chaos/${CercsArch}/lib NO_DEFAULT_PATH)
-	FIND_PATH (BINUTILS_INCLUDE_DIR NAMES dis-asm.h PATHS /users/c/chaos/include /users/c/chaos/${CercsArch}/binutils/include /users/c/chaos/${CercsArch}/include NO_DEFAULT_PATH)
-    ENDIF()
-    if (USE_NATIVE_LIBRARIES)
-	FIND_LIBRARY (BINUTILS_LIBRARIES opcodes NAMES libopcodes.so opcodes)
-	FIND_PATH (BINUTILS_INCLUDE_DIR  NAMES dis-asm.h)
-    endif()
-    IF (DEFINED BINUTILS_LIBRARIES)
-	get_filename_component ( BINUTILS_LIB_DIR ${BINUTILS_LIBRARIES} PATH)
-    ENDIF()
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(BinUtils DEFAULT_MSG
-     BINUTILS_LIBRARIES
-     BINUTILS_INCLUDE_DIR
-     BINUTILS_LIB_DIR
-   )
-ENDIF()
+find_path(BinUtils_INCLUDE_DIR dis-asm.h)
+find_library(BinUtils_opcodes_LIBRARY opcodes)
+find_library(BinUtils_bfd_LIBRARY bfd)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(BinUtils DEFAULT_MSG
+  BinUtils_opcodes_LIBRARY BinUtils_bfd_LIBRARY BinUtils_INCLUDE_DIR
+)
+if(BinUtils_FOUND)
+  set(BinUtils_INCLUDE_DIRS ${BinUtils_INCLUDE_DIR})
+  set(BinUtils_LIBRARIES ${BinUtils_opcodes_LIBRARY} ${BinUtils_bfd_LIBRARY})
+
+  if(NOT TARGET binutils::bfd)
+    add_library(binutils::bfd UNKNOWN IMPORTED)
+    set_target_properties(binutils::bfd PROPERTIES
+      IMPORTED_LOCATION              ${BinUtils_bfd_LIBRARY}
+      INTERFACE_INCLUDE_DIRECTORIES  ${BinUtils_INCLUDE_DIR}
+    )
+  endif()
+
+  if(NOT TARGET binutils::opcodes)
+    add_library(binutils::opcodes UNKNOWN IMPORTED)
+    set_target_properties(binutils::opcodes PROPERTIES
+      IMPORTED_LOCATION              ${BinUtils_opcodes_LIBRARY}
+      INTERFACE_INCLUDE_DIRECTORIES  ${BinUtils_INCLUDE_DIR}
+      INTERFACE_LINK_LIBRARIES       binutils::bfd
+    )
+  endif()
+endif()
+

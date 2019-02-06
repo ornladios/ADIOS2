@@ -12,9 +12,11 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::count
+#include <iterator>  //std::next
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 
 namespace adios2
@@ -74,6 +76,12 @@ void VariableBase::SetShape(const adios2::Dims &shape)
     m_Shape = shape;
 }
 
+void VariableBase::SetBlockSelection(const size_t blockID)
+{
+    m_BlockID = blockID;
+    m_SelectionType = SelectionType::WriteBlock;
+}
+
 void VariableBase::SetSelection(const Box<Dims> &boxDims)
 {
     const Dims &start = boxDims.first;
@@ -111,12 +119,14 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
                                         m_Name + ", in call to SetSelection\n");
         }
 
-        if (m_ShapeID == ShapeID::LocalArray && !start.empty())
-        {
-            throw std::invalid_argument("ERROR: start argument must be empty "
-                                        "for local array variable " +
-                                        m_Name + ", in call to SetSelection\n");
-        }
+        //        if (m_ShapeID == ShapeID::LocalArray && !start.empty())
+        //        {
+        //            throw std::invalid_argument("ERROR: start argument must be
+        //            empty "
+        //                                        "for local array variable " +
+        //                                        m_Name + ", in call to
+        //                                        SetSelection\n");
+        //        }
 
         if (m_ShapeID == ShapeID::JoinedArray && !start.empty())
         {
@@ -128,34 +138,63 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     m_Start = start;
     m_Count = count;
+    m_SelectionType = SelectionType::BoundingBox;
 }
 
-void VariableBase::SetMemorySelection(const std::pair<Dims, Dims> &boxDims)
+void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
 {
-    const Dims &start = boxDims.first;
-    const Dims &count = boxDims.second;
+    const Dims &memoryStart = memorySelection.first;
+    const Dims &memoryCount = memorySelection.second;
 
     if (m_DebugMode)
     {
         if (m_SingleValue)
         {
-            throw std::invalid_argument("ERROR: memory selection is not valid "
+            throw std::invalid_argument("ERROR: memory start is not valid "
                                         "for single value variable " +
                                         m_Name +
                                         ", in call to SetMemorySelection\n");
         }
 
-        if (m_Shape.size() != start.size() || m_Shape.size() != count.size())
+        if (m_Start.size() != memoryStart.size())
         {
-            throw std::invalid_argument(
-                "ERROR: selection Dims start, count sizes must be "
-                "the same as variable " +
-                m_Name + " m_Shape, in call to SetMemorySelction\n");
+            throw std::invalid_argument("ERROR: memoryStart size must be "
+                                        "the same as variable " +
+                                        m_Name + " start size " +
+                                        std::to_string(m_Start.size()) +
+                                        ", in call to SetMemorySelection\n");
+        }
+
+        if (m_Count.size() != memoryCount.size())
+        {
+            throw std::invalid_argument("ERROR: memoryCount size must be "
+                                        "the same as variable " +
+                                        m_Name + " count size " +
+                                        std::to_string(m_Count.size()) +
+                                        ", in call to SetMemorySelection\n");
+        }
+
+        // TODO might have to remove for reading
+        for (size_t i = 0; i < memoryCount.size(); ++i)
+        {
+            if (memoryCount[i] < m_Count[i])
+            {
+                const std::string indexStr = std::to_string(i);
+                const std::string memoryCountStr =
+                    std::to_string(memoryCount[i]);
+                const std::string countStr = std::to_string(m_Count[i]);
+
+                throw std::invalid_argument(
+                    "ERROR: memoyCount[" + indexStr + "]= " + memoryCountStr +
+                    " can not be smaller than variable count[" + indexStr +
+                    "]= " + countStr + " for variable " + m_Name +
+                    ", in call to SetMemorySelection\n");
+            }
         }
     }
 
-    m_MemoryStart = start;
-    m_MemoryCount = count;
+    m_MemoryStart = memorySelection.first;
+    m_MemoryCount = memorySelection.second;
 }
 
 size_t VariableBase::GetAvailableStepsStart() const
@@ -170,7 +209,7 @@ size_t VariableBase::GetAvailableStepsCount() const
 
 void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 {
-    if (boxSteps.second == 0)
+    if (m_DebugMode && boxSteps.second == 0)
     {
         throw std::invalid_argument("ERROR: boxSteps.second count argument "
                                     " can't be zero, from variable " +
@@ -244,10 +283,10 @@ bool VariableBase::IsValidStep(const size_t step) const noexcept
 
 void VariableBase::CheckRandomAccessConflict(const std::string hint) const
 {
-    if (m_DebugMode && m_RandomAccess)
+    if (m_DebugMode && m_RandomAccess && !m_FirstStreamingStep)
     {
         throw std::invalid_argument("ERROR: can't mix streaming and "
-                                    "random-access (call to StepStepSelection)"
+                                    "random-access (call to SetStepSelection)"
                                     "for variable " +
                                     m_Name + ", " + hint);
     }
@@ -277,6 +316,32 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 // PRIVATE
 void VariableBase::InitShapeType()
 {
+    if (m_DebugMode && m_Type == GetType<std::string>())
+    {
+        if (m_Shape.empty())
+        {
+            if (!m_Start.empty() || !m_Count.empty())
+            {
+                throw std::invalid_argument(
+                    "ERROR: GlobalValue string variable " + m_Name +
+                    " can't have Start and Count dimensions, string variables "
+                    "are always defined as a GlobalValue or LocalValue, "
+                    " in call to DefineVariable\n");
+            }
+        }
+        else
+        {
+            if (m_Shape != Dims{LocalValueDim})
+            {
+                throw std::invalid_argument(
+                    "ERROR: LocalValue string variable " + m_Name +
+                    " Shape must be equal to {LocalValueDim}, string variables "
+                    "are always defined as a GlobalValue or LocalValue, " +
+                    " in call to DefineVariable\n");
+            }
+        }
+    }
+
     if (!m_Shape.empty())
     {
         if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
@@ -297,6 +362,8 @@ void VariableBase::InitShapeType()
             if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
             {
                 m_ShapeID = ShapeID::LocalValue;
+                m_Start.resize(1);
+                m_Count.resize(1); // real count = 1
                 m_SingleValue = true;
             }
             else
@@ -386,11 +453,7 @@ void VariableBase::InitShapeType()
     }
 
     /* Extra checks for invalid settings */
-    if (m_DebugMode)
-    {
-        CheckDimensionsCommon(", in call to DefineVariable(\"" + m_Name +
-                              "\",...");
-    }
+    CheckDimensionsCommon(", in call to DefineVariable(\"" + m_Name + "\",...");
 }
 
 void VariableBase::CheckDimensionsCommon(const std::string hint) const
@@ -398,18 +461,6 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
     if (!m_DebugMode)
     {
         return;
-    }
-
-    if (m_Type == "string")
-    {
-        if (!(m_Shape.empty() && m_Start.empty() && m_Count.empty()))
-        {
-            throw std::invalid_argument("ERROR: string variable " + m_Name +
-                                        " can't have dimensions (shape, start, "
-                                        "count must be empty), string is "
-                                        "always defined as a LocalValue, " +
-                                        hint + "\n");
-        }
     }
 
     if (m_ShapeID != ShapeID::LocalValue)
@@ -423,8 +474,7 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
         {
             throw std::invalid_argument(
                 "ERROR: LocalValueDim parameter is only "
-                "allowed in a {LocalValueDim} "
-                "shape, " +
+                "allowed as {LocalValueDim} in Shape dimensions " +
                 hint + "\n");
         }
     }

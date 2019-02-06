@@ -188,28 +188,99 @@ int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
                        const bool IAmWriterRoot, const int globalRank,
                        const std::vector<int> &peers)
 {
-    int token = (IAmWriterRoot ? 1 : 0);
-    int writeRootGlobalRank = -1;
+    /* Return value:
+         Reader: write root global rank or -1
+         Writer: am I first connect to my Reader?
+    */
+    int retval;
     MPI_Status status;
+
+    /* Writers send msg to each connected Reader, Writer Root sends different
+     * value than others */
+    int writeRootToken = (IAmWriterRoot ? 1 : 0);
+    retval = -1;
     for (const auto peerRank : peers)
     {
         if (IAmSender)
         {
             // std::cout << " Send from " << rank << " to " << peerRank
             //          << std::endl;
-            MPI_Send(&token, 1, MPI_INT, peerRank, MpiTags::Connect, commWorld);
+            MPI_Send(&writeRootToken, 1, MPI_INT, peerRank, MpiTags::Connect,
+                     commWorld);
         }
         else
         {
             // std::cout << " Recv from " << peerRank << " by " << rank
             //          << std::endl;
-            MPI_Recv(&token, 1, MPI_INT, peerRank, MpiTags::Connect, commWorld,
-                     &status);
-            if (token == 1)
-                writeRootGlobalRank = peerRank;
+            MPI_Recv(&writeRootToken, 1, MPI_INT, peerRank, MpiTags::Connect,
+                     commWorld, &status);
+            if (writeRootToken == 1)
+                retval = peerRank;
         }
     }
-    return writeRootGlobalRank;
+
+    /* Each Reader selects one Writer to be main contact (for BeginStep) */
+    int firstAssignedWriterToken = 1;
+    for (const auto peerRank : peers)
+    {
+        if (IAmSender)
+        {
+            // std::cout << " Receive reader selection from " << peerRank << "
+            // by " << rank
+            //          << std::endl;
+            MPI_Recv(&firstAssignedWriterToken, 1, MPI_INT, peerRank,
+                     MpiTags::Connect, commWorld, &status);
+            retval = firstAssignedWriterToken;
+            /* Note that in case there are less Writer than Readers, here retval
+               is set to 1
+               multiple times. A mix of 0s and 1s cannot happen */
+        }
+        else
+        {
+            // std::cout << " Send reader selection from " << rank << " to " <<
+            // peerRank
+            //          << std::endl;
+            MPI_Send(&firstAssignedWriterToken, 1, MPI_INT, peerRank,
+                     MpiTags::Connect, commWorld);
+            firstAssignedWriterToken = 0;
+        }
+    }
+    return retval;
+}
+
+std::vector<MPI_Status> CompleteRequests(std::vector<MPI_Request> &requests,
+                                         const bool IAmWriter,
+                                         const int localRank)
+{
+    std::vector<MPI_Status> statuses(requests.size());
+
+    const auto ierr =
+        MPI_Waitall(requests.size(), requests.data(), statuses.data());
+
+    if (ierr == MPI_ERR_IN_STATUS)
+    {
+        for (auto i = 0; i < requests.size(); i++)
+        {
+            if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
+            {
+                std::cerr << "InSituMPI " << (IAmWriter ? "Writer" : "Reader")
+                          << " " << localRank
+                          << " Pending transfer error when waiting for all "
+                             "data transfers to complete. request id = "
+                          << i << std::endl;
+            }
+            else if (statuses[i].MPI_ERROR != MPI_SUCCESS)
+            {
+                std::cerr << "InSituMPI " << (IAmWriter ? "Writer" : "Reader")
+                          << " " << localRank
+                          << " MPI Error when waiting for all data transfers "
+                             "to complete. Error code = "
+                          << ierr << std::endl;
+            }
+        }
+    }
+
+    return statuses;
 }
 
 } // end namespace insitumpi

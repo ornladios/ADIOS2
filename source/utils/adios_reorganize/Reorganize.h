@@ -66,14 +66,15 @@ private:
                         const core::DataMap &attributes, int step);
     int ReadWrite(core::Engine &rStream, core::Engine &wStream, core::IO &io,
                   const core::DataMap &variables, int step);
+    Params parseParams(const std::string &param_str);
 
     // Input arguments
-    std::string infilename;    // File/stream to read
-    std::string outfilename;   // File to write
-    std::string wmethodname;   // ADIOS write method
-    std::string wmethodparams; // ADIOS write method
-    std::string rmethodname;   // ADIOS read method
-    std::string rmethodparams; // ADIOS read method
+    std::string infilename;       // File/stream to read
+    std::string outfilename;      // File to write
+    std::string wmethodname;      // ADIOS write method
+    std::string wmethodparam_str; // ADIOS write method parameter string
+    std::string rmethodname;      // ADIOS read method
+    std::string rmethodparam_str; // ADIOS read method parameter string
 
     static const int max_read_buffer_size = 1024 * 1024 * 1024;
     static const int max_write_buffer_size = 1024 * 1024 * 1024;
@@ -85,6 +86,10 @@ private:
     int rank = 0;
     int numproc = 1;
     MPI_Comm comm;
+
+    // Read/write method parameters
+    Params rmethodparams;
+    Params wmethodparams;
 
     uint64_t write_total = 0;   // data size read/written by one processor
     uint64_t largest_block = 0; // the largest variable block one process reads

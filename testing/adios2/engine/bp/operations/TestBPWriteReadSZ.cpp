@@ -51,10 +51,10 @@ void SZAccuracy1D(const double accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        adios2::Variable<float> var_r32 = io.DefineVariable<float>(
+            "r32", shape, start, count, adios2::ConstantDims);
+        adios2::Variable<double> var_r64 = io.DefineVariable<double>(
+            "r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");

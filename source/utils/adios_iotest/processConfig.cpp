@@ -28,9 +28,10 @@ CommandWrite::CommandWrite(std::string stream, std::string group)
 : Command(Operation::Write), streamName(stream), groupName(group){};
 CommandWrite::~CommandWrite(){};
 
-CommandRead::CommandRead(std::string stream, std::string group)
+CommandRead::CommandRead(std::string stream, std::string group,
+                         const float timeoutSec)
 : Command(Operation::Read), stepMode(adios2::StepMode::NextAvailable),
-  streamName(stream), groupName(group), timeout_sec(84600){};
+  streamName(stream), groupName(group), timeout_sec(timeoutSec){};
 CommandRead::~CommandRead(){};
 
 std::vector<std::string> FileToLines(std::ifstream &configfile)
@@ -241,13 +242,15 @@ VariableInfo processArray(std::vector<std::string> &words,
     {
         if (settings.isStrongScaling)
         {
-            ov.shape.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.shape.push_back(
+                stringToSizet(words, static_cast<int>(4 + i),
+                              "dimension " + std::to_string(i + 1)));
         }
         else
         {
-            ov.count.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.count.push_back(
+                stringToSizet(words, static_cast<int>(4 + i),
+                              "dimension " + std::to_string(i + 1)));
         }
     }
 
@@ -379,7 +382,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
             {
                 const auto f = cfg.condMap.at(cmd->conditionalStream);
             }
-            catch (std::exception &e)
+            catch (std::exception &)
             {
                 throw std::invalid_argument(
                     "Name used in conditional is not a read stream: '" +
@@ -393,7 +396,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
         {
             const auto f = cfg.condMap.at(it.first);
         }
-        catch (std::exception &e)
+        catch (std::exception &)
         {
             throw std::invalid_argument(
                 "Name used in step over command is not a read stream: '" +
@@ -640,14 +643,14 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                             "It must be either 'next' or 'latest'");
                     }
 
-                    double d = FLT_MAX;
+                    double d = -1.0;
                     if (words.size() >= 4)
                     {
                         // next word is timeout
                         d = stringToDouble(words, 4, "read timeout");
                         if (d < 0.0)
                         {
-                            d = FLT_MAX;
+                            d = -1.0;
                         }
                     }
 
@@ -656,7 +659,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         std::cout << "--> Command Read mode = " << mode
                                   << "  input = " << words[2]
                                   << "  group = " << groupName << " timeout = ";
-                        if (d == FLT_MAX)
+                        if (d < 0.0)
                         {
                             std::cout << "forever";
                         }
@@ -667,7 +670,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         std::cout << std::endl;
                     }
                     auto cmd =
-                        std::make_shared<CommandRead>(streamName, groupName);
+                        std::make_shared<CommandRead>(streamName, groupName, d);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                     cfg.condMap[streamName] = adios2::StepStatus::OK;
@@ -718,10 +721,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 // process config line and get global array info
                 VariableInfo ov = processArray(words, settings);
                 ov.datasize = ov.elemsize;
-                size_t pos[ov.ndim]; // Position of rank in N-dim space
+                std::vector<size_t> pos(
+                    ov.ndim); // Position of rank in N-dim space
 
                 // Calculate rank's position in N-dim space
-                decompRowMajor(ov.ndim, settings.myRank, ov.decomp.data(), pos);
+                decompRowMajor(ov.ndim, settings.myRank, ov.decomp.data(),
+                               pos.data());
 
                 if (settings.isStrongScaling)
                 {

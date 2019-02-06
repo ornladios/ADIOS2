@@ -1,6 +1,8 @@
 #ifndef SSTMPIDUMMY_H_
 #define SSTMPIDUMMY_H_
 
+#include <sys/time.h>
+
 typedef int MPI_Comm;
 typedef int MPI_Status;
 typedef int MPI_request;
@@ -27,7 +29,6 @@ typedef int MPI_Op;
 #define MPI_SEEK_SET SEEK_SET
 #define MPI_SEEK_CUR SEEK_CUR
 #define MPI_SEEK_END SEEK_END
-#define MPI_BYTE 1 /* I need the size of the type here */
 #define MPI_INFO_NULL 0
 
 #define MPI_COMM_NULL 0
@@ -36,6 +37,7 @@ typedef int MPI_Op;
 
 #define MPI_INT 1
 #define MPI_CHAR 2
+#define MPI_BYTE 2
 #define MPI_DOUBLE 3
 #define MPI_UNSIGNED 4
 #define MPI_UNSIGNED_LONG 5
@@ -216,6 +218,19 @@ static int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
                      MPI_Comm comm)
 {
     return MPI_SUCCESS;
+}
+
+static double MPI_Wtime()
+{
+    struct timeval tv;
+
+    if (gettimeofday(&tv, NULL) < 0)
+    {
+        perror("could not get time");
+        return (0.);
+    }
+
+    return (tv.tv_sec + ((double)tv.tv_usec / 1000000.));
 }
 
 #endif

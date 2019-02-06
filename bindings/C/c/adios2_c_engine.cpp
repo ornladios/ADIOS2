@@ -154,6 +154,16 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
         {
             // not supported
         }
+        else if (type == "string")
+        {
+            const std::string dataStr(reinterpret_cast<const char *>(data));
+            adios2::core::Engine &engineCpp =
+                *reinterpret_cast<adios2::core::Engine *>(engine);
+
+            engineCpp.Put(*dynamic_cast<adios2::core::Variable<std::string> *>(
+                              variableBase),
+                          dataStr);
+        }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
@@ -168,7 +178,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<const T *>(data), modeCpp);                       \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         return adios2_error_none;
@@ -199,11 +209,16 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
                   "in call to adios2_put_by_name");
 
         const std::string type(
-            engineCpp.GetIO().InquireVariableType(variable_name));
+            engineCpp.m_IO.InquireVariableType(variable_name));
 
         if (type == "compound")
         {
             // not supported
+        }
+        else if (type == "string")
+        {
+            const std::string dataStr(reinterpret_cast<const char *>(data));
+            engineCpp.Put(variable_name, dataStr);
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
@@ -211,7 +226,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         engineCpp.Put(variable_name, reinterpret_cast<const T *>(data),        \
                       modeCpp);                                                \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -252,11 +267,23 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
 
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
+
         const std::string type(variableBase->m_Type);
 
         if (type == "compound")
         {
             // not supported
+        }
+        else if (type == "string")
+        {
+            adios2::core::Engine &engineCpp =
+                *reinterpret_cast<adios2::core::Engine *>(engine);
+
+            std::string dataStr;
+            engineCpp.Get(*dynamic_cast<adios2::core::Variable<std::string> *>(
+                              variableBase),
+                          dataStr);
+            dataStr.copy(reinterpret_cast<char *>(values), dataStr.size());
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
@@ -270,7 +297,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<T *>(values), modeCpp);                           \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -298,18 +325,24 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
             mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
                   "in call to adios2_get_by_name");
         const std::string type(
-            engineCpp.GetIO().InquireVariableType(variable_name));
+            engineCpp.m_IO.InquireVariableType(variable_name));
 
         if (type == "compound")
         {
             // not supported
+        }
+        else if (type == "string")
+        {
+            std::string dataStr;
+            engineCpp.Get(variable_name, dataStr);
+            dataStr.copy(reinterpret_cast<char *>(data), dataStr.size());
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
         engineCpp.Get(variable_name, reinterpret_cast<T *>(data), modeCpp);    \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }

@@ -475,7 +475,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             "DataMan library, can't use DataMan engine\n");
 #endif
     }
-    else if (engineTypeLC == "sst")
+    else if (engineTypeLC == "sst" || engineTypeLC == "effis")
     {
 #ifdef ADIOS2_HAVE_SST
         if (mode == Mode::Read)
@@ -608,6 +608,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         Variable<T> *variable = InquireVariable<T>(name);                      \
         variable->CheckRandomAccessConflict(hint);                             \
         variable->ResetStepsSelection(zeroStart);                              \
+        variable->m_RandomAccess = false;                                      \
     }
         ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

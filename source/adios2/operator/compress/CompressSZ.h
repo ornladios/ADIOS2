@@ -60,15 +60,6 @@ public:
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
                       const Dims &dimensions, const std::string type,
                       const Params &parameters) const final;
-
-private:
-    /**
-     * In debug mode, check status from SZ compression and decompression
-     * functions
-     * @param status returned by SZ library
-     * @param hint extra exception information
-     */
-    void CheckStatus(const int status, const std::string hint) const;
 };
 
 } // end namespace compress

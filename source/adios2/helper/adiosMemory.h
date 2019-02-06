@@ -24,6 +24,11 @@ namespace adios2
 namespace helper
 {
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+template <class T>
+void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);
+#endif
+
 /**
  * Inserts source at the end of a buffer updating buffer.size()
  * @param buffer data destination calls insert()
@@ -61,6 +66,10 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
                          const T *source, const size_t elements = 1,
                          const unsigned int threads = 1) noexcept;
 
+template <class T>
+void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+                           T *destination, const size_t elements = 1) noexcept;
+
 /**
  * Copy memory from a buffer at a certain input position
  * @param buffer data source
@@ -82,7 +91,44 @@ template <class T>
 void InsertU64(std::vector<char> &buffer, const T element) noexcept;
 
 template <class T>
-T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
+T ReadValue(const std::vector<char> &buffer, size_t &position,
+            const bool isLittleEndian = true) noexcept;
+
+/**
+ * General function to copy memory between blocks of different type and start
+ * and count
+ * @param dest
+ * @param destStart
+ * @param destCount
+ * @param destRowMajor
+ * @param src
+ * @param srcStart
+ * @param srcCount
+ * @param srcRowMajor
+ * @param destMemStart
+ * @param destMemCount
+ * @param srcMemStart
+ * @param srcMemCount
+ */
+template <class T, class U>
+void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                const bool destRowMajor, const U *src, const Dims &srcStart,
+                const Dims &srcCount, const bool srcRowMajor,
+                const bool endianReverse = false,
+                const Dims &destMemStart = Dims(),
+                const Dims &destMemCount = Dims(),
+                const Dims &srcMemStart = Dims(),
+                const Dims &srcMemCount = Dims()) noexcept;
+
+void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
+                 const bool destRowMajor, const char *src, const Dims &srcStart,
+                 const Dims &srcCount, const bool srcRowMajor,
+                 const Dims &destMemStart = Dims(),
+                 const Dims &destMemCount = Dims(),
+                 const Dims &srcMemStart = Dims(),
+                 const Dims &srcMemCount = Dims(),
+                 const bool endianReverse = false,
+                 const std::string destType = "") noexcept;
 
 /**
  * Clips the contiguous memory corresponding to an intersection and puts it in
@@ -101,11 +147,25 @@ T ReadValue(const std::vector<char> &buffer, size_t &position) noexcept;
  */
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
+                          const char *contiguousMemory,
+                          const Box<Dims> &blockBox,
+                          const Box<Dims> &intersectionBox,
+                          const bool isRowMajor = true,
+                          const bool reverseDimensions = false,
+                          const bool endianReverse = false);
+
+template <class T>
+void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const std::vector<char> &contiguousMemory,
                           const Box<Dims> &blockBox,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor = true,
-                          const bool reverseDimensions = false);
+                          const bool reverseDimensions = false,
+                          const bool endianReverse = false);
+
+template <class T>
+void CopyContiguousMemory(const char *src, const size_t stride, T *dest,
+                          const bool endianReverse = false);
 
 /**
  * Clips a vector returning the sub-vector between start and end (end is
@@ -144,20 +204,27 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const bool debugMode,
  * @param inIsRowMaj specifies major for input
  * @param inIsBigEndian specifies endianess for input
  * @param out pointer to destination memory buffer
- * @param outStart source data starting offset
- * @param outCount destination data structure
+ * @param outStart destination request data starting offset
+ * @param outCount destination request data structure
  * @param outIsRowMaj specifies major for output
  * @param outIsBigEndian specifies endianess for output
+ * @param inMemStart source memory starting offset
+ * @param inMemCount source memory structure
+ * @param outMemStart destination request data starting offset
+ * @param outMemCount destination request data structure
  * @param safeMode false:runs faster, the number of function stacks
  *                 used by recursive algm is equal to the number of dimensions.
  *                 true: runs a bit slower, same algorithm using the explicit
  *                 stack/simulated stack which has more overhead for the algm.
  */
+
 template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
            const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
-           const bool outIsLittleEndian, const bool safeMode = false);
+           const bool outIsLittleEndian, const Dims &inMemStart = Dims(),
+           const Dims &inMemCount = Dims(), const Dims &outMemStart = Dims(),
+           const Dims &outMemCount = Dims(), const bool safeMode = false);
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;

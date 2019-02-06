@@ -12,7 +12,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.2.0)
+project(ADIOS2 VERSION 2.3.0)
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
@@ -101,23 +101,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-# Setup PIC defaults.  If explicitly specified somehow, then default 
-# to that.  Otherwise base the default on whether or not shared libs are even
-# supported.
-if(DEFINED ADIOS2_ENABLE_PIC)
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${ADIOS2_ENABLE_PIC})
-elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
-else()
-  set(ADIOS2_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(ADIOS2_ENABLE_PIC
-  "Build with Position Independent Code" ${ADIOS2_ENABLE_PIC_DEFAULT}
-  "SHARED_LIBS_SUPPORTED" OFF
-)
-set(CMAKE_POSITION_INDEPENDENT_CODE ${ADIOS2_ENABLE_PIC})
-mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
-
 adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
@@ -130,6 +113,7 @@ adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
+adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoprability" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
@@ -142,8 +126,14 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
+# Various homebrew MPI fortran installations break rpath usage on OSX
+if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
+  set(CMAKE_MACOSX_RPATH OFF)
+endif()
+
 set(ADIOS2_CONFIG_OPTS
-  BZip2 ZFP SZ MPI DataMan SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem
+  BZip2 ZFP SZ MGARD MPI DataMan SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem
+  Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
@@ -154,6 +144,13 @@ configure_file(
 
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
+)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/upstream/FindMPI
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/upstream
 )
 
 #------------------------------------------------------------------------------#

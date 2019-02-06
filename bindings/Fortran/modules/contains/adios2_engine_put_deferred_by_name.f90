@@ -10,6 +10,19 @@
 !
 
 ! Single Value
+subroutine adios2_put_deferred_by_name_string(engine, name, data, ierr)
+    type(adios2_engine), intent(in):: engine
+    character*(*), intent(in) :: name
+    character*(*), intent(in):: data
+    integer, intent(out):: ierr
+
+    call adios2_put_by_name_f2c(engine%f2c, TRIM(ADJUSTL(name))//char(0), &
+                                TRIM(ADJUSTL(data))//char(0), &
+                                adios2_mode_deferred, ierr)
+
+end subroutine
+
+
 subroutine adios2_put_deferred_by_name_real(engine, name, data, ierr)
     type(adios2_engine), intent(in):: engine
     character*(*), intent(in) :: name

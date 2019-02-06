@@ -1,69 +1,69 @@
-**********************************
+*********************************
 SST Sustainable Staging Transport
-**********************************
+*********************************
 
 In ADIOS2, the Sustainable Staging Transport (SST) is an engine that allows
 direct connection of data producers and consumers via the ADIOS2 write/read
 APIs.  This is a classic streaming data architecture where the data passed
-to ADIOS on the write side (via PutDeferred(), PutSync() and similar calls)
-is make directly available to a reader (via GetDeferred(), GetSync() and
+to ADIOS on the write side (via Put() deferred and sync, and similar calls)
+is made directly available to a reader (via Get(), deferred and sync, and
 similar calls).
 
-SST is designed for use in HPC environment and can take advantage of RDMA
+SST is designed for use in HPC environments and can take advantage of RDMA
 network interconnects to speed the transfer of data between communicating
-HPC applications, however it is also capable of operating in a Wide Area
+HPC applications; however, it is also capable of operating in a Wide Area
 Networking environment over standard sockets.  SST supports full MxN data
 distribution, where the number of reader ranks can differ from the number of
-writer ranks.  SST also allows multiple reader cohorts to get access to a writers
+writer ranks.  SST also allows multiple reader cohorts to get access to a writer's
 data simultaneously.
 
 To use this engine, you can either specify it in your xml config file, with
 tag ``<engine type=SST>`` or, set it in client code. For example, here is
-how to create an SST reader: 
+how to create an SST reader:
 
 .. code-block:: c++
 
  adios2::IO sstIO = adios.DeclareIO("SomeName");
- sstIO.SetEngine("SST");	
- adios2::Engine sstReader = sstIO.Open(filename, adios2::Mode::Read);	
+ sstIO.SetEngine("SST");
+ adios2::Engine sstReader = sstIO.Open(filename, adios2::Mode::Read);
 
 and a sample code for SST writer is:
 
 .. code-block:: c++
 
  adios2::IO sstIO = adios.DeclareIO("SomeName");
- sstIO.SetEngine("SST");	
- adios2::Engine sstWriter = sstIO.Open(filename, adios2::Mode::Write);	
+ sstIO.SetEngine("SST");
+ adios2::Engine sstWriter = sstIO.Open(filename, adios2::Mode::Write);
 
 The general goal of ADIOS2 is to ease the conversion of a file-based
 application to instead use a non-file streaming interconnect, for example,
 data producers such as computational physics codes and consumers such as
 analysis applications.  However, there are some uses of ADIOS2 APIs that
 work perfectly well with the ADIOS2 file engines, but which will not work or
-will perform badly.  For example, SST is based upon the *"step"* concept and
+will perform badly with streaming.  For example, SST is based upon the *"step"* concept and
 ADIOS2 applications that use SST must call BeginStep() and EndStep().  On
 the writer side, the Put() calls between BeginStep and EndStep are the unit
 of communication and represent the data that will be available between the
-corresponding Begin/EndStep calls on the reader.  
+corresponding Begin/EndStep calls on the reader.
 
 Also, it is recommended that SST-based applications not use the ADIOS2
-GetSync() method unless there is only one data item to be read per step.
+Get() sync method unless there is only one data item to be read per step.
 This is because SST implements MxN data transfer (and avoids having to
 deliver all data to every reader), by queueing data on the writer ranks
 until it is known which reader rank requires it.  Normally this data fetch
 stage is initiated by PerformGets() or EndStep(), both of which fulfill any
-pending GetDeferred() operations.  However, unlike GetDeferred(), the
-semantics GetSync() require the requested data to be fetched from the
+pending Get() deferred operations.  However, unlike Get() deferred, the
+semantics of Get() sync require the requested data to be fetched from the
 writers before the call can return.   If there are multiple calls to
-GetSync() per step, each one may require a communication with many writers,
-something that would have only had to happen once if GetDeferred() were used
-instead.  Thus the use of GetSync() is likely to incur a substantial
+Get() sync per step, each one may require a communication with many writers,
+something that would have only had to happen once if Get() differed were used
+instead.  Thus the use of Get() sync is likely to incur a substantial
 performance penalty.
 
 On the writer side, depending upon the chosen data marshaling option there
-may be some (relatively small) performance differences between PutSync() and
-PutDeferred(), but they are unlikely to be as substantial as between
-GetSync() and GetDeferred().
+may be some (relatively small) performance differences between Put() sync and
+Put() deferred, but they are unlikely to be as substantial as between
+Get() sync and Get() deferred.
 
 Note that SST readers and writers do not necessarily move in lockstep, but
 depending upon the queue length parameters and queueing policies specified,
@@ -95,7 +95,7 @@ create the file and the reader must be able to read it).  Generally the file
 so created will exist only for as long as the writer keeps the stream
 Open(), but abnormal process termination may leave "stale" files in those
 locations.  These stray ".sst" files should be deleted to avoid confusing
-future readers.   SST also offers a **"Screen"** registration method in which
+future readers.  SST also offers a **"Screen"** registration method in which
 writers and readers send their contact information to, and read it from,
 stdout and stdin respectively.  The "screen" registration method doesn't
 support batch mode operations in any way, but may be useful when manually
@@ -110,7 +110,7 @@ Writer and Reader engines.
 of steps which the writer will allow to be queued before taking specific
 action (such as discarding data or waiting for readers to consume the
 data).  The default value of 0 is interpreted as no limit.  This value is
-interpreted by SST Writer engines only. 
+interpreted by SST Writer engines only.
 
 4. **QueueFullPolicy**: Default **"Block"**.  This value controls what
 policy is invoked if a non-zero **QueueLimit** has been specified and new
@@ -136,16 +136,42 @@ satisfying, but has a similar long-term effect upon the set of steps
 delivered to the readers.)  This value is interpreted by SST Writer engines
 only.
 
-5. **DataTransport**:  Default **"RDMA"**.   This string value specifies the
-underlying network communication mechanism to use for exchanging data in
-SST.  Current allowed values are **"RDMA"** and **"WAN"**.  (**ib** and
-**fabric** are accepted as equivalent to **RDMA** and **evpath** is
-equivalent to **WAN**.)  Generally both the reader and writer should be
-using the same network transport, and the network transport chosen may be
-dictated by the situation.  For example, the RDMA transport generally
-operates only between applications running on the same high-performance
-interconnect (e.g. on the same HPC machine).  If communication is desired
-between applications running on different interconnects, the Wide Area
-Network (WAN) option should be chosen.  This value is interpreted by both
-SST Writer and Reader engines.
+5. **DataTransport**: Default **varies**.  This string value specifies
+the underlying network communication mechanism to use for exchanging
+data in SST.  Generally this is chosen by SST based upon what is
+available on the current platform.  However, specifying this engine
+parameter allows overriding SST's choice.  Current allowed values are
+**"RDMA"** and **"WAN"**.  (**ib** and **fabric** are accepted as
+equivalent to **RDMA** and **evpath** is equivalent to **WAN**.)
+Generally both the reader and writer should be using the same network
+transport, and the network transport chosen may be dictated by the
+situation.  For example, the RDMA transport generally operates only
+between applications running on the same high-performance interconnect
+(e.g. on the same HPC machine).  If communication is desired between
+applications running on different interconnects, the Wide Area Network
+(WAN) option should be chosen.  This value is interpreted by both SST
+Writer and Reader engines.
 
+5. **NetworkInterface**: Default **NULL**.  In situations in which
+there are multiple possible network interfaces available to SST, this
+string value specifies which should be used to generate SST's contact
+information for writers.  Generally this should *NOT* be specified
+except for narrow sets of circumstances.  It has no effect if
+specified on Reader engines.  If specified, the string value should
+correspond to a name of a network interface, such as are listed by
+commands like "netstat -i".  For example, on most Unix systems,
+setting the NetworkInterface parameter to "lo" (or possibly "lo0")
+will result in SST generating contact information that uses the
+network address associated with the loopback interface (127.0.0.1).
+This value is interpreted by only by the SST Writer engine.
+
+=======================  ===================== =========================================================
+ **Key**                  **Value Format**      **Default** and Examples
+=======================  ===================== =========================================================
+ RendezvousReaderCount    integer               **1**
+ RegistrationMethod       string                **File**, Screen
+ QueueLimit               integer               **0** (no queue limits)
+ QueueFullPolicy          string                **Block**, Discard
+ DataTransport            string                **default varies by platform**, RDMA, WAN
+ NetworkInterface         string                **NULL**
+=======================  ===================== =========================================================

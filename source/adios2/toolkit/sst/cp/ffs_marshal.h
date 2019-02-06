@@ -19,6 +19,11 @@ struct FFSWriterMarshalBase
     int DataFieldCount;
     FMFieldList DataFields;
     FMFormat DataFormat;
+    int AttributeFieldCount;
+    FMFieldList AttributeFields;
+    FMFormat AttributeFormat;
+    void *AttributeData;
+    int AttributeSize;
     int CompressZFP;
     attr_list ZFPParams;
 };

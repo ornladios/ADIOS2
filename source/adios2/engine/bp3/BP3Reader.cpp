@@ -22,7 +22,7 @@ namespace engine
 
 BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("BPFileReader", io, name, mode, mpiComm),
+: Engine("BP3", io, name, mode, mpiComm),
   m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
   m_SubFileManager(mpiComm, m_DebugMode)
 {
@@ -141,11 +141,11 @@ void BP3Reader::InitTransports()
 
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
-        const std::string metadataFile(
-            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
+        //        const std::string metadataFile(
+        //            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
 
         const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-        m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
+        m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
     }
 }
@@ -167,7 +167,7 @@ void BP3Reader::InitBuffer()
     helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
     // fills IO with Variables and Attributes
-    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
+    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);
 }
 
 #define declare_type(T)                                                        \

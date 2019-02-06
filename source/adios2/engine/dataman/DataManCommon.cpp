@@ -20,7 +20,8 @@ namespace engine
 DataManCommon::DataManCommon(const std::string engineType, IO &io,
                              const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine(engineType, io, name, mode, mpiComm)
+: Engine(engineType, io, name, mode, mpiComm),
+  m_FileTransport(mpiComm, m_DebugMode)
 {
 
     // initialize parameters
@@ -41,15 +42,6 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {
         m_StreamNames.push_back(m_Name + std::to_string(i));
-    }
-
-    // register callbacks
-    for (auto &j : m_IO.m_Operations)
-    {
-        if (j.Op->m_Type == "Signature2")
-        {
-            m_Callbacks.push_back(j.Op);
-        }
     }
 }
 

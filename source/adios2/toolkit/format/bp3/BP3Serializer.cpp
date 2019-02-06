@@ -309,7 +309,6 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
 void BP3Serializer::UpdateOffsetsInMetadata()
 {
     auto lf_UpdatePGIndexOffsets = [&]() {
-
         auto &buffer = m_MetadataSet.PGIndex.Buffer;
         size_t &currentPosition = m_MetadataSet.PGIndex.LastUpdatedPosition;
 
@@ -327,7 +326,6 @@ void BP3Serializer::UpdateOffsetsInMetadata()
     };
 
     auto lf_UpdateIndexOffsets = [&](SerialElementIndex &index) {
-
         auto &buffer = index.Buffer;
 
         // First get the type:
@@ -482,6 +480,14 @@ void BP3Serializer::PutAttributes(core::IO &io)
         const std::string name(attributePair.first);
         const std::string type(attributePair.second.first);
 
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(name);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
+
         if (type == "unknown")
         {
         }
@@ -635,20 +641,21 @@ void BP3Serializer::SerializeDataBuffer(core::IO &io) noexcept
     helper::CopyToBuffer(buffer, m_MetadataSet.DataPGVarsCountPosition,
                          &varsLength);
 
-    // attributes are only written once
-
-    if (!m_MetadataSet.AreAttributesWritten)
+    // each attribute is only written to output once
+    size_t attributesSizeInData = GetAttributesSizeInData(io);
+    if (attributesSizeInData)
     {
-        const size_t attributesSizeInData = GetAttributesSizeInData(io);
+        attributesSizeInData += 12; // count + length
         m_Data.Resize(position + attributesSizeInData,
                       "when writing Attributes in rank=0\n");
 
         PutAttributes(io);
-        m_MetadataSet.AreAttributesWritten = true;
     }
     else
     {
         m_Data.Resize(position + 12, "for empty Attributes\n");
+        // Attribute index header for zero attributes: 0, 0LL
+        // Resize() already takes care of this
         position += 12;
         absolutePosition += 12;
     }
@@ -668,7 +675,6 @@ void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     auto lf_SetIndexCountLength =
         [](std::unordered_map<std::string, SerialElementIndex> &indices,
            uint32_t &count, uint64_t &length) {
-
             count = static_cast<uint32_t>(indices.size());
             length = 0;
             for (auto &indexPair : indices) // set each index length
@@ -688,7 +694,6 @@ void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
         [](const uint32_t count, const uint64_t length,
            const std::unordered_map<std::string, SerialElementIndex> &indices,
            std::vector<char> &buffer, size_t &position) {
-
             helper::CopyToBuffer(buffer, position, &count);
             helper::CopyToBuffer(buffer, position, &length);
 
@@ -811,12 +816,14 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
 
     if (addSubfiles)
     {
-        position += 1;
+        const uint8_t zeros1 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros1);
         helper::CopyToBuffer(buffer, position, &m_Version);
     }
     else
     {
-        position += 2;
+        const uint16_t zeros2 = 0;
+        helper::CopyToBuffer(buffer, position, &zeros2);
     }
     helper::CopyToBuffer(buffer, position, &m_Version);
 }
@@ -872,7 +879,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     };
 
     auto lf_SerializeAllIndices = [&](MPI_Comm comm, const int rank) {
-
         const size_t pgIndicesSize = m_MetadataSet.PGIndex.Buffer.size();
         const size_t variablesIndicesSize =
             lf_IndicesSize(m_MetadataSet.VarsIndices);
@@ -934,17 +940,29 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 
             std::vector<BP3Base::SerialElementIndex> *deserializedIndexes =
                 nullptr;
-            // mutex portion
+            auto search = deserialized.find(header.Name);
+            if (search == deserialized.end())
             {
-                std::lock_guard<std::mutex> lock(m_Mutex);
-                deserializedIndexes =
-                    &(deserialized
-                          .emplace(std::piecewise_construct,
-                                   std::forward_as_tuple(header.Name),
-                                   std::forward_as_tuple(
-                                       size, SerialElementIndex(header.MemberID,
-                                                                bufferSize)))
-                          .first->second);
+                // key (variable name) is not in the map, add it
+                // mutex portion
+                {
+                    std::lock_guard<std::mutex> lock(m_Mutex);
+                    deserializedIndexes =
+                        &(deserialized
+                              .emplace(
+                                  std::piecewise_construct,
+                                  std::forward_as_tuple(header.Name),
+                                  std::forward_as_tuple(
+                                      size, SerialElementIndex(header.MemberID,
+                                                               bufferSize)))
+                              .first->second);
+                }
+            }
+            else
+            {
+                // variable name is already in the map, just get the pointer
+                // of the vector of metadata indices
+                deserializedIndexes = &(search->second);
             }
 
             SerialElementIndex &index =
@@ -991,7 +1009,6 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     auto lf_SortMergeIndices = [&](
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
             &deserializedIndices) {
-
         auto &position = bufferSTL.m_Position;
         auto &buffer = bufferSTL.m_Buffer;
 
@@ -1248,12 +1265,10 @@ void BP3Serializer::MergeSerializeIndices(
                 " not supported in BP3 Metadata Merge\n");
 
         } // end switch
-
     };
 
     auto lf_MergeRankSerial = [&](
         const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
-
         auto &bufferOut = bufferSTL.m_Buffer;
         auto &positionOut = bufferSTL.m_Position;
 
@@ -1372,12 +1387,10 @@ void BP3Serializer::MergeSerializeIndices(
         helper::CopyToBuffer(bufferOut, backPosition,
                              &indices[firstRank].Buffer[4], headerSize - 8 - 4);
         helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
-
     };
 
     auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
                             BufferSTL &bufferSTL) {
-
         ElementIndexHeader header;
         size_t firstRank = 0;
         // index positions per rank
@@ -1612,13 +1625,21 @@ uint32_t BP3Serializer::GetFileIndex() const noexcept
 
 size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 {
-    size_t attributesSizeInData = 12; // count + length
+    size_t attributesSizeInData = 0;
 
     auto &attributes = io.GetAttributesDataMap();
 
     for (const auto &attribute : attributes)
     {
         const std::string type = attribute.second.first;
+
+        // each attribute is only written to output once
+        // so filter out the ones already written
+        auto it = m_SerializedAttributes.find(attribute.first);
+        if (it != m_SerializedAttributes.end())
+        {
+            continue;
+        }
 
         if (type == "compound")
         {
@@ -1642,12 +1663,12 @@ size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
 #define declare_template_instantiation(T)                                      \
     template void BP3Serializer::PutVariablePayload(                           \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;                                                  \
                                                                                \
     template void BP3Serializer::PutVariableMetadata(                          \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool) noexcept;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

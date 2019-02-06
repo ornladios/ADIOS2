@@ -3,10 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-# We'll need to install the private find modules to ensure our import libs
-# are properly resovled
-set(adios2_find_modules)
-
 # This file contains the option and dependency logic.  The configuration
 # options are designed to be tertiary: ON, OFF, or AUTO.  If AUTO, we try to
 # determine if dependencies are available and enable the option if we find
@@ -41,6 +37,16 @@ elseif(ADIOS2_USE_SZ)
 endif()
 if(SZ_FOUND)
   set(ADIOS2_HAVE_SZ TRUE)
+endif()
+
+# MGARD
+if(ADIOS2_USE_MGARD STREQUAL AUTO)
+  find_package(MGARD)
+elseif(ADIOS2_USE_MGARD)
+  find_package(MGARD REQUIRED)
+endif()
+if(MGARD_FOUND)
+  set(ADIOS2_HAVE_MGARD TRUE)
 endif()
 
 set(mpi_find_components C)
@@ -135,7 +141,7 @@ if(ADIOS2_USE_Python)
   if(NOT (ADIOS2_USE_Python STREQUAL AUTO))
     set(python_find_args REQUIRED)
   endif()
-  if(SHARED_LIBS_SUPPORTED AND ADIOS2_ENABLE_PIC)
+  if(BUILD_SHARED_LIBS)
     set(Python_ADDITIONAL_VERSIONS "3;2.7"
       CACHE STRING "Python versions to search for"
     )
@@ -159,7 +165,7 @@ if(ADIOS2_USE_SST AND NOT MSVC)
     set(ADIOS2_SST_HAVE_LIBFABRIC TRUE)
     find_package(CrayDRC)
     if(CRAY_DRC_FOUND)
-        set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
+      set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
   endif()
 endif()
@@ -175,6 +181,10 @@ if(UNIX)
   endif()
 else()
   set(ADIOS2_HAVE_SysVShMem OFF)
+endif()
+
+if(ADIOS2_USE_Endian_Reverse STREQUAL ON)
+  set(ADIOS2_HAVE_Endian_Reverse TRUE)
 endif()
 
 # Multithreading

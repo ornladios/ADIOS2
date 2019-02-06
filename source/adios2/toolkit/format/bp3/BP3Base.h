@@ -13,10 +13,12 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <bitset>
+#include <map>
 #include <memory> //std::shared_ptr
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 /// \endcond
 
@@ -24,6 +26,7 @@
 #include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/Engine.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/BufferSTL.h"
@@ -87,8 +90,6 @@ public:
         /** @brief key: attribute name, value: bp metadata attribute index */
         std::unordered_map<std::string, SerialElementIndex> AttributesIndices;
 
-        bool AreAttributesWritten = false;
-
         /** Fixed size for mini footer, adding 28 bytes for ADIOS version */
         const unsigned int MiniFooterSize = 28 + 28;
 
@@ -120,7 +121,7 @@ public:
         uint64_t PGIndexStart;
         uint64_t VarsIndexStart;
         uint64_t AttributesIndexStart;
-        uint8_t Version = 3;
+        int8_t Version = 3;
         bool IsLittleEndian = true;
         bool HasSubFiles = false;
     };
@@ -176,6 +177,23 @@ public:
     /** tracks the overall size of deferred variables */
     size_t m_DeferredVariablesDataSize = 0;
 
+    /** attributes are serialized only once, this set contains the names of ones
+     * already serialized.
+     */
+    std::unordered_set<std::string> m_SerializedAttributes;
+
+    /**
+     * scratch memory buffers used for management of temporary memory buffers
+     * per thread.
+     * This allows thread-safety mostly is deserialization.
+     * Indices:
+     * [threadID][bufferID]
+     */
+    std::map<size_t, std::map<size_t, std::vector<char>>> m_ThreadBuffers;
+
+    /** true: NVMex each rank creates its own directory */
+    bool m_NodeLocal = false;
+
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator
@@ -213,7 +231,8 @@ public:
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 
     std::string GetBPSubFileName(const std::string &name,
-                                 const size_t subFileIndex) const noexcept;
+                                 const size_t subFileIndex,
+                                 const bool hasSubFiles = true) const noexcept;
 
     /**
      * Returns the estimated variable index size. Used by ResizeBuffer public
@@ -457,8 +476,9 @@ protected:
         Dims Shape;
         Dims Start;
         Dims Count;
-        uint32_t EntryLength;
-        uint8_t EntryCount;
+        ShapeID EntryShapeID = ShapeID::Unknown;
+        uint32_t EntryLength = 0;
+        uint8_t EntryCount = 0;
     };
 
     struct ElementIndexHeader
@@ -514,6 +534,10 @@ protected:
     /** set number of substreams, turns on aggregation if less < MPI_Size */
     void InitParameterSubStreams(const std::string value);
 
+    /** Sets if IO is node-local so each rank creates its own IO directory and
+     * stream */
+    void InitParameterNodeLocal(const std::string value);
+
     /**
      * Returns data type index from enum Datatypes
      * @param variable input variable
@@ -539,12 +563,13 @@ protected:
                                     const std::string timeStepName,
                                     const size_t transportsSize) const noexcept;
 
-    ProcessGroupIndex
-    ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
-                                size_t &position) const noexcept;
+    ProcessGroupIndex ReadProcessGroupIndexHeader(
+        const std::vector<char> &buffer, size_t &position,
+        const bool isLittleEndian = true) const noexcept;
 
-    ElementIndexHeader ReadElementIndexHeader(const std::vector<char> &buffer,
-                                              size_t &position) const noexcept;
+    ElementIndexHeader
+    ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
+                           const bool isLittleEndian = true) const noexcept;
 
     /**
      * Read variable characteristics.
@@ -557,7 +582,8 @@ protected:
     Characteristics<T>
     ReadElementIndexCharacteristics(const std::vector<char> &buffer,
                                     size_t &position, const DataTypes dataType,
-                                    const bool untilTimeStep = false) const;
+                                    const bool untilTimeStep = false,
+                                    const bool isLittleEndian = true) const;
 
     /**
      * Common function to extract a bp string, 2 bytes for length + contents
@@ -565,8 +591,8 @@ protected:
      * @param position
      * @return
      */
-    std::string ReadBP3String(const std::vector<char> &buffer,
-                              size_t &position) const noexcept;
+    std::string ReadBP3String(const std::vector<char> &buffer, size_t &position,
+                              const bool isLittleEndian = true) const noexcept;
 
     // Transform related functions
     /**
@@ -578,8 +604,9 @@ protected:
         noexcept;
 
 private:
-    std::string GetBPSubStreamName(const std::string &name,
-                                   const size_t rank) const noexcept;
+    std::string GetBPSubStreamName(const std::string &name, const size_t rank,
+                                   const bool hasSubFiles = true) const
+        noexcept;
 
     /**
      * Specialized template for string and other types
@@ -588,18 +615,19 @@ private:
     void ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
                               const DataTypes dataType,
                               const bool untilTimeStep,
-                              Characteristics<T> &characteristics) const;
+                              Characteristics<T> &characteristics,
+                              const bool isLittleEndian = true) const;
 };
 
 #define declare_template_instantiation(T)                                      \
     extern template BP3Base::Characteristics<T>                                \
     BP3Base::ReadElementIndexCharacteristics(                                  \
-        const std::vector<char> &buffer, size_t &position,                     \
-        const BP3Base::DataTypes dataType, const bool untilTimeStep) const;    \
+        const std::vector<char> &, size_t &, const BP3Base::DataTypes,         \
+        const bool, const bool) const;                                         \
                                                                                \
     extern template std::map<size_t, std::shared_ptr<BP3Operation>>            \
     BP3Base::SetBP3Operations<T>(                                              \
-        const std::vector<core::VariableBase::Operation> &operations) const;
+        const std::vector<core::VariableBase::Operation> &) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

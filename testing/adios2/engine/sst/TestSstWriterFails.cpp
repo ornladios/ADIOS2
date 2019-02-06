@@ -13,8 +13,6 @@
 
 #include <gtest/gtest.h>
 
-#include "TestData.h"
-
 class SstWriteFails : public ::testing::Test
 {
 public:
@@ -84,7 +82,7 @@ TEST_F(SstWriteFails, InvalidPut)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-    const adios2::Mode sync = adios2::Mode::Sync;
+    double data_scalar_R64 = 0.0;
 
     EXPECT_THROW(engine.Put(scalar_r64, data_scalar_R64), std::logic_error);
 

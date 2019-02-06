@@ -9,7 +9,8 @@ FortranCInterface_HEADER(FC.h MACRO_NAMESPACE "FC_")
 FortranCInterface_VERIFY(CXX QUIET)
 
 set(F2C
-     ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_adios.cpp  
+     ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_adios.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_attribute.cpp 
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_io.cpp 
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_variable.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_engine.cpp
@@ -22,11 +23,12 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_functions_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_functions_allocate_mod.f90  
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_parameters_mod.f90 
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_adios_mod.f90 
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_adios_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_attribute_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_attribute_data_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_io_define_attribute_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_begin_step_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_mod.f90 
@@ -34,6 +36,9 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_file_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fwrite_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fread_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_min_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_max_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})

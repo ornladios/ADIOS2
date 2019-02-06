@@ -665,17 +665,30 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
     int retval = 0;
 
-    if (!variable->m_SingleValue || nsteps > 1)
+    bool isGlobalValue = (nsteps == 0);
+    isGlobalValue &= variable->m_SingleValue;
+    isGlobalValue &= !(variable->m_ShapeID == ShapeID::GlobalArray);
+
+    if (!isGlobalValue)
     {
         fprintf(outf, "  ");
         if (nsteps > 1)
             fprintf(outf, "%zu*", nsteps);
-        if (variable->m_Shape.size() > 0)
+        if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
             fprintf(outf, "{%zu", variable->m_Shape[0]);
             for (size_t j = 1; j < variable->m_Shape.size(); j++)
             {
                 fprintf(outf, ", %zu", variable->m_Shape[j]);
+            }
+            fprintf(outf, "}");
+        }
+        else if (variable->m_ShapeID == ShapeID::LocalArray)
+        {
+            fprintf(outf, "{%zu", variable->m_Count[0]);
+            for (size_t j = 1; j < variable->m_Count.size(); j++)
+            {
+                fprintf(outf, ", %zu", variable->m_Count[j]);
             }
             fprintf(outf, "}");
         }
@@ -799,7 +812,7 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     }
     else
     {
-        // scalar
+        // single GlobalValue without timesteps
         fprintf(outf, "  scalar");
         if (longopt)
         {
@@ -1522,8 +1535,15 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         }
 
         // read a slice finally
-        Dims startv = helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx);
-        Dims countv = helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx);
+        const Dims startv =
+            variable->m_ShapeID == ShapeID::GlobalArray
+                ? helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx)
+                : Dims();
+        const Dims countv =
+            variable->m_ShapeID == ShapeID::GlobalArray
+                ? helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx)
+                : Dims();
+
         if (verbose > 2)
         {
             printf("set selection: ");
@@ -1534,7 +1554,10 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
         if (!variable->m_SingleValue)
         {
-            variable->SetSelection({startv, countv});
+            if (variable->m_ShapeID == ShapeID::GlobalArray)
+            {
+                variable->SetSelection({startv, countv});
+            }
         }
 
         if (nsteps > 1)
@@ -1610,13 +1633,12 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                   // data)
     uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
-    int status;
-    bool incdim;          // used in incremental reading in
-    int ndigits_dims[32]; // # of digits (to print) of each dimension
+    bool incdim;              // used in incremental reading in
+    int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
     const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
-    const int ndim = static_cast<int>(variable->m_Shape.size());
+    const int ndim = static_cast<int>(variable->m_Count.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
 
@@ -2020,7 +2042,6 @@ int print_data_as_string(const void *data, int maxlen,
                         "for type \"%d\"\n",
                 adiosvartype);
         return -1;
-        break;
     }
     return 0;
 }
@@ -2445,7 +2466,6 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
     // size_t nsteps = variable->GetAvailableStepsCount();
-    size_t ndim = variable->m_Shape.size();
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
     std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
         fp->AllStepsBlocksInfo(*variable);
@@ -2455,7 +2475,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     }
     size_t laststep = allblocks.rbegin()->first;
     int ndigits_nsteps = ndigits(laststep);
-    if (ndim == 0)
+    if (variable->m_ShapeID == ShapeID::GlobalValue ||
+        variable->m_ShapeID == ShapeID::LocalValue)
     {
         // scalars
         for (auto &blockpair : allblocks)
@@ -2494,12 +2515,23 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     else
     {
         // arrays
+        size_t ndim = variable->m_Count.size();
         int ndigits_nblocks;
-        int ndigits_dims[32];
+        int ndigits_dims[32] = {
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        };
         for (size_t k = 0; k < ndim; k++)
         {
             // get digit lengths for each dimension
-            ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+            if (variable->m_ShapeID == ShapeID::GlobalArray)
+            {
+                ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+            }
+            else
+            {
+                ndigits_dims[k] = ndigits(variable->m_Count[k] - 1);
+            }
         }
 
         for (auto &blockpair : allblocks)
@@ -2507,19 +2539,35 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             size_t step = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
+            const size_t blocksSize = blocks.size();
             fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
             fprintf(outf, "\n");
-            ndigits_nblocks = ndigits(blocks.size() - 1);
-            for (size_t j = 0; j < blocks.size(); j++)
+            ndigits_nblocks = ndigits(blocksSize - 1);
+
+            for (size_t j = 0; j < blocksSize; j++)
             {
                 fprintf(outf, "          block %*zu: [", ndigits_nblocks, j);
+
+                // just in case ndim for a block changes in LocalArrays:
+                ndim = variable->m_Count.size();
+
                 for (size_t k = 0; k < ndim; k++)
                 {
                     if (blocks[j].Count[k])
                     {
-                        fprintf(outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
+                        {
+                            fprintf(
+                                outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
                                 blocks[j].Start[k], ndigits_dims[k],
                                 blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                        }
+                        else
+                        {
+                            // blockStart is empty vector for LocalArrays
+                            fprintf(outf, "0:%*" PRIu64, ndigits_dims[k],
+                                    blocks[j].Count[k] - 1);
+                        }
                     }
                     else
                     {
@@ -2547,7 +2595,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     }
                 }
                 fprintf(outf, "\n");
-                if (dump)
+                if (dump && variable->m_ShapeID == ShapeID::GlobalArray)
                 {
                     readVarBlock(fp, io, variable, step, j, blocks[j]);
                 }

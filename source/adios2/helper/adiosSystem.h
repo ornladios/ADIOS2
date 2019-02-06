@@ -58,6 +58,13 @@ bool IsRowMajor(const std::string hostLanguage) noexcept;
 bool IsZeroIndexed(const std::string hostLanguage) noexcept;
 
 /**
+ * returns a vector of strings with all available IP addresses on the node
+ * @return vector of strings
+ */
+#ifndef _WIN32
+std::vector<std::string> AvailableIpAddresses() noexcept;
+#endif
+/**
  * Function to be called inside a catch(...) block to convert C++ exceptions to
  * error integers. Used by C, Fortran bindings.
  * @param function function name to be printed in std::cerr

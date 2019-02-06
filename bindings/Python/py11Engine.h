@@ -8,41 +8,48 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_BINDINGS_PYTHON_PY11ENGINE_H_
-#define ADIOS2_BINDINGS_PYTHON_PY11ENGINE_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_ENGINE_H_
+#define ADIOS2_BINDINGS_PYTHON_ENGINE_H_
 
 #include <pybind11/numpy.h>
 
-#include <memory> //std::shared_ptr
 #include <string>
 
-#include "adios2/core/IO.h"
-#include "adios2/core/Variable.h"
+#include "adios2/core/Engine.h"
+
+#include "py11Variable.h"
 
 namespace adios2
 {
 namespace py11
 {
 
+// forward declare
+class IO; // friend
+
 class Engine
 {
+    friend class IO;
 
 public:
-    Engine(core::IO &io, const std::string &name, const Mode openMode,
-           MPI_Comm mpiComm);
+    Engine() = default;
 
     ~Engine() = default;
 
-    StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = 0.f);
+    explicit operator bool() const noexcept;
 
-    void Put(core::VariableBase *variable, const pybind11::array &array,
+    StepStatus BeginStep(const StepMode mode,
+                         const float timeoutSeconds = -1.f);
+    StepStatus BeginStep();
+
+    void Put(Variable variable, const pybind11::array &array,
              const Mode launch = Mode::Deferred);
-    void Put(core::VariableBase *variable, const std::string &string);
+    void Put(Variable variable, const std::string &string);
     void PerformPuts();
 
-    void Get(core::VariableBase *variable, pybind11::array &array,
+    void Get(Variable variable, pybind11::array &array,
              const Mode launch = Mode::Deferred);
-    void Get(core::VariableBase *variable, std::string &string,
+    void Get(Variable variable, std::string &string,
              const Mode launch = Mode::Deferred);
     void PerformGets();
 
@@ -54,12 +61,12 @@ public:
 
     size_t CurrentStep() const;
 
-    std::string Name() const noexcept;
-    std::string Type() const noexcept;
+    std::string Name() const;
+    std::string Type() const;
 
 private:
-    core::Engine &m_Engine;
-    const bool m_DebugMode;
+    Engine(core::Engine *engine);
+    core::Engine *m_Engine = nullptr;
 };
 
 } // end namespace py11

@@ -25,7 +25,8 @@ namespace format
 template <class T>
 inline void BP3Serializer::PutVariableMetadata(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor) noexcept
 {
     auto lf_SetOffset = [&](uint64_t &offset) {
         if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
@@ -40,7 +41,8 @@ inline void BP3Serializer::PutVariableMetadata(
 
     ProfilerStart("buffering");
 
-    Stats<T> stats = GetBPStats<T>(blockInfo);
+    Stats<T> stats =
+        GetBPStats<T>(variable.m_SingleValue, blockInfo, sourceRowMajor);
 
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
@@ -63,12 +65,13 @@ inline void BP3Serializer::PutVariableMetadata(
 template <class T>
 inline void BP3Serializer::PutVariablePayload(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor) noexcept
 {
     ProfilerStart("buffering");
     if (blockInfo.Operations.empty())
     {
-        PutPayloadInBuffer(variable, blockInfo);
+        PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
     }
     else
     {
@@ -95,7 +98,6 @@ BP3Serializer::PutAttributeHeaderInData(const core::Attribute<T> &attribute,
     PutNameRecord(attribute.m_Name, buffer, position);
     position += 2; // skip path
 
-    // TODO: attribute from Variable??
     constexpr int8_t no = 'n';
     helper::CopyToBuffer(buffer, position,
                          &no); // not associated with a Variable
@@ -333,13 +335,16 @@ void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     helper::CopyToBuffer(buffer, backPosition,
                          &characteristicsLength); // length
 
-    // Finish characteristic count length
+    // Remember this attribute and its serialized piece
     m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
+    m_SerializedAttributes.emplace(attribute.m_Name);
 }
 
 template <>
 inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
-    const typename core::Variable<std::string>::Info & /*blockInfo*/) noexcept
+    const bool /*singleValue*/,
+    const typename core::Variable<std::string>::Info & /*blockInfo*/,
+    const bool /*isRowMajor*/) noexcept
 {
     Stats<std::string> stats;
     stats.Step = m_MetadataSet.TimeStep;
@@ -348,21 +353,42 @@ inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
 }
 
 template <class T>
-BP3Serializer::Stats<T> BP3Serializer::GetBPStats(
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+BP3Serializer::Stats<T>
+BP3Serializer::GetBPStats(const bool singleValue,
+                          const typename core::Variable<T>::Info &blockInfo,
+                          const bool isRowMajor) noexcept
 {
     Stats<T> stats;
-    const std::size_t valuesSize = helper::GetTotalSize(blockInfo.Count);
+    stats.Step = m_MetadataSet.TimeStep;
+    stats.FileIndex = GetFileIndex();
+
+    if (singleValue)
+    {
+        stats.Value = *blockInfo.Data;
+        stats.Min = stats.Value;
+        stats.Max = stats.Value;
+        return stats;
+    }
 
     if (m_StatsLevel == 0)
     {
         ProfilerStart("minmax");
-        helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
-                                 stats.Max, m_Threads);
+        if (blockInfo.MemoryStart.empty())
+        {
+            const std::size_t valuesSize =
+                helper::GetTotalSize(blockInfo.Count);
+            helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
+                                     stats.Max, m_Threads);
+        }
+        else // non-contiguous memory min/max
+        {
+            helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
+                                       blockInfo.MemoryStart, blockInfo.Count,
+                                       isRowMajor, stats.Min, stats.Max);
+        }
         ProfilerStop("minmax");
     }
-    stats.Step = m_MetadataSet.TimeStep;
-    stats.FileIndex = GetFileIndex();
+
     return stats;
 }
 
@@ -506,11 +532,12 @@ void BP3Serializer::PutVariableMetadataInIndex(
 }
 
 template <class T>
-void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
+void BP3Serializer::PutBoundsRecord(const bool singleValue,
+                                    const Stats<T> &stats,
                                     uint8_t &characteristicsCounter,
                                     std::vector<char> &buffer) noexcept
 {
-    if (isScalar)
+    if (singleValue)
     {
         PutCharacteristicRecord(characteristic_value, characteristicsCounter,
                                 stats.Min, buffer);
@@ -755,7 +782,8 @@ void BP3Serializer::PutVariableCharacteristics(
 template <>
 inline void BP3Serializer::PutPayloadInBuffer(
     const core::Variable<std::string> &variable,
-    const typename core::Variable<std::string>::Info &blockInfo) noexcept
+    const typename core::Variable<std::string>::Info &blockInfo,
+    const bool /* sourceRowMajor*/) noexcept
 {
     PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
     m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
@@ -764,12 +792,26 @@ inline void BP3Serializer::PutPayloadInBuffer(
 template <class T>
 void BP3Serializer::PutPayloadInBuffer(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor) noexcept
 {
     const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     ProfilerStart("memcpy");
-    helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
-                                blockInfo.Data, blockSize, m_Threads);
+    if (!blockInfo.MemoryStart.empty())
+    {
+        // TODO make it a BP3Serializer function
+        helper::CopyMemory(
+            reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
+            blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
+            blockInfo.Start, blockInfo.Count, sourceRowMajor, false, Dims(),
+            Dims(), blockInfo.MemoryStart, blockInfo.MemoryCount);
+        m_Data.m_Position += blockSize * sizeof(T);
+    }
+    else
+    {
+        helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
+                                    blockInfo.Data, blockSize, m_Threads);
+    }
     ProfilerStop("memcpy");
     m_Data.m_AbsolutePosition += blockSize * sizeof(T); // payload size
 }
@@ -827,12 +869,12 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_min):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_max):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_offset):

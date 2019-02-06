@@ -4,9 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
+#ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
+#else
+#include "sstmpidummy.h"
+#endif
 
 #include <SSTConfig.h>
 
@@ -103,10 +108,14 @@ static void init_fabric(struct fabric_state *fabric)
 
     ifname = getenv("FABRIC_IFACE");
 
-    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
-    fi_freeinfo(hints);
-
     fabric->info = NULL;
+
+    fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
+    if (!info)
+    {
+        return;
+    }
+    fi_freeinfo(hints);
 
     originfo = info;
     useinfo = NULL;
@@ -121,7 +130,7 @@ static void init_fabric(struct fabric_state *fabric)
             break;
         }
         if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
-            strcmp(prov_name, "psm2") == 0)
+            strcmp(prov_name, "psm2") == 0 || !useinfo)
         {
             useinfo = info;
         }
@@ -201,47 +210,7 @@ static void fini_fabric(struct fabric_state *fabric)
 
     do
     {
-        status = fi_close((struct fid *)fabric->signal);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
         status = fi_close((struct fid *)fabric->cq_signal);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
-        status = fi_close((struct fid *)fabric->av);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
-        status = fi_close((struct fid *)fabric->domain);
-    } while (status == FI_EBUSY);
-
-    if (status)
-    {
-        // TODO: error handling
-    }
-
-    do
-    {
-        status = fi_close((struct fid *)fabric->fabric);
     } while (status == FI_EBUSY);
 
     if (status)
@@ -316,13 +285,11 @@ typedef struct _Rdma_WS_Stream
 
 typedef struct _RdmaReaderContactInfo
 {
-    char *ContactString;
     void *RS_Stream;
 } * RdmaReaderContactInfo;
 
 typedef struct _RdmaWriterContactInfo
 {
-    char *ContactString;
     void *WS_Stream;
     size_t Length;
     void *Address;
@@ -392,7 +359,6 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     RdmaReaderContactInfo Contact =
         malloc(sizeof(struct _RdmaReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
-    char *RdmaContactString = malloc(64);
     MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     CMFormat F;
     FabricState Fabric;
@@ -408,7 +374,6 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
         Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
         free(Stream);
         free(Contact);
-        free(RdmaContactString);
         *ReaderContactInfoPtr = NULL;
         return (NULL);
     }
@@ -420,8 +385,6 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 
     MPI_Comm_rank(comm, &Stream->Rank);
 
-    sprintf(RdmaContactString, "Reader Rank %d, test contact", Stream->Rank);
-
     /*
      * add a handler for read reply messages
      */
@@ -429,7 +392,6 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     F = CMregister_format(cm, RdmaReadReplyStructs);
     CMregister_handler(F, RdmaReadReplyHandler, Svcs);
 
-    Contact->ContactString = RdmaContactString;
     Contact->RS_Stream = Stream;
 
     Stream->ReaderContactInfo = Contact;
@@ -621,12 +583,10 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     RdmaWriterContactInfo ContactInfo;
     MPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
-    char *RdmaContactString = malloc(64);
     RdmaReaderContactInfo *providedReaderInfo =
         (RdmaReaderContactInfo *)providedReaderInfo_v;
 
     MPI_Comm_rank(comm, &Rank);
-    sprintf(RdmaContactString, "Writer Rank %d, test contact", Rank);
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;
@@ -640,15 +600,11 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
 
     for (int i = 0; i < readerCohortSize; i++)
     {
-        WSR_Stream->ReaderContactInfo[i].ContactString =
-            strdup(providedReaderInfo[i]->ContactString);
         WSR_Stream->ReaderContactInfo[i].RS_Stream =
             providedReaderInfo[i]->RS_Stream;
-        Svcs->verbose(
-            WS_Stream->CP_Stream,
-            "Received contact info \"%s\", RD_Stream %p for Reader Rank %d\n",
-            WSR_Stream->ReaderContactInfo[i].ContactString,
-            WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
+        Svcs->verbose(WS_Stream->CP_Stream,
+                      "Received contact for RD_Stream %p, Reader Rank %d\n",
+                      WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
     }
 
     WSR_Stream->ReaderCohortSize = readerCohortSize;
@@ -666,7 +622,6 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
 
     ContactInfo = malloc(sizeof(struct _RdmaWriterContactInfo));
     memset(ContactInfo, 0, sizeof(struct _RdmaWriterContactInfo));
-    ContactInfo->ContactString = RdmaContactString;
     ContactInfo->WS_Stream = WSR_Stream;
 
     ContactInfo->Length = Fabric->info->src_addrlen;
@@ -704,17 +659,13 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
         malloc(sizeof(struct _RdmaWriterContactInfo) * writerCohortSize);
     for (int i = 0; i < writerCohortSize; i++)
     {
-        RS_Stream->WriterContactInfo[i].ContactString =
-            strdup(providedWriterInfo[i]->ContactString);
         RS_Stream->WriterContactInfo[i].WS_Stream =
             providedWriterInfo[i]->WS_Stream;
         fi_av_insert(Fabric->av, providedWriterInfo[i]->Address, 1,
                      &RS_Stream->WriterAddr[i], 0, NULL);
-        Svcs->verbose(
-            RS_Stream->CP_Stream,
-            "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
-            RS_Stream->WriterContactInfo[i].ContactString,
-            RS_Stream->WriterContactInfo[i].WS_Stream, i);
+        Svcs->verbose(RS_Stream->CP_Stream,
+                      "Received contact info for WS_stream %p, WSR Rank %d\n",
+                      RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
 }
 
@@ -868,7 +819,7 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     // ---------------------------------------------------------------------------------------------------
     Info->Key = Entry->Key;
     pthread_mutex_unlock(&ts_mutex);
-    Info->Block = Data->block;
+    Info->Block = (uint8_t *)Data->block;
 
     Svcs->verbose(Stream->CP_Stream,
                   "Providing timestep data with block %p and access key %d\n",
@@ -928,15 +879,9 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     Svcs->verbose(RS_Stream->CP_Stream, "Tearing down RDMA state on reader.\n");
     fini_fabric(RS_Stream->Fabric);
 
-    for (int i = 0; i < RS_Stream->WriterCohortSize; i++)
-    {
-        free(RS_Stream->WriterContactInfo[i].ContactString);
-    }
-
     ReaderContactInfo = RS_Stream->ReaderContactInfo;
     if (ReaderContactInfo)
     {
-        free(ReaderContactInfo->ContactString);
         free(ReaderContactInfo);
     }
     free(RS_Stream->WriterContactInfo);
@@ -967,16 +912,10 @@ static void RdmaDestroyWriterPerReader(CP_Services Svcs,
     WS_Stream->ReaderCount--;
     pthread_mutex_unlock(&wsr_mutex);
 
-    for (int i = 0; i < WSR_Stream->ReaderCohortSize; i++)
-    {
-        free(WSR_Stream->ReaderContactInfo[i].ContactString);
-    }
-
     free(WSR_Stream->ReaderContactInfo);
     if (WSR_Stream->WriterContactInfo)
     {
         WriterContactInfo = WSR_Stream->WriterContactInfo;
-        free(WriterContactInfo->ContactString);
         free(WriterContactInfo->Address);
     }
     free(WSR_Stream->WriterContactInfo);
@@ -1009,8 +948,6 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 }
 
 static FMField RdmaReaderContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(RdmaReaderContactInfo, ContactString)},
     {"reader_ID", "integer", sizeof(void *),
      FMOffset(RdmaReaderContactInfo, RS_Stream)},
     {NULL, NULL, 0, 0}};
@@ -1021,8 +958,6 @@ static FMStructDescRec RdmaReaderContactStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static FMField RdmaWriterContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(RdmaWriterContactInfo, ContactString)},
     {"writer_ID", "integer", sizeof(void *),
      FMOffset(RdmaWriterContactInfo, WS_Stream)},
     {"Length", "integer", sizeof(int), FMOffset(RdmaWriterContactInfo, Length)},

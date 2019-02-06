@@ -13,6 +13,8 @@
 
 #include <stdexcept>
 
+#include "adios2/core/IO.h"
+
 namespace adios2
 {
 namespace core
@@ -37,12 +39,11 @@ StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(StepMode::NextAvailable,
-                         std::numeric_limits<float>::max());
+        return BeginStep(StepMode::NextAvailable, -1.0);
     }
     else
     {
-        return BeginStep(StepMode::Append, std::numeric_limits<float>::max());
+        return BeginStep(StepMode::Append, -1.0);
     }
 }
 

@@ -134,6 +134,26 @@ adios2_error adios2_attribute_is_value(adios2_bool *result,
     }
 }
 
+adios2_error adios2_attribute_size(size_t *size,
+                                   const adios2_attribute *attribute)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(attribute,
+                                        "in call to adios2_attribute_size");
+        const adios2::core::AttributeBase *attributeBase =
+            reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
+
+        *size = attributeBase->m_IsSingleValue ? 1 : attributeBase->m_Elements;
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_attribute_size"));
+    }
+}
+
 adios2_error adios2_attribute_data(void *data, size_t *size,
                                    const adios2_attribute *attribute)
 {

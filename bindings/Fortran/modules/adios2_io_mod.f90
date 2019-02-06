@@ -125,16 +125,27 @@ contains
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(out) :: ierr
+        !local
+        integer:: is_valueInt
 
         call adios2_inquire_attribute_f2c(attribute%f2c, io%f2c, &
                                           TRIM(ADJUSTL(name))//char(0), ierr)
 
-        if(ierr == adios2_found) then
+        if(attribute%f2c > 0_8) then
             attribute%valid = .true.
             attribute%name = name
-            ! TODO call adios2_attribute_type(attribute, attribute%type, ierr)
-            ! TODO call adios2_attribute_length(attribute, attribute%length, ierr)
-        else if(ierr == adios2_not_found) then
+            call adios2_attribute_type_f2c(attribute%type, attribute%f2c, ierr)
+            call adios2_attribute_length_f2c(attribute%length, attribute%f2c, &
+                                             ierr)
+            call adios2_attribute_is_value_f2c(is_valueInt, attribute%f2c, ierr)
+
+            if(is_valueInt == 0) then
+                attribute%is_value = .false.
+            else
+                attribute%is_value = .true.
+            end if
+
+        else
             attribute%valid = .false.
             attribute%name = ''
             attribute%type = adios2_type_unknown

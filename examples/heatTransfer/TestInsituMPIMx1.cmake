@@ -20,7 +20,7 @@ add_test(NAME HeatTransfer.InsituMPI.Dump.Mx1
     -DARGS=-d 
     -DINPUT_FILE=HeatTransfer.InsituMPI.Read.Mx1.bp
     -DOUTPUT_FILE=HeatTransfer.InsituMPI.Dump.Mx1.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST HeatTransfer.InsituMPI.Dump.Mx1
   PROPERTY DEPENDS HeatTransfer.InsituMPI.Read.Mx1

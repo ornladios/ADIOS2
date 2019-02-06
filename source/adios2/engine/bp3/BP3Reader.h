@@ -39,9 +39,8 @@ public:
 
     virtual ~BP3Reader() = default;
 
-    StepStatus BeginStep(
-        StepMode mode = StepMode::NextAvailable,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
+                         const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
 

@@ -30,6 +30,20 @@ namespace helper
 size_t GetTotalSize(const Dims &dimensions) noexcept;
 
 /**
+ * Populates min and max for a selection region inside
+ * @param values
+ * @param shape
+ * @param start
+ * @param count
+ * @param min
+ * @param max
+ */
+template <class T>
+void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
+                        const Dims &count, const bool isRowMajor, T &min,
+                        T &max) noexcept;
+
+/**
  * Gets the min and max from a values array of primitive types (not including
  * complex)
  * @param values input array
@@ -124,6 +138,10 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
 Box<Dims> IntersectionBox(const Box<Dims> &box1,
                           const Box<Dims> &box2) noexcept;
 
+Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
+                                 const Dims &start2,
+                                 const Dims &count2) noexcept;
+
 /**
  * Returns true if the two boxes are identical
  * @param box1 {start, end} input
@@ -151,13 +169,25 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
 
 /**
  * Get a linear index for a point inside a localBox depending on data layout
- * @param localBox start and count
+ * Linear index start count version
+ * @param start
+ * @param count
+ * @param point
+ * @param isRowMajor
+ * @return
+ */
+size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
+                   const bool isRowMajor) noexcept;
+
+/**
+ * Get a linear index for a point inside a localBox depending on data layout
+ * @param startEndBox start (first) and end (second) box
  * @param point inside box
  * @param isRowMajor
  * @param isZeroIndex
  * @return linear index for contiguous memory
  */
-size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
+size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
                    const bool isRowMajor) noexcept;
 
 /**
@@ -181,6 +211,27 @@ bool LessThan(const T input1, const T input2) noexcept;
  */
 template <class T>
 bool GreaterThan(const T input1, const T input2) noexcept;
+
+/**
+ * Transform "typed" dimensions to payload dimensions based on ordering.
+ * Multiply fastest index by sizeof(T)
+ * Example: row major float { 4, 3, 4 } -> {4, 3, 4*sizeof(float)} = {4,3,16}
+ * @param dimensions
+ * @return
+ */
+template <class T>
+Dims PayloadDims(const Dims &dimensions, const bool isRowMajor) noexcept;
+
+/**
+ * Returns the addition of two vector element by element. vector1 and vector2
+ * must be of the same size
+ * @param vector1 input
+ * @param vector2 input
+ * @return vector = vector1 + vector2
+ */
+template <class T, class BinaryOperation>
+std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
+                         const std::vector<T> &vector2) noexcept;
 
 } // end namespace helper
 } // end namespace adios2

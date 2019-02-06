@@ -94,8 +94,25 @@ public:
      * memory. Create a separate object for independent tasks */
     ADIOS(const ADIOS &) = delete;
 
+    /**
+     * default move constructor exists to allow for
+     * auto ad = ADIOS(...) initialization
+     */
+    ADIOS(ADIOS &&) = default;
+
     /** Using RAII STL containers only */
     ~ADIOS() = default;
+
+    /**
+     * copy assignment is forbidden for the same reason as copy constructor
+     */
+    ADIOS &operator=(const ADIOS &) = delete;
+
+    /**
+     * move assignment is allowed, though, to be consistent with move
+     * constructor
+     */
+    ADIOS &operator=(ADIOS &&) = default;
 
     /**
      * Declares a new IO class object

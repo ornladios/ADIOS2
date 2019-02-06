@@ -28,7 +28,20 @@ typedef struct _SstStream *SstStream;
 typedef struct _SstFullMetadata *SstFullMetadata;
 typedef struct _SstData *SstData;
 
-typedef enum { SstSuccess, SstEndOfStream, SstFatalError } SstStatusValue;
+typedef enum {
+    SstSuccess,
+    SstEndOfStream,
+    SstFatalError,
+    SstTimeout
+} SstStatusValue;
+
+/* The SST version of enum class StepMode in ADIOSTypes.h */
+typedef enum {
+    SstAppend, // writer modes ignored in SST
+    SstUpdate, // writer modes ignored in SST
+    SstNextAvailable,
+    SstLatestAvailable // reader advance mode
+} SstStepMode;
 
 /*
  * Struct that represents statistics tracked by SST
@@ -63,7 +76,10 @@ extern void SstStreamDestroy(SstStream Stream);
 typedef void (*DataFreeFunc)(void *Data);
 extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
                                SstData LocalData, long Timestep,
-                               DataFreeFunc FreeData, void *FreeClientData);
+                               DataFreeFunc FreeData, void *FreeClientData,
+                               SstData AttributeData,
+                               DataFreeFunc FreeAttribute,
+                               void *FreeAttributeClientData);
 extern void SstWriterClose(SstStream stream);
 
 /*
@@ -79,7 +95,7 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
 extern void SstReleaseStep(SstStream stream);
-extern SstStatusValue SstAdvanceStep(SstStream stream, int mode,
+extern SstStatusValue SstAdvanceStep(SstStream stream, SstStepMode mode,
                                      const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
 extern long SstCurrentStep(SstStream s);
@@ -89,18 +105,24 @@ extern long SstCurrentStep(SstStream s);
  */
 typedef void *(*VarSetupUpcallFunc)(void *Reader, const char *Name,
                                     const char *Type, void *Data);
+typedef void (*AttrSetupUpcallFunc)(void *Reader, const char *Name,
+                                    const char *Type, void *Data);
 typedef void *(*ArraySetupUpcallFunc)(void *Reader, const char *Name,
                                       const char *Type, int DimsCount,
                                       size_t *Shape, size_t *Start,
                                       size_t *Count);
 extern void SstReaderInitFFSCallback(SstStream stream, void *Reader,
                                      VarSetupUpcallFunc VarCallback,
-                                     ArraySetupUpcallFunc ArrayCallback);
+                                     ArraySetupUpcallFunc ArrayCallback,
+                                     AttrSetupUpcallFunc AttrCallback);
 
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const char *Type, size_t ElemSize, size_t DimCount,
                           const size_t *Shape, const size_t *Count,
                           const size_t *Offsets, const void *data);
+extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
+                                   const char *Type, size_t ElemSize,
+                                   size_t ElemCount, const void *data);
 extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
                               const char *Name, size_t DimCount,
                               const size_t *Start, const size_t *Count,

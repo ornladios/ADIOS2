@@ -9,8 +9,10 @@
  */
 
 #include "Variable.h"
+#include "Variable.tcc"
 
 #include "adios2/ADIOSMacros.h"
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
 
 namespace adios2
@@ -39,6 +41,10 @@ namespace core
         info.Shape = m_Shape;                                                  \
         info.Start = m_Start;                                                  \
         info.Count = m_Count;                                                  \
+        info.BlockID = m_BlockID;                                              \
+        info.Selection = m_SelectionType;                                      \
+        info.MemoryStart = m_MemoryStart;                                      \
+        info.MemoryCount = m_MemoryCount;                                      \
         info.StepsStart = stepsStart;                                          \
         info.StepsCount = stepsCount;                                          \
         info.Data = const_cast<T *>(data);                                     \
@@ -57,6 +63,30 @@ namespace core
     T *Variable<T>::GetData() const noexcept                                   \
     {                                                                          \
         return m_Data;                                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    Dims Variable<T>::Shape(const size_t step) const                           \
+    {                                                                          \
+        return DoShape(step);                                                  \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
+    {                                                                          \
+        return DoMinMax(step);                                                 \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Min(const size_t step) const                                \
+    {                                                                          \
+        return MinMax(step).first;                                             \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Max(const size_t step) const                                \
+    {                                                                          \
+        return MinMax(step).second;                                            \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

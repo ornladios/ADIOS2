@@ -98,6 +98,38 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
                Params->ControlTransport);
 }
 
+static char *SstRegStr[] = {"File", "Screen", "Cloud"};
+static char *SstMarshalStr[] = {"FFS", "BP"};
+static char *SstQueueFullStr[] = {"Block", "Discard"};
+static char *SstCompressStr[] = {"None", "ZFP"};
+
+extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
+{
+    if (!Stream->Verbose)
+        return;
+
+    fprintf(stderr, "Param -   MarshalMethod:%s\n",
+            SstMarshalStr[Params->MarshalMethod]);
+    fprintf(stderr, "Param -   RegistrationMethod:%s\n",
+            SstRegStr[Params->RegistrationMethod]);
+    fprintf(stderr, "Param -   DataTransport:%s\n",
+            Params->DataTransport ? Params->DataTransport : "");
+    fprintf(stderr, "Param -   RendezvousReaderCount:%d\n",
+            Params->RendezvousReaderCount);
+    fprintf(stderr, "Param -   QueueLimit:%d %s\n", Params->QueueLimit,
+            (Params->QueueLimit == 0) ? "(unlimited)" : "");
+    fprintf(stderr, "Param -   QueueFullPolicy:%s\n",
+            SstQueueFullStr[Params->QueueFullPolicy]);
+    fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
+            Params->IsRowMajor);
+    fprintf(stderr, "Param -   ControlTransport:%s\n",
+            Params->ControlTransport);
+    fprintf(stderr, "Param -   NetworkInterface:%s\n",
+            Params->NetworkInterface ? Params->NetworkInterface : "");
+    fprintf(stderr, "Param -   CompressionMethod:%s\n",
+            SstCompressStr[Params->CompressionMethod]);
+}
+
 static FMField CP_SstParamsList_RAW[] = {
 #define declare_field(Param, Type, Typedecl, Default)                          \
     {#Param, #Typedecl, sizeof(Typedecl), FMOffset(struct _SstParams *, Param)},
@@ -218,10 +250,10 @@ static FMStructDescRec CP_WriterResponseStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static FMField MetaDataPlusDPInfoList[] = {
-    {"RequestGlobalOp", "integer", sizeof(int),
-     FMOffset(struct _MetadataPlusDPInfo *, RequestGlobalOp)},
     {"Metadata", "*SstBlock", sizeof(struct _SstBlock),
      FMOffset(struct _MetadataPlusDPInfo *, Metadata)},
+    {"AttributeData", "*SstBlock", sizeof(struct _SstBlock),
+     FMOffset(struct _MetadataPlusDPInfo *, AttributeData)},
     {"Formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct _MetadataPlusDPInfo *, Formats)},
     {"DP_TimestepInfo", "*DP_STRUCT", 0,
@@ -263,8 +295,10 @@ static FMField TimestepMetadataList[] = {
      FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
     {"formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct _TimestepMetadataMsg *, Formats)},
-    {"metadata", "(*SstBlock)[cohort_size]", sizeof(struct _SstBlock),
+    {"metadata", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
      FMOffset(struct _TimestepMetadataMsg *, Metadata)},
+    {"attribute_data", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
+     FMOffset(struct _TimestepMetadataMsg *, AttributeData)},
     {"TP_TimestepInfo", "(*DP_STRUCT)[cohort_size]", 0,
      FMOffset(struct _TimestepMetadataMsg *, DP_TimestepInfo)},
     {NULL, NULL, 0, 0}};
@@ -281,6 +315,15 @@ static FMField ReleaseTimestepList[] = {
      FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
     {"Timestep", "integer", sizeof(int),
      FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
+    {NULL, NULL, 0, 0}};
+
+static FMField PeerSetupList[] = {
+    {"RS_Stream", "integer", sizeof(void *),
+     FMOffset(struct _PeerSetupMsg *, RS_Stream)},
+    {"WriterRank", "integer", sizeof(int),
+     FMOffset(struct _PeerSetupMsg *, WriterRank)},
+    {"WriterCohortSize", "integer", sizeof(int),
+     FMOffset(struct _PeerSetupMsg *, WriterCohortSize)},
     {NULL, NULL, 0, 0}};
 
 static FMField ReaderActivateList[] = {
@@ -586,6 +629,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 }
 
 atom_t CM_TRANSPORT_ATOM = 0;
+static atom_t IP_INTERFACE_ATOM = 0;
 static atom_t CM_ENET_CONN_TIMEOUT = -1;
 
 static void initAtomList()
@@ -594,6 +638,7 @@ static void initAtomList()
         return;
 
     CM_TRANSPORT_ATOM = attr_atom_from_string("CM_TRANSPORT");
+    IP_INTERFACE_ATOM = attr_atom_from_string("IP_INTERFACE");
     CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
 }
 
@@ -692,6 +737,10 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     CMregister_handler(CPInfo->DeliverTimestepMetadataFormat,
                        CP_TimestepMetadataHandler, NULL);
     AddCustomStruct(CPInfo, CombinedTimestepMetadataStructs);
+
+    CPInfo->PeerSetupFormat = CMregister_simple_format(
+        CPInfo->cm, "PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg));
+    CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
 
     CPInfo->ReaderActivateFormat = CMregister_simple_format(
         CPInfo->cm, "ReaderActivate", ReaderActivateList,
@@ -837,6 +886,11 @@ extern char *CP_GetContactString(SstStream Stream)
     attr_list ListenList = create_attr_list(), ContactList;
     set_string_attr(ListenList, CM_TRANSPORT_ATOM,
                     strdup(Stream->ConfigParams->ControlTransport));
+    if (Stream->ConfigParams->NetworkInterface)
+    {
+        set_string_attr(ListenList, IP_INTERFACE_ATOM,
+                        strdup(Stream->ConfigParams->NetworkInterface));
+    }
     ContactList = CMget_specific_contact_list(Stream->CPInfo->cm, ListenList);
     if (strcmp(Stream->ConfigParams->ControlTransport, "enet") == 0)
     {
@@ -931,6 +985,8 @@ SstStream CP_newStream()
     pthread_cond_init(&Stream->DataCondition, NULL);
     Stream->WriterTimestep = -1; // Filled in by ProvideTimestep
     Stream->ReaderTimestep = -1; // first beginstep will get us timestep 0
+    Stream->DiscardPriorTimestep =
+        -1; // Timesteps prior to this discarded/released upon arrival
     if (getenv("SstVerbose"))
     {
         Stream->Verbose = 1;
@@ -952,7 +1008,7 @@ struct _CP_Services Svcs = {
     (CP_VerboseFunc)DP_verbose, (CP_GetCManagerFunc)CP_getCManager,
     (CP_SendToPeerFunc)CP_sendToPeer, (CP_GetMPICommFunc)CP_getMPIComm};
 
-extern int *setupPeerArray(int MySize, int MyRank, int PeerSize)
+static int *PeerArray(int MySize, int MyRank, int PeerSize)
 {
     int PortionSize = PeerSize / MySize;
     int Leftovers = PeerSize - PortionSize * MySize;
@@ -972,6 +1028,70 @@ extern int *setupPeerArray(int MySize, int MyRank, int PeerSize)
     MyPeers[PortionSize] = -1;
 
     return MyPeers;
+}
+
+static int *reversePeerArray(int MySize, int MyRank, int PeerSize,
+                             int *forward_entry)
+{
+    int PeerCount = 0;
+    int *ReversePeers = malloc(sizeof(int));
+
+    *forward_entry = -1;
+    for (int i = 0; i < PeerSize; i++)
+    {
+        int *their_peers = PeerArray(PeerSize, i, MySize);
+        int j;
+        j = 0;
+        while (their_peers[j] != -1)
+        {
+            if (their_peers[j] == MyRank)
+            {
+                ReversePeers = malloc((PeerCount + 2) * sizeof(int));
+                ReversePeers[PeerCount] = i;
+                PeerCount++;
+                if (j == 0)
+                    *forward_entry = i;
+            }
+            j++;
+        }
+        free(their_peers);
+    }
+    ReversePeers[PeerCount] = -1;
+    return ReversePeers;
+}
+
+extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
+                          int **forwardArray, int **reverseArray)
+{
+    if (MySize < PeerSize)
+    {
+        /* more of them than me.  I will have at least one entry in my forward
+         * array. */
+        *forwardArray = PeerArray(MySize, MyRank, PeerSize);
+        /* all need to be notified, but I'm only the forward peer to one of them
+         * (the first), so send reverse peer entry only to zeroth entry */
+        if (reverseArray)
+        {
+            *reverseArray = malloc(sizeof(int) * 2);
+            (*reverseArray)[0] = (*forwardArray)[0];
+            (*reverseArray)[1] = -1;
+        }
+    }
+    else
+    {
+        /* More of me than of them, there may be 0 or 1 entries in my forward
+         * array, but there must be one opposing peer that I should notify so
+         * that I am in his forward array */
+        int *reverse;
+        *forwardArray = malloc(sizeof(int) * 2);
+        (*forwardArray)[1] = -1;
+        reverse =
+            reversePeerArray(MySize, MyRank, PeerSize, &((*forwardArray)[0]));
+        if (reverseArray)
+        {
+            *reverseArray = reverse;
+        }
+    }
 }
 
 extern void SstSetStatsSave(SstStream Stream, SstStats Stats)

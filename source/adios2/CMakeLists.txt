@@ -11,7 +11,7 @@ add_library(adios2
   core/IO.cpp core/IO.tcc
   core/Operator.cpp
   core/Stream.cpp core/Stream.tcc
-  core/Variable.cpp 
+  core/Variable.cpp core/Variable.tcc
   core/VariableBase.cpp
   core/VariableCompound.cpp core/VariableCompound.tcc
 
@@ -22,6 +22,7 @@ add_library(adios2
 #helper
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
+  helper/adiosMemory.cpp helper/adiosMemory.tcc
   helper/adiosMPIFunctions.cpp
   helper/adiosString.cpp
   helper/adiosSystem.cpp
@@ -46,6 +47,8 @@ add_library(adios2
   toolkit/format/bp3/operation/BP3Zfp.tcc
   toolkit/format/bp3/operation/BP3SZ.cpp
   toolkit/format/bp3/operation/BP3SZ.tcc
+  toolkit/format/bp3/operation/BP3MGARD.cpp
+  toolkit/format/bp3/operation/BP3MGARD.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 
@@ -106,7 +109,7 @@ if(ADIOS2_HAVE_DataMan)
       engine/dataman/DataManWriter.h
       engine/dataman/DataManWriter.tcc
   )
-  target_link_libraries(adios2 PRIVATE adios2::thirdparty::nlohmann_json)
+  target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
 if(ADIOS2_HAVE_SST)
@@ -142,6 +145,11 @@ endif()
 if(ADIOS2_HAVE_SZ)
   target_sources(adios2 PRIVATE operator/compress/CompressSZ.cpp)
   target_link_libraries(adios2 PRIVATE SZ::SZ)
+endif()
+
+if(ADIOS2_HAVE_MGARD)
+  target_sources(adios2 PRIVATE operator/compress/CompressMGARD.cpp)
+  target_link_libraries(adios2 PRIVATE MGARD::MGARD)
 endif()
 
 if(ADIOS2_HAVE_MPI)

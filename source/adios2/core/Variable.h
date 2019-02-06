@@ -47,18 +47,6 @@ public:
 
     struct Info
     {
-        Dims Shape;
-        Dims Start;
-        Dims Count;
-        size_t StepsStart = 0;
-        size_t StepsCount = 0;
-        T *Data = nullptr;
-        T Min = T();
-        T Max = T();
-        T Value = T();
-        bool IsValue = false;
-        std::vector<Operation> Operations;
-
         /** Contains (seek) read information for available [step][blockID],
          *  used in Read mode only,
          *  <pre>
@@ -68,6 +56,22 @@ public:
          */
         std::map<size_t, std::vector<helper::SubStreamBoxInfo>>
             StepBlockSubStreamsInfo;
+
+        Dims Shape;
+        Dims Start;
+        Dims Count;
+        Dims MemoryStart;
+        Dims MemoryCount;
+        std::vector<Operation> Operations;
+        size_t StepsStart = 0;
+        size_t StepsCount = 0;
+        size_t BlockID = 0;
+        T *Data = nullptr;
+        T Min = T();
+        T Max = T();
+        T Value = T();
+        SelectionType Selection = SelectionType::BoundingBox;
+        bool IsValue = false;
     };
 
     /** use for multiblock info */
@@ -87,6 +91,19 @@ public:
     T *GetData() const noexcept;
 
     size_t SubStreamsInfoSize();
+
+    Dims Shape(const size_t step) const;
+
+    std::pair<T, T> MinMax(const size_t step) const;
+
+    T Min(const size_t step) const;
+
+    T Max(const size_t step) const;
+
+private:
+    Dims DoShape(const size_t step) const;
+
+    std::pair<T, T> DoMinMax(const size_t step) const;
 };
 
 } // end namespace core

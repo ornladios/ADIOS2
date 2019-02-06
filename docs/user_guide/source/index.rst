@@ -13,6 +13,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 
    introduction/introduction
    installation/installation
+   using/using
    components/components
    engines/engines
    api_full/api_full

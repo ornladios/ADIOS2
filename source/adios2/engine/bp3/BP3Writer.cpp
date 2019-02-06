@@ -26,8 +26,7 @@ namespace engine
 
 BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("BPFileWriter", io, name, mode, mpiComm),
-  m_BP3Serializer(mpiComm, m_DebugMode),
+: Engine("BP3", io, name, mode, mpiComm), m_BP3Serializer(mpiComm, m_DebugMode),
   m_FileDataManager(mpiComm, m_DebugMode),
   m_FileMetadataManager(mpiComm, m_DebugMode)
 {
@@ -169,7 +168,8 @@ void BP3Writer::InitTransports()
     }
 
     m_BP3Serializer.ProfilerStart("mkdir");
-    m_FileDataManager.MkDirsBarrier(bpSubStreamNames);
+    m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
+                                    m_BP3Serializer.m_NodeLocal);
     m_BP3Serializer.ProfilerStop("mkdir");
 
     if (m_BP3Serializer.m_Aggregator.m_IsConsumer)

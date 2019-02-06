@@ -6,17 +6,12 @@ shopt -s dotglob
 
 readonly name="nlohmann_json"
 readonly ownership="JSON For Modern C++ Upstream <robot@adios2>"
-readonly subtree="thirdparty/NLohmannJson/json"
+readonly subtree="thirdparty/nlohmann_json/nlohmann_json/src"
 readonly repo="https://github.com/nlohmann/json.git"
 readonly tag="master"
 readonly shortlog="true"
 readonly paths="
-  CMakeLists.txt
-  LICENSE.MIT
-  nlohmann_json.natvis
-  cmake
-  include
-  single_include
+  single_include/nlohmann/json.hpp
 "
 
 extract_source () {

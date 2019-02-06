@@ -29,9 +29,8 @@ public:
     DataManReader(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
     virtual ~DataManReader();
-    StepStatus BeginStep(
-        StepMode stepMode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode stepMode,
+                         const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformGets() final;
     void EndStep() final;
@@ -49,7 +48,6 @@ private:
 
     void Init();
     void IOThread(std::shared_ptr<transportman::DataMan> man);
-    void RunCallback();
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \

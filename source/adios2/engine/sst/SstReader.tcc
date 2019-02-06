@@ -47,29 +47,18 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                 // if remote data buffer is compressed
                 if (subStreamInfo.OperationsInfo.size() > 0)
                 {
-                    const bool identity =
-                        m_BP3Deserializer->IdentityOperation<T>(
-                            blockInfo.Operations);
-                    const helper::BlockOperationInfo &blockOperationInfo =
-                        m_BP3Deserializer->InitPostOperatorBlockData(
-                            subStreamInfo.OperationsInfo,
-                            variable.m_RawMemory[1], identity);
-                    // if identity is true, just read the entire block content
-                    buffers.emplace_back();
-                    buffers.back().resize(blockOperationInfo.PayloadSize);
-                    char *output =
-                        identity ? reinterpret_cast<char *>(blockInfo.Data)
-                                 : buffers.back().data();
+                    // TODO test with compression
+                    char *buffer = nullptr;
+                    size_t payloadSize = 0, payloadStart = 0;
 
-                    auto ret = SstReadRemoteMemory(
-                        m_Input, rank, CurrentStep(),
-                        blockOperationInfo.PayloadOffset,
-                        blockOperationInfo.PayloadSize, output, dp_info);
+                    m_BP3Deserializer->PreDataRead(
+                        variable, blockInfo, subStreamInfo, buffer, payloadSize,
+                        payloadStart, 0);
+
+                    auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
+                                                   payloadStart, payloadSize,
+                                                   buffer, dp_info);
                     sstReadHandlers.push_back(ret);
-                    if (identity)
-                    {
-                        continue;
-                    }
                 }
                 // if remote data buffer is not compressed
                 else
@@ -135,26 +124,33 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                 stepPair.second;
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
-                const size_t rank = subStreamInfo.SubStreamID;
                 // if remote data buffer is compressed
                 if (subStreamInfo.OperationsInfo.size() > 0)
                 {
-                    const bool identity =
-                        m_BP3Deserializer->IdentityOperation<T>(
-                            blockInfo.Operations);
-                    const helper::BlockOperationInfo &blockOperationInfo =
-                        m_BP3Deserializer->InitPostOperatorBlockData(
-                            subStreamInfo.OperationsInfo,
-                            variable.m_RawMemory[1], identity);
-                    m_BP3Deserializer->GetPreOperatorBlockData(
-                        buffers[iter], blockOperationInfo,
-                        variable.m_RawMemory[0]);
-                    helper::ClipVector(variable.m_RawMemory[0],
-                                       subStreamInfo.Seeks.first,
-                                       subStreamInfo.Seeks.second);
-                    m_BP3Deserializer->ClipContiguousMemory<T>(
-                        blockInfo, variable.m_RawMemory[0],
-                        subStreamInfo.BlockBox, subStreamInfo.IntersectionBox);
+                    //const bool identity =
+                    //    m_BP3Deserializer->IdentityOperation<T>(
+                    //        blockInfo.Operations);
+                    //const helper::BlockOperationInfo
+                    //    &blockOperationInfo =
+                    //        m_BP3Deserializer->InitPostOperatorBlockData(
+                    //            subStreamInfo.OperationsInfo,
+                    //            variable.m_RawMemory[1],
+                    //            identity);
+                    //m_BP3Deserializer->GetPreOperatorBlockData(
+                    //    buffers[iter], blockOperationInfo,
+                    //    variable.m_RawMemory[0]);
+                    //helper::ClipVector(variable.m_RawMemory[0],
+                    //    subStreamInfo.Seeks.first,
+                    //    subStreamInfo.Seeks.second);
+                    //m_BP3Deserializer->ClipContiguousMemory<T>(
+                    //    blockInfo,
+                    //    variable.m_RawMemory[0],
+                    //    subStreamInfo.BlockBox,
+                    //    subStreamInfo.IntersectionBox);
+
+                    m_BP3Deserializer->PostDataRead(
+                        variable, blockInfo, subStreamInfo,
+                        helper::IsRowMajor(m_IO.m_HostLanguage), 0);
                     ++iter;
                 }
                 // if remote data buffer is not compressed

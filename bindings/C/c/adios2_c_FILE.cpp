@@ -103,8 +103,7 @@ adios2_FILE *adios2_fopen_glue(const char *name, const char *mode,
     }
     catch (...)
     {
-        static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_fopen"));
+        adios2::helper::ExceptionToError("adios2_fopen");
     }
     return stream;
 }
@@ -128,8 +127,7 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const char *mode,
     }
     catch (...)
     {
-        static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_fopen_config"));
+        adios2::helper::ExceptionToError("adios2_fopen_config");
     }
     return stream;
 }
@@ -164,8 +162,7 @@ adios2_FILE *adios2_fopen_glue(const char *name, const char *mode,
     }
     catch (...)
     {
-        static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_fopen"));
+        adios2::helper::ExceptionToError("adios2_fopen");
     }
     return stream;
 }
@@ -189,8 +186,7 @@ adios2_FILE *adios2_fopen_config_glue(const char *name, const char *mode,
     }
     catch (...)
     {
-        static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_fopen_config"));
+        adios2::helper::ExceptionToError("adios2_fopen_config");
     }
     return stream;
 }
@@ -244,11 +240,9 @@ adios2_error adios2_fwrite(adios2_FILE *stream, const char *name,
 
         adios2::core::Stream &streamCpp =
             *reinterpret_cast<adios2::core::Stream *>(stream);
-        const bool endStep = (end_step == adios2_true) ? true : false;
 
         switch (type)
         {
-
         case (adios2_type_string):
         {
             const std::string stringCpp(reinterpret_cast<const char *>(data));
@@ -433,8 +427,7 @@ adios2_step *adios2_fgets(adios2_step *step, adios2_FILE *stream)
     }
     catch (...)
     {
-        static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_fgets"));
+        adios2::helper::ExceptionToError("adios2_fgets");
     }
     return step;
 }

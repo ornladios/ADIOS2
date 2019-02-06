@@ -16,7 +16,6 @@
 #include <utility> //std::pair
 #include <vector>
 
-#include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //VariablesSubFileInfo, BlockOperation
 #include "adios2/toolkit/format/bp3/BP3Base.h"
@@ -42,7 +41,7 @@ public:
 
     ~BP3Deserializer() = default;
 
-    void ParseMetadata(const BufferSTL &bufferSTL, core::IO &io);
+    void ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine);
 
     /**
      * Used to get the variable payload data for the current selection (dims and
@@ -63,7 +62,7 @@ public:
      */
     template <class T>
     typename core::Variable<T>::Info &
-    InitVariableBlockInfo(core::Variable<T> &variable, T *data);
+    InitVariableBlockInfo(core::Variable<T> &variable, T *data) const;
 
     /**
      * Sets read block information from the available metadata information
@@ -71,23 +70,40 @@ public:
      * @param blockInfo
      */
     template <class T>
-    void SetVariableBlockInfo(core::Variable<T> &variable,
-                              typename core::Variable<T>::Info &blockInfo);
+    void
+    SetVariableBlockInfo(core::Variable<T> &variable,
+                         typename core::Variable<T>::Info &blockInfo) const;
 
-    // Operation related functions
+    /**
+     * Prepares the information to get raw data from the transport manager for a
+     * required substream box (block)
+     * @param variable input Variable
+     * @param blockInfo input blockInfo with information about Get request
+     * @param subStreamBoxInfo contains information (e.g. bounds, operation,
+     * etc.) about the available box (block) to be accessed by the Transport
+     * Manager.
+     * @param buffer output to be passed to Transport Manager for current box
+     * @param payloadSize output to be passed to Transport Manager for current
+     * box
+     * @param payloadStart output to be passed to Transport Manager for current
+     * box
+     * @param threadID assign different thread ID to have independent raw memory
+     * spaces per thread, default = 0
+     */
     template <class T>
-    bool IdentityOperation(
-        const std::vector<typename core::Variable<T>::Operation> &operations)
-        const noexcept;
+    void PreDataRead(core::Variable<T> &variable,
+                     typename core::Variable<T>::Info &blockInfo,
+                     const helper::SubStreamBoxInfo &subStreamBoxInfo,
+                     char *&buffer, size_t &payloadSize, size_t &payloadOffset,
+                     const size_t threadID = 0);
 
-    const helper::BlockOperationInfo &InitPostOperatorBlockData(
-        const std::vector<helper::BlockOperationInfo> &blockOperationsInfo,
-        std::vector<char> &postOpData, const bool identity) const;
+    template <class T>
+    void PostDataRead(core::Variable<T> &variable,
+                      typename core::Variable<T>::Info &blockInfo,
+                      const helper::SubStreamBoxInfo &subStreamBoxInfo,
+                      const bool isRowMajorDestination,
+                      const size_t threadID = 0);
 
-    void GetPreOperatorBlockData(
-        const std::vector<char> &postOpData,
-        const helper::BlockOperationInfo &blockOperationInfo,
-        std::vector<char> &preOpData) const;
     /**
      * Clips and assigns memory to blockInfo.Data from a contiguous memory
      * input
@@ -151,9 +167,10 @@ private:
     static std::mutex m_Mutex;
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
-    void ParsePGIndex(const BufferSTL &bufferSTL, const core::IO &io);
-    void ParseVariablesIndex(const BufferSTL &bufferSTL, core::IO &io);
-    void ParseAttributesIndex(const BufferSTL &bufferSTL, core::IO &io);
+    void ParsePGIndex(const BufferSTL &bufferSTL,
+                      const std::string hostLanguage);
+    void ParseVariablesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
+    void ParseAttributesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
 
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
@@ -164,14 +181,16 @@ private:
      * @param position
      */
     template <class T>
-    void DefineVariableInIO(const ElementIndexHeader &header, core::IO &io,
-                            const std::vector<char> &buffer,
-                            size_t position) const;
+    void DefineVariableInEngineIO(const ElementIndexHeader &header,
+                                  core::Engine &engine,
+                                  const std::vector<char> &buffer,
+                                  size_t position) const;
 
     template <class T>
-    void DefineAttributeInIO(const ElementIndexHeader &header, core::IO &io,
-                             const std::vector<char> &buffer,
-                             size_t position) const;
+    void DefineAttributeInEngineIO(const ElementIndexHeader &header,
+                                   core::Engine &engine,
+                                   const std::vector<char> &buffer,
+                                   size_t position) const;
 
     template <class T>
     void GetValueFromMetadataCommon(core::Variable<T> &variable, T *data) const;
@@ -180,6 +199,15 @@ private:
     std::vector<typename core::Variable<T>::Info>
     BlocksInfoCommon(const core::Variable<T> &variable,
                      const std::vector<size_t> &blocksIndexOffsets) const;
+
+    template <class T>
+    bool IdentityOperation(
+        const std::vector<typename core::Variable<T>::Operation> &operations)
+        const noexcept;
+
+    const helper::BlockOperationInfo &InitPostOperatorBlockData(
+        const std::vector<helper::BlockOperationInfo> &blockOperationsInfo)
+        const;
 };
 
 // TODO: deprecate this
@@ -188,10 +216,10 @@ private:
         core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
     extern template typename core::Variable<T>::Info &                         \
-    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *);          \
+    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *) const;    \
                                                                                \
     extern template void BP3Deserializer::SetVariableBlockInfo(                \
-        core::Variable<T> &, typename core::Variable<T>::Info &);              \
+        core::Variable<T> &, typename core::Variable<T>::Info &) const;        \
                                                                                \
     extern template void BP3Deserializer::ClipContiguousMemory<T>(             \
         typename core::Variable<T>::Info &, const std::vector<char> &,         \
@@ -223,9 +251,14 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
                                                                                \
-    extern template bool BP3Deserializer::IdentityOperation<T>(                \
-        const std::vector<typename core::Variable<T>::Operation> &)            \
-        const noexcept;
+    extern template void BP3Deserializer::PreDataRead(                         \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, char *&, size_t &, size_t &,         \
+        const size_t);                                                         \
+                                                                               \
+    extern template void BP3Deserializer::PostDataRead(                        \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, const bool, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -51,9 +51,11 @@ public:
     /**
      * Function that will be called from all ranks in communicator, only rank
      * zero creates directories
-     * @params fileNames
+     * @param fileNames extract directory if needed to be created
+     * @param nodeLocal true: all ranks create a directory
      */
-    void MkDirsBarrier(const std::vector<std::string> &fileNames);
+    void MkDirsBarrier(const std::vector<std::string> &fileNames,
+                       const bool nodeLocal);
 
     /**
      *

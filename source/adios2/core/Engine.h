@@ -48,6 +48,9 @@ public:
     /** from derived class */
     const std::string m_EngineType;
 
+    /** IO class object that creates this Engine at Open */
+    IO &m_IO;
+
     /** Unique name for this Engine within m_IO */
     const std::string m_Name;
 
@@ -90,9 +93,8 @@ public:
      * @param timeoutSeconds (not yet implemented)
      * @return current step status
      */
-    virtual StepStatus
-    BeginStep(StepMode mode,
-              const float timeoutSeconds = std::numeric_limits<float>::max());
+    virtual StepStatus BeginStep(StepMode mode,
+                                 const float timeoutSeconds = -1.0);
 
     /**
      * Returns current step information for each engine.
@@ -339,9 +341,6 @@ public:
     BlocksInfo(const Variable<T> &variable, const size_t step) const;
 
 protected:
-    /** IO class object that creates this Engine at Open */
-    IO &m_IO;
-
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
     MPI_Comm m_MPIComm;

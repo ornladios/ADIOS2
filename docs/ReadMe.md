@@ -2,7 +2,7 @@
 
 # Generate User Guide in html with Sphinx
 
-This user guide is hosted in readthedocs: https://adios2-adaptable-io-system-version-2.readthedocs.io/en/latest/
+This user guide is hosted in readthedocs: https://adios2.readthedocs.io/en/latest/
  
 Python v2.7 or above is required to build the Sphinx based user guide. Sphinx can be downloaded using pip `pip install sphinx`. In addition:
 

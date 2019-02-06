@@ -27,6 +27,9 @@ namespace adios2
 namespace core
 {
 
+// forward declaration for reading streaming mode
+class Engine;
+
 /** Base class for Variable<T> (primitives) and VariableCompound classes */
 class VariableBase
 {
@@ -42,20 +45,26 @@ public:
      *  VariableCompound -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
 
-    ShapeID m_ShapeID;          ///< see shape types in ADIOSTypes.h
+    ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
+    size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
+    SelectionType m_SelectionType = SelectionType::BoundingBox;
+
     bool m_SingleValue = false; ///< true: single value, false: array
     Dims m_Shape;               ///< total dimensions across MPI
     Dims m_Start;               ///< starting point (offsets) in global shape
     Dims m_Count;               ///< dimensions from m_Start in global shape
 
+    Dims m_MemoryStart; ///< start offset
+    Dims m_MemoryCount; ///< local dimensions
+
     /** Global array was written as Joined array, so read accordingly */
     bool m_ReadAsJoined = false;
+
     /** Global array was written as Local value, so read accordingly */
     bool m_ReadAsLocalValue = false;
 
-    /** For read mode. true: SetStepSelection was used, only valid in File based
-     * engines, false: streaming */
-    bool m_RandomAccess = false;
+    /** For read mode, false: streaming */
+    bool m_RandomAccess = true;
 
     /** used in streaming mode, true: first variable encounter, false: variable
      * already encountered in previous step */
@@ -85,6 +94,8 @@ public:
     /** Index Metadata Position in a serial metadata buffer */
     size_t m_IndexStart = 0;
 
+    Engine *m_Engine = nullptr;
+
     /** Index to Step and blocks' (inside a step) characteristics position in a
      * serial metadata buffer
      * <pre>
@@ -94,8 +105,7 @@ public:
      * */
     std::map<size_t, std::vector<size_t>> m_AvailableStepBlockIndexOffsets;
 
-    /** wildcard memory space used for contiguous memory read */
-    std::map<size_t, std::vector<char>> m_RawMemory;
+    std::map<size_t, Dims> m_AvailableShapes;
 
     VariableBase(const std::string &name, const std::string type,
                  const size_t elementSize, const Dims &shape, const Dims &start,
@@ -117,6 +127,12 @@ public:
     void SetShape(const adios2::Dims &shape);
 
     /**
+     * Use at read only for local variables
+     * @param blockID
+     */
+    void SetBlockSelection(const size_t blockID);
+
+    /**
      * Set new start and count dimensions
      * @param boxDims = {start, count}
      */
@@ -131,11 +147,9 @@ public:
     void SetStepSelection(const Box<size_t> &boxSteps);
 
     /**
-     * Set the local dimension and global offset of the variable using a
-     * selection
-     * Only bounding boxes are allowed
+     * Set local offset and dimensions to memory passed at Put
      */
-    void SetMemorySelection(const Box<Dims> &boxDims);
+    void SetMemorySelection(const Box<Dims> &memorySelection);
 
     size_t GetAvailableStepsStart() const;
 
@@ -191,9 +205,6 @@ public:
 protected:
     const bool m_DebugMode = false;
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
-
-    Dims m_MemoryStart; ///< offset of memory selection
-    Dims m_MemoryCount; ///< subset of m_Shape (e.g. remove ghost points)
 
     unsigned int m_DeferredCounter = 0;
 

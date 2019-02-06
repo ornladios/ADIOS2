@@ -32,21 +32,22 @@ File::File(const std::string &name, const std::string mode, MPI_Comm comm,
 {
 }
 
+File::File(const std::string &name, const std::string mode, MPI_Comm comm,
+           const std::string &configFile, const std::string ioInConfigFile)
+: m_Name(name), m_Mode(mode),
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
+                                          ioInConfigFile, "Python"))
+{
+}
+
 File::File(const std::string &name, const std::string mode,
            const std::string engineType)
 : File(name, mode, MPI_COMM_SELF, engineType)
 {
 }
 
-File::File(const std::string &name, const std::string mode, MPI_Comm comm,
-           const std::string configFile, const std::string ioInConfigFile)
-: m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
-                                          ioInConfigFile, "Python"))
-{
-}
 File::File(const std::string &name, const std::string mode,
-           const std::string configFile, const std::string ioInConfigFile)
+           const std::string &configFile, const std::string ioInConfigFile)
 : File(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile)
 {
 }

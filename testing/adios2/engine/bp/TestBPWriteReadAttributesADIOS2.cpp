@@ -188,8 +188,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
                               "ADIOS2BPWriteAttributeReadArrayTypes.bp";
 
-    int mpiRank = 0, mpiSize = 1;
 #ifdef ADIOS2_HAVE_MPI
+    int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
@@ -532,8 +532,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
     const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
                               "BPWriteAttributeReadArrayTypesVar.bp";
 
-    int mpiRank = 0, mpiSize = 1;
 #ifdef ADIOS2_HAVE_MPI
+    int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif

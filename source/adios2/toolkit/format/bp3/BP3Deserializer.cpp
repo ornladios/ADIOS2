@@ -33,19 +33,19 @@ BP3Deserializer::BP3Deserializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL, core::IO &io)
+void BP3Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
+                                    core::Engine &engine)
+
 {
     ParseMinifooter(bufferSTL);
-    ParsePGIndex(bufferSTL, io);
-    ParseVariablesIndex(bufferSTL, io);
-    ParseAttributesIndex(bufferSTL, io);
+    ParsePGIndex(bufferSTL, engine.m_IO.m_HostLanguage);
+    ParseVariablesIndex(bufferSTL, engine);
+    ParseAttributesIndex(bufferSTL, engine);
 }
 
 const helper::BlockOperationInfo &BP3Deserializer::InitPostOperatorBlockData(
-    const std::vector<helper::BlockOperationInfo> &blockOperationsInfo,
-    std::vector<char> &postOpData, const bool identity) const
+    const std::vector<helper::BlockOperationInfo> &blockOperationsInfo) const
 {
-
     size_t index = 0;
     for (const helper::BlockOperationInfo &blockOperationInfo :
          blockOperationsInfo)
@@ -53,10 +53,6 @@ const helper::BlockOperationInfo &BP3Deserializer::InitPostOperatorBlockData(
         const std::string type = blockOperationInfo.Info.at("Type");
         if (m_TransformTypes.count(type) == 1)
         {
-            if (!identity)
-            {
-                postOpData.resize(blockOperationInfo.PayloadSize);
-            }
             break;
         }
         ++index;
@@ -64,51 +60,43 @@ const helper::BlockOperationInfo &BP3Deserializer::InitPostOperatorBlockData(
     return blockOperationsInfo.at(index);
 }
 
-void BP3Deserializer::GetPreOperatorBlockData(
-    const std::vector<char> &postOpData,
-    const helper::BlockOperationInfo &blockOperationInfo,
-    std::vector<char> &preOpData) const
-{
-    // pre-allocate decompressed block
-    preOpData.resize(helper::GetTotalSize(blockOperationInfo.PreCount) *
-                     blockOperationInfo.PreSizeOf);
-
-    // get the right bp3Op
-    std::shared_ptr<BP3Operation> bp3Op =
-        SetBP3Operation(blockOperationInfo.Info.at("Type"));
-    bp3Op->GetData(postOpData.data(), blockOperationInfo, preOpData.data());
-}
-
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
-    auto lf_GetEndianness = [](const uint8_t endianness, bool &isLittleEndian) {
-
-        switch (endianness)
-        {
-        case 0:
-            isLittleEndian = true;
-            break;
-        case 1:
-            isLittleEndian = false;
-            break;
-        }
-    };
-
     const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
     size_t position = bufferSize - 4;
-    const uint8_t endianess = helper::ReadValue<uint8_t>(buffer, position);
-    lf_GetEndianness(endianess, m_Minifooter.IsLittleEndian);
+    const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
+    m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
+#ifndef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (m_DebugMode)
+    {
+        if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
+        {
+            throw std::runtime_error(
+                "ERROR: reader found BigEndian bp file, "
+                "this version of ADIOS2 wasn't compiled "
+                "with the cmake flag -DADIOS2_USE_ENDIAN_REVERSE=ON "
+                "explicitly, in call to Open\n");
+        }
+    }
+#endif
+
     position += 1;
 
-    const uint8_t subFilesIndex = helper::ReadValue<uint8_t>(buffer, position);
-    if (subFilesIndex > 0)
+    const int8_t fileType = helper::ReadValue<int8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    if (fileType == 3)
     {
         m_Minifooter.HasSubFiles = true;
     }
+    else if (fileType == 0 || fileType == 2)
+    {
+        m_Minifooter.HasSubFiles = false;
+    }
 
-    m_Minifooter.Version = helper::ReadValue<uint8_t>(buffer, position);
+    m_Minifooter.Version = helper::ReadValue<uint8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
     if (m_Minifooter.Version < 3)
     {
         throw std::runtime_error("ERROR: ADIOS2 only supports bp format "
@@ -122,20 +110,24 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
     m_Minifooter.VersionTag.assign(&buffer[position], 28);
     position += 28;
 
-    m_Minifooter.PGIndexStart = helper::ReadValue<uint64_t>(buffer, position);
-    m_Minifooter.VarsIndexStart = helper::ReadValue<uint64_t>(buffer, position);
-    m_Minifooter.AttributesIndexStart =
-        helper::ReadValue<uint64_t>(buffer, position);
+    m_Minifooter.PGIndexStart = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    m_Minifooter.VarsIndexStart = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    m_Minifooter.AttributesIndexStart = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 }
 
 void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
-                                   const core::IO &io)
+                                   const std::string hostLanguage)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.PGIndexStart;
 
-    m_MetadataSet.DataPGCount = helper::ReadValue<uint64_t>(buffer, position);
-    const size_t length = helper::ReadValue<uint64_t>(buffer, position);
+    m_MetadataSet.DataPGCount = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const size_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     size_t localPosition = 0;
 
@@ -144,7 +136,8 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
 
     while (localPosition < length)
     {
-        ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position);
+        ProcessGroupIndex index = ReadProcessGroupIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
         if (index.IsColumnMajor == 'y')
         {
             m_IsRowMajor = false;
@@ -161,107 +154,115 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
         localPosition += index.Length + 2;
     }
 
-    if (m_IsRowMajor != helper::IsRowMajor(io.m_HostLanguage))
+    if (m_IsRowMajor != helper::IsRowMajor(hostLanguage))
     {
         m_ReverseDimensions = true;
     }
 }
 
 void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
-                                          core::IO &io)
+                                          core::Engine &engine)
 {
-    auto lf_ReadElementIndex = [&](
-        core::IO &io, const std::vector<char> &buffer, size_t position) {
+    auto lf_ReadElementIndex = [&](core::Engine &engine,
+                                   const std::vector<char> &buffer,
+                                   size_t position) {
 
-        const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position);
+        const ElementIndexHeader header = ReadElementIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
 
         case (type_string):
         {
-            DefineVariableInIO<std::string>(header, io, buffer, position);
+            DefineVariableInEngineIO<std::string>(header, engine, buffer,
+                                                  position);
             break;
         }
 
         case (type_byte):
         {
-            DefineVariableInIO<signed char>(header, io, buffer, position);
+            DefineVariableInEngineIO<signed char>(header, engine, buffer,
+                                                  position);
             break;
         }
 
         case (type_short):
         {
-            DefineVariableInIO<short>(header, io, buffer, position);
+            DefineVariableInEngineIO<short>(header, engine, buffer, position);
             break;
         }
 
         case (type_integer):
         {
-            DefineVariableInIO<int>(header, io, buffer, position);
+            DefineVariableInEngineIO<int>(header, engine, buffer, position);
             break;
         }
 
         case (type_long):
         {
-            DefineVariableInIO<int64_t>(header, io, buffer, position);
+            DefineVariableInEngineIO<int64_t>(header, engine, buffer, position);
             break;
         }
 
         case (type_unsigned_byte):
         {
-            DefineVariableInIO<unsigned char>(header, io, buffer, position);
+            DefineVariableInEngineIO<unsigned char>(header, engine, buffer,
+                                                    position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineVariableInIO<unsigned short>(header, io, buffer, position);
+            DefineVariableInEngineIO<unsigned short>(header, engine, buffer,
+                                                     position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineVariableInIO<unsigned int>(header, io, buffer, position);
+            DefineVariableInEngineIO<unsigned int>(header, engine, buffer,
+                                                   position);
             break;
         }
 
         case (type_unsigned_long):
         {
-            DefineVariableInIO<uint64_t>(header, io, buffer, position);
+            DefineVariableInEngineIO<uint64_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_real):
         {
-            DefineVariableInIO<float>(header, io, buffer, position);
+            DefineVariableInEngineIO<float>(header, engine, buffer, position);
             break;
         }
 
         case (type_double):
         {
-            DefineVariableInIO<double>(header, io, buffer, position);
+            DefineVariableInEngineIO<double>(header, engine, buffer, position);
             break;
         }
 
         case (type_long_double):
         {
-            DefineVariableInIO<long double>(header, io, buffer, position);
+            DefineVariableInEngineIO<long double>(header, engine, buffer,
+                                                  position);
             break;
         }
 
         case (type_complex):
         {
-            DefineVariableInIO<std::complex<float>>(header, io, buffer,
-                                                    position);
+            DefineVariableInEngineIO<std::complex<float>>(header, engine,
+                                                          buffer, position);
             break;
         }
 
         case (type_double_complex):
         {
-            DefineVariableInIO<std::complex<double>>(header, io, buffer,
-                                                     position);
+            DefineVariableInEngineIO<std::complex<double>>(header, engine,
+                                                           buffer, position);
             break;
         }
 
@@ -271,8 +272,10 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.VarsIndexStart;
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -281,10 +284,11 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     {
         while (localPosition < length)
         {
-            lf_ReadElementIndex(io, buffer, position);
+            lf_ReadElementIndex(engine, buffer, position);
 
-            const size_t elementIndexSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(buffer, position));
+            const size_t elementIndexSize =
+                static_cast<size_t>(helper::ReadValue<uint32_t>(
+                    buffer, position, m_Minifooter.IsLittleEndian));
             position += elementIndexSize;
             localPosition = position - startPosition;
         }
@@ -303,8 +307,9 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
         for (unsigned int t = 0; t < m_Threads; ++t)
         {
             asyncPositions[t] = position;
-            const size_t elementIndexSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(buffer, position));
+            const size_t elementIndexSize =
+                static_cast<size_t>(helper::ReadValue<uint32_t>(
+                    buffer, position, m_Minifooter.IsLittleEndian));
             position += elementIndexSize;
             localPosition = position - startPosition;
 
@@ -316,7 +321,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
             if (localPosition <= length)
             {
                 asyncs[t] = std::async(std::launch::async, lf_ReadElementIndex,
-                                       std::ref(io), std::ref(buffer),
+                                       std::ref(engine), std::ref(buffer),
                                        asyncPositions[t]);
             }
         }
@@ -333,92 +338,102 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
 }
 
 void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
-                                           core::IO &io)
+                                           core::Engine &engine)
 {
-    auto lf_ReadElementIndex = [&](
-        core::IO &io, const std::vector<char> &buffer, size_t position) {
+    auto lf_ReadElementIndex = [&](core::Engine &engine,
+                                   const std::vector<char> &buffer,
+                                   size_t position) {
 
-        const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position);
+        const ElementIndexHeader header = ReadElementIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
 
         case (type_string):
         {
-            DefineAttributeInIO<std::string>(header, io, buffer, position);
+            DefineAttributeInEngineIO<std::string>(header, engine, buffer,
+                                                   position);
             break;
         }
 
         case (type_string_array):
         {
-            DefineAttributeInIO<std::string>(header, io, buffer, position);
+            DefineAttributeInEngineIO<std::string>(header, engine, buffer,
+                                                   position);
             break;
         }
 
         case (type_byte):
         {
-            DefineAttributeInIO<signed char>(header, io, buffer, position);
+            DefineAttributeInEngineIO<signed char>(header, engine, buffer,
+                                                   position);
             break;
         }
 
         case (type_short):
         {
-            DefineAttributeInIO<short>(header, io, buffer, position);
+            DefineAttributeInEngineIO<short>(header, engine, buffer, position);
             break;
         }
 
         case (type_integer):
         {
-            DefineAttributeInIO<int>(header, io, buffer, position);
+            DefineAttributeInEngineIO<int>(header, engine, buffer, position);
             break;
         }
 
         case (type_long):
         {
-            DefineAttributeInIO<int64_t>(header, io, buffer, position);
+            DefineAttributeInEngineIO<int64_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_unsigned_byte):
         {
-            DefineAttributeInIO<unsigned char>(header, io, buffer, position);
+            DefineAttributeInEngineIO<unsigned char>(header, engine, buffer,
+                                                     position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineAttributeInIO<unsigned short>(header, io, buffer, position);
+            DefineAttributeInEngineIO<unsigned short>(header, engine, buffer,
+                                                      position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineAttributeInIO<unsigned int>(header, io, buffer, position);
+            DefineAttributeInEngineIO<unsigned int>(header, engine, buffer,
+                                                    position);
             break;
         }
 
         case (type_unsigned_long):
         {
-            DefineAttributeInIO<uint64_t>(header, io, buffer, position);
+            DefineAttributeInEngineIO<uint64_t>(header, engine, buffer,
+                                                position);
             break;
         }
 
         case (type_real):
         {
-            DefineAttributeInIO<float>(header, io, buffer, position);
+            DefineAttributeInEngineIO<float>(header, engine, buffer, position);
             break;
         }
 
         case (type_double):
         {
-            DefineAttributeInIO<double>(header, io, buffer, position);
+            DefineAttributeInEngineIO<double>(header, engine, buffer, position);
             break;
         }
 
         case (type_long_double):
         {
-            DefineAttributeInIO<long double>(header, io, buffer, position);
+            DefineAttributeInEngineIO<long double>(header, engine, buffer,
+                                                   position);
             break;
         }
 
@@ -428,8 +443,10 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_Minifooter.AttributesIndexStart;
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position);
+    const uint32_t count = helper::ReadValue<uint32_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -437,9 +454,10 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     // Read sequentially
     while (localPosition < length)
     {
-        lf_ReadElementIndex(io, buffer, position);
+        lf_ReadElementIndex(engine, buffer, position);
         const size_t elementIndexSize =
-            static_cast<size_t>(helper::ReadValue<uint32_t>(buffer, position));
+            static_cast<size_t>(helper::ReadValue<uint32_t>(
+                buffer, position, m_Minifooter.IsLittleEndian));
         position += elementIndexSize;
         localPosition = position - startPosition;
     }
@@ -504,10 +522,10 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
         core::Variable<T> &, BufferSTL &) const;                               \
                                                                                \
     template typename core::Variable<T>::Info &                                \
-    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *);          \
+    BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &, T *) const;    \
                                                                                \
     template void BP3Deserializer::SetVariableBlockInfo(                       \
-        core::Variable<T> &, typename core::Variable<T>::Info &);              \
+        core::Variable<T> &, typename core::Variable<T>::Info &) const;        \
                                                                                \
     template void BP3Deserializer::ClipContiguousMemory<T>(                    \
         typename core::Variable<T>::Info &, const std::vector<char> &,         \
@@ -538,12 +556,17 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
                                                                                \
-    template bool BP3Deserializer::IdentityOperation<T>(                       \
-        const std::vector<typename core::Variable<T>::Operation> &)            \
-        const noexcept;
+    template void BP3Deserializer::PreDataRead(                                \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, char *&, size_t &, size_t &,         \
+        const size_t);                                                         \
+                                                                               \
+    template void BP3Deserializer::PostDataRead(                               \
+        core::Variable<T> &, typename core::Variable<T>::Info &,               \
+        const helper::SubStreamBoxInfo &, const bool, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-} // end namespace format
+} // end namespace formata
 } // end namespace adios2

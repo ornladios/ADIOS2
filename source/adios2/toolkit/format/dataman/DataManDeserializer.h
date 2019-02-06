@@ -14,6 +14,7 @@
 #include <nlohmann/json.hpp>
 
 #include "adios2/ADIOSTypes.h"
+#include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
 
 #include <mutex>
@@ -27,13 +28,15 @@ namespace format
 class DataManDeserializer
 {
 public:
-    DataManDeserializer(const bool isRowMajor, const bool isLittleEndian);
+    DataManDeserializer(const bool isRowMajor, const bool contiguousMajor,
+                        const bool isLittleEndian);
     size_t MaxStep();
     size_t MinStep();
     int Put(const std::shared_ptr<const std::vector<char>> data);
     template <class T>
     int Get(T *output_data, const std::string &varName, const Dims &varStart,
-            const Dims &varCount, const size_t step);
+            const Dims &varCount, const size_t step,
+            const Dims varMemStart = Dims(), const Dims varMemCount = Dims());
     void Erase(const size_t step);
     struct DataManVar
     {
@@ -56,6 +59,7 @@ public:
     GetMetaData(const size_t step);
     const std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
     GetMetaData();
+    void GetAttributes(core::IO &io);
 
 private:
     bool HasOverlap(Dims in_start, Dims in_count, Dims out_start,
@@ -69,6 +73,8 @@ private:
     size_t m_MinStep = std::numeric_limits<size_t>::max();
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
+    bool m_ContiguousMajor;
+    nlohmann::json m_GlobalVars;
 
     std::mutex m_Mutex;
 };

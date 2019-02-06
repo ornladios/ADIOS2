@@ -35,9 +35,8 @@ public:
 
     virtual ~SstWriter();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
@@ -69,12 +68,14 @@ private:
     SstStream m_Output;
     long m_WriterStep = -1;
     bool m_BetweenStepPairs = false;
+    size_t m_FFSMarshaledAttributesCount = 0;
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
     Typedecl m_##Param = Default;
     SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals)
 #undef declare_locals
 
+    void FFSMarshalAttributes();
     void DoClose(const int transportIndex = -1) final;
 };
 

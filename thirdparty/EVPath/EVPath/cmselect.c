@@ -287,7 +287,7 @@ int timeout_usec;
 	timeout.tv_usec = timeout_usec;
 	
 	set_soonest_timeout(&timeout, sd->periodic_task_list, now);
-        svc->trace_out(sd->cm, "CMSelect with timeout %d sec, %d usec", 
+        svc->verbose(sd->cm, CMSelectVerbose, "CMSelect with timeout %d sec, %d usec", 
 		       timeout.tv_sec, timeout.tv_usec);
 
 	if (timeout.tv_sec == -1) {
@@ -300,7 +300,7 @@ int timeout_usec;
 	ACQUIRE_CM_LOCK(svc, sd->cm);
     } else {
 	int max = sd->sel_item_max;
-	svc->trace_out(sd->cm, "CMSelect blocking select");
+	svc->verbose(sd->cm, CMSelectVerbose, "CMSelect blocking select");
 	DROP_CM_LOCK(svc, sd->cm);
 	res = select(max+1, &rd_set, &wr_set, (fd_set *) NULL, NULL);
 	ACQUIRE_CM_LOCK(svc, sd->cm);
@@ -392,7 +392,7 @@ int timeout_usec;
 #endif
 
 #ifdef HAVE_FDS_BITS
-    svc->trace_out(sd->cm, "select returned, rd_set started %lx, %lx, %lx, %lx, result was %lx, %lx, %lx, %lx",
+    svc->verbose(sd->cm, CMSelectVerbose, "select returned, rd_set started %lx, %lx, %lx, %lx, result was %lx, %lx, %lx, %lx",
 	    (long) ((fd_set *) sd->fdset)->fds_bits[0],
 	    (long) ((fd_set *) sd->fdset)->fds_bits[1],
 	    (long) ((fd_set *) sd->fdset)->fds_bits[2],
@@ -401,7 +401,7 @@ int timeout_usec;
 	    (long) ((fd_set *) &rd_set)->fds_bits[1],
 	    (long) ((fd_set *) &rd_set)->fds_bits[2],
 	    (long) ((fd_set *) &rd_set)->fds_bits[3]);
-    svc->trace_out(sd->cm, "       write_set started %lx, %lx, %lx, %lx, result was %lx, %lx, %lx, %lx",
+    svc->verbose(sd->cm, CMSelectVerbose, "       write_set started %lx, %lx, %lx, %lx, result was %lx, %lx, %lx, %lx",
 	    (long) ((fd_set *) sd->write_set)->fds_bits[0],
 	    (long) ((fd_set *) sd->write_set)->fds_bits[1],
 	    (long) ((fd_set *) sd->write_set)->fds_bits[2],
@@ -430,7 +430,7 @@ int timeout_usec;
 	    }
 	    if (FD_ISSET(i, &wr_set)) {
 		if (sd->write_items[i].func != NULL) {
-		    svc->trace_out(sd->cm, 
+		    svc->verbose(sd->cm, CMSelectVerbose, 
 				   "Running select write action on fd %d",
 				   i);
 		    sd->write_items[i].func(sd->write_items[i].arg1,
@@ -443,7 +443,7 @@ int timeout_usec;
 	    }
 	    if (FD_ISSET(i, &rd_set)) {
 		if (sd->select_items[i].func != NULL) {
-		    svc->trace_out(sd->cm, 
+		    svc->verbose(sd->cm, CMSelectVerbose, 
 				   "Running select read action on fd %d",
 				   i);
 		    sd->select_items[i].func(sd->select_items[i].arg1,
@@ -558,7 +558,7 @@ void *arg2;
 	fprintf(stderr, "Internal Error, stupid WINSOCK large FD bug.\n");
 	fprintf(stderr, "Increase FD_SETSIZE.  Item not added to fdset.\n");
     }
-    svc->trace_out(sd->cm, "Adding fd %d to select read list", fd);
+    svc->verbose(sd->cm, CMSelectVerbose, "Adding fd %d to select read list", fd);
     sd->select_items[fd].func = func;
     sd->select_items[fd].arg1 = arg1;
     sd->select_items[fd].arg2 = arg2;
@@ -607,10 +607,10 @@ void *arg2;
 	sd->sel_item_max = fd;
     }
     if (func != NULL) {
-	svc->trace_out(sd->cm, "Adding fd %d to select write list", fd);
+	svc->verbose(sd->cm, CMSelectVerbose, "Adding fd %d to select write list", fd);
 	FD_SET(fd, (fd_set *) sd->write_set);
     } else {
-	svc->trace_out(sd->cm, "Removing fd %d to select write list", fd);
+	svc->verbose(sd->cm, CMSelectVerbose, "Removing fd %d to select write list", fd);
 	FD_CLR(fd, (fd_set *) sd->write_set);
     }
     if (fd > FD_SETSIZE) {
@@ -1001,7 +1001,7 @@ select_data_ptr *sdp;
     }
     sd->wake_read_fd = filedes[0];
     sd->wake_write_fd = filedes[1];
-    svc->trace_out(sd->cm, "CMSelect Adding read_wake_fd as action on fd %d",
+    svc->verbose(sd->cm, CMSelectVerbose, "CMSelect Adding read_wake_fd as action on fd %d",
 		   sd->wake_read_fd);
     libcmselect_LTX_add_select(svc, sdp, sd->wake_read_fd, read_wake_fd, 
 			       (void*)(long)sd->wake_read_fd, NULL);
@@ -1087,7 +1087,7 @@ void *client_data;
     select_data_ptr *sdp = client_data;
     select_data_ptr sd = *sdp;
 
-    svc->trace_out(sd->cm, "CMSelect Shutdown task called");
+    svc->verbose(sd->cm, CMSelectVerbose, "CMSelect Shutdown task called");
     if (sd->server_thread != thr_thread_self()) {
 	sd->closed = 1;
 	wake_server_thread(sd);
@@ -1103,7 +1103,7 @@ void *client_data;
     select_data_ptr *sdp = client_data;
     select_data_ptr sd = *sdp;
 
-    svc->trace_out(sd->cm, "CMSelect free task called");
+    svc->verbose(sd->cm, CMFreeVerbose, "CMSelect free task called");
 
     if (*((select_data_ptr *)client_data) != NULL) {
 	free_select_data(svc, sdp);
