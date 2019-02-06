@@ -299,11 +299,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         /* fields GLOBALMIN and GLOBALMAX */
         if (adiostype == adios2_type_string)
         {
-            char data[4096];
-            adios2_get(fp, avar, data, adios2_mode_sync);
-            arr = valueToMatlabValue(data, mxtype, complexFlag);
+            char *str1 = (char *)mxCalloc(65536, sizeof(char));
+            adios2_get(fp, avar, str1, adios2_mode_sync);
+            arr = valueToMatlabValue(str1, mxtype, complexFlag);
             mxSetFieldByNumber(vars, vi, var_field_GlobalMin, arr);
+            /* must make another copy to avoid double free corruption
+             * at exit of Matlab */
+            arr = valueToMatlabValue(str1, mxtype, complexFlag);
             mxSetFieldByNumber(vars, vi, var_field_GlobalMax, arr);
+            mxFree(str1);
         }
         else
         {
