@@ -357,10 +357,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mxDestroyArray(arr);
         /* field VALUE */
         size_t aelems;
-        mexPrintf("     get field Data\n");
         adios2_attribute_size(&aelems, aa);
         size_t atypesize =  adiostypeToMemSize(adiostype);
-        mexPrintf("     field Data nelems = %zu, type size=%zu\n", aelems, atypesize);
         void *data;
         if (adiostype == adios2_type_string)
         {
@@ -371,7 +369,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 data = mxCalloc(4096, 1);
                 size_t nelems;
                 adios2_attribute_data(data, &nelems, aa);
-                mexPrintf("     field Data ptr=%p  data=%s\n", data, data);
                 arr = valueToMatlabValue(data, mxtype, complexFlag);
             }
             else
@@ -386,7 +383,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 size_t nelems;
                 data = (void *) dataArray;
                 adios2_attribute_data(data, &nelems, aa);
-                mexPrintf("     field Data ptr=%p  data[0]=%s\n", data, *(char**)data);
                 arr = arrayToMatlabArray(data, aelems, mxtype, complexFlag);
             }
             mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
@@ -396,7 +392,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             data = mxCalloc(atypesize, aelems);
             size_t nelems;
             adios2_attribute_data(data, &nelems, aa);
-            mexPrintf("     field Data ptr=%p  nelems=%zu\n", data, nelems);
             if (aelems == 1)
             {
                 /* single element attribute */
@@ -415,8 +410,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mxFree(data);
     }
 
-    if (verbose)
-        mexPrintf("Lock the function call to not loose the ADIOS handlers\n");
+    //if (verbose)
+    //    mexPrintf("Lock the function call to not loose the ADIOS handlers\n");
     // mexLock();
     if (verbose)
         mexPrintf("return from adiosopenc\n");

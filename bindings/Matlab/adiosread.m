@@ -43,6 +43,7 @@ function [data, attributes] = adiosread(varargin)
 %          E.g. -1, 1  will read in the last step from the file
 %               n, -1  will read all steps from 'n' to the last one
 %
+%      Note: for scalars over time, START and COUNT should be [] 
 %
 %
 %   Please read the file adioscopyright.txt for more information.
@@ -170,18 +171,25 @@ else
     return
 end
 
+ndim=size(infostruct.Variables(args.VarIndex).Dims,2);
+
 % Arg 3: START array
 if (nargs >= 3)
     array = varargin{3};
-    if (~isnumeric(array) || isempty(array) || size(array, 1) ~= 1 || ndims(array) ~= 2)
-        msg = '3rd argument must be an 1-by-N array of integers.';
-        return
-    end
-    if((isempty(array) || size(array, 1) ~= 1) || ...
-       (size(array,2) ~= size(infostruct.Variables(args.VarIndex).Dims,2)))
-
-       msg = sprintf('3rd argument array size must equal to the dimensions of the variable which is %u in case of variable "%s"', args.Path);
-       return
+    if (ndim == 0)
+        if (~isempty(array))
+            msg = sprintf('3rd argument must be an [] for scalar variables like %s', args.Path);
+            return
+        end
+    else
+        if (~isnumeric(array) || isempty(array) || size(array, 1) ~= 1 || ndims(array) ~= 2)
+            msg = sprintf('3rd argument must be an 1-by-%u array of integers for variable %s.', ndim, args.Path);
+            return
+        end
+        if(size(array,2) ~= ndim)
+           msg = sprintf('3rd argument array size must equal to the dimensions of the variable which is %u in case of variable "%s"', ndim, args.Path);
+            return
+        end
     end
     args.Starts = int64(fix(array));
 end
@@ -189,15 +197,20 @@ end
 % Arg 4: COUNT array
 if (nargs >= 4)
     array = varargin{4};
-    if (~isnumeric(array) || isempty(array) || size(array, 1) ~= 1 || ndims(array) ~= 2)
-        msg = '4th argument must be an 1-by-N array of integers.';
-        return
-    end
-    if((isempty(array) || size(array, 1) ~= 1) || ...
-       (size(array,2) ~= size(infostruct.Variables(args.VarIndex).Dims,2)))
-
-       msg = sprintf('4th argument array size must equal to the dimensions of the variable which is %u in case of variable "%s"', infostruct.Variables(args.VarIndex).Dims, args.Path);
-       return
+    if (ndim == 0)
+        if (~isempty(array))
+            msg = sprintf('4th argument must be an [] for scalar variables like %s', args.Path);
+            return
+        end
+    else
+        if (~isnumeric(array) || isempty(array) || size(array, 1) ~= 1 || ndims(array) ~= 2)
+            msg = sprintf('4th argument must be an 1-by-%u array of integers for variable %s.', ndim, args.Path);
+            return
+        end
+        if(size(array,2) ~= ndim)
+           msg = sprintf('4th argument array size must equal to the dimensions of the variable which is %u in case of variable "%s"', ndim, args.Path);
+            return
+        end
     end
     args.Counts = int64(fix(array));
 end
