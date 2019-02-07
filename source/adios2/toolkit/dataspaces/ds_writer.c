@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * ds_writer.c
  *
  *  Created on: Jan 4, 2019
- *      Author: subedip
+ *      Author: Pradeep Subedi
+ *      		pradeep.subedi@rutgers.edu
  */
 #include <assert.h>
 #include <limits.h>

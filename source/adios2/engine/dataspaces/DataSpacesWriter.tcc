@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * DataSpacesWriter.tcc
  *
  *  Created on: Dec 5, 2018
- *      Author: pradeep.subedi@rutgers.edu
+ *      Author: Pradeep Subedi
+ *				pradeep.subedi@rutgers.edu
  */
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESWRITER_TCC_
 #define ADIOS2_ENGINE_DATASPACES_DATASPACESWRITER_TCC_

@@ -5,7 +5,8 @@
  * helloDataSpacesReader.cpp
  *
  *  Created on: Feb 06, 2019
-v *      Author: Pradeep Subedi
+ *      Author: Pradeep Subedi
+ *      		pradeep.subedi@rutgers.edu
  */
 
 #include <chrono>

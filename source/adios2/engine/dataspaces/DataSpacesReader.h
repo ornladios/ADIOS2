@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * DataSpacesReader.h
  *
  *  Created on: Dec 5, 2018
- *      Author: subedip
+ *      Author: Pradeep Subedi
+ *      		pradee.subedi@rutgers.edu
  */
 
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_H_

@@ -1,8 +1,12 @@
 /*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
  * ds_data.h
  *
  *  Created on: Dec 12, 2018
- *      Author: subedip
+ *      Author: Pradeep Subedi
+ *      		pradeep.subedi@rutgers.edu
  */
 
 #ifndef _DS_DATA_H_
@@ -13,15 +17,9 @@
 #endif
 #include "mpi.h"
 
-#define MAX_NUM_OF_STREAMS 20
 #define MAX_DS_NDIM 10
 
-struct adios_dspaces_stream_info {
-    char *name;         // file name passed in adios_open()
-    int  time_index;    // versioning, start from 0
-    int  iam_rank0;     // 1: current process has been rank 0 for this stream
-                        //    rank 0 of communicator for this file does extra work in finalize
-};
+
 struct adios_ds_data_struct
 {
     int rank;   // dataspaces rank or MPI rank if MPI is available
