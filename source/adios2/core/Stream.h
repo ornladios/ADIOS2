@@ -145,11 +145,11 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template void Stream::WriteAttribute<T>(                            \
+    extern template void Stream::WriteAttribute(                               \
         const std::string &, const T &, const std::string &,                   \
         const std::string, const bool);                                        \
                                                                                \
-    extern template void Stream::WriteAttribute<T>(                            \
+    extern template void Stream::WriteAttribute(                               \
         const std::string &, const T *, const size_t, const std::string &,     \
         const std::string, const bool);                                        \
                                                                                \

@@ -131,13 +131,13 @@ void Stream::CheckOpen()
 }
 
 #define declare_template_instantiation(T)                                      \
-    template void Stream::WriteAttribute<T>(const std::string &, const T &,    \
-                                            const std::string &,               \
-                                            const std::string, const bool);    \
+    template void Stream::WriteAttribute(const std::string &, const T &,       \
+                                         const std::string &,                  \
+                                         const std::string, const bool);       \
                                                                                \
-    template void Stream::WriteAttribute<T>(const std::string &, const T *,    \
-                                            const size_t, const std::string &, \
-                                            const std::string, const bool);    \
+    template void Stream::WriteAttribute(const std::string &, const T *,       \
+                                         const size_t, const std::string &,    \
+                                         const std::string, const bool);       \
                                                                                \
     template void Stream::ReadAttribute(                                       \
         const std::string &, T *, const std::string &, const std::string);

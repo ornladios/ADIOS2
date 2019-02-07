@@ -51,17 +51,6 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
 #else
         adios2::fstream oStream(fname, adios2::fstream::out);
 #endif
-        // write globals
-        oStream.write("gi8", m_TestData.I8.front());
-        oStream.write("gi16", m_TestData.I16.front());
-        oStream.write("gi32", m_TestData.I32.front());
-        oStream.write("gi64", m_TestData.I64.front());
-        oStream.write("gu8", m_TestData.U8.front());
-        oStream.write("gu16", m_TestData.U16.front());
-        oStream.write("gu32", m_TestData.U32.front());
-        oStream.write("gu64", m_TestData.U64.front());
-        oStream.write("gr32", m_TestData.R32.front());
-        oStream.write("gr64", m_TestData.R64.front());
 
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
@@ -73,6 +62,54 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
             SmallTestData stepData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
+            if (step == 0)
+            {
+                // write globals
+                oStream.write("gi8", m_TestData.I8.front());
+                oStream.write("gi16", m_TestData.I16.front());
+                oStream.write("gi32", m_TestData.I32.front());
+                oStream.write("gi64", m_TestData.I64.front());
+                oStream.write("gu8", m_TestData.U8.front());
+                oStream.write("gu16", m_TestData.U16.front());
+                oStream.write("gu32", m_TestData.U32.front());
+                oStream.write("gu64", m_TestData.U64.front());
+                oStream.write("gr32", m_TestData.R32.front());
+                oStream.write("gr64", m_TestData.R64.front());
+
+                oStream.write_attribute<std::string>("attrStr", "StringValue");
+                oStream.write_attribute("attri8", m_TestData.I8.front());
+                oStream.write_attribute("attri16", m_TestData.I16.front());
+                oStream.write_attribute("attri32", m_TestData.I32.front());
+                oStream.write_attribute("attri64", m_TestData.I64.front());
+                oStream.write_attribute("attru8", m_TestData.U8.front());
+                oStream.write_attribute("attru16", m_TestData.U16.front());
+                oStream.write_attribute("attru32", m_TestData.U32.front());
+                oStream.write_attribute("attru64", m_TestData.U64.front());
+                oStream.write_attribute("attrr32", m_TestData.R32.front());
+                oStream.write_attribute("attrr64", m_TestData.R64.front());
+
+                oStream.write_attribute("attri8array", m_TestData.S3.data(),
+                                        m_TestData.S3.size());
+                oStream.write_attribute("attri16array", m_TestData.I16.data(),
+                                        m_TestData.I16.size());
+                oStream.write_attribute("attri32array", m_TestData.I32.data(),
+                                        m_TestData.I32.size());
+                oStream.write_attribute("attri64array", m_TestData.I64.data(),
+                                        m_TestData.I64.size());
+                oStream.write_attribute("attru8array", m_TestData.U8.data(),
+                                        m_TestData.U8.size());
+                oStream.write_attribute("attru16array", m_TestData.U16.data(),
+                                        m_TestData.U16.size());
+                oStream.write_attribute("attru32array", m_TestData.U32.data(),
+                                        m_TestData.U32.size());
+                oStream.write_attribute("attru64array", m_TestData.U64.data(),
+                                        m_TestData.U64.size());
+                oStream.write_attribute("attrr32array", m_TestData.R32.data(),
+                                        m_TestData.R32.size());
+                oStream.write_attribute("attrr64array", m_TestData.R64.data(),
+                                        m_TestData.R64.size());
+            }
+
             oStream.write("iString", stepData.S1);
             oStream.write("i8", stepData.I8.data(), shape, start, count);
             oStream.write("i16", stepData.I16.data(), shape, start, count);
@@ -83,8 +120,32 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
             oStream.write("u32", stepData.U32.data(), shape, start, count);
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
-            oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::endl);
+            oStream.write("r64", stepData.R64.data(), shape, start, count);
+
+            if (step == 0)
+            {
+                oStream.write_attribute<std::string>("attrStr", m_TestData.S1);
+                oStream.write_attribute("attri8", m_TestData.I8.front(), "i8");
+                oStream.write_attribute("attri16", m_TestData.I16.front(),
+                                        "i16");
+                oStream.write_attribute("attri32", m_TestData.I32.front(),
+                                        "i32");
+                oStream.write_attribute("attri64", m_TestData.I64.front(),
+                                        "i64");
+                oStream.write_attribute("attru8", m_TestData.U8.front(), "u8");
+                oStream.write_attribute("attru16", m_TestData.U16.front(),
+                                        "u16");
+                oStream.write_attribute("attru32", m_TestData.U32.front(),
+                                        "u32");
+                oStream.write_attribute("attru64", m_TestData.U64.front(),
+                                        "u64");
+                oStream.write_attribute("attrr32", m_TestData.R32.front(),
+                                        "r32");
+                oStream.write_attribute("attrr64", m_TestData.R64.front(),
+                                        "r64");
+            }
+
+            oStream.endl();
         }
         oStream.close();
     }
@@ -163,6 +224,30 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead1D8)
                 EXPECT_EQ(vgu64.front(), m_TestData.U64.front());
                 EXPECT_EQ(vgr32.front(), m_TestData.R32.front());
                 EXPECT_EQ(vgr64.front(), m_TestData.R64.front());
+
+                auto vattrStr = iStep.read_attribute<std::string>("attrStr");
+                auto vattri8 = iStep.read_attribute<int8_t>("attri8");
+                auto vattri16 = iStep.read_attribute<int16_t>("attri16");
+                auto vattri32 = iStep.read_attribute<int32_t>("attri32");
+                auto vattri64 = iStep.read_attribute<int64_t>("attri64");
+                auto vattru8 = iStep.read_attribute<uint8_t>("attru8");
+                auto vattru16 = iStep.read_attribute<uint16_t>("attru16");
+                auto vattru32 = iStep.read_attribute<uint32_t>("attru32");
+                auto vattru64 = iStep.read_attribute<uint64_t>("attru64");
+                auto vattrr32 = iStep.read_attribute<float>("attrr32");
+                auto vattrr64 = iStep.read_attribute<double>("attrr64");
+
+                EXPECT_EQ(vattrStr.front(), "StringValue");
+                EXPECT_EQ(vattri8.front(), m_TestData.I8.front());
+                EXPECT_EQ(vattri16.front(), m_TestData.I16.front());
+                EXPECT_EQ(vattri32.front(), m_TestData.I32.front());
+                EXPECT_EQ(vattri64.front(), m_TestData.I64.front());
+                EXPECT_EQ(vattru8.front(), m_TestData.U8.front());
+                EXPECT_EQ(vattru16.front(), m_TestData.U16.front());
+                EXPECT_EQ(vattru32.front(), m_TestData.U32.front());
+                EXPECT_EQ(vattru64.front(), m_TestData.U64.front());
+                EXPECT_EQ(vattrr32.front(), m_TestData.R32.front());
+                EXPECT_EQ(vattrr64.front(), m_TestData.R64.front());
             }
 
             auto IString = iStep.read<std::string>("iString");
@@ -364,7 +449,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 #endif
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
-        // The local process' part (start, count) can be defined now or later
+        // The local process' part (start, count) can be defined now or
+        // later
         // before write().
         adios2::Dims shape{Ny, static_cast<std::size_t>(mpiSize * Nx)};
         adios2::Dims start{0, static_cast<std::size_t>(mpiRank * Nx)};
