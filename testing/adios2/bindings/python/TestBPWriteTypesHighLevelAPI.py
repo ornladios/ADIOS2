@@ -276,7 +276,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
             if(inTags != ["varattr1", "varattr2", "varattr3"]):
                 print(inTags)
                 raise ValueError('var attrStrArray read failed')
-            
+
             if((inI8 == data.I8).all() is False):
                 raise ValueError('var attrI8 array read failed')
 
