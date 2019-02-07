@@ -11,7 +11,6 @@ ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_engine.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_variable.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_attribute.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_operator.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_FILE.cpp
 )
 target_include_directories(adios2
   PUBLIC
@@ -34,6 +33,5 @@ install(
         c/adios2_c_attribute.h
         c/adios2_c_engine.h
         c/adios2_c_operator.h
-        c/adios2_c_FILE.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/c
 )

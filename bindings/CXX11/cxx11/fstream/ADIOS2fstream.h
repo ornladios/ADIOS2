@@ -206,14 +206,15 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
-     * @param endl similar to std::endl, end current step and flush (default).
-     * Use adios2::endl for true.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default).
+     * Use adios2::endStep for true.
      */
     template <class T>
     void write_attribute(const std::string &name, const T &value,
                          const std::string &variableName = "",
                          const std::string separator = "/",
-                         const bool endl = false);
+                         const bool endStep = false);
 
     /**
      * @brief Define attribute inside fstream or for a variable after write.
@@ -227,14 +228,16 @@ public:
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
-     * @param endl similar to std::endl, end current step and flush (default).
-     * Use adios2::endl for true.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default).
+     * Use adios2::endStep for true.
      */
     template <class T>
-    void
-    write_attribute(const std::string &name, const T *data,
-                    const size_t elements, const std::string &variableName = "",
-                    const std::string separator = "/", const bool endl = false);
+    void write_attribute(const std::string &name, const T *data,
+                         const size_t elements,
+                         const std::string &variableName = "",
+                         const std::string separator = "/",
+                         const bool endStep = false);
 
     /**
      * writes a self-describing array variable
@@ -246,8 +249,9 @@ public:
      * variables.
      * @param count variable dimension for current MPI rank. Local variables
      * only have count.
-     * @param endl similar to std::endl, end current step and flush (default).
-     * Use adios2::endl for true.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default).
+     * Use adios2::endStep for true.
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
@@ -256,20 +260,20 @@ public:
                const adios2::Dims &shape = adios2::Dims(),
                const adios2::Dims &start = adios2::Dims(),
                const adios2::Dims &count = adios2::Dims(),
-               const bool endl = false);
+               const bool endStep = false);
 
     /**
      * Write a self-describing single-value variable
      * @param name variable name
      * @param value variable data value (can be r-value)
-     * @param endl similar to std::endl, end current step and flush (default).
-     * Use adios2::endl for true.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default). Use adios2::endStep for true.
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
     template <class T>
     void write(const std::string &name, const T &value,
-               const bool endl = false);
+               const bool endStep = false);
 
     /**
      * Reads into a pre-allocated pointer a selection piece in dimension. When
@@ -423,12 +427,28 @@ public:
                         const Dims &count, const size_t stepsStart,
                         const size_t stepsCount);
 
+    /**
+     * Reads an attribute returning a vector
+     * For single values vector size = 1
+     * @param name attribute name
+     * @param variableName default is empty, if not empty look for an attribute
+     * associated to a variable
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     * @return vector containing attribute values
+     */
     template <class T>
     std::vector<T> read_attribute(const std::string &name,
                                   const std::string &variableName = "",
                                   const std::string separator = "/");
 
-    void endl();
+    /**
+     * At write: ends the current step
+     * At read: use it in streaming mode to inform the writer the reader
+     * consumed the information. No effect for file engines.
+     */
+    void end_step();
 
     /** close current stream becoming inaccessible */
     void close();

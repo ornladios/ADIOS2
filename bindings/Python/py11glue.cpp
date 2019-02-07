@@ -186,7 +186,7 @@ PYBIND11_MODULE(adios2, m)
           pybind11::arg("debugMode") = true);
 
     m.def("open", &Open, pybind11::arg("name"), pybind11::arg("mode"),
-          pybind11::arg("comm"), pybind11::arg("enginetype") = "BPFile", R"md(
+          pybind11::arg("comm"), pybind11::arg("engine_type") = "BPFile", R"md(
           Simple API MPI open, based on python IO. 
           Allows for passing parameters in source code.
 
@@ -201,7 +201,7 @@ PYBIND11_MODULE(adios2, m)
               comm  (mpi4py)
                     MPI communicator
               
-              enginetype
+              engine_type
                   adios2 engine type, default=BPFile
 
           Returns 
@@ -210,8 +210,8 @@ PYBIND11_MODULE(adios2, m)
     )md");
 
     m.def("open", &OpenConfig, pybind11::arg("name"), pybind11::arg("mode"),
-          pybind11::arg("comm"), pybind11::arg("configfile"),
-          pybind11::arg("ioinconfigfile"), R"md(
+          pybind11::arg("comm"), pybind11::arg("config_file"),
+          pybind11::arg("io_in_config_file"), R"md(
           Simple API MPI open, based on python IO. 
           Allows for passing a runtime configuration file in xml format and the
           name of the io element related to the returning File.
@@ -227,10 +227,10 @@ PYBIND11_MODULE(adios2, m)
               comm  (mpi4py)
                     MPI communicator
               
-              configfile
+              config_file
                     adios2 runtime configuration file name, in xml format
 
-              ioinconfigfile
+              io_in_config_file
                     io element in configfile related to returning File
 
           Returns 
@@ -515,7 +515,7 @@ PYBIND11_MODULE(adios2, m)
                  return stream;
              })
 
-        .def("setparameter", &adios2::py11::File::SetParameter,
+        .def("set_parameter", &adios2::py11::File::SetParameter,
              pybind11::arg("key"), pybind11::arg("value"), R"md(
              Sets a single parameter. Overwrites value if key exists.
 
@@ -527,7 +527,7 @@ PYBIND11_MODULE(adios2, m)
                      parameter value
         )md")
 
-        .def("setparameters", &adios2::py11::File::SetParameters,
+        .def("set_parameters", &adios2::py11::File::SetParameters,
              pybind11::arg("parameters"), R"md(
              Sets parameters using a dictionary. 
              Removes any previous parameter.
@@ -540,7 +540,7 @@ PYBIND11_MODULE(adios2, m)
                      parameter value
         )md")
 
-        .def("addtransport", &adios2::py11::File::AddTransport,
+        .def("add_transport", &adios2::py11::File::AddTransport,
              pybind11::return_value_policy::move, pybind11::arg("type"),
              pybind11::arg("parameters") = adios2::Params(), R"md(
              Adds a transport and its parameters to current IO. Must be
@@ -559,7 +559,7 @@ PYBIND11_MODULE(adios2, m)
                      handler to added transport
         )md")
 
-        .def("availablevariables", &adios2::py11::File::AvailableVariables,
+        .def("available_variables", &adios2::py11::File::AvailableVariables,
              pybind11::return_value_policy::move, R"md(
              Returns a 2-level dictionary with variable information. 
              Read mode only.
@@ -572,7 +572,7 @@ PYBIND11_MODULE(adios2, m)
                          variable information dictionary
         )md")
 
-        .def("availableattributes", &adios2::py11::File::AvailableAttributes,
+        .def("available_attributes", &adios2::py11::File::AvailableAttributes,
              pybind11::return_value_policy::move, R"md(
              Returns a 2-level dictionary with attribute information. 
              Read mode only.
@@ -588,11 +588,12 @@ PYBIND11_MODULE(adios2, m)
         .def("write", (void (adios2::py11::File::*)(
                           const std::string &, const pybind11::array &,
                           const adios2::Dims &, const adios2::Dims &,
-                          const adios2::Dims &, const bool endl)) &
+                          const adios2::Dims &, const bool)) &
                           adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
              pybind11::arg("shape"), pybind11::arg("start"),
-             pybind11::arg("count"), pybind11::arg("endl") = false, R"md(
+             pybind11::arg("count"), pybind11::arg("endstep") = false,
+             R"md(
              writes a self-describing array (numpy) variable
 
              Parameters
@@ -614,18 +615,18 @@ PYBIND11_MODULE(adios2, m)
                      variable dimension for current MPI rank. 
                      Pass a numpy array for local variables.
 
-                 endl 
+                 endstep 
                      end current step, begin next step and flush (default = false).
         )md")
 
-        .def("writeattribute",
+        .def("write_attribute",
              (void (adios2::py11::File::*)(
                  const std::string &, const pybind11::array &,
-                 const std::string &, const std::string, const bool endl)) &
+                 const std::string &, const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
              pybind11::arg("name"), pybind11::arg("array"),
              pybind11::arg("variablename") = "",
-             pybind11::arg("separator") = "/", pybind11::arg("endl") = false,
+             pybind11::arg("separator") = "/", pybind11::arg("endstep") = false,
              R"md(
 		             writes a self-describing single value array (numpy) variable
 
@@ -643,18 +644,18 @@ PYBIND11_MODULE(adios2, m)
                              concatenation string between variablename and attribute
                              e.g. variablename + separator + name
                                   var/units. Not used if variablename is empty 
-		                 endl 
+		                 endstep 
 		                     end current step, begin next step and flush 
 		                     (default = false).
 		        )md")
-        .def("writeattribute",
+        .def("write_attribute",
              (void (adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string &,
-                 const std::string, const bool endl)) &
+                 const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
              pybind11::arg("name"), pybind11::arg("stringvalue"),
              pybind11::arg("variablename") = "",
-             pybind11::arg("separator") = "/", pybind11::arg("endl") = false,
+             pybind11::arg("separator") = "/", pybind11::arg("endstep") = false,
              R"md(
 				 writes a self-describing single value array (numpy) variable
 
@@ -672,19 +673,19 @@ PYBIND11_MODULE(adios2, m)
 						 concatenation string between variablename and attribute
 						 e.g. variablename + separator + name
 							  var/units. Not used if variablename is empty 
-					 endl 
+					 endstep 
 						 end current step, begin next step and flush 
 						 (default = false).
 			)md")
 
-        .def("writeattribute",
+        .def("write_attribute",
              (void (adios2::py11::File::*)(
                  const std::string &, const std::vector<std::string> &,
-                 const std::string &, const std::string, const bool endl)) &
+                 const std::string &, const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
              pybind11::arg("name"), pybind11::arg("stringarray"),
              pybind11::arg("variablename") = "",
-             pybind11::arg("separator") = "/", pybind11::arg("endl") = false,
+             pybind11::arg("separator") = "/", pybind11::arg("endstep") = false,
              R"md(
 				 writes a self-describing single value array (numpy) variable
 
@@ -702,17 +703,17 @@ PYBIND11_MODULE(adios2, m)
 						 concatenation string between variablename and attribute
 						 e.g. variablename + separator + name
 							  var/units. Not used if variablename is empty 
-					 endl 
+					 endstep 
 						 end current step, begin next step and flush 
 						 (default = false).
 			)md")
 
-        .def("write", (void (adios2::py11::File::*)(const std::string &,
-                                                    const pybind11::array &,
-                                                    const bool endl)) &
-                          adios2::py11::File::Write,
+        .def("write",
+             (void (adios2::py11::File::*)(
+                 const std::string &, const pybind11::array &, const bool)) &
+                 adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
-             pybind11::arg("endl") = false, R"md(
+             pybind11::arg("endstep") = false, R"md(
              writes a self-describing single value array (numpy) variable
 
              Parameters
@@ -722,17 +723,17 @@ PYBIND11_MODULE(adios2, m)
                  array: numpy 
                      variable data single value
 
-                 endl 
+                 endstep 
                      end current step, begin next step and flush 
                      (default = false).
         )md")
 
         .def("write",
-             (void (adios2::py11::File::*)(
-                 const std::string &, const std::string &, const bool endl)) &
+             (void (adios2::py11::File::*)(const std::string &,
+                                           const std::string &, const bool)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("string"),
-             pybind11::arg("endl") = false, R"md(
+             pybind11::arg("endstep") = false, R"md(
              writes a self-describing single value string variable
 
              Parameters
@@ -742,14 +743,14 @@ PYBIND11_MODULE(adios2, m)
                  string 
                      variable data single value
 
-                 endl 
+                 endstep 
                      end current step, begin next step and flush 
                      (default = false).
         )md")
 
-        .def("readstring", (std::vector<std::string> (adios2::py11::File::*)(
-                               const std::string &)) &
-                               adios2::py11::File::ReadString,
+        .def("read_string", (std::vector<std::string> (adios2::py11::File::*)(
+                                const std::string &)) &
+                                adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), R"md(
              Reads string value for current step 
@@ -765,7 +766,7 @@ PYBIND11_MODULE(adios2, m)
 					 for localvalues an n-block size list
         )md")
 
-        .def("readstring",
+        .def("read_string",
              (std::vector<std::string> (adios2::py11::File::*)(
                  const std::string &, const size_t, const size_t)) &
                  adios2::py11::File::ReadString,
@@ -863,7 +864,7 @@ PYBIND11_MODULE(adios2, m)
                     resulting array from selection 
         )md")
 
-        .def("readattribute",
+        .def("read_attribute",
              (pybind11::array (adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttribute,
@@ -889,7 +890,7 @@ PYBIND11_MODULE(adios2, m)
 						 resulting array attribute data
 	    )md")
 
-        .def("readattributestring",
+        .def("read_attribute_string",
              (std::vector<std::string> (adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttributeString,
@@ -915,11 +916,13 @@ PYBIND11_MODULE(adios2, m)
 						 resulting string list attribute data 
 		)md")
 
-        .def("endl", &adios2::py11::File::Endl, R"md(
-			Write mode only: advances to the next step.
-			Similar to endl=True in a write call.
-			Convenient when declaring variable attributes as advancing to the
-			step is not attached to any variable.
+        .def("end_step", &adios2::py11::File::EndStep, R"md(
+			Write mode: advances to the next step.
+                        Convenient when declaring variable attributes 
+                        as advancing to the next
+			            step is not attached to any variable.
+			Read mode: in streaming mode releases the current step 
+                       (no effect in file based engines) 
 		)md")
 
         .def("close", &adios2::py11::File::Close, R"md(
@@ -928,7 +931,7 @@ PYBIND11_MODULE(adios2, m)
             Required in all other cases per-open to avoid resource leaks.
         )md")
 
-        .def("currentstep", &adios2::py11::File::CurrentStep, R"md(
+        .def("current_step", &adios2::py11::File::CurrentStep, R"md(
             Return current step when using for-in loops, read mode only
 
             Returns

@@ -9,8 +9,6 @@
 #  Created on: March 12, 2018
 #      Author: William F Godoy godoywf@ornl.gov
 
-
-import sys
 from adios2NPTypes import SmallTestData
 from mpi4py import MPI
 import numpy as np
@@ -49,30 +47,30 @@ with adios2.open("types_np.bp", "w", comm) as fw:
             fw.write("gvarR64", np.array(data.R64[0]))
 
             # single value attributes
-            fw.writeattribute("attrStr", "Testing single string attribute")
-            fw.writeattribute("attrI8", np.array(data.I8[0]))
-            fw.writeattribute("attrI16", np.array(data.I16[0]))
-            fw.writeattribute("attrI32", np.array(data.I32[0]))
-            fw.writeattribute("attrI64", np.array(data.I64[0]))
-            fw.writeattribute("attrU8", np.array(data.U8[0]))
-            fw.writeattribute("attrU16", np.array(data.U16[0]))
-            fw.writeattribute("attrU32", np.array(data.U32[0]))
-            fw.writeattribute("attrU64", np.array(data.U64[0]))
-            fw.writeattribute("attrR32", np.array(data.R32[0]))
-            fw.writeattribute("attrR64", np.array(data.R64[0]))
+            fw.write_attribute("attrStr", "Testing single string attribute")
+            fw.write_attribute("attrI8", np.array(data.I8[0]))
+            fw.write_attribute("attrI16", np.array(data.I16[0]))
+            fw.write_attribute("attrI32", np.array(data.I32[0]))
+            fw.write_attribute("attrI64", np.array(data.I64[0]))
+            fw.write_attribute("attrU8", np.array(data.U8[0]))
+            fw.write_attribute("attrU16", np.array(data.U16[0]))
+            fw.write_attribute("attrU32", np.array(data.U32[0]))
+            fw.write_attribute("attrU64", np.array(data.U64[0]))
+            fw.write_attribute("attrR32", np.array(data.R32[0]))
+            fw.write_attribute("attrR64", np.array(data.R64[0]))
 
-            fw.writeattribute(
+            fw.write_attribute(
                 "attrStrArray", ["string1", "string2", "string3"])
-            fw.writeattribute("attrI8Array",  data.I8)
-            fw.writeattribute("attrI16Array", data.I16)
-            fw.writeattribute("attrI32Array", data.I32)
-            fw.writeattribute("attrI64Array", data.I64)
-            fw.writeattribute("attrU8Array",  data.U8)
-            fw.writeattribute("attrU16Array", data.U16)
-            fw.writeattribute("attrU32Array", data.U32)
-            fw.writeattribute("attrU64Array", data.U64)
-            fw.writeattribute("attrR32Array", data.R32)
-            fw.writeattribute("attrR64Array", data.R64)
+            fw.write_attribute("attrI8Array",  data.I8)
+            fw.write_attribute("attrI16Array", data.I16)
+            fw.write_attribute("attrI32Array", data.I32)
+            fw.write_attribute("attrI64Array", data.I64)
+            fw.write_attribute("attrU8Array",  data.U8)
+            fw.write_attribute("attrU16Array", data.U16)
+            fw.write_attribute("attrU32Array", data.U32)
+            fw.write_attribute("attrU64Array", data.U64)
+            fw.write_attribute("attrR32Array", data.R32)
+            fw.write_attribute("attrR64Array", data.R64)
 
         fw.write("steps", "Step:" + str(i))
         fw.write("varI8", data.I8, shape, start, count)
@@ -87,20 +85,20 @@ with adios2.open("types_np.bp", "w", comm) as fw:
         fw.write("varR64", data.R64, shape, start, count)
 
         if(rank == 0 and i == 0):
-            fw.writeattribute("varattrStrArray", [
-                              "varattr1", "varattr2", "varattr3"], "steps")
-            fw.writeattribute("varattrI8Array",  data.I8, "varI8")
-            fw.writeattribute("varattrI16Array", data.I16, "varI16")
-            fw.writeattribute("varattrI32Array", data.I32, "varI32")
-            fw.writeattribute("varattrI64Array", data.I64, "varI64")
-            fw.writeattribute("varattrU8Array",  data.U8, "varU8")
-            fw.writeattribute("varattrU16Array", data.U16, "varU16")
-            fw.writeattribute("varattrU32Array", data.U32, "varU32")
-            fw.writeattribute("varattrU64Array", data.U64, "varU64")
-            fw.writeattribute("varattrR32Array", data.R32, "varR32")
-            fw.writeattribute("varattrR64Array", data.R64, "varR64")
+            fw.write_attribute("varattrStrArray", [
+                "varattr1", "varattr2", "varattr3"], "steps")
+            fw.write_attribute("varattrI8Array",  data.I8, "varI8")
+            fw.write_attribute("varattrI16Array", data.I16, "varI16")
+            fw.write_attribute("varattrI32Array", data.I32, "varI32")
+            fw.write_attribute("varattrI64Array", data.I64, "varI64")
+            fw.write_attribute("varattrU8Array",  data.U8, "varU8")
+            fw.write_attribute("varattrU16Array", data.U16, "varU16")
+            fw.write_attribute("varattrU32Array", data.U32, "varU32")
+            fw.write_attribute("varattrU64Array", data.U64, "varU64")
+            fw.write_attribute("varattrR32Array", data.R32, "varR32")
+            fw.write_attribute("varattrR64Array", data.R64, "varR64")
 
-        fw.endl()
+        fw.end_step()
 
 comm.Barrier()
 
@@ -111,10 +109,10 @@ with adios2.open("types_np.bp", "r", comm) as fr:
 
     for fr_step in fr:
 
-        step = fr_step.currentstep()
+        step = fr_step.current_step()
         data.update(rank, step, size)
 
-        step_vars = fr_step.availablevariables()
+        step_vars = fr_step.available_variables()
 
 #         for name, info in step_vars.items():
 #             print("variable_name: " + name)
@@ -123,7 +121,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
 #             print("\n")
 
         if(step == 0):
-            inTag = fr_step.readstring("tag")
+            inTag = fr_step.read_string("tag")
             inI8 = fr_step.read("gvarI8")
             inI16 = fr_step.read("gvarI16")
             inI32 = fr_step.read("gvarI32")
@@ -170,17 +168,17 @@ with adios2.open("types_np.bp", "r", comm) as fr:
                 raise ValueError('gvarR64 read failed')
 
             # attributes
-            inTag = fr_step.readattributestring("attrStr")
-            inI8 = fr_step.readattribute("attrI8")
-            inI16 = fr_step.readattribute("attrI16")
-            inI32 = fr_step.readattribute("attrI32")
-            inI64 = fr_step.readattribute("attrI64")
-            inU8 = fr_step.readattribute("attrU8")
-            inU16 = fr_step.readattribute("attrU16")
-            inU32 = fr_step.readattribute("attrU32")
-            inU64 = fr_step.readattribute("attrU64")
-            inR32 = fr_step.readattribute("attrR32")
-            inR64 = fr_step.readattribute("attrR64")
+            inTag = fr_step.read_attribute_string("attrStr")
+            inI8 = fr_step.read_attribute("attrI8")
+            inI16 = fr_step.read_attribute("attrI16")
+            inI32 = fr_step.read_attribute("attrI32")
+            inI64 = fr_step.read_attribute("attrI64")
+            inU8 = fr_step.read_attribute("attrU8")
+            inU16 = fr_step.read_attribute("attrU16")
+            inU32 = fr_step.read_attribute("attrU32")
+            inU64 = fr_step.read_attribute("attrU64")
+            inR32 = fr_step.read_attribute("attrR32")
+            inR64 = fr_step.read_attribute("attrR64")
 
             if(inTag[0] != "Testing single string attribute"):
                 raise ValueError('attr string read failed')
@@ -216,17 +214,17 @@ with adios2.open("types_np.bp", "r", comm) as fr:
                 raise ValueError('attrR64 read failed')
 
             # Array attribute
-            inTag = fr_step.readattributestring("attrStrArray")
-            inI8 = fr_step.readattribute("attrI8Array")
-            inI16 = fr_step.readattribute("attrI16Array")
-            inI32 = fr_step.readattribute("attrI32Array")
-            inI64 = fr_step.readattribute("attrI64Array")
-            inU8 = fr_step.readattribute("attrU8Array")
-            inU16 = fr_step.readattribute("attrU16Array")
-            inU32 = fr_step.readattribute("attrU32Array")
-            inU64 = fr_step.readattribute("attrU64Array")
-            inR32 = fr_step.readattribute("attrR32Array")
-            inR64 = fr_step.readattribute("attrR64Array")
+            inTag = fr_step.read_attribute_string("attrStrArray")
+            inI8 = fr_step.read_attribute("attrI8Array")
+            inI16 = fr_step.read_attribute("attrI16Array")
+            inI32 = fr_step.read_attribute("attrI32Array")
+            inI64 = fr_step.read_attribute("attrI64Array")
+            inU8 = fr_step.read_attribute("attrU8Array")
+            inU16 = fr_step.read_attribute("attrU16Array")
+            inU32 = fr_step.read_attribute("attrU32Array")
+            inU64 = fr_step.read_attribute("attrU64Array")
+            inR32 = fr_step.read_attribute("attrR32Array")
+            inR64 = fr_step.read_attribute("attrR64Array")
 
             if(inTag != ["string1", "string2", "string3"]):
                 raise ValueError('attrStrArray read failed')
@@ -261,17 +259,17 @@ with adios2.open("types_np.bp", "r", comm) as fr:
             if((inR64 == data.R64).all() is False):
                 raise ValueError('attrR64 array read failed')
 
-            inTags = fr_step.readattributestring("varattrStrArray", "steps")
-            inI8 = fr_step.readattribute("varattrI8Array", "varI8")
-            in16 = fr_step.readattribute("varattrI16Array", "varI16")
-            inI32 = fr_step.readattribute("varattrI32Array", "varI32")
-            inI64 = fr_step.readattribute("varattrI64Array", "varI64")
-            inU8 = fr_step.readattribute("varattrU8Array",  "varU8")
-            inU16 = fr_step.readattribute("varattrU16Array", "varU16")
-            inU32 = fr_step.readattribute("varattrU32Array", "varU32")
-            inU64 = fr_step.readattribute("varattrU64Array", "varU64")
-            inR32 = fr_step.readattribute("varattrR32Array", "varR32")
-            inR64 = fr_step.readattribute("varattrR64Array", "varR64")
+            inTags = fr_step.read_attribute_string("varattrStrArray", "steps")
+            inI8 = fr_step.read_attribute("varattrI8Array", "varI8")
+            in16 = fr_step.read_attribute("varattrI16Array", "varI16")
+            inI32 = fr_step.read_attribute("varattrI32Array", "varI32")
+            inI64 = fr_step.read_attribute("varattrI64Array", "varI64")
+            inU8 = fr_step.read_attribute("varattrU8Array",  "varU8")
+            inU16 = fr_step.read_attribute("varattrU16Array", "varU16")
+            inU32 = fr_step.read_attribute("varattrU32Array", "varU32")
+            inU64 = fr_step.read_attribute("varattrU64Array", "varU64")
+            inR32 = fr_step.read_attribute("varattrR32Array", "varR32")
+            inR64 = fr_step.read_attribute("varattrR64Array", "varR64")
 
             if(inTags != ["varattr1", "varattr2", "varattr3"]):
                 print(inTags)
@@ -309,7 +307,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
 
         stepStr = "Step:" + str(step)
 
-        instepStr = fr_step.readstring("steps")
+        instepStr = fr_step.read_string("steps")
         if(instepStr[0] != stepStr):
             raise ValueError('steps variable read failed: ' +
                              instepStr + " " + stepStr)
@@ -324,6 +322,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
         indataU64 = fr_step.read("varU64", start, count)
         indataR32 = fr_step.read("varR32", start, count)
         indataR64 = fr_step.read("varR64", start, count)
+        fr_step.end_step()
 
         if((indataI8 == data.I8).all() is False):
             raise ValueError('I8 array read failed')

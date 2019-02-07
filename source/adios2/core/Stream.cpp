@@ -59,7 +59,10 @@ bool Stream::GetStep()
 {
     if (!m_FirstStep)
     {
-        m_Engine->EndStep();
+        if (m_StepStatus)
+        {
+            m_Engine->EndStep();
+        }
     }
     else
     {
@@ -68,29 +71,28 @@ bool Stream::GetStep()
 
     if (m_Engine->BeginStep() != StepStatus::OK)
     {
+        m_StepStatus = false;
         return false;
     }
 
+    m_StepStatus = true;
     return true;
 }
 
-void Stream::NextStep()
+void Stream::EndStep()
 {
-    if (m_Mode != Mode::Write && m_Mode != Mode::Append)
+    if (m_StepStatus)
+    {
+        m_Engine->EndStep();
+        m_StepStatus = false;
+    }
+    else
     {
         throw std::invalid_argument("ERROR: stream " + m_Name +
-                                    ", endl function only allowed " +
-                                    "write or append mode, in call to endl\n");
+                                    " calling end step function twice (check "
+                                    "if a write function calls it) or "
+                                    "invalid stream\n");
     }
-
-    if (!m_StepStatus)
-    {
-        m_Engine->BeginStep();
-        m_StepStatus = true;
-    }
-
-    m_Engine->EndStep();
-    m_StepStatus = false;
 }
 
 void Stream::Close()
@@ -98,6 +100,7 @@ void Stream::Close()
     if (m_Engine != nullptr)
     {
         m_Engine->Close();
+        m_StepStatus = false;
         m_Engine = nullptr;
     }
 }

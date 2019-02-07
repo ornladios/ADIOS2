@@ -95,7 +95,7 @@ fstream::operator bool() const noexcept
     return true;
 }
 
-void fstream::endl() { m_Stream->NextStep(); }
+void fstream::end_step() { m_Stream->EndStep(); }
 
 void fstream::close()
 {

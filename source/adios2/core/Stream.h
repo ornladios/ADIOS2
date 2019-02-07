@@ -115,7 +115,7 @@ public:
                        const std::string &variableName,
                        const std::string separator);
 
-    void NextStep();
+    void EndStep();
 
     void Close();
 

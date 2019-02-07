@@ -56,28 +56,28 @@ public:
     void WriteAttribute(const std::string &name, const pybind11::array &array,
                         const std::string &variableName = "",
                         const std::string separator = "/",
-                        const bool endl = false);
+                        const bool endstep = false);
 
     void WriteAttribute(const std::string &name, const std::string &stringValue,
                         const std::string &variableName = "",
                         const std::string separator = "/",
-                        const bool endl = false);
+                        const bool endstep = false);
 
     void WriteAttribute(const std::string &name,
                         const std::vector<std::string> &stringArray,
                         const std::string &variableName = "",
                         const std::string separator = "/",
-                        const bool endl = false);
+                        const bool endstep = false);
 
     void Write(const std::string &name, const pybind11::array &array,
                const Dims &shape, const Dims &start, const Dims &count,
-               const bool endl = false);
+               const bool endstep = false);
 
     void Write(const std::string &name, const pybind11::array &array,
-               const bool endl = false);
+               const bool endstep = false);
 
     void Write(const std::string &name, const std::string &stringValue,
-               const bool endl = false);
+               const bool endstep = false);
 
     bool GetStep() const;
 
@@ -106,7 +106,7 @@ public:
                         const std::string &variableName = "",
                         const std::string separator = "/");
 
-    void Endl();
+    void EndStep();
 
     void Close();
 

@@ -336,7 +336,7 @@ File::ReadAttributeString(const std::string &name,
     return data;
 }
 
-void File::Endl() { m_Stream->NextStep(); }
+void File::EndStep() { m_Stream->EndStep(); }
 
 void File::Close()
 {

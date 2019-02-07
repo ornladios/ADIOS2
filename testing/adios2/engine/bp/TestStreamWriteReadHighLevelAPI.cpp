@@ -171,7 +171,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
                                         m_TestData.R64.size(), "r64", "::");
             }
 
-            oStream.endl();
+            oStream.end_step();
         }
         oStream.close();
     }
