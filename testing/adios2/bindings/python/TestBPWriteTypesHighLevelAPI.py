@@ -74,7 +74,6 @@ with adios2.open("types_np.bp", "w", comm) as fw:
             fw.writeattribute("attrR32Array", data.R32)
             fw.writeattribute("attrR64Array", data.R64)
 
-        print("Write Step: " + str(i) + " rank: " + str(rank))
         fw.write("steps", "Step:" + str(i))
         fw.write("varI8", data.I8, shape, start, count)
         fw.write("varI16", data.I16, shape, start, count)
@@ -103,8 +102,7 @@ with adios2.open("types_np.bp", "w", comm) as fw:
 
         fw.endl()
 
-# comm.Barrier()
-sys.stdout.flush()
+comm.Barrier()
 
 # Reader
 data = SmallTestData()
@@ -115,8 +113,6 @@ with adios2.open("types_np.bp", "r", comm) as fr:
 
         step = fr_step.currentstep()
         data.update(rank, step, size)
-
-        print("Reader Step: " + str(step))
 
         step_vars = fr_step.availablevariables()
 
@@ -265,22 +261,22 @@ with adios2.open("types_np.bp", "r", comm) as fr:
             if((inR64 == data.R64).all() is False):
                 raise ValueError('attrR64 array read failed')
 
-            inTag = fw.readattributestring("varattrStrArray", "steps")
-            inI8 = fw.readattribute("varattrI8Array", "varI8")
-            in16 = fw.readattribute("varattrI16Array", "varI16")
-            inI32 = fw.readattribute("varattrI32Array", "varI32")
-            inI64 = fw.readattribute("varattrI64Array", "varI64")
-            inU8 = fw.readattribute("varattrU8Array",  "varU8")
-            inU16 = fw.readattribute("varattrU16Array", "varU16")
-            inU32 = fw.readattribute("varattrU32Array", "varU32")
-            inU64 = fw.readattribute("varattrU64Array", "varU64")
-            inR32 = fw.readattribute("varattrR32Array", "varR32")
-            inR64 = fw.readattribute("varattrR64Array", "varR64")
+            inTags = fr_step.readattributestring("varattrStrArray", "steps")
+            inI8 = fr_step.readattribute("varattrI8Array", "varI8")
+            in16 = fr_step.readattribute("varattrI16Array", "varI16")
+            inI32 = fr_step.readattribute("varattrI32Array", "varI32")
+            inI64 = fr_step.readattribute("varattrI64Array", "varI64")
+            inU8 = fr_step.readattribute("varattrU8Array",  "varU8")
+            inU16 = fr_step.readattribute("varattrU16Array", "varU16")
+            inU32 = fr_step.readattribute("varattrU32Array", "varU32")
+            inU64 = fr_step.readattribute("varattrU64Array", "varU64")
+            inR32 = fr_step.readattribute("varattrR32Array", "varR32")
+            inR64 = fr_step.readattribute("varattrR64Array", "varR64")
 
-            if(inTag != ["varattr1", "varattr2", "varattr3"]):
-                print(inTag)
+            if(inTags != ["varattr1", "varattr2", "varattr3"]):
+                print(inTags)
                 raise ValueError('var attrStrArray read failed')
-
+            
             if((inI8 == data.I8).all() is False):
                 raise ValueError('var attrI8 array read failed')
 

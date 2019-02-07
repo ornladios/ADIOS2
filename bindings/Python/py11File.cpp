@@ -321,17 +321,16 @@ File::ReadAttributeString(const std::string &name,
                           const std::string &variableName,
                           const std::string separator)
 {
-    std::vector<std::string> data;
-    core::Attribute<std::string> *attribute =
+    const core::Attribute<std::string> *attribute =
         m_Stream->m_IO->InquireAttribute<std::string>(name, variableName,
                                                       separator);
 
     if (attribute == nullptr)
     {
-        return data;
+        return std::vector<std::string>();
     }
 
-    data.resize(attribute->m_Elements);
+    std::vector<std::string> data(attribute->m_Elements);
     m_Stream->ReadAttribute<std::string>(name, data.data(), variableName,
                                          separator);
     return data;
