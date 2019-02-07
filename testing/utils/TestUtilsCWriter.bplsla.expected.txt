@@ -8,7 +8,7 @@
   unsigned int    aU32      attr   = 2147483648
   unsigned char   aU8       attr   = 128
   string          name      attr   = "TestUtilsCWrite"
-  int             nproc     scalar = 1 / 1
+  int             nproc     scalar = 1
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
   string          strarray  attr   = {"first", "second", "third", "fourth"}
