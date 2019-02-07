@@ -76,24 +76,42 @@ if(MPI_FOUND)
   set(ADIOS2_HAVE_MPI TRUE)
 endif()
 
+# ZeroMQ
+if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
+    find_package(ZeroMQ 4.1)
+elseif(ADIOS2_USE_ZeroMQ)
+    find_package(ZeroMQ 4.1 REQUIRED)
+endif()
+if(ZeroMQ_FOUND)
+    set(ADIOS2_HAVE_ZeroMQ TRUE)
+endif()
+
 # DataMan
 # DataMan currently breaks the PGI compiler
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
     if(ADIOS2_USE_DataMan STREQUAL AUTO)
-        set(ADIOS2_HAVE_DataMan TRUE)
+        if(ZeroMQ_FOUND AND MPI_FOUND)
+            set(ADIOS2_HAVE_DataMan TRUE)
+        endif()
     elseif(ADIOS2_USE_DataMan)
-        set(ADIOS2_HAVE_DataMan TRUE)
+        if(ZeroMQ_FOUND AND MPI_FOUND)
+            set(ADIOS2_HAVE_DataMan TRUE)
+        endif()
     endif()
 endif()
 
-# ZeroMQ
-if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
-  find_package(ZeroMQ 4.1)
-elseif(ADIOS2_USE_ZeroMQ)
-  find_package(ZeroMQ 4.1 REQUIRED)
-endif()
-if(ZeroMQ_FOUND)
-  set(ADIOS2_HAVE_ZeroMQ TRUE)
+# WDM
+# WDM currently breaks the PGI compiler
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
+    if(ADIOS2_USE_WDM STREQUAL AUTO)
+        if(ZeroMQ_FOUND AND MPI_FOUND)
+            set(ADIOS2_HAVE_WDM TRUE)
+        endif()
+    elseif(ADIOS2_USE_WDM)
+        if(ZeroMQ_FOUND AND MPI_FOUND)
+            set(ADIOS2_HAVE_WDM TRUE)
+        endif()
+    endif()
 endif()
 
 # HDF5

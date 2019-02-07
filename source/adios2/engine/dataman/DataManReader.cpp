@@ -25,7 +25,7 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : DataManCommon("DataManReader", io, name, mode, mpiComm),
-  m_DataManDeserializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian)
+  m_DataManSerializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -47,7 +47,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
+    std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>> vars =
         nullptr;
     auto start_time = std::chrono::system_clock::now();
 
@@ -68,7 +68,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
             }
         }
 
-        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+        m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
         if (stepMode == StepMode::NextAvailable)
         {
@@ -110,7 +110,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
     if (m_CurrentStep == 0)
     {
-        m_DataManDeserializer.GetAttributes(m_IO);
+        m_DataManSerializer.GetAttributes(m_IO);
     }
 
     for (const auto &i : *vars)
@@ -142,7 +142,7 @@ size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
 void DataManReader::PerformGets() {}
 
-void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+void DataManReader::EndStep() { m_DataManSerializer.Erase(m_CurrentStep); }
 
 void DataManReader::Flush(const int transportIndex) {}
 
@@ -157,24 +157,24 @@ void DataManReader::Init()
     }
 
     // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                 Mode::Read, m_WorkflowMode, true);
+    m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
+    m_WANMan->OpenTransports(m_IO.m_TransportsParameters, Mode::Read,
+                             m_WorkflowMode, true);
 
     // start threads
     m_Listening = true;
-    m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
-                                                 m_DataMan);
+    m_DataThread =
+        std::make_shared<std::thread>(&DataManReader::IOThread, this, m_WANMan);
 }
 
-void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
+void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
 {
     while (m_Listening)
     {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
+        std::shared_ptr<std::vector<char>> buffer = man->Read(0);
         if (buffer != nullptr)
         {
-            int ret = m_DataManDeserializer.Put(buffer);
+            int ret = m_DataManSerializer.PutPack(buffer);
             if (ret > 0)
             {
                 m_FinalStep = ret;
@@ -218,7 +218,7 @@ void DataManReader::DoClose(const int transportIndex)
             }
         }
     }
-    m_DataMan = nullptr;
+    m_WANMan = nullptr;
 }
 
 } // end namespace engine

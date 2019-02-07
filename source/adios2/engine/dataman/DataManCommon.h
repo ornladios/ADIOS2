@@ -15,7 +15,7 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
-#include "adios2/toolkit/transportman/dataman/DataMan.h"
+#include "adios2/toolkit/transportman/wanman/WANMan.h"
 
 namespace adios2
 {
@@ -45,16 +45,16 @@ protected:
 
     bool m_IsLittleEndian;
     bool m_IsRowMajor;
-    bool m_ContiguousMajor = false;
+    bool m_ContiguousMajor = true;
 
     transport::FileFStream m_FileTransport;
 
     std::vector<std::string> m_StreamNames;
 
-    std::shared_ptr<transportman::DataMan> m_DataMan;
+    std::shared_ptr<transportman::WANMan> m_WANMan;
     std::shared_ptr<std::thread> m_DataThread;
 
-    virtual void IOThread(std::shared_ptr<transportman::DataMan> man) = 0;
+    virtual void IOThread(std::shared_ptr<transportman::WANMan> man) = 0;
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
 

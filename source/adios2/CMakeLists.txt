@@ -82,24 +82,33 @@ endif()
 
 if(ADIOS2_HAVE_ZeroMQ)
     target_sources(adios2 PRIVATE
-        toolkit/transport/wan/WANZmqPubSub.cpp
-        toolkit/transport/wan/WANZmqPubSub.h
-        toolkit/transport/wan/WANZmqP2P.cpp
-        toolkit/transport/wan/WANZmqP2P.h
+        toolkit/transport/socket/SocketZmq.h
+        toolkit/transport/socket/SocketZmqReqRep.cpp
+        toolkit/transport/socket/SocketZmqReqRep.h
+        toolkit/transport/socket/SocketZmqPubSub.cpp
+        toolkit/transport/socket/SocketZmqPubSub.h
+        toolkit/transport/socket/SocketZmqP2P.cpp
+        toolkit/transport/socket/SocketZmqP2P.h
+        toolkit/transportman/wanman/WANMan.cpp
+        toolkit/transportman/wanman/WANMan.h
+        toolkit/transportman/stagingman/StagingMan.cpp
+        toolkit/transportman/stagingman/StagingMan.h
         )
     target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()
 
+if(ADIOS2_HAVE_MPI)
+    target_sources(adios2 PRIVATE
+        toolkit/format/dataman/DataManSerializer.cpp
+        toolkit/format/dataman/DataManSerializer.tcc
+        toolkit/format/dataman/DataManSerializer.h
+        )
+    target_link_libraries(adios2 PUBLIC MPI::MPI_C)
+    target_link_libraries(adios2 PRIVATE nlohmann_json)
+endif()
+
 if(ADIOS2_HAVE_DataMan)
   target_sources(adios2 PRIVATE
-      toolkit/format/dataman/DataManDeserializer.cpp
-      toolkit/format/dataman/DataManDeserializer.tcc
-      toolkit/format/dataman/DataManDeserializer.h
-      toolkit/format/dataman/DataManSerializer.cpp
-      toolkit/format/dataman/DataManSerializer.tcc
-      toolkit/format/dataman/DataManSerializer.h
-      toolkit/transportman/dataman/DataMan.cpp
-      toolkit/transportman/dataman/DataMan.h
       engine/dataman/DataManCommon.cpp
       engine/dataman/DataManCommon.h
       engine/dataman/DataManReader.cpp
@@ -109,8 +118,22 @@ if(ADIOS2_HAVE_DataMan)
       engine/dataman/DataManWriter.h
       engine/dataman/DataManWriter.tcc
   )
-  target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
+
+if(ADIOS2_HAVE_WDM)
+  target_sources(adios2 PRIVATE
+      toolkit/format/dataman/DataManSerializer.cpp
+      toolkit/format/dataman/DataManSerializer.tcc
+      toolkit/format/dataman/DataManSerializer.h
+      engine/wdm/WdmReader.cpp
+      engine/wdm/WdmReader.h
+      engine/wdm/WdmReader.tcc
+      engine/wdm/WdmWriter.cpp
+      engine/wdm/WdmWriter.h
+      engine/wdm/WdmWriter.tcc
+  )
+endif()
+
 
 if(ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/sst)

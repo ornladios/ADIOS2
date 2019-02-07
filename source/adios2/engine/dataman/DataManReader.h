@@ -13,7 +13,7 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
 #include "DataManCommon.h"
-#include "adios2/toolkit/format/dataman/DataManDeserializer.tcc"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 
 namespace adios2
 {
@@ -40,14 +40,14 @@ private:
     bool m_Listening = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
 
-    format::DataManDeserializer m_DataManDeserializer;
+    format::DataManSerializer m_DataManSerializer;
     std::unordered_map<
         size_t,
-        std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>>>
+        std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>>>
         m_MetaDataMap;
 
     void Init();
-    void IOThread(std::shared_ptr<transportman::DataMan> man);
+    void IOThread(std::shared_ptr<transportman::WANMan> man);
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \

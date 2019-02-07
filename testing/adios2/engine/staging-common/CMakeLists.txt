@@ -141,6 +141,7 @@ set (KillReaders3Max_TIMEOUT "300")
 set (TimeoutReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -rarg --non_blocking -warg --ms_delay -warg 2000")
 set (LatestReader.FFS_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:FFS -rarg --latest -rarg --long_first_delay")
 set (LatestReader.BP_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:BP -rarg --latest -rarg --long_first_delay")
+set (LatestReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -rarg --latest -rarg --long_first_delay")
 set (DiscardWriter_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --engine_params -warg QueueLimit:1,QueueFullPolicy:discard -warg --ms_delay -warg 500 -rarg --discard")
 
 function(add_common_test basename engine)
@@ -173,4 +174,17 @@ list (APPEND SST_TESTS ${TEST_SET} ${FORTRAN_TESTS} ${SPECIAL_TESTS} ${MPI_TESTS
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
+
+
+
+#
+#   Setup tests for WDM engine
+#
+if(ADIOS2_HAVE_WDM)
+SET (WDM_TESTS "NoReaderNoWait;TimeoutReader;LatestReader;DiscardWriter")
+foreach(test ${WDM_TESTS})
+    add_common_test(${test} WDM)
+endforeach()
+endif()
+
 
