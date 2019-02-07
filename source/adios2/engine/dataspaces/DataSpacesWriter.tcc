@@ -30,16 +30,13 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 	 uint64_t lb_in[MAX_DS_NDIM], ub_in[MAX_DS_NDIM], gdims_in[MAX_DS_NDIM];
 	//Lock is acquired in BeginStep() and will be released in EndStep()
 	//For clients the lock is acquired in f_name type;
-	fprintf(stderr, "Starting to write data to dataspaces\n");
+	//fprintf(stderr, "Starting to write data to dataspaces\n");
 	 std::vector<uint64_t> dims_vec;
 
 	unsigned int version;
-	char *cstr = new char[f_Name.length() + 1];
-	strcpy(cstr, f_Name.c_str());
-	//struct adios_dspaces_stream_info *info = lookup_dspaces_stream_info(cstr);
 	version = m_CurrentStep;
 	int ndims = std::max(variable.m_Shape.size(), variable.m_Count.size());
-	fprintf(stderr, "ndims is %d\n", ndims);
+	//fprintf(stderr, "ndims is %d\n", ndims);
 	ndim_vector.push_back(ndims);
 	bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
 	/* Order of dimensions: in DataSpaces: fast --> slow --> slowest
@@ -80,8 +77,8 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 	    auto itType = varType_to_ds.find(variable.m_Type);
 	    if(itType == varType_to_ds.end()){
 	    	varType = 2;
-	    	fprintf(stderr, "variable not found. Using Integer as data type");
-	    	//TO DO fix for complex data type
+	    	fprintf(stderr, "variable Type not found. Using Integer as data type");
+	    	//Might have to fix for complex data types
 	    }else{
 	    	varType = itType->second;
 
@@ -93,13 +90,13 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 	    char *var_str = new char[ds_in_name.length() + 1];
 	    strcpy(var_str, ds_in_name.c_str());
 	    variable.SetData(values);
-	    fprintf(stderr, "Writer Varname: %s, Gdim: %llu, lb: %llu, ub: %llu, ElementType:%d\n", var_str, gdims_in[0], lb_in[0], ub_in[0], elemSize_vector[0]);
+	    //fprintf(stderr, "Writer Varname: %s, Gdim: %llu, lb: %llu, ub: %llu, ElementType:%d\n", var_str, gdims_in[0], lb_in[0], ub_in[0], elemSize_vector[0]);
 	    dspaces_define_gdim(var_str, ndims, gdims_in);
 	    dspaces_put(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, values);
 	    dspaces_put_sync();
-	    delete[] cstr;
-	    //written_variables.push_back(variable);
-	    fprintf(stderr, "Finished writing data to dataspaces\n");
+	    delete[] var_str;
+
+	    //fprintf(stderr, "Finished writing data to dataspaces\n");
 
 }
 

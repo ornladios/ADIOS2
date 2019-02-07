@@ -55,6 +55,8 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	dspaces_lock_on_read (cstr, &m_data.mpi_comm);
 	fprintf (stderr, "rank=%d got read lock\n", m_data.rank);
 
+	delete[] cstr;
+
 	//read the version and nvars from dataspaces
 	int l_version_no[2] = {0,0};
 	int version_buf_len = 2;
@@ -67,8 +69,10 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
 	dspaces_define_gdim(cstr, ndim, gdims);
 	dspaces_get(cstr, 0, elemsize, ndim, lb, ub, l_version_no);
+	delete[] cstr;
+
 	latestStep = l_version_no[0];
-	fprintf(stderr,"LatestStep Read from DSpaces %d\n", latestStep);
+	//fprintf(stderr,"LatestStep Read from DSpaces %d\n", latestStep);
 
 	if(mode == StepMode::NextAvailable){
 		m_CurrentStep++;
@@ -88,6 +92,8 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	strcpy(cstr, local_file_var.c_str());
 	dspaces_define_gdim(cstr, ndim, gdims);
 	dspaces_get(cstr, 0, elemsize, ndim, lb, ub, version_buf);
+
+	delete[] cstr;
 	nVars = version_buf[0];
 
 	m_IO.RemoveAllVariables();
@@ -102,7 +108,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	char *buffer;
 	buffer = (char*) malloc(buf_len);
 	memset(buffer, 0, buf_len);
-	fprintf(stderr, "Num Vars: %d, BufLen: %d\n", nVars, buf_len);
+	//fprintf(stderr, "Num Vars: %d, BufLen: %d\n", nVars, buf_len);
 	char * local_str;
 	local_file_var = "VARMETA@"+f_Name;
 	local_str = new char[local_file_var.length() + 1];
@@ -117,7 +123,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	dspaces_get(local_str, latestStep, elemsize, ndim, lb, ub, buffer);
 
 	//now populate data from the buffer
-	fprintf(stderr, "After receipt of long buffer\n");
+	//fprintf(stderr, "After receipt of long buffer\n");
 
 	int *dim_meta;
 	dim_meta = (int*) malloc(nVars* sizeof(int));
@@ -134,10 +140,10 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	for (int var = 0; var < nVars; ++var) {
 
 		int var_dim_size = dim_meta[var];
-		fprintf(stderr, "NDim: %d", var_dim_size);
+		//fprintf(stderr, "NDim: %d", var_dim_size);
 		int varType = elemSize_meta[var];
-		fprintf(stderr, " Type: %d", varType);
-		fprintf(stderr, " Gdim: %llu\n", gdim_meta[0]);
+		//fprintf(stderr, " Type: %d", varType);
+		//fprintf(stderr, " Gdim: %llu\n", gdim_meta[0]);
 
 		std::string adiosName;
 		char *val = (char *)(calloc(var_name_max_length, sizeof(char)));
@@ -208,9 +214,11 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
 	}
 
-
-	delete[]cstr;
-	delete []local_str;
+	free(dim_meta);
+	free(elemSize_meta);
+	free(gdim_meta);
+	free(buffer);
+	delete[] local_str;
     return StepStatus::OK;
 }
 
@@ -233,6 +241,7 @@ void DataSpacesReader::EndStep()
 	strcpy(cstr, f_Name.c_str());
     MPI_Barrier(m_data.mpi_comm);
     dspaces_unlock_on_read(cstr, &m_data.mpi_comm);
+    delete[] cstr;
 
 }
 
