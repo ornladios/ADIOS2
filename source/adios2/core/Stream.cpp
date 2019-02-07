@@ -76,6 +76,13 @@ bool Stream::GetStep()
 
 void Stream::NextStep()
 {
+    if (m_Mode != Mode::Write && m_Mode != Mode::Append)
+    {
+        throw std::invalid_argument("ERROR: stream " + m_Name +
+                                    ", endl function only allowed " +
+                                    "write or append mode, in call to endl\n");
+    }
+
     if (!m_StepStatus)
     {
         m_Engine->BeginStep();
@@ -165,6 +172,9 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
                                   const Box<size_t> &);                        \
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &);              \
+                                                                               \
+    template std::vector<T> Stream::Read<T>(const std::string &,               \
+                                            const Box<size_t> &);              \
                                                                                \
     template std::vector<T> Stream::Read<T>(                                   \
         const std::string &, const Box<Dims> &, const Box<size_t> &);          \

@@ -56,6 +56,13 @@ void fstream::read(const std::string &name, T *values)
 }
 
 template <class T>
+void fstream::read(const std::string &name, T *values, const size_t stepStart,
+                   const size_t stepCount)
+{
+    m_Stream->Read(name, values, Box<size_t>{stepStart, stepCount});
+}
+
+template <class T>
 void fstream::read(const std::string &name, T &value)
 {
     m_Stream->Read(name, &value);
@@ -89,6 +96,13 @@ template <class T>
 std::vector<T> fstream::read(const std::string &name)
 {
     return m_Stream->Read<T>(name);
+}
+
+template <class T>
+std::vector<T> fstream::read(const std::string &name, const size_t stepsStart,
+                             const size_t stepsCount)
+{
+    return m_Stream->Read<T>(name, Box<size_t>(stepsStart, stepsCount));
 }
 
 template <class T>
@@ -127,34 +141,6 @@ std::vector<T> fstream::read_attribute(const std::string &name,
     m_Stream->ReadAttribute<T>(name, data.data(), variableName, separator);
     return data;
 }
-
-// template <class T>
-// void fstream::read(const std::string &name, T *values,
-//                   const size_t stepSelectionStart,
-//                   const size_t stepSelectionCount)
-//{
-//    // TODO
-//    throw std::invalid_argument("ERROR: fstream read variable " + name +
-//                                " signature not yet implemented\n");
-//}
-//
-// template <class T>
-// T fstream::read(const std::string &name, const size_t step)
-//{
-//    // TODO
-//    throw std::invalid_argument("ERROR: fstream read variable " + name +
-//                                " signature not yet implemented\n");
-//}
-//
-// template <class T>
-// std::vector<T> fstream::read(const std::string &name,
-//                             const size_t stepSelectionStart,
-//                             const size_t stepSelectionCount)
-//{
-//    // TODO
-//    throw std::invalid_argument("ERROR: fstream read variable " + name +
-//                                " signature not yet implemented\n");
-//}
 
 } // end namespace adios2
 

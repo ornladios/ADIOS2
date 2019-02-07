@@ -747,28 +747,32 @@ PYBIND11_MODULE(adios2, m)
                      (default = false).
         )md")
 
-        .def("readstring",
-             (std::string (adios2::py11::File::*)(const std::string &)) &
-                 adios2::py11::File::ReadString,
+        .def("readstring", (std::vector<std::string> (adios2::py11::File::*)(
+                               const std::string &)) &
+                               adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), R"md(
              Reads string value for current step 
-             (streaming mode step by step)
+             (use for streaming mode step by step)
 
              Parameters
                  name
                      string variable name
 
              Returns
-                 string
-                     string value of variable name for current step.
+                 list string
+                     data string values. For global values, returns 1 element list, 
+					 for localvalues an n-block size list
         )md")
 
-        .def("readstring", (std::string (adios2::py11::File::*)(
-                               const std::string &, const size_t)) &
-                               adios2::py11::File::ReadString,
+        .def("readstring",
+             (std::vector<std::string> (adios2::py11::File::*)(
+                 const std::string &, const size_t, const size_t)) &
+                 adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("step"), R"md(
+             pybind11::arg("name"), pybind11::arg("stepstart"),
+             pybind11::arg("stepcount"),
+             R"md(
              Reads string value for a certain step 
              (random access mode)
 
@@ -779,8 +783,8 @@ PYBIND11_MODULE(adios2, m)
                      input step to be read
 
              Returns
-                 string
-                     string value of variable name for a certain step.
+                 string list
+                     data string values for a certain step range.
         )md")
 
         .def("read",
@@ -863,6 +867,7 @@ PYBIND11_MODULE(adios2, m)
              (pybind11::array (adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttribute,
+             pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("variablename") = "",
              pybind11::arg("separator") = "/",
              R"md(
@@ -888,6 +893,7 @@ PYBIND11_MODULE(adios2, m)
              (std::vector<std::string> (adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttributeString,
+             pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("variablename") = "",
              pybind11::arg("separator") = "/",
              R"md(

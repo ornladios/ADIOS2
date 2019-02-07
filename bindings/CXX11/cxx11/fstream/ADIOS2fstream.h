@@ -179,6 +179,23 @@ public:
 #endif
 
     /**
+     * Set a single stream parameter based on Engine supported parameters.
+     * MUST be passed before the first call to write or read.
+     * See: https://adios2.readthedocs.io/en/latest/engines/engines.html
+     * @param key input parameter key
+     * @param value input parameter value
+     */
+    void set_parameter(const std::string key, const std::string value) noexcept;
+
+    /**
+     * Set stream parameters based on Engine supported parameters.
+     * MUST be passed before the first call to write or read.
+     * See: https://adios2.readthedocs.io/en/latest/engines/engines.html
+     * @param parameters input key/value parameters
+     */
+    void set_parameters(const adios2::Params &parameters) noexcept;
+
+    /**
      * @brief Define attribute inside fstream or for a variable after write.
      * Single value input version
      * @param name unique attribute identifier IO object or for a Variable if
@@ -354,17 +371,6 @@ public:
     std::vector<T> read(const std::string &name);
 
     /**
-     * Return single value given name and step
-     * @param name variable name
-     * @param step input step
-     * @return value if name and step are found
-     * @exception throws exception if variable name, dimensions or step not
-     * found
-     */
-    template <class T>
-    T read(const std::string &name, const size_t step);
-
-    /**
      * Returns a vector with full variable dimensions for the current step
      * selection. Not be used with adios2::getstep as it throw an exception when
      * reading in stepping mode.
@@ -380,7 +386,7 @@ public:
      */
     template <class T>
     std::vector<T> read(const std::string &name, const size_t stepsStart,
-                        const size_t stepsCount);
+                        const size_t stepsCount = 1);
 
     /**
      * Reads a selection piece in dimension for current step (streaming mode:
@@ -481,6 +487,9 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
     extern template std::vector<T> fstream::read<T>(const std::string &);      \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
+        const std::string &, const size_t, const size_t);                      \
+                                                                               \
+    extern template std::vector<T> fstream::read<T>(                           \
         const std::string &, const Dims &, const Dims &);                      \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
@@ -488,6 +497,9 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
         const size_t);                                                         \
                                                                                \
     extern template void fstream::read<T>(const std::string &, T *);           \
+                                                                               \
+    extern template void fstream::read(const std::string &, T *, const size_t, \
+                                       const size_t);                          \
                                                                                \
     extern template void fstream::read<T>(const std::string &name, T &);       \
                                                                                \

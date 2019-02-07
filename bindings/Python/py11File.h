@@ -81,9 +81,11 @@ public:
 
     bool GetStep() const;
 
-    std::string ReadString(const std::string &name);
+    std::vector<std::string> ReadString(const std::string &name);
 
-    std::string ReadString(const std::string &name, const size_t step);
+    std::vector<std::string> ReadString(const std::string &name,
+                                        const size_t stepStart,
+                                        const size_t stepCount);
 
     pybind11::array Read(const std::string &name);
 

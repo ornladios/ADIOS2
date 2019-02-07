@@ -186,6 +186,19 @@ std::vector<T> Stream::Read(const std::string &name)
 }
 
 template <class T>
+std::vector<T> Stream::Read(const std::string &name,
+                            const Box<size_t> &stepsSelection)
+{
+    Variable<T> *variable = m_IO->InquireVariable<T>(name);
+    if (variable == nullptr)
+    {
+        return std::vector<T>();
+    }
+    variable->SetStepSelection(stepsSelection);
+    return GetCommon(*variable);
+}
+
+template <class T>
 std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);

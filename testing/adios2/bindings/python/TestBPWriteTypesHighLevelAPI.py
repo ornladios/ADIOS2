@@ -135,9 +135,9 @@ with adios2.open("types_np.bp", "r", comm) as fr:
             inR32 = fr_step.read("gvarR32")
             inR64 = fr_step.read("gvarR64")
 
-            if(inTag != "Testing ADIOS2 high-level API"):
+            if(inTag[0] != "Testing ADIOS2 high-level API"):
                 print("InTag: " + str(inTag))
-                raise ValueError('tag read failed')
+                raise ValueError('tag variable read failed')
 
             if(inI8[0] != data.I8[0]):
                 raise ValueError('gvarI8 read failed')
@@ -310,7 +310,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
         stepStr = "Step:" + str(step)
 
         instepStr = fr_step.readstring("steps")
-        if(instepStr != stepStr):
+        if(instepStr[0] != stepStr):
             raise ValueError('steps variable read failed: ' +
                              instepStr + " " + stepStr)
 

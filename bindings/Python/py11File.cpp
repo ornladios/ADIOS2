@@ -162,16 +162,16 @@ bool File::GetStep() const
     return const_cast<File *>(this)->m_Stream->GetStep();
 }
 
-std::string File::ReadString(const std::string &name)
+std::vector<std::string> File::ReadString(const std::string &name)
 {
-    return m_Stream->Read<std::string>(name).front();
+    return m_Stream->Read<std::string>(name);
 }
 
-std::string File::ReadString(const std::string &name, const size_t step)
+std::vector<std::string> File::ReadString(const std::string &name,
+                                          const size_t stepStart,
+                                          const size_t stepCount)
 {
-    std::string value;
-    m_Stream->Read<std::string>(name, &value, Box<size_t>(step, 1));
-    return value;
+    return m_Stream->Read<std::string>(name, Box<size_t>(stepStart, stepCount));
 }
 
 pybind11::array File::Read(const std::string &name)

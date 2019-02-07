@@ -100,11 +100,15 @@ public:
     std::vector<T> Read(const std::string &name);
 
     template <class T>
+    std::vector<T> Read(const std::string &name,
+                        const Box<size_t> &stepsSelection);
+
+    template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection);
 
     template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
-                        const Box<size_t> &stepSelection);
+                        const Box<size_t> &stepsSelection);
 
     template <class T>
     void ReadAttribute(const std::string &name, T *data,
@@ -181,6 +185,9 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
         const std::string &, T *, const Box<Dims> &, const Box<size_t> &);     \
                                                                                \
     extern template std::vector<T> Stream::Read<T>(const std::string &);       \
+                                                                               \
+    extern template std::vector<T> Stream::Read(const std::string &,           \
+                                                const Box<size_t> &);          \
                                                                                \
     extern template std::vector<T> Stream::Read<T>(                            \
         const std::string &, const Box<Dims> &, const Box<size_t> &);          \

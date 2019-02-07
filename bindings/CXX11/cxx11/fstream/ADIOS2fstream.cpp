@@ -103,6 +103,17 @@ void fstream::close()
     m_Stream.reset();
 }
 
+void fstream::set_parameter(const std::string key,
+                            const std::string value) noexcept
+{
+    m_Stream->m_IO->SetParameter(key, value);
+}
+
+void fstream::set_parameters(const adios2::Params &parameters) noexcept
+{
+    m_Stream->m_IO->SetParameters(parameters);
+}
+
 bool getstep(adios2::fstream &stream, adios2::fstep &step)
 {
     step = stream;
@@ -165,6 +176,9 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
     template std::vector<T> fstream::read<T>(const std::string &);             \
                                                                                \
     template std::vector<T> fstream::read<T>(const std::string &,              \
+                                             const size_t, const size_t);      \
+                                                                               \
+    template std::vector<T> fstream::read<T>(const std::string &,              \
                                              const Dims &, const Dims &);      \
                                                                                \
     template std::vector<T> fstream::read<T>(const std::string &,              \
@@ -172,6 +186,9 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
                                              const size_t, const size_t);      \
                                                                                \
     template void fstream::read<T>(const std::string &, T *);                  \
+                                                                               \
+    template void fstream::read(const std::string &, T *, const size_t,        \
+                                const size_t);                                 \
                                                                                \
     template void fstream::read<T>(const std::string &name, T &);              \
                                                                                \
