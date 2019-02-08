@@ -39,8 +39,9 @@ program TestSstRead
 
   !read handlers
   character(len =:), allocatable::variable_name 
-  integer::variable_type, ndims
+  integer::variable_type, ndims, testComm
   integer(kind = 8), dimension(:), allocatable::shape_in
+  integer::key, color
   
   numargs = iargc()
 
@@ -58,11 +59,17 @@ program TestSstRead
 #ifdef ADIOS2_HAVE_MPI_F
   !Launch MPI
   call MPI_Init(ierr) 
-  call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr) 
-  call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
+
+  call MPI_Comm_rank(MPI_COMM_WORLD, key, ierr);
+
+  color = 2
+  call MPI_Comm_split(MPI_COMM_WORLD, color, key, testComm, ierr);
+
+  call MPI_Comm_rank(testComm, irank, ierr) 
+  call MPI_Comm_size(testComm, isize, ierr)
 
   !Create adios handler passing the communicator, debug mode and error flag
-  call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+  call adios2_init(adios, testComm, adios2_debug_mode_on, ierr)
 #else
   irank = 0;
   isize = 1;
