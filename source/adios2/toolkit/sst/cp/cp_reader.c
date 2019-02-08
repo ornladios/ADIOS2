@@ -230,6 +230,10 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
+    Stream->mpiComm = comm;
+
+    MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
+    MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
@@ -238,11 +242,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
-    Stream->mpiComm = comm;
     Stream->FinalTimestep = INT_MAX; /* set this on close */
-
-    MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
-    MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
     Stream->DP_Stream = Stream->DP_Interface->initReader(&Svcs, Stream, &dpInfo,
                                                          Stream->ConfigParams);

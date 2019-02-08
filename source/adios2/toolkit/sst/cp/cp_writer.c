@@ -790,6 +790,12 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->ConfigParams = Params;
 
     char *Filename = strdup(Name);
+
+    Stream->mpiComm = comm;
+
+    MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
+    MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
+
     Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
 
     if (!Stream->DP_Interface)
@@ -801,7 +807,6 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
-    Stream->mpiComm = comm;
     if (Stream->RendezvousReaderCount > 0)
     {
         Stream->FirstReaderCondition =
@@ -811,9 +816,6 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     {
         Stream->FirstReaderCondition = -1;
     }
-
-    MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
-    MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
     Stream->DP_Stream =
         Stream->DP_Interface->initWriter(&Svcs, Stream, Stream->ConfigParams);
