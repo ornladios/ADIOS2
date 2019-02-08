@@ -169,7 +169,7 @@ void adios_dataspaces_init (void* comm, DsData* md)
 }
 */
 
-int adios_dataspaces_init (void* comm, DsData* md)
+void adios_dataspaces_init (void* comm, DsData* md)
 {
 	int  nproc;
 	int  rank, err;
@@ -195,7 +195,6 @@ int adios_dataspaces_init (void* comm, DsData* md)
 	    md->appid = appid;
 
 	    fprintf(stderr, "Connected to DATASPACES from Writer\n");
-	    return 0;
 
 }
 
