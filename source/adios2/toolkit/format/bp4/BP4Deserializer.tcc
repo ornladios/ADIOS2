@@ -344,10 +344,10 @@ void BP4Deserializer::SetVariableBlockInfo(
         }
 
         // relative position
-        subStreamInfo.Seeks.first = 
+        subStreamInfo.Seeks.first =
             sizeof(T) * helper::LinearIndex(subStreamInfo.BlockBox,
-                                    subStreamInfo.IntersectionBox.first,
-                                    isRowMajor);
+                                            subStreamInfo.IntersectionBox.first,
+                                            isRowMajor);
 
         subStreamInfo.Seeks.second =
             sizeof(T) * (helper::LinearIndex(
@@ -362,7 +362,7 @@ void BP4Deserializer::SetVariableBlockInfo(
         // count) depending on operation info
         if (bp4Op.IsActive)
         {
-            lf_SetSubStreamInfoOperations(bp4Op, payloadOffset, subStreamInfo, 
+            lf_SetSubStreamInfoOperations(bp4Op, payloadOffset, subStreamInfo,
                                           m_IsRowMajor);
         }
         else
@@ -628,8 +628,9 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
     if (variable)
     {
         size_t endPositionCurrentStep =
-            initialPosition - (header.Name.size() + header.GroupName.size() +
-                               header.Path.size() + 23) +
+            initialPosition -
+            (header.Name.size() + header.GroupName.size() + header.Path.size() +
+             23) +
             static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
         // variable->m_AvailableStepsCount = step;
@@ -700,7 +701,6 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
 
     position = initialPosition;
 
-
     size_t currentStep = 0; // Starts at 1 in bp file
     std::set<uint32_t> stepsFound;
     variable->m_AvailableStepsCount = 0;
@@ -752,7 +752,7 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
      * sorted map minus one */
     variable->m_StepsStart =
         variable->m_AvailableStepBlockIndexOffsets.begin()->first - 1;
-    
+
     // update variable Engine for read streaming functions
     variable->m_Engine = &engine;
 }
@@ -779,8 +779,9 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
     if (variable)
     {
         size_t endPositionCurrentStep =
-            initialPosition - (header.Name.size() + header.GroupName.size() +
-                               header.Path.size() + 23) +
+            initialPosition -
+            (header.Name.size() + header.GroupName.size() + header.Path.size() +
+             23) +
             static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
         // variable->m_AvailableStepsCount = step;
@@ -796,11 +797,11 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                     false, m_Minifooter.IsLittleEndian);
 
             const T blockMin = characteristics.Statistics.IsValue
-                               ? subsetCharacteristics.Statistics.Value
-                               : subsetCharacteristics.Statistics.Min;
+                                   ? subsetCharacteristics.Statistics.Value
+                                   : subsetCharacteristics.Statistics.Min;
             const T blockMax = characteristics.Statistics.IsValue
-                               ? subsetCharacteristics.Statistics.Value
-                               : subsetCharacteristics.Statistics.Max;
+                                   ? subsetCharacteristics.Statistics.Value
+                                   : subsetCharacteristics.Statistics.Max;
 
             if (helper::LessThan(blockMin, variable->m_Min))
             {
@@ -832,12 +833,11 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                 {
                     if (subsetCharacteristics.Shape !=
                         variable->m_AvailableShapes.rbegin()->second)
-                    {   
+                    {
                         variable->m_AvailableShapes[step] =
                             subsetCharacteristics.Shape;
                     }
                 }
-
             }
 
             variable->m_AvailableStepBlockIndexOffsets[step].push_back(
@@ -863,15 +863,16 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                                           characteristics.Shape.rend())
                                    : characteristics.Shape;
 
-            variable = &engine.m_IO.DefineVariable<T>(variableName, shape,
-                                             Dims(shape.size(), 0), shape);
+            variable = &engine.m_IO.DefineVariable<T>(
+                variableName, shape, Dims(shape.size(), 0), shape);
             variable->m_AvailableShapes[characteristics.Statistics.Step] =
                 variable->m_Shape;
             break;
         }
         case (ShapeID::LocalValue):
         {
-            variable = &engine.m_IO.DefineVariable<T>(variableName, {1}, {0}, {1});
+            variable =
+                &engine.m_IO.DefineVariable<T>(variableName, {1}, {0}, {1});
             variable->m_ShapeID = ShapeID::LocalValue;
             break;
         }
@@ -881,7 +882,8 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                                    ? Dims(characteristics.Count.rbegin(),
                                           characteristics.Count.rend())
                                    : characteristics.Count;
-            variable = &engine.m_IO.DefineVariable<T>(variableName, {}, {}, count);
+            variable =
+                &engine.m_IO.DefineVariable<T>(variableName, {}, {}, count);
             break;
         }
         default:
@@ -1002,12 +1004,10 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
     variable->m_Engine = &engine;
 }
 
-
 template <class T>
-void BP4Deserializer::DefineAttributeInEngineIO(const ElementIndexHeader &header,
-                                          core::Engine &engine,
-                                          const std::vector<char> &buffer,
-                                          size_t position) const
+void BP4Deserializer::DefineAttributeInEngineIO(
+    const ElementIndexHeader &header, core::Engine &engine,
+    const std::vector<char> &buffer, size_t position) const
 {
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(
@@ -1022,16 +1022,16 @@ void BP4Deserializer::DefineAttributeInEngineIO(const ElementIndexHeader &header
 
     if (characteristics.Statistics.IsValue)
     {
-        engine.m_IO.DefineAttribute<T>(attributeName, characteristics.Statistics.Value);
+        engine.m_IO.DefineAttribute<T>(attributeName,
+                                       characteristics.Statistics.Value);
     }
     else
     {
-        engine.m_IO.DefineAttribute<T>(attributeName,
-                              characteristics.Statistics.Values.data(),
-                              characteristics.Statistics.Values.size());
+        engine.m_IO.DefineAttribute<T>(
+            attributeName, characteristics.Statistics.Values.data(),
+            characteristics.Statistics.Values.size());
     }
 }
-
 
 template <class T>
 std::map<std::string, helper::SubFileInfoMap>

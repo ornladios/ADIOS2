@@ -35,7 +35,7 @@ BP4Deserializer::BP4Deserializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL, 
+void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
                                     core::Engine &engine)
 {
     // ParseMinifooter(bufferSTL);
@@ -100,7 +100,7 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
                                  std::to_string(m_Minifooter.Version) +
                                  " version \n");
     }
-    
+
     position = 0;
     m_Minifooter.VersionTag.assign(&buffer[position], 28);
 
@@ -108,20 +108,21 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
     while (position < bufferSize)
     {
         std::vector<uint64_t> ptrs;
-        const uint64_t currentStep =
-            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
-        const uint64_t mpiRank = helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
-        const uint64_t pgIndexStart =
-            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t currentStep = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t mpiRank = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t pgIndexStart = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(pgIndexStart);
-        const uint64_t variablesIndexStart =
-            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t variablesIndexStart = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(variablesIndexStart);
-        const uint64_t attributesIndexStart =
-            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t attributesIndexStart = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(attributesIndexStart);
-        const uint64_t currentStepEndPos =
-            helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+        const uint64_t currentStepEndPos = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(currentStepEndPos);
         m_MetadataIndexTable[mpiRank][currentStep] = ptrs;
     }
@@ -214,13 +215,16 @@ void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][0];
     // std::cout << step << ", " << position << std::endl;
-    m_MetadataSet.DataPGCount = m_MetadataSet.DataPGCount +
-                                helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
-    
+    m_MetadataSet.DataPGCount =
+        m_MetadataSet.DataPGCount +
+        helper::ReadValue<uint64_t>(buffer, position,
+                                    m_Minifooter.IsLittleEndian);
+
     const size_t length = helper::ReadValue<uint64_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
-    
-    ProcessGroupIndex index = ReadProcessGroupIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
+
+    ProcessGroupIndex index = ReadProcessGroupIndexHeader(
+        buffer, position, m_Minifooter.IsLittleEndian);
     if (index.IsColumnMajor == 'y')
     {
         m_IsRowMajor = false;
@@ -278,106 +282,107 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndexPerStep = [&](core::Engine &engine,
                                           const std::vector<char> &buffer,
                                           size_t position, size_t step) {
-        const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
+        const ElementIndexHeader header = ReadElementIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
 
         case (type_string):
         {
-            DefineVariableInEngineIOPerStep<std::string>(header, engine, buffer, position,
-                                                   step);
+            DefineVariableInEngineIOPerStep<std::string>(header, engine, buffer,
+                                                         position, step);
             break;
         }
 
         case (type_byte):
         {
-            DefineVariableInEngineIOPerStep<signed char>(header, engine, buffer, position,
-                                                   step);
+            DefineVariableInEngineIOPerStep<signed char>(header, engine, buffer,
+                                                         position, step);
             break;
         }
 
         case (type_short):
         {
-            DefineVariableInEngineIOPerStep<short>(header, engine, buffer, position,
-                                             step);
+            DefineVariableInEngineIOPerStep<short>(header, engine, buffer,
+                                                   position, step);
             break;
         }
 
         case (type_integer):
         {
-            DefineVariableInEngineIOPerStep<int>(header, engine, buffer, position, step);
+            DefineVariableInEngineIOPerStep<int>(header, engine, buffer,
+                                                 position, step);
             break;
         }
 
         case (type_long):
         {
-            DefineVariableInEngineIOPerStep<int64_t>(header, engine, buffer, position,
-                                               step);
+            DefineVariableInEngineIOPerStep<int64_t>(header, engine, buffer,
+                                                     position, step);
             break;
         }
 
         case (type_unsigned_byte):
         {
-            DefineVariableInEngineIOPerStep<unsigned char>(header, engine, buffer,
-                                                     position, step);
+            DefineVariableInEngineIOPerStep<unsigned char>(
+                header, engine, buffer, position, step);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineVariableInEngineIOPerStep<unsigned short>(header, engine, buffer,
-                                                      position, step);
+            DefineVariableInEngineIOPerStep<unsigned short>(
+                header, engine, buffer, position, step);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineVariableInEngineIOPerStep<unsigned int>(header, engine, buffer,
-                                                    position, step);
+            DefineVariableInEngineIOPerStep<unsigned int>(
+                header, engine, buffer, position, step);
             break;
         }
 
         case (type_unsigned_long):
         {
-            DefineVariableInEngineIOPerStep<uint64_t>(header, engine, buffer, position,
-                                                step);
+            DefineVariableInEngineIOPerStep<uint64_t>(header, engine, buffer,
+                                                      position, step);
             break;
         }
 
         case (type_real):
         {
-            DefineVariableInEngineIOPerStep<float>(header, engine, buffer, position,
-                                             step);
+            DefineVariableInEngineIOPerStep<float>(header, engine, buffer,
+                                                   position, step);
             break;
         }
 
         case (type_double):
         {
-            DefineVariableInEngineIOPerStep<double>(header, engine, buffer, position,
-                                              step);
+            DefineVariableInEngineIOPerStep<double>(header, engine, buffer,
+                                                    position, step);
             break;
         }
 
         case (type_long_double):
         {
-            DefineVariableInEngineIOPerStep<long double>(header, engine, buffer, position,
-                                                   step);
+            DefineVariableInEngineIOPerStep<long double>(header, engine, buffer,
+                                                         position, step);
             break;
         }
 
         case (type_complex):
         {
-            DefineVariableInEngineIOPerStep<std::complex<float>>(header, engine, buffer,
-                                                           position, step);
+            DefineVariableInEngineIOPerStep<std::complex<float>>(
+                header, engine, buffer, position, step);
             break;
         }
 
         case (type_double_complex):
         {
-            DefineVariableInEngineIOPerStep<std::complex<double>>(header, engine, buffer,
-                                                            position, step);
+            DefineVariableInEngineIOPerStep<std::complex<double>>(
+                header, engine, buffer, position, step);
             break;
         }
 
@@ -387,8 +392,10 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][1];
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    const uint32_t count = helper::ReadValue<uint32_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -399,8 +406,9 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
         {
             lf_ReadElementIndexPerStep(engine, buffer, position, step);
 
-            const size_t elementIndexSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian));
+            const size_t elementIndexSize =
+                static_cast<size_t>(helper::ReadValue<uint32_t>(
+                    buffer, position, m_Minifooter.IsLittleEndian));
             position += elementIndexSize;
             localPosition = position - startPosition;
         }
@@ -432,9 +440,10 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 
             if (localPosition <= length)
             {
-                asyncs[t] = std::async(std::launch::async, lf_ReadElementIndexPerStep,
-                                       std::ref(engine), std::ref(buffer),
-                                       asyncPositions[t], step);
+                asyncs[t] =
+                    std::async(std::launch::async, lf_ReadElementIndexPerStep,
+                               std::ref(engine), std::ref(buffer),
+                               asyncPositions[t], step);
             }
         }
         launched = true;
@@ -447,7 +456,6 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
             async.wait();
         }
     }
-
 }
 
 /* void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
@@ -620,29 +628,33 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
                                                   size_t submetadatafileId,
                                                   size_t step)
 {
-    auto lf_ReadElementIndex = [&](
-        core::Engine &engine, const std::vector<char> &buffer, size_t position) {
-        const ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, position, m_Minifooter.IsLittleEndian);
+    auto lf_ReadElementIndex = [&](core::Engine &engine,
+                                   const std::vector<char> &buffer,
+                                   size_t position) {
+        const ElementIndexHeader header = ReadElementIndexHeader(
+            buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
 
         case (type_string):
         {
-            DefineAttributeInEngineIO<std::string>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<std::string>(header, engine, buffer,
+                                                   position);
             break;
         }
 
         case (type_string_array):
         {
-            DefineAttributeInEngineIO<std::string>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<std::string>(header, engine, buffer,
+                                                   position);
             break;
         }
 
         case (type_byte):
         {
-            DefineAttributeInEngineIO<signed char>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<signed char>(header, engine, buffer,
+                                                   position);
             break;
         }
 
@@ -660,31 +672,36 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_long):
         {
-            DefineAttributeInEngineIO<int64_t>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<int64_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_unsigned_byte):
         {
-            DefineAttributeInEngineIO<unsigned char>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<unsigned char>(header, engine, buffer,
+                                                     position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineAttributeInEngineIO<unsigned short>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<unsigned short>(header, engine, buffer,
+                                                      position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineAttributeInEngineIO<unsigned int>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<unsigned int>(header, engine, buffer,
+                                                    position);
             break;
         }
 
         case (type_unsigned_long):
         {
-            DefineAttributeInEngineIO<uint64_t>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<uint64_t>(header, engine, buffer,
+                                                position);
             break;
         }
 
@@ -702,7 +719,8 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_long_double):
         {
-            DefineAttributeInEngineIO<long double>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<long double>(header, engine, buffer,
+                                                   position);
             break;
         }
 
@@ -712,8 +730,10 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
     const auto &buffer = bufferSTL.m_Buffer;
     size_t position = m_MetadataIndexTable[submetadatafileId][step][2];
 
-    const uint32_t count = helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian);
-    const uint64_t length = helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
+    const uint32_t count = helper::ReadValue<uint32_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    const uint64_t length = helper::ReadValue<uint64_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
 
     const size_t startPosition = position;
     size_t localPosition = 0;
@@ -723,7 +743,8 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
     {
         lf_ReadElementIndex(engine, buffer, position);
         const size_t elementIndexSize =
-            static_cast<size_t>(helper::ReadValue<uint32_t>(buffer, position, m_Minifooter.IsLittleEndian));
+            static_cast<size_t>(helper::ReadValue<uint32_t>(
+                buffer, position, m_Minifooter.IsLittleEndian));
         position += elementIndexSize;
         localPosition = position - startPosition;
     }

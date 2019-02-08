@@ -358,7 +358,7 @@ inline BP4Serializer::Stats<std::string> BP4Serializer::GetBPStats(
 }
 
 template <class T>
-BP4Serializer::Stats<T> 
+BP4Serializer::Stats<T>
 BP4Serializer::GetBPStats(const bool singleValue,
                           const typename core::Variable<T>::Info &blockInfo,
                           const bool isRowMajor) noexcept

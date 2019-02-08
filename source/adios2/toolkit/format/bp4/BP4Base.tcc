@@ -255,7 +255,6 @@ inline void BP4Base::ParseCharacteristics(
         case (characteristic_dimensions):
         {
             auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
-
                 return std::all_of(
                     dimensions.begin(), dimensions.end(),
                     [](const size_t dimension) { return dimension == 0; });
@@ -426,7 +425,6 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
         case (characteristic_dimensions):
         {
             auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
-
                 return std::all_of(
                     dimensions.begin(), dimensions.end(),
                     [](const size_t dimension) { return dimension == 0; });

@@ -138,9 +138,9 @@ public:
     {
         std::string VersionTag;
         /* we don't need these pointers in bp4's minifooter */
-        //uint64_t PGIndexStart;
-        //uint64_t VarsIndexStart;
-        //uint64_t AttributesIndexStart;
+        // uint64_t PGIndexStart;
+        // uint64_t VarsIndexStart;
+        // uint64_t AttributesIndexStart;
         uint8_t Version = 4;
         bool IsLittleEndian = true;
         bool HasSubFiles = false;
@@ -564,7 +564,7 @@ protected:
     /** Sets if IO is node-local so each rank creates its own IO directory and
      * stream */
     void InitParameterNodeLocal(const std::string value);
-    
+
     /**
      * Returns data type index from enum Datatypes
      * @param variable input variable

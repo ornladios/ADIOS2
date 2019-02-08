@@ -64,14 +64,13 @@ void BP4Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
         DoPutSync(variable, data);
         return;
     }
-    
+
     const typename Variable<T>::Info blockInfo =
         variable.SetBlockInfo(data, CurrentStep());
     m_BP4Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP4Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(
         1.05 * helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-        4 *
-            m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name,
+        4 * m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name,
                                                  blockInfo.Count));
 }
 
