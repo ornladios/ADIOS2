@@ -61,11 +61,11 @@ with adios2.open("types_np.bp", "w", comm) as fw:
 
             fw.write_attribute(
                 "attrStrArray", ["string1", "string2", "string3"])
-            fw.write_attribute("attrI8Array",  data.I8)
+            fw.write_attribute("attrI8Array", data.I8)
             fw.write_attribute("attrI16Array", data.I16)
             fw.write_attribute("attrI32Array", data.I32)
             fw.write_attribute("attrI64Array", data.I64)
-            fw.write_attribute("attrU8Array",  data.U8)
+            fw.write_attribute("attrU8Array", data.U8)
             fw.write_attribute("attrU16Array", data.U16)
             fw.write_attribute("attrU32Array", data.U32)
             fw.write_attribute("attrU64Array", data.U64)
@@ -87,11 +87,11 @@ with adios2.open("types_np.bp", "w", comm) as fw:
         if(rank == 0 and i == 0):
             fw.write_attribute("varattrStrArray", [
                 "varattr1", "varattr2", "varattr3"], "steps")
-            fw.write_attribute("varattrI8Array",  data.I8, "varI8")
+            fw.write_attribute("varattrI8Array", data.I8, "varI8")
             fw.write_attribute("varattrI16Array", data.I16, "varI16")
             fw.write_attribute("varattrI32Array", data.I32, "varI32")
             fw.write_attribute("varattrI64Array", data.I64, "varI64")
-            fw.write_attribute("varattrU8Array",  data.U8, "varU8")
+            fw.write_attribute("varattrU8Array", data.U8, "varU8")
             fw.write_attribute("varattrU16Array", data.U16, "varU16")
             fw.write_attribute("varattrU32Array", data.U32, "varU32")
             fw.write_attribute("varattrU64Array", data.U64, "varU64")
@@ -264,7 +264,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
             in16 = fr_step.read_attribute("varattrI16Array", "varI16")
             inI32 = fr_step.read_attribute("varattrI32Array", "varI32")
             inI64 = fr_step.read_attribute("varattrI64Array", "varI64")
-            inU8 = fr_step.read_attribute("varattrU8Array",  "varU8")
+            inU8 = fr_step.read_attribute("varattrU8Array", "varU8")
             inU16 = fr_step.read_attribute("varattrU16Array", "varU16")
             inU32 = fr_step.read_attribute("varattrU32Array", "varU32")
             inU64 = fr_step.read_attribute("varattrU64Array", "varU64")
