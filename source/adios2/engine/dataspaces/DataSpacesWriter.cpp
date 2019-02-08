@@ -43,7 +43,10 @@ StepStatus DataSpacesWriter::BeginStep(StepMode mode, const float timeout_sec)
 	char *cstr = new char[f_Name.length() + 1];
 	strcpy(cstr, f_Name.c_str());
 	m_CurrentStep++; // current step begins at 0;
-	adios_dataspaces_open(cstr, &m_data);
+
+	fprintf (stderr, "rank=%d call read lock...\n", m_data.rank);
+	dspaces_lock_on_write (cstr, &m_data.mpi_comm);
+	fprintf (stderr, "rank=%d got read lock\n", m_data.rank);
 	delete[] cstr;
     return StepStatus::OK;
 }

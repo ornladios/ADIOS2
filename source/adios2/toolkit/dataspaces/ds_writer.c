@@ -106,7 +106,7 @@ static int connect_to_dspaces (struct adios_ds_data_struct * md, MPI_Comm comm)
     int num_peers;
     fprintf(stderr, "Before checking if dspaces is connected\n");
 
-    if (!globals_adios_is_dataspaces_connected()) {
+    if (!globals_adios_is_dataspaces_connected_from_writer()) {
 
     	 fprintf(stderr, "DataSpaces is not connected\n");
         MPI_Comm_rank (comm, &(md->rank));
@@ -143,6 +143,7 @@ static int connect_to_dspaces (struct adios_ds_data_struct * md, MPI_Comm comm)
     return ret;
 }
 
+/*
 void adios_dataspaces_init (void* comm, DsData* md)
 {
     if (!adios_dataspaces_initialized)
@@ -151,7 +152,6 @@ void adios_dataspaces_init (void* comm, DsData* md)
     }
 
     int index, i;
-    char temp[64];
 
     //Init the static data structure
     md->peers = 1;
@@ -165,6 +165,37 @@ void adios_dataspaces_init (void* comm, DsData* md)
     connect_to_dspaces (md, *(MPI_Comm *)comm);
     number_of_inits++;
     fprintf (stderr,"adios_dataspaces_init: called the %d. time\n", number_of_inits);
+
+}
+*/
+
+int adios_dataspaces_init (void* comm, DsData* md)
+{
+	int  nproc;
+	int  rank, err;
+	int  appid, was_set;
+	MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
+	MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
+
+	    if (!globals_adios_is_dataspaces_connected_from_writer()) {
+	        appid = globals_adios_get_application_id (&was_set);
+	        if (!was_set)
+	            appid = 1;
+	        fprintf(stderr, "-- %s, rank %d: connect to dataspaces with nproc=%d and appid=%d\n",
+	                    __func__, rank, nproc, appid);
+	        err = dspaces_init(nproc, appid, (MPI_Comm *)comm, NULL);
+	        if (err < 0) {
+	            fprintf (stderr, "Failed to connect with DATASPACES\n");
+	            return err;
+	        }
+	    }
+	    globals_adios_set_dataspaces_connected_from_reader();
+	    md->rank = rank;
+	    md->mpi_comm = *(MPI_Comm *)comm;
+	    md->appid = appid;
+
+	    fprintf(stderr, "Connected to DATASPACES from Writer\n");
+	    return 0;
 
 }
 
@@ -189,8 +220,7 @@ int adios_read_dataspaces_init (void* comm, DsData* md)
 	MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
 	MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
 
-	/* Connect to DATASPACES, but only if we are not yet connected (from Write API) */
-	    if (!globals_adios_is_dataspaces_connected()) {
+	    if (!globals_adios_is_dataspaces_connected_from_reader()) {
 	        appid = globals_adios_get_application_id (&was_set);
 	        if (!was_set)
 	            appid = 2;
