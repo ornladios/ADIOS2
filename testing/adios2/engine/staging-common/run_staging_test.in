@@ -11,10 +11,8 @@ usage()
 { 
   cat << EO 
         Usage: $PROGNAME [options] 
-               $PROGNAME -o <version> -c 
 
-	Run a test under flexpath_tests.
-        
+	Run a simple staging test.
 
         Options: 
 EO
@@ -26,8 +24,12 @@ EO
 	-n <count> & number of nodes to run both sides
 	-nw <count> & number of nodes to run write side
 	-nr <count> & number of nodes to run read side
+	-e <engine> & staging engine to use with the test
+	-f <filename> & filename to specify for connection info
+        -rd <secs> & number of seconds to delay before staring the reader
 	-arg <str> & pass <arg> on the command line to the executables
-	-q & be quiet
+	-v & run this script verbosely
+	-q & be quiet (don't print PASSED/FAILED)
 EO
 }
 
@@ -76,66 +78,87 @@ if [ "$writer_prog" == "UNSET" ]; then
    writer_prog="$prefix""Write"
 fi
 
-# remove any lingering sst contact files
-rm -f *.sst
+# remove any lingering engine contact files (IF YOU ADD AN ENGINE, ADD TO THIS LIST)
+rm -f $filename.{sst,other}
 
-# Spawn the writer
+use_mpmd=1;
+if [ $reader_delay -ne 0 ] ; then
+    use_mpmd=0;
+fi
+
+if [ $nr -eq 0 ] ; then
+    use_mpmd=0;
+fi
+
 if [ -z "@MPIEXEC@" ]; then
     write_spawn_cmd=""
     read_spawn_cmd=""
+    use_mpmd=0
 elif [ "@MPIEXEC@" = "MPIEXEC_EXECUTABLE-NOTFOUND" ]; then
     write_spawn_cmd=""
     read_spawn_cmd=""
+    use_mpmd=0
 else
     write_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw"
     read_spawn_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nr"
 fi
-if [ $nr -eq "0" ]; then
-   read_spawn_cmd="echo"
-fi
 
-if [ $vflag == "yes" ]; then
-    echo "Doing        ($write_spawn_cmd ./$writer_prog $engine $filename $args) & writer_pid=$!"
-fi
+if [ $use_mpmd -eq 1 ] ; then
+    mpmd_cmd="@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $nw ./$writer_prog $engine $filename $args : @MPIEXEC_NUMPROC_FLAG@ $nr ./$reader_prog $engine $filename $args"
+    if [ $vflag == "yes" ]; then
+	echo "Doing        ($mpmd_cmd)"
+    fi
+    $mpmd_cmd
+    exit_value=$?
+else 
+    # Spawn the writer
+    if [ $nr -eq "0" ]; then
+	read_spawn_cmd="echo"
+    fi
 
-($write_spawn_cmd ./$writer_prog  $engine $filename $args ) & writer_pid=$!
+    if [ $vflag == "yes" ]; then
+	echo "Doing        ($write_spawn_cmd ./$writer_prog $engine $filename $args) & writer_pid=$!"
+    fi
 
-# Spawn the reader
-if [ "$reader_delay" -ne 0 ]; then
-    sleep $reader_delay
-fi
-if [ $vflag == "yes" ]; then
-    echo "Doing ($read_spawn_cmd ./$reader_prog  $engine $filename $args ) & reader_pid=$!"
-fi
-($read_spawn_cmd ./$reader_prog  $engine $filename $args) & reader_pid=$!
+    ($write_spawn_cmd ./$writer_prog  $engine $filename $args ) & writer_pid=$!
+
+    # Spawn the reader
+    if [ "$reader_delay" -ne 0 ]; then
+	sleep $reader_delay
+    fi
+    if [ $vflag == "yes" ]; then
+	echo "Doing ($read_spawn_cmd ./$reader_prog  $engine $filename $args ) & reader_pid=$!"
+    fi
+    ($read_spawn_cmd ./$reader_prog  $engine $filename $args) & reader_pid=$!
 
 
 
-# wait on our worker process and return the exitcode
+    # wait on our worker process and return the exitcode
     if [ $vflag == "yes" ]; then
 	echo -n "Wait for reader $reader_pid   "
 	date
     fi
-wait $reader_pid
-reader_exitcode=$?
+    wait $reader_pid
+    reader_exitcode=$?
 
-# wait on our worker process and return the exitcode
+    # wait on our worker process and return the exitcode
     if [ $vflag == "yes" ]; then
 	echo -n "Wait for writer $writer_pid   "
 	date
     fi
 
-wait $writer_pid
-writer_exitcode=$?
+    wait $writer_pid
+    writer_exitcode=$?
 
-exit_value=0
-if [ "$writer_exitcode" -ne "0" ]; then
-  echo "$writer_prog exited with error code $writer_exitcode"
-  exit_value=1
-fi
-if [ "$reader_exitcode" -ne "0" ]; then
-  echo "$reader_prog exited with error code $reader_exitcode"
-  exit_value=1
+    exit_value=0
+    if [ "$writer_exitcode" -ne "0" ]; then
+	echo "$writer_prog exited with error code $writer_exitcode"
+	exit_value=1
+    fi
+    if [ "$reader_exitcode" -ne "0" ]; then
+	echo "$reader_prog exited with error code $reader_exitcode"
+	exit_value=1
+    fi
 fi
 
 if [ $qflag != "yes" ]; then

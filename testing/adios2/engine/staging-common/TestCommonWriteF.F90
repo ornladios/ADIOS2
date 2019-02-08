@@ -40,6 +40,7 @@ program TestSstWrite
   integer::variable_type, ndims
   integer(kind = 8), dimension(:), allocatable::shape_in
   integer(kind = 8)::localtime
+  integer::color, key, testComm
 
   numargs = iargc()
   if ( numargs < 2 ) then
@@ -54,8 +55,14 @@ program TestSstWrite
 #ifdef ADIOS2_HAVE_MPI_F
   !Launch MPI
   call MPI_Init(ierr) 
-  call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr) 
-  call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
+
+  call MPI_Comm_rank(MPI_COMM_WORLD, key, ierr);
+
+  color = 1
+  call MPI_Comm_split(MPI_COMM_WORLD, color, key, testComm, ierr);
+
+  call MPI_Comm_rank(testComm, irank, ierr) 
+  call MPI_Comm_size(testComm, isize, ierr)
 #else
   ! No MPI
   irank = 0;
@@ -84,7 +91,7 @@ program TestSstWrite
 
 #ifdef ADIOS2_HAVE_MPI_F
   !Create adios handler passing the communicator, debug mode and error flag
-  call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+  call adios2_init(adios, testComm, adios2_debug_mode_on, ierr)
 #else
   call adios2_init_nompi(adios, adios2_debug_mode_on, ierr)
 #endif
