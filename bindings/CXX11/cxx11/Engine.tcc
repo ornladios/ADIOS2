@@ -21,13 +21,17 @@ namespace adios2
 {
 
 template <class T>
-static std::vector<typename Variable<T>::Info> ToBlocksInfo(
-    const std::vector<typename core::Variable<T>::Info> &coreBlocksInfo)
+static std::vector<typename Variable<T>::Info>
+ToBlocksInfo(const std::vector<typename core::Variable<
+                 typename TypeInfo<T>::IOType>::Info> &coreBlocksInfo)
 {
+    using IOType = typename TypeInfo<T>::IOType;
+
     std::vector<typename Variable<T>::Info> blocksInfo;
     blocksInfo.reserve(coreBlocksInfo.size());
 
-    for (const typename core::Variable<T>::Info &coreBlockInfo : coreBlocksInfo)
+    for (const typename core::Variable<IOType>::Info &coreBlockInfo :
+         coreBlocksInfo)
     {
         typename Variable<T>::Info blockInfo;
         // doesn't work because coreBlockInfo is transient.
@@ -54,10 +58,12 @@ static std::vector<typename Variable<T>::Info> ToBlocksInfo(
 template <class T>
 void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::Put");
-    m_Engine->Put<T>(*variable.m_Variable, data, launch);
+    m_Engine->Put(*variable.m_Variable, reinterpret_cast<const IOType *>(data),
+                  launch);
 }
 
 template <class T>
@@ -71,10 +77,12 @@ void Engine::Put(const std::string &variableName, const T *data,
 template <class T>
 void Engine::Put(Variable<T> variable, const T &datum, const Mode /*launch*/)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::Put");
-    m_Engine->Put(*variable.m_Variable, datum);
+    m_Engine->Put(*variable.m_Variable,
+                  reinterpret_cast<const IOType &>(datum));
 }
 
 template <class T>
@@ -88,10 +96,12 @@ void Engine::Put(const std::string &variableName, const T &datum,
 template <class T>
 void Engine::Get(Variable<T> variable, T *data, const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::Get");
-    m_Engine->Get<T>(*variable.m_Variable, data, launch);
+    m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType *>(data),
+                  launch);
 }
 
 template <class T>
@@ -104,10 +114,11 @@ void Engine::Get(const std::string &variableName, T *data, const Mode launch)
 template <class T>
 void Engine::Get(Variable<T> variable, T &datum, const Mode /*launch*/)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::Get");
-    m_Engine->Get<T>(*variable.m_Variable, datum);
+    m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType &>(datum));
 }
 
 template <class T>
@@ -121,11 +132,13 @@ void Engine::Get(const std::string &variableName, T &datum,
 template <class T>
 void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::Get");
-    m_Engine->Get<T>(*variable.m_Variable, dataV, launch);
+    m_Engine->Get(*variable.m_Variable,
+                  reinterpret_cast<std::vector<IOType> &>(dataV), launch);
 }
 
 template <class T>
@@ -140,32 +153,36 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 template <class T>
 void Engine::Get(Variable<T> variable, typename Variable<T>::Info& info, const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::Get");
-    info.m_Info = m_Engine->Get<T>(*variable.m_Variable, launch);
+    info.m_Info = m_Engine->Get(*variable.m_Variable, launch);
 }
 
 template <class T>
 void Engine::Get(const std::string &variableName, typename Variable<T>::Info& info, const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    info.m_Info = m_Engine->Get<T>(variableName, launch);
+    info.m_Info = m_Engine->Get<IOType>(variableName, launch);
 }
 
 template <class T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 Engine::AllStepsBlocksInfo(const Variable<T> variable) const
 {
+    using IOType = typename TypeInfo<T>::IOType;
+
     adios2::helper::CheckForNullptr(
         m_Engine, "for Engine in call to Engine::AllStepsBlocksInfo");
     adios2::helper::CheckForNullptr(
         variable.m_Variable,
         "for variable in call to Engine::AllStepsBlocksInfo");
 
-    const std::map<size_t, std::vector<typename core::Variable<T>::Info>>
+    const std::map<size_t, std::vector<typename core::Variable<IOType>::Info>>
         coreAllStepsBlockInfo =
-            m_Engine->AllStepsBlocksInfo<T>(*variable.m_Variable);
+            m_Engine->AllStepsBlocksInfo(*variable.m_Variable);
 
     std::map<size_t, std::vector<typename Variable<T>::Info>>
         allStepsBlocksInfo;
@@ -173,8 +190,8 @@ Engine::AllStepsBlocksInfo(const Variable<T> variable) const
     for (const auto &pair : coreAllStepsBlockInfo)
     {
         const size_t step = pair.first;
-        const std::vector<typename core::Variable<T>::Info> &coreBlocksInfo =
-            pair.second;
+        const std::vector<typename core::Variable<IOType>::Info>
+            &coreBlocksInfo = pair.second;
 
         allStepsBlocksInfo[step] = ToBlocksInfo<T>(coreBlocksInfo);
     }
@@ -190,12 +207,15 @@ template <class T>
 std::vector<typename Variable<T>::Info>
 Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
 {
+    using IOType = typename TypeInfo<T>::IOType;
+
     adios2::helper::CheckForNullptr(m_Engine,
                                     "for Engine in call to Engine::BlocksInfo");
     adios2::helper::CheckForNullptr(
         variable.m_Variable, "for variable in call to Engine::BlocksInfo");
 
-    const auto blocksInfo = m_Engine->BlocksInfo<T>(*variable.m_Variable, step);
+    const auto blocksInfo =
+        m_Engine->BlocksInfo<IOType>(*variable.m_Variable, step);
     return ToBlocksInfo<T>(blocksInfo);
 }
 

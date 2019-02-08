@@ -24,8 +24,8 @@ Variable<T> IO::DefineVariable(const std::string &name, const Dims &shape,
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name +
                                       ", in call to IO::DefineVariable");
-    return Variable<T>(
-        &m_IO->DefineVariable<T>(name, shape, start, count, constantDims));
+    return Variable<T>(&m_IO->DefineVariable<typename TypeInfo<T>::IOType>(
+        name, shape, start, count, constantDims));
 }
 
 template <class T>
@@ -33,7 +33,8 @@ Variable<T> IO::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name +
                                       ", in call to IO::InquireVariable");
-    return Variable<T>(m_IO->InquireVariable<T>(name));
+    return Variable<T>(
+        m_IO->InquireVariable<typename TypeInfo<T>::IOType>(name));
 }
 
 template <class T>

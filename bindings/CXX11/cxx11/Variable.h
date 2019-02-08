@@ -35,6 +35,7 @@ class Variable; // private implementation
 template <class T>
 class Variable
 {
+    using IOType = typename TypeInfo<T>::IOType;
 
     friend class IO;
     friend class Engine;
@@ -239,9 +240,9 @@ public:
     {
         adios2::Dims Start;   ///< block start
         adios2::Dims Count;   ///< block count
-        T Min = T();          ///< block Min, if IsValue is false
-        T Max = T();          ///< block Max, if IsValue is false
-        T Value = T();        ///< block Value, if IsValue is true
+        IOType Min = IOType();   ///< block Min, if IsValue is false
+        IOType Max = IOType();   ///< block Max, if IsValue is false
+        IOType Value = IOType(); ///< block Value, if IsValue is true
         bool IsValue = false; ///< true: value, false: array
         size_t BlockID = -1;  ///< block ID for block selections
         const T *Data() const
@@ -254,12 +255,12 @@ public:
         friend class Engine;
 
     private:
-        const typename core::Variable<T>::Info *m_Info;
+        const typename core::Variable<IOType>::Info *m_Info;
     };
 
 private:
-    Variable<T>(core::Variable<T> *variable);
-    core::Variable<T> *m_Variable = nullptr;
+    Variable<T>(core::Variable<IOType> *variable);
+    core::Variable<IOType> *m_Variable = nullptr;
 };
 
 } // end namespace adios2
