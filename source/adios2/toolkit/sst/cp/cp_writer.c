@@ -795,7 +795,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     if (!Stream->DP_Interface)
     {
         CP_verbose(Stream, "Failed to load DataPlane %s for Stream \"%s\"\n",
-                   Stream->DataTransport, Filename);
+                   Params->DataTransport, Filename);
         return NULL;
     }
 
