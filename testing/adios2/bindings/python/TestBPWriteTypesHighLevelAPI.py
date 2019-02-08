@@ -97,6 +97,7 @@ with adios2.open("types_np.bp", "w", comm) as fw:
             fw.write_attribute("varattrU64Array", data.U64, "varU64")
             fw.write_attribute("varattrR32Array", data.R32, "varR32")
             fw.write_attribute("varattrR64Array", data.R64, "varR64")
+            fw.write_attribute("varattrR64Value", data.R64, "varR64")
 
         fw.end_step()
 

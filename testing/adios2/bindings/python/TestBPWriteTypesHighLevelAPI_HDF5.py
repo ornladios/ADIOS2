@@ -27,7 +27,7 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-with adios2.open("types_np.h5", "w", comm, engine_type="HDF5") as fw:
+with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
 
     for i in range(0, 5):
 
@@ -97,6 +97,7 @@ with adios2.open("types_np.h5", "w", comm, engine_type="HDF5") as fw:
             fw.write_attribute("varattrU64Array", data.U64, "varU64")
             fw.write_attribute("varattrR32Array", data.R32, "varR32")
             fw.write_attribute("varattrR64Array", data.R64, "varR64")
+            fw.write_attribute("varattrR64Value", data.R64, "varR64")
 
         fw.end_step()
 
@@ -105,7 +106,7 @@ comm.Barrier()
 # Reader
 data = SmallTestData()
 
-with adios2.open("types_np.h5", "r", comm, engine_type="HDF5") as fr:
+with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
 
     for fr_step in fr:
 

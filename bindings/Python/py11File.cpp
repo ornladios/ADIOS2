@@ -79,7 +79,7 @@ std::map<std::string, adios2::Params> File::AvailableAttributes() noexcept
 
 void File::WriteAttribute(const std::string &name, const pybind11::array &array,
                           const std::string &variableName,
-                          const std::string separator, const bool endl)
+                          const std::string separator, const bool endStep)
 {
     if (false)
     {
@@ -88,9 +88,10 @@ void File::WriteAttribute(const std::string &name, const pybind11::array &array,
     else if (pybind11::isinstance<                                             \
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
-        m_Stream->WriteAttribute(                                              \
-            name, reinterpret_cast<const T *>(array.data()),                   \
-            static_cast<size_t>(array.size()), variableName, separator, endl); \
+        m_Stream->WriteAttribute(name,                                         \
+                                 reinterpret_cast<const T *>(array.data()),    \
+                                 static_cast<size_t>(array.size()),            \
+                                 variableName, separator, endStep);            \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -106,23 +107,24 @@ void File::WriteAttribute(const std::string &name, const pybind11::array &array,
 void File::WriteAttribute(const std::string &name,
                           const std::string &stringValue,
                           const std::string &variableName,
-                          const std::string separator, const bool endl)
+                          const std::string separator, const bool endStep)
 {
-    m_Stream->WriteAttribute(name, stringValue, variableName, separator, endl);
+    m_Stream->WriteAttribute(name, stringValue, variableName, separator,
+                             endStep);
 }
 
 void File::WriteAttribute(const std::string &name,
                           const std::vector<std::string> &stringArray,
                           const std::string &variableName,
-                          const std::string separator, const bool endl)
+                          const std::string separator, const bool endStep)
 {
     m_Stream->WriteAttribute(name, stringArray.data(), stringArray.size(),
-                             variableName, separator, endl);
+                             variableName, separator, endStep);
 }
 
 void File::Write(const std::string &name, const pybind11::array &array,
                  const Dims &shape, const Dims &start, const Dims &count,
-                 const bool endl)
+                 const bool endStep)
 {
     if (false)
     {
@@ -132,7 +134,7 @@ void File::Write(const std::string &name, const pybind11::array &array,
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
         m_Stream->Write(name, reinterpret_cast<const T *>(array.data()),       \
-                        shape, start, count, endl);                            \
+                        shape, start, count, endStep);                         \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -146,15 +148,15 @@ void File::Write(const std::string &name, const pybind11::array &array,
 }
 
 void File::Write(const std::string &name, const pybind11::array &array,
-                 const bool endl)
+                 const bool endStep)
 {
-    Write(name, array, {}, {}, {}, endl);
+    Write(name, array, {}, {}, {}, endStep);
 }
 
 void File::Write(const std::string &name, const std::string &stringValue,
-                 const bool endl)
+                 const bool endStep)
 {
-    m_Stream->Write(name, stringValue, endl);
+    m_Stream->Write(name, stringValue, endStep);
 }
 
 bool File::GetStep() const

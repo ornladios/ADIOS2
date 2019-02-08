@@ -250,12 +250,12 @@ PYBIND11_MODULE(adios2, m)
 
     m.def("open", &Open, "High-level API, file object open",
           pybind11::arg("name"), pybind11::arg("mode"),
-          pybind11::arg("engineType") = "BPFile");
+          pybind11::arg("engine_type") = "BPFile");
 
     m.def("open", &OpenConfig,
           "High-level API, file object open with a runtime config file",
           pybind11::arg("name"), pybind11::arg("mode"),
-          pybind11::arg("configFile"), pybind11::arg("ioInConfigFile"));
+          pybind11::arg("config_file"), pybind11::arg("io_in_config_file"));
 #endif
 
     pybind11::class_<adios2::py11::ADIOS>(m, "py11_ADIOS")
@@ -592,7 +592,7 @@ PYBIND11_MODULE(adios2, m)
                           adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
              pybind11::arg("shape"), pybind11::arg("start"),
-             pybind11::arg("count"), pybind11::arg("endstep") = false,
+             pybind11::arg("count"), pybind11::arg("end_step") = false,
              R"md(
              writes a self-describing array (numpy) variable
 
@@ -625,8 +625,9 @@ PYBIND11_MODULE(adios2, m)
                  const std::string &, const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
              pybind11::arg("name"), pybind11::arg("array"),
-             pybind11::arg("variablename") = "",
-             pybind11::arg("separator") = "/", pybind11::arg("endstep") = false,
+             pybind11::arg("variable_name") = "",
+             pybind11::arg("separator") = "/",
+             pybind11::arg("end_step") = false,
              R"md(
 		             writes a self-describing single value array (numpy) variable
 
@@ -653,9 +654,10 @@ PYBIND11_MODULE(adios2, m)
                  const std::string &, const std::string &, const std::string &,
                  const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
-             pybind11::arg("name"), pybind11::arg("stringvalue"),
-             pybind11::arg("variablename") = "",
-             pybind11::arg("separator") = "/", pybind11::arg("endstep") = false,
+             pybind11::arg("name"), pybind11::arg("string_value"),
+             pybind11::arg("variable_name") = "",
+             pybind11::arg("separator") = "/",
+             pybind11::arg("end_step") = false,
              R"md(
 				 writes a self-describing single value array (numpy) variable
 
@@ -683,9 +685,10 @@ PYBIND11_MODULE(adios2, m)
                  const std::string &, const std::vector<std::string> &,
                  const std::string &, const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
-             pybind11::arg("name"), pybind11::arg("stringarray"),
-             pybind11::arg("variablename") = "",
-             pybind11::arg("separator") = "/", pybind11::arg("endstep") = false,
+             pybind11::arg("name"), pybind11::arg("string_array"),
+             pybind11::arg("variable_name") = "",
+             pybind11::arg("separator") = "/",
+             pybind11::arg("end_step") = false,
              R"md(
 				 writes a self-describing single value array (numpy) variable
 
@@ -713,7 +716,7 @@ PYBIND11_MODULE(adios2, m)
                  const std::string &, const pybind11::array &, const bool)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
-             pybind11::arg("endstep") = false, R"md(
+             pybind11::arg("end_step") = false, R"md(
              writes a self-describing single value array (numpy) variable
 
              Parameters
@@ -733,7 +736,7 @@ PYBIND11_MODULE(adios2, m)
                                            const std::string &, const bool)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("string"),
-             pybind11::arg("endstep") = false, R"md(
+             pybind11::arg("end_step") = false, R"md(
              writes a self-describing single value string variable
 
              Parameters
@@ -752,7 +755,8 @@ PYBIND11_MODULE(adios2, m)
                                 const std::string &)) &
                                 adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), R"md(
+             pybind11::arg("name"),
+             R"md(
              Reads string value for current step 
              (use for streaming mode step by step)
 
@@ -763,7 +767,7 @@ PYBIND11_MODULE(adios2, m)
              Returns
                  list string
                      data string values. For global values, returns 1 element list, 
-					 for localvalues an n-block size list
+					 for local_values an n-block size list
         )md")
 
         .def("read_string",
@@ -771,8 +775,8 @@ PYBIND11_MODULE(adios2, m)
                  const std::string &, const size_t, const size_t)) &
                  adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("stepstart"),
-             pybind11::arg("stepcount"),
+             pybind11::arg("name"), pybind11::arg("step_start"),
+             pybind11::arg("step_count"),
              R"md(
              Reads string value for a certain step 
              (random access mode)
@@ -838,8 +842,8 @@ PYBIND11_MODULE(adios2, m)
                          adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("start"),
-             pybind11::arg("count"), pybind11::arg("stepstart"),
-             pybind11::arg("stepcount"), R"md(
+             pybind11::arg("count"), pybind11::arg("step_start"),
+             pybind11::arg("step_count"), R"md(
              Random access read allowed to select steps, 
              only valid with File Engines
 
@@ -869,7 +873,7 @@ PYBIND11_MODULE(adios2, m)
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttribute,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("variablename") = "",
+             pybind11::arg("name"), pybind11::arg("variable_name") = "",
              pybind11::arg("separator") = "/",
              R"md(
 				 Reads a numpy based attribute
@@ -895,7 +899,7 @@ PYBIND11_MODULE(adios2, m)
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttributeString,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("variablename") = "",
+             pybind11::arg("name"), pybind11::arg("variable_name") = "",
              pybind11::arg("separator") = "/",
              R"md(
 				 Read a string attribute
