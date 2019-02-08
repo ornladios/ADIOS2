@@ -15,7 +15,6 @@ set(F2C
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_variable.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_engine.cpp
      ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_operator.cpp
-     ${CMAKE_CURRENT_SOURCE_DIR}/f2c/adios2_f2c_FILE.cpp
 )
 
 set(MODULES 
@@ -33,9 +32,6 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_begin_step_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_put_mod.f90 
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_engine_get_mod.f90 
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_file_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fwrite_mod.f90
-     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_fread_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_min_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_max_mod.f90
@@ -52,14 +48,12 @@ target_link_libraries(adios2_f PRIVATE adios2)
 if(ADIOS2_HAVE_MPI)
    target_sources(adios2_f PRIVATE modules/mpi/adios2_adios_init_mod.f90 
                                    modules/mpi/adios2_io_open_mod.f90
-                                   modules/mpi/adios2_fopen_mod.f90
    )
    target_compile_definitions(adios2_f PUBLIC ADIOS2_HAVE_MPI_F)
    target_link_libraries(adios2_f PRIVATE MPI::MPI_Fortran MPI::MPI_C)
 else()
    target_sources(adios2_f PRIVATE modules/nompi/adios2_adios_init_mod.f90 
                                    modules/nompi/adios2_io_open_mod.f90
-                                   modules/nompi/adios2_fopen_mod.f90
    )
 endif()
 

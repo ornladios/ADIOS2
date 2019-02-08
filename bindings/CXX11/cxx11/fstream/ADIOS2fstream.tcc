@@ -19,6 +19,24 @@ namespace adios2
 {
 
 template <class T>
+void fstream::write_attribute(const std::string &name, const T &value,
+                              const std::string &variableName,
+                              const std::string separator, const bool endl)
+{
+    m_Stream->WriteAttribute(name, value, variableName, separator, endl);
+}
+
+template <class T>
+void fstream::write_attribute(const std::string &name, const T *data,
+                              const size_t elements,
+                              const std::string &variableName,
+                              const std::string separator, const bool endl)
+{
+    m_Stream->WriteAttribute(name, data, elements, variableName, separator,
+                             endl);
+}
+
+template <class T>
 void fstream::write(const std::string &name, const T *values, const Dims &shape,
                     const Dims &start, const Dims &count, const bool endl)
 {
@@ -35,6 +53,13 @@ template <class T>
 void fstream::read(const std::string &name, T *values)
 {
     m_Stream->Read(name, values);
+}
+
+template <class T>
+void fstream::read(const std::string &name, T *values, const size_t stepStart,
+                   const size_t stepCount)
+{
+    m_Stream->Read(name, values, Box<size_t>{stepStart, stepCount});
 }
 
 template <class T>
@@ -74,6 +99,13 @@ std::vector<T> fstream::read(const std::string &name)
 }
 
 template <class T>
+std::vector<T> fstream::read(const std::string &name, const size_t stepsStart,
+                             const size_t stepsCount)
+{
+    return m_Stream->Read<T>(name, Box<size_t>(stepsStart, stepsCount));
+}
+
+template <class T>
 std::vector<T> fstream::read(const std::string &name,
                              const Dims &selectionStart,
                              const Dims &selectionCount)
@@ -92,33 +124,23 @@ fstream::read(const std::string &name, const Dims &selectionStart,
         Box<size_t>(stepSelectionStart, stepSelectionCount));
 }
 
-// template <class T>
-// void fstream::read(const std::string &name, T *values,
-//                   const size_t stepSelectionStart,
-//                   const size_t stepSelectionCount)
-//{
-//    // TODO
-//    throw std::invalid_argument("ERROR: fstream read variable " + name +
-//                                " signature not yet implemented\n");
-//}
-//
-// template <class T>
-// T fstream::read(const std::string &name, const size_t step)
-//{
-//    // TODO
-//    throw std::invalid_argument("ERROR: fstream read variable " + name +
-//                                " signature not yet implemented\n");
-//}
-//
-// template <class T>
-// std::vector<T> fstream::read(const std::string &name,
-//                             const size_t stepSelectionStart,
-//                             const size_t stepSelectionCount)
-//{
-//    // TODO
-//    throw std::invalid_argument("ERROR: fstream read variable " + name +
-//                                " signature not yet implemented\n");
-//}
+template <class T>
+std::vector<T> fstream::read_attribute(const std::string &name,
+                                       const std::string &variableName,
+                                       const std::string separator)
+{
+    std::vector<T> data;
+    core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(name);
+
+    if (attribute == nullptr)
+    {
+        return data;
+    }
+
+    data.resize(attribute->m_Elements);
+    m_Stream->ReadAttribute<T>(name, data.data(), variableName, separator);
+    return data;
+}
 
 } // end namespace adios2
 

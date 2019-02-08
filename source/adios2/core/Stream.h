@@ -64,13 +64,22 @@ public:
     ~Stream() = default;
 
     template <class T>
+    void WriteAttribute(const std::string &name, const T &value,
+                        const std::string &variableName,
+                        const std::string separator, const bool nextStep);
+    template <class T>
+    void WriteAttribute(const std::string &name, const T *array,
+                        const size_t elements, const std::string &variableName,
+                        const std::string separator, const bool nextStep);
+
+    template <class T>
     void Write(const std::string &name, const T *values,
                const Dims &shape = Dims{}, const Dims &start = Dims{},
-               const Dims &count = Dims{}, const bool endl = false);
+               const Dims &count = Dims{}, const bool nextStep = false);
 
     template <class T>
     void Write(const std::string &name, const T &value,
-               const bool endl = false);
+               const bool nextStep = false);
 
     bool GetStep();
 
@@ -91,11 +100,22 @@ public:
     std::vector<T> Read(const std::string &name);
 
     template <class T>
+    std::vector<T> Read(const std::string &name,
+                        const Box<size_t> &stepsSelection);
+
+    template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection);
 
     template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
-                        const Box<size_t> &stepSelection);
+                        const Box<size_t> &stepsSelection);
+
+    template <class T>
+    void ReadAttribute(const std::string &name, T *data,
+                       const std::string &variableName,
+                       const std::string separator);
+
+    void EndStep();
 
     void Close();
 
@@ -128,8 +148,24 @@ private:
     void CheckOpen();
 };
 
+#define declare_template_instantiation(T)                                      \
+    extern template void Stream::WriteAttribute(                               \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string, const bool);                                        \
+                                                                               \
+    extern template void Stream::WriteAttribute(                               \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string, const bool);                                        \
+                                                                               \
+    extern template void Stream::ReadAttribute(                                \
+        const std::string &, T *, const std::string &, const std::string);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
+                                                                               \
     extern template void Stream::Write<T>(const std::string &, const T *,      \
                                           const Dims &, const Dims &,          \
                                           const Dims &, const bool);           \
@@ -149,6 +185,9 @@ private:
         const std::string &, T *, const Box<Dims> &, const Box<size_t> &);     \
                                                                                \
     extern template std::vector<T> Stream::Read<T>(const std::string &);       \
+                                                                               \
+    extern template std::vector<T> Stream::Read(const std::string &,           \
+                                                const Box<size_t> &);          \
                                                                                \
     extern template std::vector<T> Stream::Read<T>(                            \
         const std::string &, const Box<Dims> &, const Box<size_t> &);          \
