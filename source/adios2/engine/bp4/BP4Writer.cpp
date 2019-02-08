@@ -170,7 +170,8 @@ void BP4Writer::InitTransports()
     }
 
     m_BP4Serializer.ProfilerStart("mkdir");
-    m_FileDataManager.MkDirsBarrier(bpSubStreamNames);
+    m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
+                                    m_BP4Serializer.m_NodeLocal);
     m_BP4Serializer.ProfilerStop("mkdir");
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
