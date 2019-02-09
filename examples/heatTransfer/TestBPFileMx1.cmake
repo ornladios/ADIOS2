@@ -67,7 +67,7 @@ add_test(NAME HeatTransfer.BP4File.Dump.Mx1
     -DARGS=-d 
     -DINPUT_FILE=${BP4_DIR}/HeatTransfer.BP4File.Read.Mx1.bp
     -DOUTPUT_FILE=HeatTransfer.BP4File.Dump.Mx1.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls2.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST HeatTransfer.BP4File.Dump.Mx1
   PROPERTY DEPENDS HeatTransfer.BP4File.Read.Mx1
