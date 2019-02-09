@@ -2557,15 +2557,15 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     {
                         if (variable->m_ShapeID == ShapeID::GlobalArray)
                         {
-                            fprintf(
-                                outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
-                                blocks[j].Start[k], ndigits_dims[k],
-                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                    blocks[j].Start[k], ndigits_dims[k],
+                                    blocks[j].Start[k] + blocks[j].Count[k] -
+                                        1);
                         }
                         else
                         {
                             // blockStart is empty vector for LocalArrays
-                            fprintf(outf, "0:%*" PRIu64, ndigits_dims[k],
+                            fprintf(outf, "0:%*zu", ndigits_dims[k],
                                     blocks[j].Count[k] - 1);
                         }
                     }
