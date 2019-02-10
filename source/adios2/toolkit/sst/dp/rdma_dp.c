@@ -105,6 +105,7 @@ static void init_fabric(struct fabric_state *fabric)
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->ep_attr->type = FI_EP_RDM;
 
     ifname = getenv("FABRIC_IFACE");
 
@@ -129,7 +130,7 @@ static void init_fabric(struct fabric_state *fabric)
             useinfo = info;
             break;
         }
-        if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
+        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) || strcmp(prov_name, "gni") == 0 ||
             strcmp(prov_name, "psm2") == 0 || !useinfo)
         {
             useinfo = info;
@@ -1007,6 +1008,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->ep_attr->type = FI_EP_RDM;
 
     ifname = getenv("FABRIC_IFACE");
 
@@ -1035,7 +1037,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             Ret = 100;
             break;
         }
-        if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
+        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) || strcmp(prov_name, "gni") == 0 ||
             strcmp(prov_name, "psm2") == 0)
         {
 
