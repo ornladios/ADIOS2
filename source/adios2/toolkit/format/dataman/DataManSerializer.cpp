@@ -25,8 +25,7 @@ DataManSerializer::DataManSerializer(bool isRowMajor,
                                      bool isLittleEndian)
 : m_IsRowMajor(isRowMajor), m_IsLittleEndian(isLittleEndian),
   m_ContiguousMajor(contiguousMajor),
-  m_DeferredRequestsToSend(
-      std::make_shared<std::unordered_map<std::string, std::vector<char>>>())
+  m_DeferredRequestsToSend(std::make_shared<DeferredRequestMap>())
 
 {
     New(1024);
@@ -44,43 +43,41 @@ void DataManSerializer::New(size_t size)
     m_LocalBuffer->resize(sizeof(uint64_t) * 2);
 }
 
-const std::shared_ptr<std::vector<char>> DataManSerializer::GetLocalPack()
+VecPtr DataManSerializer::GetLocalPack()
 {
-    std::vector<char> metapack = SerializeJson(m_MetadataJson);
-    size_t metasize = metapack.size();
+    auto metapack = SerializeJson(m_MetadataJson);
+    size_t metasize = metapack->size();
     (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[0] =
         m_LocalBuffer->size();
     (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[1] = metasize;
     m_LocalBuffer->resize(m_LocalBuffer->size() + metasize);
     std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - metasize,
-                metapack.data(), metasize);
+                metapack->data(), metasize);
     return m_LocalBuffer;
 }
 
-std::shared_ptr<std::vector<char>>
-DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
+VecPtr DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
 {
     int mpiSize;
     int mpiRank;
     MPI_Comm_size(mpiComm, &mpiSize);
     MPI_Comm_rank(mpiComm, &mpiRank);
 
-    std::vector<char> localJsonPack = SerializeJson(m_MetadataJson);
-    unsigned int size = localJsonPack.size();
+    auto localJsonPack = SerializeJson(m_MetadataJson);
+    unsigned int size = localJsonPack->size();
     unsigned int maxSize;
     MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, mpiComm);
     maxSize += sizeof(uint64_t);
-    localJsonPack.resize(maxSize, '\0');
-    *(reinterpret_cast<uint64_t *>(localJsonPack.data() +
-                                   localJsonPack.size()) -
+    localJsonPack->resize(maxSize, '\0');
+    *(reinterpret_cast<uint64_t *>(localJsonPack->data() +
+                                   localJsonPack->size()) -
       1) = size;
 
     std::vector<char> globalJsonStr(mpiSize * maxSize);
-    MPI_Allgather(localJsonPack.data(), maxSize, MPI_CHAR, globalJsonStr.data(),
-                  maxSize, MPI_CHAR, mpiComm);
+    MPI_Allgather(localJsonPack->data(), maxSize, MPI_CHAR,
+                  globalJsonStr.data(), maxSize, MPI_CHAR, mpiComm);
 
     nlohmann::json globalMetadata;
-    std::shared_ptr<std::vector<char>> globalJsonPack = nullptr;
 
     for (int i = 0; i < mpiSize; ++i)
     {
@@ -101,26 +98,14 @@ DataManSerializer::GetAggregatedMetadata(const MPI_Comm mpiComm)
             }
         }
     }
-    globalJsonPack = std::make_shared<std::vector<char>>(
-        std::move(SerializeJson(globalMetadata)));
 
-    if (m_Verbosity >= 1)
-    {
-        if (mpiRank == 0)
-        {
-            if (globalJsonPack->empty())
-            {
-                std::cout << "DataManSerializer::GetAggregatedMetadata "
-                             "resulted in empty json pack"
-                          << std::endl;
-            }
-        }
-    }
+    auto globalJsonPack = SerializeJson(globalMetadata);
+
     return globalJsonPack;
 }
 
-void DataManSerializer::PutAggregatedMetadata(
-    const MPI_Comm mpiComm, std::shared_ptr<std::vector<char>> data)
+void DataManSerializer::PutAggregatedMetadata(const MPI_Comm mpiComm,
+                                              VecPtr data)
 {
     if (data->empty())
     {
@@ -139,13 +124,12 @@ void DataManSerializer::PutAggregatedMetadata(
     }
 }
 
-std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
+VecPtr DataManSerializer::EndSignal(size_t step)
 {
     nlohmann::json j;
     j["FinalStep"] = step;
     std::string s = j.dump() + '\0';
-    std::shared_ptr<std::vector<char>> c =
-        std::make_shared<std::vector<char>>(s.size());
+    auto c = std::make_shared<std::vector<char>>(s.size());
     std::memcpy(c->data(), s.c_str(), s.size());
     return c;
 }
@@ -215,8 +199,7 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
     }
 }
 
-void DataManSerializer::JsonToDataManVarMap(
-    nlohmann::json &metaJ, std::shared_ptr<std::vector<char>> pack)
+void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
 
     // the mutex has to be locked here through the entire function. Otherwise
@@ -329,7 +312,7 @@ void DataManSerializer::JsonToDataManVarMap(
     }
 }
 
-int DataManSerializer::PutPack(const std::shared_ptr<std::vector<char>> data)
+int DataManSerializer::PutPack(const VecPtr data)
 {
     if (data->size() == 0)
     {
@@ -367,9 +350,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
     if (allPreviousSteps)
     {
-        std::vector<std::unordered_map<
-            size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator>
-            its;
+        std::vector<DmvVecPtrMap::iterator> its;
         for (auto it = m_DataManVarMap.begin(); it != m_DataManVarMap.end();
              ++it)
         {
@@ -396,9 +377,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     }
 }
 
-const std::unordered_map<
-    size_t, std::shared_ptr<std::vector<DataManSerializer::DataManVar>>>
-DataManSerializer::GetMetaData()
+const DmvVecPtrMap DataManSerializer::GetMetaData()
 {
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     // This meta data map is supposed to be very light weight to return because
@@ -407,8 +386,7 @@ DataManSerializer::GetMetaData()
     return m_DataManVarMap;
 }
 
-std::shared_ptr<const std::vector<DataManSerializer::DataManVar>>
-DataManSerializer::GetMetaData(const size_t step)
+DmvVecPtr DataManSerializer::GetMetaData(const size_t step)
 {
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     const auto &i = m_DataManVarMap.find(step);
@@ -461,7 +439,7 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                                           const Dims &count, void *data)
 {
 
-    std::shared_ptr<std::vector<DataManVar>> varVec;
+    DmvVecPtr varVec;
 
     m_DataManVarMapMutex.lock();
     auto stepVecIt = m_DataManVarMap.find(step);
@@ -518,17 +496,15 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
     return 0;
 }
 
-std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
-DataManSerializer::GetDeferredRequest()
+DeferredRequestMapPtr DataManSerializer::GetDeferredRequest()
 {
     auto t = m_DeferredRequestsToSend;
-    m_DeferredRequestsToSend =
-        std::make_shared<std::unordered_map<std::string, std::vector<char>>>();
+    m_DeferredRequestsToSend = std::make_shared<DeferredRequestMap>();
     return t;
 }
 
-std::shared_ptr<std::vector<char>>
-DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
+VecPtr DataManSerializer::GenerateReply(const std::vector<char> &request,
+                                        size_t &step)
 {
     auto replyMetaJ = std::make_shared<nlohmann::json>();
     auto replyLocalBuffer =
@@ -556,7 +532,7 @@ DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
         Dims count = req["C"].get<Dims>();
         step = req["T"].get<size_t>();
 
-        std::shared_ptr<std::vector<DataManVar>> varVec;
+        DmvVecPtr varVec;
 
         {
             std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
@@ -622,8 +598,8 @@ DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
                     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-                    std::vector<char> metapack = SerializeJson(*replyMetaJ);
-                    size_t metasize = metapack.size();
+                    auto metapack = SerializeJson(*replyMetaJ);
+                    size_t metasize = metapack->size();
                     (reinterpret_cast<uint64_t *>(
                         replyLocalBuffer->data()))[0] =
                         replyLocalBuffer->size();
@@ -633,7 +609,7 @@ DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
                                              metasize);
                     std::memcpy(replyLocalBuffer->data() +
                                     replyLocalBuffer->size() - metasize,
-                                metapack.data(), metasize);
+                                metapack->data(), metasize);
                 }
             }
         }
@@ -723,34 +699,27 @@ size_t DataManSerializer::Steps()
     return m_DataManVarMap.size();
 }
 
-std::vector<char>
-DataManSerializer::SerializeJson(const nlohmann::json &message)
+VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 {
-    std::vector<char> pack;
+    auto pack = std::make_shared<std::vector<char>>();
     if (m_UseJsonSerialization == "msgpack")
     {
-        nlohmann::json::to_msgpack(message, pack);
+        nlohmann::json::to_msgpack(message, *pack);
     }
     else if (m_UseJsonSerialization == "cbor")
     {
-        nlohmann::json::to_cbor(message, pack);
+        nlohmann::json::to_cbor(message, *pack);
     }
     else if (m_UseJsonSerialization == "ubjson")
     {
-        nlohmann::json::to_ubjson(message, pack);
+        nlohmann::json::to_ubjson(message, *pack);
     }
     else if (m_UseJsonSerialization == "string")
     {
         std::string pack_str = message.dump();
-        pack.resize(pack_str.size() + 1);
-        std::memcpy(pack.data(), pack_str.data(), pack_str.size());
-        pack.back() = '\0';
-        if (m_Verbosity >= 5)
-        {
-            std::cout << "DataManSerializer::SerializeJson Json = ";
-            std::cout << nlohmann::json::parse(pack).dump(4);
-            std::cout << std::endl;
-        }
+        pack->resize(pack_str.size() + 1);
+        std::memcpy(pack->data(), pack_str.data(), pack_str.size());
+        pack->back() = '\0';
     }
     else
     {

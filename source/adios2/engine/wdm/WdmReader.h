@@ -45,10 +45,7 @@ private:
     format::DataManSerializer m_DataManSerializer;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
     std::shared_ptr<transportman::StagingMan> m_MetadataTransport;
-    std::unordered_map<
-        size_t,
-        std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>>>
-        m_MetaDataMap;
+    format::DmvVecPtrMap m_MetaDataMap;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
     std::vector<std::string> m_FullAddresses;

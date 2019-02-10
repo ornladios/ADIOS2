@@ -41,10 +41,7 @@ private:
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
 
     format::DataManSerializer m_DataManSerializer;
-    std::unordered_map<
-        size_t,
-        std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>>>
-        m_MetaDataMap;
+    format::DmvVecPtrMap m_MetaDataMap;
 
     void Init();
     void IOThread(std::shared_ptr<transportman::WANMan> man);

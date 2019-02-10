@@ -47,8 +47,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         return StepStatus::EndOfStream;
     }
 
-    std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>> vars =
-        nullptr;
+    format::DmvVecPtr vars = nullptr;
     auto start_time = std::chrono::system_clock::now();
 
     while (vars == nullptr)

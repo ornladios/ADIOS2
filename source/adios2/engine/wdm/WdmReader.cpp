@@ -117,8 +117,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
             "[WdmReader::BeginStep] Step mode is not supported!"));
     }
 
-    std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>> vars =
-        nullptr;
+    format::DmvVecPtr vars = nullptr;
     auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
     if (currentStepIt != m_MetaDataMap.end())
     {
@@ -173,7 +172,7 @@ void WdmReader::PerformGets()
         for (const auto &i : *requests)
         {
             std::cout << i.first << ": ";
-            for (auto j : i.second)
+            for (auto j : *i.second)
             {
                 std::cout << j;
             }
@@ -183,7 +182,7 @@ void WdmReader::PerformGets()
 
     for (const auto &i : *requests)
     {
-        auto reply = m_DataTransport->Request(i.second, i.first);
+        auto reply = m_DataTransport->Request(*i.second, i.first);
         if (reply->empty())
         {
             Log(1, "Lost connection to writer. Data for the final step is "

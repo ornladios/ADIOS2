@@ -36,9 +36,8 @@ template <class T>
 void DataManSerializer::PutVar(const core::Variable<T> &variable,
                                const std::string &doid, const size_t step,
                                const int rank, const std::string &address,
-                               const Params &params,
-                               std::shared_ptr<std::vector<char>> localBuffer,
-                               std::shared_ptr<nlohmann::json> metadataJson)
+                               const Params &params, VecPtr localBuffer,
+                               JsonPtr metadataJson)
 {
     PutVar(variable.GetData(), variable.m_Name, variable.m_Shape,
            variable.m_Start, variable.m_Count, variable.m_MemoryStart,
@@ -53,8 +52,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                                const Dims &varMemCount, const std::string &doid,
                                const size_t step, const int rank,
                                const std::string &address, const Params &params,
-                               std::shared_ptr<std::vector<char>> localBuffer,
-                               std::shared_ptr<nlohmann::json> metadataJson)
+                               VecPtr localBuffer, JsonPtr metadataJson)
 {
     Log(1, "DataManSerializer::PutVar begin with Step " + std::to_string(step) +
                " Var " + varName,
@@ -330,7 +328,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                               const Dims &varMemCount)
 {
 
-    std::shared_ptr<std::vector<DataManVar>> vec = nullptr;
+    DmvVecPtr vec = nullptr;
 
     {
         std::lock_guard<std::mutex> l(m_DataManVarMapMutex);

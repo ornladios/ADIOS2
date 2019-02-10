@@ -43,31 +43,42 @@ namespace adios2
 namespace format
 {
 
+using VecPtr = std::shared_ptr<std::vector<char>>;
+using VecPtrMap = std::unordered_map<size_t, VecPtr>;
+using JsonPtr = std::shared_ptr<nlohmann::json>;
+
+struct DataManVar
+{
+    bool isRowMajor;
+    bool isLittleEndian;
+    Dims shape;
+    Dims count;
+    Dims start;
+    std::string name;
+    std::string doid;
+    std::string type;
+    size_t step;
+    size_t size;
+    size_t position;
+    int rank;
+    std::string address;
+    std::string compression;
+    Params params;
+    VecPtr buffer = nullptr;
+};
+
+using DmvVecPtr = std::shared_ptr<std::vector<DataManVar>>;
+using DmvVecPtrMap = std::unordered_map<size_t, DmvVecPtr>;
+using DmvVecPtrMapPtr = std::shared_ptr<DmvVecPtrMap>;
+using DeferredRequestMap =
+    std::unordered_map<std::string, std::shared_ptr<std::vector<char>>>;
+using DeferredRequestMapPtr = std::shared_ptr<DeferredRequestMap>;
+
 class DataManSerializer
 {
 public:
     DataManSerializer(bool isRowMajor, const bool contiguousMajor,
                       bool isLittleEndian);
-
-    struct DataManVar
-    {
-        bool isRowMajor;
-        bool isLittleEndian;
-        Dims shape;
-        Dims count;
-        Dims start;
-        std::string name;
-        std::string doid;
-        std::string type;
-        size_t step;
-        size_t size;
-        size_t position;
-        int rank;
-        std::string address;
-        std::string compression;
-        Params params;
-        std::shared_ptr<std::vector<char>> buffer = nullptr;
-    };
 
     // clear and allocate new buffer for writer
     void New(size_t size);
@@ -79,35 +90,31 @@ public:
            const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
            const Dims &varMemCount, const std::string &doid, const size_t step,
            const int rank, const std::string &address, const Params &params,
-           std::shared_ptr<std::vector<char>> localBuffer = nullptr,
-           std::shared_ptr<nlohmann::json> metadataJson = nullptr);
+           VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // another wrapper for PutVar which accepts adios2::core::Variable
     template <class T>
     void PutVar(const core::Variable<T> &variable, const std::string &doid,
                 const size_t step, const int rank, const std::string &address,
-                const Params &params,
-                std::shared_ptr<std::vector<char>> localBuffer = nullptr,
-                std::shared_ptr<nlohmann::json> metadataJson = nullptr);
+                const Params &params, VecPtr localBuffer = nullptr,
+                JsonPtr metadataJson = nullptr);
 
     // put attributes for writer
     void PutAttributes(core::IO &io, const int rank);
 
     // get the metadata incorporated local buffer for writer, usually called in
     // EndStep
-    const std::shared_ptr<std::vector<char>> GetLocalPack();
+    VecPtr GetLocalPack();
 
     // aggregate metadata across all writer ranks and return the aggregated
     // metadata, usually called from master rank of writer
-    std::shared_ptr<std::vector<char>>
-    GetAggregatedMetadata(const MPI_Comm mpiComm);
+    VecPtr GetAggregatedMetadata(const MPI_Comm mpiComm);
 
-    static std::shared_ptr<std::vector<char>> EndSignal(size_t step);
+    static VecPtr EndSignal(size_t step);
 
-    std::shared_ptr<std::vector<char>>
-    GenerateReply(const std::vector<char> &request, size_t &step);
+    VecPtr GenerateReply(const std::vector<char> &request, size_t &step);
 
-    int PutPack(const std::shared_ptr<std::vector<char>> data);
+    int PutPack(const VecPtr data);
 
     template <class T>
     int GetVar(T *output_data, const std::string &varName, const Dims &varStart,
@@ -117,21 +124,17 @@ public:
 
     void Erase(const size_t step, const bool allPreviousSteps = false);
 
-    std::shared_ptr<const std::vector<DataManVar>>
-    GetMetaData(const size_t step);
+    DmvVecPtr GetMetaData(const size_t step);
 
-    const std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
-    GetMetaData();
+    const DmvVecPtrMap GetMetaData();
 
     void GetAttributes(core::IO &io);
 
-    void PutAggregatedMetadata(MPI_Comm mpiComm,
-                               std::shared_ptr<std::vector<char>>);
+    void PutAggregatedMetadata(MPI_Comm mpiComm, VecPtr);
 
     int PutDeferredRequest(const std::string &variable, const size_t step,
                            const Dims &start, const Dims &count, void *data);
-    std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
-    GetDeferredRequest();
+    DeferredRequestMapPtr GetDeferredRequest();
 
     size_t MinStep();
     size_t Steps();
@@ -155,14 +158,13 @@ private:
     bool IsCompressionAvailable(const std::string &method,
                                 const std::string &type, const Dims &count);
 
-    void JsonToDataManVarMap(nlohmann::json &metaJ,
-                             std::shared_ptr<std::vector<char>> pack);
+    void JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack);
 
     bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
                           const Dims &outStart, const Dims &outCount,
                           Dims &ovlpStart, Dims &ovlpCount);
 
-    std::vector<char> SerializeJson(const nlohmann::json &message);
+    VecPtr SerializeJson(const nlohmann::json &message);
     nlohmann::json DeserializeJson(const char *start, size_t size);
 
     void Log(const int level, const std::string &message, const bool mpi,
@@ -170,7 +172,7 @@ private:
 
     // local rank single step data and metadata pack buffer, used in writer,
     // only accessed from writer app API thread, does not need mutex
-    std::shared_ptr<std::vector<char>> m_LocalBuffer;
+    VecPtr m_LocalBuffer;
 
     // local rank single step JSON metadata, used in writer, only accessed from
     // writer app API thread, do not need mutex
@@ -182,9 +184,12 @@ private:
 
     // global aggregated buffer for metadata and data buffer, used in writer
     // (Staging engine) and reader (all engines), needs mutex for accessing
-    std::unordered_map<size_t, std::shared_ptr<std::vector<DataManVar>>>
-        m_DataManVarMap;
+    DmvVecPtrMap m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
+
+    // Aggregated metadata map, used in writer, needs mutex
+    VecPtrMap m_AggregatedMetadataMap;
+    std::mutex m_AggregatedMetadataMapMutex;
 
     // for global variables and attributes, needs mutex
     nlohmann::json m_GlobalVars;
@@ -192,8 +197,8 @@ private:
 
     // for generating deferred requests, only accessed from reader app thread,
     // does not need mutex
-    std::shared_ptr<std::unordered_map<std::string, std::vector<char>>>
-        m_DeferredRequestsToSend;
+
+    DeferredRequestMapPtr m_DeferredRequestsToSend;
 
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
