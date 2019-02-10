@@ -90,7 +90,7 @@ private:
     void Log(const int level, const std::string &message, const bool mpi,
              const bool endline);
 
-    int m_Verbosity = 5;
+    int m_Verbosity = 0;
 };
 
 } // end namespace engine
