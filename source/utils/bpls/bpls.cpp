@@ -2554,7 +2554,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             size_t step = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
-            fprintf(outf, "%c        step %*zu: ", commentchar, ndigits_nsteps,
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
                     step);
             fprintf(outf, "%zu instances available\n", blocks.size());
             if (dump)
