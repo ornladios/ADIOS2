@@ -67,7 +67,9 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
     auto reply = std::make_shared<std::vector<char>>();
     if (m_MpiRank == 0)
     {
-        std::vector<char> request(1, 'M');
+        std::vector<char> request(16);
+        reinterpret_cast<int64_t *>(request.data())[0] = -1;
+        reinterpret_cast<int64_t *>(request.data())[1] = m_ReaderId;
         reply = m_MetadataTransport->Request(
             request, m_FullAddresses[rand() % m_FullAddresses.size()]);
     }
@@ -313,6 +315,18 @@ void WdmReader::InitTransports() {}
 
 void WdmReader::Handshake()
 {
+    auto ips = helper::AvailableIpAddresses();
+    if (ips.empty())
+    {
+        m_ReaderId = rand();
+    }
+    else
+    {
+        std::hash<std::string> hash_fn;
+        m_ReaderId = hash_fn(ips[0]);
+    }
+    helper::BroadcastValue(m_ReaderId, m_MPIComm);
+
     transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
     while (true)
     {

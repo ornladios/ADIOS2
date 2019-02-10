@@ -53,6 +53,7 @@ private:
     int m_MpiRank;
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 3;
+    size_t m_ReaderId;
 
     struct Request
     {

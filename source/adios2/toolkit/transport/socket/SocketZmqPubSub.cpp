@@ -114,9 +114,7 @@ void SocketZmqPubSub::IWrite(const char *buffer, size_t size, Status &status,
 {
     int retInt = 0;
     ProfilerStart("write");
-    std::cout << "before send\n";
     retInt = zmq_send(m_Socket, buffer, size, ZMQ_DONTWAIT);
-    std::cout << "end send\n";
     ProfilerStop("write");
     if (retInt < 0)
     {

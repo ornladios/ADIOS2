@@ -488,21 +488,28 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                     }
                     std::cout << std::endl;
                 }
-                if (m_ContiguousMajor)
+                if (j.start.size() > 0 && j.start.size() == j.count.size() &&
+                    j.start.size() == varStart.size() &&
+                    j.start.size() == varCount.size())
                 {
-                    helper::NdCopy<T>(
-                        input_data + j.position, j.start, j.count, true,
-                        j.isLittleEndian, reinterpret_cast<char *>(outputData),
-                        varStart, varCount, true, m_IsLittleEndian, j.start,
-                        j.count, varMemStart, varMemCount);
-                }
-                else
-                {
-                    helper::NdCopy<T>(
-                        input_data + j.position, j.start, j.count, j.isRowMajor,
-                        j.isLittleEndian, reinterpret_cast<char *>(outputData),
-                        varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
-                        j.start, j.count, varMemStart, varMemCount);
+                    if (m_ContiguousMajor)
+                    {
+                        helper::NdCopy<T>(input_data + j.position, j.start,
+                                          j.count, true, j.isLittleEndian,
+                                          reinterpret_cast<char *>(outputData),
+                                          varStart, varCount, true,
+                                          m_IsLittleEndian, j.start, j.count,
+                                          varMemStart, varMemCount);
+                    }
+                    else
+                    {
+                        helper::NdCopy<T>(
+                            input_data + j.position, j.start, j.count,
+                            j.isRowMajor, j.isLittleEndian,
+                            reinterpret_cast<char *>(outputData), varStart,
+                            varCount, m_IsRowMajor, m_IsLittleEndian, j.start,
+                            j.count, varMemStart, varMemCount);
+                    }
                 }
             }
         }

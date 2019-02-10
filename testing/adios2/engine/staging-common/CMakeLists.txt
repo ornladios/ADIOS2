@@ -138,8 +138,11 @@ endforeach()
 #
 #   Setup tests for WDM engine
 #
+
+set (5x3.Gap_CMD "run_multi_test -nw 5 -nr 3 -rarg --ignore_time_gap")
+
 if(ADIOS2_HAVE_WDM)
-SET (WDM_TESTS "NoReaderNoWait;TimeoutReader;LatestReader;DiscardWriter")
+SET (WDM_TESTS "NoReaderNoWait;5x3")
 foreach(test ${WDM_TESTS})
     add_common_test(${test} WDM)
 endforeach()

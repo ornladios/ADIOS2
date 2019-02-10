@@ -44,9 +44,9 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     ++m_CurrentStep;
 
-    if (m_DataManSerializer.Steps() > m_MaxBufferSteps)
+    if (m_DataManSerializer.Steps() > m_QueueLimit)
     {
-        int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps;
+        int64_t stepToErase = m_CurrentStep - m_QueueLimit;
         if (stepToErase > 0)
         {
             Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing "
@@ -218,8 +218,14 @@ void WdmWriter::ReplyThread(std::string address)
     while (m_Listening)
     {
         auto request = tpm.ReceiveRequest();
-        if (request->size() == 1)
+        if (request == nullptr)
         {
+            continue;
+        }
+        if (request->size() == 16)
+        {
+            int64_t step = reinterpret_cast<int64_t *>(request->data())[0];
+            int64_t reader_id = reinterpret_cast<int64_t *>(request->data())[1];
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
             while (aggMetadata == nullptr)
             {
@@ -239,7 +245,7 @@ void WdmWriter::ReplyThread(std::string address)
                           << std::endl;
             }
         }
-        else if (request->size() > 1)
+        else if (request->size() > 16)
         {
             size_t step;
             auto reply = m_DataManSerializer.GenerateReply(*request, step);

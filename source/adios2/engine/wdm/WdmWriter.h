@@ -44,7 +44,7 @@ public:
 private:
     // API parameters
     int m_Channels = 1;
-    int64_t m_MaxBufferSteps = 3000;
+    int64_t m_QueueLimit = 3000;
     size_t m_DefaultBufferSize = 1024;
 
     format::DataManSerializer m_DataManSerializer;
@@ -55,6 +55,8 @@ private:
     int m_Timeout = 5;
     bool m_Listening = false;
     bool m_Tolerance = false;
+
+    std::string m_QueueFullPolicy = "Block";
 
     // metadata for current step being written.
     std::pair<int64_t, std::shared_ptr<std::vector<char>>>
