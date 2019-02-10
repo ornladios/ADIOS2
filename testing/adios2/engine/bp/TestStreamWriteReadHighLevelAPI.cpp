@@ -14,7 +14,7 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 class StreamWriteReadHighLevelAPI : public ::testing::Test
 {
@@ -50,8 +50,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
     {
 #ifdef ADIOS2_HAVE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
-        
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
+                                engineName);
+
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, engineName);
 #endif
@@ -474,7 +475,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
     {
 #ifdef ADIOS2_HAVE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
+                                engineName);
 
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, engineName);
@@ -511,7 +513,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
     // READ
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
+                                engineName);
 #else
         adios2::fstream iStream(fname, adios2::fstream::in, engineName);
 #endif
@@ -593,7 +596,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
     {
 #ifdef ADIOS2_HAVE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
+                                engineName);
 
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, engineName);
@@ -633,7 +637,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 
     {
 #ifdef ADIOS2_HAVE_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
+                                engineName);
 #else
         adios2::fstream iStream(fname, adios2::fstream::in, engineName);
 #endif
@@ -697,8 +702,10 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
     {
 #ifdef ADIOS2_HAVE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
-        EXPECT_THROW(oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD, engineName),
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
+                                engineName);
+        EXPECT_THROW(oStream.open("second", adios2::fstream::out,
+                                  MPI_COMM_WORLD, engineName),
                      std::invalid_argument);
 
 #else
