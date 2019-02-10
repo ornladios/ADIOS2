@@ -839,7 +839,14 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     if (dump && !show_decomp)
     {
         // print variable content
-        retval = readVar(fp, io, variable);
+        if (variable->m_ShapeID == ShapeID::LocalArray)
+        {
+            print_decomp(fp, io, variable);
+        }
+        else
+        {
+            retval = readVar(fp, io, variable);
+        }
         fprintf(outf, "\n");
     }
     return retval;
@@ -2488,16 +2495,11 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
     std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
         fp->AllStepsBlocksInfo(*variable);
 
-    // init nblocks and dims with first block info
-    std::vector<typename core::Variable<T>::Info> b1 =
-        allblocks.begin()->second;
-
     bool firstStep = true;
     bool firstBlock = true;
 
     for (auto &blockpair : allblocks)
     {
-        size_t step = blockpair.first;
         std::vector<typename adios2::core::Variable<T>::Info> &blocks =
             blockpair.second;
         const size_t blocksSize = blocks.size();
@@ -2552,7 +2554,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             size_t step = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
+            fprintf(outf, "%c        step %*zu: ", commentchar, ndigits_nsteps,
+                    step);
             fprintf(outf, "%zu instances available\n", blocks.size());
             if (dump)
             {
@@ -2608,13 +2611,15 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
             const size_t blocksSize = blocks.size();
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
+                    step);
             fprintf(outf, "\n");
             ndigits_nblocks = ndigits(blocksSize - 1);
 
             for (size_t j = 0; j < blocksSize; j++)
             {
-                fprintf(outf, "          block %*zu: [", ndigits_nblocks, j);
+                fprintf(outf, "%c         block %*zu: [", commentchar,
+                        ndigits_nblocks, j);
 
                 // just in case ndim for a block changes in LocalArrays:
                 ndim = variable->m_Count.size();
