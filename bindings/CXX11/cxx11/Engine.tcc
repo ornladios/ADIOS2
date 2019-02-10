@@ -70,8 +70,9 @@ template <class T>
 void Engine::Put(const std::string &variableName, const T *data,
                  const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
-    m_Engine->Put<T>(variableName, data, launch);
+    m_Engine->Put(variableName, reinterpret_cast<const IOType *>(data), launch);
 }
 
 template <class T>
@@ -89,8 +90,9 @@ template <class T>
 void Engine::Put(const std::string &variableName, const T &datum,
                  const Mode /*launch*/)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
-    m_Engine->Put<T>(variableName, datum);
+    m_Engine->Put(variableName, reinterpret_cast<const IOType &>(datum));
 }
 
 template <class T>
@@ -107,8 +109,9 @@ void Engine::Get(Variable<T> variable, T *data, const Mode launch)
 template <class T>
 void Engine::Get(const std::string &variableName, T *data, const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    m_Engine->Get<T>(variableName, data, launch);
+    m_Engine->Get(variableName, reinterpret_cast<IOType *>(data), launch);
 }
 
 template <class T>
@@ -125,8 +128,9 @@ template <class T>
 void Engine::Get(const std::string &variableName, T &datum,
                  const Mode /*launch*/)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    m_Engine->Get<T>(variableName, datum);
+    m_Engine->Get(variableName, reinterpret_cast<IOType &>(datum));
 }
 
 template <class T>
@@ -145,9 +149,10 @@ template <class T>
 void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
                  const Mode launch)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
-    m_Engine->Get<T>(variableName, dataV, launch);
+    m_Engine->Get(variableName, reinterpret_cast<std::vector<IOType> &>(dataV), launch);
 }
 
 template <class T>
