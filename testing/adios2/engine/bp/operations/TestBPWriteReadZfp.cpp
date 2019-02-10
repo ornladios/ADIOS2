@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+std::string engineName; // comes from command line
+
 void ZfpRate1D(const double rate)
 {
     // Each process would write a 1x8 array and all processes would
@@ -45,6 +47,11 @@ void ZfpRate1D(const double rate)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
@@ -79,6 +86,11 @@ void ZfpRate1D(const double rate)
 #endif
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -168,6 +180,11 @@ void ZfpRate2D(const double rate)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -198,6 +215,11 @@ void ZfpRate2D(const double rate)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -290,6 +312,11 @@ void ZfpRate3D(const double rate)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny, Nz};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
@@ -320,6 +347,11 @@ void ZfpRate3D(const double rate)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -413,6 +445,11 @@ void ZfpRate1DSel(const double rate)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<std::size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<std::size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -446,6 +483,11 @@ void ZfpRate1DSel(const double rate)
 #endif
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -535,6 +577,11 @@ void ZfpRate2DSel(const double rate)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -565,6 +612,11 @@ void ZfpRate2DSel(const double rate)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -656,6 +708,11 @@ void ZfpRate3DSel(const double rate)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny, Nz};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
@@ -686,6 +743,11 @@ void ZfpRate3DSel(const double rate)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -782,6 +844,11 @@ void ZfpRate2DSmallSel(const double rate)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -812,6 +879,11 @@ void ZfpRate2DSmallSel(const double rate)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -896,6 +968,10 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

@@ -55,6 +55,7 @@ if(ADIOS2_HAVE_MGARD)
     target_link_libraries(TestBPWriteReadMGARD MPI::MPI_C)
   endif()
   
-  gtest_add_tests(TARGET TestBPWriteReadMGARD ${extra_test_args})
+  gtest_add_tests(TARGET TestBPWriteReadMGARD ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+  gtest_add_tests(TARGET TestBPWriteReadMGARD ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 endif()
 

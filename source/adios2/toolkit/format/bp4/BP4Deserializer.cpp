@@ -220,8 +220,8 @@ void BP4Deserializer::ParsePGIndexPerStep(const BufferSTL &bufferSTL,
         helper::ReadValue<uint64_t>(buffer, position,
                                     m_Minifooter.IsLittleEndian);
 
-    const size_t length = helper::ReadValue<uint64_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
+    // read length of pg index which is not used, only for moving the pointer
+    helper::ReadValue<uint64_t>(buffer, position, m_Minifooter.IsLittleEndian);
 
     ProcessGroupIndex index = ReadProcessGroupIndexHeader(
         buffer, position, m_Minifooter.IsLittleEndian);

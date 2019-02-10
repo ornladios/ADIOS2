@@ -920,13 +920,13 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
     const std::string bpName = helper::AddExtension(name, ".bp");
 
     // path/root.bp.dir/root.bp.Index
-    std::string bpRoot = bpName;
+    // std::string bpRoot = bpName;
     const auto lastPathSeparator(bpName.find_last_of(PathSeparator));
 
-    if (lastPathSeparator != std::string::npos)
-    {
-        bpRoot = bpName.substr(lastPathSeparator + 1);
-    }
+    // if (lastPathSeparator != std::string::npos)
+    // {
+    //     bpRoot = bpName.substr(lastPathSeparator + 1);
+    // }
 
     const size_t index =
         m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : rank;

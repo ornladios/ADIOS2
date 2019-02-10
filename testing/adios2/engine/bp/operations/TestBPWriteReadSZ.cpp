@@ -13,7 +13,7 @@
 
 #include <gtest/gtest.h>
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 void SZAccuracy1D(const double accuracy)
 {
