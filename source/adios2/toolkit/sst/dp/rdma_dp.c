@@ -130,8 +130,9 @@ static void init_fabric(struct fabric_state *fabric)
             useinfo = info;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) || strcmp(prov_name, "gni") == 0 ||
-            strcmp(prov_name, "psm2") == 0 || !useinfo)
+        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
+            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0 ||
+            !useinfo)
         {
             useinfo = info;
         }
@@ -1037,8 +1038,8 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             Ret = 100;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) || strcmp(prov_name, "gni") == 0 ||
-            strcmp(prov_name, "psm2") == 0)
+        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
+            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0)
         {
 
             Svcs->verbose(CP_Stream, "RDMA Dataplane sees interface %s, "
