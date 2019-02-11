@@ -17,6 +17,8 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/engine/bp3/BP3Reader.h"
 #include "adios2/engine/bp3/BP3Writer.h"
+#include "adios2/engine/inline/InlineReader.h"
+#include "adios2/engine/inline/InlineWriter.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
@@ -541,6 +543,15 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             engine = std::make_shared<engine::SkeletonWriter>(*this, name, mode,
                                                               mpiComm);
     }
+    else if (engineTypeLC == "inline")
+    {
+        if (mode == Mode::Read)
+            engine = std::make_shared<engine::InlineReader>(*this, name, mode,
+                                                            mpiComm);
+        else
+            engine = std::make_shared<engine::InlineWriter>(*this, name, mode,
+                                                            mpiComm);
+    }
     else
     {
         if (m_DebugMode)
@@ -570,6 +581,22 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 Engine &IO::Open(const std::string &name, const Mode mode)
 {
     return Open(name, mode, m_MPIComm);
+}
+
+Engine &IO::GetEngine(const std::string &name)
+{
+    auto itEngine = m_Engines.find(name);
+    if (m_DebugMode)
+    {
+        if (itEngine == m_Engines.end())
+        {
+            throw std::invalid_argument(
+                "ERROR: engine name " + name +
+                " could not be found, in call to GetEngine\n");
+        }
+    }
+    // return a reference
+    return *itEngine->second.get();
 }
 
 void IO::FlushAll()

@@ -375,6 +375,11 @@ public:
     Engine &Open(const std::string &name, const Mode mode);
 
     /**
+     * Retrieve an engine by name
+     */
+    Engine &GetEngine(const std::string &name);
+
+    /**
      * Flushes all engines created with the current IO object using Open.
      * If no engine is created it does nothing.
      * @exception std::runtime_error if any engine Flush fails

@@ -30,6 +30,8 @@ static std::vector<typename Variable<T>::Info> ToBlocksInfo(
     for (const typename core::Variable<T>::Info &coreBlockInfo : coreBlocksInfo)
     {
         typename Variable<T>::Info blockInfo;
+        // doesn't work because coreBlockInfo is transient.
+        // blockInfo.m_Info = &coreBlockInfo;
         blockInfo.Start = coreBlockInfo.Start;
         blockInfo.Count = coreBlockInfo.Count;
         blockInfo.IsValue = coreBlockInfo.IsValue;
@@ -42,6 +44,7 @@ static std::vector<typename Variable<T>::Info> ToBlocksInfo(
             blockInfo.Min = coreBlockInfo.Min;
             blockInfo.Max = coreBlockInfo.Max;
         }
+        blockInfo.BlockID = coreBlockInfo.BlockID;
         blocksInfo.push_back(blockInfo);
     }
 
@@ -52,6 +55,8 @@ template <class T>
 void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Put");
     m_Engine->Put<T>(*variable.m_Variable, data, launch);
 }
 
@@ -67,6 +72,8 @@ template <class T>
 void Engine::Put(Variable<T> variable, const T &datum, const Mode /*launch*/)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Put");
     m_Engine->Put(*variable.m_Variable, datum);
 }
 
@@ -82,6 +89,8 @@ template <class T>
 void Engine::Get(Variable<T> variable, T *data, const Mode launch)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
     m_Engine->Get<T>(*variable.m_Variable, data, launch);
 }
 
@@ -96,6 +105,8 @@ template <class T>
 void Engine::Get(Variable<T> variable, T &datum, const Mode /*launch*/)
 {
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
     m_Engine->Get<T>(*variable.m_Variable, datum);
 }
 
@@ -112,6 +123,8 @@ void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch)
 {
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
     m_Engine->Get<T>(*variable.m_Variable, dataV, launch);
 }
 
@@ -122,6 +135,22 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
     m_Engine->Get<T>(variableName, dataV, launch);
+}
+
+template <class T>
+void Engine::Get(Variable<T> variable, typename Variable<T>::Info& info, const Mode launch)
+{
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    adios2::helper::CheckForNullptr(
+        variable.m_Variable, "for variable in call to Engine::Get");
+    info.m_Info = m_Engine->Get<T>(*variable.m_Variable, launch);
+}
+
+template <class T>
+void Engine::Get(const std::string &variableName, typename Variable<T>::Info& info, const Mode launch)
+{
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    info.m_Info = m_Engine->Get<T>(variableName, launch);
 }
 
 template <class T>
@@ -152,6 +181,11 @@ Engine::AllStepsBlocksInfo(const Variable<T> variable) const
     return allStepsBlocksInfo;
 }
 
+// Design Node: All Info structs are copied. This prevents Engine::Get() from
+// connecting the Core Info struct to Binding Info struct when this method is
+// called. Instead of returning a vector, BlocksInfo could populate a vector member
+// of the Variable, and those could contain pointers to the Core Info structs,
+// enabling users of the Inline engine to do Info.Data()
 template <class T>
 std::vector<typename Variable<T>::Info>
 Engine::BlocksInfo(const Variable<T> variable, const size_t step) const

@@ -134,6 +134,43 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
         dataV, launch);
 }
 
+// Get
+template <class T>
+typename Variable<T>::Info* Engine::Get(Variable<T> &variable, const Mode launch)
+{
+    if (m_DebugMode)
+    {
+        // CommonChecks<T>(variable, nullptr, {{Mode::Read}}, "in call to Get");
+    }
+
+    switch (launch)
+    {
+    case Mode::Deferred:
+        // TODO different? Should use DoGetDeferred?
+        return DoGetBlockSync(variable);
+        break;
+    case Mode::Sync:
+        // TODO should use DoGetSync()?
+        return DoGetBlockSync(variable);
+        break;
+    default:
+        if (m_DebugMode)
+        {
+            throw std::invalid_argument(
+                "ERROR: invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid, in call to "
+                "GetBlock\n");
+        }
+    }
+    return nullptr;
+}
+
+template <class T>
+typename Variable<T>::Info* Engine::Get(const std::string &variableName, const Mode launch)
+{
+    return Get(FindVariable<T>(variableName, "in call to Get"), launch);
+}
+
 template <class T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 Engine::AllStepsBlocksInfo(const Variable<T> &variable) const
