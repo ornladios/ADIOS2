@@ -30,6 +30,7 @@
 
 #include "sst_data.h"
 
+#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "dp_interface.h"
 
 #define DP_AV_DEF_SIZE 512
@@ -405,6 +406,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
                                    void *client_Data, attr_list attrs)
 {
+    TAU_START_FUNC();
     RdmaReadRequestMsg ReadRequestMsg = (RdmaReadRequestMsg)msg_v;
     Rdma_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
 
@@ -441,6 +443,7 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
             Svcs->sendToPeer(WS_Stream->CP_Stream, WSR_Stream->PeerCohort,
                              ReadRequestMsg->RequestingRank,
                              WS_Stream->ReadReplyFormat, &ReadReplyMsg);
+            TAU_STOP_FUNC();
             return;
         }
         tmp = tmp->Next;
@@ -457,6 +460,7 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
      * assert(0) here.  Probably this sort of error should close the link to
      * a reader though.
      */
+    TAU_STOP_FUNC();
 }
 
 typedef struct _RdmaCompletionHandle
@@ -473,6 +477,7 @@ typedef struct _RdmaCompletionHandle
 static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                  void *client_Data, attr_list attrs)
 {
+    TAU_START_FUNC();
     RdmaReadReplyMsg ReadReplyMsg = (RdmaReadReplyMsg)msg_v;
     Rdma_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
     FabricState Fabric = RS_Stream->Fabric;
@@ -528,6 +533,7 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
      * Signal the condition to wake the reader if they are waiting.
      */
     CMCondition_signal(cm, ReadReplyMsg->NotifyCondition);
+    TAU_STOP_FUNC();
 }
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,

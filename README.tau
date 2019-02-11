@@ -1,0 +1,40 @@
+To use the TAU instrumentation:
+
+-----------------------
+
+Download and build TAU (for Cray systems, see note):
+
+$ git clone https://github.com/UO-OACISS/tau2.git
+$ cd tau2
+$ ./configure -mpi -pthread -bfd=download
+$ make -j install
+
+*** Note *** For cray systems, add the -arch=craycnl option to the configure:
+
+$ ./configure -mpi -pthread -bfd=download -arch=craycnl
+$ make -j install
+
+# Add TAU to your path
+# Change apple to x86_64 for linux, or craycnl for titan, or...
+$ PATH=$PATH:`pwd`/apple/bin
+
+-----------------------
+
+Build ADIOS2 as normal, using the "go.sh" script.
+*** Note *** For cray systems, enable dynamic linking before building ADIOS2:
+
+$ export CRAYPE_LINK_TYPE=dynamic
+
+-----------------------
+
+Run the "runit.sh" script.  The default is profiling, you can run without TAU or with Tracing.
+
+Profling: two profiles will be written, reader_tauprofile.xml and
+writer_tauprofile.xml.  They can be analized with the paraprof application:
+
+$ paraprof reader_tauprofile.xml writer_tauprofile.xml
+
+The Traces can be visualized with Jumpshot:
+
+$ cd reader_trace
+$ jumpshot tau.slog2

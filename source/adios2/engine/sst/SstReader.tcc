@@ -15,6 +15,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -26,6 +27,7 @@ namespace engine
 template <class T>
 void SstReader::ReadVariableBlocks(Variable<T> &variable)
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::vector<void *> sstReadHandlers;
     std::vector<std::vector<char>> buffers;
 
@@ -55,6 +57,9 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         variable, blockInfo, subStreamInfo, buffer, payloadSize,
                         payloadStart, 0);
 
+                    std::stringstream ss;
+                    ss << "SST Bytes Read from remote rank " << rank;
+                    TAU_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
                     auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
                                                    payloadStart, payloadSize,
                                                    buffer, dp_info);

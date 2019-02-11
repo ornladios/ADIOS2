@@ -17,6 +17,7 @@
 #include "SstReader.tcc"
 
 #include "SstParamParser.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -163,6 +164,7 @@ SstReader::~SstReader() { SstStreamDestroy(m_Input); }
 
 StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {
+    TAU_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
     SstStepMode StepMode;
@@ -199,6 +201,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 
     if (m_WriterMarshalMethod == SstMarshalBP)
     {
+        TAU_SCOPED_TIMER(
+            "BP Marshaling Case - deserialize and install metadata");
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         // At begin step, you get metadata from the writers.  You need to
         // use this for two things: First, you need to create the
@@ -269,6 +273,7 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstStatusValue Result;

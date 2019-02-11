@@ -1,0 +1,35 @@
+See README.tau for general instructions.  This README contains specific
+instructions for Cori KNL.
+
+----------------------------------------------------------------------------
+Load modules, set up dynamic linking:
+----------------------------------------------------------------------------
+
+module swap PrgEnv-intel PrgEnv-gnu
+module swap craype-haswell craype-mic-knl
+module load cmake/3.11.4
+export CRAYPE_LINK_TYPE=dynamic
+
+----------------------------------------------------------------------------
+Build tau with:
+----------------------------------------------------------------------------
+
+./configure -mpi -pthread -bfd=download -arch=craycnl
+make install
+
+----------------------------------------------------------------------------
+Build ADIOS2 with:
+----------------------------------------------------------------------------
+
+cmake -DCMAKE_C_COMPILER=`which cc` -DCMAKE_CXX_COMPILER=`which CC` \
+-DCMAKE_INSTALL_PREFIX=`pwd` -DCMAKE_BUILD_TYPE=Debug ../ADIOS2
+make -j8
+
+----------------------------------------------------------------------------
+Run heat transfer example ADIOS2 with:
+----------------------------------------------------------------------------
+
+see job.slurm.cori for details.
+
+
+

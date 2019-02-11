@@ -22,6 +22,7 @@
 
 #include "sst.h"
 
+#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
 
 static char *readContactInfoFile(const char *Name, SstStream Stream)
@@ -105,6 +106,7 @@ static char *readContactInfo(const char *Name, SstStream Stream)
 static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                                    void *client_data)
 {
+    TAU_START_FUNC();
     SstStream Stream = (SstStream)client_data;
     int FailedPeerRank = -1;
     for (int i = 0; i < Stream->WriterCohortSize; i++)
@@ -155,6 +157,7 @@ static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                            "status %s\n",
                    SSTStreamStatusStr[Stream->Status]);
     }
+    TAU_STOP_FUNC();
 }
 
 extern long SstCurrentStep(SstStream Stream) { return Stream->ReaderTimestep; }
@@ -450,6 +453,7 @@ extern void SstReaderGetParams(SstStream Stream,
 extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
                                 void *client_data, attr_list attrs)
 {
+    TAU_START_FUNC();
     SstStream Stream;
     struct _PeerSetupMsg *Msg = (struct _PeerSetupMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
@@ -469,6 +473,7 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *Msg_v,
     CMconn_register_close_handler(conn, ReaderConnCloseHandler, (void *)Stream);
     pthread_cond_signal(&Stream->DataCondition);
     pthread_mutex_unlock(&Stream->DataLock);
+    TAU_STOP_FUNC();
 }
 
 void queueTimestepMetadataMsgAndNotify(SstStream Stream,
@@ -547,6 +552,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
 void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
                                 void *client_data, attr_list attrs)
 {
+    TAU_START_FUNC();
     SstStream Stream;
     struct _TimestepMetadataMsg *Msg = (struct _TimestepMetadataMsg *)Msg_v;
     Stream = (SstStream)Msg->RS_Stream;
@@ -566,6 +572,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
         }
         pthread_mutex_unlock(&Stream->DataLock);
 
+        TAU_STOP_FUNC();
         return;
     }
     else
@@ -578,11 +585,14 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
     CMtake_buffer(cm, Msg);
 
     queueTimestepMetadataMsgAndNotify(Stream, Msg, conn);
+    TAU_STOP_FUNC();
 }
 
 void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
                               void *client_data, attr_list attrs)
 {
+    TAU_REGISTER_THREAD();
+    TAU_START_FUNC();
     struct _WriterResponseMsg *Msg = (struct _WriterResponseMsg *)Msg_v;
     struct _WriterResponseMsg **response_ptr;
     //    fprintf(stderr, "Received a writer_response message for condition
@@ -607,11 +617,13 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
 
     /* wake the main thread */
     CMCondition_signal(cm, Msg->WriterResponseCondition);
+    TAU_STOP_FUNC();
 }
 
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                                   void *client_data, attr_list attrs)
 {
+    TAU_START_FUNC();
     WriterCloseMsg Msg = (WriterCloseMsg)Msg_v;
     SstStream Stream = (SstStream)Msg->RS_Stream;
 
@@ -625,6 +637,7 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     /* wake anyone that might be waiting */
     pthread_cond_signal(&Stream->DataCondition);
     pthread_mutex_unlock(&Stream->DataLock);
+    TAU_STOP_FUNC();
 }
 
 static long MaxQueuedMetadata(SstStream Stream)
@@ -904,6 +917,7 @@ extern void SstReleaseStep(SstStream Stream)
     long Timestep = Stream->ReaderTimestep;
     struct _ReleaseTimestepMsg Msg;
 
+    TAU_START_FUNC();
     /*
      * remove local metadata for that timestep
      */
@@ -966,6 +980,7 @@ extern void SstReleaseStep(SstStream Stream)
     {
         FFSClearTimestepData(Stream);
     }
+    TAU_STOP_FUNC();
 }
 
 /*
@@ -977,6 +992,8 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
 {
 
     TSMetadataList Entry;
+
+    TAU_START("Waiting on metadata per rank per timestep");
 
     if (Stream->CurrentMetadata != NULL)
     {
@@ -1125,11 +1142,15 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
 
     Entry = waitForNextMetadata(Stream, Stream->ReaderTimestep);
 
+    TAU_STOP("Waiting on metadata per rank per timestep");
+
     if (Entry)
     {
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
         {
+            TAU_START("FFS marshaling case");
             FFSMarshalInstallMetadata(Stream, Entry->MetadataMsg);
+            TAU_STOP("FFS marshaling case");
         }
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
