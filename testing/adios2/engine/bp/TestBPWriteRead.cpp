@@ -15,7 +15,7 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 class BPWriteReadTest : public ::testing::Test
 {
@@ -84,7 +84,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read1D8)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {
@@ -386,7 +385,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D2x4)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
@@ -678,7 +676,6 @@ TEST_F(BPWriteReadTest, ADIOS2BPWriteADIOS1Read2D4x2)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {

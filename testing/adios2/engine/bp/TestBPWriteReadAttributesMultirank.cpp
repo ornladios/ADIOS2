@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 class BPWriteReadAttributeTestMultirank : public ::testing::Test
 {
@@ -28,8 +28,9 @@ public:
 // ADIOS2  declare attributes on multiple ranks
 TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "ADIOS2BPWriteAttributeMultirankReadArrayTypes.bp";
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) +
+        "ADIOS2BPWriteAttributeMultirankReadArrayTypes.bp";
 
     int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI

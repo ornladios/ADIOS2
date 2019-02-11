@@ -20,7 +20,7 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 class BPChangingShape : public ::testing::Test
 {

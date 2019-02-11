@@ -15,7 +15,7 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 class BPWriteReadTestADIOS2 : public ::testing::Test
 {
@@ -48,7 +48,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -85,7 +85,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {
@@ -169,7 +168,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
 
         if (!engineName.empty())
         {
@@ -363,7 +361,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -400,7 +398,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {
@@ -475,7 +472,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
 
         if (!engineName.empty())
         {
@@ -673,7 +669,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -711,7 +707,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {
@@ -783,7 +778,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
 
         if (!engineName.empty())
         {
@@ -971,7 +965,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -1006,7 +1000,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {
@@ -1078,7 +1071,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
 
         if (!engineName.empty())
         {
@@ -1268,7 +1260,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -1303,7 +1295,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {
@@ -1375,7 +1366,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
 
         if (!engineName.empty())
         {
@@ -1538,7 +1528,7 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
         {
             io.SetEngine(engineName);
         }
-        
+
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
         adios2::Variable<int64_t> varRange =
             io.InquireVariable<int64_t>("range");

@@ -50,7 +50,7 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    // Write test data using BP
+// Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -512,7 +512,7 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    // Write test data using BP
+// Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -980,7 +980,7 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    // Write test data using BP
+// Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);

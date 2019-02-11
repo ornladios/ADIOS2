@@ -25,7 +25,7 @@
 
 using json = nlohmann::json;
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 class BPWriteProfilingJSONTest : public ::testing::Test
 {
@@ -91,7 +91,6 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
             auto var_r64 =
                 io.DefineVariable<double>("r64", shape, start, count);
         }
-
 
         if (!engineName.empty())
         {
@@ -325,7 +324,7 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
-    
+
     if (argc > 1)
     {
         engineName = std::string(argv[1]);

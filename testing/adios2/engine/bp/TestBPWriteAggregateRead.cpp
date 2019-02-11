@@ -699,7 +699,6 @@ void WriteAggRead2D2x4(const std::string substreams)
             io.SetEngine("BPFile");
         }
 
-
         io.AddTransport("file");
 
         SmallTestData m_TestData;

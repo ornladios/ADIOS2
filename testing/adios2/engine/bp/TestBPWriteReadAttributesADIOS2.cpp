@@ -14,7 +14,7 @@
 
 #include "../SmallTestData.h"
 
-std::string engineName;  // comes from command line
+std::string engineName; // comes from command line
 
 class BPWriteReadAttributeTestADIOS2 : public ::testing::Test
 {
