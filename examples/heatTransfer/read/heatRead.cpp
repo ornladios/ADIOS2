@@ -104,18 +104,6 @@ int main(int argc, char *argv[])
         }
 
         adios2::IO outIO = ad.DeclareIO("readerOutput");
-        /*Lipeng*/
-/*         if (!outIO.InConfigFile())
-        {
-            // if not defined by user, we can change the default settings
-            // ADIOS1 BPFile is the default engine
-            outIO.SetEngine("ADIOS1");
-            outIO.SetParameters({{"num_threads", "1"}});
-
-            // ISO-POSIX file output is the default transport (called "File")
-            // Passing parameters to the transport
-            outIO.AddTransport("File", {{"verbose", "4"}});
-        } */
 
         adios2::Engine reader =
             inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
