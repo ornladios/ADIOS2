@@ -61,10 +61,10 @@ int main(int argc, char *argv[])
     count2[1] = d2_Ny;
 
     // Define variables in ioH
-    adios2_define_variable(ioH, "nproc", adios2_type_int, 0, NULL, NULL, NULL,
-                           adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varChar", adios2_type_char, 1, shape, start,
-                           count, adios2_constant_dims_true);
+    adios2_define_variable(ioH, "nproc", adios2_type_int32_t, 0, NULL, NULL,
+                           NULL, adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varChar", adios2_type_signed_char, 1, shape,
+                           start, count, adios2_constant_dims_true);
 
     adios2_define_variable(ioH, "varSChar", adios2_type_signed_char, 1, shape,
                            start, count, adios2_constant_dims_true);
@@ -101,10 +101,11 @@ int main(int argc, char *argv[])
     adios2_define_attribute(ioH, "name", adios2_type_string, "TestUtilsCWrite");
     adios2_define_attribute_array(ioH, "strarray", adios2_type_string, strarray,
                                   sizeof(strarray) / sizeof(char *));
-    adios2_define_attribute_array(ioH, "nwriters", adios2_type_int, &nproc, 1);
+    adios2_define_attribute_array(ioH, "nwriters", adios2_type_int32_t, &nproc,
+                                  1);
     unsigned short shape2D[2] = {(unsigned short)d2_Nx, (unsigned short)d2_Ny};
-    adios2_define_attribute_array(ioH, "shape2D", adios2_type_unsigned_short,
-                                  shape2D, 2);
+    adios2_define_attribute_array(ioH, "shape2D", adios2_type_uint16_t, shape2D,
+                                  2);
     adios2_define_attribute_array(ioH, "aI8", adios2_type_int8_t, data_I8, 1);
     adios2_define_attribute_array(ioH, "aI16", adios2_type_int16_t, data_I16,
                                   1);

@@ -87,7 +87,7 @@ contains
 
     end subroutine
 
-    subroutine adios2_remove_variable(io, name, result, ierr)
+    subroutine adios2_remove_variable(result, io, name, ierr)
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
         logical, intent(out) :: result
@@ -98,9 +98,8 @@ contains
 
         call adios2_inquire_variable(variable, io, name, ierr)
         if( variable%valid ) then
-            call adios2_remove_variable_f2c(io%f2c, &
-                                            TRIM(ADJUSTL(name))//char(0), &
-                                            resultInt, ierr)
+            call adios2_remove_variable_f2c(resultInt, io%f2c, &
+                                            TRIM(ADJUSTL(name))//char(0), ierr)
             if( resultInt == 1) then
                 result = .true.
             else
@@ -155,7 +154,7 @@ contains
     end subroutine
 
 
-    subroutine adios2_remove_attribute(io, name, result, ierr)
+    subroutine adios2_remove_attribute(result, io, name, ierr)
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
         logical, intent(out) :: result
@@ -164,15 +163,12 @@ contains
         type(adios2_attribute):: attribute
         integer :: resultInt
 
-        call adios2_inquire_attribute(attribute, io, name, ierr)
-        if(ierr == adios2_found) then
-            call adios2_remove_attribute_f2c(io%f2c, &
-                                             TRIM(ADJUSTL(name))//char(0), ierr)
-            if( resultInt == 1) then
-                result = .true.
-            else
-                result = .false.
-            end if
+        call adios2_remove_attribute_f2c(resultInt, io%f2c, &
+                                         TRIM(ADJUSTL(name))//char(0), ierr)
+        if( resultInt == 1) then
+            result = .true.
+        else
+            result = .false.
         end if
 
     end subroutine

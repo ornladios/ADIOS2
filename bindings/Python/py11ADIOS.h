@@ -52,7 +52,7 @@ public:
 
     bool RemoveIO(const std::string name);
 
-    void RemoveAllIOs() noexcept;
+    void RemoveAllIOs();
 
     void FlushAll();
 

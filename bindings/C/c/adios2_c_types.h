@@ -25,8 +25,6 @@ typedef struct adios2_variable adios2_variable;
 typedef struct adios2_attribute adios2_attribute;
 typedef struct adios2_engine adios2_engine;
 typedef struct adios2_operator adios2_operator;
-typedef struct adios2_FILE adios2_FILE;
-typedef adios2_FILE adios2_step;
 
 /**
  * @brief adios2_error return types for all ADIOS2 C API functions
@@ -93,7 +91,10 @@ typedef enum {
     adios2_type_uint8_t = 9,
     adios2_type_uint16_t = 10,
     adios2_type_uint32_t = 11,
-    adios2_type_uint64_t = 12
+    adios2_type_uint64_t = 12,
+
+    adios2_type_signed_char = 5,
+    adios2_type_unsigned_char = 9,
 } adios2_type;
 
 typedef enum {

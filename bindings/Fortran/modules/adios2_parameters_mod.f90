@@ -17,19 +17,27 @@ module adios2_parameters_mod
 
     ! Types
     integer, parameter :: adios2_type_unknown = -1
+
     integer, parameter :: adios2_type_character = 0
-    integer, parameter :: adios2_type_real = 2
-    integer, parameter :: adios2_type_dp = 3
-    integer, parameter :: adios2_type_complex = 4
-    integer, parameter :: adios2_type_complex_dp = 5
+    integer, parameter :: adios2_type_string = 0
 
-    integer, parameter :: adios2_type_integer1 = 6
-    integer, parameter :: adios2_type_integer2 = 7
-    integer, parameter :: adios2_type_integer4 = 8
-    integer, parameter :: adios2_type_integer8 = 9
+    integer, parameter :: adios2_type_real4 = 1
+    integer, parameter :: adios2_type_real  = 1
 
-    integer, parameter :: adios2_type_string = 10
+    integer, parameter :: adios2_type_real8 = 2
+    integer, parameter :: adios2_type_dp    = 2
+    integer, parameter :: adios2_type_double_precision = 2
 
+    integer, parameter :: adios2_type_complex4 = 3
+    integer, parameter :: adios2_type_complex = 3
+
+    integer, parameter :: adios2_type_complex8 = 4
+    integer, parameter :: adios2_type_complex_dp = 4
+
+    integer, parameter :: adios2_type_integer1 = 5
+    integer, parameter :: adios2_type_integer2 = 6
+    integer, parameter :: adios2_type_integer4 = 7
+    integer, parameter :: adios2_type_integer8 = 8
 
     ! is_constant_dims
     logical, parameter :: adios2_constant_dims = .true.
@@ -117,13 +125,6 @@ module adios2_parameters_mod
         logical :: valid = .false.
         character(len=64):: name = ''
         character(len=64):: type = ''
-    end type
-
-
-    ! High-level API
-    type adios2_file
-        integer(kind=8):: f2c = 0_8
-        logical :: valid = .false.
     end type
 
 end module
