@@ -445,6 +445,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     io.DefineVariable<double>("r64", shape, start, count);
     io.DefineVariable<std::complex<float>>("c32", shape, start, count);
     io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+    io.DefineVariable<char>("char", shape, start, count);
+    io.DefineVariable<long>("l", shape, start, count);
+    io.DefineVariable<unsigned long>("ul", shape, start, count);
 
     lf_CheckRemove("iString");
     lf_CheckRemove("i8");
@@ -463,6 +466,10 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     lf_CheckRemove("c32");
     lf_CheckRemove("c64");
 
+    lf_CheckRemove("char");
+    lf_CheckRemove("l");
+    lf_CheckRemove("ul");
+
     auto var_iString = io.InquireVariable<std::string>("iString");
     auto var_i8 = io.InquireVariable<int8_t>("i8");
     auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -476,6 +483,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     auto var_r64 = io.InquireVariable<double>("r64");
     auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
     auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+    auto var_char = io.InquireVariable<char>("char");
+    auto var_l = io.InquireVariable<char>("l");
+    auto var_ul = io.InquireVariable<char>("ul");
 
     EXPECT_FALSE(var_iString);
     EXPECT_FALSE(var_i8);
@@ -493,6 +503,10 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
 
     EXPECT_FALSE(var_c32);
     EXPECT_FALSE(var_c64);
+
+    EXPECT_FALSE(var_char);
+    EXPECT_FALSE(var_l);
+    EXPECT_FALSE(var_ul);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
@@ -514,6 +528,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
     io.DefineVariable<double>("r64", shape, start, count);
     io.DefineVariable<std::complex<float>>("c32", shape, start, count);
     io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+    io.DefineVariable<char>("char", shape, start, count);
+    io.DefineVariable<long>("l", shape, start, count);
+    io.DefineVariable<unsigned long>("ul", shape, start, count);
 
     io.RemoveAllVariables();
 
@@ -530,6 +547,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
     auto var_r64 = io.InquireVariable<double>("r64");
     auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
     auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+    auto var_char = io.InquireVariable<char>("char");
+    auto var_l = io.InquireVariable<char>("l");
+    auto var_ul = io.InquireVariable<char>("ul");
 
     EXPECT_FALSE(var_iString);
     EXPECT_FALSE(var_i8);
@@ -547,6 +567,10 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
 
     EXPECT_FALSE(var_c32);
     EXPECT_FALSE(var_c64);
+
+    EXPECT_FALSE(var_char);
+    EXPECT_FALSE(var_l);
+    EXPECT_FALSE(var_ul);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineCheckType)
@@ -568,6 +592,9 @@ TEST_F(ADIOSDefineVariableTest, DefineCheckType)
     io.DefineVariable<double>("r64", shape, start, count);
     io.DefineVariable<std::complex<float>>("c32", shape, start, count);
     io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+    io.DefineVariable<char>("char", shape, start, count);
+    io.DefineVariable<long>("l", shape, start, count);
+    io.DefineVariable<unsigned long>("ul", shape, start, count);
 
     EXPECT_EQ(io.VariableType("iString"), adios2::GetType<std::string>());
     EXPECT_EQ(io.VariableType("i8"), adios2::GetType<int8_t>());
@@ -582,6 +609,9 @@ TEST_F(ADIOSDefineVariableTest, DefineCheckType)
     EXPECT_EQ(io.VariableType("r64"), adios2::GetType<double>());
     EXPECT_EQ(io.VariableType("c32"), adios2::GetType<std::complex<float>>());
     EXPECT_EQ(io.VariableType("c64"), adios2::GetType<std::complex<double>>());
+    EXPECT_EQ(io.VariableType("char"), adios2::GetType<char>());
+    EXPECT_EQ(io.VariableType("l"), adios2::GetType<long>());
+    EXPECT_EQ(io.VariableType("ul"), adios2::GetType<unsigned long>());
 }
 
 int main(int argc, char **argv)
