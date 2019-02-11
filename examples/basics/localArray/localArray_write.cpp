@@ -164,10 +164,10 @@ int main(int argc, char *argv[])
 
             // random chance who writes it
             unsigned int chance = rand() % 100;
-            /*if (step == 2)
+            if (step == 2)
             {
                 chance = 0;
-            }*/
+            }
             bool doWrite = (chance > 60);
             if (doWrite)
             {

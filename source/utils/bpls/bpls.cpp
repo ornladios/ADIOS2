@@ -2605,14 +2605,15 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
         }
 
+        size_t stepRelative = 0;
         for (auto &blockpair : allblocks)
         {
-            size_t step = blockpair.first;
+            size_t stepAbsolute = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
             const size_t blocksSize = blocks.size();
             fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
-                    step);
+                    stepAbsolute);
             fprintf(outf, "\n");
             ndigits_nblocks = ndigits(blocksSize - 1);
 
@@ -2670,9 +2671,10 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 fprintf(outf, "\n");
                 if (dump)
                 {
-                    readVarBlock(fp, io, variable, step, j, blocks[j]);
+                    readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
                 }
             }
+            ++stepRelative;
         }
     }
 }
