@@ -50,6 +50,10 @@ public:
 
     Operator InquireOperator(const std::string name);
 
+    bool RemoveIO(const std::string name);
+
+    void RemoveAllIOs() noexcept;
+
     void FlushAll();
 
 private:

@@ -118,6 +118,27 @@ adios2_error adios2_flush_all(adios2_adios *adios);
  */
 adios2_error adios2_finalize(adios2_adios *adios);
 
+/**
+ * DANGER ZONE: removes an io created with adios2_declare_io.
+ * Will create dangling pointers for all the handlers inside removed io.
+ * NOTE: Use result, not adios2_error to check if the IO was removed.
+ * @param result output adios2_true: io not found and not removed, adios2_false:
+ * io not found and not removed
+ * @param adios owner of io to be removed
+ * @param name input unique identifier for io to be removed
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_remove_io(adios2_bool *result, adios2_adios *adios,
+                              const char *name);
+
+/**
+ * DANGER ZONE: removes all ios created with adios2_declare_io.
+ * Will create dangling pointers for all the handlers inside all removed io.
+ * @param adios owner of all ios to be removed
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_remove_all_ios(adios2_adios *adios);
+
 #ifdef __cplusplus
 } // end extern C
 #endif

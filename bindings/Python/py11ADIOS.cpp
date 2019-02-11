@@ -73,6 +73,18 @@ void ADIOS::FlushAll()
     m_ADIOS->FlushAll();
 }
 
+bool ADIOS::RemoveIO(const std::string name)
+{
+    CheckPointer("in call to ADIOS::RemoveIO");
+    return m_ADIOS->RemoveIO(name);
+}
+
+void ADIOS::RemoveAllIOs()
+{
+    CheckPointer("in call to ADIOS::RemoveAllIOs");
+    m_ADIOS->RemoveAllIOs();
+}
+
 // PRIVATE
 void ADIOS::CheckPointer(const std::string hint)
 {

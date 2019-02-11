@@ -194,6 +194,42 @@ adios2_error adios2_finalize(adios2_adios *adios)
     }
 }
 
+adios2_error adios2_remove_io(adios2_bool *result, adios2_adios *adios,
+                              const char *name)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_remove_io");
+        const bool resultCpp =
+            reinterpret_cast<adios2::core::ADIOS *>(adios)->RemoveIO(name);
+        *result = resultCpp ? adios2_true : adios2_false;
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_remove_io"));
+    }
+}
+
+adios2_error adios2_remove_all_ios(adios2_adios *adios)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            adios, "for adios2_adios, in call to adios2_remove_all_ios");
+        reinterpret_cast<adios2::core::ADIOS *>(adios)->RemoveAllIOs();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_remove_all_ios"));
+    }
+}
+
 #ifdef __cplusplus
-} // end extern C
+}
+// end extern C
 #endif

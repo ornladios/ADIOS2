@@ -273,6 +273,18 @@ Operator &ADIOS::DefineCallBack(
     return *itPair.first->second;
 }
 
+bool ADIOS::RemoveIO(const std::string name)
+{
+    if (m_IOs.erase(name) == 1)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void ADIOS::RemoveAllIOs() { m_IOs.clear(); }
+
 // PRIVATE FUNCTIONS
 void ADIOS::CheckMPI() const
 {

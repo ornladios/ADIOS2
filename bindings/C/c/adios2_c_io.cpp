@@ -920,8 +920,8 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
 }
 
 // DANGEROUS
-adios2_error adios2_remove_variable(adios2_io *io, const char *name,
-                                    adios2_bool *result)
+adios2_error adios2_remove_variable(adios2_bool *result, adios2_io *io,
+                                    const char *name)
 {
     try
     {
@@ -958,8 +958,8 @@ adios2_error adios2_remove_all_variables(adios2_io *io)
     }
 }
 
-adios2_error adios2_remove_attribute(adios2_io *io, const char *name,
-                                     adios2_bool *result)
+adios2_error adios2_remove_attribute(adios2_bool *result, adios2_io *io,
+                                     const char *name)
 {
     try
     {
