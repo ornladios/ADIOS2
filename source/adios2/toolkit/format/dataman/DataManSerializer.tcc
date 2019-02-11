@@ -75,7 +75,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     metaj["D"] = doid;
     metaj["M"] = m_IsRowMajor;
     metaj["E"] = m_IsLittleEndian;
-    metaj["Y"] = GetType<T>();
+    metaj["Y"] = helper::GetType<T>();
     metaj["P"] = localBuffer->size();
 
     size_t datasize = 0;
@@ -90,7 +90,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                            compressionMethod.begin(), ::tolower);
             if (compressionMethod == "zfp")
             {
-                if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                if (IsCompressionAvailable(compressionMethod, helper::GetType<T>(),
                                            varCount))
                 {
                     compressed =
@@ -103,7 +103,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
             }
             else if (compressionMethod == "sz")
             {
-                if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                if (IsCompressionAvailable(compressionMethod, helper::GetType<T>(),
                                            varCount))
                 {
                     compressed =
@@ -116,7 +116,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
             }
             else if (compressionMethod == "bzip2")
             {
-                if (IsCompressionAvailable(compressionMethod, GetType<T>(),
+                if (IsCompressionAvailable(compressionMethod, helper::GetType<T>(),
                                            varCount))
                 {
                     compressed = PutBZip2<T>(metaj, datasize, inputData,
@@ -209,7 +209,7 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                              std::multiplies<size_t>()));
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
+        datasize = compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
                                        m_CompressBuffer.data(), p);
         return true;
     }
@@ -248,7 +248,7 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressSZ compressor(p, false);
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
+        datasize = compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
                                        m_CompressBuffer.data(), p);
         return true;
     }
@@ -288,7 +288,7 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressBZip2 compressor(p, false);
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
+        datasize = compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
                                        m_CompressBuffer.data(), p);
         return true;
     }

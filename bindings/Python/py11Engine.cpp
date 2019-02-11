@@ -82,7 +82,7 @@ void Engine::Put(Variable variable, const std::string &string)
     helper::CheckForNullptr(variable.m_Variable,
                             "for variable, in call to Engine::Put string");
 
-    if (variable.Type() != GetType<std::string>())
+    if (variable.Type() != helper::GetType<std::string>())
     {
         throw std::invalid_argument(
             "ERROR: variable " + variable.Name() +
