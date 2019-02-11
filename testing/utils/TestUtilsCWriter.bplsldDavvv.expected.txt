@@ -43,7 +43,7 @@ set selection:   start = { 0 0 }  count = { 4 5 }
   unsigned char   aU8       attr   = 128
   string          name      attr   = "TestUtilsCWrite"
   int             nproc     scalar = 1
-        step 0: 1 instances available
+        step 0:  = 1
                1
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
