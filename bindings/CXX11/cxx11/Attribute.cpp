@@ -20,7 +20,7 @@ namespace adios2
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
-    Attribute<T>::Attribute(core::Attribute<T> *attribute)                     \
+    Attribute<T>::Attribute(core::Attribute<IOType> *attribute)                \
     : m_Attribute(attribute)                                                   \
     {                                                                          \
     }                                                                          \
@@ -59,7 +59,8 @@ namespace adios2
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            return m_Attribute->m_DataArray;                                   \
+            return reinterpret_cast<std::vector<T> &>(                         \
+                m_Attribute->m_DataArray);                                     \
         }                                                                      \
     }
 

@@ -19,7 +19,8 @@ namespace adios2
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
-    Variable<T>::Variable(core::Variable<T> *variable) : m_Variable(variable)  \
+    Variable<T>::Variable(core::Variable<IOType> *variable)                    \
+    : m_Variable(variable)                                                     \
     {                                                                          \
     }                                                                          \
                                                                                \

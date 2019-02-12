@@ -316,7 +316,7 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 // PRIVATE
 void VariableBase::InitShapeType()
 {
-    if (m_DebugMode && m_Type == GetType<std::string>())
+    if (m_DebugMode && m_Type == helper::GetType<std::string>())
     {
         if (m_Shape.empty())
         {

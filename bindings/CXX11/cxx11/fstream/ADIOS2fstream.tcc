@@ -23,7 +23,8 @@ void fstream::write_attribute(const std::string &name, const T &value,
                               const std::string &variableName,
                               const std::string separator, const bool endl)
 {
-    m_Stream->WriteAttribute(name, value, variableName, separator, endl);
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->WriteAttribute(name, reinterpret_cast<const IOType&>(value), variableName, separator, endl);
 }
 
 template <class T>
@@ -32,7 +33,8 @@ void fstream::write_attribute(const std::string &name, const T *data,
                               const std::string &variableName,
                               const std::string separator, const bool endl)
 {
-    m_Stream->WriteAttribute(name, data, elements, variableName, separator,
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->WriteAttribute(name, reinterpret_cast<const IOType *>(data), elements, variableName, separator,
                              endl);
 }
 
@@ -40,39 +42,46 @@ template <class T>
 void fstream::write(const std::string &name, const T *values, const Dims &shape,
                     const Dims &start, const Dims &count, const bool endl)
 {
-    m_Stream->Write(name, values, shape, start, count, endl);
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Write(name, reinterpret_cast<const IOType *>(values), shape, start, count, endl);
 }
 
 template <class T>
 void fstream::write(const std::string &name, const T &value, const bool endl)
 {
-    m_Stream->Write(name, value, endl);
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Write(name, reinterpret_cast<const IOType &>(value), endl);
 }
 
 template <class T>
 void fstream::read(const std::string &name, T *values)
 {
-    m_Stream->Read(name, values);
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Read(name, reinterpret_cast<IOType *>(values));
 }
 
 template <class T>
 void fstream::read(const std::string &name, T *values, const size_t stepStart,
                    const size_t stepCount)
 {
-    m_Stream->Read(name, values, Box<size_t>{stepStart, stepCount});
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Read(name, reinterpret_cast<IOType *>(values), Box<size_t>{stepStart, stepCount});
 }
 
 template <class T>
 void fstream::read(const std::string &name, T &value)
 {
-    m_Stream->Read(name, &value);
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Read(name, &reinterpret_cast<IOType &>(value));
 }
 
 template <class T>
 void fstream::read(const std::string &name, T *values,
                    const Dims &selectionStart, const Dims &selectionCount)
 {
-    m_Stream->Read(name, values, Box<Dims>(selectionStart, selectionCount));
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Read(name, reinterpret_cast<IOType *>(values),
+		   Box<Dims>(selectionStart, selectionCount));
 }
 
 template <class T>
@@ -81,7 +90,8 @@ void fstream::read(const std::string &name, T *values,
                    const size_t stepSelectionStart,
                    const size_t stepSelectionCount)
 {
-    m_Stream->Read(name, values, Box<Dims>(selectionStart, selectionCount),
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Read(name, reinterpret_cast<IOType *>(values), Box<Dims>(selectionStart, selectionCount),
                    Box<size_t>(stepSelectionStart, stepSelectionCount));
 }
 
@@ -89,20 +99,25 @@ template <class T>
 void fstream::read(const std::string &name, T &value,
                    const size_t stepSelectionStart)
 {
-    m_Stream->Read(name, &value, Box<size_t>(stepSelectionStart, 1));
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Read(name, &reinterpret_cast<IOType &>(value), Box<size_t>(stepSelectionStart, 1));
 }
 
 template <class T>
 std::vector<T> fstream::read(const std::string &name)
 {
-    return m_Stream->Read<T>(name);
+    using IOType = typename TypeInfo<T>::IOType;
+    auto vec = m_Stream->Read<IOType>(name);
+    return reinterpret_cast<std::vector<T>&>(vec);
 }
 
 template <class T>
 std::vector<T> fstream::read(const std::string &name, const size_t stepsStart,
                              const size_t stepsCount)
 {
-    return m_Stream->Read<T>(name, Box<size_t>(stepsStart, stepsCount));
+    using IOType = typename TypeInfo<T>::IOType;
+    auto vec = m_Stream->Read<IOType>(name, Box<size_t>(stepsStart, stepsCount));
+    return reinterpret_cast<std::vector<T>&>(vec);
 }
 
 template <class T>
@@ -110,7 +125,9 @@ std::vector<T> fstream::read(const std::string &name,
                              const Dims &selectionStart,
                              const Dims &selectionCount)
 {
-    return m_Stream->Read<T>(name, Box<Dims>(selectionStart, selectionCount));
+    using IOType = typename TypeInfo<T>::IOType;
+    auto vec = m_Stream->Read<IOType>(name, Box<Dims>(selectionStart, selectionCount));
+    return reinterpret_cast<std::vector<T>&>(vec);
 }
 
 template <class T>
@@ -119,9 +136,11 @@ fstream::read(const std::string &name, const Dims &selectionStart,
               const Dims &selectionCount, const size_t stepSelectionStart,
               const size_t stepSelectionCount)
 {
-    return m_Stream->Read<T>(
+    using IOType = typename TypeInfo<T>::IOType;
+    auto vec = m_Stream->Read<IOType>(
         name, Box<Dims>(selectionStart, selectionCount),
         Box<size_t>(stepSelectionStart, stepSelectionCount));
+    return reinterpret_cast<std::vector<T>&>(vec);
 }
 
 template <class T>
@@ -129,8 +148,9 @@ std::vector<T> fstream::read_attribute(const std::string &name,
                                        const std::string &variableName,
                                        const std::string separator)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     std::vector<T> data;
-    core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(name);
+    core::Attribute<IOType> *attribute = m_Stream->m_IO->InquireAttribute<IOType>(name);
 
     if (attribute == nullptr)
     {
@@ -138,7 +158,7 @@ std::vector<T> fstream::read_attribute(const std::string &name,
     }
 
     data.resize(attribute->m_Elements);
-    m_Stream->ReadAttribute<T>(name, data.data(), variableName, separator);
+    m_Stream->ReadAttribute(name, reinterpret_cast<IOType*>(data.data()), variableName, separator);
     return data;
 }
 
