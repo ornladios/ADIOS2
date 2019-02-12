@@ -386,6 +386,16 @@ public:
     AllStepsBlocksInfo(const Variable<T> &variable) const;
 
     /**
+     * This function is internal, for public interface use
+     * Variable<T>::AllStepsBlocksInfo
+     * @param variable
+     * @return
+     */
+    template <class T>
+    std::vector<std::vector<typename Variable<T>::Info>>
+    AllRelativeStepsBlocksInfo(const Variable<T> &variable) const;
+
+    /**
      * Extracts all available blocks information for a particular
      * variable and step.
      * Valid in read mode only.
@@ -455,6 +465,9 @@ protected:
     virtual std::map<size_t, std::vector<typename Variable<T>::Info>>          \
     DoAllStepsBlocksInfo(const Variable<T> &variable) const;                   \
                                                                                \
+    virtual std::vector<std::vector<typename Variable<T>::Info>>               \
+    DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const;           \
+                                                                               \
     virtual std::vector<typename Variable<T>::Info> DoBlocksInfo(              \
         const Variable<T> &variable, const size_t step) const;
 
@@ -518,10 +531,13 @@ private:
         const std::string &variableName, const std::string hint);              \
                                                                                \
     extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
-    Engine::AllStepsBlocksInfo(const Variable<T> &variable) const;             \
+    Engine::AllStepsBlocksInfo(const Variable<T> &) const;                     \
+                                                                               \
+    extern template std::vector<std::vector<typename Variable<T>::Info>>       \
+    Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;             \
                                                                                \
     extern template std::vector<typename Variable<T>::Info>                    \
-    Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const;
+    Engine::BlocksInfo(const Variable<T> &, const size_t) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

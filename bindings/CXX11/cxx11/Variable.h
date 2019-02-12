@@ -238,13 +238,14 @@ public:
     /** Contains sub-block information for a particular Variable<T> */
     struct Info
     {
-        adios2::Dims Start;   ///< block start
-        adios2::Dims Count;   ///< block count
+        adios2::Dims Start;      ///< block start
+        adios2::Dims Count;      ///< block count
         IOType Min = IOType();   ///< block Min, if IsValue is false
         IOType Max = IOType();   ///< block Max, if IsValue is false
         IOType Value = IOType(); ///< block Value, if IsValue is true
-        bool IsValue = false; ///< true: value, false: array
-        size_t BlockID = -1;  ///< block ID for block selections
+        bool IsValue = false;    ///< true: value, false: array
+        size_t BlockID = -1;     ///< block ID for block selections
+        size_t Step = 0;
         const T *Data() const
         {
             return m_Info ? (m_Info->BufferP ? m_Info->BufferP
@@ -258,9 +259,21 @@ public:
         const typename core::Variable<IOType>::Info *m_Info;
     };
 
+    /**
+     * Read mode only and random-access (no BeginStep/EndStep) with file engines
+     * only. Allows inspection of variable info on a per relative step (returned
+     * vector index)
+     * basis
+     * @return first vector: relative steps, second vector: blocks info within a
+     * step
+     */
+    std::vector<std::vector<typename Variable<T>::Info>> AllStepsBlocksInfo();
+
 private:
     Variable<T>(core::Variable<IOType> *variable);
     core::Variable<IOType> *m_Variable = nullptr;
+
+    std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
 };
 
 } // end namespace adios2

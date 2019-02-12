@@ -552,6 +552,10 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     template std::map<size_t, std::vector<typename core::Variable<T>::Info>>   \
     BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
                                                                                \
+    template std::vector<std::vector<typename core::Variable<T>::Info>>        \
+    BP3Deserializer::AllRelativeStepsBlocksInfo(const core::Variable<T> &)     \
+        const;                                                                 \
+                                                                               \
     template std::vector<typename core::Variable<T>::Info>                     \
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \

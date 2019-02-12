@@ -196,6 +196,12 @@ void BP3Reader::DoClose(const int transportIndex)
         return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    BP3Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
+    {                                                                          \
+        return m_BP3Deserializer.AllRelativeStepsBlocksInfo(variable);         \
+    }                                                                          \
+                                                                               \
     std::vector<typename Variable<T>::Info> BP3Reader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
