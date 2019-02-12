@@ -168,8 +168,9 @@ endfunction()
 #   Setup tests for SST engine
 #
 SET (SST_TESTS "")
-list (APPEND SST_TESTS ${TEST_SET} ${FORTRAN_TESTS} ${SPECIAL_TESTS} ${MPI_TESTS} ${MPI_FORTRAN_TESTS} ${ZFP_TESTS})
-
+if(ADIOS2_HAVE_SST)
+    list (APPEND SST_TESTS ${TEST_SET} ${FORTRAN_TESTS} ${SPECIAL_TESTS} ${MPI_TESTS} ${MPI_FORTRAN_TESTS} ${ZFP_TESTS})
+endif()
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
