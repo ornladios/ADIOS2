@@ -49,7 +49,8 @@ void FileStdio::Open(const std::string &name, const Mode openMode)
         m_File = std::fopen(name.c_str(), "wb");
         break;
     case (Mode::Append):
-        m_File = std::fopen(name.c_str(), "rwb");
+        // m_File = std::fopen(name.c_str(), "rwb");
+        m_File = std::fopen(name.c_str(), "a+b");
         break;
     case (Mode::Read):
         m_File = std::fopen(name.c_str(), "rb");
@@ -79,7 +80,6 @@ void FileStdio::SetBuffer(char *buffer, size_t size)
 void FileStdio::Write(const char *buffer, size_t size, size_t start)
 {
     auto lf_Write = [&](const char *buffer, size_t size) {
-
         ProfilerStart("write");
         const auto writtenSize =
             std::fwrite(buffer, sizeof(char), size, m_File);
@@ -134,7 +134,6 @@ void FileStdio::Write(const char *buffer, size_t size, size_t start)
 void FileStdio::Read(char *buffer, size_t size, size_t start)
 {
     auto lf_Read = [&](char *buffer, size_t size) {
-
         ProfilerStart("read");
         const auto readSize = std::fread(buffer, sizeof(char), size, m_File);
         ProfilerStop("read");

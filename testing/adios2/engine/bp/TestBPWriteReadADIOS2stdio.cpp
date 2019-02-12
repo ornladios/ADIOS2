@@ -14,6 +14,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 class BPWriteReadTestADIOS2stdio : public ::testing::Test
 {
 public:
@@ -54,6 +56,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         // Declare 1D variables (NumOfProcesses * Nx)
@@ -158,6 +164,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
@@ -382,6 +392,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         // Declare 2D variables (Ny * (NumOfProcesses * Nx))
@@ -484,6 +498,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
@@ -712,6 +730,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
@@ -811,6 +833,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
@@ -1031,6 +1057,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
@@ -1127,6 +1157,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
@@ -1348,6 +1382,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         // Declare 2D variables (4 * (NumberOfProcess * Nx))
@@ -1434,6 +1472,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
@@ -1523,6 +1565,10 @@ TEST_F(BPWriteReadTestADIOS2stdio, OpenEngineTwice)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TwoOpens");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         io.AddTransport("file", {{"Library", "stdio"}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -1545,6 +1591,10 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

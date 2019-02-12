@@ -33,6 +33,9 @@ add_library(adios2
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc
   engine/bp3/BP3Writer.cpp engine/bp3/BP3Writer.tcc
 
+  engine/bp4/BP4Reader.cpp engine/bp4/BP4Reader.tcc
+  engine/bp4/BP4Writer.cpp engine/bp4/BP4Writer.tcc
+
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
 
@@ -52,6 +55,17 @@ add_library(adios2
   toolkit/format/bp3/operation/BP3SZ.tcc
   toolkit/format/bp3/operation/BP3MGARD.cpp
   toolkit/format/bp3/operation/BP3MGARD.tcc
+
+  toolkit/format/bp4/BP4Base.cpp toolkit/format/bp4/BP4Base.tcc
+  toolkit/format/bp4/BP4Serializer.cpp toolkit/format/bp4/BP4Serializer.tcc
+  toolkit/format/bp4/BP4Deserializer.cpp toolkit/format/bp4/BP4Deserializer.tcc
+  toolkit/format/bp4/operation/BP4Operation.cpp
+  toolkit/format/bp4/operation/BP4Zfp.cpp
+  toolkit/format/bp4/operation/BP4Zfp.tcc
+  toolkit/format/bp4/operation/BP4SZ.cpp
+  toolkit/format/bp4/operation/BP4SZ.tcc
+  toolkit/format/bp4/operation/BP4MGARD.cpp
+  toolkit/format/bp4/operation/BP4MGARD.tcc
 
   toolkit/profiling/iochrono/Timer.cpp
 

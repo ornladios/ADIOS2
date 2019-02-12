@@ -20,6 +20,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 class BPLargeMetadata : public ::testing::Test
 {
 public:
@@ -54,6 +56,11 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
+        // io.SetEngine("ADIOS1");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Dims shape{static_cast<size_t>(mpiSize * Nx)};
         adios2::Dims start{static_cast<size_t>(mpiRank * Nx)};
@@ -110,6 +117,10 @@ TEST_F(BPLargeMetadata, ManyLongStrings)
 #endif
 
     adios2::IO io = adios.DeclareIO("myIO");
+    if (!engineName.empty())
+    {
+        io.SetEngine(engineName);
+    }
     {
         adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
 
@@ -153,6 +164,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

@@ -17,7 +17,7 @@ add_test(NAME HeatTransfer.BPFile.Read.MxM
     HeatTransfer.BPFile.Write.MxM.bp HeatTransfer.BPFile.Read.MxM 2 2
 )
 set_property(TEST HeatTransfer.BPFile.Read.MxM
-  PROPERTY DEPENDS HeatTransfer.BPFile.Write.M
+  PROPERTY DEPENDS HeatTransfer.BPFile.Write.MxM
 )
 
 add_test(NAME HeatTransfer.BPFile.Dump.MxM
@@ -39,4 +39,46 @@ add_test(NAME HeatTransfer.BPFile.Validate.MxM
 )
 set_property(TEST HeatTransfer.BPFile.Validate.MxM
   PROPERTY DEPENDS HeatTransfer.BPFile.Dump.MxM
+)
+
+#####################################################################
+set(BP4_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bp4)
+file(MAKE_DIRECTORY ${BP4_DIR})
+
+add_test(NAME HeatTransfer.BP4File.Write.MxM
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+    $<TARGET_FILE:heatTransfer_write_adios2>
+    ${CMAKE_CURRENT_SOURCE_DIR}/heat_bp4file.xml
+    ${BP4_DIR}/HeatTransfer.BP4File.Write.MxM 2 2 10 10 10 10
+)
+
+add_test(NAME HeatTransfer.BP4File.Read.MxM
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+    $<TARGET_FILE:heatTransfer_read>
+    ${CMAKE_CURRENT_SOURCE_DIR}/heat_bp4file.xml
+    ${BP4_DIR}/HeatTransfer.BP4File.Write.MxM.bp ${BP4_DIR}/HeatTransfer.BP4File.Read.MxM 2 2
+)
+set_property(TEST HeatTransfer.BP4File.Read.MxM
+  PROPERTY DEPENDS HeatTransfer.BP4File.Write.MxM
+)
+
+add_test(NAME HeatTransfer.BP4File.Dump.MxM
+  COMMAND ${CMAKE_COMMAND}
+    -DARGS=-d 
+    -DINPUT_FILE=${BP4_DIR}/HeatTransfer.BP4File.Read.MxM.bp
+    -DOUTPUT_FILE=HeatTransfer.BP4File.Dump.MxM.txt
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+)
+set_property(TEST HeatTransfer.BP4File.Dump.MxM
+  PROPERTY DEPENDS HeatTransfer.BP4File.Read.MxM
+)
+
+add_test(NAME HeatTransfer.BP4File.Validate.MxM
+  COMMAND ${CMAKE_COMMAND}
+    -E compare_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
+    ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.BP4File.Dump.MxM.txt
+)
+set_property(TEST HeatTransfer.BP4File.Validate.MxM
+  PROPERTY DEPENDS HeatTransfer.BP4File.Dump.MxM
 )

@@ -56,7 +56,9 @@ void Settings::displayHelp()
         << "  --hdf5     Use native Parallel HDF5 instead of ADIOS for I/O"
 #endif
         << "  -v         increase verbosity\n"
-        << "  -h         display this help\n\n";
+        << "  -h         display this help\n"
+        << "  -t         print and dump the timing measured by the I/O "
+           "timer\n\n";
 }
 
 size_t Settings::stringToNumber(const std::string &varName,
@@ -127,6 +129,9 @@ int Settings::processArgs(int argc, char *argv[])
             }
             isStrongScaling = false;
             scalingDefined = true;
+            break;
+        case 't':
+            ioTimer = true;
             break;
         case 'x':
             adiosConfigFileName = optarg;

@@ -55,7 +55,9 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
 
     case (Mode::Append):
         ProfilerStart("open");
-        m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
+        // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
+        m_FileDescriptor =
+            open(m_Name.c_str(), O_RDWR | O_APPEND | O_CREAT, 0777);
         ProfilerStop("open");
         break;
 

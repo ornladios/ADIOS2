@@ -14,6 +14,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 class BPWriteReadAsStreamTestADIOS2 : public ::testing::Test
 {
 public:
@@ -92,6 +94,16 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
                                                     adios2::ConstantDims);
         }
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -143,6 +155,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
     // if (false)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -430,8 +447,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.AddTransport("file");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -462,6 +486,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -681,8 +710,15 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
                                       adios2::ConstantDims);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         io.AddTransport("file");
 
@@ -714,6 +750,11 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -904,6 +945,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
     // simple writer to generate content
     {
         adios2::IO io = adios.DeclareIO("Writer");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         io.DefineVariable<float>("r32", shape, start, count,
                                  adios2::ConstantDims);
@@ -926,6 +971,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 #endif
     {
         adios2::IO io = adios.DeclareIO("ReaderWriter");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine reader = io.Open(fnameFloat, adios2::Mode::Read);
         adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
@@ -959,6 +1008,10 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 #endif
     {
         adios2::IO io = adios.DeclareIO("Reader");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
         adios2::Engine reader = io.Open(fname, adios2::Mode::Read);
         while (reader.BeginStep() == adios2::StepStatus::OK)
         {
@@ -980,6 +1033,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
