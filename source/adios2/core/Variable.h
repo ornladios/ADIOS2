@@ -70,8 +70,6 @@ public:
         T Min = T();
         T Max = T();
         T Value = T();
-        T *BufferP = nullptr;
-        std::vector<T> BufferV;
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
     };

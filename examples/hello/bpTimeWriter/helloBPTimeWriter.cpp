@@ -90,9 +90,7 @@ int main(int argc, char *argv[])
                 for (unsigned int v = 0; v < variablesSize; ++v)
                 {
                     myFloats[0] = static_cast<float>(v + timeStep);
-                    // Note: Put is deferred, so all variables will see v == 9
-                    // and myFloats[0] == 9, 10, or 11
-                    bpWriter.Put<float>(bpFloats[v], myFloats.data());
+                    bpWriter.Put(bpFloats[v], myFloats.data());
                 }
                 const std::string myString(
                     "Hello from rank: " + std::to_string(rank) +

@@ -36,9 +36,6 @@ add_library(adios2
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
 
-  engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
-  engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
-
 #toolkit
   toolkit/format/BufferSTL.cpp
   

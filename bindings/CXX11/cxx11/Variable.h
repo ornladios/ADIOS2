@@ -14,7 +14,6 @@
 #include "Operator.h"
 
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/Variable.h"
 
 namespace adios2
 {
