@@ -26,6 +26,7 @@ public:
     void Close();
 
 private:
+    MPI_Comm comm;
     void defineADIOSArray(const std::shared_ptr<VariableInfo> ov);
     void putADIOSArray(const std::shared_ptr<VariableInfo> ov);
     void getADIOSArray(std::shared_ptr<VariableInfo> ov);

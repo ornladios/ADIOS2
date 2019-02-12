@@ -16,46 +16,44 @@
 
 hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
                        MPI_Comm comm)
-: Stream(streamName, mode)
+: Stream(streamName, mode), comm(comm)
 {
     hid_t acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
     MPI_Info info = MPI_INFO_NULL;
     herr_t ret = H5Pset_fapl_mpio(acc_tpl, comm, info);
 
-    int myRank;
-    MPI_Comm_rank(comm, &myRank);
-    double timeStart, timeEnd;
-    double openTime;
-    double maxOpenTime, minOpenTime;
+    // int myRank;
+    // MPI_Comm_rank(comm, &myRank);
+    // double timeStart, timeEnd;
+    // double openTime;
+    // double maxOpenTime, minOpenTime;
 
     if (mode == adios2::Mode::Write)
     {
-        timeStart = MPI_Wtime();
+        // timeStart = MPI_Wtime();
         h5file =
             H5Fcreate(streamName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
-        timeEnd = MPI_Wtime();
+        // timeEnd = MPI_Wtime();
     }
     else
     {
-        timeStart = MPI_Wtime();
+        // timeStart = MPI_Wtime();
         h5file = H5Fopen(streamName.c_str(), H5F_ACC_RDONLY, acc_tpl);
-        timeEnd = MPI_Wtime();
+        // timeEnd = MPI_Wtime();
     }
-    openTime = timeEnd - timeStart;
-    MPI_Allreduce(&openTime, &maxOpenTime, 1, MPI_DOUBLE, MPI_MAX,
-                  MPI_COMM_WORLD);
-    MPI_Allreduce(&openTime, &minOpenTime, 1, MPI_DOUBLE, MPI_MIN,
-                  MPI_COMM_WORLD);
-    if (myRank == 0)
-    {
-        std::cout << "        Max open time = " << maxOpenTime << std::endl;
-        std::cout << "        Min open time = " << minOpenTime << std::endl;
-        std::ofstream open_perf_log;
-        open_perf_log.open("open_perf.txt", std::ios::app);
-        open_perf_log << std::to_string(maxOpenTime) + ", " +
-                             std::to_string(minOpenTime) + "\n";
-        open_perf_log.close();
-    }
+    // openTime = timeEnd - timeStart;
+    // MPI_Allreduce(&openTime, &maxOpenTime, 1, MPI_DOUBLE, MPI_MAX, comm);
+    // MPI_Allreduce(&openTime, &minOpenTime, 1, MPI_DOUBLE, MPI_MIN, comm);
+    // if (myRank == 0)
+    // {
+    //     std::cout << "        Max open time = " << maxOpenTime << std::endl;
+    //     std::cout << "        Min open time = " << minOpenTime << std::endl;
+    //     std::ofstream open_perf_log;
+    //     open_perf_log.open("open_perf.txt", std::ios::app);
+    //     open_perf_log << std::to_string(maxOpenTime) + ", " +
+    //                          std::to_string(minOpenTime) + "\n";
+    //     open_perf_log.close();
+    // }
     ret = H5Pclose(acc_tpl);
 }
 
@@ -199,27 +197,30 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
     double timeStart, timeEnd;
     double writeTime;
     double maxWriteTime, minWriteTime;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(comm);
     timeStart = MPI_Wtime();
     for (const auto ov : cmdW->variables)
     {
         putHDF5Array(ov, step);
     }
     timeEnd = MPI_Wtime();
-    writeTime = timeEnd - timeStart;
-    MPI_Allreduce(&writeTime, &maxWriteTime, 1, MPI_DOUBLE, MPI_MAX,
-                  MPI_COMM_WORLD);
-    MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE, MPI_MIN,
-                  MPI_COMM_WORLD);
-    if (settings.myRank == 0)
+    if (settings.ioTimer)
     {
-        std::cout << "        Max write time = " << maxWriteTime << std::endl;
-        std::cout << "        Min write time = " << minWriteTime << std::endl;
-        std::ofstream wr_perf_log;
-        wr_perf_log.open("write_perf.txt", std::ios::app);
-        wr_perf_log << std::to_string(maxWriteTime) + ", " +
-                           std::to_string(minWriteTime) + "\n";
-        wr_perf_log.close();
+        writeTime = timeEnd - timeStart;
+        MPI_Allreduce(&writeTime, &maxWriteTime, 1, MPI_DOUBLE, MPI_MAX, comm);
+        MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE, MPI_MIN, comm);
+        if (settings.myRank == 0)
+        {
+            std::cout << "        Max write time = " << maxWriteTime
+                      << std::endl;
+            std::cout << "        Min write time = " << minWriteTime
+                      << std::endl;
+            std::ofstream wr_perf_log;
+            wr_perf_log.open("write_perf.txt", std::ios::app);
+            wr_perf_log << std::to_string(maxWriteTime) + ", " +
+                               std::to_string(minWriteTime) + "\n";
+            wr_perf_log.close();
+        }
     }
 }
 
@@ -301,7 +302,7 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
     double timeStart, timeEnd;
     double readTime;
     double maxReadTime, minReadTime;
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(comm);
     timeStart = MPI_Wtime();
     if (step == 1)
     {
@@ -350,21 +351,23 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
         getHDF5Array(ov, step);
     }
     timeEnd = MPI_Wtime();
-    readTime = timeEnd - timeStart;
-    MPI_Allreduce(&readTime, &maxReadTime, 1, MPI_DOUBLE, MPI_MAX,
-                  MPI_COMM_WORLD);
-    MPI_Allreduce(&readTime, &minReadTime, 1, MPI_DOUBLE, MPI_MIN,
-                  MPI_COMM_WORLD);
-    if (settings.myRank == 0)
+    if (settings.ioTimer)
     {
-        std::cout << "        Max read time = " << maxReadTime << std::endl;
-        std::cout << "        Min read time = " << minReadTime << std::endl;
-        std::ofstream rd_perf_log;
-        rd_perf_log.open("read_perf.txt", std::ios::app);
-        rd_perf_log << std::to_string(maxReadTime) + ", " +
-                           std::to_string(minReadTime) + "\n";
-        rd_perf_log.close();
+        readTime = timeEnd - timeStart;
+        MPI_Allreduce(&readTime, &maxReadTime, 1, MPI_DOUBLE, MPI_MAX, comm);
+        MPI_Allreduce(&readTime, &minReadTime, 1, MPI_DOUBLE, MPI_MIN, comm);
+        if (settings.myRank == 0)
+        {
+            std::cout << "        Max read time = " << maxReadTime << std::endl;
+            std::cout << "        Min read time = " << minReadTime << std::endl;
+            std::ofstream rd_perf_log;
+            rd_perf_log.open("read_perf.txt", std::ios::app);
+            rd_perf_log << std::to_string(maxReadTime) + ", " +
+                               std::to_string(minReadTime) + "\n";
+            rd_perf_log.close();
+        }
     }
+
     return adios2::StepStatus::OK;
 }
 void hdf5Stream::Close()

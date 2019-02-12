@@ -39,6 +39,7 @@ public:
     void Close();
 
 private:
+    MPI_Comm comm;
     hid_t hdf5Type(std::string &type);
     int nSteps = 0;
     void defineHDF5Array(const std::shared_ptr<VariableInfo> ov);

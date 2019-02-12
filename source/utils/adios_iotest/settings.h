@@ -38,6 +38,7 @@ public:
     unsigned int verbose = 0;
     size_t appId = 0;
     bool isStrongScaling = true; // strong or weak scaling
+    bool ioTimer = false;        // used to measure io time
     IOLib iolib = IOLib::ADIOS;
     //   process decomposition
     std::vector<size_t> processDecomp = {1, 1, 1, 1, 1, 1, 1, 1,
