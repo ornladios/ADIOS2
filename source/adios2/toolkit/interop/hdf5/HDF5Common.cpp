@@ -1048,7 +1048,7 @@ void HDF5Common::WriteStringAttr(core::IO &io,
 
         hsize_t onedim[1] = {adiosAttr->m_Elements};
         hid_t s = H5Screate_simple(1, onedim, NULL);
-        hid_t attr = H5Acreate2(parentID, adiosAttr->m_Name.c_str(), h5Type, s,
+        hid_t attr = H5Acreate2(parentID, attrName.c_str(), h5Type, s,
                                 H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attr, h5Type, all.c_str());
         H5Sclose(s);
@@ -1077,7 +1077,7 @@ void HDF5Common::WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
         H5Sclose(s);
         H5Aclose(attr);
     }
-    else if (adiosAttr->m_Elements > 1)
+    else if (adiosAttr->m_Elements >= 1)
     {
         hsize_t onedim[1] = {adiosAttr->m_Elements};
         hid_t s = H5Screate_simple(1, onedim, NULL);
