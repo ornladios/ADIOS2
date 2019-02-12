@@ -57,13 +57,13 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         if ((strcmp(SelectedTransport, "wan") == 0) ||
             (strcmp(SelectedTransport, "evpath") == 0))
         {
-            Stream->DataTransport = strdup("evpath");
+            Params->DataTransport = strdup("evpath");
         }
         else if ((strcmp(SelectedTransport, "rdma") == 0) ||
                  (strcmp(SelectedTransport, "ib") == 0) ||
                  (strcmp(SelectedTransport, "fabric") == 0))
         {
-            Stream->DataTransport = strdup("rdma");
+            Params->DataTransport = strdup("rdma");
         }
         free(SelectedTransport);
     }
@@ -809,7 +809,6 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->Readers);
     }
 
-    free(Stream->DataTransport);
     FFSFormatList FFSList = Stream->PreviousFormats;
     while (FFSList)
     {
