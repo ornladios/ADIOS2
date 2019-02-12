@@ -91,7 +91,14 @@ void ADIOS::RemoveAllIOs() noexcept
                                  const Dims &)> &function,                     \
         const Params &parameters)                                              \
     {                                                                          \
-        return Operator(&m_ADIOS->DefineCallBack(name, function, parameters)); \
+        using IOType = typename TypeInfo<T>::IOType;                           \
+                                                                               \
+        const auto &io_function = reinterpret_cast<const std::function<void(   \
+            const IOType *, const std::string &, const std::string &,          \
+            const std::string &, const size_t, const Dims &, const Dims &,     \
+            const Dims &)> &>(function);                                       \
+        return Operator(                                                       \
+            &m_ADIOS->DefineCallBack(name, io_function, parameters));          \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
