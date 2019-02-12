@@ -243,18 +243,18 @@ for name, info in variablesInfo.items():
 
 
 result = adios.RemoveIO('writer')
-if(result == False):
+if(result is False):
     raise ValueError('Could not remove IO writer')
 
 reader.Close()
 
 ioReader.RemoveAllVariables()
 varStr = ioReader.InquireVariable("varStr")
-if(varStr == True):
+if(varStr is True):
     raise ValueError('Could remove reader variables')
 
 adios.RemoveAllIOs()
 try:
     ioWriter = adios.DeclareIO('reader')
-except:
+except ValueError:
     raise ValueError('Could not re-Declare IO reader')
