@@ -209,7 +209,7 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
     {                                                                          \
         variableCpp = ioCpp.InquireVariable<T>(name);                          \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         variable = reinterpret_cast<adios2_variable *>(variableCpp);
@@ -253,7 +253,7 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         variable = ioCpp.InquireVariable<T>(name);                             \
         list[n] = reinterpret_cast<adios2_variable *>(variable);               \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
             n++;
@@ -449,7 +449,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
     {                                                                          \
         attributeCpp = ioCpp.InquireAttribute<T>(name);                        \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         attribute = reinterpret_cast<adios2_attribute *>(attributeCpp);
@@ -504,7 +504,8 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         attribute = ioCpp.InquireAttribute<T>(name);                           \
         list[n] = reinterpret_cast<adios2_attribute *>(attribute);             \
     }
-            ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
+                declare_template_instantiation)
 #undef declare_template_instantiation
 
             n++;

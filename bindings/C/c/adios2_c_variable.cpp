@@ -530,7 +530,7 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
         *minT = variableT->m_Min;                                              \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -567,7 +567,7 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
         *maxT = variableT->m_Max;                                              \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }

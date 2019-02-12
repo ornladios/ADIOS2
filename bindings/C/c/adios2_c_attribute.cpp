@@ -202,7 +202,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
             *size = attributeCpp->m_Elements;                                  \
         }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(
             declare_template_instantiation)
 #undef declare_template_instantiation
 
