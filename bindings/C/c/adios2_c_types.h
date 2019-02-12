@@ -92,9 +92,6 @@ typedef enum {
     adios2_type_uint16_t = 10,
     adios2_type_uint32_t = 11,
     adios2_type_uint64_t = 12,
-
-    adios2_type_signed_char = 5,
-    adios2_type_unsigned_char = 9,
 } adios2_type;
 
 typedef enum {

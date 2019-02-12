@@ -1,5 +1,5 @@
 File info:
-  of variables:  13
+  of variables:  10
   of attributes: 12
   statistics:    Min / Max 
 
@@ -25,11 +25,6 @@ File info:
   int             nwriters  attr   = 1
   unsigned short  shape2D   attr   = {4, 5}
   string          strarray  attr   = {"first", "second", "third", "fourth"}
-  signed char     varChar   {10} = 97 / 106
-        step 0: 
-          block 0: [0:9] = 97 / 106
-    (0)    97 98 99 100 101 102
-    (6)    103 104 105 106 
   short           varI16    {10} = -510 / 521
         step 0: 
           block 0: [0:9] = -510 / 521
@@ -55,11 +50,6 @@ File info:
           block 0: [0:9] = 0 / 9
     (0)    0 1 2 3 4 5
     (6)    6 7 8 9 
-  signed char     varSChar  {10} = 97 / 106
-        step 0: 
-          block 0: [0:9] = 97 / 106
-    (0)    97 98 99 100 101 102
-    (6)    103 104 105 106 
   unsigned short  varU16    {10} = 32768 / 32777
         step 0: 
           block 0: [0:9] = 32768 / 32777
@@ -75,8 +65,3 @@ File info:
           block 0: [0:9] = 128 / 137
     (0)    128 129 130 131 132 133
     (6)    134 135 136 137 
-  unsigned char   varUChar  {10} = 97 / 106
-        step 0: 
-          block 0: [0:9] = 97 / 106
-    (0)    97 98 99 100 101 102
-    (6)    103 104 105 106 

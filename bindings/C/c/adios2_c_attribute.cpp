@@ -21,7 +21,6 @@ namespace
 {
 const std::map<std::string, std::vector<adios2_type>>
     adios2_attribute_types_map = {
-        {"char", {adios2_type_signed_char}},
         {"int", {adios2_type_int32_t}},
         {"float", {adios2_type_float}},
         {"double", {adios2_type_double}},
@@ -30,7 +29,7 @@ const std::map<std::string, std::vector<adios2_type>>
         {"long int", {adios2_type_int64_t}},
         {"long long int", {adios2_type_int64_t}},
         {"string", {adios2_type_string}},
-        {"unsigned char", {adios2_type_uint8_t, adios2_type_unsigned_char}},
+        {"unsigned char", {adios2_type_uint8_t}},
         {"unsigned short", {adios2_type_uint16_t}},
         {"unsigned int", {adios2_type_uint32_t}},
         {"unsigned long int", {adios2_type_uint64_t}},
