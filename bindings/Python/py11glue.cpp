@@ -281,7 +281,15 @@ PYBIND11_MODULE(adios2, m)
         .def("DefineOperator", &adios2::py11::ADIOS::DefineOperator)
         .def("InquireOperator", &adios2::py11::ADIOS::InquireOperator)
         .def("FlushAll", &adios2::py11::ADIOS::FlushAll,
-             "flushes all engines in all spawned IO objects");
+             "flushes all engines in all spawned IO objects")
+        .def("RemoveIO", &adios2::py11::ADIOS::RemoveIO,
+             "DANGER ZONE: remove a particular IO by name, creates dangling "
+             "objects to parameters, variable, attributes, engines created "
+             "with removed IO")
+        .def("RemoveAllIOs", &adios2::py11::ADIOS::RemoveAllIOs,
+             "DANGER ZONE: remove all IOs in current ADIOS object, creates "
+             "dangling objects to parameters, variable, attributes, engines "
+             "created with removed IO");
 
     pybind11::class_<adios2::py11::IO>(m, "IO")
         .def("__nonzero__",
@@ -362,7 +370,11 @@ PYBIND11_MODULE(adios2, m)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll)
         .def("EngineType", &adios2::py11::IO::EngineType)
-        .def("LockDefinitions", &adios2::py11::IO::LockDefinitions);
+        .def("LockDefinitions", &adios2::py11::IO::LockDefinitions)
+        .def("RemoveVariable", &adios2::py11::IO::RemoveVariable)
+        .def("RemoveAllVariables", &adios2::py11::IO::RemoveAllVariables)
+        .def("RemoveAttribute", &adios2::py11::IO::RemoveAttribute)
+        .def("RemoveAllAttributes", &adios2::py11::IO::RemoveAllAttributes);
 
     pybind11::class_<adios2::py11::Variable>(m, "Variable")
         .def("__nonzero__",

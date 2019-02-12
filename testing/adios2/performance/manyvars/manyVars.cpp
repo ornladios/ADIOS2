@@ -310,9 +310,9 @@ public:
          * Offsets will change at writing for each block. */
         for (size_t i = 0; i < NVARS; i++)
         {
-            varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int,
-                                             2, shape, start, count,
-                                             adios2_constant_dims_false);
+            varW[i] = adios2_define_variable(
+                ioW, varnames[i], adios2_type_int32_t, 2, shape, start, count,
+                adios2_constant_dims_false);
         }
     }
 

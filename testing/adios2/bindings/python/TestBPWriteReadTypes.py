@@ -241,5 +241,20 @@ for name, info in variablesInfo.items():
             print("\t" + key + ": " + value)
         print("\n")
 
-# here tests reader data
+
+result = adios.RemoveIO('writer')
+if(result is False):
+    raise ValueError('Could not remove IO writer')
+
 reader.Close()
+
+ioReader.RemoveAllVariables()
+varStr = ioReader.InquireVariable("varStr")
+if(varStr is True):
+    raise ValueError('Could remove reader variables')
+
+adios.RemoveAllIOs()
+try:
+    ioWriter = adios.DeclareIO('reader')
+except ValueError:
+    raise ValueError('Could not re-Declare IO reader')

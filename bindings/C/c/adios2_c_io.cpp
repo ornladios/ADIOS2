@@ -149,72 +149,6 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                 name, shapeV, startV, countV, constantSizeBool);
             break;
         }
-        case (adios2_type_char):
-        {
-            variableCpp = &ioCpp.DefineVariable<char>(name, shapeV, startV,
-                                                      countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_signed_char):
-        {
-            variableCpp = &ioCpp.DefineVariable<signed char>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_short):
-        {
-            variableCpp = &ioCpp.DefineVariable<short>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int):
-        {
-            variableCpp = &ioCpp.DefineVariable<int>(name, shapeV, startV,
-                                                     countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_long_int):
-        {
-            variableCpp = &ioCpp.DefineVariable<long int>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_long_long_int):
-        {
-            variableCpp = &ioCpp.DefineVariable<long long int>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_unsigned_char):
-        {
-            variableCpp = &ioCpp.DefineVariable<unsigned char>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_unsigned_short):
-        {
-            variableCpp = &ioCpp.DefineVariable<unsigned short>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_unsigned_int):
-        {
-            variableCpp = &ioCpp.DefineVariable<unsigned int>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_unsigned_long_int):
-        {
-            variableCpp = &ioCpp.DefineVariable<unsigned long int>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_unsigned_long_long_int):
-        {
-            variableCpp = &ioCpp.DefineVariable<unsigned long long int>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
         case (adios2_type_float):
         {
             variableCpp = &ioCpp.DefineVariable<float>(
@@ -443,83 +377,6 @@ adios2_attribute *adios2_define_variable_attribute(
                 name, singleString, variable_name, separator);
             break;
         }
-        case (adios2_type_char):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<char>(
-                name, *reinterpret_cast<const char *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_signed_char):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<signed char>(
-                name, *reinterpret_cast<const signed char *>(value),
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_short):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<short>(
-                name, *reinterpret_cast<const short *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int>(
-                name, *reinterpret_cast<const int *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<long int>(
-                name, *reinterpret_cast<const long int *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_long_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<long long int>(
-                name, *reinterpret_cast<const long long int *>(value),
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_char):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned char>(
-                name, *reinterpret_cast<const unsigned char *>(value),
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_short):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned short>(
-                name, *reinterpret_cast<const unsigned short *>(value),
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned int>(
-                name, *reinterpret_cast<const unsigned int *>(value),
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned long int>(
-                name, *reinterpret_cast<const unsigned long int *>(value),
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_long_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned long long int>(
-                name, *reinterpret_cast<const unsigned long long int *>(value),
-                variable_name, separator);
-            break;
-        }
         case (adios2_type_float):
         {
             attributeCpp = &ioCpp.DefineAttribute<float>(
@@ -648,83 +505,6 @@ adios2_attribute *adios2_define_variable_attribute_array(
             attributeCpp = &ioCpp.DefineAttribute<std::string>(
                 name, arrayStrings.data(), arrayStrings.size(), variable_name,
                 separator);
-            break;
-        }
-        case (adios2_type_char):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<char>(
-                name, reinterpret_cast<const char *>(data), size, variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_signed_char):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<signed char>(
-                name, reinterpret_cast<const signed char *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_short):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<short>(
-                name, reinterpret_cast<const short *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int>(
-                name, reinterpret_cast<const int *>(data), size, variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<long int>(
-                name, reinterpret_cast<const long int *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_long_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<long long int>(
-                name, reinterpret_cast<const long long int *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_char):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned char>(
-                name, reinterpret_cast<const unsigned char *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_short):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned short>(
-                name, reinterpret_cast<const unsigned short *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned int>(
-                name, reinterpret_cast<const unsigned int *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned long int>(
-                name, reinterpret_cast<const unsigned long int *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_unsigned_long_long_int):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<unsigned long long int>(
-                name, reinterpret_cast<const unsigned long long int *>(data),
-                size, variable_name, separator);
             break;
         }
         case (adios2_type_float):
@@ -920,8 +700,8 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
 }
 
 // DANGEROUS
-adios2_error adios2_remove_variable(adios2_io *io, const char *name,
-                                    adios2_bool *result)
+adios2_error adios2_remove_variable(adios2_bool *result, adios2_io *io,
+                                    const char *name)
 {
     try
     {
@@ -958,8 +738,8 @@ adios2_error adios2_remove_all_variables(adios2_io *io)
     }
 }
 
-adios2_error adios2_remove_attribute(adios2_io *io, const char *name,
-                                     adios2_bool *result)
+adios2_error adios2_remove_attribute(adios2_bool *result, adios2_io *io,
+                                     const char *name)
 {
     try
     {

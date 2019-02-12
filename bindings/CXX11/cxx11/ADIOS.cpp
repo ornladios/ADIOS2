@@ -68,6 +68,18 @@ Operator ADIOS::InquireOperator(const std::string name)
     return Operator(m_ADIOS->InquireOperator(name));
 }
 
+bool ADIOS::RemoveIO(const std::string name)
+{
+    CheckPointer("for io name " + name + ", in call to ADIOS::RemoveIO");
+    return m_ADIOS->RemoveIO(name);
+}
+
+void ADIOS::RemoveAllIOs() noexcept
+{
+    CheckPointer("in call to ADIOS::RemoveAllIOs");
+    m_ADIOS->RemoveAllIOs();
+}
+
 // PRIVATE
 
 #define declare_type(T)                                                        \

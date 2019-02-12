@@ -98,7 +98,7 @@ program TestRemove
      if (variables(12)%valid .eqv. .false. ) stop 'gvar_IR64 not defined'
 
     ! remove piece
-    call adios2_remove_variable(ioWrite, "gvar_R64", res, ierr)
+    call adios2_remove_variable(res, ioWrite, "gvar_R64", ierr)
     if( res .eqv. .false. ) stop 'adios2_remove_variable failed'
 
     call adios2_inquire_variable(variables(12), ioWrite, "gvar_R64", ierr)
@@ -139,6 +139,12 @@ program TestRemove
 
     call adios2_inquire_variable(variables(11), ioWrite, "gvar_R32", ierr)
     if (variables(11)%valid .eqv. .true.) stop 'gvar_R32 found'
+
+    call adios2_remove_io(res, adios, 'ioWrite', ierr)
+    if( res .neqv. .true. ) stop 'could not remove ioWrite'
+
+    call adios2_at_io(ioWrite, adios, 'ioWrite', ierr)
+    if( ioWrite%valid .eqv. .true. ) stop 'did not remove ioWrite correctly'
 
     call adios2_finalize(adios, ierr)
 

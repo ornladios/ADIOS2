@@ -177,6 +177,21 @@ public:
      */
     void FlushAll();
 
+    /**
+     * DANGER ZONE: removes a particular IO. This will effectively eliminate
+     * any parameter from the config.xml file
+     * @param name io input name
+     * @return true: IO was found and removed, false: IO not found and not
+     * removed
+     */
+    bool RemoveIO(const std::string name);
+
+    /**
+     * DANGER ZONE: removes all IOs created with DeclareIO. This will
+     * effectively eliminate any parameter from the config.xml file also.
+     */
+    void RemoveAllIOs() noexcept;
+
 private:
     std::shared_ptr<core::ADIOS> m_ADIOS;
 

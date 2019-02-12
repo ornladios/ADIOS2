@@ -101,6 +101,32 @@ contains
 
     end subroutine
 
+    subroutine adios2_remove_io(result, adios, name, ierr)
+        logical, intent(out):: result
+        type(adios2_adios), intent(in) :: adios
+        character*(*), intent(in):: name
+        integer, intent(out) :: ierr
+        ! local
+        integer resultInt
+
+        call adios2_remove_io_f2c(resultInt, adios, &
+                                  TRIM(ADJUSTL(name))//char(0), ierr)
+        if(resultInt == 0) then
+            result = .false.
+        else
+            result = .true.
+        end if
+
+    end subroutine
+
+    subroutine adios2_remove_all_ios(adios, ierr)
+        type(adios2_adios), intent(in) :: adios
+        integer, intent(out) :: ierr
+
+        call adios2_remove_all_ios_f2c(adios, ierr)
+
+    end subroutine
+
     subroutine adios2_finalize(adios, ierr)
         type(adios2_adios), intent(inout) :: adios
         integer, intent(out) :: ierr

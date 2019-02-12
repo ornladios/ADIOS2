@@ -194,7 +194,6 @@ adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
                                                     const char *name,
                                                     const char *variable_name,
                                                     const char *separator);
-
 /**
  * Returns an array of attribute handlers for all attribute present in the io
  * group
@@ -210,14 +209,14 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
 /**
  * @brief DANGEROUS! Removes a variable identified by name. Might create
  * dangling pointers
- * @param io handler variable io owner
- * @param name unique variable name within io handler
  * @param result output adios2_true(1): found and removed variable,
  *                      adios2_false(0): not found, nothing to remove
+ * @param io handler variable io owner
+ * @param name unique variable name within io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_remove_variable(adios2_io *io, const char *name,
-                                    adios2_bool *result);
+adios2_error adios2_remove_variable(adios2_bool *result, adios2_io *io,
+                                    const char *name);
 
 /**
  * @brief DANGEROUS! Removes all existing variables in current IO object.
@@ -230,14 +229,14 @@ adios2_error adios2_remove_all_variables(adios2_io *io);
 /**
  * @brief DANGEROUS! Removes an attribute identified by name. Might create
  * dangling pointers
- * @param io handler attribute io owner
- * @param name unique attribute name within io handler
  * @param result output adios2_true(1): found and removed attribute,
  *                      adios2_false(0): not found, nothing to remove
+ * @param io handler attribute io owner
+ * @param name unique attribute name within io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_remove_attribute(adios2_io *io, const char *name,
-                                     adios2_bool *result);
+adios2_error adios2_remove_attribute(adios2_bool *result, adios2_io *io,
+                                     const char *name);
 
 /**
  * @brief DANGEROUS! Removes all existing attributes in current IO object.
