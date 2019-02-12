@@ -15,6 +15,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2_c_internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -149,78 +150,15 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                 name, shapeV, startV, countV, constantSizeBool);
             break;
         }
-        case (adios2_type_float):
-        {
-            variableCpp = &ioCpp.DefineVariable<float>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_double):
-        {
-            variableCpp = &ioCpp.DefineVariable<double>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_float_complex):
-        {
-            variableCpp = &ioCpp.DefineVariable<std::complex<float>>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_double_complex):
-        {
-            variableCpp = &ioCpp.DefineVariable<std::complex<double>>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int8_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int8_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int16_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int16_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int32_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int32_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int64_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int64_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint8_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint8_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint16_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint16_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint32_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint32_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint64_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint64_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
+#define make_case(adios2_type)                                                 \
+    case (adios2_type):                                                        \
+    {                                                                          \
+        variableCpp = &ioCpp.DefineVariable<MapAdios2Type<adios2_type>::Type>( \
+            name, shapeV, startV, countV, constantSizeBool);                   \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_C_TYPE_1ARG(make_case)
+#undef make_case
         default:
         {
             throw std::invalid_argument("ERROR: unsupported type " +
