@@ -53,21 +53,39 @@ public:
 
     std::map<std::string, adios2::Params> AvailableAttributes() noexcept;
 
+    void WriteAttribute(const std::string &name, const pybind11::array &array,
+                        const std::string &variableName = "",
+                        const std::string separator = "/",
+                        const bool endstep = false);
+
+    void WriteAttribute(const std::string &name, const std::string &stringValue,
+                        const std::string &variableName = "",
+                        const std::string separator = "/",
+                        const bool endstep = false);
+
+    void WriteAttribute(const std::string &name,
+                        const std::vector<std::string> &stringArray,
+                        const std::string &variableName = "",
+                        const std::string separator = "/",
+                        const bool endstep = false);
+
     void Write(const std::string &name, const pybind11::array &array,
                const Dims &shape, const Dims &start, const Dims &count,
-               const bool endl = false);
+               const bool endstep = false);
 
     void Write(const std::string &name, const pybind11::array &array,
-               const bool endl = false);
+               const bool endstep = false);
 
     void Write(const std::string &name, const std::string &stringValue,
-               const bool endl = false);
+               const bool endstep = false);
 
     bool GetStep() const;
 
-    std::string ReadString(const std::string &name);
+    std::vector<std::string> ReadString(const std::string &name);
 
-    std::string ReadString(const std::string &name, const size_t step);
+    std::vector<std::string> ReadString(const std::string &name,
+                                        const size_t stepStart,
+                                        const size_t stepCount);
 
     pybind11::array Read(const std::string &name);
 
@@ -78,6 +96,18 @@ public:
                          const Dims &selectionCount,
                          const size_t stepSelectionStart,
                          const size_t stepSelectionCount);
+
+    pybind11::array ReadAttribute(const std::string &name,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/");
+
+    std::vector<std::string>
+    ReadAttributeString(const std::string &name,
+                        const std::string &variableName = "",
+                        const std::string separator = "/");
+
+    void EndStep();
+
     void Close();
 
     size_t CurrentStep() const;

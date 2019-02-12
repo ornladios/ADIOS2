@@ -13,8 +13,6 @@ if(ADIOS2_HAVE_MPI)
   endif()
 endif()
 
-add_subdirectory(highLevelAPI)
-
 if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
   add_subdirectory(experimental)
 endif()
