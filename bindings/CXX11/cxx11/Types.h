@@ -6,6 +6,7 @@
  *
  *  Created on: Feb 11, 2019
  *      Author: Kai Germaschewski <kai.germaschewski@unh.edu>
+ *              William F Godoy <godoywf@ornl.gov>
  */
 
 #ifndef ADIOS2_BINDINGS_CXX11_TYPES_H_

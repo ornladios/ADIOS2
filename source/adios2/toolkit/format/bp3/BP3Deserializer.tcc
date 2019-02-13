@@ -1077,13 +1077,15 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
             blockInfo.Start = Dims{n};
             blockInfo.Min = blockCharacteristics.Statistics.Value;
             blockInfo.Max = blockCharacteristics.Statistics.Value;
-            ++n;
         }
         // bp index starts at 1
         blockInfo.Step =
             static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
+        blockInfo.BlockID = n;
 
         blocksInfo.push_back(blockInfo);
+
+        ++n;
     }
 
     return blocksInfo;

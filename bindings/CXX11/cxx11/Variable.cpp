@@ -208,6 +208,17 @@ namespace adios2
     Variable<T>::AllStepsBlocksInfo()                                          \
     {                                                                          \
         return DoAllStepsBlocksInfo();                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T *Variable<T>::Info::Data() const                                   \
+    {                                                                          \
+        const core::Variable<T>::Info *coreInfo =                              \
+            reinterpret_cast<const core::Variable<T>::Info *>(m_Info);         \
+                                                                               \
+        return m_Info ? (coreInfo->BufferP ? coreInfo->BufferP                 \
+                                           : coreInfo->BufferV.data())         \
+                      : nullptr;                                               \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

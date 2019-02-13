@@ -14,7 +14,6 @@
 #include "Operator.h"
 
 #include "adios2/ADIOSTypes.h"
-#include "adios2/core/Variable.h"
 
 namespace adios2
 {
@@ -246,17 +245,14 @@ public:
         bool IsValue = false;    ///< true: value, false: array
         size_t BlockID = -1;     ///< block ID for block selections
         size_t Step = 0;
-        const T *Data() const
-        {
-            return m_Info ? (m_Info->BufferP ? m_Info->BufferP
-                                             : m_Info->BufferV.data())
-                          : nullptr;
-        }; ///< block data for block selections. Provided by core Info.
+        const T *Data() const;
+
         // allow Engine to set m_Info
         friend class Engine;
 
     private:
-        const typename core::Variable<IOType>::Info *m_Info;
+        class CoreInfo;
+        const CoreInfo *m_Info;
     };
 
     /**
