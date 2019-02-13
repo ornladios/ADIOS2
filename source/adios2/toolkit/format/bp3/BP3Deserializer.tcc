@@ -591,11 +591,10 @@ BP3Deserializer::AllRelativeStepsBlocksInfo(
     size_t relativeStep = 0;
     for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
     {
-        const size_t step = pair.first;
         const std::vector<size_t> &blockPositions = pair.second;
-
         allRelativeStepsBlocksInfo[relativeStep] =
             BlocksInfoCommon(variable, blockPositions);
+        ++relativeStep;
     }
     return allRelativeStepsBlocksInfo;
 }
@@ -1081,7 +1080,7 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
             ++n;
         }
         // bp index starts at 1
-        blockInfo.StepsStart =
+        blockInfo.Step =
             static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
 
         blocksInfo.push_back(blockInfo);

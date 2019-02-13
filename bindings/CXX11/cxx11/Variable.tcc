@@ -48,7 +48,7 @@ ToBlocksInfo(const std::vector<typename core::Variable<
             blockInfo.Max = coreBlockInfo.Max;
         }
         blockInfo.BlockID = coreBlockInfo.BlockID;
-        blockInfo.Step = coreBlockInfo.StepsStart;
+        blockInfo.Step = coreBlockInfo.Step;
         blocksInfo.push_back(blockInfo);
     }
 

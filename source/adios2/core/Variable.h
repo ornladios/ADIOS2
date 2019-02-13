@@ -63,6 +63,7 @@ public:
         Dims MemoryStart;
         Dims MemoryCount;
         std::vector<Operation> Operations;
+        size_t Step = 0;
         size_t StepsStart = 0;
         size_t StepsCount = 0;
         size_t BlockID = 0;
