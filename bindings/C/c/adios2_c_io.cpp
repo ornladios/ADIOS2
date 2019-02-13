@@ -365,13 +365,14 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         adios2_variable **list =
             (adios2_variable **)calloc(*size, sizeof(adios2_variable *));
 
-        // Sort the names so that we return the same order as the 
+        // Sort the names so that we return the same order as the
         // C++, python APIs
         std::set<std::string> names;
-        for (auto& it : dataMap) names.insert(it.first);
+        for (auto &it : dataMap)
+            names.insert(it.first);
 
         size_t n = 0;
-        for (auto& name : names) 
+        for (auto &name : names)
         {
             auto it = dataMap.find(name);
             const std::string type(it->second.first);
@@ -894,13 +895,14 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         adios2_attribute **list =
             (adios2_attribute **)calloc(*size, sizeof(adios2_attribute *));
 
-        // Sort the names so that we return the same order as the 
+        // Sort the names so that we return the same order as the
         // C++, python APIs
         std::set<std::string> names;
-        for (auto& it : dataMap) names.insert(it.first);
+        for (auto &it : dataMap)
+            names.insert(it.first);
 
         size_t n = 0;
-        for (auto& name : names) 
+        for (auto &name : names)
         {
             auto it = dataMap.find(name);
             const std::string type(it->second.first);
