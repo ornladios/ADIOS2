@@ -187,7 +187,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
+    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
                               "ADIOS2BPWriteAttributeReadArrayTypes.h5";
 
 #ifdef ADIOS2_HAVE_MPI
@@ -366,7 +366,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 
 TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
+    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
                               "BPWriteAttributeReadSingleTypesVar.h5";
 
     const std::string zero = std::to_string(0);
@@ -535,7 +535,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
+    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
                               "BPWriteAttributeReadArrayTypesVar.h5";
 
 #ifdef ADIOS2_HAVE_MPI
