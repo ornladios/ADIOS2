@@ -1021,7 +1021,7 @@ void HDF5Common::WriteStringAttr(core::IO &io,
         H5Tclose(h5Type);
         H5Aclose(attr);
     }
-    else if (adiosAttr->m_Elements > 1)
+    else if (adiosAttr->m_Elements >= 1)
     {
         // is array
         int max = 0;
@@ -1128,19 +1128,19 @@ void HDF5Common::LocateAttrParent(const std::string &attrName,
                 ts += delimiter;
                 ts += list[j].c_str();
             }
-            if (H5Lexists(m_FileId, ts.c_str(), H5P_DEFAULT) == 0)
+            if (H5Lexists(m_FileId, ts.c_str(), H5P_DEFAULT) <= 0)
                 continue;
             else
             {
                 topId = H5Dopen(m_FileId, ts.c_str(), H5P_DEFAULT);
                 break;
             }
-        }
+        } // for
 
         if (topId != m_FileId)
             parentChain.push_back(topId);
         return;
-    }
+    } // if
 
     // hid_t dsetID = H5Dopen(topId, list.back().c_str(), H5P_DEFAULT);
 
@@ -1174,7 +1174,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         std::string attrType = temp["Type"];
 
         hid_t parentID = m_FileId;
-#ifndef NO_ATTR_VAR_ASSOC
+#ifdef NO_ATTR_VAR_ASSOC
         std::vector<hid_t> chain;
         std::vector<std::string> list;
         LocateAttrParent(attrName, list, chain);
@@ -1184,6 +1184,11 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         {
             parentID = chain.back();
         }
+#else
+        // will list out all attr at root level
+        // to make it easy to be consistant with ADIOS2 attr symantic
+        std::vector<std::string> list;
+        list.push_back(attrName);
 #endif
         // if (H5Aexists(parentID, attrName.c_str()) > 0)
         if (H5Aexists(parentID, list.back().c_str()) > 0)
