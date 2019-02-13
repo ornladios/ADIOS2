@@ -56,7 +56,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
-	io.SetEngine("HDF5");
+        io.SetEngine("HDF5");
 
         // Declare Single Value Attributes
         io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
@@ -77,8 +77,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
         io.DefineAttribute<float>(r32_Single, currentTestData.R32.front());
         io.DefineAttribute<double>(r64_Single, currentTestData.R64.front());
 
-        //io.SetEngine("BPFile");
-        //io.AddTransport("File");
+        // io.SetEngine("BPFile");
+        // io.AddTransport("File");
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         // only attributes are written
@@ -87,7 +87,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
-	ioRead.SetEngine("HDF5");
+        ioRead.SetEngine("HDF5");
         // ioRead.AddTransport("File");
         // ioRead.SetParameter("OpenAsFile", "true");
 
@@ -223,7 +223,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
-	io.SetEngine("HDF5");
+        io.SetEngine("HDF5");
 
         // Declare Single Value Attributes
         io.DefineAttribute<std::string>(s1_Array, currentTestData.S3.data(),
@@ -252,8 +252,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         io.DefineAttribute<double>(r64_Array, currentTestData.R64.data(),
                                    currentTestData.R64.size());
 
-        //io.SetEngine("BPFile");
-        //io.AddTransport("file");
+        // io.SetEngine("BPFile");
+        // io.AddTransport("file");
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         // only attributes are written
@@ -262,7 +262,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
-	ioRead.SetEngine("HDF5");
+        ioRead.SetEngine("HDF5");
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
@@ -398,7 +398,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
-	io.SetEngine("HDF5");
+        io.SetEngine("HDF5");
 
         // Declare Single Value Attributes
         auto var = io.DefineVariable<int>("myVar");
@@ -435,7 +435,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
-	ioRead.SetEngine("HDF5");
+        ioRead.SetEngine("HDF5");
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
@@ -570,7 +570,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
-	io.SetEngine("HDF5");
+        io.SetEngine("HDF5");
 
         auto var = io.DefineVariable<int>("myVar");
         // Declare Single Value Attributes
@@ -600,8 +600,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         io.DefineAttribute<double>(r64_Array, currentTestData.R64.data(),
                                    currentTestData.R64.size(), var.Name());
 
-        //io.SetEngine("BPFile");
-        //io.AddTransport("file");
+        // io.SetEngine("BPFile");
+        // io.AddTransport("file");
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         engine.Put(var, 10);
@@ -610,7 +610,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 
     {
         adios2::IO ioRead = adios.DeclareIO("ioRead");
-	ioRead.SetEngine("HDF5");
+        ioRead.SetEngine("HDF5");
 
         adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::Read);
 
