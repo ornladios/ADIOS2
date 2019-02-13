@@ -31,6 +31,32 @@
    #undef instantiate_foo
  </pre>
 */
+#define ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)                 \
+    MACRO(int8_t)                                                              \
+    MACRO(int16_t)                                                             \
+    MACRO(int32_t)                                                             \
+    MACRO(int64_t)                                                             \
+    MACRO(uint8_t)                                                             \
+    MACRO(uint16_t)                                                            \
+    MACRO(uint32_t)                                                            \
+    MACRO(uint64_t)                                                            \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
+
+#define ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)                           \
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)                     \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)
+
+#define ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(MACRO)                           \
+    MACRO(std::string)                                                         \
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)
+
+#define ADIOS2_FOREACH_STDTYPE_1ARG(MACRO)                                     \
+    MACRO(std::string)                                                         \
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)
+
 #define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                        \
     MACRO(std::string)                                                         \
     MACRO(char)                                                                \

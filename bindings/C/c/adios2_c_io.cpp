@@ -15,6 +15,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2_c_internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -149,78 +150,15 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                 name, shapeV, startV, countV, constantSizeBool);
             break;
         }
-        case (adios2_type_float):
-        {
-            variableCpp = &ioCpp.DefineVariable<float>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_double):
-        {
-            variableCpp = &ioCpp.DefineVariable<double>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_float_complex):
-        {
-            variableCpp = &ioCpp.DefineVariable<std::complex<float>>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_double_complex):
-        {
-            variableCpp = &ioCpp.DefineVariable<std::complex<double>>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int8_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int8_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int16_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int16_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int32_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int32_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_int64_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<int64_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint8_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint8_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint16_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint16_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint32_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint32_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
-        case (adios2_type_uint64_t):
-        {
-            variableCpp = &ioCpp.DefineVariable<uint64_t>(
-                name, shapeV, startV, countV, constantSizeBool);
-            break;
-        }
+#define make_case(adios2_type)                                                 \
+    case (adios2_type):                                                        \
+    {                                                                          \
+        variableCpp = &ioCpp.DefineVariable<MapAdios2Type<adios2_type>::Type>( \
+            name, shapeV, startV, countV, constantSizeBool);                   \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_C_TYPE_1ARG(make_case)
+#undef make_case
         default:
         {
             throw std::invalid_argument("ERROR: unsupported type " +
@@ -271,7 +209,7 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
     {                                                                          \
         variableCpp = ioCpp.InquireVariable<T>(name);                          \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         variable = reinterpret_cast<adios2_variable *>(variableCpp);
@@ -315,7 +253,7 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         variable = ioCpp.InquireVariable<T>(name);                             \
         list[n] = reinterpret_cast<adios2_variable *>(variable);               \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
             n++;
@@ -377,76 +315,17 @@ adios2_attribute *adios2_define_variable_attribute(
                 name, singleString, variable_name, separator);
             break;
         }
-        case (adios2_type_float):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<float>(
-                name, *reinterpret_cast<const float *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_double):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<double>(
-                name, *reinterpret_cast<const double *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_int8_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int8_t>(
-                name, *reinterpret_cast<const int8_t *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_int16_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int16_t>(
-                name, *reinterpret_cast<const int16_t *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_int32_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int32_t>(
-                name, *reinterpret_cast<const int32_t *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_int64_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int64_t>(
-                name, *reinterpret_cast<const int64_t *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_uint8_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint8_t>(
-                name, *reinterpret_cast<const uint8_t *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_uint16_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint16_t>(
-                name, *reinterpret_cast<const uint16_t *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_uint32_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint32_t>(
-                name, *reinterpret_cast<const uint32_t *>(value), variable_name,
-                separator);
-            break;
-        }
-        case (adios2_type_uint64_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint64_t>(
-                name, *reinterpret_cast<const uint64_t *>(value), variable_name,
-                separator);
-            break;
-        }
+#define make_case(adios2_type)                                                 \
+    case (adios2_type):                                                        \
+    {                                                                          \
+        attributeCpp = &ioCpp.DefineAttribute(                                 \
+            name, *reinterpret_cast<const MapAdios2Type<adios2_type>::Type *>( \
+                      value),                                                  \
+            variable_name, separator);                                         \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
+#undef make_case
         default:
         {
             throw std::invalid_argument("ERROR: unsupported type " +
@@ -507,76 +386,17 @@ adios2_attribute *adios2_define_variable_attribute_array(
                 separator);
             break;
         }
-        case (adios2_type_float):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<float>(
-                name, reinterpret_cast<const float *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_double):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<double>(
-                name, reinterpret_cast<const double *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_int8_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int8_t>(
-                name, reinterpret_cast<const int8_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_int16_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int16_t>(
-                name, reinterpret_cast<const int16_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_int32_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int32_t>(
-                name, reinterpret_cast<const int32_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_int64_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<int64_t>(
-                name, reinterpret_cast<const int64_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_uint8_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint8_t>(
-                name, reinterpret_cast<const uint8_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_uint16_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint16_t>(
-                name, reinterpret_cast<const uint16_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_uint32_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint32_t>(
-                name, reinterpret_cast<const uint32_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
-        case (adios2_type_uint64_t):
-        {
-            attributeCpp = &ioCpp.DefineAttribute<uint64_t>(
-                name, reinterpret_cast<const uint64_t *>(data), size,
-                variable_name, separator);
-            break;
-        }
+#define make_case(adios2_type)                                                 \
+    case (adios2_type):                                                        \
+    {                                                                          \
+        attributeCpp = &ioCpp.DefineAttribute(                                 \
+            name,                                                              \
+            reinterpret_cast<const MapAdios2Type<adios2_type>::Type *>(data),  \
+            size, variable_name, separator);                                   \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
+#undef make_case
         default:
         {
             throw std::invalid_argument(
@@ -629,7 +449,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
     {                                                                          \
         attributeCpp = ioCpp.InquireAttribute<T>(name);                        \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         attribute = reinterpret_cast<adios2_attribute *>(attributeCpp);
@@ -684,7 +504,8 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         attribute = ioCpp.InquireAttribute<T>(name);                           \
         list[n] = reinterpret_cast<adios2_attribute *>(attribute);             \
     }
-            ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
+                declare_template_instantiation)
 #undef declare_template_instantiation
 
             n++;

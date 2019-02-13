@@ -63,13 +63,6 @@ int main(int argc, char *argv[])
     // Define variables in ioH
     adios2_define_variable(ioH, "nproc", adios2_type_int32_t, 0, NULL, NULL,
                            NULL, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varChar", adios2_type_signed_char, 1, shape,
-                           start, count, adios2_constant_dims_true);
-
-    adios2_define_variable(ioH, "varSChar", adios2_type_signed_char, 1, shape,
-                           start, count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varUChar", adios2_type_unsigned_char, 1, shape,
-                           start, count, adios2_constant_dims_true);
 
     adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape, start,
                            count, adios2_constant_dims_true);
@@ -121,9 +114,6 @@ int main(int argc, char *argv[])
 
     // inquire variables
     adios2_variable *varNproc = adios2_inquire_variable(ioH, "nproc");
-    adios2_variable *varChar = adios2_inquire_variable(ioH, "varChar");
-    adios2_variable *varSChar = adios2_inquire_variable(ioH, "varSChar");
-    adios2_variable *varUChar = adios2_inquire_variable(ioH, "varUChar");
     adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
     adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
     adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
@@ -140,12 +130,6 @@ int main(int argc, char *argv[])
         adios2_open(ioH, "TestUtilsCWriter.bp", adios2_mode_write);
 
     adios2_put(engineH, varNproc, &nproc, adios2_mode_deferred);
-    adios2_put(engineH, varChar, "abcdefghijklmnopqrstuvwxyz",
-               adios2_mode_deferred);
-    adios2_put(engineH, varSChar, "abcdefghijklmnopqrstuvwxyz",
-               adios2_mode_deferred);
-    adios2_put(engineH, varUChar, "abcdefghijklmnopqrstuvwxyz",
-               adios2_mode_deferred);
     adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
     adios2_put(engineH, varI16, data_I16, adios2_mode_deferred);
     adios2_put(engineH, varI32, data_I32, adios2_mode_deferred);

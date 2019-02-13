@@ -12,30 +12,10 @@
 
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2_c_internal.h"
 
 namespace
 {
-const std::map<std::string, std::vector<adios2_type>>
-    adios2_variable_types_map = {
-        {"char", {adios2_type_signed_char}},
-        {"int", {adios2_type_int32_t}},
-        {"float", {adios2_type_float}},
-        {"double", {adios2_type_double}},
-        {"float complex", {adios2_type_float_complex}},
-        {"double complex", {adios2_type_double_complex}},
-        {"signed char", {adios2_type_int8_t, adios2_type_signed_char}},
-        {"short", {adios2_type_int16_t}},
-        {"long int", {adios2_type_int64_t}},
-        {"long long int", {adios2_type_int64_t}},
-        {"string", {adios2_type_string}},
-        // TODO {"string array", {adios2_type_string_array}},
-        {"unsigned char", {adios2_type_unsigned_char, adios2_type_uint8_t}},
-        {"unsigned short", {adios2_type_uint16_t}},
-        {"unsigned int", {adios2_type_uint32_t}},
-        {"unsigned long int", {adios2_type_uint64_t}},
-        {"unsigned long long int", {adios2_type_uint64_t}},
-};
-
 adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
                                 const std::string &hint)
 {
@@ -242,10 +222,19 @@ adios2_error adios2_variable_type(adios2_type *type,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        auto itType = adios2_variable_types_map.find(variableBase->m_Type);
-        *type = (itType == adios2_variable_types_map.end())
-                    ? adios2_type_unknown
-                    : itType->second.front();
+        auto type_s = variableBase->m_Type;
+        if (type_s == adios2::helper::GetType<std::string>())
+        {
+            *type = adios2_type_string;
+        }
+#define make_case(T)                                                           \
+    else if (type_s == adios2::helper::GetType<MapAdios2Type<T>::Type>())      \
+    {                                                                          \
+        *type = T;                                                             \
+    }
+        ADIOS2_FOREACH_C_TYPE_1ARG(make_case)
+#undef make_case
+        else { *type = adios2_type_unknown; }
         return adios2_error_none;
     }
     catch (...)
@@ -541,7 +530,7 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
         *minT = variableT->m_Min;                                              \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -578,7 +567,7 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
         *maxT = variableT->m_Max;                                              \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }

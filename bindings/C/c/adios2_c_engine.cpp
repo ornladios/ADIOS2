@@ -178,7 +178,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<const T *>(data), modeCpp);                       \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         return adios2_error_none;
@@ -226,7 +226,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         engineCpp.Put(variable_name, reinterpret_cast<const T *>(data),        \
                       modeCpp);                                                \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -297,7 +297,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<T *>(values), modeCpp);                           \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -342,7 +342,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
     {                                                                          \
         engineCpp.Get(variable_name, reinterpret_cast<T *>(data), modeCpp);    \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
