@@ -60,8 +60,8 @@ void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
-    adios2::helper::CheckForNullptr(
-        variable.m_Variable, "for variable in call to Engine::Put");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Put");
     m_Engine->Put(*variable.m_Variable, reinterpret_cast<const IOType *>(data),
                   launch);
 }
@@ -80,8 +80,8 @@ void Engine::Put(Variable<T> variable, const T &datum, const Mode /*launch*/)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
-    adios2::helper::CheckForNullptr(
-        variable.m_Variable, "for variable in call to Engine::Put");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Put");
     m_Engine->Put(*variable.m_Variable,
                   reinterpret_cast<const IOType &>(datum));
 }
@@ -100,8 +100,8 @@ void Engine::Get(Variable<T> variable, T *data, const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    adios2::helper::CheckForNullptr(
-        variable.m_Variable, "for variable in call to Engine::Get");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get");
     m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType *>(data),
                   launch);
 }
@@ -119,8 +119,8 @@ void Engine::Get(Variable<T> variable, T &datum, const Mode /*launch*/)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    adios2::helper::CheckForNullptr(
-        variable.m_Variable, "for variable in call to Engine::Get");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get");
     m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType &>(datum));
 }
 
@@ -139,8 +139,8 @@ void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch)
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
-    adios2::helper::CheckForNullptr(
-        variable.m_Variable, "for variable in call to Engine::Get");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get");
     m_Engine->Get(*variable.m_Variable,
                   reinterpret_cast<std::vector<IOType> &>(dataV), launch);
 }
@@ -152,25 +152,30 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
-    m_Engine->Get(variableName, reinterpret_cast<std::vector<IOType> &>(dataV), launch);
+    m_Engine->Get(variableName, reinterpret_cast<std::vector<IOType> &>(dataV),
+                  launch);
 }
 
 template <class T>
-void Engine::Get(Variable<T> variable, typename Variable<T>::Info& info, const Mode launch)
+void Engine::Get(Variable<T> variable, typename Variable<T>::Info &info,
+                 const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    adios2::helper::CheckForNullptr(
-        variable.m_Variable, "for variable in call to Engine::Get");
-    info.m_Info = m_Engine->Get(*variable.m_Variable, launch);
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get");
+    info.m_Info = reinterpret_cast<typename Variable<T>::Info::CoreInfo *>(
+        m_Engine->Get(*variable.m_Variable, launch));
 }
 
 template <class T>
-void Engine::Get(const std::string &variableName, typename Variable<T>::Info& info, const Mode launch)
+void Engine::Get(const std::string &variableName,
+                 typename Variable<T>::Info &info, const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    info.m_Info = m_Engine->Get<IOType>(variableName, launch);
+    info.m_Info = reinterpret_cast<typename Variable<T>::Info::CoreInfo *>(
+        m_Engine->Get<IOType>(variableName, launch));
 }
 
 template <class T>
@@ -205,7 +210,8 @@ Engine::AllStepsBlocksInfo(const Variable<T> variable) const
 
 // Design Node: All Info structs are copied. This prevents Engine::Get() from
 // connecting the Core Info struct to Binding Info struct when this method is
-// called. Instead of returning a vector, BlocksInfo could populate a vector member
+// called. Instead of returning a vector, BlocksInfo could populate a vector
+// member
 // of the Variable, and those could contain pointers to the Core Info structs,
 // enabling users of the Inline engine to do Info.Data()
 template <class T>

@@ -63,6 +63,7 @@ public:
         Dims MemoryStart;
         Dims MemoryCount;
         std::vector<Operation> Operations;
+        size_t Step = 0;
         size_t StepsStart = 0;
         size_t StepsCount = 0;
         size_t BlockID = 0;
@@ -102,10 +103,16 @@ public:
 
     T Max(const size_t step) const;
 
+    std::vector<std::vector<typename Variable<T>::Info>>
+    AllStepsBlocksInfo() const;
+
 private:
     Dims DoShape(const size_t step) const;
 
     std::pair<T, T> DoMinMax(const size_t step) const;
+
+    std::vector<std::vector<typename Variable<T>::Info>>
+    DoAllStepsBlocksInfo() const;
 };
 
 } // end namespace core

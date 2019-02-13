@@ -136,7 +136,8 @@ void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
 
 // Get
 template <class T>
-typename Variable<T>::Info* Engine::Get(Variable<T> &variable, const Mode launch)
+typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
+                                        const Mode launch)
 {
     if (m_DebugMode)
     {
@@ -166,7 +167,8 @@ typename Variable<T>::Info* Engine::Get(Variable<T> &variable, const Mode launch
 }
 
 template <class T>
-typename Variable<T>::Info* Engine::Get(const std::string &variableName, const Mode launch)
+typename Variable<T>::Info *Engine::Get(const std::string &variableName,
+                                        const Mode launch)
 {
     return Get(FindVariable<T>(variableName, "in call to Get"), launch);
 }
@@ -176,6 +178,13 @@ std::map<size_t, std::vector<typename Variable<T>::Info>>
 Engine::AllStepsBlocksInfo(const Variable<T> &variable) const
 {
     return DoAllStepsBlocksInfo(variable);
+}
+
+template <class T>
+std::vector<std::vector<typename Variable<T>::Info>>
+Engine::AllRelativeStepsBlocksInfo(const Variable<T> &variable) const
+{
+    return DoAllRelativeStepsBlocksInfo(variable);
 }
 
 template <class T>

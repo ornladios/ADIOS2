@@ -580,6 +580,26 @@ BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
 }
 
 template <class T>
+std::vector<std::vector<typename core::Variable<T>::Info>>
+BP3Deserializer::AllRelativeStepsBlocksInfo(
+    const core::Variable<T> &variable) const
+{
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+        allRelativeStepsBlocksInfo(
+            variable.m_AvailableStepBlockIndexOffsets.size());
+
+    size_t relativeStep = 0;
+    for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
+    {
+        const std::vector<size_t> &blockPositions = pair.second;
+        allRelativeStepsBlocksInfo[relativeStep] =
+            BlocksInfoCommon(variable, blockPositions);
+        ++relativeStep;
+    }
+    return allRelativeStepsBlocksInfo;
+}
+
+template <class T>
 std::vector<typename core::Variable<T>::Info>
 BP3Deserializer::BlocksInfo(const core::Variable<T> &variable,
                             const size_t step) const
@@ -1057,9 +1077,15 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
             blockInfo.Start = Dims{n};
             blockInfo.Min = blockCharacteristics.Statistics.Value;
             blockInfo.Max = blockCharacteristics.Statistics.Value;
-            ++n;
         }
+        // bp index starts at 1
+        blockInfo.Step =
+            static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
+        blockInfo.BlockID = n;
+
         blocksInfo.push_back(blockInfo);
+
+        ++n;
     }
 
     return blocksInfo;

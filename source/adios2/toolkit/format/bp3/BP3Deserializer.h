@@ -131,6 +131,10 @@ public:
     AllStepsBlocksInfo(const core::Variable<T> &variable) const;
 
     template <class T>
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+    AllRelativeStepsBlocksInfo(const core::Variable<T> &variable) const;
+
+    template <class T>
     std::vector<typename core::Variable<T>::Info>
     BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
 
@@ -246,6 +250,10 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     extern template std::map<size_t,                                           \
                              std::vector<typename core::Variable<T>::Info>>    \
     BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
+                                                                               \
+    extern template std::vector<std::vector<typename core::Variable<T>::Info>> \
+    BP3Deserializer::AllRelativeStepsBlocksInfo(const core::Variable<T> &)     \
+        const;                                                                 \
                                                                                \
     extern template std::vector<typename core::Variable<T>::Info>              \
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \

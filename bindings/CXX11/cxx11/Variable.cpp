@@ -8,6 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "Variable.h"
+#include "Variable.tcc"
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Variable.h"
@@ -200,6 +201,24 @@ namespace adios2
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Max");    \
         return m_Variable->Max(step);                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    Variable<T>::AllStepsBlocksInfo()                                          \
+    {                                                                          \
+        return DoAllStepsBlocksInfo();                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T *Variable<T>::Info::Data() const                                   \
+    {                                                                          \
+        const core::Variable<T>::Info *coreInfo =                              \
+            reinterpret_cast<const core::Variable<T>::Info *>(m_Info);         \
+                                                                               \
+        return m_Info ? (coreInfo->BufferP ? coreInfo->BufferP                 \
+                                           : coreInfo->BufferV.data())         \
+                      : nullptr;                                               \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)

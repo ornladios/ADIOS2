@@ -88,6 +88,13 @@ namespace core
     T Variable<T>::Max(const size_t step) const                                \
     {                                                                          \
         return MinMax(step).second;                                            \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    Variable<T>::AllStepsBlocksInfo() const                                    \
+    {                                                                          \
+        return DoAllStepsBlocksInfo();                                         \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
