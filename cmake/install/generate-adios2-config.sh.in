@@ -1,0 +1,105 @@
+#!/bin/bash
+
+# Disable the make jobserver???
+unset MAKEFLAGS
+unset MAKE
+
+function make_target_flags() {
+  local tgt=$1
+  sleep 1
+  make -j1 VERBOSE=1 $tgt 2>&1 | \
+    awk "/foo.(c|cxx|F90)( |$)/{print} /-o *(lib)?$tgt/{print}" | \
+    sed -e "s| \+| |g" -e "s| *[^ ]*$tgt[^ ]*||g" \
+      -e "s| *-D *WITH_ADIOS2||" > $tgt.flags
+}
+
+function a_without_b() {
+  local A="$1"
+  local B="$2"
+  local skip=0
+  for a in $A
+  do
+    skip=0
+    for b in ${B}
+    do
+      if [ "${a}" == "${b}" ]
+      then
+        skip=1
+        break
+      fi
+    done
+    if [ $skip -eq 1 ]
+    then
+      continue
+    fi
+    echo $a
+  done
+}
+
+function flag_diff() {
+  local A="$1"
+  local B="$2"
+  a_without_b "$2" "$1"
+}
+
+function prefixify() {
+  echo "$@" | sed 's|@CMAKE_INSTALL_PREFIX@|${ADIOS2_PREFIX}|g'
+}
+
+export adios2_DIR="@CMAKE_INSTALL_PREFIX@"
+CMAKE="@CMAKE_COMMAND@"
+SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/adios2-config-dummy"
+BUILD_DIR=$(mktemp -d)
+pushd ${BUILD_DIR}
+
+echo "Configuring adios2-config dummy CMake project"
+if ! ${CMAKE} -G "Unix Makefiles" ${SOURCE_DIR} 
+then
+  echo "Failed"
+  exit 1
+fi
+
+echo "Extacting build flags with and without ADIOS"
+make_target_flags without_C
+make_target_flags without_CXX
+make_target_flags without_Fortran
+make_target_flags with_C
+make_target_flags with_CXX
+make_target_flags with_Fortran
+
+without_C_CFLAGS=$(head -1 without_C.flags)
+without_C_LDFLAGS=$(tail -1 without_C.flags)
+without_CXX_CXXFLAGS=$(head -1 without_CXX.flags)
+without_CXX_LDFLAGS=$(tail -1 without_CXX.flags)
+without_Fortran_FFLAGS=$(head -1 without_Fortran.flags)
+without_Fortran_LDFLAGS=$(tail -1 without_Fortran.flags)
+
+with_C_CFLAGS=$(head -1 with_C.flags)
+with_C_LDFLAGS=$(tail -1 with_C.flags)
+with_CXX_CXXFLAGS=$(head -1 with_CXX.flags)
+with_CXX_LDFLAGS=$(tail -1 with_CXX.flags)
+with_Fortran_FFLAGS=$(head -1 with_Fortran.flags)
+with_Fortran_LDFLAGS=$(tail -1 with_Fortran.flags)
+
+echo "Computing diff"
+ADIOS2_C_CFLAGS="$(prefixify $(flag_diff "${without_C_CFLAGS}" "${with_C_CFLAGS}"))"
+ADIOS2_C_LDFLAGS="$(prefixify $(flag_diff "${without_C_LDFLAGS}" "${with_C_LDFLAGS}"))"
+ADIOS2_CXX_CXXFLAGS="$(prefixify $(flag_diff "${without_CXX_CXXFLAGS}" "${with_CXX_CXXFLAGS}"))"
+ADIOS2_CXX_LDFLAGS="$(prefixify $(flag_diff "${without_CXX_LDFLAGS}" "${with_CXX_LDFLAGS}"))"
+ADIOS2_Fortran_FFLAGS="$(prefixify $(flag_diff "${without_Fortran_FFLAGS}" "${with_Fortran_FFLAGS}"))"
+ADIOS2_Fortran_LDFLAGS="$(prefixify $(flag_diff "${without_Fortran_LDFLAGS}" "${with_Fortran_LDFLAGS}"))"
+
+rm -f adios2.flags
+echo ADIOS2_C_CFLAGS=\"${ADIOS2_C_CFLAGS}\" >> adios2.flags
+echo ADIOS2_C_LDFLAGS=\"${ADIOS2_C_LDFLAGS}\" >> adios2.flags
+echo ADIOS2_CXX_CXXFLAGS=\"${ADIOS2_CXX_CXXFLAGS}\" >> adios2.flags
+echo ADIOS2_CXX_LDFLAGS=\"${ADIOS2_CXX_LDFLAGS}\" >> adios2.flags
+echo ADIOS2_Fortran_FFLAGS=\"${ADIOS2_Fortran_FFLAGS}\" >> adios2.flags
+echo ADIOS2_Fortran_LDFLAGS=\"${ADIOS2_Fortran_LDFLAGS}\" >> adios2.flags
+
+echo "Writing @CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
+cat \
+  "@ADIOS2_BINARY_DIR@/cmake/install/adios2-config.pre.sh" adios2.flags "@ADIOS2_BINARY_DIR@/cmake/install/adios2-config.post.sh" > "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
+chmod +x "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
+popd 
+rm -rf ${BUILD_DIR}

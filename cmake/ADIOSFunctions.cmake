@@ -152,8 +152,4 @@ function(GenerateADIOSPackageConfig)
     RENAME adios2-config.cmake
     DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
   )
-
-  install(PROGRAMS ${ADIOS2_SOURCE_DIR}/cmake/adios2-config
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-  )
 endfunction()

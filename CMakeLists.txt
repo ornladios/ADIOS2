@@ -199,6 +199,11 @@ endif()
 #------------------------------------------------------------------------------#
 GenerateADIOSPackageConfig()
 
+# It's certainly a little awkward to have this lass add_subdirectory but it's
+# currently the only way to guarantee installation order for the static config
+# generation script
+add_subdirectory(cmake/install)
+
 #------------------------------------------------------------------------------#
 # Configuration summary
 #------------------------------------------------------------------------------#
