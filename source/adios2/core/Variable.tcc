@@ -126,7 +126,6 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
             if (helper::LessThan<T>(minValue, minMax.first))
             {
                 minMax.first = minValue;
-                continue;
             }
 
             const T maxValue = isValue ? blockInfo.Value : blockInfo.Max;

@@ -1830,10 +1830,10 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
         if (!variable->m_SingleValue)
         {
-            // if (variable->m_ShapeID == ShapeID::LocalArray)
-            //{
-            variable->SetBlockSelection(blockid);
-            //}
+            if (variable->m_ShapeID == ShapeID::LocalArray)
+            {
+                variable->SetBlockSelection(blockid);
+            }
             variable->SetSelection({startv, countv});
         }
 
@@ -2556,7 +2556,16 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 blockpair.second;
             fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
                     step);
-            fprintf(outf, "%zu instances available\n", blocks.size());
+            if (blocks.size() == 1)
+            {
+                fprintf(outf, " = ");
+                print_data(&blocks[0].Value, 0, adiosvartype, true);
+                fprintf(outf, "\n");
+            }
+            else
+            {
+                fprintf(outf, "%zu instances available\n", blocks.size());
+            }
             if (dump)
             {
                 fprintf(outf, "               ");
@@ -2605,14 +2614,15 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
         }
 
+        size_t stepRelative = 0;
         for (auto &blockpair : allblocks)
         {
-            size_t step = blockpair.first;
+            size_t stepAbsolute = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
             const size_t blocksSize = blocks.size();
             fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
-                    step);
+                    stepAbsolute);
             fprintf(outf, "\n");
             ndigits_nblocks = ndigits(blocksSize - 1);
 
@@ -2670,9 +2680,10 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 fprintf(outf, "\n");
                 if (dump)
                 {
-                    readVarBlock(fp, io, variable, step, j, blocks[j]);
+                    readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
                 }
             }
+            ++stepRelative;
         }
     }
 }
