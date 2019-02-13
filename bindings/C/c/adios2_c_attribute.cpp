@@ -12,30 +12,11 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/AttributeBase.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2_c_internal.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-namespace
-{
-const std::map<std::string, std::vector<adios2_type>>
-    adios2_attribute_types_map = {
-        {"int", {adios2_type_int32_t}},
-        {"float", {adios2_type_float}},
-        {"double", {adios2_type_double}},
-        {"signed char", {adios2_type_int8_t}},
-        {"short", {adios2_type_int16_t}},
-        {"long int", {adios2_type_int64_t}},
-        {"long long int", {adios2_type_int64_t}},
-        {"string", {adios2_type_string}},
-        {"unsigned char", {adios2_type_uint8_t}},
-        {"unsigned short", {adios2_type_uint16_t}},
-        {"unsigned int", {adios2_type_uint32_t}},
-        {"unsigned long int", {adios2_type_uint64_t}},
-        {"unsigned long long int", {adios2_type_uint64_t}},
-};
-} // end anonymous namespace
 
 adios2_error adios2_attribute_name(char *name, size_t *size,
                                    const adios2_attribute *attribute)
@@ -71,10 +52,19 @@ adios2_error adios2_attribute_type(adios2_type *type,
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
 
-        auto itType = adios2_attribute_types_map.find(attributeBase->m_Type);
-        *type = (itType == adios2_attribute_types_map.end())
-                    ? adios2_type_unknown
-                    : itType->second.front();
+        auto type_s = attributeBase->m_Type;
+        if (type_s == adios2::helper::GetType<std::string>())
+        {
+            *type = adios2_type_string;
+        }
+#define make_case(T)                                                           \
+    else if (type_s == adios2::helper::GetType<MapAdios2Type<T>::Type>())      \
+    {                                                                          \
+        *type = T;                                                             \
+    }
+        ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
+#undef make_case
+        else { *type = adios2_type_unknown; }
         return adios2_error_none;
     }
     catch (...)
