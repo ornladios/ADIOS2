@@ -110,7 +110,7 @@ void InlineReader::EndStep()
         return GetBlockSyncCommon(variable);                                   \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 // Design note: Returns a copy. Instead, could return a reference, then
@@ -130,7 +130,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
         return variable.m_BlocksInfo;                                          \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void InlineReader::Init()
