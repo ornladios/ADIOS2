@@ -169,7 +169,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
         variableMap.erase(index);                                              \
         isRemoved = true;                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -185,7 +185,7 @@ void IO::RemoveAllVariables() noexcept
 {
     m_Variables.clear();
 #define declare_type(T) GetVariableMap<T>().clear();
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     m_Compound.clear();
 }
@@ -212,7 +212,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
         variableMap.erase(index);                                              \
         isRemoved = true;                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -229,7 +229,7 @@ void IO::RemoveAllAttributes() noexcept
     m_Attributes.clear();
 
 #define declare_type(T) GetAttributeMap<T>().clear();
-    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 }
 
@@ -267,7 +267,7 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
                 helper::ValueToString(variable.m_Max);                         \
         }                                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 
@@ -328,7 +328,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
                 "{ " + helper::VectorToCSV(attribute.m_DataArray) + " }";      \
         }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
     } // end for
@@ -361,7 +361,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
             return std::string();                                              \
         }                                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 
@@ -659,7 +659,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         variable->ResetStepsSelection(zeroStart);                              \
         variable->m_RandomAccess = false;                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 }
@@ -730,7 +730,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(define_template_instantiation)
     template Attribute<T> *IO::InquireAttribute<T>(                            \
         const std::string &, const std::string &, const std::string) noexcept;
 
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

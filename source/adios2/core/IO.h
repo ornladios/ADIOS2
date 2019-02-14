@@ -437,7 +437,7 @@ private:
 
     /** Variable containers based on fixed-size type */
 #define declare_map(T, NAME) std::map<unsigned int, Variable<T>> m_##NAME;
-    ADIOS2_FOREACH_TYPE_2ARGS(declare_map)
+    ADIOS2_FOREACH_STDTYPE_2ARGS(declare_map)
 #undef declare_map
 
     std::map<unsigned int, VariableCompound> m_Compound;
@@ -459,7 +459,7 @@ private:
     DataMap m_Attributes;
 
 #define declare_map(T, NAME) std::map<unsigned int, Attribute<T>> m_##NAME##A;
-    ADIOS2_FOREACH_ATTRIBUTE_TYPE_2ARGS(declare_map)
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(declare_map)
 #undef declare_map
 
     template <class T>
@@ -516,7 +516,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
     extern template Attribute<T> *IO::InquireAttribute<T>(                     \
         const std::string &, const std::string &, const std::string) noexcept;
 
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

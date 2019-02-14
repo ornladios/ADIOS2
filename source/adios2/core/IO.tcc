@@ -194,8 +194,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
     {                                                                          \
         return m_##NAME;                                                       \
     }
-
-ADIOS2_FOREACH_TYPE_2ARGS(make_GetVariableMap)
+ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
 #undef make_GetVariableMap
 
 // GetAttributeMap
@@ -205,8 +204,7 @@ ADIOS2_FOREACH_TYPE_2ARGS(make_GetVariableMap)
     {                                                                          \
         return m_##NAME##A;                                                    \
     }
-
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_2ARGS(make_GetAttributeMap)
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(make_GetAttributeMap)
 #undef make_GetAttributeMap
 
 } // end namespace core

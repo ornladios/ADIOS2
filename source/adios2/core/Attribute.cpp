@@ -34,7 +34,7 @@ namespace core
     {                                                                          \
     }
 
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace core
