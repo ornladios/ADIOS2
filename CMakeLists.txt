@@ -20,15 +20,9 @@ endif()
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
   CACHE STRING "Installation CMake subdirectory")
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
 list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
@@ -147,9 +141,11 @@ install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
 )
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
-  PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
+  FILES_MATCHING
+    PATTERN "Find*.cmake"
+    PATTERN "CMake*.cmake"
 )
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/upstream/FindMPI
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/upstream/
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/upstream
 )
 
@@ -202,6 +198,11 @@ endif()
 # Generating package configs
 #------------------------------------------------------------------------------#
 GenerateADIOSPackageConfig()
+
+# It's certainly a little awkward to have this lass add_subdirectory but it's
+# currently the only way to guarantee installation order for the static config
+# generation script
+add_subdirectory(cmake/install)
 
 #------------------------------------------------------------------------------#
 # Configuration summary

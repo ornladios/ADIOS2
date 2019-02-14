@@ -1,0 +1,62 @@
+
+function usage() {
+  echo "adios2-config (--help | [--c-flags] [--c-libs] [--cxx-flags] [--cxx-libs] [-fortran-flags] [--fortran-libs])"
+  echo "  --help           Display help information"
+  echo "  -c               Both compile and link flags for the C bindings"
+  echo "  --c-flags        Preprocessor and compile flags for the C bindings"
+  echo "  --c-libs         Linker flags for the C bindings"
+  echo "  -x               Both compile and link flags for the C++ bindings"
+  echo "  --cxx-flags      Preprocessor and compile flags for the C++ bindings"
+  echo "  --cxx-libs       Linker flags for the C++ bindings"
+  echo "  -f               Both compile and link flags for the F90 bindings"
+  echo "  --fortran-flags  Preprocessor and compile flags for the F90 bindings"
+  echo "  --fortran-libs   Linker flags for the F90 bindings"
+}
+
+if [ $# -eq 0 ]
+then
+  usage
+  exit 1
+fi
+
+CF=0
+CL=0
+CXXF=0
+CXXL=0
+FF=0
+FL=0
+
+while [ $# -gt 0 ]
+do
+  case $1
+  in
+    -c) CF=1; CL=1 ;;
+    --c-flags) CF=1 ;;
+    --c-libs) CL=1 ;;
+    -x) CXXF=1; CXXL=1 ;;
+    --cxx-flags) CXXF=1 ;;
+    --cxx-libs) CXXL=1 ;;
+    -f) FF=1; FL=1 ;;
+    --fortran-flags) FF=1 ;;
+    --fortran-libs) FL=1 ;;
+    --help)
+      usage
+      exit 1
+      ;;
+    *)
+      echo "Error: Unknown argument: $1"
+      usage
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+if [ $CF -eq 1 ]; then echo -n "${ADIOS2_C_CFLAGS} "; fi
+if [ $CL -eq 1 ]; then echo -n "${ADIOS2_C_LDFLAGS} "; fi
+if [ $CXXF -eq 1 ]; then echo -n "${ADIOS2_CXX_CXXFLAGS} "; fi
+if [ $CXXL -eq 1 ]; then echo -n "${ADIOS2_CXX_LDFLAGS} "; fi
+if [ $FF -eq 1 ]; then echo -n "${ADIOS2_Fortran_FFLAGS} "; fi
+if [ $FL -eq 1 ]; then echo -n "${ADIOS2_Fortran_LDFLAGS} "; fi
+
+echo ""
