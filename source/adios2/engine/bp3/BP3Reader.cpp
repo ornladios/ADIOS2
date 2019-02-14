@@ -105,7 +105,7 @@ void BP3Reader::PerformGets()
         ReadVariableBlocks(variable);                                          \
         variable.m_BlocksInfo.clear();                                         \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -179,7 +179,7 @@ void BP3Reader::InitBuffer()
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void BP3Reader::DoClose(const int transportIndex)
@@ -208,7 +208,7 @@ void BP3Reader::DoClose(const int transportIndex)
         return m_BP3Deserializer.BlocksInfo(variable, step);                   \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace engine
