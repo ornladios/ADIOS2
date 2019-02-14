@@ -40,13 +40,14 @@ DataSpacesWriter::~DataSpacesWriter(){ DoClose();}
 StepStatus DataSpacesWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
 	//acquire lock in Begin Step
+	//std::string lk_name = f_name+std::to_string
 	char *cstr = new char[f_Name.length() + 1];
 	strcpy(cstr, f_Name.c_str());
 	m_CurrentStep++; // current step begins at 0;
 
-	fprintf (stderr, "rank=%d call read lock...\n", m_data.rank);
+	fprintf (stderr, "rank=%d call write lock, TS=%d...\n", m_data.rank, m_CurrentStep);
 	dspaces_lock_on_write (cstr, &m_data.mpi_comm);
-	fprintf (stderr, "rank=%d got read lock\n", m_data.rank);
+	fprintf (stderr, "rank=%d got write lock, TS=%d \n", m_data.rank, m_CurrentStep);
 	delete[] cstr;
     return StepStatus::OK;
 }

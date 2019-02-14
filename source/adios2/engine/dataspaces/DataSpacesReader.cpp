@@ -80,13 +80,16 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
 	if(mode == StepMode::NextAvailable){
 		m_CurrentStep++;
+		fprintf (stderr, "Next step mode, TS=%d...\n", m_CurrentStep);
 	}
 	if(mode == StepMode::LatestAvailable){
 			m_CurrentStep = latestStep;
+			fprintf (stderr, "LatestStep mode, TS=%d...\n", m_CurrentStep);
 	}
 	//we check if the current step is the end of the step that is in DataSpaces
 	if (m_CurrentStep > latestStep)
 	{
+		fprintf (stderr, "End of Stream, TS=%d\n", m_CurrentStep);
 		return StepStatus::EndOfStream;
 	}
 
