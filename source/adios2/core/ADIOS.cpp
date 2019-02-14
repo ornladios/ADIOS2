@@ -254,7 +254,7 @@ Operator *ADIOS::InquireOperator(const std::string name) noexcept
         return *itPair.first->second;                                          \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 Operator &ADIOS::DefineCallBack(

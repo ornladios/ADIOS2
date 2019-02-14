@@ -156,7 +156,7 @@ public:
                                  const Dims &)> &function,                     \
         const Params &parameters);
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     /** define CallBack2 */

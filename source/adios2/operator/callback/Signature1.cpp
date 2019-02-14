@@ -26,7 +26,7 @@ namespace callback
     : Operator("Signature1", parameters, debugMode), m_Function##L(function)   \
     {                                                                          \
     }
-ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
+ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
 #define declare_type(T, L)                                                     \
@@ -46,7 +46,7 @@ ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
                                      " callback function failed\n");           \
         }                                                                      \
     }
-ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
+ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
 } // end namespace callback
