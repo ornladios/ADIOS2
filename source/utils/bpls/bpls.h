@@ -98,6 +98,11 @@ template <class T>
 int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                  int blockid);
 
+template <class T>
+std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
+                                                  core::IO *io,
+                                                  core::Variable<T> *variable);
+
 int cmpstringp(const void *p1, const void *p2);
 bool grpMatchesMask(char *name);
 bool matchesAMask(const char *name);
