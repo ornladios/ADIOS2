@@ -621,7 +621,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
         core::Attribute<T> *a = io->InquireAttribute<T>(name);                 \
         retval = printAttributeValue(fp, io, a);                               \
     }
-                    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(
+                    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
                         declare_template_instantiation)
 #undef declare_template_instantiation
                     fprintf(outf, "\n");
@@ -644,7 +644,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
         core::Variable<T> *v = io->InquireVariable<T>(name);                   \
         retval = printVariableInfo(fp, io, v);                                 \
     }
-                ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
             }
         }

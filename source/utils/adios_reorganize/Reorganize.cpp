@@ -431,7 +431,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     {                                                                          \
         variable = io.InquireVariable<T>(variablePair.first);                  \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         varinfo[varidx].v = variable;
@@ -549,7 +549,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         }
     }
@@ -589,7 +589,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         }
     }
