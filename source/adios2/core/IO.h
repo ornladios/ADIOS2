@@ -528,7 +528,7 @@ private:
     extern template Variable<T> *IO::InquireVariable<T>(                       \
         const std::string &name) noexcept;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \

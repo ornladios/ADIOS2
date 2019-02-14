@@ -717,7 +717,7 @@ void IO::CheckTransportType(const std::string type) const
                                                 const Dims &, const bool);     \
     template Variable<T> *IO::InquireVariable<T>(const std::string &) noexcept;
 
-ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
 
 #define declare_template_instantiation(T)                                      \

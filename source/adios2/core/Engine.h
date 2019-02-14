@@ -437,7 +437,7 @@ protected:
 #define declare_type(T)                                                        \
     virtual void DoPutSync(Variable<T> &, const T *);                          \
     virtual void DoPutDeferred(Variable<T> &, const T *);
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 // Get
@@ -445,7 +445,7 @@ protected:
     virtual void DoGetSync(Variable<T> &, T *);                                \
     virtual void DoGetDeferred(Variable<T> &, T *);                            \
     virtual typename Variable<T>::Info *DoGetBlockSync(Variable<T> &);
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     virtual void DoClose(const int transportIndex) = 0;
@@ -471,7 +471,7 @@ protected:
     virtual std::vector<typename Variable<T>::Info> DoBlocksInfo(              \
         const Variable<T> &variable, const size_t step) const;
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 private:
@@ -539,7 +539,7 @@ private:
     extern template std::vector<typename Variable<T>::Info>                    \
     Engine::BlocksInfo(const Variable<T> &, const size_t) const;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core
