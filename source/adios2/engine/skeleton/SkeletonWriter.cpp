@@ -100,7 +100,7 @@ void SkeletonWriter::Flush(const int transportIndex)
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void SkeletonWriter::Init()
