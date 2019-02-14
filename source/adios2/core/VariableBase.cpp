@@ -89,15 +89,15 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     if (m_DebugMode)
     {
-        if (m_Type == helper::GetType<std::string>())
+        if (m_Type == helper::GetType<std::string>() &&
+            m_ShapeID != ShapeID::GlobalArray)
         {
-            throw std::invalid_argument(
-                "ERROR: string variable " + m_Name +
-                " is always LocalValue, it can't have a "
-                "selection, in call to SetSelection\n");
+            throw std::invalid_argument("ERROR: string variable " + m_Name +
+                                        " not a GlobalArray, it can't have a "
+                                        "selection, in call to SetSelection\n");
         }
 
-        if (m_SingleValue)
+        if (m_SingleValue && m_ShapeID != ShapeID::GlobalArray)
         {
             throw std::invalid_argument(
                 "ERROR: selection is not valid for single value variable " +
@@ -118,15 +118,6 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
                                         "same size as shape for variable " +
                                         m_Name + ", in call to SetSelection\n");
         }
-
-        //        if (m_ShapeID == ShapeID::LocalArray && !start.empty())
-        //        {
-        //            throw std::invalid_argument("ERROR: start argument must be
-        //            empty "
-        //                                        "for local array variable " +
-        //                                        m_Name + ", in call to
-        //                                        SetSelection\n");
-        //        }
 
         if (m_ShapeID == ShapeID::JoinedArray && !start.empty())
         {

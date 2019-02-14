@@ -101,6 +101,11 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
+        auto var_local =
+            io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
+        auto var_localStr =
+            io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
+
         auto var_iString = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
@@ -127,6 +132,10 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
 
             bpWriter.BeginStep();
 
+            const int32_t localNumber = static_cast<int32_t>(mpiRank + step);
+            bpWriter.Put(var_local, localNumber);
+            bpWriter.Put(var_localStr, std::to_string(localNumber));
+
             bpWriter.Put(var_iString, currentTestData.S1);
             bpWriter.Put(var_i8, currentTestData.I8.data());
             bpWriter.Put(var_i16, currentTestData.I16.data());
@@ -150,6 +159,9 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         adios2::IO io = adios.DeclareIO("ReadIO");
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        auto var_local = io.InquireVariable<int32_t>("local");
+        auto var_localStr = io.InquireVariable<std::string>("localStr");
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -225,6 +237,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         // TODO: other types
 
         SmallTestData testData;
+        std::vector<int32_t> ILocal;
+        std::vector<std::string> ILocalStr;
 
         std::string IString;
         std::array<int8_t, Nx> I8;
@@ -259,6 +273,9 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
+            var_local.SetStepSelection({t, 1});
+            var_localStr.SetStepSelection({t, 1});
+
             var_i8.SetStepSelection({t, 1});
             var_i16.SetStepSelection({t, 1});
             var_i32.SetStepSelection({t, 1});
@@ -317,6 +334,27 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
                 EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
                 EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
+            }
+
+            const size_t domainSize = static_cast<size_t>(mpiSize);
+            for (size_t i = 0; i < domainSize; ++i)
+            {
+                var_local.SetSelection({{i}, {domainSize - i}});
+                var_localStr.SetSelection({{i}, {domainSize - i}});
+
+                bpReader.Get(var_local, ILocal);
+                bpReader.Get(var_localStr, ILocalStr);
+                bpReader.PerformGets();
+
+                for (size_t j = i; j < domainSize; ++j)
+                {
+                    std::stringstream ss;
+                    ss << "t=" << t << " i=" << i << " j=" << j;
+                    std::string msg = ss.str();
+
+                    EXPECT_EQ(ILocal[j - i], j + t) << msg;
+                    EXPECT_EQ(ILocalStr[j - i], std::to_string(j + t)) << msg;
+                }
             }
         }
         bpReader.Close();
