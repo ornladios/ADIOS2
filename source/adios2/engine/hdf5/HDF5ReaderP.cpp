@@ -324,7 +324,7 @@ void HDF5ReaderP::PerformGets()
             }                                                                  \
         }                                                                      \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     //
@@ -357,7 +357,7 @@ void HDF5ReaderP::PerformGets()
         return GetBlocksInfo(variable, step);                                  \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void HDF5ReaderP::DoClose(const int transportIndex)
