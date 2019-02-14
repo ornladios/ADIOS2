@@ -152,7 +152,19 @@ applications running on different interconnects, the Wide Area Network
 (WAN) option should be chosen.  This value is interpreted by both SST
 Writer and Reader engines.
 
-5. **NetworkInterface**: Default **NULL**.  In situations in which
+6. **DataTransport**: Default **tcp**.  This string value specifies
+the underlying network communication mechanism to use for performing
+control operations in SST.  SST can be configured to standard TCP
+sockets, which are very reliable and efficient, but which are limited
+in their scalability.  Alternatively, SST can use a reliable UDP
+protocol, that is more scalable, but as of ADIOS2 Release 2.3.1 still
+suffers from some reliability problems.  (**sockets** is accepted as
+equivalent to **tcp** and **udp**, **rudp**, and **enet** are
+equivalent to **scalable**.  Generally both the reader and writer
+should be using the same control transport.  This value is interpreted
+by both SST Writer and Reader engines.
+
+7. **NetworkInterface**: Default **NULL**.  In situations in which
 there are multiple possible network interfaces available to SST, this
 string value specifies which should be used to generate SST's contact
 information for writers.  Generally this should *NOT* be specified
@@ -173,5 +185,6 @@ This value is interpreted by only by the SST Writer engine.
  QueueLimit               integer               **0** (no queue limits)
  QueueFullPolicy          string                **Block**, Discard
  DataTransport            string                **default varies by platform**, RDMA, WAN
+ ControlTransport         string                **TCP**, Scalable
  NetworkInterface         string                **NULL**
 =======================  ===================== =========================================================

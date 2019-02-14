@@ -64,6 +64,7 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
     int BestPriority = -1;
     int BestPrioDP = -1;
     int i = 0;
+    int FoundPreferred = 0;
     if (Params->DataTransport)
     {
         Svcs->verbose(CP_Stream, "Prefered dataplane name is \"%s\"\n",
@@ -79,8 +80,18 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
         {
             if (strcasecmp(List[i].Name, Params->DataTransport) == 0)
             {
-                SelectedDP = i;
-                break;
+                FoundPreferred = 1;
+                if (List[i].Priority >= 0)
+                {
+                    SelectedDP = i;
+                    break;
+                }
+                else
+                {
+                    fprintf(stderr, "Warning:  Perferred DataPlane \"%s\" is "
+                                    "not available.",
+                            List[i].Name);
+                }
             }
         }
         if (List[i].Priority > BestPriority)
@@ -89,6 +100,11 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
             BestPrioDP = i;
         }
         i++;
+    }
+    if (Params->DataTransport && (FoundPreferred == 0))
+    {
+        fprintf(stderr, "Warning:  Preferred DataPlane \"%s\" not found.",
+                Params->DataTransport);
     }
     if (SelectedDP != -1)
     {
@@ -115,6 +131,13 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
         }
         i++;
     }
+
+    if (Params->DataTransport)
+    {
+        free(Params->DataTransport);
+    }
+    Params->DataTransport = strdup(List[SelectedDP].Name);
+
     Ret = List[SelectedDP].Interface;
     free(List);
     return Ret;
