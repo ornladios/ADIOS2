@@ -350,8 +350,8 @@ void BP3Serializer::UpdateOffsetsInMetadata()
 
             case (type_byte):
             {
-                UpdateIndexOffsetsCharacteristics<char>(currentPosition,
-                                                        type_byte, buffer);
+                UpdateIndexOffsetsCharacteristics<signed char>(
+                    currentPosition, type_byte, buffer);
                 break;
             }
 
@@ -1137,8 +1137,9 @@ void BP3Serializer::MergeSerializeIndices(
 
         case (type_byte):
         {
-            const auto characteristics = ReadElementIndexCharacteristics<char>(
-                buffer, position, type_byte, true);
+            const auto characteristics =
+                ReadElementIndexCharacteristics<signed char>(buffer, position,
+                                                             type_byte, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
