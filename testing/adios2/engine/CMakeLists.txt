@@ -21,6 +21,6 @@ endif()
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(common)
   add_subdirectory(insitumpi)
-  add_subdirectory(staging-common)
 endif()
 
+add_subdirectory(staging-common)
