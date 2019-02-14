@@ -12,9 +12,26 @@
  * size information of the variable, and allocate memory for reading
  * accordingly.
  *
- * bpls can show the size of each block of the variable:
- * bpls -D <file> <variable>
+ * In this example we write v0, v1, v2 and v3, in 5 output steps, where
+ * v0 has the same size on every process at every step
+ * v1 has different size on each process but fixed over time
+ * v2 has different size on each process and that is changing over time
+ * v3 is like v2 but also the number of processes writing it changes over time
  *
+ * bpls can show the size of each block of the variable:
+ *
+ * $ cd <adios build directory>
+ * $ make
+ * $ mpirun -n 4 ./bin/localArray
+ * $ bpls -l localArray.bp
+ * double   v0    5*[4]*{6} = 0 / 3.4
+ * double   v1    5*[4]*{__} = 0 / 3.4
+ * double   v2    5*[4]*{__} = 0 / 3.4
+ * double   v3    5*[__]*{__} = 0 / 3.3
+ *
+ * Study the decomposition of each variable
+ * $ bpls -l localArray.bp -D v0
+ * and notice the progression in the changes.
  *
  * Created on: Jun 2, 2017
  *      Author: pnorbert
@@ -49,9 +66,14 @@ int main(int argc, char *argv[])
     adios2::ADIOS adios;
 #endif
 
+    // v0 has the same size on every process at every step
+    const size_t Nglobal = 6;
+    std::vector<double> v0(Nglobal);
+
     // Application variables for output
     // random size per process, 5..10 each
-    unsigned int Nx = rand() % 6 + 5;
+    // v1 has different size on each process (but fixed over time)
+    const unsigned int Nx = rand() % 6 + 5;
     // Local array, size is fixed over time on each process
     std::vector<double> v1(Nx);
 
@@ -59,6 +81,10 @@ int main(int argc, char *argv[])
     unsigned int Nelems;
     // Local array, size is changing over time on each process
     std::vector<double> v2;
+
+    // Local array, size is changing over time on each process
+    // Also, random number of processes will write it at each step
+    std::vector<double> &v3 = v2;
 
     try
     {
@@ -69,6 +95,14 @@ int main(int argc, char *argv[])
         /*
          * Define local array: type, name, local size
          * Global dimension and starting offset must be an empty vector
+         * Here the size of the local array is the same on every process
+         */
+        adios2::Variable<double> varV0 =
+            io.DefineVariable<double>("v0", {}, {}, {Nglobal});
+
+        /*
+         * v1 is similar to v0 but on every process the local size
+         * is a different value
          */
         adios2::Variable<double> varV1 =
             io.DefineVariable<double>("v1", {}, {}, {Nx});
@@ -76,12 +110,18 @@ int main(int argc, char *argv[])
         /*
          * Define local array: type, name
          * Global dimension and starting offset must be an empty vector
-         * but local size must NOT be an empty vector.
+         * but local size CANNOT be an empty vector.
          * We can use {adios2::UnknownDim} for this purpose or any number
-         * but we will modify it before writing
+         * actually since we will modify it before writing
          */
         adios2::Variable<double> varV2 =
             io.DefineVariable<double>("v2", {}, {}, {adios2::UnknownDim});
+
+        /*
+         * v3 is just like v2
+         */
+        adios2::Variable<double> varV3 =
+            io.DefineVariable<double>("v3", {}, {}, {adios2::UnknownDim});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
@@ -91,17 +131,26 @@ int main(int argc, char *argv[])
         {
             writer.BeginStep();
 
-            for (unsigned int i = 0; i < Nx; i++)
+            // v0
+            for (size_t i = 0; i < Nglobal; i++)
+            {
+                v0[i] = rank * 1.0 + step * 0.1;
+            }
+            writer.Put<double>(varV0, v0.data());
+
+            // v1
+            for (size_t i = 0; i < Nx; i++)
             {
                 v1[i] = rank * 1.0 + step * 0.1;
             }
-
             writer.Put<double>(varV1, v1.data());
+
+            // v2
 
             // random size per process per step, 5..10 each
             Nelems = rand() % 6 + 5;
             v2.reserve(Nelems);
-            for (unsigned int i = 0; i < Nelems; i++)
+            for (size_t i = 0; i < Nelems; i++)
             {
                 v2[i] = rank * 1.0 + step * 0.1;
             }
@@ -110,6 +159,21 @@ int main(int argc, char *argv[])
             // the size at the time of definition
             varV2.SetSelection(adios2::Box<adios2::Dims>({}, {Nelems}));
             writer.Put<double>(varV2, v2.data());
+
+            // v3
+
+            // random chance who writes it
+            unsigned int chance = rand() % 100;
+            if (step == 2)
+            {
+                chance = 0;
+            }
+            bool doWrite = (chance > 60);
+            if (doWrite)
+            {
+                varV3.SetSelection(adios2::Box<adios2::Dims>({}, {Nelems}));
+                writer.Put<double>(varV3, v3.data());
+            }
 
             writer.EndStep();
         }

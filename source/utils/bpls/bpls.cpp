@@ -672,8 +672,10 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     if (!isGlobalValue)
     {
         fprintf(outf, "  ");
+
         if (nsteps > 1)
             fprintf(outf, "%zu*", nsteps);
+
         if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
             fprintf(outf, "{%zu", variable->m_Shape[0]);
@@ -685,10 +687,17 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         }
         else if (variable->m_ShapeID == ShapeID::LocalArray)
         {
-            fprintf(outf, "{%zu", variable->m_Count[0]);
+            std::pair<size_t, Dims> signo =
+                get_local_array_signature(fp, io, variable);
+            Dims &d = signo.second;
+            fprintf(outf, "[%s]*", signo.first > 0
+                                       ? std::to_string(signo.first).data()
+                                       : "__");
+            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).data() : "__");
             for (size_t j = 1; j < variable->m_Count.size(); j++)
             {
-                fprintf(outf, ", %zu", variable->m_Count[j]);
+                fprintf(outf, ", %s",
+                        d[j] > 0 ? std::to_string(d[j]).data() : "__");
             }
             fprintf(outf, "}");
         }
@@ -830,7 +839,14 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     if (dump && !show_decomp)
     {
         // print variable content
-        retval = readVar(fp, io, variable);
+        if (variable->m_ShapeID == ShapeID::LocalArray)
+        {
+            print_decomp(fp, io, variable);
+        }
+        else
+        {
+            retval = readVar(fp, io, variable);
+        }
         fprintf(outf, "\n");
     }
     return retval;
@@ -1796,9 +1812,12 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
          * TODO: this will change in the future to block reading with relative
          * selection
          */
-        for (j = 0; j < ndim; j++)
+        if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
-            startv[j] += blockinfo.Start[j];
+            for (j = 0; j < ndim; j++)
+            {
+                startv[j] += blockinfo.Start[j];
+            }
         }
 
         if (verbose > 2)
@@ -1811,6 +1830,10 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
         if (!variable->m_SingleValue)
         {
+            if (variable->m_ShapeID == ShapeID::LocalArray)
+            {
+                variable->SetBlockSelection(blockid);
+            }
             variable->SetSelection({startv, countv});
         }
 
@@ -2462,10 +2485,57 @@ void print_endline(void)
 }
 
 template <class T>
+std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
+                                                  core::IO *io,
+                                                  core::Variable<T> *variable)
+{
+    const size_t ndim = variable->m_Count.size();
+    size_t nblocks = 0;
+    Dims dims(ndim, 0);
+    std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
+        fp->AllStepsBlocksInfo(*variable);
+
+    bool firstStep = true;
+    bool firstBlock = true;
+
+    for (auto &blockpair : allblocks)
+    {
+        std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+            blockpair.second;
+        const size_t blocksSize = blocks.size();
+        if (firstStep)
+        {
+            nblocks = blocksSize;
+        }
+        else if (nblocks != blocksSize)
+        {
+            nblocks = 0;
+        }
+
+        for (size_t j = 0; j < blocksSize; j++)
+        {
+            for (size_t k = 0; k < ndim; k++)
+            {
+                if (firstBlock)
+                {
+                    dims[k] = blocks[j].Count[k];
+                }
+                else if (dims[k] != blocks[j].Count[k])
+                {
+                    dims[k] = 0;
+                }
+            }
+            firstBlock = false;
+        }
+        firstStep = false;
+    }
+    return std::make_pair(nblocks, dims);
+}
+
+template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
-    // size_t nsteps = variable->GetAvailableStepsCount();
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
     std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
         fp->AllStepsBlocksInfo(*variable);
@@ -2484,8 +2554,18 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             size_t step = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
-            fprintf(outf, "%zu instances available\n", blocks.size());
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
+                    step);
+            if (blocks.size() == 1)
+            {
+                fprintf(outf, " = ");
+                print_data(&blocks[0].Value, 0, adiosvartype, true);
+                fprintf(outf, "\n");
+            }
+            else
+            {
+                fprintf(outf, "%zu instances available\n", blocks.size());
+            }
             if (dump)
             {
                 fprintf(outf, "               ");
@@ -2534,19 +2614,22 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
         }
 
+        size_t stepRelative = 0;
         for (auto &blockpair : allblocks)
         {
-            size_t step = blockpair.first;
+            size_t stepAbsolute = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
             const size_t blocksSize = blocks.size();
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
+                    stepAbsolute);
             fprintf(outf, "\n");
             ndigits_nblocks = ndigits(blocksSize - 1);
 
             for (size_t j = 0; j < blocksSize; j++)
             {
-                fprintf(outf, "          block %*zu: [", ndigits_nblocks, j);
+                fprintf(outf, "%c         block %*zu: [", commentchar,
+                        ndigits_nblocks, j);
 
                 // just in case ndim for a block changes in LocalArrays:
                 ndim = variable->m_Count.size();
@@ -2595,11 +2678,12 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     }
                 }
                 fprintf(outf, "\n");
-                if (dump && variable->m_ShapeID == ShapeID::GlobalArray)
+                if (dump)
                 {
-                    readVarBlock(fp, io, variable, step, j, blocks[j]);
+                    readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
                 }
             }
+            ++stepRelative;
         }
     }
 }
