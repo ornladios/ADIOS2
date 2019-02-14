@@ -201,7 +201,7 @@
    virtual std::complex<double>& foo_CDouble(std::string bar);
   </pre>
 */
-#define ADIOS2_FOREACH_TYPE_2ARGS(MACRO)                                       \
+#define ADIOS2_FOREACH_ATTRIBUTE_TYPE_2ARGS(MACRO)                             \
     MACRO(std::string, String)                                                 \
     MACRO(char, Char)                                                          \
     MACRO(signed char, SChar)                                                  \
@@ -216,7 +216,10 @@
     MACRO(unsigned long long int, ULLInt)                                      \
     MACRO(float, Float)                                                        \
     MACRO(double, Double)                                                      \
-    MACRO(long double, LDouble)                                                \
+    MACRO(long double, LDouble)
+
+#define ADIOS2_FOREACH_TYPE_2ARGS(MACRO)                                       \
+    ADIOS2_FOREACH_ATTRIBUTE_TYPE_2ARGS(MACRO)                                 \
     MACRO(std::complex<float>, CFloat)                                         \
     MACRO(std::complex<double>, CDouble)
 

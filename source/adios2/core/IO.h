@@ -436,23 +436,10 @@ private:
     DataMap m_Variables;
 
     /** Variable containers based on fixed-size type */
-    std::map<unsigned int, Variable<std::string>> m_String;
-    std::map<unsigned int, Variable<char>> m_Char;
-    std::map<unsigned int, Variable<signed char>> m_SChar;
-    std::map<unsigned int, Variable<unsigned char>> m_UChar;
-    std::map<unsigned int, Variable<short>> m_Short;
-    std::map<unsigned int, Variable<unsigned short>> m_UShort;
-    std::map<unsigned int, Variable<int>> m_Int;
-    std::map<unsigned int, Variable<unsigned int>> m_UInt;
-    std::map<unsigned int, Variable<long int>> m_LInt;
-    std::map<unsigned int, Variable<unsigned long int>> m_ULInt;
-    std::map<unsigned int, Variable<long long int>> m_LLInt;
-    std::map<unsigned int, Variable<unsigned long long int>> m_ULLInt;
-    std::map<unsigned int, Variable<float>> m_Float;
-    std::map<unsigned int, Variable<double>> m_Double;
-    std::map<unsigned int, Variable<long double>> m_LDouble;
-    std::map<unsigned int, Variable<cfloat>> m_CFloat;
-    std::map<unsigned int, Variable<cdouble>> m_CDouble;
+#define declare_map(T, NAME) std::map<unsigned int, Variable<T>> m_##NAME;
+    ADIOS2_FOREACH_TYPE_2ARGS(declare_map)
+#undef declare_map
+
     std::map<unsigned int, VariableCompound> m_Compound;
 
     /** Gets the internal reference to a variable map for type T
@@ -471,21 +458,9 @@ private:
      */
     DataMap m_Attributes;
 
-    std::map<unsigned int, Attribute<std::string>> m_StringA;
-    std::map<unsigned int, Attribute<char>> m_CharA;
-    std::map<unsigned int, Attribute<signed char>> m_SCharA;
-    std::map<unsigned int, Attribute<unsigned char>> m_UCharA;
-    std::map<unsigned int, Attribute<short>> m_ShortA;
-    std::map<unsigned int, Attribute<unsigned short>> m_UShortA;
-    std::map<unsigned int, Attribute<int>> m_IntA;
-    std::map<unsigned int, Attribute<unsigned int>> m_UIntA;
-    std::map<unsigned int, Attribute<long int>> m_LIntA;
-    std::map<unsigned int, Attribute<unsigned long int>> m_ULIntA;
-    std::map<unsigned int, Attribute<long long int>> m_LLIntA;
-    std::map<unsigned int, Attribute<unsigned long long int>> m_ULLIntA;
-    std::map<unsigned int, Attribute<float>> m_FloatA;
-    std::map<unsigned int, Attribute<double>> m_DoubleA;
-    std::map<unsigned int, Attribute<long double>> m_LDoubleA;
+#define declare_map(T, NAME) std::map<unsigned int, Attribute<T>> m_##NAME##A;
+    ADIOS2_FOREACH_ATTRIBUTE_TYPE_2ARGS(declare_map)
+#undef declare_map
 
     template <class T>
     std::map<unsigned int, Attribute<T>> &GetAttributeMap() noexcept;
