@@ -503,7 +503,7 @@ void BP3Serializer::PutAttributes(core::IO &io)
         PutAttributeInData(attribute, stats);                                  \
         PutAttributeInIndex(attribute, stats);                                 \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
         ++memberID;
@@ -1652,7 +1652,7 @@ size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
         const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \
         attributesSizeInData += GetAttributeSizeInData<T>(attribute);          \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -1671,7 +1671,7 @@ size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
         const bool) noexcept;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 //------------------------------------------------------------------------------
