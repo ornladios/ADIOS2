@@ -433,11 +433,11 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 
         // global values only read one block per step
         const size_t blocksStart = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? variable.m_Start.front()
+                                       ? blockInfo.Start.front()
                                        : 0;
 
         const size_t blocksCount = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? variable.m_Count.front()
+                                       ? blockInfo.Count.front()
                                        : 1;
 
         if (m_DebugMode)
@@ -455,7 +455,7 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
             }
         }
 
-        for (size_t b = blocksStart; b < blocksCount; ++b)
+        for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
         {
             size_t localPosition = positions[b];
             const Characteristics<T> characteristics =
