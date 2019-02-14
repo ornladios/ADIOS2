@@ -113,47 +113,43 @@ function(GenerateADIOSPackageConfig)
 
   # Build interface configs
   write_basic_package_version_file(
-    ${ADIOS2_BINARY_DIR}/ADIOS2ConfigVersion.cmake
+    ${ADIOS2_BINARY_DIR}/adios2-config-version.cmake
     COMPATIBILITY AnyNewerVersion
   )
   export(EXPORT adios2Exports
-    FILE ${ADIOS2_BINARY_DIR}/ADIOS2Targets.cmake
+    FILE ${ADIOS2_BINARY_DIR}/adios2-targets.cmake
     NAMESPACE adios2::
   )
   configure_file(
-    ${ADIOS2_SOURCE_DIR}/cmake/ADIOS2ConfigCommon.cmake.in
-    ${ADIOS2_BINARY_DIR}/ADIOS2ConfigCommon.cmake
+    ${ADIOS2_SOURCE_DIR}/cmake/adios2-config-common.cmake.in
+    ${ADIOS2_BINARY_DIR}/adios2-config-common.cmake
     @ONLY
   )
   configure_file(
-    ${ADIOS2_SOURCE_DIR}/cmake/ADIOS2Config.cmake.in
-    ${ADIOS2_BINARY_DIR}/ADIOS2Config.cmake
+    ${ADIOS2_SOURCE_DIR}/cmake/adios2-config.cmake.in
+    ${ADIOS2_BINARY_DIR}/adios2-config.cmake
     @ONLY
   )
 
   # Install interface configs
   install(
     FILES
-      ${ADIOS2_BINARY_DIR}/ADIOS2ConfigVersion.cmake
-      ${ADIOS2_BINARY_DIR}/ADIOS2ConfigCommon.cmake
+      ${ADIOS2_BINARY_DIR}/adios2-config-version.cmake
+      ${ADIOS2_BINARY_DIR}/adios2-config-common.cmake
     DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
   )
   install(EXPORT adios2Exports
-    FILE ADIOS2Targets.cmake
+    FILE adios2-targets.cmake
     NAMESPACE adios2::
     DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
   )
   configure_file(
-    ${ADIOS2_SOURCE_DIR}/cmake/ADIOS2ConfigInstall.cmake.in
-    ${ADIOS2_BINARY_DIR}/ADIOS2ConfigInstall.cmake
+    ${ADIOS2_SOURCE_DIR}/cmake/adios2-config-install.cmake.in
+    ${ADIOS2_BINARY_DIR}/adios2-config-install.cmake
     @ONLY
   )
-  install(FILES ${ADIOS2_BINARY_DIR}/ADIOS2ConfigInstall.cmake
-    RENAME ADIOS2Config.cmake
+  install(FILES ${ADIOS2_BINARY_DIR}/adios2-config-install.cmake
+    RENAME adios2-config.cmake
     DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
-  )
-
-  install(PROGRAMS ${ADIOS2_SOURCE_DIR}/cmake/adios2-config
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 endfunction()

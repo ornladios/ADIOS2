@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.6)
+if(POLICY CMP0028)
+  cmake_policy(SET CMP0028 NEW)
+endif()
 
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
@@ -6,12 +8,13 @@ endif()
 
 include(CMakeFindDependencyMacro)
 
-set(ADIOS2_HAVE_C @ADIOS2_HAVE_C@)
-if(ADIOS2_HAVE_C)
-  find_dependency(C)
-endif()
+enable_language(C)
+enable_language(CXX)
 
 set(ADIOS2_HAVE_Fortran @ADIOS2_HAVE_Fortran@)
+if(ADIOS2_HAVE_Fortran)
+  enable_language(Fortran)
+endif()
 
 set(ADIOS2_HAVE_MPI @ADIOS2_HAVE_MPI@)
 if(ADIOS2_HAVE_MPI)
@@ -60,12 +63,15 @@ if(NOT @BUILD_SHARED_LIBS@)
 
 endif()
 
-include("${CMAKE_CURRENT_LIST_DIR}/ADIOS2ConfigVersion.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/adios2-config-version.cmake")
 
 include(FindPackageHandleStandardArgs)
-set(ADIOS2_CONFIG "${CMAKE_CURRENT_LIST_FILE}")
-find_package_handle_standard_args(ADIOS2 CONFIG_MODE)
+find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME} CONFIG_MODE)
 
 if(NOT TARGET adios2::adios2)
-  include("${CMAKE_CURRENT_LIST_DIR}/ADIOS2Targets.cmake")
+  include("${CMAKE_CURRENT_LIST_DIR}/adios2-targets.cmake")
 endif()
+
+# backwards compatibility for things that still use package variables
+set(${CMAKE_FIND_PACKAGE_NAME}_INCLUDE_DIRS)
+set(${CMAKE_FIND_PACKAGE_NAME}_LIBRARIES adios2::adios2)
