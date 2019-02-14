@@ -220,21 +220,24 @@
     MACRO(std::complex<float>, CFloat)                                         \
     MACRO(std::complex<double>, CDouble)
 
-#define ADIOS2_FOREACH_PRIMITIVE_TYPE_2ARGS(MACRO)                             \
-    MACRO(char, Char)                                                          \
-    MACRO(signed char, Char)                                                   \
-    MACRO(unsigned char, UChar)                                                \
-    MACRO(short, Short)                                                        \
-    MACRO(unsigned short, UShort)                                              \
-    MACRO(int, Int)                                                            \
-    MACRO(unsigned int, UInt)                                                  \
-    MACRO(long int, LInt)                                                      \
-    MACRO(long long int, LLInt)                                                \
-    MACRO(unsigned long int, ULInt)                                            \
-    MACRO(unsigned long long int, ULLInt)                                      \
+#define ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                          \
+    MACRO(std::string, String)                                                 \
+    MACRO(int8_t, SChar)                                                       \
+    MACRO(uint8_t, UChar)                                                      \
+    MACRO(int16_t, Short)                                                      \
+    MACRO(uint16_t, UShort)                                                    \
+    MACRO(int32_t, Int)                                                        \
+    MACRO(uint32_t, UInt)                                                      \
+    MACRO(int64_t, LLInt)                                                      \
+    MACRO(uint64_t, ULLInt)                                                    \
     MACRO(float, Float)                                                        \
     MACRO(double, Double)                                                      \
     MACRO(long double, LDouble)
+
+#define ADIOS2_FOREACH_STDTYPE_2ARGS(MACRO)                                    \
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                              \
+    MACRO(std::complex<float>, CFloat)                                         \
+    MACRO(std::complex<double>, CDouble)
 
 #define ADIOS2_FOREACH_COMPLEX_TYPE_2ARGS(MACRO)                               \
     MACRO(std::complex<float>, CFloat)                                         \
