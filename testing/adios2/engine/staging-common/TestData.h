@@ -71,16 +71,16 @@ void generateCommonTestData(int step, int rank, int size)
         data_I16[i] = (int16_t)(j + 10 * i);
         data_I32[i] = (int32_t)(j + 10 * i);
         data_I64[i] = (int64_t)(j + 10 * i);
-        data_R32[i] = j + 10 * i;
-        data_R64[i] = j + 10 * i;
-        data_C32[i].imag(j + 10 * i);
-        data_C32[i].real(-(j + 10 * i));
-        data_C64[i].imag(j + 10 * i);
-        data_C64[i].real(-(j + 10 * i));
-        data_R64_2d[i][0] = j + 10 * i;
-        data_R64_2d[i][1] = 10000 + j + 10 * i;
-        data_R64_2d_rev[0][i] = j + 10 * i;
-        data_R64_2d_rev[1][i] = 10000 + j + 10 * i;
+        data_R32[i] = (float)j + 10 * i;
+        data_R64[i] = (double)j + 10 * i;
+        data_C32[i].imag((float)j + 10 * i);
+        data_C32[i].real((float)-(j + 10 * i));
+        data_C64[i].imag((double)j + 10 * i);
+        data_C64[i].real((double)-(j + 10 * i));
+        data_R64_2d[i][0] = (double)j + 10 * i;
+        data_R64_2d[i][1] = (double)10000 + j + 10 * i;
+        data_R64_2d_rev[0][i] = (double)j + 10 * i;
+        data_R64_2d_rev[1][i] = (double)10000 + j + 10 * i;
     }
 }
 

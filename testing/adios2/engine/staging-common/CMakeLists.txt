@@ -5,27 +5,24 @@
 
 find_package(Threads REQUIRED)
 
-set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
-
-add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
-target_link_libraries(TestStagingMPMD adios2 gtest ${CMAKE_THREAD_LIBS_INIT})
 if(ADIOS2_HAVE_MPI)
+    set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
+
+    add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
+    target_link_libraries(TestStagingMPMD adios2 gtest ${CMAKE_THREAD_LIBS_INIT})
     target_link_libraries(TestStagingMPMD adios2 gtest_interface MPI::MPI_C)
-endif()
+    if(ADIOS2_HAVE_SST)
+        gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+        		EXTRA_ARGS "SST" "MarshalMethod:FFS"
+			TEST_SUFFIX _SST_FFS)
+	gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+        	        EXTRA_ARGS "SST" "MarshalMethod:BP"
+                	TEST_SUFFIX _SST_BP)
+    endif()
 
-if(ADIOS2_HAVE_SST)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                EXTRA_ARGS "SST" "MarshalMethod:FFS"
-                TEST_SUFFIX _SST_FFS)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                EXTRA_ARGS "SST" "MarshalMethod:BP"
-                TEST_SUFFIX _SST_BP)
-endif()
-
-if(ADIOS2_HAVE_MPI)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                EXTRA_ARGS "InSituMPI"
-                TEST_SUFFIX _InSituMPI)
+    gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+                    EXTRA_ARGS "InSituMPI"
+                    TEST_SUFFIX _InSituMPI)
 endif()
 
 add_executable(TestCommonWrite TestCommonWrite.cpp)
@@ -96,7 +93,8 @@ set (FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1.FFS;CtoF.1x1.BP;FtoF.1x1")
 endif()
-set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestReader.FFS;LatestReader.BP;DiscardWriter")
+#set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestReader.FFS;LatestReader.BP;DiscardWriter")
+set (SPECIAL_TESTS "TimeoutReader;LatestReader.FFS;LatestReader.BP;DiscardWriter")
 
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")
