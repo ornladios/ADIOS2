@@ -35,9 +35,10 @@ namespace adios2
 namespace core
 {
 
+using DataMapEntry = std::pair<std::string, unsigned int>;
+
 /** used for Variables and Attributes, name, type, type-index */
-using DataMap =
-    std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
+using DataMap = std::unordered_map<std::string, DataMapEntry>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
