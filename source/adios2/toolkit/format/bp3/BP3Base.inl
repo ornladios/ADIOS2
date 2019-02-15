@@ -23,30 +23,30 @@ namespace format
 
 // PROTECTED
 
-#define make_GetDataType(data_type, TYPE)                                      \
+#define make_TypeTraits(data_type, TYPE)                                       \
     template <>                                                                \
-    inline int8_t BP3Base::GetDataType<TYPE>() const noexcept                  \
+    struct BP3Base::TypeTraits<TYPE>                                           \
     {                                                                          \
-        const int8_t type = static_cast<int8_t>(data_type);                    \
-        return type;                                                           \
-    }
+        static const DataTypes type_enum = DataTypes::data_type;               \
+    };
 
 /* clang-format off */
-make_GetDataType(type_string, std::string)
-make_GetDataType(type_byte, int8_t)
-make_GetDataType(type_short, int16_t)
-make_GetDataType(type_integer, int32_t)
-make_GetDataType(type_long, int64_t)
-make_GetDataType(type_unsigned_byte, uint8_t)
-make_GetDataType(type_unsigned_short, uint16_t)
-make_GetDataType(type_unsigned_integer, uint32_t)
-make_GetDataType(type_unsigned_long, uint64_t)
-make_GetDataType(type_real, float)
-make_GetDataType(type_double, double)
-make_GetDataType(type_long_double, long double)
-make_GetDataType(type_complex, cfloat)
-make_GetDataType(type_double_complex, cdouble)
+make_TypeTraits(type_string, std::string)
+make_TypeTraits(type_byte, int8_t)
+make_TypeTraits(type_short, int16_t)
+make_TypeTraits(type_integer, int32_t)
+make_TypeTraits(type_long, int64_t)
+make_TypeTraits(type_unsigned_byte, uint8_t)
+make_TypeTraits(type_unsigned_short, uint16_t)
+make_TypeTraits(type_unsigned_integer, uint32_t)
+make_TypeTraits(type_unsigned_long, uint64_t)
+make_TypeTraits(type_real, float)
+make_TypeTraits(type_double, double)
+make_TypeTraits(type_long_double, long double)
+make_TypeTraits(type_complex, cfloat)
+make_TypeTraits(type_double_complex, cdouble)
 /* clang-format on */
+#undef make_TypeTraits
 
 } // end namespace format
 } // end namespace adios2

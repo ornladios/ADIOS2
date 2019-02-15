@@ -360,6 +360,12 @@ protected:
     };
 
     /**
+     * Maps C++ type to DataTypes enum
+     */
+    template <typename T>
+    struct TypeTraits;
+
+    /**
      * Characteristic ID in variable metadata
      */
     enum CharacteristicID
@@ -537,14 +543,6 @@ protected:
     /** Sets if IO is node-local so each rank creates its own IO directory and
      * stream */
     void InitParameterNodeLocal(const std::string value);
-
-    /**
-     * Returns data type index from enum Datatypes
-     * @param variable input variable
-     * @return data type
-     */
-    template <class T>
-    int8_t GetDataType() const noexcept;
 
     std::vector<uint8_t>
     GetTransportIDs(const std::vector<std::string> &transportsTypes) const

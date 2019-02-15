@@ -133,7 +133,7 @@ BP3Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
 
-    uint8_t dataType = GetDataType<std::string>();
+    uint8_t dataType = TypeTraits<std::string>::type_enum;
     if (!attribute.m_IsSingleValue)
     {
         dataType = type_string_array;
@@ -184,7 +184,7 @@ void BP3Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
 
-    uint8_t dataType = GetDataType<T>();
+    uint8_t dataType = TypeTraits<T>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
@@ -276,7 +276,7 @@ void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     PutNameRecord(attribute.m_Name, buffer);
     buffer.insert(buffer.end(), 2, '\0'); // skip path
 
-    uint8_t dataType = GetDataType<T>(); // dataType
+    uint8_t dataType = TypeTraits<T>::type_enum; // dataType
 
     if (dataType == type_string && !attribute.m_IsSingleValue)
     {
@@ -411,7 +411,7 @@ void BP3Serializer::PutVariableMetadataInData(
     PutNameRecord(variable.m_Name, buffer, position);
     position += 2; // skip path
 
-    const uint8_t dataType = GetDataType<T>();
+    const uint8_t dataType = TypeTraits<T>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
 
     constexpr char no = 'n'; // isDimension
@@ -462,7 +462,7 @@ inline void BP3Serializer::PutVariableMetadataInData(
     PutNameRecord(variable.m_Name, buffer, position);
     position += 2; // skip path
 
-    const uint8_t dataType = GetDataType<std::string>();
+    const uint8_t dataType = TypeTraits<std::string>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
 
     constexpr char no = 'n'; // is dimension is deprecated
@@ -507,7 +507,7 @@ void BP3Serializer::PutVariableMetadataInIndex(
         PutNameRecord(variable.m_Name, buffer);
         buffer.insert(buffer.end(), 2, '\0'); // skip path
 
-        const uint8_t dataType = GetDataType<T>();
+        const uint8_t dataType = TypeTraits<T>::type_enum;
         helper::InsertToBuffer(buffer, &dataType);
 
         // Characteristics Sets Count in Metadata
@@ -979,7 +979,7 @@ void BP3Serializer::PutCharacteristicOperation(
     helper::InsertToBuffer(buffer, type.c_str(), type.size());
 
     // pre-transform type
-    const uint8_t dataType = GetDataType<T>();
+    const uint8_t dataType = TypeTraits<T>::type_enum;
     helper::InsertToBuffer(buffer, &dataType);
     // pre-transform dimensions
     const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
