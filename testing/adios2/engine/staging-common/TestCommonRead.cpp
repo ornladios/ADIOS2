@@ -178,13 +178,14 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_time.Shape()[0], writerSize);
 
-        long unsigned int myStart = (writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myStart =
+            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
-            ((writerSize * Nx + mpiSize - 1) / mpiSize);
+            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
-            myLength = writerSize * Nx - myStart;
+            myLength = (long unsigned int)writerSize * Nx - myStart;
         }
         const adios2::Dims start{myStart};
         const adios2::Dims count{myLength};
