@@ -76,7 +76,7 @@ void SstWriter::FFSMarshalAttributes()
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.first);
+        const std::string type(attributePair.second.m_Type);
 
         if (type == "unknown")
         {

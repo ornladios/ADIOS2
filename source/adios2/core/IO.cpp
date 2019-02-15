@@ -154,8 +154,8 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     if (itVariable != m_Variables.end())
     {
         // first remove the Variable object
-        const std::string type(itVariable->second.first);
-        const unsigned int index(itVariable->second.second);
+        const std::string type(itVariable->second.m_Type);
+        const unsigned int index(itVariable->second.m_Index);
 
         if (type == "compound")
         {
@@ -198,8 +198,8 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
     if (itAttribute != m_Attributes.end())
     {
         // first remove the Variable object
-        const std::string type(itAttribute->second.first);
-        const unsigned int index(itAttribute->second.second);
+        const std::string type(itAttribute->second.m_Type);
+        const unsigned int index(itAttribute->second.m_Index);
 
         if (type.empty())
         {
@@ -304,7 +304,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
             }
         }
 
-        const std::string type(attributePair.second.first);
+        const std::string type(attributePair.second.m_Type);
         attributesInfo[name]["Type"] = type;
 
         if (type == "compound")
@@ -343,7 +343,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
         return std::string();
     }
 
-    const std::string type = itVariable->second.first;
+    const std::string type = itVariable->second.m_Type;
 
     if (m_ReadStreaming)
     {
@@ -355,7 +355,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
     {                                                                          \
         const Variable<T> &variable =                                          \
             const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
-                itVariable->second.second);                                    \
+                itVariable->second.m_Index);                                   \
         if (!variable.IsValidStep(m_EngineStep + 1))                           \
         {                                                                      \
             return std::string();                                              \
@@ -381,7 +381,7 @@ std::string IO::InquireAttributeType(const std::string &name,
         return std::string();
     }
 
-    return itAttribute->second.first;
+    return itAttribute->second.m_Type;
 }
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
@@ -675,7 +675,7 @@ int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
     {
         return -1;
     }
-    return itName->second.second;
+    return itName->second.m_Index;
 }
 
 void IO::CheckAttributeCommon(const std::string &name) const

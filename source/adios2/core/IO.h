@@ -35,7 +35,11 @@ namespace adios2
 namespace core
 {
 
-using DataMapEntry = std::pair<std::string, unsigned int>;
+struct DataMapEntry
+{
+    std::string m_Type;
+    unsigned int m_Index;
+};
 
 /** used for Variables and Attributes, name, type, type-index */
 using DataMap = std::unordered_map<std::string, DataMapEntry>;
@@ -276,8 +280,8 @@ public:
      * @return
      * <pre>
      * key: unique variable name,
-     * value: pair.first = string type
-     *        pair.second = order in the type bucket
+     * value: DataMapEntry entry: entry.m_Type = string type
+     *                            entry.m_Index = order in the type bucket
      * </pre>
      */
     const DataMap &GetVariablesDataMap() const noexcept;
@@ -287,8 +291,8 @@ public:
      * @return
      * <pre>
      * key: unique attribute name,
-     * value: pair.first = string type
-     *        pair.second = order in the type bucket
+     * value: DataMapEntry entry: entry.m_Type = string type
+     *                            entry.m_Index = order in the type bucket
      * </pre>
      */
     const DataMap &GetAttributesDataMap() const noexcept;
@@ -430,8 +434,9 @@ private:
      * Map holding variable identifiers
      * <pre>
      * key: unique variable name,
-     * value: pair.first = type as string GetType<T> from adiosTemplates.h
-     *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
+     * value: DataMapEntry entry
+     *        entry.m_Type = type as string GetType<T> from adiosTemplates.h
+     *        entry.m_Index = index in fixed size map (e.g. m_Int8, m_Double)
      * </pre>
      */
     DataMap m_Variables;
@@ -452,9 +457,9 @@ private:
      * Map holding attribute identifiers
      * <pre>
      * key: unique attribute name,
-     * value: pair.first = type as string GetType<T> from
-     *                     helper/adiosTemplates.h
-     *        pair.second = index in fixed size map (e.g. m_Int8, m_Double)
+     * value: DataMapEntry entry
+     *        entry.m_Type = type as string GetType<T> from adiosTemplates.h
+     *        entry.m_Index = index in fixed size map (e.g. m_Int8, m_Double)
      * </pre>
      */
     DataMap m_Attributes;
