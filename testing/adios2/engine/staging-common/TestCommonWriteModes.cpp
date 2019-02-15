@@ -150,7 +150,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     {
         adios2::Mode WriteMode;
         // Generate test data for each process uniquely
-        generateCommonTestData(step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope

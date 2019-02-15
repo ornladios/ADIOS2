@@ -103,7 +103,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         const size_t currentStep = engine.CurrentStep();
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-        int writerSize;
+        size_t writerSize;
 
         auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
         EXPECT_TRUE(scalar_r64);
