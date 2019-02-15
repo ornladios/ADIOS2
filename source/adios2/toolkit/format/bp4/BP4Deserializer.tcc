@@ -41,9 +41,9 @@ void BP4Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
     size_t position = itStep->second.front();
 
     const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(GetDataType<T>()), false,
-            m_Minifooter.IsLittleEndian);
+        ReadElementIndexCharacteristics<T>(buffer, position,
+                                           TypeTraits<T>::type_enum, false,
+                                           m_Minifooter.IsLittleEndian);
 
     const size_t payloadOffset = characteristics.Statistics.PayloadOffset;
     variable.m_Data = reinterpret_cast<T *>(&buffer[payloadOffset]);
@@ -166,9 +166,9 @@ void BP4Deserializer::SetVariableBlockInfo(
         size_t position = blockIndexOffset;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, position, static_cast<DataTypes>(GetDataType<T>()),
-                false, m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(buffer, position,
+                                               TypeTraits<T>::type_enum, false,
+                                               m_Minifooter.IsLittleEndian);
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
 
@@ -284,9 +284,9 @@ void BP4Deserializer::SetVariableBlockInfo(
         size_t position = blockIndexOffset;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, position, static_cast<DataTypes>(GetDataType<T>()),
-                false, m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(buffer, position,
+                                               TypeTraits<T>::type_enum, false,
+                                               m_Minifooter.IsLittleEndian);
 
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
@@ -1080,8 +1080,7 @@ BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
         {
             const Characteristics<T> blockCharacteristics =
                 ReadElementIndexCharacteristics<T>(
-                    buffer, blockPosition,
-                    static_cast<DataTypes>(GetDataType<T>()), false,
+                    buffer, blockPosition, TypeTraits<T>::type_enum, false,
                     m_Minifooter.IsLittleEndian);
 
             // check if they intersect
@@ -1135,10 +1134,9 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
         size_t position = blockIndexOffset;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                m_Metadata.m_Buffer, position,
-                static_cast<DataTypes>(GetDataType<T>()), false,
-                m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(m_Metadata.m_Buffer, position,
+                                               TypeTraits<T>::type_enum, false,
+                                               m_Minifooter.IsLittleEndian);
 
         typename core::Variable<T>::Info blockInfo;
         blockInfo.Shape = blockCharacteristics.Shape;
