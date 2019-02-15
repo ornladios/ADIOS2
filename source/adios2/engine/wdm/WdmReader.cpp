@@ -139,7 +139,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
     {                                                                          \
         CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
-                ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
                 else
                 {
@@ -239,7 +239,7 @@ void WdmReader::PerformGets()
                    " from serializer",                                         \
             true, true);                                                       \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -274,7 +274,7 @@ void WdmReader::EndStep()
         GetDeferredCommon(variable, data);                                     \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void WdmReader::Init()

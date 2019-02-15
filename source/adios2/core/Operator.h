@@ -53,7 +53,7 @@ public:
                               const std::string &, const std::string &,        \
                               const size_t, const Dims &, const Dims &,        \
                               const Dims &) const;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     virtual void RunCallback2(void *, const std::string &, const std::string &,

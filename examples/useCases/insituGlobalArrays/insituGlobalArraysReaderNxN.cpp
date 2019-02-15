@@ -105,7 +105,7 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
     {                                                                          \
         ProcessVariableMetadata<T>(rank, name, type, reader, io, varinfos);    \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 #ifdef ADIOS2_HAVE_MPI

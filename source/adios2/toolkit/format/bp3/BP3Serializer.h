@@ -428,7 +428,7 @@ private:
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
         const bool) noexcept;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format

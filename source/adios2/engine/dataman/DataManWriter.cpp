@@ -140,7 +140,7 @@ void DataManWriter::IOThread(std::shared_ptr<transportman::WANMan> man) {}
     {                                                                          \
         PutDeferredCommon(variable, values);                                   \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void DataManWriter::DoClose(const int transportIndex)

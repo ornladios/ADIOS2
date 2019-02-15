@@ -204,7 +204,7 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
         core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
         PutAttribute(attribute, rank);                                         \
     }
-            ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
     }
@@ -446,7 +446,7 @@ void DataManSerializer::GetAttributes(core::IO &io)
             }                                                                  \
         }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 }
@@ -614,7 +614,7 @@ DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
                ovlpStart, ovlpCount, ovlpStart, ovlpCount, var.doid, step,     \
                var.rank, var.address, Params(), replyLocalBuffer, replyMetaJ); \
     }
-                    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+                    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
                     std::vector<char> metapack = SerializeJson(*replyMetaJ);

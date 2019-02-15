@@ -31,7 +31,7 @@ public:
                    const Dims &, const Dims &)> &function,                     \
                const Params &parameters, const bool debugMode);
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     ~Signature1() = default;
@@ -40,7 +40,7 @@ public:
     void RunCallback1(const T *, const std::string &, const std::string &,     \
                       const std::string &, const size_t, const Dims &,         \
                       const Dims &, const Dims &) const final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 private:
@@ -49,7 +49,7 @@ private:
                        const std::string &, const size_t, const Dims &,        \
                        const Dims &, const Dims &)>                            \
         m_Function##L;
-    ADIOS2_FOREACH_TYPE_2ARGS(declare_type)
+    ADIOS2_FOREACH_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 };
 

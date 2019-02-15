@@ -90,7 +90,7 @@ void Engine::InitTransports() {}
     {                                                                          \
         ThrowUp("DoPutDeferred");                                              \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 // DoGet*
@@ -105,7 +105,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
         return nullptr;                                                        \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 #define declare_type(T)                                                        \
@@ -130,7 +130,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
         return std::vector<typename Variable<T>::Info>();                      \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 // PRIVATE
@@ -187,7 +187,7 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     template std::vector<typename Variable<T>::Info> Engine::BlocksInfo(       \
         const Variable<T> &, const size_t) const;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

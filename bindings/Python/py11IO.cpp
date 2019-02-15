@@ -203,7 +203,7 @@ Attribute IO::InquireAttribute(const std::string &name)
     {                                                                          \
         attribute = m_IO->InquireAttribute<T>(name);                           \
     }
-    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
     return Attribute(attribute);

@@ -80,7 +80,7 @@ void BP3Writer::PerformPuts()
         variable.m_BlocksInfo.clear();                                         \
     }
 
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
     m_BP3Serializer.m_DeferredVariables.clear();
@@ -135,7 +135,7 @@ void BP3Writer::Init()
         PutDeferredCommon(variable, data);                                     \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void BP3Writer::InitParameters()

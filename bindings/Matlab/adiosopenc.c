@@ -50,8 +50,6 @@ static int verbose = 0;
 
 mxClassID adiostypeToMatlabClass(int adiostype, mxComplexity *complexity);
 size_t adiostypeToMemSize(adios2_type adiostype);
-mxClassID adiostypestringToMatlabClass(const char *type,
-                                       mxComplexity *complexity);
 mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
                             mxComplexity complexFlag);
 mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxtype,
@@ -630,63 +628,6 @@ size_t adiostypeToMemSize(adios2_type adiostype)
                           adiostype);
         break;
     }
-    return 0; /* just to avoid warnings. never executed */
-}
-
-/** return the appropriate class for an adios type (and complexity too) */
-mxClassID adiostypestringToMatlabClass(const char *type,
-                                       mxComplexity *complexity)
-{
-    *complexity = mxREAL;
-    if (!strcmp(type, "char"))
-        return mxINT8_CLASS;
-    else if (!strcmp(type, "unsigned char"))
-        return mxUINT8_CLASS;
-    else if (!strcmp(type, "short"))
-        return mxINT16_CLASS;
-    else if (!strcmp(type, "unsigned short"))
-        return mxUINT16_CLASS;
-    else if (!strcmp(type, "int"))
-        return mxINT32_CLASS;
-    else if (!strcmp(type, "unsigned int"))
-        return mxUINT32_CLASS;
-    else if (!strcmp(type, "long int"))
-    {
-        if (sizeof(long int) == 4)
-            return mxINT32_CLASS;
-        else
-            return mxINT64_CLASS;
-    }
-    else if (!strcmp(type, "unsigned long int"))
-    {
-        if (sizeof(long int) == 4)
-            return mxUINT32_CLASS;
-        else
-            return mxUINT64_CLASS;
-    }
-    else if (!strcmp(type, "long long int"))
-        return mxINT64_CLASS;
-    else if (!strcmp(type, "unsigned long long int"))
-        return mxUINT64_CLASS;
-    else if (!strcmp(type, "float"))
-        return mxSINGLE_CLASS;
-    else if (!strcmp(type, "double"))
-        return mxDOUBLE_CLASS;
-    else if (!strcmp(type, "float complex"))
-    {
-        *complexity = mxCOMPLEX;
-        return mxSINGLE_CLASS;
-    }
-    else if (!strcmp(type, "double complex"))
-    {
-        *complexity = mxCOMPLEX;
-        return mxDOUBLE_CLASS;
-    }
-    else if (!strcmp(type, "string"))
-        return mxCHAR_CLASS;
-    else if (!strcmp(type, "string array"))
-        return mxCHAR_CLASS;
-
     return 0; /* just to avoid warnings. never executed */
 }
 

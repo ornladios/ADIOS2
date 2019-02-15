@@ -126,7 +126,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {                                                                          \
         CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
             else
             {
@@ -202,7 +202,7 @@ void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
     {                                                                          \
         return BlocksInfoCommon(variable, step);                               \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void DataManReader::DoClose(const int transportIndex)

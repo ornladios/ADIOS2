@@ -97,7 +97,7 @@ namespace core
         return DoAllStepsBlocksInfo();                                         \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace core

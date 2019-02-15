@@ -186,203 +186,26 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
 }
 
 // PRIVATE
-template <>
-std::map<unsigned int, Variable<std::string>> &IO::GetVariableMap() noexcept
-{
-    return m_String;
-}
 
-template <>
-std::map<unsigned int, Variable<char>> &IO::GetVariableMap() noexcept
-{
-    return m_Char;
-}
+// GetVariableMap
+#define make_GetVariableMap(T, NAME)                                           \
+    template <>                                                                \
+    std::map<unsigned int, Variable<T>> &IO::GetVariableMap() noexcept         \
+    {                                                                          \
+        return m_##NAME;                                                       \
+    }
+ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
+#undef make_GetVariableMap
 
-template <>
-std::map<unsigned int, Variable<signed char>> &IO::GetVariableMap() noexcept
-{
-    return m_SChar;
-}
-
-template <>
-std::map<unsigned int, Variable<unsigned char>> &IO::GetVariableMap() noexcept
-{
-    return m_UChar;
-}
-
-template <>
-std::map<unsigned int, Variable<short>> &IO::GetVariableMap() noexcept
-{
-    return m_Short;
-}
-
-template <>
-std::map<unsigned int, Variable<unsigned short>> &IO::GetVariableMap() noexcept
-{
-    return m_UShort;
-}
-
-template <>
-std::map<unsigned int, Variable<int>> &IO::GetVariableMap() noexcept
-{
-    return m_Int;
-}
-
-template <>
-std::map<unsigned int, Variable<unsigned int>> &IO::GetVariableMap() noexcept
-{
-    return m_UInt;
-}
-
-template <>
-std::map<unsigned int, Variable<long int>> &IO::GetVariableMap() noexcept
-{
-    return m_LInt;
-}
-
-template <>
-std::map<unsigned int, Variable<unsigned long int>> &
-IO::GetVariableMap() noexcept
-{
-    return m_ULInt;
-}
-
-template <>
-std::map<unsigned int, Variable<long long int>> &IO::GetVariableMap() noexcept
-{
-    return m_LLInt;
-}
-
-template <>
-std::map<unsigned int, Variable<unsigned long long int>> &
-IO::GetVariableMap() noexcept
-{
-    return m_ULLInt;
-}
-
-template <>
-std::map<unsigned int, Variable<float>> &IO::GetVariableMap() noexcept
-{
-    return m_Float;
-}
-
-template <>
-std::map<unsigned int, Variable<double>> &IO::GetVariableMap() noexcept
-{
-    return m_Double;
-}
-
-template <>
-std::map<unsigned int, Variable<long double>> &IO::GetVariableMap() noexcept
-{
-    return m_LDouble;
-}
-
-template <>
-std::map<unsigned int, Variable<cfloat>> &IO::GetVariableMap() noexcept
-{
-    return m_CFloat;
-}
-
-template <>
-std::map<unsigned int, Variable<cdouble>> &IO::GetVariableMap() noexcept
-{
-    return m_CDouble;
-}
-
-// attributes
-template <>
-std::map<unsigned int, Attribute<std::string>> &IO::GetAttributeMap() noexcept
-{
-    return m_StringA;
-}
-
-template <>
-std::map<unsigned int, Attribute<char>> &IO::GetAttributeMap() noexcept
-{
-    return m_CharA;
-}
-
-template <>
-std::map<unsigned int, Attribute<signed char>> &IO::GetAttributeMap() noexcept
-{
-    return m_SCharA;
-}
-
-template <>
-std::map<unsigned int, Attribute<unsigned char>> &IO::GetAttributeMap() noexcept
-{
-    return m_UCharA;
-}
-
-template <>
-std::map<unsigned int, Attribute<short>> &IO::GetAttributeMap() noexcept
-{
-    return m_ShortA;
-}
-
-template <>
-std::map<unsigned int, Attribute<unsigned short>> &
-IO::GetAttributeMap() noexcept
-{
-    return m_UShortA;
-}
-
-template <>
-std::map<unsigned int, Attribute<int>> &IO::GetAttributeMap() noexcept
-{
-    return m_IntA;
-}
-
-template <>
-std::map<unsigned int, Attribute<unsigned int>> &IO::GetAttributeMap() noexcept
-{
-    return m_UIntA;
-}
-
-template <>
-std::map<unsigned int, Attribute<long int>> &IO::GetAttributeMap() noexcept
-{
-    return m_LIntA;
-}
-
-template <>
-std::map<unsigned int, Attribute<unsigned long int>> &
-IO::GetAttributeMap() noexcept
-{
-    return m_ULIntA;
-}
-
-template <>
-std::map<unsigned int, Attribute<long long int>> &IO::GetAttributeMap() noexcept
-{
-    return m_LLIntA;
-}
-
-template <>
-std::map<unsigned int, Attribute<unsigned long long int>> &
-IO::GetAttributeMap() noexcept
-{
-    return m_ULLIntA;
-}
-
-template <>
-std::map<unsigned int, Attribute<float>> &IO::GetAttributeMap() noexcept
-{
-    return m_FloatA;
-}
-
-template <>
-std::map<unsigned int, Attribute<double>> &IO::GetAttributeMap() noexcept
-{
-    return m_DoubleA;
-}
-
-template <>
-std::map<unsigned int, Attribute<long double>> &IO::GetAttributeMap() noexcept
-{
-    return m_LDoubleA;
-}
+// GetAttributeMap
+#define make_GetAttributeMap(T, NAME)                                          \
+    template <>                                                                \
+    std::map<unsigned int, Attribute<T>> &IO::GetAttributeMap() noexcept       \
+    {                                                                          \
+        return m_##NAME##A;                                                    \
+    }
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(make_GetAttributeMap)
+#undef make_GetAttributeMap
 
 } // end namespace core
 } // end namespace adios2

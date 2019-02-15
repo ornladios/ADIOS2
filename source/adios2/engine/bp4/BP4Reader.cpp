@@ -90,7 +90,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
             variable->SetStepSelection({m_CurrentStep, 1});                    \
         }                                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
     */
@@ -129,7 +129,7 @@ void BP4Reader::PerformGets()
         ReadVariableBlocks(variable);                                          \
         variable.m_BlocksInfo.clear();                                         \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -225,7 +225,7 @@ void BP4Reader::InitBuffer()
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void BP4Reader::DoClose(const int transportIndex)
@@ -248,7 +248,7 @@ void BP4Reader::DoClose(const int transportIndex)
         return m_BP4Deserializer.BlocksInfo(variable, step);                   \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace engine

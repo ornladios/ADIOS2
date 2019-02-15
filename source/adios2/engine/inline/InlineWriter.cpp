@@ -64,7 +64,7 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         Variable<T> &variable = FindVariable<T>(name, "in call to BeginStep"); \
         variable.m_BlocksInfo.clear();                                         \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -124,7 +124,7 @@ void InlineWriter::Flush(const int transportIndex)
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void InlineWriter::Init()

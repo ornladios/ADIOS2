@@ -61,7 +61,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
         }                                                                      \
         std::cout << std::endl;                                                \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 }
 

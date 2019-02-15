@@ -152,7 +152,7 @@ void Stream::CheckOpen()
     template void Stream::ReadAttribute(                                       \
         const std::string &, T *, const std::string &, const std::string);
 
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
@@ -185,7 +185,7 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
     template std::vector<T> Stream::Read<T>(const std::string &,               \
                                             const Box<Dims> &);
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core
