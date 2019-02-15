@@ -252,12 +252,6 @@ hid_t HDF5Common::GetHDF5Type<unsigned char>()
 }
 
 template <>
-hid_t HDF5Common::GetHDF5Type<char>()
-{
-    return H5T_NATIVE_CHAR;
-}
-
-template <>
 hid_t HDF5Common::GetHDF5Type<short>()
 {
     return H5T_NATIVE_SHORT;
@@ -276,16 +270,6 @@ template <>
 hid_t HDF5Common::GetHDF5Type<unsigned int>()
 {
     return H5T_NATIVE_UINT;
-}
-template <>
-hid_t HDF5Common::GetHDF5Type<long int>()
-{
-    return H5T_NATIVE_LONG;
-}
-template <>
-hid_t HDF5Common::GetHDF5Type<unsigned long int>()
-{
-    return H5T_NATIVE_ULONG;
 }
 template <>
 hid_t HDF5Common::GetHDF5Type<long long int>()
