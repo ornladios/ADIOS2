@@ -364,10 +364,16 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         *size = dataMap.size();
         adios2_variable **list =
             (adios2_variable **)calloc(*size, sizeof(adios2_variable *));
+
+        // Sort the names so that we return the same order as the 
+        // C++, python APIs
+        std::set<std::string> names;
+        for (auto& it : dataMap) names.insert(it.first);
+
         size_t n = 0;
-        for (auto it = dataMap.begin(); it != dataMap.end(); ++it)
+        for (auto& name : names) 
         {
-            const std::string name(it->first);
+            auto it = dataMap.find(name);
             const std::string type(it->second.first);
             adios2::core::VariableBase *variable = nullptr;
 
@@ -887,10 +893,16 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         *size = dataMap.size();
         adios2_attribute **list =
             (adios2_attribute **)calloc(*size, sizeof(adios2_attribute *));
+
+        // Sort the names so that we return the same order as the 
+        // C++, python APIs
+        std::set<std::string> names;
+        for (auto& it : dataMap) names.insert(it.first);
+
         size_t n = 0;
-        for (auto it = dataMap.begin(); it != dataMap.end(); ++it)
+        for (auto& name : names) 
         {
-            const std::string name(it->first);
+            auto it = dataMap.find(name);
             const std::string type(it->second.first);
             adios2::core::AttributeBase *attribute = nullptr;
 
