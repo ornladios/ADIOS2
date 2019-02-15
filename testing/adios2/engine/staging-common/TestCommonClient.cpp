@@ -150,7 +150,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             {
                 SkippedSteps++;
             }
-            t = currentStep; // starting out
+            t = (unsigned int)currentStep; // starting out
         }
 
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
