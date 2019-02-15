@@ -24,12 +24,9 @@
 #include "dataspaces.h"
 #include "ds.h"
 
-static int adios_dataspaces_initialized = 0;
 #define MAX_DS_NAMELEN 128
 
 
-// count the number of inits/finalizes (one per adios group using this method
-static unsigned int number_of_inits = 0;
 
 static int globals_adios_appid = -1;
 static int globals_adios_was_set = 0;
@@ -100,76 +97,8 @@ int  globals_adios_is_dataspaces_connected_from_both()
 }
 
 
-static int connect_to_dspaces (struct adios_ds_data_struct * md, MPI_Comm comm)
-{
-    int ret = 0;
-    int num_peers;
-    fprintf(stderr, "Before checking if dspaces is connected\n");
 
-    if (!globals_adios_is_dataspaces_connected_from_writer()) {
-
-    	 fprintf(stderr, "DataSpaces is not connected\n");
-        MPI_Comm_rank (comm, &(md->rank));
-        fprintf(stderr, "After rank copy\n");
-        MPI_Comm_size (comm, &num_peers);
-        fprintf(stderr, "After MPI functions\n");
-
-        // Application ID should be set by the application calling adios_set_application_id()
-        int was_set;
-        md->appid = globals_adios_get_application_id (&was_set);
-        if (!was_set)
-            md->appid = 1;
-
-        //Init the dart client
-        ret = dspaces_init (num_peers, md->appid, &md->mpi_comm_init, NULL);
-        fprintf(stderr, "After dspaces_init");
-        if (ret) {
-            fprintf (stderr, "adios_dataspaces: rank=%d Failed to connect to DATASPACES: err=%d,  rank=%d\n", ret, md->rank);
-            return ret;
-        }
-/*
-#if ! HAVE_MPI
-        dspaces_rank (&(md->rank));
-        dspaces_peers (&(md->peers));
-#else*/
-
-        md->peers = num_peers;
-//#endif
-
-        fprintf (stderr, "adios_dataspaces: rank=%d connected to DATASPACES: peers=%d\n", md->rank, md->peers);
-    }
-
-    globals_adios_set_dataspaces_connected_from_writer();
-    return ret;
-}
-
-/*
-void adios_dataspaces_init (void* comm, DsData* md)
-{
-    if (!adios_dataspaces_initialized)
-    {
-        adios_dataspaces_initialized = 1;
-    }
-
-    int index, i;
-
-    //Init the static data structure
-    md->peers = 1;
-    md->appid = -1;
-    md->n_writes = 0;
-    md->rank = 0;
-    md->mpi_comm = *(MPI_Comm *)comm;
-    md->mpi_comm_init = *(MPI_Comm *)comm;
-
-
-    connect_to_dspaces (md, *(MPI_Comm *)comm);
-    number_of_inits++;
-    fprintf (stderr,"adios_dataspaces_init: called the %d. time\n", number_of_inits);
-
-}
-*/
-
-void adios_dataspaces_init (void* comm, DsData* md)
+int adios_dataspaces_init (void* comm, DsData* md)
 {
 	int  nproc;
 	int  rank, err;
@@ -181,8 +110,6 @@ void adios_dataspaces_init (void* comm, DsData* md)
 	        appid = globals_adios_get_application_id (&was_set);
 	        if (!was_set)
 	            appid = 1;
-	        fprintf(stderr, "-- %s, rank %d: connect to dataspaces with nproc=%d and appid=%d\n",
-	                    __func__, rank, nproc, appid);
 	        err = dspaces_init(nproc, appid, (MPI_Comm *)comm, NULL);
 	        if (err < 0) {
 	            fprintf (stderr, "Failed to connect with DATASPACES\n");
@@ -193,8 +120,7 @@ void adios_dataspaces_init (void* comm, DsData* md)
 	    md->rank = rank;
 	    md->mpi_comm = *(MPI_Comm *)comm;
 	    md->appid = appid;
-
-	    fprintf(stderr, "Connected to DATASPACES from Writer\n");
+	    return 0;
 
 }
 
@@ -206,9 +132,7 @@ void adios_dataspaces_open (char* fname, DsData* md)
     MPI_Comm_size (md->mpi_comm, &(md->peers));
 
 
-    fprintf (stderr, "adios_dataspaces_open: rank=%d call write lock...\n", md->rank);
     dspaces_lock_on_write (fname, &md->mpi_comm);
-    fprintf (stderr, "adios_dataspaces_open: rank=%d got write lock\n", md->rank);
 }
 
 int adios_read_dataspaces_init (void* comm, DsData* md)
@@ -223,8 +147,6 @@ int adios_read_dataspaces_init (void* comm, DsData* md)
 	        appid = globals_adios_get_application_id (&was_set);
 	        if (!was_set)
 	            appid = 2;
-	        fprintf(stderr, "-- %s, rank %d: connect to dataspaces with nproc=%d and appid=%d\n",
-	                    __func__, rank, nproc, appid);
 	        err = dspaces_init(nproc, appid, (MPI_Comm *)comm, NULL);
 	        if (err < 0) {
 	            fprintf (stderr, "Failed to connect with DATASPACES\n");
@@ -235,8 +157,6 @@ int adios_read_dataspaces_init (void* comm, DsData* md)
 	    md->rank = rank;
 	    md->mpi_comm = *(MPI_Comm *)comm;
 	    md->appid = appid;
-
-	    fprintf(stderr, "Connected to DATASPACES\n");
 	    return 0;
 
 }

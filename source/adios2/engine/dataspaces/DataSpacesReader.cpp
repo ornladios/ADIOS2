@@ -55,9 +55,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	char *cstr = new char[f_Name.length() + 1];
 	strcpy(cstr, f_Name.c_str());
 
-	fprintf (stderr, "rank=%d call read lock...\n", m_data.rank);
 	dspaces_lock_on_read (cstr, &m_data.mpi_comm);
-	fprintf (stderr, "rank=%d got read lock\n", m_data.rank);
 
 	delete[] cstr;
 
@@ -76,20 +74,16 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	delete[] cstr;
 
 	latestStep = l_version_no[0];
-	//fprintf(stderr,"LatestStep Read from DSpaces %d\n", latestStep);
 
 	if(mode == StepMode::NextAvailable){
 		m_CurrentStep++;
-		fprintf (stderr, "Next step mode, TS=%d...\n", m_CurrentStep);
 	}
 	if(mode == StepMode::LatestAvailable){
 			m_CurrentStep = latestStep;
-			fprintf (stderr, "LatestStep mode, TS=%d...\n", m_CurrentStep);
 	}
 	//we check if the current step is the end of the step that is in DataSpaces
 	if (m_CurrentStep > latestStep)
 	{
-		fprintf (stderr, "End of Stream, TS=%d\n", m_CurrentStep);
 		return StepStatus::EndOfStream;
 	}
 
@@ -115,7 +109,6 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	char *buffer;
 	buffer = (char*) malloc(buf_len);
 	memset(buffer, 0, buf_len);
-	//fprintf(stderr, "Num Vars: %d, BufLen: %d\n", nVars, buf_len);
 	char * local_str;
 	local_file_var = "VARMETA@"+f_Name;
 	local_str = new char[local_file_var.length() + 1];
@@ -130,7 +123,6 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	dspaces_get(local_str, latestStep, elemsize, ndim, lb, ub, buffer);
 
 	//now populate data from the buffer
-	//fprintf(stderr, "After receipt of long buffer\n");
 
 	int *dim_meta;
 	dim_meta = (int*) malloc(nVars* sizeof(int));
@@ -147,15 +139,11 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	for (int var = 0; var < nVars; ++var) {
 
 		int var_dim_size = dim_meta[var];
-		//fprintf(stderr, "NDim: %d", var_dim_size);
 		int varType = elemSize_meta[var];
-		//fprintf(stderr, " Type: %d", varType);
-		//fprintf(stderr, " Gdim: %llu\n", gdim_meta[0]);
 
 		std::string adiosName;
 		char *val = (char *)(calloc(var_name_max_length, sizeof(char)));
 		memcpy(val, &buffer[nVars* sizeof(int) + nVars *sizeof(int) + nVars*MAX_DS_NDIM*sizeof(uint64_t) + var * var_name_max_length], var_name_max_length*sizeof(char));
-		fprintf(stderr, "VarName: %s\n", val);
 		adiosName.assign(val);
 		free(val);
 
@@ -181,7 +169,6 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		auto itType = ds_to_varType.find(varType);
 		if(itType == ds_to_varType.end()){
 			fprintf(stderr, "Wrong value in the serialized meta buffer for varType\n");
-			//TO DO fix for complex data type
 		}else{
 			adiosVarType = itType->second;
 
@@ -256,7 +243,6 @@ void DataSpacesReader::DoClose(const int transportIndex){
 
 	PerformGets();
 
-	fprintf(stderr, "%s: Disconnect from DATASPACES server now, rank= ...\n", __func__);
 	// disconnect from dataspaces if we are connected from writer but not anymore from reader
 	if (globals_adios_is_dataspaces_connected_from_reader() &&
 			!globals_adios_is_dataspaces_connected_from_writer())
