@@ -77,12 +77,12 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    if (itVariable->second.first != helper::GetType<T>())
+    if (itVariable->second.m_Type != helper::GetType<T>())
     {
         return nullptr;
     }
 
-    Variable<T> *variable = &GetVariableMap<T>().at(itVariable->second.second);
+    Variable<T> *variable = &GetVariableMap<T>().at(itVariable->second.m_Index);
     if (m_ReadStreaming)
     {
         if (!variable->IsValidStep(m_EngineStep + 1))
@@ -175,12 +175,12 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
         return nullptr;
     }
 
-    if (itAttribute->second.first != helper::GetType<T>())
+    if (itAttribute->second.m_Type != helper::GetType<T>())
     {
         return nullptr;
     }
 
-    return &GetAttributeMap<T>().at(itAttribute->second.second);
+    return &GetAttributeMap<T>().at(itAttribute->second.m_Index);
 }
 
 // PRIVATE

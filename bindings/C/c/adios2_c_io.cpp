@@ -247,7 +247,7 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const std::string type(it->second.first);
+            const std::string type(it->second.m_Type);
             adios2::core::VariableBase *variable = nullptr;
 
             if (type == "compound")
@@ -444,7 +444,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
             return attribute;
         }
 
-        const std::string type(itAttribute->second.first);
+        const std::string type(itAttribute->second.m_Type);
         adios2::core::AttributeBase *attributeCpp = nullptr;
 
         if (type == "compound")
@@ -505,7 +505,7 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const std::string type(it->second.first);
+            const std::string type(it->second.m_Type);
             adios2::core::AttributeBase *attribute = nullptr;
 
             if (type == "compound")

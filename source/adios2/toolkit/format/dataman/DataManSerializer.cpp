@@ -199,7 +199,7 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
         for (const auto &attributePair : attributesDataMap)
         {
             const std::string name(attributePair.first);
-            const std::string type(attributePair.second.first);
+            const std::string type(attributePair.second.m_Type);
             if (type == "unknown")
             {
             }

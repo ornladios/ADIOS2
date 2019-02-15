@@ -418,7 +418,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     for (const auto &variablePair : variables)
     {
         const std::string &name(variablePair.first);
-        const std::string &type(variablePair.second.first);
+        const std::string &type(variablePair.second.m_Type);
         core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
 
@@ -526,7 +526,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
             // read variable subset
             std::cout << "rank " << rank << ": Read variable " << name
                       << std::endl;
-            const std::string &type = variables.at(name).first;
+            const std::string &type = variables.at(name).m_Type;
             if (type == "compound")
             {
                 // not supported
@@ -567,7 +567,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
             // Write variable subset
             std::cout << "rank " << rank << ": Write variable " << name
                       << std::endl;
-            const std::string &type = variables.at(name).first;
+            const std::string &type = variables.at(name).m_Type;
             if (type == "compound")
             {
                 // not supported
