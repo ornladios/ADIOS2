@@ -453,27 +453,27 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
 
     if (H5Tequal(H5T_NATIVE_INT8, h5Type))
     {
-        AddVar<signed char>(io, name, datasetId, ts);
+        AddVar<int8_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_UINT8, h5Type))
     {
-        AddVar<unsigned char>(io, name, datasetId, ts);
+        AddVar<uint8_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_INT16, h5Type))
     {
-        AddVar<short>(io, name, datasetId, ts);
+        AddVar<int16_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_UINT16, h5Type))
     {
-        AddVar<unsigned short>(io, name, datasetId, ts);
+        AddVar<uint16_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_INT32, h5Type))
     {
-        AddVar<int>(io, name, datasetId, ts);
+        AddVar<int32_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_UINT32, h5Type))
     {
-        AddVar<unsigned int>(io, name, datasetId, ts);
+        AddVar<uint32_t>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_INT64, h5Type))
     {
@@ -906,31 +906,27 @@ void HDF5Common::ReadInNonStringAttr(core::IO &io, const std::string &attrName,
 
     if (H5Tequal(H5T_NATIVE_INT8, h5Type))
     {
-        AddNonStringAttribute<signed char>(io, attrName, attrId, h5Type,
-                                           dims[0]);
+        AddNonStringAttribute<int8_t>(io, attrName, attrId, h5Type, dims[0]);
     }
     else if (H5Tequal(H5T_NATIVE_UINT8, h5Type))
     {
-        AddNonStringAttribute<unsigned char>(io, attrName, attrId, h5Type,
-                                             dims[0]);
+        AddNonStringAttribute<uint8_t>(io, attrName, attrId, h5Type, dims[0]);
     }
     else if (H5Tequal(H5T_NATIVE_INT16, h5Type))
     {
-        AddNonStringAttribute<short>(io, attrName, attrId, h5Type, dims[0]);
+        AddNonStringAttribute<int16_t>(io, attrName, attrId, h5Type, dims[0]);
     }
     else if (H5Tequal(H5T_NATIVE_UINT16, h5Type))
     {
-        AddNonStringAttribute<unsigned short>(io, attrName, attrId, h5Type,
-                                              dims[0]);
+        AddNonStringAttribute<uint16_t>(io, attrName, attrId, h5Type, dims[0]);
     }
     else if (H5Tequal(H5T_NATIVE_INT32, h5Type))
     {
-        AddNonStringAttribute<int>(io, attrName, attrId, h5Type, dims[0]);
+        AddNonStringAttribute<int32_t>(io, attrName, attrId, h5Type, dims[0]);
     }
     else if (H5Tequal(H5T_NATIVE_UINT32, h5Type))
     {
-        AddNonStringAttribute<unsigned int>(io, attrName, attrId, h5Type,
-                                            dims[0]);
+        AddNonStringAttribute<uint32_t>(io, attrName, attrId, h5Type, dims[0]);
     }
     else if (H5Tequal(H5T_NATIVE_INT64, h5Type))
     {
