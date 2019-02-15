@@ -25,31 +25,56 @@
 #                    variable, it will override any setting specified
 #                    as an environment variable.
 
+
+
 if(NOT DATASPACES_FOUND)
   if((NOT DATASPACES_ROOT) AND (NOT (ENV{DATASPACES_ROOT} STREQUAL "")))
     set(DATASPACES_ROOT "$ENV{DATASPACES_ROOT}")
   endif()
   if(DATASPACES_ROOT)
-    set(DATASPACES_INCLUDE_OPTS HINTS ${DATASPACES_ROOT}/include)
-    set(DATASPACES_LIBRARY_OPTS
-      HINTS ${DATASPACES_ROOT}/lib
-    )
+    find_program(DSPACES_CONF dspaces_config ${DATASPACES_ROOT}/bin)
+    
+    if (DSPACES_CONF)
+	  execute_process(COMMAND ${DSPACES_CONF} -l
+	    RESULT_VARIABLE RESULT_VAR
+	    OUTPUT_VARIABLE DSPACES_CONFIG_STRING)
+		string(REPLACE "-L"  ""   LINK_LIBS_ALL   ${DSPACES_CONFIG_STRING})
+		string(REPLACE " -l"  ";"   LINK_LIBS   ${LINK_LIBS_ALL})
+		set(DATASPACES_LIBRARIES)
+		set(DATASPACES_LIBRARY_HINT)
+		foreach(LOOP_VAR ${LINK_LIBS})
+				STRING(FIND ${LOOP_VAR} "/" HINT_FLG)
+				if(NOT("${HINT_FLG}" EQUAL "-1"))
+					string(REPLACE "-L" ";" INCLUDE_DIR ${LOOP_VAR})
+					list(APPEND DATASPACES_LIBRARY_HINT ${LOOP_VAR})
+				else()
+					unset(LOCAL_LIBRARY CACHE)
+					STRING(FIND ${LOOP_VAR} "stdc++" CPP_FLG)
+					if("${CPP_FLG}" EQUAL "-1")
+						message("${LOOP_VAR}")
+						find_library(LOCAL_LIBRARY NAMES "${LOOP_VAR}" HINTS ${DATASPACES_LIBRARY_HINT})
+						message("${LOCAL_LIBRARY}")
+						list(APPEND DATASPACES_LIBRARIES ${LOCAL_LIBRARY})
+					endif()
+				endif()
+		endforeach()
+				
+	endif ()
+	
+	 set(DATASPACES_INCLUDE_OPTS HINTS ${DATASPACES_ROOT}/include)
+
   endif()
 
   find_path(DATASPACES_INCLUDE_DIR dataspaces.h ${DATASPACES_INCLUDE_OPTS})
-  find_library(DSPACESF_LIBRARY dspacesf ${DATASPACES_LIBRARY_OPTS})
-  find_library(DSCOMMON_LIBRARY dscommon ${DATASPACES_LIBRARY_OPTS})
-  find_library(DSPACES_LIBRARY dspaces ${DATASPACES_LIBRARY_OPTS}) 
-  find_library(DART_LIBRARY dart ${DATASPACES_LIBRARY_OPTS})
+  find_library(DSPACES_LIBRARY dspaces HINTS ${DATASPACES_LIBRARY_HINT}) 
 
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(DATASPACES
     FOUND_VAR DATASPACES_FOUND
-    REQUIRED_VARS DSPACESF_LIBRARY DSCOMMON_LIBRARY DART_LIBRARY DATASPACES_INCLUDE_DIR
+    REQUIRED_VARS DATASPACES_INCLUDE_DIR DATASPACES_LIBRARIES DSPACES_LIBRARY
   )
+  message("${DATASPACES_LIBRARIES}")
   if(DATASPACES_FOUND)
-    set(DATASPACES_INCLUDE_DIRS ${DATASPACES_INCLUDE_DIR})
-    set(DATASPACES_LIBRARIES ${DSPACES_LIBRARY} ${DSPACESF_LIBRARY} ${DSCOMMON_LIBRARY} ${DART_LIBRARY})
     if(DATASPACES_FOUND AND NOT TARGET DataSpaces::DataSpaces)
       add_library(DataSpaces::DataSpaces UNKNOWN IMPORTED)
       set_target_properties(DataSpaces::DataSpaces PROPERTIES
