@@ -23,10 +23,10 @@ class SocketZmq
 public:
     SocketZmq(const int timeout);
     virtual ~SocketZmq();
-    virtual int Open(const std::string &address, const Mode openMode) =0;
-    virtual int Write(const char *buffer, const size_t size) =0;
-    virtual int Read(char *buffer, const size_t size)=0;
-    virtual int Close()=0;
+    virtual int Open(const std::string &address, const Mode openMode) = 0;
+    virtual int Write(const char *buffer, const size_t size) = 0;
+    virtual int Read(char *buffer, const size_t size) = 0;
+    virtual int Close() = 0;
 
 protected:
     void *m_Context = nullptr;

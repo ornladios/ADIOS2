@@ -135,7 +135,6 @@ public:
 
     const DmvVecPtrMap GetMetaData();
 
-
     void PutAggregatedMetadata(MPI_Comm mpiComm, VecPtr);
 
     int PutDeferredRequest(const std::string &variable, const size_t step,
@@ -183,7 +182,6 @@ private:
     // local rank single step JSON metadata, used in writer, only accessed from
     // writer app API thread, do not need mutex
     nlohmann::json m_MetadataJson;
-
 
     // temporary compression buffer, made class member only for saving costs for
     // memory allocation

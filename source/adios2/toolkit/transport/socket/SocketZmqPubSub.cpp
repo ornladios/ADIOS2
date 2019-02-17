@@ -18,10 +18,7 @@ namespace adios2
 namespace transport
 {
 
-SocketZmqPubSub::SocketZmqPubSub(const int timeout)
-: SocketZmq(timeout)
-{
-}
+SocketZmqPubSub::SocketZmqPubSub(const int timeout) : SocketZmq(timeout) {}
 
 SocketZmqPubSub::~SocketZmqPubSub()
 {
@@ -69,7 +66,6 @@ int SocketZmqPubSub::Open(const std::string &address, const Mode openMode)
 
     return error;
 }
-
 
 int SocketZmqPubSub::Write(const char *buffer, const size_t size)
 {

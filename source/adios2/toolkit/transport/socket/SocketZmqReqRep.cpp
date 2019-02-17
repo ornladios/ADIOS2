@@ -18,9 +18,7 @@ namespace adios2
 namespace transport
 {
 
-
-SocketZmqReqRep::SocketZmqReqRep(const int timeout)
-: SocketZmq(timeout)
+SocketZmqReqRep::SocketZmqReqRep(const int timeout) : SocketZmq(timeout)
 {
     if (m_Context == nullptr || m_Context == NULL)
     {

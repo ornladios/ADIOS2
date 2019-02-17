@@ -14,9 +14,9 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosSystem.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transportman/wanman/WANMan.h"
-#include "adios2/helper/adiosSystem.h"
 
 namespace adios2
 {

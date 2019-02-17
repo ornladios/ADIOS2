@@ -47,7 +47,7 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
-    if(m_CurrentStep ==0)
+    if (m_CurrentStep == 0)
     {
         for (auto &serializer : m_DataManSerializer)
         {
@@ -71,7 +71,6 @@ void DataManWriter::EndStep()
             m_WANMan->Write(buf, i);
         }
     }
-
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -96,8 +95,8 @@ void DataManWriter::Init()
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {
         m_DataManSerializer.push_back(
-                std::make_shared<format::DataManSerializer>(
-                    m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian));
+            std::make_shared<format::DataManSerializer>(
+                m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian));
     }
 }
 

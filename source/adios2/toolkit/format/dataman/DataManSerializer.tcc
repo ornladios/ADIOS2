@@ -160,11 +160,13 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     if (metadataJson == nullptr)
     {
-        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(std::move(metaj));
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
+            std::move(metaj));
     }
     else
     {
-        (*metadataJson)[std::to_string(step)][std::to_string(rank)].emplace_back(std::move(metaj));
+        (*metadataJson)[std::to_string(step)][std::to_string(rank)]
+            .emplace_back(std::move(metaj));
     }
 
     if (m_Verbosity >= 100)

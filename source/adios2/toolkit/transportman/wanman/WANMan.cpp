@@ -111,7 +111,8 @@ void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
         {
 #ifdef ADIOS2_HAVE_ZEROMQ
             std::shared_ptr<transport::SocketZmq> wanTransport;
-            wanTransport = std::make_shared<transport::SocketZmqPubSub>(m_Timeout);
+            wanTransport =
+                std::make_shared<transport::SocketZmqPubSub>(m_Timeout);
 
             wanTransport->Open(fullIP, mode);
             m_Transports.emplace(i, wanTransport);
@@ -187,7 +188,8 @@ std::shared_ptr<std::vector<char>> WANMan::PopBufferQueue(size_t id)
     return nullptr;
 }
 
-void WANMan::WriteThread(std::shared_ptr<transport::SocketZmq> transport, size_t id)
+void WANMan::WriteThread(std::shared_ptr<transport::SocketZmq> transport,
+                         size_t id)
 {
     while (m_Writing)
     {

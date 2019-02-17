@@ -18,7 +18,6 @@
 #include "adios2/core/Operator.h"
 #include "adios2/toolkit/transport/socket/SocketZmq.h"
 
-
 namespace adios2
 {
 namespace transportman
@@ -44,7 +43,8 @@ public:
     void SetMaxReceiveBuffer(size_t size);
 
 private:
-    std::unordered_map<size_t, std::shared_ptr<transport::SocketZmq>> m_Transports;
+    std::unordered_map<size_t, std::shared_ptr<transport::SocketZmq>>
+        m_Transports;
     MPI_Comm m_MpiComm;
     bool m_DebugMode;
 
@@ -67,7 +67,8 @@ private:
     bool m_Reading = false;
 
     // For write thread
-    void WriteThread(std::shared_ptr<transport::SocketZmq> transport, size_t id);
+    void WriteThread(std::shared_ptr<transport::SocketZmq> transport,
+                     size_t id);
     std::vector<std::thread> m_WriteThreads;
     bool m_Writing = false;
 

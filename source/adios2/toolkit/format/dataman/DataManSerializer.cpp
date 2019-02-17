@@ -47,10 +47,12 @@ VecPtr DataManSerializer::GetLocalPack()
 {
     auto metapack = SerializeJson(m_MetadataJson);
     size_t metasize = metapack->size();
-    (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[0] = m_LocalBuffer->size();
+    (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[0] =
+        m_LocalBuffer->size();
     (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[1] = metasize;
     m_LocalBuffer->resize(m_LocalBuffer->size() + metasize);
-    std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - metasize, metapack->data(), metasize);
+    std::memcpy(m_LocalBuffer->data() + m_LocalBuffer->size() - metasize,
+                metapack->data(), metasize);
     return m_LocalBuffer;
 }
 
@@ -79,20 +81,28 @@ void DataManSerializer::AggregateMetadata(const MPI_Comm mpiComm)
 
     for (int i = 0; i < mpiSize; ++i)
     {
-        size_t deserializeSize = *(reinterpret_cast<uint64_t *>(globalJsonStr.data() + (i + 1) * maxSize) - 1);
-        nlohmann::json metaj = DeserializeJson( globalJsonStr.data() + i * maxSize, deserializeSize);
-        for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end(); ++stepMapIt)
+        size_t deserializeSize =
+            *(reinterpret_cast<uint64_t *>(globalJsonStr.data() +
+                                           (i + 1) * maxSize) -
+              1);
+        nlohmann::json metaj = DeserializeJson(
+            globalJsonStr.data() + i * maxSize, deserializeSize);
+        for (auto stepMapIt = metaj.begin(); stepMapIt != metaj.end();
+             ++stepMapIt)
         {
-            for (auto rankMapIt = stepMapIt.value().begin(); rankMapIt != stepMapIt.value().end(); ++rankMapIt)
+            for (auto rankMapIt = stepMapIt.value().begin();
+                 rankMapIt != stepMapIt.value().end(); ++rankMapIt)
             {
-                aggMetadata[stepMapIt.key()][rankMapIt.key()] = rankMapIt.value();
+                aggMetadata[stepMapIt.key()][rankMapIt.key()] =
+                    rankMapIt.value();
             }
         }
     }
 
     m_AggregatedMetadataJsonMutex.lock();
 
-    for (auto stepMapIt = aggMetadata.begin(); stepMapIt != aggMetadata.end(); ++stepMapIt)
+    for (auto stepMapIt = aggMetadata.begin(); stepMapIt != aggMetadata.end();
+         ++stepMapIt)
     {
         m_AggregatedMetadataJson[stepMapIt.key()] = stepMapIt.value();
     }
@@ -118,7 +128,8 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
         if (step == -1) // getting the earliest step
         {
             int64_t min = std::numeric_limits<int64_t>::max();
-            for (auto stepMapIt = m_AggregatedMetadataJson.begin(); stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
+            for (auto stepMapIt = m_AggregatedMetadataJson.begin();
+                 stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
             {
                 int64_t step = stoll(stepMapIt.key());
                 if (min > step)
@@ -131,7 +142,8 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
         else if (step == -2) // getting the latest step
         {
             int64_t max = std::numeric_limits<int64_t>::min();
-            for (auto stepMapIt = m_AggregatedMetadataJson.begin(); stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
+            for (auto stepMapIt = m_AggregatedMetadataJson.begin();
+                 stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
             {
                 int64_t step = stoll(stepMapIt.key());
                 if (max < step)
@@ -248,31 +260,32 @@ void DataManSerializer::GetAttributes(core::IO &io)
 {
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     const auto attributesDataMap = io.GetAttributesDataMap();
-    for (const auto &staticVar : m_StaticDataJson)
+    for (const auto &staticVar : m_StaticDataJson["S"])
     {
         const std::string type(staticVar["Y"].get<std::string>());
         if (type == "")
         {
         }
 #define declare_type(T)                                                        \
-        else if (type == helper::GetType<T>())                                     \
-        {                                                                          \
-            auto it = attributesDataMap.find(staticVar["N"].get<std::string>());           \
-            if (it == attributesDataMap.end())                                     \
-            {                                                                      \
-                if (staticVar["V"].get<bool>())                                            \
-                {                                                                  \
-                    io.DefineAttribute<T>(staticVar["N"].get<std::string>(),               \
-                            staticVar["G"].get<T>());                        \
-                }                                                                  \
-                else                                                               \
-                {                                                                  \
-                    io.DefineAttribute<T>(staticVar["N"].get<std::string>(),               \
-                            staticVar["G"].get<std::vector<T>>().data(),     \
-                            staticVar["G"].get<std::vector<T>>().size());    \
-                }                                                                  \
-            }                                                                      \
-        }
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        auto it = attributesDataMap.find(staticVar["N"].get<std::string>());   \
+        if (it == attributesDataMap.end())                                     \
+        {                                                                      \
+            if (staticVar["V"].get<bool>())                                    \
+            {                                                                  \
+                io.DefineAttribute<T>(staticVar["N"].get<std::string>(),       \
+                                      staticVar["G"].get<T>());                \
+            }                                                                  \
+            else                                                               \
+            {                                                                  \
+                io.DefineAttribute<T>(                                         \
+                    staticVar["N"].get<std::string>(),                         \
+                    staticVar["G"].get<std::vector<T>>().data(),               \
+                    staticVar["G"].get<std::vector<T>>().size());              \
+            }                                                                  \
+        }                                                                      \
+    }
         ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
     }
@@ -414,7 +427,8 @@ int DataManSerializer::PutPack(const VecPtr data)
     }
 
     // if not control signal then go through standard deserialization
-    uint64_t metaPosition = (reinterpret_cast<const uint64_t *>(data->data()))[0];
+    uint64_t metaPosition =
+        (reinterpret_cast<const uint64_t *>(data->data()))[0];
     uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
     nlohmann::json j = DeserializeJson(data->data() + metaPosition, metaSize);
 

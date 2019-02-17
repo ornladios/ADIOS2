@@ -58,7 +58,7 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_DataManSerializer.New(m_DefaultBufferSize);
-    if(m_MpiRank == 0)
+    if (m_MpiRank == 0)
     {
         m_DataManSerializer.PutAttributes(m_IO);
     }

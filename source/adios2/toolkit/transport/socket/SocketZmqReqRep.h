@@ -28,7 +28,6 @@ public:
     int Write(const char *buffer, size_t size) final;
     int Read(char *buffer, size_t size) final;
     int Close() final;
-
 };
 
 } // end namespace transport

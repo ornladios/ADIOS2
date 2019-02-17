@@ -106,10 +106,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         }
     }
 
-    if (m_CurrentStep == 0)
-    {
-        m_DataManSerializer.GetAttributes(m_IO);
-    }
+    m_DataManSerializer.GetAttributes(m_IO);
 
     for (const auto &i : *vars)
     {
