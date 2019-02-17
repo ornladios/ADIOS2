@@ -160,13 +160,11 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     if (metadataJson == nullptr)
     {
-        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
-            metaj);
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(std::move(metaj));
     }
     else
     {
-        (*metadataJson)[std::to_string(step)][std::to_string(rank)]
-            .emplace_back(metaj);
+        (*metadataJson)[std::to_string(step)][std::to_string(rank)].emplace_back(std::move(metaj));
     }
 
     if (m_Verbosity >= 100)
@@ -303,22 +301,24 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
 }
 
 template <class T>
-void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute,
-                                     const int rank)
+void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
 {
-    m_MetadataJson["A"][std::to_string(rank)].emplace_back();
-    auto &j = m_MetadataJson["A"][std::to_string(rank)].back();
-    j["N"] = attribute.m_Name;
-    j["Y"] = attribute.m_Type;
-    j["V"] = attribute.m_IsSingleValue;
+    nlohmann::json staticVar;
+    staticVar["N"] = attribute.m_Name;
+    staticVar["Y"] = attribute.m_Type;
+    staticVar["V"] = attribute.m_IsSingleValue;
     if (attribute.m_IsSingleValue)
     {
-        j["G"] = attribute.m_DataSingleValue;
+        staticVar["G"] = attribute.m_DataSingleValue;
     }
     else
     {
-        j["G"] = attribute.m_DataArray;
+        staticVar["G"] = attribute.m_DataArray;
     }
+
+    m_StaticDataJsonMutex.lock();
+    m_StaticDataJson["S"].emplace_back(std::move(staticVar));
+    m_StaticDataJsonMutex.unlock();
 }
 
 template <class T>

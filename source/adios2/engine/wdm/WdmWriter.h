@@ -58,11 +58,6 @@ private:
 
     std::string m_QueueFullPolicy = "Block";
 
-    // metadata for current step being written.
-    std::pair<int64_t, std::shared_ptr<std::vector<char>>>
-        m_LockedAggregatedMetadata;
-    std::mutex m_LockedAggregatedMetadataMutex;
-
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;

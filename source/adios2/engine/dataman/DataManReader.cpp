@@ -62,7 +62,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         {
             if (duration.count() > timeoutSeconds)
             {
-                std::cout << "Dataman Reader timeing out" << std::endl;
                 return StepStatus::NotReady;
             }
         }

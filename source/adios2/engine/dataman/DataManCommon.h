@@ -16,6 +16,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transportman/wanman/WANMan.h"
+#include "adios2/helper/adiosSystem.h"
 
 namespace adios2
 {
@@ -37,8 +38,7 @@ protected:
     int m_MPIRank;
     int m_MPISize;
     int m_TransportChannels;
-    std::string m_Format = "dataman";
-    std::string m_WorkflowMode = "p2p";
+    std::string m_WorkflowMode = "stream";
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;

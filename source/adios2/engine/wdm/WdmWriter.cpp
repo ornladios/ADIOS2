@@ -58,7 +58,10 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_DataManSerializer.New(m_DefaultBufferSize);
-    m_DataManSerializer.PutAttributes(m_IO, m_MpiRank);
+    if(m_MpiRank == 0)
+    {
+        m_DataManSerializer.PutAttributes(m_IO);
+    }
 
     Log(5,
         "WdmWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep),
@@ -76,12 +79,7 @@ void WdmWriter::EndStep()
         true, false);
 
     m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-    auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
-    {
-        std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
-        m_LockedAggregatedMetadata.first = m_CurrentStep;
-        m_LockedAggregatedMetadata.second = aggMetadata;
-    }
+    m_DataManSerializer.AggregateMetadata(m_MPIComm);
 
     Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
         true, true);
@@ -229,9 +227,6 @@ void WdmWriter::ReplyThread(std::string address)
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
             while (aggMetadata == nullptr)
             {
-                std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
-                aggMetadata = m_LockedAggregatedMetadata.second;
-                m_LockedAggregatedMetadata.second = nullptr;
             }
             tpm.SendReply(aggMetadata);
 

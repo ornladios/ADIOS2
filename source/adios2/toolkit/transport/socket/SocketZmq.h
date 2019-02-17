@@ -18,19 +18,21 @@ namespace adios2
 namespace transport
 {
 
-class SocketZmq : public Transport
+class SocketZmq
 {
 public:
-    SocketZmq(const std::string type, const std::string library,
-              const MPI_Comm mpiComm, const bool debugMode)
-    : Transport("wan", "zmq", mpiComm, debugMode)
-    {
-    }
-    virtual ~SocketZmq() = default;
-    virtual void Open(const std::string &ipAddress, const std::string &port,
-                      const std::string &name, const Mode openMode) = 0;
+    SocketZmq(const int timeout);
+    virtual ~SocketZmq();
+    virtual int Open(const std::string &address, const Mode openMode) =0;
+    virtual int Write(const char *buffer, const size_t size) =0;
+    virtual int Read(char *buffer, const size_t size)=0;
+    virtual int Close()=0;
 
-private:
+protected:
+    void *m_Context = nullptr;
+    void *m_Socket = nullptr;
+    const int m_Timeout = 3;
+    int m_Verbosity = 0;
 };
 
 } // end namespace transport

@@ -34,20 +34,9 @@ DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     ++m_CurrentStep;
-    if (m_Format == "dataman")
+    for (size_t i = 0; i < m_TransportChannels; ++i)
     {
-        for (size_t i = 0; i < m_TransportChannels; ++i)
-        {
-            m_DataManSerializer[i]->New(m_BufferSize);
-        }
-    }
-    else if (m_Format == "binary")
-    {
-    }
-    else
-    {
-        throw(std::invalid_argument("[DataManWriter::EndStep] format " +
-                                    m_Format + " is not supported."));
+        m_DataManSerializer[i]->New(m_BufferSize);
     }
     return StepStatus::OK;
 }
@@ -58,37 +47,31 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
+    if(m_CurrentStep ==0)
+    {
+        for (auto &serializer : m_DataManSerializer)
+        {
+            serializer->PutAttributes(m_IO);
+        }
+    }
 
     if (m_WorkflowMode == "file")
     {
-        const std::shared_ptr<std::vector<char>> buf =
-            m_DataManSerializer[0]->GetLocalPack();
+        const auto buf = m_DataManSerializer[0]->GetLocalPack();
         m_FileTransport.Write(buf->data(), buf->size());
         return;
     }
-
-    if (m_Format == "dataman")
+    else if (m_WorkflowMode == "stream")
     {
         for (size_t i = 0; i < m_TransportChannels; ++i)
         {
-            if (m_CurrentStep == 0)
-            {
-                m_DataManSerializer[i]->PutAttributes(m_IO, m_MPIRank);
-            }
-            const std::shared_ptr<std::vector<char>> buf =
-                m_DataManSerializer[i]->GetLocalPack();
-            m_BufferSize = buf->size() * 2;
+            m_DataManSerializer[i]->AttachAttributes();
+            const auto buf = m_DataManSerializer[i]->GetLocalPack();
+            m_BufferSize = buf->size();
             m_WANMan->Write(buf, i);
         }
     }
-    else if (m_Format == "binary")
-    {
-    }
-    else
-    {
-        throw(std::invalid_argument("[DataManWriter::EndStep] format " +
-                                    m_Format + " is not supported."));
-    }
+
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -110,22 +93,11 @@ void DataManWriter::Init()
                              m_WorkflowMode, true);
 
     // initialize serializer
-    if (m_Format == "dataman")
+    for (size_t i = 0; i < m_TransportChannels; ++i)
     {
-        for (size_t i = 0; i < m_TransportChannels; ++i)
-        {
-            m_DataManSerializer.push_back(
+        m_DataManSerializer.push_back(
                 std::make_shared<format::DataManSerializer>(
                     m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian));
-        }
-    }
-    else if (m_Format == "binary")
-    {
-    }
-    else
-    {
-        throw(std::invalid_argument("[DataManWriter::Init] format " + m_Format +
-                                    " is not supported."));
     }
 }
 
@@ -151,10 +123,7 @@ void DataManWriter::DoClose(const int transportIndex)
         return;
     }
 
-    if (m_Format == "dataman")
-    {
-        m_WANMan->Write(format::DataManSerializer::EndSignal(CurrentStep()), 0);
-    }
+    m_WANMan->Write(format::DataManSerializer::EndSignal(CurrentStep()), 0);
 }
 
 } // end namespace engine

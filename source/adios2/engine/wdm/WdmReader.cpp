@@ -68,7 +68,18 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
     if (m_MpiRank == 0)
     {
         std::vector<char> request(16);
-        reinterpret_cast<int64_t *>(request.data())[0] = -1;
+        if (m_StepMode == "NextAvailable")
+        {
+            reinterpret_cast<int64_t *>(request.data())[0] = m_CurrentStep;
+        }
+        else if (m_StepMode == "LatestAvailable")
+        {
+            reinterpret_cast<int64_t *>(request.data())[0] = -1;
+        }
+        else if (m_StepMode == "AllAvailable")
+        {
+            reinterpret_cast<int64_t *>(request.data())[0] = -2;
+        }
         reinterpret_cast<int64_t *>(request.data())[1] = m_ReaderId;
         reply = m_MetadataTransport->Request(
             request, m_FullAddresses[rand() % m_FullAddresses.size()]);

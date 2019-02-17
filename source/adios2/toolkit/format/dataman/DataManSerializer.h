@@ -44,7 +44,7 @@ namespace format
 {
 
 using VecPtr = std::shared_ptr<std::vector<char>>;
-using VecPtrMap = std::unordered_map<size_t, VecPtr>;
+using VecPtrMap = std::unordered_map<int64_t, VecPtr>;
 using JsonPtr = std::shared_ptr<nlohmann::json>;
 
 struct DataManVar
@@ -99,16 +99,23 @@ public:
                 const Params &params, VecPtr localBuffer = nullptr,
                 JsonPtr metadataJson = nullptr);
 
-    // put attributes for writer
-    void PutAttributes(core::IO &io, const int rank);
+    // read attributes from IO and put into m_StaticDataJson
+    void PutAttributes(core::IO &io);
+
+    // read attributes form m_StaticDataJson and put into IO
+    void GetAttributes(core::IO &io);
+
+    // attach m_StaticDataJson to m_MetadataJson
+    void AttachAttributes();
 
     // get the metadata incorporated local buffer for writer, usually called in
     // EndStep
     VecPtr GetLocalPack();
 
-    // aggregate metadata across all writer ranks and return the aggregated
-    // metadata, usually called from master rank of writer
-    VecPtr GetAggregatedMetadata(const MPI_Comm mpiComm);
+    // aggregate metadata across all writer ranks and put it into map
+    void AggregateMetadata(const MPI_Comm mpiComm);
+
+    VecPtr GetAggregatedMetadataPack(const int64_t step);
 
     static VecPtr EndSignal(size_t step);
 
@@ -128,7 +135,6 @@ public:
 
     const DmvVecPtrMap GetMetaData();
 
-    void GetAttributes(core::IO &io);
 
     void PutAggregatedMetadata(MPI_Comm mpiComm, VecPtr);
 
@@ -153,7 +159,7 @@ private:
                   const Dims &varCount, const Params &params);
 
     template <class T>
-    void PutAttribute(const core::Attribute<T> &attribute, const int rank);
+    void PutAttribute(const core::Attribute<T> &attribute);
 
     bool IsCompressionAvailable(const std::string &method,
                                 const std::string &type, const Dims &count);
@@ -178,6 +184,7 @@ private:
     // writer app API thread, do not need mutex
     nlohmann::json m_MetadataJson;
 
+
     // temporary compression buffer, made class member only for saving costs for
     // memory allocation
     std::vector<char> m_CompressBuffer;
@@ -187,13 +194,14 @@ private:
     DmvVecPtrMap m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
 
-    // Aggregated metadata map, used in writer, needs mutex
-    VecPtrMap m_AggregatedMetadataMap;
-    std::mutex m_AggregatedMetadataMapMutex;
+    // Aggregated metadata json, used in writer, accessed from API thread and
+    // reply thread, needs mutex
+    nlohmann::json m_AggregatedMetadataJson;
+    std::mutex m_AggregatedMetadataJsonMutex;
 
     // for global variables and attributes, needs mutex
-    nlohmann::json m_GlobalVars;
-    std::mutex m_GlobalVarsMutex;
+    nlohmann::json m_StaticDataJson;
+    std::mutex m_StaticDataJsonMutex;
 
     // for generating deferred requests, only accessed from reader app thread,
     // does not need mutex

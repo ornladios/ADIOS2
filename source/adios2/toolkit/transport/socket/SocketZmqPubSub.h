@@ -22,24 +22,13 @@ class SocketZmqPubSub : public SocketZmq
 {
 
 public:
-    SocketZmqPubSub(const MPI_Comm mpiComm, const bool debugMode);
+    SocketZmqPubSub(const int timeout);
     virtual ~SocketZmqPubSub();
-    void Open(const std::string &name, const Mode openMode) final;
-    void Open(const std::string &ipAddress, const std::string &port,
-              const std::string &name, const Mode openMode);
-    void SetBuffer(char *buffer, size_t size) final;
-    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
-    void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
-    void IWrite(const char *buffer, size_t size, Status &status,
-                size_t start = MaxSizeT) final;
-    void IRead(char *buffer, size_t size, Status &status,
-               size_t start = MaxSizeT) final;
-    void Flush() final;
-    void Close() final;
+    int Open(const std::string &address, const Mode openMode) final;
+    int Write(const char *buffer, const size_t size) final;
+    int Read(char *buffer, const size_t size) final;
+    int Close() final;
 
-private:
-    void *m_Context = nullptr;
-    void *m_Socket = nullptr;
 };
 
 } // end namespace transport

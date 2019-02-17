@@ -18,8 +18,9 @@ namespace adios2
 namespace transport
 {
 
-SocketZmqReqRep::SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout)
-: m_Timeout(timeout)
+
+SocketZmqReqRep::SocketZmqReqRep(const int timeout)
+: SocketZmq(timeout)
 {
     if (m_Context == nullptr || m_Context == NULL)
     {
@@ -87,12 +88,13 @@ int SocketZmqReqRep::Read(char *buffer, size_t size)
     return zmq_recv(m_Socket, buffer, size, 0);
 }
 
-void SocketZmqReqRep::Close()
+int SocketZmqReqRep::Close()
 {
     if (m_Socket)
     {
         zmq_close(m_Socket);
     }
+    return 0;
 }
 
 } // end namespace transport
