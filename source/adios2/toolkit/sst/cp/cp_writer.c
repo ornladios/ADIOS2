@@ -1154,9 +1154,14 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
         ArrivingReader = ArrivingReader->Next;
     }
     if (Stream->QueueLimit &&
-        (Stream->QueuedTimestepCount > Stream->QueueLimit))
+        ((Stream->QueuedTimestepCount + 1) > Stream->QueueLimit))
     {
-        SendBlock[1] = 1; /* this rank is over stream limit */
+        CP_verbose(Stream,
+                   "Writer will be over queue limit, count %d, limit %d\n",
+                   Stream->QueuedTimestepCount, Stream->QueueLimit);
+
+        SendBlock[1] =
+            1; /* this rank will be over queue limit with new timestep */
     }
     else
     {
@@ -1207,10 +1212,6 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
             ActiveReaderCount++;
     }
 
-    /*
-     *  Then handle possible incoming connection requests.  (Only rank 0 has
-     * valid info.)
-     */
     int OverLimit = 0;
     for (int i = 0; i < Stream->CohortSize; i++)
     {
@@ -1220,6 +1221,47 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
     /* we've got all the state we need to know, release data lock */
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 
+    /*
+     * before we add any new readers, see if we are going to need to
+     * discard anything in the queue to stay in the queue limit
+     */
+
+    if (OverLimit)
+    {
+        if (Stream->QueueFullPolicy == SstQueueFullDiscard)
+        {
+            /* discard things */
+            if (ActiveReaderCount == 0)
+            {
+                PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+                /* 
+                 * Have to double-check here.  While in general, if everyone
+                 * had zero readers at the start, everyone should have the
+                 * same set of timesteps queued and everyone should be doing
+                 * a dequeue here.  However, we might have just gone to zero
+                 * active (because of failed or exiting readers), and some
+                 * timesteps might just have been released.  (Note: Assuming
+                 * that if having gone to zero readers will have dequeued
+                 * timesteps that had reference counts.  So generally we
+                 * must be dequeueing things with a zero reference count
+                 * here.)  That is an assumption that should not be
+                 * violated.
+                 */
+                if ((Stream->QueuedTimestepCount + 1) >= Stream->QueueLimit)
+                {
+                    CP_verbose(Stream, "Writer doing discard for overlimit\n");
+                    DoStreamDiscard(Stream);
+                    OverLimit = 0; /* handled */
+                }
+                PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+            }
+        }
+    }
+
+    /*
+     *  Then handle possible incoming connection requests.  (Only rank 0 has
+     * valid info, so only look to RecvBlock[0].)
+     */
     for (int i = 0; i < RecvBlock[0]; i++)
     {
         WS_ReaderInfo reader;
@@ -1235,7 +1277,9 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
     }
 
     /*
-     *  Lastly, we'll decide what to do with the current provided timestep.
+     *  Lastly, we'll decide what to do with the current provided timestep,
+     *  (if it was not discarded before we added new readers).
+     *
      *  If any writer rank is over the queuelimit, we must discard or block
      * decision points:
      If mode is block on queue limit:
@@ -1307,7 +1351,9 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
             /* discard things */
             if (ActiveReaderCount == 0)
             {
-                DoStreamDiscard(Stream);
+                /* this should have been handled above */
+                CP_verbose(Stream, "Finding a late need to discard when Active "
+                                   "Readers is zero, shouldn't happen!!\n\n");
             }
             else
             {
