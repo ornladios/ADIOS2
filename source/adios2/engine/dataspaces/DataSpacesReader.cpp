@@ -250,13 +250,6 @@ void DataSpacesReader::DoClose(const int transportIndex){
 
 	PerformGets();
 
-	// disconnect from dataspaces if we are connected from writer but not anymore from reader
-	//if (globals_adios_is_dataspaces_connected_from_reader() &&
-	//		!globals_adios_is_dataspaces_connected_from_writer())
-	//{
-		MPI_Barrier (m_data.mpi_comm);
-	//}
-	//globals_adios_set_dataspaces_disconnected_from_reader();
 }
 
 void DataSpacesReader::Flush(const int transportIndex) {}
