@@ -5,8 +5,10 @@
 #include <cstdint>
 #include <cstring>
 
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 #include <adios2.h>
 
@@ -115,7 +117,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             while (Status == adios2::StepStatus::NotReady)
             {
                 BeginStepFailedPolls++;
-                usleep(1000 * 100);
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
             }
         }
@@ -124,7 +126,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             if (LongFirstDelay)
             {
                 LongFirstDelay = 0;
-                usleep(3 * 1000 * 1000); /* sleep for 3 seconds */
+                std::this_thread::sleep_for(std::chrono::seconds(3));
             }
             /* would like to do blocking, but API is inconvenient, so specify an
              * hour timeout */
@@ -150,12 +152,12 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             {
                 SkippedSteps++;
             }
-            t = currentStep; // starting out
+            t = (unsigned int)currentStep; // starting out
         }
 
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-        int writerSize;
+        size_t writerSize;
 
         auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
         EXPECT_TRUE(scalar_r64);
@@ -221,13 +223,14 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_time.Shape()[0], writerSize);
 
-        long unsigned int myStart = (writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myStart =
+            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
-            ((writerSize * Nx + mpiSize - 1) / mpiSize);
+            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
-            myLength = writerSize * Nx - myStart;
+            myLength = (long unsigned int)writerSize * Nx - myStart;
         }
         const adios2::Dims start{myStart};
         const adios2::Dims count{myLength};
@@ -306,7 +309,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
         if (IncreasingDelay)
         {
-            usleep(1000 * DelayMS); /* sleep for DelayMS milliseconds */
+            std::this_thread::sleep_for(std::chrono::milliseconds(
+                DelayMS)); /* sleep for DelayMS milliseconds */
             DelayMS += 200;
         }
     }

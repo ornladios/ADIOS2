@@ -7,10 +7,12 @@
 #include <cstring>
 #include <ctime>
 
+#include <chrono>
 #include <iostream>
 #include <signal.h>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 #include <adios2.h>
 
@@ -139,7 +141,7 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
     while ((std::time(NULL) < EndTime) && !GlobalCloseNow)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData(step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -196,7 +198,8 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
-        usleep(1000 * DelayMS); /* sleep for DelayMS milliseconds */
+        std::this_thread::sleep_for(std::chrono::milliseconds(
+            DelayMS)); /* sleep for DelayMS milliseconds */
         step++;
 #ifdef ADIOS2_HAVE_MPI
         MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
