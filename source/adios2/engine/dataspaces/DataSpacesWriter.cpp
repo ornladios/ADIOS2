@@ -44,7 +44,7 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name, const Mode m
     	fprintf(stderr, "Unable to connect to DataSpaces. Err: %d\n", ret);
 
 }
-DataSpacesWriter::~DataSpacesWriter(){ DoClose();}
+DataSpacesWriter::~DataSpacesWriter(){ }
 
 StepStatus DataSpacesWriter::BeginStep(StepMode mode, const float timeout_sec)
 {

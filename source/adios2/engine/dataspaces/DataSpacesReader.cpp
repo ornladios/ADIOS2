@@ -48,7 +48,7 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name, const Mode m
 
 }
 
-DataSpacesReader::~DataSpacesReader() { DoClose(); }
+DataSpacesReader::~DataSpacesReader() { }
 
 
 StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
