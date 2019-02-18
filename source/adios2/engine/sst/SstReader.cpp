@@ -98,7 +98,6 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 #define declare_type(T)                                                        \
     else if (Type == helper::GetType<T>())                                     \
     {                                                                          \
-        std::cout << "Loading attribute matched type " << Type << std::endl;   \
         Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
     }
 
