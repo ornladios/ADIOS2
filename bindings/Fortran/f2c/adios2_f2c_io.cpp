@@ -114,6 +114,24 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
                 "adios2_define_variable");
         }
 
+        // Check for local value
+        if (*ndims == 1)
+        {
+            if (shape[0] == -2)
+            {
+                size_t shapeC[1];
+                shapeC[0] = adios2_local_value_dim;
+
+                *variable = adios2_define_variable(
+                    *io, name, static_cast<adios2_type>(*type), *ndims, shapeC,
+                    nullptr, nullptr,
+                    static_cast<adios2_constant_dims>(*constant_dims));
+                *ierr = (*variable == NULL)
+                            ? static_cast<int>(adios2_error_exception)
+                            : static_cast<int>(adios2_error_none);
+                return;
+            }
+        }
         // Check for local variables
         if (shape[0] == -1)
         {
