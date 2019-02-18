@@ -59,18 +59,18 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	uint64_t gdims[MAX_DS_NDIM], lb[MAX_DS_NDIM], ub[MAX_DS_NDIM];
 	int elemsize, ndim;
 	//acquire lock, current step and n_vars in the Begin Step
-	char *cstr = new char[f_Name.length() + 1];
-	strcpy(cstr, f_Name.c_str());
+	char *fstr = new char[f_Name.length() + 1];
+	strcpy(fstr, f_Name.c_str());
 
-	dspaces_lock_on_read (cstr, &m_data.mpi_comm);
+	dspaces_lock_on_read (fstr, &m_data.mpi_comm);
 
-	delete[] cstr;
+
 
 	//read the version and nvars from dataspaces
 	int l_version_no[2] = {0,0};
 	int version_buf_len = 2;
 	local_file_var = "LATESTVERSION@"+f_Name;
-	cstr = new char[local_file_var.length() + 1];
+	char *cstr = new char[local_file_var.length() + 1];
 	strcpy(cstr, local_file_var.c_str());
 	elemsize = sizeof(int);
 	ndim = 1;
@@ -79,7 +79,6 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	dspaces_define_gdim(cstr, ndim, gdims);
 	dspaces_get(cstr, 0, elemsize, ndim, lb, ub, l_version_no);
 	delete[] cstr;
-
 	latestStep = l_version_no[0];
 
 	if(mode == StepMode::NextAvailable){
@@ -91,8 +90,10 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	//we check if the current step is the end of the step that is in DataSpaces
 	if (m_CurrentStep > latestStep)
 	{
+		dspaces_unlock_on_read (fstr, &m_data.mpi_comm);
 		return StepStatus::EndOfStream;
 	}
+	delete[] fstr;
 
 	int version_buf[2] = {0,0}; /* last version put in space; not terminated */
 	local_file_var = "VERSION@"+f_Name;
