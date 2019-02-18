@@ -80,7 +80,16 @@ void DataSpacesWriter::EndStep()
 void DataSpacesWriter::Flush(const int transportIndex) {}
 
 void DataSpacesWriter::DoClose(const int transportIndex){
+	// disconnect from dataspaces if we are connected from writer but not anymore from reader
+	if (globals_adios_is_dataspaces_connected_from_writer() &&
+			!globals_adios_is_dataspaces_connected_from_both())
+	{
+		fprintf(stderr, "Disconnecting writer via finalize \n");
+		MPI_Barrier (m_data.mpi_comm);
+		dspaces_finalize();
 
+	}
+	globals_adios_set_dataspaces_disconnected_from_writer();
 }
 
 void DataSpacesWriter::PerformPuts() {}

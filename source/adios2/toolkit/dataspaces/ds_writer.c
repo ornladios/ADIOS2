@@ -102,22 +102,27 @@ int adios_dataspaces_init (void* comm, DsData* md)
 {
 	int  nproc;
 	int  rank, err;
-	MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
-	MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
+	if (!globals_adios_is_dataspaces_connected()) {
 
-	if(md->appid==0){
-		md->appid = 1;
-		fprintf (stderr, "AppID not found in xml file. Setting it as 1 for the writer in DATASPACES\n");
+		MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
+		MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
 
+		if(md->appid==0){
+			md->appid = 1;
+			fprintf (stderr, "AppID not found in xml file. Setting it as 1 for the Writer in DATASPACES\n");
+
+		}
+
+		err = dspaces_init(nproc, md->appid, (MPI_Comm *)comm, NULL);
+		if (err < 0) {
+			fprintf (stderr, "Failed to connect with DATASPACES\n");
+			return err;
+		}
+
+		md->rank = rank;
+		md->mpi_comm = *(MPI_Comm *)comm;
 	}
-	err = dspaces_init(nproc, md->appid, (MPI_Comm *)comm, NULL);
-	if (err < 0) {
-		fprintf (stderr, "Failed to connect with DATASPACES\n");
-		return err;
-	}
-
-	md->rank = rank;
-	md->mpi_comm = *(MPI_Comm *)comm;
+	globals_adios_set_dataspaces_connected_from_writer();
 	return 0;
 
 }
@@ -137,22 +142,26 @@ int adios_read_dataspaces_init (void* comm, DsData* md)
 {
 	int  nproc;
 	int  rank, err;
-	MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
-	MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
+	if (!globals_adios_is_dataspaces_connected()) {
 
-	if(md->appid==0){
-		md->appid = 2;
-		fprintf (stderr, "AppID not found in xml file. Setting it as 2 for the Reader in DATASPACES\n");
+		MPI_Comm_rank(*(MPI_Comm *)comm, &rank);
+		MPI_Comm_size(*(MPI_Comm *)comm, &nproc);
 
+		if(md->appid==0){
+			md->appid = 2;
+			fprintf (stderr, "AppID not found in xml file. Setting it as 2 for the Reader in DATASPACES\n");
+
+		}
+		err = dspaces_init(nproc, md->appid, (MPI_Comm *)comm, NULL);
+		if (err < 0) {
+			fprintf (stderr, "Failed to connect with DATASPACES\n");
+			return err;
+		}
+
+		md->rank = rank;
+		md->mpi_comm = *(MPI_Comm *)comm;
 	}
-	err = dspaces_init(nproc, md->appid, (MPI_Comm *)comm, NULL);
-	if (err < 0) {
-		fprintf (stderr, "Failed to connect with DATASPACES\n");
-		return err;
-	}
-
-	md->rank = rank;
-	md->mpi_comm = *(MPI_Comm *)comm;
+	globals_adios_set_dataspaces_connected_from_reader();
 	return 0;
 
 }
