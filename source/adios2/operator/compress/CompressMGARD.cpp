@@ -47,7 +47,7 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
 
     // set type
     int mgardType = -1;
-    if (type == "float")
+    if (type == helper::GetType<float>())
     {
         if (m_DebugMode)
         {
@@ -56,7 +56,7 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
                 "MGARD only supports double precision, in call to Put\n");
         }
     }
-    else if (type == "double")
+    else if (type == helper::GetType<double>())
     {
         mgardType = 1;
     }
@@ -112,7 +112,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
     int mgardType = -1;
     size_t elementSize = 0;
 
-    if (type == "float")
+    if (type == helper::GetType<float>())
     {
         if (m_DebugMode)
         {
@@ -121,7 +121,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
                 "MGARD only supports double precision, in call to Get\n");
         }
     }
-    else if (type == "double")
+    else if (type == helper::GetType<double>())
     {
         mgardType = 1;
         elementSize = 8;
