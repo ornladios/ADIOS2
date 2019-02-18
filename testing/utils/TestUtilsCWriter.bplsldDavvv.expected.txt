@@ -10,11 +10,11 @@ Settings :
 ADIOS Open: read header info from TestUtilsCWriter.bp
 Try BPFile engine to open the file...
 File info:
-  of variables:  10
+  of variables:  12
   of attributes: 12
   statistics:    Min / Max 
 
-  double          R64_2d    {4, 5} = 0 / 19
+  double                  R64_2d    {4, 5} = 0 / 19
         step 0: 
           block 0: [0:3, 0:4] = 0 / 19
     j=0, st=0 ct=4
@@ -33,22 +33,22 @@ set selection:   start = { 0 0 }  count = { 4 5 }
     (1,1)    6 7 8 9 10 11
     (2,2)    12 13 14 15 16 17
     (3,3)    18 19 
-  short           aI16      attr   = 512
-  int             aI32      attr   = 131072
-  signed char     aI8       attr   = 0
-  float           aR32      attr   = 0
-  double          aR64      attr   = 0
-  unsigned short  aU16      attr   = 32768
-  unsigned int    aU32      attr   = 2147483648
-  unsigned char   aU8       attr   = 128
-  string          name      attr   = "TestUtilsCWrite"
-  int             nproc     scalar = 1
+  short                   aI16      attr   = 512
+  int                     aI32      attr   = 131072
+  signed char             aI8       attr   = 0
+  float                   aR32      attr   = 0
+  double                  aR64      attr   = 0
+  unsigned short          aU16      attr   = 32768
+  unsigned int            aU32      attr   = 2147483648
+  unsigned char           aU8       attr   = 128
+  string                  name      attr   = "TestUtilsCWrite"
+  int                     nproc     scalar = 1
         step 0:  = 1
                1
-  int             nwriters  attr   = 1
-  unsigned short  shape2D   attr   = {4, 5}
-  string          strarray  attr   = {"first", "second", "third", "fourth"}
-  short           varI16    {10} = -510 / 521
+  int                     nwriters  attr   = 1
+  unsigned short          shape2D   attr   = {4, 5}
+  string                  strarray  attr   = {"first", "second", "third", "fourth"}
+  short                   varI16    {10} = -510 / 521
         step 0: 
           block 0: [0:9] = -510 / 521
     j=0, st=0 ct=10
@@ -62,7 +62,7 @@ adios_read_var name=varI16   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    512 513 -510 515 -508 517
     (6)    -506 519 -504 521 
-  int             varI32    {10} = -131070 / 131081
+  int                     varI32    {10} = -131070 / 131081
         step 0: 
           block 0: [0:9] = -131070 / 131081
     j=0, st=0 ct=10
@@ -76,7 +76,21 @@ adios_read_var name=varI32   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    131072 131073 -131070 131075 -131068 131077
     (6)    -131066 131079 -131064 131081 
-  signed char     varI8     {10} = -8 / 9
+  long long int           varI64    {10} = -8589934590 / 8589934601
+        step 0: 
+          block 0: [0:9] = -8589934590 / 8589934601
+    j=0, st=0 ct=10
+    s[0]=0, c[0]=10, n=10
+ total size of data to read = 80
+Read size strategy:
+    dim 0: read 10 elements
+    read 10 elements at once, 10 in total (nelems=10)
+adios_read_var name=varI64   start = { 0 }  count = { 10 }  read 10 elems
+    read block 0 from offset 0 nelems 10)
+set selection:   start = { 0 }  count = { 10 }
+    (0)    8589934592 8589934593 -8589934590 8589934595 -8589934588 8589934597
+    (6)    -8589934586 8589934599 -8589934584 8589934601 
+  signed char             varI8     {10} = -8 / 9
         step 0: 
           block 0: [0:9] = -8 / 9
     j=0, st=0 ct=10
@@ -90,7 +104,7 @@ adios_read_var name=varI8   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    0 1 -2 3 -4 5
     (6)    -6 7 -8 9 
-  float           varR32    {10} = 0 / 9
+  float                   varR32    {10} = 0 / 9
         step 0: 
           block 0: [0:9] = 0 / 9
     j=0, st=0 ct=10
@@ -104,7 +118,7 @@ adios_read_var name=varR32   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    0 1 2 3 4 5
     (6)    6 7 8 9 
-  double          varR64    {10} = 0 / 9
+  double                  varR64    {10} = 0 / 9
         step 0: 
           block 0: [0:9] = 0 / 9
     j=0, st=0 ct=10
@@ -118,7 +132,7 @@ adios_read_var name=varR64   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    0 1 2 3 4 5
     (6)    6 7 8 9 
-  unsigned short  varU16    {10} = 32768 / 32777
+  unsigned short          varU16    {10} = 32768 / 32777
         step 0: 
           block 0: [0:9] = 32768 / 32777
     j=0, st=0 ct=10
@@ -132,7 +146,7 @@ adios_read_var name=varU16   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    32768 32769 32770 32771 32772 32773
     (6)    32774 32775 32776 32777 
-  unsigned int    varU32    {10} = 2147483648 / 2147483657
+  unsigned int            varU32    {10} = 2147483648 / 2147483657
         step 0: 
           block 0: [0:9] = 2147483648 / 2147483657
     j=0, st=0 ct=10
@@ -146,7 +160,21 @@ adios_read_var name=varU32   start = { 0 }  count = { 10 }  read 10 elems
 set selection:   start = { 0 }  count = { 10 }
     (0)    2147483648 2147483649 2147483650 2147483651 2147483652 2147483653
     (6)    2147483654 2147483655 2147483656 2147483657 
-  unsigned char   varU8     {10} = 128 / 137
+  unsigned long long int  varU64    {10} = 9223372036854775808 / 9223372036854775817
+        step 0: 
+          block 0: [0:9] = 9223372036854775808 / 9223372036854775817
+    j=0, st=0 ct=10
+    s[0]=0, c[0]=10, n=10
+ total size of data to read = 80
+Read size strategy:
+    dim 0: read 10 elements
+    read 10 elements at once, 10 in total (nelems=10)
+adios_read_var name=varU64   start = { 0 }  count = { 10 }  read 10 elems
+    read block 0 from offset 0 nelems 10)
+set selection:   start = { 0 }  count = { 10 }
+    (0)    9223372036854775808 9223372036854775809 9223372036854775810 9223372036854775811 9223372036854775812 9223372036854775813
+    (6)    9223372036854775814 9223372036854775815 9223372036854775816 9223372036854775817 
+  unsigned char           varU8     {10} = 128 / 137
         step 0: 
           block 0: [0:9] = 128 / 137
     j=0, st=0 ct=10
