@@ -72,18 +72,26 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     }
 
     // Parameters
-    auto itTolerance = parameters.find("tolerance");
-    if (m_DebugMode)
+    bool hasTolerance = false;
+    double tolerance;
+    auto itAccuracy = parameters.find("accuracy");
+    if (itAccuracy != parameters.end())
     {
-        if (itTolerance == parameters.end())
-        {
-            throw std::invalid_argument("ERROR: missing mandatory parameter "
-                                        "tolerance for MGARD compression "
-                                        "operator, in call to Put\n");
-        }
+        tolerance = std::stod(itAccuracy->second);
+        hasTolerance = true;
     }
-
-    double tolerance = std::stod(itTolerance->second);
+    auto itTolerance = parameters.find("tolerance");
+    if (itTolerance != parameters.end())
+    {
+        tolerance = std::stod(itTolerance->second);
+        hasTolerance = true;
+    }
+    if (!hasTolerance)
+    {
+        throw std::invalid_argument("ERROR: missing mandatory parameter "
+                                    "tolerance for MGARD compression "
+                                    "operator\n");
+    }
 
     int sizeOut = 0;
     unsigned char *dataOutPtr =

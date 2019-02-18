@@ -5,27 +5,24 @@
 
 find_package(Threads REQUIRED)
 
-set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
-
-add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
-target_link_libraries(TestStagingMPMD adios2 gtest ${CMAKE_THREAD_LIBS_INIT})
 if(ADIOS2_HAVE_MPI)
+    set(extra_test_args EXEC_WRAPPER ${MPIEXEC_COMMAND})
+
+    add_executable(TestStagingMPMD  TestStagingMPMD.cpp)
+    target_link_libraries(TestStagingMPMD adios2 gtest ${CMAKE_THREAD_LIBS_INIT})
     target_link_libraries(TestStagingMPMD adios2 gtest_interface MPI::MPI_C)
-endif()
+    if(ADIOS2_HAVE_SST)
+        gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+        		EXTRA_ARGS "SST" "MarshalMethod:FFS"
+			TEST_SUFFIX _SST_FFS)
+	gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+        	        EXTRA_ARGS "SST" "MarshalMethod:BP"
+                	TEST_SUFFIX _SST_BP)
+    endif()
 
-if(ADIOS2_HAVE_SST)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                EXTRA_ARGS "SST" "MarshalMethod:FFS"
-                TEST_SUFFIX _SST_FFS)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                EXTRA_ARGS "SST" "MarshalMethod:BP"
-                TEST_SUFFIX _SST_BP)
-endif()
-
-if(ADIOS2_HAVE_MPI)
-gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-                EXTRA_ARGS "InSituMPI"
-                TEST_SUFFIX _InSituMPI)
+    gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
+                    EXTRA_ARGS "InSituMPI"
+                    TEST_SUFFIX _InSituMPI)
 endif()
 
 add_executable(TestCommonWrite TestCommonWrite.cpp)
@@ -96,7 +93,8 @@ set (FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1.FFS;CtoF.1x1.BP;FtoF.1x1")
 endif()
-set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestReader.FFS;LatestReader.BP;DiscardWriter")
+#set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestReader.FFS;LatestReader.BP;DiscardWriter")
+set (SPECIAL_TESTS "TimeoutReader;LatestReader.FFS;LatestReader.BP;DiscardWriter")
 
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")
@@ -139,6 +137,7 @@ set (KillReadersSerialized_TIMEOUT "300")
 set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 3 -warg RendezvousReaderCount:0,ControlTransport:sockets -rarg --ignore_time_gap")
 set (KillReaders3Max_TIMEOUT "300")
 set (TimeoutReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -rarg --non_blocking -warg --ms_delay -warg 2000")
+set (TimeoutReaders_TIMEOUT "60")
 set (LatestReader.FFS_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:FFS -rarg --latest -rarg --long_first_delay")
 set (LatestReader.BP_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:BP -rarg --latest -rarg --long_first_delay")
 set (LatestReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -rarg --latest -rarg --long_first_delay")

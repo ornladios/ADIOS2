@@ -42,11 +42,10 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     Stream->QueueFullPolicy = Params->QueueFullPolicy;
     Stream->RegistrationMethod = Params->RegistrationMethod;
-    char *SelectedTransport = NULL;
     if (Params->DataTransport != NULL)
     {
         int i;
-        SelectedTransport = malloc(strlen(Params->DataTransport) + 1);
+        char *SelectedTransport = malloc(strlen(Params->DataTransport) + 1);
         for (i = 0; Params->DataTransport[i] != 0; i++)
         {
             SelectedTransport[i] = tolower(Params->DataTransport[i]);
@@ -69,8 +68,33 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     if (Params->ControlTransport == NULL)
     {
-        /* determine reasonable default, now "enet" */
-        Params->ControlTransport = strdup("enet");
+        /* determine reasonable default, now "sockets" */
+        Params->ControlTransport = strdup("sockets");
+    }
+    else
+    {
+        int i;
+        char *SelectedTransport = malloc(strlen(Params->ControlTransport) + 1);
+        for (i = 0; Params->ControlTransport[i] != 0; i++)
+        {
+            SelectedTransport[i] = tolower(Params->ControlTransport[i]);
+        }
+        SelectedTransport[i] = 0;
+
+        /* canonicalize SelectedTransport */
+        if ((strcmp(SelectedTransport, "sockets") == 0) ||
+            (strcmp(SelectedTransport, "tcp") == 0))
+        {
+            Params->ControlTransport = strdup("sockets");
+        }
+        else if ((strcmp(SelectedTransport, "udp") == 0) ||
+                 (strcmp(SelectedTransport, "rudp") == 0) ||
+                 (strcmp(SelectedTransport, "scalable") == 0) ||
+                 (strcmp(SelectedTransport, "enet") == 0))
+        {
+            Params->ControlTransport = strdup("enet");
+        }
+        free(SelectedTransport);
     }
     Stream->ConnectionUsleepMultiplier = 50;
     if ((strcmp(Params->ControlTransport, "enet") == 0) &&
