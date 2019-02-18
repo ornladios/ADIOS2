@@ -84,7 +84,7 @@ void DataSpacesWriter::DoClose(const int transportIndex){
 	if (globals_adios_is_dataspaces_connected_from_writer() &&
 			!globals_adios_is_dataspaces_connected_from_both())
 	{
-		fprintf(stderr, "Disconnecting writer via finalize \n");
+		//fprintf(stderr, "Disconnecting writer via finalize \n");
 		MPI_Barrier (m_data.mpi_comm);
 		dspaces_finalize();
 
