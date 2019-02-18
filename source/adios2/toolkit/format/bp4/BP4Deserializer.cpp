@@ -297,22 +297,22 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_byte):
         {
-            DefineVariableInEngineIOPerStep<signed char>(header, engine, buffer,
-                                                         position, step);
+            DefineVariableInEngineIOPerStep<int8_t>(header, engine, buffer,
+                                                    position, step);
             break;
         }
 
         case (type_short):
         {
-            DefineVariableInEngineIOPerStep<short>(header, engine, buffer,
-                                                   position, step);
+            DefineVariableInEngineIOPerStep<int16_t>(header, engine, buffer,
+                                                     position, step);
             break;
         }
 
         case (type_integer):
         {
-            DefineVariableInEngineIOPerStep<int>(header, engine, buffer,
-                                                 position, step);
+            DefineVariableInEngineIOPerStep<int32_t>(header, engine, buffer,
+                                                     position, step);
             break;
         }
 
@@ -325,22 +325,22 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_unsigned_byte):
         {
-            DefineVariableInEngineIOPerStep<unsigned char>(
-                header, engine, buffer, position, step);
+            DefineVariableInEngineIOPerStep<uint8_t>(header, engine, buffer,
+                                                     position, step);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineVariableInEngineIOPerStep<unsigned short>(
-                header, engine, buffer, position, step);
+            DefineVariableInEngineIOPerStep<uint16_t>(header, engine, buffer,
+                                                      position, step);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineVariableInEngineIOPerStep<unsigned int>(
-                header, engine, buffer, position, step);
+            DefineVariableInEngineIOPerStep<uint32_t>(header, engine, buffer,
+                                                      position, step);
             break;
         }
 
@@ -477,19 +477,19 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_byte):
         {
-            DefineVariableInIO<signed char>(header, io, buffer, position);
+            DefineVariableInIO<int8_t>(header, io, buffer, position);
             break;
         }
 
         case (type_short):
         {
-            DefineVariableInIO<short>(header, io, buffer, position);
+            DefineVariableInIO<int16_t>(header, io, buffer, position);
             break;
         }
 
         case (type_integer):
         {
-            DefineVariableInIO<int>(header, io, buffer, position);
+            DefineVariableInIO<int32_t>(header, io, buffer, position);
             break;
         }
 
@@ -501,19 +501,19 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_unsigned_byte):
         {
-            DefineVariableInIO<unsigned char>(header, io, buffer, position);
+            DefineVariableInIO<uint8_t>(header, io, buffer, position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineVariableInIO<unsigned short>(header, io, buffer, position);
+            DefineVariableInIO<uint16_t>(header, io, buffer, position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineVariableInIO<unsigned int>(header, io, buffer, position);
+            DefineVariableInIO<uint32_t>(header, io, buffer, position);
             break;
         }
 
@@ -653,20 +653,21 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_byte):
         {
-            DefineAttributeInEngineIO<signed char>(header, engine, buffer,
-                                                   position);
+            DefineAttributeInEngineIO<int8_t>(header, engine, buffer, position);
             break;
         }
 
         case (type_short):
         {
-            DefineAttributeInEngineIO<short>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<int16_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_integer):
         {
-            DefineAttributeInEngineIO<int>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<int32_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
@@ -679,22 +680,22 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_unsigned_byte):
         {
-            DefineAttributeInEngineIO<unsigned char>(header, engine, buffer,
-                                                     position);
+            DefineAttributeInEngineIO<uint8_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineAttributeInEngineIO<unsigned short>(header, engine, buffer,
-                                                      position);
+            DefineAttributeInEngineIO<uint16_t>(header, engine, buffer,
+                                                position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineAttributeInEngineIO<unsigned int>(header, engine, buffer,
-                                                    position);
+            DefineAttributeInEngineIO<uint32_t>(header, engine, buffer,
+                                                position);
             break;
         }
 
@@ -775,19 +776,19 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_byte):
         {
-            DefineAttributeInIO<signed char>(header, io, buffer, position);
+            DefineAttributeInIO<int8_t>(header, io, buffer, position);
             break;
         }
 
         case (type_short):
         {
-            DefineAttributeInIO<short>(header, io, buffer, position);
+            DefineAttributeInIO<int16_t>(header, io, buffer, position);
             break;
         }
 
         case (type_integer):
         {
-            DefineAttributeInIO<int>(header, io, buffer, position);
+            DefineAttributeInIO<int32_t>(header, io, buffer, position);
             break;
         }
 
@@ -799,19 +800,19 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
 
         case (type_unsigned_byte):
         {
-            DefineAttributeInIO<unsigned char>(header, io, buffer, position);
+            DefineAttributeInIO<uint8_t>(header, io, buffer, position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineAttributeInIO<unsigned short>(header, io, buffer, position);
+            DefineAttributeInIO<uint16_t>(header, io, buffer, position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineAttributeInIO<unsigned int>(header, io, buffer, position);
+            DefineAttributeInIO<uint32_t>(header, io, buffer, position);
             break;
         }
 

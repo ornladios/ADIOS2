@@ -31,87 +31,56 @@ int8_t BP4Base::GetDataType<std::string>() const noexcept
 }
 
 template <>
-int8_t BP4Base::GetDataType<char>() const noexcept
+int8_t BP4Base::GetDataType<int8_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_byte);
     return type;
 }
 
 template <>
-int8_t BP4Base::GetDataType<signed char>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_byte);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<short>() const noexcept
+int8_t BP4Base::GetDataType<int16_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_short);
     return type;
 }
 
 template <>
-int8_t BP4Base::GetDataType<int>() const noexcept
+int8_t BP4Base::GetDataType<int32_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_integer);
     return type;
 }
 
 template <>
-int8_t BP4Base::GetDataType<long int>() const noexcept
-{
-    int8_t type = static_cast<int8_t>(type_long);
-    if (sizeof(long int) == sizeof(int))
-    {
-        type = static_cast<int8_t>(type_integer);
-    }
-
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<long long int>() const noexcept
+int8_t BP4Base::GetDataType<int64_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_long);
     return type;
 }
 
 template <>
-int8_t BP4Base::GetDataType<unsigned char>() const noexcept
+int8_t BP4Base::GetDataType<uint8_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_unsigned_byte);
     return type;
 }
 
 template <>
-int8_t BP4Base::GetDataType<unsigned short>() const noexcept
+int8_t BP4Base::GetDataType<uint16_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_unsigned_short);
     return type;
 }
 
 template <>
-int8_t BP4Base::GetDataType<unsigned int>() const noexcept
+int8_t BP4Base::GetDataType<uint32_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_unsigned_integer);
     return type;
 }
 
 template <>
-int8_t BP4Base::GetDataType<unsigned long int>() const noexcept
-{
-    int8_t type = static_cast<int8_t>(type_unsigned_long);
-    if (sizeof(unsigned long int) == sizeof(unsigned int))
-    {
-        type = static_cast<int8_t>(type_unsigned_integer);
-    }
-
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<unsigned long long int>() const noexcept
+int8_t BP4Base::GetDataType<uint64_t>() const noexcept
 {
     const int8_t type = static_cast<int8_t>(type_unsigned_long);
     return type;
