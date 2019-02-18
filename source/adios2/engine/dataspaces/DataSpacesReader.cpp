@@ -34,6 +34,13 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name, const Mode m
     latestStep = 0;
     nVars = 0;
     m_CurrentStep=-1;
+    auto appID = m_IO.m_Parameters.find("AppID");
+	if (appID != m_IO.m_Parameters.end()){
+		m_data.appid = std::stoi(appID->second);
+	}else{
+		m_data.appid = 0;
+
+	}
     ret = adios_read_dataspaces_init(&mpiComm, &m_data);
     if(ret < 0){
     	fprintf(stderr, "DataSpaces did not initialize properly %d\n", ret);
@@ -244,12 +251,12 @@ void DataSpacesReader::DoClose(const int transportIndex){
 	PerformGets();
 
 	// disconnect from dataspaces if we are connected from writer but not anymore from reader
-	if (globals_adios_is_dataspaces_connected_from_reader() &&
-			!globals_adios_is_dataspaces_connected_from_writer())
-	{
+	//if (globals_adios_is_dataspaces_connected_from_reader() &&
+	//		!globals_adios_is_dataspaces_connected_from_writer())
+	//{
 		MPI_Barrier (m_data.mpi_comm);
-	}
-	globals_adios_set_dataspaces_disconnected_from_reader();
+	//}
+	//globals_adios_set_dataspaces_disconnected_from_reader();
 }
 
 void DataSpacesReader::Flush(const int transportIndex) {}

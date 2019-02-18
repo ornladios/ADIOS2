@@ -27,7 +27,6 @@ struct adios_ds_data_struct
     int appid;  // from xml parameter or 1
     int n_writes; // how many times adios_write has been called
     MPI_Comm mpi_comm; // for use in open..close
-    MPI_Comm mpi_comm_init; // for use in init/finalize
 };
 
 

@@ -32,6 +32,13 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name, const Mode m
 
 	f_Name=name;
     int ret = 0;
+    auto appID = m_IO.m_Parameters.find("AppID");
+    if (appID != m_IO.m_Parameters.end()){
+    	m_data.appid = std::stoi(appID->second);
+	}else{
+		m_data.appid = 0;
+
+    }
     ret = adios_dataspaces_init(&mpiComm, &m_data);
     if(ret< 0)
     	fprintf(stderr, "Unable to connect to DataSpaces. Err: %d\n", ret);
@@ -74,13 +81,13 @@ void DataSpacesWriter::Flush(const int transportIndex) {}
 
 void DataSpacesWriter::DoClose(const int transportIndex){
 	// disconnect from dataspaces if we are connected from writer but not anymore from reader
-	if (globals_adios_is_dataspaces_connected_from_writer() &&
-			!globals_adios_is_dataspaces_connected_from_reader())
-	{
+	//if (globals_adios_is_dataspaces_connected_from_writer() &&
+	//		!globals_adios_is_dataspaces_connected_from_reader())
+	//{
 		MPI_Barrier (m_data.mpi_comm);
 
-	}
-	globals_adios_set_dataspaces_disconnected_from_writer();
+	//}
+	//globals_adios_set_dataspaces_disconnected_from_writer();
 }
 
 void DataSpacesWriter::PerformPuts() {}
