@@ -75,12 +75,17 @@ endif()
 
 # Use meta-compile features if available, otherwise use specific language
 # features
-if(NOT (CMAKE_VERSION VERSION_LESS 3.9))
-  set(ADIOS2_CXX11_FEATURES cxx_std_11)
-  set(ADIOS2_C99_FEATURES c_std_99)
-else()
+if(CMAKE_VERSION VERSION_LESS 3.9 OR
+   CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_CXX11_FEATURES cxx_auto_type cxx_nullptr)
+else()
+  set(ADIOS2_CXX11_FEATURES cxx_std_11)
+endif()
+if(CMAKE_VERSION VERSION_LESS 3.9 OR
+   CMAKE_C_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_C99_FEATURES c_restrict)
+else()
+  set(ADIOS2_C99_FEATURES c_std_99)
 endif()
 
 include(CMakeDependentOption)
