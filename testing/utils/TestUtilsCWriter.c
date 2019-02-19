@@ -117,11 +117,11 @@ int main(int argc, char *argv[])
     adios2_variable *varI8 = adios2_inquire_variable(ioH, "varI8");
     adios2_variable *varI16 = adios2_inquire_variable(ioH, "varI16");
     adios2_variable *varI32 = adios2_inquire_variable(ioH, "varI32");
-    // adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
+    adios2_variable *varI64 = adios2_inquire_variable(ioH, "varI64");
     adios2_variable *varU8 = adios2_inquire_variable(ioH, "varU8");
     adios2_variable *varU16 = adios2_inquire_variable(ioH, "varU16");
     adios2_variable *varU32 = adios2_inquire_variable(ioH, "varU32");
-    // adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
+    adios2_variable *varU64 = adios2_inquire_variable(ioH, "varU64");
     adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
     adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
     adios2_variable *R64_2d = adios2_inquire_variable(ioH, "R64_2d");
@@ -133,18 +133,12 @@ int main(int argc, char *argv[])
     adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);
     adios2_put(engineH, varI16, data_I16, adios2_mode_deferred);
     adios2_put(engineH, varI32, data_I32, adios2_mode_deferred);
-
-    /* Do not write the 64 bit integer array because its type
-       name is different on Windows than Linux and the bpls
-       output will look different
-       long int   vs   long long int   */
-    // adios2_put(engineH, varI64, data_I64, adios2_mode_deferred);
+    adios2_put(engineH, varI64, data_I64, adios2_mode_deferred);
 
     adios2_put(engineH, varU8, data_U8, adios2_mode_deferred);
     adios2_put(engineH, varU16, data_U16, adios2_mode_deferred);
     adios2_put(engineH, varU32, data_U32, adios2_mode_deferred);
-
-    // adios2_put(engineH, varU64, data_U64, adios2_mode_deferred);
+    adios2_put(engineH, varU64, data_U64, adios2_mode_deferred);
 
     adios2_put(engineH, varR32, data_R32, adios2_mode_deferred);
     adios2_put(engineH, varR64, data_R64, adios2_mode_deferred);

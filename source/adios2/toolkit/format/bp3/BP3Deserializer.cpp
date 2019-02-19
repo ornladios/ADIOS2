@@ -182,20 +182,19 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
 
         case (type_byte):
         {
-            DefineVariableInEngineIO<signed char>(header, engine, buffer,
-                                                  position);
+            DefineVariableInEngineIO<int8_t>(header, engine, buffer, position);
             break;
         }
 
         case (type_short):
         {
-            DefineVariableInEngineIO<short>(header, engine, buffer, position);
+            DefineVariableInEngineIO<int16_t>(header, engine, buffer, position);
             break;
         }
 
         case (type_integer):
         {
-            DefineVariableInEngineIO<int>(header, engine, buffer, position);
+            DefineVariableInEngineIO<int32_t>(header, engine, buffer, position);
             break;
         }
 
@@ -207,22 +206,21 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
 
         case (type_unsigned_byte):
         {
-            DefineVariableInEngineIO<unsigned char>(header, engine, buffer,
-                                                    position);
+            DefineVariableInEngineIO<uint8_t>(header, engine, buffer, position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineVariableInEngineIO<unsigned short>(header, engine, buffer,
-                                                     position);
+            DefineVariableInEngineIO<uint16_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineVariableInEngineIO<unsigned int>(header, engine, buffer,
-                                                   position);
+            DefineVariableInEngineIO<uint32_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
@@ -366,20 +364,21 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
 
         case (type_byte):
         {
-            DefineAttributeInEngineIO<signed char>(header, engine, buffer,
-                                                   position);
+            DefineAttributeInEngineIO<int8_t>(header, engine, buffer, position);
             break;
         }
 
         case (type_short):
         {
-            DefineAttributeInEngineIO<short>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<int16_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_integer):
         {
-            DefineAttributeInEngineIO<int>(header, engine, buffer, position);
+            DefineAttributeInEngineIO<int32_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
@@ -392,22 +391,22 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
 
         case (type_unsigned_byte):
         {
-            DefineAttributeInEngineIO<unsigned char>(header, engine, buffer,
-                                                     position);
+            DefineAttributeInEngineIO<uint8_t>(header, engine, buffer,
+                                               position);
             break;
         }
 
         case (type_unsigned_short):
         {
-            DefineAttributeInEngineIO<unsigned short>(header, engine, buffer,
-                                                      position);
+            DefineAttributeInEngineIO<uint16_t>(header, engine, buffer,
+                                                position);
             break;
         }
 
         case (type_unsigned_integer):
         {
-            DefineAttributeInEngineIO<unsigned int>(header, engine, buffer,
-                                                    position);
+            DefineAttributeInEngineIO<uint32_t>(header, engine, buffer,
+                                                position);
             break;
         }
 

@@ -402,22 +402,22 @@ void BP4Serializer::UpdateOffsetsInMetadata()
 
             case (type_byte):
             {
-                UpdateIndexOffsetsCharacteristics<signed char>(
-                    currentPosition, type_byte, buffer);
+                UpdateIndexOffsetsCharacteristics<int8_t>(currentPosition,
+                                                          type_byte, buffer);
                 break;
             }
 
             case (type_short):
             {
-                UpdateIndexOffsetsCharacteristics<short>(currentPosition,
-                                                         type_short, buffer);
+                UpdateIndexOffsetsCharacteristics<int16_t>(currentPosition,
+                                                           type_short, buffer);
                 break;
             }
 
             case (type_integer):
             {
-                UpdateIndexOffsetsCharacteristics<int>(currentPosition,
-                                                       type_integer, buffer);
+                UpdateIndexOffsetsCharacteristics<int32_t>(
+                    currentPosition, type_integer, buffer);
                 break;
             }
 
@@ -431,7 +431,7 @@ void BP4Serializer::UpdateOffsetsInMetadata()
 
             case (type_unsigned_byte):
             {
-                UpdateIndexOffsetsCharacteristics<unsigned char>(
+                UpdateIndexOffsetsCharacteristics<uint8_t>(
                     currentPosition, type_unsigned_byte, buffer);
 
                 break;
@@ -439,7 +439,7 @@ void BP4Serializer::UpdateOffsetsInMetadata()
 
             case (type_unsigned_short):
             {
-                UpdateIndexOffsetsCharacteristics<unsigned short>(
+                UpdateIndexOffsetsCharacteristics<uint16_t>(
                     currentPosition, type_unsigned_short, buffer);
 
                 break;
@@ -447,7 +447,7 @@ void BP4Serializer::UpdateOffsetsInMetadata()
 
             case (type_unsigned_integer):
             {
-                UpdateIndexOffsetsCharacteristics<unsigned int>(
+                UpdateIndexOffsetsCharacteristics<uint32_t>(
                     currentPosition, type_unsigned_integer, buffer);
 
                 break;
@@ -1235,8 +1235,8 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
         case (type_byte):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<signed char>(buffer, position,
-                                                             type_byte, true);
+                ReadElementIndexCharacteristics<int8_t>(buffer, position,
+                                                        type_byte, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -1245,8 +1245,9 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 
         case (type_short):
         {
-            const auto characteristics = ReadElementIndexCharacteristics<short>(
-                buffer, position, type_short, true);
+            const auto characteristics =
+                ReadElementIndexCharacteristics<int16_t>(buffer, position,
+                                                         type_short, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -1255,8 +1256,9 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 
         case (type_integer):
         {
-            const auto characteristics = ReadElementIndexCharacteristics<int>(
-                buffer, position, type_integer, true);
+            const auto characteristics =
+                ReadElementIndexCharacteristics<int32_t>(buffer, position,
+                                                         type_integer, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -1277,7 +1279,7 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
         case (type_unsigned_byte):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned char>(
+                ReadElementIndexCharacteristics<uint8_t>(
                     buffer, position, type_unsigned_byte, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
@@ -1288,7 +1290,7 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
         case (type_unsigned_short):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned short>(
+                ReadElementIndexCharacteristics<uint16_t>(
                     buffer, position, type_unsigned_short, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
@@ -1299,7 +1301,7 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
         case (type_unsigned_integer):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned int>(
+                ReadElementIndexCharacteristics<uint32_t>(
                     buffer, position, type_unsigned_integer, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
@@ -1681,8 +1683,8 @@ void BP4Serializer::MergeSerializeIndices(
         case (type_byte):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<signed char>(buffer, position,
-                                                             type_byte, true);
+                ReadElementIndexCharacteristics<int8_t>(buffer, position,
+                                                        type_byte, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -1691,8 +1693,9 @@ void BP4Serializer::MergeSerializeIndices(
 
         case (type_short):
         {
-            const auto characteristics = ReadElementIndexCharacteristics<short>(
-                buffer, position, type_short, true);
+            const auto characteristics =
+                ReadElementIndexCharacteristics<int16_t>(buffer, position,
+                                                         type_short, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -1701,8 +1704,9 @@ void BP4Serializer::MergeSerializeIndices(
 
         case (type_integer):
         {
-            const auto characteristics = ReadElementIndexCharacteristics<int>(
-                buffer, position, type_integer, true);
+            const auto characteristics =
+                ReadElementIndexCharacteristics<int32_t>(buffer, position,
+                                                         type_integer, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -1723,7 +1727,7 @@ void BP4Serializer::MergeSerializeIndices(
         case (type_unsigned_byte):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned char>(
+                ReadElementIndexCharacteristics<uint8_t>(
                     buffer, position, type_unsigned_byte, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
@@ -1734,7 +1738,7 @@ void BP4Serializer::MergeSerializeIndices(
         case (type_unsigned_short):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned short>(
+                ReadElementIndexCharacteristics<uint16_t>(
                     buffer, position, type_unsigned_short, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
@@ -1745,7 +1749,7 @@ void BP4Serializer::MergeSerializeIndices(
         case (type_unsigned_integer):
         {
             const auto characteristics =
-                ReadElementIndexCharacteristics<unsigned int>(
+                ReadElementIndexCharacteristics<uint32_t>(
                     buffer, position, type_unsigned_integer, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
