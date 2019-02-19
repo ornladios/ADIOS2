@@ -23,108 +23,37 @@ namespace format
 {
 
 // PROTECTED
-template <>
-int8_t BP4Base::GetDataType<std::string>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_string);
-    return type;
-}
 
-template <>
-int8_t BP4Base::GetDataType<int8_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_byte);
-    return type;
-}
+#define make_GetDataType(data_type, TYPE)                                      \
+    template <>                                                                \
+    int8_t BP4Base::GetDataType<TYPE>() const noexcept                         \
+    {                                                                          \
+        const int8_t type = static_cast<int8_t>(data_type);                    \
+        return type;                                                           \
+    }
 
-template <>
-int8_t BP4Base::GetDataType<int16_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_short);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<int32_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_integer);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<int64_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_long);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<uint8_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_byte);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<uint16_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_short);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<uint32_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_integer);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<uint64_t>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_long);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<float>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_real);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<double>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_double);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<long double>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_long_double);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<cfloat>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_complex);
-    return type;
-}
-
-template <>
-int8_t BP4Base::GetDataType<cdouble>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_double_complex);
-    return type;
-}
+/* clang-format off */
+make_GetDataType(type_string, std::string)
+make_GetDataType(type_byte, int8_t)
+make_GetDataType(type_short, int16_t)
+make_GetDataType(type_integer, int32_t)
+make_GetDataType(type_long, int64_t)
+make_GetDataType(type_unsigned_byte, uint8_t)
+make_GetDataType(type_unsigned_short, uint16_t)
+make_GetDataType(type_unsigned_integer, uint32_t)
+make_GetDataType(type_unsigned_long, uint64_t)
+make_GetDataType(type_real, float)
+make_GetDataType(type_double, double)
+make_GetDataType(type_long_double, long double)
+make_GetDataType(type_complex, cfloat)
+make_GetDataType(type_double_complex, cdouble)
+/* clang-format on */
 
 template <class T>
 BP4Base::Characteristics<T> BP4Base::ReadElementIndexCharacteristics(
-    const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
-    const bool untilTimeStep, const bool isLittleEndian) const
+    const std::vector<char> &buffer, size_t &position,
+    const DataTypes dataType, const bool untilTimeStep,
+    const bool isLittleEndian) const
 {
     Characteristics<T> characteristics;
     characteristics.EntryCount =
