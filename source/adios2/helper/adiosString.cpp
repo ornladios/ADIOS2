@@ -99,7 +99,6 @@ std::string AddExtension(const std::string &name,
     {
         result += extension;
     }
-    return result;
 }
 
 bool EndsWith(const std::string &str, const std::string &ending,
@@ -121,7 +120,7 @@ bool EndsWith(const std::string &str, const std::string &ending,
             std::transform(endLC.begin(), endLC.end(), endLC.begin(),
                            ::tolower);
             return (!strLC.compare(strLC.length() - endLC.length(),
-                                 endLC.length(), endLC));
+                                   endLC.length(), endLC));
         }
     }
     else
