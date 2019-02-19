@@ -138,7 +138,7 @@ set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -
 set (KillReaders3Max_TIMEOUT "300")
 set (TimeoutReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -rarg --non_blocking -warg --ms_delay -warg 2000")
 set (TimeoutReader_TIMEOUT "60")
-set (TimeoutReader_PROPERTIES " RUN_SERIAL ")
+set (TimeoutReader_PROPERTIES "RUN_SERIAL;1")
 set (LatestReader.FFS_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:FFS -rarg --latest -rarg --long_first_delay")
 set (LatestReader.BP_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:BP -rarg --latest -rarg --long_first_delay")
 set (DiscardWriter_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --engine_params -warg QueueLimit:1,QueueFullPolicy:discard -warg --ms_delay -warg 500 -rarg --discard")
