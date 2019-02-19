@@ -111,7 +111,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         }
         catch (...)
         {
-            std::cout << "Load failed" << std::endl;
+            //            std::cout << "Load failed" << std::endl;
             return;
         }
         return;
