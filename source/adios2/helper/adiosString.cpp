@@ -11,6 +11,7 @@
 #include "adiosString.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <algorithm> //std::transform
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <sstream>
@@ -100,6 +101,34 @@ std::string AddExtension(const std::string &name,
     }
     return result;
 }
+
+bool EndsWith(const std::string &str, const std::string &ending,
+              const bool caseSensitive)
+{
+    if (str.length() >= ending.length())
+    {
+        if (caseSensitive)
+        {
+            return (!str.compare(str.length() - ending.length(),
+                                 ending.length(), ending));
+        }
+        else
+        {
+            std::string strLC = std::string(str);
+            std::string endLC = std::string(ending);
+            std::transform(strLC.begin(), strLC.end(), strLC.begin(),
+                           ::tolower);
+            std::transform(endLC.begin(), endLC.end(), endLC.begin(),
+                           ::tolower);
+            return (!strLC.compare(strLC.length() - endLC.length(),
+                                 endLC.length(), endLC));
+        }
+    }
+    else
+    {
+        return false;
+    }
+};
 
 std::vector<std::string>
 GetParametersValues(const std::string &key,
