@@ -173,96 +173,14 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
         switch (header.DataType)
         {
 
-        case (type_string):
-        {
-            DefineVariableInEngineIO<std::string>(header, engine, buffer,
-                                                  position);
-            break;
-        }
-
-        case (type_byte):
-        {
-            DefineVariableInEngineIO<int8_t>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_short):
-        {
-            DefineVariableInEngineIO<int16_t>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_integer):
-        {
-            DefineVariableInEngineIO<int32_t>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_long):
-        {
-            DefineVariableInEngineIO<int64_t>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_unsigned_byte):
-        {
-            DefineVariableInEngineIO<uint8_t>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_unsigned_short):
-        {
-            DefineVariableInEngineIO<uint16_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_unsigned_integer):
-        {
-            DefineVariableInEngineIO<uint32_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_unsigned_long):
-        {
-            DefineVariableInEngineIO<uint64_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_real):
-        {
-            DefineVariableInEngineIO<float>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_double):
-        {
-            DefineVariableInEngineIO<double>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_long_double):
-        {
-            DefineVariableInEngineIO<long double>(header, engine, buffer,
-                                                  position);
-            break;
-        }
-
-        case (type_complex):
-        {
-            DefineVariableInEngineIO<std::complex<float>>(header, engine,
-                                                          buffer, position);
-            break;
-        }
-
-        case (type_double_complex):
-        {
-            DefineVariableInEngineIO<std::complex<double>>(header, engine,
-                                                           buffer, position);
-            break;
-        }
+#define make_case(T)                                                           \
+    case (TypeTraits<T>::type_enum):                                           \
+    {                                                                          \
+        DefineVariableInEngineIO<T>(header, engine, buffer, position);         \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(make_case)
+#undef make_case
 
         } // end switch
     };
@@ -348,90 +266,17 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
         switch (header.DataType)
         {
 
-        case (type_string):
-        {
-            DefineAttributeInEngineIO<std::string>(header, engine, buffer,
-                                                   position);
-            break;
-        }
-
+#define make_case(T)                                                           \
+    case (TypeTraits<T>::type_enum):                                           \
+    {                                                                          \
+        DefineAttributeInEngineIO<T>(header, engine, buffer, position);        \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(make_case)
+#undef make_case
         case (type_string_array):
         {
             DefineAttributeInEngineIO<std::string>(header, engine, buffer,
-                                                   position);
-            break;
-        }
-
-        case (type_byte):
-        {
-            DefineAttributeInEngineIO<int8_t>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_short):
-        {
-            DefineAttributeInEngineIO<int16_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_integer):
-        {
-            DefineAttributeInEngineIO<int32_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_long):
-        {
-            DefineAttributeInEngineIO<int64_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_unsigned_byte):
-        {
-            DefineAttributeInEngineIO<uint8_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_unsigned_short):
-        {
-            DefineAttributeInEngineIO<uint16_t>(header, engine, buffer,
-                                                position);
-            break;
-        }
-
-        case (type_unsigned_integer):
-        {
-            DefineAttributeInEngineIO<uint32_t>(header, engine, buffer,
-                                                position);
-            break;
-        }
-
-        case (type_unsigned_long):
-        {
-            DefineAttributeInEngineIO<uint64_t>(header, engine, buffer,
-                                                position);
-            break;
-        }
-
-        case (type_real):
-        {
-            DefineAttributeInEngineIO<float>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_double):
-        {
-            DefineAttributeInEngineIO<double>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_long_double):
-        {
-            DefineAttributeInEngineIO<long double>(header, engine, buffer,
                                                    position);
             break;
         }
