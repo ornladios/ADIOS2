@@ -56,6 +56,11 @@ if(MSVC)
 endif()
 
 #------------------------------------------------------------------------------#
+# Deal with any pre-installation cleanup tasks
+#------------------------------------------------------------------------------#
+add_subdirectory(cmake/install/pre)
+
+#------------------------------------------------------------------------------#
 # Top level options
 #------------------------------------------------------------------------------#
 include(ADIOSFunctions)
@@ -144,15 +149,6 @@ configure_file(
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
-  FILES_MATCHING
-    PATTERN "Find*.cmake"
-    PATTERN "CMake*.cmake"
-)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/upstream/
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/upstream
-)
 
 #------------------------------------------------------------------------------#
 # Third party libraries
@@ -202,14 +198,12 @@ endif()
 #------------------------------------------------------------------------------#
 # Generating package configs
 #------------------------------------------------------------------------------#
-GenerateADIOSPackageConfig()
+add_subdirectory(cmake/install/packaging)
 
-# It's certainly a little awkward to have this last add_subdirectory but it's
-# currently the only way to guarantee installation order for the static config
-# generation script
-if(UNIX)
-  add_subdirectory(cmake/install)
-endif()
+#------------------------------------------------------------------------------#
+# Generating static adios-config
+#------------------------------------------------------------------------------#
+add_subdirectory(cmake/install/post)
 
 #------------------------------------------------------------------------------#
 # Configuration summary

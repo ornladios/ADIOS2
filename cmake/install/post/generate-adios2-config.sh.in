@@ -48,7 +48,7 @@ function prefixify() {
 
 export adios2_DIR="@CMAKE_INSTALL_PREFIX@"
 CMAKE="@CMAKE_COMMAND@"
-SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/adios2-config-dummy"
+SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/post/adios2-config-dummy"
 BUILD_DIR=$(mktemp -d)
 pushd ${BUILD_DIR}
 
@@ -117,7 +117,9 @@ fi
 
 echo "Writing @CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
 cat \
-  "@ADIOS2_BINARY_DIR@/cmake/install/adios2-config.pre.sh" adios2.flags "@ADIOS2_BINARY_DIR@/cmake/install/adios2-config.post.sh" > "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
+  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.pre.sh" \
+  adios2.flags \
+  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
 chmod +x "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
 popd 
 rm -rf ${BUILD_DIR}
