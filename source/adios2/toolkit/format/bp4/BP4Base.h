@@ -662,4 +662,6 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios2
 
+#include "BP4Base.inl"
+
 #endif /* ADIOS2_TOOLKIT_FORMAT_BP4_BP4BASE_H_ */
