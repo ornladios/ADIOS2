@@ -24,17 +24,6 @@ namespace adios2
 namespace helper
 {
 
-template <class T>
-inline std::string GetType() noexcept
-{
-    return "compound";
-}
-template <>
-inline std::string GetType<void>() noexcept
-{
-    return "unknown";
-}
-
 template <>
 inline std::string GetType<std::string>() noexcept
 {
@@ -42,57 +31,42 @@ inline std::string GetType<std::string>() noexcept
 }
 
 template <>
-inline std::string GetType<char>() noexcept
-{
-    return "char";
-}
-template <>
-inline std::string GetType<signed char>() noexcept
+inline std::string GetType<int8_t>() noexcept
 {
     return "signed char";
 }
 template <>
-inline std::string GetType<unsigned char>() noexcept
+inline std::string GetType<uint8_t>() noexcept
 {
     return "unsigned char";
 }
 template <>
-inline std::string GetType<short>() noexcept
+inline std::string GetType<int16_t>() noexcept
 {
     return "short";
 }
 template <>
-inline std::string GetType<unsigned short>() noexcept
+inline std::string GetType<uint16_t>() noexcept
 {
     return "unsigned short";
 }
 template <>
-inline std::string GetType<int>() noexcept
+inline std::string GetType<int32_t>() noexcept
 {
     return "int";
 }
 template <>
-inline std::string GetType<unsigned int>() noexcept
+inline std::string GetType<uint32_t>() noexcept
 {
     return "unsigned int";
 }
 template <>
-inline std::string GetType<long int>() noexcept
-{
-    return "long int";
-}
-template <>
-inline std::string GetType<unsigned long int>() noexcept
-{
-    return "unsigned long int";
-}
-template <>
-inline std::string GetType<long long int>() noexcept
+inline std::string GetType<int64_t>() noexcept
 {
     return "long long int";
 }
 template <>
-inline std::string GetType<unsigned long long int>() noexcept
+inline std::string GetType<uint64_t>() noexcept
 {
     return "unsigned long long int";
 }
