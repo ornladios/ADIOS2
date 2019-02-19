@@ -24,31 +24,6 @@ namespace format
 
 // PROTECTED
 
-#define make_GetDataType(data_type, TYPE)\
-template <>\
-int8_t BP3Base::GetDataType<TYPE>() const noexcept\
-{\
-    const int8_t type = static_cast<int8_t>(data_type);\
-    return type;\
-}
-
-/* clang-format off */
-make_GetDataType(type_string, std::string)
-make_GetDataType(type_byte, int8_t)
-make_GetDataType(type_short, int16_t)
-make_GetDataType(type_integer, int32_t)
-make_GetDataType(type_long, int64_t)
-make_GetDataType(type_unsigned_byte, uint8_t)
-make_GetDataType(type_unsigned_short, uint16_t)
-make_GetDataType(type_unsigned_integer, uint32_t)
-make_GetDataType(type_unsigned_long, uint64_t)
-make_GetDataType(type_real, float)
-make_GetDataType(type_double, double)
-make_GetDataType(type_long_double, long double)
-make_GetDataType(type_complex, cfloat)
-make_GetDataType(type_double_complex, cdouble)
-/* clang-format on */
-
 template <class T>
 BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,

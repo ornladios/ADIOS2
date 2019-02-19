@@ -635,4 +635,6 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 } // end namespace format
 } // end namespace adios2
 
+#include "BP3Base.inl"
+
 #endif /* ADIOS2_TOOLKIT_FORMAT_BP3_BP3BASE_H_ */
