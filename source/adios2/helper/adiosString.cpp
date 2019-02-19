@@ -99,6 +99,7 @@ std::string AddExtension(const std::string &name,
     {
         result += extension;
     }
+    return result;
 }
 
 bool EndsWith(const std::string &str, const std::string &ending,
