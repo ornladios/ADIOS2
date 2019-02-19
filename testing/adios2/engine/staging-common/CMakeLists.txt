@@ -134,12 +134,17 @@ set (ZFPCompression.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg 
 set (ZFPCompression.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -p TestCommon -arg CompressionMethod:zfp" )
 set (KillReadersSerialized_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 1 -warg RendezvousReaderCount:0,ControlTransport:sockets -rarg --ignore_time_gap")
 set (KillReadersSerialized_TIMEOUT "300")
+set (KillReadersSerialized_PROPERTIES "RUN_SERIAL;1")
 set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 3 -warg RendezvousReaderCount:0,ControlTransport:sockets -rarg --ignore_time_gap")
 set (KillReaders3Max_TIMEOUT "300")
+set (KillReaders3Max_PROPERTIES "RUN_SERIAL;1")
 set (TimeoutReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -rarg --non_blocking -warg --ms_delay -warg 2000")
-set (TimeoutReaders_TIMEOUT "60")
+set (TimeoutReader_TIMEOUT "60")
+set (TimeoutReader_PROPERTIES "RUN_SERIAL;1")
 set (LatestReader.FFS_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:FFS -rarg --latest -rarg --long_first_delay")
+set (LatestReader.FFS_PROPERTIES "RUN_SERIAL;1")
 set (LatestReader.BP_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -warg MarshalMethod:BP -rarg --latest -rarg --long_first_delay")
+set (LatestReader.BP_PROPERTIES "RUN_SERIAL;1")
 set (LatestReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --ms_delay -warg 250 -warg --engine_params -rarg --latest -rarg --long_first_delay")
 set (DiscardWriter_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -max_readers 1 -warg --engine_params -warg QueueLimit:1,QueueFullPolicy:discard -warg --ms_delay -warg 500 -rarg --discard")
 
@@ -160,7 +165,7 @@ function(add_common_test basename engine)
        set (timeout "30")
     endif()
 
-    set_tests_properties(${testname} PROPERTIES TIMEOUT ${timeout})
+    set_tests_properties(${testname} PROPERTIES TIMEOUT ${timeout} ${${basename}_PROPERTIES} )
 endfunction()
 
 
