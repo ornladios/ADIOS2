@@ -119,7 +119,7 @@ ADIOS 2 default configuration on Titan is to build the static library. Python bi
       -- Found PythonFull: /sw/titan/.swci/0-login/opt/spack/20180315/linux-suse_linux11-x86_64/gcc-4.3.4/python-2.7.9-v6ctjewwdx6k2qs7ublexz7gnx457jo5/bin/python2.7  found components:  Interp Libs numpy mpi4py 
       ...
       ADIOS2 build configuration:
-        ADIOS Version: 2.3.0
+        ADIOS Version: 2.3.1
         C++ Compiler : GNU 6.3.0 CrayPrgEnv
           /opt/cray/craype/2.5.13/bin/CC
 

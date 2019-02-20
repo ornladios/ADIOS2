@@ -67,6 +67,7 @@ if(CMAKE_Fortran_COMPILER_LOADED)
 endif()
 
 # MPI
+list(APPEND mpi_find_components OPTIONAL_COMPONENTS CXX)
 if(ADIOS2_USE_MPI STREQUAL AUTO)
   find_package(MPI COMPONENTS ${mpi_find_components})
 elseif(ADIOS2_USE_MPI)

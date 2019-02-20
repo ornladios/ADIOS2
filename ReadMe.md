@@ -10,8 +10,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6eeb5a8ac3e34d2599cfdea5bdc3390f)](https://www.codacy.com/app/chuckatkins/ADIOS2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ornladios/ADIOS2&amp;utm_campaign=Badge_Grade)
 
 
-# Adaptable Input / Output System (ADIOS) v2.3.0
-This is v2.3.0 of the ADIOS I/O system, developed as part of the
+# Adaptable Input / Output System (ADIOS) v2.3.1
+This is v2.3.1 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
 
 ## License
@@ -64,20 +64,20 @@ $ cd adios2
 $ git clone https://github.com/ornladios/adios2.git source
 $ mkdir build
 $ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.0/gnu/openmpi ../source
+$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../source
 -- The C compiler identification is GNU 7.3.0
 -- The CXX compiler identification is GNU 7.3.0
 ...
 
 ADIOS2 build configuration:
-  ADIOS Version: 2.3.0
+  ADIOS Version: 2.3.1
   C++ Compiler : GNU 7.3.0 
     /opt/ohpc/pub/compiler/gcc/7.3.0/bin/g++
 
   Fortran Compiler : GNU 7.3.0 
     /opt/ohpc/pub/compiler/gcc/7.3.0/bin/gfortran
 
-  Installation prefix: /opt/adios2/2.3.0/gnu/openmpi
+  Installation prefix: /opt/adios2/2.3.1/gnu/openmpi
         bin: bin
         lib: lib
     include: include
@@ -165,15 +165,15 @@ $ make install
 ...
 Install the project...
 -- Install configuration: "Release"
--- Installing: /opt/adios2/2.3.0/gnu/openmpi/include/adios2/ADIOSConfig.h
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/include/adios2/ADIOSConfig.h
 ...
--- Installing: /opt/adios2/2.3.0/gnu/openmpi/bin/adios2-config
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/bin/adios2-config
 ...
--- Installing: /opt/adios2/2.3.0/gnu/openmpi/include/adios2.h
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/include/adios2.h
 ...
--- Installing: /opt/adios2/2.3.0/gnu/openmpi/lib/libadios2.so.2.3.0
--- Installing: /opt/adios2/2.3.0/gnu/openmpi/lib/libadios2.so.2
--- Installing: /opt/adios2/2.3.0/gnu/openmpi/lib/libadios2.so
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/lib/libadios2.so.2.3.1
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/lib/libadios2.so.2
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/lib/libadios2.so
 ...
 $
 ```

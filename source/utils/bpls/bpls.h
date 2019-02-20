@@ -89,9 +89,6 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                       core::Variable<T> *variable);
 
 template <class T>
-int printAttributeValue(core::Engine *fp, core::IO *io,
-                        core::Attribute<T> *attribute);
-template <class T>
 int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable);
 
 template <class T>
@@ -111,6 +108,11 @@ void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
                       uint64_t *c, Dims count);
 int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartypes,
                bool allowformat);
+
+/* s is a character array not necessarily null terminated.
+ * return false on OK print, true if it not XML (not printed)*/
+bool print_data_xml(const char *s, const size_t length);
+
 int print_dataset(const void *data, const std::string vartype, uint64_t *s,
                   uint64_t *c, int tdims, int *ndigits);
 void print_endline(void);
