@@ -1178,8 +1178,7 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
     };
 
     auto lf_MergeRankSerial = [&](
-        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL)
-    {
+        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
         auto &bufferOut = bufferSTL.m_Buffer;
         auto &positionOut = bufferSTL.m_Position;
 
@@ -1502,8 +1501,7 @@ void BP4Serializer::MergeSerializeIndices(
     };
 
     auto lf_MergeRankSerial = [&](
-        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL)
-    {
+        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
         auto &bufferOut = bufferSTL.m_Buffer;
         auto &positionOut = bufferSTL.m_Position;
 

@@ -943,8 +943,7 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 
     auto lf_SortMergeIndices = [&](
         const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-            &deserializedIndices)
-    {
+            &deserializedIndices) {
         auto &position = bufferSTL.m_Position;
         auto &buffer = bufferSTL.m_Buffer;
 
@@ -1082,8 +1081,7 @@ void BP3Serializer::MergeSerializeIndices(
     };
 
     auto lf_MergeRankSerial = [&](
-        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL)
-    {
+        const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
         auto &bufferOut = bufferSTL.m_Buffer;
         auto &positionOut = bufferSTL.m_Position;
 
