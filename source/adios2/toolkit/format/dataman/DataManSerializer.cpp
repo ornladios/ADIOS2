@@ -180,13 +180,7 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
     }
     else if (method == "bzip2")
     {
-        if (type == helper::GetType<int32_t>() ||
-            type == helper::GetType<int64_t>() ||
-            type == helper::GetType<float>() ||
-            type == helper::GetType<double>())
-        {
-            return true;
-        }
+        return true;
     }
     return false;
 }
