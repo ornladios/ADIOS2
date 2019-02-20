@@ -50,6 +50,7 @@
 #endif
 
 #include "adios2sys/CommandLineArguments.hxx"
+#include <pugixml.hpp>
 
 namespace adios2
 {
@@ -550,10 +551,88 @@ static inline int ndigits(size_t n)
     return snprintf(digitstr, 32, "%zu", n);
 }
 
+template <class T>
+int printAttributeValue(core::Engine *fp, core::IO *io,
+                        core::Attribute<T> *attribute)
+{
+    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
+    if (attribute->m_IsSingleValue)
+    {
+        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
+                   true);
+    }
+    else
+    {
+        fprintf(outf, "{");
+        size_t nelems = attribute->m_DataArray.size();
+        for (size_t j = 0; j < nelems; j++)
+        {
+            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
+                       true);
+            if (j < nelems - 1)
+            {
+                fprintf(outf, ", ");
+            }
+        }
+        fprintf(outf, "}");
+    }
+    return 0;
+}
+
+template <>
+int printAttributeValue(core::Engine *fp, core::IO *io,
+                        core::Attribute<std::string> *attribute)
+{
+    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
+    bool xmlprint = helper::EndsWith(attribute->m_Name, "xml", false);
+    bool printDataAnyway = true;
+
+    if (attribute->m_IsSingleValue)
+    {
+        if (xmlprint)
+        {
+            printDataAnyway =
+                print_data_xml(attribute->m_DataSingleValue.data(),
+                               attribute->m_DataSingleValue.length());
+        }
+        if (printDataAnyway)
+        {
+            print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
+                       true);
+        }
+    }
+    else
+    {
+        fprintf(outf, "{");
+        size_t nelems = attribute->m_DataArray.size();
+        for (size_t j = 0; j < nelems; j++)
+        {
+            if (xmlprint)
+            {
+                printDataAnyway =
+                    print_data_xml(attribute->m_DataArray[j].data(),
+                                   attribute->m_DataArray[j].length());
+            }
+            if (printDataAnyway)
+            {
+                print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
+                           true);
+            }
+            if (j < nelems - 1)
+            {
+                fprintf(outf, ", ");
+            }
+        }
+        fprintf(outf, "}");
+    }
+    return 0;
+}
+
 int nEntriesMatched = 0;
 
 int doList_vars(core::Engine *fp, core::IO *io)
 {
+
     const core::DataMap &variables = io->GetVariablesDataMap();
     const core::DataMap &attributes = io->GetAttributesDataMap();
 
@@ -578,7 +657,8 @@ int doList_vars(core::Engine *fp, core::IO *io)
 
     // size_t nNames = entries.size();
 
-    // calculate max length of variable names and type names in the first round
+    // calculate max length of variable names and type names in the first
+    // round
     int maxlen = 4; // need int for printf formatting
     int maxtypelen = 7;
     for (const auto &entrypair : entries)
@@ -852,35 +932,6 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     return retval;
 }
 
-template <class T>
-int printAttributeValue(core::Engine *fp, core::IO *io,
-                        core::Attribute<T> *attribute)
-{
-    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
-
-    if (attribute->m_IsSingleValue)
-    {
-        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
-                   true);
-    }
-    else
-    {
-        fprintf(outf, "{");
-        size_t nelems = attribute->m_DataArray.size();
-        for (size_t j = 0; j < nelems; j++)
-        {
-            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
-                       true);
-            if (j < nelems - 1)
-            {
-                fprintf(outf, ", ");
-            }
-        }
-        fprintf(outf, "}");
-    }
-    return 0;
-}
-
 #define PRINT_ARRAY(str, ndim, dims, loopvar, format)                          \
     fprintf(outf, "%s", str);                                                  \
     if (ndim > 0)                                                              \
@@ -922,7 +973,8 @@ void printMeshes(core::Engine *fp)
     int mpi_comm_dummy = 0;
     if (fp->nmeshes == 0)
     {
-        fprintf(outf, "Mesh info: There are no meshes defined in this file\n");
+        fprintf(outf, "Mesh info: There are no meshes defined in this
+    file\n");
         return;
     }
     fprintf(outf, "Mesh info: \n");
@@ -935,10 +987,12 @@ void printMeshes(core::Engine *fp)
             if (meshid != mi->id)
                 fprintf(
                     outf,
-                    "  bpls warning: meshid (=%d) != inquired mesh id (%d)\n",
+                    "  bpls warning: meshid (=%d) != inquired mesh id
+    (%d)\n",
                     meshid, mi->id);
             if (strcmp(fp->mesh_namelist[meshid], mi->name))
-                fprintf(outf, "  bpls warning: mesh name in list (=\"%s\") != "
+                fprintf(outf, "  bpls warning: mesh name in list (=\"%s\")
+    != "
                               "inquired mesh name (\"%s\")\n",
                         fp->mesh_namelist[meshid], mi->name);
             if (mi->file_name)
@@ -954,7 +1008,8 @@ void printMeshes(core::Engine *fp)
             {
             case ADIOS_MESH_UNIFORM:
                 fprintf(outf, "uniform\n");
-                PRINT_ARRAY64("    dimensions:   ", mi->uniform->num_dimensions,
+                PRINT_ARRAY64("    dimensions:   ",
+    mi->uniform->num_dimensions,
                               mi->uniform->dimensions, j)
                 if (mi->uniform->origins)
                 {
@@ -1015,7 +1070,8 @@ void printMeshes(core::Engine *fp)
                             mi->structured->points[0]);
                     for (i = 1; i < mi->structured->num_dimensions; i++)
                     {
-                        fprintf(outf, ", \"%s\"", mi->structured->points[i]);
+                        fprintf(outf, ", \"%s\"",
+    mi->structured->points[i]);
                     }
                     fprintf(outf, "\n");
                 }
@@ -1038,7 +1094,8 @@ void printMeshes(core::Engine *fp)
                             mi->unstructured->points[0]);
                     for (i = 1; i < mi->unstructured->nvar_points; i++)
                     {
-                        fprintf(outf, ", \"%s\"", mi->unstructured->points[i]);
+                        fprintf(outf, ", \"%s\"",
+    mi->unstructured->points[i]);
                     }
                     fprintf(outf, "\n");
                 }
@@ -1139,7 +1196,8 @@ int doList(const char *path)
     {
         //, variables, timesteps, and attributes
         // all parameters are integers,
-        // besides the last parameter, which is an array of strings for holding
+        // besides the last parameter, which is an array of strings for
+        // holding
         // the
         // list of group names
         // ntsteps = fp->tidx_stop - fp->tidx_start + 1;
@@ -1478,6 +1536,10 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     if (nelems < maxreadn)
         maxreadn = nelems;
 
+    bool xmlprint = helper::EndsWith(variable->m_Name, ".xml", false);
+    if (xmlprint && nelems > maxreadn)
+        maxreadn = nelems;
+
     // special case: string. Need to use different elemsize
     /*if (vi->type == adios_string)
     {
@@ -1728,7 +1790,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         maxreadn = nelems;
 
     // allocate data array
-    // data = (void *)malloc(maxreadn * elemsize + 8); // +8 for just to be sure
+    // data = (void *)malloc(maxreadn * elemsize + 8); // +8 for just to be
+    // sure
 
     // determine strategy how to read in:
     //  - at once
@@ -1809,7 +1872,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
         /* In current implementation we read with global selection, so
          * we need to adjust start_t for global offsets here.
-         * TODO: this will change in the future to block reading with relative
+         * TODO: this will change in the future to block reading with
+         * relative
          * selection
          */
         if (variable->m_ShapeID == ShapeID::GlobalArray)
@@ -2286,6 +2350,27 @@ int print_data_characteristics(void *min, void *max, double *avg,
         break;
     } // end switch
     return 0;
+}
+
+/* s is a character array not necessarily null terminated.
+ * return false on OK print, true if it not XML (not printed)*/
+bool print_data_xml(const char *s, const size_t length)
+{
+    pugi::xml_document document;
+    auto parse_result = document.load_buffer(s, length);
+    if (!parse_result)
+    {
+        /*throw std::invalid_argument(
+            "ERROR: XML: parse error in XML string, description: " +
+            std::string(parse_result.description()) +
+            ", check with any XML editor if format is ill-formed\n ");*/
+        return true;
+    }
+    std::cout << std::endl;
+    document.save(std::cout, PUGIXML_TEXT("  "),
+                  pugi::format_default | pugi::format_no_declaration);
+    std::cout << std::flush;
+    return false;
 }
 
 int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
