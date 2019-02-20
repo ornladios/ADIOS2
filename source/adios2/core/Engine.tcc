@@ -23,6 +23,23 @@ namespace core
 {
 
 template <class T>
+typename Variable<T>::Span &Engine::Put(Variable<T> &variable)
+{
+    if (m_DebugMode)
+    {
+        CheckOpenModes({{Mode::Write}},
+                       " for variable " + variable.m_Name +
+                           ", in call to Variable<T>::Span Put");
+    }
+
+    auto itSpan = variable.m_BlocksSpan.emplace(
+        variable.m_BlocksInfo.size(),
+        typename Variable<T>::Span(*this, variable.TotalSize()));
+    DoPut(variable, itSpan.first->second);
+    return itSpan.first->second;
+}
+
+template <class T>
 void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
 {
     if (m_DebugMode)
@@ -194,6 +211,16 @@ Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const
     return DoBlocksInfo(variable, step);
 }
 
+#define declare_type(T, L)                                                     \
+    template <>                                                                \
+    T *Engine::BufferData(const size_t payloadPosition,                        \
+                          const size_t bufferID) noexcept                      \
+    {                                                                          \
+        return DoBufferData_##L(payloadPosition, bufferID);                    \
+    }
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
+
 // PROTECTED
 template <class T>
 Variable<T> &Engine::FindVariable(const std::string &variableName,
@@ -230,18 +257,6 @@ void Engine::CommonChecks(Variable<T> &variable, const T *data,
         helper::CheckForNullptr(
             data, "for data argument in non-zero count block, " + hint);
     }
-
-    /*  Commented out by Jason for allowing SetMemorySelection on reader
-    if (!variable.m_MemoryStart.empty() && m_OpenMode == adios2::Mode::Read)
-    {
-        throw std::invalid_argument("ERROR: from Engine " + m_Name +
-                                    " and Variable " + variable.m_Name +
-                                    ", Variable<T>::SetMemoryStart not yet "
-                                    "implemented for Engines in Open Read "
-                                    "mode, " +
-                                    hint + "\n");
-    }
-    */
 }
 
 } // end namespace core

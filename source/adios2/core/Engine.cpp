@@ -85,6 +85,15 @@ void Engine::InitTransports() {}
 
 // DoPut*
 #define declare_type(T)                                                        \
+    void Engine::DoPut(Variable<T> &, typename Variable<T>::Span &)            \
+    {                                                                          \
+        ThrowUp("DoPut");                                                      \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
     void Engine::DoPutSync(Variable<T> &, const T *) { ThrowUp("DoPutSync"); } \
     void Engine::DoPutDeferred(Variable<T> &, const T *)                       \
     {                                                                          \
@@ -131,6 +140,17 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T, L)                                                     \
+    T *Engine::DoBufferData_##L(const size_t payloadPosition,                  \
+                                const size_t bufferID) noexcept                \
+    {                                                                          \
+        T *data = nullptr;                                                     \
+        return data;                                                           \
+    }
+
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
 // PRIVATE
@@ -188,6 +208,12 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
         const Variable<T> &, const size_t) const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    template typename Variable<T>::Span &Engine::Put(Variable<T> &);
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

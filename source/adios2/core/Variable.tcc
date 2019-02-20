@@ -223,6 +223,49 @@ void Variable<T>::CheckRandomAccess(const size_t step,
     }
 }
 
+// Variable<T>::Span functions
+template <class T>
+T &Variable<T>::Span::DoAt(const size_t position)
+{
+    if (position > m_Size)
+    {
+        throw std::invalid_argument(
+            "ERROR: position " + std::to_string(position) +
+            " is out of bounds for span of size " + std::to_string(m_Size) +
+            " , in call to T& Variable<T>::Span::At\n");
+    }
+
+    return DoAccess(position);
+}
+
+template <class T>
+const T &Variable<T>::Span::DoAt(const size_t position) const
+{
+    if (position > m_Size)
+    {
+        throw std::invalid_argument(
+            "ERROR: position " + std::to_string(position) +
+            " is out of bounds for span of size " + std::to_string(m_Size) +
+            " , in call to const T& Variable<T>::Span::At\n");
+    }
+
+    return DoAccess(position);
+}
+
+template <class T>
+T &Variable<T>::Span::DoAccess(const size_t position)
+{
+    T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position);
+    return data;
+}
+
+template <class T>
+const T &Variable<T>::Span::DoAccess(const size_t position) const
+{
+    const T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position);
+    return data;
+}
+
 } // end namespace core
 } // end namespace adios2
 

@@ -35,8 +35,6 @@ BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
-BP3Writer::~BP3Writer() = default;
-
 StepStatus BP3Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     m_BP3Serializer.m_DeferredVariables.clear();
@@ -123,6 +121,16 @@ void BP3Writer::Init()
     InitTransports();
     InitBPBuffer();
 }
+
+#define declare_type(T)                                                        \
+    void BP3Writer::DoPut(Variable<T> &variable,                               \
+                          typename Variable<T>::Span &span)                    \
+    {                                                                          \
+        return PutCommon(variable, span);                                      \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
 
 #define declare_type(T)                                                        \
     void BP3Writer::DoPutSync(Variable<T> &variable, const T *data)            \
@@ -376,6 +384,16 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     m_BP3Serializer.m_Aggregator.ResetBuffers();
 }
+
+#define declare_type(T, L)                                                     \
+    T *BP3Writer::DoBufferData_##L(const size_t payloadPosition,               \
+                                   const size_t bufferID) noexcept             \
+    {                                                                          \
+        return BufferDataCommon<T>(payloadPosition, bufferID);                 \
+    }
+
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
 
 } // end namespace engine
 } // end namespace core

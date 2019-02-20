@@ -20,6 +20,13 @@ namespace engine
 {
 
 template <class T>
+void BP3Writer::PutCommon(Variable<T> &variable,
+                          typename Variable<T>::Span &span)
+{
+    // TODO fill payload size and span members
+}
+
+template <class T>
 void BP3Writer::PutSyncCommon(Variable<T> &variable,
                               const typename Variable<T>::Info &blockInfo)
 {
@@ -73,6 +80,17 @@ void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
         4 *
             m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
                                                  blockInfo.Count));
+}
+
+template <class T>
+T *BP3Writer::BufferDataCommon(const size_t payloadPosition,
+                               const size_t /*bufferID*/) noexcept
+{
+    //    T *data = reinterpret_cast<T *>(m_BP3Serializer.m_Data.m_Buffer.data()
+    //    +
+    //                                    payloadPosition);
+    T *data = nullptr;
+    return data;
 }
 
 } // end namespace engine

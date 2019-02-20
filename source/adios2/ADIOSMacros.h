@@ -6,6 +6,7 @@
  *
  * Created on: March 23, 2017
  *     Author: Chuck Atkins chuck.atkins@kitware.com
+ *             William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_ADIOSMACROS_H
@@ -187,7 +188,7 @@
  type, and since the method is virtual then it cannot be a template.
  For example:
 
-   #define declare_foo(T,L) virtual const T& foo ## L (std::string bar);
+   #define declare_foo(T,L) virtual const T& foo_## L (std::string bar);
    ADIOS2_FOREACH_STDTYPE_2ARGS(declare_foo)
    #undef declare_foo
 
@@ -214,6 +215,21 @@
     MACRO(float, float)                                                        \
     MACRO(double, double)                                                      \
     MACRO(long double, ldouble)
+
+#define ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(MACRO)                           \
+    MACRO(int8_t, int8)                                                        \
+    MACRO(uint8_t, uint8)                                                      \
+    MACRO(int16_t, int16)                                                      \
+    MACRO(uint16_t, uint16)                                                    \
+    MACRO(int32_t, int32)                                                      \
+    MACRO(uint32_t, uint32)                                                    \
+    MACRO(int64_t, int64)                                                      \
+    MACRO(uint64_t, uint64)                                                    \
+    MACRO(float, float)                                                        \
+    MACRO(double, double)                                                      \
+    MACRO(long double, ldouble)                                                \
+    MACRO(std::complex<float>, cfloat)                                         \
+    MACRO(std::complex<double>, cdouble)
 
 #define ADIOS2_FOREACH_STDTYPE_2ARGS(MACRO)                                    \
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                              \

@@ -85,6 +85,18 @@ public:
     size_t CurrentStep() const;
 
     /**
+     * Put signature that provides access to the internal engine buffer for a
+     * pre-allocated variable. Returns a fixed size Span (based on C++20
+     * std::span) so applications can populate data value after this Put.
+     * Requires a call to PerformPuts, EndStep, or Close to extract the Min/Max
+     * bounds.
+     * @param variable input variable
+     * @return span to variable data in engine internal buffer
+     */
+    template <class T>
+    typename Variable<T>::Span Put(Variable<T> variable);
+
+    /**
      * Put data associated with a Variable in the Engine
      * @param variable contains variable metadata information
      * @param data user data to be associated with a variable
@@ -361,6 +373,14 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
+                                                                               \
+    extern template typename Variable<T>::Span Engine::Put(                    \
+        Variable<T> variable);
+
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
     extern template void Engine::Put<T>(Variable<T>, const T *, const Mode);   \
     extern template void Engine::Put<T>(const std::string &, const T *,        \
                                         const Mode);                           \
@@ -387,7 +407,10 @@ private:
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \
                                                                                \
     extern template std::vector<typename Variable<T>::Info>                    \
-    Engine::BlocksInfo(const Variable<T> variable, const size_t step) const;
+    Engine::BlocksInfo(const Variable<T> variable, const size_t step) const;   \
+                                                                               \
+    extern template typename Variable<T>::Span Engine::Put(                    \
+        const Variable<T> variable);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -243,7 +243,7 @@ public:
         IOType Max = IOType();   ///< block Max, if IsValue is false
         IOType Value = IOType(); ///< block Value, if IsValue is true
         bool IsValue = false;    ///< true: value, false: array
-        size_t BlockID = -1;     ///< block ID for block selections
+        size_t BlockID = 0;      ///< block ID for block selections
         size_t Step = 0;
         const T *Data() const;
 
@@ -264,6 +264,35 @@ public:
      * step
      */
     std::vector<std::vector<typename Variable<T>::Info>> AllStepsBlocksInfo();
+
+    class Span
+    {
+    public:
+        Span() = delete;
+        Span(const Span &) = delete;
+        Span(Span &&) = default;
+        ~Span() = default;
+
+        Span &operator=(const Span &) = delete;
+        Span &operator=(Span &&) = default;
+
+        size_t Size() const noexcept;
+        T *Data() const noexcept;
+
+        T &At(const size_t position);
+        const T &At(const size_t position) const;
+
+        T &operator[](const size_t position);
+        const T &operator[](const size_t position) const;
+
+        // engine allowed to set m_Span
+        friend class Engine;
+
+    private:
+        class CoreSpan;
+        Span(CoreSpan *span);
+        CoreSpan *m_Span = nullptr;
+    };
 
 private:
     Variable<T>(core::Variable<IOType> *variable);

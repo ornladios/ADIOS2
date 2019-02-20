@@ -112,5 +112,56 @@ namespace core
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+#define declare_type(T)                                                        \
+                                                                               \
+    template <>                                                                \
+    Variable<T>::Span::Span(Engine &engine, const size_t size)                 \
+    : m_Engine(engine), m_Size(size)                                           \
+    {                                                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::Span::Size() const noexcept                            \
+    {                                                                          \
+        return m_Size;                                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T *Variable<T>::Span::Data() const noexcept                                \
+    {                                                                          \
+        return m_Engine.BufferData<T>(m_PayloadPosition);                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T &Variable<T>::Span::At(const size_t position)                            \
+    {                                                                          \
+        T &data = DoAt(position);                                              \
+        return data;                                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T &Variable<T>::Span::At(const size_t position) const                \
+    {                                                                          \
+        const T &data = DoAt(position);                                        \
+        return data;                                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T &Variable<T>::Span::Access(const size_t position)                        \
+    {                                                                          \
+        T &data = DoAccess(position);                                          \
+        return data;                                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T &Variable<T>::Span::Access(const size_t position) const            \
+    {                                                                          \
+        const T &data = DoAccess(position);                                    \
+        return data;                                                           \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
 } // end namespace core
 } // end namespace adios2

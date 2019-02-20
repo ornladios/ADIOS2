@@ -103,6 +103,16 @@ public:
     virtual size_t CurrentStep() const;
 
     /**
+     * Put signature that pre-allocates a Variable in Buffer returning a Span of
+     * the payload memory from variable.m_Count
+     * @param variable input variable to be allocated
+     * @return span to the buffer internal memory that be populated by the
+     * application
+     */
+    template <class T>
+    typename Variable<T>::Span &Put(Variable<T> &variable);
+
+    /**
      * @brief Put associates variable and data into adios2 in Engine Write mode.
      * Check your Engine documentation for specific behavior.
      * In general, it will register variable metadata and data for buffering.
@@ -408,6 +418,10 @@ public:
     std::vector<typename Variable<T>::Info>
     BlocksInfo(const Variable<T> &variable, const size_t step) const;
 
+    template <class T>
+    T *BufferData(const size_t payloadOffset,
+                  const size_t bufferID = 0) noexcept;
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
@@ -433,6 +447,13 @@ protected:
 
     /** From IO AddTransport */
     virtual void InitTransports();
+
+// Put
+#define declare_type(T)                                                        \
+    virtual void DoPut(Variable<T> &variable, typename Variable<T>::Span &span);
+
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
 
 #define declare_type(T)                                                        \
     virtual void DoPutSync(Variable<T> &, const T *);                          \
@@ -472,6 +493,13 @@ protected:
         const Variable<T> &variable, const size_t step) const;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T, L)                                                     \
+    virtual T *DoBufferData_##L(const size_t payloadPosition,                  \
+                                const size_t bufferID) noexcept;
+
+    ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
 private:
@@ -540,6 +568,12 @@ private:
     Engine::BlocksInfo(const Variable<T> &, const size_t) const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    extern template typename Variable<T>::Span &Engine::Put(Variable<T> &);
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core
