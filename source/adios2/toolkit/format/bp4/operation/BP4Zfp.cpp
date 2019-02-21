@@ -90,7 +90,7 @@ void BP4Zfp::GetData(const char *input,
     core::compress::CompressZfp op(Params(), true);
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
                   blockOperationInfo.PreCount,
-                  blockOperationInfo.Info.at("PreDataType"),
+                  DataType(blockOperationInfo.Info.at("PreDataType")),
                   blockOperationInfo.Info);
 #else
     throw std::runtime_error(

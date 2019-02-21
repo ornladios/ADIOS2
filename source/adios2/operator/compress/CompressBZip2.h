@@ -44,7 +44,7 @@ public:
      * @return size of compressed buffer in bytes
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, const std::string type,
+                    const size_t elementSize, const DataType type,
                     void *bufferOut,
                     const Params &parameters = Params()) const final;
 

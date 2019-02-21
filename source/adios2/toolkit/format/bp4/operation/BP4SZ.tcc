@@ -32,8 +32,8 @@ void BP4SZ::SetDataCommon(
 
     const size_t outputSize = op.Compress(
         blockInfo.Data, blockInfo.Count, variable.m_ElementSize,
-        variable.m_Type.ToString(),
-        bufferSTL.m_Buffer.data() + bufferSTL.m_Position, parameters);
+        variable.m_Type, bufferSTL.m_Buffer.data() + bufferSTL.m_Position,
+        parameters);
 
     // being naughty here
     Params &info = const_cast<Params &>(operation.Info);

@@ -25,7 +25,7 @@ CompressZfp::CompressZfp(const Params &parameters, const bool debugMode)
 }
 
 size_t CompressZfp::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                    const std::string type,
+                                    const DataType type,
                                     const Params &parameters) const
 {
     zfp_field *field = GetZFPField(dataIn, dimensions, type);
@@ -37,10 +37,9 @@ size_t CompressZfp::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
 }
 
 size_t CompressZfp::Compress(const void *dataIn, const Dims &dimensions,
-                             const size_t elementSize, const std::string type,
+                             const size_t elementSize, const DataType type,
                              void *bufferOut, const Params &parameters) const
 {
-
     zfp_field *field = GetZFPField(dataIn, dimensions, type);
     zfp_stream *stream = GetZFPStream(dimensions, type, parameters);
     size_t maxSize = zfp_stream_maximum_size(stream, field);
@@ -67,7 +66,7 @@ size_t CompressZfp::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressZfp::Decompress(const void *bufferIn, const size_t sizeIn,
                                void *dataOut, const Dims &dimensions,
-                               const std::string type,
+                               const DataType type,
                                const Params &parameters) const
 {
     auto lf_GetTypeSize = [](const zfp_type zfpType) -> size_t {
@@ -116,23 +115,23 @@ size_t CompressZfp::Decompress(const void *bufferIn, const size_t sizeIn,
 }
 
 // PRIVATE
-zfp_type CompressZfp::GetZfpType(const std::string type) const
+zfp_type CompressZfp::GetZfpType(const DataType type) const
 {
     zfp_type zfpType = zfp_type_none;
 
-    if (type == helper::GetType<double>())
+    if (type == helper::GetDataType<double>())
     {
         zfpType = zfp_type_double;
     }
-    else if (type == helper::GetType<float>())
+    else if (type == helper::GetDataType<float>())
     {
         zfpType = zfp_type_float;
     }
-    else if (type == helper::GetType<int64_t>())
+    else if (type == helper::GetDataType<int64_t>())
     {
         zfpType = zfp_type_int64;
     }
-    else if (type == helper::GetType<int32_t>())
+    else if (type == helper::GetDataType<int32_t>())
     {
         zfpType = zfp_type_int32;
     }
@@ -142,7 +141,7 @@ zfp_type CompressZfp::GetZfpType(const std::string type) const
         {
 
             throw std::invalid_argument(
-                "ERROR: type " + type +
+                "ERROR: type " + type.ToString() +
                 " not supported by zfp, only "
                 "signed int32_t, signed int64_t, float, and "
                 "double types are acceptable, from class "
@@ -154,18 +153,19 @@ zfp_type CompressZfp::GetZfpType(const std::string type) const
 }
 
 zfp_field *CompressZfp::GetZFPField(const void *data, const Dims &dimensions,
-                                    const std::string type) const
+                                    const DataType type) const
 {
     auto lf_CheckField = [](const zfp_field *field,
                             const std::string zfpFieldFunction,
-                            const std::string type) {
+                            const DataType type)
+    {
 
         if (field == nullptr || field == NULL)
         {
             throw std::invalid_argument(
                 "ERROR: " + zfpFieldFunction + " failed for data of type " +
-                type + ", data pointer might be corrupted, from "
-                       "class CompressZfp Transform\n");
+                type.ToString() + ", data pointer might be corrupted, from "
+                                  "class CompressZfp Transform\n");
         }
     };
 
@@ -203,7 +203,7 @@ zfp_field *CompressZfp::GetZFPField(const void *data, const Dims &dimensions,
         if (m_DebugMode)
         {
             throw std::invalid_argument(
-                "ERROR: zfp_field* failed for data of type " + type +
+                "ERROR: zfp_field* failed for data of type " + type.ToString() +
                 ", only 1D, 2D and 3D dimensions are supported, from "
                 "class CompressZfp Transform\n");
         }
@@ -213,7 +213,7 @@ zfp_field *CompressZfp::GetZFPField(const void *data, const Dims &dimensions,
 }
 
 zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
-                                      const std::string type,
+                                      const DataType type,
                                       const Params &parameters) const
 {
     auto lf_HasKey = [](Params::const_iterator itKey,

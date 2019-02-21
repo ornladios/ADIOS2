@@ -71,7 +71,7 @@ void BP3MGARD::GetData(const char *input,
     core::compress::CompressMGARD op(Params(), true);
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
                   blockOperationInfo.PreCount,
-                  blockOperationInfo.Info.at("PreDataType"),
+                  DataType(blockOperationInfo.Info.at("PreDataType")),
                   blockOperationInfo.Info);
 
 #else

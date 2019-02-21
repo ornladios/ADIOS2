@@ -71,7 +71,7 @@ void BP4SZ::GetData(const char *input,
     core::compress::CompressSZ op(Params(), true);
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
                   blockOperationInfo.PreCount,
-                  blockOperationInfo.Info.at("PreDataType"),
+                  DataType(blockOperationInfo.Info.at("PreDataType")),
                   blockOperationInfo.Info);
 
 #else

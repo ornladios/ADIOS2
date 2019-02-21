@@ -42,7 +42,7 @@ size_t CompressBZip2::BufferMaxSize(const size_t sizeIn) const
 }
 
 size_t CompressBZip2::Compress(const void *dataIn, const Dims &dimensions,
-                               const size_t elementSize, const std::string type,
+                               const size_t elementSize, const DataType type,
                                void *bufferOut, const Params &parameters) const
 {
     // defaults
@@ -52,8 +52,8 @@ size_t CompressBZip2::Compress(const void *dataIn, const Dims &dimensions,
 
     if (!parameters.empty())
     {
-        const std::string hint(" in call to CompressBZip2 Compress " + type +
-                               "\n");
+        const std::string hint(" in call to CompressBZip2 Compress " +
+                               type.ToString() + "\n");
         helper::SetParameterValueInt("BlockSize100K", parameters, blockSize100k,
                                      m_DebugMode, hint);
         helper::SetParameterValueInt("Verbosity", parameters, verbosity,

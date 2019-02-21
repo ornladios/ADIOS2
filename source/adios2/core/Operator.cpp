@@ -69,16 +69,15 @@ size_t Operator::BufferMaxSize(const size_t sizeIn) const
     size_t Operator::BufferMaxSize<T>(const T *dataIn, const Dims &dimensions, \
                                       const Params &parameters) const          \
     {                                                                          \
-        return DoBufferMaxSize(dataIn, dimensions, helper::GetType<T>(),       \
+        return DoBufferMaxSize(dataIn, dimensions, helper::GetDataType<T>(),   \
                                parameters);                                    \
     }
 ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
 #undef declare_type
 
 size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
-                          const size_t /*elementSize*/,
-                          const std::string /*type*/, void * /*bufferOut*/,
-                          const Params & /*params*/) const
+                          const size_t /*elementSize*/, const DataType /*type*/,
+                          void * /*bufferOut*/, const Params & /*params*/) const
 {
     if (m_DebugMode)
     {
@@ -107,7 +106,7 @@ size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
 
 size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
                             void * /*dataOut*/, const Dims & /*dimensions*/,
-                            const std::string /*type*/,
+                            const DataType /*type*/,
                             const Params & /*parameters*/) const
 {
     if (m_DebugMode)
@@ -124,7 +123,7 @@ size_t Operator::Decompress(const void * /*bufferIn*/, const size_t /*sizeIn*/,
 
 // PROTECTED
 size_t Operator::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                                 const std::string type,
+                                 const DataType type,
                                  const Params &parameters) const
 {
     if (m_DebugMode)

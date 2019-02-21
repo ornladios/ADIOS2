@@ -209,7 +209,8 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                              std::multiplies<size_t>()));
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
+        datasize = compressor.Compress(inputData, varCount, 4,
+                                       helper::GetDataType<T>(),
                                        m_CompressBuffer.data(), p);
         return true;
     }
@@ -248,7 +249,8 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressSZ compressor(p, false);
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
+        datasize = compressor.Compress(inputData, varCount, 4,
+                                       helper::GetDataType<T>(),
                                        m_CompressBuffer.data(), p);
         return true;
     }
@@ -288,7 +290,8 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressBZip2 compressor(p, false);
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
+        datasize = compressor.Compress(inputData, varCount, 4,
+                                       helper::GetDataType<T>(),
                                        m_CompressBuffer.data(), p);
         return true;
     }
@@ -378,7 +381,8 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.count, DataType(j.type),
+                                            j.params);
                 }
                 catch (std::exception &e)
                 {
@@ -411,7 +415,8 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                 {
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
-                                            j.count, j.type, j.params);
+                                            j.count, DataType(j.type),
+                                            j.params);
                 }
                 catch (std::exception &e)
                 {

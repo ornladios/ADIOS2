@@ -42,7 +42,7 @@ public:
      * @return size of compressed buffer in bytes
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
-                    const size_t elementSize, const std::string type,
+                    const size_t elementSize, const DataType type,
                     void *bufferOut,
                     const Params &parameters = Params()) const final;
 
@@ -57,7 +57,7 @@ public:
      * @return
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const Dims &dimensions, const std::string varType,
+                      const Dims &dimensions, const DataType varType,
                       const Params & /*parameters*/) const final;
 };
 

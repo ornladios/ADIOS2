@@ -38,7 +38,7 @@ size_t CompressSZ::BufferMaxSize(const size_t sizeIn) const
 }
 
 size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
-                            const size_t elementSize, const std::string varType,
+                            const size_t elementSize, const DataType varType,
                             void *bufferOut, const Params &parameters) const
 {
     const size_t ndims = dimensions.size();
@@ -254,11 +254,11 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
     // Get type info
     int dtype;
-    if (varType == helper::GetType<double>())
+    if (varType == helper::GetDataType<double>())
     {
         dtype = SZ_DOUBLE;
     }
-    else if (varType == helper::GetType<float>())
+    else if (varType == helper::GetDataType<float>())
     {
         dtype = SZ_FLOAT;
     }
@@ -269,7 +269,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
             throw std::invalid_argument(
                 "ERROR: ADIOS2 SZ Compression only support "
                 "double or float, type: " +
-                varType + " is unsupported\n");
+                varType.ToString() + " is unsupported\n");
         }
     }
 
@@ -297,7 +297,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
 size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
                               void *dataOut, const Dims &dimensions,
-                              const std::string varType,
+                              const DataType varType,
                               const Params & /*parameters*/) const
 {
     if (dimensions.size() > 5)
@@ -309,12 +309,12 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     // Get type info
     int dtype = 0;
     size_t typeSizeBytes = 0;
-    if (varType == helper::GetType<double>())
+    if (varType == helper::GetDataType<double>())
     {
         dtype = SZ_DOUBLE;
         typeSizeBytes = 8;
     }
-    else if (varType == helper::GetType<float>())
+    else if (varType == helper::GetDataType<float>())
     {
         dtype = SZ_FLOAT;
         typeSizeBytes = 4;
