@@ -644,7 +644,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
     {
         for (const auto &vpair : variables)
         {
-            Entry e(true, vpair.second.m_Type.ToString(), vpair.second.m_Index);
+            Entry e(true, vpair.second.m_Type, vpair.second.m_Index);
             entries.emplace(vpair.first, e);
         }
     }
@@ -652,8 +652,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
     {
         for (const auto &apair : attributes)
         {
-            Entry e(false, apair.second.m_Type.ToString(),
-                    apair.second.m_Index);
+            Entry e(false, apair.second.m_Type, apair.second.m_Index);
             entries.emplace(apair.first, e);
         }
     }
@@ -669,7 +668,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
         int len = static_cast<int>(entrypair.first.size());
         if (len > maxlen)
             maxlen = len;
-        len = static_cast<int>(entrypair.second.typeName.size());
+        len = static_cast<int>(entrypair.second.type.ToString().size());
         if (len > maxtypelen)
             maxtypelen = len;
     }
@@ -687,19 +686,19 @@ int doList_vars(core::Engine *fp, core::IO *io)
 
             // print definition of variable
             fprintf(outf, "%c %-*s  %-*s", commentchar, maxtypelen,
-                    entry.typeName.c_str(), maxlen, name.c_str());
+                    entry.type.ToString().c_str(), maxlen, name.c_str());
             if (!entry.isVar)
             {
                 // list (and print) attribute
                 if (longopt || dump)
                 {
                     fprintf(outf, "  attr   = ");
-                    if (entry.typeName == "compound")
+                    if (entry.type == DataType("compound"))
                     {
                         // not supported
                     }
 #define declare_template_instantiation(T)                                      \
-    else if (entry.typeName == helper::GetType<T>())                           \
+    else if (entry.type == helper::GetDataType<T>())                           \
     {                                                                          \
         core::Attribute<T> *a = io->InquireAttribute<T>(name);                 \
         retval = printAttributeValue(fp, io, a);                               \
@@ -717,12 +716,12 @@ int doList_vars(core::Engine *fp, core::IO *io)
             }
             else
             {
-                if (entry.typeName == "compound")
+                if (entry.type == DataType("compound"))
                 {
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (entry.typeName == helper::GetType<T>())                           \
+    else if (entry.type == helper::GetDataType<T>())                           \
     {                                                                          \
         core::Variable<T> *v = io->InquireVariable<T>(name);                   \
         retval = printVariableInfo(fp, io, v);                                 \

@@ -61,10 +61,10 @@ enum ADIOS_DATATYPES
 struct Entry
 {
     bool isVar;
-    std::string typeName;
+    DataType type;
     unsigned int typeIndex;
-    Entry(bool b, std::string name, unsigned idx)
-    : isVar(b), typeName(name), typeIndex(idx)
+    Entry(bool b, DataType type, unsigned idx)
+    : isVar(b), type(type), typeIndex(idx)
     {
     }
 };
