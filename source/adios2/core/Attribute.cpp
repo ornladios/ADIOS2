@@ -23,14 +23,15 @@ namespace core
     template <>                                                                \
     Attribute<T>::Attribute(const std::string &name, const T *array,           \
                             const size_t elements)                             \
-    : AttributeBase(name, helper::GetType<T>(), elements), m_DataSingleValue() \
+    : AttributeBase(name, helper::GetDataType<T>(), elements),                 \
+      m_DataSingleValue()                                                      \
     {                                                                          \
         m_DataArray = std::vector<T>(array, array + elements);                 \
     }                                                                          \
                                                                                \
     template <>                                                                \
     Attribute<T>::Attribute(const std::string &name, const T &value)           \
-    : AttributeBase(name, helper::GetType<T>()), m_DataSingleValue(value)      \
+    : AttributeBase(name, helper::GetDataType<T>()), m_DataSingleValue(value)  \
     {                                                                          \
     }
 

@@ -90,7 +90,7 @@ namespace adios2
     std::string Variable<T>::Type() const                                      \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Type");   \
-        return m_Variable->m_Type;                                             \
+        return m_Variable->m_Type.ToString();                                  \
     }                                                                          \
     template <>                                                                \
     size_t Variable<T>::Sizeof() const                                         \

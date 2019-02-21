@@ -148,13 +148,13 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
 
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
-        const std::string type(variableBase->m_Type);
+        const adios2::DataType type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::DataType("compound"))
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::DataType("string"))
         {
             const std::string dataStr(reinterpret_cast<const char *>(data));
             adios2::core::Engine &engineCpp =
@@ -165,7 +165,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
                           dataStr);
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         adios2::core::Engine &engineCpp =                                      \
             *reinterpret_cast<adios2::core::Engine *>(engine);                 \
@@ -268,13 +268,13 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
 
-        const std::string type(variableBase->m_Type);
+        const adios2::DataType type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::DataType("compound"))
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::DataType("string"))
         {
             adios2::core::Engine &engineCpp =
                 *reinterpret_cast<adios2::core::Engine *>(engine);
@@ -286,7 +286,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
             dataStr.copy(reinterpret_cast<char *>(values), dataStr.size());
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         adios2::core::Engine &engineCpp =                                      \
             *reinterpret_cast<adios2::core::Engine *>(engine);                 \

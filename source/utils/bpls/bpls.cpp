@@ -555,7 +555,8 @@ template <class T>
 int printAttributeValue(core::Engine *fp, core::IO *io,
                         core::Attribute<T> *attribute)
 {
-    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
+    enum ADIOS_DATATYPES adiosvartype =
+        type_to_enum(attribute->m_Type.ToString());
     if (attribute->m_IsSingleValue)
     {
         print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
@@ -583,7 +584,8 @@ template <>
 int printAttributeValue(core::Engine *fp, core::IO *io,
                         core::Attribute<std::string> *attribute)
 {
-    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
+    enum ADIOS_DATATYPES adiosvartype =
+        type_to_enum(attribute->m_Type.ToString());
     bool xmlprint = helper::EndsWith(attribute->m_Name, "xml", false);
     bool printDataAnyway = true;
 
@@ -743,7 +745,8 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                       core::Variable<T> *variable)
 {
     size_t nsteps = variable->GetAvailableStepsCount();
-    enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
+    enum ADIOS_DATATYPES adiosvartype =
+        type_to_enum(variable->m_Type.ToString());
     int retval = 0;
 
     bool isGlobalValue = (nsteps == 1);
@@ -1654,7 +1657,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         fp->Get(*variable, dataV, adios2::Mode::Sync);
 
         // print slice
-        print_dataset(dataV.data(), variable->m_Type, s, c, tdims,
+        print_dataset(dataV.data(), variable->m_Type.ToString(), s, c, tdims,
                       ndigits_dims);
 
         // prepare for next read
@@ -1916,7 +1919,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         dataV.resize(variable->SelectionSize());
         fp->Get(*variable, dataV, adios2::Mode::Sync);
         // print slice
-        print_dataset(dataV.data(), variable->m_Type, s, c, ndim, ndigits_dims);
+        print_dataset(dataV.data(), variable->m_Type.ToString(), s, c, ndim,
+                      ndigits_dims);
 
         // prepare for next read
         sum += actualreadn;
@@ -2622,7 +2626,8 @@ template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
-    enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
+    enum ADIOS_DATATYPES adiosvartype =
+        type_to_enum(variable->m_Type.ToString());
     std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
         fp->AllStepsBlocksInfo(*variable);
     if (allblocks.empty())

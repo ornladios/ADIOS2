@@ -311,7 +311,7 @@ void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute,
     m_MetadataJson["A"][std::to_string(rank)].emplace_back();
     auto &j = m_MetadataJson["A"][std::to_string(rank)].back();
     j["N"] = attribute.m_Name;
-    j["Y"] = attribute.m_Type;
+    j["Y"] = attribute.m_Type.ToString();
     j["V"] = attribute.m_IsSingleValue;
     if (attribute.m_IsSingleValue)
     {

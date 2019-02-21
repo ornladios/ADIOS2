@@ -24,7 +24,7 @@ namespace adios2
 namespace core
 {
 
-VariableBase::VariableBase(const std::string &name, const std::string type,
+VariableBase::VariableBase(const std::string &name, const DataType type,
                            const size_t elementSize, const Dims &shape,
                            const Dims &start, const Dims &count,
                            const bool constantDims, const bool debugMode)
@@ -44,7 +44,7 @@ void VariableBase::SetShape(const adios2::Dims &shape)
 {
     if (m_DebugMode)
     {
-        if (m_Type == helper::GetType<std::string>())
+        if (m_Type == helper::GetDataType<std::string>())
         {
             throw std::invalid_argument("ERROR: string variable " + m_Name +
                                         " is always LocalValue, can't change "
@@ -89,7 +89,7 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     if (m_DebugMode)
     {
-        if (m_Type == helper::GetType<std::string>() &&
+        if (m_Type == helper::GetDataType<std::string>() &&
             m_ShapeID != ShapeID::GlobalArray)
         {
             throw std::invalid_argument("ERROR: string variable " + m_Name +
@@ -307,7 +307,7 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 // PRIVATE
 void VariableBase::InitShapeType()
 {
-    if (m_DebugMode && m_Type == helper::GetType<std::string>())
+    if (m_DebugMode && m_Type == helper::GetDataType<std::string>())
     {
         if (m_Shape.empty())
         {

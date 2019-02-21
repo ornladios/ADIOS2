@@ -222,13 +222,14 @@ adios2_error adios2_variable_type(adios2_type *type,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        auto type_s = variableBase->m_Type;
-        if (type_s == adios2::helper::GetType<std::string>())
+        auto data_type = variableBase->m_Type;
+        if (data_type == adios2::helper::GetDataType<std::string>())
         {
             *type = adios2_type_string;
         }
 #define make_case(T)                                                           \
-    else if (type_s == adios2::helper::GetType<MapAdios2Type<T>::Type>())      \
+    else if (data_type ==                                                      \
+             adios2::helper::GetDataType<MapAdios2Type<T>::Type>())            \
     {                                                                          \
         *type = T;                                                             \
     }
@@ -259,8 +260,9 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->m_Type.size();
-        variableBase->m_Type.copy(type, *size);
+        std::string type_s = variableBase->m_Type.ToString();
+        *size = type_s.size();
+        type_s.copy(type, *size);
         return adios2_error_none;
     }
     catch (...)
@@ -516,14 +518,14 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        const std::string type(variableBase->m_Type);
+        const adios2::DataType type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::DataType("compound"))
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         T *minT = reinterpret_cast<T *>(min);                                  \
         const adios2::core::Variable<T> *variableT =                           \
@@ -553,14 +555,14 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        const std::string type(variableBase->m_Type);
+        const adios2::DataType type(variableBase->m_Type);
 
-        if (type == "compound")
+        if (type == adios2::DataType("compound"))
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         T *maxT = reinterpret_cast<T *>(max);                                  \
         const adios2::core::Variable<T> *variableT =                           \
