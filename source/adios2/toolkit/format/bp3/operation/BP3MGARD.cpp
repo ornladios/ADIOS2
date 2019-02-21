@@ -69,11 +69,9 @@ void BP3MGARD::GetData(const char *input,
 {
 #ifdef ADIOS2_HAVE_MGARD
     core::compress::CompressMGARD op(Params(), true);
-    op.Decompress(
-        input, blockOperationInfo.PayloadSize, dataOutput,
-        blockOperationInfo.PreCount,
-        DataType::FromString(blockOperationInfo.Info.at("PreDataType")),
-        blockOperationInfo.Info);
+    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
+                  blockOperationInfo.PreCount, blockOperationInfo.PreDataType,
+                  blockOperationInfo.Info);
 
 #else
     throw std::runtime_error(

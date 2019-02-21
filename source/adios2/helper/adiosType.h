@@ -61,6 +61,9 @@ struct BlockOperationInfo
     /** pre operation count */
     Dims PreCount;
 
+    /* pre operation data type */
+    DataType PreDataType;
+
     /** payload offset position of operated data */
     size_t PayloadOffset = MaxSizeT;
     /** size in bytes **/
