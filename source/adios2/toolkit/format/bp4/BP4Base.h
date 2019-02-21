@@ -387,6 +387,12 @@ protected:
     };
 
     /**
+     * Maps C++ type to DataTypes enum
+     */
+    template <typename T>
+    struct TypeTraits;
+
+    /**
      * Characteristic ID in variable metadata
      */
     enum CharacteristicID
@@ -565,14 +571,6 @@ protected:
      * stream */
     void InitParameterNodeLocal(const std::string value);
 
-    /**
-     * Returns data type index from enum Datatypes
-     * @param variable input variable
-     * @return data type
-     */
-    template <class T>
-    int8_t GetDataType() const noexcept;
-
     std::vector<uint8_t>
     GetTransportIDs(const std::vector<std::string> &transportsTypes) const
         noexcept;
@@ -661,5 +659,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 
 } // end namespace format
 } // end namespace adios2
+
+#include "BP4Base.inl"
 
 #endif /* ADIOS2_TOOLKIT_FORMAT_BP4_BP4BASE_H_ */

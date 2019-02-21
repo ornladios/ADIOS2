@@ -348,81 +348,16 @@ void BP3Serializer::UpdateOffsetsInMetadata()
                 break;
             }
 
-            case (type_byte):
-            {
-                UpdateIndexOffsetsCharacteristics<int8_t>(currentPosition,
-                                                          type_byte, buffer);
-                break;
-            }
+#define make_case(T)                                                           \
+    case (TypeTraits<T>::type_enum):                                           \
+    {                                                                          \
+        UpdateIndexOffsetsCharacteristics<T>(                                  \
+            currentPosition, TypeTraits<T>::type_enum, buffer);                \
+        break;                                                                 \
+    }
 
-            case (type_short):
-            {
-                UpdateIndexOffsetsCharacteristics<int16_t>(currentPosition,
-                                                           type_short, buffer);
-                break;
-            }
-
-            case (type_integer):
-            {
-                UpdateIndexOffsetsCharacteristics<int32_t>(
-                    currentPosition, type_integer, buffer);
-                break;
-            }
-
-            case (type_long):
-            {
-                UpdateIndexOffsetsCharacteristics<int64_t>(currentPosition,
-                                                           type_long, buffer);
-
-                break;
-            }
-
-            case (type_unsigned_byte):
-            {
-                UpdateIndexOffsetsCharacteristics<uint8_t>(
-                    currentPosition, type_unsigned_byte, buffer);
-
-                break;
-            }
-
-            case (type_unsigned_short):
-            {
-                UpdateIndexOffsetsCharacteristics<uint16_t>(
-                    currentPosition, type_unsigned_short, buffer);
-
-                break;
-            }
-
-            case (type_unsigned_integer):
-            {
-                UpdateIndexOffsetsCharacteristics<uint32_t>(
-                    currentPosition, type_unsigned_integer, buffer);
-
-                break;
-            }
-
-            case (type_unsigned_long):
-            {
-                UpdateIndexOffsetsCharacteristics<uint64_t>(
-                    currentPosition, type_unsigned_long, buffer);
-
-                break;
-            }
-
-            case (type_real):
-            {
-                UpdateIndexOffsetsCharacteristics<float>(currentPosition,
-                                                         type_real, buffer);
-                break;
-            }
-
-            case (type_double):
-            {
-                UpdateIndexOffsetsCharacteristics<double>(currentPosition,
-                                                          type_double, buffer);
-
-                break;
-            }
+                ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(make_case)
+#undef make_case
 
             default:
                 // TODO: complex, long double
@@ -1113,149 +1048,24 @@ void BP3Serializer::MergeSerializeIndices(
         switch (dataTypeEnum)
         {
 
-        case (type_string):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<std::string>(buffer, position,
-                                                             type_string, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
+#define make_case(T)                                                           \
+    case (TypeTraits<T>::type_enum):                                           \
+    {                                                                          \
+        const auto characteristics = ReadElementIndexCharacteristics<T>(       \
+            buffer, position, TypeTraits<T>::type_enum, true);                 \
+        count = characteristics.EntryCount;                                    \
+        length = characteristics.EntryLength;                                  \
+        timeStep = characteristics.Statistics.Step;                            \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(make_case)
+#undef make_case
 
         case (type_string_array):
         {
             const auto characteristics =
                 ReadElementIndexCharacteristics<std::string>(
                     buffer, position, type_string_array, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_byte):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<int8_t>(buffer, position,
-                                                        type_byte, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_short):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<int16_t>(buffer, position,
-                                                         type_short, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_integer):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<int32_t>(buffer, position,
-                                                         type_integer, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_long):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<int64_t>(buffer, position,
-                                                         type_long, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_unsigned_byte):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<uint8_t>(
-                    buffer, position, type_unsigned_byte, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_unsigned_short):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<uint16_t>(
-                    buffer, position, type_unsigned_short, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_unsigned_integer):
-        {
-            const auto characteristics =
-                ReadElementIndexCharacteristics<uint32_t>(
-                    buffer, position, type_unsigned_integer, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_unsigned_long):
-        {
-            auto characteristics = ReadElementIndexCharacteristics<uint64_t>(
-                buffer, position, type_unsigned_long, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_real):
-        {
-            auto characteristics = ReadElementIndexCharacteristics<float>(
-                buffer, position, type_real, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_double):
-        {
-            auto characteristics = ReadElementIndexCharacteristics<double>(
-                buffer, position, type_double, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_complex):
-        {
-            auto characteristics = ReadElementIndexCharacteristics<double>(
-                buffer, position, type_complex, true);
-            count = characteristics.EntryCount;
-            length = characteristics.EntryLength;
-            timeStep = characteristics.Statistics.Step;
-            break;
-        }
-
-        case (type_double_complex):
-        {
-            auto characteristics = ReadElementIndexCharacteristics<double>(
-                buffer, position, type_double_complex, true);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
