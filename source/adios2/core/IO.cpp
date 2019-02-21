@@ -154,7 +154,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     if (itVariable != m_Variables.end())
     {
         // first remove the Variable object
-        const std::string type(itVariable->second.m_Type);
+        const std::string type(itVariable->second.m_Type.ToString());
         const unsigned int index(itVariable->second.m_Index);
 
         if (type == "compound")
@@ -198,7 +198,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
     if (itAttribute != m_Attributes.end())
     {
         // first remove the Variable object
-        const std::string type(itAttribute->second.m_Type);
+        const std::string type(itAttribute->second.m_Type.ToString());
         const unsigned int index(itAttribute->second.m_Index);
 
         if (type.empty())
@@ -304,7 +304,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
             }
         }
 
-        const std::string type(attributePair.second.m_Type);
+        const std::string type(attributePair.second.m_Type.ToString());
         attributesInfo[name]["Type"] = type;
 
         if (type == "compound")
@@ -343,7 +343,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
         return std::string();
     }
 
-    const std::string type = itVariable->second.m_Type;
+    const std::string type = itVariable->second.m_Type.ToString();
 
     if (m_ReadStreaming)
     {
@@ -381,7 +381,7 @@ std::string IO::InquireAttributeType(const std::string &name,
         return std::string();
     }
 
-    return itAttribute->second.m_Type;
+    return itAttribute->second.m_Type.ToString();
 }
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept

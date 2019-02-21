@@ -77,7 +77,7 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    if (itVariable->second.m_Type != helper::GetType<T>())
+    if (itVariable->second.m_Type.ToString() != helper::GetType<T>())
     {
         return nullptr;
     }
@@ -175,7 +175,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
         return nullptr;
     }
 
-    if (itAttribute->second.m_Type != helper::GetType<T>())
+    if (itAttribute->second.m_Type.ToString() != helper::GetType<T>())
     {
         return nullptr;
     }

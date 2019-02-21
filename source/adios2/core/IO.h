@@ -37,7 +37,7 @@ namespace core
 
 struct DataMapEntry
 {
-    std::string m_Type;
+    DataType m_Type;
     unsigned int m_Index;
 };
 
@@ -280,7 +280,7 @@ public:
      * @return
      * <pre>
      * key: unique variable name,
-     * value: DataMapEntry entry: entry.m_Type = string type
+     * value: DataMapEntry entry: entry.m_Type = DataType
      *                            entry.m_Index = order in the type bucket
      * </pre>
      */
@@ -291,7 +291,7 @@ public:
      * @return
      * <pre>
      * key: unique attribute name,
-     * value: DataMapEntry entry: entry.m_Type = string type
+     * value: DataMapEntry entry: entry.m_Type = DataType type
      *                            entry.m_Index = order in the type bucket
      * </pre>
      */

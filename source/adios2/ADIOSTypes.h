@@ -189,6 +189,17 @@ using Params = std::map<std::string, std::string>;
 using vParams = std::vector<std::pair<std::string, Params>>;
 using Steps = size_t;
 
+class DataType
+{
+public:
+    explicit DataType(const std::string &Type);
+
+    const std::string &ToString() const;
+
+private:
+    const std::string m_Type;
+};
+
 template <class T>
 using Box = std::pair<T, T>;
 

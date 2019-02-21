@@ -464,7 +464,7 @@ void BP4Serializer::PutAttributes(core::IO &io)
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.m_Type);
+        const std::string type(attributePair.second.m_Type.ToString());
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -1865,7 +1865,7 @@ size_t BP4Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
     for (const auto &attribute : attributes)
     {
-        const std::string type = attribute.second.m_Type;
+        const std::string type = attribute.second.m_Type.ToString();
 
         // each attribute is only written to output once
         // so filter out the ones already written

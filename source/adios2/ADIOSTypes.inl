@@ -112,6 +112,12 @@ struct TypeInfo<
     using ValueType = T;
 };
 
+// class DataType
+
+inline DataType::DataType(const std::string &Type) : m_Type(Type) {}
+
+inline const std::string &DataType::ToString() const { return m_Type; }
+
 } // end namespace adios2
 
 #endif /* ADIOS2_ADIOSTYPES_INL_ */
