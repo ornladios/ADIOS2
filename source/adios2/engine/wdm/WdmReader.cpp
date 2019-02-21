@@ -225,12 +225,12 @@ void WdmReader::PerformGets()
 
     for (const auto &req : m_DeferredRequests)
     {
-        if (req.type == "compound")
+        if (req.type == DataType("compound"))
         {
             throw("Compound type is not supported yet.");
         }
 #define declare_type(T)                                                        \
-    else if (req.type == helper::GetType<T>())                                 \
+    else if (req.type == helper::GetDataType<T>())                             \
     {                                                                          \
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \

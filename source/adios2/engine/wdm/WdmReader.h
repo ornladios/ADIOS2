@@ -57,7 +57,7 @@ private:
     struct Request
     {
         std::string variable;
-        std::string type;
+        DataType type;
         size_t step;
         Dims start;
         Dims count;

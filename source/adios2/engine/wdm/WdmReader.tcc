@@ -60,7 +60,7 @@ void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
     req.start = variable.m_Start;
     req.count = variable.m_Count;
     req.data = data;
-    req.type = helper::GetType<T>();
+    req.type = helper::GetDataType<T>();
 
     Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") end", true, true);
 }
