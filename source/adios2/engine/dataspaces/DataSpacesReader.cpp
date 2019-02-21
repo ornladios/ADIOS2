@@ -81,6 +81,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	delete[] cstr;
 	latestStep = l_version_no[0];
 
+
 	if(mode == StepMode::NextAvailable){
 		m_CurrentStep++;
 	}
@@ -244,21 +245,11 @@ void DataSpacesReader::EndStep()
 
 	PerformGets();
 
-	int rank;
-	MPI_Comm_rank(m_data.mpi_comm, &rank);
-	MPI_Barrier(m_data.mpi_comm);
-    //Release lock in End Step
-	//char *cstr = new char[f_Name.length() + 1];
-	//strcpy(cstr, f_Name.c_str());
-   // MPI_Barrier(m_data.mpi_comm);
-    //dspaces_unlock_on_read(cstr, &m_data.mpi_comm);
-    //delete[] cstr;
 
 }
 
 void DataSpacesReader::DoClose(const int transportIndex){
 
-	PerformGets();
 	if (globals_adios_is_dataspaces_connected_from_reader() &&
 				!globals_adios_is_dataspaces_connected_from_both())
 	{
@@ -280,7 +271,7 @@ void DataSpacesReader::PerformGets()
 	    for (std::string variableName : m_DeferredStack)                           \
 	    {                                                                          \
 	        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
-	        if (var != nullptr)                                                    \
+	        if (var != nullptr && m_CurrentStep <= latestStep)                                                    \
 	        {                                                                      \
 	            ReadDsData(*var, var->GetData(), m_CurrentStep);                          \
 	        }                                                                      \
