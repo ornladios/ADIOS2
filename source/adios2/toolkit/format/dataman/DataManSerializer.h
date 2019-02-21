@@ -135,7 +135,8 @@ public:
 
     const DmvVecPtrMap GetMetaData();
 
-    void PutAggregatedMetadata(MPI_Comm mpiComm, VecPtr);
+    void PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm);
+    void AccumulateAggregatedMetadata(const VecPtr input, VecPtr output);
 
     int PutDeferredRequest(const std::string &variable, const size_t step,
                            const Dims &start, const Dims &count, void *data);
@@ -213,7 +214,7 @@ private:
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
 
-    int m_Verbosity = 0;
+    int m_Verbosity = 1;
 };
 
 } // end namespace format

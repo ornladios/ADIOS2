@@ -11,6 +11,8 @@
 #ifndef ADIOS2_ENGINE_STAGINGREADER_H_
 #define ADIOS2_ENGINE_STAGINGREADER_H_
 
+#include <queue>
+
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
@@ -51,7 +53,7 @@ private:
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 3;
     size_t m_ReaderId;
-    std::string m_StepMode = "NextAvailable";
+    bool m_AttributesSet = false;
 
     struct Request
     {
@@ -63,6 +65,13 @@ private:
         void *data;
     };
     std::vector<Request> m_DeferredRequests;
+
+    format::VecPtr m_RepliedMetadata;
+    std::mutex m_RepliedMetadataMutex;
+
+    void MetadataRequestThread();
+    bool m_RequestingMetadata = true;
+    std::thread m_MetadataRequestThread;
 
     void Init() final;
     void InitParameters() final;

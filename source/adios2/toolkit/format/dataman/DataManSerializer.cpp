@@ -121,7 +121,9 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
 
     if (it != m_AggregatedMetadataJson.end())
     {
-        ret = SerializeJson(*it);
+        nlohmann::json retJ;
+        retJ[std::to_string(step)] = *it;
+        ret = SerializeJson(retJ);
     }
     else
     {
@@ -137,7 +139,10 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
                     min = step;
                 }
             }
-            ret = SerializeJson(m_AggregatedMetadataJson[min]);
+            nlohmann::json retJ;
+            retJ[std::to_string(min)] =
+                m_AggregatedMetadataJson[std::to_string(min)];
+            ret = SerializeJson(retJ);
         }
         else if (step == -2) // getting the latest step
         {
@@ -151,11 +156,18 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
                     max = step;
                 }
             }
-            ret = SerializeJson(m_AggregatedMetadataJson[max]);
+            nlohmann::json retJ;
+            retJ[std::to_string(max)] =
+                m_AggregatedMetadataJson[std::to_string(max)];
+            ret = SerializeJson(retJ);
         }
         else if (step == -3) // getting static variables
         {
             ret = SerializeJson(m_StaticDataJson);
+        }
+        else if (step == -4) // getting all steps
+        {
+            ret = SerializeJson(m_AggregatedMetadataJson);
         }
     }
 
@@ -164,24 +176,54 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
     return ret;
 }
 
-void DataManSerializer::PutAggregatedMetadata(const MPI_Comm mpiComm,
-                                              VecPtr data)
+void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
 {
-    if (data->empty())
+    if (input == nullptr)
     {
-        Log(1, "DataManSerializer::PutAggregatedMetadata tries to deserialize "
+        Log(1,
+            "DataManSerializer::PutAggregatedMetadata received nullptr input",
+            true, true);
+        return;
+    }
+
+    helper::BroadcastVector(*input, mpiComm);
+
+    if (input->size() > 0)
+    {
+        nlohmann::json metaJ = DeserializeJson(input->data(), input->size());
+        JsonToDataManVarMap(metaJ, nullptr);
+
+        if (m_Verbosity >= 100)
+        {
+            std::cout << "DataManSerializer::PutAggregatedMetadata: "
+                      << std::endl;
+            std::cout << metaJ.dump(4) << std::endl;
+        }
+    }
+}
+
+void DataManSerializer::AccumulateAggregatedMetadata(const VecPtr input,
+                                                     VecPtr output)
+{
+    if (input->empty())
+    {
+        Log(1, "DataManSerializer::AccumulateAggregatedMetadata tries to "
+               "deserialize "
                "an empty json pack",
             true, true);
     }
 
-    nlohmann::json metaJ = DeserializeJson(data->data(), data->size());
-    JsonToDataManVarMap(metaJ, nullptr);
-
-    if (m_Verbosity >= 100)
+    nlohmann::json inputJ = DeserializeJson(input->data(), input->size());
+    nlohmann::json outputJ;
+    if (output->size() > 0)
     {
-        std::cout << "DataManSerializer::PutAggregatedMetadata: " << std::endl;
-        std::cout << metaJ.dump(4) << std::endl;
+        outputJ = DeserializeJson(output->data(), output->size());
     }
+    for (auto i = inputJ.begin(); i != inputJ.end(); ++i)
+    {
+        outputJ[i.key()] = i.value();
+    }
+    output = SerializeJson(outputJ);
 }
 
 VecPtr DataManSerializer::EndSignal(size_t step)
@@ -472,9 +514,6 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 const DmvVecPtrMap DataManSerializer::GetMetaData()
 {
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-    // This meta data map is supposed to be very light weight to return because
-    // 1) it only holds shared pointers, and 2) the old steps are removed
-    // regularly by the engine.
     return m_DataManVarMap;
 }
 
@@ -792,6 +831,22 @@ VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 nlohmann::json DataManSerializer::DeserializeJson(const char *start,
                                                   size_t size)
 {
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManSerializer::DeserializeJson Json = ";
+        for (size_t i = 0; i < size; ++i)
+        {
+            std::cout << start[i];
+        }
+        std::cout << std::endl;
+        std::cout << size << std::endl;
+    }
+
+    if (start == nullptr or start == NULL or size == 0)
+    {
+        throw(std::runtime_error("DataManSerializer::DeserializeJson received "
+                                 "uninitialized message"));
+    }
     nlohmann::json message;
     if (m_UseJsonSerialization == "msgpack")
     {
@@ -817,11 +872,6 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
                                     "ubjson"));
     }
 
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManSerializer::DeserializeJson Json = "
-                  << message.dump() << std::endl;
-    }
     return message;
 }
 

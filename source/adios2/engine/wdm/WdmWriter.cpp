@@ -124,14 +124,6 @@ void WdmWriter::InitParameters()
         if (key == "verbose")
         {
             m_Verbosity = std::stoi(value);
-            if (m_DebugMode)
-            {
-                if (m_Verbosity < 0 || m_Verbosity > 5)
-                    throw std::invalid_argument(
-                        "ERROR: Method verbose argument must be an "
-                        "integer in the range [0,5], in call to "
-                        "Open or Engine constructor\n");
-            }
         }
     }
 }
@@ -209,7 +201,7 @@ void WdmWriter::Handshake()
     }
 }
 
-void WdmWriter::ReplyThread(std::string address)
+void WdmWriter::ReplyThread(const std::string &address)
 {
     transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
     tpm.OpenTransport(address);
@@ -220,13 +212,23 @@ void WdmWriter::ReplyThread(std::string address)
         {
             continue;
         }
-        if (request->size() == 16)
+        if (request->size() == sizeof(int64_t))
         {
             int64_t step = reinterpret_cast<int64_t *>(request->data())[0];
             int64_t reader_id = reinterpret_cast<int64_t *>(request->data())[1];
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
             while (aggMetadata == nullptr)
             {
+                if (m_QueueFullPolicy == "Discard")
+                {
+                    aggMetadata =
+                        m_DataManSerializer.GetAggregatedMetadataPack(-2);
+                }
+                else if (m_QueueFullPolicy == "Block")
+                {
+                    aggMetadata =
+                        m_DataManSerializer.GetAggregatedMetadataPack(-4);
+                }
             }
             tpm.SendReply(aggMetadata);
 

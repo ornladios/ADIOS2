@@ -29,12 +29,13 @@ WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("WdmReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian())
+                      helper::IsLittleEndian()),
+  m_RepliedMetadata(std::make_shared<std::vector<char>>())
 {
     m_DataTransport = std::make_shared<transportman::StagingMan>(
         mpiComm, Mode::Read, m_Timeout, 1e9);
     m_MetadataTransport = std::make_shared<transportman::StagingMan>(
-        mpiComm, Mode::Read, m_Timeout, 1e6);
+        mpiComm, Mode::Read, m_Timeout, 1e8);
     m_EndMessage = " in call to IO Open WdmReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
@@ -64,40 +65,27 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
-    auto reply = std::make_shared<std::vector<char>>();
-    if (m_MpiRank == 0)
-    {
-        std::vector<char> request(16);
-        if (m_StepMode == "NextAvailable")
-        {
-            reinterpret_cast<int64_t *>(request.data())[0] = m_CurrentStep;
-        }
-        else if (m_StepMode == "LatestAvailable")
-        {
-            reinterpret_cast<int64_t *>(request.data())[0] = -1;
-        }
-        else if (m_StepMode == "AllAvailable")
-        {
-            reinterpret_cast<int64_t *>(request.data())[0] = -2;
-        }
-        reinterpret_cast<int64_t *>(request.data())[1] = m_ReaderId;
-        reply = m_MetadataTransport->Request(
-            request, m_FullAddresses[rand() % m_FullAddresses.size()]);
-    }
-
-    helper::BroadcastVector(*reply, m_MPIComm);
-
-    if (reply->empty())
-    {
-        Log(1,
-            "WdmReader::BeginStep() lost connection to writer. End of stream.",
-            true, true);
-        return StepStatus::EndOfStream;
-    }
-
-    m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
-    m_DataManSerializer.GetAttributes(m_IO);
+    MetadataRequestThread();
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
+
+    auto startTime = std::chrono::system_clock::now();
+    while (m_MetaDataMap.empty())
+    {
+        m_MetaDataMap = m_DataManSerializer.GetMetaData();
+        auto nowTime = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            nowTime - startTime);
+        if (duration.count() > timeoutSeconds)
+        {
+            return StepStatus::EndOfStream;
+        }
+    }
+
+    if (not m_AttributesSet)
+    {
+        m_DataManSerializer.GetAttributes(m_IO);
+        m_AttributesSet = true;
+    }
 
     size_t maxStep = std::numeric_limits<size_t>::min();
     size_t minStep = std::numeric_limits<size_t>::max();
@@ -309,14 +297,6 @@ void WdmReader::InitParameters()
         if (key == "verbose")
         {
             m_Verbosity = std::stoi(value);
-            if (m_DebugMode)
-            {
-                if (m_Verbosity < 0 || m_Verbosity > 5)
-                    throw std::invalid_argument(
-                        "ERROR: Method verbose argument must be an "
-                        "integer in the range [0,5], in call to "
-                        "Open or Engine constructor\n");
-            }
         }
     }
 }
@@ -371,6 +351,21 @@ void WdmReader::Handshake()
     ipstream.Close();
     nlohmann::json j = nlohmann::json::parse(address);
     m_FullAddresses = j.get<std::vector<std::string>>();
+}
+
+void WdmReader::MetadataRequestThread()
+{
+    format::VecPtr reply = std::make_shared<std::vector<char>>();
+    if (m_MpiRank == 0)
+    {
+        std::vector<char> request(sizeof(int64_t));
+        reinterpret_cast<int64_t *>(request.data())[0] = m_ReaderId;
+        std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
+        std::cout << request.size() << std::endl;
+        std::cout << address << std::endl;
+        reply = m_MetadataTransport->Request(request, address);
+    }
+    m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
 }
 
 void WdmReader::DoClose(const int transportIndex)

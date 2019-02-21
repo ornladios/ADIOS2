@@ -11,6 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_
 #define ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_
 
+#include <mutex>
 #include <queue>
 #include <thread>
 
