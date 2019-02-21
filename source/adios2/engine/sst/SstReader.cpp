@@ -49,16 +49,17 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     SstReaderGetParams(m_Input, &m_WriterMarshalMethod);
 
     auto varFFSCallback = [](void *reader, const char *variableName,
-                             const char *type, void *data) {
-        std::string Type(type);
+                             const char *type, void *data)
+    {
+        DataType Type = DataType(type);
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
-        if (Type == "compound")
+        if (Type == DataType("compound"))
         {
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable =                                                \
             &(Reader->m_IO.DefineVariable<T>(variableName));                   \
@@ -83,20 +84,20 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             Reader->m_IO.RemoveAllAttributes();
             return;
         }
-        std::string Type(type);
+        DataType Type = DataType(type);
         try
         {
-            if (Type == "compound")
+            if (Type == DataType("compound"))
             {
                 return;
             }
-            else if (Type == "string")
+            else if (Type == DataType("string"))
             {
                 Reader->m_IO.DefineAttribute<std::string>(attrName,
                                                           *(char **)data);
             }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
     }
@@ -105,8 +106,8 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 #undef declare_type
             else
             {
-                std::cout << "Loading attribute matched no type " << Type
-                          << std::endl;
+                std::cout << "Loading attribute matched no type "
+                          << Type.ToString() << std::endl;
             }
         }
         catch (...)
@@ -123,7 +124,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::vector<size_t> VecShape;
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
-        std::string Type(type);
+        DataType Type = DataType(type);
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         /*
@@ -136,12 +137,12 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             VecStart.push_back(0);
             VecCount.push_back(Shape[i]);
         }
-        if (Type == "compound")
+        if (Type == DataType("compound"))
         {
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetType<T>())                                     \
+    else if (Type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
             variableName, VecShape, VecStart, VecCount));                      \
