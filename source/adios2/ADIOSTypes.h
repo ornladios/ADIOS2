@@ -195,6 +195,14 @@ public:
     static const DataType Unknown;
     static const DataType Compound;
     static const DataType String;
+    static const DataType Int8;
+    static const DataType Int16;
+    static const DataType Int32;
+    static const DataType Int64;
+    static const DataType UInt8;
+    static const DataType UInt16;
+    static const DataType UInt32;
+    static const DataType UInt64;
 
     explicit DataType();
     explicit DataType(const std::string &Type);

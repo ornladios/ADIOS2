@@ -17,5 +17,12 @@ namespace adios2
 const DataType DataType::Unknown("unknown");
 const DataType DataType::Compound("compound");
 const DataType DataType::String("string");
-
+const DataType DataType::Int8("signed char");
+const DataType DataType::Int16("short");
+const DataType DataType::Int32("int");
+const DataType DataType::Int64("long long int");
+const DataType DataType::UInt8("unsigned char");
+const DataType DataType::UInt16("unsigned short");
+const DataType DataType::UInt32("unsigned int");
+const DataType DataType::UInt64("unsigned long long int");
 }
