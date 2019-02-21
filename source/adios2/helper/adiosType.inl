@@ -97,12 +97,6 @@ inline std::string GetType<std::complex<double>>() noexcept
 }
 
 template <class T>
-DataType GetDataType() noexcept
-{
-    return DataType(GetType<T>());
-}
-
-template <class T>
 bool IsTypeAlias(
     const std::string type,
     const std::map<std::string, std::set<std::string>> &aliases) noexcept

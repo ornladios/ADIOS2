@@ -58,8 +58,7 @@ adios2_error adios2_attribute_type(adios2_type *type,
             *type = adios2_type_string;
         }
 #define make_case(T)                                                           \
-    else if (data_type ==                                                      \
-             adios2::helper::GetDataType<MapAdios2Type<T>::Type>())            \
+    else if (data_type == adios2::DataType::Get<MapAdios2Type<T>::Type>())     \
     {                                                                          \
         *type = T;                                                             \
     }

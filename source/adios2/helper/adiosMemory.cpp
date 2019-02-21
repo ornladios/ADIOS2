@@ -33,7 +33,7 @@ void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
         {
         }
 #define declare_type(T)                                                        \
-    else if (destType == GetDataType<T>())                                     \
+    else if (destType == DataType::Get<T>())                                   \
     {                                                                          \
         CopyEndianReverse<T>(src, payloadStride, reinterpret_cast<T *>(dest)); \
     }

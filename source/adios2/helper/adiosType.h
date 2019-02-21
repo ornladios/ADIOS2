@@ -104,13 +104,6 @@ template <class T>
 std::string GetType() noexcept;
 
 /**
- * Gets type as DataType from template parameter T
- * @return DataType
- */
-template <class T>
-DataType GetDataType() noexcept;
-
-/**
  * Check in types set if "type" is one of the aliases for a certain type,
  * (e.g. if type = integer is an accepted alias for "int", returning true)
  * @param type input to be compared with an alias

@@ -239,7 +239,7 @@ void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 reinterpret_cast<const char *>(src), srcStartPayload,
                 srcCountPayload, srcRowMajor, destMemStartPayload,
                 destMemCountPayload, srcMemStartPayload, srcMemCountPayload,
-                endianReverse, GetDataType<T>());
+                endianReverse, DataType::Get<T>());
 }
 
 template <class T>

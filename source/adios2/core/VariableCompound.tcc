@@ -13,8 +13,6 @@
 
 #include "VariableCompound.h"
 
-#include "adios2/helper/adiosFunctions.h" //GetDataType
-
 namespace adios2
 {
 namespace core
