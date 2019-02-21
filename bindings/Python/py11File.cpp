@@ -180,7 +180,7 @@ pybind11::array File::Read(const std::string &name)
 {
     const DataType type = m_Stream->m_IO->InquireVariableType(name);
 
-    if (type == DataType("string"))
+    if (type == DataType::String)
     {
         const std::string value = m_Stream->Read<std::string>(name).front();
         pybind11::array pyArray(pybind11::dtype::of<char>(),

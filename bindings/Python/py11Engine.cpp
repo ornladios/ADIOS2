@@ -82,7 +82,7 @@ void Engine::Put(Variable variable, const std::string &string)
     helper::CheckForNullptr(variable.m_Variable,
                             "for variable, in call to Engine::Put string");
 
-    if (variable.DataType() != helper::GetDataType<std::string>())
+    if (variable.DataType() != DataType::String)
     {
         throw std::invalid_argument(
             "ERROR: variable " + variable.Name() +
@@ -145,7 +145,7 @@ void Engine::Get(Variable variable, std::string &string, const Mode launch)
 
     const DataType type = variable.DataType();
 
-    if (type == helper::GetDataType<std::string>())
+    if (type == DataType::String)
     {
         m_Engine->Get(
             *dynamic_cast<core::Variable<std::string> *>(variable.m_Variable),

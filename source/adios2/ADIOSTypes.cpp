@@ -16,5 +16,6 @@ namespace adios2
 
 const DataType DataType::Unknown("unknown");
 const DataType DataType::Compound("compound");
+const DataType DataType::String("string");
 
 }

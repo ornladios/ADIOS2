@@ -91,7 +91,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             {
                 return;
             }
-            else if (Type == DataType("string"))
+            else if (Type == DataType::String)
             {
                 Reader->m_IO.DefineAttribute<std::string>(attrName,
                                                           *(char **)data);

@@ -46,7 +46,7 @@ std::vector<std::string> Attribute::DataString()
 
     std::vector<std::string> data;
 
-    if (type == DataType("string"))
+    if (type == DataType::String)
     {
         const core::Attribute<std::string> *attribute =
             dynamic_cast<core::Attribute<std::string> *>(m_Attribute);

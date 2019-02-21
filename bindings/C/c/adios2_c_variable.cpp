@@ -223,7 +223,7 @@ adios2_error adios2_variable_type(adios2_type *type,
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
         auto data_type = variableBase->m_Type;
-        if (data_type == adios2::helper::GetDataType<std::string>())
+        if (data_type == adios2::DataType::String)
         {
             *type = adios2_type_string;
         }

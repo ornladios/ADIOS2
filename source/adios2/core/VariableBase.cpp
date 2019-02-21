@@ -44,7 +44,7 @@ void VariableBase::SetShape(const adios2::Dims &shape)
 {
     if (m_DebugMode)
     {
-        if (m_Type == helper::GetDataType<std::string>())
+        if (m_Type == DataType::String)
         {
             throw std::invalid_argument("ERROR: string variable " + m_Name +
                                         " is always LocalValue, can't change "
@@ -89,8 +89,7 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     if (m_DebugMode)
     {
-        if (m_Type == helper::GetDataType<std::string>() &&
-            m_ShapeID != ShapeID::GlobalArray)
+        if (m_Type == DataType::String && m_ShapeID != ShapeID::GlobalArray)
         {
             throw std::invalid_argument("ERROR: string variable " + m_Name +
                                         " not a GlobalArray, it can't have a "
@@ -307,7 +306,7 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 // PRIVATE
 void VariableBase::InitShapeType()
 {
-    if (m_DebugMode && m_Type == helper::GetDataType<std::string>())
+    if (m_DebugMode && m_Type == DataType::String)
     {
         if (m_Shape.empty())
         {

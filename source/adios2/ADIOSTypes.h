@@ -194,6 +194,7 @@ class DataType
 public:
     static const DataType Unknown;
     static const DataType Compound;
+    static const DataType String;
 
     explicit DataType();
     explicit DataType(const std::string &Type);

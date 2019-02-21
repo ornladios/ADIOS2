@@ -81,7 +81,7 @@ void SstWriter::FFSMarshalAttributes()
         if (type == DataType("unknown"))
         {
         }
-        else if (type == DataType("string"))
+        else if (type == DataType::String)
         {
             core::Attribute<std::string> &attribute =
                 *m_IO.InquireAttribute<std::string>(name);
