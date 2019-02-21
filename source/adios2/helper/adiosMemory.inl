@@ -234,11 +234,12 @@ void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
     const Dims srcMemStartPayload = PayloadDims<U>(srcMemStart, srcRowMajor);
     const Dims srcMemCountPayload = PayloadDims<U>(srcMemCount, srcRowMajor);
 
-    CopyPayload(
-        reinterpret_cast<char *>(dest), destStartPayload, destCountPayload,
-        destRowMajor, reinterpret_cast<const char *>(src), srcStartPayload,
-        srcCountPayload, srcRowMajor, destMemStartPayload, destMemCountPayload,
-        srcMemStartPayload, srcMemCountPayload, endianReverse, GetType<T>());
+    CopyPayload(reinterpret_cast<char *>(dest), destStartPayload,
+                destCountPayload, destRowMajor,
+                reinterpret_cast<const char *>(src), srcStartPayload,
+                srcCountPayload, srcRowMajor, destMemStartPayload,
+                destMemCountPayload, srcMemStartPayload, srcMemCountPayload,
+                endianReverse, GetDataType<T>());
 }
 
 template <class T>

@@ -24,16 +24,16 @@ namespace
 {
 
 void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
-                       const bool endianReverse, const std::string destType)
+                       const bool endianReverse, const DataType destType)
 {
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (endianReverse)
     {
-        if (destType == "")
+        if (destType.empty())
         {
         }
 #define declare_type(T)                                                        \
-    else if (destType == GetType<T>())                                         \
+    else if (destType == GetDataType<T>())                                     \
     {                                                                          \
         CopyEndianReverse<T>(src, payloadStride, reinterpret_cast<T *>(dest)); \
     }
@@ -66,7 +66,7 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
                   const Dims &srcStart, const Dims &srcCount,
                   const Dims & /*destMemStart*/, const Dims & /*destMemCount*/,
                   const Dims &srcMemStart, const Dims &srcMemCount,
-                  const bool endianReverse, const std::string destType)
+                  const bool endianReverse, const DataType destType)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, true);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, true);
@@ -163,7 +163,7 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
                      const Dims & /*destMemStart*/,
                      const Dims & /*destMemCount*/, const Dims &srcMemStart,
                      const Dims &srcMemCount, const bool endianReverse,
-                     const std::string destType)
+                     const DataType destType)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, false);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, false);
@@ -250,7 +250,7 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const Dims &srcCount, const bool srcRowMajor,
                  const Dims &destMemStart, const Dims &destMemCount,
                  const Dims &srcMemStart, const Dims &srcMemCount,
-                 const bool endianReverse, const std::string destType) noexcept
+                 const bool endianReverse, const DataType destType) noexcept
 {
     if (srcStart.size() == 1) // 1D copy memory
     {
