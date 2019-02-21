@@ -192,6 +192,7 @@ using Steps = size_t;
 class DataType
 {
 public:
+    explicit DataType();
     explicit DataType(const std::string &Type);
 
     bool operator==(const DataType &other) const;

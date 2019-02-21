@@ -64,13 +64,13 @@ void BP4Writer::PerformPuts()
 
     for (const std::string &variableName : m_BP4Serializer.m_DeferredVariables)
     {
-        const std::string type = m_IO.InquireVariableType(variableName);
-        if (type == "compound")
+        const DataType type = m_IO.InquireVariableType(variableName);
+        if (type == DataType("compound"))
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \

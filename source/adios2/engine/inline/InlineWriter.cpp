@@ -53,13 +53,13 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     for (const std::string &name : m_ReadVariables)
     {
-        const std::string type = m_IO.InquireVariableType(name);
+        const DataType type = m_IO.InquireVariableType(name);
 
-        if (type == "compound")
+        if (type == DataType("compound"))
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(name, "in call to BeginStep"); \
         variable.m_BlocksInfo.clear();                                         \

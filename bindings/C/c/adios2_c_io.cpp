@@ -197,15 +197,15 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
             return variable;
         }
 
-        const std::string type(ioCpp.InquireVariableType(name));
+        const adios2::DataType type(ioCpp.InquireVariableType(name));
         adios2::core::VariableBase *variableCpp = nullptr;
 
-        if (type == "compound")
+        if (type == adios2::DataType("compound"))
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         variableCpp = ioCpp.InquireVariable<T>(name);                          \
     }

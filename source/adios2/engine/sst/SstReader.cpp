@@ -391,13 +391,13 @@ void SstReader::PerformGets()
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
         {
-            const std::string type = m_IO.InquireVariableType(name);
+            const DataType type = m_IO.InquireVariableType(name);
 
-            if (type == "compound")
+            if (type == DataType("compound"))
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \

@@ -308,8 +308,8 @@ void HDF5ReaderP::PerformGets()
 #define declare_type(T)                                                        \
     for (std::string variableName : m_DeferredStack)                           \
     {                                                                          \
-        const std::string type = m_IO.InquireVariableType(variableName);       \
-        if (type == helper::GetType<T>())                                      \
+        const DataType type = m_IO.InquireVariableType(variableName);          \
+        if (type == helper::GetDataType<T>())                                  \
         {                                                                      \
             Variable<T> *var = m_IO.InquireVariable<T>(variableName);          \
             if (var != nullptr)                                                \

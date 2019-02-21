@@ -131,13 +131,13 @@ IO::AvailableAttributes(const std::string &variableName,
 std::string IO::VariableType(const std::string &name) const
 {
     helper::CheckForNullptr(m_IO, "in call to IO::VariableType");
-    return m_IO->InquireVariableType(name);
+    return m_IO->InquireVariableType(name).ToString();
 }
 
 std::string IO::AttributeType(const std::string &name) const
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AttributeType");
-    return m_IO->InquireAttributeType(name);
+    return m_IO->InquireAttributeType(name).ToString();
 }
 
 size_t IO::AddOperation(const Operator op, const Params &parameters)

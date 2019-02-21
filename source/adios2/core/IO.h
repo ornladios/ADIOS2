@@ -273,7 +273,7 @@ public:
      * @param name input variable name
      * @return type primitive type
      */
-    std::string InquireVariableType(const std::string &name) const noexcept;
+    DataType InquireVariableType(const std::string &name) const noexcept;
 
     /**
      * Retrieves hash holding internal variable identifiers
@@ -313,9 +313,9 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    std::string InquireAttributeType(const std::string &name,
-                                     const std::string &variableName = "",
-                                     const std::string separator = "/") const
+    DataType InquireAttributeType(const std::string &name,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/") const
         noexcept;
 
     /**

@@ -239,15 +239,15 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
     for (const auto &variablePair : m_Variables)
     {
         const std::string name(variablePair.first);
-        const std::string type = InquireVariableType(name);
+        const DataType type = InquireVariableType(name);
 
-        if (type == "compound")
+        if (type == DataType("compound"))
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
-        variablesInfo[name]["Type"] = type;                                    \
+        variablesInfo[name]["Type"] = type.ToString();                         \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             helper::ValueToString(variable.m_AvailableStepsCount);             \
@@ -335,12 +335,12 @@ IO::GetAvailableAttributes(const std::string &variableName,
     return attributesInfo;
 }
 
-std::string IO::InquireVariableType(const std::string &name) const noexcept
+DataType IO::InquireVariableType(const std::string &name) const noexcept
 {
     auto itVariable = m_Variables.find(name);
     if (itVariable == m_Variables.end())
     {
-        return std::string();
+        return DataType();
     }
 
     const DataType type = itVariable->second.m_Type;
@@ -358,19 +358,19 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
                 itVariable->second.m_Index);                                   \
         if (!variable.IsValidStep(m_EngineStep + 1))                           \
         {                                                                      \
-            return std::string();                                              \
+            return DataType();                                                 \
         }                                                                      \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 
-    return type.ToString();
+    return type;
 }
 
-std::string IO::InquireAttributeType(const std::string &name,
-                                     const std::string &variableName,
-                                     const std::string separator) const noexcept
+DataType IO::InquireAttributeType(const std::string &name,
+                                  const std::string &variableName,
+                                  const std::string separator) const noexcept
 {
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
@@ -378,10 +378,10 @@ std::string IO::InquireAttributeType(const std::string &name,
     auto itAttribute = m_Attributes.find(globalName);
     if (itAttribute == m_Attributes.end())
     {
-        return std::string();
+        return DataType();
     }
 
-    return itAttribute->second.m_Type.ToString();
+    return itAttribute->second.m_Type;
 }
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
@@ -640,19 +640,19 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
     for (const auto &variableData : variablesData)
     {
         const std::string name = variableData.first;
-        const std::string type = InquireVariableType(name);
+        const DataType type = InquireVariableType(name);
 
         if (type.empty())
         {
             continue;
         }
 
-        if (type == "compound")
+        if (type == DataType("compound"))
         {
         }
 // using relative start
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *variable = InquireVariable<T>(name);                      \
         variable->CheckRandomAccessConflict(hint);                             \
