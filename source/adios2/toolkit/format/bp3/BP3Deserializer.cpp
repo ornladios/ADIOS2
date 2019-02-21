@@ -320,7 +320,7 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
         const std::string variableName(subFileInfoPair.first);
         const DataType type(io.InquireVariableType(variableName));
 
-        if (type == DataType("compound"))
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
@@ -342,7 +342,7 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
 {
     const DataType type(io.InquireVariableType(variableName));
 
-    if (type == DataType("compound"))
+    if (type == DataType::Compound)
     {
     }
 #define declare_type(T)                                                        \

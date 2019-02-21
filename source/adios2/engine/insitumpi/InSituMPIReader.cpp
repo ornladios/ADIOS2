@@ -470,7 +470,7 @@ void InSituMPIReader::AsyncRecvAllVariables()
         // AsyncRecvVariable(variablePair.first, variablePair.second);
         const DataType type(m_IO.InquireVariableType(variablePair.first));
 
-        if (type == DataType("compound"))
+        if (type == DataType::Compound)
         {
             // not supported
         }

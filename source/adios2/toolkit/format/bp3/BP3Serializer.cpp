@@ -1453,7 +1453,7 @@ size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
             continue;
         }
 
-        if (type == DataType("compound"))
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \

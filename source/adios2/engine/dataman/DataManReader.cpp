@@ -117,7 +117,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (i.step == m_CurrentStep)
         {
-            if (i.type == DataType("compound"))
+            if (i.type == DataType::Compound)
             {
                 throw("Compound type is not supported yet.");
             }

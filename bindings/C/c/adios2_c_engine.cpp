@@ -150,7 +150,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
             reinterpret_cast<adios2::core::VariableBase *>(variable);
         const adios2::DataType type(variableBase->m_Type);
 
-        if (type == adios2::DataType("compound"))
+        if (type == adios2::DataType::Compound)
         {
             // not supported
         }
@@ -211,7 +211,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         const adios2::DataType type(
             engineCpp.m_IO.InquireVariableType(variable_name));
 
-        if (type == adios2::DataType("compound"))
+        if (type == adios2::DataType::Compound)
         {
             // not supported
         }
@@ -270,7 +270,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
 
         const adios2::DataType type(variableBase->m_Type);
 
-        if (type == adios2::DataType("compound"))
+        if (type == adios2::DataType::Compound)
         {
             // not supported
         }
@@ -327,7 +327,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
         const adios2::DataType type(
             engineCpp.m_IO.InquireVariableType(variable_name));
 
-        if (type == adios2::DataType("compound"))
+        if (type == adios2::DataType::Compound)
         {
             // not supported
         }

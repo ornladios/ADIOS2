@@ -78,7 +78,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         const std::string name = variableData.first;
         const DataType type = m_IO.InquireVariableType(name);
 
-        if (type == DataType("compound"))
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \
@@ -114,7 +114,7 @@ void BP4Reader::PerformGets()
     {
         const DataType type = m_IO.InquireVariableType(name);
 
-        if (type == DataType("compound"))
+        if (type == DataType::Compound)
         {
         }
 #define declare_type(T)                                                        \

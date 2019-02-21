@@ -271,7 +271,7 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 {
     const DataType type(m_IO.InquireVariableType(variableName));
 
-    if (type == DataType("compound"))
+    if (type == DataType::Compound)
     {
         // not supported
     }

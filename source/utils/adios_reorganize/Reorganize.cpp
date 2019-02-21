@@ -422,7 +422,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
         core::VariableBase *variable = nullptr;
         print0("Get info on variable ", varidx, ": ", name);
 
-        if (type == DataType("compound"))
+        if (type == DataType::Compound)
         {
             // not supported
         }
@@ -527,7 +527,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
             std::cout << "rank " << rank << ": Read variable " << name
                       << std::endl;
             const DataType type = variables.at(name).m_Type;
-            if (type == DataType("compound"))
+            if (type == DataType::Compound)
             {
                 // not supported
             }
@@ -568,7 +568,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
             std::cout << "rank " << rank << ": Write variable " << name
                       << std::endl;
             DataType type = variables.at(name).m_Type;
-            if (type == DataType("compound"))
+            if (type == DataType::Compound)
             {
                 // not supported
             }

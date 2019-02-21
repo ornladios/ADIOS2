@@ -65,7 +65,7 @@ void BP4Writer::PerformPuts()
     for (const std::string &variableName : m_BP4Serializer.m_DeferredVariables)
     {
         const DataType type = m_IO.InquireVariableType(variableName);
-        if (type == DataType("compound"))
+        if (type == DataType::Compound)
         {
             // not supported
         }
