@@ -13,8 +13,6 @@
 
 #include <string>
 
-#include "adios2/ADIOSTypes.h"
-
 /**
  <pre>
  The ADIOS_FOREACH_TYPE_1ARG macro assumes the given argument is a macro which
@@ -202,23 +200,23 @@
   </pre>
 */
 #define ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                          \
-    MACRO(std::string, string)                                                 \
-    MACRO(int8_t, int8)                                                        \
-    MACRO(uint8_t, uint8)                                                      \
-    MACRO(int16_t, int16)                                                      \
-    MACRO(uint16_t, uint16)                                                    \
-    MACRO(int32_t, int32)                                                      \
-    MACRO(uint32_t, uint32)                                                    \
-    MACRO(int64_t, int64)                                                      \
-    MACRO(uint64_t, uint64)                                                    \
-    MACRO(float, float)                                                        \
-    MACRO(double, double)                                                      \
-    MACRO(long double, ldouble)
+    MACRO(std::string, String)                                                 \
+    MACRO(int8_t, Int8)                                                        \
+    MACRO(uint8_t, UInt8)                                                      \
+    MACRO(int16_t, Int16)                                                      \
+    MACRO(uint16_t, UInt16)                                                    \
+    MACRO(int32_t, Int32)                                                      \
+    MACRO(uint32_t, UInt32)                                                    \
+    MACRO(int64_t, Int64)                                                      \
+    MACRO(uint64_t, UInt64)                                                    \
+    MACRO(float, Float)                                                        \
+    MACRO(double, Double)                                                      \
+    MACRO(long double, LDouble)
 
 #define ADIOS2_FOREACH_STDTYPE_2ARGS(MACRO)                                    \
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                              \
-    MACRO(std::complex<float>, cfloat)                                         \
-    MACRO(std::complex<double>, cdouble)
+    MACRO(std::complex<float>, CFloat)                                         \
+    MACRO(std::complex<double>, CDouble)
 
 #define ADIOS2_FOREACH_COMPLEX_TYPE_2ARGS(MACRO)                               \
     MACRO(std::complex<float>, CFloat)                                         \
