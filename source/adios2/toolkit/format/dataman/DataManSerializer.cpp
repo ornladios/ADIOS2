@@ -151,15 +151,15 @@ std::shared_ptr<std::vector<char>> DataManSerializer::EndSignal(size_t step)
 }
 
 bool DataManSerializer::IsCompressionAvailable(const std::string &method,
-                                               const std::string &type,
+                                               const DataType type,
                                                const Dims &count)
 {
     if (method == "zfp")
     {
-        if (type == helper::GetType<int32_t>() ||
-            type == helper::GetType<int64_t>() ||
-            type == helper::GetType<float>() ||
-            type == helper::GetType<double>())
+        if (type == helper::GetDataType<int32_t>() ||
+            type == helper::GetDataType<int64_t>() ||
+            type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
         {
             if (count.size() <= 3)
             {
@@ -169,8 +169,8 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
     }
     else if (method == "sz")
     {
-        if (type == helper::GetType<float>() ||
-            type == helper::GetType<double>())
+        if (type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
         {
             if (count.size() <= 5)
             {
@@ -180,10 +180,10 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
     }
     else if (method == "bzip2")
     {
-        if (type == helper::GetType<int32_t>() ||
-            type == helper::GetType<int64_t>() ||
-            type == helper::GetType<float>() ||
-            type == helper::GetType<double>())
+        if (type == helper::GetDataType<int32_t>() ||
+            type == helper::GetDataType<int64_t>() ||
+            type == helper::GetDataType<float>() ||
+            type == helper::GetDataType<double>())
         {
             return true;
         }
@@ -280,7 +280,7 @@ void DataManSerializer::JsonToDataManVarMap(
                     itJson = varBlock.find("Y");
                     if (itJson != varBlock.end())
                     {
-                        var.type = itJson->get<std::string>();
+                        var.type = DataType(itJson->get<std::string>());
                     }
 
                     itJson = varBlock.find("S");
@@ -368,8 +368,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     if (allPreviousSteps)
     {
         std::vector<std::unordered_map<
-            size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator>
-            its;
+            size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator> its;
         for (auto it = m_DataManVarMap.begin(); it != m_DataManVarMap.end();
              ++it)
         {
@@ -428,12 +427,12 @@ void DataManSerializer::GetAttributes(core::IO &io)
     const auto attributesDataMap = io.GetAttributesDataMap();
     for (const auto &j : m_GlobalVars)
     {
-        const std::string type(j["Y"].get<std::string>());
-        if (type == "unknown")
+        const DataType type(DataType(j["Y"].get<std::string>()));
+        if (type == DataType("unknown"))
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         auto it = attributesDataMap.find(j["N"].get<std::string>());           \
         if (it == attributesDataMap.end())                                     \
@@ -603,12 +602,12 @@ DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
                 if (ovlp)
                 {
                     std::vector<char> tmpBuffer;
-                    if (var.type == "compound")
+                    if (var.type == DataType("compound"))
                     {
                         throw("Compound type is not supported yet.");
                     }
 #define declare_type(T)                                                        \
-    else if (var.type == helper::GetType<T>())                                 \
+    else if (var.type == helper::GetDataType<T>())                             \
     {                                                                          \
         tmpBuffer.reserve(std::accumulate(ovlpCount.begin(), ovlpCount.end(),  \
                                           sizeof(T),                           \

@@ -75,7 +75,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     metaj["D"] = doid;
     metaj["M"] = m_IsRowMajor;
     metaj["E"] = m_IsLittleEndian;
-    metaj["Y"] = helper::GetType<T>();
+    metaj["Y"] = helper::GetDataType<T>().ToString();
     metaj["P"] = localBuffer->size();
 
     size_t datasize = 0;
@@ -90,8 +90,8 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                            compressionMethod.begin(), ::tolower);
             if (compressionMethod == "zfp")
             {
-                if (IsCompressionAvailable(compressionMethod, helper::GetType<T>(),
-                                           varCount))
+                if (IsCompressionAvailable(compressionMethod,
+                                           helper::GetDataType<T>(), varCount))
                 {
                     compressed =
                         PutZfp<T>(metaj, datasize, inputData, varCount, params);
@@ -103,8 +103,8 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
             }
             else if (compressionMethod == "sz")
             {
-                if (IsCompressionAvailable(compressionMethod, helper::GetType<T>(),
-                                           varCount))
+                if (IsCompressionAvailable(compressionMethod,
+                                           helper::GetDataType<T>(), varCount))
                 {
                     compressed =
                         PutSz<T>(metaj, datasize, inputData, varCount, params);
@@ -116,8 +116,8 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
             }
             else if (compressionMethod == "bzip2")
             {
-                if (IsCompressionAvailable(compressionMethod, helper::GetType<T>(),
-                                           varCount))
+                if (IsCompressionAvailable(compressionMethod,
+                                           helper::GetDataType<T>(), varCount))
                 {
                     compressed = PutBZip2<T>(metaj, datasize, inputData,
                                              varCount, params);

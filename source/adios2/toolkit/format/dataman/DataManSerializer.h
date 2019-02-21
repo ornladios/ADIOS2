@@ -58,7 +58,7 @@ public:
         Dims start;
         std::string name;
         std::string doid;
-        std::string type;
+        DataType type;
         size_t step;
         size_t size;
         size_t position;
@@ -152,8 +152,8 @@ private:
     template <class T>
     void PutAttribute(const core::Attribute<T> &attribute, const int rank);
 
-    bool IsCompressionAvailable(const std::string &method,
-                                const std::string &type, const Dims &count);
+    bool IsCompressionAvailable(const std::string &method, const DataType type,
+                                const Dims &count);
 
     void JsonToDataManVarMap(nlohmann::json &metaJ,
                              std::shared_ptr<std::vector<char>> pack);
