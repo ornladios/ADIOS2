@@ -227,7 +227,7 @@ set_target_properties(adios2 PROPERTIES
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSMPICommOnly.h
+install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSTypes.inl ADIOSMPICommOnly.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 

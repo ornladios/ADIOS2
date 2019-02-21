@@ -192,91 +192,15 @@ using Steps = size_t;
 template <class T>
 using Box = std::pair<T, T>;
 
-// Get a fixed width integer type from a size specification
-template <size_t Bytes, bool Signed>
-struct FixedWidthInt;
-
-template <>
-struct FixedWidthInt<1, true>
-{
-    using Type = std::int8_t;
-};
-template <>
-struct FixedWidthInt<2, true>
-{
-    using Type = std::int16_t;
-};
-template <>
-struct FixedWidthInt<4, true>
-{
-    using Type = std::int32_t;
-};
-template <>
-struct FixedWidthInt<8, true>
-{
-    using Type = std::int64_t;
-};
-template <>
-struct FixedWidthInt<1, false>
-{
-    using Type = std::uint8_t;
-};
-template <>
-struct FixedWidthInt<2, false>
-{
-    using Type = std::uint16_t;
-};
-template <>
-struct FixedWidthInt<4, false>
-{
-    using Type = std::uint32_t;
-};
-template <>
-struct FixedWidthInt<8, false>
-{
-    using Type = std::uint64_t;
-};
-
-// Some core type information that may be useful at compile time
+/**
+ * TypeInfo
+ * used to map from primitive types to stdint-based types
+ */
 template <typename T, typename Enable = void>
-struct TypeInfo
-{
-    using IOType = T;
-    using ValueType = T;
-};
-
-template <typename T>
-struct TypeInfo<T, typename std::enable_if<std::is_integral<T>::value>::type>
-{
-    using IOType =
-        typename FixedWidthInt<sizeof(T), std::is_signed<T>::value>::Type;
-    using ValueType = T;
-};
-
-template <typename T>
-struct TypeInfo<T,
-                typename std::enable_if<std::is_floating_point<T>::value>::type>
-{
-    using IOType = T;
-    using ValueType = T;
-};
-
-template <typename T>
-struct TypeInfo<T, typename std::enable_if<std::is_same<
-                       T, std::complex<typename T::value_type>>::value>::type>
-{
-    using IOType = T;
-    using ValueType = typename T::value_type;
-};
-
-template <typename T>
-struct TypeInfo<
-    T, typename std::enable_if<std::is_same<T, std::string>::value>::type>
-{
-    using IOType = T;
-    using ValueType = T;
-};
+struct TypeInfo;
 
 } // end namespace adios2
+
+#include "ADIOSTypes.inl"
 
 #endif /* ADIOS2_ADIOSTYPES_H_ */
