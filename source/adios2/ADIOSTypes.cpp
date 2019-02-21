@@ -31,4 +31,22 @@ const DataType DataType::Double("double");
 const DataType DataType::LDouble("long double");
 const DataType DataType::CFloat("float complex");
 const DataType DataType::CDouble("double complex");
+
+DataType DataType::FromString(const std::string &type_string)
+{
+    DataType type = None;
+
+    if (false)
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (type_string == DataType::Get<T>().ToString())                     \
+    {                                                                          \
+        type = DataType::Get<T>();                                             \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+    return type;
+}
 }

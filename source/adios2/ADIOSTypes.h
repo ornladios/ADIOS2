@@ -223,6 +223,7 @@ public:
     explicit operator bool() const;
 
     const std::string &ToString() const;
+    static DataType FromString(const std::string &);
 
 private:
     std::string m_Type;
