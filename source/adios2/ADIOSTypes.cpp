@@ -25,4 +25,9 @@ const DataType DataType::UInt8("unsigned char");
 const DataType DataType::UInt16("unsigned short");
 const DataType DataType::UInt32("unsigned int");
 const DataType DataType::UInt64("unsigned long long int");
+const DataType DataType::Float("float");
+const DataType DataType::Double("double");
+const DataType DataType::LDouble("long double");
+const DataType DataType::CFloat("float complex");
+const DataType DataType::CDouble("double complex");
 }

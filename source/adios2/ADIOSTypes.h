@@ -203,6 +203,11 @@ public:
     static const DataType UInt16;
     static const DataType UInt32;
     static const DataType UInt64;
+    static const DataType Float;
+    static const DataType Double;
+    static const DataType LDouble;
+    static const DataType CFloat;
+    static const DataType CDouble;
 
     explicit DataType();
     explicit DataType(const std::string &Type);
