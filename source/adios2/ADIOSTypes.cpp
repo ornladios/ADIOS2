@@ -40,13 +40,87 @@ DataType DataType::FromString(const std::string &type_string)
     {
     }
 #define declare_type(T)                                                        \
-    else if (type_string == DataType::Get<T>().ToString())                     \
-    {                                                                          \
-        type = DataType::Get<T>();                                             \
-    }
+    else if (type_string == ToString(Get<T>())) { type = Get<T>(); }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     return type;
+}
+
+std::string DataType::ToString(const DataType &type)
+{
+    if (type == None)
+    {
+        return "";
+    }
+    else if (type == Unknown)
+    {
+        return "unknown";
+    }
+    else if (type == Compound)
+    {
+        return "compound";
+    }
+    else if (type == String)
+    {
+        return "string";
+    }
+    else if (type == Int8)
+    {
+        return "signed char";
+    }
+    else if (type == Int16)
+    {
+        return "short";
+    }
+    else if (type == Int32)
+    {
+        return "int";
+    }
+    else if (type == Int64)
+    {
+        return "long long int";
+    }
+    else if (type == UInt8)
+    {
+        return "unsigned char";
+    }
+    else if (type == UInt16)
+    {
+        return "unsigned short";
+    }
+    else if (type == UInt32)
+    {
+        return "unsigned int";
+    }
+    else if (type == UInt64)
+    {
+        return "unsigned long long int";
+    }
+    else if (type == Float)
+    {
+        return "float";
+    }
+    else if (type == Double)
+    {
+        return "double";
+    }
+    else if (type == LDouble)
+    {
+        return "long double";
+    }
+    else if (type == CFloat)
+    {
+        return "float complex";
+    }
+    else if (type == CDouble)
+    {
+        return "double complex";
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: invalid type in call to DataType::ToString\n");
+    }
 }
 }

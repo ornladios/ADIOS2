@@ -221,8 +221,10 @@ public:
     /* if this is a valid type, return true when cast to bool */
     explicit operator bool() const;
 
-    const std::string &ToString() const;
+    std::string ToString() const;
     static DataType FromString(const std::string &);
+
+    static std::string ToString(const DataType &);
 
 private:
     explicit DataType(const std::string &Type);
