@@ -44,7 +44,7 @@ public:
 private:
     // API parameters
     int m_Channels = 1;
-    int64_t m_QueueLimit = 3000;
+    int64_t m_QueueLimit = 1000;
     std::string m_QueueFullPolicy = "Block";
     size_t m_DefaultBufferSize = 1024;
 
@@ -56,6 +56,7 @@ private:
     int m_Timeout = 5;
     bool m_Listening = false;
     bool m_Tolerance = false;
+    bool m_AttributesSet = false;
 
     void Init() final;
     void InitParameters() final;

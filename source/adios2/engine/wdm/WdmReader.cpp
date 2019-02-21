@@ -65,7 +65,14 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
-    MetadataRequestThread();
+    if (not m_AttributesSet)
+    {
+        RequestMetadata(-3);
+        m_DataManSerializer.GetAttributes(m_IO);
+        m_AttributesSet = true;
+    }
+
+    RequestMetadata();
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
     auto startTime = std::chrono::system_clock::now();
@@ -79,12 +86,6 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
         {
             return StepStatus::EndOfStream;
         }
-    }
-
-    if (not m_AttributesSet)
-    {
-        m_DataManSerializer.GetAttributes(m_IO);
-        m_AttributesSet = true;
     }
 
     size_t maxStep = std::numeric_limits<size_t>::min();
@@ -353,13 +354,14 @@ void WdmReader::Handshake()
     m_FullAddresses = j.get<std::vector<std::string>>();
 }
 
-void WdmReader::MetadataRequestThread()
+void WdmReader::RequestMetadata(int64_t step)
 {
     format::VecPtr reply = std::make_shared<std::vector<char>>();
     if (m_MpiRank == 0)
     {
-        std::vector<char> request(sizeof(int64_t));
+        std::vector<char> request(2 * sizeof(int64_t));
         reinterpret_cast<int64_t *>(request.data())[0] = m_ReaderId;
+        reinterpret_cast<int64_t *>(request.data())[1] = step;
         std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
         std::cout << request.size() << std::endl;
         std::cout << address << std::endl;

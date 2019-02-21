@@ -44,10 +44,10 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
     ++m_CurrentStep;
 
-    if (m_DataManSerializer.Steps() > m_QueueLimit)
+    if (m_DataManSerializer.Steps() >= m_QueueLimit)
     {
         int64_t stepToErase = m_CurrentStep - m_QueueLimit;
-        if (stepToErase > 0)
+        if (stepToErase >= 0)
         {
             Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing "
                    "Step " +
@@ -58,9 +58,11 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_DataManSerializer.New(m_DefaultBufferSize);
-    if (m_MpiRank == 0)
+
+    if (not m_AttributesSet)
     {
         m_DataManSerializer.PutAttributes(m_IO);
+        m_AttributesSet = true;
     }
 
     Log(5,
@@ -212,22 +214,30 @@ void WdmWriter::ReplyThread(const std::string &address)
         {
             continue;
         }
-        if (request->size() == sizeof(int64_t))
+        if (request->size() == 2 * sizeof(int64_t))
         {
-            int64_t step = reinterpret_cast<int64_t *>(request->data())[0];
-            int64_t reader_id = reinterpret_cast<int64_t *>(request->data())[1];
+            int64_t reader_id = reinterpret_cast<int64_t *>(request->data())[0];
+            int64_t step = reinterpret_cast<int64_t *>(request->data())[1];
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
             while (aggMetadata == nullptr)
             {
-                if (m_QueueFullPolicy == "Discard")
+                if (step == -5) // let writer decide what to send
                 {
-                    aggMetadata =
-                        m_DataManSerializer.GetAggregatedMetadataPack(-2);
+                    if (m_QueueFullPolicy == "Discard")
+                    {
+                        aggMetadata =
+                            m_DataManSerializer.GetAggregatedMetadataPack(-2);
+                    }
+                    else if (m_QueueFullPolicy == "Block")
+                    {
+                        aggMetadata =
+                            m_DataManSerializer.GetAggregatedMetadataPack(-4);
+                    }
                 }
-                else if (m_QueueFullPolicy == "Block")
+                else
                 {
                     aggMetadata =
-                        m_DataManSerializer.GetAggregatedMetadataPack(-4);
+                        m_DataManSerializer.GetAggregatedMetadataPack(step);
                 }
             }
             tpm.SendReply(aggMetadata);

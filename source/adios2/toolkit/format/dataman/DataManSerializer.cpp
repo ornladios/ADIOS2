@@ -335,8 +335,9 @@ void DataManSerializer::GetAttributes(core::IO &io)
 
 void DataManSerializer::AttachAttributes()
 {
-    std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
-    m_MetadataJson["S"] = m_StaticDataJson["S"];
+    std::lock_guard<std::mutex> l1(m_StaticDataJsonMutex);
+    std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
+    m_AggregatedMetadataJson["S"] = m_StaticDataJson["S"];
 }
 
 void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
@@ -443,7 +444,12 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
     {
         std::cout
             << "DataManSerializer::JsonToDataManVarMap Total buffered steps = "
-            << m_DataManVarMap.size() << std::endl;
+            << m_DataManVarMap.size() << ": ";
+        for (const auto &i : m_DataManVarMap)
+        {
+            std::cout << i.first << ", ";
+        }
+        std::cout << std::endl;
     }
 }
 
@@ -482,6 +488,7 @@ int DataManSerializer::PutPack(const VecPtr data)
 void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 {
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
+    std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
     if (allPreviousSteps)
     {
         std::vector<DmvVecPtrMap::iterator> its;
@@ -501,6 +508,23 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
                 true, true);
             m_DataManVarMap.erase(it);
         }
+
+        if (m_AggregatedMetadataJson != nullptr)
+        {
+            std::vector<nlohmann::json::iterator> jits;
+            for (auto it = m_AggregatedMetadataJson.begin();
+                 it != m_AggregatedMetadataJson.end(); ++it)
+            {
+                if (stoull(it.key()) < step)
+                {
+                    jits.push_back(it);
+                }
+            }
+            for (auto it : jits)
+            {
+                m_AggregatedMetadataJson.erase(it);
+            }
+        }
     }
     else
     {
@@ -508,6 +532,10 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
                    std::to_string(step),
             true, true);
         m_DataManVarMap.erase(step);
+        if (m_AggregatedMetadataJson != nullptr)
+        {
+            m_AggregatedMetadataJson.erase(std::to_string(step));
+        }
     }
 }
 
@@ -831,7 +859,7 @@ VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 nlohmann::json DataManSerializer::DeserializeJson(const char *start,
                                                   size_t size)
 {
-    if (m_Verbosity >= 5)
+    if (m_Verbosity >= 200)
     {
         std::cout << "DataManSerializer::DeserializeJson Json = ";
         for (size_t i = 0; i < size; ++i)
