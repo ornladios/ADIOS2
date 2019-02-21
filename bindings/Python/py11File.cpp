@@ -226,7 +226,7 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
 {
     const DataType type = m_Stream->m_IO->InquireVariableType(name);
 
-    if (type.empty())
+    if (!type)
     {
     }
 #define declare_type(T)                                                        \
@@ -261,7 +261,7 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
 
     const DataType type = m_Stream->m_IO->InquireVariableType(name);
 
-    if (type.empty())
+    if (!type)
     {
     }
 #define declare_type(T)                                                        \
@@ -292,7 +292,7 @@ pybind11::array File::ReadAttribute(const std::string &name,
     const DataType type =
         m_Stream->m_IO->InquireAttributeType(name, variableName, separator);
 
-    if (type.empty())
+    if (!type)
     {
     }
 #define declare_type(T)                                                        \

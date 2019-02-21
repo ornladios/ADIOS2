@@ -100,7 +100,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 {
     if (m_DebugMode)
     {
-        if (!variableName.empty() && InquireVariableType(variableName).empty())
+        if (!variableName.empty() && !InquireVariableType(variableName))
         {
             throw std::invalid_argument(
                 "ERROR: variable " + variableName +
@@ -134,7 +134,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 {
     if (m_DebugMode)
     {
-        if (!variableName.empty() && InquireVariableType(variableName).empty())
+        if (!variableName.empty() && !InquireVariableType(variableName))
         {
             throw std::invalid_argument(
                 "ERROR: variable " + variableName +
@@ -156,7 +156,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 
     auto itAttributePair =
         attributeMap.emplace(size, Attribute<T>(globalName, array, elements));
-    m_Attributes.emplace(globalName, DataMapEntry{DataType::Fet<T>(), size});
+    m_Attributes.emplace(globalName, DataMapEntry{DataType::Get<T>(), size});
 
     return itAttributePair.first->second;
 }

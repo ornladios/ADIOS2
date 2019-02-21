@@ -201,7 +201,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
         const DataType type(itAttribute->second.m_Type);
         const unsigned int index(itAttribute->second.m_Index);
 
-        if (type.empty())
+        if (!type)
         {
             // nothing to do
         }
@@ -642,7 +642,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         const std::string name = variableData.first;
         const DataType type = InquireVariableType(name);
 
-        if (type.empty())
+        if (!type)
         {
             continue;
         }

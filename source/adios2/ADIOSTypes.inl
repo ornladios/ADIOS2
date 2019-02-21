@@ -131,7 +131,10 @@ inline bool DataType::operator!=(const DataType &other) const
     return !(*this == other);
 }
 
-inline bool DataType::empty() const { return m_Type.empty(); }
+inline DataType::operator bool() const
+{
+    return !(m_Type.empty() || *this == Unknown);
+}
 
 #define make_Get(TYPE, NAME)                                                   \
     template <>                                                                \

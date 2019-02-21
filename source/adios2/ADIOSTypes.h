@@ -218,8 +218,10 @@ public:
     bool operator==(const DataType &other) const;
     bool operator!=(const DataType &other) const;
 
+    /* if this is a valid type, return true when cast to bool */
+    explicit operator bool() const;
+
     const std::string &ToString() const;
-    bool empty() const;
 
 private:
     std::string m_Type;
