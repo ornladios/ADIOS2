@@ -202,7 +202,7 @@ public:
     bool empty() const;
 
 private:
-    const std::string m_Type;
+    std::string m_Type;
 };
 
 template <class T>
