@@ -250,7 +250,7 @@ void DataSpacesReader::EndStep()
     //Release lock in End Step
 	//char *cstr = new char[f_Name.length() + 1];
 	//strcpy(cstr, f_Name.c_str());
-    MPI_Barrier(m_data.mpi_comm);
+   // MPI_Barrier(m_data.mpi_comm);
     //dspaces_unlock_on_read(cstr, &m_data.mpi_comm);
     //delete[] cstr;
 
