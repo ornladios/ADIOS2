@@ -340,7 +340,7 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
     auto itVariable = m_Variables.find(name);
     if (itVariable == m_Variables.end())
     {
-        return DataType();
+        return DataType::None;
     }
 
     const DataType type = itVariable->second.m_Type;
@@ -358,7 +358,7 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
                 itVariable->second.m_Index);                                   \
         if (!variable.IsValidStep(m_EngineStep + 1))                           \
         {                                                                      \
-            return DataType();                                                 \
+            return DataType::None;                                             \
         }                                                                      \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
@@ -378,7 +378,7 @@ DataType IO::InquireAttributeType(const std::string &name,
     auto itAttribute = m_Attributes.find(globalName);
     if (itAttribute == m_Attributes.end())
     {
-        return DataType();
+        return DataType::None;
     }
 
     return itAttribute->second.m_Type;
