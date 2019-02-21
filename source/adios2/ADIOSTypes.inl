@@ -115,7 +115,7 @@ struct TypeInfo<
 
 // class DataType
 
-inline DataType::DataType() { *this = None; }
+inline DataType::DataType() { *this = Unknown; }
 
 inline DataType::DataType(const std::string &Type) : m_Type(Type) {}
 
@@ -133,7 +133,7 @@ inline bool DataType::operator!=(const DataType &other) const
 
 inline DataType::operator bool() const
 {
-    return !(*this == None || *this == Unknown);
+    return *this != Unknown;
 }
 
 #define make_Get(TYPE, NAME)                                                   \

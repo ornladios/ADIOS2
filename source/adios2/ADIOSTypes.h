@@ -192,7 +192,6 @@ using Steps = size_t;
 class DataType
 {
 public:
-    static const DataType None;
     static const DataType Unknown;
     static const DataType Compound;
     static const DataType String;

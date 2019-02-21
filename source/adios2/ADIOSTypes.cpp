@@ -14,7 +14,6 @@
 namespace adios2
 {
 
-const DataType DataType::None("");
 const DataType DataType::Unknown("unknown");
 const DataType DataType::Compound("compound");
 const DataType DataType::String("string");
@@ -34,7 +33,7 @@ const DataType DataType::CDouble("double complex");
 
 DataType DataType::FromString(const std::string &type_string)
 {
-    DataType type = None;
+    DataType type = Unknown;
 
     if (false)
     {
@@ -49,13 +48,9 @@ DataType DataType::FromString(const std::string &type_string)
 
 std::string DataType::ToString(const DataType &type)
 {
-    if (type == None)
+    if (type == Unknown)
     {
         return "";
-    }
-    else if (type == Unknown)
-    {
-        return "unknown";
     }
     else if (type == Compound)
     {
