@@ -138,7 +138,7 @@ void BP3Deserializer::SetVariableBlockInfo(
         blockOperation.PreShape = bp3OpInfo.PreShape;
         blockOperation.PreStart = bp3OpInfo.PreStart;
         blockOperation.PreCount = bp3OpInfo.PreCount;
-        blockOperation.Info["PreDataType"] = helper::GetType<T>();
+        blockOperation.Info["PreDataType"] = helper::GetDataType<T>().ToString();
         // TODO: need to verify it's a match with PreDataType
         // std::to_string(static_cast<size_t>(bp3OpInfo.PreDataType));
         blockOperation.Info["Type"] = bp3OpInfo.Type;

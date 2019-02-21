@@ -139,7 +139,7 @@ void BP4Deserializer::SetVariableBlockInfo(
         blockOperation.PreShape = bp4OpInfo.PreShape;
         blockOperation.PreStart = bp4OpInfo.PreStart;
         blockOperation.PreCount = bp4OpInfo.PreCount;
-        blockOperation.Info["PreDataType"] = helper::GetType<T>();
+        blockOperation.Info["PreDataType"] = helper::GetDataType<T>().ToString();
         // TODO: need to verify it's a match with PreDataType
         // std::to_string(static_cast<size_t>(bp4OpInfo.PreDataType));
         blockOperation.Info["Type"] = bp4OpInfo.Type;

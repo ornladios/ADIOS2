@@ -16,8 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>,
-                                          // ReduceValue<T>
+#include "adios2/helper/adiosFunctions.h" //helper::ReadValue<T>, ReduceValue<T>
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // Windows complains about SubFileInfoMap levels
