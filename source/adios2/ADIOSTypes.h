@@ -226,9 +226,9 @@ public:
     static std::string ToString(const DataType &);
 
 private:
-    explicit DataType(const std::string &Type);
+    explicit DataType(int type);
 
-    std::string m_Type;
+    int m_Type;
 };
 
 template <class T>

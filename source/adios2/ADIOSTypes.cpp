@@ -14,22 +14,24 @@
 namespace adios2
 {
 
-const DataType DataType::Unknown("unknown");
-const DataType DataType::Compound("compound");
-const DataType DataType::String("string");
-const DataType DataType::Int8("signed char");
-const DataType DataType::Int16("short");
-const DataType DataType::Int32("int");
-const DataType DataType::Int64("long long int");
-const DataType DataType::UInt8("unsigned char");
-const DataType DataType::UInt16("unsigned short");
-const DataType DataType::UInt32("unsigned int");
-const DataType DataType::UInt64("unsigned long long int");
-const DataType DataType::Float("float");
-const DataType DataType::Double("double");
-const DataType DataType::LDouble("long double");
-const DataType DataType::CFloat("float complex");
-const DataType DataType::CDouble("double complex");
+// The actual numbers below don't matter, but they've picked so that they could be unified with the
+// enum adios2_type from adios2_c_type.h eventually
+const DataType DataType::Unknown(-1);
+const DataType DataType::Compound(14);
+const DataType DataType::String(0);
+const DataType DataType::Int8(5);
+const DataType DataType::Int16(6);
+const DataType DataType::Int32(7);
+const DataType DataType::Int64(8);
+const DataType DataType::UInt8(9);
+const DataType DataType::UInt16(10);
+const DataType DataType::UInt32(11);
+const DataType DataType::UInt64(12);
+const DataType DataType::Float(1);
+const DataType DataType::Double(2);
+const DataType DataType::LDouble(13);
+const DataType DataType::CFloat(3);
+const DataType DataType::CDouble(4);
 
 DataType DataType::FromString(const std::string &type_string)
 {

@@ -117,7 +117,7 @@ struct TypeInfo<
 
 inline DataType::DataType() { *this = Unknown; }
 
-inline DataType::DataType(const std::string &Type) : m_Type(Type) {}
+inline DataType::DataType(int type) : m_Type(type) {}
 
 inline std::string DataType::ToString() const { return ToString(*this); }
 
