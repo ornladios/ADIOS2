@@ -68,8 +68,8 @@ size_t DataSpacesWriter::CurrentStep() const
 
 void DataSpacesWriter::EndStep()
 {
-	//int rank;
-	//MPI_Comm_rank(m_data.mpi_comm, &rank);
+	int rank;
+	MPI_Comm_rank(m_data.mpi_comm, &rank);
 	//MPI_Barrier(m_data.mpi_comm);
 	if(rank==0)
 		WriteVarInfo();
