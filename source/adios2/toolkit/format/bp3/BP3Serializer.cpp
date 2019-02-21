@@ -422,7 +422,7 @@ void BP3Serializer::PutAttributes(core::IO &io)
             continue;
         }
 
-        if (type == DataType("unknown"))
+        if (type == DataType::Unknown)
         {
         }
 #define declare_type(T)                                                        \

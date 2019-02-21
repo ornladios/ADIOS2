@@ -115,7 +115,7 @@ struct TypeInfo<
 
 // class DataType
 
-inline DataType::DataType() {}
+inline DataType::DataType() { *this = None; }
 
 inline DataType::DataType(const std::string &Type) : m_Type(Type) {}
 

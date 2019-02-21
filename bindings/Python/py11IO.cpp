@@ -113,7 +113,7 @@ Variable IO::InquireVariable(const std::string &name)
     const DataType type(m_IO->InquireVariableType(name));
     core::VariableBase *variable = nullptr;
 
-    if (type == DataType("unknown"))
+    if (type == DataType::Unknown)
     {
     }
 #define declare_template_instantiation(T)                                      \
@@ -194,7 +194,7 @@ Attribute IO::InquireAttribute(const std::string &name)
     core::AttributeBase *attribute = nullptr;
     const DataType type(m_IO->InquireAttributeType(name));
 
-    if (type == DataType("unknown"))
+    if (type == DataType::Unknown)
     {
     }
 #define declare_template_instantiation(T)                                      \

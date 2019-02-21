@@ -78,7 +78,7 @@ void SstWriter::FFSMarshalAttributes()
         const std::string name(attributePair.first);
         const DataType type(attributePair.second.m_Type);
 
-        if (type == DataType("unknown"))
+        if (type == DataType::Unknown)
         {
         }
         else if (type == DataType::String)

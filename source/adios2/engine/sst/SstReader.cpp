@@ -51,7 +51,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     auto varFFSCallback = [](void *reader, const char *variableName,
                              const char *type, void *data)
     {
-        DataType Type = DataType(type);
+        DataType Type = DataType::FromString(type);
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         if (Type == DataType::Compound)
@@ -84,7 +84,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             Reader->m_IO.RemoveAllAttributes();
             return;
         }
-        DataType Type = DataType(type);
+        DataType Type = DataType::FromString(type);
         try
         {
             if (Type == DataType::Compound)
@@ -124,7 +124,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         std::vector<size_t> VecShape;
         std::vector<size_t> VecStart;
         std::vector<size_t> VecCount;
-        DataType Type = DataType(type);
+        DataType Type = DataType::FromString(type);
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
         /*

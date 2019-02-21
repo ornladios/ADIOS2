@@ -88,10 +88,11 @@ void BP3Zfp::GetData(const char *input,
 {
 #ifdef ADIOS2_HAVE_ZFP
     core::compress::CompressZfp op(Params(), true);
-    op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
-                  blockOperationInfo.PreCount,
-                  DataType(blockOperationInfo.Info.at("PreDataType")),
-                  blockOperationInfo.Info);
+    op.Decompress(
+        input, blockOperationInfo.PayloadSize, dataOutput,
+        blockOperationInfo.PreCount,
+        DataType::FromString(blockOperationInfo.Info.at("PreDataType")),
+        blockOperationInfo.Info);
 #else
     throw std::runtime_error(
         "ERROR: current ADIOS2 library didn't compile "

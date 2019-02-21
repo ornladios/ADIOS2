@@ -214,7 +214,6 @@ public:
     static DataType Get();
 
     explicit DataType();
-    explicit DataType(const std::string &Type);
 
     bool operator==(const DataType &other) const;
     bool operator!=(const DataType &other) const;
@@ -226,6 +225,8 @@ public:
     static DataType FromString(const std::string &);
 
 private:
+    explicit DataType(const std::string &Type);
+
     std::string m_Type;
 };
 

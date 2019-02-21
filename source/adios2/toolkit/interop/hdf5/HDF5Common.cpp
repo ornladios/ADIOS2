@@ -1124,7 +1124,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
     {
         std::string attrName = apair.first;
         Params temp = apair.second;
-        DataType attrType = DataType(temp["Type"]);
+        DataType attrType = DataType::FromString(temp["Type"]);
 
         hid_t parentID = m_FileId;
 #ifdef NO_ATTR_VAR_ASSOC

@@ -195,7 +195,7 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
         {
             const std::string name(attributePair.first);
             const DataType type(attributePair.second.m_Type);
-            if (type == DataType("unknown"))
+            if (type == DataType::Unknown)
             {
             }
 #define declare_type(T)                                                        \
@@ -275,7 +275,8 @@ void DataManSerializer::JsonToDataManVarMap(
                     itJson = varBlock.find("Y");
                     if (itJson != varBlock.end())
                     {
-                        var.type = DataType(itJson->get<std::string>());
+                        var.type =
+                            DataType::FromString(itJson->get<std::string>());
                     }
 
                     itJson = varBlock.find("S");
@@ -422,8 +423,8 @@ void DataManSerializer::GetAttributes(core::IO &io)
     const auto attributesDataMap = io.GetAttributesDataMap();
     for (const auto &j : m_GlobalVars)
     {
-        const DataType type(DataType(j["Y"].get<std::string>()));
-        if (type == DataType("unknown"))
+        const DataType type = DataType::FromString(j["Y"].get<std::string>());
+        if (type == DataType::Unknown)
         {
         }
 #define declare_type(T)                                                        \
