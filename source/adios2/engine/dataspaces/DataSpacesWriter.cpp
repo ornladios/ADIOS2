@@ -49,12 +49,15 @@ DataSpacesWriter::~DataSpacesWriter(){ }
 StepStatus DataSpacesWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
 	//acquire lock in Begin Step
-	char *cstr = new char[f_Name.length() + 1];
-	strcpy(cstr, f_Name.c_str());
 	m_CurrentStep++; // current step begins at 0;
+	/*
+	std::string l_Name= f_Name + std::to_string(m_CurrentStep);
+	char *cstr = new char[l_Name.length() + 1];
+	strcpy(cstr, l_Name.c_str());
 
 	dspaces_lock_on_write (cstr, &m_data.mpi_comm);
 	delete[] cstr;
+	*/
     return StepStatus::OK;
 }
 
@@ -70,11 +73,10 @@ void DataSpacesWriter::EndStep()
 	MPI_Barrier(m_data.mpi_comm);
 	if(rank==0)
 		WriteVarInfo();
-    //Release lock in End Step
-	char *cstr = new char[f_Name.length() + 1];
-	strcpy(cstr, f_Name.c_str());
+	//char *cstr = new char[f_Name.length() + 1];
+	//strcpy(cstr, f_Name.c_str());
     MPI_Barrier(m_data.mpi_comm);
-    dspaces_unlock_on_write(cstr, &m_data.mpi_comm);
+    //dspaces_unlock_on_write(cstr, &m_data.mpi_comm);
 
 }
 void DataSpacesWriter::Flush(const int transportIndex) {}
@@ -161,6 +163,13 @@ void DataSpacesWriter::WriteVarInfo()
 	strcpy(local_str, local_file_var.c_str());
 
 	dspaces_put_sync(); //wait on previous put to finish
+
+	local_file_var = f_Name + std::to_string(m_CurrentStep);
+	char *meta_lk = new char[local_file_var.length() + 1];
+	strcpy(meta_lk, local_file_var.c_str());
+
+	dspaces_lock_on_write (meta_lk, &m_data.mpi_comm);
+
 	elemsize = sizeof(char);
 	ndim = 1;
 	lb[0] = 0; ub[0] = buf_len-1;
@@ -190,7 +199,11 @@ void DataSpacesWriter::WriteVarInfo()
 
 	dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
 	dspaces_put_sync(); //wait on previous put to finish
+
+	dspaces_unlock_on_write (meta_lk, &m_data.mpi_comm);
+
 	delete[] local_str;
+	delete[] meta_lk;
 
 	//store the latest version or step information for the file and how many variables are there in the file
 
@@ -200,13 +213,20 @@ void DataSpacesWriter::WriteVarInfo()
 	strcpy(local_str, local_file_var.c_str());
 	dspaces_define_gdim(local_str, ndim, gdims);
 
+	char *lkstr = new char[f_Name.length() + 1];
+	strcpy(lkstr, f_Name.c_str());
+
+	dspaces_lock_on_write (lkstr, &m_data.mpi_comm);
+
 	dspaces_put(local_str, 0, elemsize, ndim, lb, ub, l_version_buf);
 	dspaces_put_sync(); //wait on previous put to finish
+	dspaces_unlock_on_write (lkstr, &m_data.mpi_comm);
     // std::string attrType = attributesInfo[attrName]["Type"];
 	ndim_vector.clear();
 	gdims_vector.clear();
 	v_name_vector.clear();
 	elemSize_vector.clear();
+	delete[] lkstr;
 	delete[] local_str;
 	free(dim_meta);
 	free(elemSize_meta);

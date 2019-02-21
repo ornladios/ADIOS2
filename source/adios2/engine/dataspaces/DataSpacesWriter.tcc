@@ -32,8 +32,7 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 
 
 	 uint64_t lb_in[MAX_DS_NDIM], ub_in[MAX_DS_NDIM], gdims_in[MAX_DS_NDIM];
-	//Lock is acquired in BeginStep() and will be released in EndStep()
-	//For clients the lock is acquired in f_name type;
+
 	 std::vector<uint64_t> dims_vec;
 
 	unsigned int version;
@@ -90,9 +89,17 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 	    char *var_str = new char[ds_in_name.length() + 1];
 	    strcpy(var_str, ds_in_name.c_str());
 	    variable.SetData(values);
+	    
+	    std::string l_Name= ds_in_name + std::to_string(version);
+		char *cstr = new char[l_Name.length() + 1];
+		strcpy(cstr, l_Name.c_str());
+		
+		dspaces_lock_on_write (cstr, &m_data.mpi_comm);
 	    dspaces_define_gdim(var_str, ndims, gdims_in);
 	    dspaces_put(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, values);
 	    dspaces_put_sync();
+	    dspaces_unlock_on_write (cstr, &m_data.mpi_comm);
+	    delete[] cstr;
 	    delete[] var_str;
 
 }

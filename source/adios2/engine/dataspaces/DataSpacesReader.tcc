@@ -90,8 +90,17 @@ void DataSpacesReader::ReadDsData(Variable<T> &variable, T *data, int version){
 		    ds_in_name +=  variable.m_Name;
 		    char *var_str = new char[ds_in_name.length() + 1];
 		    strcpy(var_str, ds_in_name.c_str());
+		    
+		    std::string l_Name= ds_in_name + std::to_string(version);
+			char *cstr = new char[l_Name.length() + 1];
+			strcpy(cstr, l_Name.c_str());
+			
+			dspaces_lock_on_read (cstr, &m_data.mpi_comm);
+		    
 		    dspaces_define_gdim(var_str, ndims, gdims_in);
 		    dspaces_get(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, (void*)data);
+		    dspaces_unlock_on_read (cstr, &m_data.mpi_comm);
+		    delete[] cstr;
 		    delete[] var_str;
 }
 

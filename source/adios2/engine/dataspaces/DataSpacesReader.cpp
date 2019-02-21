@@ -62,7 +62,6 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	char *fstr = new char[f_Name.length() + 1];
 	strcpy(fstr, f_Name.c_str());
 
-	dspaces_lock_on_read (fstr, &m_data.mpi_comm);
 
 
 
@@ -76,6 +75,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	ndim = 1;
 	lb[0] = 0; ub[0] = version_buf_len-1;
 	gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
+	dspaces_lock_on_read (fstr, &m_data.mpi_comm);
 	dspaces_define_gdim(cstr, ndim, gdims);
 	dspaces_get(cstr, 0, elemsize, ndim, lb, ub, l_version_no);
 	delete[] cstr;
@@ -93,12 +93,20 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		dspaces_unlock_on_read (fstr, &m_data.mpi_comm);
 		return StepStatus::EndOfStream;
 	}
+	dspaces_unlock_on_read (fstr, &m_data.mpi_comm);
 	delete[] fstr;
 
 	int version_buf[2] = {0,0}; /* last version put in space; not terminated */
 	local_file_var = "VERSION@"+f_Name;
 	cstr = new char[local_file_var.length() + 1];
 	strcpy(cstr, local_file_var.c_str());
+
+	local_file_var = f_Name + std::to_string(m_CurrentStep);
+	char *meta_lk = new char[local_file_var.length() + 1];
+	strcpy(meta_lk, local_file_var.c_str());
+
+	dspaces_lock_on_read (meta_lk, &m_data.mpi_comm);
+
 	dspaces_define_gdim(cstr, ndim, gdims);
 	dspaces_get(cstr, 0, elemsize, ndim, lb, ub, version_buf);
 
@@ -129,7 +137,8 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	dspaces_define_gdim(local_str, ndim, gdims);
 
 	dspaces_get(local_str, latestStep, elemsize, ndim, lb, ub, buffer);
-
+	dspaces_unlock_on_read (meta_lk, &m_data.mpi_comm);
+	delete[] meta_lk;
 	//now populate data from the buffer
 
 	int *dim_meta;
@@ -239,11 +248,11 @@ void DataSpacesReader::EndStep()
 	MPI_Comm_rank(m_data.mpi_comm, &rank);
 	MPI_Barrier(m_data.mpi_comm);
     //Release lock in End Step
-	char *cstr = new char[f_Name.length() + 1];
-	strcpy(cstr, f_Name.c_str());
+	//char *cstr = new char[f_Name.length() + 1];
+	//strcpy(cstr, f_Name.c_str());
     MPI_Barrier(m_data.mpi_comm);
-    dspaces_unlock_on_read(cstr, &m_data.mpi_comm);
-    delete[] cstr;
+    //dspaces_unlock_on_read(cstr, &m_data.mpi_comm);
+    //delete[] cstr;
 
 }
 
