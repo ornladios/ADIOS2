@@ -133,7 +133,7 @@ inline bool DataType::operator!=(const DataType &other) const
 
 inline DataType::operator bool() const
 {
-    return !(m_Type.empty() || *this == Unknown);
+    return !(*this == None || *this == Unknown);
 }
 
 #define make_Get(TYPE, NAME)                                                   \
