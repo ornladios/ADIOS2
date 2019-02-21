@@ -59,7 +59,7 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(name, "in call to BeginStep"); \
         variable.m_BlocksInfo.clear();                                         \

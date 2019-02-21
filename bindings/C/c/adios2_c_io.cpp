@@ -205,7 +205,7 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         variableCpp = ioCpp.InquireVariable<T>(name);                          \
     }
@@ -255,7 +255,7 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         variable = ioCpp.InquireVariable<T>(name);                             \
         list[n] = reinterpret_cast<adios2_variable *>(variable);               \
@@ -452,7 +452,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         attributeCpp = ioCpp.InquireAttribute<T>(name);                        \
     }
@@ -513,7 +513,7 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         attribute = ioCpp.InquireAttribute<T>(name);                           \
         list[n] = reinterpret_cast<adios2_attribute *>(attribute);             \

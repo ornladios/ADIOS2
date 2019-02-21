@@ -525,7 +525,7 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         T *minT = reinterpret_cast<T *>(min);                                  \
         const adios2::core::Variable<T> *variableT =                           \
@@ -562,7 +562,7 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         T *maxT = reinterpret_cast<T *>(max);                                  \
         const adios2::core::Variable<T> *variableT =                           \

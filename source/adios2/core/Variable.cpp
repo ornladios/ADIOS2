@@ -25,8 +25,8 @@ namespace core
     Variable<T>::Variable(const std::string &name, const Dims &shape,          \
                           const Dims &start, const Dims &count,                \
                           const bool constantDims, const bool debugMode)       \
-    : VariableBase(name, helper::GetDataType<T>(), sizeof(T), shape, start,    \
-                   count, constantDims, debugMode)                             \
+    : VariableBase(name, DataType::Get<T>(), sizeof(T), shape, start, count,   \
+                   constantDims, debugMode)                                    \
     {                                                                          \
         m_BlocksInfo.reserve(1);                                               \
     }                                                                          \

@@ -97,7 +97,7 @@ void SstWriter::FFSMarshalAttributes()
                                    element_count, data_addr);
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
         int element_count = -1;                                                \

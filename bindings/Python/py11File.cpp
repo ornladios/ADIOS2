@@ -191,7 +191,7 @@ pybind11::array File::Read(const std::string &name)
         return pyArray;
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         core::Variable<T> &variable =                                          \
             *m_Stream->m_IO->InquireVariable<T>(name);                         \
@@ -230,7 +230,7 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         pybind11::array pyArray(pybind11::dtype::of<T>(), selectionCount);     \
         m_Stream->Read<T>(                                                     \
@@ -265,7 +265,7 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         pybind11::array pyArray(pybind11::dtype::of<T>(), shapePy);            \
         m_Stream->Read<T>(                                                     \
@@ -296,7 +296,7 @@ pybind11::array File::ReadAttribute(const std::string &name,
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(   \
             name, variableName, separator);                                    \

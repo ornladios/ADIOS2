@@ -698,7 +698,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
                         // not supported
                     }
 #define declare_template_instantiation(T)                                      \
-    else if (entry.type == helper::GetDataType<T>())                           \
+    else if (entry.type == DataType::Get<T>())                                 \
     {                                                                          \
         core::Attribute<T> *a = io->InquireAttribute<T>(name);                 \
         retval = printAttributeValue(fp, io, a);                               \
@@ -721,7 +721,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
                     // not supported
                 }
 #define declare_template_instantiation(T)                                      \
-    else if (entry.type == helper::GetDataType<T>())                           \
+    else if (entry.type == DataType::Get<T>())                                 \
     {                                                                          \
         core::Variable<T> *v = io->InquireVariable<T>(name);                   \
         retval = printVariableInfo(fp, io, v);                                 \

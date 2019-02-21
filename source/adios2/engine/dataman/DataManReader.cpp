@@ -122,7 +122,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                 throw("Compound type is not supported yet.");
             }
 #define declare_type(T)                                                        \
-    else if (i.type == helper::GetDataType<T>())                               \
+    else if (i.type == DataType::Get<T>())                                     \
     {                                                                          \
         CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }

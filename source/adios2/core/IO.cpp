@@ -163,7 +163,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
             variableMap.erase(index);
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         auto variableMap = GetVariableMap<T>();                                \
         variableMap.erase(index);                                              \
@@ -206,7 +206,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
             // nothing to do
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         auto attributeMap = GetAttributeMap<T>();                              \
         attributeMap.erase(index);                                             \
@@ -245,7 +245,7 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         variablesInfo[name]["Type"] = type.ToString();                         \
         Variable<T> &variable = *InquireVariable<T>(name);                     \
@@ -311,7 +311,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Attribute<T> &attribute = *InquireAttribute<T>(absoluteName);          \
         attributesInfo[name]["Elements"] =                                     \
@@ -351,7 +351,7 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         const Variable<T> &variable =                                          \
             const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
@@ -652,7 +652,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         }
 // using relative start
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> *variable = InquireVariable<T>(name);                      \
         variable->CheckRandomAccessConflict(hint);                             \

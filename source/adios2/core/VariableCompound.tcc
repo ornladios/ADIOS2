@@ -24,7 +24,7 @@ template <class T>
 void VariableCompound::InsertMember(const std::string &name,
                                     const size_t offset)
 {
-    m_Elements.push_back(Element{name, helper::GetDataType<T>(), offset});
+    m_Elements.push_back(Element{name, DataType::Get<T>(), offset});
 }
 
 } // end namespace core

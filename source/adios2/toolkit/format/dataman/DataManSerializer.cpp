@@ -199,7 +199,7 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
         PutAttribute(attribute, rank);                                         \
@@ -427,7 +427,7 @@ void DataManSerializer::GetAttributes(core::IO &io)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         auto it = attributesDataMap.find(j["N"].get<std::string>());           \
         if (it == attributesDataMap.end())                                     \
@@ -602,7 +602,7 @@ DataManSerializer::GenerateReply(const std::vector<char> &request, size_t &step)
                         throw("Compound type is not supported yet.");
                     }
 #define declare_type(T)                                                        \
-    else if (var.type == helper::GetDataType<T>())                             \
+    else if (var.type == DataType::Get<T>())                                   \
     {                                                                          \
         tmpBuffer.reserve(std::accumulate(ovlpCount.begin(), ovlpCount.end(),  \
                                           sizeof(T),                           \

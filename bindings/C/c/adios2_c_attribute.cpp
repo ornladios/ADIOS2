@@ -187,7 +187,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
             }
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         const adios2::core::Attribute<T> *attributeCpp =                       \
             dynamic_cast<const adios2::core::Attribute<T> *>(attributeBase);   \

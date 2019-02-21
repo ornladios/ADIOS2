@@ -117,7 +117,7 @@ Variable IO::InquireVariable(const std::string &name)
     {
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         variable = m_IO->InquireVariable<T>(name);                             \
     }
@@ -198,7 +198,7 @@ Attribute IO::InquireAttribute(const std::string &name)
     {
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         attribute = m_IO->InquireAttribute<T>(name);                           \
     }

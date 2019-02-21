@@ -82,7 +82,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                 \
     {                                                                          \
         Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
         if (mode == StepMode::NextAvailable)                                   \
@@ -118,7 +118,7 @@ void BP4Reader::PerformGets()
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \

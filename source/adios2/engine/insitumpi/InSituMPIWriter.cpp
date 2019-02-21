@@ -276,7 +276,7 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
         // not supported
     }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> *variable = m_IO.InquireVariable<T>(variableName);         \
         if (m_DebugMode && variable == nullptr)                                \

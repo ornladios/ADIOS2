@@ -69,7 +69,7 @@ size_t Operator::BufferMaxSize(const size_t sizeIn) const
     size_t Operator::BufferMaxSize<T>(const T *dataIn, const Dims &dimensions, \
                                       const Params &parameters) const          \
     {                                                                          \
-        return DoBufferMaxSize(dataIn, dimensions, helper::GetDataType<T>(),   \
+        return DoBufferMaxSize(dataIn, dimensions, DataType::Get<T>(),         \
                                parameters);                                    \
     }
 ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)

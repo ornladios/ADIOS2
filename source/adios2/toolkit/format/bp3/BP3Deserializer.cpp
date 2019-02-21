@@ -324,7 +324,7 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         subFileInfoPair.second =                                               \
             GetSubFileInfo(*io.InquireVariable<T>(variableName));              \
@@ -346,7 +346,7 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
     {
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         core::Variable<T> *variable = io.InquireVariable<T>(variableName);     \
         if (variable != nullptr)                                               \

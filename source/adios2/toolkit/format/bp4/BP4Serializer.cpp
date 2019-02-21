@@ -477,7 +477,7 @@ void BP4Serializer::PutAttributes(core::IO &io)
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Stats<T> stats;                                                        \
         stats.Offset = absolutePosition;                                       \
@@ -1878,7 +1878,7 @@ size_t BP4Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         const std::string name = attribute.first;                              \
         const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \

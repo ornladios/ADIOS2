@@ -59,7 +59,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetDataType<T>())                                 \
+    else if (Type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> *variable =                                                \
             &(Reader->m_IO.DefineVariable<T>(variableName));                   \
@@ -97,7 +97,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                                                           *(char **)data);
             }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetDataType<T>())                                 \
+    else if (Type == DataType::Get<T>())                                       \
     {                                                                          \
         Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
     }
@@ -142,7 +142,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             return (void *)NULL;
         }
 #define declare_type(T)                                                        \
-    else if (Type == helper::GetDataType<T>())                                 \
+    else if (Type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
             variableName, VecShape, VecStart, VecCount));                      \
@@ -398,7 +398,7 @@ void SstReader::PerformGets()
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \

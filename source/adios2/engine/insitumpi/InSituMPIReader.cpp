@@ -475,7 +475,7 @@ void InSituMPIReader::AsyncRecvAllVariables()
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         core::Variable<T> *variable =                                          \
             m_IO.InquireVariable<T>(variablePair.first);                       \

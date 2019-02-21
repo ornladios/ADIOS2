@@ -427,7 +427,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         variable = io.InquireVariable<T>(variablePair.first);                  \
     }
@@ -532,7 +532,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         varinfo[varidx].readbuf = calloc(1, varinfo[varidx].writesize);        \
         if (varinfo[varidx].count.size() == 0)                                 \
@@ -573,7 +573,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         if (varinfo[varidx].count.size() == 0)                                 \
         {                                                                      \

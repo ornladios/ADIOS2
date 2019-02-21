@@ -1164,7 +1164,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
 // note no std::complext attr types
 //
 #define declare_template_instantiation(T)                                      \
-    else if (attrType == helper::GetDataType<T>())                                 \
+    else if (attrType == DataType::Get<T>())                                   \
     {                                                                          \
         core::Attribute<T> *adiosAttr = io.InquireAttribute<T>(attrName);      \
         WriteNonStringAttr(io, adiosAttr, parentID, list.back().c_str());      \

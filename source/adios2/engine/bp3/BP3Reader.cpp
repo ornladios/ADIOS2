@@ -94,7 +94,7 @@ void BP3Reader::PerformGets()
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         Variable<T> &variable =                                                \
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \

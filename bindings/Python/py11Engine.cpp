@@ -59,7 +59,7 @@ void Engine::Put(Variable variable, const pybind11::array &array,
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         m_Engine->Put(*dynamic_cast<core::Variable<T> *>(variable.m_Variable), \
                       reinterpret_cast<const T *>(array.data()), launch);      \
@@ -116,7 +116,7 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         m_Engine->Get(*dynamic_cast<core::Variable<T> *>(variable.m_Variable), \
                       reinterpret_cast<T *>(const_cast<void *>(array.data())), \

@@ -165,7 +165,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
                           dataStr);
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         adios2::core::Engine &engineCpp =                                      \
             *reinterpret_cast<adios2::core::Engine *>(engine);                 \
@@ -221,7 +221,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
             engineCpp.Put(variable_name, dataStr);
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         engineCpp.Put(variable_name, reinterpret_cast<const T *>(data),        \
                       modeCpp);                                                \
@@ -286,7 +286,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
             dataStr.copy(reinterpret_cast<char *>(values), dataStr.size());
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         adios2::core::Engine &engineCpp =                                      \
             *reinterpret_cast<adios2::core::Engine *>(engine);                 \
@@ -338,7 +338,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
             dataStr.copy(reinterpret_cast<char *>(data), dataStr.size());
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
+    else if (type == adios2::DataType::Get<T>())                               \
     {                                                                          \
         engineCpp.Get(variable_name, reinterpret_cast<T *>(data), modeCpp);    \
     }

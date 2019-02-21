@@ -80,7 +80,7 @@ pybind11::array Attribute::Data()
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
+    else if (type == DataType::Get<T>())                                       \
     {                                                                          \
         pybind11::array pyArray(pybind11::dtype::of<T>(),                      \
                                 m_Attribute->m_Elements);                      \

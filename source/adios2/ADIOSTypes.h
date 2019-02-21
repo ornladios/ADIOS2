@@ -209,6 +209,9 @@ public:
     static const DataType CFloat;
     static const DataType CDouble;
 
+    template <typename T>
+    static DataType Get();
+
     explicit DataType();
     explicit DataType(const std::string &Type);
 

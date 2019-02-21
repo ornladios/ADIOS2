@@ -18,6 +18,8 @@
 #error "Inline file should only be included from its header, never on its own"
 #endif
 
+#include "ADIOSMacros.h"
+
 namespace adios2
 {
 
@@ -130,6 +132,16 @@ inline bool DataType::operator!=(const DataType &other) const
 }
 
 inline bool DataType::empty() const { return m_Type.empty(); }
+
+#define make_Get(TYPE, NAME)                                                   \
+    template <>                                                                \
+    inline DataType DataType::Get<TYPE>()                                      \
+    {                                                                          \
+        return NAME;                                                           \
+    }
+
+ADIOS2_FOREACH_STDTYPE_2ARGS(make_Get)
+#undef make_Get
 
 } // end namespace adios2
 

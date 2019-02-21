@@ -135,7 +135,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
                     throw("Compound type is not supported yet.");
                 }
 #define declare_type(T)                                                        \
-    else if (i.type == helper::GetDataType<T>())                               \
+    else if (i.type == DataType::Get<T>())                                     \
     {                                                                          \
         CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
@@ -230,7 +230,7 @@ void WdmReader::PerformGets()
             throw("Compound type is not supported yet.");
         }
 #define declare_type(T)                                                        \
-    else if (req.type == helper::GetDataType<T>())                             \
+    else if (req.type == DataType::Get<T>())                                   \
     {                                                                          \
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \
