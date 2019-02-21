@@ -88,6 +88,12 @@ std::string Variable::Type() const
     return m_Variable->m_Type.ToString();
 }
 
+DataType Variable::DataType() const
+{
+    helper::CheckForNullptr(m_Variable, "in call to Variable::DataType");
+    return m_Variable->m_Type;
+}
+
 size_t Variable::Sizeof() const
 {
     helper::CheckForNullptr(m_Variable, "in call to Variable::Sizeof");

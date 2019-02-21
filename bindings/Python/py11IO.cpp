@@ -11,7 +11,6 @@
 #include "py11IO.h"
 
 #include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
 
 #include "py11types.h"
 

@@ -51,6 +51,8 @@ public:
 
     std::string Type() const;
 
+    adios2::DataType DataType() const;
+
     /**
      * Inspects size of the current element type, sizeof(T)
      * @return sizeof(T) for current system

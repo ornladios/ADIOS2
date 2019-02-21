@@ -52,14 +52,14 @@ void Engine::Put(Variable variable, const pybind11::array &array,
     helper::CheckForNullptr(variable.m_Variable,
                             "for variable, in call to Engine::Put numpy array");
 
-    const std::string type = variable.Type();
+    const DataType type = variable.DataType();
 
-    if (type == "compound")
+    if (type == DataType("compound"))
     {
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         m_Engine->Put(*dynamic_cast<core::Variable<T> *>(variable.m_Variable), \
                       reinterpret_cast<const T *>(array.data()), launch);      \
@@ -82,7 +82,7 @@ void Engine::Put(Variable variable, const std::string &string)
     helper::CheckForNullptr(variable.m_Variable,
                             "for variable, in call to Engine::Put string");
 
-    if (variable.Type() != helper::GetType<std::string>())
+    if (variable.DataType() != helper::GetDataType<std::string>())
     {
         throw std::invalid_argument(
             "ERROR: variable " + variable.Name() +
@@ -109,14 +109,14 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
         variable.m_Variable,
         "for variable, in call to Engine::Get a numpy array");
 
-    const std::string type = variable.Type();
+    const DataType type = variable.DataType();
 
-    if (type == "compound")
+    if (type == DataType("compound"))
     {
         // not supported
     }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         m_Engine->Get(*dynamic_cast<core::Variable<T> *>(variable.m_Variable), \
                       reinterpret_cast<T *>(const_cast<void *>(array.data())), \
@@ -143,9 +143,9 @@ void Engine::Get(Variable variable, std::string &string, const Mode launch)
     helper::CheckForNullptr(variable.m_Variable,
                             "for variable, in call to Engine::Get a string");
 
-    const std::string type = variable.Type();
+    const DataType type = variable.DataType();
 
-    if (type == helper::GetType<std::string>())
+    if (type == helper::GetDataType<std::string>())
     {
         m_Engine->Get(
             *dynamic_cast<core::Variable<std::string> *>(variable.m_Variable),

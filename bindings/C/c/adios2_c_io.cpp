@@ -14,7 +14,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/core/IO.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //helper::ExceptionToError
 #include "adios2_c_internal.h"
 
 #ifdef __cplusplus
@@ -247,15 +247,15 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const std::string type(it->second.m_Type.ToString());
+            const adios2::DataType type(it->second.m_Type);
             adios2::core::VariableBase *variable = nullptr;
 
-            if (type == "compound")
+            if (type == adios2::DataType("compound"))
             {
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         variable = ioCpp.InquireVariable<T>(name);                             \
         list[n] = reinterpret_cast<adios2_variable *>(variable);               \
@@ -444,15 +444,15 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
             return attribute;
         }
 
-        const std::string type(itAttribute->second.m_Type.ToString());
+        const adios2::DataType type(itAttribute->second.m_Type);
         adios2::core::AttributeBase *attributeCpp = nullptr;
 
-        if (type == "compound")
+        if (type == adios2::DataType("compound"))
         {
             // not supported
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         attributeCpp = ioCpp.InquireAttribute<T>(name);                        \
     }
@@ -505,15 +505,15 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
         for (auto &name : names)
         {
             auto it = dataMap.find(name);
-            const std::string type(it->second.m_Type.ToString());
+            const adios2::DataType type(it->second.m_Type);
             adios2::core::AttributeBase *attribute = nullptr;
 
-            if (type == "compound")
+            if (type == adios2::DataType("compound"))
             {
                 // not supported
             }
 #define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetType<T>())                             \
+    else if (type == adios2::helper::GetDataType<T>())                         \
     {                                                                          \
         attribute = ioCpp.InquireAttribute<T>(name);                           \
         list[n] = reinterpret_cast<adios2_attribute *>(attribute);             \
