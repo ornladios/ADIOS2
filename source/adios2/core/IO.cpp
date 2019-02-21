@@ -208,8 +208,8 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        auto variableMap = GetVariableMap<T>();                                \
-        variableMap.erase(index);                                              \
+        auto attributeMap = GetAttributeMap<T>();                              \
+        attributeMap.erase(index);                                             \
         isRemoved = true;                                                      \
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
