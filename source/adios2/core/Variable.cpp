@@ -13,7 +13,6 @@
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
 
 namespace adios2
 {

@@ -11,7 +11,7 @@
 #include "Attribute.h"
 
 #include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/helper/adiosFunctions.h" //GetDataType<T>
 
 namespace adios2
 {

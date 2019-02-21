@@ -34,7 +34,7 @@ public:
     struct Element
     {
         const std::string Name;
-        const std::string Type; ///< from GetType<T>
+        const DataType Type;
         const size_t Offset;    ///< element offset in struct
     };
 

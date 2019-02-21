@@ -20,7 +20,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
+#include "adios2/helper/adiosFunctions.h" //helper::GlobalName
 
 namespace adios2
 {

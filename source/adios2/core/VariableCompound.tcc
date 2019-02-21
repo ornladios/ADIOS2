@@ -13,7 +13,7 @@
 
 #include "VariableCompound.h"
 
-#include "adios2/helper/adiosFunctions.h" //GetType
+#include "adios2/helper/adiosFunctions.h" //GetDataType
 
 namespace adios2
 {
@@ -24,7 +24,7 @@ template <class T>
 void VariableCompound::InsertMember(const std::string &name,
                                     const size_t offset)
 {
-    m_Elements.push_back(Element{name, helper::GetType<T>(), offset});
+    m_Elements.push_back(Element{name, helper::GetDataType<T>(), offset});
 }
 
 } // end namespace core
