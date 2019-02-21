@@ -68,15 +68,11 @@ size_t DataSpacesWriter::CurrentStep() const
 
 void DataSpacesWriter::EndStep()
 {
-	int rank;
-	MPI_Comm_rank(m_data.mpi_comm, &rank);
-	MPI_Barrier(m_data.mpi_comm);
+	//int rank;
+	//MPI_Comm_rank(m_data.mpi_comm, &rank);
+	//MPI_Barrier(m_data.mpi_comm);
 	if(rank==0)
 		WriteVarInfo();
-	//char *cstr = new char[f_Name.length() + 1];
-	//strcpy(cstr, f_Name.c_str());
-    MPI_Barrier(m_data.mpi_comm);
-    //dspaces_unlock_on_write(cstr, &m_data.mpi_comm);
 
 }
 void DataSpacesWriter::Flush(const int transportIndex) {}
