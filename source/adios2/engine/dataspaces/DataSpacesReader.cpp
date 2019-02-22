@@ -260,6 +260,7 @@ size_t DataSpacesReader::CurrentStep() const
 void DataSpacesReader::EndStep()
 {
 
+	MPI_Barrier(m_data.mpi_comm);
 	PerformGets();
 
 
