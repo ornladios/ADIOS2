@@ -194,7 +194,11 @@ class DataType
 public:
     explicit DataType(const std::string &Type);
 
+    bool operator==(const DataType &other) const;
+    bool operator!=(const DataType &other) const;
+
     const std::string &ToString() const;
+    bool empty() const;
 
 private:
     const std::string m_Type;

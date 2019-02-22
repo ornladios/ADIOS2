@@ -154,16 +154,16 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     if (itVariable != m_Variables.end())
     {
         // first remove the Variable object
-        const std::string type(itVariable->second.m_Type.ToString());
+        const DataType type(itVariable->second.m_Type);
         const unsigned int index(itVariable->second.m_Index);
 
-        if (type == "compound")
+        if (type == DataType("compound"))
         {
             auto variableMap = m_Compound;
             variableMap.erase(index);
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         auto variableMap = GetVariableMap<T>();                                \
         variableMap.erase(index);                                              \
@@ -197,8 +197,8 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
     // attribute exists
     if (itAttribute != m_Attributes.end())
     {
-        // first remove the Variable object
-        const std::string type(itAttribute->second.m_Type.ToString());
+        // first remove the Attribute object
+        const DataType type(itAttribute->second.m_Type);
         const unsigned int index(itAttribute->second.m_Index);
 
         if (type.empty())
@@ -206,7 +206,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
             // nothing to do
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         auto attributeMap = GetAttributeMap<T>();                              \
         attributeMap.erase(index);                                             \
@@ -304,14 +304,14 @@ IO::GetAvailableAttributes(const std::string &variableName,
             }
         }
 
-        const std::string type(attributePair.second.m_Type.ToString());
-        attributesInfo[name]["Type"] = type;
+        const DataType type(attributePair.second.m_Type);
+        attributesInfo[name]["Type"] = type.ToString();
 
-        if (type == "compound")
+        if (type == DataType("compound"))
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Attribute<T> &attribute = *InquireAttribute<T>(absoluteName);          \
         attributesInfo[name]["Elements"] =                                     \
@@ -343,15 +343,15 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
         return std::string();
     }
 
-    const std::string type = itVariable->second.m_Type.ToString();
+    const DataType type = itVariable->second.m_Type;
 
     if (m_ReadStreaming)
     {
-        if (type == "compound")
+        if (type == DataType("compound"))
         {
         }
 #define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         const Variable<T> &variable =                                          \
             const_cast<IO *>(this)->GetVariableMap<T>().at(                    \
@@ -365,7 +365,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
 #undef declare_template_instantiation
     }
 
-    return type;
+    return type.ToString();
 }
 
 std::string IO::InquireAttributeType(const std::string &name,

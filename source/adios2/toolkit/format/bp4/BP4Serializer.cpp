@@ -464,7 +464,7 @@ void BP4Serializer::PutAttributes(core::IO &io)
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.m_Type.ToString());
+        const DataType type(attributePair.second.m_Type);
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -474,11 +474,11 @@ void BP4Serializer::PutAttributes(core::IO &io)
             continue;
         }
 
-        if (type == "unknown")
+        if (type == DataType("unknown"))
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Stats<T> stats;                                                        \
         stats.Offset = absolutePosition;                                       \
@@ -1865,7 +1865,7 @@ size_t BP4Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
 
     for (const auto &attribute : attributes)
     {
-        const std::string type = attribute.second.m_Type.ToString();
+        const DataType type = attribute.second.m_Type;
 
         // each attribute is only written to output once
         // so filter out the ones already written
@@ -1875,11 +1875,11 @@ size_t BP4Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
             continue;
         }
 
-        if (type == "compound")
+        if (type == DataType("compound"))
         {
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         const std::string name = attribute.first;                              \
         const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \

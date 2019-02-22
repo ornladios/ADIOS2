@@ -76,12 +76,12 @@ void SstWriter::FFSMarshalAttributes()
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
-        const std::string type(attributePair.second.m_Type.ToString());
+        const DataType type(attributePair.second.m_Type);
 
-        if (type == "unknown")
+        if (type == DataType("unknown"))
         {
         }
-        else if (type == "string")
+        else if (type == DataType("string"))
         {
             core::Attribute<std::string> &attribute =
                 *m_IO.InquireAttribute<std::string>(name);
@@ -92,11 +92,12 @@ void SstWriter::FFSMarshalAttributes()
                 //
             }
 
-            SstFFSMarshalAttribute(m_Output, name.c_str(), type.c_str(),
-                                   sizeof(char *), element_count, data_addr);
+            SstFFSMarshalAttribute(m_Output, name.c_str(),
+                                   type.ToString().c_str(), sizeof(char *),
+                                   element_count, data_addr);
         }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
         int element_count = -1;                                                \
@@ -107,8 +108,8 @@ void SstWriter::FFSMarshalAttributes()
             data_addr = attribute.m_DataArray.data();                          \
         }                                                                      \
         SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),             \
-                               type.c_str(), sizeof(T), element_count,         \
-                               data_addr);                                     \
+                               type.ToString().c_str(), sizeof(T),             \
+                               element_count, data_addr);                      \
     }
 
         ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)

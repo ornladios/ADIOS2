@@ -199,12 +199,12 @@ void DataManSerializer::PutAttributes(core::IO &io, const int rank)
         for (const auto &attributePair : attributesDataMap)
         {
             const std::string name(attributePair.first);
-            const std::string type(attributePair.second.m_Type.ToString());
-            if (type == "unknown")
+            const DataType type(attributePair.second.m_Type);
+            if (type == DataType("unknown"))
             {
             }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
+    else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
         PutAttribute(attribute, rank);                                         \

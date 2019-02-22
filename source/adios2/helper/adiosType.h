@@ -97,11 +97,18 @@ struct SubStreamBoxInfo
 };
 
 /**
- * Gets type from template parameter T
+ * Gets type as string from template parameter T
  * @return string with type
  */
 template <class T>
 std::string GetType() noexcept;
+
+/**
+ * Gets type as DataType from template parameter T
+ * @return DataType
+ */
+template <class T>
+DataType GetDataType() noexcept;
 
 /**
  * Check in types set if "type" is one of the aliases for a certain type,

@@ -118,6 +118,18 @@ inline DataType::DataType(const std::string &Type) : m_Type(Type) {}
 
 inline const std::string &DataType::ToString() const { return m_Type; }
 
+inline bool DataType::operator==(const DataType &other) const
+{
+    return m_Type == other.m_Type;
+}
+
+inline bool DataType::operator!=(const DataType &other) const
+{
+    return !(*this == other);
+}
+
+inline bool DataType::empty() const { return m_Type.empty(); }
+
 } // end namespace adios2
 
 #endif /* ADIOS2_ADIOSTYPES_INL_ */

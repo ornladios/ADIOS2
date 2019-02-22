@@ -48,7 +48,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     auto itVariablePair =
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
                                               constantDims, m_DebugMode));
-    m_Variables.emplace(name, DataMapEntry{helper::GetType<T>(), size});
+    m_Variables.emplace(name, DataMapEntry{helper::GetDataType<T>(), size});
 
     Variable<T> &variable = itVariablePair.first->second;
 
@@ -77,7 +77,7 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    if (itVariable->second.m_Type.ToString() != helper::GetType<T>())
+    if (itVariable->second.m_Type != helper::GetDataType<T>())
     {
         return nullptr;
     }
@@ -121,7 +121,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 
     auto itAttributePair =
         attributeMap.emplace(size, Attribute<T>(globalName, value));
-    m_Attributes.emplace(globalName, DataMapEntry{helper::GetType<T>(), size});
+    m_Attributes.emplace(globalName,
+                         DataMapEntry{helper::GetDataType<T>(), size});
 
     return itAttributePair.first->second;
 }
@@ -156,7 +157,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
 
     auto itAttributePair =
         attributeMap.emplace(size, Attribute<T>(globalName, array, elements));
-    m_Attributes.emplace(globalName, DataMapEntry{helper::GetType<T>(), size});
+    m_Attributes.emplace(globalName,
+                         DataMapEntry{helper::GetDataType<T>(), size});
 
     return itAttributePair.first->second;
 }
@@ -175,7 +177,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
         return nullptr;
     }
 
-    if (itAttribute->second.m_Type.ToString() != helper::GetType<T>())
+    if (itAttribute->second.m_Type != helper::GetDataType<T>())
     {
         return nullptr;
     }
