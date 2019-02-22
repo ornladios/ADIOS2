@@ -121,12 +121,12 @@ inline DataType::DataType(int type) : m_Type(type) {}
 
 inline std::string DataType::ToString() const { return ToString(*this); }
 
-inline bool DataType::operator==(const DataType &other) const
+inline bool DataType::operator==(const DataType other) const
 {
     return m_Type == other.m_Type;
 }
 
-inline bool DataType::operator!=(const DataType &other) const
+inline bool DataType::operator!=(const DataType other) const
 {
     return !(*this == other);
 }

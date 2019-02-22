@@ -48,7 +48,7 @@ DataType DataType::FromString(const std::string &type_string)
     return type;
 }
 
-std::string DataType::ToString(const DataType &type)
+std::string DataType::ToString(const DataType type)
 {
     if (type == Unknown)
     {
