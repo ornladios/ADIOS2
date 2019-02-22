@@ -60,6 +60,8 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	int elemsize, ndim;
 	//acquire lock, current step and n_vars in the Begin Step
 	int rank;
+	char *cstr;
+	char *meta_lk;
 	MPI_Comm_rank(m_data.mpi_comm, &rank);
 	MPI_Comm self_comm = MPI_COMM_SELF;
 
@@ -71,7 +73,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		int l_version_no[2] = {0,0};
 		int version_buf_len = 2;
 		local_file_var = "LATESTVERSION@"+f_Name;
-		char *cstr = new char[local_file_var.length() + 1];
+		cstr = new char[local_file_var.length() + 1];
 		strcpy(cstr, local_file_var.c_str());
 		elemsize = sizeof(int);
 		ndim = 1;
@@ -110,7 +112,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		strcpy(cstr, local_file_var.c_str());
 
 		local_file_var = f_Name + std::to_string(m_CurrentStep);
-		char *meta_lk = new char[local_file_var.length() + 1];
+		meta_lk = new char[local_file_var.length() + 1];
 		strcpy(meta_lk, local_file_var.c_str());
 
 		dspaces_lock_on_read (meta_lk, &self_comm);
