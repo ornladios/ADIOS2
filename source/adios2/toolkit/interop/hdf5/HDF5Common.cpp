@@ -871,16 +871,15 @@ void HDF5Common::AddNonStringAttribute(core::IO &io,
                                        hid_t attrId, hid_t h5Type,
                                        hsize_t arraySize)
 {
-    using IOType = typename TypeInfo<T>::IOType;
     if (arraySize == 0)
     { // SCALAR
-        IOType val;
+        T val;
         H5Aread(attrId, h5Type, &val);
         io.DefineAttribute(attrName, val);
     }
     else
     {
-        IOType val[arraySize];
+        T val[arraySize];
         H5Aread(attrId, h5Type, val);
         io.DefineAttribute(attrName, val, arraySize);
     }
