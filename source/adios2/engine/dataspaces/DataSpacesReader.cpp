@@ -156,7 +156,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		delete[] meta_lk;
 		delete[] local_str;
 	}
-	MPI_Bcast(&buffer, buf_len, MPI_CHAR, 0, m_data.mpi_comm);
+	MPI_Bcast(buffer, buf_len, MPI_CHAR, 0, m_data.mpi_comm);
 	//now populate data from the buffer
 
 	int *dim_meta;
