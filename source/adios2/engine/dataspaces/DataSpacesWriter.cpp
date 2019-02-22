@@ -70,10 +70,10 @@ void DataSpacesWriter::EndStep()
 {
 	int rank;
 	MPI_Comm_rank(m_data.mpi_comm, &rank);
-	MPI_Barrier(m_data.mpi_comm);
+
 	if(rank==0)
 		WriteVarInfo();
-
+	MPI_Barrier(m_data.mpi_comm);
 }
 void DataSpacesWriter::Flush(const int transportIndex) {}
 
@@ -158,13 +158,15 @@ void DataSpacesWriter::WriteVarInfo()
 	local_str = new char[local_file_var.length() + 1];
 	strcpy(local_str, local_file_var.c_str());
 
+	MPI_Comm self_comm = MPI_COMM_SELF;
+
 	dspaces_put_sync(); //wait on previous put to finish
 
 	local_file_var = f_Name + std::to_string(m_CurrentStep);
 	char *meta_lk = new char[local_file_var.length() + 1];
 	strcpy(meta_lk, local_file_var.c_str());
 
-	dspaces_lock_on_write (meta_lk, &m_data.mpi_comm);
+	dspaces_lock_on_write (meta_lk, &self_comm);
 
 	elemsize = sizeof(char);
 	ndim = 1;
@@ -196,7 +198,7 @@ void DataSpacesWriter::WriteVarInfo()
 	dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
 	dspaces_put_sync(); //wait on previous put to finish
 
-	dspaces_unlock_on_write (meta_lk, &m_data.mpi_comm);
+	dspaces_unlock_on_write (meta_lk, &self_comm);
 
 	delete[] local_str;
 	delete[] meta_lk;
@@ -212,11 +214,11 @@ void DataSpacesWriter::WriteVarInfo()
 	char *lkstr = new char[f_Name.length() + 1];
 	strcpy(lkstr, f_Name.c_str());
 
-	dspaces_lock_on_write (lkstr, &m_data.mpi_comm);
+	dspaces_lock_on_write (lkstr, &self_comm);
 
 	dspaces_put(local_str, 0, elemsize, ndim, lb, ub, l_version_buf);
 	dspaces_put_sync(); //wait on previous put to finish
-	dspaces_unlock_on_write (lkstr, &m_data.mpi_comm);
+	dspaces_unlock_on_write (lkstr, &self_comm);
     // std::string attrType = attributesInfo[attrName]["Type"];
 	ndim_vector.clear();
 	gdims_vector.clear();
