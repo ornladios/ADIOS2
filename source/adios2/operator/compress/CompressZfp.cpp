@@ -157,8 +157,7 @@ zfp_field *CompressZfp::GetZFPField(const void *data, const Dims &dimensions,
 {
     auto lf_CheckField = [](const zfp_field *field,
                             const std::string zfpFieldFunction,
-                            const DataType type)
-    {
+                            const DataType type) {
 
         if (field == nullptr || field == NULL)
         {

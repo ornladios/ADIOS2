@@ -364,7 +364,8 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     if (allPreviousSteps)
     {
         std::vector<std::unordered_map<
-            size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator> its;
+            size_t, std::shared_ptr<std::vector<DataManVar>>>::iterator>
+            its;
         for (auto it = m_DataManVarMap.begin(); it != m_DataManVarMap.end();
              ++it)
         {

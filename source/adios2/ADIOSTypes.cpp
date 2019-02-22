@@ -14,7 +14,8 @@
 namespace adios2
 {
 
-// The actual numbers below don't matter, but they've picked so that they could be unified with the
+// The actual numbers below don't matter, but they've picked so that they could
+// be unified with the
 // enum adios2_type from adios2_c_type.h eventually
 const DataType DataType::Unknown(-1);
 const DataType DataType::Compound(14);

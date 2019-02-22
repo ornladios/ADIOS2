@@ -49,8 +49,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     SstReaderGetParams(m_Input, &m_WriterMarshalMethod);
 
     auto varFFSCallback = [](void *reader, const char *variableName,
-                             const char *type, void *data)
-    {
+                             const char *type, void *data) {
         DataType Type = DataType::FromString(type);
         class SstReader::SstReader *Reader =
             reinterpret_cast<class SstReader::SstReader *>(reader);
