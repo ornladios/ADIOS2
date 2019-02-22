@@ -667,7 +667,7 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
     std::string token;
     while ((pos = s.find(delimiter)) != std::string::npos)
     {
-        if (pos > 1)
+        if (pos > 0)
         { // "///a/b/c" == "a/b/c"
             token = s.substr(0, pos);
             list.push_back(token);
@@ -759,7 +759,7 @@ bool HDF5Common::OpenDataset(const std::string &varName,
     std::string token;
     while ((pos = s.find(delimiter)) != std::string::npos)
     {
-        if (pos > 1)
+        if (pos > 0)
         { // "///a/b/c" == "a/b/c"
             token = s.substr(0, pos);
             list.push_back(token);
