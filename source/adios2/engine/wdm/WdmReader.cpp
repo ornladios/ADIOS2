@@ -80,10 +80,10 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
     {
         m_MetaDataMap = m_DataManSerializer.GetMetaData();
         auto nowTime = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            nowTime - startTime);
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>( nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
+            Log(5, "WdmReader::BeginStep() returned EndOfStream.", true, true);
             return StepStatus::EndOfStream;
         }
     }
@@ -363,8 +363,6 @@ void WdmReader::RequestMetadata(int64_t step)
         reinterpret_cast<int64_t *>(request.data())[0] = m_ReaderId;
         reinterpret_cast<int64_t *>(request.data())[1] = step;
         std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
-        std::cout << request.size() << std::endl;
-        std::cout << address << std::endl;
         reply = m_MetadataTransport->Request(request, address);
     }
     m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);

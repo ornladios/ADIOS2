@@ -38,25 +38,42 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
 
-    Log(5, "WdmWriter::BeginStep() begin. Last step " +
-               std::to_string(m_CurrentStep),
-        true, true);
+    Log(5, "WdmWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
 
-    ++m_CurrentStep;
+    std::cout << "timeoutSeconds = " << timeoutSeconds << std::endl;
 
-    if (m_DataManSerializer.Steps() >= m_QueueLimit)
+
+    if(m_QueueFullPolicy == "discard")
     {
         int64_t stepToErase = m_CurrentStep - m_QueueLimit;
         if (stepToErase >= 0)
         {
-            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing "
-                   "Step " +
-                       std::to_string(stepToErase),
-                true, true);
+            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing Step " + std::to_string(stepToErase), true, true);
             m_DataManSerializer.Erase(stepToErase);
         }
     }
+    else if(m_QueueFullPolicy == "block")
+    {
+        auto startTime = std::chrono::system_clock::now();
+        while (m_DataManSerializer.Steps() > m_QueueLimit)
+        {
+            auto nowTime = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
+            if(duration.count() > timeoutSeconds)
+            {
+                Log(5, "WdmWriter::BeginStep() returned NotReady", true, true);
+                return StepStatus::NotReady;
+            }
+        }
+    }
+    else
+    {
+        throw(std::invalid_argument("WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
+    }
 
+    Log(5, "WdmWriter::BeginStep() after checking queue limit", true, true);
+
+    ++m_CurrentStep;
     m_DataManSerializer.New(m_DefaultBufferSize);
 
     if (not m_AttributesSet)
@@ -119,13 +136,15 @@ void WdmWriter::InitParameters()
     {
         std::string key(pair.first);
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-
         std::string value(pair.second);
         std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-
         if (key == "verbose")
         {
             m_Verbosity = std::stoi(value);
+        }
+        else if(key == "queuefullpolicy")
+        {
+            m_QueueFullPolicy = value;
         }
     }
 }
@@ -223,15 +242,19 @@ void WdmWriter::ReplyThread(const std::string &address)
             {
                 if (step == -5) // let writer decide what to send
                 {
-                    if (m_QueueFullPolicy == "Discard")
+                    if (m_QueueFullPolicy == "discard")
                     {
                         aggMetadata =
                             m_DataManSerializer.GetAggregatedMetadataPack(-2);
                     }
-                    else if (m_QueueFullPolicy == "Block")
+                    else if (m_QueueFullPolicy == "block")
                     {
                         aggMetadata =
                             m_DataManSerializer.GetAggregatedMetadataPack(-4);
+                    }
+                    else
+                    {
+                        throw(std::invalid_argument("WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
                     }
                 }
                 else

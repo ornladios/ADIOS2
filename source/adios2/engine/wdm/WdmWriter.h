@@ -45,7 +45,7 @@ private:
     // API parameters
     int m_Channels = 1;
     int64_t m_QueueLimit = 1000;
-    std::string m_QueueFullPolicy = "Block";
+    std::string m_QueueFullPolicy = "discard";
     size_t m_DefaultBufferSize = 1024;
 
     format::DataManSerializer m_DataManSerializer;
@@ -94,7 +94,7 @@ private:
     void Log(const int level, const std::string &message, const bool mpi,
              const bool endline);
 
-    int m_Verbosity = 0;
+    int m_Verbosity = 11;
 };
 
 } // end namespace engine
