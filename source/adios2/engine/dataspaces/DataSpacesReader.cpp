@@ -284,12 +284,12 @@ void DataSpacesReader::Flush(const int transportIndex) {}
 
 void DataSpacesReader::PerformGets()
 {
-	if(m_DeferredStack.size()>0){
+	if(m_DeferredStack.size()>0 && m_CurrentStep <= latestStep){
 	#define declare_type(T)                                                        \
 	    for (std::string variableName : m_DeferredStack)                           \
 	    {                                                                          \
 	        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
-	        if (var != nullptr && m_CurrentStep <= latestStep)                                                    \
+	        if (var != nullptr)                                                    \
 	        {                                                                      \
 	            ReadDsData(*var, var->GetData(), m_CurrentStep);                          \
 	        }                                                                      \
