@@ -111,6 +111,12 @@ struct TypeInfo<
     using ValueType = T;
 };
 
+template <typename T, typename Enable>
+inline std::ostream &operator<<(std::ostream &os, const T &value)
+{
+    return os << ToString(value);
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_ADIOSTYPES_INL_ */
