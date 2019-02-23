@@ -304,6 +304,23 @@ private:
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
 };
 
+namespace
+{
+template <typename T>
+struct IsVariable : std::false_type
+{
+};
+
+template <typename T>
+struct IsVariable<Variable<T>> : std::true_type
+{
+};
+} // namespace
+
+template <typename T,
+          typename std::enable_if<IsVariable<T>::value, int>::type = 0>
+std::string ToString(T value);
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_H_ */
