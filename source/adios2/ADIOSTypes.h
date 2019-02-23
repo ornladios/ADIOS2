@@ -206,6 +206,9 @@ struct TypeInfo;
  */
 
 std::string ToString(ShapeID value);
+std::string ToString(IOMode value);
+std::string ToString(Mode value);
+
 } // end namespace adios2
 
 #include "ADIOSTypes.inl"
