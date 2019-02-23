@@ -224,6 +224,12 @@ namespace adios2
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+#define declare_template_instantiation(T)                                      \
+    template std::string ToString(Variable<T> var);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
