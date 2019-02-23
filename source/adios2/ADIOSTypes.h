@@ -209,6 +209,14 @@ std::string ToString(ShapeID value);
 std::string ToString(IOMode value);
 std::string ToString(Mode value);
 
+/**
+ * operator<<(ostream&, T enum_val)
+ * enables output of enum classes directly to std::cout etc,
+ * if ToString() can handle it
+ */
+template <typename T, typename Enable = decltype(ToString(std::declval<T>()))>
+std::ostream &operator<<(std::ostream &os, const T &value);
+
 } // end namespace adios2
 
 #include "ADIOSTypes.inl"
