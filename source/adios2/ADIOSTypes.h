@@ -200,6 +200,12 @@ using Box = std::pair<T, T>;
 template <typename T, typename Enable = void>
 struct TypeInfo;
 
+/**
+ * ToString
+ * makes a string from an enum class like ShapeID etc, for debugging etc
+ */
+
+std::string ToString(ShapeID value);
 } // end namespace adios2
 
 #include "ADIOSTypes.inl"

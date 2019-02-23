@@ -10,6 +10,8 @@ add_library(taustubs
 )
 
 add_library(adios2
+  ADIOSTypes.cpp
+  
   core/Attribute.cpp 
   core/AttributeBase.cpp
   core/ADIOS.cpp
