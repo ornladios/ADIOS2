@@ -152,7 +152,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             const adios2::core::Attribute<std::string> *attributeCpp =
                 dynamic_cast<const adios2::core::Attribute<std::string> *>(
