@@ -57,25 +57,6 @@
     MACRO(std::string)                                                         \
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)
 
-#define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                        \
-    MACRO(std::string)                                                         \
-    MACRO(char)                                                                \
-    MACRO(signed char)                                                         \
-    MACRO(unsigned char)                                                       \
-    MACRO(short)                                                               \
-    MACRO(unsigned short)                                                      \
-    MACRO(int)                                                                 \
-    MACRO(unsigned int)                                                        \
-    MACRO(long int)                                                            \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long int)                                                   \
-    MACRO(unsigned long long int)                                              \
-    MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)                                                         \
-    MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)
-
 #define ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                              \
     MACRO(char)                                                                \
     MACRO(signed char)                                                         \
@@ -93,6 +74,10 @@
     MACRO(long double)                                                         \
     MACRO(std::complex<float>)                                                 \
     MACRO(std::complex<double>)
+
+#define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                        \
+    MACRO(std::string)                                                         \
+    ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)
 
 #define ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(MACRO)                      \
     MACRO(float)                                                               \
