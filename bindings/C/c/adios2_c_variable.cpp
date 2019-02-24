@@ -206,7 +206,7 @@ adios2_error adios2_variable_name(char *name, size_t *size,
     }
 }
 
-adios2_error adios2_variable_type(adios2_type *type,
+adios2_error adios2_variable_type(adios2_type *c_type,
                                   const adios2_variable *variable)
 {
     try
@@ -218,19 +218,19 @@ adios2_error adios2_variable_type(adios2_type *type,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        const std::string typeCpp = variableBase->m_Type;
-        if (typeCpp == adios2::helper::GetType<std::string>())
+        std::string type = variableBase->m_Type;
+        if (type == adios2::helper::GetType<std::string>())
         {
-            *type = adios2_type_string;
+            *c_type = adios2_type_string;
         }
 #define make_case(T)                                                           \
-    else if (typeCpp == adios2::helper::GetType<MapAdios2Type<T>::Type>())     \
+    else if (type == adios2::helper::GetType<MapAdios2Type<T>::Type>())        \
     {                                                                          \
-        *type = T;                                                             \
+        *c_type = T;                                                           \
     }
         ADIOS2_FOREACH_C_TYPE_1ARG(make_case)
 #undef make_case
-        else { *type = adios2_type_unknown; }
+        else { *c_type = adios2_type_unknown; }
         return adios2_error_none;
     }
     catch (...)

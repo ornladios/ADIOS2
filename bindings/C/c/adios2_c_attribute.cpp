@@ -38,7 +38,7 @@ adios2_error adios2_attribute_name(char *name, size_t *size,
     }
 }
 
-adios2_error adios2_attribute_type(adios2_type *type,
+adios2_error adios2_attribute_type(adios2_type *c_type,
                                    const adios2_attribute *attribute)
 {
     try
@@ -48,19 +48,19 @@ adios2_error adios2_attribute_type(adios2_type *type,
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
 
-        auto type_s = attributeBase->m_Type;
-        if (type_s == adios2::helper::GetType<std::string>())
+        std::string type = attributeBase->m_Type;
+        if (type == adios2::helper::GetType<std::string>())
         {
-            *type = adios2_type_string;
+            *c_type = adios2_type_string;
         }
 #define make_case(T)                                                           \
-    else if (type_s == adios2::helper::GetType<MapAdios2Type<T>::Type>())      \
+    else if (type == adios2::helper::GetType<MapAdios2Type<T>::Type>())        \
     {                                                                          \
-        *type = T;                                                             \
+        *c_type = T;                                                           \
     }
         ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
 #undef make_case
-        else { *type = adios2_type_unknown; }
+        else { *c_type = adios2_type_unknown; }
         return adios2_error_none;
     }
     catch (...)
