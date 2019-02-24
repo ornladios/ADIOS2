@@ -89,21 +89,6 @@
     MACRO(signed char)                                                         \
     MACRO(unsigned char)
 
-#define ADIOS2_FOREACH_NUMERIC_TYPE_1ARG(MACRO)                                \
-    MACRO(short)                                                               \
-    MACRO(unsigned short)                                                      \
-    MACRO(int)                                                                 \
-    MACRO(unsigned int)                                                        \
-    MACRO(long int)                                                            \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long int)                                                   \
-    MACRO(unsigned long long int)                                              \
-    MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)                                                         \
-    MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)
-
 #define ADIOS2_FOREACH_ZFP_TYPE_1ARG(MACRO)                                    \
     MACRO(int32_t)                                                             \
     MACRO(int64_t)                                                             \
@@ -144,19 +129,6 @@
     MACRO(long int)                                                            \
     MACRO(unsigned long int)                                                   \
     MACRO(long long int)                                                       \
-    MACRO(unsigned long long int)                                              \
-    MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)
-
-#define ADIOS2_FOREACH_NUMERIC_ATTRIBUTE_TYPE_1ARG(MACRO)                      \
-    MACRO(short)                                                               \
-    MACRO(unsigned short)                                                      \
-    MACRO(int)                                                                 \
-    MACRO(unsigned int)                                                        \
-    MACRO(long int)                                                            \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long int)                                                   \
     MACRO(unsigned long long int)                                              \
     MACRO(float)                                                               \
     MACRO(double)                                                              \
