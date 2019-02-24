@@ -3,7 +3,8 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * adios2_c_internal.h
+ * adios2_c_internal.h: helper functionality for use within the C bindings,
+ *                      but not part of the public interface
  *
  *  Created on: Feb 9, 2019
  *      Author: Kai Germaschewski <kai.germaschewski@unh.edu>

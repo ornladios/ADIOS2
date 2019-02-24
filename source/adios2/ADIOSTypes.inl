@@ -3,8 +3,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * ADIOSTypes.h : public header that contains "using/typedef" alias, defaults
- * and parameters options as enum classes
+ * ADIOSTypes.inl : inline implementatios for ADIOSTypes.h
  *
  *  Created on: Feb 20, 2019
  *      Author: Kai Germaschewski <kai.germaschewski@unh.edu>
