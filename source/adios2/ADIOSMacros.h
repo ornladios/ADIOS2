@@ -220,12 +220,4 @@
     MACRO(std::complex<float>, cfloat)                                         \
     MACRO(std::complex<double>, cdouble)
 
-#define ADIOS2_FOREACH_COMPLEX_TYPE_2ARGS(MACRO)                               \
-    MACRO(std::complex<float>, CFloat)                                         \
-    MACRO(std::complex<double>, CDouble)
-
-#define ADIOS2_FOREACH_LAUNCH_MODE(MACRO)                                      \
-    MACRO(Sync)                                                                \
-    MACRO(Deferred)
-
 #endif /* ADIOS2_ADIOSMACROS_H */
