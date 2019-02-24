@@ -53,7 +53,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
     std::cout << "Data : " << std::endl;
 
 #define declare_type(T)                                                        \
-    if (type == adios2::helper::GetType<T>())                                  \
+    if (type == adios2::GetType<T>())                                          \
     {                                                                          \
         for (size_t i = 0; i < dumpsize; ++i)                                  \
         {                                                                      \
