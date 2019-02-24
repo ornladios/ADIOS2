@@ -197,7 +197,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
     // attribute exists
     if (itAttribute != m_Attributes.end())
     {
-        // first remove the Variable object
+        // first remove the Attribute object
         const std::string type(itAttribute->second.first);
         const unsigned int index(itAttribute->second.second);
 
