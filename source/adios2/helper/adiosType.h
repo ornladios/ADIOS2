@@ -104,19 +104,6 @@ template <class T>
 std::string GetType() noexcept;
 
 /**
- * Check in types set if "type" is one of the aliases for a certain type,
- * (e.g. if type = integer is an accepted alias for "int", returning true)
- * @param type input to be compared with an alias
- * @param aliases set containing aliases to a certain type, typically
- * Support::DatatypesAliases from Support.h
- * @return true: is an alias, false: is not
- */
-template <class T>
-bool IsTypeAlias(
-    const std::string type,
-    const std::map<std::string, std::set<std::string>> &aliases) noexcept;
-
-/**
  * Converts a vector of dimensions to a CSV string
  * @param dims vector of dimensions
  * @return comma separate value (CSV)
