@@ -57,8 +57,7 @@ public:
     template <class... Args>
     iterator emplace(Args &&... args)
     {
-        Index key = static_cast<Index>(m_Map.size());
-        auto status = m_Map.emplace(key, std::forward<Args>(args)...);
+        auto status = m_Map.emplace(m_Index++, std::forward<Args>(args)...);
         if (!status.second)
         {
             throw std::runtime_error("emplace failed in VariableMap::emplace");
@@ -68,6 +67,7 @@ public:
 
 private:
     Map m_Map;
+    Index m_Index = 0;
 };
 
 // forward declaration needed as IO is passed to Engine derived
