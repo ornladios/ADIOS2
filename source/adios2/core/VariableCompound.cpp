@@ -18,19 +18,18 @@ namespace adios2
 namespace core
 {
 
-VariableCompound::VariableCompound(const std::string &name,
-                                   const size_t structSize, const Dims &shape,
-                                   const Dims &start, const Dims &count,
-                                   const bool constantDims,
-                                   const bool debugMode)
-: VariableBase(name, "compound", structSize, shape, start, count, constantDims,
-               debugMode)
+Variable<Compound>::Variable(const std::string &name, const size_t structSize,
+                             const Dims &shape, const Dims &start,
+                             const Dims &count, const bool constantDims,
+                             const bool debugMode)
+: VariableBase(name, "compound", structSize, shape, start, count,
+               constantDims, debugMode)
 {
 }
 
 #define declare_template_instantiation(T)                                      \
-    template void VariableCompound::InsertMember<T>(const std::string &,       \
-                                                    const size_t);
+    template void Variable<Compound>::InsertMember<T>(const std::string &,     \
+                                                      const size_t);
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
