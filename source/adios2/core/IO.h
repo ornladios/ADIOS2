@@ -50,7 +50,6 @@ public:
 
     void erase(Index key) { m_Map.erase(key); }
     void clear() noexcept { m_Map.clear(); }
-    size_t size() const noexcept { return m_Map.size(); }
 
     Value &at(Index key) { return m_Map.at(key); }
     const Value &at(Index key) const { return m_Map.at(key); }
