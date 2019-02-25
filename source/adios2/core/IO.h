@@ -44,11 +44,22 @@ class VariableMap
 {
 public:
     using Index = unsigned int;
-    using Map = std::map<Index, Variable<T>>;
+    using Value = Variable<T>;
+    using Map = std::map<Index, Value>;
+    using iterator = typename Map::iterator;
 
-    Map &GetMap() noexcept { return m_Map; }
     void erase(Index key) { m_Map.erase(key); }
     void clear() noexcept { m_Map.clear(); }
+    size_t size() const noexcept { return m_Map.size(); }
+
+    Value &at(Index key) { return m_Map.at(key); }
+    const Value &at(Index key) const { return m_Map.at(key); }
+
+    template <class... Args>
+    std::pair<iterator, bool> emplace(Args &&... args)
+    {
+        return m_Map.emplace(std::forward<Args>(args)...);
+    }
 
 private:
     Map m_Map;
@@ -460,7 +471,7 @@ private:
     /** Gets the internal reference to a variable map for type T
      *  This function is specialized in IO.tcc */
     template <class T>
-    std::map<unsigned int, Variable<T>> &GetVariableMap() noexcept;
+    VariableMap<T> &GetVariableMap() noexcept;
 
     /**
      * Map holding attribute identifiers
