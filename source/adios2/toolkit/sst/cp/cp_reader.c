@@ -1077,6 +1077,11 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
                                Smallest);
                     NextTimestep = Smallest;
                 }
+                if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
+                {
+                    /* force everyone to close */
+                    NextTimestep = -2;
+                }
                 MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
             }
         }
@@ -1084,8 +1089,10 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
         {
             MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
-        if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
+        if (NextTimestep == -2)
         {
+            /* there was a peerClosed setting on rank0, we'll close */
+            Stream->Status = PeerClosed;
             CP_verbose(Stream,
                        "SstAdvanceStep returning EndOfStream at timestep %d\n",
                        Stream->ReaderTimestep);
