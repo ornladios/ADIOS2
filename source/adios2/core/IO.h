@@ -39,6 +39,21 @@ namespace core
 using DataMap =
     std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
 
+template <class T>
+class VariableMap
+{
+public:
+    using Index = unsigned int;
+    using Map = std::map<Index, Variable<T>>;
+
+    Map &GetMap() noexcept { return m_Map; }
+    void erase(Index key) { m_Map.erase(key); }
+    void clear() noexcept { m_Map.clear(); }
+
+private:
+    Map m_Map;
+};
+
 // forward declaration needed as IO is passed to Engine derived
 // classes
 class Engine;
@@ -436,11 +451,11 @@ private:
     DataMap m_Variables;
 
     /** Variable containers based on fixed-size type */
-#define declare_map(T, NAME) std::map<unsigned int, Variable<T>> m_##NAME;
+#define declare_map(T, NAME) VariableMap<T> m_##NAME;
     ADIOS2_FOREACH_STDTYPE_2ARGS(declare_map)
 #undef declare_map
 
-    std::map<unsigned int, VariableCompound> m_Compound;
+    VariableMap<Compound> m_Compound;
 
     /** Gets the internal reference to a variable map for type T
      *  This function is specialized in IO.tcc */

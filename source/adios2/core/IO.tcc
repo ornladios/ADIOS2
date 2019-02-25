@@ -195,7 +195,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
     template <>                                                                \
     std::map<unsigned int, Variable<T>> &IO::GetVariableMap() noexcept         \
     {                                                                          \
-        return m_##NAME;                                                       \
+        return m_##NAME.GetMap();                                              \
     }
 ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
 #undef make_GetVariableMap
