@@ -44,13 +44,12 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     }
 
     auto &variableMap = GetVariableMap<T>();
-    const unsigned int size = static_cast<unsigned int>(variableMap.size());
-    auto itVariable =
-        variableMap.emplace(size, Variable<T>(name, shape, start, count,
-                                              constantDims, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), size));
-
+    auto itVariable = variableMap.emplace(
+        Variable<T>(name, shape, start, count, constantDims, m_DebugMode));
+    typename VariableMap<T>::Index index = itVariable->first;
     Variable<T> &variable = itVariable->second;
+
+    m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), index));
 
     // check IO placeholder for variable operations
     auto itOperations = m_VarOpsPlaceholder.find(name);

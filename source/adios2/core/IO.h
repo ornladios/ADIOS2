@@ -56,8 +56,9 @@ public:
     const Value &at(Index key) const { return m_Map.at(key); }
 
     template <class... Args>
-    iterator emplace(Index key, Args &&... args)
+    iterator emplace(Args &&... args)
     {
+        Index key = static_cast<Index>(m_Map.size());
         auto status = m_Map.emplace(key, std::forward<Args>(args)...);
         if (!status.second)
         {
