@@ -56,9 +56,9 @@ public:
     const Value &at(Index key) const { return m_Map.at(key); }
 
     template <class... Args>
-    iterator emplace(Args &&... args)
+    iterator emplace(Index key, Args &&... args)
     {
-        auto status = m_Map.emplace(std::forward<Args>(args)...);
+        auto status = m_Map.emplace(key, std::forward<Args>(args)...);
         if (!status.second)
         {
             throw std::runtime_error("emplace failed in VariableMap::emplace");
