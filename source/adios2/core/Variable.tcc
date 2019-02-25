@@ -22,7 +22,7 @@ namespace core
 {
 
 template <class T>
-Dims Variable<T>::DoShape(const size_t step) const
+Dims Variable<T>::Shape(const size_t step) const
 {
     if (m_DebugMode)
     {
@@ -66,7 +66,7 @@ Dims Variable<T>::DoShape(const size_t step) const
 }
 
 template <class T>
-std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
+std::pair<T, T> Variable<T>::MinMax(const size_t step) const
 {
     if (m_DebugMode && !m_FirstStreamingStep && step != DefaultSizeT)
     {
@@ -146,7 +146,7 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
 
 template <class T>
 std::vector<std::vector<typename Variable<T>::Info>>
-Variable<T>::DoAllStepsBlocksInfo() const
+Variable<T>::AllStepsBlocksInfo() const
 {
     if (m_DebugMode && m_Engine == nullptr)
     {
@@ -216,18 +216,6 @@ T *Variable<T>::GetData() const noexcept
 }
 
 template <class T>
-Dims Variable<T>::Shape(const size_t step) const
-{
-    return DoShape(step);
-}
-
-template <class T>
-std::pair<T, T> Variable<T>::MinMax(const size_t step) const
-{
-    return DoMinMax(step);
-}
-
-template <class T>
 T Variable<T>::Min(const size_t step) const
 {
     return MinMax(step).first;
@@ -237,13 +225,6 @@ template <class T>
 T Variable<T>::Max(const size_t step) const
 {
     return MinMax(step).second;
-}
-
-template <class T>
-std::vector<std::vector<typename Variable<T>::Info>>
-Variable<T>::AllStepsBlocksInfo() const
-{
-    return DoAllStepsBlocksInfo();
 }
 
 } // end namespace core
