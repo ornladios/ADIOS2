@@ -60,6 +60,36 @@ TEST(ADIOS2HelperString, ADIOS2HelperStringAddExtension)
     ASSERT_EQ(adios2::helper::AddExtension(abcbp, ext), abcbp);
 }
 
+TEST(ADIOS2HelperString, ADIOS2HelperStringEndsWithCaseSensitive)
+{
+
+    const std::string abcdefgh("abcd.efgh");
+    const std::string theend(".efgh");
+    const std::string notanend(".ephs");
+    const std::string shortstr("abc");
+
+    ASSERT_TRUE(adios2::helper::EndsWith(abcdefgh, theend));
+    ASSERT_FALSE(adios2::helper::EndsWith(abcdefgh, notanend));
+    ASSERT_FALSE(adios2::helper::EndsWith(shortstr, theend));
+}
+
+TEST(ADIOS2HelperString, ADIOS2HelperStringEndsWithCaseInsensitive)
+{
+
+    const std::string abcdefgh("abCd.eFgH");
+    const std::string end1(".efGh");
+    const std::string end2(".efgh");
+    const std::string noend1(".ephs");
+    const std::string noend2(".efdHs");
+    const std::string shortstr("ABC");
+
+    ASSERT_TRUE(adios2::helper::EndsWith(abcdefgh, end1, false));
+    ASSERT_TRUE(adios2::helper::EndsWith(abcdefgh, end2, false));
+    ASSERT_FALSE(adios2::helper::EndsWith(abcdefgh, noend1, false));
+    ASSERT_FALSE(adios2::helper::EndsWith(abcdefgh, noend2, false));
+    ASSERT_FALSE(adios2::helper::EndsWith(shortstr, end1, false));
+}
+
 TEST(ADIOS2HelperString, ADIOS2HelperStringConversion)
 {
 
