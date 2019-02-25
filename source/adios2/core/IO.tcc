@@ -45,15 +45,12 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
 
     auto &variableMap = GetVariableMap<T>();
     const unsigned int size = static_cast<unsigned int>(variableMap.size());
-    auto itVariablePair =
+    auto itVariable =
         variableMap.emplace(size, Variable<T>(name, shape, start, count,
                                               constantDims, m_DebugMode));
-    bool emplaceSucceeded = itVariablePair.second;
-    if (!emplaceSucceeded)
-        throw std::runtime_error("emplace failed in IO::DefineVariable");
     m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), size));
 
-    Variable<T> &variable = itVariablePair.first->second;
+    Variable<T> &variable = itVariable->second;
 
     // check IO placeholder for variable operations
     auto itOperations = m_VarOpsPlaceholder.find(name);
