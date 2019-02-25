@@ -9,62 +9,14 @@
  */
 
 #include "Attribute.h"
-
-#include "adios2/ADIOSMacros.h"
-#include "adios2/core/Attribute.h"
-#include "adios2/helper/adiosFunctions.h"
+#include "Attribute.tcc"
 
 namespace adios2
 {
 
-#define declare_type(T)                                                        \
-                                                                               \
-    template <>                                                                \
-    Attribute<T>::Attribute(core::Attribute<IOType> *attribute)                \
-    : m_Attribute(attribute)                                                   \
-    {                                                                          \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    Attribute<T>::operator bool() const noexcept                               \
-    {                                                                          \
-        return (m_Attribute == nullptr) ? false : true;                        \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    std::string Attribute<T>::Name() const                                     \
-    {                                                                          \
-        helper::CheckForNullptr(m_Attribute,                                   \
-                                "in call to Attribute<T>::Name()");            \
-        return m_Attribute->m_Name;                                            \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    std::string Attribute<T>::Type() const                                     \
-    {                                                                          \
-        helper::CheckForNullptr(m_Attribute,                                   \
-                                "in call to Attribute<T>::Type()");            \
-        return m_Attribute->m_Type;                                            \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    std::vector<T> Attribute<T>::Data() const                                  \
-    {                                                                          \
-        helper::CheckForNullptr(m_Attribute,                                   \
-                                "in call to Attribute<T>::Data()");            \
-                                                                               \
-        if (m_Attribute->m_IsSingleValue)                                      \
-        {                                                                      \
-            return std::vector<T>{m_Attribute->m_DataSingleValue};             \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            return reinterpret_cast<std::vector<T> &>(                         \
-                m_Attribute->m_DataArray);                                     \
-        }                                                                      \
-    }
+#define declare_template_instantiation(T) template class Attribute<T>;
 
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
-#undef declare_type
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace adios2
