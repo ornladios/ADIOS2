@@ -43,6 +43,17 @@ make_MapAdios2Type(adios2_type_double_complex, std::complex<double>)
 /* clang-format on */
 #undef make_MapAdios2Type
 
+                                    inline adios2_error
+    String2CAPI(const std::string &s, char *buf, size_t *size)
+{
+    *size = s.size();
+    if (buf)
+    {
+        s.copy(buf, *size);
+    }
+    return adios2_error_none;
+}
+
 } // namespace
 
 #endif /* ADIOS2_BINDINGS_C_C_ADIOS2_C_INTERNAL_INL_ */
