@@ -39,12 +39,12 @@ namespace core
 using DataMap =
     std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
 
-template <class T>
-class VariableMap
+template <template <class> class Entity, class T>
+class EntityMap
 {
 public:
     using Index = unsigned int;
-    using Value = Variable<T>;
+    using Value = Entity<T>;
     using Map = std::map<Index, Value>;
     using iterator = typename Map::iterator;
 
@@ -60,7 +60,7 @@ public:
         auto status = m_Map.emplace(m_Index++, std::forward<Args>(args)...);
         if (!status.second)
         {
-            throw std::runtime_error("emplace failed in VariableMap::emplace");
+            throw std::runtime_error("emplace failed in EntityMap::emplace");
         }
         return status.first;
     }
@@ -69,6 +69,9 @@ private:
     Map m_Map;
     Index m_Index = 0;
 };
+
+template <class T>
+using VariableMap = EntityMap<Variable, T>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
