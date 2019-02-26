@@ -330,6 +330,7 @@ TEST(ADIOS2_C_API, ReturnedStrings)
 
         const char *var_name;
         adios2_variable_name(&var_name, var);
+        adios2_remove_all_ios(adiosH);
         EXPECT_EQ(strcmp(var_name, "varI8"), 0);
     }
 }
