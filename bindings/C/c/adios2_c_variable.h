@@ -89,16 +89,14 @@ adios2_error adios2_set_step_selection(adios2_variable *variable,
 
 /**
  * Retrieve variable name
- * For safe use, call this function first with NULL name parameter
- * to get the size, then preallocate the buffer (with room for '\0'
- * if desired), then call the function again with the buffer.
- * Then '\0' terminate it if desired.
- * @param name output, string without trailing '\0', NULL or preallocated buffer
- * @param size output, name size without '\0'
+ * The string will be accessible through *name after the call.
+ * It remains valid until the Variable (or the underlying IO) is
+ * destroyed.
+ * @param name output, *name is a 0-terminated C string
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_variable_name(char *name, size_t *size,
+adios2_error adios2_variable_name(const char **name,
                                   const adios2_variable *variable);
 
 /**

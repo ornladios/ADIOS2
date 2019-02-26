@@ -116,11 +116,8 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
         adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
         adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
-        size_t size;
-        adios2_variable_name(NULL, &size, varStr);
-        char var_name[size + 1];
-        adios2_variable_name(var_name, &size, varStr);
-        var_name[size] = '\0';
+        const char *var_name;
+        adios2_variable_name(&var_name, varStr);
         EXPECT_EQ(strcmp(var_name, "varStr"), 0);
 
         adios2_engine *engineH =
