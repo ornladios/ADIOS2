@@ -47,13 +47,17 @@ namespace core
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode, const std::string hostLanguage)
-: m_MPIComm(mpiComm), m_ConfigFile(configFile), m_DebugMode(debugMode),
-  m_HostLanguage(hostLanguage)
+: m_ConfigFile(configFile), m_DebugMode(debugMode), m_HostLanguage(hostLanguage)
 {
-    if (m_DebugMode)
+    if (m_DebugMode && mpiComm == MPI_COMM_NULL)
     {
-        CheckMPI();
+        throw std::ios_base::failure(
+            "ERROR: MPI communicator is MPI_COMM_NULL, "
+            " in call to ADIOS constructor\n");
     }
+
+    MPI_Comm_dup(mpiComm, &m_MPIComm);
+
     if (!configFile.empty())
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
@@ -286,15 +290,6 @@ bool ADIOS::RemoveIO(const std::string name)
 void ADIOS::RemoveAllIOs() noexcept { m_IOs.clear(); }
 
 // PRIVATE FUNCTIONS
-void ADIOS::CheckMPI() const
-{
-    if (m_MPIComm == MPI_COMM_NULL)
-    {
-        throw std::ios_base::failure("ERROR: MPI communicator is MPI_COMM_NULL,"
-                                     " in call to ADIOS constructor\n");
-    }
-}
-
 void ADIOS::CheckOperator(const std::string name) const
 {
     if (m_DebugMode)

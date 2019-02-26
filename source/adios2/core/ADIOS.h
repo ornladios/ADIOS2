@@ -201,9 +201,6 @@ private:
     /** operators created with DefineOperator */
     std::map<std::string, std::shared_ptr<Operator>> m_Operators;
 
-    /** throws exception if m_MPIComm = MPI_COMM_NULL */
-    void CheckMPI() const;
-
     void CheckOperator(const std::string name) const;
 
     void XMLInit(const std::string &configFileXML);
