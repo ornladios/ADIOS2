@@ -200,7 +200,10 @@ adios2_error adios2_variable_name(char *name, size_t *size,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
         *size = variableBase->m_Name.size();
-        variableBase->m_Name.copy(name, *size);
+        if (name)
+        {
+            variableBase->m_Name.copy(name, *size);
+        }
         return adios2_error_none;
     }
     catch (...)

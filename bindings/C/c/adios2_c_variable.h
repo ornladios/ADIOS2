@@ -89,7 +89,11 @@ adios2_error adios2_set_step_selection(adios2_variable *variable,
 
 /**
  * Retrieve variable name
- * @param name output, must be pre-allocated
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ *  Then '\0' terminate it if desired.
+ * @param name output, string without trailing '\0'
  * @param size output, name size without '\0'
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors
