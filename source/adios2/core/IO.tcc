@@ -116,14 +116,14 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     }
 
     auto &attributeMap = GetAttributeMap<T>();
-    const unsigned int size = static_cast<unsigned int>(attributeMap.size());
+    auto itAttribute = attributeMap.emplace(Attribute<T>(globalName, value));
+    typename AttributeMap<T>::Index index = itAttribute->first;
+    Attribute<T> &attribute = itAttribute->second;
 
-    auto itAttributePair =
-        attributeMap.emplace(size, Attribute<T>(globalName, value));
     m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetType<T>(), size));
+                         std::make_pair(helper::GetType<T>(), index));
 
-    return itAttributePair.first->second;
+    return attribute;
 }
 
 template <class T>
@@ -152,14 +152,15 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     }
 
     auto &attributeMap = GetAttributeMap<T>();
-    const unsigned int size = static_cast<unsigned int>(attributeMap.size());
+    auto itAttribute =
+        attributeMap.emplace(Attribute<T>(globalName, array, elements));
+    typename AttributeMap<T>::Index index = itAttribute->first;
+    Attribute<T> &attribute = itAttribute->second;
 
-    auto itAttributePair =
-        attributeMap.emplace(size, Attribute<T>(globalName, array, elements));
     m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetType<T>(), size));
+                         std::make_pair(helper::GetType<T>(), index));
 
-    return itAttributePair.first->second;
+    return attribute;
 }
 
 template <class T>
@@ -199,7 +200,7 @@ ADIOS2_FOREACH_STDTYPE_2ARGS(make_GetVariableMap)
 // GetAttributeMap
 #define make_GetAttributeMap(T, NAME)                                          \
     template <>                                                                \
-    std::map<unsigned int, Attribute<T>> &IO::GetAttributeMap() noexcept       \
+    AttributeMap<T> &IO::GetAttributeMap() noexcept                            \
     {                                                                          \
         return m_##NAME##A;                                                    \
     }

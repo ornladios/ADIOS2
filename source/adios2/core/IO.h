@@ -73,6 +73,9 @@ private:
 template <class T>
 using VariableMap = EntityMap<Variable, T>;
 
+template <class T>
+using AttributeMap = EntityMap<Attribute, T>;
+
 // forward declaration needed as IO is passed to Engine derived
 // classes
 class Engine;
@@ -492,12 +495,12 @@ private:
      */
     DataMap m_Attributes;
 
-#define declare_map(T, NAME) std::map<unsigned int, Attribute<T>> m_##NAME##A;
+#define declare_map(T, NAME) AttributeMap<T> m_##NAME##A;
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(declare_map)
 #undef declare_map
 
     template <class T>
-    std::map<unsigned int, Attribute<T>> &GetAttributeMap() noexcept;
+    AttributeMap<T> &GetAttributeMap() noexcept;
 
     std::map<std::string, std::shared_ptr<Engine>> m_Engines;
 
