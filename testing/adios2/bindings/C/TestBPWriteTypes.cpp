@@ -321,6 +321,9 @@ TEST(ADIOS2_C_API, ReturnedStrings)
         // IO
         adios2_io *ioH = adios2_declare_io(adiosH, "C_API_TestIO");
 
+        // create some objects
+        adios2_set_engine(ioH, "BP3");
+
         size_t shape[1] = {2};
         size_t start[1] = {0};
         size_t count[1] = {2};
@@ -328,17 +331,49 @@ TEST(ADIOS2_C_API, ReturnedStrings)
             adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape,
                                    start, count, adios2_constant_dims_true);
 
-        const char *var_name;
-        adios2_variable_name(&var_name, var);
+        int32_t value = 99;
+        adios2_attribute *attr = adios2_define_attribute(
+            ioH, "intAttr", adios2_type_int32_t, &value);
+
+#ifdef ADIOS2_HAVE_BZIP2
+        adios2_operator *op = adios2_define_operator(adiosH, "testOp", "bzip2");
+#endif
+
+        // now test the APIs that return strings
+        size_t engine_type_size;
+        adios2_engine_type(NULL, &engine_type_size, ioH);
+        char engine_type[engine_type_size + 1];
+        adios2_engine_type(engine_type, &engine_type_size, ioH);
+        engine_type[engine_type_size] = '\0';
+
         size_t var_name_size;
         adios2_variable_name(NULL, &var_name_size, var);
         char var_name[var_name_size + 1];
         adios2_variable_name(var_name, &var_name_size, var);
         var_name[var_name_size] = '\0';
 
+        size_t attr_name_size;
+        adios2_attribute_name(NULL, &attr_name_size, attr);
+        char attr_name[attr_name_size + 1];
+        adios2_attribute_name(attr_name, &attr_name_size, attr);
+        attr_name[attr_name_size] = '\0';
+
+#ifdef ADIOS2_HAVE_BZIP2
+        size_t op_type_size;
+        adios2_operator_type(NULL, &op_type_size, op);
+        char op_type[op_type_size + 1];
+        adios2_operator_type(op_type, &op_type_size, op);
+        op_type[op_type_size] = '\0';
+#endif
+
         adios2_remove_all_ios(adiosH);
 
+        EXPECT_EQ(strcmp(engine_type, "BP3"), 0);
         EXPECT_EQ(strcmp(var_name, "varI8"), 0);
+        EXPECT_EQ(strcmp(attr_name, "intAttr"), 0);
+#ifdef ADIOS2_HAVE_BZIP2
+        EXPECT_EQ(strcmp(op_type, "bzip2"), 0);
+#endif
     }
 }
 
