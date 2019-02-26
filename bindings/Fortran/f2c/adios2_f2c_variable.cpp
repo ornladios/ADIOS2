@@ -22,12 +22,11 @@ void FC_GLOBAL(adios2_variable_name_f2c,
                                          int *ierr)
 {
     *size = -1;
-    const char *str;
-    *ierr = static_cast<int>(adios2_variable_name(&str, *variable));
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_variable_name(name, &sizeC, *variable));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
-        *size = static_cast<int>(strlen(str));
-        memcpy(name, str, *size);
+        *size = static_cast<int>(sizeC);
     }
 }
 

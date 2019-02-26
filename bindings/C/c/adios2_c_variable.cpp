@@ -184,7 +184,7 @@ adios2_error adios2_set_step_selection(adios2_variable *variable,
     }
 }
 
-adios2_error adios2_variable_name(const char **name,
+adios2_error adios2_variable_name(char *name, size_t *size,
                                   const adios2_variable *variable)
 {
     try
@@ -193,12 +193,11 @@ adios2_error adios2_variable_name(const char **name,
             variable,
             "for const adios2_variable, in call to adios2_variable_name");
         adios2::helper::CheckForNullptr(
-            name, "for const char* name, in call to adios2_variable_name");
+            size, "for size_t* length, in call to adios2_variable_name");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *name = variableBase->m_Name.c_str();
-        return adios2_error_none;
+        return String2CAPI(variableBase->m_Name, name, size);
     }
     catch (...)
     {
