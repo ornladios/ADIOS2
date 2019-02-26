@@ -31,17 +31,14 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian())
 {
-    Log(5, "WdmWriter::WdmWriter()", true, true);
     Init();
+    Log(5, "WdmWriter::WdmWriter()", true, true);
 }
 
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
 
     Log(5, "WdmWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
-
-    std::cout << "timeoutSeconds = " << timeoutSeconds << std::endl;
-
 
     if(m_QueueFullPolicy == "discard")
     {
@@ -285,7 +282,7 @@ void WdmWriter::ReplyThread(const std::string &address)
                 if (m_Tolerance)
                 {
                     Log(1, "WdmWriter::ReplyThread received data request but "
-                           "the step is already removed from buffer. Increased "
+                           "the step is already removed from buffer. Increase the"
                            "buffer size to prevent this from happening again.",
                         true, true);
                 }
@@ -293,7 +290,7 @@ void WdmWriter::ReplyThread(const std::string &address)
                 {
                     throw(std::runtime_error(
                         "WdmWriter::ReplyThread received data request but the "
-                        "step is already removed from buffer. Increased buffer "
+                        "step is already removed from buffer. Increase the buffer "
                         "size to prevent this from happening again."));
                 }
             }

@@ -22,18 +22,6 @@ namespace core
 namespace engine
 {
 
-template <>
-inline void WdmReader::GetSyncCommon(Variable<std::string> &variable,
-                                     std::string *data)
-{
-    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") begin", true, true);
-
-    GetDeferredCommon(variable, data);
-    PerformGets();
-
-    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") end", true, true);
-}
-
 template <class T>
 inline void WdmReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
@@ -50,9 +38,15 @@ void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") begin", true, true);
 
+    if(variable.m_SingleValue)
+    {
+        variable.m_Shape = Dims(1,1);
+        variable.m_Start = Dims(1,0);
+        variable.m_Count = Dims(1,1);
+    }
     m_DataManSerializer.PutDeferredRequest(variable.m_Name, CurrentStep(),
-                                           variable.m_Start, variable.m_Count,
-                                           data);
+                variable.m_Start, variable.m_Count, data);
+
     m_DeferredRequests.emplace_back();
     auto &req = m_DeferredRequests.back();
     req.variable = variable.m_Name;
@@ -69,22 +63,41 @@ template <typename T>
 void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count)
 {
+    bool singleValue = false;
+    if(shape.size() == 1 and start.size() ==1 and count.size()==1)
+    {
+        if(shape[0] == 1 and start[0] == 0 and count[0] == 1)
+        {
+            singleValue = true;
+        }
+    }
     auto v = m_IO.InquireVariable<T>(name);
     if (v == nullptr)
     {
-        m_IO.DefineVariable<T>(name, shape, start, count);
+        if(singleValue)
+        {
+            m_IO.DefineVariable<T>(name);
+        }
+        else
+        {
+            m_IO.DefineVariable<T>(name, shape, start, count);
+        }
     }
     else
     {
-        if (v->m_Shape != shape)
+        if(not singleValue)
         {
-            v->SetShape(shape);
-        }
-        if (v->m_Start != start || v->m_Count != count)
-        {
-            v->SetSelection({start, count});
+            if (v->m_Shape != shape)
+            {
+                v->SetShape(shape);
+            }
+            if (v->m_Start != start || v->m_Count != count)
+            {
+                v->SetSelection({start, count});
+            }
         }
     }
+
 }
 
 } // end namespace engine

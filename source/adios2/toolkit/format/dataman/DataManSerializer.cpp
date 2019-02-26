@@ -564,6 +564,7 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                                           const Dims &count, void *data)
 {
 
+
     DmvVecPtr varVec;
 
     m_DataManVarMapMutex.lock();
@@ -603,14 +604,15 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                     continue;
                 }
             }
-        }
 
-        jmap[var.address].emplace_back();
-        nlohmann::json &j = jmap[var.address].back();
-        j["N"] = variable;
-        j["O"] = var.start;
-        j["C"] = var.count;
-        j["T"] = step;
+            jmap[var.address].emplace_back();
+            nlohmann::json &j = jmap[var.address].back();
+            j["N"] = variable;
+            j["O"] = var.start;
+            j["C"] = var.count;
+            j["T"] = step;
+
+        }
     }
 
     for (const auto &i : jmap)

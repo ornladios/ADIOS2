@@ -168,7 +168,7 @@ void WdmReader::PerformGets()
     if (m_Verbosity >= 10)
     {
         Log(10, "WdmReader::PerformGets() processing deferred requests ", true,
-            false);
+            true);
         for (const auto &i : *requests)
         {
             std::cout << i.first << ": ";
