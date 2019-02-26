@@ -116,10 +116,6 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
         adios2_variable *varR32 = adios2_inquire_variable(ioH, "varR32");
         adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
 
-        const char *var_name;
-        adios2_variable_name(&var_name, varStr);
-        EXPECT_EQ(strcmp(var_name, "varStr"), 0);
-
         adios2_engine *engineH =
             adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
@@ -306,6 +302,36 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
     }
     // deallocate adiosH
     adios2_finalize(adiosH);
+}
+
+TEST(ADIOS2_C_API, ReturnedStrings)
+{
+    int rank = 0;
+    int size = 1;
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+    adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
+#endif
+
+    {
+        // IO
+        adios2_io *ioH = adios2_declare_io(adiosH, "C_API_TestIO");
+
+        size_t shape[1] = {2};
+        size_t start[1] = {0};
+        size_t count[1] = {2};
+        adios2_variable *var =
+            adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape,
+                                   start, count, adios2_constant_dims_true);
+
+        const char *var_name;
+        adios2_variable_name(&var_name, var);
+        EXPECT_EQ(strcmp(var_name, "varI8"), 0);
+    }
 }
 
 //******************************************************************************
