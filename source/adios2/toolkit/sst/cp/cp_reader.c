@@ -1049,7 +1049,6 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
                 }
                 NextTimestep =
                     MaxQueuedMetadata(Stream); /* might be -1 if we timed out */
-                MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
             }
             else
             {
@@ -1077,13 +1076,13 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
                                Smallest);
                     NextTimestep = Smallest;
                 }
-                if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
-                {
-                    /* force everyone to close */
-                    NextTimestep = -2;
-                }
-                MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
             }
+            if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
+            {
+                /* force everyone to close */
+                NextTimestep = -2;
+            }
+            MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
         else
         {
