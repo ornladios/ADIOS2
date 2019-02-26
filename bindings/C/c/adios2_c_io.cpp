@@ -701,9 +701,6 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
         adios2::helper::CheckForNullptr(
             io, "for const adios2_io, in call to adios2_io_engine_type");
         adios2::helper::CheckForNullptr(
-            engine_type,
-            "for char* engine_type, in call to adios2_io_engine_type");
-        adios2::helper::CheckForNullptr(
             size, "for size_t* size, in call to adios2_io_engine_type");
 
         const adios2::core::IO *ioCpp =

@@ -193,8 +193,6 @@ adios2_error adios2_variable_name(char *name, size_t *size,
             variable,
             "for const adios2_variable, in call to adios2_variable_name");
         adios2::helper::CheckForNullptr(
-            name, "for char* name, in call to adios2_variable_name");
-        adios2::helper::CheckForNullptr(
             size, "for size_t* length, in call to adios2_variable_name");
 
         const adios2::core::VariableBase *variableBase =
@@ -250,8 +248,6 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
         adios2::helper::CheckForNullptr(variable,
                                         "for const adios2_variable, in call to "
                                         "adios2_variable_type_string");
-        adios2::helper::CheckForNullptr(
-            type, "for char* type, in call to adios2_variable_type_string");
         adios2::helper::CheckForNullptr(
             size, "for size_t* length, in call to adios2_variable_type_string");
 
