@@ -60,6 +60,7 @@ void HDF5ReaderP::Init()
     }
 
     m_H5File.Init(m_Name, m_MPIComm, false);
+    m_H5File.ParseParameters(m_IO);
 
     /*
     int ts = m_H5File.GetNumAdiosSteps();

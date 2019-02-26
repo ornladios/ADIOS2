@@ -76,7 +76,7 @@ void HDF5WriterP::Init()
     {
         m_H5File.Init(m_Name, m_MPIComm, true);
     }
-
+    m_H5File.ParseParameters(m_IO);
 #endif
 }
 
