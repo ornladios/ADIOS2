@@ -26,7 +26,7 @@ namespace
 template <int adios2_type>
 struct MapAdios2Type;
 
-inline adios2_error String2CAPI(const std::string &s, char *buf, size_t *size);
+adios2_error String2CAPI(const std::string &s, char *buf, size_t *size);
 
 } // anonymous namespace
 
