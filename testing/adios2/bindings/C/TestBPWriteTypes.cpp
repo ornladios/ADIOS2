@@ -368,11 +368,11 @@ TEST(ADIOS2_C_API, ReturnedStrings)
 
         adios2_remove_all_ios(adiosH);
 
-        EXPECT_EQ(strcmp(engine_type, "BP3"), 0);
-        EXPECT_EQ(strcmp(var_name, "varI8"), 0);
-        EXPECT_EQ(strcmp(attr_name, "intAttr"), 0);
+        EXPECT_EQ(std::string(engine_type), "BP3");
+        EXPECT_EQ(std::string(var_name), "varI8");
+        EXPECT_EQ(std::string(attr_name), "intAttr");
 #ifdef ADIOS2_HAVE_BZIP2
-        EXPECT_EQ(strcmp(op_type, "bzip2"), 0);
+        EXPECT_EQ(std::string(op_type), "bzip2");
 #endif
     }
 }
