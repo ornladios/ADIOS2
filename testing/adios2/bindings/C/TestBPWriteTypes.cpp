@@ -14,8 +14,8 @@
 #include <mpi.h>
 #endif
 
-#include <gtest/gtest.h>
 #include <cstring>
+#include <gtest/gtest.h>
 
 #include "SmallTestData_c.h"
 
@@ -306,13 +306,8 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
 
 TEST(ADIOS2_C_API, ReturnedStrings)
 {
-    int rank = 0;
-    int size = 1;
-
 #ifdef ADIOS2_HAVE_MPI
     adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
 #else
     adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
 #endif

@@ -84,7 +84,7 @@ adios2_error adios2_attribute_type_string(char *type, size_t *size,
 
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
-	return String2CAPI(attributeBase->m_Type, type, size);
+        return String2CAPI(attributeBase->m_Type, type, size);
     }
     catch (...)
     {

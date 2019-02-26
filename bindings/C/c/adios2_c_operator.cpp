@@ -10,8 +10,8 @@
 
 #include "adios2_c_operator.h"
 
-#include "adios2_c_internal.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2_c_internal.h"
 
 adios2_error adios2_operator_type(char *type, size_t *size,
                                   const adios2_operator *op)
