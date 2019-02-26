@@ -93,6 +93,8 @@ public:
 
     T *GetData() const noexcept;
 
+    size_t SubStreamsInfoSize();
+
     Dims Shape(const size_t step) const;
 
     std::pair<T, T> MinMax(const size_t step) const;
@@ -103,6 +105,14 @@ public:
 
     std::vector<std::vector<typename Variable<T>::Info>>
     AllStepsBlocksInfo() const;
+
+private:
+    Dims DoShape(const size_t step) const;
+
+    std::pair<T, T> DoMinMax(const size_t step) const;
+
+    std::vector<std::vector<typename Variable<T>::Info>>
+    DoAllStepsBlocksInfo() const;
 };
 
 } // end namespace core
