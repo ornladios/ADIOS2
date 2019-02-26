@@ -29,6 +29,7 @@ const std::string HDF5Common::ATTRNAME_NUM_STEPS = "NumSteps";
 const std::string HDF5Common::ATTRNAME_GIVEN_ADIOSNAME = "ADIOSName";
 const std::string HDF5Common::PREFIX_BLOCKINFO = "ADIOS_BLOCKINFO_";
 const std::string HDF5Common::PREFIX_STAT = "ADIOS_STAT_";
+const std::string HDF5Common::PARAMETER_COLLECTIVE = "H5CollectiveMPIO";
 
 /*
    //need to know ndim before defining this.
@@ -58,8 +59,17 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
               H5T_NATIVE_DOUBLE);
 
     m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
+}
+
+void HDF5Common::ParseParameters(core::IO &io)
+{
 #ifdef ADIOS2_HAVE_MPI
-    H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+    auto itKey = io.m_Parameters.find(PARAMETER_COLLECTIVE);
+    if (itKey != io.m_Parameters.end())
+    {
+        if (itKey->second == "yes" || itKey->second == "true")
+            H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+    }
 #endif
 }
 
@@ -104,7 +114,7 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
     else
     {
         // read a file collectively
-        m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+        m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, m_PropertyListId);
         if (m_FileId >= 0)
         {
             if (H5Lexists(m_FileId, ts0.c_str(), H5P_DEFAULT) != 0)

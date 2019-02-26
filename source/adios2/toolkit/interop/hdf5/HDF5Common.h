@@ -115,6 +115,9 @@ public:
     static const std::string PREFIX_BLOCKINFO;
     static const std::string PREFIX_STAT;
 
+    static const std::string PARAMETER_COLLECTIVE;
+
+    void ParseParameters(core::IO &io);
     void Init(const std::string &name, MPI_Comm comm, bool toWrite);
 
     template <class T>
