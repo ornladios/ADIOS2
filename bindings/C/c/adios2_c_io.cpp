@@ -709,9 +709,7 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
         const adios2::core::IO *ioCpp =
             reinterpret_cast<const adios2::core::IO *>(io);
 
-        *size = ioCpp->m_EngineType.size();
-        ioCpp->m_EngineType.copy(engine_type, *size);
-        return adios2_error_none;
+        return String2CAPI(ioCpp->m_EngineType, engine_type, size);
     }
     catch (...)
     {

@@ -15,6 +15,8 @@
 #error "Inline file should only be included from its header, never on its own"
 #endif
 
+#include <complex>
+
 namespace
 {
 

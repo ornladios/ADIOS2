@@ -257,9 +257,7 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->m_Type.size();
-        variableBase->m_Type.copy(type, *size);
-        return adios2_error_none;
+        return String2CAPI(variableBase->m_Type, type, size);
     }
     catch (...)
     {

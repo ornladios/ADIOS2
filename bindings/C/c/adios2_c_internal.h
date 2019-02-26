@@ -14,6 +14,8 @@
 
 #include "adios2_c_types.h"
 
+#include <string>
+
 namespace
 {
 /**

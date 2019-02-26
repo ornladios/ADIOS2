@@ -10,6 +10,7 @@
 
 #include "adios2_c_operator.h"
 
+#include "adios2_c_internal.h"
 #include "adios2/helper/adiosFunctions.h"
 
 adios2_error adios2_operator_type(char *type, size_t *size,
@@ -23,10 +24,7 @@ adios2_error adios2_operator_type(char *type, size_t *size,
         const adios2::core::Operator *opCpp =
             reinterpret_cast<const adios2::core::Operator *>(op);
 
-        *size = opCpp->m_Type.size();
-        opCpp->m_Type.copy(type, *size);
-
-        return adios2_error_none;
+        return String2CAPI(opCpp->m_Type, type, size);
     }
     catch (...)
     {
