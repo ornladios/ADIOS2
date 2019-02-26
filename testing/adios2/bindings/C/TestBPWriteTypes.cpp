@@ -337,26 +337,26 @@ TEST(ADIOS2_C_API, ReturnedStrings)
         // now test the APIs that return strings
         size_t engine_type_size;
         adios2_engine_type(NULL, &engine_type_size, ioH);
-        char engine_type[engine_type_size + 1];
+        char *engine_type = (char *)malloc(engine_type_size + 1);
         adios2_engine_type(engine_type, &engine_type_size, ioH);
         engine_type[engine_type_size] = '\0';
 
         size_t var_name_size;
         adios2_variable_name(NULL, &var_name_size, var);
-        char var_name[var_name_size + 1];
+        char *var_name = (char *)malloc(var_name_size + 1);
         adios2_variable_name(var_name, &var_name_size, var);
         var_name[var_name_size] = '\0';
 
         size_t attr_name_size;
         adios2_attribute_name(NULL, &attr_name_size, attr);
-        char attr_name[attr_name_size + 1];
+        char *attr_name = (char *)malloc(attr_name_size + 1);
         adios2_attribute_name(attr_name, &attr_name_size, attr);
         attr_name[attr_name_size] = '\0';
 
 #ifdef ADIOS2_HAVE_BZIP2
         size_t op_type_size;
         adios2_operator_type(NULL, &op_type_size, op);
-        char op_type[op_type_size + 1];
+        char *op_type = (char *)malloc(op_type_size + 1);
         adios2_operator_type(op_type, &op_type_size, op);
         op_type[op_type_size] = '\0';
 #endif
@@ -368,6 +368,13 @@ TEST(ADIOS2_C_API, ReturnedStrings)
         EXPECT_EQ(std::string(attr_name), "intAttr");
 #ifdef ADIOS2_HAVE_BZIP2
         EXPECT_EQ(std::string(op_type), "bzip2");
+#endif
+
+        free(engine_type);
+        free(var_name);
+        free(attr_name);
+#ifdef ADIOS2_HAVE_BZIP2
+        free(op_type);
 #endif
     }
 }
