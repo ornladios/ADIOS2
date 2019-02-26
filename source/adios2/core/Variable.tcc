@@ -22,51 +22,7 @@ namespace core
 {
 
 template <class T>
-Variable<T>::Variable(const std::string &name, const Dims &shape,
-                      const Dims &start, const Dims &count,
-                      const bool constantDims, const bool debugMode)
-: VariableBase(name, helper::GetType<T>(), sizeof(T), shape, start, count,
-               constantDims, debugMode)
-{
-    m_BlocksInfo.reserve(1);
-}
-
-template <class T>
-typename Variable<T>::Info &
-Variable<T>::SetBlockInfo(const T *data, const size_t stepsStart,
-                          const size_t stepsCount) noexcept
-{
-    Info info;
-    info.Shape = m_Shape;
-    info.Start = m_Start;
-    info.Count = m_Count;
-    info.BlockID = m_BlockID;
-    info.Selection = m_SelectionType;
-    info.MemoryStart = m_MemoryStart;
-    info.MemoryCount = m_MemoryCount;
-    info.StepsStart = stepsStart;
-    info.StepsCount = stepsCount;
-    info.Data = const_cast<T *>(data);
-    info.BufferP = info.Data;
-    info.Operations = m_Operations;
-    m_BlocksInfo.push_back(info);
-    return m_BlocksInfo.back();
-}
-
-template <class T>
-void Variable<T>::SetData(const T *data) noexcept
-{
-    m_Data = const_cast<T *>(data);
-}
-
-template <class T>
-T *Variable<T>::GetData() const noexcept
-{
-    return m_Data;
-}
-
-template <class T>
-Dims Variable<T>::Shape(const size_t step) const
+Dims Variable<T>::DoShape(const size_t step) const
 {
     if (m_DebugMode)
     {
@@ -110,7 +66,7 @@ Dims Variable<T>::Shape(const size_t step) const
 }
 
 template <class T>
-std::pair<T, T> Variable<T>::MinMax(const size_t step) const
+std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
 {
     if (m_DebugMode && !m_FirstStreamingStep && step != DefaultSizeT)
     {
@@ -189,20 +145,8 @@ std::pair<T, T> Variable<T>::MinMax(const size_t step) const
 }
 
 template <class T>
-T Variable<T>::Min(const size_t step) const
-{
-    return MinMax(step).first;
-}
-
-template <class T>
-T Variable<T>::Max(const size_t step) const
-{
-    return MinMax(step).second;
-}
-
-template <class T>
 std::vector<std::vector<typename Variable<T>::Info>>
-Variable<T>::AllStepsBlocksInfo() const
+Variable<T>::DoAllStepsBlocksInfo() const
 {
     if (m_DebugMode && m_Engine == nullptr)
     {

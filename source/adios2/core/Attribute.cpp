@@ -8,18 +8,34 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "Attribute.tcc"
+#include "Attribute.h"
 
 #include "adios2/ADIOSMacros.h"
+#include "adios2/helper/adiosFunctions.h" //GetType<T>
 
 namespace adios2
 {
 namespace core
 {
 
-#define declare_template_instantiation(T) template class Attribute<T>;
-ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
+#define declare_type(T)                                                        \
+                                                                               \
+    template <>                                                                \
+    Attribute<T>::Attribute(const std::string &name, const T *array,           \
+                            const size_t elements)                             \
+    : AttributeBase(name, helper::GetType<T>(), elements), m_DataSingleValue() \
+    {                                                                          \
+        m_DataArray = std::vector<T>(array, array + elements);                 \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    Attribute<T>::Attribute(const std::string &name, const T &value)           \
+    : AttributeBase(name, helper::GetType<T>()), m_DataSingleValue(value)      \
+    {                                                                          \
+    }
+
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace core
 } // end namespace adios2
