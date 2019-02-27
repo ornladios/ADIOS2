@@ -644,11 +644,7 @@ void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
 
-    /*if (std::is_same<T, std::string> :: value)  { // double check
-      ((std::string*)values) ->assign(val);
-    }
-    */
-    result.assign(val);
+    result.assign(val, typesize);
     free(val);
 
     H5Tclose(h5Type);
@@ -754,7 +750,7 @@ void HDF5Common::ReadADIOSName(hid_t dsetID, std::string &adiosName)
     H5Tclose(attrType);
     H5Aclose(attrID);
 
-    adiosName.assign(val);
+    adiosName.assign(val, typeSize);
     free(val);
 }
 
