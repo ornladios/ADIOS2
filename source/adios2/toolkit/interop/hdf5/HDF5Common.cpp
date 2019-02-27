@@ -644,11 +644,7 @@ void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
 
-    /*if (std::is_same<T, std::string> :: value)  { // double check
-      ((std::string*)values) ->assign(val);
-    }
-    */
-    result.assign(val);
+    result.assign(val, typesize);
     free(val);
 
     H5Tclose(h5Type);
@@ -754,7 +750,7 @@ void HDF5Common::ReadADIOSName(hid_t dsetID, std::string &adiosName)
     H5Tclose(attrType);
     H5Aclose(attrID);
 
-    adiosName.assign(val);
+    adiosName.assign(val, typeSize);
     free(val);
 }
 
@@ -838,15 +834,11 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName,
 
     if (H5S_SCALAR == stype)
     {
-        // char* val = (char*)(calloc(typeSize, sizeof(char)));
-        // char val[typeSize+1];
-        void *stringVal = calloc(typeSize, sizeof(char));
-        H5Aread(attrId, h5Type, (char *)stringVal);
+        auto val = std::unique_ptr<char[]>(new char[typeSize]);
+        H5Aread(attrId, h5Type, &val[0]);
 
-        std::string strValue((char *)stringVal);
-        free(stringVal);
+        auto strValue = std::string(&val[0], typeSize);
         io.DefineAttribute<std::string>(attrName, strValue);
-        // free(val);
     }
     else
     { // array
@@ -859,18 +851,18 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName,
         hsize_t dims[1];
         hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
 
-        char val[typeSize * dims[0]];
-        H5Aread(attrId, h5Type, val);
-        std::string strValue(val);
+        auto val = std::unique_ptr<char[]>(new char[typeSize * dims[0]]);
+        H5Aread(attrId, h5Type, val.get());
 
         std::vector<std::string> stringArray;
         for (int i = 0; i < dims[0]; i++)
         {
-            std::string input = strValue.substr(i * typeSize, typeSize);
+            auto input = std::string(&val[i * typeSize], typeSize);
             // remove the padded empty space;
             rtrim(input);
             stringArray.push_back(input);
         }
+
         io.DefineAttribute<std::string>(attrName, stringArray.data(), dims[0]);
     }
 }

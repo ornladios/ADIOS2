@@ -206,7 +206,7 @@ int process_unused_args(adios2sys::CommandLineArguments &arg)
     arg.GetUnusedArguments(&nuargs, &uargs);
 
     std::vector<char *> retry_args;
-    retry_args.push_back(new char[4]);
+    retry_args.push_back(new char[4]{});
 
     // first arg is argv[0], so skip that
     for (int i = 1; i < nuargs; i++)

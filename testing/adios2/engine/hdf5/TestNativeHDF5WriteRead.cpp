@@ -411,7 +411,7 @@ void HDF5NativeReader::ReadString(const std::string varName,
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
 
-    result.assign(val);
+    result.assign(val, typesize);
     free(val);
 
     H5Dclose(dataSetId);
