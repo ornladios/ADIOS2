@@ -94,7 +94,7 @@ public:
      */
     ADIOS(const ADIOS &adios) = delete;
 
-    ~ADIOS() = default;
+    ~ADIOS();
 
     /**
      * Declares a new IO class object and returns a reference to that object.
@@ -184,6 +184,8 @@ public:
     void RemoveAllIOs() noexcept;
 
 private:
+    bool m_NeedMPICommFree;
+
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
 

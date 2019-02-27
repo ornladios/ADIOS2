@@ -56,7 +56,18 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
             " in call to ADIOS constructor\n");
     }
 
-    MPI_Comm_dup(mpiComm, &m_MPIComm);
+    int flag;
+    MPI_Initialized(&flag);
+    if (flag)
+    {
+        MPI_Comm_dup(mpiComm, &m_MPIComm);
+        m_NeedMPICommFree = true;
+    }
+    else
+    {
+        m_MPIComm = mpiComm;
+        m_NeedMPICommFree = false;
+    }
 
     if (!configFile.empty())
     {
@@ -83,6 +94,16 @@ ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode,
 ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
 : ADIOS("", MPI_COMM_SELF, debugMode, hostLanguage)
 {
+}
+
+ADIOS::~ADIOS()
+{
+    int flag;
+    MPI_Initialized(&flag);
+    if (flag && m_NeedMPICommFree)
+    {
+        MPI_Comm_free(&m_MPIComm);
+    }
 }
 
 IO &ADIOS::DeclareIO(const std::string name)
