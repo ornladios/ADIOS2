@@ -1456,7 +1456,8 @@ extern void SstInternalProvideTimestep(
     Md.Metadata = (SstData)LocalMetadata;
     Md.AttributeData = (SstData)AttributeData;
     Md.DP_TimestepInfo = DP_TimestepInfo;
-    TAU_SAMPLE_COUNTER("Timestep local data size", Data->DataSize);
+    if (Data)
+        TAU_SAMPLE_COUNTER("Timestep local data size", Data->DataSize);
     TAU_SAMPLE_COUNTER("Timestep local metadata size", LocalMetadata->DataSize);
     TAU_START("Metadata Consolidation time in EndStep()");
     pointers = (MetadataPlusDPInfo *)CP_consolidateDataToAll(
