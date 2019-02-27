@@ -1082,7 +1082,7 @@ static void DoStreamDiscard(SstStream Stream)
      * list) */
     if (!Stream->QueuedTimesteps)
     {
-        fprintf(stderr, "Expected at least one timestep to dequeue!\n");
+        return;
     }
     if (Stream->QueuedTimesteps->Next == NULL)
     {
@@ -1182,6 +1182,19 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
 
+        /* first update our global info that we'll operate with */
+        int GlobalReaderStatusForPeer = Established;
+        for (int j = 0; j < Stream->CohortSize; j++)
+        {
+            if (RecvBlock[j * SendBlockSize + i + 2] != Established)
+            {
+                GlobalReaderStatusForPeer = PeerFailed;
+            }
+        }
+        if (GlobalReaderStatusForPeer == Established)
+            ActiveReaderCount++;
+
+        /* now update our own stream info */
         if (Stream->Readers[i]->ReaderStatus == Established)
         {
             /*
@@ -1208,8 +1221,6 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
             CP_PeerFailCloseWSReader(Stream->Readers[i], Closed);
             PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         }
-        if (Stream->Readers[i]->ReaderStatus == Established)
-            ActiveReaderCount++;
     }
 
     int OverLimit = 0;
