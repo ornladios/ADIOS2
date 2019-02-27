@@ -126,32 +126,35 @@ static char *SstRegStr[] = {"File", "Screen", "Cloud"};
 static char *SstMarshalStr[] = {"FFS", "BP"};
 static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
+static char *SstCommPatternStr[] = {"Min", "Peer"};
 
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
 {
     if (!Stream->Verbose)
         return;
 
-    fprintf(stderr, "Param -   MarshalMethod:%s\n",
-            SstMarshalStr[Params->MarshalMethod]);
     fprintf(stderr, "Param -   RegistrationMethod:%s\n",
             SstRegStr[Params->RegistrationMethod]);
-    fprintf(stderr, "Param -   DataTransport:%s\n",
-            Params->DataTransport ? Params->DataTransport : "");
     fprintf(stderr, "Param -   RendezvousReaderCount:%d\n",
             Params->RendezvousReaderCount);
     fprintf(stderr, "Param -   QueueLimit:%d %s\n", Params->QueueLimit,
             (Params->QueueLimit == 0) ? "(unlimited)" : "");
     fprintf(stderr, "Param -   QueueFullPolicy:%s\n",
             SstQueueFullStr[Params->QueueFullPolicy]);
-    fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
-            Params->IsRowMajor);
+    fprintf(stderr, "Param -   DataTransport:%s\n",
+            Params->DataTransport ? Params->DataTransport : "");
     fprintf(stderr, "Param -   ControlTransport:%s\n",
             Params->ControlTransport);
     fprintf(stderr, "Param -   NetworkInterface:%s\n",
             Params->NetworkInterface ? Params->NetworkInterface : "");
     fprintf(stderr, "Param -   CompressionMethod:%s\n",
             SstCompressStr[Params->CompressionMethod]);
+    fprintf(stderr, "Param -   CPCommPattern:%s\n",
+            SstCommPatternStr[Params->CPCommPattern]);
+    fprintf(stderr, "Param -   MarshalMethod:%s\n",
+            SstMarshalStr[Params->MarshalMethod]);
+    fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
+            Params->IsRowMajor);
 }
 
 static FMField CP_SstParamsList_RAW[] = {
@@ -328,6 +331,22 @@ static FMField TimestepMetadataList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec TimestepMetadataStructs[] = {
+    {"timestepMetadata", TimestepMetadataList,
+     sizeof(struct _TimestepMetadataMsg), NULL},
+    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
+    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
+    {NULL, NULL, 0, NULL}};
+
+static FMField TimestepMetadataDistributionList[] = {
+    {"ReturnValue", "integer", sizeof(int),
+     FMOffset(struct _TimestepMetadataDistributionMsg *, ReturnValue)},
+    {"TSmsg", "*timestepMetadata", sizeof(struct _TimestepMetadataMsg),
+     FMOffset(struct _TimestepMetadataDistributionMsg *, TSmsg)},
+    {NULL, NULL, 0, 0}};
+
+static FMStructDescRec TimestepMetadataDistributionStructs[] = {
+    {"TimestepDistribution", TimestepMetadataDistributionList,
+     sizeof(struct _TimestepMetadataDistributionMsg), NULL},
     {"timestepMetadata", TimestepMetadataList,
      sizeof(struct _TimestepMetadataMsg), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
@@ -762,6 +781,14 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
                        CP_TimestepMetadataHandler, NULL);
     AddCustomStruct(CPInfo, CombinedTimestepMetadataStructs);
 
+    /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
+        TimestepMetadataDistributionStructs, NULL, DPInfo->TimestepInfoFormats);
+    f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
+    CPInfo->TimestepDistributionFormat =
+        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
+    AddCustomStruct(CPInfo, CombinedMetadataStructs);
+
     CPInfo->PeerSetupFormat = CMregister_simple_format(
         CPInfo->cm, "PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg));
     CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
@@ -827,7 +854,10 @@ extern void SstStreamDestroy(SstStream Stream)
                 free_attr_list(connections_to_reader[j].ContactList);
             }
             free(Stream->Readers[i]->Connections);
-            free(Stream->Readers[i]->Peers);
+            if (Stream->Readers[i]->Peers)
+            {
+                free(Stream->Readers[i]->Peers);
+            }
             // Stream->Readers[i] is free'd in LastCall
         }
         free(Stream->Readers);
@@ -1008,6 +1038,7 @@ SstStream CP_newStream()
     pthread_cond_init(&Stream->DataCondition, NULL);
     Stream->WriterTimestep = -1; // Filled in by ProvideTimestep
     Stream->ReaderTimestep = -1; // first beginstep will get us timestep 0
+    Stream->LastReleasedTimestep = -1;
     Stream->DiscardPriorTimestep =
         -1; // Timesteps prior to this discarded/released upon arrival
     if (getenv("SstVerbose"))

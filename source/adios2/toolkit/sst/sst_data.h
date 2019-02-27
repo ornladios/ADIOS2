@@ -34,6 +34,7 @@ struct _SstBlock
     MACRO(IsRowMajor, IsRowMajor, int, 0)                                      \
     MACRO(ControlTransport, String, char *, NULL)                              \
     MACRO(NetworkInterface, String, char *, NULL)                              \
+    MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommPeer)                 \
     MACRO(CompressionMethod, CompressionMethod, size_t, 0)
 
 typedef enum {
