@@ -431,9 +431,9 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
                 }
                 case (statistic_cnt):
                 {
-                    throw std::invalid_argument(
-                        "ERROR: ADIOS2 default BP3 engine doesn't support "
-                        "count statistics\n");
+                    characteristics.Statistics.BitCount =
+                        helper::ReadValue<uint32_t>(buffer, position,
+                                                    isLittleEndian);
                 }
 
                 } // switch
