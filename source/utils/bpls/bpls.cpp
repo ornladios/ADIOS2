@@ -2886,7 +2886,16 @@ int main(int argc, char *argv[])
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
 #endif
-    int retval = adios2::utils::bplsMain(argc, argv);
+    int retval = 1;
+    try
+    {
+        retval = adios2::utils::bplsMain(argc, argv);
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "\nbpls caught an exception\n";
+        std::cout << e.what() << std::endl;
+    }
 #ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
 #endif
