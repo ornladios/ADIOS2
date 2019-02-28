@@ -54,6 +54,12 @@ int MPI_Initialized(int *flag)
     return MPI_SUCCESS;
 }
 
+int MPI_Finalized(int *flag)
+{
+    *flag = 0;
+    return MPI_SUCCESS;
+}
+
 int MPI_Comm_split(MPI_Comm /*comm*/, int /*color*/, int /*key*/,
                    MPI_Comm * /*comm_out*/)
 {
