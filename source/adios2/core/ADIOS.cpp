@@ -99,8 +99,8 @@ ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
 ADIOS::~ADIOS()
 {
     int flag;
-    MPI_Initialized(&flag);
-    if (flag && m_NeedMPICommFree)
+    MPI_Finalized(&flag);
+    if (!flag && m_NeedMPICommFree)
     {
         MPI_Comm_free(&m_MPIComm);
     }
