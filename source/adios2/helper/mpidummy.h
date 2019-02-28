@@ -85,6 +85,7 @@ using MPI_Op = int;
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
 int MPI_Initialized(int *flag);
+int MPI_Finalized(int *flag);
 
 int MPI_Barrier(MPI_Comm comm);
 int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
