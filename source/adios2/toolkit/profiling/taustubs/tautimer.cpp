@@ -5,6 +5,9 @@
  */
 
 #include "tautimer.hpp"
+/* If not enabled, macro out all of the code in this file. */
+#if defined(TAU_USE_STUBS)
+
 #include <unistd.h>
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -351,3 +354,5 @@ void tautimer_metadata_(const char *name, const char *value)
 }
 
 } // extern "C"
+
+#endif // defined(TAU_USE_STUBS)

@@ -6,6 +6,13 @@
 
 #pragma once
 
+/* This code won't compile on windows.  Disable it */
+#if !defined(_WIN32) && !defined(_WIN64)
+#define TAU_USE_STUBS
+#endif
+
+#if defined(TAU_USE_STUBS)
+
 #include <memory>
 #include <sstream>
 #include <string>
@@ -54,9 +61,6 @@ public:
 
 } // namespace taustubs
 
-#define TAU_USE_STUBS
-#if defined(TAU_USE_STUBS)
-
 #define TAU_REGISTER_THREAD() taustubs::TauTimer::RegisterThread();
 #define TAU_START(_timer_name) taustubs::TauTimer::Start(_timer_name);
 #define TAU_STOP(_timer_name) taustubs::TauTimer::Stop(_timer_name);
@@ -70,7 +74,7 @@ public:
                 << ",0}]";                                                     \
     taustubs::scoped_timer __var##finfo(__ss##finfo.str());
 
-#else
+#else // defined(TAU_USE_STUBS)
 
 #define TAU_REGISTER_THREAD()
 #define TAU_START(_timer_name)
@@ -82,4 +86,4 @@ public:
 #define TAU_SCOPED_TIMER(__name)
 #define TAU_SCOPED_TIMER_FUNC()
 
-#endif
+#endif // defined(TAU_USE_STUBS)
