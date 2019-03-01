@@ -24,17 +24,7 @@ namespace core
 template <class T>
 Dims Variable<T>::DoShape(const size_t step) const
 {
-    if (m_DebugMode)
-    {
-        if (!m_FirstStreamingStep && step != DefaultSizeT)
-        {
-            throw std::invalid_argument("ERROR: can't pass a step input in "
-                                        "streaming (BeginStep/EndStep)"
-                                        "mode for variable " +
-                                        m_Name +
-                                        ", in call to Variable<T>::Shape\n");
-        }
-    }
+    CheckRandomAccess(step, "Shape");
 
     if (m_FirstStreamingStep && step == DefaultSizeT)
     {
@@ -66,15 +56,46 @@ Dims Variable<T>::DoShape(const size_t step) const
 }
 
 template <class T>
+Dims Variable<T>::DoCount(const size_t step) const
+{
+    CheckRandomAccess(step, "Count");
+
+    if (m_Engine != nullptr && m_ShapeID == ShapeID::LocalArray)
+    {
+        if (m_DebugMode)
+        {
+            if (m_SelectionType != SelectionType::WriteBlock)
+            {
+                throw std::invalid_argument(
+                    "ERROR: missing SetBlockSelection for local array "
+                    "variable " +
+                    m_Name + ", in call to Variable<T>::Count()");
+            }
+        }
+
+        const size_t stepInput =
+            !m_FirstStreamingStep ? m_Engine->CurrentStep() : step;
+
+        const std::vector<typename Variable<T>::Info> blocksInfo =
+            m_Engine->BlocksInfo<T>(*this, stepInput);
+
+        if (m_DebugMode && m_BlockID > blocksInfo.size())
+        {
+            throw std::invalid_argument(
+                "ERROR: blockID " + std::string(m_BlockID) +
+                " is out of bounds for available blocks size " +
+                std::to_string(blocksInfo.size()) + " for variable " + m_Name +
+                ", in call to Variable<T>::Count()");
+        }
+        return blocksInfo[m_BlockID].Count;
+    }
+    return m_Count;
+}
+
+template <class T>
 std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
 {
-    if (m_DebugMode && !m_FirstStreamingStep && step != DefaultSizeT)
-    {
-        throw std::invalid_argument(
-            "ERROR: can't pass a step input in streaming (BeginStep/EndStep)"
-            "mode for variable " +
-            m_Name + ", in call to Variable<T>:: Min Max or MinMax\n");
-    }
+    CheckRandomAccess(step, "MinMax");
 
     std::pair<T, T> minMax;
     minMax.first = {};
@@ -169,6 +190,23 @@ Variable<T>::DoAllStepsBlocksInfo() const
     }
 
     return m_Engine->AllRelativeStepsBlocksInfo(*this);
+}
+
+template <class T>
+void Variable<T>::CheckRandomAccess(const size_t step,
+                                    const std::string hint) const
+{
+    if (m_DebugMode)
+    {
+        if (!m_FirstStreamingStep && step != DefaultSizeT)
+        {
+            throw std::invalid_argument("ERROR: can't pass a step input in "
+                                        "streaming (BeginStep/EndStep)"
+                                        "mode for variable " +
+                                        m_Name + ", in call to Variable<T>::" +
+                                        hint + "\n");
+        }
+    }
 }
 
 } // end namespace core

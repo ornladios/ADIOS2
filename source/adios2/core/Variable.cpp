@@ -73,6 +73,12 @@ namespace core
     }                                                                          \
                                                                                \
     template <>                                                                \
+    Dims Variable<T>::Count(const size_t step) const                           \
+    {                                                                          \
+        return DoCount(step);                                                  \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
     {                                                                          \
         return DoMinMax(step);                                                 \

@@ -256,6 +256,10 @@ void VariableBase::CheckDimensions(const std::string hint) const
 
 size_t VariableBase::SelectionSize() const noexcept
 {
+    if (m_Engine != nullptr && m_SelectionType == SelectionType::WriteBlock)
+    {
+    }
+
     return helper::GetTotalSize(m_Count) * m_StepsCount;
 }
 
