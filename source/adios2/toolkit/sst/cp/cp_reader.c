@@ -890,6 +890,38 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
     pthread_mutex_unlock(&Stream->DataLock);
 }
 
+static void FreeTimestep(SstStream Stream, long Timestep)
+{
+    /*
+     * remove local metadata for that timestep
+     */
+    struct _TimestepMetadataList *List = Stream->Timesteps;
+
+    if (Stream->Timesteps->MetadataMsg->Timestep == Timestep)
+    {
+        Stream->Timesteps = List->Next;
+        CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
+        free(List);
+    }
+    else
+    {
+        struct _TimestepMetadataList *last = List;
+        List = List->Next;
+        while (List != NULL)
+        {
+            if (List->MetadataMsg->Timestep == Timestep)
+            {
+                last->Next = List->Next;
+                CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
+                free(List);
+                break;
+            }
+            last = List;
+            List = List->Next;
+        }
+    }
+}
+
 static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
 {
     struct _TimestepMetadataList *Next;
@@ -905,6 +937,23 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         {
             CP_verbose(Stream, "Examining metadata for Timestep %d\n",
                        Next->MetadataMsg->Timestep);
+            if (Next->MetadataMsg->Metadata == NULL)
+            {
+                /*
+                 * This is a dummy timestep for something that was
+                 * discarded on the writer side.  Now is the time to
+                 * install the 'precious' info that it carried
+                 * (Attributes and formats) and then discard it.
+                 */
+                CP_verbose(Stream, "SstAdvanceStep installing precious "
+                                   "metadata for discarded TS %d\n",
+                           Next->MetadataMsg->Timestep);
+                FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
+                TSMetadataList Tmp = Next;
+                Next = Next->Next;
+                FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
+                break;
+            }
             if (Next->MetadataMsg->Timestep >= LastTimestep)
             {
                 if ((FoundTS == NULL) &&
@@ -1021,35 +1070,8 @@ extern void SstReleaseStep(SstStream Stream)
     if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer) ||
         (Stream->Rank == 0))
     {
-        /*
-         * remove local metadata for that timestep
-         */
         pthread_mutex_lock(&Stream->DataLock);
-        struct _TimestepMetadataList *List = Stream->Timesteps;
-
-        if (Stream->Timesteps->MetadataMsg->Timestep == Timestep)
-        {
-            Stream->Timesteps = List->Next;
-            CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
-            free(List);
-        }
-        else
-        {
-            struct _TimestepMetadataList *last = List;
-            List = List->Next;
-            while (List != NULL)
-            {
-                if (List->MetadataMsg->Timestep == Timestep)
-                {
-                    last->Next = List->Next;
-                    CMreturn_buffer(Stream->CPInfo->cm, List->MetadataMsg);
-                    free(List);
-                    break;
-                }
-                last = List;
-                List = List->Next;
-            }
-        }
+        FreeTimestep(Stream, Timestep);
         pthread_mutex_unlock(&Stream->DataLock);
     }
 
@@ -1214,7 +1236,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         }
         if (NextTimestep == -1)
         {
-            CP_verbose(Stream, "Advancestep timing out on no data\n");
+            CP_verbose(Stream, "AdvancestepPeer timing out on no data\n");
             return SstTimeout;
         }
         if (mode == SstLatestAvailable)
@@ -1367,7 +1389,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             }
             else if (NextTimestep == -1)
             {
-                CP_verbose(Stream, "Advancestep timing out on no data\n");
+                CP_verbose(Stream, "AdvancestepMin timing out on no data\n");
                 return_value = SstTimeout;
             }
             else if (mode == SstLatestAvailable)
@@ -1398,22 +1420,29 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         }
         else
         {
-            if (Stream->Status == PeerClosed)
+            if (return_value == SstSuccess)
             {
-                CP_verbose(Stream, "SstAdvanceStepMin rank 0 returning "
-                                   "EndOfStream at timestep %d\n",
-                           Stream->ReaderTimestep);
-                msg.ReturnValue = SstEndOfStream;
+                if (Stream->Status == PeerClosed)
+                {
+                    CP_verbose(Stream, "SstAdvanceStepMin rank 0 returning "
+                                       "EndOfStream at timestep %d\n",
+                               Stream->ReaderTimestep);
+                    msg.ReturnValue = SstEndOfStream;
+                }
+                else
+                {
+                    CP_verbose(Stream, "SstAdvanceStepMin rank 0 returning "
+                                       "FatalError at timestep %d\n",
+                               Stream->ReaderTimestep);
+                    msg.ReturnValue = SstFatalError;
+                }
+                CP_verbose(Stream, "Setting TSmsg to NULL\n");
+                msg.TSmsg = NULL;
             }
             else
             {
-                CP_verbose(Stream, "SstAdvanceStepMin rank 0 returning "
-                                   "FatalError at timestep %d\n",
-                           Stream->ReaderTimestep);
-                msg.ReturnValue = SstFatalError;
+                msg.ReturnValue = return_value;
             }
-            CP_verbose(Stream, "Setting TSmsg to NULL\n");
-            msg.TSmsg = NULL;
         }
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &msg, Stream->CPInfo->TimestepDistributionFormat,
