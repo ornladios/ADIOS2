@@ -41,9 +41,8 @@ for i in range(0, Nx):
 adios = adios2.ADIOS(comm)
 ioWrite = adios.DeclareIO("ioWriter")
 
-varTemperature = ioWrite.DefineVariable("temperature2D", shape,
-                                        start, count, adios2.ConstantDims,
-                                        temperatures)
+varTemperature = ioWrite.DefineVariable("temperature2D", temperatures, shape,
+                                        start, count, adios2.ConstantDims)
 
 obpStream = ioWrite.Open('HeatMap2D_py.bp', adios2.Mode.Write)
 obpStream.Put(varTemperature, temperatures)
