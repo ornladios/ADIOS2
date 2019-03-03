@@ -1023,9 +1023,9 @@ extern void *SstReadRemoteMemory(SstStream Stream, int Rank, long Timestep,
 static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
                                     void **WS_StreamPtr)
 {
-    int i = 0;
     if (s->WriterConfigParams->CPCommPattern == SstCPCommPeer)
     {
+        int i = 0;
         while (s->Peers[i] != -1)
         {
             int peer = s->Peers[i];
@@ -1055,7 +1055,6 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
                 CP_verbose(s, "Message failed to send to writer %d (%p)\n",
                            peer, *WS_StreamPtr);
             }
-            i++;
         }
     }
 }
@@ -1318,7 +1317,6 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     void *free_block;
     if (Stream->Rank == 0)
     {
-        long NextTimestep = -1;
         struct _TimestepMetadataDistributionMsg msg;
         SstStatusValue return_value = SstSuccess;
         TSMetadataList RootEntry = NULL;
@@ -1327,6 +1325,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         msg.TSmsg = NULL;
         if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
         {
+            long NextTimestep = -1;
             long LatestTimestep = MaxQueuedMetadata(Stream);
             /*
              * Several situations are possible here, depending upon
