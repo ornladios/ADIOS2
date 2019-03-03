@@ -27,14 +27,11 @@ count = [Nx, Ny]
 start = [rank * Nx, 0]
 shape = [size * Nx, Ny]
 
-temperatures = np.empty(count, dtype=np.int)
+temperatures = np.zeros(count, dtype=np.int)
 
 for i in range(0, Nx):
-    iGlobal = start[0] + i
-
     for j in range(0, Ny):
-        value = iGlobal * shape[1] + j
-        temperatures[i, j] = value
+        temperatures[i, j] = (start[0] + i) * shape[1] + (j + start[1])
 
 # print(temperatures)
 # ADIOS2 read
@@ -64,7 +61,7 @@ if rank == 0:
     ibpStream.Get(var_inTemperature, inTemperatures, adios2.Mode.Sync)
     ibpStream.Close()
 
-    #print('Incoming temperature map\n', inTemperatures)
+    # print('Incoming temperature map\n', inTemperatures)
     expected = np.array([[22, 23, 24, 25],
                          [32, 33, 34, 35],
                          [42, 43, 44, 45],
