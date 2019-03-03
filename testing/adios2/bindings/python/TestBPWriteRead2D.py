@@ -11,7 +11,7 @@
 #
 
 from mpi4py import MPI
-import numpy
+import numpy as np
 import adios2
 
 # MPI
@@ -27,7 +27,7 @@ count = [Nx, Ny]
 start = [rank * Nx, 0]
 shape = [size * Nx, Ny]
 
-temperatures = numpy.empty(count, dtype=numpy.int)
+temperatures = np.empty(count, dtype=np.int)
 
 for i in range(0, Nx):
     iGlobal = start[0] + i
@@ -60,13 +60,13 @@ if rank == 0:
     readSize = [4, 4]
 
     var_inTemperature.SetSelection([readOffset, readSize])
-    inTemperatures = numpy.zeros(readSize, dtype=numpy.int)
+    inTemperatures = np.zeros(readSize, dtype=np.int)
     ibpStream.Get(var_inTemperature, inTemperatures, adios2.Mode.Sync)
     ibpStream.Close()
 
     #print('Incoming temperature map\n', inTemperatures)
-    expected = numpy.array([[22, 23, 24, 25],
-                            [32, 33, 34, 35],
-                            [42, 43, 44, 45],
-                            [52, 53, 54, 55]], numpy.int)
-    assert numpy.array_equal(inTemperatures, expected)
+    expected = np.array([[22, 23, 24, 25],
+                         [32, 33, 34, 35],
+                         [42, 43, 44, 45],
+                         [52, 53, 54, 55]], np.int)
+    assert np.array_equal(inTemperatures, expected)
