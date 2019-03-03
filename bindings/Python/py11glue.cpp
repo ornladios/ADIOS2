@@ -28,6 +28,49 @@
 #include "py11Variable.h"
 
 #ifdef ADIOS2_HAVE_MPI
+
+namespace pybind11
+{
+namespace detail
+{
+template <>
+struct type_caster<adios2::py11::MPI4PY_Comm>
+{
+public:
+    /**
+     * This macro establishes the name 'MPI4PY_Comm' in
+     * function signatures and declares a local variable
+     * 'value' of type MPI4PY_Comm
+     */
+    PYBIND11_TYPE_CASTER(adios2::py11::MPI4PY_Comm, _("MPI4PY_Comm"));
+
+    /**
+     * Conversion part 1 (Python->C++): convert a PyObject into a MPI4PY_Comm
+     * instance or return false upon failure. The second argument
+     * indicates whether implicit conversions should be applied.
+     */
+    bool load(handle src, bool)
+    {
+        // If src is not actually a MPI4PY communicator, the next
+        // call returns nullptr, and we return false to indicate the conversion
+        // failed.
+
+        MPI_Comm *mpiCommPtr = PyMPIComm_Get(src.ptr());
+        if (mpiCommPtr == nullptr)
+        {
+            return false;
+        }
+        value.comm = *mpiCommPtr;
+        return true;
+    }
+};
+} // namespace detail
+} // namespace pybind11
+
+#endif
+
+#ifdef ADIOS2_HAVE_MPI
+
 adios2::py11::ADIOS ADIOSInitConfig(const std::string &configFile,
                                     pybind11::object &comm,
                                     const bool debugMode)
@@ -366,10 +409,12 @@ PYBIND11_MODULE(adios2, m)
         .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
-        .def("Open",
-             (adios2::py11::Engine (adios2::py11::IO::*)(
-                 const std::string &, const int, pybind11::object &comm)) &
-                 adios2::py11::IO::Open)
+#ifdef ADIOS2_HAVE_MPI
+        .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
+                         const std::string &, const int,
+                         adios2::py11::MPI4PY_Comm comm)) &
+                         adios2::py11::IO::Open)
+#endif
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll)
