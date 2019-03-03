@@ -17,13 +17,21 @@ extern "C" {
 #endif
 
 void FC_GLOBAL(adios2_variable_name_f2c,
-               ADIOS2_VARIABLE_NAME_F2C)(char name[4096], int *size,
+               ADIOS2_VARIABLE_NAME_F2C)(char *name,
                                          const adios2_variable **variable,
                                          int *ierr)
 {
-    *size = -1;
     size_t sizeC;
     *ierr = static_cast<int>(adios2_variable_name(name, &sizeC, *variable));
+}
+
+void FC_GLOBAL(adios2_variable_name_length_f2c,
+               ADIOS2_VARIABLE_NAME_LENGTH_F2C)(
+    int *size, const adios2_variable **variable, int *ierr)
+{
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_variable_name(nullptr, &sizeC, *variable));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *size = static_cast<int>(sizeC);
