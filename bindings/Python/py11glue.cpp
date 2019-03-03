@@ -366,6 +366,10 @@ PYBIND11_MODULE(adios2, m)
         .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
+        .def("Open",
+             (adios2::py11::Engine (adios2::py11::IO::*)(
+                 const std::string &, const int, pybind11::object &comm)) &
+                 adios2::py11::IO::Open)
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll)

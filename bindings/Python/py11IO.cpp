@@ -13,6 +13,10 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi4py/mpi4py.h>
+#endif
+
 #include "py11types.h"
 
 namespace adios2
@@ -243,12 +247,20 @@ Engine IO::Open(const std::string &name, const int mode)
 }
 
 #ifdef ADIOS2_HAVE_MPI
-Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
+Engine IO::Open(const std::string &name, const int mode, pybind11::object &comm)
 {
+    if (import_mpi4py() < 0)
+    {
+        throw std::runtime_error("ERROR: could not import mpi4py "
+                                 "communicator\n");
+    }
+
     helper::CheckForNullptr(m_IO,
                             "for engine " + name + ", in call to IO::Open");
+
+    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
     return Engine(
-        &m_IO->Open(name, static_cast<adios2::Mode>(mode), m_IO->m_MPIComm));
+        &m_IO->Open(name, static_cast<adios2::Mode>(mode), *mpiCommPtr));
 }
 #endif
 
