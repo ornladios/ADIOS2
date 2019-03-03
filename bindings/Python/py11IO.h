@@ -87,7 +87,8 @@ public:
     Engine Open(const std::string &name, const int openMode);
 
 #ifdef ADIOS2_HAVE_MPI
-    Engine Open(const std::string &name, const Mode mode, MPI_Comm comm);
+    Engine Open(const std::string &name, const int openMode,
+                pybind11::object &comm);
 #endif
 
     void FlushAll();
