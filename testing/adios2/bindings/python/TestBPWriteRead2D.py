@@ -27,17 +27,16 @@ count = [Nx, Ny]
 start = [rank * Nx, 0]
 shape = [size * Nx, Ny]
 
-temperatures = numpy.zeros(Nx * Ny, dtype=numpy.int)
+temperatures = numpy.empty(count, dtype=numpy.int)
 
 for i in range(0, Nx):
     iGlobal = start[0] + i
 
     for j in range(0, Ny):
         value = iGlobal * shape[1] + j
-        temperatures[i * Nx + j] = value
-        print(str(i) + "," + str(j) + " " + str(value))
+        temperatures[i,j] = value
 
-
+print(temperatures)
 # ADIOS portion
 adios = adios2.ADIOS(comm)
 ioWrite = adios.DeclareIO("ioWriter")
@@ -58,20 +57,13 @@ if rank == 0:
     var_inTemperature = ioRead.InquireVariable("temperature2D")
 
     if var_inTemperature is not None:
-        var_inTemperature.SetSelection([[2, 2], [4, 4]])
+        readOffset = [2, 2]
+        readSize = [4, 4]
 
-        inSize = var_inTemperature.SelectionSize()
-        print('Incoming size ' + str(inSize))
-        inTemperatures = numpy.zeros(inSize, dtype=numpy.int)
-
+        var_inTemperature.SetSelection([readOffset, readSize])
+        inTemperatures = numpy.zeros(readSize, dtype=numpy.int)
         ibpStream.Get(var_inTemperature, inTemperatures, adios2.Mode.Sync)
 
-        print('Incoming temperature map')
-
-        for i in range(0, inTemperatures.size):
-            print(str(inTemperatures[i]) + ' ')
-
-            if (i + 1) % 4 == 0:
-                print()
+        print('Incoming temperature map\n', inTemperatures)
 
     ibpStream.Close()
