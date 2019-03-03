@@ -701,17 +701,12 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
         adios2::helper::CheckForNullptr(
             io, "for const adios2_io, in call to adios2_io_engine_type");
         adios2::helper::CheckForNullptr(
-            engine_type,
-            "for char* engine_type, in call to adios2_io_engine_type");
-        adios2::helper::CheckForNullptr(
             size, "for size_t* size, in call to adios2_io_engine_type");
 
         const adios2::core::IO *ioCpp =
             reinterpret_cast<const adios2::core::IO *>(io);
 
-        *size = ioCpp->m_EngineType.size();
-        ioCpp->m_EngineType.copy(engine_type, *size);
-        return adios2_error_none;
+        return String2CAPI(ioCpp->m_EngineType, engine_type, size);
     }
     catch (...)
     {

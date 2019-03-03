@@ -193,15 +193,11 @@ adios2_error adios2_variable_name(char *name, size_t *size,
             variable,
             "for const adios2_variable, in call to adios2_variable_name");
         adios2::helper::CheckForNullptr(
-            name, "for char* name, in call to adios2_variable_name");
-        adios2::helper::CheckForNullptr(
             size, "for size_t* length, in call to adios2_variable_name");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->m_Name.size();
-        variableBase->m_Name.copy(name, *size);
-        return adios2_error_none;
+        return String2CAPI(variableBase->m_Name, name, size);
     }
     catch (...)
     {
@@ -253,15 +249,11 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
                                         "for const adios2_variable, in call to "
                                         "adios2_variable_type_string");
         adios2::helper::CheckForNullptr(
-            type, "for char* type, in call to adios2_variable_type_string");
-        adios2::helper::CheckForNullptr(
             size, "for size_t* length, in call to adios2_variable_type_string");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->m_Type.size();
-        variableBase->m_Type.copy(type, *size);
-        return adios2_error_none;
+        return String2CAPI(variableBase->m_Type, type, size);
     }
     catch (...)
     {

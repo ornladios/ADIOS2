@@ -281,9 +281,13 @@ adios2_error adios2_flush_all_engines(adios2_io *io);
 
 /**
  * return engine type string and length without null character
- * @param engine_type output filled with current engine type, must be
- * pre-allocated. Engine types are short (~ 15 characters)
- * @param size of resulting engine_type
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param engine_type output, string without trailing '\0', NULL or preallocated
+ * buffer
+ * @param size output, engine_type size without '\0'
  * @param io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */

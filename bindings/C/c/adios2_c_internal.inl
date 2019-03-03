@@ -15,6 +15,8 @@
 #error "Inline file should only be included from its header, never on its own"
 #endif
 
+#include <complex>
+
 namespace
 {
 
@@ -42,6 +44,17 @@ make_MapAdios2Type(adios2_type_float_complex, std::complex<float>)
 make_MapAdios2Type(adios2_type_double_complex, std::complex<double>)
 /* clang-format on */
 #undef make_MapAdios2Type
+
+                                    inline adios2_error
+    String2CAPI(const std::string &s, char *buf, size_t *size)
+{
+    *size = s.size();
+    if (buf != nullptr)
+    {
+        s.copy(buf, *size);
+    }
+    return adios2_error_none;
+}
 
 } // namespace
 
