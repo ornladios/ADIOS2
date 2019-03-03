@@ -72,85 +72,31 @@ public:
 #ifdef ADIOS2_HAVE_MPI
 
 adios2::py11::ADIOS ADIOSInitConfig(const std::string &configFile,
-                                    pybind11::object &comm,
+                                    const adios2::py11::MPI4PY_Comm comm,
                                     const bool debugMode)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
-
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error("ERROR: could not import mpi4py "
-                                 "communicator, in call to ADIOS "
-                                 "constructor\n");
-    }
-
-    if (mpiCommPtr == nullptr)
-    {
-        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
-                                 "to ADIOS constructor\n");
-    }
-    return adios2::py11::ADIOS(configFile, *mpiCommPtr, debugMode);
+    return adios2::py11::ADIOS(configFile, comm, debugMode);
 }
 
-adios2::py11::ADIOS ADIOSInit(pybind11::object &comm, const bool debugMode)
+adios2::py11::ADIOS ADIOSInit(adios2::py11::MPI4PY_Comm comm,
+                              const bool debugMode)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
-
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error("ERROR: could not import mpi4py "
-                                 "communicator, in call to ADIOS "
-                                 "constructor\n");
-    }
-
-    if (mpiCommPtr == nullptr)
-    {
-        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
-                                 "to ADIOS constructor\n");
-    }
-    return adios2::py11::ADIOS(*mpiCommPtr, debugMode);
+    return adios2::py11::ADIOS(comm, debugMode);
 }
 
 adios2::py11::File Open(const std::string &name, const std::string mode,
-                        pybind11::object &comm, const std::string enginetype)
+                        adios2::py11::MPI4PY_Comm comm,
+                        const std::string enginetype)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
-
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error("ERROR: could not import mpi4py "
-                                 "communicator, in call to ADIOS "
-                                 "constructor\n");
-    }
-
-    if (mpiCommPtr == nullptr)
-    {
-        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
-                                 "to ADIOS constructor\n");
-    }
-    return adios2::py11::File(name, mode, *mpiCommPtr, enginetype);
+    return adios2::py11::File(name, mode, comm, enginetype);
 }
 
 adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
-                              pybind11::object &comm,
+                              adios2::py11::MPI4PY_Comm comm,
                               const std::string &configfile,
                               const std::string ioinconfigfile)
 {
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
-
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error("ERROR: could not import mpi4py "
-                                 "communicator, in call to open\n");
-    }
-
-    if (mpiCommPtr == nullptr)
-    {
-        throw std::runtime_error("ERROR: mpi4py communicator is null, in call "
-                                 "to ADIOS constructor\n");
-    }
-    return adios2::py11::File(name, mode, *mpiCommPtr, configfile,
-                              ioinconfigfile);
+    return adios2::py11::File(name, mode, comm, configfile, ioinconfigfile);
 }
 
 #else
@@ -220,12 +166,12 @@ PYBIND11_MODULE(adios2, m)
 #ifdef ADIOS2_HAVE_MPI
     m.def("ADIOS", &ADIOSInit,
           "adios2 module starting point, creates an ADIOS class object",
-          pybind11::arg("object"), pybind11::arg("debugMode") = true);
+          pybind11::arg("comm"), pybind11::arg("debugMode") = true);
 
     m.def("ADIOS", &ADIOSInitConfig, "adios2 module starting point, creates an "
                                      "ADIOS class object including a runtime "
                                      "config file",
-          pybind11::arg("configFile") = "", pybind11::arg("object"),
+          pybind11::arg("configFile") = "", pybind11::arg("comm"),
           pybind11::arg("debugMode") = true);
 
     m.def("open", &Open, pybind11::arg("name"), pybind11::arg("mode"),
