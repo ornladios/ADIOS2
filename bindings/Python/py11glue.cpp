@@ -71,19 +71,6 @@ public:
 
 #ifdef ADIOS2_HAVE_MPI
 
-adios2::py11::ADIOS ADIOSInitConfig(const std::string &configFile,
-                                    const adios2::py11::MPI4PY_Comm comm,
-                                    const bool debugMode)
-{
-    return adios2::py11::ADIOS(configFile, comm, debugMode);
-}
-
-adios2::py11::ADIOS ADIOSInit(adios2::py11::MPI4PY_Comm comm,
-                              const bool debugMode)
-{
-    return adios2::py11::ADIOS(comm, debugMode);
-}
-
 adios2::py11::File Open(const std::string &name, const std::string mode,
                         adios2::py11::MPI4PY_Comm comm,
                         const std::string enginetype)
@@ -100,17 +87,6 @@ adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
 }
 
 #else
-adios2::py11::ADIOS ADIOSInitConfig(const std::string configFile,
-                                    const bool debugMode)
-{
-    return adios2::py11::ADIOS(configFile, debugMode);
-}
-
-adios2::py11::ADIOS ADIOSInit(const bool debugMode)
-{
-    return adios2::py11::ADIOS(debugMode);
-}
-
 adios2::py11::File Open(const std::string &name, const std::string mode,
                         const std::string enginetype)
 {
@@ -164,16 +140,6 @@ PYBIND11_MODULE(adios2, m)
         .export_values();
 
 #ifdef ADIOS2_HAVE_MPI
-    m.def("ADIOS", &ADIOSInit,
-          "adios2 module starting point, creates an ADIOS class object",
-          pybind11::arg("comm"), pybind11::arg("debugMode") = true);
-
-    m.def("ADIOS", &ADIOSInitConfig, "adios2 module starting point, creates an "
-                                     "ADIOS class object including a runtime "
-                                     "config file",
-          pybind11::arg("configFile") = "", pybind11::arg("comm"),
-          pybind11::arg("debugMode") = true);
-
     m.def("open", &Open, pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("comm"), pybind11::arg("engine_type") = "BPFile", R"md(
           Simple API MPI open, based on python IO. 
@@ -228,15 +194,6 @@ PYBIND11_MODULE(adios2, m)
     )md");
 
 #else
-    m.def("ADIOS", &ADIOSInit,
-          "adios2 module starting point NON MPI, creates an ADIOS class object",
-          pybind11::arg("debugMode") = true);
-
-    m.def("ADIOS", &ADIOSInitConfig,
-          "adios2 module starting point NON MPI, creates an "
-          "ADIOS class object including a runtime config file",
-          pybind11::arg("configFile") = "", pybind11::arg("debugMode") = true);
-
     m.def("open", &Open, "High-level API, file object open",
           pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("engine_type") = "BPFile");
@@ -247,7 +204,7 @@ PYBIND11_MODULE(adios2, m)
           pybind11::arg("config_file"), pybind11::arg("io_in_config_file"));
 #endif
 
-    pybind11::class_<adios2::py11::ADIOS>(m, "py11_ADIOS")
+    pybind11::class_<adios2::py11::ADIOS>(m, "ADIOS")
         .def("__nonzero__",
              [](const adios2::py11::ADIOS &adios) {
                  if (adios)
@@ -259,6 +216,25 @@ PYBIND11_MODULE(adios2, m)
                      return false;
                  };
              })
+#ifdef ADIOS2_HAVE_MPI
+        .def(pybind11::init<const adios2::py11::MPI4PY_Comm, const bool>(),
+             "adios2 module starting point, constructs an ADIOS class object",
+             pybind11::arg("comm"), pybind11::arg("debugMode") = true)
+        .def(pybind11::init<const std::string &,
+                            const adios2::py11::MPI4PY_Comm, const bool>(),
+             "adios2 module starting point, constructs an ADIOS class object",
+             pybind11::arg("configFile"), pybind11::arg("comm"),
+             pybind11::arg("debugMode") = true)
+#else
+        .def(pybind11::init<const bool>(), "adios2 module starting point "
+                                           "non-MPI, constructs an ADIOS class "
+                                           "object",
+             pybind11::arg("debugMode") = true)
+        .def(pybind11::init<const std::string &, const bool>(),
+             "adios2 module starting point non-MPI, constructs an ADIOS class "
+             "object",
+             pybind11::arg("configFile"), pybind11::arg("debugMode") = true)
+#endif
         .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
              "spawn IO object component returning a IO object with a unique "
              "name, throws an exception if IO with the same name is declared "
