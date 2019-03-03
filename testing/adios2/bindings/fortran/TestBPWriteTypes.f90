@@ -12,6 +12,7 @@
      type(adios2_variable), dimension(13) :: variables
      type(adios2_engine) :: bpWriter, bpReader
      character(len=15) :: inString
+     character(len=:), allocatable :: varName
 
      ! read handlers
      integer :: ndims
@@ -110,6 +111,15 @@
      do i=1,13
         if( variables(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_variable'
      end do
+
+     ! Testing adios2_variable_name for just two cases
+     call adios2_variable_name(varName, variables(1), ierr)
+     if (varName /= 'var_I8') stop 'Invalid adios2_variable_name'
+
+     call adios2_variable_name(varName, variables(2), ierr)
+     if (varName /= 'var_I16') stop 'Invalid adios2_variable_name'
+
+     deallocate(varName)
 
      ! Open myVector_f.bp in write mode, this launches an engine
      if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_io'
