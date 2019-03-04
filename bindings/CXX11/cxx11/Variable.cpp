@@ -125,7 +125,7 @@ namespace adios2
     Dims Variable<T>::Count() const                                            \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Count");  \
-        return m_Variable->m_Count;                                            \
+        return m_Variable->Count();                                            \
     }                                                                          \
                                                                                \
     template <>                                                                \

@@ -24,14 +24,6 @@ namespace core
 template <class T>
 Dims Variable<T>::DoShape(const size_t step) const
 {
-    if (m_DebugMode && m_ShapeID == ShapeID::LocalArray)
-    {
-        throw std::invalid_argument(
-            "ERROR: local array variable " + m_Name +
-            " does not have a shape, did you mean "
-            "Count()?, in call to Variable<T>::Shape\n");
-    }
-
     CheckRandomAccess(step, "Shape");
 
     if (m_FirstStreamingStep && step == DefaultSizeT)
@@ -66,10 +58,26 @@ Dims Variable<T>::DoShape(const size_t step) const
 template <class T>
 Dims Variable<T>::DoCount() const
 {
-    if (m_Engine != nullptr && !m_FirstStreamingStep &&
-        m_SelectionType == SelectionType::WriteBlock)
+    auto lf_Step = [&]() -> size_t {
+
+        auto itStep =
+            std::next(m_AvailableStepBlockIndexOffsets.begin(), m_StepsStart);
+        if (itStep == m_AvailableStepBlockIndexOffsets.end())
+        {
+            auto it = m_AvailableStepBlockIndexOffsets.rbegin();
+            throw std::invalid_argument(
+                "ERROR: current relative step start for variable " + m_Name +
+                " is outside the scope of available steps " +
+                std::to_string(it->first - 1) + " in call to Count\n");
+        }
+        return itStep->first - 1;
+    };
+
+    if (m_Engine != nullptr && m_SelectionType == SelectionType::WriteBlock)
     {
-        const size_t step = m_Engine->CurrentStep();
+        const size_t step =
+            !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
+
         const std::vector<typename Variable<T>::Info> blocksInfo =
             m_Engine->BlocksInfo<T>(*this, step);
 
@@ -86,6 +94,7 @@ Dims Variable<T>::DoCount() const
                     ", in call to Variable<T>::Count()");
             }
         }
+
         return blocksInfo[m_BlockID].Count;
     }
     return m_Count;
