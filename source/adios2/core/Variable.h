@@ -97,7 +97,9 @@ public:
 
     Dims Shape(const size_t step) const;
 
-    Dims Count(const size_t step) const;
+    Dims Count() const;
+
+    size_t SelectionSize() const;
 
     std::pair<T, T> MinMax(const size_t step) const;
 
@@ -111,7 +113,9 @@ public:
 private:
     Dims DoShape(const size_t step) const;
 
-    Dims DoCount(const size_t step) const;
+    Dims DoCount() const;
+
+    size_t DoSelectionSize() const;
 
     std::pair<T, T> DoMinMax(const size_t step) const;
 

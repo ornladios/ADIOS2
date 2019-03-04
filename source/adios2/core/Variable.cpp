@@ -73,9 +73,15 @@ namespace core
     }                                                                          \
                                                                                \
     template <>                                                                \
-    Dims Variable<T>::Count(const size_t step) const                           \
+    Dims Variable<T>::Count() const                                            \
     {                                                                          \
-        return DoCount(step);                                                  \
+        return DoCount();                                                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::SelectionSize() const                                  \
+    {                                                                          \
+        return DoSelectionSize();                                              \
     }                                                                          \
                                                                                \
     template <>                                                                \

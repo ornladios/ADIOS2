@@ -24,6 +24,14 @@ namespace core
 template <class T>
 Dims Variable<T>::DoShape(const size_t step) const
 {
+    if (m_DebugMode && m_ShapeID == ShapeID::LocalArray)
+    {
+        throw std::invalid_argument(
+            "ERROR: local array variable " + m_Name +
+            " does not have a shape, did you mean "
+            "Count()?, in call to Variable<T>::Shape\n");
+    }
+
     CheckRandomAccess(step, "Shape");
 
     if (m_FirstStreamingStep && step == DefaultSizeT)
@@ -56,40 +64,37 @@ Dims Variable<T>::DoShape(const size_t step) const
 }
 
 template <class T>
-Dims Variable<T>::DoCount(const size_t step) const
+Dims Variable<T>::DoCount() const
 {
-    CheckRandomAccess(step, "Count");
-
-    if (m_Engine != nullptr && m_ShapeID == ShapeID::LocalArray)
+    if (m_Engine != nullptr && !m_FirstStreamingStep &&
+        m_SelectionType == SelectionType::WriteBlock)
     {
+        const size_t step = m_Engine->CurrentStep();
+        const std::vector<typename Variable<T>::Info> blocksInfo =
+            m_Engine->BlocksInfo<T>(*this, step);
+
         if (m_DebugMode)
         {
-            if (m_SelectionType != SelectionType::WriteBlock)
+            if (m_BlockID > blocksInfo.size())
             {
                 throw std::invalid_argument(
-                    "ERROR: missing SetBlockSelection for local array "
-                    "variable " +
-                    m_Name + ", in call to Variable<T>::Count()");
+                    "ERROR: blockID " + std::to_string(m_BlockID) +
+                    " from SetBlockSelection is out of bounds for available "
+                    "blocks size " +
+                    std::to_string(blocksInfo.size()) + " for variable " +
+                    m_Name + " for step " + std::to_string(step) +
+                    ", in call to Variable<T>::Count()");
             }
-        }
-
-        const size_t stepInput =
-            !m_FirstStreamingStep ? m_Engine->CurrentStep() : step;
-
-        const std::vector<typename Variable<T>::Info> blocksInfo =
-            m_Engine->BlocksInfo<T>(*this, stepInput);
-
-        if (m_DebugMode && m_BlockID > blocksInfo.size())
-        {
-            throw std::invalid_argument(
-                "ERROR: blockID " + std::string(m_BlockID) +
-                " is out of bounds for available blocks size " +
-                std::to_string(blocksInfo.size()) + " for variable " + m_Name +
-                ", in call to Variable<T>::Count()");
         }
         return blocksInfo[m_BlockID].Count;
     }
     return m_Count;
+}
+
+template <class T>
+size_t Variable<T>::DoSelectionSize() const
+{
+    return helper::GetTotalSize(DoCount()) * m_StepsCount;
 }
 
 template <class T>
