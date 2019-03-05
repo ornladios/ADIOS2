@@ -254,11 +254,6 @@ void VariableBase::CheckDimensions(const std::string hint) const
     CheckDimensionsCommon(hint);
 }
 
-size_t VariableBase::SelectionSize() const noexcept
-{
-    return helper::GetTotalSize(m_Count) * m_StepsCount;
-}
-
 bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; };
 void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; };
 

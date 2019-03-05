@@ -67,7 +67,7 @@ public:
      * Inspects current shape
      * @return shape vector
      */
-    Dims Shape() const;
+    Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
 
     /**
      * Inspects current start point
@@ -135,7 +135,7 @@ public:
 private:
     Variable(core::VariableBase *variable);
 
-    core::VariableBase *m_Variable = nullptr;
+    core::VariableBase *m_VariableBase = nullptr;
 };
 
 } // end namespace py11

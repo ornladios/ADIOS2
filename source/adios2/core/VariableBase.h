@@ -177,13 +177,6 @@ public:
      * @param hint extra debugging info for the exception */
     void CheckDimensions(const std::string hint) const;
 
-    /**
-     * Returns the minimum required allocation for the current selection
-     * @return memory size to be allocated by a pointer/vector to read this
-     * variable
-     */
-    size_t SelectionSize() const noexcept;
-
     bool IsConstantDims() const noexcept;
     void SetConstantDims() noexcept;
 

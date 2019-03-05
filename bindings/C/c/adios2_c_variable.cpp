@@ -218,13 +218,13 @@ adios2_error adios2_variable_type(adios2_type *type,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        auto type_s = variableBase->m_Type;
-        if (type_s == adios2::helper::GetType<std::string>())
+        const std::string typeCpp = variableBase->m_Type;
+        if (typeCpp == adios2::helper::GetType<std::string>())
         {
             *type = adios2_type_string;
         }
 #define make_case(T)                                                           \
-    else if (type_s == adios2::helper::GetType<MapAdios2Type<T>::Type>())      \
+    else if (typeCpp == adios2::helper::GetType<MapAdios2Type<T>::Type>())     \
     {                                                                          \
         *type = T;                                                             \
     }
@@ -318,8 +318,22 @@ adios2_error adios2_variable_shape(size_t *shape,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        std::copy(variableBase->m_Shape.begin(), variableBase->m_Shape.end(),
-                  shape);
+        const std::string typeCpp = variableBase->m_Type;
+        if (typeCpp == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    {                                                                          \
+        const adios2::core::Variable<T> *variable =                            \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        const adios2::Dims shapeCpp =                                          \
+            variable->Shape(adios2::EngineCurrentStep);                        \
+        std::copy(shapeCpp.begin(), shapeCpp.end(), shape);                    \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
         return adios2_error_none;
     }
@@ -367,8 +381,21 @@ adios2_error adios2_variable_count(size_t *count,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        std::copy(variableBase->m_Count.begin(), variableBase->m_Count.end(),
-                  count);
+        const std::string typeCpp = variableBase->m_Type;
+        if (typeCpp == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    {                                                                          \
+        const adios2::core::Variable<T> *variable =                            \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        const adios2::Dims countCpp = variable->Count();                       \
+        std::copy(countCpp.begin(), countCpp.end(), count);                    \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
         return adios2_error_none;
     }
@@ -429,7 +456,23 @@ adios2_error adios2_selection_size(size_t *size,
                                         "adios2_selection_size");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->SelectionSize();
+
+        const std::string typeCpp = variableBase->m_Type;
+
+        if (typeCpp == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    {                                                                          \
+        const adios2::core::Variable<T> *variable =                            \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        *size = variable->SelectionSize();                                     \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
         return adios2_error_none;
     }
     catch (...)
