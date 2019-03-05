@@ -1704,10 +1704,14 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
         const std::string subFileName =
             fname + ".dir/" + fname + "." + std::to_string(mpiRank);
 
-        // requires using MPI_COMM_SELF so metadata won't be shared when reading
-        // each subfile independently
+// requires using MPI_COMM_SELF so metadata won't be shared when reading
+// each subfile independently
+#ifdef ADIOS2_HAVE_MPI
         adios2::Engine bpReader =
             io.Open(subFileName, adios2::Mode::Read, MPI_COMM_SELF);
+#else
+        adios2::Engine bpReader = io.Open(subFileName, adios2::Mode::Read);
+#endif
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::LocalArray);
