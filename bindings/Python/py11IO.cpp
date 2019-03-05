@@ -247,20 +247,12 @@ Engine IO::Open(const std::string &name, const int mode)
 }
 
 #ifdef ADIOS2_HAVE_MPI
-Engine IO::Open(const std::string &name, const int mode, pybind11::object &comm)
+Engine IO::Open(const std::string &name, const int mode, MPI4PY_Comm comm)
 {
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error("ERROR: could not import mpi4py "
-                                 "communicator\n");
-    }
-
     helper::CheckForNullptr(m_IO,
                             "for engine " + name + ", in call to IO::Open");
 
-    MPI_Comm *mpiCommPtr = PyMPIComm_Get(comm.ptr());
-    return Engine(
-        &m_IO->Open(name, static_cast<adios2::Mode>(mode), *mpiCommPtr));
+    return Engine(&m_IO->Open(name, static_cast<adios2::Mode>(mode), comm));
 }
 #endif
 
