@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include <iostream>
+#include <numeric>
 #include <stdexcept>
 
 #include <adios2.h>
@@ -1703,7 +1704,10 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
         const std::string subFileName =
             fname + ".dir/" + fname + "." + std::to_string(mpiRank);
 
-        adios2::Engine bpReader = io.Open(subFileName, adios2::Mode::Read);
+        // requires using MPI_COMM_SELF so metadata won't be shared when reading
+        // each subfile independently
+        adios2::Engine bpReader =
+            io.Open(subFileName, adios2::Mode::Read, MPI_COMM_SELF);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::LocalArray);
@@ -1729,8 +1733,8 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
             std::stringstream ss;
             ss << "rank= " << mpiRank << " block=" << b << " ";
 
-            ASSERT_EQ(var_i32.Count()[0], blockNx) << ss.str();
-            ASSERT_EQ(var_i32.SelectionSize(), blockNx) << ss.str();
+            EXPECT_EQ(var_i32.Count()[0], blockNx) << ss.str();
+            EXPECT_EQ(var_i32.SelectionSize(), blockNx) << ss.str();
 
             bpReader.Get(var_i32, inI32, adios2::Mode::Sync);
 
@@ -1738,11 +1742,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
 
             for (size_t i = 0; i < blockNx; ++i)
             {
-                EXPECT_EQ(inI32[i], data[b][i]);
                 ss << i << ": " << inI32[i] << " " << data[b][i] << " ";
+                EXPECT_EQ(inI32[i], data[b][i]) << ss.str();
             }
-            std::cout << ss.str() << "\n";
-
         } // block loop
 
         bpReader.Close();
