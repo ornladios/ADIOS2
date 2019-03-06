@@ -412,3 +412,8 @@ extern void CP_verbose(SstStream Stream, char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params);
+
+typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string,
+                                  const char *data_string);
+extern CPNetworkInfoFunc globalNetinfoCallback;
+extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);

@@ -73,6 +73,8 @@ typedef int MPI_Op;
 #define MPI_REPLACE 12
 #define MPI_NO_OP 13
 
+#define MPI_Init(argc, argv)
+
 static int MPI_Comm_rank(MPI_Comm comm, int *rank)
 {
     *rank = 0;
