@@ -5,8 +5,9 @@
 
 # stt_conn_tool
 add_executable(sst_conn_tool ./sst_conn_tool.c)
+target_link_libraries(sst_conn_tool adios2)
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(sst_conn_tool adios2 MPI::MPI_C)
+  target_link_libraries(sst_conn_tool MPI::MPI_C)
 endif()
 
 if(WIN32)
