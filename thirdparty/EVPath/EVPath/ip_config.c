@@ -83,7 +83,7 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
 		       if_addr->ifa_name,
 		       inet_ntop(family, tmp, buf, sizeof(buf)));
 	}
-	if (!interface) interface = getenv("CM_INTERFACE");
+	if (!interface) interface = getenv(IPCONFIG_ENVVAR_PREFIX "INTERFACE");
 	if (interface != NULL) {
 	    trace_func(trace_data, "CM<IP_CONFIG> searching for interface %s\n", interface);
 	    for (if_addr = if_addrs; if_addr != NULL; if_addr = if_addr->ifa_next) {
@@ -101,7 +101,7 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
 		free(if_addrs);
 		return IP;
 	    }
-	    printf("Warning!  CM_INTERFACE specified as \"%s\", but no active interface by that name found\n", interface);
+	    printf("Warning!  " IPCONFIG_ENVVAR_PREFIX "INTERFACE specified as \"%s\", but no active interface by that name found\n", interface);
 	}
 	    
 	gethostname(hostname_buf, sizeof(hostname_buf));
@@ -223,7 +223,7 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
      *  for the CM_LAST_RESORT_IP_ADDR environment variable.
      */
     if (rv == 0) {
-	char *c = getenv("CM_LAST_RESORT_IP_ADDR");
+	char *c = getenv(IPCONFIG_ENVVAR_PREFIX "LAST_RESORT_IP_ADDR");
 	trace_func(trace_data, "CM<IP_CONFIG> - Get self IP addr at last resort");
 	if (c != NULL) {
 	    trace_func(trace_data, "CM<IP_CONFIG> - Translating last resort %s", c);
@@ -258,8 +258,8 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
 {
     struct hostent *host = NULL;
 
-    char *network_string = getenv("CM_NETWORK");
-    char *hostname_string = getenv("CERCS_HOSTNAME");
+    char *network_string = getenv(IPCONFIG_ENVVAR_PREFIX "NETWORK");
+    char *hostname_string = getenv(IPCONFIG_ENVVAR_PREFIX "HOSTNAME");
     if (hostname_string != NULL) {
 	strncpy(buf, hostname_string, len);
 	return;
@@ -353,7 +353,7 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
     if (network_string == NULL) {
 	static atom_t CM_NETWORK_POSTFIX = -1;
 	if (CM_NETWORK_POSTFIX == -1) {
-	    CM_NETWORK_POSTFIX = attr_atom_from_string("CM_NETWORK_POSTFIX");
+	    CM_NETWORK_POSTFIX = attr_atom_from_string(IPCONFIG_ENVVAR_PREFIX "NETWORK_POSTFIX");
 	}
 	if (!get_string_attr(attrs, CM_NETWORK_POSTFIX, &network_string)) {
 	    trace_func(trace_data, "TCP/IP transport found no NETWORK POSTFIX attribute");
@@ -420,9 +420,9 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
     char *interface = NULL;
 
     if (first_call) {
-	char *preferred_hostname = getenv("CM_HOSTNAME");
-	char *preferred_IP = getenv("CM_IP");
-	char *port_range = getenv("CM_PORT_RANGE");
+	char *preferred_hostname = getenv(IPCONFIG_ENVVAR_PREFIX "HOSTNAME");
+	char *preferred_IP = getenv(IPCONFIG_ENVVAR_PREFIX "IP");
+	char *port_range = getenv(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE");
 	CM_IP_INTERFACE = attr_atom_from_string("IP_INTERFACE");
 	CM_IP_PORT = attr_atom_from_string("IP_PORT");
 	atom_init++;
@@ -431,11 +431,11 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	
 	if (preferred_IP != NULL) {
 	    struct in_addr addr;
-	    if (preferred_hostname) printf("Warning, CM_HOSTNAME and CM_IP are both set, preferring CM_IP\n");
+	    if (preferred_hostname) printf("Warning, " IPCONFIG_ENVVAR_PREFIX "HOSTNAME and " IPCONFIG_ENVVAR_PREFIX "IP are both set, preferring " IPCONFIG_ENVVAR_PREFIX "IP\n");
 	    if (inet_aton(preferred_IP, &addr) == 0) {
-		fprintf(stderr, "Invalid address %s specified for CM_IP\n", preferred_IP);
+		fprintf(stderr, "Invalid address %s specified for " IPCONFIG_ENVVAR_PREFIX "IP\n", preferred_IP);
 	    } else {
-		trace_func(trace_data, "CM IP_CONFIG Using IP specified in CM_IP, %s", preferred_IP);
+		trace_func(trace_data, "CM IP_CONFIG Using IP specified in " IPCONFIG_ENVVAR_PREFIX "IP, %s", preferred_IP);
 		determined_IP =  (ntohl(addr.s_addr));
 	    }
 	} else if (preferred_hostname != NULL) {
@@ -445,7 +445,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	    host = gethostbyname(preferred_hostname);
 	    strcpy(determined_hostname, preferred_hostname);
 	    if (!host) {
-		printf("Warning, CM_HOSTNAME is \"%s\", but gethostbyname fails for that string.\n", preferred_hostname);
+		printf("Warning, " IPCONFIG_ENVVAR_PREFIX "HOSTNAME is \"%s\", but gethostbyname fails for that string.\n", preferred_hostname);
 	    } else {
 		char **p;
 		for (p = host->h_addr_list; *p != 0; p++) {
@@ -468,7 +468,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	}
 	if (port_range != NULL) {
 	    if (sscanf(port_range, "%d:%d", &port_range_high, &port_range_low) != 2) {
-		printf("CM_PORT_RANGE spec not understood \"%s\"\n", port_range);
+		printf(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE spec not understood \"%s\"\n", port_range);
 	    } else {
 		if (port_range_high < port_range_low) {
 		    int tmp = port_range_high;
