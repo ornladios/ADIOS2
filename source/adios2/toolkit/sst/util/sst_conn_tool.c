@@ -257,7 +257,7 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
 static void do_connect()
 {
     struct _SstParams Params;
-    SstStream reader = NULL;
+    SstStream reader;
     memset(&Params, 0, sizeof(Params));
     SSTSetNetworkCallback(ConnToolCallback);
     Params.RendezvousReaderCount = 1;
@@ -279,7 +279,7 @@ static void do_connect()
 static void do_listen()
 {
     struct _SstParams Params;
-    SstStream writer = NULL;
+    SstStream writer;
     memset(&Params, 0, sizeof(Params));
     SSTSetNetworkCallback(ConnToolCallback);
     Params.RendezvousReaderCount = 1;
