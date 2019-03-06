@@ -15,8 +15,7 @@ extern "C" {
 #endif
 
 void FC_GLOBAL(adios2_operator_type_f2c,
-               ADIOS2_OPERATOR_TYPE_F2C)(char *type,
-                                         const adios2_operator **op,
+               ADIOS2_OPERATOR_TYPE_F2C)(char *type, const adios2_operator **op,
                                          int *ierr)
 {
     size_t sizeC;
@@ -24,8 +23,9 @@ void FC_GLOBAL(adios2_operator_type_f2c,
 }
 
 void FC_GLOBAL(adios2_operator_type_length_f2c,
-               ADIOS2_OPERATOR_TYPE_LENGTH_F2C)(
-    int *size, const adios2_operator **op, int *ierr)
+               ADIOS2_OPERATOR_TYPE_LENGTH_F2C)(int *size,
+                                                const adios2_operator **op,
+                                                int *ierr)
 {
     *size = -1;
     size_t sizeC;

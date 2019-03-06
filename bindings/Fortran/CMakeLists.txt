@@ -35,6 +35,7 @@ set(MODULES
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_min_mod.f90
      ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_variable_max_mod.f90
+     ${CMAKE_CURRENT_SOURCE_DIR}/modules/adios2_operator_mod.f90
 )
 
 add_library(adios2_f ${MODULES} ${F2C})
