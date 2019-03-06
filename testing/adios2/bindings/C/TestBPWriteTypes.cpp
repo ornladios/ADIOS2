@@ -336,9 +336,9 @@ TEST(ADIOS2_C_API, ReturnedStrings)
 
         // now test the APIs that return strings
         size_t engine_type_size;
-        adios2_engine_type(NULL, &engine_type_size, ioH);
+        adios2_io_engine_type(NULL, &engine_type_size, ioH);
         char *engine_type = (char *)malloc(engine_type_size + 1);
-        adios2_engine_type(engine_type, &engine_type_size, ioH);
+        adios2_io_engine_type(engine_type, &engine_type_size, ioH);
         engine_type[engine_type_size] = '\0';
 
         size_t var_name_size;

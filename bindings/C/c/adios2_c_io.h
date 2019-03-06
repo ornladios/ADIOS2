@@ -291,8 +291,8 @@ adios2_error adios2_flush_all_engines(adios2_io *io);
  * @param io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_engine_type(char *engine_type, size_t *size,
-                                const adios2_io *io);
+adios2_error adios2_io_engine_type(char *engine_type, size_t *size,
+                                   const adios2_io *io);
 
 /**
  * Promise that no more definitions or changes to defined variables will

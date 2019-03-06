@@ -693,8 +693,8 @@ adios2_error adios2_flush_all_engines(adios2_io *io)
     }
 }
 
-adios2_error adios2_engine_type(char *engine_type, size_t *size,
-                                const adios2_io *io)
+adios2_error adios2_io_engine_type(char *engine_type, size_t *size,
+                                   const adios2_io *io)
 {
     try
     {
@@ -711,7 +711,7 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
     catch (...)
     {
         return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_engine_type"));
+            adios2::helper::ExceptionToError("adios2_io_engine_type"));
     }
 }
 
@@ -727,7 +727,7 @@ adios2_error adios2_lock_definitions(adios2_io *io)
     catch (...)
     {
         return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_engine_type"));
+            adios2::helper::ExceptionToError("adios2_lock_definitions"));
     }
 }
 

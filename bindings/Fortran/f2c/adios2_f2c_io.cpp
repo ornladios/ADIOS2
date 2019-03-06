@@ -338,7 +338,7 @@ void FC_GLOBAL(adios2_io_engine_type_f2c,
 {
     *size = -1;
     size_t sizeC;
-    *ierr = static_cast<int>(adios2_engine_type(engine_type, &sizeC, *io));
+    *ierr = static_cast<int>(adios2_io_engine_type(engine_type, &sizeC, *io));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *size = static_cast<int>(sizeC);
