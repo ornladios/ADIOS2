@@ -13,6 +13,7 @@
      type(adios2_engine) :: bpWriter, bpReader
      character(len=15) :: inString
      character(len=:), allocatable :: varName
+     character(len=:), allocatable :: engineType
 
      ! read handlers
      integer :: ndims
@@ -133,6 +134,11 @@
      if( TRIM(bpWriter%type) /= 'bpfile') then
         write(*,*) 'Engine Type ', TRIM(bpWriter%type)
         stop 'Invalid adios2_engine name'
+     end if
+     call adios2_io_engine_type(engineType, ioWrite, ierr)
+     if( engineType /= 'bp') then ! FIXME, different from the above!
+        write(*,*) 'Engine Type ', engineType
+        stop 'Invalid type from adios2_engine_type'
      end if
 
      if( bpWriter%mode /= adios2_mode_write) stop 'Invalid adios2_engine mode'

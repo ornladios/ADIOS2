@@ -26,8 +26,10 @@ contains
                                    TRIM(ADJUSTL(io_name))//char(0), ierr)
         if( ierr == 0 ) then
             io%valid = .true.
-            call adios2_io_engine_type_f2c(io%f2c, io%engine_type, length, ierr)
-            io%engine_type = trim(io%engine_type(1:length))
+            call adios2_io_engine_type_length_f2c(length, io%f2c, ierr)
+            if (length > 15) stop 'adios2_declare_io: engine_type too long!'
+            call adios2_io_engine_type_f2c(io%engine_type, io%f2c, ierr)
+            io%engine_type = io%engine_type(1:length)
         end if
 
     end subroutine
@@ -44,8 +46,10 @@ contains
                               TRIM(ADJUSTL(io_name))//char(0), ierr)
         if( ierr == 0 ) then
             io%valid = .true.
-            call adios2_io_engine_type_f2c(io%f2c, io%engine_type, length, ierr)
-            io%engine_type = trim(io%engine_type(1:length))
+            call adios2_io_engine_type_length_f2c(length, io%f2c, ierr)
+            if (length > 15) stop 'adios2_at_io: engine_type too long!'
+            call adios2_io_engine_type_f2c(io%engine_type, io%f2c, ierr)
+            io%engine_type = io%engine_type(1:length)
         end if
 
     end subroutine

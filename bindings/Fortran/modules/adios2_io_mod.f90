@@ -17,6 +17,24 @@ module adios2_io_mod
 
 contains
 
+    subroutine adios2_io_engine_type(type, io, ierr)
+        character(len=:), allocatable, intent(out) :: type
+        type(adios2_io), intent(in) :: io
+        integer, intent(out) :: ierr
+
+        !local
+        integer :: length
+
+        call adios2_io_engine_type_length_f2c(length, io%f2c, ierr)
+
+        if (allocated(type)) deallocate (type)
+        if (length > 0) then
+            allocate (character(length) :: type)
+            call adios2_io_engine_type_f2c(type, io%f2c, ierr)
+        end if
+
+    end subroutine
+
     subroutine adios2_set_engine(io, engine_type, ierr)
         type(adios2_io), intent(inout) :: io
         character*(*), intent(in) :: engine_type
