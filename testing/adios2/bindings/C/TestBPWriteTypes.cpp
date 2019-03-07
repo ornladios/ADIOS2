@@ -314,6 +314,30 @@ public:
     adios2_io *ioH;
 };
 
+TEST_F(ADIOS2_C_API_IO, Engine)
+{
+    int ierr;
+
+    ierr = adios2_set_engine(ioH, "bpfile");
+    EXPECT_EQ(ierr, 0);
+
+    size_t engine_type_size;
+    ierr = adios2_engine_type(NULL, &engine_type_size, ioH);
+    EXPECT_EQ(ierr, 0);
+    char *engine_type = (char *)malloc(engine_type_size + 1);
+    ierr = adios2_engine_type(engine_type, &engine_type_size, ioH);
+    EXPECT_EQ(ierr, 0);
+    engine_type[engine_type_size] = '\0';
+
+    EXPECT_EQ(std::string(engine_type), "bpfile");
+    free(engine_type);
+
+    adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+
+    // FIXME, I'd like to check that the engine type is correct, but there's no
+    // API for it
+}
+
 TEST_F(ADIOS2_C_API_IO, ReturnedStrings)
 {
     // create some objects
