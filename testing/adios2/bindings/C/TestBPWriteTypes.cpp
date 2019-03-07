@@ -306,18 +306,17 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
     }
 }
 
-TEST_F(ADIOS2_C_API, ReturnedStrings)
+class ADIOS2_C_API_IO : public ADIOS2_C_API
 {
-#ifdef ADIOS2_HAVE_MPI
-    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
-#else
-    adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
-#endif
+public:
+    ADIOS2_C_API_IO() { ioH = adios2_declare_io(adiosH, "C_API_TestIO"); }
 
+    adios2_io *ioH;
+};
+
+TEST_F(ADIOS2_C_API_IO, ReturnedStrings)
+{
     {
-        // IO
-        adios2_io *ioH = adios2_declare_io(adiosH, "C_API_TestIO");
-
         // create some objects
         adios2_set_engine(ioH, "BP3");
 
