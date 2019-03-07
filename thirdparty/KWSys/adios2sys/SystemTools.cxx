@@ -4666,22 +4666,28 @@ void SystemTools::ClassInitialize()
 #endif
 }
 
+namespace {
+
+template <class T>
+void SafeDelete(T*& pointer)
+{
+  if (pointer != nullptr) {
+    delete pointer;
+    pointer = nullptr;
+  }
+}
+
+} // end empty namespace
+
 void SystemTools::ClassFinalize()
 {
-  auto lf_Delete = [](void** pointer) {
-    if (*pointer != nullptr) {
-      delete *pointer;
-      *pointer = nullptr;
-    }
-  };
-
-  lf_Delete(SystemTools::TranslationMap);
+  SafeDelete(SystemTools::TranslationMap);
 #ifdef _WIN32
-  lf_Delete(SystemTools::PathCaseMap);
-  lf_Delete(SystemTools::EnvMap);
+  SafeDelete(SystemTools::PathCaseMap);
+  SafeDelete(SystemTools::EnvMap);
 #endif
 #ifdef __CYGWIN__
-  lf_Delete(SystemTools::Cyg2Win32Map);
+  SafeDelete(SystemTools::Cyg2Win32Map);
 #endif
 }
 
