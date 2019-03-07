@@ -118,7 +118,7 @@ if(ADIOS2_HAVE_SST)
     list (APPEND BASIC_SST_TESTS ${TEST_SET} ${FORTRAN_TESTS} ${SPECIAL_TESTS} ${MPI_TESTS} ${MPI_FORTRAN_TESTS} ${ZFP_TESTS})
 endif()
 
-message(STATUS "basic tests is ${BASIC_SST_TESTS}")
+
 MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
 MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
 

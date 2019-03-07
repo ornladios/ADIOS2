@@ -1,3 +1,59 @@
+#
+#
+# This Cmake testing specification is unfortunately complex, and will
+# likely be hard to maintain, but at the moment I don't know a better
+# way to do it (contributions welcome).  The idea is that we have a set of tests that we'd
+# like to run on staging engines.  Some tests may be applicable to
+# some engines and not to others.  Some tests we want to run multiple
+# times, but with different engine parameters set to test different
+# modes of operation for the engines.
+#
+# The approach here is as follows:
+#   - A test is specified by setting a CMake variable of the form
+#     <testname>_CMD.  
+#   - If the test requires a different time out than is usually
+#     specified (30 seconds), then you can also define a variable of
+#     the form <testname>_TIMEOUT to control the timeout.
+#   - If the test requires special properties you can also define a variable of 
+#     the form <testname>_PROPERTIES.
+# 
+#     BASIC TEST ADDITION
+# Given the existence of the above variables, the cmake function
+# "add_common_test(testname engine)" adds a CTest which runs the given
+# test with a particular ADIOS2 engine, adding the engine's name to
+# the test name to differentiate it from other tests.  For example,
+# given the variable 1x1_CMD, set to
+#  "run_staging_test -nw 1 -nr 1 -v -p TestCommon"
+# and 1x1_PROPERTIES set to "RUN_SERIAL;1" then
+# add_common_test(1x1 SST) ends up doing:
+# 
+#  add_test(NAME "Staging.1x1.SST"
+#          COMMAND "run_staging_test -e SST -f Staging.1x1.SST -nw 1 -nr 1 -v -p TestCommon")
+#  set_tests_properties(${testname} PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
+#
+#    RUNNING TESTS WITH DIFFERENT ENGINE PARAMETERS
+# 
+# One of the design goals here is to enable running the same tests
+# with different engine parameters, *_CMD strings can also contain the
+# string "ENGINE_PARAMS".  This string is treated specially by the
+# function MutateTestSet().  This function is takes a list of tests
+# (I.E. things with _CMD strings defined like above) and creates a new
+# set of tests where a specified engine parameter gets added to the in
+# the location of the ENGINE_PARAMS string.  MutateTestSet takes 4 parameters:
+# output_test_list, param_name, param_spec, and input test list.  For example
+# MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+# If BASIC_SST_TESTS contains "1x1" as defined above, MutateTestSet
+# will add the test "1x1.CommMin", by defining the variable
+# 1x1.CommMin_CMD, using the original value of 1x1_CMD buth with
+# "CPCommPattern:Min: added to the ENGINE_PARAMS location (if
+# present).  Any 1x1_TIMEOUT and 1x1_PROPERTIES values will also be
+# propogated to 1x1.CommMin_TIMEOUT and 1x1.CommMin_PROPERTIES.
+# "1x1.CommMin" will also be added to the output test list.
+# 
+# Note that MutateTestSet() can be used multiple times to add multiple
+# engine params.  The ENGINE_PARAMS string is retained in the
+# resulting _CMD strings until add_common_test() which removes it.
+
 set (1x1_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg ENGINE_PARAMS")
 set (2x1_CMD "run_staging_test -nw 2 -nr 1 -v -p TestCommon -arg ENGINE_PARAMS")
 set (1x2_CMD "run_staging_test -nw 1 -nr 2 -v -p TestCommon -arg ENGINE_PARAMS")
@@ -102,7 +158,6 @@ function(add_common_test basename engine)
     remove_engine_params_placeholder(command  "${command}")
     separate_arguments(command)
     list(INSERT command 1 "-e" "${engine}" "-f" "${filename}")
-    message (STATUS "Command is now ${command}")
     add_test(
     	NAME ${testname}
 	COMMAND ${command})
@@ -111,7 +166,6 @@ function(add_common_test basename engine)
        set (timeout "30")
     endif()
 
-    message (STATUS "Timeout for test ${testname} is ${timeout}")
     set_tests_properties(${testname} PROPERTIES TIMEOUT ${timeout} ${${basename}_PROPERTIES} )
 endfunction()
 
