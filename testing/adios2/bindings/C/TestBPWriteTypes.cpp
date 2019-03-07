@@ -348,7 +348,8 @@ TEST_F(ADIOS2_C_API_IO, Engine)
     std::string engine_type = testing::adios2_engine_type_as_string(ioH);
     EXPECT_EQ(engine_type, "bpfile");
 
-    adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
+    /*adios2_engine *engineH =*/adios2_open(ioH, "ctypes.bp",
+                                            adios2_mode_write);
 
     // FIXME, I'd like to check that the engine type itself is correct, but
     // there's no API to get it
