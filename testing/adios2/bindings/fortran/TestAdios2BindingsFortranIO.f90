@@ -73,6 +73,8 @@ end module testing_adios_io
 ! ------------------------------------------------------------
 subroutine testing_adios_io_engine()
 ! ------------------------------------------------------------
+! test engine related functionality that's part of IO
+
   use testing_adios_io
   implicit none
 
@@ -81,7 +83,6 @@ subroutine testing_adios_io_engine()
 
   character(len=:), allocatable :: engine_type
 
-  call MPI_Init(ierr)
   call testing_adios_io_init()
 
   ! Engine related functionality
@@ -103,15 +104,57 @@ subroutine testing_adios_io_engine()
   deallocate(engine_type)
 
   call testing_adios_io_finalize()
-  call MPI_Finalize(ierr)
 
 end subroutine testing_adios_io_engine
+
+! ------------------------------------------------------------
+subroutine testing_adios_io_engine_default()
+! ------------------------------------------------------------
+  use testing_adios_io
+  implicit none
+
+  integer :: ierr
+  type(adios2_engine) :: engine
+
+  character(len=:), allocatable :: engine_type
+
+  call testing_adios_io_init()
+
+  ! Engine related functionality
+  call adios2_set_engine(io, "", ierr)
+
+  call adios2_io_engine_type(engine_type, io, ierr)
+  if (engine_type /= "") stop "FAIL adios2_io_engine_type"
+  deallocate(engine_type)
+
+  call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
+
+  if (engine%type /= "") stop "FAIL engine%type"
+  ! // FIXME, I'd like to check that the engine type itself is correct, but
+  ! // there's no (function-style) API to get it
+  ! // FIXME, I'd like to check the engine's name, but there's no API to get it
+
+  call adios2_io_engine_type(engine_type, io, ierr)
+  if (engine_type /= "bp") stop "FAIL adios2_io_engine_type"
+  deallocate(engine_type)
+
+  call testing_adios_io_finalize
+
+end subroutine testing_adios_io_engine_default
 
 ! ======================================================================
 program main
 ! ======================================================================
+  use mpi
   implicit none
 
+  integer :: ierr
+
+  call MPI_Init(ierr)
+
   call testing_adios_io_engine()
+  call testing_adios_io_engine_default()
+
+  call MPI_Finalize(ierr)
 
 end program main

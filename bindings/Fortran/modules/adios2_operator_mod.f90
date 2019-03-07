@@ -22,10 +22,10 @@ contains
         !local
         integer :: length
 
-        call adios2_operator_type_length_f2c(length, op%f2c, ierr)
-
         if (allocated(type)) deallocate (type)
-        if (length > 0) then
+
+        call adios2_operator_type_length_f2c(length, op%f2c, ierr)
+        if (ierr == 0) then
             allocate (character(length) :: type)
             call adios2_operator_type_f2c(type, op%f2c, ierr)
         end if
