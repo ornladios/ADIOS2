@@ -12,6 +12,8 @@
      type(adios2_variable), dimension(13) :: variables
      type(adios2_engine) :: bpWriter, bpReader
      character(len=15) :: inString
+     character(len=:), allocatable :: varName
+     character(len=:), allocatable :: engineType
 
      ! read handlers
      integer :: ndims
@@ -111,6 +113,15 @@
         if( variables(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_variable'
      end do
 
+     ! Testing adios2_variable_name for just two cases
+     call adios2_variable_name(varName, variables(1), ierr)
+     if (varName /= 'var_I8') stop 'Invalid adios2_variable_name'
+
+     call adios2_variable_name(varName, variables(2), ierr)
+     if (varName /= 'var_I16') stop 'Invalid adios2_variable_name'
+
+     deallocate(varName)
+
      ! Open myVector_f.bp in write mode, this launches an engine
      if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_io'
      if( bpWriter%valid .eqv. .true. ) stop 'Invalid adios2_engine pre-open'
@@ -123,6 +134,11 @@
      if( TRIM(bpWriter%type) /= 'bpfile') then
         write(*,*) 'Engine Type ', TRIM(bpWriter%type)
         stop 'Invalid adios2_engine name'
+     end if
+     call adios2_io_engine_type(engineType, ioWrite, ierr)
+     if( engineType /= 'bp') then ! FIXME, different from the above!
+        write(*,*) 'Engine Type ', engineType
+        stop 'Invalid type from adios2_engine_type'
      end if
 
      if( bpWriter%mode /= adios2_mode_write) stop 'Invalid adios2_engine mode'

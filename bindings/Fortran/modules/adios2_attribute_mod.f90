@@ -14,6 +14,24 @@ module adios2_attribute_mod
 
     contains
 
+    subroutine adios2_attribute_name(name, attribute, ierr)
+        character(len=:), allocatable, intent(out) :: name
+        type(adios2_attribute), intent(in) :: attribute
+        integer, intent(out) :: ierr
+
+        !local
+        integer :: length
+
+        call adios2_attribute_name_length_f2c(length, attribute%f2c, ierr)
+
+        if (allocated(name)) deallocate (name)
+        if (length > 0) then
+            allocate (character(length) :: name)
+            call adios2_attribute_name_f2c(name, attribute%f2c, ierr)
+        end if
+
+    end subroutine
+
     subroutine adios2_attribute_check_type(attribute, adios2_type, hint, ierr)
         type(adios2_attribute), intent(in):: attribute
         integer, intent(in):: adios2_type

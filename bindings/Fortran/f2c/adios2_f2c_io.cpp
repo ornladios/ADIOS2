@@ -332,13 +332,21 @@ void FC_GLOBAL(adios2_lock_definitions_f2c,
 }
 
 void FC_GLOBAL(adios2_io_engine_type_f2c,
-               ADIOS2_IO_ENGINE_TYPE_F2C)(const adios2_io **io,
-                                          char engine_type[32], int *size,
+               ADIOS2_IO_ENGINE_TYPE_F2C)(char *type, const adios2_io **io,
                                           int *ierr)
+{
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_engine_type(type, &sizeC, *io));
+}
+
+void FC_GLOBAL(adios2_io_engine_type_length_f2c,
+               ADIOS2_io_ENGINE_TYPE_LENGTH_F2C)(int *size,
+                                                 const adios2_io **io,
+                                                 int *ierr)
 {
     *size = -1;
     size_t sizeC;
-    *ierr = static_cast<int>(adios2_engine_type(engine_type, &sizeC, *io));
+    *ierr = static_cast<int>(adios2_engine_type(nullptr, &sizeC, *io));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *size = static_cast<int>(sizeC);
