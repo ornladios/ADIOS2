@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <adios2.h>
+#include <adios2/ADIOSMacros.h>
 
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>

@@ -11,15 +11,15 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_FSTREAM_ADIOS2FSTREAM_H_
 
-#include <memory> //std::shared_ptr
+#include "../Types.h"
 
 #include "adios2/ADIOSConfig.h"
 
+#include <memory> //std::shared_ptr
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #endif
 
-#include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 
 namespace adios2

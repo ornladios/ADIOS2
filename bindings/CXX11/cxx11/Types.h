@@ -16,6 +16,41 @@
 
 #include <vector>
 
+/**
+ * The ADIOS_FOREACH_TYPE_1ARG macros are similar to the _STDTYPE macros used in
+ * core,
+ * but use primitive C++ types rather than stdint based types. Only for use in
+ * the CXX11 bindings.
+ */
+#define ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(MACRO)                    \
+    MACRO(char)                                                                \
+    MACRO(signed char)                                                         \
+    MACRO(unsigned char)                                                       \
+    MACRO(short)                                                               \
+    MACRO(unsigned short)                                                      \
+    MACRO(int)                                                                 \
+    MACRO(unsigned int)                                                        \
+    MACRO(long int)                                                            \
+    MACRO(unsigned long int)                                                   \
+    MACRO(long long int)                                                       \
+    MACRO(unsigned long long int)                                              \
+    MACRO(float)                                                               \
+    MACRO(double)                                                              \
+    MACRO(long double)
+
+#define ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                              \
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(MACRO)                        \
+    MACRO(std::complex<float>)                                                 \
+    MACRO(std::complex<double>)
+
+#define ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(MACRO)                              \
+    MACRO(std::string)                                                         \
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(MACRO)
+
+#define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                        \
+    MACRO(std::string)                                                         \
+    ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)
+
 namespace adios2
 {
 
