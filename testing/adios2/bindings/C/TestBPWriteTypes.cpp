@@ -360,6 +360,28 @@ TEST_F(ADIOS2_C_API_IO, Engine)
                                   // changes the engine_type string?
 }
 
+TEST_F(ADIOS2_C_API_IO, EngineDefault)
+{
+    int ierr;
+
+    ierr = adios2_set_engine(ioH, "");
+    EXPECT_EQ(ierr, 0);
+
+    std::string engine_type = testing::adios2_engine_type_as_string(ioH);
+    EXPECT_EQ(engine_type, "");
+
+    /*adios2_engine *engineH =*/adios2_open(ioH, "ctypes.bp",
+                                            adios2_mode_write);
+
+    // FIXME, I'd like to check that the engine type itself is correct, but
+    // there's no API to get it
+    // FIXME, I'd like to check the engine's name, but there's no API to get it
+
+    engine_type = testing::adios2_engine_type_as_string(ioH);
+    EXPECT_EQ(engine_type, "bp"); // FIXME? Is it expected that adios2_open
+                                  // changes the engine_type string?
+}
+
 TEST_F(ADIOS2_C_API_IO, ReturnedStrings)
 {
     // create some objects
