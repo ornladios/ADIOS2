@@ -4668,10 +4668,10 @@ void SystemTools::ClassInitialize()
 
 void SystemTools::ClassFinalize()
 {
-  auto lf_Delete = [](void*& pointer) {
-    if (pointer != nullptr) {
-      delete pointer;
-      pointer = nullptr;
+  auto lf_Delete = [](void** pointer) {
+    if (*pointer != nullptr) {
+      delete *pointer;
+      *pointer = nullptr;
     }
   };
 
