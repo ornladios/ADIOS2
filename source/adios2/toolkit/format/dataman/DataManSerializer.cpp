@@ -8,6 +8,7 @@
  *      Author: Jason Wang
  */
 
+#include "DataManSerializer.h"
 #include "DataManSerializer.tcc"
 
 #include "adios2/helper/adiosMPIFunctions.h"
@@ -373,70 +374,79 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
                     var.start = varBlock["O"].get<Dims>();
                     var.count = varBlock["C"].get<Dims>();
                     var.size = varBlock["I"].get<size_t>();
+                    var.type = varBlock["Y"].get<std::string>();
                     var.rank = stoi(rankMapIt.key());
                     var.address = varBlock["A"].get<std::string>();
-
-                    // optional properties
-
-                    auto itJson = varBlock.find("D");
-                    if (itJson != varBlock.end())
-                    {
-                        var.doid = itJson->get<std::string>();
-                    }
-
-                    itJson = varBlock.find("M");
-                    if (itJson != varBlock.end())
-                    {
-                        var.isRowMajor = itJson->get<bool>();
-                    }
-
-                    itJson = varBlock.find("E");
-                    if (itJson != varBlock.end())
-                    {
-                        var.isLittleEndian = itJson->get<bool>();
-                    }
-
-                    itJson = varBlock.find("Y");
-                    if (itJson != varBlock.end())
-                    {
-                        var.type = itJson->get<std::string>();
-                    }
-
-                    itJson = varBlock.find("S");
-                    if (itJson != varBlock.end())
-                    {
-                        var.shape = itJson->get<Dims>();
-                    }
-
-                    var.position = varBlock["P"].get<size_t>();
-                    var.buffer = pack;
-
-                    auto it = varBlock.find("Z");
-                    if (it != varBlock.end())
-                    {
-                        var.compression = it->get<std::string>();
-                    }
-
-                    for (auto i = varBlock.begin(); i != varBlock.end(); ++i)
-                    {
-                        auto pos = i.key().find(":");
-                        if (pos != std::string::npos)
-                        {
-                            var.params[i.key().substr(pos + 1)] = i.value();
-                        }
-                    }
-
-                    if (m_DataManVarMap[var.step] == nullptr)
-                    {
-                        m_DataManVarMap[var.step] =
-                            std::make_shared<std::vector<DataManVar>>();
-                    }
-                    m_DataManVarMap[var.step]->emplace_back(std::move(var));
                 }
                 catch (std::exception &e)
                 {
-                    std::cout << e.what() << std::endl;
+                    throw(std::runtime_error(
+                        "DataManSerializer::JsonToDataManVarMap missing "
+                        "compulsory properties in JSON metadata"));
                 }
+
+                // optional properties
+
+                auto itJson = varBlock.find("D");
+                if (itJson != varBlock.end())
+                {
+                    var.doid = itJson->get<std::string>();
+                }
+
+                itJson = varBlock.find("M");
+                if (itJson != varBlock.end())
+                {
+                    var.isRowMajor = itJson->get<bool>();
+                }
+
+                itJson = varBlock.find("E");
+                if (itJson != varBlock.end())
+                {
+                    var.isLittleEndian = itJson->get<bool>();
+                }
+
+                itJson = varBlock.find("S");
+                if (itJson != varBlock.end())
+                {
+                    var.shape = itJson->get<Dims>();
+                }
+
+                itJson = varBlock.find("+");
+                if (itJson != varBlock.end())
+                {
+                    var.max = itJson->get<std::vector<char>>();
+                }
+
+                itJson = varBlock.find("-");
+                if (itJson != varBlock.end())
+                {
+                    var.min = itJson->get<std::vector<char>>();
+                }
+
+                var.position = varBlock["P"].get<size_t>();
+                var.buffer = pack;
+
+                auto it = varBlock.find("Z");
+                if (it != varBlock.end())
+                {
+                    var.compression = it->get<std::string>();
+                }
+
+                for (auto i = varBlock.begin(); i != varBlock.end(); ++i)
+                {
+                    auto pos = i.key().find(":");
+                    if (pos != std::string::npos)
+                    {
+                        var.params[i.key().substr(pos + 1)] = i.value();
+                    }
+                }
+
+                if (m_DataManVarMap[var.step] == nullptr)
+                {
+                    m_DataManVarMap[var.step] =
+                        std::make_shared<std::vector<DataManVar>>();
+                }
+                m_DataManVarMap[var.step]->emplace_back(std::move(var));
             }
         }
     }
@@ -564,7 +574,6 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                                           const Dims &count, void *data)
 {
 
-
     DmvVecPtr varVec;
 
     m_DataManVarMapMutex.lock();
@@ -611,7 +620,6 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
             j["O"] = var.start;
             j["C"] = var.count;
             j["T"] = step;
-
         }
     }
 

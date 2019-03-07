@@ -38,25 +38,31 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
 
-    Log(5, "WdmWriter::BeginStep() begin. Last step " + std::to_string(m_CurrentStep), true, true);
+    Log(5, "WdmWriter::BeginStep() begin. Last step " +
+               std::to_string(m_CurrentStep),
+        true, true);
 
-    if(m_QueueFullPolicy == "discard")
+    if (m_QueueFullPolicy == "discard")
     {
         int64_t stepToErase = m_CurrentStep - m_QueueLimit;
         if (stepToErase >= 0)
         {
-            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing Step " + std::to_string(stepToErase), true, true);
+            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing "
+                   "Step " +
+                       std::to_string(stepToErase),
+                true, true);
             m_DataManSerializer.Erase(stepToErase);
         }
     }
-    else if(m_QueueFullPolicy == "block")
+    else if (m_QueueFullPolicy == "block")
     {
         auto startTime = std::chrono::system_clock::now();
         while (m_DataManSerializer.Steps() > m_QueueLimit)
         {
             auto nowTime = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(nowTime - startTime);
-            if(duration.count() > timeoutSeconds)
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                nowTime - startTime);
+            if (duration.count() > timeoutSeconds)
             {
                 Log(5, "WdmWriter::BeginStep() returned NotReady", true, true);
                 return StepStatus::NotReady;
@@ -65,7 +71,8 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
     else
     {
-        throw(std::invalid_argument("WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
+        throw(std::invalid_argument(
+            "WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
     }
 
     Log(5, "WdmWriter::BeginStep() after checking queue limit", true, true);
@@ -139,9 +146,13 @@ void WdmWriter::InitParameters()
         {
             m_Verbosity = std::stoi(value);
         }
-        else if(key == "queuefullpolicy")
+        else if (key == "queuefullpolicy")
         {
             m_QueueFullPolicy = value;
+        }
+        else if (key == "port")
+        {
+            m_Port = std::stoi(value);
         }
     }
 }
@@ -158,10 +169,9 @@ void WdmWriter::InitTransports()
 
 void WdmWriter::Handshake()
 {
+    // Get IP address
     auto ips = helper::AvailableIpAddresses();
-
     std::string ip = "127.0.0.1";
-
     if (ips.empty() == false)
     {
         ip = ips[0];
@@ -173,24 +183,70 @@ void WdmWriter::Handshake()
             true, true);
     }
 
+    // Check total number of writer apps
+    /*
+    if(m_MpiRank == 0)
+    {
+        transport::FileFStream lockCheck(m_MPIComm, m_DebugMode);
+        while (true)
+        {
+            try
+            {
+                lockCheck.Open(".wdm.lock", Mode::Read);
+                lockCheck.Close();
+            }
+            catch (...)
+            {
+                break;
+            }
+        }
+        transport::FileFStream lockWrite(m_MPIComm, m_DebugMode);
+        lockWrite.Open(".wdm.lock", Mode::Write);
+
+        transport::FileFStream numRead(m_MPIComm, m_DebugMode);
+        try
+        {
+            numRead.Open(".wdm", Mode::Read);
+            auto size = numRead.GetSize();
+            std::vector<char> numAppsChar(size);
+            numRead.Read(numAppsChar.data(), numAppsChar.size());
+            m_AppID = 1 + stoi (std::string(numAppsChar.begin(),
+    numAppsChar.end()));
+            numRead.Close();
+        }
+        catch (...)
+        {
+        }
+        transport::FileFStream numWrite(m_MPIComm, m_DebugMode);
+        numWrite.Open(".wdm", Mode::Write);
+        std::string numAppsString = std::to_string(m_AppID);
+        numWrite.Write(numAppsString.data(), numAppsString.size());
+        numWrite.Close();
+
+        lockWrite.Close();
+        remove(".wdm.lock");
+    }
+    */
+
+    // Make full addresses
     for (int i = 0; i < m_Channels; ++i)
     {
-        std::string addr =
-            "tcp://" + ip + ":" +
-            std::to_string(12307 + (m_MpiRank % 1000) * m_Channels + i) + "\0";
+        std::string addr = "tcp://" + ip + ":" +
+                           std::to_string(m_Port + (100 * m_AppID) +
+                                          (m_MpiRank % 1000) * m_Channels + i) +
+                           "\0";
         m_FullAddresses.push_back(addr);
     }
-
     nlohmann::json localAddressesJson = m_FullAddresses;
     std::string localAddressesStr = localAddressesJson.dump();
     std::vector<char> localAddressesChar(64 * m_Channels, '\0');
     std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(),
                 localAddressesStr.size());
     std::vector<char> globalAddressesChar(64 * m_Channels * m_MpiSize, '\0');
-
     helper::GatherArrays(localAddressesChar.data(), 64 * m_Channels,
                          globalAddressesChar.data(), m_MPIComm);
 
+    // Writing handshake file
     if (m_MpiRank == 0)
     {
         nlohmann::json globalAddressesJson;
@@ -203,19 +259,15 @@ void WdmWriter::Handshake()
                 globalAddressesJson.push_back(i);
             }
         }
-
         std::string globalAddressesStr = globalAddressesJson.dump();
-
         transport::FileFStream lockstream(m_MPIComm, m_DebugMode);
-        lockstream.Open(".StagingHandshakeLock", Mode::Write);
-
+        lockstream.Open(m_Name + ".wdm.lock", Mode::Write);
         transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
-        ipstream.Open(".StagingHandshake", Mode::Write);
+        ipstream.Open(m_Name + ".wdm", Mode::Write);
         ipstream.Write(globalAddressesStr.data(), globalAddressesStr.size());
         ipstream.Close();
-
         lockstream.Close();
-        remove(".StagingHandshakeLock");
+        remove(std::string(m_Name + ".wdm.lock").c_str());
     }
 }
 
@@ -251,7 +303,9 @@ void WdmWriter::ReplyThread(const std::string &address)
                     }
                     else
                     {
-                        throw(std::invalid_argument("WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
+                        throw(std::invalid_argument("WdmWriter::ReplyThread: "
+                                                    "unknown QueueFullPolicy "
+                                                    "parameter"));
                     }
                 }
                 else
@@ -281,16 +335,18 @@ void WdmWriter::ReplyThread(const std::string &address)
             {
                 if (m_Tolerance)
                 {
-                    Log(1, "WdmWriter::ReplyThread received data request but "
-                           "the step is already removed from buffer. Increase the"
-                           "buffer size to prevent this from happening again.",
+                    Log(1,
+                        "WdmWriter::ReplyThread received data request but "
+                        "the step is already removed from buffer. Increase the"
+                        "buffer size to prevent this from happening again.",
                         true, true);
                 }
                 else
                 {
                     throw(std::runtime_error(
                         "WdmWriter::ReplyThread received data request but the "
-                        "step is already removed from buffer. Increase the buffer "
+                        "step is already removed from buffer. Increase the "
+                        "buffer "
                         "size to prevent this from happening again."));
                 }
             }
@@ -310,7 +366,8 @@ void WdmWriter::DoClose(const int transportIndex)
         }
     }
 
-    remove(".StagingHandshake");
+    remove(".wdm");
+    remove(std::string(m_Name + ".wdm").c_str());
 
     Log(5, "WdmWriter::DoClose(" + m_Name + ")", true, true);
 }

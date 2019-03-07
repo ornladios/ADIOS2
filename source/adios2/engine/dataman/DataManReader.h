@@ -13,7 +13,6 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMANREADER_H_
 
 #include "DataManCommon.h"
-#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 
 namespace adios2
 {

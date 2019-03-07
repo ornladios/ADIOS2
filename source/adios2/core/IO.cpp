@@ -508,9 +508,8 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             engine =
                 std::make_shared<engine::WdmWriter>(*this, name, mode, mpiComm);
 #else
-        throw std::invalid_argument(
-            "ERROR: this version didn't compile with "
-            "DataMan library, can't use DataMan engine\n");
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Wdm library, can't use Wdm engine\n");
 #endif
     }
     else if (engineTypeLC == "sst" || engineTypeLC == "effis")

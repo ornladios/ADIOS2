@@ -15,6 +15,8 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosSystem.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transportman/wanman/WANMan.h"
 

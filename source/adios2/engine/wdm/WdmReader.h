@@ -18,6 +18,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/transportman/stagingman/StagingMan.h"
 
@@ -83,9 +84,25 @@ private:
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
-    void DoGetDeferred(Variable<T> &, T *) final;
+    void DoGetDeferred(Variable<T> &, T *) final;                              \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
+    std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
+        const Variable<T> &variable, const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+    template <typename T>
+    std::map<size_t, std::vector<typename Variable<T>::Info>>
+    AllStepsBlocksInfoCommon(const Variable<T> &variable) const;
+
+    template <typename T>
+    std::vector<typename Variable<T>::Info>
+    BlocksInfoCommon(const Variable<T> &variable, const size_t step) const;
+
+    template <typename T>
+    void AccumulateMinMax(T &min, T &max, const std::vector<char> &minVec,
+                          const std::vector<char> &maxVec) const;
 
     void DoClose(const int transportIndex = -1);
 
@@ -94,6 +111,10 @@ private:
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    template <class T>
+    void CalculateMinMax(const T *data, const size_t size, T &min,
+                         T &max) const;
 
     void Log(const int level, const std::string &message, const bool mpi,
              const bool endline);

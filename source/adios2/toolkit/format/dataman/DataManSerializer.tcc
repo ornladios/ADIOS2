@@ -32,6 +32,49 @@ namespace adios2
 namespace format
 {
 
+template <>
+inline void DataManSerializer::CalculateMinMax<std::complex<float>>(
+    const std::complex<float> *data, const Dims &count, nlohmann::json &metaj)
+{
+}
+
+template <>
+inline void DataManSerializer::CalculateMinMax<std::complex<double>>(
+    const std::complex<double> *data, const Dims &count, nlohmann::json &metaj)
+{
+}
+
+template <typename T>
+void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
+                                        nlohmann::json &metaj)
+{
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
+    T max = std::numeric_limits<T>::min();
+    T min = std::numeric_limits<T>::max();
+
+    for (size_t j = 0; j < size; ++j)
+    {
+        T value = data[j];
+        if (value > max)
+        {
+            max = value;
+        }
+        if (value < min)
+        {
+            min = value;
+        }
+    }
+
+    std::vector<char> vectorValue(sizeof(T));
+
+    reinterpret_cast<T *>(vectorValue.data())[0] = max;
+    metaj["+"] = vectorValue;
+
+    reinterpret_cast<T *>(vectorValue.data())[0] = min;
+    metaj["-"] = vectorValue;
+}
+
 template <class T>
 void DataManSerializer::PutVar(const core::Variable<T> &variable,
                                const std::string &doid, const size_t step,
@@ -70,11 +113,22 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
     metaj["O"] = varStart;
     metaj["C"] = varCount;
     metaj["S"] = varShape;
-    metaj["D"] = doid;
-    metaj["M"] = m_IsRowMajor;
-    metaj["E"] = m_IsLittleEndian;
     metaj["Y"] = helper::GetType<T>();
     metaj["P"] = localBuffer->size();
+
+    if (m_EnableStat)
+    {
+        CalculateMinMax(inputData, varCount, metaj);
+    }
+
+    if (not m_IsRowMajor)
+    {
+        metaj["M"] = m_IsRowMajor;
+    }
+    if (not m_IsLittleEndian)
+    {
+        metaj["E"] = m_IsLittleEndian;
+    }
 
     size_t datasize = 0;
     bool compressed = false;

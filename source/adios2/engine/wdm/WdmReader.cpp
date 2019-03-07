@@ -80,7 +80,8 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
     {
         m_MetaDataMap = m_DataManSerializer.GetMetaData();
         auto nowTime = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>( nowTime - startTime);
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
             Log(5, "WdmReader::BeginStep() returned EndOfStream.", true, true);
@@ -273,8 +274,17 @@ void WdmReader::EndStep()
     void WdmReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    WdmReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
+    {                                                                          \
+        return AllStepsBlocksInfoCommon(variable);                             \
+    }                                                                          \
+    std::vector<typename Variable<T>::Info> WdmReader::DoBlocksInfo(           \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return BlocksInfoCommon(variable, step);                               \
     }
-
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -323,7 +333,7 @@ void WdmReader::Handshake()
     {
         try
         {
-            ipstream.Open(".StagingHandshake", Mode::Read);
+            ipstream.Open(m_Name + ".wdm", Mode::Read);
             break;
         }
         catch (...)
@@ -337,7 +347,7 @@ void WdmReader::Handshake()
     {
         try
         {
-            lockstream.Open(".StagingHandshakeLock", Mode::Read);
+            lockstream.Open(m_Name + ".wdm.lock", Mode::Read);
             lockstream.Close();
         }
         catch (...)

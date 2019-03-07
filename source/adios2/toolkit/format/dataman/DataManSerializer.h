@@ -13,7 +13,7 @@
 
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/IO.h"
-#include "adios2/core/Variable.h"
+//#include "adios2/core/Variable.h"
 
 #include <mutex>
 #include <unordered_map>
@@ -24,7 +24,7 @@
 // C - Count
 // D - Data Object ID or File Name
 // E - Endian
-// G - Global Value
+// G - Global Value, for attributes
 // H - Meatadata Hash
 // I - Data Size
 // M - Major
@@ -33,10 +33,13 @@
 // P - Position of Memory Block
 // S - Shape
 // T - Step
-// V - Is Single Value
+// V - Is Single Value, for attributes
 // Y - Data Type
 // Z - Compression Method
 // ZP - Compression Parameters
+// - - Min
+// + - Max
+// # - Value
 
 namespace adios2
 {
@@ -57,6 +60,9 @@ struct DataManVar
     std::string name;
     std::string doid;
     std::string type;
+    std::vector<char> min;
+    std::vector<char> max;
+    std::vector<char> value;
     size_t step;
     size_t size;
     size_t position;
@@ -173,6 +179,10 @@ private:
     VecPtr SerializeJson(const nlohmann::json &message);
     nlohmann::json DeserializeJson(const char *start, size_t size);
 
+    template <typename T>
+    void CalculateMinMax(const T *data, const Dims &count,
+                         nlohmann::json &metaj);
+
     void Log(const int level, const std::string &message, const bool mpi,
              const bool endline);
 
@@ -213,6 +223,7 @@ private:
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
+    bool m_EnableStat = true;
 
     int m_Verbosity = 0;
 };
