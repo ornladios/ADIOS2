@@ -53,6 +53,10 @@
 # Note that MutateTestSet() can be used multiple times to add multiple
 # engine params.  The ENGINE_PARAMS string is retained in the
 # resulting _CMD strings until add_common_test() which removes it.
+#
+# Change the STAGING_COMMON_TEST_SUPP_VERBOSE value to ON for debugging output
+#
+set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
 set (1x1_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg ENGINE_PARAMS")
 set (2x1_CMD "run_staging_test -nw 2 -nr 1 -v -p TestCommon -arg ENGINE_PARAMS")
@@ -102,15 +106,14 @@ set (LatestReader_PROPERTIES "RUN_SERIAL;1")
 # A faster writer and a queue policy that will cause timesteps to be discarded
 set (DiscardWriter_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -warg --engine_params -warg QueueLimit:1,QueueFullPolicy:discard,ENGINE_PARAMS -warg --ms_delay -warg 500 -rarg --discard")
 
-
 function(remove_engine_params_placeholder dst_str src_str )
     string(REGEX REPLACE "([^ 		  ]*),ENGINE_PARAMS" "\\1" src_str "${src_str}")
-    if ("{src_string}" MATCHES "ENGINE_PARAMS")
+    if ("${src_str}" MATCHES "ENGINE_PARAMS")
        # empty engine params remains
        string(REGEX REPLACE "-warg *--engine_params *-warg *ENGINE_PARAMS" "" src_str "${src_str}")       
+       string(REGEX REPLACE "-warg *--engine_params *-rarg *ENGINE_PARAMS" "" src_str "${src_str}")       
        string(REGEX REPLACE "-arg *ENGINE_PARAMS" "" src_str "${src_str}")
     endif()
-
   set(${dst_str} ${src_str} PARENT_SCOPE)
 endfunction()
 
@@ -144,7 +147,9 @@ function(MutateTestSet out_list name param in_list )
     endif()
     LIST(APPEND tmp_list ${modname})
   endforeach()
-  message (STATUS "Setting ${out_list} to ${tmp_list}")
+  if (STAGING_COMMON_TEST_SUPP_VERBOSE)
+    message (STATUS "Setting ${out_list} to ${tmp_list}")
+  endif()
   set(${out_list} ${tmp_list} PARENT_SCOPE)
 endfunction()
 
@@ -161,6 +166,9 @@ function(add_common_test basename engine)
     add_test(
     	NAME ${testname}
 	COMMAND ${command})
+    if (STAGING_COMMON_TEST_SUPP_VERBOSE)
+	message ( STATUS "Adding test \"${testname}\" COMMAND \"${command}\"")
+    endif()
     set (timeout "${${basename}_TIMEOUT}")
     if ("${timeout}" STREQUAL "")
        set (timeout "30")

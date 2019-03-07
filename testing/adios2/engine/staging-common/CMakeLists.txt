@@ -130,7 +130,6 @@ set (SST_TESTS "")
 LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
 
 foreach(test ${SST_TESTS})
-	     message(Status "ADDING SST TEST ${test}")
     add_common_test(${test} SST)
 endforeach()
 
