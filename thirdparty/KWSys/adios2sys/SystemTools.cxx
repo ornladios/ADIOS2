@@ -4668,13 +4668,20 @@ void SystemTools::ClassInitialize()
 
 void SystemTools::ClassFinalize()
 {
-  delete SystemTools::TranslationMap;
+  auto lf_Delete = [](void*& pointer) {
+    if (pointer != nullptr) {
+      delete pointer;
+      pointer = nullptr;
+    }
+  };
+
+  lf_Delete(SystemTools::TranslationMap);
 #ifdef _WIN32
-  delete SystemTools::PathCaseMap;
-  delete SystemTools::EnvMap;
+  lf_Delete(SystemTools::PathCaseMap);
+  lf_Delete(SystemTools::EnvMap);
 #endif
 #ifdef __CYGWIN__
-  delete SystemTools::Cyg2Win32Map;
+  lf_Delete(SystemTools::Cyg2Win32Map);
 #endif
 }
 
