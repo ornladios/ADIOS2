@@ -17,6 +17,7 @@
 
 #include "sst.h"
 
+#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
 #include "ffs_marshal.h"
 
@@ -785,6 +786,9 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
             Info->WriterInfo[i].RawBuffer =
                 realloc(Info->WriterInfo[i].RawBuffer, DataSize);
 
+            char tmpstr[256] = {0};
+            sprintf(tmpstr, "Request to rank %d, bytes", i);
+            TAU_SAMPLE_COUNTER(tmpstr, (double)DataSize);
             Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
                 Stream, i, Stream->ReaderTimestep, 0, DataSize,
                 Info->WriterInfo[i].RawBuffer, DP_TimestepInfo);
@@ -1232,6 +1236,8 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     struct FFSFormatBlock *Formats = NULL;
     FMFormat AttributeFormat = NULL;
 
+    TAU_START("Marshaling overhead in SstFFSWriterEndStep");
+
     CP_verbose(Stream, "Calling SstWriterEndStep\n");
     // if field lists have changed, register formats with FFS local context, add
     // to format chain
@@ -1362,6 +1368,9 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     //        printf("\nAttributeBlock is :\n");
     //        FMdump_encoded_data(AttributeFormat, AttributeRec.block, 1024000);
     //    }
+
+    TAU_STOP("Marshaling overhead in SstFFSWriterEndStep");
+
     SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
                                Formats, FreeTSInfo, TSInfo, &AttributeRec,
                                FreeAttrInfo, AttributeEncodeBuffer);

@@ -10,6 +10,9 @@ add_library(sst
   cp/cp_common.c
   cp/ffs_marshal.c
 )
+
+target_link_libraries(sst PRIVATE taustubs)
+
 if(ADIOS2_SST_HAVE_LIBFABRIC)
   target_sources(sst PRIVATE dp/rdma_dp.c)
   target_link_libraries(sst PRIVATE libfabric::libfabric)
@@ -52,6 +55,7 @@ endif()
 
 target_include_directories(sst PRIVATE
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )

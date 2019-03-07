@@ -14,6 +14,7 @@
 #include "SstParamParser.h"
 #include "SstWriter.h"
 #include "SstWriter.tcc"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -39,6 +40,7 @@ SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
+    TAU_SCOPED_TIMER_FUNC();
     m_WriterStep++;
     m_BetweenStepPairs = true;
     if (m_MarshalMethod == SstMarshalFFS)
@@ -64,6 +66,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 
 void SstWriter::FFSMarshalAttributes()
 {
+    TAU_SCOPED_TIMER_FUNC();
     const auto attributesDataMap = m_IO.GetAttributesDataMap();
 
     const uint32_t attributesCount =
@@ -118,10 +121,14 @@ void SstWriter::FFSMarshalAttributes()
 
 void SstWriter::EndStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
     m_BetweenStepPairs = false;
     if (m_MarshalMethod == SstMarshalFFS)
     {
+        TAU_SCOPED_TIMER("Marshaling Overhead");
+        TAU_START("SstMarshalFFS");
         FFSMarshalAttributes();
+        TAU_STOP("SstMarshalFFS");
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
     else if (m_MarshalMethod == SstMarshalBP)
@@ -137,6 +144,7 @@ void SstWriter::EndStep()
         // here should not be deallocated when SstProvideTimestep returns!
         // They should not be deallocated until SST is done with them
         // (explicit deallocation callback).
+        TAU_START("Marshaling overhead");
         auto lf_FreeBlocks = [](void *vBlock) {
             BP3DataBlock *BlockToFree =
                 reinterpret_cast<BP3DataBlock *>(vBlock);
@@ -156,6 +164,7 @@ void SstWriter::EndStep()
         newblock->data.DataSize = m_BP3Serializer->m_Data.m_Buffer.size();
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
         newblock->serializer = m_BP3Serializer;
+        TAU_STOP("Marshaling overhead");
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
                            m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
                            NULL);

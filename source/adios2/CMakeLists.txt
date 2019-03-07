@@ -3,6 +3,12 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
   
+add_library(taustubs
+  toolkit/profiling/taustubs/tautimer.cpp
+  toolkit/profiling/taustubs/tautimer.hpp
+  toolkit/profiling/taustubs/taustubs.h
+)
+
 add_library(adios2
   core/Attribute.cpp 
   core/AttributeBase.cpp
@@ -85,7 +91,7 @@ target_include_directories(adios2
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml) 
+target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml taustubs) 
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2 PUBLIC ${ADIOS2_CXX11_FEATURES})
 
@@ -232,7 +238,7 @@ install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSTypes.inl ADIOSMPICommOnly.h
 )
 
 # Library installation
-install(TARGETS adios2 EXPORT adios2Exports
+install(TARGETS adios2 taustubs EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
