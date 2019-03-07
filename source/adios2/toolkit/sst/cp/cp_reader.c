@@ -266,6 +266,11 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         //               WriterFileID, CMContactString);
         free(Writer0Contact);
 
+        if (globalNetinfoCallback)
+        {
+            (globalNetinfoCallback)(1, CP_GetContactString(Stream), NULL);
+            (globalNetinfoCallback)(2, CMContactString, NULL);
+        }
         attr_list WriterRank0Contact = attr_list_from_string(CMContactString);
         CMConnection conn = CMget_conn(Stream->CPInfo->cm, WriterRank0Contact);
         free_attr_list(WriterRank0Contact);

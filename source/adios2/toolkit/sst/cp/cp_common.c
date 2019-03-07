@@ -1201,3 +1201,10 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
                    Rank);
     }
 }
+
+CPNetworkInfoFunc globalNetinfoCallback = NULL;
+
+extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback)
+{
+    globalNetinfoCallback = callback;
+}

@@ -134,6 +134,15 @@ mark_as_advanced(EVPATH_LIBRARY_PREFIX)
 set_target_properties(EVPath PROPERTIES
   OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}evpath)
 
+set(IPCONFIG_ENVVAR_PREFIX "CM_" CACHE STRING
+  "Prefix to prepend to the networking environment variable names")
+mark_as_advanced(IPCONFIG_ENVVAR_PREFIX)
+if (NOT EVPATH_LIBRARY_PREFIX STREQUAL "")
+   STRING (TOUPPER ${EVPATH_LIBRARY_PREFIX} IPCONFIG_ENVVAR_PREFIX)
+endif()
+   
+mark_as_advanced(EVPATH_LIBRARY_PREFIX)
+
 set(EVPATH_TRANSPORT_DEP_LIBS)
 
 if(NOT DEFINED CM_SELF_FORMATS)
@@ -558,11 +567,8 @@ install(TARGETS EVPath ${EVPATH_TRANSPORT_TARGETS} EXPORT EVPathTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-set(EVPATH_LIBRARY_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(EVPATH_LIBRARY_BUILD_DIR ${PROJECT_BINARY_DIR}/lib)
 set(EVPATH_LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
-
-add_executable(cmprobe cmprobe.c)
-target_link_libraries(cmprobe evpath atl::atl)
 
 if(CMAKE_C_COMPILER_ID MATCHES "Intel") 
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
@@ -574,6 +580,9 @@ if(SSH)
 endif() 
 
 if(BUILD_TESTING) 
+  add_executable(cmprobe cmprobe.c)
+  target_link_libraries(cmprobe evpath atl::atl)
+
   enable_testing()
 
   add_subdirectory(tests)

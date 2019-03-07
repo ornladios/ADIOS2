@@ -833,6 +833,10 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         CP_dumpParams(Stream, Stream->ConfigParams);
     }
 
+    if (globalNetinfoCallback)
+    {
+        (globalNetinfoCallback)(0, CP_GetContactString(Stream), NULL);
+    }
     while (Stream->RendezvousReaderCount > 0)
     {
         WS_ReaderInfo reader;
