@@ -19,25 +19,29 @@
 
 #include "SmallTestData_c.h"
 
-class BPWriteTypesCC : public ::testing::Test
+class ADIOS2_C_API : public ::testing::Test
 {
 public:
-    BPWriteTypesCC() = default;
-};
+    ADIOS2_C_API()
+    {
+#ifdef ADIOS2_HAVE_MPI
+        adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+        adiosH = adios2_init(adios2_debug_mode_on);
+#endif
+    }
 
-TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
-{
+    ~ADIOS2_C_API() { adios2_finalize(adiosH); }
+
+    adios2_adios *adiosH;
     int rank = 0;
     int size = 1;
+};
 
-#ifdef ADIOS2_HAVE_MPI
-    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-#else
-    adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
-#endif
-
+TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
+{
     // write
     {
         // IO
@@ -300,11 +304,9 @@ TEST_F(BPWriteTypesCC, ADIOS2BPWriteTypes)
 
         delete[] dataArray;
     }
-    // deallocate adiosH
-    adios2_finalize(adiosH);
 }
 
-TEST(ADIOS2_C_API, ReturnedStrings)
+TEST_F(ADIOS2_C_API, ReturnedStrings)
 {
 #ifdef ADIOS2_HAVE_MPI
     adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
