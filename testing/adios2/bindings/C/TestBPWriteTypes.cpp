@@ -314,13 +314,16 @@ public:
     adios2_io *ioH;
 };
 
-TEST_F(ADIOS2_C_API_IO, Engine)
+namespace testing // helpers for testing
+{
+/**
+ * helper that tests the C API for adios2_engine_type,
+ * and then converts the result to a std::string for easier
+ * handling
+ */
+std::string adios2_engine_type_as_string(adios2_io *ioH)
 {
     int ierr;
-
-    ierr = adios2_set_engine(ioH, "bpfile");
-    EXPECT_EQ(ierr, 0);
-
     size_t engine_type_size;
     ierr = adios2_engine_type(NULL, &engine_type_size, ioH);
     EXPECT_EQ(ierr, 0);
@@ -328,9 +331,22 @@ TEST_F(ADIOS2_C_API_IO, Engine)
     ierr = adios2_engine_type(engine_type, &engine_type_size, ioH);
     EXPECT_EQ(ierr, 0);
     engine_type[engine_type_size] = '\0';
-
-    EXPECT_EQ(std::string(engine_type), "bpfile");
+    std::string type(engine_type);
     free(engine_type);
+
+    return type;
+}
+}
+
+TEST_F(ADIOS2_C_API_IO, Engine)
+{
+    int ierr;
+
+    ierr = adios2_set_engine(ioH, "bpfile");
+    EXPECT_EQ(ierr, 0);
+
+    std::string engine_type = testing::adios2_engine_type_as_string(ioH);
+    EXPECT_EQ(engine_type, "bpfile");
 
     adios2_engine *engineH = adios2_open(ioH, "ctypes.bp", adios2_mode_write);
 
@@ -359,11 +375,7 @@ TEST_F(ADIOS2_C_API_IO, ReturnedStrings)
 #endif
 
     // now test the APIs that return strings
-    size_t engine_type_size;
-    adios2_engine_type(NULL, &engine_type_size, ioH);
-    char *engine_type = (char *)malloc(engine_type_size + 1);
-    adios2_engine_type(engine_type, &engine_type_size, ioH);
-    engine_type[engine_type_size] = '\0';
+    std::string engine_type = testing::adios2_engine_type_as_string(ioH);
 
     size_t var_name_size;
     adios2_variable_name(NULL, &var_name_size, var);
@@ -389,14 +401,13 @@ TEST_F(ADIOS2_C_API_IO, ReturnedStrings)
     // are still accessible (which is kinda obvious)
     adios2_remove_all_ios(adiosH);
 
-    EXPECT_EQ(std::string(engine_type), "BP3");
+    EXPECT_EQ(engine_type, "BP3");
     EXPECT_EQ(std::string(var_name), "varI8");
     EXPECT_EQ(std::string(attr_name), "intAttr");
 #ifdef ADIOS2_HAVE_BZIP2
     EXPECT_EQ(std::string(op_type), "bzip2");
 #endif
 
-    free(engine_type);
     free(var_name);
     free(attr_name);
 #ifdef ADIOS2_HAVE_BZIP2
