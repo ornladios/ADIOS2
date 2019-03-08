@@ -18,6 +18,21 @@ extern "C" {
 #endif
 
 /**
+ * Return engine name string and length without '\0\ character
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param name output, string without trailing '\0', NULL or preallocated
+ * buffer
+ * @param size output, engine_type size without '\0'
+ * @param engine handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_engine_name(char *name, size_t *size,
+                                const adios2_engine *engine);
+
+/**
  * @brief Begin a logical adios2 step stream
  * @param engine handler
  * @param mode see enum adios2_step_mode in adios2_c_types.h for options,

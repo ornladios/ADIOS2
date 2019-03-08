@@ -12,6 +12,7 @@
 
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2_c_internal.h"
 
 namespace
 {
@@ -87,6 +88,28 @@ adios2_step_status ToStepStatus(const adios2::StepStatus statusCpp,
     return status;
 }
 } // end anonymous namespace
+
+adios2_error adios2_engine_name(char *name, size_t *size,
+                                const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for const adios2_engine, in call to adios2_engine_name");
+        adios2::helper::CheckForNullptr(
+            size, "for size_t* size, in call to adios2_engine_name");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        return String2CAPI(engineCpp->m_Name, name, size);
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_name"));
+    }
+}
 
 adios2_error adios2_begin_step(adios2_engine *engine,
                                const adios2_step_mode mode,
