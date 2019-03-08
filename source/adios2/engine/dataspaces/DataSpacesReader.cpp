@@ -296,7 +296,6 @@ void DataSpacesReader::PerformGets()
 	    }
 	        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 	#undef declare_type
-	        return;
 	    m_DeferredStack.clear();
 	}
 }
