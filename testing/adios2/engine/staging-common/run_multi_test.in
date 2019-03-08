@@ -152,15 +152,16 @@ if ($test_protocol eq "one_to_one") {
     }
     print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
     waitpid($reader_pid, 0);
-    print "TestDriver: Status of one_to_one reader was $?\n" if $verbose;
-    if ($? != 0) {
+    my $reader_exit = ${^CHILD_ERROR_NATIVE};
+    print "TestDriver: Status of one_to_one reader was $reader_exit\n" if $verbose;
+    if ($reader_exit != 0) {
 	$exit_value = 1; 
 	print "TestDriver: Setting failure return because of bad exit status ($?) on normal reader\n";
     }
     system("touch DieTest");
     my $ret = waitpid($writer_pid, 0);
     unlink("DieTest");
-    print "TestDriver: Status of writer was $? with return value $ret\n" if $verbose;
+    print "TestDriver: Status of writer was $?\n" if $verbose;
     if ($? != 0) {
 	$exit_value = 1; #failure
 	print "TestDriver: Setting failure return because of bad exit status ($?) of writer\n";

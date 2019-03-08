@@ -58,6 +58,8 @@ typedef struct _SstParams *SstParams;
 
 typedef enum { SstMarshalFFS, SstMarshalBP } SstMarshalMethod;
 
+typedef enum { SstCPCommMin, SstCPCommPeer } SstCPCommPattern;
+
 typedef enum {
     SstQueueFullBlock = 0,
     SstQueueFullDiscard = 1

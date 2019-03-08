@@ -267,8 +267,6 @@ int main(int argc, char **argv)
         }
         else if (std::string(argv[1]) == "--engine_params")
         {
-            std::cout << "PArsing engineparams in -- " << argv[2] << std::endl;
-
             engineParams = ParseEngineParams(argv[2]);
             argv++;
             argc--;

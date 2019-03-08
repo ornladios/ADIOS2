@@ -14,6 +14,7 @@ typedef struct _CP_GlobalInfo
     FFSTypeHandle CombinedWriterInfoFormat;
     CMFormat WriterResponseFormat;
     FFSTypeHandle PerRankMetadataFormat;
+    FFSTypeHandle TimestepDistributionFormat;
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
@@ -126,7 +127,7 @@ struct _SstStream
 
     /* WRITER-SIDE FIELDS */
     int WriterTimestep;
-    int ReaderTimestep;
+    int LastReleasedTimestep;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
@@ -155,6 +156,7 @@ struct _SstStream
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
     int WriterCohortSize;
+    int ReaderTimestep;
     int *Peers;
     CP_PeerConnection *ConnectionsToWriter;
     enum StreamStatus Status;
@@ -299,7 +301,7 @@ struct _ReaderActivateMsg
 
 /*
  * The timestepMetadata message carries the metadata from all writer ranks.
- * One is sent to each reader.
+ * One is sent to each reader in peer mode, between rank 0's in min mode.
  */
 typedef struct _TimestepMetadataMsg
 {
@@ -311,6 +313,16 @@ typedef struct _TimestepMetadataMsg
     SstData AttributeData;
     void **DP_TimestepInfo;
 } * TSMetadataMsg;
+
+/*
+ * The timestepMetadataDistribution message carries the metadata from rank 0 to
+ * all reader ranks in min ode.
+ */
+typedef struct _TimestepMetadataDistributionMsg
+{
+    int ReturnValue;
+    TSMetadataMsg TSmsg;
+} * TSMetadataDistributionMsg;
 
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
