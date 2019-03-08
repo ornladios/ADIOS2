@@ -1154,7 +1154,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         {
             // not supported
         }
-        else if (attrType == "string")
+        else if (attrType == helper::GetType<std::string>())
         {
             // WriteStringAttr(io, attrName, parentID);
             core::Attribute<std::string> *adiosAttr =

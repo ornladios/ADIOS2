@@ -154,7 +154,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             const std::string dataStr(reinterpret_cast<const char *>(data));
             adios2::core::Engine &engineCpp =
@@ -215,7 +215,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             const std::string dataStr(reinterpret_cast<const char *>(data));
             engineCpp.Put(variable_name, dataStr);
@@ -274,7 +274,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             adios2::core::Engine &engineCpp =
                 *reinterpret_cast<adios2::core::Engine *>(engine);
@@ -331,7 +331,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             std::string dataStr;
             engineCpp.Get(variable_name, dataStr);
