@@ -1028,7 +1028,7 @@ void SstWriterClose(SstStream Stream)
     KillZeroRefTimesteps(Stream);
 
     // sleep briefly to allow for outgoing close messages to arrive
-    usleep(10 * Stream->ConnectionUsleepMultiplier);
+    usleep(100 * 1000);
 
     if ((Stream->ConfigParams->CPCommPattern == SstCPCommPeer) ||
         (Stream->Rank == 0))
