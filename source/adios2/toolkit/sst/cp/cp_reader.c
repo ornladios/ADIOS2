@@ -986,8 +986,25 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
             CP_verbose(Stream,
                        "Stream Final Timestep is %d, last timestep was %d\n",
                        Stream->FinalTimestep, LastTimestep);
-            CP_verbose(Stream, "Wait for next metadata returning NULL because "
-                               "Stream is not Established\n");
+            if (Stream->Status == NotOpen)
+            {
+                CP_verbose(Stream,
+                           "Wait for next metadata returning NULL because "
+                           "channel was never fully established\n");
+            }
+            else if (Stream->Status == PeerFailed)
+            {
+                CP_verbose(Stream,
+                           "Wait for next metadata returning NULL because "
+                           "the connection failed before final timestep "
+                           "notification\n");
+            }
+            else
+            {
+                CP_verbose(Stream,
+                           "Wait for next metadata returning NULL, status %d ",
+                           Stream->Status);
+            }
             /* closed or failed, return NULL */
             Stream->CurrentWorkingTimestep = -1;
             return NULL;
