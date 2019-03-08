@@ -48,6 +48,13 @@ public:
     using Map = std::map<Index, Value>;
     using iterator = typename Map::iterator;
 
+    EntityMap() = default;
+    // copy ctor / assignment would work fine, but they're deleted to prevent
+    // buggy /
+    // inefficient code
+    EntityMap(const EntityMap &) = delete;
+    EntityMap &operator=(const EntityMap &) = delete;
+
     void erase(Index key) { m_Map.erase(key); }
     void clear() noexcept { m_Map.clear(); }
 

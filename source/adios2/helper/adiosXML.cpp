@@ -292,10 +292,10 @@ void ParseConfigXML(
             helper::XMLAttribute("name", io, adios.m_DebugMode, hint);
 
         // Build the IO object
-        auto itCurrentIO =
-            ios.emplace(ioName.value(),
-                        core::IO(adios, ioName.value(), adios.m_MPIComm, true,
-                                 adios.m_HostLanguage, adios.m_DebugMode));
+        auto itCurrentIO = ios.emplace(
+            std::piecewise_construct, std::forward_as_tuple(ioName.value()),
+            std::forward_as_tuple(adios, ioName.value(), adios.m_MPIComm, true,
+                                  adios.m_HostLanguage, adios.m_DebugMode));
         core::IO &currentIO = itCurrentIO.first->second;
 
         // must be unique per io

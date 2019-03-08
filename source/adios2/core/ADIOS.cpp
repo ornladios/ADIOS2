@@ -131,8 +131,10 @@ IO &ADIOS::DeclareIO(const std::string name)
         }
     }
 
-    auto ioPair = m_IOs.emplace(
-        name, IO(*this, name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
+    auto ioPair =
+        m_IOs.emplace(std::piecewise_construct, std::forward_as_tuple(name),
+                      std::forward_as_tuple(*this, name, m_MPIComm, false,
+                                            m_HostLanguage, m_DebugMode));
     IO &io = ioPair.first->second;
     io.SetDeclared();
     return io;
