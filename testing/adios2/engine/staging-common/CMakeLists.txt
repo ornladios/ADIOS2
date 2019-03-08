@@ -120,8 +120,11 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 
-MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
-MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+#  For the moment, only test the default comm pattern (Peer)
+#MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+#MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+set (COMM_PEER_SST_TESTS ${BASIC_SST_TESTS})
+set (COMM_MIN_SST_TESTS "")
 
 MutateTestSet( FFS_SST_TESTS "FFS" "MarshalMethod:FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP_SST_TESTS "BP" "MarshalMethod:BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
