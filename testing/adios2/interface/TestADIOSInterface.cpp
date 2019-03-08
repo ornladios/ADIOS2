@@ -51,6 +51,18 @@ public:
     adios2::IO io;
 };
 
+TEST_F(ADIOS2_CXX11_API_IO, RemoveVariable)
+{
+    using T = int;
+
+    auto var1 = io.DefineVariable<T>("var1");
+    auto var2 = io.DefineVariable<T>("var2");
+    io.RemoveVariable("var1");
+    auto var3 = io.DefineVariable<T>("var3");
+    EXPECT_EQ(var2.Name(), "var2");
+    EXPECT_EQ(var3.Name(), "var3");
+}
+
 TEST_F(ADIOS2_CXX11_API_IO, Engine)
 {
     io.SetEngine("bpfile");
