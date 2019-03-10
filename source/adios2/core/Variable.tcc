@@ -115,10 +115,8 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
     minMax.first = {};
     minMax.second = {};
 
-    std::cout << "DoMinMax before\n";
     if (m_Engine != nullptr && !m_FirstStreamingStep)
     {
-        std::cout << "DoMinMax after\n";
         const size_t stepInput =
             (step == DefaultSizeT) ? m_Engine->CurrentStep() : step;
 

@@ -106,7 +106,15 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 
     if (stepMode == StepMode::NextAvailable)
     {
-        m_CurrentStep = minStep;
+        if (m_CurrentStep < minStep)
+        {
+            m_CurrentStep = minStep;
+        }
+        if (m_CurrentStep > maxStep)
+        {
+            --m_CurrentStep;
+            return StepStatus::NotReady;
+        }
     }
     else if (stepMode == StepMode::LatestAvailable)
     {
