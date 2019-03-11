@@ -168,7 +168,7 @@ void BP3Reader::InitBuffer()
             "Open");
 
         m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
-                               miniFooterSize, fileSize - miniFooterSize);
+                               miniFooterSize, miniFooterStart);
 
         // Load/Read Metadata
         const size_t metadataStart =

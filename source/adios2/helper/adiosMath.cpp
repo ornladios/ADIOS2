@@ -311,7 +311,7 @@ size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
 }
 
 size_t GetDistance(const size_t end, const size_t start, const bool debugMode,
-                   const std::string hint)
+                   const std::string &hint)
 {
     if (debugMode)
     {
