@@ -119,12 +119,13 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     }
 
     auto &attributeMap = GetAttributeMap<T>();
-    const unsigned int size = static_cast<unsigned int>(attributeMap.size());
+    const unsigned int newIndex =
+        attributeMap.empty() ? 0 : attributeMap.rbegin()->first + 1;
 
     auto itAttributePair =
-        attributeMap.emplace(size, Attribute<T>(globalName, value));
+        attributeMap.emplace(newIndex, Attribute<T>(globalName, value));
     m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetType<T>(), size));
+                         std::make_pair(helper::GetType<T>(), newIndex));
 
     return itAttributePair.first->second;
 }

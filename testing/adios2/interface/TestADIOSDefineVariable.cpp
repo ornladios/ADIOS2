@@ -545,6 +545,10 @@ TEST_F(ADIOSDefineVariableTest, DefineRemoveDefine)
     i8_vars[0] = io.InquireVariable<int8_t>("i8_0");
     EXPECT_TRUE(i8_vars[0]);
     EXPECT_EQ(i8_vars[0].Name(), "i8_0");
+
+    auto i8_var2 = io.DefineVariable<int8_t>("i8_2", shape, start, count);
+    EXPECT_TRUE(i8_var2);
+    EXPECT_EQ(i8_var2.Name(), "i8_2");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
