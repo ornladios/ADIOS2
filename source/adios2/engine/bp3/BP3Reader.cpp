@@ -141,9 +141,6 @@ void BP3Reader::InitTransports()
 
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
-        //        const std::string metadataFile(
-        //            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
-
         const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
         m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
                                 m_IO.m_TransportsParameters, profile);
@@ -152,21 +149,45 @@ void BP3Reader::InitTransports()
 
 void BP3Reader::InitBuffer()
 {
-    // Put all metadata in buffer
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
-        const size_t fileSize = m_FileManager.GetFileSize(0);
+        const size_t fileSize = m_FileManager.GetFileSize();
+        // handle single bp files from ADIOS 1.x by getting onl the metadata in
+        // buffer
+
+        // Load/Read Minifooter
+        const size_t miniFooterSize =
+            m_BP3Deserializer.m_MetadataSet.MiniFooterSize;
+        const size_t miniFooterStart =
+            helper::GetDistance(fileSize, miniFooterSize, m_DebugMode,
+                                " fileSize < miniFooterSize, in call to Open");
+
         m_BP3Deserializer.m_Metadata.Resize(
-            fileSize,
-            "allocating metadata buffer, in call to BPFileReader Open");
+            miniFooterSize,
+            "allocating metadata buffer to inspect bp minifooter, in call to "
+            "Open");
 
         m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
-                               fileSize);
+                               miniFooterSize, fileSize - miniFooterSize);
+
+        // Load/Read Metadata
+        const size_t metadataStart =
+            m_BP3Deserializer.MetadataStart(m_BP3Deserializer.m_Metadata);
+        const size_t metadataSize =
+            helper::GetDistance(fileSize, metadataStart, m_DebugMode,
+                                " fileSize < miniFooterSize, in call to Open");
+
+        m_BP3Deserializer.m_Metadata.Resize(
+            metadataSize, "allocating metadata buffer, in call to Open");
+
+        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
+                               metadataSize, metadataStart);
     }
-    // broadcast buffer to all ranks from zero
+
+    // broadcast metadata buffer to all ranks from zero
     helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
-    // fills IO with Variables and Attributes
+    // fills IO with available Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);
 }
 

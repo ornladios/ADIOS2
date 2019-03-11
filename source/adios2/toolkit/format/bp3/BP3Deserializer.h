@@ -165,6 +165,14 @@ public:
     // TODO: will deprecate
     bool m_PerformedGets = false;
 
+    /**
+     * Gets metadata start position from current m_Metadata buffer
+     * @param bufferSTL minifooter only buffer
+     * @return metadata start position (0 for metadata files, greater than zero
+     * for single bp files)
+     */
+    size_t MetadataStart(const BufferSTL &bufferSTL);
+
 private:
     std::map<std::string, helper::SubFileInfoMap> m_DeferredVariablesMap;
 

@@ -310,5 +310,22 @@ size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
     return LinearIndex(start, count, point, isRowMajor);
 }
 
+size_t GetDistance(const size_t end, const size_t start, const bool debugMode,
+                   const std::string hint)
+{
+    if (debugMode)
+    {
+        if (end < start)
+        {
+            throw std::invalid_argument("ERROR: end position: " +
+                                        std::to_string(end) +
+                                        " is smaller than start position " +
+                                        std::to_string(start) + ", " + hint);
+        }
+    }
+
+    return end - start;
+}
+
 } // end namespace helper
 } // end namespace adios2

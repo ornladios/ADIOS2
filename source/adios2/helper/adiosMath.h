@@ -233,6 +233,19 @@ template <class T, class BinaryOperation>
 std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
                          const std::vector<T> &vector2) noexcept;
 
+/**
+ * Get the size for a piece between end and start positions
+ * Safe call with debug mode to check end > start so size_t won't be negative
+ * (undefined)
+ * @param end input
+ * @param start input
+ * @param debugMode true: check end > start
+ * @param hint added debug information
+ * @return end - start
+ */
+size_t GetDistance(const size_t end, const size_t start,
+                   const bool debugMode = false, const std::string hint = "");
+
 } // end namespace helper
 } // end namespace adios2
 
