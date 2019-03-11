@@ -1,5 +1,6 @@
 #include <cstdint>
 
+#include <array>
 #include <iostream>
 #include <stdexcept>
 
@@ -507,6 +508,48 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     EXPECT_FALSE(var_char);
     EXPECT_FALSE(var_l);
     EXPECT_FALSE(var_ul);
+}
+
+TEST_F(ADIOSDefineVariableTest, DefineRemoveDefine)
+{
+    auto lf_CheckRemove = [&](const std::string variableName) {
+
+        const bool isRemoved = io.RemoveVariable(variableName);
+        EXPECT_EQ(isRemoved, true);
+    };
+
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineVariable<int8_t>("i8_0", shape, start, count);
+    io.DefineVariable<int8_t>("i8_1", shape, start, count);
+
+    lf_CheckRemove("i8_0");
+
+    std::array<adios2::Variable<int8_t>, 2> i8_vars;
+
+    i8_vars[0] = io.InquireVariable<int8_t>("i8_0");
+    EXPECT_FALSE(i8_vars[0]);
+
+    i8_vars[1] = io.InquireVariable<int8_t>("i8_1");
+    EXPECT_TRUE(i8_vars[1]);
+    EXPECT_EQ(i8_vars[1].Name(), "i8_1");
+
+    io.DefineVariable<int8_t>("i8_0", shape, start, count);
+
+    // check again after defining variable
+    i8_vars[1] = io.InquireVariable<int8_t>("i8_1");
+    EXPECT_TRUE(i8_vars[1]);
+    EXPECT_EQ(i8_vars[1].Name(), "i8_1");
+
+    i8_vars[0] = io.InquireVariable<int8_t>("i8_0");
+    EXPECT_TRUE(i8_vars[0]);
+    EXPECT_EQ(i8_vars[0].Name(), "i8_0");
+
+    auto i8_var2 = io.DefineVariable<int8_t>("i8_2", shape, start, count);
+    EXPECT_TRUE(i8_var2);
+    EXPECT_EQ(i8_var2.Name(), "i8_2");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)

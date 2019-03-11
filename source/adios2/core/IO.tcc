@@ -44,11 +44,13 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
     }
 
     auto &variableMap = GetVariableMap<T>();
-    const unsigned int size = static_cast<unsigned int>(variableMap.size());
+    const unsigned int newIndex =
+        variableMap.empty() ? 0 : variableMap.rbegin()->first + 1;
+
     auto itVariablePair =
-        variableMap.emplace(size, Variable<T>(name, shape, start, count,
-                                              constantDims, m_DebugMode));
-    m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), size));
+        variableMap.emplace(newIndex, Variable<T>(name, shape, start, count,
+                                                  constantDims, m_DebugMode));
+    m_Variables.emplace(name, std::make_pair(helper::GetType<T>(), newIndex));
 
     Variable<T> &variable = itVariablePair.first->second;
 
@@ -117,12 +119,13 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     }
 
     auto &attributeMap = GetAttributeMap<T>();
-    const unsigned int size = static_cast<unsigned int>(attributeMap.size());
+    const unsigned int newIndex =
+        attributeMap.empty() ? 0 : attributeMap.rbegin()->first + 1;
 
     auto itAttributePair =
-        attributeMap.emplace(size, Attribute<T>(globalName, value));
+        attributeMap.emplace(newIndex, Attribute<T>(globalName, value));
     m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetType<T>(), size));
+                         std::make_pair(helper::GetType<T>(), newIndex));
 
     return itAttributePair.first->second;
 }
