@@ -64,6 +64,19 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
                                       // changes the engine_type string?
 }
 
+TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
+{
+    io.SetEngine("");
+    EXPECT_EQ(io.EngineType(), "");
+
+    adios2::Engine engine = io.Open("types.bp", adios2::Mode::Write);
+    EXPECT_EQ(engine.Name(), "types.bp");
+    EXPECT_EQ(engine.Type(), "BP3");
+
+    EXPECT_EQ(io.EngineType(), "bp"); // FIXME? Is it expected that adios2_open
+                                      // changes the engine_type string?
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

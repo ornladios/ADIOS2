@@ -22,10 +22,10 @@ contains
         !local
         integer :: length
 
-        call adios2_variable_name_length_f2c(length, variable%f2c, ierr)
-
         if (allocated(name)) deallocate (name)
-        if (length > 0) then
+
+        call adios2_variable_name_length_f2c(length, variable%f2c, ierr)
+        if (ierr == 0) then
             allocate (character(length) :: name)
             call adios2_variable_name_f2c(name, variable%f2c, ierr)
         end if

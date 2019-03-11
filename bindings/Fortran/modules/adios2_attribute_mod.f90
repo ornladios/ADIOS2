@@ -22,10 +22,10 @@ module adios2_attribute_mod
         !local
         integer :: length
 
-        call adios2_attribute_name_length_f2c(length, attribute%f2c, ierr)
-
         if (allocated(name)) deallocate (name)
-        if (length > 0) then
+
+        call adios2_attribute_name_length_f2c(length, attribute%f2c, ierr)
+        if (ierr == 0) then
             allocate (character(length) :: name)
             call adios2_attribute_name_f2c(name, attribute%f2c, ierr)
         end if
