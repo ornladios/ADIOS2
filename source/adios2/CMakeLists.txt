@@ -48,6 +48,8 @@ add_library(adios2
 
   engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
   engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
+  
+  engine/null/NullEngine.cpp
 
 #toolkit
   toolkit/format/BufferSTL.cpp

@@ -85,6 +85,10 @@ typename Variable<T>::Span Engine::Put(Variable<T> variable)
 template <class T>
 void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     adios2::helper::CheckForNullptr(variable.m_Variable,
@@ -97,6 +101,10 @@ template <class T>
 void Engine::Put(const std::string &variableName, const T *data,
                  const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     m_Engine->Put(variableName, reinterpret_cast<const IOType *>(data), launch);
@@ -105,6 +113,10 @@ void Engine::Put(const std::string &variableName, const T *data,
 template <class T>
 void Engine::Put(Variable<T> variable, const T &datum, const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     adios2::helper::CheckForNullptr(variable.m_Variable,
@@ -117,6 +129,10 @@ template <class T>
 void Engine::Put(const std::string &variableName, const T &datum,
                  const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     m_Engine->Put(variableName, reinterpret_cast<const IOType &>(datum),
@@ -126,6 +142,10 @@ void Engine::Put(const std::string &variableName, const T &datum,
 template <class T>
 void Engine::Get(Variable<T> variable, T *data, const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     adios2::helper::CheckForNullptr(variable.m_Variable,
@@ -137,6 +157,10 @@ void Engine::Get(Variable<T> variable, T *data, const Mode launch)
 template <class T>
 void Engine::Get(const std::string &variableName, T *data, const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     m_Engine->Get(variableName, reinterpret_cast<IOType *>(data), launch);
@@ -145,6 +169,10 @@ void Engine::Get(const std::string &variableName, T *data, const Mode launch)
 template <class T>
 void Engine::Get(Variable<T> variable, T &datum, const Mode /*launch*/)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     adios2::helper::CheckForNullptr(variable.m_Variable,
@@ -156,6 +184,10 @@ template <class T>
 void Engine::Get(const std::string &variableName, T &datum,
                  const Mode /*launch*/)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     m_Engine->Get(variableName, reinterpret_cast<IOType &>(datum));
@@ -164,6 +196,10 @@ void Engine::Get(const std::string &variableName, T &datum,
 template <class T>
 void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
@@ -177,6 +213,10 @@ template <class T>
 void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
                  const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(
         m_Engine, "in call to Engine::Get with std::vector argument");
@@ -188,6 +228,10 @@ template <class T>
 void Engine::Get(Variable<T> variable, typename Variable<T>::Info &info,
                  const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     adios2::helper::CheckForNullptr(variable.m_Variable,
@@ -200,6 +244,11 @@ template <class T>
 void Engine::Get(const std::string &variableName,
                  typename Variable<T>::Info &info, const Mode launch)
 {
+    if (Type() == "null")
+    {
+        return;
+    }
+
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     info.m_Info = reinterpret_cast<typename Variable<T>::Info::CoreInfo *>(
@@ -210,6 +259,11 @@ template <class T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 Engine::AllStepsBlocksInfo(const Variable<T> variable) const
 {
+    if (Type() == "null")
+    {
+        return std::map<size_t, std::vector<typename Variable<T>::Info>>();
+    }
+
     using IOType = typename TypeInfo<T>::IOType;
 
     adios2::helper::CheckForNullptr(
@@ -246,6 +300,11 @@ template <class T>
 std::vector<typename Variable<T>::Info>
 Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
 {
+    if (Type() == "null")
+    {
+        return std::vector<typename Variable<T>::Info>();
+    }
+
     using IOType = typename TypeInfo<T>::IOType;
 
     adios2::helper::CheckForNullptr(m_Engine,

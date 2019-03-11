@@ -18,15 +18,14 @@
 
 #include "adios2/engine/bp3/BP3Reader.h"
 #include "adios2/engine/bp3/BP3Writer.h"
-#include "adios2/engine/inline/InlineReader.h"
-#include "adios2/engine/inline/InlineWriter.h"
-
-/*BP4 engine headers*/
 #include "adios2/engine/bp4/BP4Reader.h"
 #include "adios2/engine/bp4/BP4Writer.h"
-
+#include "adios2/engine/inline/InlineReader.h"
+#include "adios2/engine/inline/InlineWriter.h"
+#include "adios2/engine/null/NullEngine.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
+
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
@@ -571,6 +570,11 @@ Engine &IO::Open(const std::string &name, const Mode mode,
         else
             engine = std::make_shared<engine::InlineWriter>(*this, name, mode,
                                                             mpiComm);
+    }
+    else if (engineTypeLC == "null")
+    {
+        engine =
+            std::make_shared<engine::NullEngine>(*this, name, mode, mpiComm);
     }
     else
     {
