@@ -4,7 +4,8 @@ C++ simple bindings
 
 .. caution::
 
-   DO NOT call ``use namespace adios2`` in your C++ code. Use ``adios2::fstream`` directly to prevent conflicts with std::stream. 
+   DO NOT call ``use namespace adios2`` in your C++ code.
+   Use ``adios2::fstream`` directly to prevent conflicts with ``std::stream``. 
 
 Write example:
 

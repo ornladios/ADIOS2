@@ -8,7 +8,9 @@ C++11 bindings
    
 .. caution::
 
-   DO NOT use the clause ``using namespace adios2`` in your code. This is in general a bad practices that creates potential name conflicts. Always use adios2:: explicitly, *e.g.* adios2::ADIOS, adios2::IO.
+   DO NOT use the clause ``using namespace adios2`` in your code.
+   This is in general a bad practices that creates potential name conflicts.
+   Always use ``adios2::`` explicitly, *e.g.* ``adios2::ADIOS``, ``adios2::IO``.
 
 
 .. tip::
@@ -19,7 +21,8 @@ C++11 bindings
 ADIOS2 components classes
 -------------------------
 
-ADIOS2 C++ bindings objects are mapped 1-to-1 to the ADIOS components described in the :ref:`Components Overview` section. Only the ``adios2::ADIOS`` object is "owned" by the developer's program using adios2, all other components are light-weigth objects that point internally to a component that lives inside the ``adios2::ADIOS`` "factory" object.`
+ADIOS2 C++ bindings objects are mapped 1-to-1 to the ADIOS components described in the :ref:`Components Overview` section.
+Only the ``adios2::ADIOS`` object is "owned" by the developer's program using adios2, all other components are light-weigth objects that point internally to a component that lives inside the ``adios2::ADIOS`` "factory" object.
  
 .. code-block:: c++
    
@@ -50,8 +53,8 @@ The following section provides a summary of the available functionality for each
    :path: ../../bindings/CXX11/cxx11/
    :members:
    
-:ref:`Variable` <T> class
--------------------------
+:ref:`Variable` ``<T>`` class
+-----------------------------
 
 .. doxygenclass:: adios2::Variable
    :project: CXX11
@@ -59,8 +62,8 @@ The following section provides a summary of the available functionality for each
    :members:
 
 
-:ref:`Attribute` <T> class
---------------------------
+:ref:`Attribute` ``<T>`` class
+------------------------------
 
 .. doxygenclass:: adios2::Attribute
    :project: CXX11

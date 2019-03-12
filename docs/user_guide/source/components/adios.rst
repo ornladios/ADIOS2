@@ -17,14 +17,18 @@ This component is created by passing:
 
 .. caution::
 
-   Running with the default debug mode (turned on) is highly recommended as it performs additional exception checks that the user can fix in case of an error or ill-formed object (std::invalid_argument). Turning the debug mode option off should be used with caution, when the user inputs to the resulting workflow is stable.
+   Running with the default debug mode (turned on) is highly recommended as it performs additional exception checks that the user can fix in case of an error or ill-formed object (``std::invalid_argument``).
+   Turning the debug mode option off should be used with caution, when the user inputs to the resulting workflow is stable.
 
 .. note::
 
-   Unexpected system failures and runtime errors are always checked by throwing std::runtime_error. Keep in mind that Segmentation Faults are NOT runtime exceptions. We try to keep user interactions as friendly as possible, please report any bugs on github: https://github.com/ornladios/ADIOS2/issues
+   Unexpected system failures and runtime errors are always checked by throwing ``std::runtime_error``.
+   Keep in mind that Segmentation Faults are NOT runtime exceptions. We try to keep user interactions as friendly as possible, please report any bugs on github: https://github.com/ornladios/ADIOS2/issues
 
 
-`adios2::ADIOS` objects can be created in MPI and non-MPI (serial) mode. Optionally, a runtime configuration file can be passed to the constructor indicating the full file path, name and extension. Thus resulting in:
+``adios2::ADIOS`` objects can be created in MPI and non-MPI (serial) mode.
+Optionally, a runtime configuration file can be passed to the constructor indicating the full file path, name and extension.
+Thus resulting in:
 
 **Constructors for MPI applications**
 
@@ -60,10 +64,11 @@ This component is created by passing:
 
 .. tip::
 
-   adios2::DebugON and adios::DebugOFF are aliases to true and false, respectively. Use them for code clarity.
+   ``adios2::DebugON`` and ``adios::DebugOFF`` are aliases to true and false, respectively.
+   Use them for code clarity.
 
 
-**Factory of IO components**: Multiple IO components (IO tasks) can be created from within the scope of an ADIOS object by calling the **DeclareIO** function:
+**Factory of IO components**: Multiple IO components (IO tasks) can be created from within the scope of an ADIOS object by calling the ``DeclareIO`` function:
 
 .. code-block:: c++
 
@@ -75,7 +80,9 @@ This component is created by passing:
     adios2::IO bpReader = adios.DeclareIO("BPReader");
 
 
-This function returns a reference to an existing IO class object that lives inside the ADIOS object that created it. The `ioName` identifier input must be unique for each IO. Trying to declare an IO object with the same name twice will throw an exception if the debugMode is on in the ADIOS object constructor.
+This function returns a reference to an existing IO class object that lives inside the ADIOS object that created it.
+The ``ioName`` identifier input must be unique for each IO.
+Trying to declare an IO object with the same name twice will throw an exception if the ``debugMode`` is on in the ADIOS object constructor.
 IO names are used to identify IO components in the runtime configuration file, :ref:`Runtime Configuration Files`
 
 As shown in the diagram below, each resulting IO object is self-managed and independent, thus providing an adaptable way to perform different kinds of I/O operations. Users must be careful not to create conflicts between system level unique I/O identifiers: file names, IP address and port, MPI Send/Receive message rank and tag, etc.

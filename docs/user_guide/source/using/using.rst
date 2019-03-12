@@ -6,7 +6,7 @@ Using ADIOS in your own projects
 From CMake
 **********
 
-ADIOS exports a CMake package configuration file that allows it's targets to be directly imported into another CMake project via CMake's `find_package` command:
+ADIOS exports a CMake package configuration file that allows it's targets to be directly imported into another CMake project via CMake's ``find_package`` command:
 
 .. code-block:: cmake
 
@@ -19,13 +19,13 @@ ADIOS exports a CMake package configuration file that allows it's targets to be 
     add_library(my_library src1.cxx src2.cxx...)
     target_link_libraries(my_library PRIVATE adios2::adios2 MPI::MPI_C ...)
 
-When configuring your project you can then set the `ADIOS2_ROOT` or `ADIOS2_DIR` environment variables to the install prefix for adios.  You can also point it to an ADIOS build directory, which may be easier when using development versions of ADIOS than you may not want installed system-wide
+When configuring your project you can then set the ``ADIOS2_ROOT`` or ``ADIOS2_DIR`` environment variables to the install prefix for adios.  You can also point it to an ADIOS build directory, which may be easier when using development versions of ADIOS than you may not want installed system-wide
 
 ****************************
 From non-CMake build systems
 ****************************
 
-If you're not using CMake then you can manually get the necessary compile and link flags for your project using the adios2-config tool from the installation folder:
+If you're not using CMake then you can manually get the necessary compile and link flags for your project using the ``adios2-config`` tool from the installation folder:
 
 .. code-block:: bash
 
