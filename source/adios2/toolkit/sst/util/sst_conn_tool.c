@@ -67,13 +67,15 @@ static atom_t ENET_PORT = -1;
 static atom_t ENET_HOSTNAME = -1;
 static atom_t ENET_ADDR = -1;
 
-struct option options[] = {
-    {"help", no_argument, NULL, 'h'},   {"verbose", no_argument, NULL, 'v'},
-    {"listen", no_argument, NULL, 'l'}, {"connect", no_argument, NULL, 'c'},
-    {"file", no_argument, NULL, 'f'},   {"screen", no_argument, NULL, 's'},
-    {"info", no_argument, NULL, 'i'},   {NULL, 0, NULL, 0}};
+struct option options[] = {{"help", no_argument, NULL, 'h'},
+                           {"listen", no_argument, NULL, 'l'},
+                           {"connect", no_argument, NULL, 'c'},
+                           {"file", no_argument, NULL, 'f'},
+                           {"screen", no_argument, NULL, 's'},
+                           {"info", no_argument, NULL, 'i'},
+                           {NULL, 0, NULL, 0}};
 
-static const char *optstring = "hvlcifs";
+static const char *optstring = "hlcifs";
 
 void displayHelp()
 {
@@ -129,7 +131,7 @@ static int screen = 0;
 int main(int argc, char **argv)
 {
     int c;
-    int verbose = 0, connect = 0, listen = 0;
+    int connect = 0, listen = 0;
     while ((c = getopt_long(argc, argv, optstring, options, NULL)) != -1)
     {
         switch (c)
@@ -137,9 +139,6 @@ int main(int argc, char **argv)
         case 'h':
             displayHelp();
             return 1;
-        case 'v':
-            verbose = 1;
-            break;
         case 'l':
             listen = 1;
             break;
