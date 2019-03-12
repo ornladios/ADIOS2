@@ -110,7 +110,8 @@ public:
      * application
      */
     template <class T>
-    typename Variable<T>::Span &Put(Variable<T> &variable);
+    typename Variable<T>::Span &Put(Variable<T> &variable,
+                                    const size_t bufferID = 0);
 
     /**
      * @brief Put associates variable and data into adios2 in Engine Write mode.
@@ -450,7 +451,9 @@ protected:
 
 // Put
 #define declare_type(T)                                                        \
-    virtual void DoPut(Variable<T> &variable, typename Variable<T>::Span &span);
+    virtual void DoPut(Variable<T> &variable,                                  \
+                       typename Variable<T>::Span &span,                       \
+                       const size_t blockID);
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -571,7 +574,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
-    extern template typename Variable<T>::Span &Engine::Put(Variable<T> &);
+    extern template typename Variable<T>::Span &Engine::Put(Variable<T> &,     \
+                                                            const size_t);
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

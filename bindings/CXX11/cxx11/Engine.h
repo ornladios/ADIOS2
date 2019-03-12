@@ -91,10 +91,12 @@ public:
      * Requires a call to PerformPuts, EndStep, or Close to extract the Min/Max
      * bounds.
      * @param variable input variable
+     * @param bufferID (default = 0) optional, if engine has multiple buffers
      * @return span to variable data in engine internal buffer
      */
     template <class T>
-    typename Variable<T>::Span Put(Variable<T> variable);
+    typename Variable<T>::Span Put(Variable<T> variable,
+                                   const size_t bufferID = 0);
 
     /**
      * Put data associated with a Variable in the Engine
@@ -374,8 +376,8 @@ private:
 
 #define declare_template_instantiation(T)                                      \
                                                                                \
-    extern template typename Variable<T>::Span Engine::Put(                    \
-        Variable<T> variable);
+    extern template typename Variable<T>::Span Engine::Put(Variable<T>,        \
+                                                           const size_t);
 
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -407,10 +409,7 @@ ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \
                                                                                \
     extern template std::vector<typename Variable<T>::Info>                    \
-    Engine::BlocksInfo(const Variable<T> variable, const size_t step) const;   \
-                                                                               \
-    extern template typename Variable<T>::Span Engine::Put(                    \
-        const Variable<T> variable);
+    Engine::BlocksInfo(const Variable<T> variable, const size_t step) const;
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

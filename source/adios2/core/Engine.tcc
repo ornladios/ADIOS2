@@ -23,7 +23,8 @@ namespace core
 {
 
 template <class T>
-typename Variable<T>::Span &Engine::Put(Variable<T> &variable)
+typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
+                                        const size_t bufferID)
 {
     if (m_DebugMode)
     {
@@ -35,7 +36,7 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable)
     auto itSpan = variable.m_BlocksSpan.emplace(
         variable.m_BlocksInfo.size(),
         typename Variable<T>::Span(*this, variable.TotalSize()));
-    DoPut(variable, itSpan.first->second);
+    DoPut(variable, itSpan.first->second, bufferID);
     return itSpan.first->second;
 }
 

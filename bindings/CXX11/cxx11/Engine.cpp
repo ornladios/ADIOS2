@@ -92,7 +92,7 @@ Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
 #define declare_template_instantiation(T)                                      \
                                                                                \
-    template typename Variable<T>::Span Engine::Put(Variable<T> variable);
+    template typename Variable<T>::Span Engine::Put(Variable<T>, const size_t);
 
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -21,7 +21,8 @@ namespace engine
 
 template <class T>
 void BP3Writer::PutCommon(Variable<T> &variable,
-                          typename Variable<T>::Span &span)
+                          typename Variable<T>::Span &span,
+                          const size_t /*bufferID*/)
 {
     // TODO fill payload size and span members
 }

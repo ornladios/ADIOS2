@@ -65,7 +65,8 @@ private:
     void InitBPBuffer();
 
 #define declare_type(T)                                                        \
-    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span) final;
+    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
+               const size_t bufferID) final;
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -78,7 +79,8 @@ private:
 #undef declare_type
 
     template <class T>
-    void PutCommon(Variable<T> &variable, typename Variable<T>::Span &span);
+    void PutCommon(Variable<T> &variable, typename Variable<T>::Span &span,
+                   const size_t bufferID);
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
