@@ -438,7 +438,6 @@ dump_output(int length_estimate, char *format, ...)
     char *tmp = &buf[0];
     va_list ap;
     int free_tmp = 0;
-    int use_buf = 1;
 
     if (IP_config_output_len == -1) return;
 
