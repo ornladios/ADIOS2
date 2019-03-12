@@ -107,7 +107,11 @@ The AddTransport function returns an unsigned int handler for each transport tha
 Defining, Inquiring and Removing Variables and Attributes
 ---------------------------------------------------------
 
-The template functions ``DefineVariable<T>`` allows subscribing self-describing data into ADIOS2 by returning a reference to a Variable class object whose scope is the same as the IO object that created it. The user must provide a unique name (among Variables), the dimensions: MPI global: shape, MPI local: start and offset, optionally a flag indicating that dimensions are known to be constant, and a data pointer if defined in the application. Note: actual data is not passed at this stage. This is done by the Engine functions Put/Get for Variables. See the :ref:`Variable` section for supported types and shapes.
+The template functions ``DefineVariable<T>`` allows subscribing self-describing data into ADIOS2 by returning a reference to a Variable class object whose scope is the same as the IO object that created it.
+The user must provide a unique name (among Variables), the dimensions: MPI global: shape, MPI local: start and offset, optionally a flag indicating that dimensions are known to be constant, and a data pointer if defined in the application.
+Note: actual data is not passed at this stage.
+This is done by the Engine functions ``Put``/``Get`` for Variables.
+See the :ref:`Variable` section for supported types and shapes.
 
 .. tip::
    ``adios2::Dims`` is an alias to ``std::vector<std::size_t>``, while ``adios2::ConstantDims`` is an alias to bool ``true``. Use them for code clarity.
@@ -190,7 +194,7 @@ Removing Variables and Attributes can be done one at a time or by removing all e
 
 .. tip::
 
-   It is good practice to check the bool flag returned by RemoveVariable or RemoveAttribute.
+   It is good practice to check the bool flag returned by ``RemoveVariable`` or ``RemoveAttribute``.
 
 
 Opening an Engine
@@ -200,7 +204,7 @@ The ``IO::Open`` function creates a new derived object of the abstract Engine cl
 
 .. note::
 
-   Currently only adios2::Mode:Write and adios2::Mode::Read are supported, adios2::Mode::Append is under development
+   Currently only ``adios2::Mode:Write`` and ``adios2::Mode::Read`` are supported, ``adios2::Mode::Append`` is under development
 
 
 .. code-block:: c++
@@ -241,10 +245,11 @@ The ``IO::Open`` function creates a new derived object of the abstract Engine cl
 
 .. tip::
 
-   It is good practice to always check the validity of each ADIOS object before operating on it using the explicit bool operator.  ```if( engine ){ }```
+   It is good practice to always check the validity of each ADIOS object before operating on it using the explicit bool operator.
+   ``if( engine ){ }``
 
 .. caution::
 
-   Always pass MPI_COMM_SELF if an Engine lives in only one MPI process. Open and Close are collective operations.
+   Always pass ``MPI_COMM_SELF`` if an ``Engine`` lives in only one MPI process. ``Open`` and ``Close`` are collective operations.
 
 

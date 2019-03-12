@@ -6,9 +6,9 @@ Please read this section before building ADIOS2 with CMake on a Supercomputer:
 
 #. **Modules with minimum requirements:** Make sure the corresponding "module" dependencies are loaded and that minimum requirements are satisfied. Load the latest cmake module as many systems have older cmake versions as default. The same with your build environment, make sure compilers support C++11. This includes gcc >= 4.8.1, Intel >= 15, PGI >= 15, etc.
 
-#. **Optimization flags:** For actual performance tests and operations, it is recommended to set -DCMAKE_BUILD_TYPE=Release explicitly so CMake can turn on appropriate optimization flags. 
+#. **Optimization flags:** For actual performance tests and operations, it is recommended to set ``-DCMAKE_BUILD_TYPE=Release`` explicitly so CMake can turn on appropriate optimization flags. 
 
-#. **Static/Dynamic build:** On most Cray systems, like `Titan <https://www.olcf.ornl.gov/kb_articles/compiling-and-node-types/>`_, the default library link behavior is "static", thus CMake builds ADIOS2 statically (libadios2.a) by default. Read the system's documentation to enable dynamic compilation, usually by setting an environment variable such as `CRAYPE_LINK_TYPE=dynamic`. Click `here <https://github.com/ornladios/ADIOS2/tree/master/scripts/runconf/runconf_olcf.sh>`_ for a full configurable script example on OLCF systems.
+#. **Static/Dynamic build:** On most Cray systems, like `Titan <https://www.olcf.ornl.gov/kb_articles/compiling-and-node-types/>`_, the default library link behavior is "static", thus CMake builds ADIOS2 statically (``libadios2.a``) by default. Read the system's documentation to enable dynamic compilation, usually by setting an environment variable such as ``CRAYPE_LINK_TYPE=dynamic``. Click `here <https://github.com/ornladios/ADIOS2/tree/master/scripts/runconf/runconf_olcf.sh>`_ for a full configurable script example on OLCF systems.
 
 #. **Big Endian and 32-bit systems:** ADIOS2 hasn't been tested on big endian or 32-bit systems. Please be aware before attempting to run.
 

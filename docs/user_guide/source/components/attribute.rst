@@ -2,7 +2,7 @@
 Attribute
 *********
 
-Attributes are extra information associated with a particular IO component. They can be thought of a very simplified version of a Variable, but with the goal of adding extra metadata. The most common use is the addition of human-readable information available when producing data (*e.g.* "experiment name", "date and time", "04,27,2017", schema). 
+Attributes are extra information associated with a particular IO component. They can be thought of a very simplified version of a Variable, but with the goal of adding extra metadata. The most common use is the addition of human-readable information available when producing data (*e.g.* ``"experiment name"``, ``"date and time"``, ``"04,27,2017"``, or a schema). 
 
 Currently, ADIOS2 supports single values and arrays of primitive types (excluding ``complex<T>``) for the template type in the ``IO::DefineAttribute<T>`` and ``IO::InquireAttribute<T>`` function (in C++).  
 
@@ -26,7 +26,7 @@ Currently, ADIOS2 supports single values and arrays of primitive types (excludin
    double  
    long double 
    
-The returned object (DefineAttribute or InquireAttribute) only serves the purpose to inspect the current ``Attribute<T>`` information within code.
+The returned object (``DefineAttribute`` or ``InquireAttribute``) only serves the purpose to inspect the current ``Attribute<T>`` information within code.
 
 .. note:
 

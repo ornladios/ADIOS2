@@ -331,7 +331,7 @@ To build ADIOS2:
     -- Build files have been written to: /home/chuck/adios2-build
  
 
-4. Compile using make -j cores
+4. Compile using ``make -j`` cores
 
 .. code-block:: bash 
     
@@ -372,22 +372,22 @@ To build ADIOS2:
 Build CMake -DVAR=VALUE Options
 *******************************
 
-The following options can be specified with CMake's `-DVAR=VALUE` syntax to control which features get enabled or disabled, default option (ON/OFF) is highlighted:
+The following options can be specified with CMake's ``-DVAR=VALUE`` syntax to control which features get enabled or disabled, default option (``ON``/``OFF``) is highlighted:
 
 ============================= ========================= ==========================================================================================================================================================================================================================
 CMake VAR Option               Values                     Description                                                                     
 ============================= ========================= ==========================================================================================================================================================================================================================
- `ADIOS2_USE_MPI`              **`AUTO`**/``ON``/OFF      MPI or non-MPI (serial) build.                                                                      
- `ADIOS2_USE_ZeroMQ`           **`AUTO`**/``ON``/OFF      `ZeroMQ <http://zeromq.org/>`_ for the DataMan engine.                                            
- `ADIOS2_USE_HDF5`             **`AUTO`**/``ON``/OFF      `HDF5 <https://www.hdfgroup.org>`_ engine. If HDF5 is not in the path or not the correct version is in the path, set the correct path by the -DHDF5_ROOT=... option      
- `ADIOS2_USE_Python`           **`AUTO`**/``ON``/OFF      Python >= 2.7 bindings. mpi4py and numpy. Python 3 will be used if Python 2 and 3 are found. If you want a python version not in the path then choose the right pyhton executable by -DPYTHON_EXECUTABLE=... 
- `ADIOS2_USE_Fortran`          **`AUTO`**/``ON``/OFF      Fortran 90 or above bindings. Must have a Fortran compiler. Default is OFF, must be explicitly set to ON.
- `ADIOS2_USE_SST`              **`AUTO`**/``ON``/OFF      Simplified Staging Engine (SST) and its dependencies, requires MPI. Can optionally use LibFabric for RDMA transport. Specify the LibFabric install manually with the -DLIBFABRIC_ROOT=... option. 
- `ADIOS2_USE_BZip2`            **`AUTO`**/``ON``/OFF      `BZip2 <http://www.bzip.org>`_ compression (experimental, not yet implemented).              
- `ADIOS2_USE_ZFP`              **`AUTO`**/``ON``/OFF      `ZFP <https://github.com/LLNL/zfp>`_ compression (experimental).
- `ADIOS2_USE_SZ`               **`AUTO`**/``ON``/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental).
- `ADIOS2_USE_MGARD`            **`AUTO`**/``ON``/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
- `ADIOS2_USE_Endian_Reverse`   **`AUTO`**/ON/``OFF``      Big/Little Endian Interoperability for different endianness platforms at write and read.
+``ADIOS2_USE_MPI``             **`AUTO`**/``ON``/OFF      MPI or non-MPI (serial) build.                                                                      
+``ADIOS2_USE_ZeroMQ``          **`AUTO`**/``ON``/OFF      `ZeroMQ <http://zeromq.org/>`_ for the DataMan engine.                                            
+``ADIOS2_USE_HDF5``            **`AUTO`**/``ON``/OFF      `HDF5 <https://www.hdfgroup.org>`_ engine. If HDF5 is not in the path or not the correct version is in the path, set the correct path by the -DHDF5_ROOT=... option      
+``ADIOS2_USE_Python``          **`AUTO`**/``ON``/OFF      Python >= 2.7 bindings. mpi4py and numpy. Python 3 will be used if Python 2 and 3 are found. If you want a python version not in the path then choose the right pyhton executable by -DPYTHON_EXECUTABLE=... 
+``ADIOS2_USE_Fortran``         **`AUTO`**/``ON``/OFF      Fortran 90 or above bindings. Must have a Fortran compiler. Default is OFF, must be explicitly set to ON.
+``ADIOS2_USE_SST``             **`AUTO`**/``ON``/OFF      Simplified Staging Engine (SST) and its dependencies, requires MPI. Can optionally use LibFabric for RDMA transport. Specify the LibFabric install manually with the -DLIBFABRIC_ROOT=... option. 
+``ADIOS2_USE_BZip2``           **`AUTO`**/``ON``/OFF      `BZip2 <http://www.bzip.org>`_ compression (experimental, not yet implemented).              
+``ADIOS2_USE_ZFP``             **`AUTO`**/``ON``/OFF      `ZFP <https://github.com/LLNL/zfp>`_ compression (experimental).
+``ADIOS2_USE_SZ``              **`AUTO`**/``ON``/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental).
+``ADIOS2_USE_MGARD``           **`AUTO`**/``ON``/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
+``ADIOS2_USE_Endian_Reverse``  **`AUTO`**/ON/``OFF``      Big/Little Endian Interoperability for different endianness platforms at write and read.
 ============================= ========================= ==========================================================================================================================================================================================================================
 
 Examples: Enable Fortran, disable Python bindings and ZeroMQ functionality 
@@ -398,7 +398,7 @@ Examples: Enable Fortran, disable Python bindings and ZeroMQ functionality
 
 
 Notes: 
-   * The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled. Similary, enabling MPI and Python bindings require `mpi4py`.
+   * The ``ADIOS2_USE_HDF5`` option requires the use of a matching serial or parallel version depending on whether ``ADIOS2_USE_MPI`` is enabled. Similary, enabling MPI and Python bindings require ``mpi4py``.
    
    * Optional ROOT suffix to a dependency can guide cmake into finding a particular dependency:
    
@@ -406,16 +406,16 @@ Notes:
 
     $ cmake -DHDF5_ROOT=/opt/hdf5/1.12.0 ../ADIOS2
 
-In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library gets built:
+In addition to the ``ADIOS2_USE_Feature`` options, the following options are also available to control how the library gets built:
 
 ==================================== =============================================== ===============================
  CMake VAR Options                       Values                                       Description                                                                          |
 ==================================== =============================================== ===============================
- `BUILD_SHARED_LIBS`                   ``ON``/OFF                                     Build shared libraries.                                                               
- `ADIOS2_BUILD_EXAMPLES`               ``ON``/OFF                                     Build examples.                                                                       
- `ADIOS2_BUILD_TESTING`                ``ON``/OFF                                     Build test code.                                                                      
- `CMAKE_INSTALL_PREFIX`                /path/to/install (``/usr/local``)              Installation location.                                                                     
- `CMAKE_BUILD_TYPE`                    ``Debug``/Release/RelWithDebInfo/MinSizeRel    Compiler optimization levels.                                            
+``BUILD_SHARED_LIBS``                  ``ON``/OFF                                     Build shared libraries.                                                               
+``ADIOS2_BUILD_EXAMPLES``              ``ON``/OFF                                     Build examples.                                                                       
+``ADIOS2_BUILD_TESTING``               ``ON``/OFF                                     Build test code.                                                                      
+``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.                                                                     
+``CMAKE_BUILD_TYPE``                   ``Debug``/Release/RelWithDebInfo/MinSizeRel    Compiler optimization levels.                                            
 ==================================== =============================================== ===============================
 
 Example: the following configuration will build, test and install under /opt/adios2/2.3.1 an optimized (Release) version of ADIOS2.

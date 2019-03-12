@@ -21,7 +21,7 @@ Let's assume we run the Heat Transfer tutorial example and produce the output by
     $ bpls sim.bp
       double   T     3*{15, 16}
 
-In our example, we have an array, `T`. It is a 2-dimensional `double` array, its global size is `15x16` and the file contains `3 output steps` of this array. The array is composed of 12 separate blocks coming from the 12 producers in the application. 
+In our example, we have an array, ``T``. It is a 2-dimensional ``double`` array, its global size is ``15x16`` and the file contains ``3 output steps`` of this array. The array is composed of 12 separate blocks coming from the 12 producers in the application. 
 
 * Convert BP file to HDF5 file
 
@@ -49,7 +49,7 @@ In our example, we have an array, `T`. It is a 2-dimensional `double` array, its
 
     If writing data to disk is a bottleneck to the application, it may be worth to use extra nodes for receiving the data quickly from the application and then write to disk while the application continues computing. Similarly, data can be staged in from disk into extra nodes and make it available for fast read-in for an application. One can use one of the staging engines in ADIOS to perform this data staging (SST, InSituMPI, DataMan).
     
-    Assuming that the heatSimulation is using SST instead of file I/O in a run (set in its adios2.xml configuration file), staging to disk can be done this way:
+    Assuming that the heatSimulation is using SST instead of file I/O in a run (set in its ``adios2.xml`` configuration file), staging to disk can be done this way:
     
     .. code-block:: bash
    
@@ -72,7 +72,7 @@ In our example, we have an array, `T`. It is a 2-dimensional `double` array, its
     
 * Reorganizing the data blocks in file for a different number of blocks
 
-    In the above example, the application writes the array from 12 processes, but then adios_reorganize reads the global arrays on 2 processes. The output file on disk will therefore contain the array in 2 blocks. This reorganization of the array may be useful if reading is too slow for a dataset created by many-many processes. One may want to reorganize a file written by tens or hundreds of thousands of processes if one wants to read the content more than one time and the read time proves to be a bottleneck in one's work flow. 
+    In the above example, the application writes the array from 12 processes, but then ``adios_reorganize`` reads the global arrays on 2 processes. The output file on disk will therefore contain the array in 2 blocks. This reorganization of the array may be useful if reading is too slow for a dataset created by many-many processes. One may want to reorganize a file written by tens or hundreds of thousands of processes if one wants to read the content more than one time and the read time proves to be a bottleneck in one's work flow. 
     
     .. code-block:: bash
     
