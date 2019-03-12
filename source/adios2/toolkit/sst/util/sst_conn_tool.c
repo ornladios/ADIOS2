@@ -12,6 +12,10 @@ Run with -c parameter
 Look for connection info. say what connection parameters are read and being
 tried.  Say if connection succeeds, fails or times out.
 
+Run with -d parameter
+Look for connection info. say what connection parameters are read and being
+tried.  Say if connection succeeds, fails or times out.
+
 
 SST info mode:
 What interfaces are available.   What IP addresses are associated with each.  if
@@ -66,21 +70,43 @@ static atom_t ENET_ADDR = -1;
 struct option options[] = {
     {"help", no_argument, NULL, 'h'},   {"verbose", no_argument, NULL, 'v'},
     {"listen", no_argument, NULL, 'l'}, {"connect", no_argument, NULL, 'c'},
+    {"file", no_argument, NULL, 'f'},   {"screen", no_argument, NULL, 's'},
     {"info", no_argument, NULL, 'i'},   {NULL, 0, NULL, 0}};
 
-static const char *optstring = "-hvci";
+static const char *optstring = "hvlcifs";
 
 void displayHelp()
 {
-    fprintf(stderr, "Usage:  sst_conn_tool { -l | -c | -i }\n");
-    fprintf(stderr, "  -l,-listen  Display connection parameters and wait for "
-                    "an SST connection\n");
-    fprintf(stderr, "  -c,-connect Attempt a connection to an already-running "
-                    "instance of sst_conn_tool\n");
     fprintf(stderr,
-            "  -i,-info    Display networking information on this host\n");
-    fprintf(stderr, "  -h,-help    Display this message\n\n");
+            "sst_conn_tool - Diagnostics for ADIOS2/SST connections\n\n");
+    fprintf(stderr, "Usage:  sst_conn_tool { -l | -c } [options]\n");
+    fprintf(stderr, "  -l,--listen  Display connection parameters and wait for "
+                    "an SST connection (default)\n");
+    fprintf(stderr, "  -c,--connect Attempt a connection to an already-running "
+                    "instance of sst_conn_tool\n");
+    fprintf(stderr, "\nOptions:\n");
+    fprintf(stderr, "  -i,--info    Display additional networking information "
+                    "for this host\n");
+    fprintf(stderr, "  -f,--file    Use file-based contact info sharing "
+                    "(default), SST contact file created in the current "
+                    "directory\n");
+    fprintf(stderr, "  -s,--screen  Use screen-based contact info sharing, SST "
+                    "contact info displayed/entered via terminal\n");
+    fprintf(stderr, "  -h,--help    Display this message\n\n");
 }
+
+static char *envHelp =
+    "\tThe following environment variables can impact ADIOS2_IP_CONFIG "
+    "operation:\n"
+    "\t\tADIOS2_IP  		-  Publish the specified IP address for "
+    "contact\n"
+    "\t\tADIOS2_HOSTNAME  	-  Publish the specified hostname for contact\n"
+    "\t\tADIOS2_USE_HOSTNAME 	-  Publish a hostname preferentially over IP "
+    "address\n"
+    "\t\tADIOS2_INTERFACE  	-  Use the IP address associated with the "
+    "specified network interface\n"
+    "\t\tADIOS2_PORT_RANGE  	-  Use a port within the specified range "
+    "\"low:high\"\n";
 
 static void do_listen();
 static void do_connect();
@@ -96,10 +122,14 @@ static void init_atoms()
     ENET_ADDR = attr_atom_from_string("CM_ENET_ADDR");
 }
 
+static int info = 0;
+static int file = 0;
+static int screen = 0;
+
 int main(int argc, char **argv)
 {
     int c;
-    int verbose = 0, connect = 0, info = 0, listen = 0;
+    int verbose = 0, connect = 0, listen = 0;
     while ((c = getopt_long(argc, argv, optstring, options, NULL)) != -1)
     {
         switch (c)
@@ -110,21 +140,36 @@ int main(int argc, char **argv)
         case 'v':
             verbose = 1;
             break;
+        case 'l':
+            listen = 1;
+            break;
         case 'c':
             connect = 1;
             break;
         case 'i':
             info = 1;
             break;
+        case 'f':
+            file = 1;
+            break;
+        case 's':
+            screen = 1;
+            break;
         default:
             displayHelp();
             return 1;
         }
     }
-    if (verbose + connect + info > 1)
+    if (verbose + connect > 1)
     {
         fprintf(stderr,
-                "Only one of -listen, -connect or -info can be specified\n\n");
+                "Only one of --listen or --connect can be specified\n\n");
+        displayHelp();
+        return 1;
+    }
+    if (file + screen > 1)
+    {
+        fprintf(stderr, "Only one of --screen or --file can be specified\n\n");
         displayHelp();
         return 1;
     }
@@ -133,9 +178,6 @@ int main(int argc, char **argv)
     if (connect)
     {
         do_connect();
-    }
-    else if (info)
-    {
     }
     else
     {
@@ -189,6 +231,10 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
     char *IP = NULL, *transport = NULL, *hostname = NULL;
     int port = -1;
     DecodeAttrList(attrs, &transport, &IP, &hostname, &port);
+    if (info && data)
+    {
+        printf("\n%s\n %s", data, envHelp);
+    }
     if (dataID == 0)
     {
         /* writer-side, prior to connection, giving info on listener network
@@ -262,6 +308,15 @@ static void do_connect()
     SSTSetNetworkCallback(ConnToolCallback);
     Params.RendezvousReaderCount = 1;
     Params.ControlTransport = "enet";
+    if (screen)
+    {
+        Params.RegistrationMethod = SstRegisterScreen;
+    }
+    else
+    {
+        Params.RegistrationMethod = SstRegisterFile;
+    }
+
     reader = SstReaderOpen("SstConnToolTemp", &Params, MPI_COMM_WORLD);
     if (reader)
     {
@@ -281,10 +336,18 @@ static void do_listen()
     struct _SstParams Params;
     SstStream writer;
     memset(&Params, 0, sizeof(Params));
+    if (screen)
+    {
+        Params.RegistrationMethod = SstRegisterScreen;
+    }
+    else if (file)
+    {
+        Params.RegistrationMethod = SstRegisterFile;
+    }
     SSTSetNetworkCallback(ConnToolCallback);
     Params.RendezvousReaderCount = 1;
     //    Params.ControlTransport = "enet";
     writer = SstWriterOpen("SstConnToolTemp", &Params, MPI_COMM_WORLD);
-    printf("Connection success!\n");
+    printf("Connection success, all is well!\n");
     SstWriterClose(writer);
 }

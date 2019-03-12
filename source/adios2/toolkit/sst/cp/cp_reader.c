@@ -271,7 +271,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
         if (globalNetinfoCallback)
         {
-            (globalNetinfoCallback)(1, CP_GetContactString(Stream), NULL);
+            (globalNetinfoCallback)(1, CP_GetContactString(Stream),
+                                    IPDiagString);
             (globalNetinfoCallback)(2, CMContactString, NULL);
         }
         attr_list WriterRank0Contact = attr_list_from_string(CMContactString);
