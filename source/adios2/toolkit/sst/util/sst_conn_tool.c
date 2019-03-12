@@ -160,7 +160,7 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    if (verbose + connect > 1)
+    if (listen + connect > 1)
     {
         fprintf(stderr,
                 "Only one of --listen or --connect can be specified\n\n");
