@@ -553,11 +553,8 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	}
     }
 
-    get_string_attr(attrs, CM_IP_INTERFACE, &interface);
-    if (!interface) {
-	interface = getenv(IPCONFIG_ENVVAR_PREFIX "INTERFACE");
-    }
-    if (interface) {
+
+    if (get_string_attr(attrs, CM_IP_INTERFACE, &interface)) {
 	/* don't use predetermined stuff ! */
 	get_qual_hostname(hostname_to_use, sizeof(hostname_to_use), attrs, NULL, trace_func, trace_data);
 	IP_to_use = get_self_ip_iface(trace_func, trace_data, interface);
