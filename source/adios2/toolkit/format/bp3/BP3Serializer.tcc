@@ -28,16 +28,36 @@ inline void BP3Serializer::PutVariableMetadata(
     const typename core::Variable<T>::Info &blockInfo,
     const bool sourceRowMajor) noexcept
 {
-    auto lf_SetOffset = [&](uint64_t &offset) {
-        if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
-        {
-            offset = static_cast<uint64_t>(m_Data.m_Position);
-        }
-        else
-        {
-            offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition);
-        }
-    };
+    ProfilerStart("buffering");
+
+    Stats<T> stats =
+        GetBPStats<T>(variable.m_SingleValue, blockInfo, sourceRowMajor);
+
+    // Get new Index or point to existing index
+    bool isNew = true; // flag to check if variable is new
+    SerialElementIndex &variableIndex = GetSerialElementIndex(
+        variable.m_Name, m_MetadataSet.VarsIndices, isNew);
+    stats.MemberID = variableIndex.MemberID;
+
+    SetDataOffset(stats.Offset);
+    PutVariableMetadataInData(variable, blockInfo, stats);
+    SetDataOffset(stats.PayloadOffset);
+
+    // write to metadata  index
+    PutVariableMetadataInIndex(variable, blockInfo, stats, isNew,
+                               variableIndex);
+    ++m_MetadataSet.DataPGVarsCount;
+
+    ProfilerStop("buffering");
+}
+
+template <class T>
+inline void BP3Serializer::PutVariableMetadata(
+    const core::Variable<T> &variable,
+    const typename core::Variable<T>::Info &blockInfo,
+    typename core::Variable<T>::Span &span, const bool sourceRowMajor) noexcept
+{
+    // TODO fill out span fields
 
     ProfilerStart("buffering");
 
@@ -50,9 +70,10 @@ inline void BP3Serializer::PutVariableMetadata(
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
     stats.MemberID = variableIndex.MemberID;
 
-    lf_SetOffset(stats.Offset);
+    SetDataOffset(stats.Offset);
     PutVariableMetadataInData(variable, blockInfo, stats);
-    lf_SetOffset(stats.PayloadOffset);
+    SetDataOffset(stats.PayloadOffset);
+    span.m_PayloadPosition = stats.PayloadOffset;
 
     // write to metadata  index
     PutVariableMetadataInIndex(variable, blockInfo, stats, isNew,
@@ -362,6 +383,14 @@ BP3Serializer::GetBPStats(const bool singleValue,
     stats.Step = m_MetadataSet.TimeStep;
     stats.FileIndex = GetFileIndex();
 
+    // added to support span
+    if (blockInfo.Data == nullptr)
+    {
+        stats.Min = {};
+        stats.Max = {};
+        return stats;
+    }
+
     if (singleValue)
     {
         stats.Value = *blockInfo.Data;
@@ -495,7 +524,8 @@ template <class T>
 void BP3Serializer::PutVariableMetadataInIndex(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
-    const bool isNew, SerialElementIndex &index) noexcept
+    const bool isNew, SerialElementIndex &index,
+    typename core::Variable<T>::Span *span) noexcept
 {
     auto &buffer = index.Buffer;
 
@@ -528,7 +558,7 @@ void BP3Serializer::PutVariableMetadataInIndex(
         }
     }
 
-    PutVariableCharacteristics(variable, blockInfo, stats, buffer);
+    PutVariableCharacteristics(variable, blockInfo, stats, buffer, span);
 }
 
 template <class T>
@@ -548,7 +578,6 @@ void BP3Serializer::PutBoundsRecord(const bool singleValue,
         {
             PutCharacteristicRecord(characteristic_min, characteristicsCounter,
                                     stats.Min, buffer);
-
             PutCharacteristicRecord(characteristic_max, characteristicsCounter,
                                     stats.Max, buffer);
         }
@@ -668,7 +697,7 @@ template <class T>
 void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
-    std::vector<char> &buffer) noexcept
+    std::vector<char> &buffer, typename core::Variable<T>::Span *span) noexcept
 {
     // going back at the end
     const size_t characteristicsCountPosition = buffer.size();
@@ -683,8 +712,15 @@ void BP3Serializer::PutVariableCharacteristics(
     PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
                             stats.FileIndex, buffer);
 
-    if (blockInfo.Data != nullptr)
+    if (blockInfo.Data != nullptr || span != nullptr)
     {
+        if (m_StatsLevel == 0)
+        {
+            span->m_MinMaxMetadataPositions.first = buffer.size() + 1;
+            span->m_MinMaxMetadataPositions.second =
+                buffer.size() + 2 + sizeof(T);
+        }
+
         PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                         buffer);
     }

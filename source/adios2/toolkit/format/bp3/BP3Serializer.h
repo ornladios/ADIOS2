@@ -55,6 +55,12 @@ public:
                              const typename core::Variable<T>::Info &blockInfo,
                              const bool sourceRowMajor = true) noexcept;
 
+    template <class T>
+    void PutVariableMetadata(const core::Variable<T> &variable,
+                             const typename core::Variable<T>::Info &blockInfo,
+                             typename core::Variable<T>::Span &span,
+                             const bool sourceRowMajor = true) noexcept;
+
     /**
      * Put in buffer variable payload. Expensive part.
      * @param variable payload input from m_PutValues
@@ -62,6 +68,12 @@ public:
     template <class T>
     void PutVariablePayload(const core::Variable<T> &variable,
                             const typename core::Variable<T>::Info &blockInfo,
+                            const bool sourceRowMajor = true) noexcept;
+
+    template <class T>
+    void PutVariablePayload(const core::Variable<T> &variable,
+                            const typename core::Variable<T>::Info &blockInfo,
+                            typename core::Variable<T>::Span &span,
                             const bool sourceRowMajor = true) noexcept;
 
     /**
@@ -238,14 +250,15 @@ private:
     void PutVariableMetadataInIndex(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::Info &blockInfo,
-        const Stats<T> &stats, const bool isNew,
-        SerialElementIndex &index) noexcept;
+        const Stats<T> &stats, const bool isNew, SerialElementIndex &index,
+        typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     template <class T>
     void PutVariableCharacteristics(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::Info &blockInfo,
-        const Stats<T> &stats, std::vector<char> &buffer) noexcept;
+        const Stats<T> &stats, std::vector<char> &buffer,
+        typename core::Variable<T>::Span *span) noexcept;
 
     template <class T>
     void PutVariableCharacteristics(
@@ -402,6 +415,8 @@ private:
 
     size_t GetAttributesSizeInData(core::IO &io) const noexcept;
 
+    void SetDataOffset(uint64_t &offset) noexcept;
+
     template <class T>
     size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
         noexcept;
@@ -429,6 +444,18 @@ private:
         const bool) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    extern template void BP3Serializer::PutVariablePayload(                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        typename core::Variable<T>::Span &, const bool) noexcept;              \
+                                                                               \
+    extern template void BP3Serializer::PutVariableMetadata(                   \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        typename core::Variable<T>::Span &, const bool) noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format

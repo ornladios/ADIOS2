@@ -24,6 +24,39 @@ void BP3Writer::PutCommon(Variable<T> &variable,
                           typename Variable<T>::Span &span,
                           const size_t /*bufferID*/)
 {
+    // if first timestep Write create a new pg index
+    if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
+    {
+        m_BP3Serializer.PutProcessGroupIndex(
+            m_IO.m_Name, m_IO.m_HostLanguage,
+            m_FileDataManager.GetTransportsTypes());
+    }
+    const typename Variable<T>::Info blockInfo =
+        variable.SetBlockInfo(nullptr, CurrentStep());
+
+    const size_t dataSize =
+        helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
+        m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
+
+    const format::BP3Base::ResizeResult resizeResult =
+        m_BP3Serializer.ResizeBuffer(dataSize, "in call to variable " +
+                                                   variable.m_Name + " Put");
+
+    if (m_DebugMode && resizeResult == format::BP3Base::ResizeResult::Flush)
+    {
+        throw std::invalid_argument(
+            "ERROR: returning a Span can't trigger "
+            "buffer reallocation in BP3 engine, remove "
+            "MaxBufferSize parameter, in call to Put\n");
+    }
+
+    // WRITE INDEX to data buffer and metadata structure (in memory)//
+    const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+    m_BP3Serializer.PutVariableMetadata(variable, blockInfo, span,
+                                        sourceRowMajor);
+    m_BP3Serializer.PutVariablePayload(variable, blockInfo, span,
+                                       sourceRowMajor);
+
     // TODO fill payload size and span members
 }
 
