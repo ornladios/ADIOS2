@@ -247,7 +247,9 @@ adios2_error adios2_remove_attribute(adios2_bool *result, adios2_io *io,
 adios2_error adios2_remove_all_attributes(adios2_io *io);
 
 /**
- * @brief Open an Engine to start heavy-weight input/output operations.
+ * Open an Engine to start heavy-weight input/output operations.
+ * In MPI version reuses the communicator from adios2_init or adios2_init_config
+ * MPI Collective function as it calls MPI_Comm_dup
  * @param io engine owner
  * @param name unique engine identifier
  * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append (not yet
@@ -259,8 +261,8 @@ adios2_engine *adios2_open(adios2_io *io, const char *name,
 
 #ifdef ADIOS2_HAVE_MPI
 /**
- * @brief Open an Engine to start heavy-weight input/output operations. In MPI
- * version reuses the communicator from adios2_init or adios2_init_config
+ * Open an Engine to start heavy-weight input/output operations.
+ * MPI Collective function as it calls MPI_Comm_dup
  * @param io engine owner
  * @param name unique engine identifier
  * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append (not yet
