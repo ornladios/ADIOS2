@@ -76,16 +76,19 @@ void Engine::Put(const std::string &variableName, const T *data,
 }
 
 template <class T>
-void Engine::Put(Variable<T> &variable, const T &datum)
+void Engine::Put(Variable<T> &variable, const T &datum, const Mode /*launch*/)
 {
     const T datumLocal = datum;
     Put(variable, &datumLocal, Mode::Sync);
 }
 
 template <class T>
-void Engine::Put(const std::string &variableName, const T &datum)
+void Engine::Put(const std::string &variableName, const T &datum,
+                 const Mode /*launch*/)
 {
-    Put(FindVariable<T>(variableName, "in call to Put"), datum);
+    const T datumLocal = datum;
+    Put(FindVariable<T>(variableName, "in call to Put"), &datumLocal,
+        Mode::Sync);
 }
 
 // Get

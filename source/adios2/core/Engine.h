@@ -169,7 +169,7 @@ public:
      * @param datum contains user defined single value
      */
     template <class T>
-    void Put(Variable<T> &variable, const T &datum);
+    void Put(Variable<T> &variable, const T &datum, const Mode launch);
 
     /**
      * @brief Put version for single value datum using variable name. Throws
@@ -192,7 +192,8 @@ public:
      * </pre>
      */
     template <class T>
-    void Put(const std::string &variableName, const T &datum);
+    void Put(const std::string &variableName, const T &datum,
+             const Mode launch);
 
     /**
      * @brief Get associates an existing variable selections and populates data
@@ -538,8 +539,9 @@ private:
     extern template void Engine::Put<T>(const std::string &, const T *,        \
                                         const Mode);                           \
                                                                                \
-    extern template void Engine::Put<T>(Variable<T> &, const T &);             \
-    extern template void Engine::Put<T>(const std::string &, const T &);       \
+    extern template void Engine::Put<T>(Variable<T> &, const T &, const Mode); \
+    extern template void Engine::Put<T>(const std::string &, const T &,        \
+                                        const Mode);                           \
                                                                                \
     extern template void Engine::Get<T>(Variable<T> &, T *, const Mode);       \
     extern template void Engine::Get<T>(const std::string &, T *, const Mode); \

@@ -687,7 +687,7 @@ void BP3Serializer::PutVariableCharacteristics(
 
     if (blockInfo.Data != nullptr || span != nullptr)
     {
-        if (m_StatsLevel == 0)
+        if (m_StatsLevel == 0 && span != nullptr)
         {
             span->m_MinMaxMetadataPositions.first = buffer.size() + 1;
             span->m_MinMaxMetadataPositions.second =

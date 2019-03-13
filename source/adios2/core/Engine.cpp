@@ -178,8 +178,8 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     template void Engine::Put<T>(Variable<T> &, const T *, const Mode);        \
     template void Engine::Put<T>(const std::string &, const T *, const Mode);  \
                                                                                \
-    template void Engine::Put<T>(Variable<T> &, const T &);                    \
-    template void Engine::Put<T>(const std::string &, const T &);              \
+    template void Engine::Put<T>(Variable<T> &, const T &, const Mode);        \
+    template void Engine::Put<T>(const std::string &, const T &, const Mode);  \
                                                                                \
     template void Engine::Get<T>(Variable<T> &, T *, const Mode);              \
     template void Engine::Get<T>(const std::string &, T *, const Mode);        \

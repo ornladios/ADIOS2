@@ -95,23 +95,24 @@ void Engine::Put(const std::string &variableName, const T *data,
 }
 
 template <class T>
-void Engine::Put(Variable<T> variable, const T &datum, const Mode /*launch*/)
+void Engine::Put(Variable<T> variable, const T &datum, const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     adios2::helper::CheckForNullptr(variable.m_Variable,
                                     "for variable in call to Engine::Put");
-    m_Engine->Put(*variable.m_Variable,
-                  reinterpret_cast<const IOType &>(datum));
+    m_Engine->Put(*variable.m_Variable, reinterpret_cast<const IOType &>(datum),
+                  launch);
 }
 
 template <class T>
 void Engine::Put(const std::string &variableName, const T &datum,
-                 const Mode /*launch*/)
+                 const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
-    m_Engine->Put(variableName, reinterpret_cast<const IOType &>(datum));
+    m_Engine->Put(variableName, reinterpret_cast<const IOType &>(datum),
+                  launch);
 }
 
 template <class T>
