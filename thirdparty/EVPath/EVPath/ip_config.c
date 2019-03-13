@@ -21,6 +21,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef STDC_HEADERS
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #include "evpath.h"
 #include "cm_transport.h"
@@ -40,6 +45,8 @@ static int ipv4_is_loopback(int addr)
 {
   return (htonl(addr) & htonl(0xff000000)) == htonl(0x7f000000);
 }
+
+static void dump_output(int length_estimate, char *format, ...);
 
 static int
 get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interface)
@@ -62,6 +69,7 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
     int ss;
     int ipv4_count = 0;
     int ipv6_count = 0;
+    static int first_call = 1;
 #endif
     int rv = 0;
 #ifdef HAVE_GETIFADDRS
@@ -82,10 +90,21 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
 	    trace_func(trace_data, "CM<IP_CONFIG> IP possibility -> %s : %s",
 		       if_addr->ifa_name,
 		       inet_ntop(family, tmp, buf, sizeof(buf)));
+	    if ((family == AF_INET) && first_call) {
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG Possible interface %s : IPV4 %s\n",
+			    if_addr->ifa_name,
+			    inet_ntop(family, tmp, buf, sizeof(buf)));
+	    } else {
+		// until we support IPV6, don't dump info
+		//dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG Possible interface %s : IPV6 %s\n",
+		//	    if_addr->ifa_name,
+		//	    inet_ntop(family, tmp, buf, sizeof(buf)));
+	    }
 	}
 	if (!interface) interface = getenv(IPCONFIG_ENVVAR_PREFIX "INTERFACE");
 	if (interface != NULL) {
 	    trace_func(trace_data, "CM<IP_CONFIG> searching for interface %s\n", interface);
+	    if (first_call) dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s requested\n", interface);
 	    for (if_addr = if_addrs; if_addr != NULL; if_addr = if_addr->ifa_next) {
 	        int family;
 		uint32_t IP;
@@ -97,13 +116,18 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
 		trace_func(trace_data, "CM<IP_CONFIG> Interface specified, returning ->%s : %s",
 			   if_addr->ifa_name,
 			   inet_ntop(family, tmp, buf, sizeof(buf)));
+		if (first_call)
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s found, using IP %s\n", interface,
+			   inet_ntop(family, tmp, buf, sizeof(buf)));
 		IP = ntohl(*(uint32_t*)tmp);
 		free(if_addrs);
+		first_call = 0;
 		return IP;
 	    }
 	    printf("Warning!  " IPCONFIG_ENVVAR_PREFIX "INTERFACE specified as \"%s\", but no active interface by that name found\n", interface);
 	}
 	    
+	first_call = 0;
 	gethostname(hostname_buf, sizeof(hostname_buf));
 	if (index(hostname_buf, '.') != NULL) {
 	    /* don't even check for host if not fully qualified */
@@ -403,6 +427,38 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
     trace_func(trace_data, "CM<IP_CONFIG> - GetQualHostname returning %s", buf);
 }
 
+
+char *IP_config_diagnostics = NULL;
+int IP_config_output_len = -1;
+
+static void
+dump_output(int length_estimate, char *format, ...)
+{
+    char buf[1024];
+    char *tmp = &buf[0];
+    va_list ap;
+    int free_tmp = 0;
+
+    if (IP_config_output_len == -1) return;
+
+    IP_config_diagnostics = realloc(IP_config_diagnostics, IP_config_output_len + length_estimate + 1);
+    tmp = IP_config_diagnostics + IP_config_output_len;
+
+    if (length_estimate > 1024) {
+	tmp = malloc(length_estimate + 1);
+	free_tmp++;
+    }
+#ifdef STDC_HEADERS
+    va_start(ap, format);
+#else
+    va_start(ap);
+#endif
+    vsprintf(tmp, format, ap);
+    va_end(ap);
+    IP_config_output_len += strlen(tmp);
+    if (free_tmp) free(tmp);
+}
+
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 255
 #endif
@@ -437,15 +493,18 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	    } else {
 		trace_func(trace_data, "CM IP_CONFIG Using IP specified in " IPCONFIG_ENVVAR_PREFIX "IP, %s", preferred_IP);
 		determined_IP =  (ntohl(addr.s_addr));
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP environment variable found, preferring IP %s\n", preferred_IP);
 	    }
 	} else if (preferred_hostname != NULL) {
 	    struct hostent *host;
 	    use_hostname = 1;
 	    trace_func(trace_data, "CM<IP_CONFIG> CM_HOSTNAME set to \"%s\", running with that.", preferred_hostname);
+	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "HOSTNAME environment variable found, trying \"%s\"\n", preferred_hostname);
 	    host = gethostbyname(preferred_hostname);
 	    strcpy(determined_hostname, preferred_hostname);
 	    if (!host) {
 		printf("Warning, " IPCONFIG_ENVVAR_PREFIX "HOSTNAME is \"%s\", but gethostbyname fails for that string.\n", preferred_hostname);
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "HOSTNAME \"%s\" fails to translate to IP address.\n", preferred_hostname);
 	    } else {
 		char **p;
 		for (p = host->h_addr_list; *p != 0; p++) {
@@ -455,16 +514,27 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 					      
 			inet_ntop(AF_INET, &(in->s_addr), str, sizeof(str));
 			trace_func(trace_data, "CM IP_CONFIG Prefer IP associated with hostname net -> %s", str);
+			dump_output(1023, "\t" "HOSTNAME \"%s\" translates to IP address %s.\n", preferred_hostname, str);
 			determined_IP  = (ntohl(in->s_addr));
 		    }
+		}
+		if (determined_IP == -1) {
+		    dump_output(1023, "\t" "No non-loopback interfaces found for hostname \"%s\", rejected for IP use.\n", preferred_hostname);
 		}
 	    }
 	} else {
 	    get_qual_hostname(determined_hostname, sizeof(determined_hostname), NULL /* attrs */, NULL, trace_func, trace_data);
+	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG best guess hostname is \"%s\"\n", determined_hostname);
 	}
 	if (determined_IP == -1) {
 	    /* I.E. the specified hostname didn't determine what IP we should use */
+	    char str[INET_ADDRSTRLEN];
+	    struct in_addr addr;
 	    determined_IP = get_self_ip_addr(trace_func, trace_data);
+					      
+	    addr.s_addr = ntohl(determined_IP);
+	    inet_ntop(AF_INET, &(addr.s_addr), str, sizeof(str));
+	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG best guess IP is \"%s\"\n", str);
 	}
 	if (port_range != NULL) {
 	    if (sscanf(port_range, "%d:%d", &port_range_high, &port_range_low) != 2) {
@@ -475,11 +545,15 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 		    port_range_high = port_range_low;
 		    port_range_low = tmp;
 		}
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG specified port range is %d:%d\n", port_range_low, port_range_high);
 	    }
+	} else {
+	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG default port range is %d:%d\n", port_range_low, port_range_high);
 	}
     }
 
-    if (get_string_attr(attrs, CM_IP_INTERFACE, &interface)){
+
+    if (get_string_attr(attrs, CM_IP_INTERFACE, &interface)) {
 	/* don't use predetermined stuff ! */
 	get_qual_hostname(hostname_to_use, sizeof(hostname_to_use), attrs, NULL, trace_func, trace_data);
 	IP_to_use = get_self_ip_iface(trace_func, trace_data, interface);

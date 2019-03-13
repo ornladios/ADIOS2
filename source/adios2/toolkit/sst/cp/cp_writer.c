@@ -904,7 +904,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     if (globalNetinfoCallback)
     {
-        (globalNetinfoCallback)(0, CP_GetContactString(Stream), NULL);
+        (globalNetinfoCallback)(0, CP_GetContactString(Stream), IPDiagString);
     }
     while (Stream->RendezvousReaderCount > 0)
     {

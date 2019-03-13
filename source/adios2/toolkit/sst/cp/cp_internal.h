@@ -427,5 +427,6 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params);
 
 typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string,
                                   const char *data_string);
+extern char *IPDiagString;
 extern CPNetworkInfoFunc globalNetinfoCallback;
 extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);

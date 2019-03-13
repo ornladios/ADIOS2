@@ -975,6 +975,11 @@ extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
         exit(1);
     }
 
+    if (globalNetinfoCallback)
+    {
+        IPDiagString = CMget_ip_config_diagnostics(CPInfo->cm);
+    }
+
     CMlisten(CPInfo->cm);
 
     CPInfo->fm_c = create_local_FMcontext();
@@ -1234,6 +1239,7 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
 }
 
 CPNetworkInfoFunc globalNetinfoCallback = NULL;
+char *IPDiagString = NULL;
 
 extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback)
 {

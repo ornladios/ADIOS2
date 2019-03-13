@@ -496,6 +496,9 @@ INT_CMget_static_trans_services();
 
 extern void INT_CMsleep(CManager cm, int secs);
 extern int INT_CMget_self_ip_addr(CManager cm);
+extern void INT_CMget_port_range(CManager cm, int *high, int *low);
+extern char *INT_CMget_ip_config_diagnostics(CManager cm);
+extern void INT_CMget_qual_hostname(CManager cm, char *buf, int len);
 extern attr_list INT_CMConnection_get_attrs(CMConnection conn);
 extern void * INT_CMcreate_compat_info(CMFormat format, char *xform_code,
 			int *len_p);
