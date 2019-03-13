@@ -45,7 +45,7 @@ Option 2, generated timer name:
 void function_to_time(void) {
     /* Will generate something like:
      * "function_to_time [{filename.c} {123,0}]"
-     * /
+     */
     TAU_START_FUNC();
     ...
     TAU_STOP_FUNC();
@@ -76,7 +76,7 @@ The C++ API adds additional scoped timers for convenience:
 void function_to_time(void) {
     /* Will generate something like:
      * "function_to_time [{filename.cpp} {123,0}]"
-     * /
+     */
     TAU_SCOPED_TIMER_FUNC();
     ...
 }
