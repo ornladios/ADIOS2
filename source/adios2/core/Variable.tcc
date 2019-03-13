@@ -255,14 +255,15 @@ const T &Variable<T>::Span::DoAt(const size_t position) const
 template <class T>
 T &Variable<T>::Span::DoAccess(const size_t position)
 {
-    T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position);
+    T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
     return data;
 }
 
 template <class T>
 const T &Variable<T>::Span::DoAccess(const size_t position) const
 {
-    const T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position);
+    const T &data =
+        *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
     return data;
 }
 

@@ -115,36 +115,29 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
                 bpWriter.Put(var_cr64);
 
             // Testing Data()
-            int8_t *i8_data = i8Span.Data();
-            EXPECT_EQ(i8_data, nullptr);
+            std::copy(currentTestData.I8.begin(),
+                      currentTestData.I8.begin() + Nx, i8Span.Data());
+            std::copy(currentTestData.I16.begin(),
+                      currentTestData.I16.begin() + Nx, i16Span.Data());
+            std::copy(currentTestData.I32.begin(),
+                      currentTestData.I32.begin() + Nx, i32Span.Data());
+            std::copy(currentTestData.I64.begin(),
+                      currentTestData.I64.begin() + Nx, i64Span.Data());
+            // Testing operator[] and At
+            for (auto i = 0; i < Nx; ++i)
+            {
+                u8Span[i] = currentTestData.U8[i];
+                u16Span[i] = currentTestData.U16[i];
+                u32Span[i] = currentTestData.U32[i];
+                u64Span[i] = currentTestData.U64[i];
 
-            //            std::copy(currentTestData.I8.begin(),
-            //                      currentTestData.I8.begin() + Nx,
-            //                      i8Span.Data());
-            //            std::copy(currentTestData.I16.begin(),
-            //                      currentTestData.I16.begin() + Nx,
-            //                      i16Span.Data());
-            //            std::copy(currentTestData.I32.begin(),
-            //                      currentTestData.I32.begin() + Nx,
-            //                      i32Span.Data());
-            //            std::copy(currentTestData.I64.begin(),
-            //                      currentTestData.I64.begin() + Nx,
-            //                      i64Span.Data());
-            //            // Testing operator[] and At
-            //            for (auto i = 0; i < Nx; ++i)
-            //            {
-            //                u8Span[i] = currentTestData.U8[i];
-            //                u16Span[i] = currentTestData.U16[i];
-            //                u32Span[i] = currentTestData.U32[i];
-            //                u64Span[i] = currentTestData.U64[i];
-            //
-            //                r32Span.At(i) = currentTestData.R32[i];
-            //                r64Span.At(i) = currentTestData.R64[i];
-            //                cr32Span.At(i) = currentTestData.CR32[i];
-            //                cr64Span.At(i) = currentTestData.CR64[i];
-            //            }
+                r32Span.At(i) = currentTestData.R32[i];
+                r64Span.At(i) = currentTestData.R64[i];
+                cr32Span.At(i) = currentTestData.CR32[i];
+                cr64Span.At(i) = currentTestData.CR64[i];
+            }
 
-            // here get update min/max for spans
+            // TODO: update min/max for spans
             bpWriter.EndStep();
         }
 
