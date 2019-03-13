@@ -1495,27 +1495,15 @@ void BP3Serializer::SetDataOffset(uint64_t &offset) noexcept
 }
 
 #define declare_template_instantiation(T)                                      \
-    template void BP3Serializer::PutVariablePayload(                           \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;                                                  \
-                                                                               \
     template void BP3Serializer::PutVariableMetadata(                          \
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;
+        const bool, typename core::Variable<T>::Span *) noexcept;              \
+                                                                               \
+    template void BP3Serializer::PutVariablePayload(                           \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool, typename core::Variable<T>::Span *) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-    template void BP3Serializer::PutVariablePayload(                           \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        typename core::Variable<T>::Span &, const bool) noexcept;              \
-                                                                               \
-    template void BP3Serializer::PutVariableMetadata(                          \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        typename core::Variable<T>::Span &, const bool) noexcept;
-
-ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format

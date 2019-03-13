@@ -52,10 +52,10 @@ void BP3Writer::PutCommon(Variable<T> &variable,
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
-    m_BP3Serializer.PutVariableMetadata(variable, blockInfo, span,
-                                        sourceRowMajor);
-    m_BP3Serializer.PutVariablePayload(variable, blockInfo, span,
-                                       sourceRowMajor);
+    m_BP3Serializer.PutVariableMetadata(variable, blockInfo, sourceRowMajor,
+                                        &span);
+    m_BP3Serializer.PutVariablePayload(variable, blockInfo, sourceRowMajor,
+                                       &span);
 
     // TODO fill payload size and span members
 }

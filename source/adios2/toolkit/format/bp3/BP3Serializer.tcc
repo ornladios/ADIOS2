@@ -23,10 +23,10 @@ namespace format
 {
 
 template <class T>
-inline void BP3Serializer::PutVariableMetadata(
+void BP3Serializer::PutVariableMetadata(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo,
-    const bool sourceRowMajor) noexcept
+    const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     ProfilerStart("buffering");
 
@@ -42,42 +42,14 @@ inline void BP3Serializer::PutVariableMetadata(
     SetDataOffset(stats.Offset);
     PutVariableMetadataInData(variable, blockInfo, stats);
     SetDataOffset(stats.PayloadOffset);
+    if (span != nullptr)
+    {
+        span->m_PayloadPosition = stats.PayloadOffset;
+    }
 
     // write to metadata  index
-    PutVariableMetadataInIndex(variable, blockInfo, stats, isNew,
-                               variableIndex);
-    ++m_MetadataSet.DataPGVarsCount;
-
-    ProfilerStop("buffering");
-}
-
-template <class T>
-inline void BP3Serializer::PutVariableMetadata(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
-    typename core::Variable<T>::Span &span, const bool sourceRowMajor) noexcept
-{
-    // TODO fill out span fields
-
-    ProfilerStart("buffering");
-
-    Stats<T> stats =
-        GetBPStats<T>(variable.m_SingleValue, blockInfo, sourceRowMajor);
-
-    // Get new Index or point to existing index
-    bool isNew = true; // flag to check if variable is new
-    SerialElementIndex &variableIndex = GetSerialElementIndex(
-        variable.m_Name, m_MetadataSet.VarsIndices, isNew);
-    stats.MemberID = variableIndex.MemberID;
-
-    SetDataOffset(stats.Offset);
-    PutVariableMetadataInData(variable, blockInfo, stats);
-    SetDataOffset(stats.PayloadOffset);
-    span.m_PayloadPosition = stats.PayloadOffset;
-
-    // write to metadata  index
-    PutVariableMetadataInIndex(variable, blockInfo, stats, isNew,
-                               variableIndex);
+    PutVariableMetadataInIndex(variable, blockInfo, stats, isNew, variableIndex,
+                               span);
     ++m_MetadataSet.DataPGVarsCount;
 
     ProfilerStop("buffering");
@@ -87,7 +59,7 @@ template <class T>
 inline void BP3Serializer::PutVariablePayload(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo,
-    const bool sourceRowMajor) noexcept
+    const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     ProfilerStart("buffering");
     if (blockInfo.Operations.empty())
@@ -643,7 +615,8 @@ template <>
 inline void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<std::string> &variable,
     const core::Variable<std::string>::Info &blockInfo,
-    const Stats<std::string> &stats, std::vector<char> &buffer) noexcept
+    const Stats<std::string> &stats, std::vector<char> &buffer,
+    typename core::Variable<std::string>::Span * /*span*/) noexcept
 {
     const size_t characteristicsCountPosition = buffer.size();
     // skip characteristics count(1) + length (4)

@@ -51,30 +51,22 @@ public:
      * @param variable
      */
     template <class T>
-    void PutVariableMetadata(const core::Variable<T> &variable,
-                             const typename core::Variable<T>::Info &blockInfo,
-                             const bool sourceRowMajor = true) noexcept;
-
-    template <class T>
-    void PutVariableMetadata(const core::Variable<T> &variable,
-                             const typename core::Variable<T>::Info &blockInfo,
-                             typename core::Variable<T>::Span &span,
-                             const bool sourceRowMajor = true) noexcept;
+    void PutVariableMetadata(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        const bool sourceRowMajor = true,
+        typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     /**
      * Put in buffer variable payload. Expensive part.
      * @param variable payload input from m_PutValues
      */
     template <class T>
-    void PutVariablePayload(const core::Variable<T> &variable,
-                            const typename core::Variable<T>::Info &blockInfo,
-                            const bool sourceRowMajor = true) noexcept;
-
-    template <class T>
-    void PutVariablePayload(const core::Variable<T> &variable,
-                            const typename core::Variable<T>::Info &blockInfo,
-                            typename core::Variable<T>::Span &span,
-                            const bool sourceRowMajor = true) noexcept;
+    void PutVariablePayload(
+        const core::Variable<T> &variable,
+        const typename core::Variable<T>::Info &blockInfo,
+        const bool sourceRowMajor = true,
+        typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     /**
      *  Serializes data buffer and close current process group
@@ -251,7 +243,7 @@ private:
         const core::Variable<T> &variable,
         const typename core::Variable<T>::Info &blockInfo,
         const Stats<T> &stats, const bool isNew, SerialElementIndex &index,
-        typename core::Variable<T>::Span *span = nullptr) noexcept;
+        typename core::Variable<T>::Span *span) noexcept;
 
     template <class T>
     void PutVariableCharacteristics(
@@ -435,27 +427,15 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template void BP3Serializer::PutVariablePayload(                    \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;                                                  \
-                                                                               \
     extern template void BP3Serializer::PutVariableMetadata(                   \
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;
+        const bool, typename core::Variable<T>::Span *) noexcept;              \
+                                                                               \
+    extern template void BP3Serializer::PutVariablePayload(                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool, typename core::Variable<T>::Span *) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-    extern template void BP3Serializer::PutVariablePayload(                    \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        typename core::Variable<T>::Span &, const bool) noexcept;              \
-                                                                               \
-    extern template void BP3Serializer::PutVariableMetadata(                   \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        typename core::Variable<T>::Span &, const bool) noexcept;
-
-ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format
