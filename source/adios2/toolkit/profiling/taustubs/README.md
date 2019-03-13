@@ -8,6 +8,7 @@ _Note:_ This library in ADIOS is a stub wrapper library for the TAU performance 
 	- [ ] New environment variable specifying location of library containing function implementations.
 - [ ] Add a CMake option to disable the API entirely.
 - [ ] Add CMake support for linking in measurement libraries when static linking.
+- [ ] Investigate API call to trigger writing of performance data to the ADIOS2 archive (performance data stored with the science data).
 
 ## Overview:
 
