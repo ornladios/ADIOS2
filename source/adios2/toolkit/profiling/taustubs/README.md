@@ -3,12 +3,15 @@
 _Note:_ This library in ADIOS is a stub wrapper library for the TAU performance measurement system.  In the near future, we will make it more generic for instrumentation-based tools.  In the meantime, it is TAU specific.
 
 ## Todo Items
-  - [ ] Make the interface generic.
+- [ ] Make the interface generic.
     - [ ] Replace TAU-specific symbols with generic versions that will be implemented by interested measurement libraries (i.e. Score-P). 
     - [ ] New environment variable specifying location of library containing function implementations.
-  - [ ] Add a CMake option to disable the API entirely.
-  - [ ] Add CMake support for linking in measurement libraries when static linking.
-  - [ ] Investigate API call to trigger writing of performance data to the ADIOS2 archive (performance data stored with the science data).
+
+- [ ] Add a CMake option to disable the API entirely.
+
+- [ ] Add CMake support for linking in measurement libraries when static linking.
+
+- [ ] Investigate API call to trigger writing of performance data to the ADIOS2 archive (performance data stored with the science data).
 
 ## Overview
 
