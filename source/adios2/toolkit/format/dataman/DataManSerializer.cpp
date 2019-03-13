@@ -337,8 +337,7 @@ void DataManSerializer::GetAttributes(core::IO &io)
 void DataManSerializer::AttachAttributes()
 {
     std::lock_guard<std::mutex> l1(m_StaticDataJsonMutex);
-    std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
-    m_AggregatedMetadataJson["S"] = m_StaticDataJson["S"];
+    m_MetadataJson["S"] = m_StaticDataJson["S"];
 }
 
 void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
@@ -398,11 +397,19 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
                 {
                     var.isRowMajor = itJson->get<bool>();
                 }
+                else
+                {
+                    var.isRowMajor = true;
+                }
 
                 itJson = varBlock.find("E");
                 if (itJson != varBlock.end())
                 {
                     var.isLittleEndian = itJson->get<bool>();
+                }
+                else
+                {
+                    var.isLittleEndian = true;
                 }
 
                 itJson = varBlock.find("S");

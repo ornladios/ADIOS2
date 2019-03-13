@@ -33,11 +33,24 @@ DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManWriter::BeginStep() begin. Last step "
+                  << m_CurrentStep << std::endl;
+    }
+
     ++m_CurrentStep;
     for (size_t i = 0; i < m_TransportChannels; ++i)
     {
         m_DataManSerializer[i]->New(m_BufferSize);
     }
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManWriter::BeginStep() end. Current step "
+                  << m_CurrentStep << std::endl;
+    }
+
     return StepStatus::OK;
 }
 
@@ -47,19 +60,15 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
-    if (m_CurrentStep == 0)
+    for (auto &serializer : m_DataManSerializer)
     {
-        for (auto &serializer : m_DataManSerializer)
-        {
-            serializer->PutAttributes(m_IO);
-        }
+        serializer->PutAttributes(m_IO);
     }
 
     if (m_WorkflowMode == "file")
     {
         const auto buf = m_DataManSerializer[0]->GetLocalPack();
         m_FileTransport.Write(buf->data(), buf->size());
-        return;
     }
     else if (m_WorkflowMode == "stream")
     {

@@ -564,16 +564,33 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                             varCount, m_IsRowMajor, m_IsLittleEndian, j.start,
                             j.count, varMemStart, varMemCount);
                     }
+                    if (m_Verbosity >= 100)
+                    {
+                        size_t datasize =
+                            std::accumulate(j.count.begin(), j.count.end(), 1,
+                                            std::multiplies<size_t>());
+                        std::cout
+                            << "DataManSerializer::GetVar printing input data"
+                            << std::endl;
+                        for (size_t i = 0; i < datasize; ++i)
+                        {
+                            std::cout << (reinterpret_cast<T *>(input_data +
+                                                                j.position))[i]
+                                      << "  ";
+                        }
+                        std::cout << std::endl;
+                    }
                 }
             }
         }
     }
     if (m_Verbosity >= 100)
     {
-        size_t datasize = std::accumulate(varCount.begin(), varCount.end(),
-                                          sizeof(T), std::multiplies<size_t>());
-        Log(100, "DataManSerializer::GetVar printing data", true, true);
-        for (size_t i = 0; i < datasize / sizeof(T); ++i)
+        size_t datasize = std::accumulate(varCount.begin(), varCount.end(), 1,
+                                          std::multiplies<size_t>());
+        std::cout << "DataManSerializer::GetVar printing output data"
+                  << std::endl;
+        for (size_t i = 0; i < datasize; ++i)
         {
             std::cout << outputData[i] << "  ";
         }

@@ -56,6 +56,10 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    template <typename T>
+    void AccumulateMinMax(T &min, T &max, const std::vector<char> &minVec,
+                          const std::vector<char> &maxVec) const;
+
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 

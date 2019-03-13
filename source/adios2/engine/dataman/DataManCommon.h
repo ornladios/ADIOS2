@@ -49,6 +49,8 @@ protected:
     bool m_IsRowMajor;
     bool m_ContiguousMajor = true;
 
+    int m_Verbosity = 0;
+
     transport::FileFStream m_FileTransport;
 
     std::vector<std::string> m_StreamNames;

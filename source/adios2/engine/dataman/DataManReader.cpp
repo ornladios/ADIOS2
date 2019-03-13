@@ -42,7 +42,13 @@ DataManReader::~DataManReader()
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0 && m_FinalStep > 0)
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::BeginStep() begin. Last step "
+                  << m_CurrentStep << std::endl;
+    }
+
+    if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0)
     {
         return StepStatus::EndOfStream;
     }
@@ -130,6 +136,13 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
             }
         }
     }
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::BeginStep() end. Current step "
+                  << m_CurrentStep << std::endl;
+    }
+
     return StepStatus::OK;
 }
 
@@ -137,7 +150,21 @@ size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
 void DataManReader::PerformGets() {}
 
-void DataManReader::EndStep() { m_DataManSerializer.Erase(m_CurrentStep); }
+void DataManReader::EndStep()
+{
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::EndStep() start. Current step "
+                  << m_CurrentStep << std::endl;
+    }
+    m_DataManSerializer.Erase(m_CurrentStep);
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::EndStep() end. Current step "
+                  << m_CurrentStep << std::endl;
+    }
+}
 
 void DataManReader::Flush(const int transportIndex) {}
 

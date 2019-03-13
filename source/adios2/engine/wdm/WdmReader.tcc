@@ -135,10 +135,7 @@ WdmReader::BlocksInfoCommon(const Variable<T> &variable,
                     b.IsValue = true;
                 }
             }
-
-            std::cout << "accumulate min max\n";
             AccumulateMinMax(min, max, i.min, i.max);
-
             v.push_back(b);
         }
     }
@@ -147,8 +144,6 @@ WdmReader::BlocksInfoCommon(const Variable<T> &variable,
         i.Min = min;
         i.Max = max;
     }
-
-    std::cout << "return block info\n";
     return v;
 }
 
