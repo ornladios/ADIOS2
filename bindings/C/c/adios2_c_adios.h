@@ -24,6 +24,7 @@ extern "C" {
 #ifdef ADIOS2_HAVE_MPI
 /**
  * Starting point for MPI apps. Creates an ADIOS handler.
+ * MPI collective and it calls MPI_Comm_dup
  * @param comm defines domain scope from application
  * @param debug_mode true: extra user-input debugging information, false:
  * run without checking user-input (stable workflows)
@@ -34,6 +35,8 @@ adios2_adios *adios2_init(MPI_Comm comm, const adios2_debug_mode debug_mode);
 /**
  * Starting point for MPI apps. Creates an ADIOS handler allowing a runtime
  * config file.
+ * MPI collective and it calls MPI_Comm_dup and MPI_Bcast to pass the
+ * configFile contents
  * @param config_file runtime configuration file in xml format
  * @param comm defines domain scope from application
  * @param debug_mode true: extra user-input debugging information, false:
@@ -112,6 +115,7 @@ adios2_error adios2_flush_all(adios2_adios *adios);
 /**
  * Final point for adios handler. Deallocates adios pointer. Required to avoid
  * memory leaks.
+ * MPI collective and it calls MPI_Comm_free
  * @param adios handler to be deallocated, must be initialized with
  * adios2_init or adios2_init_config
  * @return adios2_error 0: success, see enum adios2_error for errors
