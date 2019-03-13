@@ -2,23 +2,21 @@
 
 _Note:_ This library in ADIOS is a stub wrapper library for the TAU performance measurement system.  In the near future, we will make it more generic for instrumentation-based tools.  In the meantime, it is TAU specific.
 
-## Todo Items:
-- [ ] Make the interface generic.
-	- [ ] Replace TAU-specific symbols with generic versions that will be implemented by interested measurement libraries (i.e. Score-P). 
-	- [ ] New environment variable specifying location of library containing function implementations.
-- [ ] Add a CMake option to disable the API entirely.
-- [ ] Add CMake support for linking in measurement libraries when static linking.
-- [ ] Investigate API call to trigger writing of performance data to the ADIOS2 archive (performance data stored with the science data).
+## Todo Items
+  - [ ] Make the interface generic.
+    - [ ] Replace TAU-specific symbols with generic versions that will be implemented by interested measurement libraries (i.e. Score-P). 
+    - [ ] New environment variable specifying location of library containing function implementations.
+  - [ ] Add a CMake option to disable the API entirely.
+  - [ ] Add CMake support for linking in measurement libraries when static linking.
+  - [ ] Investigate API call to trigger writing of performance data to the ADIOS2 archive (performance data stored with the science data).
 
-## Overview:
+## Overview
 
 These files contain a thin stub interface for instrumenting ADIOS2 code.  The interface can be compiled away entirely (that feature will eventually be configurable).  The function calls are "stubs" in the form of function pointers, initialized to ```nullptr```. The functions are optionally assigned at runtime using dlopen() (if necessary) and dlsym() calls, as is typical with plugin implementations. If the function pointers have the value ```nullptr```, then this library is a few more instructions than a no-op.  If the function pointers are assigned, the measurement library functions are called to perform the timing measurement.  The symbols are made available to the environment either through ```LD_PRELOAD``` settings or by linking in the measurement library.
 
-
-
 Convenience macros are provided for constructing descriptive timer names using pre-processor definitions such as ```__FILE__```, ```__LINE__```, and ```__func__```.  For C++ codes, there are also scoped timers to minimize instrumentation text and ensure timers are stopped in functions with multiple return locations or exceptions that throw outside of scope.
 
-## Known Issues:
+## Known Issues
 
 Because the implementation uses ```libdl.so``` there will be linker warnings.  The current implementation has only been tested with dynamically linked executables.  It is known that static executables that load shared-object measurement libraries with pthread support will crash, because of a known issue with thread local storage at program startup.  If this is the case, link a static version of the measurement library into the final static executable.
 
@@ -30,7 +28,7 @@ For C code, you have the option of specifying the timer name or letting the API 
 
 Option 1, explicit timer name:
 
-```
+```C
 void function_to_time(void) {
     TAU_START("interesting loop");
     ...
@@ -40,7 +38,7 @@ void function_to_time(void) {
 
 Option 2, generated timer name:
 
-```
+```C
 void function_to_time(void) {
     /* Will generate something like:
      * "function_to_time [{filename.c} {123,0}]"
@@ -55,7 +53,7 @@ void function_to_time(void) {
 
 The interface can be used to capture interesting counter values, too:
 
-```
+```C
 TAU_SAMPLE_COUNTER("Bytes Written", 1024);
 ```
 
@@ -63,7 +61,7 @@ TAU_SAMPLE_COUNTER("Bytes Written", 1024);
 
 The interface can be used to capture interesting metadata:
 
-```
+```C
 TAU_METADATA("ADIOS Method", "POSIX");
 ```
 
@@ -71,7 +69,7 @@ TAU_METADATA("ADIOS Method", "POSIX");
 
 The C++ API adds additional scoped timers for convenience:
 
-```
+```C++
 void function_to_time(void) {
     /* Will generate something like:
      * "function_to_time [{filename.cpp} {123,0}]"
@@ -81,7 +79,7 @@ void function_to_time(void) {
 }
 ```
 
-```
+```C++
 do {
     TAU_SCOPED_TIMER("While Loop");
     ...
@@ -92,7 +90,7 @@ do {
 
 To use the API with TAU, the executable has to be linked dynamically.  Then the executable will be executed with the ```tau_exec``` wrapper script that will preload the TAU libraries and enable additional TAU features.  ```tau_exec``` should be in the user's ```PATH```:
 
-```
+```bash
 mpirun -np 4 tau_exec -T mpi,papi,pthread,cupti -ebs -cupti -io ./executable
 ```
 
