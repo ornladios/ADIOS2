@@ -62,6 +62,15 @@ inline void BP3Serializer::PutVariablePayload(
     const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     ProfilerStart("buffering");
+
+    if (span != nullptr)
+    {
+        const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
+        m_Data.m_Position += blockSize * sizeof(T);
+        m_Data.m_AbsolutePosition += blockSize * sizeof(T);
+        return;
+    }
+
     if (blockInfo.Operations.empty())
     {
         PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
