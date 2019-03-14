@@ -294,9 +294,9 @@ void DataManSerializer::PutAttributes(core::IO &io)
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
-        PutAttribute(attribute);                                         \
+        PutAttribute(attribute);                                               \
     }
-            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 }
@@ -331,7 +331,7 @@ void DataManSerializer::GetAttributes(core::IO &io)
             }                                                                  \
         }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 }
