@@ -227,6 +227,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
+    bool received_steps = false;
     size_t i;
     for (i = 0; i < steps; ++i)
     {
@@ -244,6 +245,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
             dataManReader.BeginStep(StepMode::NextAvailable, 5);
         if (status == adios2::StepStatus::OK)
         {
+            received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
             ASSERT_EQ(vars.size(), 10);
             if (print_lines == 0)
@@ -336,11 +338,14 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
             break;
         }
     }
-    auto attInt = dataManIO.InquireAttribute<int>("AttInt");
-    std::cout << "Attribute received " << attInt.Data()[0] << ", expected 110"
-              << std::endl;
-    ASSERT_EQ(110, attInt.Data()[0]);
-    ASSERT_NE(111, attInt.Data()[0]);
+    if (received_steps)
+    {
+        auto attInt = dataManIO.InquireAttribute<int>("AttInt");
+        std::cout << "Attribute received " << attInt.Data()[0]
+                  << ", expected 110" << std::endl;
+        ASSERT_EQ(110, attInt.Data()[0]);
+        ASSERT_NE(111, attInt.Data()[0]);
+    }
     //    ASSERT_EQ(i, steps);
     dataManReader.Close();
     print_lines = 0;
@@ -358,7 +363,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
     memstart = {1, 1};
     memcount = {7, 9};
 
-    size_t steps = 100;
+    size_t steps = 1000;
     adios2::Params engineParams = {{"WorkflowMode", "stream"}};
     std::vector<adios2::Params> transportParams = {{
         {"Library", "ZMQ"}, {"IPAddress", "127.0.0.1"}, {"Port", "12312"},

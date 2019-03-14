@@ -95,8 +95,6 @@ void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
         std::string name;
         GetStringParameter(paramsVector[i], "Name", name);
 
-        std::string fullIP = "tcp://" + ip + ":" + port;
-
         // Calculate port number
         int mpiRank, mpiSize;
         MPI_Comm_rank(m_MpiComm, &mpiRank);
@@ -114,6 +112,7 @@ void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
             wanTransport =
                 std::make_shared<transport::SocketZmqPubSub>(m_Timeout);
 
+            std::string fullIP = "tcp://" + ip + ":" + port;
             wanTransport->Open(fullIP, mode);
             m_Transports.emplace(i, wanTransport);
 

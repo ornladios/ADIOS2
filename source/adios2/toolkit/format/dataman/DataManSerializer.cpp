@@ -203,6 +203,7 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
     }
 }
 
+/*
 void DataManSerializer::AccumulateAggregatedMetadata(const VecPtr input,
                                                      VecPtr output)
 {
@@ -226,6 +227,7 @@ void DataManSerializer::AccumulateAggregatedMetadata(const VecPtr input,
     }
     output = SerializeJson(outputJ);
 }
+*/
 
 VecPtr DataManSerializer::EndSignal(size_t step)
 {
@@ -302,9 +304,9 @@ void DataManSerializer::PutAttributes(core::IO &io)
 void DataManSerializer::GetAttributes(core::IO &io)
 {
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
-    const auto attributesDataMap = io.GetAttributesDataMap();
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
+        const auto attributesDataMap = io.GetAttributesDataMap();
         const std::string type(staticVar["Y"].get<std::string>());
         if (type == "")
         {
@@ -347,7 +349,7 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
     // reader engine could get incomplete step metadata. This function only
     // deals with JSON metadata and data buffer already in allocated shared
     // pointers, so it should be cheap to lock.
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+    std::lock_guard<std::mutex> lDataManVarMapMutex(m_DataManVarMapMutex);
 
     for (auto stepMapIt = metaJ.begin(); stepMapIt != metaJ.end(); ++stepMapIt)
     {

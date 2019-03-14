@@ -142,7 +142,7 @@ public:
     const DmvVecPtrMap GetMetaData();
 
     void PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm);
-    void AccumulateAggregatedMetadata(const VecPtr input, VecPtr output);
+    //    void AccumulateAggregatedMetadata(const VecPtr input, VecPtr output);
 
     int PutDeferredRequest(const std::string &variable, const size_t step,
                            const Dims &start, const Dims &count, void *data);

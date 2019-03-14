@@ -284,7 +284,8 @@ void WdmWriter::ReplyThread(const std::string &address)
         }
         if (request->size() == 2 * sizeof(int64_t))
         {
-            int64_t reader_id = reinterpret_cast<int64_t *>(request->data())[0];
+            //            int64_t reader_id = reinterpret_cast<int64_t
+            //            *>(request->data())[0];
             int64_t step = reinterpret_cast<int64_t *>(request->data())[1];
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
             while (aggMetadata == nullptr)
