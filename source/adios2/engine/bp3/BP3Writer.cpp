@@ -70,15 +70,9 @@ void BP3Writer::PerformPuts()
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
-                                                                               \
-        for (const auto &blockInfo : variable.m_BlocksInfo)                    \
-        {                                                                      \
-            PutSyncCommon(variable, blockInfo);                                \
-        }                                                                      \
-        variable.m_BlocksInfo.clear();                                         \
+        PerformPutCommon(variable);                                            \
     }
-
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
     m_BP3Serializer.m_DeferredVariables.clear();

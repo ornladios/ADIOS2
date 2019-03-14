@@ -48,7 +48,6 @@ public:
 
     /**
      * Put in buffer metadata for a given variable
-     * @param variable
      */
     template <class T>
     void PutVariableMetadata(
@@ -67,6 +66,10 @@ public:
         const typename core::Variable<T>::Info &blockInfo,
         const bool sourceRowMajor = true,
         typename core::Variable<T>::Span *span = nullptr) noexcept;
+
+    template <class T>
+    void PutSpanMetadata(const core::Variable<T> &variable,
+                         const typename core::Variable<T>::Span &span) noexcept;
 
     /**
      *  Serializes data buffer and close current process group
@@ -436,6 +439,14 @@ private:
         const bool, typename core::Variable<T>::Span *) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    extern template void BP3Serializer::PutSpanMetadata(                       \
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::Span &) noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format

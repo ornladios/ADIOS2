@@ -33,6 +33,7 @@ void BP3Writer::PutCommon(Variable<T> &variable,
     }
     const typename Variable<T>::Info blockInfo =
         variable.SetBlockInfo(nullptr, CurrentStep());
+    m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
 
     const size_t dataSize =
         helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
@@ -56,8 +57,6 @@ void BP3Writer::PutCommon(Variable<T> &variable,
                                         &span);
     m_BP3Serializer.PutVariablePayload(variable, blockInfo, sourceRowMajor,
                                        &span);
-
-    // TODO fill payload size and span members
 }
 
 template <class T>
@@ -123,6 +122,26 @@ T *BP3Writer::BufferDataCommon(const size_t payloadPosition,
     T *data = reinterpret_cast<T *>(m_BP3Serializer.m_Data.m_Buffer.data() +
                                     payloadPosition);
     return data;
+}
+
+template <class T>
+void BP3Writer::PerformPutCommon(Variable<T> &variable)
+{
+    for (size_t b = 0; b < variable.m_BlocksInfo.size(); ++b)
+    {
+        auto itSpanBlock = variable.m_BlocksSpan.find(b);
+        if (itSpanBlock == variable.m_BlocksSpan.end())
+        {
+            PutSyncCommon(variable, variable.m_BlocksInfo[b]);
+        }
+        else
+        {
+            m_BP3Serializer.PutSpanMetadata(variable, itSpanBlock->second);
+        }
+    }
+
+    variable.m_BlocksInfo.clear();
+    variable.m_BlocksSpan.clear();
 }
 
 } // end namespace engine

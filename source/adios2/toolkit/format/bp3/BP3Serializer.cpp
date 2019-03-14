@@ -1506,5 +1506,13 @@ void BP3Serializer::SetDataOffset(uint64_t &offset) noexcept
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+#define declare_template_instantiation(T)                                      \
+    template void BP3Serializer::PutSpanMetadata(                              \
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::Span &) noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
 } // end namespace format
 } // end namespace adios2

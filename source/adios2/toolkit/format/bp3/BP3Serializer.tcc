@@ -44,7 +44,7 @@ void BP3Serializer::PutVariableMetadata(
     SetDataOffset(stats.PayloadOffset);
     if (span != nullptr)
     {
-        span->m_PayloadPosition = stats.PayloadOffset;
+        span->m_PayloadPosition = m_Data.m_Position;
     }
 
     // write to metadata  index
@@ -81,6 +81,33 @@ inline void BP3Serializer::PutVariablePayload(
     }
 
     ProfilerStop("buffering");
+}
+
+template <class T>
+void BP3Serializer::PutSpanMetadata(
+    const core::Variable<T> &variable,
+    const typename core::Variable<T>::Span &span) noexcept
+{
+    if (m_StatsLevel == 0)
+    {
+        // Get Min/Max from populated data
+        ProfilerStart("minmax");
+        T min, max;
+        helper::GetMinMaxThreads(span.Data(), span.Size(), min, max, m_Threads);
+        ProfilerStop("minmax");
+
+        // Put min/max in variable index
+        SerialElementIndex &variableIndex =
+            m_MetadataSet.VarsIndices.at(variable.m_Name);
+        auto &buffer = variableIndex.Buffer;
+
+        const size_t minPosition = span.m_MinMaxMetadataPositions.first;
+        const size_t maxPosition = span.m_MinMaxMetadataPositions.second;
+        std::copy(&min, &min + 1,
+                  reinterpret_cast<T *>(buffer.data() + minPosition));
+        std::copy(&max, &max + 1,
+                  reinterpret_cast<T *>(buffer.data() + maxPosition));
+    }
 }
 
 // PRIVATE

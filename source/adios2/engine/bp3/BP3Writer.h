@@ -121,6 +121,9 @@ private:
     template <class T>
     T *BufferDataCommon(const size_t payloadOffset,
                         const size_t bufferID) noexcept;
+
+    template <class T>
+    void PerformPutCommon(Variable<T> &variable);
 };
 
 } // end namespace engine
