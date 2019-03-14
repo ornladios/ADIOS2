@@ -1482,22 +1482,37 @@ size_t BP3Serializer::GetAttributesSizeInData(core::IO &io) const noexcept
     return attributesSizeInData;
 }
 
-//------------------------------------------------------------------------------
-// Explicit instantiation of only public templates
+void BP3Serializer::SetDataOffset(uint64_t &offset) noexcept
+{
+    if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
+    {
+        offset = static_cast<uint64_t>(m_Data.m_Position);
+    }
+    else
+    {
+        offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+    }
+}
 
 #define declare_template_instantiation(T)                                      \
-    template void BP3Serializer::PutVariablePayload(                           \
-        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;                                                  \
-                                                                               \
     template void BP3Serializer::PutVariableMetadata(                          \
         const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
-        const bool) noexcept;
+        const bool, typename core::Variable<T>::Span *) noexcept;              \
+                                                                               \
+    template void BP3Serializer::PutVariablePayload(                           \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool, typename core::Variable<T>::Span *) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-//------------------------------------------------------------------------------
+#define declare_template_instantiation(T)                                      \
+    template void BP3Serializer::PutSpanMetadata(                              \
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::Span &) noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace format
 } // end namespace adios2

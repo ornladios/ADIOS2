@@ -91,6 +91,13 @@ void Engine::Close(const int transportIndex)
 Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
 #define declare_template_instantiation(T)                                      \
+                                                                               \
+    template typename Variable<T>::Span Engine::Put(Variable<T>, const size_t);
+
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
     template void Engine::Put<T>(Variable<T>, const T *, const Mode);          \
     template void Engine::Put<T>(const std::string &, const T *, const Mode);  \
     template void Engine::Put<T>(Variable<T>, const T &, const Mode);          \

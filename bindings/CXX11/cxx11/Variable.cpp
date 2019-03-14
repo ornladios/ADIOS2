@@ -224,4 +224,66 @@ namespace adios2
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
+#define declare_type(T)                                                        \
+                                                                               \
+    template <>                                                                \
+    Variable<T>::Span::Span(CoreSpan *coreSpan) : m_Span(coreSpan)             \
+    {                                                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::Span::size() const noexcept                            \
+    {                                                                          \
+        const core::Variable<IOType>::Span *coreSpan =                         \
+            reinterpret_cast<const core::Variable<IOType>::Span *>(m_Span);    \
+        return coreSpan->Size();                                               \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T *Variable<T>::Span::data() const noexcept                                \
+    {                                                                          \
+        const core::Variable<IOType>::Span *coreSpan =                         \
+            reinterpret_cast<const core::Variable<IOType>::Span *>(m_Span);    \
+        return reinterpret_cast<T *>(coreSpan->Data());                        \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T &Variable<T>::Span::at(const size_t position)                            \
+    {                                                                          \
+        core::Variable<IOType>::Span *coreSpan =                               \
+            reinterpret_cast<core::Variable<IOType>::Span *>(m_Span);          \
+        IOType &data = coreSpan->At(position);                                 \
+        return reinterpret_cast<T &>(data);                                    \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T &Variable<T>::Span::at(const size_t position) const                \
+    {                                                                          \
+        const core::Variable<IOType>::Span *coreSpan =                         \
+            reinterpret_cast<const core::Variable<IOType>::Span *>(m_Span);    \
+        const IOType &data = coreSpan->At(position);                           \
+        return reinterpret_cast<const T &>(data);                              \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T &Variable<T>::Span::operator[](const size_t position)                    \
+    {                                                                          \
+        core::Variable<IOType>::Span *coreSpan =                               \
+            reinterpret_cast<core::Variable<IOType>::Span *>(m_Span);          \
+        IOType &data = coreSpan->Access(position);                             \
+        return reinterpret_cast<T &>(data);                                    \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T &Variable<T>::Span::operator[](const size_t position) const        \
+    {                                                                          \
+        const core::Variable<IOType>::Span *coreSpan =                         \
+            reinterpret_cast<const core::Variable<IOType>::Span *>(m_Span);    \
+        const IOType &data = coreSpan->Access(position);                       \
+        return reinterpret_cast<const T &>(data);                              \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_type)
+#undef declare_type
+
 } // end namespace adios2

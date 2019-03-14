@@ -80,6 +80,40 @@ public:
     /** use for multiblock info */
     std::vector<Info> m_BlocksInfo;
 
+    class Span
+    {
+    public:
+        std::pair<size_t, size_t> m_MinMaxDataPositions;
+        std::pair<size_t, size_t> m_MinMaxMetadataPositions;
+        size_t m_PayloadPosition = 0;
+
+        Span(Engine &engine, const size_t size);
+        ~Span() = default;
+
+        size_t Size() const noexcept;
+        T *Data() const noexcept;
+
+        T &At(const size_t position);
+        const T &At(const size_t position) const;
+
+        T &Access(const size_t position);
+        const T &Access(const size_t position) const;
+
+    private:
+        Engine &m_Engine;
+        size_t m_Size = 0;
+
+        T &DoAt(const size_t position);
+        const T &DoAt(const size_t position) const;
+
+        T &DoAccess(const size_t position);
+        const T &DoAccess(const size_t position) const;
+    };
+
+    /** Needs a map to preserve iterator as it resizes and the key to match the
+     * m_BlocksInfo index */
+    std::map<size_t, Span> m_BlocksSpan;
+
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
                 const Dims &count, const bool constantShape,
                 const bool debugMode);

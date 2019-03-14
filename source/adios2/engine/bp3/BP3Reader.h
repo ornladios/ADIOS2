@@ -37,7 +37,7 @@ public:
     BP3Reader(IO &io, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    virtual ~BP3Reader() = default;
+    ~BP3Reader() = default;
 
     StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
                          const float timeoutSeconds = -1.0) final;

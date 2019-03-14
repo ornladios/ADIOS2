@@ -173,6 +173,10 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
             reinterpret_cast<adios2::core::VariableBase *>(variable);
         const std::string type(variableBase->m_Type);
 
+        const adios2::Mode modeCpp = adios2_ToMode(
+            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
+                  "in call to adios2_put");
+
         if (type == "compound")
         {
             // not supported
@@ -185,17 +189,13 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
 
             engineCpp.Put(*dynamic_cast<adios2::core::Variable<std::string> *>(
                               variableBase),
-                          dataStr);
+                          dataStr, modeCpp);
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
         adios2::core::Engine &engineCpp =                                      \
             *reinterpret_cast<adios2::core::Engine *>(engine);                 \
-                                                                               \
-        const adios2::Mode modeCpp = adios2_ToMode(                            \
-            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "  \
-                  "in call to adios2_put");                                    \
                                                                                \
         engineCpp.Put(                                                         \
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
@@ -241,7 +241,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         else if (type == adios2::helper::GetType<std::string>())
         {
             const std::string dataStr(reinterpret_cast<const char *>(data));
-            engineCpp.Put(variable_name, dataStr);
+            engineCpp.Put(variable_name, dataStr, modeCpp);
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \

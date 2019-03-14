@@ -6,6 +6,7 @@
  *
  * Created on: March 23, 2017
  *     Author: Chuck Atkins chuck.atkins@kitware.com
+ *             William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_ADIOSMACROS_H
@@ -187,7 +188,7 @@
  type, and since the method is virtual then it cannot be a template.
  For example:
 
-   #define declare_foo(T,L) virtual const T& foo ## L (std::string bar);
+   #define declare_foo(T,L) virtual const T& foo_## L (std::string bar);
    ADIOS2_FOREACH_STDTYPE_2ARGS(declare_foo)
    #undef declare_foo
 
@@ -215,6 +216,21 @@
     MACRO(double, double)                                                      \
     MACRO(long double, ldouble)
 
+#define ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(MACRO)                           \
+    MACRO(int8_t, int8)                                                        \
+    MACRO(uint8_t, uint8)                                                      \
+    MACRO(int16_t, int16)                                                      \
+    MACRO(uint16_t, uint16)                                                    \
+    MACRO(int32_t, int32)                                                      \
+    MACRO(uint32_t, uint32)                                                    \
+    MACRO(int64_t, int64)                                                      \
+    MACRO(uint64_t, uint64)                                                    \
+    MACRO(float, float)                                                        \
+    MACRO(double, double)                                                      \
+    MACRO(long double, ldouble)                                                \
+    MACRO(std::complex<float>, cfloat)                                         \
+    MACRO(std::complex<double>, cdouble)
+
 #define ADIOS2_FOREACH_STDTYPE_2ARGS(MACRO)                                    \
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                              \
     MACRO(std::complex<float>, cfloat)                                         \
@@ -227,5 +243,48 @@
 #define ADIOS2_FOREACH_LAUNCH_MODE(MACRO)                                      \
     MACRO(Sync)                                                                \
     MACRO(Deferred)
+
+/**
+ * Custom iterators from:
+ * https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
+ */
+#define ADIOS2_CLASS_iterator                                                  \
+    class iterator                                                             \
+    {                                                                          \
+    public:                                                                    \
+        typedef iterator self_type;                                            \
+        typedef T value_type;                                                  \
+        typedef T &reference;                                                  \
+        typedef T *pointer;                                                    \
+        typedef std::forward_iterator_tag iterator_category;                   \
+        typedef int difference_type;                                           \
+        iterator(pointer ptr) : ptr_(ptr) {}                                   \
+        self_type operator++()                                                 \
+        {                                                                      \
+            self_type i = *this;                                               \
+            ptr_++;                                                            \
+            return i;                                                          \
+        }                                                                      \
+        self_type operator++(int junk)                                         \
+        {                                                                      \
+            ptr_++;                                                            \
+            return *this;                                                      \
+        }                                                                      \
+        reference operator*() { return *ptr_; }                                \
+        pointer operator->() { return ptr_; }                                  \
+        bool operator==(const self_type &rhs) { return ptr_ == rhs.ptr_; }     \
+        bool operator!=(const self_type &rhs) { return ptr_ != rhs.ptr_; }     \
+    private:                                                                   \
+        pointer ptr_;                                                          \
+    };
+
+#define ADIOS2_iterators_functions(DATA_FUNCTION, SIZE_FUNCTION)               \
+    iterator begin() noexcept { return iterator(DATA_FUNCTION); }              \
+    iterator end() noexcept                                                    \
+    {                                                                          \
+        return iterator(DATA_FUNCTION + SIZE_FUNCTION);                        \
+    }                                                                          \
+    iterator rbegin() noexcept { return --end(); }                             \
+    iterator rend() noexcept { return --begin(); }
 
 #endif /* ADIOS2_ADIOSMACROS_H */

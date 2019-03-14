@@ -92,7 +92,7 @@ void Engine::Put(Variable variable, const std::string &string)
 
     m_Engine->Put(
         *dynamic_cast<core::Variable<std::string> *>(variable.m_VariableBase),
-        string);
+        string, adios2::Mode::Sync);
 }
 
 void Engine::PerformPuts()

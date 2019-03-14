@@ -20,6 +20,8 @@
 namespace adios2
 {
 
+namespace
+{
 template <class T>
 static std::vector<typename Variable<T>::Info>
 ToBlocksInfo(const std::vector<typename core::Variable<
@@ -54,6 +56,23 @@ ToBlocksInfo(const std::vector<typename core::Variable<
 
     return blocksInfo;
 }
+} // end empty namespace
+
+template <class T>
+typename Variable<T>::Span Engine::Put(Variable<T> variable,
+                                       const size_t bufferID)
+{
+    adios2::helper::CheckForNullptr(m_Engine,
+                                    "for Engine in call to Engine::Array");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Array");
+
+    typename Variable<T>::Span::CoreSpan *coreSpan =
+        reinterpret_cast<typename Variable<T>::Span::CoreSpan *>(
+            &m_Engine->Put(*variable.m_Variable, bufferID));
+
+    return typename Variable<T>::Span(coreSpan);
+}
 
 template <class T>
 void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
@@ -76,23 +95,24 @@ void Engine::Put(const std::string &variableName, const T *data,
 }
 
 template <class T>
-void Engine::Put(Variable<T> variable, const T &datum, const Mode /*launch*/)
+void Engine::Put(Variable<T> variable, const T &datum, const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     adios2::helper::CheckForNullptr(variable.m_Variable,
                                     "for variable in call to Engine::Put");
-    m_Engine->Put(*variable.m_Variable,
-                  reinterpret_cast<const IOType &>(datum));
+    m_Engine->Put(*variable.m_Variable, reinterpret_cast<const IOType &>(datum),
+                  launch);
 }
 
 template <class T>
 void Engine::Put(const std::string &variableName, const T &datum,
-                 const Mode /*launch*/)
+                 const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
-    m_Engine->Put(variableName, reinterpret_cast<const IOType &>(datum));
+    m_Engine->Put(variableName, reinterpret_cast<const IOType &>(datum),
+                  launch);
 }
 
 template <class T>

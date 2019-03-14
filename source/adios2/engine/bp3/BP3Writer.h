@@ -36,7 +36,7 @@ public:
     BP3Writer(IO &io, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    ~BP3Writer();
+    ~BP3Writer() = default;
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;
@@ -65,17 +65,23 @@ private:
     void InitBPBuffer();
 
 #define declare_type(T)                                                        \
+    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
+               const size_t bufferID) final;
+
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
     void DoPutDeferred(Variable<T> &, const T *) final;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    /**
-     * Common function for primitive PutSync, puts variables in buffer
-     * @param variable
-     * @param values
-     */
+    template <class T>
+    void PutCommon(Variable<T> &variable, typename Variable<T>::Span &span,
+                   const size_t bufferID);
+
     template <class T>
     void PutSyncCommon(Variable<T> &variable,
                        const typename Variable<T>::Info &blockInfo);
@@ -104,6 +110,20 @@ private:
      * @param transportIndex
      */
     void AggregateWriteData(const bool isFinal, const int transportIndex = -1);
+
+#define declare_type(T, L)                                                     \
+    T *DoBufferData_##L(const size_t payloadPosition,                          \
+                        const size_t bufferID = 0) noexcept final;
+
+    ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
+
+    template <class T>
+    T *BufferDataCommon(const size_t payloadOffset,
+                        const size_t bufferID) noexcept;
+
+    template <class T>
+    void PerformPutCommon(Variable<T> &variable);
 };
 
 } // end namespace engine

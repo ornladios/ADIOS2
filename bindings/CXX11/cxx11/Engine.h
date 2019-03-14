@@ -89,6 +89,20 @@ public:
     size_t CurrentStep() const;
 
     /**
+     * Put signature that provides access to the internal engine buffer for a
+     * pre-allocated variable. Returns a fixed size Span (based on C++20
+     * std::span) so applications can populate data value after this Put.
+     * Requires a call to PerformPuts, EndStep, or Close to extract the Min/Max
+     * bounds.
+     * @param variable input variable
+     * @param bufferID (default = 0) optional, if engine has multiple buffers
+     * @return span to variable data in engine internal buffer
+     */
+    template <class T>
+    typename Variable<T>::Span Put(Variable<T> variable,
+                                   const size_t bufferID = 0);
+
+    /**
      * Put data associated with a Variable in the Engine
      * @param variable contains variable metadata information
      * @param data user data to be associated with a variable
@@ -368,6 +382,14 @@ private:
     Engine(core::Engine *engine);
     core::Engine *m_Engine = nullptr;
 };
+
+#define declare_template_instantiation(T)                                      \
+                                                                               \
+    extern template typename Variable<T>::Span Engine::Put(Variable<T>,        \
+                                                           const size_t);
+
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
     extern template void Engine::Put<T>(Variable<T>, const T *, const Mode);   \
