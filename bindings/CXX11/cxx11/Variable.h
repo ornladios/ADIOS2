@@ -276,17 +276,20 @@ public:
         Span &operator=(const Span &) = delete;
         Span &operator=(Span &&) = default;
 
-        size_t Size() const noexcept;
-        T *Data() const noexcept;
+        size_t size() const noexcept;
+        T *data() const noexcept;
 
-        T &At(const size_t position);
-        const T &At(const size_t position) const;
+        T &at(const size_t position);
+        const T &at(const size_t position) const;
 
         T &operator[](const size_t position);
         const T &operator[](const size_t position) const;
 
         // engine allowed to set m_Span
         friend class Engine;
+
+        ADIOS2_CLASS_iterator;
+        ADIOS2_iterators_functions(data(), size());
 
     private:
         class CoreSpan;
