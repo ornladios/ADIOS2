@@ -13,7 +13,7 @@
 
 #include "BP3Serializer.h"
 
-#include <algorithm> // std::all_of
+#include <algorithm> // std::all_of, std::fill_n
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -62,12 +62,19 @@ inline void BP3Serializer::PutVariablePayload(
     const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     ProfilerStart("buffering");
-
     if (span != nullptr)
     {
         const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
+        if (span->m_Value != T{})
+        {
+            T *itBegin = reinterpret_cast<T *>(m_Data.m_Buffer.data() +
+                                               m_Data.m_Position);
+            std::fill_n(itBegin, blockSize, span->m_Value);
+        }
+
         m_Data.m_Position += blockSize * sizeof(T);
         m_Data.m_AbsolutePosition += blockSize * sizeof(T);
+        ProfilerStop("buffering");
         return;
     }
 

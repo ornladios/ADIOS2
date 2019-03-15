@@ -119,9 +119,9 @@ void BP3Writer::Init()
 #define declare_type(T)                                                        \
     void BP3Writer::DoPut(Variable<T> &variable,                               \
                           typename Variable<T>::Span &span,                    \
-                          const size_t bufferID)                               \
+                          const size_t bufferID, const T &value)               \
     {                                                                          \
-        return PutCommon(variable, span, bufferID);                            \
+        return PutCommon(variable, span, bufferID, value);                     \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)

@@ -86,6 +86,7 @@ public:
         std::pair<size_t, size_t> m_MinMaxDataPositions;
         std::pair<size_t, size_t> m_MinMaxMetadataPositions;
         size_t m_PayloadPosition = 0;
+        T m_Value = T{};
 
         Span(Engine &engine, const size_t size);
         ~Span() = default;

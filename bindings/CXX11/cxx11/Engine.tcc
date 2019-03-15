@@ -60,8 +60,9 @@ ToBlocksInfo(const std::vector<typename core::Variable<
 
 template <class T>
 typename Variable<T>::Span Engine::Put(Variable<T> variable,
-                                       const size_t bufferID)
+                                       const size_t bufferID, const T &value)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine,
                                     "for Engine in call to Engine::Array");
     adios2::helper::CheckForNullptr(variable.m_Variable,
@@ -69,7 +70,8 @@ typename Variable<T>::Span Engine::Put(Variable<T> variable,
 
     typename Variable<T>::Span::CoreSpan *coreSpan =
         reinterpret_cast<typename Variable<T>::Span::CoreSpan *>(
-            &m_Engine->Put(*variable.m_Variable, bufferID));
+            &m_Engine->Put(*variable.m_Variable, bufferID,
+                           reinterpret_cast<const IOType &>(value)));
 
     return typename Variable<T>::Span(coreSpan);
 }
