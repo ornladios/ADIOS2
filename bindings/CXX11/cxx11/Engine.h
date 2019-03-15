@@ -11,6 +11,7 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 
+#include "Types.h"
 #include "Variable.h"
 
 #include "adios2/ADIOSMacros.h"
@@ -101,7 +102,7 @@ public:
      */
     template <class T>
     typename Variable<T>::Span
-    Put(Variable<T> variable, const size_t bufferID = 0, const T &value = T{});
+    Put(Variable<T> variable, const size_t bufferID = 0, const T &value = {});
 
     /**
      * Put data associated with a Variable in the Engine
