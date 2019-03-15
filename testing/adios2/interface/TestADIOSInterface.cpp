@@ -223,6 +223,99 @@ TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutDS)
     engine.Close();
 }
 
+TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutZeroCopySync)
+{
+    using T = double;
+    using Box = MyDataView<T>::Box;
+    using Block = MyDataView<T>::Block;
+    const size_t Nx = 10;
+    const adios2::Dims shape = {size * Nx};
+    std::vector<Box> selections = {
+        {{rank * Nx}, {Nx / 2}}, {{rank * Nx + Nx / 2}, {Nx / 2}},
+    };
+
+    adios2::Engine engine = io.Open("multi0_sync.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", shape);
+
+    MyDataView<T> myData(selections);
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        var.SetSelection(myData.selection(b));
+        auto span = engine.Put(var);
+        myData.place(b, span.data());
+    }
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        PopulateBlock(myData, b);
+        //engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+    }
+    engine.Close();
+}
+
+TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutZeroCopySync2)
+{
+    using T = double;
+    using Box = MyDataView<T>::Box;
+    using Block = MyDataView<T>::Block;
+    const size_t Nx = 10;
+    const adios2::Dims shape = {size * Nx};
+    std::vector<Box> selections = {
+        {{rank * Nx}, {Nx / 2}}, {{rank * Nx + Nx / 2}, {Nx / 2}},
+    };
+
+    io.SetParameter("MaxBufferSize", "50");
+    adios2::Engine engine = io.Open("multi0_sync2.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", shape);
+
+    MyDataView<T> myData(selections);
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        var.SetSelection(myData.selection(b));
+        auto span = engine.Put(var);
+        myData.place(b, span.data());
+    }
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        PopulateBlock(myData, b);
+        //engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+    }
+    engine.Close();
+}
+
+TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutZeroCopySync3)
+{
+    using T = double;
+    using Box = MyDataView<T>::Box;
+    using Block = MyDataView<T>::Block;
+    const size_t Nx = 10;
+    const adios2::Dims shape = {size * Nx};
+    std::vector<Box> selections = {
+        {{rank * Nx}, {Nx / 2}}, {{rank * Nx + Nx / 2}, {Nx / 2}},
+    };
+
+    adios2::Engine engine = io.Open("multi0_sync3.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", shape);
+
+    MyDataView<T> myData(selections);
+    for (int b = 0; b < 1; ++b)
+    {
+        var.SetSelection(myData.selection(b));
+        auto span = engine.Put(var);
+        myData.place(b, span.data());
+    }
+
+    for (int b = 0; b < 1; ++b)
+    {
+        PopulateBlock(myData, b);
+        //engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+    }
+
+    engine.Put(var, std::vector<T>{5., 6., 7., 8., 9.}.data(), adios2::Mode::Sync);
+    engine.Close();
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
