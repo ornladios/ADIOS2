@@ -29,12 +29,13 @@ WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("WdmReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian())
+                      helper::IsLittleEndian()),
+  m_RepliedMetadata(std::make_shared<std::vector<char>>())
 {
     m_DataTransport = std::make_shared<transportman::StagingMan>(
         mpiComm, Mode::Read, m_Timeout, 1e9);
     m_MetadataTransport = std::make_shared<transportman::StagingMan>(
-        mpiComm, Mode::Read, m_Timeout, 1e6);
+        mpiComm, Mode::Read, m_Timeout, 1e8);
     m_EndMessage = " in call to IO Open WdmReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
@@ -64,27 +65,29 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
-    auto reply = std::make_shared<std::vector<char>>();
-    if (m_MpiRank == 0)
+    if (not m_AttributesSet)
     {
-        std::vector<char> request(1, 'M');
-        reply = m_MetadataTransport->Request(
-            request, m_FullAddresses[rand() % m_FullAddresses.size()]);
+        RequestMetadata(-3);
+        m_DataManSerializer.GetAttributes(m_IO);
+        m_AttributesSet = true;
     }
 
-    helper::BroadcastVector(*reply, m_MPIComm);
-
-    if (reply->empty())
-    {
-        Log(1,
-            "WdmReader::BeginStep() lost connection to writer. End of stream.",
-            true, true);
-        return StepStatus::EndOfStream;
-    }
-
-    m_DataManSerializer.PutAggregatedMetadata(m_MPIComm, reply);
-    m_DataManSerializer.GetAttributes(m_IO);
+    RequestMetadata();
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
+
+    auto startTime = std::chrono::system_clock::now();
+    while (m_MetaDataMap.empty())
+    {
+        m_MetaDataMap = m_DataManSerializer.GetMetaData();
+        auto nowTime = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            nowTime - startTime);
+        if (duration.count() > timeoutSeconds)
+        {
+            Log(5, "WdmReader::BeginStep() returned EndOfStream.", true, true);
+            return StepStatus::EndOfStream;
+        }
+    }
 
     size_t maxStep = std::numeric_limits<size_t>::min();
     size_t minStep = std::numeric_limits<size_t>::max();
@@ -103,7 +106,15 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 
     if (stepMode == StepMode::NextAvailable)
     {
-        m_CurrentStep = minStep;
+        if (m_CurrentStep < minStep)
+        {
+            m_CurrentStep = minStep;
+        }
+        if (m_CurrentStep > maxStep)
+        {
+            --m_CurrentStep;
+            return StepStatus::NotReady;
+        }
     }
     else if (stepMode == StepMode::LatestAvailable)
     {
@@ -115,8 +126,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
             "[WdmReader::BeginStep] Step mode is not supported!"));
     }
 
-    std::shared_ptr<std::vector<format::DataManSerializer::DataManVar>> vars =
-        nullptr;
+    format::DmvVecPtr vars = nullptr;
     auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
     if (currentStepIt != m_MetaDataMap.end())
     {
@@ -167,11 +177,11 @@ void WdmReader::PerformGets()
     if (m_Verbosity >= 10)
     {
         Log(10, "WdmReader::PerformGets() processing deferred requests ", true,
-            false);
+            true);
         for (const auto &i : *requests)
         {
             std::cout << i.first << ": ";
-            for (auto j : i.second)
+            for (auto j : *i.second)
             {
                 std::cout << j;
             }
@@ -181,7 +191,7 @@ void WdmReader::PerformGets()
 
     for (const auto &i : *requests)
     {
-        auto reply = m_DataTransport->Request(i.second, i.first);
+        auto reply = m_DataTransport->Request(*i.second, i.first);
         if (reply->empty())
         {
             Log(1, "Lost connection to writer. Data for the final step is "
@@ -272,8 +282,17 @@ void WdmReader::EndStep()
     void WdmReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
+    }                                                                          \
+    std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
+    WdmReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
+    {                                                                          \
+        return AllStepsBlocksInfoCommon(variable);                             \
+    }                                                                          \
+    std::vector<typename Variable<T>::Info> WdmReader::DoBlocksInfo(           \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        return BlocksInfoCommon(variable, step);                               \
     }
-
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -297,14 +316,6 @@ void WdmReader::InitParameters()
         if (key == "verbose")
         {
             m_Verbosity = std::stoi(value);
-            if (m_DebugMode)
-            {
-                if (m_Verbosity < 0 || m_Verbosity > 5)
-                    throw std::invalid_argument(
-                        "ERROR: Method verbose argument must be an "
-                        "integer in the range [0,5], in call to "
-                        "Open or Engine constructor\n");
-            }
         }
     }
 }
@@ -313,12 +324,24 @@ void WdmReader::InitTransports() {}
 
 void WdmReader::Handshake()
 {
+    auto ips = helper::AvailableIpAddresses();
+    if (ips.empty())
+    {
+        m_ReaderId = rand();
+    }
+    else
+    {
+        std::hash<std::string> hash_fn;
+        m_ReaderId = hash_fn(ips[0]);
+    }
+    helper::BroadcastValue(m_ReaderId, m_MPIComm);
+
     transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
     while (true)
     {
         try
         {
-            ipstream.Open(".StagingHandshake", Mode::Read);
+            ipstream.Open(m_Name + ".wdm", Mode::Read);
             break;
         }
         catch (...)
@@ -332,7 +355,7 @@ void WdmReader::Handshake()
     {
         try
         {
-            lockstream.Open(".StagingHandshakeLock", Mode::Read);
+            lockstream.Open(m_Name + ".wdm.lock", Mode::Read);
             lockstream.Close();
         }
         catch (...)
@@ -347,6 +370,20 @@ void WdmReader::Handshake()
     ipstream.Close();
     nlohmann::json j = nlohmann::json::parse(address);
     m_FullAddresses = j.get<std::vector<std::string>>();
+}
+
+void WdmReader::RequestMetadata(int64_t step)
+{
+    format::VecPtr reply = std::make_shared<std::vector<char>>();
+    if (m_MpiRank == 0)
+    {
+        std::vector<char> request(2 * sizeof(int64_t));
+        reinterpret_cast<int64_t *>(request.data())[0] = m_ReaderId;
+        reinterpret_cast<int64_t *>(request.data())[1] = step;
+        std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
+        reply = m_MetadataTransport->Request(request, address);
+    }
+    m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
 }
 
 void WdmReader::DoClose(const int transportIndex)

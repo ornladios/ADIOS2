@@ -17,7 +17,6 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef ADIOS2_HAVE_ZEROMQ
-#include "adios2/toolkit/transport/socket/SocketZmqP2P.h"
 #include "adios2/toolkit/transport/socket/SocketZmqPubSub.h"
 #endif
 
@@ -110,27 +109,11 @@ void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
         {
 #ifdef ADIOS2_HAVE_ZEROMQ
             std::shared_ptr<transport::SocketZmq> wanTransport;
-            if (workflowMode == "subscribe")
-            {
-                wanTransport = std::make_shared<transport::SocketZmqPubSub>(
-                    m_MpiComm, m_DebugMode);
-            }
-            else if (workflowMode == "p2p")
-            {
-                wanTransport = std::make_shared<transport::SocketZmqP2P>(
-                    m_MpiComm, m_Timeout, m_DebugMode);
-            }
-            else if (workflowMode == "query")
-            {
-            }
-            else
-            {
-                throw(std::invalid_argument(
-                    "[WANMan::OpenSocketTransports] workflow mode " +
-                    workflowMode + " not supported."));
-            }
+            wanTransport =
+                std::make_shared<transport::SocketZmqPubSub>(m_Timeout);
 
-            wanTransport->Open(ip, port, name, mode);
+            std::string fullIP = "tcp://" + ip + ":" + port;
+            wanTransport->Open(fullIP, mode);
             m_Transports.emplace(i, wanTransport);
 
             // launch thread
@@ -204,7 +187,8 @@ std::shared_ptr<std::vector<char>> WANMan::PopBufferQueue(size_t id)
     return nullptr;
 }
 
-void WANMan::WriteThread(std::shared_ptr<Transport> transport, size_t id)
+void WANMan::WriteThread(std::shared_ptr<transport::SocketZmq> transport,
+                         size_t id)
 {
     while (m_Writing)
     {
@@ -214,24 +198,24 @@ void WANMan::WriteThread(std::shared_ptr<Transport> transport, size_t id)
         {
             if (buffer->size() > 0)
             {
-                transport->IWrite(buffer->data(), buffer->size(), status);
+                transport->Write(buffer->data(), buffer->size());
             }
         }
     }
 }
 
-void WANMan::ReadThread(std::shared_ptr<Transport> transport)
+void WANMan::ReadThread(std::shared_ptr<transport::SocketZmq> transport)
 {
     std::vector<char> buffer(m_MaxReceiveBuffer);
     while (m_Reading)
     {
         Transport::Status status;
-        transport->IRead(buffer.data(), m_MaxReceiveBuffer, status);
-        if (status.Bytes > 0)
+        int ret = transport->Read(buffer.data(), m_MaxReceiveBuffer);
+        if (ret > 0)
         {
             std::shared_ptr<std::vector<char>> bufferQ =
-                std::make_shared<std::vector<char>>(status.Bytes);
-            std::memcpy(bufferQ->data(), buffer.data(), status.Bytes);
+                std::make_shared<std::vector<char>>(ret);
+            std::memcpy(bufferQ->data(), buffer.data(), ret);
             PushBufferQueue(bufferQ, 0);
         }
     }

@@ -20,7 +20,7 @@ namespace transportman
 StagingMan::StagingMan(const MPI_Comm mpiComm, const Mode openMode,
                        const int timeout, const size_t maxBufferSize)
 : m_MpiComm(mpiComm), m_Timeout(timeout), m_OpenMode(openMode),
-  m_Transport(mpiComm, timeout), m_MaxBufferSize(maxBufferSize)
+  m_Transport(timeout), m_MaxBufferSize(maxBufferSize)
 {
     m_Buffer.reserve(maxBufferSize);
 }
@@ -41,7 +41,6 @@ StagingMan::Request(const std::vector<char> &request,
     auto reply = std::make_shared<std::vector<char>>();
 
     int ret = m_Transport.Open(address, m_OpenMode);
-    ;
     auto start_time = std::chrono::system_clock::now();
     while (ret)
     {
@@ -92,9 +91,9 @@ StagingMan::Request(const std::vector<char> &request,
 std::shared_ptr<std::vector<char>> StagingMan::ReceiveRequest()
 {
     int bytes = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
-    if (bytes < 0)
+    if (bytes <= 0)
     {
-        bytes = 0;
+        return nullptr;
     }
     auto request = std::make_shared<std::vector<char>>(bytes);
     std::memcpy(request->data(), m_Buffer.data(), bytes);

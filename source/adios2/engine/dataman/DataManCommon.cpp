@@ -30,7 +30,11 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     m_IsLittleEndian = helper::IsLittleEndian();
     m_IsRowMajor = helper::IsRowMajor(io.m_HostLanguage);
     GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
-    GetStringParameter(m_IO.m_Parameters, "Format", m_Format);
+    if (m_WorkflowMode != "file" && m_WorkflowMode != "stream")
+    {
+        throw(std::invalid_argument(
+            "WorkflowMode parameter for DataMan must be File or Stream"));
+    }
     m_TransportChannels = m_IO.m_TransportsParameters.size();
     if (m_TransportChannels == 0)
     {

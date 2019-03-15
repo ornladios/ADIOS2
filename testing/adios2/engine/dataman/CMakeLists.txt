@@ -53,4 +53,3 @@ if(ADIOS2_HAVE_MPI)
 endif()
 gtest_add_tests(TARGET TestDataManSubscribe1D)
 
-

@@ -31,8 +31,8 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian())
 {
-    Log(5, "WdmWriter::WdmWriter()", true, true);
     Init();
+    Log(5, "WdmWriter::WdmWriter()", true, true);
 }
 
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -42,12 +42,10 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
                std::to_string(m_CurrentStep),
         true, true);
 
-    ++m_CurrentStep;
-
-    if (m_DataManSerializer.Steps() > m_MaxBufferSteps)
+    if (m_QueueFullPolicy == "discard")
     {
-        int64_t stepToErase = m_CurrentStep - m_MaxBufferSteps;
-        if (stepToErase > 0)
+        int64_t stepToErase = m_CurrentStep - m_QueueLimit;
+        if (stepToErase >= 0)
         {
             Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing "
                    "Step " +
@@ -56,9 +54,37 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
             m_DataManSerializer.Erase(stepToErase);
         }
     }
+    else if (m_QueueFullPolicy == "block")
+    {
+        auto startTime = std::chrono::system_clock::now();
+        while (m_DataManSerializer.Steps() > m_QueueLimit)
+        {
+            auto nowTime = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                nowTime - startTime);
+            if (duration.count() > timeoutSeconds)
+            {
+                Log(5, "WdmWriter::BeginStep() returned NotReady", true, true);
+                return StepStatus::NotReady;
+            }
+        }
+    }
+    else
+    {
+        throw(std::invalid_argument(
+            "WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
+    }
 
+    Log(5, "WdmWriter::BeginStep() after checking queue limit", true, true);
+
+    ++m_CurrentStep;
     m_DataManSerializer.New(m_DefaultBufferSize);
-    m_DataManSerializer.PutAttributes(m_IO, m_MpiRank);
+
+    if (not m_AttributesSet)
+    {
+        m_DataManSerializer.PutAttributes(m_IO);
+        m_AttributesSet = true;
+    }
 
     Log(5,
         "WdmWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep),
@@ -76,12 +102,7 @@ void WdmWriter::EndStep()
         true, false);
 
     m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-    auto aggMetadata = m_DataManSerializer.GetAggregatedMetadata(m_MPIComm);
-    {
-        std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
-        m_LockedAggregatedMetadata.first = m_CurrentStep;
-        m_LockedAggregatedMetadata.second = aggMetadata;
-    }
+    m_DataManSerializer.AggregateMetadata(m_MPIComm);
 
     Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
         true, true);
@@ -119,21 +140,19 @@ void WdmWriter::InitParameters()
     {
         std::string key(pair.first);
         std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-
         std::string value(pair.second);
         std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-
         if (key == "verbose")
         {
             m_Verbosity = std::stoi(value);
-            if (m_DebugMode)
-            {
-                if (m_Verbosity < 0 || m_Verbosity > 5)
-                    throw std::invalid_argument(
-                        "ERROR: Method verbose argument must be an "
-                        "integer in the range [0,5], in call to "
-                        "Open or Engine constructor\n");
-            }
+        }
+        else if (key == "queuefullpolicy")
+        {
+            m_QueueFullPolicy = value;
+        }
+        else if (key == "port")
+        {
+            m_Port = std::stoi(value);
         }
     }
 }
@@ -150,10 +169,9 @@ void WdmWriter::InitTransports()
 
 void WdmWriter::Handshake()
 {
+    // Get IP address
     auto ips = helper::AvailableIpAddresses();
-
     std::string ip = "127.0.0.1";
-
     if (ips.empty() == false)
     {
         ip = ips[0];
@@ -165,24 +183,70 @@ void WdmWriter::Handshake()
             true, true);
     }
 
+    // Check total number of writer apps
+    /*
+    if(m_MpiRank == 0)
+    {
+        transport::FileFStream lockCheck(m_MPIComm, m_DebugMode);
+        while (true)
+        {
+            try
+            {
+                lockCheck.Open(".wdm.lock", Mode::Read);
+                lockCheck.Close();
+            }
+            catch (...)
+            {
+                break;
+            }
+        }
+        transport::FileFStream lockWrite(m_MPIComm, m_DebugMode);
+        lockWrite.Open(".wdm.lock", Mode::Write);
+
+        transport::FileFStream numRead(m_MPIComm, m_DebugMode);
+        try
+        {
+            numRead.Open(".wdm", Mode::Read);
+            auto size = numRead.GetSize();
+            std::vector<char> numAppsChar(size);
+            numRead.Read(numAppsChar.data(), numAppsChar.size());
+            m_AppID = 1 + stoi (std::string(numAppsChar.begin(),
+    numAppsChar.end()));
+            numRead.Close();
+        }
+        catch (...)
+        {
+        }
+        transport::FileFStream numWrite(m_MPIComm, m_DebugMode);
+        numWrite.Open(".wdm", Mode::Write);
+        std::string numAppsString = std::to_string(m_AppID);
+        numWrite.Write(numAppsString.data(), numAppsString.size());
+        numWrite.Close();
+
+        lockWrite.Close();
+        remove(".wdm.lock");
+    }
+    */
+
+    // Make full addresses
     for (int i = 0; i < m_Channels; ++i)
     {
-        std::string addr =
-            "tcp://" + ip + ":" +
-            std::to_string(12307 + (m_MpiRank % 1000) * m_Channels + i) + "\0";
+        std::string addr = "tcp://" + ip + ":" +
+                           std::to_string(m_Port + (100 * m_AppID) +
+                                          (m_MpiRank % 1000) * m_Channels + i) +
+                           "\0";
         m_FullAddresses.push_back(addr);
     }
-
     nlohmann::json localAddressesJson = m_FullAddresses;
     std::string localAddressesStr = localAddressesJson.dump();
     std::vector<char> localAddressesChar(64 * m_Channels, '\0');
     std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(),
                 localAddressesStr.size());
     std::vector<char> globalAddressesChar(64 * m_Channels * m_MpiSize, '\0');
-
     helper::GatherArrays(localAddressesChar.data(), 64 * m_Channels,
                          globalAddressesChar.data(), m_MPIComm);
 
+    // Writing handshake file
     if (m_MpiRank == 0)
     {
         nlohmann::json globalAddressesJson;
@@ -195,37 +259,61 @@ void WdmWriter::Handshake()
                 globalAddressesJson.push_back(i);
             }
         }
-
         std::string globalAddressesStr = globalAddressesJson.dump();
-
         transport::FileFStream lockstream(m_MPIComm, m_DebugMode);
-        lockstream.Open(".StagingHandshakeLock", Mode::Write);
-
+        lockstream.Open(m_Name + ".wdm.lock", Mode::Write);
         transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
-        ipstream.Open(".StagingHandshake", Mode::Write);
+        ipstream.Open(m_Name + ".wdm", Mode::Write);
         ipstream.Write(globalAddressesStr.data(), globalAddressesStr.size());
         ipstream.Close();
-
         lockstream.Close();
-        remove(".StagingHandshakeLock");
+        remove(std::string(m_Name + ".wdm.lock").c_str());
     }
 }
 
-void WdmWriter::ReplyThread(std::string address)
+void WdmWriter::ReplyThread(const std::string &address)
 {
     transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
     tpm.OpenTransport(address);
     while (m_Listening)
     {
         auto request = tpm.ReceiveRequest();
-        if (request->size() == 1)
+        if (request == nullptr)
         {
+            continue;
+        }
+        if (request->size() == 2 * sizeof(int64_t))
+        {
+            //            int64_t reader_id = reinterpret_cast<int64_t
+            //            *>(request->data())[0];
+            int64_t step = reinterpret_cast<int64_t *>(request->data())[1];
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
             while (aggMetadata == nullptr)
             {
-                std::lock_guard<std::mutex> l(m_LockedAggregatedMetadataMutex);
-                aggMetadata = m_LockedAggregatedMetadata.second;
-                m_LockedAggregatedMetadata.second = nullptr;
+                if (step == -5) // let writer decide what to send
+                {
+                    if (m_QueueFullPolicy == "discard")
+                    {
+                        aggMetadata =
+                            m_DataManSerializer.GetAggregatedMetadataPack(-2);
+                    }
+                    else if (m_QueueFullPolicy == "block")
+                    {
+                        aggMetadata =
+                            m_DataManSerializer.GetAggregatedMetadataPack(-4);
+                    }
+                    else
+                    {
+                        throw(std::invalid_argument("WdmWriter::ReplyThread: "
+                                                    "unknown QueueFullPolicy "
+                                                    "parameter"));
+                    }
+                }
+                else
+                {
+                    aggMetadata =
+                        m_DataManSerializer.GetAggregatedMetadataPack(step);
+                }
             }
             tpm.SendReply(aggMetadata);
 
@@ -239,7 +327,7 @@ void WdmWriter::ReplyThread(std::string address)
                           << std::endl;
             }
         }
-        else if (request->size() > 1)
+        else if (request->size() > 16)
         {
             size_t step;
             auto reply = m_DataManSerializer.GenerateReply(*request, step);
@@ -248,16 +336,18 @@ void WdmWriter::ReplyThread(std::string address)
             {
                 if (m_Tolerance)
                 {
-                    Log(1, "WdmWriter::ReplyThread received data request but "
-                           "the step is already removed from buffer. Increased "
-                           "buffer size to prevent this from happening again.",
+                    Log(1,
+                        "WdmWriter::ReplyThread received data request but "
+                        "the step is already removed from buffer. Increase the"
+                        "buffer size to prevent this from happening again.",
                         true, true);
                 }
                 else
                 {
                     throw(std::runtime_error(
                         "WdmWriter::ReplyThread received data request but the "
-                        "step is already removed from buffer. Increased buffer "
+                        "step is already removed from buffer. Increase the "
+                        "buffer "
                         "size to prevent this from happening again."));
                 }
             }
@@ -277,7 +367,8 @@ void WdmWriter::DoClose(const int transportIndex)
         }
     }
 
-    remove(".StagingHandshake");
+    remove(".wdm");
+    remove(std::string(m_Name + ".wdm").c_str());
 
     Log(5, "WdmWriter::DoClose(" + m_Name + ")", true, true);
 }

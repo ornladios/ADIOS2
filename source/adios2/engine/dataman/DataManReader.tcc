@@ -94,6 +94,8 @@ DataManReader::BlocksInfoCommon(const Variable<T> &variable,
     {
         return v;
     }
+    T max = std::numeric_limits<T>::min();
+    T min = std::numeric_limits<T>::max();
     for (const auto &i : *it->second)
     {
         if (i.name == variable.m_Name)
@@ -101,17 +103,23 @@ DataManReader::BlocksInfoCommon(const Variable<T> &variable,
             typename Variable<T>::Info b;
             b.Start = i.start;
             b.Count = i.count;
-            b.IsValue = true;
-            if (i.count.size() == 1)
+            b.Shape = i.shape;
+            b.IsValue = false;
+            if (i.shape.size() == 1)
             {
-                if (i.count[0] == 1)
+                if (i.shape[0] == 1)
                 {
-                    b.IsValue = false;
+                    b.IsValue = true;
                 }
             }
-            // TODO: assign b.Min, b.Max, b.Value
+            AccumulateMinMax(min, max, i.min, i.max);
             v.push_back(b);
         }
+    }
+    for (auto &i : v)
+    {
+        i.Min = min;
+        i.Max = max;
     }
     return v;
 }
@@ -135,6 +143,37 @@ void DataManReader::CheckIOVariable(const std::string &name, const Dims &shape,
         {
             v->SetSelection({start, count});
         }
+    }
+}
+
+template <>
+inline void DataManReader::AccumulateMinMax<std::complex<float>>(
+    std::complex<float> &min, std::complex<float> &max,
+    const std::vector<char> &minVec, const std::vector<char> &maxVec) const
+{
+}
+
+template <>
+inline void DataManReader::AccumulateMinMax<std::complex<double>>(
+    std::complex<double> &min, std::complex<double> &max,
+    const std::vector<char> &minVec, const std::vector<char> &maxVec) const
+{
+}
+
+template <typename T>
+void DataManReader::AccumulateMinMax(T &min, T &max,
+                                     const std::vector<char> &minVec,
+                                     const std::vector<char> &maxVec) const
+{
+    T maxInMetadata = reinterpret_cast<const T *>(maxVec.data())[0];
+    if (maxInMetadata > max)
+    {
+        max = maxInMetadata;
+    }
+    T minInMetadata = reinterpret_cast<const T *>(minVec.data())[0];
+    if (minInMetadata < min)
+    {
+        min = minInMetadata;
     }
 }
 

@@ -14,6 +14,7 @@
 #include <queue>
 
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/transportman/stagingman/StagingMan.h"
 
@@ -42,10 +43,11 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    // API parameters
     int m_Channels = 1;
-    int64_t m_MaxBufferSteps = 3000;
+    int64_t m_QueueLimit = 3000;
+    std::string m_QueueFullPolicy = "discard";
     size_t m_DefaultBufferSize = 1024;
+    int m_Port = 12307;
 
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;
@@ -54,19 +56,16 @@ private:
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 5;
     bool m_Listening = false;
-    bool m_Tolerance = false;
-
-    // metadata for current step being written.
-    std::pair<int64_t, std::shared_ptr<std::vector<char>>>
-        m_LockedAggregatedMetadata;
-    std::mutex m_LockedAggregatedMetadataMutex;
+    bool m_Tolerance = true;
+    bool m_AttributesSet = false;
+    int m_AppID = 0;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     void Handshake();
 
-    void ReplyThread(std::string address);
+    void ReplyThread(const std::string &address);
     std::vector<std::thread> m_ReplyThreads;
 
 #define declare_type(T)                                                        \

@@ -18,22 +18,16 @@ namespace adios2
 namespace transport
 {
 
-class SocketZmqReqRep
+class SocketZmqReqRep : public SocketZmq
 {
 
 public:
-    SocketZmqReqRep(const MPI_Comm mpiComm, const int timeout);
+    SocketZmqReqRep(const int timeout);
     virtual ~SocketZmqReqRep();
-    int Open(const std::string &fullAddress, const Mode openMode);
-    int Write(const char *buffer, size_t size);
-    int Read(char *buffer, size_t size);
-    void Close();
-
-private:
-    void *m_Context = nullptr;
-    void *m_Socket = nullptr;
-    const int m_Timeout;
-    int m_Verbosity = 0;
+    int Open(const std::string &fullAddress, const Mode openMode) final;
+    int Write(const char *buffer, size_t size) final;
+    int Read(char *buffer, size_t size) final;
+    int Close() final;
 };
 
 } // end namespace transport

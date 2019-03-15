@@ -435,7 +435,7 @@ private:
      */
     DataMap m_Variables;
 
-    /** Variable containers based on fixed-size type */
+/** Variable containers based on fixed-size type */
 #define declare_map(T, NAME) std::map<unsigned int, Variable<T>> m_##NAME;
     ADIOS2_FOREACH_STDTYPE_2ARGS(declare_map)
 #undef declare_map
