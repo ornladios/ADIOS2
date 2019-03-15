@@ -77,6 +77,152 @@ TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
                                       // changes the engine_type string?
 }
 
+template <class T>
+struct MyData
+{
+    using Block = std::vector<T>;
+    using Box = adios2::Box<adios2::Dims>;
+
+    MyData(const std::vector<Box> &selections)
+    : m_Blocks(selections.size()), m_Selections(selections)
+    {
+        for (int b = 0; b < nBlocks(); ++b)
+        {
+            m_Blocks[b].resize(selections[b].second[0]);
+        }
+    }
+
+    size_t nBlocks() const { return m_Selections.size(); }
+    size_t start(int b) const { return m_Selections[b].first[0]; }
+    size_t count(int b) const { return m_Selections[b].second[0]; }
+    const Box &selection(int b) const { return m_Selections[b]; }
+    Block &operator[](int b) { return m_Blocks[b]; }
+
+private:
+    std::vector<Block> m_Blocks;
+    std::vector<Box> m_Selections;
+};
+
+template <class T>
+struct MyDataView
+{
+    using Block = T*;
+    using Box = adios2::Box<adios2::Dims>;
+
+    MyDataView(const std::vector<Box> &selections)
+    : m_Blocks(selections.size()), m_Selections(selections)
+    {
+    }
+
+    void place(int b, T* arr)
+    {
+      m_Blocks[b] = arr;
+    }
+
+    size_t nBlocks() const { return m_Selections.size(); }
+    size_t start(int b) const { return m_Selections[b].first[0]; }
+    size_t count(int b) const { return m_Selections[b].second[0]; }
+    const Box &selection(int b) const { return m_Selections[b]; }
+    Block operator[](int b) { return m_Blocks[b]; }
+
+private:
+    std::vector<Block> m_Blocks;
+    std::vector<Box> m_Selections;
+};
+
+template <class MyData>
+void PopulateBlock(MyData &myData, int b)
+{
+    auto &&block = myData[b];
+
+    for (size_t i = 0; i < myData.count(b); i++)
+    {
+        block[i] = i + myData.start(b);
+    }
+}
+
+TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutSync)
+{
+    using T = double;
+    using Box = MyData<T>::Box;
+    using Block = MyData<T>::Block;
+    const size_t Nx = 10;
+    const adios2::Dims shape = {size * Nx};
+    std::vector<Box> selections = {
+        {{rank * Nx}, {Nx / 2}}, {{rank * Nx + Nx / 2}, {Nx / 2}},
+    };
+
+    adios2::Engine engine = io.Open("multi_sync.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", shape);
+
+    MyData<T> myData(selections);
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        PopulateBlock(myData, b);
+
+        var.SetSelection(myData.selection(b));
+        engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+    }
+    engine.Close();
+}
+
+TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutDeferred)
+{
+    using T = double;
+    using Box = MyData<T>::Box;
+    using Block = MyData<T>::Block;
+    const size_t Nx = 10;
+    const adios2::Dims shape = {size * Nx};
+    std::vector<Box> selections = {
+        {{rank * Nx}, {Nx / 2}}, {{rank * Nx + Nx / 2}, {Nx / 2}},
+    };
+
+    adios2::Engine engine = io.Open("multi_deferred.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", shape);
+
+    MyData<T> myData(selections);
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        PopulateBlock(myData, b);
+
+        var.SetSelection(myData.selection(b));
+        engine.Put(var, &myData[b][0], adios2::Mode::Deferred);
+    }
+    engine.Close();
+}
+
+TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutDS)
+{
+    using T = double;
+    using Box = MyData<T>::Box;
+    using Block = MyData<T>::Block;
+    const size_t Nx = 10;
+    const adios2::Dims shape = {size * Nx};
+    std::vector<Box> selections = {
+        {{rank * Nx}, {Nx / 2}}, {{rank * Nx + Nx / 2}, {Nx / 2}},
+    };
+
+    adios2::Engine engine = io.Open("multi_ds.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", shape);
+
+    MyData<T> myData(selections);
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        PopulateBlock(myData, b);
+
+        var.SetSelection(myData.selection(b));
+	if (b == 0) {
+	  engine.Put(var, &myData[b][0], adios2::Mode::Deferred);
+	} else {
+	  engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+	}
+    }
+    engine.Close();
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
