@@ -459,6 +459,12 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
     return 0;
 }
 
+int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
+                  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+    return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
+}
+
 } // end namespace mpi
 } // end namespace helper
 } // end namespace adios2
