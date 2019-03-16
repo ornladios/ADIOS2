@@ -75,7 +75,10 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
     {
         if (!shape.empty())
         {
-            variable->SetShape(shape);
+            if (!(shape.size() == 1 && shape.front() == adios2::LocalValueDim))
+            {
+                variable->SetShape(shape);
+            }
         }
 
         if (!start.empty() && !count.empty())
