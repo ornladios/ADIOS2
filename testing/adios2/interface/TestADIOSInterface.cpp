@@ -331,13 +331,15 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync3)
 }
 #endif
 
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockGetSyncPutDef)
+TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPut2FileGetSyncPutSync)
+
 {
+    SetupDecomposition(10);
+
     // Generate data
     {
-        SetupDecomposition(10);
-
-        adios2::Engine engine = io.Open("multi_sync.bp", adios2::Mode::Write);
+        adios2::Engine engine =
+            io.Open("multi_2f_sync_input.bp", adios2::Mode::Write);
         adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
 
         MyData<T> myData(m_Selections);
@@ -354,10 +356,54 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockGetSyncPutDef)
 
     io.RemoveAllVariables();
 
-    adios2::Engine reader = io.Open("multi_sync.bp", adios2::Mode::Read);
+    adios2::Engine reader =
+        io.Open("multi_2f_sync_input.bp", adios2::Mode::Read);
+    adios2::Engine writer = io.Open("multi_2f_sync.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.InquireVariable<T>("var");
 
-    adios2::Engine writer =
-        io.Open("multi_2f_syncdeferred.bp", adios2::Mode::Write);
+    MyData<T> myData(m_Selections);
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        var.SetSelection(myData.selection(b));
+        reader.Get(var, &myData[b][0], adios2::Mode::Sync);
+        writer.Put(var, &myData[b][0], adios2::Mode::Sync);
+    }
+
+    reader.Close();
+    writer.Close();
+
+    EXPECT_TRUE(checkOutput("multi_2f_sync.bp"));
+}
+
+TEST_F(ADIOS2_CXX11_API_Put, MultiBlock2FileGetSyncPutDef)
+{
+    SetupDecomposition(10);
+
+    // Generate data
+    {
+        adios2::Engine engine =
+            io.Open("multi_2f_syncdef_input.bp", adios2::Mode::Write);
+        adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
+
+        MyData<T> myData(m_Selections);
+
+        for (int b = 0; b < myData.nBlocks(); ++b)
+        {
+            PopulateBlock(myData, b);
+
+            var.SetSelection(myData.selection(b));
+            engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+        }
+        engine.Close();
+    }
+
+    io.RemoveAllVariables();
+
+    adios2::Engine reader =
+        io.Open("multi_2f_syncdef_input.bp", adios2::Mode::Read);
+
+    adios2::Engine writer = io.Open("multi_2f_syncdef.bp", adios2::Mode::Write);
     adios2::Variable<T> var = io.InquireVariable<T>("var");
 
     MyData<T> myData(m_Selections);
@@ -371,7 +417,8 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockGetSyncPutDef)
 
     reader.Close();
     writer.Close();
-    EXPECT_TRUE(checkOutput("multi_2f_syncdeferred.bp"));
+
+    EXPECT_TRUE(checkOutput("multi_2f_syncdef.bp"));
 }
 
 int main(int argc, char **argv)
