@@ -66,7 +66,7 @@ private:
 
 #define declare_type(T)                                                        \
     void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
-               const size_t bufferID) final;
+               const size_t bufferID, const T &value) final;
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -80,7 +80,7 @@ private:
 
     template <class T>
     void PutCommon(Variable<T> &variable, typename Variable<T>::Span &span,
-                   const size_t bufferID);
+                   const size_t bufferID, const T &value);
 
     template <class T>
     void PutSyncCommon(Variable<T> &variable,

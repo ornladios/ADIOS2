@@ -106,12 +106,14 @@ public:
      * Put signature that pre-allocates a Variable in Buffer returning a Span of
      * the payload memory from variable.m_Count
      * @param variable input variable to be allocated
+     * @param bufferID
+     * @param value
      * @return span to the buffer internal memory that be populated by the
      * application
      */
     template <class T>
-    typename Variable<T>::Span &Put(Variable<T> &variable,
-                                    const size_t bufferID = 0);
+    typename Variable<T>::Span &
+    Put(Variable<T> &variable, const size_t bufferID = 0, const T &value = T{});
 
     /**
      * @brief Put associates variable and data into adios2 in Engine Write mode.
@@ -453,8 +455,8 @@ protected:
 // Put
 #define declare_type(T)                                                        \
     virtual void DoPut(Variable<T> &variable,                                  \
-                       typename Variable<T>::Span &span,                       \
-                       const size_t blockID);
+                       typename Variable<T>::Span &span, const size_t blockID, \
+                       const T &value);
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -576,8 +578,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
-    extern template typename Variable<T>::Span &Engine::Put(Variable<T> &,     \
-                                                            const size_t);
+    extern template typename Variable<T>::Span &Engine::Put(                   \
+        Variable<T> &, const size_t, const T &);
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

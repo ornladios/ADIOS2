@@ -22,7 +22,7 @@ namespace engine
 template <class T>
 void BP3Writer::PutCommon(Variable<T> &variable,
                           typename Variable<T>::Span &span,
-                          const size_t /*bufferID*/)
+                          const size_t /*bufferID*/, const T &value)
 {
     // if first timestep Write create a new pg index
     if (!m_BP3Serializer.m_MetadataSet.DataPGIsOpen)
@@ -55,6 +55,7 @@ void BP3Writer::PutCommon(Variable<T> &variable,
     const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
     m_BP3Serializer.PutVariableMetadata(variable, blockInfo, sourceRowMajor,
                                         &span);
+    span.m_Value = value;
     m_BP3Serializer.PutVariablePayload(variable, blockInfo, sourceRowMajor,
                                        &span);
 }

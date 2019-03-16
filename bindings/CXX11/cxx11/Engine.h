@@ -11,6 +11,7 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 
+#include "Types.h"
 #include "Variable.h"
 
 #include "adios2/ADIOSMacros.h"
@@ -96,11 +97,12 @@ public:
      * bounds.
      * @param variable input variable
      * @param bufferID (default = 0) optional, if engine has multiple buffers
+     * @param value (default is zeros) optional initial value
      * @return span to variable data in engine internal buffer
      */
     template <class T>
-    typename Variable<T>::Span Put(Variable<T> variable,
-                                   const size_t bufferID = 0);
+    typename Variable<T>::Span
+    Put(Variable<T> variable, const size_t bufferID = 0, const T &value = {});
 
     /**
      * Put data associated with a Variable in the Engine
@@ -385,8 +387,8 @@ private:
 
 #define declare_template_instantiation(T)                                      \
                                                                                \
-    extern template typename Variable<T>::Span Engine::Put(Variable<T>,        \
-                                                           const size_t);
+    extern template typename Variable<T>::Span Engine::Put(                    \
+        Variable<T>, const size_t, const T &);
 
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
