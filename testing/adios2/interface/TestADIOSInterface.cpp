@@ -147,7 +147,8 @@ public:
     template <class MyData>
     void PopulateBlock(MyData &myData, int b)
     {
-        std::iota(&myData[b][0], &myData[b][myData.count(b)], myData.start(b));
+        std::iota(&myData[b][0], &myData[b][myData.count(b)],
+                  T(myData.start(b)));
     }
 
     bool checkOutput(std::string filename)
@@ -170,7 +171,7 @@ public:
         engine.Close();
 
         std::vector<T> ref(shape[0]);
-        std::iota(ref.begin(), ref.end(), 0);
+        std::iota(ref.begin(), ref.end(), T());
         return data == ref;
     }
 
@@ -293,7 +294,7 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync2)
         PopulateBlock(myData, b);
     }
     std::vector<T> lastBlock(m_Nx / 2);
-    std::iota(lastBlock.begin(), lastBlock.end(), rank * m_Nx + m_Nx / 2);
+    std::iota(lastBlock.begin(), lastBlock.end(), T(rank * m_Nx + m_Nx / 2));
     var.SetSelection(myData.selection(1));
     engine.Put(var, lastBlock.data(), adios2::Mode::Deferred);
     engine.Close();
