@@ -315,7 +315,7 @@ with adios2.open("types_np.bp", "r", comm) as fr:
                              instepStr + " " + stepStr)
 
         indataRanks = fr_step.read("rank", [0], [size])
-        dataRanks = np.arange(0,size)
+        dataRanks = np.arange(0, size)
         if((indataRanks == dataRanks).all() is False):
             raise ValueError('Ranks read failed')
 
