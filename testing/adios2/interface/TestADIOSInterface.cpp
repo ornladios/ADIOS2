@@ -316,6 +316,34 @@ TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutZeroCopySync3)
     engine.Close();
 }
 
+TEST_F(ADIOS2_CXX11_API_IO, MultiBlockPutTwoFilesSync)
+{
+    using T = double;
+    using Box = MyData<T>::Box;
+    using Block = MyData<T>::Block;
+    const size_t Nx = 10;
+    const adios2::Dims shape = {size * Nx};
+    std::vector<Box> selections = {
+        {{rank * Nx}, {Nx / 2}}, {{rank * Nx + Nx / 2}, {Nx / 2}},
+    };
+
+    adios2::Engine reader = io.Open("multi_sync.bp", adios2::Mode::Read);
+    adios2::Engine writer = io.Open("multi_2f.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.InquireVariable<T>("var");
+
+    MyData<T> myData(selections);
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+      var.SetSelection(myData.selection(b));
+      reader.Get(var, &myData[b][0], adios2::Mode::Sync);
+      writer.Put(var, &myData[b][0], adios2::Mode::Deferred);
+    }
+
+    reader.Close();
+    writer.Close();
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
