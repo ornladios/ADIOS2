@@ -50,7 +50,7 @@ add_library(adios2
 
 #toolkit
   toolkit/format/BufferSTL.cpp
-  
+
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
   toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
@@ -78,12 +78,11 @@ add_library(adios2
   toolkit/transport/Transport.cpp
   toolkit/transport/file/FileStdio.cpp
   toolkit/transport/file/FileFStream.cpp
-  
+
   toolkit/transportman/TransportMan.cpp
-  
+
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
-  
 )
 target_include_directories(adios2
   PUBLIC
@@ -91,7 +90,7 @@ target_include_directories(adios2
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml taustubs) 
+target_link_libraries(adios2 PRIVATE adios2sys_interface pugixml taustubs)
 target_link_libraries(adios2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2 PUBLIC ${ADIOS2_CXX11_FEATURES})
 
@@ -114,32 +113,29 @@ if(ADIOS2_HAVE_ZeroMQ)
     target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()
 
-if(ADIOS2_HAVE_MPI)
+if(ADIOS2_HAVE_DataMan)
     target_sources(adios2 PRIVATE
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
+        engine/dataman/DataManCommon.cpp
+        engine/dataman/DataManReader.cpp
+        engine/dataman/DataManReader.tcc
+        engine/dataman/DataManWriter.cpp
+        engine/dataman/DataManWriter.tcc
         )
-    target_link_libraries(adios2 PUBLIC MPI::MPI_C)
     target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
-if(ADIOS2_HAVE_DataMan)
-  target_sources(adios2 PRIVATE
-      engine/dataman/DataManCommon.cpp
-      engine/dataman/DataManReader.cpp
-      engine/dataman/DataManReader.tcc
-      engine/dataman/DataManWriter.cpp
-      engine/dataman/DataManWriter.tcc
-  )
-endif()
-
 if(ADIOS2_HAVE_WDM)
-  target_sources(adios2 PRIVATE
-      engine/wdm/WdmReader.cpp
-      engine/wdm/WdmReader.tcc
-      engine/wdm/WdmWriter.cpp
-      engine/wdm/WdmWriter.tcc
-  )
+    target_sources(adios2 PRIVATE
+        toolkit/format/dataman/DataManSerializer.cpp
+        toolkit/format/dataman/DataManSerializer.tcc
+        engine/wdm/WdmReader.cpp
+        engine/wdm/WdmReader.tcc
+        engine/wdm/WdmWriter.cpp
+        engine/wdm/WdmWriter.tcc
+        )
+    target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
 
