@@ -72,6 +72,7 @@ with adios2.open("types_np.bp", "w", comm) as fw:
             fw.write_attribute("attrR32Array", data.R32)
             fw.write_attribute("attrR64Array", data.R64)
 
+        fw.write("rank", np.array(rank), [adios2.LocalValueDim])
         fw.write("steps", "Step:" + str(i))
         fw.write("varI8", data.I8, shape, start, count)
         fw.write("varI16", data.I16, shape, start, count)
@@ -312,6 +313,11 @@ with adios2.open("types_np.bp", "r", comm) as fr:
         if(instepStr[0] != stepStr):
             raise ValueError('steps variable read failed: ' +
                              instepStr + " " + stepStr)
+
+        indataRanks = fr_step.read("rank", [0], [size])
+        dataRanks = np.arange(0, size)
+        if((indataRanks == dataRanks).all() is False):
+            raise ValueError('Ranks read failed')
 
         indataI8 = fr_step.read("varI8", start, count)
         indataI16 = fr_step.read("varI16", start, count)

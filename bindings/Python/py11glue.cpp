@@ -115,6 +115,7 @@ PYBIND11_MODULE(adios2, m)
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
     m.attr("VariableDims") = false;
+    m.attr("LocalValueDim") = adios2::LocalValueDim;
 
     // enum classes
     pybind11::enum_<adios2::Mode>(m, "Mode")
@@ -123,6 +124,14 @@ PYBIND11_MODULE(adios2, m)
         .value("Append", adios2::Mode::Append)
         .value("Deferred", adios2::Mode::Deferred)
         .value("Sync", adios2::Mode::Sync)
+        .export_values();
+
+    pybind11::enum_<adios2::ShapeID>(m, "ShapeID")
+        .value("Unknown", adios2::ShapeID::Unknown)
+        .value("GlobalValue", adios2::ShapeID::GlobalValue)
+        .value("GlobalArray", adios2::ShapeID::GlobalArray)
+        .value("LocalValue", adios2::ShapeID::LocalValue)
+        .value("LocalArray", adios2::ShapeID::LocalArray)
         .export_values();
 
     pybind11::enum_<adios2::StepMode>(m, "StepMode")
@@ -575,8 +584,10 @@ PYBIND11_MODULE(adios2, m)
                           const adios2::Dims &, const bool)) &
                           adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
-             pybind11::arg("shape"), pybind11::arg("start"),
-             pybind11::arg("count"), pybind11::arg("end_step") = false,
+             pybind11::arg("shape") = adios2::Dims(),
+             pybind11::arg("start") = adios2::Dims(),
+             pybind11::arg("count") = adios2::Dims(),
+             pybind11::arg("end_step") = false,
              R"md(
              writes a self-describing array (numpy) variable
 
@@ -603,6 +614,46 @@ PYBIND11_MODULE(adios2, m)
                      end current step, begin next step and flush (default = false).
         )md")
 
+        .def("write",
+             (void (adios2::py11::File::*)(
+                 const std::string &, const pybind11::array &, const bool)) &
+                 adios2::py11::File::Write,
+             pybind11::arg("name"), pybind11::arg("array"),
+             pybind11::arg("end_step") = false, R"md(
+				             writes a self-describing single value array (numpy) variable
+
+				             Parameters
+				                 name
+				                     variable name
+
+				                 array: numpy 
+				                     variable data single value
+
+				                 endstep 
+				                     end current step, begin next step and flush 
+				                     (default = false).
+				        )md")
+
+        .def("write",
+             (void (adios2::py11::File::*)(const std::string &,
+                                           const std::string &, const bool)) &
+                 adios2::py11::File::Write,
+             pybind11::arg("name"), pybind11::arg("string"),
+             pybind11::arg("end_step") = false, R"md(
+				             writes a self-describing single value string variable
+
+				             Parameters
+				                 name
+				                     variable name
+
+				                 string 
+				                     variable data single value
+
+				                 endstep 
+				                     end current step, begin next step and flush 
+				                     (default = false).
+				        )md")
+
         .def("write_attribute",
              (void (adios2::py11::File::*)(
                  const std::string &, const pybind11::array &,
@@ -613,26 +664,27 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("separator") = "/",
              pybind11::arg("end_step") = false,
              R"md(
-		             writes a self-describing single value array (numpy) variable
+								             writes a self-describing single value array (numpy) variable
 
-		             Parameters
-		                 name
-		                     attribute name
+								             Parameters
+								                 name
+								                     attribute name
 
-		                 array: numpy 
-		                     attribute numpy array data
+								                 array: numpy 
+								                     attribute numpy array data
 
-						 variablename:
-                             if attribute is associated with a variable
+												 variablename:
+						                             if attribute is associated with a variable
 
-                         separator:
-                             concatenation string between variablename and attribute
-                             e.g. variablename + separator + name
-                                  var/units. Not used if variablename is empty 
-		                 endstep 
-		                     end current step, begin next step and flush 
-		                     (default = false).
-		        )md")
+						                         separator:
+						                             concatenation string between variablename and attribute
+						                             e.g. variablename + separator + name
+						                                  var/units. Not used if variablename is empty 
+								                 endstep 
+								                     end current step, begin next step and flush 
+								                     (default = false).
+								        )md")
+
         .def("write_attribute",
              (void (adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string &,
@@ -694,46 +746,6 @@ PYBIND11_MODULE(adios2, m)
 						 end current step, begin next step and flush 
 						 (default = false).
 			)md")
-
-        .def("write",
-             (void (adios2::py11::File::*)(
-                 const std::string &, const pybind11::array &, const bool)) &
-                 adios2::py11::File::Write,
-             pybind11::arg("name"), pybind11::arg("array"),
-             pybind11::arg("end_step") = false, R"md(
-             writes a self-describing single value array (numpy) variable
-
-             Parameters
-                 name
-                     variable name
-
-                 array: numpy 
-                     variable data single value
-
-                 endstep 
-                     end current step, begin next step and flush 
-                     (default = false).
-        )md")
-
-        .def("write",
-             (void (adios2::py11::File::*)(const std::string &,
-                                           const std::string &, const bool)) &
-                 adios2::py11::File::Write,
-             pybind11::arg("name"), pybind11::arg("string"),
-             pybind11::arg("end_step") = false, R"md(
-             writes a self-describing single value string variable
-
-             Parameters
-                 name
-                     variable name
-
-                 string 
-                     variable data single value
-
-                 endstep 
-                     end current step, begin next step and flush 
-                     (default = false).
-        )md")
 
         .def("read_string", (std::vector<std::string> (adios2::py11::File::*)(
                                 const std::string &)) &
