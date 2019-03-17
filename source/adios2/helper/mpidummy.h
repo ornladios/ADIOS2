@@ -79,6 +79,7 @@ using MPI_Op = int;
 #define MPI_ANY_TAG 0
 
 #define MPI_SUM 0
+#define MPI_MAX 1
 
 #define MPI_MAX_PROCESSOR_NAME 32
 
