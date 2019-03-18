@@ -293,16 +293,17 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync2)
     {
         PopulateBlock(myData, b);
     }
+
     std::vector<T> lastBlock(m_Nx / 2);
     std::iota(lastBlock.begin(), lastBlock.end(), T(rank * m_Nx + m_Nx / 2));
     var.SetSelection(myData.selection(1));
     engine.Put(var, lastBlock.data(), adios2::Mode::Deferred);
+
     engine.Close();
 
     EXPECT_TRUE(checkOutput("multi0_sync2.bp"));
 }
 
-#if 0
 TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync3)
 {
     SetupDecomposition(10);
@@ -323,13 +324,15 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync3)
         PopulateBlock(myData, b);
     }
 
-    engine.Put(var, std::vector<T>{5., 6., 7., 8., 9.}.data(),
-               adios2::Mode::Sync);
+    std::vector<T> lastBlock(m_Nx / 2);
+    std::iota(lastBlock.begin(), lastBlock.end(), T(rank * m_Nx + m_Nx / 2));
+    var.SetSelection(myData.selection(1));
+    engine.Put(var, lastBlock.data(), adios2::Mode::Sync);
+
     engine.Close();
 
     EXPECT_TRUE(checkOutput("multi0_sync3.bp"));
 }
-#endif
 
 int main(int argc, char **argv)
 {
