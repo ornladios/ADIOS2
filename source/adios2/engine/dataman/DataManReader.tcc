@@ -88,6 +88,7 @@ std::vector<typename Variable<T>::Info>
 DataManReader::BlocksInfoCommon(const Variable<T> &variable,
                                 const size_t step) const
 {
+    std::cout << "DataManReader::BlocksInfoCommon\n";
     std::vector<typename Variable<T>::Info> v;
     auto it = m_MetaDataMap.find(step);
     if (it == m_MetaDataMap.end())
@@ -128,22 +129,43 @@ template <typename T>
 void DataManReader::CheckIOVariable(const std::string &name, const Dims &shape,
                                     const Dims &start, const Dims &count)
 {
+    bool singleValue = false;
+    if (shape.size() == 1 and start.size() == 1 and count.size() == 1)
+    {
+        if (shape[0] == 1 and start[0] == 0 and count[0] == 1)
+        {
+            singleValue = true;
+        }
+    }
     auto v = m_IO.InquireVariable<T>(name);
     if (v == nullptr)
     {
-        m_IO.DefineVariable<T>(name, shape, start, count);
+        if (singleValue)
+        {
+            m_IO.DefineVariable<T>(name);
+        }
+        else
+        {
+            m_IO.DefineVariable<T>(name, shape, start, count);
+        }
+        v = m_IO.InquireVariable<T>(name);
+        v->m_Engine = this;
     }
     else
     {
-        if (v->m_Shape != shape)
+        if (not singleValue)
         {
-            v->SetShape(shape);
-        }
-        if (v->m_Start != start || v->m_Count != count)
-        {
-            v->SetSelection({start, count});
+            if (v->m_Shape != shape)
+            {
+                v->SetShape(shape);
+            }
+            if (v->m_Start != start || v->m_Count != count)
+            {
+                v->SetSelection({start, count});
+            }
         }
     }
+    v->m_FirstStreamingStep = false;
 }
 
 template <>
