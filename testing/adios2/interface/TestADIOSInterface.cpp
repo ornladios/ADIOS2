@@ -306,7 +306,7 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync2)
 
 TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync3)
 {
-    SetupDecomposition(10);
+    SetupDecomposition(10); // changing to 10000 will make this test fail
 
     adios2::Engine engine = io.Open("multi0_sync3.bp", adios2::Mode::Write);
     adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
@@ -319,15 +319,14 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync3)
         myData.place(b, span.data());
     }
 
-    for (int b = 0; b < 1; ++b)
-    {
-        PopulateBlock(myData, b);
-    }
-
+    // writing block 1 Deferred
     std::vector<T> lastBlock(m_Nx / 2);
     std::iota(lastBlock.begin(), lastBlock.end(), T(rank * m_Nx + m_Nx / 2));
     var.SetSelection(myData.selection(1));
     engine.Put(var, lastBlock.data(), adios2::Mode::Sync);
+
+    // filling span for block 0
+    PopulateBlock(myData, 0);
 
     engine.Close();
 
