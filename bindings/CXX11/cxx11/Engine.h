@@ -90,9 +90,9 @@ public:
     size_t CurrentStep() const;
 
     /**
-     * Put signature that provides access to the internal engine buffer for a
+     * Provides access to the internal engine buffer for a
      * pre-allocated variable. Returns a fixed size Span (based on C++20
-     * std::span) so applications can populate data value after this Put.
+     * std::span) so applications can populate data value after this call.
      * Requires a call to PerformPuts, EndStep, or Close to extract the Min/Max
      * bounds.
      * @param variable input variable
@@ -101,8 +101,9 @@ public:
      * @return span to variable data in engine internal buffer
      */
     template <class T>
-    typename Variable<T>::Span
-    Put(Variable<T> variable, const size_t bufferID = 0, const T &value = {});
+    typename Variable<T>::Span PutPrealloc(Variable<T> variable,
+                                           const size_t bufferID = 0,
+                                           const T &value = {});
 
     /**
      * Put data associated with a Variable in the Engine
@@ -387,7 +388,7 @@ private:
 
 #define declare_template_instantiation(T)                                      \
                                                                                \
-    extern template typename Variable<T>::Span Engine::Put(                    \
+    extern template typename Variable<T>::Span Engine::PutPrealloc(            \
         Variable<T>, const size_t, const T &);
 
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)

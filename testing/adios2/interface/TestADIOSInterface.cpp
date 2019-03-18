@@ -261,7 +261,7 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync)
     for (int b = 0; b < myData.nBlocks(); ++b)
     {
         var.SetSelection(myData.selection(b));
-        auto span = engine.Put(var);
+        auto span = engine.PutPrealloc(var);
         myData.place(b, span.data());
     }
 
@@ -285,7 +285,7 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync2)
     for (int b = 0; b < 1; ++b)
     {
         var.SetSelection(myData.selection(b));
-        auto span = engine.Put(var);
+        auto span = engine.PutPrealloc(var);
         myData.place(b, span.data());
     }
 

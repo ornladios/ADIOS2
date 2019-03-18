@@ -59,8 +59,8 @@ ToBlocksInfo(const std::vector<typename core::Variable<
 } // end empty namespace
 
 template <class T>
-typename Variable<T>::Span Engine::Put(Variable<T> variable,
-                                       const size_t bufferID, const T &value)
+typename Variable<T>::Span
+Engine::PutPrealloc(Variable<T> variable, const size_t bufferID, const T &value)
 {
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine,

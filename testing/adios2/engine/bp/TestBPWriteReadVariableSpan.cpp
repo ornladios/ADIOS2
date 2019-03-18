@@ -99,20 +99,30 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
             bpWriter.BeginStep();
             bpWriter.Put<std::string>("iString", currentTestData.S1);
 
-            adios2::Variable<int8_t>::Span i8Span = bpWriter.Put(var_i8);
-            adios2::Variable<int16_t>::Span i16Span = bpWriter.Put(var_i16);
-            adios2::Variable<int32_t>::Span i32Span = bpWriter.Put(var_i32);
-            adios2::Variable<int64_t>::Span i64Span = bpWriter.Put(var_i64);
-            adios2::Variable<uint8_t>::Span u8Span = bpWriter.Put(var_u8);
-            adios2::Variable<uint16_t>::Span u16Span = bpWriter.Put(var_u16);
-            adios2::Variable<uint32_t>::Span u32Span = bpWriter.Put(var_u32);
-            adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
-            adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
-            adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
+            adios2::Variable<int8_t>::Span i8Span =
+                bpWriter.PutPrealloc(var_i8);
+            adios2::Variable<int16_t>::Span i16Span =
+                bpWriter.PutPrealloc(var_i16);
+            adios2::Variable<int32_t>::Span i32Span =
+                bpWriter.PutPrealloc(var_i32);
+            adios2::Variable<int64_t>::Span i64Span =
+                bpWriter.PutPrealloc(var_i64);
+            adios2::Variable<uint8_t>::Span u8Span =
+                bpWriter.PutPrealloc(var_u8);
+            adios2::Variable<uint16_t>::Span u16Span =
+                bpWriter.PutPrealloc(var_u16);
+            adios2::Variable<uint32_t>::Span u32Span =
+                bpWriter.PutPrealloc(var_u32);
+            adios2::Variable<uint64_t>::Span u64Span =
+                bpWriter.PutPrealloc(var_u64);
+            adios2::Variable<float>::Span r32Span =
+                bpWriter.PutPrealloc(var_r32);
+            adios2::Variable<double>::Span r64Span =
+                bpWriter.PutPrealloc(var_r64);
             adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
+                bpWriter.PutPrealloc(var_cr32);
             adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+                bpWriter.PutPrealloc(var_cr64);
 
             // Testing Data()
             std::copy(currentTestData.I8.begin(),
@@ -389,20 +399,30 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
             bpWriter.BeginStep();
-            adios2::Variable<int8_t>::Span i8Span = bpWriter.Put(var_i8);
-            adios2::Variable<int16_t>::Span i16Span = bpWriter.Put(var_i16);
-            adios2::Variable<int32_t>::Span i32Span = bpWriter.Put(var_i32);
-            adios2::Variable<int64_t>::Span i64Span = bpWriter.Put(var_i64);
-            adios2::Variable<uint8_t>::Span u8Span = bpWriter.Put(var_u8);
-            adios2::Variable<uint16_t>::Span u16Span = bpWriter.Put(var_u16);
-            adios2::Variable<uint32_t>::Span u32Span = bpWriter.Put(var_u32);
-            adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
-            adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
-            adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
+            adios2::Variable<int8_t>::Span i8Span =
+                bpWriter.PutPrealloc(var_i8);
+            adios2::Variable<int16_t>::Span i16Span =
+                bpWriter.PutPrealloc(var_i16);
+            adios2::Variable<int32_t>::Span i32Span =
+                bpWriter.PutPrealloc(var_i32);
+            adios2::Variable<int64_t>::Span i64Span =
+                bpWriter.PutPrealloc(var_i64);
+            adios2::Variable<uint8_t>::Span u8Span =
+                bpWriter.PutPrealloc(var_u8);
+            adios2::Variable<uint16_t>::Span u16Span =
+                bpWriter.PutPrealloc(var_u16);
+            adios2::Variable<uint32_t>::Span u32Span =
+                bpWriter.PutPrealloc(var_u32);
+            adios2::Variable<uint64_t>::Span u64Span =
+                bpWriter.PutPrealloc(var_u64);
+            adios2::Variable<float>::Span r32Span =
+                bpWriter.PutPrealloc(var_r32);
+            adios2::Variable<double>::Span r64Span =
+                bpWriter.PutPrealloc(var_r64);
             adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
+                bpWriter.PutPrealloc(var_cr32);
             adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+                bpWriter.PutPrealloc(var_cr64);
 
             // Testing Data()
             std::copy(currentTestData.I8.begin(),
@@ -698,20 +718,30 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
             bpWriter.BeginStep();
             bpWriter.Put<std::string>("iString", currentTestData.S1);
 
-            adios2::Variable<int8_t>::Span i8Span = bpWriter.Put(var_i8);
-            adios2::Variable<int16_t>::Span i16Span = bpWriter.Put(var_i16);
-            adios2::Variable<int32_t>::Span i32Span = bpWriter.Put(var_i32);
-            adios2::Variable<int64_t>::Span i64Span = bpWriter.Put(var_i64);
-            adios2::Variable<uint8_t>::Span u8Span = bpWriter.Put(var_u8);
-            adios2::Variable<uint16_t>::Span u16Span = bpWriter.Put(var_u16);
-            adios2::Variable<uint32_t>::Span u32Span = bpWriter.Put(var_u32);
-            adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
-            adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
-            adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
+            adios2::Variable<int8_t>::Span i8Span =
+                bpWriter.PutPrealloc(var_i8);
+            adios2::Variable<int16_t>::Span i16Span =
+                bpWriter.PutPrealloc(var_i16);
+            adios2::Variable<int32_t>::Span i32Span =
+                bpWriter.PutPrealloc(var_i32);
+            adios2::Variable<int64_t>::Span i64Span =
+                bpWriter.PutPrealloc(var_i64);
+            adios2::Variable<uint8_t>::Span u8Span =
+                bpWriter.PutPrealloc(var_u8);
+            adios2::Variable<uint16_t>::Span u16Span =
+                bpWriter.PutPrealloc(var_u16);
+            adios2::Variable<uint32_t>::Span u32Span =
+                bpWriter.PutPrealloc(var_u32);
+            adios2::Variable<uint64_t>::Span u64Span =
+                bpWriter.PutPrealloc(var_u64);
+            adios2::Variable<float>::Span r32Span =
+                bpWriter.PutPrealloc(var_r32);
+            adios2::Variable<double>::Span r64Span =
+                bpWriter.PutPrealloc(var_r64);
             adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
+                bpWriter.PutPrealloc(var_cr32);
             adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+                bpWriter.PutPrealloc(var_cr64);
 
             // Testing Data()
             std::copy(currentTestData.I8.begin(),
@@ -969,20 +999,30 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
             bpWriter.BeginStep();
-            adios2::Variable<int8_t>::Span i8Span = bpWriter.Put(var_i8);
-            adios2::Variable<int16_t>::Span i16Span = bpWriter.Put(var_i16);
-            adios2::Variable<int32_t>::Span i32Span = bpWriter.Put(var_i32);
-            adios2::Variable<int64_t>::Span i64Span = bpWriter.Put(var_i64);
-            adios2::Variable<uint8_t>::Span u8Span = bpWriter.Put(var_u8);
-            adios2::Variable<uint16_t>::Span u16Span = bpWriter.Put(var_u16);
-            adios2::Variable<uint32_t>::Span u32Span = bpWriter.Put(var_u32);
-            adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
-            adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
-            adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
+            adios2::Variable<int8_t>::Span i8Span =
+                bpWriter.PutPrealloc(var_i8);
+            adios2::Variable<int16_t>::Span i16Span =
+                bpWriter.PutPrealloc(var_i16);
+            adios2::Variable<int32_t>::Span i32Span =
+                bpWriter.PutPrealloc(var_i32);
+            adios2::Variable<int64_t>::Span i64Span =
+                bpWriter.PutPrealloc(var_i64);
+            adios2::Variable<uint8_t>::Span u8Span =
+                bpWriter.PutPrealloc(var_u8);
+            adios2::Variable<uint16_t>::Span u16Span =
+                bpWriter.PutPrealloc(var_u16);
+            adios2::Variable<uint32_t>::Span u32Span =
+                bpWriter.PutPrealloc(var_u32);
+            adios2::Variable<uint64_t>::Span u64Span =
+                bpWriter.PutPrealloc(var_u64);
+            adios2::Variable<float>::Span r32Span =
+                bpWriter.PutPrealloc(var_r32);
+            adios2::Variable<double>::Span r64Span =
+                bpWriter.PutPrealloc(var_r64);
             adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
+                bpWriter.PutPrealloc(var_cr32);
             adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+                bpWriter.PutPrealloc(var_cr64);
 
             // Testing Data()
             std::copy(currentTestData.I8.begin(),
@@ -1246,35 +1286,37 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
             bpWriter.Put<std::string>("iString", std::to_string(step));
 
             adios2::Variable<int8_t>::Span i8Span =
-                bpWriter.Put(var_i8, NULL, static_cast<int8_t>(step));
+                bpWriter.PutPrealloc(var_i8, NULL, static_cast<int8_t>(step));
             adios2::Variable<int16_t>::Span i16Span =
-                bpWriter.Put(var_i16, NULL, static_cast<int16_t>(step));
+                bpWriter.PutPrealloc(var_i16, NULL, static_cast<int16_t>(step));
             adios2::Variable<int32_t>::Span i32Span =
-                bpWriter.Put(var_i32, NULL, static_cast<int32_t>(step));
+                bpWriter.PutPrealloc(var_i32, NULL, static_cast<int32_t>(step));
             adios2::Variable<int64_t>::Span i64Span =
-                bpWriter.Put(var_i64, NULL, static_cast<int64_t>(step));
+                bpWriter.PutPrealloc(var_i64, NULL, static_cast<int64_t>(step));
 
             adios2::Variable<uint8_t>::Span u8Span =
-                bpWriter.Put(var_u8, NULL, static_cast<uint8_t>(step));
-            adios2::Variable<uint16_t>::Span u16Span =
-                bpWriter.Put(var_u16, NULL, static_cast<uint16_t>(step));
-            adios2::Variable<uint32_t>::Span u32Span =
-                bpWriter.Put(var_u32, NULL, static_cast<uint32_t>(step));
-            adios2::Variable<uint64_t>::Span u64Span =
-                bpWriter.Put(var_u64, NULL, static_cast<uint64_t>(step));
+                bpWriter.PutPrealloc(var_u8, NULL, static_cast<uint8_t>(step));
+            adios2::Variable<uint16_t>::Span u16Span = bpWriter.PutPrealloc(
+                var_u16, NULL, static_cast<uint16_t>(step));
+            adios2::Variable<uint32_t>::Span u32Span = bpWriter.PutPrealloc(
+                var_u32, NULL, static_cast<uint32_t>(step));
+            adios2::Variable<uint64_t>::Span u64Span = bpWriter.PutPrealloc(
+                var_u64, NULL, static_cast<uint64_t>(step));
 
             adios2::Variable<float>::Span r32Span =
-                bpWriter.Put(var_r32, NULL, static_cast<float>(step));
+                bpWriter.PutPrealloc(var_r32, NULL, static_cast<float>(step));
 
             adios2::Variable<double>::Span r64Span =
-                bpWriter.Put(var_r64, NULL, static_cast<double>(step));
+                bpWriter.PutPrealloc(var_r64, NULL, static_cast<double>(step));
 
             adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32, NULL, {static_cast<float>(step),
-                                              static_cast<float>(step)});
+                bpWriter.PutPrealloc(
+                    var_cr32, NULL,
+                    {static_cast<float>(step), static_cast<float>(step)});
             adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64, NULL, {static_cast<double>(step),
-                                              static_cast<double>(step)});
+                bpWriter.PutPrealloc(
+                    var_cr64, NULL,
+                    {static_cast<double>(step), static_cast<double>(step)});
 
             bpWriter.EndStep();
         }
