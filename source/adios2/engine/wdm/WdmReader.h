@@ -112,10 +112,6 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    template <class T>
-    void CalculateMinMax(const T *data, const size_t size, T &min,
-                         T &max) const;
-
     void Log(const int level, const std::string &message, const bool mpi,
              const bool endline);
 

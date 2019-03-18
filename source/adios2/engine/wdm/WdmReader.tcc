@@ -111,6 +111,7 @@ std::vector<typename Variable<T>::Info>
 WdmReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
+    std::cout << "WdmReader::BlocksInfoCommon Step " << step << "\n";
     std::vector<typename Variable<T>::Info> v;
     auto it = m_MetaDataMap.find(step);
     if (it == m_MetaDataMap.end())
@@ -147,37 +148,6 @@ WdmReader::BlocksInfoCommon(const Variable<T> &variable,
     return v;
 }
 
-template <>
-void WdmReader::CalculateMinMax<std::complex<float>>(
-    const std::complex<float> *data, const size_t size,
-    std::complex<float> &min, std::complex<float> &max) const
-{
-}
-template <>
-void WdmReader::CalculateMinMax<std::complex<double>>(
-    const std::complex<double> *data, const size_t size,
-    std::complex<double> &min, std::complex<double> &max) const
-{
-}
-
-template <typename T>
-void WdmReader::CalculateMinMax(const T *data, const size_t size, T &min,
-                                T &max) const
-{
-    for (size_t j = 0; j < size; ++j)
-    {
-        T value = data[j];
-        if (value > max)
-        {
-            max = value;
-        }
-        if (value < min)
-        {
-            min = value;
-        }
-    }
-}
-
 template <typename T>
 void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count)
@@ -203,11 +173,9 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
         }
         v = m_IO.InquireVariable<T>(name);
         v->m_Engine = this;
-        v->m_FirstStreamingStep = false;
     }
     else
     {
-        v->m_FirstStreamingStep = false;
         if (not singleValue)
         {
             if (v->m_Shape != shape)
@@ -220,6 +188,7 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
             }
         }
     }
+    v->m_FirstStreamingStep = false;
 }
 
 } // end namespace engine
