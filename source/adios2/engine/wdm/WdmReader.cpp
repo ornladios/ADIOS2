@@ -89,6 +89,16 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
         }
     }
 
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "WdmReader::BeginStep() MetadataMap contains ";
+        for (const auto &i : m_MetaDataMap)
+        {
+            std::cout << i.first << ", ";
+        }
+        std::cout << std::endl;
+    }
+
     size_t maxStep = std::numeric_limits<size_t>::min();
     size_t minStep = std::numeric_limits<size_t>::max();
 
@@ -112,8 +122,16 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
         }
         if (m_CurrentStep > maxStep)
         {
+            ++m_RetryTimes;
             --m_CurrentStep;
-            return StepStatus::NotReady;
+            if (m_RetryTimes > m_RetryMax)
+            {
+                return StepStatus::EndOfStream;
+            }
+            else
+            {
+                return StepStatus::NotReady;
+            }
         }
     }
     else if (stepMode == StepMode::LatestAvailable)
@@ -128,14 +146,38 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 
     format::DmvVecPtr vars = nullptr;
     auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
-    if (currentStepIt != m_MetaDataMap.end())
+    if (currentStepIt == m_MetaDataMap.end())
+    {
+        for (int64_t step = m_CurrentStep + 1; step <= maxStep; ++step)
+        {
+            auto currentStepIt = m_MetaDataMap.find(step);
+            if (currentStepIt != m_MetaDataMap.end())
+            {
+                m_CurrentStep = step;
+                vars = currentStepIt->second;
+                break;
+            }
+        }
+    }
+    else
     {
         vars = currentStepIt->second;
     }
 
-    if (vars != nullptr)
+    if (vars == nullptr)
     {
-
+        ++m_RetryTimes;
+        if (m_RetryTimes > m_RetryMax)
+        {
+            return StepStatus::EndOfStream;
+        }
+        else
+        {
+            return StepStatus::NotReady;
+        }
+    }
+    else
+    {
         for (const auto &i : *vars)
         {
             if (i.step == m_CurrentStep)
@@ -164,6 +206,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
                std::to_string(m_CurrentStep),
         true, true);
 
+    m_RetryTimes = 0;
     return StepStatus::OK;
 }
 
@@ -266,7 +309,7 @@ void WdmReader::EndStep()
         true, true);
 
     PerformGets();
-    m_DataManSerializer.Erase(CurrentStep());
+    m_DataManSerializer.Erase(CurrentStep(), true);
 
     Log(5, "WdmReader::EndStep() end. Step " + std::to_string(m_CurrentStep),
         true, true);

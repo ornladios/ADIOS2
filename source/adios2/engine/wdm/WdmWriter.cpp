@@ -184,8 +184,7 @@ void WdmWriter::Handshake()
     }
 
     // Check total number of writer apps
-    /*
-    if(m_MpiRank == 0)
+    if (m_MpiRank == 0)
     {
         transport::FileFStream lockCheck(m_MPIComm, m_DebugMode);
         while (true)
@@ -210,8 +209,8 @@ void WdmWriter::Handshake()
             auto size = numRead.GetSize();
             std::vector<char> numAppsChar(size);
             numRead.Read(numAppsChar.data(), numAppsChar.size());
-            m_AppID = 1 + stoi (std::string(numAppsChar.begin(),
-    numAppsChar.end()));
+            m_AppID =
+                1 + stoi(std::string(numAppsChar.begin(), numAppsChar.end()));
             numRead.Close();
         }
         catch (...)
@@ -225,8 +224,8 @@ void WdmWriter::Handshake()
 
         lockWrite.Close();
         remove(".wdm.lock");
+        std::cout << "====== AppID" << m_AppID << std::endl;
     }
-    */
 
     // Make full addresses
     for (int i = 0; i < m_Channels; ++i)
