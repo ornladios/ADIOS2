@@ -19,6 +19,26 @@ namespace core
 namespace engine
 {
 
+typename std::map<size_t, typename Variable<std::string>::Span>::iterator
+FindBlockSpan(Variable<std::string> &variable, const std::string *data)
+{
+    return variable.m_BlocksSpan.end();
+}
+
+template <class T>
+typename std::map<size_t, typename Variable<T>::Span>::iterator
+FindBlockSpan(Variable<T> &variable, const T *data)
+{
+    auto &blocksSpan = variable.m_BlocksSpan;
+    auto it =
+        std::find_if(blocksSpan.begin(), blocksSpan.end(),
+                     [&](std::pair<size_t, typename Variable<T>::Span> pair)
+                     {
+                         return pair.second.Data() == data;
+                     });
+    return it;
+}
+
 template <class T>
 void BP3Writer::PutCommon(Variable<T> &variable,
                           typename Variable<T>::Span &span,
@@ -60,11 +80,32 @@ void BP3Writer::PutCommon(Variable<T> &variable,
                                        &span);
 }
 
-template <class T>
-void BP3Writer::PutSyncCommon(Variable<T> &variable, const T *data)
+template <>
+void BP3Writer::PutSyncCommon(Variable<std::string> &variable,
+                              const std::string *data)
 {
     PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));
     variable.m_BlocksInfo.pop_back();
+}
+
+template <class T>
+void BP3Writer::PutSyncCommon(Variable<T> &variable, const T *data)
+{
+    auto itSpan = FindBlockSpan(variable, data);
+    if (itSpan != variable.m_BlocksSpan.end())
+    { // data was preallocated
+        m_BP3Serializer.PutSpanMetadata(variable, itSpan->second);
+        auto &blockInfo = variable.m_BlocksInfo.at(itSpan->first);
+        // invalidate this blockInfo -- can't erase it here, since that'd mess
+        // up the indices of subsequent elements
+        blockInfo.BlockID = static_cast<size_t>(-1);
+        variable.m_BlocksSpan.erase(itSpan);
+    }
+    else
+    {
+        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));
+        variable.m_BlocksInfo.pop_back();
+    }
 }
 
 template <class T>
@@ -113,14 +154,21 @@ void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
         return;
     }
 
-    const typename Variable<T>::Info blockInfo =
-        variable.SetBlockInfo(data, CurrentStep());
-    m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
-    m_BP3Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(
-        1.05 * helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-        4 *
-            m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
-                                                 blockInfo.Count));
+    auto itSpan = FindBlockSpan(variable, data);
+    if (itSpan != variable.m_BlocksSpan.end())
+    {
+        // data was preallocated: do nothing
+    }
+    else
+    {
+        const auto &blockInfo = variable.SetBlockInfo(data, CurrentStep());
+        m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
+        m_BP3Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(
+            1.05 * helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
+            4 *
+                m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
+                                                     blockInfo.Count));
+    }
 }
 
 template <class T>
@@ -137,10 +185,16 @@ void BP3Writer::PerformPutCommon(Variable<T> &variable)
 {
     for (size_t b = 0; b < variable.m_BlocksInfo.size(); ++b)
     {
+        auto &blockInfo = variable.m_BlocksInfo[b];
+        if (blockInfo.BlockID ==
+            static_cast<size_t>(-1)) // has already been PutSync'd
+        {
+            continue;
+        }
         auto itSpanBlock = variable.m_BlocksSpan.find(b);
         if (itSpanBlock == variable.m_BlocksSpan.end())
         {
-            PutSyncCommon(variable, variable.m_BlocksInfo[b]);
+            PutSyncCommon(variable, blockInfo);
         }
         else
         {
