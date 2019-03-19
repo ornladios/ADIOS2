@@ -83,6 +83,9 @@ private:
                    const size_t bufferID, const T &value);
 
     template <class T>
+    void PutSyncCommon(Variable<T> &variable, const T *data);
+
+    template <class T>
     void PutSyncCommon(Variable<T> &variable,
                        const typename Variable<T>::Info &blockInfo);
 

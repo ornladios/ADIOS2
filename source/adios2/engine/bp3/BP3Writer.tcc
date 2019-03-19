@@ -61,6 +61,13 @@ void BP3Writer::PutCommon(Variable<T> &variable,
 }
 
 template <class T>
+void BP3Writer::PutSyncCommon(Variable<T> &variable, const T *data)
+{
+    PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));
+    variable.m_BlocksInfo.pop_back();
+}
+
+template <class T>
 void BP3Writer::PutSyncCommon(Variable<T> &variable,
                               const typename Variable<T>::Info &blockInfo)
 {
@@ -102,7 +109,7 @@ void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     if (variable.m_SingleValue)
     {
-        DoPutSync(variable, data);
+        PutSyncCommon(variable, data);
         return;
     }
 

@@ -130,8 +130,7 @@ ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #define declare_type(T)                                                        \
     void BP3Writer::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
-        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        variable.m_BlocksInfo.pop_back();                                      \
+        PutSyncCommon(variable, data);                                         \
     }                                                                          \
     void BP3Writer::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
