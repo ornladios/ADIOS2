@@ -250,6 +250,32 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutDS)
     EXPECT_TRUE(checkOutput("multi_ds.bp"));
 }
 
+// uses current interface, ie, no Put call
+TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopy)
+{
+    SetupDecomposition(10);
+
+    adios2::Engine engine = io.Open("multi0.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
+
+    MyDataView<T> myData(m_Selections);
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        var.SetSelection(myData.selection(b));
+        auto span = engine.PutPrealloc(var);
+        myData.place(b, span.data());
+    }
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        PopulateBlock(myData, b);
+    }
+    engine.Close();
+
+    EXPECT_TRUE(checkOutput("multi0.bp"));
+}
+
+// uses provided buffers, Sync Put
 TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync)
 {
     SetupDecomposition(10);
@@ -268,10 +294,37 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync)
     for (int b = 0; b < myData.nBlocks(); ++b)
     {
         PopulateBlock(myData, b);
+        engine.Put(var, &myData[b][0], adios2::Mode::Sync);
     }
     engine.Close();
 
     EXPECT_TRUE(checkOutput("multi0_sync.bp"));
+}
+
+// uses provided buffers, Deferred Put
+TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopyDeferred)
+{
+    SetupDecomposition(10);
+
+    adios2::Engine engine = io.Open("multi0_deferred.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
+
+    MyDataView<T> myData(m_Selections);
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        var.SetSelection(myData.selection(b));
+        auto span = engine.PutPrealloc(var);
+        myData.place(b, span.data());
+    }
+
+    for (int b = 0; b < myData.nBlocks(); ++b)
+    {
+        PopulateBlock(myData, b);
+        engine.Put(var, &myData[b][0], adios2::Mode::Deferred);
+    }
+    engine.Close();
+
+    EXPECT_TRUE(checkOutput("multi0_deferred.bp"));
 }
 
 TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync2)
