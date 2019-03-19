@@ -440,7 +440,7 @@ void BP4Serializer::UpdateOffsetsInMetadata()
 // PRIVATE FUNCTIONS
 void BP4Serializer::PutAttributes(core::IO &io)
 {
-    const auto attributesDataMap = io.GetAttributesDataMap();
+    const auto &attributesDataMap = io.GetAttributesDataMap();
 
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;

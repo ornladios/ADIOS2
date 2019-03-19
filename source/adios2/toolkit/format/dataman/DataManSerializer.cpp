@@ -282,7 +282,7 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
 
 void DataManSerializer::PutAttributes(core::IO &io)
 {
-    const auto attributesDataMap = io.GetAttributesDataMap();
+    const auto &attributesDataMap = io.GetAttributesDataMap();
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
@@ -306,7 +306,7 @@ void DataManSerializer::GetAttributes(core::IO &io)
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
-        const auto attributesDataMap = io.GetAttributesDataMap();
+        const auto &attributesDataMap = io.GetAttributesDataMap();
         const std::string type(staticVar["Y"].get<std::string>());
         if (type == "")
         {

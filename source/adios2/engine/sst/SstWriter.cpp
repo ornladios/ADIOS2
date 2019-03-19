@@ -67,7 +67,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 void SstWriter::FFSMarshalAttributes()
 {
     TAU_SCOPED_TIMER_FUNC();
-    const auto attributesDataMap = m_IO.GetAttributesDataMap();
+    const auto &attributesDataMap = m_IO.GetAttributesDataMap();
 
     const uint32_t attributesCount =
         static_cast<uint32_t>(attributesDataMap.size());
