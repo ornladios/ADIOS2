@@ -111,7 +111,10 @@ std::vector<typename Variable<T>::Info>
 WdmReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
-    std::cout << "WdmReader::BlocksInfoCommon Step " << step << "\n";
+    if (m_Verbosity >= 10)
+    {
+        std::cout << "WdmReader::BlocksInfoCommon Step " << step << "\n";
+    }
     std::vector<typename Variable<T>::Info> v;
     auto it = m_MetaDataMap.find(step);
     if (it == m_MetaDataMap.end())
@@ -173,6 +176,11 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
         }
         v = m_IO.InquireVariable<T>(name);
         v->m_Engine = this;
+        if (m_Verbosity >= 5)
+        {
+            std::cout << "WdmReader::CheckIOVariable defined Variable" << name
+                      << " Dimension " << shape.size() << std::endl;
+        }
     }
     else
     {
@@ -186,6 +194,11 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
             {
                 v->SetSelection({start, count});
             }
+        }
+        if (m_Verbosity >= 5)
+        {
+            std::cout << "WdmReader::CheckIOVariable Variable" << name
+                      << " existing, Dimension " << shape.size() << std::endl;
         }
     }
     v->m_FirstStreamingStep = false;

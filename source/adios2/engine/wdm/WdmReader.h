@@ -53,6 +53,8 @@ private:
     int m_MpiRank;
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 3;
+    int m_RetryMax = 3;
+    int m_RetryTimes = 0;
     size_t m_ReaderId;
     bool m_AttributesSet = false;
 
