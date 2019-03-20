@@ -42,7 +42,7 @@ inline void BP3Reader::GetSyncCommon(Variable<T> &variable, T *data)
         m_BP3Deserializer.InitVariableBlockInfo(variable, data);
     m_BP3Deserializer.SetVariableBlockInfo(variable, blockInfo);
     ReadVariableBlocks(variable);
-    variable.m_BlocksInfo.clear();
+    variable.m_BlocksInfo.pop_back();
 }
 
 template <class T>
