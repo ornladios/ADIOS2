@@ -938,7 +938,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
         {
             CP_verbose(Stream, "Examining metadata for Timestep %d\n",
                        Next->MetadataMsg->Timestep);
-            if (Next->MetadataMsg->Metadata == NULL)
+            if ((Next->MetadataMsg->Metadata == NULL) && (FoundTS == NULL))
             {
                 /*
                  * This is a dummy timestep for something that was
@@ -953,7 +953,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                 TSMetadataList Tmp = Next;
                 Next = Next->Next;
                 FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
-                break;
+                continue;
             }
             if (Next->MetadataMsg->Timestep >= LastTimestep)
             {

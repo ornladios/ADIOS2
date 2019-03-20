@@ -31,17 +31,30 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
 static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                                      enum StreamStatus NewState);
 
+static int locked = 0;
 #ifdef MUTEX_DEBUG
 #define PTHREAD_MUTEX_LOCK(lock)                                               \
     printf("Trying lock line %d\n", __LINE__);                                 \
     pthread_mutex_lock(lock);                                                  \
+    locked++;                                                                  \
     printf("Got lock\n");
 #define PTHREAD_MUTEX_UNLOCK(lock)                                             \
     printf("UNlocking line %d\n", __LINE__);                                   \
+    locked--;                                                                  \
     pthread_mutex_unlock(lock);
+#define SST_ASSERT_LOCKED() assert(locked)
 #else
-#define PTHREAD_MUTEX_LOCK(lock) pthread_mutex_lock(lock);
-#define PTHREAD_MUTEX_UNLOCK(lock) pthread_mutex_unlock(lock);
+#define PTHREAD_MUTEX_LOCK(lock)                                               \
+    {                                                                          \
+        pthread_mutex_lock(lock);                                              \
+        locked++;                                                              \
+    }
+#define PTHREAD_MUTEX_UNLOCK(lock)                                             \
+    {                                                                          \
+        locked--;                                                              \
+        pthread_mutex_unlock(lock);                                            \
+    }
+#define SST_ASSERT_LOCKED() assert(locked)
 #endif
 
 static char *buildContactInfo(SstStream Stream)
@@ -464,15 +477,15 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     return Ret;
 }
 
-static void KillZeroRefTimesteps(SstStream Stream)
+static void KillNeverSentTimesteps(SstStream Stream)
 {
     CPTimestepList Last = NULL, List;
     int AnythingRemoved = 0;
-    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    SST_ASSERT_LOCKED();
     List = Stream->QueuedTimesteps;
     while (List)
     {
-        if (List->ReferenceCount == 0)
+        if (List->NeverSent == 1)
         {
             /* dequeue and free */
             CPTimestepList ItemToFree = List;
@@ -487,9 +500,11 @@ static void KillZeroRefTimesteps(SstStream Stream)
             CP_verbose(Stream, "Step %d reference count is zero, "
                                "releasing from DP and freeing\n",
                        List->Timestep);
-            Stream->DP_Interface->releaseTimestep(&Svcs, Stream->DP_Stream,
-                                                  List->Timestep);
-
+            if (ItemToFree->DPRegistered)
+            {
+                Stream->DP_Interface->releaseTimestep(&Svcs, Stream->DP_Stream,
+                                                      List->Timestep);
+            }
             Stream->QueuedTimestepCount--;
             List = List->Next;
             free(ItemToFree);
@@ -506,12 +521,12 @@ static void KillZeroRefTimesteps(SstStream Stream)
         /* main thread might be waiting on timesteps going away */
         pthread_cond_signal(&Stream->DataCondition);
     }
-    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
 static void DiscardReleasedTimesteps(SstStream Stream)
 {
     CPTimestepList Last = NULL, List;
+    SST_ASSERT_LOCKED();
     List = Stream->QueuedTimesteps;
     while (List)
     {
@@ -523,7 +538,7 @@ static void DiscardReleasedTimesteps(SstStream Stream)
         }
         List = List->Next;
     }
-    KillZeroRefTimesteps(Stream);
+    KillNeverSentTimesteps(Stream);
 }
 
 static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
@@ -531,6 +546,7 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
     CPTimestepList Last = NULL, List;
     int AnythingRemoved = 0;
     List = Stream->QueuedTimesteps;
+    SST_ASSERT_LOCKED();
     while (List)
     {
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
@@ -540,7 +556,8 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
                                "reference count %d\n",
                        List->Timestep, List->ReferenceCount);
         }
-        if (List->ReferenceCount == 0)
+        if ((List->ReferenceCount == 0) &&
+            (List->NeverSent == 0)) /* don't kill never sent timesteps here */
         {
             /* dequeue and free */
             CPTimestepList ItemToFree = List;
@@ -555,9 +572,11 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
             CP_verbose(Stream, "Step %d reference count reached zero, "
                                "releasing from DP and freeing\n",
                        ItemToFree->Timestep);
-            Stream->DP_Interface->releaseTimestep(&Svcs, Stream->DP_Stream,
-                                                  List->Timestep);
-
+            if (ItemToFree->DPRegistered)
+            {
+                Stream->DP_Interface->releaseTimestep(&Svcs, Stream->DP_Stream,
+                                                      List->Timestep);
+            }
             Stream->QueuedTimestepCount--;
             Stream->LastReleasedTimestep = ItemToFree->Msg->Timestep;
             List = List->Next;
@@ -703,8 +722,10 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                            "timesteps from %ld to %ld\n",
                    MyStartingTimestep, GlobalStartingTimestep - 1);
 
+        PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         SubRefRangeTimestep(Stream, MyStartingTimestep,
                             GlobalStartingTimestep - 1);
+        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
     CP_verbose(Stream,
                "My oldest timestep was %ld, global oldest timestep was %ld\n",
@@ -812,7 +833,6 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);
     }
     assert(Reader->ReaderStatus == Established);
-    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 
     /* send any queued metadata necessary */
     Reader->OldestUnreleasedTimestep = Reader->StartingTimestep;
@@ -847,6 +867,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
             List = List->Next;
         }
     }
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
 SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
@@ -1025,7 +1046,9 @@ void SstWriterClose(SstStream Stream)
     sendOneToEachReaderRank(Stream, Stream->CPInfo->WriterCloseFormat, &Msg,
                             &Msg.RS_Stream);
 
-    KillZeroRefTimesteps(Stream);
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    KillNeverSentTimesteps(Stream);
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 
     // sleep briefly to allow for outgoing close messages to arrive
     usleep(100 * 1000);
@@ -1075,7 +1098,9 @@ void SstWriterClose(SstStream Stream)
                   Stream->mpiComm);
         if ((Stream->Rank != 0) && (Stream->LastReleasedTimestep > -1))
         {
+            PTHREAD_MUTEX_LOCK(&Stream->DataLock);
             DiscardReleasedTimesteps(Stream);
+            PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         }
     }
     gettimeofday(&CloseTime, NULL);
@@ -1182,6 +1207,7 @@ static void DoStreamDiscard(SstStream Stream)
 {
     /* No readers, discard earliest timestep in queue (at the end of TS
      * list) */
+    SST_ASSERT_LOCKED();
     if (!Stream->QueuedTimesteps)
     {
         return;
@@ -1522,6 +1548,116 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
     CP_verbose(Stream, "Finished with Writer side Global operations\n");
 }
 
+static void FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
+                            MetadataPlusDPInfo *pointers)
+{
+    FFSFormatList XmitFormats = NULL;
+
+    /* build the Metadata Msg */
+    Msg->CohortSize = Stream->CohortSize;
+    Msg->Timestep = Stream->WriterTimestep;
+
+    /* separate metadata and DP_info to separate arrays */
+    Msg->Metadata = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
+    Msg->AttributeData = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
+    Msg->DP_TimestepInfo =
+        malloc(Stream->CohortSize * sizeof(Msg->DP_TimestepInfo[0]));
+    int NullCount = 0;
+    for (int i = 0; i < Stream->CohortSize; i++)
+    {
+        if (pointers[i]->Metadata)
+        {
+            Msg->Metadata[i] = *(pointers[i]->Metadata);
+        }
+        else
+        {
+            Msg->Metadata[i].DataSize = 0;
+            Msg->Metadata[i].block = NULL;
+        }
+        if (pointers[i]->AttributeData)
+        {
+            Msg->AttributeData[i] = *(pointers[i]->AttributeData);
+        }
+        else
+        {
+            Msg->AttributeData[i].DataSize = 0;
+            Msg->AttributeData[i].block = NULL;
+        }
+        Msg->DP_TimestepInfo[i] = pointers[i]->DP_TimestepInfo;
+        if (pointers[i]->DP_TimestepInfo == NULL)
+            NullCount++;
+        XmitFormats = AddUniqueFormats(XmitFormats, pointers[i]->Formats,
+                                       /*nocopy*/ 0);
+    }
+    if (NullCount == Stream->CohortSize)
+    {
+        free(Msg->DP_TimestepInfo);
+        Msg->DP_TimestepInfo = NULL;
+    }
+
+    free(pointers);
+
+    Stream->PreviousFormats =
+        AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
+
+    if (Stream->NewReaderPresent)
+    {
+        /*
+         *  If there is a new reader cohort, those ranks will need all prior
+         * FFS
+         * Format info.
+         */
+        Msg->Formats = Stream->PreviousFormats;
+        Stream->NewReaderPresent = 0;
+    }
+    else
+    {
+        Msg->Formats = XmitFormats;
+    }
+}
+
+/*
+ *
+ *   Flowchart:
+ *     if (preliminary_global_op)
+ *        do global op determination
+ *        handle all events and decide if this timestep is to be discarded
+ *     end
+ *     if (!discarded) register TS with DP and mark as registered
+ *     LOCK STREAM METATDATA AND
+ *         queue timestep with reference count = 1 + #established readers
+ *         if there are no established readers, mark event "not sent"
+ *         We do this all at once, because if a reader failure is detected in
+ the background, it will drop the reference count
+ *     DROP LOCK
+ *     if (discarded), zero metadata, but not precious
+ *     aggregate all metadata (if not preliminary global op test, include this
+ info here)
+ *     if global op
+ *       handle all events and decide if timestep is to be discarded
+ *     end
+ *     if (timestep to be discarded)
+ *	   send discarded timestep message to all readers with precious metadata
+ *         change event reference count to 1
+ *     else
+ *         send discarded timestep message to all readers with precious metadata
+ *     end
+ *     dereference timestep
+
+
+ *     The dereference timestep timestep procedure will *not* discard events in
+ the queue tagged "not sent", even if they have a zero reference count.
+ *     On Close, all events with zero reference count are removed without regard
+ to "not sent" status.
+ *     On new reader arrival, all events in the queue will be sent to that
+ reader and their reference count incremented
+ *     on release message, events are discard when their reference count reaches
+ zero
+ *     In discard procedure, the oldest "not sent" queued timestep will be
+ discarded if any are found.  This is done by setting it
+ *
+ */
+
 extern void SstInternalProvideTimestep(
     SstStream Stream, SstData LocalMetadata, SstData Data, long Timestep,
     FFSFormatList Formats, DataFreeFunc FreeTimestep, void *FreeClientData,
@@ -1534,7 +1670,6 @@ extern void SstInternalProvideTimestep(
     void *DP_TimestepInfo = NULL;
     struct _MetadataPlusDPInfo Md;
     CPTimestepList Entry = calloc(1, sizeof(struct _CPTimestepEntry));
-    FFSFormatList XmitFormats = NULL;
     int GlobalOpRequested = 0;
     int GlobalOpRequired = 0;
 
@@ -1571,7 +1706,6 @@ extern void SstInternalProvideTimestep(
             CP_verbose(Stream, "Discarding incoming timestep %d because of "
                                "queue full condition\n",
                        Timestep);
-            FreeTimestep(FreeClientData);
             LocalMetadata = NULL;
             Data = NULL;
             /*
@@ -1590,6 +1724,7 @@ extern void SstInternalProvideTimestep(
                                               &DP_TimestepInfo);
     }
 
+    /* Md is the local contribution to MetaData */
     Md.Formats = Formats;
     Md.Metadata = (SstData)LocalMetadata;
     Md.AttributeData = (SstData)AttributeData;
@@ -1600,6 +1735,44 @@ extern void SstInternalProvideTimestep(
     if (LocalMetadata)
         TAU_SAMPLE_COUNTER("Timestep local metadata size",
                            LocalMetadata->DataSize);
+
+    /* preliminary queue of message before metadata collection.  Timestep may
+     * still be discarded.*/
+
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    Entry->ReferenceCount =
+        1; /* holding one for us, so it doesn't disappear under us */
+    Entry->DPRegistered = (Data != NULL);
+    Entry->NeverSent = 1;
+    if (Data)
+    {
+        /* only incremement ref cound if timestep will not be discarded */
+        for (int i = 0; i < Stream->ReaderCount; i++)
+        {
+            if (Stream->Readers[i]->ReaderStatus == Established)
+            {
+                /* the metadata will be sent only to established readers */
+                Stream->Readers[i]->LastSentTimestep = Timestep;
+                Entry->ReferenceCount++;
+                Entry->NeverSent = 0; /* will be sent */
+            }
+        }
+    }
+    Stream->LastProvidedTimestep = Timestep;
+    Entry->Timestep = Timestep;
+    Entry->Msg = Msg;
+    Entry->MetadataArray = Msg->Metadata;
+    Entry->DP_TimestepInfo = Msg->DP_TimestepInfo;
+    Entry->FreeTimestep = FreeTimestep;
+    Entry->FreeClientData = FreeClientData;
+    Entry->Next = Stream->QueuedTimesteps;
+    Stream->QueuedTimesteps = Entry;
+    Stream->QueuedTimestepCount++;
+    /* no one waits on timesteps being added, so no condition signal to note
+     * change */
+
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+
     TAU_START("Metadata Consolidation time in EndStep()");
     if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
     {
@@ -1614,7 +1787,9 @@ extern void SstInternalProvideTimestep(
                   Stream->mpiComm);
         if ((Stream->Rank != 0) && (Stream->LastReleasedTimestep > -1))
         {
+            PTHREAD_MUTEX_LOCK(&Stream->DataLock);
             DiscardReleasedTimesteps(Stream);
+            PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         }
     }
     TAU_STOP("Metadata Consolidation time in EndStep()");
@@ -1625,69 +1800,17 @@ extern void SstInternalProvideTimestep(
     if ((Stream->ConfigParams->CPCommPattern == SstCPCommPeer) ||
         (Stream->Rank == 0))
     {
-        /* build the Metadata Msg */
-        Msg->CohortSize = Stream->CohortSize;
-        Msg->Timestep = Timestep;
-
-        /* separate metadata and DP_info to separate arrays */
-        Msg->Metadata = malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
-        Msg->AttributeData =
-            malloc(Stream->CohortSize * sizeof(Msg->Metadata[0]));
-        Msg->DP_TimestepInfo =
-            malloc(Stream->CohortSize * sizeof(Msg->DP_TimestepInfo[0]));
-        int NullCount = 0;
-        for (int i = 0; i < Stream->CohortSize; i++)
-        {
-            if (pointers[i]->Metadata)
-            {
-                Msg->Metadata[i] = *(pointers[i]->Metadata);
-            }
-            else
-            {
-                Msg->Metadata[i].DataSize = 0;
-                Msg->Metadata[i].block = NULL;
-            }
-            if (pointers[i]->AttributeData)
-            {
-                Msg->AttributeData[i] = *(pointers[i]->AttributeData);
-            }
-            else
-            {
-                Msg->AttributeData[i].DataSize = 0;
-                Msg->AttributeData[i].block = NULL;
-            }
-            Msg->DP_TimestepInfo[i] = pointers[i]->DP_TimestepInfo;
-            if (pointers[i]->DP_TimestepInfo == NULL)
-                NullCount++;
-            XmitFormats = AddUniqueFormats(XmitFormats, pointers[i]->Formats,
-                                           /*nocopy*/ 0);
-        }
-        if (NullCount == Stream->CohortSize)
-        {
-            free(Msg->DP_TimestepInfo);
-            Msg->DP_TimestepInfo = NULL;
-        }
-
-        free(pointers);
-
-        Stream->PreviousFormats =
-            AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
-
-        if (Stream->NewReaderPresent)
-        {
-            /*
-             *  If there is a new reader cohort, those ranks will need all prior
-             * FFS
-             * Format info.
-             */
-            Msg->Formats = Stream->PreviousFormats;
-            Stream->NewReaderPresent = 0;
-        }
-        else
-        {
-            Msg->Formats = XmitFormats;
-        }
+        FillMetadataMsg(Stream, Msg, pointers);
     }
+
+    /*
+     * lock this Stream's data and queue the timestep
+     */
+    Entry->Msg = Msg;
+    Entry->MetadataArray = Msg->Metadata;
+    Entry->DP_TimestepInfo = Msg->DP_TimestepInfo;
+    Entry->DataBlockToFree = data_block;
+
     if (Data == NULL)
     {
         /* Data was actually discarded, but we want to send a message to each
@@ -1696,7 +1819,7 @@ extern void SstInternalProvideTimestep(
 
         Msg->Metadata = NULL;
         Msg->DP_TimestepInfo = NULL;
-        Msg->Formats = Formats;
+
         CP_verbose(Stream, "Sending Empty TimestepMetadata for Discarded "
                            "timestep %d, one to each reader\n",
                    Timestep);
@@ -1704,59 +1827,26 @@ extern void SstInternalProvideTimestep(
         sendOneToEachReaderRank(Stream,
                                 Stream->CPInfo->DeliverTimestepMetadataFormat,
                                 Msg, &Msg->RS_Stream);
-        free(Entry);
-        free(Msg);
-        free(data_block);
+
+        Entry->NeverSent = 0;
+        Entry->ReferenceCount = 1; // make sure this dies
+        PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+        SubRefRangeTimestep(Stream, Timestep, Timestep);
+        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         TAU_STOP("provide timestep operations");
         return;
     }
 
-    /*
-     * lock this Stream's data and queue the timestep
-     */
-    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    for (int i = 0; i < Stream->ReaderCount; i++)
-    {
-        if (Stream->Readers[i]->ReaderStatus == Established)
-        {
-            /* the metadata will be sent only to established readers */
-            Stream->Readers[i]->LastSentTimestep = Timestep;
-            Entry->ReferenceCount++;
-        }
-    }
-    Stream->LastProvidedTimestep = Timestep;
-    Entry->Timestep = Timestep;
-    Entry->Msg = Msg;
-    Entry->MetadataArray = Msg->Metadata;
-    Entry->DP_TimestepInfo = Msg->DP_TimestepInfo;
-    Entry->FreeTimestep = FreeTimestep;
-    Entry->FreeClientData = FreeClientData;
-    Entry->Next = Stream->QueuedTimesteps;
-    Entry->DataBlockToFree = data_block;
-    Stream->QueuedTimesteps = Entry;
-    Stream->QueuedTimestepCount++;
-    /* no one waits on timesteps being added, so no condition signal to note
-     * change */
-
-    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
-
     CP_verbose(Stream, "Sending TimestepMetadata for timestep %d (ref count "
                        "%d), one to each reader\n",
-               Timestep, Entry->ReferenceCount);
-
-    /*
-     * This barrier deals with a possible race condition on the return
-     * of relase timestep messages.  It's possible for one rank to get
-     * far enough ahead that it has sent metadata and received a
-     * release timestep message before another rank even gets to the
-     * point of enqueueing its timestep.  We'll try to eliminate this
-     * barrier in another way in the future.
-     */
-    MPI_Barrier(Stream->mpiComm);
+               Timestep, Entry->ReferenceCount - 1);
 
     sendOneToEachReaderRank(Stream,
                             Stream->CPInfo->DeliverTimestepMetadataFormat, Msg,
                             &Msg->RS_Stream);
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    SubRefRangeTimestep(Stream, Timestep, Timestep);
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     TAU_STOP("provide timestep operations");
 }
 
