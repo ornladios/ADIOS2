@@ -306,7 +306,6 @@ void DataManSerializer::GetAttributes(core::IO &io)
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
-        const auto &attributesDataMap = io.GetAttributesDataMap();
         const std::string type(staticVar["Y"].get<std::string>());
         if (type == "")
         {
@@ -314,6 +313,7 @@ void DataManSerializer::GetAttributes(core::IO &io)
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
+        const auto &attributesDataMap = io.GetAttributesDataMap();             \
         auto it = attributesDataMap.find(staticVar["N"].get<std::string>());   \
         if (it == attributesDataMap.end())                                     \
         {                                                                      \
