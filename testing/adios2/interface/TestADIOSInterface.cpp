@@ -151,6 +151,26 @@ public:
                   T(myData.start(b)));
     }
 
+    void GenerateOutput(std::string filename)
+    {
+        adios2::IO io = ad.DeclareIO("CXX11_API_GenerateOutput");
+        adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
+        adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
+
+        MyData<T> myData(m_Selections);
+
+        for (int b = 0; b < myData.nBlocks(); ++b)
+        {
+            PopulateBlock(myData, b);
+
+            var.SetSelection(myData.selection(b));
+            engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+        }
+        engine.Close();
+
+        ad.RemoveIO("CXX11_API_GenerateOutput");
+    }
+
     bool checkOutput(std::string filename)
     {
         if (rank != 0)
@@ -336,26 +356,7 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPut2FileGetSyncPutSync)
 {
     SetupDecomposition(10);
 
-    // Generate data
-    {
-        adios2::Engine engine =
-            io.Open("multi_2f_sync_input.bp", adios2::Mode::Write);
-        adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
-
-        MyData<T> myData(m_Selections);
-
-        for (int b = 0; b < myData.nBlocks(); ++b)
-        {
-            PopulateBlock(myData, b);
-
-            var.SetSelection(myData.selection(b));
-            engine.Put(var, &myData[b][0], adios2::Mode::Sync);
-        }
-        engine.Close();
-    }
-
-    io.RemoveAllVariables();
-
+    GenerateOutput("multi_2f_sync_input.bp");
     adios2::Engine reader =
         io.Open("multi_2f_sync_input.bp", adios2::Mode::Read);
     adios2::Engine writer = io.Open("multi_2f_sync.bp", adios2::Mode::Write);
@@ -380,25 +381,7 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlock2FileGetSyncPutDef)
 {
     SetupDecomposition(10);
 
-    // Generate data
-    {
-        adios2::Engine engine =
-            io.Open("multi_2f_syncdef_input.bp", adios2::Mode::Write);
-        adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
-
-        MyData<T> myData(m_Selections);
-
-        for (int b = 0; b < myData.nBlocks(); ++b)
-        {
-            PopulateBlock(myData, b);
-
-            var.SetSelection(myData.selection(b));
-            engine.Put(var, &myData[b][0], adios2::Mode::Sync);
-        }
-        engine.Close();
-    }
-
-    io.RemoveAllVariables();
+    GenerateOutput("multi_2f_syncdef_input.bp");
 
     adios2::Engine reader =
         io.Open("multi_2f_syncdef_input.bp", adios2::Mode::Read);
