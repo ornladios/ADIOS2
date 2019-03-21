@@ -151,7 +151,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
 		dspaces_define_gdim(local_str, ndim, gdims);
 
-		dspaces_get(local_str, latestStep, elemsize, ndim, lb, ub, buffer);
+		dspaces_get(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
 		dspaces_unlock_on_read (meta_lk, &self_comm);
 		delete[] meta_lk;
 		delete[] local_str;
