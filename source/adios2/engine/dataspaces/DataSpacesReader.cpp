@@ -118,7 +118,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		dspaces_lock_on_read (meta_lk, &self_comm);
 
 		dspaces_define_gdim(cstr, ndim, gdims);
-		dspaces_get(cstr, 0, elemsize, ndim, lb, ub, version_buf);
+		dspaces_get(cstr, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
 
 		delete[] cstr;
 
