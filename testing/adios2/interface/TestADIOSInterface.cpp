@@ -61,8 +61,9 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
     EXPECT_EQ(engine.Name(), "types.bp");
     EXPECT_EQ(engine.Type(), "BP3");
 
-    EXPECT_EQ(m_Io.EngineType(), "bp"); // FIXME? Is it expected that adios2_open
-                                      // changes the engine_type string?
+    EXPECT_EQ(m_Io.EngineType(),
+              "bp"); // FIXME? Is it expected that adios2_open
+                     // changes the engine_type string?
 }
 
 TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
@@ -74,8 +75,9 @@ TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
     EXPECT_EQ(engine.Name(), "types.bp");
     EXPECT_EQ(engine.Type(), "BP3");
 
-    EXPECT_EQ(m_Io.EngineType(), "bp"); // FIXME? Is it expected that adios2_open
-                                      // changes the engine_type string?
+    EXPECT_EQ(m_Io.EngineType(),
+              "bp"); // FIXME? Is it expected that adios2_open
+                     // changes the engine_type string?
 }
 
 template <class T>
@@ -128,36 +130,52 @@ private:
     std::vector<Box> m_Selections;
 };
 
-class ADIOS2_CXX11_API_Put : public ADIOS2_CXX11_API_IO
+// ----------------------------------------------------------------------
+// ADIOS2_CXX11_API_MultiBlock
+
+template <typename _DataType, adios2::Mode _PutMode>
+struct CaseMultiBlock
+{
+    using DataType = _DataType;
+    static const adios2::Mode PutMode = _PutMode;
+};
+
+using MultiBlockTypes =
+    ::testing::Types<CaseMultiBlock<double, adios2::Mode::Sync>,
+                     CaseMultiBlock<int64_t, adios2::Mode::Sync>,
+                     CaseMultiBlock<double, adios2::Mode::Deferred>,
+                     CaseMultiBlock<int64_t, adios2::Mode::Deferred>>;
+
+template <typename TypeParam>
+class ADIOS2_CXX11_API_MultiBlock : public ADIOS2_CXX11_API_IO
 {
 public:
-    using T = double;
+    using DataType = typename TypeParam::DataType;
     using Box = adios2::Box<adios2::Dims>;
 
     using ADIOS2_CXX11_API_IO::ADIOS2_CXX11_API_IO;
 
-    void SetupDecomposition(size_t Nx)
+    void SetUp() override
     {
-        m_Nx = Nx;
-        m_Shape = {m_MpiSize * Nx};
-        m_Selections = {{{m_MpiRank * Nx}, {Nx / 2}},
-                        {{m_MpiRank * Nx + Nx / 2}, {Nx / 2}}};
+        m_Shape = {m_MpiSize * m_Nx};
+        m_Selections = {{{m_MpiRank * m_Nx}, {m_Nx / 2}},
+                        {{m_MpiRank * m_Nx + m_Nx / 2}, {m_Nx / 2}}};
     }
 
     template <class MyData>
     void PopulateBlock(MyData &myData, int b)
     {
         std::iota(&myData[b][0], &myData[b][myData.Count(b)],
-                  T(myData.Start(b)));
+                  DataType(myData.Start(b)));
     }
 
     void GenerateOutput(std::string filename)
     {
-        adios2::IO io = m_Ad.DeclareIO("CXX11_API_GenerateOutput");
-        adios2::Engine engine = io.Open(filename, adios2::Mode::Write);
-        adios2::Variable<T> var = io.DefineVariable<T>("var", m_Shape);
+        auto io = m_Ad.DeclareIO("CXX11_API_GenerateOutput");
+        auto engine = io.Open(filename, adios2::Mode::Write);
+        auto var = io.template DefineVariable<DataType>("var", m_Shape);
 
-        MyData<T> myData(m_Selections);
+        MyData<DataType> myData(m_Selections);
 
         for (int b = 0; b < myData.NBlocks(); ++b)
         {
@@ -171,120 +189,101 @@ public:
         m_Ad.RemoveIO("CXX11_API_GenerateOutput");
     }
 
-    bool checkOutput(std::string filename)
+    void CheckOutput(std::string filename)
     {
         if (m_MpiRank != 0)
         {
-            return true;
+            return;
         }
-        adios2::IO io = m_Ad.DeclareIO("CXX11_API_CheckOutput");
+        auto io = m_Ad.DeclareIO("CXX11_API_CheckOutput");
 #ifdef ADIOS2_HAVE_MPI
-        adios2::Engine engine =
-            io.Open(filename, adios2::Mode::Read, MPI_COMM_SELF);
+        auto engine = io.Open(filename, adios2::Mode::Read, MPI_COMM_SELF);
 #else
-        adios2::Engine engine = io.Open(filename, adios2::Mode::Read);
+        auto engine = io.Open(filename, adios2::Mode::Read);
 #endif
-        adios2::Variable<T> var = io.InquireVariable<T>("var");
-        adios2::Dims shape = var.Shape();
-        std::vector<T> data(shape[0]);
+        auto var = io.template InquireVariable<DataType>("var");
+        auto shape = var.Shape();
+        std::vector<DataType> data(shape[0]);
         engine.Get(var, data, adios2::Mode::Sync);
         engine.Close();
         m_Ad.RemoveIO("CXX11_API_CheckOutput");
 
-        std::vector<T> ref(shape[0]);
-        std::iota(ref.begin(), ref.end(), T());
-        return data == ref;
+        std::vector<DataType> ref(shape[0]);
+        std::iota(ref.begin(), ref.end(), DataType());
+        EXPECT_EQ(data, ref);
     }
 
-    size_t m_Nx;
+    size_t m_Nx = 10;
     adios2::Dims m_Shape;
     std::vector<Box> m_Selections;
 };
 
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutSync)
+TYPED_TEST_CASE(ADIOS2_CXX11_API_MultiBlock, MultiBlockTypes);
+
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put)
 {
-    SetupDecomposition(10);
+    using T = typename TypeParam::DataType;
 
-    adios2::Engine engine = m_Io.Open("multi_sync.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.DefineVariable<T>("var", m_Shape);
-
-    MyData<T> myData(m_Selections);
+    std::string filename = "multi_put.bp";
+    auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
+    auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
+    MyData<T> myData(this->m_Selections);
 
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
-        PopulateBlock(myData, b);
-
+        this->PopulateBlock(myData, b);
         var.SetSelection(myData.Selection(b));
-        engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+        writer.Put(var, &myData[b][0], TypeParam::PutMode);
     }
-    engine.Close();
 
-    EXPECT_TRUE(checkOutput("multi_sync.bp"));
+    writer.Close();
+    this->CheckOutput(filename);
 }
 
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutDeferred)
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutMixed)
 {
-    SetupDecomposition(10);
+    using T = typename TestFixture::DataType;
 
-    adios2::Engine engine = m_Io.Open("multi_deferred.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.DefineVariable<T>("var", m_Shape);
-
-    MyData<T> myData(m_Selections);
+    std::string filename = "multi_putmixed.bp";
+    auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
+    auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
+    MyData<T> myData(this->m_Selections);
 
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
-        PopulateBlock(myData, b);
-
-        var.SetSelection(myData.Selection(b));
-        engine.Put(var, &myData[b][0], adios2::Mode::Deferred);
-    }
-    engine.Close();
-
-    EXPECT_TRUE(checkOutput("multi_deferred.bp"));
-}
-
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutDS)
-{
-    SetupDecomposition(10);
-
-    adios2::Engine engine = m_Io.Open("multi_ds.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.DefineVariable<T>("var", m_Shape);
-
-    MyData<T> myData(m_Selections);
-
-    for (int b = 0; b < myData.NBlocks(); ++b)
-    {
-        PopulateBlock(myData, b);
+        this->PopulateBlock(myData, b);
 
         var.SetSelection(myData.Selection(b));
         if (b == 0)
         {
-            engine.Put(var, &myData[b][0], adios2::Mode::Deferred);
+            writer.Put(var, &myData[b][0], adios2::Mode::Deferred);
         }
         else
         {
-            engine.Put(var, &myData[b][0], adios2::Mode::Sync);
+            writer.Put(var, &myData[b][0], adios2::Mode::Sync);
         }
     }
-    engine.Close();
 
-    EXPECT_TRUE(checkOutput("multi_ds.bp"));
+    writer.Close();
+    this->CheckOutput(filename);
 }
 
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync)
+// this one doesn't actually use the PutMode param
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopy)
 {
-    SetupDecomposition(10);
+    using T = typename TestFixture::DataType;
 
-    adios2::Engine engine = m_Io.Open("multi0_sync.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.DefineVariable<T>("var", m_Shape);
+    std::string filename = "multi_putzerocopy.bp";
+    auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
+    auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
+    MyDataView<T> myData(this->m_Selections);
 
-    MyDataView<T> myData(m_Selections);
 #if 0
     // keeping this as an example on how not to use Span
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
         var.SetSelection(myData.Selection(b));
-        auto span = engine.Put(var);
+        auto span = writer.Put(var);
         myData.Place(b, span.data());
     }
 #else
@@ -292,7 +291,7 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync)
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
         var.SetSelection(myData.Selection(b));
-        spans.push_back(engine.Put(var));
+        spans.push_back(writer.Put(var));
     }
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
@@ -301,71 +300,60 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync)
 #endif
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
-        PopulateBlock(myData, b);
+        this->PopulateBlock(myData, b);
     }
-    engine.Close();
 
-    EXPECT_TRUE(checkOutput("multi0_sync.bp"));
+    writer.Close();
+    this->CheckOutput(filename);
 }
 
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync2)
+// writes last block using regular Put(Sync/Deferred)
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopyMixed)
 {
-    SetupDecomposition(10);
+    using T = typename TestFixture::DataType;
 
-    adios2::Engine engine = m_Io.Open("multi0_sync2.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.DefineVariable<T>("var", m_Shape);
+    std::string filename = "multi_putzerocopymixed.bp";
+    auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
+    auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
 
-    MyDataView<T> myData(m_Selections);
-    for (int b = 0; b < 1; ++b)
+    MyDataView<T> myData(this->m_Selections);
+    std::unique_ptr<T[]> lastBlock;
+    for (int b = 0; b < myData.NBlocks(); ++b)
     {
-        var.SetSelection(myData.Selection(b));
-        auto span = engine.Put(var);
-        myData.Place(b, span.data());
+        if (b < 1)
+        {
+            var.SetSelection(myData.Selection(b));
+            auto span = writer.Put(var);
+            myData.Place(b, span.data());
+        }
+        else
+        {
+            lastBlock.reset(new T[myData.Count(b)]);
+            myData.Place(b, lastBlock.get());
+        }
     }
 
-    for (int b = 0; b < 1; ++b)
+    for (int b = 0; b < myData.NBlocks(); ++b)
     {
-        PopulateBlock(myData, b);
+        this->PopulateBlock(myData, b);
     }
-    std::vector<T> lastBlock(m_Nx / 2);
-    std::iota(lastBlock.begin(), lastBlock.end(),
-              T(m_MpiRank * m_Nx + m_Nx / 2));
     var.SetSelection(myData.Selection(1));
-    engine.Put(var, lastBlock.data(), adios2::Mode::Deferred);
-    engine.Close();
+    writer.Put(var, lastBlock.get(), TypeParam::PutMode);
 
-    EXPECT_TRUE(checkOutput("multi0_sync2.bp"));
+    writer.Close();
+    this->CheckOutput(filename);
 }
 
-template <typename TypeParam>
-class ADIOS2_CXX11_API_MultiBlockPut2File : public ADIOS2_CXX11_API_Put
-{
-};
-
-template <typename _DataType, adios2::Mode _WriteMode>
-struct Case2File
-{
-    using DataType = _DataType;
-    static constexpr adios2::Mode WriteMode = _WriteMode;
-};
-
-using Case2FilePutSync = Case2File<double, adios2::Mode::Sync>;
-using Case2FilePutDeferred = Case2File<double, adios2::Mode::Deferred>;
-using Put2FileTypes = ::testing::Types<Case2FilePutSync, Case2FilePutDeferred>;
-
-TYPED_TEST_CASE(ADIOS2_CXX11_API_MultiBlockPut2File, Put2FileTypes);
-TYPED_TEST(ADIOS2_CXX11_API_MultiBlockPut2File, MultiBlockPut2File)
-
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2File)
 {
     using T = typename TypeParam::DataType;
 
-    this->SetupDecomposition(10);
-
     this->GenerateOutput("multi_2f_input.bp");
-    adios2::Engine reader =
-        this->m_Io.Open("multi_2f_input.bp", adios2::Mode::Read);
-    adios2::Engine writer = this->m_Io.Open("multi_2f.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = this->m_Io.template InquireVariable<T>("var");
+
+    std::string filename = "multi_put2file.bp";
+    auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
+    auto reader = this->m_Io.Open("multi_2f_input.bp", adios2::Mode::Read);
+    auto var = this->m_Io.template InquireVariable<T>("var");
 
     MyData<T> myData(this->m_Selections);
 
@@ -373,13 +361,12 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlockPut2File, MultiBlockPut2File)
     {
         var.SetSelection(myData.Selection(b));
         reader.Get(var, &myData[b][0], adios2::Mode::Sync);
-        writer.Put(var, &myData[b][0], TypeParam::WriteMode);
+        writer.Put(var, &myData[b][0], TypeParam::PutMode);
     }
 
     reader.Close();
     writer.Close();
-
-    EXPECT_TRUE(this->checkOutput("multi_2f.bp"));
+    this->CheckOutput(filename);
 }
 
 int main(int argc, char **argv)
