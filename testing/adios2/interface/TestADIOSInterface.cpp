@@ -324,86 +324,49 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync2)
     EXPECT_TRUE(checkOutput("multi0_sync2.bp"));
 }
 
-#if 0
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync3)
+template <typename TypeParam>
+class ADIOS2_CXX11_API_MultiBlockPut2File : public ADIOS2_CXX11_API_Put
 {
-    SetupDecomposition(10);
+};
 
-    adios2::Engine engine = m_Io.Open("multi0_sync3.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.DefineVariable<T>("var", m_Shape);
+template <typename _DataType, adios2::Mode _WriteMode>
+struct Case2File
+{
+    using DataType = _DataType;
+    static constexpr adios2::Mode WriteMode = _WriteMode;
+};
 
-    MyDataView<T> myData(m_Selections);
-    for (int b = 0; b < 1; ++b)
-    {
-        var.SetSelection(myData.Selection(b));
-        auto span = engine.Put(var);
-        myData.Place(b, span.data());
-    }
+using Case2FilePutSync = Case2File<double, adios2::Mode::Sync>;
+using Case2FilePutDeferred = Case2File<double, adios2::Mode::Deferred>;
+using Put2FileTypes = ::testing::Types<Case2FilePutSync, Case2FilePutDeferred>;
 
-    for (int b = 0; b < 1; ++b)
-    {
-        PopulateBlock(myData, b);
-    }
-
-    engine.Put(var, std::vector<T>{5., 6., 7., 8., 9.}.data(),
-               adios2::Mode::Sync);
-    engine.Close();
-
-    EXPECT_TRUE(checkOutput("multi0_sync3.bp"));
-}
-#endif
-
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPut2FileGetSyncPutSync)
+TYPED_TEST_CASE(ADIOS2_CXX11_API_MultiBlockPut2File, Put2FileTypes);
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlockPut2File, MultiBlockPut2File)
 
 {
-    SetupDecomposition(10);
+    using T = typename TypeParam::DataType;
 
-    GenerateOutput("multi_2f_sync_input.bp");
+    this->SetupDecomposition(10);
+
+    this->GenerateOutput("multi_2f_input.bp");
     adios2::Engine reader =
-        m_Io.Open("multi_2f_sync_input.bp", adios2::Mode::Read);
-    adios2::Engine writer = m_Io.Open("multi_2f_sync.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.InquireVariable<T>("var");
+        this->m_Io.Open("multi_2f_input.bp", adios2::Mode::Read);
+    adios2::Engine writer = this->m_Io.Open("multi_2f.bp", adios2::Mode::Write);
+    adios2::Variable<T> var = this->m_Io.template InquireVariable<T>("var");
 
-    MyData<T> myData(m_Selections);
+    MyData<T> myData(this->m_Selections);
 
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
         var.SetSelection(myData.Selection(b));
         reader.Get(var, &myData[b][0], adios2::Mode::Sync);
-        writer.Put(var, &myData[b][0], adios2::Mode::Sync);
+        writer.Put(var, &myData[b][0], TypeParam::WriteMode);
     }
 
     reader.Close();
     writer.Close();
 
-    EXPECT_TRUE(checkOutput("multi_2f_sync.bp"));
-}
-
-TEST_F(ADIOS2_CXX11_API_Put, MultiBlock2FileGetSyncPutDef)
-{
-    SetupDecomposition(10);
-
-    GenerateOutput("multi_2f_syncdef_input.bp");
-
-    adios2::Engine reader =
-        m_Io.Open("multi_2f_syncdef_input.bp", adios2::Mode::Read);
-
-    adios2::Engine writer = m_Io.Open("multi_2f_syncdef.bp", adios2::Mode::Write);
-    adios2::Variable<T> var = m_Io.InquireVariable<T>("var");
-
-    MyData<T> myData(m_Selections);
-
-    for (int b = 0; b < myData.NBlocks(); ++b)
-    {
-        var.SetSelection(myData.Selection(b));
-        reader.Get(var, &myData[b][0], adios2::Mode::Sync);
-        writer.Put(var, &myData[b][0], adios2::Mode::Deferred);
-    }
-
-    reader.Close();
-    writer.Close();
-
-    EXPECT_TRUE(checkOutput("multi_2f_syncdef.bp"));
+    EXPECT_TRUE(this->checkOutput("multi_2f.bp"));
 }
 
 int main(int argc, char **argv)
