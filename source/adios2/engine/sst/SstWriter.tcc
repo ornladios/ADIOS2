@@ -36,14 +36,6 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                "Put() calls must appear between "
                                "BeginStep/EndStep pairs");
     }
-    if (variable.m_Count.empty())
-    {
-        variable.m_Count = variable.m_Shape;
-    }
-    if (variable.m_Start.empty())
-    {
-        variable.m_Start.assign(variable.m_Count.size(), 0);
-    }
 
     if (m_MarshalMethod == SstMarshalFFS)
     {
