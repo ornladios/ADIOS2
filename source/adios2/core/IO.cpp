@@ -165,7 +165,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        auto variableMap = GetVariableMap<T>();                                \
+        auto &variableMap = GetVariableMap<T>();                               \
         variableMap.erase(index);                                              \
         isRemoved = true;                                                      \
     }
@@ -208,7 +208,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        auto attributeMap = GetAttributeMap<T>();                              \
+        auto &attributeMap = GetAttributeMap<T>();                             \
         attributeMap.erase(index);                                             \
         isRemoved = true;                                                      \
     }
