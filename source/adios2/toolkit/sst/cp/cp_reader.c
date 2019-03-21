@@ -961,11 +961,13 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                     (Next->MetadataMsg->Timestep > LastTimestep))
                 {
                     FoundTS = Next;
+                    break;
                 }
                 else if ((FoundTS != NULL) && (FoundTS->MetadataMsg->Timestep >
                                                Next->MetadataMsg->Timestep))
                 {
                     FoundTS = Next;
+                    break;
                 }
             }
             Next = Next->Next;
