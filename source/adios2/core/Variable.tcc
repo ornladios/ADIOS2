@@ -252,7 +252,7 @@ T &Span<T>::At(const size_t position)
             " , in call to T& Span<T>::At\n");
     }
 
-    return Access(position);
+    return (*this)[position];
 }
 
 template <class T>
@@ -266,18 +266,18 @@ const T &Span<T>::At(const size_t position) const
             " , in call to const T& Span<T>::At\n");
     }
 
-    return Access(position);
+    return (*this)[position];
 }
 
 template <class T>
-T &Span<T>::Access(const size_t position)
+T &Span<T>::operator[](const size_t position)
 {
     T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
     return data;
 }
 
 template <class T>
-const T &Span<T>::Access(const size_t position) const
+const T &Span<T>::operator[](const size_t position) const
 {
     const T &data =
         *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));

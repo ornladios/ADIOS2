@@ -124,14 +124,14 @@ const T &Span<T>::at(const size_t position) const
 template <class T>
 T &Span<T>::operator[](const size_t position)
 {
-    IOType &data = m_Span->Access(position);
+    IOType &data = (*m_Span)[position];
     return reinterpret_cast<T &>(data);
 }
 
 template <class T>
 const T &Span<T>::operator[](const size_t position) const
 {
-    const IOType &data = m_Span->Access(position);
+    const IOType &data = (*m_Span)[position];
     return reinterpret_cast<const T &>(data);
 }
 

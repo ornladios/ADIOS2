@@ -46,8 +46,8 @@ public:
     T &At(const size_t position);
     const T &At(const size_t position) const;
 
-    T &Access(const size_t position);
-    const T &Access(const size_t position) const;
+    T &operator[](const size_t position);
+    const T &operator[](const size_t position) const;
 
 private:
     Engine &m_Engine;
