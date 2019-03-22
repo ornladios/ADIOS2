@@ -28,6 +28,9 @@ namespace core
 
 template <class T>
 class Variable; // private implementation
+
+template <class T>
+class Span; // private implementation
 }
 /// \endcond
 
@@ -352,7 +355,7 @@ public:
         ADIOS2_iterators_functions(data(), size());
 
     private:
-        class CoreSpan;
+        using CoreSpan = core::Span<IOType>;
         Span(CoreSpan *span);
         CoreSpan *m_Span = nullptr;
     };
