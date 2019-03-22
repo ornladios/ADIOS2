@@ -205,12 +205,8 @@ TauTimer::TauTimer(void) : initialized(false)
 #if defined(__APPLE__) && defined(__MACH__)
     // why should Apple support gettid? BE DIFFERENT, BABY!
     pthread_threadid_np(NULL, &mytid);
-// this assertion doesn't work correctly.  Bummer.
-// TAUTIMER_ASSERT(main_thread_id == std::this_thread::get_id());
 #else
     mytid = (uint64_t)syscall(__NR_gettid);
-    // only true on Linux.  Bummer.
-    TAUTIMER_ASSERT(mytid == mypid);
 #endif
     if (tau_stub_initialize_simple_() == 0)
         initialized = true;
@@ -237,12 +233,8 @@ inline void TauTimer::_RegisterThread(void)
 #if defined(__APPLE__) && defined(__MACH__)
         // why should Apple support gettid? BE DIFFERENT, BABY!
         pthread_threadid_np(NULL, &mytid);
-// this assertion doesn't work correctly.  Bummer.
-// TAUTIMER_ASSERT(main_thread_id != std::this_thread::get_id());
 #else
         mytid = (uint64_t)syscall(__NR_gettid);
-        // only true on Linux.  Bummer.
-        TAUTIMER_ASSERT(mytid != mypid);
 #endif
         my_Tau_register_thread();
         my_Tau_create_top_level_timer_if_necessary();
