@@ -279,13 +279,26 @@ TEST_F(ADIOS2_CXX11_API_Put, MultiBlockPutZeroCopySync)
     adios2::Variable<T> var = m_Io.DefineVariable<T>("var", m_Shape);
 
     MyDataView<T> myData(m_Selections);
+#if 0
+    // keeping this as an example on how not to use Span
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
         var.SetSelection(myData.Selection(b));
         auto span = engine.Put(var);
         myData.Place(b, span.data());
     }
-
+#else
+    std::vector<typename adios2::Variable<T>::Span> spans;
+    for (int b = 0; b < myData.NBlocks(); ++b)
+    {
+        var.SetSelection(myData.Selection(b));
+        spans.push_back(engine.Put(var));
+    }
+    for (int b = 0; b < myData.NBlocks(); ++b)
+    {
+        myData.Place(b, spans[b].data());
+    }
+#endif
     for (int b = 0; b < myData.NBlocks(); ++b)
     {
         PopulateBlock(myData, b);
