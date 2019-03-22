@@ -210,7 +210,10 @@ TauTimer::TauTimer(void) : initialized(false)
 #else
     mytid = (uint64_t)syscall(__NR_gettid);
     // only true on Linux.  Bummer.
-    TAUTIMER_ASSERT(mytid == mypid);
+    /* Disabled due to incompatability with Python/Matlab.
+     * Only really used to make sure that we are on the master
+     * thread, and that problem doesn't happen any more. */
+    // TAUTIMER_ASSERT(mytid == mypid);
 #endif
     if (tau_stub_initialize_simple_() == 0)
         initialized = true;
@@ -242,7 +245,10 @@ inline void TauTimer::_RegisterThread(void)
 #else
         mytid = (uint64_t)syscall(__NR_gettid);
         // only true on Linux.  Bummer.
-        TAUTIMER_ASSERT(mytid != mypid);
+        /* Disabled due to incompatability with Python/Matlab.
+         * Only really used to make sure that we are NOT on the master
+         * thread, and that problem doesn't happen any more. */
+        //TAUTIMER_ASSERT(mytid != mypid);
 #endif
         my_Tau_register_thread();
         my_Tau_create_top_level_timer_if_necessary();
