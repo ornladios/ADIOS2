@@ -87,6 +87,56 @@ std::string ToString(const Variable<T> &variable)
            variable.Name() + "\")";
 }
 
+namespace detail
+{
+// Span
+template <class T>
+Span<T>::Span(core::Span<IOType> *coreSpan) : m_Span(coreSpan)
+{
+}
+
+template <class T>
+size_t Span<T>::size() const noexcept
+{
+    return m_Span->Size();
+}
+
+template <class T>
+T *Span<T>::data() const noexcept
+{
+    return reinterpret_cast<T *>(m_Span->Data());
+}
+
+template <class T>
+T &Span<T>::at(const size_t position)
+{
+    IOType &data = m_Span->At(position);
+    return reinterpret_cast<T &>(data);
+}
+
+template <class T>
+const T &Span<T>::at(const size_t position) const
+{
+    const IOType &data = m_Span->At(position);
+    return reinterpret_cast<const T &>(data);
+}
+
+template <class T>
+T &Span<T>::operator[](const size_t position)
+{
+    IOType &data = m_Span->Access(position);
+    return reinterpret_cast<T &>(data);
+}
+
+template <class T>
+const T &Span<T>::operator[](const size_t position) const
+{
+    const IOType &data = m_Span->Access(position);
+    return reinterpret_cast<const T &>(data);
+}
+
+} // end namespace detail
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_TCC_ */

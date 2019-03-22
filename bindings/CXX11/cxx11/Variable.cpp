@@ -226,59 +226,11 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 
 #define declare_template_instantiation(T)                                      \
     template std::string ToString(const Variable<T> &var);
-
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-#define declare_type(T)                                                        \
-                                                                               \
-    template <>                                                                \
-    Variable<T>::Span::Span(core::Span<IOType> *coreSpan)                      \
-    : m_Span(coreSpan)                                                         \
-    {                                                                          \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    size_t Variable<T>::Span::size() const noexcept                            \
-    {                                                                          \
-        return m_Span->Size();                                                 \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    T *Variable<T>::Span::data() const noexcept                                \
-    {                                                                          \
-        return reinterpret_cast<T *>(m_Span->Data());                          \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    T &Variable<T>::Span::at(const size_t position)                            \
-    {                                                                          \
-        IOType &data = m_Span->At(position);                                   \
-        return reinterpret_cast<T &>(data);                                    \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    const T &Variable<T>::Span::at(const size_t position) const                \
-    {                                                                          \
-        const IOType &data = m_Span->At(position);                             \
-        return reinterpret_cast<const T &>(data);                              \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    T &Variable<T>::Span::operator[](const size_t position)                    \
-    {                                                                          \
-        IOType &data = m_Span->Access(position);                               \
-        return reinterpret_cast<T &>(data);                                    \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
-    const T &Variable<T>::Span::operator[](const size_t position) const        \
-    {                                                                          \
-        const IOType &data = m_Span->Access(position);                         \
-        return reinterpret_cast<const T &>(data);                              \
-    }
-
-ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_type)
-#undef declare_type
+#define declare_template_instantiation(T) template class detail::Span<T>;
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace adios2
