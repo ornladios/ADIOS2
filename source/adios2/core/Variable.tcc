@@ -266,6 +266,52 @@ const T &Span<T>::DoAccess(const size_t position) const
     return data;
 }
 
+template <class T>
+Span<T>::Span(Engine &engine, const size_t size)
+: m_Engine(engine), m_Size(size)
+{
+}
+
+template <class T>
+size_t Span<T>::Size() const noexcept
+{
+    return m_Size;
+}
+
+template <class T>
+T *Span<T>::Data() const noexcept
+{
+    return m_Engine.BufferData<T>(m_PayloadPosition);
+}
+
+template <class T>
+T &Span<T>::At(const size_t position)
+{
+    T &data = DoAt(position);
+    return data;
+}
+
+template <class T>
+const T &Span<T>::At(const size_t position) const
+{
+    const T &data = DoAt(position);
+    return data;
+}
+
+template <class T>
+T &Span<T>::Access(const size_t position)
+{
+    T &data = DoAccess(position);
+    return data;
+}
+
+template <class T>
+const T &Span<T>::Access(const size_t position) const
+{
+    const T &data = DoAccess(position);
+    return data;
+}
+
 } // end namespace core
 } // end namespace adios2
 
