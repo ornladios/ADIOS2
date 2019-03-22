@@ -52,12 +52,6 @@ public:
 private:
     Engine &m_Engine;
     size_t m_Size = 0;
-
-    T &DoAt(const size_t position);
-    const T &DoAt(const size_t position) const;
-
-    T &DoAccess(const size_t position);
-    const T &DoAccess(const size_t position) const;
 };
 
 /**
