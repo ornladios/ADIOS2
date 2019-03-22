@@ -369,6 +369,37 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2File)
     this->CheckOutput(filename);
 }
 
+// write two files simultaneously (in a more realistic use case, one
+// would write different data into the two files, but this is enough to
+// show a problem)
+#if 0
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2Writers)
+{
+    using T = typename TypeParam::DataType;
+
+    std::string filename = "multi_put2writers.bp";
+    auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
+    auto writer2 =
+        this->m_Io.Open("multi_put2writers2.bp", adios2::Mode::Write);
+    auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
+
+    MyData<T> myData(this->m_Selections);
+
+    for (int b = 0; b < myData.NBlocks(); ++b)
+    {
+        this->PopulateBlock(myData, b);
+        var.SetSelection(myData.Selection(b));
+        writer.Put(var, &myData[b][0], TypeParam::PutMode);
+        writer2.Put(var, &myData[b][0], TypeParam::PutMode);
+    }
+    writer2.Close();
+    writer.Close();
+
+    this->CheckOutput(filename);
+    this->CheckOutput("multi_put2writers2.bp");
+}
+#endif
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
