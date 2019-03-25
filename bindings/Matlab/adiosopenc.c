@@ -236,8 +236,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         adios2_variable *avar = adios_vars[vi];
         /* field NAME */
         size_t namelen;
-        char varname[adios2_string_array_element_max_size];
-
+        adios2_variable_name(NULL, &namelen, avar);
+        char varname[namelen + 1];
         adios2_variable_name(varname, &namelen, avar);
         varname[namelen] = '\0';
         mxSetFieldByNumber(vars, vi, var_field_Name, mxCreateString(varname));
@@ -333,7 +333,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         const adios2_attribute *aa = adios_attrs[ai];
         /* field NAME */
         size_t namelen;
-        char attrname[adios2_string_array_element_max_size];
+        adios2_attribute_name(NULL, &namelen, aa);
+        char attrname[namelen + 1];
         adios2_attribute_name(attrname, &namelen, aa);
         attrname[namelen] = '\0';
 
