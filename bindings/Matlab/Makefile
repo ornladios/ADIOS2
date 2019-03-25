@@ -1,22 +1,22 @@
 ###  CORI
 #ADIOS_DIR=/global/homes/p/pnorbert/adios/2.2/login
-#ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib -L${ADIOS_DIR}/lib -ladios2 
+#ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib64 -L${ADIOS_DIR}/lib64 -ladios2 
 #ADIOS_INC=-I${ADIOS_DIR}/include
 #MEXLIBS="LDFLAGS=${ADIOS_LIBS}"
 
 ###   TITAN
 ADIOS_DIR=/ccs/proj/e2e/pnorbert/ADIOS/ADIOS2/build.titan.gnu-nompi/install
-#ADIOS_DIR=/ccs/proj/e2e/pnorbert/ADIOS/ADIOS2/build.rhea.gnu-nompi/install
-#ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib -L${ADIOS_DIR}/lib -ladios2 
-ADIOS_LIBS=-L${ADIOS_DIR}/lib -ladios2 
-#ADIOS_INC=-I${ADIOS_DIR}/include
 MEXLIBS=${ADIOS_LIBS}
 
 ###  Kathleen's PC
 #ADIOS_DIR=/opt/adios/2.2-lean
-#ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib -L${ADIOS_DIR}/lib -ladios2
-ADIOS_INC=-I${ADIOS_DIR}/include
+#ADIOS_LIBS=-Wl,-rpath=${ADIOS_DIR}/lib64 -L${ADIOS_DIR}/lib -ladios2
+#ADIOS_INC=-I${ADIOS_DIR}/include
 #MEXLIBS="LDFLAGS=${ADIOS_LIBS}"
+
+### General - this should work everywhere
+ADIOS_INC=-I${ADIOS_DIR}/include
+ADIOS_LIBS=`${ADIOS_DIR}/bin/adios2-config --cxx-libs`
 
 
 MEXOPTS=-largeArrayDims -DDEBUG CFLAGS="-g -std=c99 -fPIC -O0"
