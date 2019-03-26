@@ -52,6 +52,7 @@ public:
     int m_ConsumerRank = -1;
 
     size_t m_SizeSend = 0;
+    size_t m_AbsolutePositionSend;
 
     MPIAggregator();
 

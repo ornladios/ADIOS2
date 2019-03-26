@@ -57,16 +57,12 @@ MPIAggregator::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
 
     if (m_Rank == step)
     {
-        const size_t position = (m_Rank == 0)
-                                    ? m_SizeSend
-                                    : m_SizeSend + bufferSTL.m_AbsolutePosition;
+        m_AbsolutePositionSend =
+            (m_Rank == 0) ? m_SizeSend
+                          : m_SizeSend + bufferSTL.m_AbsolutePosition;
 
-        // While the MPI_Isend function should take a const void* as it's first
-        // argument, some MPICH implementations provide a broken signature
-        // which takes a non-const first argument.  The explicit const_cast
-        // here works around this.
         helper::CheckMPIReturn(
-            MPI_Isend(const_cast<size_t *>(&position), 1, ADIOS2_MPI_SIZE_T,
+            MPI_Isend(&m_AbsolutePositionSend, 1, ADIOS2_MPI_SIZE_T,
                       destination, 0, m_Comm, &requests[0]),
             ", aggregation Isend absolute position at iteration " +
                 std::to_string(step) + "\n");
