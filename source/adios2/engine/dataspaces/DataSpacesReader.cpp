@@ -67,7 +67,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
 	char *fstr = new char[f_Name.length() + 1];
 	strcpy(fstr, f_Name.c_str());
-
+	/*
     if (rank==0){
 	//read the version and nvars from dataspaces
 		int l_version_no[2] = {0,0};
@@ -86,13 +86,28 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		latestStep = l_version_no[0];
     }
     MPI_Bcast(&latestStep, 1, MPI_INT, 0, m_data.mpi_comm);
-
+	*/
+	char *buffer;
+	int nVars, err;
 	if(mode == StepMode::NextAvailable){
-		m_CurrentStep++;
+		if(rank==0){
+			err = common_dspaces_get_next_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
+		}
+		MPI_Bcast(&err, 1, MPI_INT, 0, m_data.mpi_comm);
+		if(err < 0)
+			return StepStatus::EndOfStream;
 	}
 	if(mode == StepMode::LatestAvailable){
-			m_CurrentStep = latestStep;
+		if(rank==0){
+			err = common_dspaces_get_latest_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
+		}
+		MPI_Bcast(&err, 1, MPI_INT, 0, m_data.mpi_comm);
+		if(err < 0)
+			return StepStatus::EndOfStream;
 	}
+	MPI_Bcast(&m_CurrentStep, 1, MPI_INT, 0, m_data.mpi_comm);
+	MPI_Bcast(&nVars, 1, MPI_INT, 0, m_data.mpi_comm);
+	/*
 	//we check if the current step is the end of the step that is in DataSpaces
 	if (m_CurrentStep > latestStep)
 	{
@@ -106,7 +121,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
 	if(rank==0){
 
-		int version_buf[2] = {0,0}; /* last version put in space; not terminated */
+		int version_buf[2] = {0,0};
 		local_file_var = "VERSION@"+f_Name;
 		cstr = new char[local_file_var.length() + 1];
 		strcpy(cstr, local_file_var.c_str());
@@ -125,9 +140,10 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		nVars = version_buf[0];
 	}
 	MPI_Bcast(&nVars, 1, MPI_INT, 0, m_data.mpi_comm);
+	*/
 
 	m_IO.RemoveAllVariables();
-
+	/*
 	memset(lb, 0, MAX_DS_NDIM * sizeof(uint64_t));
 	memset(ub, 0, MAX_DS_NDIM * sizeof(uint64_t));
 	memset(gdims, 0, MAX_DS_NDIM * sizeof(uint64_t));
@@ -156,6 +172,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		delete[] meta_lk;
 		delete[] local_str;
 	}
+	*/
 	MPI_Bcast(buffer, buf_len, MPI_CHAR, 0, m_data.mpi_comm);
 	//now populate data from the buffer
 
