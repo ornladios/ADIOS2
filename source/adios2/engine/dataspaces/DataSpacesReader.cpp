@@ -107,6 +107,8 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	}
 	MPI_Bcast(&m_CurrentStep, 1, MPI_INT, 0, m_data.mpi_comm);
 	MPI_Bcast(&nVars, 1, MPI_INT, 0, m_data.mpi_comm);
+	int var_name_max_length = 128;
+	int buf_len = nVars * sizeof(int) + nVars * sizeof(int)+ MAX_DS_NDIM * nVars * sizeof(uint64_t) + nVars * var_name_max_length * sizeof(char);
 	/*
 	//we check if the current step is the end of the step that is in DataSpaces
 	if (m_CurrentStep > latestStep)
