@@ -49,7 +49,6 @@ private:
     std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
 
     void Init();
-    void Handshake();
     void MetadataThread(const std::string &address);
     std::thread m_MetadataThread;
 
