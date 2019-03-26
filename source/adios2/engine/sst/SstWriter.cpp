@@ -160,7 +160,7 @@ void SstWriter::EndStep()
         BP3DataBlock *newblock = new BP3DataBlock;
         newblock->metadata.DataSize = m_BP3Serializer->m_Metadata.m_Position;
         newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
-        newblock->data.DataSize = m_BP3Serializer->m_Data.m_Buffer.size();
+        newblock->data.DataSize = m_BP3Serializer->m_Data.m_Position;
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
         newblock->serializer = m_BP3Serializer;
         TAU_STOP("Marshaling overhead");
