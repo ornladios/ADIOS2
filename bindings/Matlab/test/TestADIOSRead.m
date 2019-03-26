@@ -43,8 +43,8 @@ f.Handlers
 
 fprintf('\n****   Check variables...\n');
 assert(size(f.Variables,2)==2, 'Error: Expected number of variables is 2 but got %s', size(f.Variables,2))
-assert(strcmp(f.Variables(1).Name, 'dT'), 'Error: First variable is expected to be ''dT'' but got %s', f.Variables(1).Name)
-assert(strcmp(f.Variables(2).Name, 'T'), 'Error: Second variable is expected to be ''T'' but got %s', f.Variables(1).Name)
+assert(strcmp(f.Variables(1).Name, 'T'), 'Error: Second variable is expected to be ''T'' but got %s', f.Variables(2).Name)
+assert(strcmp(f.Variables(2).Name, 'dT'), 'Error: First variable is expected to be ''dT'' but got %s', f.Variables(1).Name)
 
 fprintf('\n****   Check attributes...\n');
 assert(size(f.Attributes,2)==0, 'Error: Expected number of attributes is 0 but got %s', size(f.Attributes,2))
