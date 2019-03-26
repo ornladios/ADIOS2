@@ -54,7 +54,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         // SstWriter::EndStep()::lf_FreeBlocks()
         m_BP3Serializer = new format::BP3Serializer(m_MPIComm, m_DebugMode);
         m_BP3Serializer->InitParameters(m_IO.m_Parameters);
-        m_BP3Serializer->m_MetadataSet.TimeStep = m_WriterStep + 1;
+        m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
     else
