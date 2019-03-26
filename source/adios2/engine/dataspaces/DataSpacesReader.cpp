@@ -91,7 +91,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	int nVars, err;
 	if(mode == StepMode::NextAvailable){
 		if(rank==0){
-			err = common_dspaces_get_next_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
+			err = dspaces_get_next_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
 		}
 		MPI_Bcast(&err, 1, MPI_INT, 0, m_data.mpi_comm);
 		if(err < 0)
@@ -99,7 +99,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	}
 	if(mode == StepMode::LatestAvailable){
 		if(rank==0){
-			err = common_dspaces_get_latest_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
+			err = dspaces_get_latest_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
 		}
 		MPI_Bcast(&err, 1, MPI_INT, 0, m_data.mpi_comm);
 		if(err < 0)
