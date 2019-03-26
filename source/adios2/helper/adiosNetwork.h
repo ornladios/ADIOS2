@@ -13,10 +13,11 @@
 #define ADIOS2_HELPER_ADIOSNETWORK_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-#include <mpi.h>
 #include <string>
 #include <vector>
 /// \endcond
+
+#include "adios2/ADIOSMPI.h"
 
 namespace adios2
 {
