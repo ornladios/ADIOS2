@@ -13,6 +13,7 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
 #include "DataManCommon.h"
+#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
 
 namespace adios2
 {
@@ -38,12 +39,19 @@ public:
 
 private:
     size_t m_BufferSize = 1024 * 1024 * 1024;
-    size_t m_StepsPerBuffer = 10;
+    bool m_Listening = true;
+    format::VecPtr m_AggregatedMetadata = nullptr;
+    std::mutex m_AggregatedMetadataMutex;
+    int m_AppID = 0;
+    int m_Port = 12307;
+    std::vector<std::string> m_FullAddresses;
 
     std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
 
     void Init();
-    void IOThread(std::shared_ptr<transportman::WANMan> man) final;
+    void Handshake();
+    void MetadataThread(const std::string &address);
+    std::thread m_MetadataThread;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \

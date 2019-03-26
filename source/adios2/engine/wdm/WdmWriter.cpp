@@ -130,7 +130,8 @@ void WdmWriter::Init()
     MPI_Comm_size(m_MPIComm, &m_MpiSize);
     srand(time(NULL));
     InitParameters();
-    Handshake();
+    helper::HandshakeWriter(m_MPIComm, m_AppID, m_FullAddresses, m_Name, m_Port,
+                            m_Channels, m_MaxRanksPerNode, m_MaxAppsPerNode);
     InitTransports();
 }
 
@@ -164,109 +165,6 @@ void WdmWriter::InitTransports()
     {
         m_ReplyThreads.emplace_back(
             std::thread(&WdmWriter::ReplyThread, this, address));
-    }
-}
-
-void WdmWriter::Handshake()
-{
-    // Get IP address
-    auto ips = helper::AvailableIpAddresses();
-    std::string ip = "127.0.0.1";
-    if (ips.empty() == false)
-    {
-        ip = ips[0];
-    }
-    else
-    {
-        Log(1, "WdmWriter::Handshake() Cound not find any available IP "
-               "address. Using local address 127.0.0.1",
-            true, true);
-    }
-
-    // Check total number of writer apps
-    if (m_MpiRank == 0)
-    {
-        transport::FileFStream lockCheck(m_MPIComm, m_DebugMode);
-        while (true)
-        {
-            try
-            {
-                lockCheck.Open(".wdm.lock", Mode::Read);
-                lockCheck.Close();
-            }
-            catch (...)
-            {
-                break;
-            }
-        }
-        transport::FileFStream lockWrite(m_MPIComm, m_DebugMode);
-        lockWrite.Open(".wdm.lock", Mode::Write);
-
-        transport::FileFStream numRead(m_MPIComm, m_DebugMode);
-        try
-        {
-            numRead.Open(".wdm", Mode::Read);
-            auto size = numRead.GetSize();
-            std::vector<char> numAppsChar(size);
-            numRead.Read(numAppsChar.data(), numAppsChar.size());
-            m_AppID =
-                1 + stoi(std::string(numAppsChar.begin(), numAppsChar.end()));
-            numRead.Close();
-        }
-        catch (...)
-        {
-        }
-        transport::FileFStream numWrite(m_MPIComm, m_DebugMode);
-        numWrite.Open(".wdm", Mode::Write);
-        std::string numAppsString = std::to_string(m_AppID);
-        numWrite.Write(numAppsString.data(), numAppsString.size());
-        numWrite.Close();
-
-        lockWrite.Close();
-        remove(".wdm.lock");
-        std::cout << "====== AppID" << m_AppID << std::endl;
-    }
-
-    // Make full addresses
-    for (int i = 0; i < m_Channels; ++i)
-    {
-        std::string addr = "tcp://" + ip + ":" +
-                           std::to_string(m_Port + (100 * m_AppID) +
-                                          (m_MpiRank % 1000) * m_Channels + i) +
-                           "\0";
-        m_FullAddresses.push_back(addr);
-    }
-    nlohmann::json localAddressesJson = m_FullAddresses;
-    std::string localAddressesStr = localAddressesJson.dump();
-    std::vector<char> localAddressesChar(64 * m_Channels, '\0');
-    std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(),
-                localAddressesStr.size());
-    std::vector<char> globalAddressesChar(64 * m_Channels * m_MpiSize, '\0');
-    helper::GatherArrays(localAddressesChar.data(), 64 * m_Channels,
-                         globalAddressesChar.data(), m_MPIComm);
-
-    // Writing handshake file
-    if (m_MpiRank == 0)
-    {
-        nlohmann::json globalAddressesJson;
-        for (int i = 0; i < m_MpiSize; ++i)
-        {
-            auto j = nlohmann::json::parse(
-                &globalAddressesChar[i * 64 * m_Channels]);
-            for (auto &i : j)
-            {
-                globalAddressesJson.push_back(i);
-            }
-        }
-        std::string globalAddressesStr = globalAddressesJson.dump();
-        transport::FileFStream lockstream(m_MPIComm, m_DebugMode);
-        lockstream.Open(m_Name + ".wdm.lock", Mode::Write);
-        transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
-        ipstream.Open(m_Name + ".wdm", Mode::Write);
-        ipstream.Write(globalAddressesStr.data(), globalAddressesStr.size());
-        ipstream.Close();
-        lockstream.Close();
-        remove(std::string(m_Name + ".wdm.lock").c_str());
     }
 }
 
@@ -366,8 +264,8 @@ void WdmWriter::DoClose(const int transportIndex)
         }
     }
 
-    remove(".wdm");
-    remove(std::string(m_Name + ".wdm").c_str());
+    remove(".staging");
+    remove(std::string(m_Name + ".staging").c_str());
 
     Log(5, "WdmWriter::DoClose(" + m_Name + ")", true, true);
 }
