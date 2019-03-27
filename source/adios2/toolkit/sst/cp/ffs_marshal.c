@@ -1571,8 +1571,9 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
 
     if (!MetaData->Metadata[WriterRank].block)
     {
-        fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == "
-                        "NULL for WriterRank = %d\n",
+        fprintf(stderr,
+                "FAILURE!   MetaData->Metadata[WriterRank]->block == "
+                "NULL for WriterRank = %d\n",
                 WriterRank);
     }
     FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,

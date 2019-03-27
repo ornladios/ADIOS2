@@ -39,10 +39,10 @@ class Attribute
 
 public:
     /**
-    * Empty (default) constructor, use it as a placeholder for future
-    * attributes from IO:DefineAttribute<T> or IO:InquireAttribute<T>.
-    * Can be used with STL containers.
-    */
+     * Empty (default) constructor, use it as a placeholder for future
+     * attributes from IO:DefineAttribute<T> or IO:InquireAttribute<T>.
+     * Can be used with STL containers.
+     */
     Attribute<T>() = default;
     ~Attribute<T>() = default;
 

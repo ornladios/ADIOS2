@@ -340,7 +340,7 @@ void LocalAggregate1DBlock0(const std::string substreams)
 }
 
 class BPWriteAggregateReadLocalTest
-    : public ::testing::TestWithParam<std::string>
+: public ::testing::TestWithParam<std::string>
 {
 public:
     BPWriteAggregateReadLocalTest() = default;

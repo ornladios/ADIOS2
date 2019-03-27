@@ -78,7 +78,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     MPI_Comm_size(testComm, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(testComm, adios2::DebugON);

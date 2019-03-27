@@ -214,9 +214,10 @@ static void DummyReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
     TimestepList tmp = WS_Stream->Timesteps;
     CP_Services Svcs = (CP_Services)client_Data;
 
-    Svcs->verbose(WS_Stream->CP_Stream, "Got a request to read remote memory "
-                                        "from reader rank %d: timestep %d, "
-                                        "offset %d, length %d\n",
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Got a request to read remote memory "
+                  "from reader rank %d: timestep %d, "
+                  "offset %d, length %d\n",
                   ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
                   ReadRequestMsg->Offset, ReadRequestMsg->Length);
     while (tmp != NULL)

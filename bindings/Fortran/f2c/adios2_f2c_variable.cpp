@@ -112,14 +112,12 @@ void FC_GLOBAL(adios2_set_shape_f2c,
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
-
         output.resize(size);
 
         for (auto d = 0; d < size; ++d)
         {
             output[d] = dimensions[d];
         }
-
     };
 
     try
@@ -157,7 +155,6 @@ void FC_GLOBAL(adios2_set_selection_f2c,
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
-
         output.resize(size);
 
         for (auto d = 0; d < size; ++d)
@@ -196,14 +193,12 @@ void FC_GLOBAL(adios2_set_memory_selection_f2c,
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
-
         output.resize(size);
 
         for (auto d = 0; d < size; ++d)
         {
             output[d] = dimensions[d];
         }
-
     };
 
     try

@@ -628,8 +628,9 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
     if (variable)
     {
         size_t endPositionCurrentStep =
-            initialPosition - (header.Name.size() + header.GroupName.size() +
-                               header.Path.size() + 23) +
+            initialPosition -
+            (header.Name.size() + header.GroupName.size() + header.Path.size() +
+             23) +
             static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
         // variable->m_AvailableStepsCount = step;
@@ -778,8 +779,9 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
     if (variable)
     {
         size_t endPositionCurrentStep =
-            initialPosition - (header.Name.size() + header.GroupName.size() +
-                               header.Path.size() + 23) +
+            initialPosition -
+            (header.Name.size() + header.GroupName.size() + header.Path.size() +
+             23) +
             static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
         // variable->m_AvailableStepsCount = step;

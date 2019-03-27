@@ -235,9 +235,10 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("configFile"), pybind11::arg("comm"),
              pybind11::arg("debugMode") = true)
 #else
-        .def(pybind11::init<const bool>(), "adios2 module starting point "
-                                           "non-MPI, constructs an ADIOS class "
-                                           "object",
+        .def(pybind11::init<const bool>(),
+             "adios2 module starting point "
+             "non-MPI, constructs an ADIOS class "
+             "object",
              pybind11::arg("debugMode") = true)
         .def(pybind11::init<const std::string &, const bool>(),
              "adios2 module starting point non-MPI, constructs an ADIOS class "
@@ -248,10 +249,11 @@ PYBIND11_MODULE(adios2, m)
              "spawn IO object component returning a IO object with a unique "
              "name, throws an exception if IO with the same name is declared "
              "twice")
-        .def("AtIO", &adios2::py11::ADIOS::AtIO, "returns an IO object "
-                                                 "previously defined IO object "
-                                                 "with DeclareIO, throws "
-                                                 "an exception if not found")
+        .def("AtIO", &adios2::py11::ADIOS::AtIO,
+             "returns an IO object "
+             "previously defined IO object "
+             "with DeclareIO, throws "
+             "an exception if not found")
         .def("DefineOperator", &adios2::py11::ADIOS::DefineOperator)
         .def("InquireOperator", &adios2::py11::ADIOS::InquireOperator)
         .def("FlushAll", &adios2::py11::ADIOS::FlushAll,
@@ -286,21 +288,23 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("type"),
              pybind11::arg("parameters") = adios2::Params())
 
-        .def("DefineVariable", (adios2::py11::Variable (adios2::py11::IO::*)(
-                                   const std::string &, const pybind11::array &,
-                                   const adios2::Dims &, const adios2::Dims &,
-                                   const adios2::Dims &, const bool)) &
-                                   adios2::py11::IO::DefineVariable,
+        .def("DefineVariable",
+             (adios2::py11::Variable(adios2::py11::IO::*)(
+                 const std::string &, const pybind11::array &,
+                 const adios2::Dims &, const adios2::Dims &,
+                 const adios2::Dims &, const bool)) &
+                 adios2::py11::IO::DefineVariable,
              pybind11::return_value_policy::move, pybind11::arg("name"),
              pybind11::arg("array"), pybind11::arg("shape") = adios2::Dims(),
              pybind11::arg("start") = adios2::Dims(),
              pybind11::arg("count") = adios2::Dims(),
              pybind11::arg("isConstantDims") = false)
 
-        .def("DefineVariable", (adios2::py11::Variable (adios2::py11::IO::*)(
-                                   const std::string &)) &
-                                   adios2::py11::IO::DefineVariable,
-             pybind11::return_value_policy::move, pybind11::arg("name"))
+        .def(
+            "DefineVariable",
+            (adios2::py11::Variable(adios2::py11::IO::*)(const std::string &)) &
+                adios2::py11::IO::DefineVariable,
+            pybind11::return_value_policy::move, pybind11::arg("name"))
 
         .def("InquireVariable", &adios2::py11::IO::InquireVariable,
              pybind11::return_value_policy::move)
@@ -309,7 +313,7 @@ PYBIND11_MODULE(adios2, m)
              pybind11::return_value_policy::move)
 
         .def("DefineAttribute",
-             (adios2::py11::Attribute (adios2::py11::IO::*)(
+             (adios2::py11::Attribute(adios2::py11::IO::*)(
                  const std::string &, const pybind11::array &,
                  const std::string &, const std::string)) &
                  adios2::py11::IO::DefineAttribute,
@@ -318,17 +322,18 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("separator") = "/",
              pybind11::return_value_policy::move)
 
-        .def("DefineAttribute", (adios2::py11::Attribute (adios2::py11::IO::*)(
-                                    const std::string &, const std::string &,
-                                    const std::string &, const std::string)) &
-                                    adios2::py11::IO::DefineAttribute,
+        .def("DefineAttribute",
+             (adios2::py11::Attribute(adios2::py11::IO::*)(
+                 const std::string &, const std::string &, const std::string &,
+                 const std::string)) &
+                 adios2::py11::IO::DefineAttribute,
              pybind11::arg("name"), pybind11::arg("stringValue"),
              pybind11::arg("variableName") = "",
              pybind11::arg("separator") = "/",
              pybind11::return_value_policy::move)
 
         .def("DefineAttribute",
-             (adios2::py11::Attribute (adios2::py11::IO::*)(
+             (adios2::py11::Attribute(adios2::py11::IO::*)(
                  const std::string &, const std::vector<std::string> &,
                  const std::string &, const std::string)) &
                  adios2::py11::IO::DefineAttribute,
@@ -337,11 +342,11 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("separator") = "/",
              pybind11::return_value_policy::move)
 
-        .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
+        .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(
                          const std::string &, const int)) &
                          adios2::py11::IO::Open)
 #ifdef ADIOS2_HAVE_MPI
-        .def("Open", (adios2::py11::Engine (adios2::py11::IO::*)(
+        .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(
                          const std::string &, const int,
                          adios2::py11::MPI4PY_Comm comm)) &
                          adios2::py11::IO::Open)
@@ -416,20 +421,23 @@ PYBIND11_MODULE(adios2, m)
                      return false;
                  };
              })
-        .def("BeginStep", (adios2::StepStatus (adios2::py11::Engine::*)(
-                              const adios2::StepMode, const float)) &
-                              adios2::py11::Engine::BeginStep,
+        .def("BeginStep",
+             (adios2::StepStatus(adios2::py11::Engine::*)(
+                 const adios2::StepMode, const float)) &
+                 adios2::py11::Engine::BeginStep,
              pybind11::arg("mode"), pybind11::arg("timeoutSeconds") = -1.f,
              pybind11::return_value_policy::move)
 
-        .def("BeginStep", (adios2::StepStatus (adios2::py11::Engine::*)()) &
-                              adios2::py11::Engine::BeginStep,
+        .def("BeginStep",
+             (adios2::StepStatus(adios2::py11::Engine::*)()) &
+                 adios2::py11::Engine::BeginStep,
              pybind11::return_value_policy::move)
 
-        .def("Put", (void (adios2::py11::Engine::*)(
-                        adios2::py11::Variable, const pybind11::array &,
-                        const adios2::Mode launch)) &
-                        adios2::py11::Engine::Put,
+        .def("Put",
+             (void (adios2::py11::Engine::*)(adios2::py11::Variable,
+                                             const pybind11::array &,
+                                             const adios2::Mode launch)) &
+                 adios2::py11::Engine::Put,
              pybind11::arg("variable"), pybind11::arg("array"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
@@ -439,17 +447,19 @@ PYBIND11_MODULE(adios2, m)
 
         .def("PerformPuts", &adios2::py11::Engine::PerformPuts)
 
-        .def("Get", (void (adios2::py11::Engine::*)(
-                        adios2::py11::Variable, pybind11::array &,
-                        const adios2::Mode launch)) &
-                        adios2::py11::Engine::Get,
+        .def("Get",
+             (void (adios2::py11::Engine::*)(adios2::py11::Variable,
+                                             pybind11::array &,
+                                             const adios2::Mode launch)) &
+                 adios2::py11::Engine::Get,
              pybind11::arg("variable"), pybind11::arg("array"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
-        .def("Get", (void (adios2::py11::Engine::*)(
-                        adios2::py11::Variable, std::string &,
-                        const adios2::Mode launch)) &
-                        adios2::py11::Engine::Get,
+        .def("Get",
+             (void (adios2::py11::Engine::*)(adios2::py11::Variable,
+                                             std::string &,
+                                             const adios2::Mode launch)) &
+                 adios2::py11::Engine::Get,
              pybind11::arg("variable"), pybind11::arg("string"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
@@ -578,11 +588,12 @@ PYBIND11_MODULE(adios2, m)
                          attribute information dictionary
         )md")
 
-        .def("write", (void (adios2::py11::File::*)(
-                          const std::string &, const pybind11::array &,
-                          const adios2::Dims &, const adios2::Dims &,
-                          const adios2::Dims &, const bool)) &
-                          adios2::py11::File::Write,
+        .def("write",
+             (void (adios2::py11::File::*)(
+                 const std::string &, const pybind11::array &,
+                 const adios2::Dims &, const adios2::Dims &,
+                 const adios2::Dims &, const bool)) &
+                 adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
              pybind11::arg("shape") = adios2::Dims(),
              pybind11::arg("start") = adios2::Dims(),
@@ -747,9 +758,10 @@ PYBIND11_MODULE(adios2, m)
 						 (default = false).
 			)md")
 
-        .def("read_string", (std::vector<std::string> (adios2::py11::File::*)(
-                                const std::string &)) &
-                                adios2::py11::File::ReadString,
+        .def("read_string",
+             (std::vector<std::string>(adios2::py11::File::*)(
+                 const std::string &)) &
+                 adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"),
              R"md(
@@ -767,7 +779,7 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("read_string",
-             (std::vector<std::string> (adios2::py11::File::*)(
+             (std::vector<std::string>(adios2::py11::File::*)(
                  const std::string &, const size_t, const size_t)) &
                  adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
@@ -789,7 +801,7 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("read",
-             (pybind11::array (adios2::py11::File::*)(const std::string &)) &
+             (pybind11::array(adios2::py11::File::*)(const std::string &)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), R"md(
@@ -806,10 +818,11 @@ PYBIND11_MODULE(adios2, m)
                         Single values will have a shape={1} numpy array
         )md")
 
-        .def("read", (pybind11::array (adios2::py11::File::*)(
-                         const std::string &, const adios2::Dims &,
-                         const adios2::Dims &)) &
-                         adios2::py11::File::Read,
+        .def("read",
+             (pybind11::array(adios2::py11::File::*)(const std::string &,
+                                                     const adios2::Dims &,
+                                                     const adios2::Dims &)) &
+                 adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("start"),
              pybind11::arg("count"), R"md(
@@ -832,10 +845,11 @@ PYBIND11_MODULE(adios2, m)
                      empty if exception is thrown
         )md")
 
-        .def("read", (pybind11::array (adios2::py11::File::*)(
-                         const std::string &, const adios2::Dims &,
-                         const adios2::Dims &, const size_t, const size_t)) &
-                         adios2::py11::File::Read,
+        .def("read",
+             (pybind11::array(adios2::py11::File::*)(
+                 const std::string &, const adios2::Dims &,
+                 const adios2::Dims &, const size_t, const size_t)) &
+                 adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("start"),
              pybind11::arg("count"), pybind11::arg("step_start"),
@@ -865,7 +879,7 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("read_attribute",
-             (pybind11::array (adios2::py11::File::*)(
+             (pybind11::array(adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttribute,
              pybind11::return_value_policy::take_ownership,
@@ -891,7 +905,7 @@ PYBIND11_MODULE(adios2, m)
 	    )md")
 
         .def("read_attribute_string",
-             (std::vector<std::string> (adios2::py11::File::*)(
+             (std::vector<std::string>(adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string)) &
                  adios2::py11::File::ReadAttributeString,
              pybind11::return_value_policy::take_ownership,

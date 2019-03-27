@@ -770,9 +770,9 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
             std::pair<size_t, Dims> signo =
                 get_local_array_signature(fp, io, variable);
             Dims &d = signo.second;
-            fprintf(outf, "[%s]*", signo.first > 0
-                                       ? std::to_string(signo.first).data()
-                                       : "__");
+            fprintf(outf, "[%s]*",
+                    signo.first > 0 ? std::to_string(signo.first).data()
+                                    : "__");
             fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).data() : "__");
             for (size_t j = 1; j < variable->m_Count.size(); j++)
             {
@@ -1455,11 +1455,9 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     // size_t elemsize;                   // size in bytes of one element
     uint64_t st, ct;
     std::vector<T> dataV;
-    uint64_t sum; // working var to sum up things
-    uint64_t
-        maxreadn; // max number of elements to read once up to a limit (10MB
-                  // of
-                  // data)
+    uint64_t sum;      // working var to sum up things
+    uint64_t maxreadn; // max number of elements to read once up to a limit
+                       // (10MB of data)
     uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     bool incdim;              // used in incremental reading in
@@ -1704,11 +1702,9 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
     int tidx;
     uint64_t st, ct;
     std::vector<T> dataV;
-    uint64_t sum; // working var to sum up things
-    uint64_t
-        maxreadn; // max number of elements to read once up to a limit (10MB
-                  // of
-                  // data)
+    uint64_t sum;      // working var to sum up things
+    uint64_t maxreadn; // max number of elements to read once up to a limit
+                       // (10MB of data)
     uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     bool incdim;              // used in incremental reading in
@@ -1973,7 +1969,7 @@ bool matchesAMask(const char *name)
                 (pmatch[0].rm_so == 0 ||
                  pmatch[0].rm_so == startpos) && // from the beginning
                 pmatch[0].rm_eo == strlen(name)  // to the very end of the name
-                )
+            )
 #else
             bool matches = std::regex_match(name, varregex[i]);
             if (!matches && name[0] == '/')
@@ -2125,8 +2121,9 @@ int print_data_as_string(const void *data, int maxlen,
         }
         break;
     default:
-        fprintf(stderr, "Error in bpls code: cannot use print_data_as_string() "
-                        "for type \"%d\"\n",
+        fprintf(stderr,
+                "Error in bpls code: cannot use print_data_as_string() "
+                "for type \"%d\"\n",
                 adiosvartype);
         return -1;
     }
@@ -2795,8 +2792,9 @@ void parseDimSpec(const std::string &str, int64_t *dims)
         dims[i] = (int64_t)strtoll(token, (char **)NULL, 0);
         if (errno)
         {
-            fprintf(stderr, "Error: could not convert field into a value: "
-                            "%s from \"%s\"\n",
+            fprintf(stderr,
+                    "Error: could not convert field into a value: "
+                    "%s from \"%s\"\n",
                     token, str.c_str());
             exit(200);
         }
@@ -2814,8 +2812,9 @@ void parseDimSpec(const std::string &str, int64_t *dims)
     // check if number of dims specified is larger than we can handle
     if (token != NULL)
     {
-        fprintf(stderr, "Error: More dimensions specified in \"%s\" than we "
-                        "can handle (%d)\n",
+        fprintf(stderr,
+                "Error: More dimensions specified in \"%s\" than we "
+                "can handle (%d)\n",
                 str.c_str(), MAX_DIMS);
         exit(200);
     }
@@ -2833,8 +2832,9 @@ int compile_regexp_masks(void)
         if (errcode)
         {
             regerror(errcode, &(varregex[i]), buf, sizeof(buf));
-            fprintf(stderr, "Error: \"%s\" is an invalid extended regular "
-                            "expression: %s\n",
+            fprintf(stderr,
+                    "Error: \"%s\" is an invalid extended regular "
+                    "expression: %s\n",
                     varmask[i], buf);
             return 2;
         }
@@ -2849,8 +2849,9 @@ int compile_regexp_masks(void)
         }
         catch (std::regex_error &e)
         {
-            fprintf(stderr, "Error: \"%s\" is an invalid extended regular "
-                            "expression. C++ regex error code: %d\n",
+            fprintf(stderr,
+                    "Error: \"%s\" is an invalid extended regular "
+                    "expression. C++ regex error code: %d\n",
                     varmask[i],
                     e.code() == std::regex_constants::error_badrepeat);
             return 2;

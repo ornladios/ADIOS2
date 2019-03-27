@@ -267,8 +267,9 @@ bool WANMan::GetIntParameter(const Params &params, const std::string &key,
         {
             std::cout << "Parameter " << key
                       << " should be an integer in string format. However, "
-                      << e.what() << " has been caught while trying to convert "
-                                     "the value to an integer."
+                      << e.what()
+                      << " has been caught while trying to convert "
+                         "the value to an integer."
                       << std::endl;
             return false;
         }

@@ -542,7 +542,6 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
 TEST_F(ADIOSDefineAttributeTest, DefineAndRemove)
 {
     auto lf_CheckRemove = [&](const std::string attributeName) {
-
         const bool isRemoved = io.RemoveAttribute(attributeName);
         EXPECT_EQ(isRemoved, true);
     };
@@ -605,7 +604,6 @@ TEST_F(ADIOSDefineAttributeTest, DefineAndRemove)
 TEST_F(ADIOSDefineAttributeTest, DefineRemoveDefine)
 {
     auto lf_CheckRemove = [&](const std::string attributeName) {
-
         const bool isRemoved = io.RemoveAttribute(attributeName);
         EXPECT_EQ(isRemoved, true);
     };

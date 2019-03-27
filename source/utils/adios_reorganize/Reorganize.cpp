@@ -303,7 +303,7 @@ std::string Reorganize::VectorToString(const T &v)
 size_t
 Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
                       const int *np // number of processes in each dimension
-                      )
+)
 {
     size_t writesize = 0;
     if (vi.v == nullptr)
@@ -507,8 +507,9 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     if (nvars != varinfo.size())
     {
         std::cerr
-            << "ERROR rank " << rank << ": Invalid program state, number "
-                                        "of variables ("
+            << "ERROR rank " << rank
+            << ": Invalid program state, number "
+               "of variables ("
             << nvars
             << ") to read does not match the number of processed variables ("
             << varinfo.size() << ")" << std::endl;

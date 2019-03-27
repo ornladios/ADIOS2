@@ -52,8 +52,8 @@ mxClassID adiostypeToMatlabClass(int adiostype, mxComplexity *complexity);
 size_t adiostypeToMemSize(adios2_type adiostype);
 mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
                             mxComplexity complexFlag);
-mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxtype,
-                            mxComplexity complexFlag);
+mxArray *arrayToMatlabArray(const void *data, const size_t nelems,
+                            mxClassID mxtype, mxComplexity complexFlag);
 void errorCheck(int nlhs, int nrhs, const mxArray *prhs[]);
 char *getString(const mxArray *mxstr);
 static size_t *swap_order(size_t n, const size_t *array);
@@ -121,8 +121,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     const char *attr_field_names[] = {
         "Name", "Type", "Value"}; /* attribute level struct fields */
     mwSize nattrfields = 3;
-    mwSize attr_struct_dims
-        [2]; /* dimensions for attribute level struct array: 1-by-sth */
+    mwSize attr_struct_dims[2]; /* dimensions for attribute level struct array:
+                                   1-by-sth */
     int attr_field_Name;
     int attr_field_Type;
     int attr_field_Value;
@@ -309,7 +309,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
         else
         {
-            size_t typesize =  adiostypeToMemSize(adiostype);
+            size_t typesize = adiostypeToMemSize(adiostype);
             char value[typesize];
             adios2_variable_min(value, avar);
             arr = valueToMatlabValue(value, mxtype, complexFlag);
@@ -357,7 +357,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         /* field VALUE */
         size_t aelems;
         adios2_attribute_size(&aelems, aa);
-        size_t atypesize =  adiostypeToMemSize(adiostype);
+        size_t atypesize = adiostypeToMemSize(adiostype);
         void *data;
         if (adiostype == adios2_type_string)
         {
@@ -373,14 +373,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             else
             {
                 /* string array attribute */
-                char **dataArray = mxCalloc(aelems, sizeof(char*));
+                char **dataArray = mxCalloc(aelems, sizeof(char *));
                 size_t i;
                 for (i = 0; i < aelems; ++i)
                 {
                     dataArray[i] = mxCalloc(4096, 1);
                 }
                 size_t nelems;
-                data = (void *) dataArray;
+                data = (void *)dataArray;
                 adios2_attribute_data(data, &nelems, aa);
                 arr = arrayToMatlabArray(data, aelems, mxtype, complexFlag);
             }
@@ -404,12 +404,12 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
         }
         if (verbose > 1)
-            mexPrintf("      %s: adios type=%s size=%zu\n", attrname, mxGetClassName(arr),
-                      aelems);
+            mexPrintf("      %s: adios type=%s size=%zu\n", attrname,
+                      mxGetClassName(arr), aelems);
         mxFree(data);
     }
 
-    //if (verbose)
+    // if (verbose)
     //    mexPrintf("Lock the function call to not loose the ADIOS handlers\n");
     // mexLock();
     if (verbose)
@@ -451,8 +451,8 @@ mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
     return arr;
 }
 
-mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxtype,
-                            mxComplexity complexFlag)
+mxArray *arrayToMatlabArray(const void *data, const size_t nelems,
+                            mxClassID mxtype, mxComplexity complexFlag)
 {
     /* copies values in all cases, so one can free(data) later */
     mxArray *arr;
@@ -462,7 +462,7 @@ mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxt
     }
     else if (mxtype == mxCHAR_CLASS)
     {
-        arr = mxCreateCharMatrixFromStrings(nelems, (const char**)data);
+        arr = mxCreateCharMatrixFromStrings(nelems, (const char **)data);
     }
     else if (complexFlag == mxCOMPLEX)
     {
@@ -472,20 +472,20 @@ mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxt
         {
             if (mxtype == mxSINGLE_CLASS)
             {
-                ((float *)mxGetPr(arr))[i] = ((const float *)data)[2*i];
-                ((float *)mxGetPi(arr))[i] = ((const float *)data)[2*i+1];
+                ((float *)mxGetPr(arr))[i] = ((const float *)data)[2 * i];
+                ((float *)mxGetPi(arr))[i] = ((const float *)data)[2 * i + 1];
             }
             else
             {
-                ((double *)mxGetPr(arr))[i] = ((const double *)data)[2*i];
-                ((double *)mxGetPi(arr))[i] = ((const double *)data)[2*i+1];
+                ((double *)mxGetPr(arr))[i] = ((const double *)data)[2 * i];
+                ((double *)mxGetPi(arr))[i] = ((const double *)data)[2 * i + 1];
             }
         }
     }
     else
     {
         arr = mxCreateNumericMatrix(1, nelems, mxtype, mxREAL);
-        memcpy(mxGetData(arr), data, nelems*mxGetElementSize(arr));
+        memcpy(mxGetData(arr), data, nelems * mxGetElementSize(arr));
     }
     return arr;
 }
@@ -549,7 +549,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
         return mxINT8_CLASS;
 
     case adios2_type_string:
-    /* case adios2_type_string_array: */
+        /* case adios2_type_string_array: */
         return mxCHAR_CLASS;
 
     case adios2_type_uint16_t:
@@ -598,7 +598,7 @@ size_t adiostypeToMemSize(adios2_type adiostype)
         return sizeof(char);
 
     case adios2_type_string:
-    /* case adios2_type_string_array: */
+        /* case adios2_type_string_array: */
         return sizeof(char);
 
     case adios2_type_uint16_t:
@@ -619,9 +619,9 @@ size_t adiostypeToMemSize(adios2_type adiostype)
         return sizeof(double);
 
     case adios2_type_float_complex: /* 8 bytes */
-        return 2*sizeof(float);
+        return 2 * sizeof(float);
     case adios2_type_double_complex: /*  16 bytes */
-        return 2*sizeof(double);
+        return 2 * sizeof(double);
 
     default:
         mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",

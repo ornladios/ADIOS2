@@ -28,7 +28,8 @@ namespace adios2
 namespace interop
 {
 
-typedef enum {
+typedef enum
+{
     E_H5_DATASET = 0,
     E_H5_DATATYPE = 1,
     E_H5_GROUP = 2,

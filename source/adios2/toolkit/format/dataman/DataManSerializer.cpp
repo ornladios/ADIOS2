@@ -521,9 +521,10 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         }
         for (auto it : its)
         {
-            Log(5, "DataManSerializer::Erase() trying to erase step " +
-                       std::to_string(it->first) +
-                       ". This is one of multiple steps being erased.",
+            Log(5,
+                "DataManSerializer::Erase() trying to erase step " +
+                    std::to_string(it->first) +
+                    ". This is one of multiple steps being erased.",
                 true, true);
             m_DataManVarMap.erase(it);
         }
@@ -547,8 +548,9 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     }
     else
     {
-        Log(5, "DataManSerializer::Erase() trying to erase step " +
-                   std::to_string(step),
+        Log(5,
+            "DataManSerializer::Erase() trying to erase step " +
+                std::to_string(step),
             true, true);
         m_DataManVarMap.erase(step);
         if (m_AggregatedMetadataJson != nullptr)
@@ -661,9 +663,10 @@ VecPtr DataManSerializer::GenerateReply(const std::vector<char> &request,
     }
     catch (std::exception &e)
     {
-        Log(1, "DataManSerializer::GenerateReply() received staging request "
-               "but failed to deserialize due to " +
-                   std::string(e.what()),
+        Log(1,
+            "DataManSerializer::GenerateReply() received staging request "
+            "but failed to deserialize due to " +
+                std::string(e.what()),
             true, true);
         step = -1;
         return replyLocalBuffer;
@@ -683,9 +686,10 @@ VecPtr DataManSerializer::GenerateReply(const std::vector<char> &request,
             auto itVarVec = m_DataManVarMap.find(step);
             if (itVarVec == m_DataManVarMap.end())
             {
-                Log(1, "DataManSerializer::GenerateReply() received staging "
-                       "request but DataManVarMap does not have Step " +
-                           std::to_string(step),
+                Log(1,
+                    "DataManSerializer::GenerateReply() received staging "
+                    "request but DataManVarMap does not have Step " +
+                        std::to_string(step),
                     true, true);
                 if (m_Verbosity >= 1)
                 {
@@ -704,10 +708,11 @@ VecPtr DataManSerializer::GenerateReply(const std::vector<char> &request,
                 varVec = itVarVec->second;
                 if (varVec == nullptr)
                 {
-                    Log(1, "DataManSerializer::GenerateReply() received "
-                           "staging request but DataManVarMap contains a "
-                           "nullptr for Step " +
-                               std::to_string(step),
+                    Log(1,
+                        "DataManSerializer::GenerateReply() received "
+                        "staging request but DataManVarMap contains a "
+                        "nullptr for Step " +
+                            std::to_string(step),
                         true, true);
                     return replyLocalBuffer;
                 }

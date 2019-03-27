@@ -59,8 +59,9 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
                                 const float timeoutSeconds)
 {
 
-    Log(5, "WdmReader::BeginStep() start. Last step " +
-               std::to_string(m_CurrentStep),
+    Log(5,
+        "WdmReader::BeginStep() start. Last step " +
+            std::to_string(m_CurrentStep),
         true, true);
 
     ++m_CurrentStep;
@@ -202,8 +203,9 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
         }
     }
 
-    Log(5, "WdmReader::BeginStep() start. Last step " +
-               std::to_string(m_CurrentStep),
+    Log(5,
+        "WdmReader::BeginStep() start. Last step " +
+            std::to_string(m_CurrentStep),
         true, true);
 
     m_RetryTimes = 0;
@@ -237,8 +239,9 @@ void WdmReader::PerformGets()
         auto reply = m_DataTransport->Request(*i.second, i.first);
         if (reply->empty())
         {
-            Log(1, "Lost connection to writer. Data for the final step is "
-                   "corrupted!",
+            Log(1,
+                "Lost connection to writer. Data for the final step is "
+                "corrupted!",
                 true, true);
             return;
         }
@@ -259,8 +262,9 @@ void WdmReader::PerformGets()
         }
         else
         {
-            Log(6, "WdmReader::PerformGets() put reply of size " +
-                       std::to_string(reply->size()) + " into serializer",
+            Log(6,
+                "WdmReader::PerformGets() put reply of size " +
+                    std::to_string(reply->size()) + " into serializer",
                 true, true);
             m_DataManSerializer.PutPack(reply);
         }
@@ -288,8 +292,9 @@ void WdmReader::PerformGets()
         m_DataManSerializer.GetVar(reinterpret_cast<T *>(req.data),            \
                                    req.variable, req.start, req.count,         \
                                    req.step);                                  \
-        Log(6, "WdmReader::PerformGets() get variable " + req.variable +       \
-                   " from serializer",                                         \
+        Log(6,                                                                 \
+            "WdmReader::PerformGets() get variable " + req.variable +          \
+                " from serializer",                                            \
             true, true);                                                       \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

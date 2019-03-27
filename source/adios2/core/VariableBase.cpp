@@ -373,18 +373,18 @@ void VariableBase::InitShapeType()
         {
             if (m_DebugMode)
             {
-                auto lf_LargerThanError =
-                    [&](const unsigned int i, const std::string dims1,
-                        const size_t dims1Value, const std::string dims2,
-                        const size_t dims2Value) {
-
-                        const std::string iString(std::to_string(i));
-                        throw std::invalid_argument(
-                            "ERROR: " + dims1 + "[" + iString + "] = " +
-                            std::to_string(dims1Value) + " > " + dims2 + "[" +
-                            iString + "], = " + std::to_string(dims2Value) +
-                            " in DefineVariable " + m_Name + "\n");
-                    };
+                auto lf_LargerThanError = [&](const unsigned int i,
+                                              const std::string dims1,
+                                              const size_t dims1Value,
+                                              const std::string dims2,
+                                              const size_t dims2Value) {
+                    const std::string iString(std::to_string(i));
+                    throw std::invalid_argument(
+                        "ERROR: " + dims1 + "[" + iString +
+                        "] = " + std::to_string(dims1Value) + " > " + dims2 +
+                        "[" + iString + "], = " + std::to_string(dims2Value) +
+                        " in DefineVariable " + m_Name + "\n");
+                };
 
                 for (unsigned int i = 0; i < m_Shape.size(); ++i)
                 {

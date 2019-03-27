@@ -48,7 +48,8 @@ Attribute<T> IO::DefineAttribute(const std::string &name, const T *data,
                                       " and variable name " + variableName +
                                       ", in call to IO::DefineAttribute");
     return Attribute<T>(
-        &m_IO->DefineAttribute(name, reinterpret_cast<const IOType *>(data), size, variableName, separator));
+        &m_IO->DefineAttribute(name, reinterpret_cast<const IOType *>(data),
+                               size, variableName, separator));
 }
 
 template <class T>
@@ -60,7 +61,8 @@ Attribute<T> IO::DefineAttribute(const std::string &name, const T &value,
     helper::CheckForNullptr(m_IO, "for attribute name " + name +
                                       ", in call to IO::DefineAttribute");
     return Attribute<T>(
-	&m_IO->DefineAttribute(name, reinterpret_cast<const IOType &>(value), variableName, separator));
+        &m_IO->DefineAttribute(name, reinterpret_cast<const IOType &>(value),
+                               variableName, separator));
 }
 
 template <class T>
