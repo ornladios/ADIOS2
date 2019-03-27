@@ -55,7 +55,7 @@ private:
     int m_Timeout = 3;
     int m_RetryMax = 3;
     int m_RetryTimes = 0;
-    size_t m_ReaderId;
+    size_t m_AppID;
     bool m_AttributesSet = false;
 
     struct Request
@@ -79,7 +79,6 @@ private:
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
-    void Handshake();
     template <typename T>
     void CheckIOVariable(const std::string &name, const Dims &shape,
                          const Dims &start, const Dims &count);

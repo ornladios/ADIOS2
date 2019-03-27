@@ -15,6 +15,7 @@
 #include "adios2/helper/adiosMPIFunctions.h" //MPI functions (Bcast, send/recv)
 #include "adios2/helper/adiosMath.h"         //math functions (cmath, algorithm)
 #include "adios2/helper/adiosMemory.h"       //memcpy, std::copy, insert, resize
+#include "adios2/helper/adiosNetwork.h"      //network and staging functions
 #include "adios2/helper/adiosString.h"       //std::string manipulation
 #include "adios2/helper/adiosSystem.h" //OS functionality, POSIX, filesystem
 #include "adios2/helper/adiosType.h"   //Type casting, conversion, checks, etc.

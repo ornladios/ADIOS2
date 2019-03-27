@@ -343,7 +343,7 @@ void WdmReader::Init()
 {
     srand(time(NULL));
     InitParameters();
-    Handshake();
+    helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name);
 }
 
 void WdmReader::InitParameters()
@@ -365,63 +365,13 @@ void WdmReader::InitParameters()
 
 void WdmReader::InitTransports() {}
 
-void WdmReader::Handshake()
-{
-    auto ips = helper::AvailableIpAddresses();
-    if (ips.empty())
-    {
-        m_ReaderId = rand();
-    }
-    else
-    {
-        std::hash<std::string> hash_fn;
-        m_ReaderId = hash_fn(ips[0]);
-    }
-    helper::BroadcastValue(m_ReaderId, m_MPIComm);
-
-    transport::FileFStream ipstream(m_MPIComm, m_DebugMode);
-    while (true)
-    {
-        try
-        {
-            ipstream.Open(m_Name + ".wdm", Mode::Read);
-            break;
-        }
-        catch (...)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-    }
-
-    transport::FileFStream lockstream(m_MPIComm, m_DebugMode);
-    while (true)
-    {
-        try
-        {
-            lockstream.Open(m_Name + ".wdm.lock", Mode::Read);
-            lockstream.Close();
-        }
-        catch (...)
-        {
-            break;
-        }
-    }
-
-    auto size = ipstream.GetSize();
-    std::vector<char> address(size);
-    ipstream.Read(address.data(), size);
-    ipstream.Close();
-    nlohmann::json j = nlohmann::json::parse(address);
-    m_FullAddresses = j.get<std::vector<std::string>>();
-}
-
 void WdmReader::RequestMetadata(int64_t step)
 {
     format::VecPtr reply = std::make_shared<std::vector<char>>();
     if (m_MpiRank == 0)
     {
         std::vector<char> request(2 * sizeof(int64_t));
-        reinterpret_cast<int64_t *>(request.data())[0] = m_ReaderId;
+        reinterpret_cast<int64_t *>(request.data())[0] = m_AppID;
         reinterpret_cast<int64_t *>(request.data())[1] = step;
         std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
         reply = m_MetadataTransport->Request(request, address);

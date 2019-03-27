@@ -48,6 +48,8 @@ private:
     std::string m_QueueFullPolicy = "discard";
     size_t m_DefaultBufferSize = 1024;
     int m_Port = 12307;
+    int m_MaxRanksPerNode = 200;
+    int m_MaxAppsPerNode = 10;
 
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;
@@ -58,12 +60,11 @@ private:
     bool m_Listening = false;
     bool m_Tolerance = true;
     bool m_AttributesSet = false;
-    int m_AppID = 0;
+    size_t m_AppID = 0;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
-    void Handshake();
 
     void ReplyThread(const std::string &address);
     std::vector<std::thread> m_ReplyThreads;

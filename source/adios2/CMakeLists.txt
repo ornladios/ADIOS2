@@ -30,6 +30,7 @@ add_library(adios2
   helper/adiosMath.cpp
   helper/adiosMemory.cpp helper/adiosMemory.tcc
   helper/adiosMPIFunctions.cpp
+  helper/adiosNetwork.cpp
   helper/adiosString.cpp
   helper/adiosSystem.cpp
   helper/adiosType.cpp
