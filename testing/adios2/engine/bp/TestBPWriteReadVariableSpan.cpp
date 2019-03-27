@@ -42,7 +42,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -326,7 +326,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -641,7 +641,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -909,7 +909,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -1192,7 +1192,7 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -1269,12 +1269,13 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
             adios2::Variable<double>::Span r64Span =
                 bpWriter.Put(var_r64, NULL, static_cast<double>(step));
 
-            adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32, NULL, {static_cast<float>(step),
-                                              static_cast<float>(step)});
+            adios2::Variable<std::complex<float>>::Span cr32Span = bpWriter.Put(
+                var_cr32, NULL,
+                {static_cast<float>(step), static_cast<float>(step)});
             adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64, NULL, {static_cast<double>(step),
-                                              static_cast<double>(step)});
+                bpWriter.Put(
+                    var_cr64, NULL,
+                    {static_cast<double>(step), static_cast<double>(step)});
 
             bpWriter.EndStep();
         }

@@ -88,8 +88,9 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
                 }
                 else
                 {
-                    fprintf(stderr, "Warning:  Perferred DataPlane \"%s\" is "
-                                    "not available.",
+                    fprintf(stderr,
+                            "Warning:  Perferred DataPlane \"%s\" is "
+                            "not available.",
                             List[i].Name);
                 }
             }

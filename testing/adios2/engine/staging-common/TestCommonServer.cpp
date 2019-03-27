@@ -89,7 +89,7 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Server test data using ADIOS2
+    // Server test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);

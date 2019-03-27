@@ -38,8 +38,9 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
 
-    Log(5, "WdmWriter::BeginStep() begin. Last step " +
-               std::to_string(m_CurrentStep),
+    Log(5,
+        "WdmWriter::BeginStep() begin. Last step " +
+            std::to_string(m_CurrentStep),
         true, true);
 
     if (m_QueueFullPolicy == "discard")
@@ -47,9 +48,10 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         int64_t stepToErase = m_CurrentStep - m_QueueLimit;
         if (stepToErase >= 0)
         {
-            Log(5, "WdmWriter::BeginStep() reaching max buffer steps, removing "
-                   "Step " +
-                       std::to_string(stepToErase),
+            Log(5,
+                "WdmWriter::BeginStep() reaching max buffer steps, removing "
+                "Step " +
+                    std::to_string(stepToErase),
                 true, true);
             m_DataManSerializer.Erase(stepToErase);
         }
@@ -216,9 +218,10 @@ void WdmWriter::ReplyThread(const std::string &address)
 
             if (m_Verbosity >= 100)
             {
-                Log(100, "WdmWriter::MetadataRepThread() sending metadata "
-                         "pack, size =  " +
-                             std::to_string(aggMetadata->size()),
+                Log(100,
+                    "WdmWriter::MetadataRepThread() sending metadata "
+                    "pack, size =  " +
+                        std::to_string(aggMetadata->size()),
                     true, true);
                 std::cout << nlohmann::json::parse(*aggMetadata).dump(4)
                           << std::endl;

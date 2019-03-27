@@ -97,8 +97,9 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                                const std::string &address, const Params &params,
                                VecPtr localBuffer, JsonPtr metadataJson)
 {
-    Log(1, "DataManSerializer::PutVar begin with Step " + std::to_string(step) +
-               " Var " + varName,
+    Log(1,
+        "DataManSerializer::PutVar begin with Step " + std::to_string(step) +
+            " Var " + varName,
         true, true);
 
     if (localBuffer == nullptr)
@@ -233,8 +234,9 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
         std::cout << std::endl;
     }
 
-    Log(1, "DataManSerializer::PutVar end with Step " + std::to_string(step) +
-               " Var " + varName,
+    Log(1,
+        "DataManSerializer::PutVar end with Step " + std::to_string(step) +
+            " Var " + varName,
         true, true);
 }
 

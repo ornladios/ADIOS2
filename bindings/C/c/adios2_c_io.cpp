@@ -129,7 +129,6 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
 
         auto lf_ConvertDims = [](const size_t ndims,
                                  const size_t *in) -> adios2::Dims {
-
             if (in != nullptr)
             {
                 return adios2::Dims(in, in + ndims);
@@ -326,8 +325,9 @@ adios2_attribute *adios2_define_variable_attribute(
     case (adios2_type):                                                        \
     {                                                                          \
         attributeCpp = &ioCpp.DefineAttribute(                                 \
-            name, *reinterpret_cast<const MapAdios2Type<adios2_type>::Type *>( \
-                      value),                                                  \
+            name,                                                              \
+            *reinterpret_cast<const MapAdios2Type<adios2_type>::Type *>(       \
+                value),                                                        \
             variable_name, separator);                                         \
         break;                                                                 \
     }

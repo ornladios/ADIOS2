@@ -274,6 +274,7 @@
         pointer operator->() { return ptr_; }                                  \
         bool operator==(const self_type &rhs) { return ptr_ == rhs.ptr_; }     \
         bool operator!=(const self_type &rhs) { return ptr_ != rhs.ptr_; }     \
+                                                                               \
     private:                                                                   \
         pointer ptr_;                                                          \
     };

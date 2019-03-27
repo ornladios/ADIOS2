@@ -424,7 +424,6 @@ TEST_F(ADIOSDefineVariableTest, DefineString)
 TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
 {
     auto lf_CheckRemove = [&](const std::string variableName) {
-
         const bool isRemoved = io.RemoveVariable(variableName);
         EXPECT_EQ(isRemoved, true);
     };
@@ -513,7 +512,6 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
 TEST_F(ADIOSDefineVariableTest, DefineRemoveDefine)
 {
     auto lf_CheckRemove = [&](const std::string variableName) {
-
         const bool isRemoved = io.RemoveVariable(variableName);
         EXPECT_EQ(isRemoved, true);
     };

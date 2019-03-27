@@ -71,7 +71,6 @@ size_t CompressZfp::Decompress(const void *bufferIn, const size_t sizeIn,
                                const Params &parameters) const
 {
     auto lf_GetTypeSize = [](const zfp_type zfpType) -> size_t {
-
         size_t size = 0;
         if (zfpType == zfp_type_int32 || zfpType == zfp_type_float)
         {
@@ -159,13 +158,13 @@ zfp_field *CompressZfp::GetZFPField(const void *data, const Dims &dimensions,
     auto lf_CheckField = [](const zfp_field *field,
                             const std::string zfpFieldFunction,
                             const std::string type) {
-
         if (field == nullptr || field == NULL)
         {
             throw std::invalid_argument(
                 "ERROR: " + zfpFieldFunction + " failed for data of type " +
-                type + ", data pointer might be corrupted, from "
-                       "class CompressZfp Transform\n");
+                type +
+                ", data pointer might be corrupted, from "
+                "class CompressZfp Transform\n");
         }
     };
 
@@ -218,7 +217,6 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
 {
     auto lf_HasKey = [](Params::const_iterator itKey,
                         const Params &parameters) -> bool {
-
         bool hasKey = false;
         if (itKey != parameters.end())
         {

@@ -34,7 +34,6 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
     auto lf_MinMaxRowMajor = [](const T *values, const Dims &shape,
                                 const Dims &start, const Dims &count, T &min,
                                 T &max) {
-
         // loop through selection box contiguous part
         const size_t dimensions = shape.size();
         const size_t stride = count.back();
@@ -100,7 +99,6 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
     auto lf_MinMaxColumnMajor = [](const T *values, const Dims &shape,
                                    const Dims &start, const Dims &count, T &min,
                                    T &max) {
-
         // loop through selection box contiguous part
         const size_t dimensions = shape.size();
         const size_t stride = count.front();

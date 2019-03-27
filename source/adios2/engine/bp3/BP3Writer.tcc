@@ -111,8 +111,7 @@ void BP3Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
     m_BP3Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP3Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(
         1.05 * helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-        4 *
-            m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
+        4 * m_BP3Serializer.GetBPIndexSizeInData(variable.m_Name,
                                                  blockInfo.Count));
 }
 

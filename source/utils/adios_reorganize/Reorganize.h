@@ -60,7 +60,7 @@ private:
 
     size_t Decompose(int numproc, int rank, VarInfo &vi,
                      const int *np // number of processes in each dimension
-                     );
+    );
     int ProcessMetadata(core::Engine &rStream, core::IO &io,
                         const core::DataMap &variables,
                         const core::DataMap &attributes, int step);

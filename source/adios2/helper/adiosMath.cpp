@@ -245,7 +245,6 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
 {
     auto lf_RowMajor = [](const Dims &count,
                           const Dims &normalizedPoint) -> size_t {
-
         const size_t countSize = count.size();
         size_t linearIndex = normalizedPoint[countSize - 1]; // fastest
         size_t product = 1;
@@ -260,7 +259,6 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
 
     auto lf_ColumnMajor = [](const Dims &count,
                              const Dims &normalizedPoint) -> size_t {
-
         const size_t countSize = count.size();
         size_t linearIndex = normalizedPoint[0]; // fastest
         size_t product = 1;
@@ -317,10 +315,10 @@ size_t GetDistance(const size_t end, const size_t start, const bool debugMode,
     {
         if (end < start)
         {
-            throw std::invalid_argument("ERROR: end position: " +
-                                        std::to_string(end) +
-                                        " is smaller than start position " +
-                                        std::to_string(start) + ", " + hint);
+            throw std::invalid_argument(
+                "ERROR: end position: " + std::to_string(end) +
+                " is smaller than start position " + std::to_string(start) +
+                ", " + hint);
         }
     }
 

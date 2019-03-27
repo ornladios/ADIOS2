@@ -59,7 +59,6 @@ template <class T>
 Dims Variable<T>::DoCount() const
 {
     auto lf_Step = [&]() -> size_t {
-
         auto itStep =
             std::next(m_AvailableStepBlockIndexOffsets.begin(), m_StepsStart);
         if (itStep == m_AvailableStepBlockIndexOffsets.end())
@@ -214,11 +213,11 @@ void Variable<T>::CheckRandomAccess(const size_t step,
     {
         if (!m_FirstStreamingStep && step != DefaultSizeT)
         {
-            throw std::invalid_argument("ERROR: can't pass a step input in "
-                                        "streaming (BeginStep/EndStep)"
-                                        "mode for variable " +
-                                        m_Name + ", in call to Variable<T>::" +
-                                        hint + "\n");
+            throw std::invalid_argument(
+                "ERROR: can't pass a step input in "
+                "streaming (BeginStep/EndStep)"
+                "mode for variable " +
+                m_Name + ", in call to Variable<T>::" + hint + "\n");
         }
     }
 }
