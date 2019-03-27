@@ -63,7 +63,7 @@ private:
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
-    format::BP3Deserializer *m_BP3Deserializer;
+    format::BP4Deserializer *m_BP4Deserializer;
     /* --- Used only with BP marshaling --- */
 
     struct _SstParams Params;

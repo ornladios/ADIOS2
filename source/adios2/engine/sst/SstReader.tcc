@@ -53,7 +53,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     char *buffer = nullptr;
                     size_t payloadSize = 0, payloadStart = 0;
 
-                    m_BP3Deserializer->PreDataRead(
+                    m_BP4Deserializer->PreDataRead(
                         variable, blockInfo, subStreamInfo, buffer, payloadSize,
                         payloadStart, 0);
 
@@ -77,13 +77,13 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     if (helper::IsIntersectionContiguousSubarray(
                             subStreamInfo.BlockBox,
                             subStreamInfo.IntersectionBox,
-                            m_BP3Deserializer->m_IsRowMajor, dummy) &&
+                            m_BP4Deserializer->m_IsRowMajor, dummy) &&
                         helper::IsIntersectionContiguousSubarray(
                             helper::StartEndBox(
                                 blockInfo.Start, blockInfo.Count,
-                                m_BP3Deserializer->m_ReverseDimensions),
+                                m_BP4Deserializer->m_ReverseDimensions),
                             subStreamInfo.IntersectionBox,
-                            m_BP3Deserializer->m_IsRowMajor, elementOffset))
+                            m_BP4Deserializer->m_IsRowMajor, elementOffset))
                     {
                         auto ret = SstReadRemoteMemory(
                             m_Input, rank, CurrentStep(), writerBlockStart,
@@ -133,27 +133,27 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                 if (subStreamInfo.OperationsInfo.size() > 0)
                 {
                     // const bool identity =
-                    //    m_BP3Deserializer->IdentityOperation<T>(
+                    //    m_BP4Deserializer->IdentityOperation<T>(
                     //        blockInfo.Operations);
                     // const helper::BlockOperationInfo
                     //    &blockOperationInfo =
-                    //        m_BP3Deserializer->InitPostOperatorBlockData(
+                    //        m_BP4Deserializer->InitPostOperatorBlockData(
                     //            subStreamInfo.OperationsInfo,
                     //            variable.m_RawMemory[1],
                     //            identity);
-                    // m_BP3Deserializer->GetPreOperatorBlockData(
+                    // m_BP4Deserializer->GetPreOperatorBlockData(
                     //    buffers[iter], blockOperationInfo,
                     //    variable.m_RawMemory[0]);
                     // helper::ClipVector(variable.m_RawMemory[0],
                     //    subStreamInfo.Seeks.first,
                     //    subStreamInfo.Seeks.second);
-                    // m_BP3Deserializer->ClipContiguousMemory<T>(
+                    // m_BP4Deserializer->ClipContiguousMemory<T>(
                     //    blockInfo,
                     //    variable.m_RawMemory[0],
                     //    subStreamInfo.BlockBox,
                     //    subStreamInfo.IntersectionBox);
 
-                    m_BP3Deserializer->PostDataRead(
+                    m_BP4Deserializer->PostDataRead(
                         variable, blockInfo, subStreamInfo,
                         helper::IsRowMajor(m_IO.m_HostLanguage), 0);
                     ++iter;
@@ -167,16 +167,16 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     if (helper::IsIntersectionContiguousSubarray(
                             subStreamInfo.BlockBox,
                             subStreamInfo.IntersectionBox,
-                            m_BP3Deserializer->m_IsRowMajor, dummy) == false ||
+                            m_BP4Deserializer->m_IsRowMajor, dummy) == false ||
                         helper::IsIntersectionContiguousSubarray(
                             helper::StartEndBox(
                                 blockInfo.Start, blockInfo.Count,
-                                m_BP3Deserializer->m_ReverseDimensions),
+                                m_BP4Deserializer->m_ReverseDimensions),
                             subStreamInfo.IntersectionBox,
-                            m_BP3Deserializer->m_IsRowMajor, dummy) == false)
+                            m_BP4Deserializer->m_IsRowMajor, dummy) == false)
                     {
                         size_t blockID = 0;
-                        m_BP3Deserializer->ClipContiguousMemory<T>(
+                        m_BP4Deserializer->ClipContiguousMemory<T>(
                             variable.m_BlocksInfo.at(blockID), buffers[iter],
                             subStreamInfo.BlockBox,
                             subStreamInfo.IntersectionBox);

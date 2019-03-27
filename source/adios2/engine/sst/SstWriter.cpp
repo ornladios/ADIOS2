@@ -52,10 +52,10 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     {
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
-        m_BP3Serializer = new format::BP3Serializer(m_MPIComm, m_DebugMode);
-        m_BP3Serializer->InitParameters(m_IO.m_Parameters);
-        m_BP3Serializer->m_MetadataSet.TimeStep = 1;
-        m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
+        m_BP4Serializer = new format::BP4Serializer(m_MPIComm, m_DebugMode);
+        m_BP4Serializer->InitParameters(m_IO.m_Parameters);
+        m_BP4Serializer->m_MetadataSet.TimeStep = 1;
+        m_BP4Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
     else
     {
@@ -146,23 +146,23 @@ void SstWriter::EndStep()
         // (explicit deallocation callback).
         TAU_START("Marshaling overhead");
         auto lf_FreeBlocks = [](void *vBlock) {
-            BP3DataBlock *BlockToFree =
-                reinterpret_cast<BP3DataBlock *>(vBlock);
+            BP4DataBlock *BlockToFree =
+                reinterpret_cast<BP4DataBlock *>(vBlock);
             //  Free data and metadata blocks here.  BlockToFree is the newblock
             //  value in the enclosing function.
             delete BlockToFree->serializer;
             delete BlockToFree;
         };
 
-        m_BP3Serializer->CloseStream(m_IO, true);
-        m_BP3Serializer->AggregateCollectiveMetadata(
-            m_MPIComm, m_BP3Serializer->m_Metadata, true);
-        BP3DataBlock *newblock = new BP3DataBlock;
-        newblock->metadata.DataSize = m_BP3Serializer->m_Metadata.m_Position;
-        newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
-        newblock->data.DataSize = m_BP3Serializer->m_Data.m_Position;
-        newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
-        newblock->serializer = m_BP3Serializer;
+        m_BP4Serializer->CloseStream(m_IO, true);
+        m_BP4Serializer->AggregateCollectiveMetadata(
+            m_MPIComm, m_BP4Serializer->m_Metadata, true);
+        BP4DataBlock *newblock = new BP4DataBlock;
+        newblock->metadata.DataSize = m_BP4Serializer->m_Metadata.m_Position;
+        newblock->metadata.block = m_BP4Serializer->m_Metadata.m_Buffer.data();
+        newblock->data.DataSize = m_BP4Serializer->m_Data.m_Position;
+        newblock->data.block = m_BP4Serializer->m_Data.m_Buffer.data();
+        newblock->serializer = m_BP4Serializer;
         TAU_STOP("Marshaling overhead");
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
                            m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,

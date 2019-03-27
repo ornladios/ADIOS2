@@ -47,25 +47,25 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
     else if (m_MarshalMethod == SstMarshalBP)
     {
         auto &blockInfo = variable.SetBlockInfo(
-            values, m_BP3Serializer->m_MetadataSet.CurrentStep);
+            values, m_BP4Serializer->m_MetadataSet.CurrentStep);
 
-        if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
+        if (!m_BP4Serializer->m_MetadataSet.DataPGIsOpen)
         {
-            m_BP3Serializer->PutProcessGroupIndex(m_IO.m_Name,
+            m_BP4Serializer->PutProcessGroupIndex(m_IO.m_Name,
                                                   m_IO.m_HostLanguage, {"SST"});
         }
         const size_t dataSize =
             helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-            m_BP3Serializer->GetBPIndexSizeInData(variable.m_Name,
+            m_BP4Serializer->GetBPIndexSizeInData(variable.m_Name,
                                                   blockInfo.Count);
-        format::BP3Base::ResizeResult resizeResult =
-            m_BP3Serializer->ResizeBuffer(
+        format::BP4Base::ResizeResult resizeResult =
+            m_BP4Serializer->ResizeBuffer(
                 dataSize, "in call to variable " + variable.m_Name +
                               " Put adios2::Mode::Sync");
         const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
-        m_BP3Serializer->PutVariableMetadata(variable, blockInfo,
+        m_BP4Serializer->PutVariableMetadata(variable, blockInfo,
                                              sourceRowMajor);
-        m_BP3Serializer->PutVariablePayload(variable, blockInfo,
+        m_BP4Serializer->PutVariablePayload(variable, blockInfo,
                                             sourceRowMajor);
         variable.m_BlocksInfo.clear();
     }
