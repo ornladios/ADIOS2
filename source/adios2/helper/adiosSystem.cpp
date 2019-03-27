@@ -8,13 +8,6 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "adiosSystem.h"
-#ifndef _WIN32
-#include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
-#include <net/if.h>    //AvailableIpAddresses() struct if_nameindex
-#include <string.h>    //AvailableIpAddresses() strncp
-#include <sys/ioctl.h> //AvailableIpAddresses() ioctl
-#include <unistd.h>    //AvailableIpAddresses() close
-#endif
 #include <chrono> //system_clock, now
 #include <ctime>
 #include <iostream>  //std::cerr

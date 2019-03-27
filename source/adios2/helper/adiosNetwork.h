@@ -12,6 +12,9 @@
 #ifndef ADIOS2_HELPER_ADIOSNETWORK_H_
 #define ADIOS2_HELPER_ADIOSNETWORK_H_
 
+#ifndef _WIN32
+#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_WDM)
+
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
 #include <vector>
@@ -24,7 +27,6 @@ namespace adios2
 namespace helper
 {
 
-#ifndef _WIN32
 /**
  * returns a vector of strings with all available IP addresses on the node
  * @return vector of strings
@@ -41,9 +43,9 @@ void HandshakeReader(MPI_Comm mpiComm, size_t &appID,
                      std::vector<std::string> &fullAddresses,
                      const std::string &name);
 
-#endif
-
 } // end namespace helper
 } // end namespace adios2
 
+#endif
+#endif
 #endif /* ADIOS2_HELPER_ADIOSNETWORK_H_ */

@@ -7,13 +7,16 @@
  *  Created on: March 22, 2019
  *      Author: William F Godoy godoywf@ornl.gov
  */
+
 #include "adiosNetwork.h"
 #include "adios2/helper/adiosMPIFunctions.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
+#ifndef _WIN32
+#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_WDM)
+
 #include <thread>
 
-#ifndef _WIN32
 #include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
 #include <net/if.h>    //AvailableIpAddresses() struct if_nameindex
 #include <string.h>    //AvailableIpAddresses() strncp
@@ -22,14 +25,11 @@
 
 #include <nlohmann/json.hpp>
 
-#endif
-
 namespace adios2
 {
 namespace helper
 {
 
-#ifndef _WIN32
 std::vector<std::string> AvailableIpAddresses() noexcept
 {
     std::vector<std::string> ips;
@@ -228,7 +228,8 @@ void HandshakeReader(MPI_Comm mpiComm, size_t &appID,
     fullAddresses = j.get<std::vector<std::string>>();
 }
 
-#endif
-
 } // end namespace helper
 } // end namespace adios2
+
+#endif
+#endif
