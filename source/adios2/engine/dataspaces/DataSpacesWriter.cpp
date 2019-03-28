@@ -118,6 +118,8 @@ void DataSpacesWriter::WriteVarInfo()
 	local_file_var = f_Name + std::to_string(m_CurrentStep);
 	char *meta_lk = new char[local_file_var.length() + 1];
 	strcpy(meta_lk, local_file_var.c_str());
+	int rank;
+	MPI_Comm_rank(m_data.mpi_comm, &rank);
 
 	dspaces_lock_on_write (meta_lk, &(m_data.mpi_comm));
 	if(rank==0){
