@@ -237,11 +237,13 @@ void DataSpacesWriter::WriteVarInfo()
 	v_name_vector.clear();
 	elemSize_vector.clear();
 	delete[] lkstr;
-	free(dim_meta);
-	free(elemSize_meta);
-	free(gdim_meta);
-	free(buffer);
-	free(name_string);
+	if(rank==0){
+		free(dim_meta);
+		free(elemSize_meta);
+		free(gdim_meta);
+		free(buffer);
+		free(name_string);
+	}
 
 }
 
