@@ -209,15 +209,15 @@ void DataSpacesWriter::WriteVarInfo()
 			delete[] local_str;
 
 	}
-	dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
+	//dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
 
 
-	delete[] meta_lk;
-	char *lkstr = new char[f_Name.length() + 1];
-	strcpy(lkstr, f_Name.c_str());
+	//delete[] meta_lk;
+	//char *lkstr = new char[f_Name.length() + 1];
+	//strcpy(lkstr, f_Name.c_str());
 
 
-	dspaces_lock_on_write (lkstr, &(m_data.mpi_comm));
+	//dspaces_lock_on_write (lkstr, &(m_data.mpi_comm));
 	//store the latest version or step information for the file and how many variables are there in the file
 	if(rank==0){
 		int l_version_buf[2] = {m_CurrentStep,0}; /* Put the latest version number to dataspaces*/
@@ -230,7 +230,7 @@ void DataSpacesWriter::WriteVarInfo()
 		dspaces_put_sync(); //wait on previous put to finish
 		delete[] local_str;
 	}
-	dspaces_unlock_on_write (lkstr, &(m_data.mpi_comm));
+	dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
     // std::string attrType = attributesInfo[attrName]["Type"];
 	ndim_vector.clear();
 	gdims_vector.clear();
