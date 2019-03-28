@@ -65,7 +65,6 @@ void DataManWriter::EndStep()
         serializer->PutAttributes(m_IO);
     }
 
-    /*
     if (m_CurrentStep == 0)
     {
         m_DataManSerializer[0]->AggregateMetadata(m_MPIComm);
@@ -74,7 +73,6 @@ void DataManWriter::EndStep()
             m_DataManSerializer[0]->GetAggregatedMetadataPack(0);
         m_AggregatedMetadataMutex.unlock();
     }
-    */
 
     if (m_WorkflowMode == "file")
     {
@@ -145,7 +143,6 @@ void DataManWriter::DoClose(const int transportIndex)
 
 void DataManWriter::MetadataThread(const std::string &address)
 {
-    /*
     transportman::StagingMan tpm(m_MPIComm, Mode::Write, 0, 1e7);
     tpm.OpenTransport(address);
     while (m_Listening)
@@ -162,7 +159,6 @@ void DataManWriter::MetadataThread(const std::string &address)
             m_AggregatedMetadataMutex.unlock();
         }
     }
-    */
 }
 
 } // end namespace engine
