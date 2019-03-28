@@ -208,7 +208,7 @@ void DataSpacesWriter::WriteVarInfo()
 			//dspaces_put_sync(); //wait on previous put to finish
 			delete[] local_str;
 
-	}
+	//}
 	//dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
 
 
@@ -219,7 +219,7 @@ void DataSpacesWriter::WriteVarInfo()
 
 	//dspaces_lock_on_write (lkstr, &(m_data.mpi_comm));
 	//store the latest version or step information for the file and how many variables are there in the file
-	if(rank==0){
+	//if(rank==0){
 		int l_version_buf[2] = {m_CurrentStep,0}; /* Put the latest version number to dataspaces*/
 		local_file_var = "LATESTVERSION@"+f_Name;
 		local_str = new char[local_file_var.length() + 1];
@@ -236,7 +236,7 @@ void DataSpacesWriter::WriteVarInfo()
 	gdims_vector.clear();
 	v_name_vector.clear();
 	elemSize_vector.clear();
-	delete[] lkstr;
+	//delete[] lkstr;
 	if(rank==0){
 		free(dim_meta);
 		free(elemSize_meta);
