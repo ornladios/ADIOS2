@@ -173,7 +173,6 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndex = [&](core::Engine &engine,
                                    const std::vector<char> &buffer,
                                    size_t position) {
-
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
 
@@ -268,7 +267,6 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndex = [&](core::Engine &engine,
                                    const std::vector<char> &buffer,
                                    size_t position) {
-
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
 

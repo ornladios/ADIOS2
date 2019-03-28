@@ -88,7 +88,6 @@ std::vector<typename Variable<T>::Info>
 DataManReader::BlocksInfoCommon(const Variable<T> &variable,
                                 const size_t step) const
 {
-    std::cout << "DataManReader::BlocksInfoCommon\n";
     std::vector<typename Variable<T>::Info> v;
     auto it = m_MetaDataMap.find(step);
     if (it == m_MetaDataMap.end())

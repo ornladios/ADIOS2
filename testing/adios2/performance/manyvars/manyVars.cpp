@@ -139,9 +139,8 @@ public:
     size_t NVARS = 1;
     size_t NBLOCKS = 1;
     size_t NSTEPS = 1;
-    int REDEFINE =
-        0; // 1: delete and redefine variable definitions at each step to
-           // test adios_delete_vardefs()
+    int REDEFINE = 0; // 1: delete and redefine variable definitions at each
+                      // step to test adios_delete_vardefs()
     char FILENAME[256];
 
     /* Variables to write */

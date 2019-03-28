@@ -414,9 +414,10 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
     TimestepList tmp = WS_Stream->Timesteps;
     CP_Services Svcs = (CP_Services)client_Data;
 
-    Svcs->verbose(WS_Stream->CP_Stream, "Got a request to read remote memory "
-                                        "from reader rank %d: timestep %d, "
-                                        "offset %d, length %d\n",
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Got a request to read remote memory "
+                  "from reader rank %d: timestep %d, "
+                  "offset %d, length %d\n",
                   ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
                   ReadRequestMsg->Offset, ReadRequestMsg->Length);
     pthread_mutex_lock(&ts_mutex);
@@ -755,9 +756,10 @@ static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
-    Svcs->verbose(Stream->CP_Stream, "received notification that writer peer "
-                                     "%d has failed, failing any pending "
-                                     "requests\n",
+    Svcs->verbose(Stream->CP_Stream,
+                  "received notification that writer peer "
+                  "%d has failed, failing any pending "
+                  "requests\n",
                   FailedPeerRank);
     //   This is what EVPath does...
     //   FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
@@ -1038,8 +1040,9 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
         domain_name = info->domain_attr->name;
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
-            Svcs->verbose(CP_Stream, "RDMA Dataplane found the requested "
-                                     "interface %s, provider type %s.\n",
+            Svcs->verbose(CP_Stream,
+                          "RDMA Dataplane found the requested "
+                          "interface %s, provider type %s.\n",
                           ifname, prov_name);
             Ret = 100;
             break;
@@ -1048,8 +1051,9 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0)
         {
 
-            Svcs->verbose(CP_Stream, "RDMA Dataplane sees interface %s, "
-                                     "provider type %s, which should work.\n",
+            Svcs->verbose(CP_Stream,
+                          "RDMA Dataplane sees interface %s, "
+                          "provider type %s, which should work.\n",
                           domain_name, prov_name);
             Ret = 10;
         }

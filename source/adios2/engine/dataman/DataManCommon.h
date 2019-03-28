@@ -37,9 +37,9 @@ public:
     virtual ~DataManCommon() = default;
 
 protected:
-    int m_MPIRank;
-    int m_MPISize;
-    int m_TransportChannels;
+    int m_MpiRank;
+    int m_MpiSize;
+    int m_Channels;
     std::string m_WorkflowMode = "stream";
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
@@ -58,7 +58,6 @@ protected:
     std::shared_ptr<transportman::WANMan> m_WANMan;
     std::shared_ptr<std::thread> m_DataThread;
 
-    virtual void IOThread(std::shared_ptr<transportman::WANMan> man) = 0;
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
 

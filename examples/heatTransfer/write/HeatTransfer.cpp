@@ -117,10 +117,10 @@ void HeatTransfer::iterate()
     {
         for (unsigned int j = 1; j <= m_s.ndy; ++j)
         {
-            m_TNext[i][j] =
-                omega / 4 * (m_TCurrent[i - 1][j] + m_TCurrent[i + 1][j] +
-                             m_TCurrent[i][j - 1] + m_TCurrent[i][j + 1]) +
-                (1.0 - omega) * m_TCurrent[i][j];
+            m_TNext[i][j] = omega / 4 *
+                                (m_TCurrent[i - 1][j] + m_TCurrent[i + 1][j] +
+                                 m_TCurrent[i][j - 1] + m_TCurrent[i][j + 1]) +
+                            (1.0 - omega) * m_TCurrent[i][j];
         }
     }
     switchCurrentNext();

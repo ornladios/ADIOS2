@@ -90,7 +90,6 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             const std::string hint) -> adios2::Dims {
-
         adios2::Dims output(static_cast<size_t>(size));
 
         for (auto d = 0; d < size; ++d)

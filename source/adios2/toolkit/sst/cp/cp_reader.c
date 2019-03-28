@@ -41,8 +41,9 @@ redo:
         TotalSleepTime += 500;
         if (TotalSleepTime > 30 * 1000 * 1000)
         {
-            fprintf(stderr, "ADIOS2 SST Engine waiting for contact information "
-                            "file %s to be created\n",
+            fprintf(stderr,
+                    "ADIOS2 SST Engine waiting for contact information "
+                    "file %s to be created\n",
                     Name);
             TotalSleepTime = 0;
         }
@@ -73,8 +74,9 @@ static char *readContactInfoScreen(const char *Name, SstStream Stream)
 {
     char Input[10240];
     char *Skip = Input;
-    fprintf(stdout, "Please enter the contact information associated with SST "
-                    "input stream \"%s\":\n",
+    fprintf(stdout,
+            "Please enter the contact information associated with SST "
+            "input stream \"%s\":\n",
             Name);
     if (fgets(Input, sizeof(Input), stdin) == NULL)
     {
@@ -152,9 +154,10 @@ static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
     else
     {
         fprintf(stderr, "Got an unexpected connection close event\n");
-        CP_verbose(Stream, "Reader-side Rank received a "
-                           "connection-close event in unexpected "
-                           "status %s\n",
+        CP_verbose(Stream,
+                   "Reader-side Rank received a "
+                   "connection-close event in unexpected "
+                   "status %s\n",
                    SSTStreamStatusStr[Stream->Status]);
     }
     TAU_STOP_FUNC();
@@ -540,8 +543,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
          * WSR
          * Streams)
          */
-        CP_verbose(Stream, "Sending ReleaseTimestep message for PRIOR DISCARD "
-                           "timestep %d, one to each writer\n",
+        CP_verbose(Stream,
+                   "Sending ReleaseTimestep message for PRIOR DISCARD "
+                   "timestep %d, one to each writer\n",
                    tsm->Timestep);
         if (tsm->Metadata != NULL)
         {
@@ -555,8 +559,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         }
         else
         {
-            CP_verbose(Stream, "Received discard notice for imestep %d, "
-                               "ignoring in PRIOR DISCARD\n",
+            CP_verbose(Stream,
+                       "Received discard notice for imestep %d, "
+                       "ignoring in PRIOR DISCARD\n",
                        tsm->Timestep);
         }
         CMreturn_buffer(Stream->CPInfo->cm, tsm);
@@ -580,8 +585,9 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
     {
         Stream->Timesteps = New;
     }
-    CP_verbose(Stream, "Received a Timestep metadata message for timestep %d, "
-                       "signaling condition\n",
+    CP_verbose(Stream,
+               "Received a Timestep metadata message for timestep %d, "
+               "signaling condition\n",
                tsm->Timestep);
 
     pthread_cond_signal(&Stream->DataCondition);
@@ -681,8 +687,9 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     WriterCloseMsg Msg = (WriterCloseMsg)Msg_v;
     SstStream Stream = (SstStream)Msg->RS_Stream;
 
-    CP_verbose(Stream, "Received a writer close message. "
-                       "Timestep %d was the final timestep.\n",
+    CP_verbose(Stream,
+               "Received a writer close message. "
+               "Timestep %d was the final timestep.\n",
                Msg->FinalTimestep);
 
     pthread_mutex_lock(&Stream->DataLock);
@@ -865,8 +872,9 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
              * to WSR
              * Streams)
              */
-            CP_verbose(Stream, "Sending ReleaseTimestep message for RELEASE "
-                               "PRIOR timestep %d, one to each writer\n",
+            CP_verbose(Stream,
+                       "Sending ReleaseTimestep message for RELEASE "
+                       "PRIOR timestep %d, one to each writer\n",
                        This->MetadataMsg->Timestep);
             sendOneToEachWriterRank(Stream,
                                     Stream->CPInfo->ReleaseTimestepFormat, &Msg,
@@ -946,8 +954,9 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                  * install the 'precious' info that it carried
                  * (Attributes and formats) and then discard it.
                  */
-                CP_verbose(Stream, "SstAdvanceStep installing precious "
-                                   "metadata for discarded TS %d\n",
+                CP_verbose(Stream,
+                           "SstAdvanceStep installing precious "
+                           "metadata for discarded TS %d\n",
                            Next->MetadataMsg->Timestep);
                 FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
                 TSMetadataList Tmp = Next;
@@ -1150,8 +1159,9 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         if (Stream->Rank == 0)
         {
             global_info = malloc(sizeof(my_info) * Stream->CohortSize);
-            CP_verbose(Stream, "In special case of advancestep, mode is %d, "
-                               "Timeout Sec is %g, flt_max is %g\n",
+            CP_verbose(Stream,
+                       "In special case of advancestep, mode is %d, "
+                       "Timeout Sec is %g, flt_max is %g\n",
                        mode, timeout_sec, FLT_MAX);
         }
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
@@ -1218,17 +1228,19 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                 if (mode == SstLatestAvailable)
                 {
                     // latest available
-                    CP_verbose(Stream, "Returning Biggest timestep available "
-                                       "%ld because LatestAvailable "
-                                       "specified\n",
+                    CP_verbose(Stream,
+                               "Returning Biggest timestep available "
+                               "%ld because LatestAvailable "
+                               "specified\n",
                                Biggest);
                     NextTimestep = Biggest;
                 }
                 else
                 {
                     // next available (take the oldest that everyone has)
-                    CP_verbose(Stream, "Returning Smallest timestep available "
-                                       "%ld because NextAvailable specified\n",
+                    CP_verbose(Stream,
+                               "Returning Smallest timestep available "
+                               "%ld because NextAvailable specified\n",
                                Smallest);
                     NextTimestep = Smallest;
                 }
@@ -1383,9 +1395,10 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                 if (mode == SstLatestAvailable)
                 {
                     // latest available
-                    CP_verbose(Stream, "Returning latest timestep available "
-                                       "%ld because LatestAvailable "
-                                       "specified\n",
+                    CP_verbose(Stream,
+                               "Returning latest timestep available "
+                               "%ld because LatestAvailable "
+                               "specified\n",
                                LatestTimestep);
                     NextTimestep = LatestTimestep;
                 }
@@ -1393,8 +1406,9 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                 {
                     // next available (take the oldest that everyone has)
                     NextTimestep = NextQueuedMetadata(Stream);
-                    CP_verbose(Stream, "Returning Smallest timestep available "
-                                       "%ld because NextAvailable specified\n",
+                    CP_verbose(Stream,
+                               "Returning Smallest timestep available "
+                               "%ld because NextAvailable specified\n",
                                NextTimestep);
                 }
             }
@@ -1443,15 +1457,17 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             {
                 if (Stream->Status == PeerClosed)
                 {
-                    CP_verbose(Stream, "SstAdvanceStepMin rank 0 returning "
-                                       "EndOfStream at timestep %d\n",
+                    CP_verbose(Stream,
+                               "SstAdvanceStepMin rank 0 returning "
+                               "EndOfStream at timestep %d\n",
                                Stream->ReaderTimestep);
                     msg.ReturnValue = SstEndOfStream;
                 }
                 else
                 {
-                    CP_verbose(Stream, "SstAdvanceStepMin rank 0 returning "
-                                       "FatalError at timestep %d\n",
+                    CP_verbose(Stream,
+                               "SstAdvanceStepMin rank 0 returning "
+                               "FatalError at timestep %d\n",
                                Stream->ReaderTimestep);
                     msg.ReturnValue = SstFatalError;
                 }

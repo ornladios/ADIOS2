@@ -253,7 +253,7 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
 
     if (adiostype == adios2_type_string)
     {
-        mexPrintf("Create Matlab string from C string [%s]\n", (char*)data);
+        mexPrintf("Create Matlab string from C string [%s]\n", (char *)data);
         out = mxCreateString((char *)data);
         mxFree(data);
     }
@@ -346,7 +346,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
         return mxINT8_CLASS;
 
     case adios2_type_string:
-    /* case adios2_type_string_array: */
+        /* case adios2_type_string_array: */
         return mxCHAR_CLASS;
 
     case adios2_type_uint16_t:

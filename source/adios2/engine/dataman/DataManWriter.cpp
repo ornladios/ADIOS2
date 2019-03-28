@@ -38,9 +38,9 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
         std::cout << "DataManWriter::BeginStep() begin. Last step "
                   << m_CurrentStep << std::endl;
     }
-
     ++m_CurrentStep;
-    for (size_t i = 0; i < m_TransportChannels; ++i)
+
+    for (size_t i = 0; i < m_Channels; ++i)
     {
         m_DataManSerializer[i]->New(m_BufferSize);
     }
@@ -65,6 +65,17 @@ void DataManWriter::EndStep()
         serializer->PutAttributes(m_IO);
     }
 
+    /*
+    if (m_CurrentStep == 0)
+    {
+        m_DataManSerializer[0]->AggregateMetadata(m_MPIComm);
+        m_AggregatedMetadataMutex.lock();
+        m_AggregatedMetadata =
+            m_DataManSerializer[0]->GetAggregatedMetadataPack(0);
+        m_AggregatedMetadataMutex.unlock();
+    }
+    */
+
     if (m_WorkflowMode == "file")
     {
         const auto buf = m_DataManSerializer[0]->GetLocalPack();
@@ -72,7 +83,7 @@ void DataManWriter::EndStep()
     }
     else if (m_WorkflowMode == "stream")
     {
-        for (size_t i = 0; i < m_TransportChannels; ++i)
+        for (size_t i = 0; i < m_Channels; ++i)
         {
             m_DataManSerializer[i]->AttachAttributes();
             const auto buf = m_DataManSerializer[i]->GetLocalPack();
@@ -101,15 +112,13 @@ void DataManWriter::Init()
                              m_WorkflowMode, true);
 
     // initialize serializer
-    for (size_t i = 0; i < m_TransportChannels; ++i)
+    for (size_t i = 0; i < m_Channels; ++i)
     {
         m_DataManSerializer.push_back(
             std::make_shared<format::DataManSerializer>(
                 m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian));
     }
 }
-
-void DataManWriter::IOThread(std::shared_ptr<transportman::WANMan> man) {}
 
 #define declare_type(T)                                                        \
     void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
@@ -132,6 +141,28 @@ void DataManWriter::DoClose(const int transportIndex)
     }
 
     m_WANMan->Write(format::DataManSerializer::EndSignal(CurrentStep()), 0);
+}
+
+void DataManWriter::MetadataThread(const std::string &address)
+{
+    /*
+    transportman::StagingMan tpm(m_MPIComm, Mode::Write, 0, 1e7);
+    tpm.OpenTransport(address);
+    while (m_Listening)
+    {
+        auto request = tpm.ReceiveRequest();
+        if (request == nullptr)
+        {
+            continue;
+        }
+        if (request->size() >= 0)
+        {
+            m_AggregatedMetadataMutex.lock();
+            tpm.SendReply(m_AggregatedMetadata);
+            m_AggregatedMetadataMutex.unlock();
+        }
+    }
+    */
 }
 
 } // end namespace engine

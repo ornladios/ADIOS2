@@ -33,7 +33,8 @@ typedef struct adios2_operator adios2_operator;
  * Each error will issue a more detailed description in the standard error
  * output, stderr
  */
-typedef enum {
+typedef enum
+{
     /** success */
     adios2_error_none = 0,
 
@@ -54,27 +55,32 @@ typedef enum {
 
 } adios2_error;
 
-typedef enum {
+typedef enum
+{
     adios2_false = 0,
     adios2_true = 1,
 } adios2_bool;
 
-typedef enum {
+typedef enum
+{
     adios2_debug_mode_off = 0,
     adios2_debug_mode_on = 1,
 } adios2_debug_mode;
 
-typedef enum {
+typedef enum
+{
     adios2_constant_dims_false = 0,
     adios2_constant_dims_true = 1,
 } adios2_constant_dims;
 
-typedef enum {
+typedef enum
+{
     adios2_advance_step_false = 0,
     adios2_advance_step_true = 1,
 } adios2_advance_step;
 
-typedef enum {
+typedef enum
+{
     adios2_type_unknown = -1,
 
     adios2_type_string = 0,
@@ -94,7 +100,8 @@ typedef enum {
     adios2_type_uint64_t = 12,
 } adios2_type;
 
-typedef enum {
+typedef enum
+{
     adios2_mode_undefined = 0,
     adios2_mode_write = 1,
     adios2_mode_read = 2,
@@ -104,21 +111,24 @@ typedef enum {
     adios2_mode_sync = 5
 } adios2_mode;
 
-typedef enum {
+typedef enum
+{
     adios2_step_mode_append = 0,
     adios2_step_mode_update = 1,
     adios2_step_mode_next_available = 2,
     adios2_step_mode_latest_available = 3
 } adios2_step_mode;
 
-typedef enum {
+typedef enum
+{
     adios2_step_status_other_error = -1,
     adios2_step_status_ok = 0,
     adios2_step_status_not_ready = 1,
     adios2_step_status_end_of_stream = 2
 } adios2_step_status;
 
-typedef enum {
+typedef enum
+{
     adios2_shapeid_unknown = -1,
     adios2_shapeid_global_value = 0,
     adios2_shapeid_global_array = 1,

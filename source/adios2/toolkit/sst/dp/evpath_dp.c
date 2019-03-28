@@ -233,9 +233,10 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
     TimestepList tmp = WS_Stream->Timesteps;
     CP_Services Svcs = (CP_Services)client_Data;
 
-    Svcs->verbose(WS_Stream->CP_Stream, "Got a request to read remote memory "
-                                        "from reader rank %d: timestep %d, "
-                                        "offset %d, length %d\n",
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Got a request to read remote memory "
+                  "from reader rank %d: timestep %d, "
+                  "offset %d, length %d\n",
                   ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
                   ReadRequestMsg->Offset, ReadRequestMsg->Length);
     while (tmp != NULL)
@@ -542,9 +543,10 @@ static void FailRequestsToRank(CP_Services Svcs, CManager cm,
         if (Tmp->Rank == FailedRank)
         {
             Tmp->Failed = 1;
-            Svcs->verbose(Tmp->CPStream, "Found a pending remote memory read "
-                                         "to failed writer rank %d, marking as "
-                                         "failed and signalling condition %d\n",
+            Svcs->verbose(Tmp->CPStream,
+                          "Found a pending remote memory read "
+                          "to failed writer rank %d, marking as "
+                          "failed and signalling condition %d\n",
                           Tmp->Rank, Tmp->CMcondition);
             CMCondition_signal(cm, Tmp->CMcondition);
             Svcs->verbose(Tmp->CPStream, "Did the signal of condition %d\n",
@@ -629,9 +631,10 @@ static int EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
         CMCondition_wait(Handle->cm, Handle->CMcondition);
     if (Handle->Failed)
     {
-        Svcs->verbose(Handle->CPStream, "Remote memory read to rank %d with "
-                                        "condition %d has FAILED because of "
-                                        "writer failure\n",
+        Svcs->verbose(Handle->CPStream,
+                      "Remote memory read to rank %d with "
+                      "condition %d has FAILED because of "
+                      "writer failure\n",
                       Handle->Rank, Handle->CMcondition);
         Ret = 0;
     }
@@ -653,9 +656,10 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     Evpath_RS_Stream Stream = (Evpath_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
-    Svcs->verbose(Stream->CP_Stream, "received notification that writer peer "
-                                     "%d has failed, failing any pending "
-                                     "requests\n",
+    Svcs->verbose(Stream->CP_Stream,
+                  "received notification that writer peer "
+                  "%d has failed, failing any pending "
+                  "requests\n",
                   FailedPeerRank);
     FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }

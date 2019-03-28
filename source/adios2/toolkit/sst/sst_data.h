@@ -37,7 +37,8 @@ struct _SstBlock
     MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommPeer)                 \
     MACRO(CompressionMethod, CompressionMethod, size_t, 0)
 
-typedef enum {
+typedef enum
+{
     SstRegisterFile,
     SstRegisterScreen,
     SstRegisterCloud

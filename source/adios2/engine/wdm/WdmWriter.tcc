@@ -25,21 +25,24 @@ namespace engine
 template <class T>
 void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
-    Log(5, "WdmWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
-               std::to_string(m_CurrentStep),
+    Log(5,
+        "WdmWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
+            std::to_string(m_CurrentStep),
         true, true);
     PutDeferredCommon(variable, data);
     PerformPuts();
-    Log(5, "WdmWriter::PutSync(" + variable.m_Name + ") end. Current step " +
-               std::to_string(m_CurrentStep),
+    Log(5,
+        "WdmWriter::PutSync(" + variable.m_Name + ") end. Current step " +
+            std::to_string(m_CurrentStep),
         true, true);
 }
 
 template <class T>
 void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    Log(5, "WdmWriter::PutDeferred(" + variable.m_Name +
-               ") start. Current step " + std::to_string(m_CurrentStep),
+    Log(5,
+        "WdmWriter::PutDeferred(" + variable.m_Name + ") start. Current step " +
+            std::to_string(m_CurrentStep),
         true, true);
     if (variable.m_SingleValue)
     {
@@ -51,8 +54,9 @@ void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
                                m_FullAddresses[rand() % m_FullAddresses.size()],
                                Params());
-    Log(5, "WdmWriter::PutDeferred(" + variable.m_Name +
-               ") end. Current step " + std::to_string(m_CurrentStep),
+    Log(5,
+        "WdmWriter::PutDeferred(" + variable.m_Name + ") end. Current step " +
+            std::to_string(m_CurrentStep),
         true, true);
 }
 
