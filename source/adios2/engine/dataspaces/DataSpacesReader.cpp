@@ -57,11 +57,11 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	std::string ds_file_var;
 	std::string local_file_var;
 	uint64_t gdims[MAX_DS_NDIM], lb[MAX_DS_NDIM], ub[MAX_DS_NDIM];
-	int elemsize, ndim;
+	int elemsize, ndim, rank;
 	//acquire lock, current step and n_vars in the Begin Step
-	int rank;
 	char *cstr;
 	char *meta_lk;
+	int bcast_array[2]={0,0};
 	MPI_Comm_rank(m_data.mpi_comm, &rank);
 	//MPI_Comm self_comm = MPI_COMM_SELF;
 
@@ -73,19 +73,24 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	if(mode == StepMode::NextAvailable){
 		dspaces_lock_on_read (fstr, &(m_data.mpi_comm));
 		if(rank==0){
-			buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &nVars, &m_CurrentStep);
+			buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0], &bcast_array[1]);
+			//bcast_array[0]=nVars;
+			//bcast_array[1]=m_CurrentStep;
 		}
 		dspaces_unlock_on_read (fstr, &(m_data.mpi_comm));
 	}
 	if(mode == StepMode::LatestAvailable){
 		dspaces_lock_on_read (fstr, &(m_data.mpi_comm));
 		if(rank==0){
-				buffer = dspaces_get_latest_meta(m_CurrentStep, fstr, &nVars, &m_CurrentStep);
+				buffer = dspaces_get_latest_meta(m_CurrentStep, fstr, &bcast_array[0], &bcast_array[1]);
 		}
 		dspaces_unlock_on_read (fstr, &(m_data.mpi_comm));
 	}
-	MPI_Bcast(&m_CurrentStep, 1, MPI_INT, 0, m_data.mpi_comm);
-	MPI_Bcast(&nVars, 1, MPI_INT, 0, m_data.mpi_comm);
+	MPI_Bcast(bcast_array, 2, MPI_INT, 0, m_data.mpi_comm);
+	nVars = bcast_array[0];
+	m_CurrentStep = bcast_array[1];
+	//MPI_Bcast(&m_CurrentStep, 1, MPI_INT, 0, m_data.mpi_comm);
+	//MPI_Bcast(&nVars, 1, MPI_INT, 0, m_data.mpi_comm);
 	if(nVars==0)
 			return StepStatus::EndOfStream;
 	int var_name_max_length = 128;

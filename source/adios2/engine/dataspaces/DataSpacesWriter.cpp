@@ -173,7 +173,7 @@ void DataSpacesWriter::WriteVarInfo()
 			local_str = new char[local_file_var.length() + 1];
 			strcpy(local_str, local_file_var.c_str());
 
-			dspaces_put_sync(); //wait on previous put to finish
+			//dspaces_put_sync(); //wait on previous put to finish
 
 
 
@@ -184,7 +184,7 @@ void DataSpacesWriter::WriteVarInfo()
 			dspaces_define_gdim(local_str, ndim, gdims);
 
 			dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
-			dspaces_put_sync();
+			//dspaces_put_sync();
 
 			delete[] local_str;
 
@@ -205,7 +205,7 @@ void DataSpacesWriter::WriteVarInfo()
 			dspaces_define_gdim(local_str, ndim, gdims);
 
 			dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
-			dspaces_put_sync(); //wait on previous put to finish
+			//dspaces_put_sync(); //wait on previous put to finish
 			delete[] local_str;
 
 	}
