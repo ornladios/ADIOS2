@@ -24,6 +24,10 @@ CommandSleep::CommandSleep(size_t time)
 : Command(Operation::Sleep), sleepTime_us(time){};
 CommandSleep::~CommandSleep(){};
 
+CommandBusy::CommandBusy(size_t time)
+: Command(Operation::Busy), busyTime_us(time){};
+CommandBusy::~CommandBusy(){};
+
 CommandWrite::CommandWrite(std::string stream, std::string group)
 : Command(Operation::Write), streamName(stream), groupName(group){};
 CommandWrite::~CommandWrite(){};
@@ -309,6 +313,13 @@ void printConfig(const Config &cfg)
                       << " microseconds " << std::endl;
             break;
         }
+        case Operation::Busy:
+        {
+            auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
+            std::cout << "          Be busy for " << cmdS->busyTime_us
+                      << " microseconds " << std::endl;
+            break;
+        }
         case Operation::Write:
         {
             auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
@@ -544,6 +555,23 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
                     auto cmd = std::make_shared<CommandSleep>(t_us);
+                    cmd->conditionalStream = conditionalStream;
+                    cfg.commands.push_back(cmd);
+                }
+            }
+            else if (key == "busy")
+            {
+                if (currentAppId == settings.appId)
+                {
+                    double d = stringToDouble(words, 1, "busy");
+                    if (verbose0)
+                    {
+                        std::cout
+                            << "--> Command Busy for: " << std::setprecision(7)
+                            << d << " seconds" << std::endl;
+                    }
+                    size_t t_us = static_cast<size_t>(d * 1000000);
+                    auto cmd = std::make_shared<CommandBusy>(t_us);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                 }

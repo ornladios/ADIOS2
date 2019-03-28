@@ -35,6 +35,7 @@ struct VariableInfo
 enum Operation
 {
     Sleep,
+    Busy,
     Write,
     Read
 };
@@ -54,6 +55,14 @@ public:
     const size_t sleepTime_us = 0; // in microseconds
     CommandSleep(size_t time);
     ~CommandSleep();
+};
+
+class CommandBusy : public Command
+{
+public:
+    const size_t busyTime_us = 0; // in microseconds
+    CommandBusy(size_t time);
+    ~CommandBusy();
 };
 
 class CommandWrite : public Command
