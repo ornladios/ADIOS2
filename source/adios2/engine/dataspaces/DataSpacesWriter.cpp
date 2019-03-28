@@ -113,7 +113,7 @@ void DataSpacesWriter::WriteVarInfo()
 	uint64_t *gdim_meta;
 	int *elemSize_meta;
 	int *dim_meta;
-	int *buffer;
+	char *buffer;
 	char *name_string;
 	local_file_var = f_Name + std::to_string(m_CurrentStep);
 	char *meta_lk = new char[local_file_var.length() + 1];
