@@ -63,122 +63,38 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	char *cstr;
 	char *meta_lk;
 	MPI_Comm_rank(m_data.mpi_comm, &rank);
-	MPI_Comm self_comm = MPI_COMM_SELF;
+	//MPI_Comm self_comm = MPI_COMM_SELF;
 
 	char *fstr = new char[f_Name.length() + 1];
 	strcpy(fstr, f_Name.c_str());
-	/*
-    if (rank==0){
-	//read the version and nvars from dataspaces
-		int l_version_no[2] = {0,0};
-		int version_buf_len = 2;
-		local_file_var = "LATESTVERSION@"+f_Name;
-		cstr = new char[local_file_var.length() + 1];
-		strcpy(cstr, local_file_var.c_str());
-		elemsize = sizeof(int);
-		ndim = 1;
-		lb[0] = 0; ub[0] = version_buf_len-1;
-		gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
-		dspaces_lock_on_read (fstr, &self_comm);
-		dspaces_define_gdim(cstr, ndim, gdims);
-		dspaces_get(cstr, 0, elemsize, ndim, lb, ub, l_version_no);
-		delete[] cstr;
-		latestStep = l_version_no[0];
-    }
-    MPI_Bcast(&latestStep, 1, MPI_INT, 0, m_data.mpi_comm);
-	*/
+
 	char *buffer;
-	int nVars, err;
+	int nVars=0;
 	if(mode == StepMode::NextAvailable){
+		dspaces_lock_on_read (fstr, &(m_data.mpi_comm));
 		if(rank==0){
-			dspaces_lock_on_read (fstr, &self_comm);
-			err = dspaces_get_next_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
-			dspaces_unlock_on_read (fstr, &self_comm);
+			buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &nVars, &m_CurrentStep);
 		}
-		MPI_Bcast(&err, 1, MPI_INT, 0, m_data.mpi_comm);
-		if(err < 0)
-			return StepStatus::EndOfStream;
+		dspaces_unlock_on_read (fstr, &(m_data.mpi_comm));
 	}
 	if(mode == StepMode::LatestAvailable){
+		dspaces_lock_on_read (fstr, &(m_data.mpi_comm));
 		if(rank==0){
-			dspaces_lock_on_read (fstr, &self_comm);
-			err = dspaces_get_latest_meta(m_CurrentStep, buffer, fstr, &nVars, &m_CurrentStep);
-			dspaces_unlock_on_read (fstr, &self_comm);
+				buffer = dspaces_get_latest_meta(m_CurrentStep, fstr, &nVars, &m_CurrentStep);
 		}
-		MPI_Bcast(&err, 1, MPI_INT, 0, m_data.mpi_comm);
-		if(err < 0)
-			return StepStatus::EndOfStream;
+		dspaces_unlock_on_read (fstr, &(m_data.mpi_comm));
 	}
 	MPI_Bcast(&m_CurrentStep, 1, MPI_INT, 0, m_data.mpi_comm);
 	MPI_Bcast(&nVars, 1, MPI_INT, 0, m_data.mpi_comm);
+	if(nVars==0)
+			return StepStatus::EndOfStream;
 	int var_name_max_length = 128;
 	int buf_len = nVars * sizeof(int) + nVars * sizeof(int)+ MAX_DS_NDIM * nVars * sizeof(uint64_t) + nVars * var_name_max_length * sizeof(char);
-	/*
-	//we check if the current step is the end of the step that is in DataSpaces
-	if (m_CurrentStep > latestStep)
-	{
-		if(rank==0)
-			dspaces_unlock_on_read (fstr, &self_comm);
-		return StepStatus::EndOfStream;
-	}
-	if(rank==0)
-				dspaces_unlock_on_read (fstr, &self_comm);
-	delete[] fstr;
-
-	if(rank==0){
-
-		int version_buf[2] = {0,0};
-		local_file_var = "VERSION@"+f_Name;
-		cstr = new char[local_file_var.length() + 1];
-		strcpy(cstr, local_file_var.c_str());
-
-		local_file_var = f_Name + std::to_string(m_CurrentStep);
-		meta_lk = new char[local_file_var.length() + 1];
-		strcpy(meta_lk, local_file_var.c_str());
-
-		dspaces_lock_on_read (meta_lk, &self_comm);
-
-		dspaces_define_gdim(cstr, ndim, gdims);
-		dspaces_get(cstr, 0, elemsize, ndim, lb, ub, version_buf);
-
-		delete[] cstr;
-
-		nVars = version_buf[0];
-	}
-	MPI_Bcast(&nVars, 1, MPI_INT, 0, m_data.mpi_comm);
-	*/
+	if(rank!=0)
+			buffer = (char*)malloc(buf_len);
 
 	m_IO.RemoveAllVariables();
-	/*
-	memset(lb, 0, MAX_DS_NDIM * sizeof(uint64_t));
-	memset(ub, 0, MAX_DS_NDIM * sizeof(uint64_t));
-	memset(gdims, 0, MAX_DS_NDIM * sizeof(uint64_t));
 
-	//now populate vars in the IO
-	int var_name_max_length = 128;
-	int buf_len = nVars * sizeof(int) + nVars * sizeof(int)+ MAX_DS_NDIM * nVars * sizeof(uint64_t) + nVars * var_name_max_length * sizeof(char);
-	char *buffer;
-	buffer = (char*) malloc(buf_len);
-	memset(buffer, 0, buf_len);
-
-	if(rank==0){
-		char * local_str;
-		local_file_var = "VARMETA@"+f_Name;
-		local_str = new char[local_file_var.length() + 1];
-		strcpy(local_str, local_file_var.c_str());
-
-		elemsize = sizeof(char);
-		ndim = 1;
-		lb[0] = 0; ub[0] = buf_len-1;
-		gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
-		dspaces_define_gdim(local_str, ndim, gdims);
-
-		dspaces_get(local_str, latestStep, elemsize, ndim, lb, ub, buffer);
-		dspaces_unlock_on_read (meta_lk, &self_comm);
-		delete[] meta_lk;
-		delete[] local_str;
-	}
-	*/
 	MPI_Bcast(buffer, buf_len, MPI_CHAR, 0, m_data.mpi_comm);
 	//now populate data from the buffer
 
