@@ -100,7 +100,8 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	MPI_Bcast(buffer, buf_len, MPI_CHAR, 0, m_data.mpi_comm);
 	//now populate data from the buffer
 
-	int *dim_meta, *elemSize_meta, *gdim_meta;
+	int *dim_meta, *elemSize_meta;
+	uint64_t *gdim_meta;
 	dim_meta = (int*) malloc(nVars* sizeof(int));
 	elemSize_meta = (int*) malloc(nVars*sizeof(int));
 	gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * nVars * sizeof(uint64_t));
