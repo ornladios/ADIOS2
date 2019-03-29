@@ -77,6 +77,13 @@ void DataSpacesWriter::Flush(const int transportIndex) {}
 
 void DataSpacesWriter::DoClose(const int transportIndex){
 	// disconnect from dataspaces if we are connected from writer but not anymore from reader
+	std::string local_file_var = f_Name + std::to_string(m_CurrentStep+1);
+	char *meta_lk = new char[local_file_var.length() + 1];
+	strcpy(meta_lk, local_file_var.c_str());
+
+	dspaces_lock_on_write (meta_lk, &(m_data.mpi_comm));
+	dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
+
 	if (globals_adios_is_dataspaces_connected_from_writer() &&
 			!globals_adios_is_dataspaces_connected_from_both())
 	{
@@ -106,120 +113,87 @@ void DataSpacesWriter::WriteVarInfo()
 {
 
 	std::string local_file_var;
-	char * local_str;
-	uint64_t gdims[MAX_DS_NDIM], lb[MAX_DS_NDIM], ub[MAX_DS_NDIM];
-	int elemsize, ndim;
-	int nvars;
+	int elemsize, ndim, nvars, rank;
+	int *elemSize_meta, *dim_meta;
+	char * local_str, *buffer, *name_string;
 	uint64_t *gdim_meta;
-	int *elemSize_meta;
-	int *dim_meta;
-	char *buffer;
-	char *name_string;
+	uint64_t gdims[MAX_DS_NDIM], lb[MAX_DS_NDIM], ub[MAX_DS_NDIM];
+
 	local_file_var = f_Name + std::to_string(m_CurrentStep);
 	char *meta_lk = new char[local_file_var.length() + 1];
 	strcpy(meta_lk, local_file_var.c_str());
-	int rank;
 	MPI_Comm_rank(m_data.mpi_comm, &rank);
 
 	dspaces_lock_on_write (meta_lk, &(m_data.mpi_comm));
 	if(rank==0){
 
 		std::string ds_file_var;
+		int var_num = ndim_vector.size();
+		int var_name_max_length = 128;
+		int buf_len = var_num * sizeof(int) +var_num * sizeof(int)+ MAX_DS_NDIM * var_num * sizeof(uint64_t) + var_num * var_name_max_length * sizeof(char);
+		int *dim_meta, *elemSize_meta;
+		uint64_t *gdim_meta;
+		dim_meta = (int*) malloc(var_num* sizeof(int));
+		elemSize_meta = (int*) malloc(var_num*sizeof(int));
+		gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * var_num * sizeof(uint64_t));
+		memset(gdim_meta, 0, MAX_DS_NDIM * var_num * sizeof(uint64_t));
+		buffer = (char*) malloc(buf_len);
+		name_string= (char*) malloc(var_num * var_name_max_length * sizeof(char));
 
+		for (nvars = 0; nvars < var_num; ++nvars) {
+			char *cstr = new char[v_name_vector.at(nvars).length() + 1];
+			strcpy(cstr, v_name_vector.at(nvars).c_str());
+			//copy the name to specific offset
+			memcpy( &name_string[nvars*var_name_max_length], &cstr[0], (v_name_vector.at(nvars).length() + 1)*sizeof( char ) );
 
-			int var_num = ndim_vector.size();
-			int var_name_max_length = 128;
-			int buf_len = var_num * sizeof(int) +var_num * sizeof(int)+ MAX_DS_NDIM * var_num * sizeof(uint64_t) + var_num * var_name_max_length * sizeof(char);
-			int *dim_meta;
-			dim_meta = (int*) malloc(var_num* sizeof(int));
-			int *elemSize_meta;
-			elemSize_meta = (int*) malloc(var_num*sizeof(int));
-
-			uint64_t *gdim_meta;
-			gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * var_num * sizeof(uint64_t));
-			memset(gdim_meta, 0, MAX_DS_NDIM * var_num * sizeof(uint64_t));
-
-			//payload of ndims + var Element Size + gdims for each var + each var name
-
-			buffer = (char*) malloc(buf_len);
-
-			name_string= (char*) malloc(var_num * var_name_max_length * sizeof(char));
-
-			for (nvars = 0; nvars < var_num; ++nvars) {
-				char *cstr = new char[v_name_vector.at(nvars).length() + 1];
-				strcpy(cstr, v_name_vector.at(nvars).c_str());
-				//copy the name to specific offset
-				memcpy( &name_string[nvars*var_name_max_length], &cstr[0], (v_name_vector.at(nvars).length() + 1)*sizeof( char ) );
-
-				dim_meta[nvars] = ndim_vector[nvars]; //store the ndim information for each variable
-				elemSize_meta[nvars] = elemSize_vector[nvars];
-				for (int i = 0; i < dim_meta[nvars]; i++)
-				{
-					gdim_meta[nvars*MAX_DS_NDIM+i] = gdims_vector[nvars].at(i);
-				}
-
-
+			dim_meta[nvars] = ndim_vector[nvars]; //store the ndim information for each variable
+			elemSize_meta[nvars] = elemSize_vector[nvars];
+			for (int i = 0; i < dim_meta[nvars]; i++)
+			{
+				gdim_meta[nvars*MAX_DS_NDIM+i] = gdims_vector[nvars].at(i);
 			}
-			//copy all the data into payload buffer
-			memcpy(buffer, dim_meta, var_num* sizeof(int));
-			memcpy(&buffer[var_num* sizeof(int)], elemSize_meta, var_num* sizeof(int));
-			memcpy(&buffer[2*var_num* sizeof(int)], gdim_meta, MAX_DS_NDIM * var_num * sizeof(uint64_t));
-			memcpy(&buffer[2*var_num* sizeof(int)+MAX_DS_NDIM * var_num * sizeof(uint64_t)], name_string, var_num * var_name_max_length * sizeof(char));
 
 
-			//store metadata in DataSoaces
+		}
+		//copy all the data into payload buffer
+		memcpy(buffer, dim_meta, var_num* sizeof(int));
+		memcpy(&buffer[var_num* sizeof(int)], elemSize_meta, var_num* sizeof(int));
+		memcpy(&buffer[2*var_num* sizeof(int)], gdim_meta, MAX_DS_NDIM * var_num * sizeof(uint64_t));
+		memcpy(&buffer[2*var_num* sizeof(int)+MAX_DS_NDIM * var_num * sizeof(uint64_t)], name_string, var_num * var_name_max_length * sizeof(char));
 
-			local_file_var = "VARMETA@"+f_Name;
-			local_str = new char[local_file_var.length() + 1];
-			strcpy(local_str, local_file_var.c_str());
+		//store metadata in DataSoaces
+		local_file_var = "VARMETA@"+f_Name;
+		local_str = new char[local_file_var.length() + 1];
+		strcpy(local_str, local_file_var.c_str());
 
-			//dspaces_put_sync(); //wait on previous put to finish
+		elemsize = sizeof(char);
+		ndim = 1;
+		lb[0] = 0; ub[0] = buf_len-1;
+		gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
+		dspaces_define_gdim(local_str, ndim, gdims);
 
+		dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
+		delete[] local_str;
 
+		memset(lb, 0, MAX_DS_NDIM * sizeof(uint64_t));
+		memset(ub, 0, MAX_DS_NDIM * sizeof(uint64_t));
+		memset(gdims, 0, MAX_DS_NDIM * sizeof(uint64_t));
+		//store the latest version or step information for the file and how many variables are there in the file
 
-			elemsize = sizeof(char);
-			ndim = 1;
-			lb[0] = 0; ub[0] = buf_len-1;
-			gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
-			dspaces_define_gdim(local_str, ndim, gdims);
+		int version_buf[2] = {var_num,0}; /* Put var_numbers in each step in DataSpaces */
+		int version_buf_len = 2;
+		local_file_var = "VERSION@"+f_Name;
+		local_str = new char[local_file_var.length() + 1];
+		strcpy(local_str, local_file_var.c_str());
+		elemsize = sizeof(int);
+		ndim = 1;
+		lb[0] = 0; ub[0] = version_buf_len-1;
+		gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
+		dspaces_define_gdim(local_str, ndim, gdims);
 
-			dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
-			//dspaces_put_sync();
+		dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
+		delete[] local_str;
 
-			delete[] local_str;
-
-			memset(lb, 0, MAX_DS_NDIM * sizeof(uint64_t));
-			memset(ub, 0, MAX_DS_NDIM * sizeof(uint64_t));
-			memset(gdims, 0, MAX_DS_NDIM * sizeof(uint64_t));
-			//store the latest version or step information for the file and how many variables are there in the file
-
-			int version_buf[2] = {var_num,0}; /* Put var_numbers in each step in DataSpaces */
-			int version_buf_len = 2;
-			local_file_var = "VERSION@"+f_Name;
-			local_str = new char[local_file_var.length() + 1];
-			strcpy(local_str, local_file_var.c_str());
-			elemsize = sizeof(int);
-			ndim = 1;
-			lb[0] = 0; ub[0] = version_buf_len-1;
-			gdims[0] = (ub[0]-lb[0]+1) * dspaces_get_num_space_server();
-			dspaces_define_gdim(local_str, ndim, gdims);
-
-			dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
-			//dspaces_put_sync(); //wait on previous put to finish
-			delete[] local_str;
-
-	//}
-	//dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
-
-
-	//delete[] meta_lk;
-	//char *lkstr = new char[f_Name.length() + 1];
-	//strcpy(lkstr, f_Name.c_str());
-
-
-	//dspaces_lock_on_write (lkstr, &(m_data.mpi_comm));
-	//store the latest version or step information for the file and how many variables are there in the file
-	//if(rank==0){
 		int l_version_buf[2] = {m_CurrentStep,0}; /* Put the latest version number to dataspaces*/
 		local_file_var = "LATESTVERSION@"+f_Name;
 		local_str = new char[local_file_var.length() + 1];
@@ -229,21 +203,17 @@ void DataSpacesWriter::WriteVarInfo()
 		dspaces_put(local_str, 0, elemsize, ndim, lb, ub, l_version_buf);
 		dspaces_put_sync(); //wait on previous put to finish
 		delete[] local_str;
-	}
-	dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
-    // std::string attrType = attributesInfo[attrName]["Type"];
-	ndim_vector.clear();
-	gdims_vector.clear();
-	v_name_vector.clear();
-	elemSize_vector.clear();
-	//delete[] lkstr;
-	if(rank==0){
 		free(dim_meta);
 		free(elemSize_meta);
 		free(gdim_meta);
 		free(buffer);
 		free(name_string);
 	}
+	dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
+	ndim_vector.clear();
+	gdims_vector.clear();
+	v_name_vector.clear();
+	elemSize_vector.clear();
 
 }
 
