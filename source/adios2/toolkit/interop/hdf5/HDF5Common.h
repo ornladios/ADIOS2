@@ -117,6 +117,8 @@ public:
     static const std::string PREFIX_STAT;
 
     static const std::string PARAMETER_COLLECTIVE;
+    static const std::string PARAMETER_CHUNK_FLAG;
+    static const std::string PARAMETER_CHUNK_VARS;
 
     void ParseParameters(core::IO &io);
     void Init(const std::string &name, MPI_Comm comm, bool toWrite);
@@ -214,6 +216,10 @@ private:
     template <class T>
     void AddStats(const core::Variable<T> &variable, hid_t parentId,
                   std::vector<T> &stats);
+
+    hid_t m_ChunkPID;
+    int m_ChunkDim;
+    std::set<std::string> m_ChunkVarNames;
 };
 
 // Explicit declaration of the public template methods
