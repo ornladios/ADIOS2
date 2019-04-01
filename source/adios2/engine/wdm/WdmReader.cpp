@@ -48,9 +48,11 @@ WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
 
 WdmReader::~WdmReader()
 {
+    m_MetadataTransport = nullptr;
+    m_DataTransport = nullptr;
     if (m_Verbosity >= 5)
     {
-        std::cout << "Staging Reader " << m_MpiRank << " deconstructor on "
+        std::cout << "Staging Reader " << m_MpiRank << " destructor on "
                   << m_Name << "\n";
     }
 }
@@ -79,13 +81,17 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
     auto startTime = std::chrono::system_clock::now();
     while (m_MetaDataMap.empty())
     {
+        RequestMetadata();
         m_MetaDataMap = m_DataManSerializer.GetMetaData();
         auto nowTime = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(
             nowTime - startTime);
         if (duration.count() > timeoutSeconds)
         {
-            Log(5, "WdmReader::BeginStep() returned EndOfStream.", true, true);
+            Log(5,
+                "WdmReader::BeginStep() returned EndOfStream because of "
+                "timeout.",
+                true, true);
             return StepStatus::EndOfStream;
         }
     }
@@ -127,6 +133,10 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
             --m_CurrentStep;
             if (m_RetryTimes > m_RetryMax)
             {
+                Log(5,
+                    "WdmReader::BeginStep() returned EndOfStream because "
+                    "reaching max try times for waiting next available step.",
+                    true, true);
                 return StepStatus::EndOfStream;
             }
             else
@@ -170,6 +180,10 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
         ++m_RetryTimes;
         if (m_RetryTimes > m_RetryMax)
         {
+            Log(5,
+                "WdmReader::BeginStep() returned EndOfStream because reaching "
+                "max try times for waiting valid metadata map element.",
+                true, true);
             return StepStatus::EndOfStream;
         }
         else
@@ -243,6 +257,7 @@ void WdmReader::PerformGets()
                 "Lost connection to writer. Data for the final step is "
                 "corrupted!",
                 true, true);
+            m_ConnectionLost = true;
             return;
         }
         if (reply->size() <= 16)
