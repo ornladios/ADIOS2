@@ -78,6 +78,8 @@ private:
             {"unsigned int", 14},
             {"unsigned long int",15},
             {"unsigned long long int",16},
+			{"unsigned long long",17},
+			{"long long", 18},
     };
 
 #define declare_type(T)                                                          \

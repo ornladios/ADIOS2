@@ -166,6 +166,10 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 				AddVar<long int>(m_IO, adiosName, shape);
 		else if(adiosVarType =="long long int")
 				AddVar<long long int>(m_IO, adiosName, shape);
+		else if(adiosVarType =="long long")
+				AddVar<long long>(m_IO, adiosName, shape);
+		else if(adiosVarType =="unsigned long long")
+				AddVar<unsigned long long>(m_IO, adiosName, shape);
 		else if(adiosVarType =="string")
 				AddVar<std::string>(m_IO, adiosName, shape);
 		else if(adiosVarType =="unsigned char")
