@@ -15,6 +15,8 @@
 #include "adios2/ADIOSTypes.h"
 #include "adios2/toolkit/format/BufferSTL.h"
 
+#include <array>
+
 namespace adios2
 {
 namespace aggregator
@@ -63,11 +65,9 @@ public:
     virtual std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
                                                const int step);
 
-    std::vector<MPI_Request> IExchangeAbsolutePosition(BufferSTL &bufferSTL,
-                                                       const int step);
+    void IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step);
 
-    void WaitAbsolutePosition(std::vector<MPI_Request> &requests,
-                              const int step);
+    void WaitAbsolutePosition(const int step);
 
     virtual void Wait(std::vector<MPI_Request> &requests, const int step);
 
@@ -90,6 +90,9 @@ protected:
 
     /** assigning extra buffers for aggregation */
     std::vector<BufferSTL> m_Buffers;
+
+private:
+    std::array<MPI_Request, 2> m_AbsolutePositionRequests;
 };
 
 } // end namespace aggregator
