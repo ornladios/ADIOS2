@@ -150,40 +150,38 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		}
 		if(adiosVarType =="char")
 			AddVar<char>(m_IO, adiosName, shape);
+		else if(adiosVarType =="signed char")
+			AddVar<signed char>(m_IO, adiosName, shape);
+		else if(adiosVarType =="unsigned char")
+			AddVar<unsigned char>(m_IO, adiosName, shape);
+		else if(adiosVarType =="short")
+						AddVar<short>(m_IO, adiosName, shape);
+		else if(adiosVarType =="unsigned short")
+						AddVar<unsigned short>(m_IO, adiosName, shape);
+		else if(adiosVarType =="int")
+						AddVar<int>(m_IO, adiosName, shape);
+		else if(adiosVarType =="unsigned int")
+						AddVar<unsigned int>(m_IO, adiosName, shape);
+		else if(adiosVarType =="long int")
+						AddVar<long int>(m_IO, adiosName, shape);
+		else if(adiosVarType =="long long int")
+						AddVar<long long int>(m_IO, adiosName, shape);
+		else if(adiosVarType =="unsigned long int")
+						AddVar<unsigned long int>(m_IO, adiosName, shape);
+		else if(adiosVarType =="unsigned long long int")
+						AddVar<unsigned long long int>(m_IO, adiosName, shape);
 		else if(adiosVarType =="float")
 				AddVar<float>(m_IO, adiosName, shape);
 		else if(adiosVarType =="double")
 				AddVar<double>(m_IO, adiosName, shape);
+		else if(adiosVarType =="long double")
+						AddVar<long double>(m_IO, adiosName, shape);
 		else if(adiosVarType =="float complex")
 				AddVar<std::complex<float>>(m_IO, adiosName, shape);
 		else if(adiosVarType =="double complex")
 				AddVar<std::complex<double>>(m_IO, adiosName, shape);
-		else if(adiosVarType =="signed char")
-				AddVar<signed char>(m_IO, adiosName, shape);
-		else if(adiosVarType =="short")
-				AddVar<short>(m_IO, adiosName, shape);
-		else if(adiosVarType =="long int")
-				AddVar<long int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="long long int")
-				AddVar<long long int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="long long")
-				AddVar<long long>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned long long")
-				AddVar<unsigned long long>(m_IO, adiosName, shape);
-		else if(adiosVarType =="string")
-				AddVar<std::string>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned char")
-				AddVar<unsigned char>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned short")
-				AddVar<unsigned short>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned int")
-				AddVar<unsigned int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned long int")
-				AddVar<unsigned long int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned long long int")
-				AddVar<unsigned long long int>(m_IO, adiosName, shape);
 		else
-			AddVar<int>(m_IO, adiosName, shape);// used int for last value
+			AddVar<std::string>(m_IO, adiosName, shape);// used string for last value
 
 	}
 
