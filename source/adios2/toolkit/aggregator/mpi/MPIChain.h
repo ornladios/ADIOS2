@@ -28,10 +28,9 @@ public:
 
     void Init(const size_t subStreams, MPI_Comm parentComm) final;
 
-    std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
-                                       const int step) final;
+    void IExchange(BufferSTL &bufferSTL, const int step) final;
 
-    void Wait(std::vector<MPI_Request> &request, const int step) final;
+    void Wait(const int step) final;
 
     void SwapBuffers(const int step) noexcept final;
 
@@ -73,6 +72,8 @@ private:
      */
     void ResizeUpdateBufferSTL(const size_t newSize, BufferSTL &bufferSTL,
                                const std::string hint);
+
+    std::array<MPI_Request, 3> m_DataRequests;
 };
 
 } // end namespace aggregator
