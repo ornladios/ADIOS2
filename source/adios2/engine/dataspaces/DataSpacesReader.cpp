@@ -234,7 +234,7 @@ void DataSpacesReader::PerformGets()
 	            ReadDsData(*var, var->GetData(), m_CurrentStep);                          \
 	        }                                                                      \
 	    }
-	        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+	        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 	#undef declare_type
 	    m_DeferredStack.clear();
 	}
@@ -251,7 +251,7 @@ void DataSpacesReader::PerformGets()
         GetDeferredCommon(variable, data);                                     \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 
