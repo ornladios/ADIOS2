@@ -23,12 +23,13 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"xml", required_argument, NULL, 'x'},
                            {"strong-scaling", no_argument, NULL, 's'},
                            {"weak-scaling", no_argument, NULL, 'w'},
+                           {"timer", no_argument, NULL, 't'},
 #ifdef ADIOS2_HAVE_HDF5
                            {"hdf5", no_argument, NULL, 'H'},
 #endif
                            {NULL, 0, NULL, 0}};
 
-static const char *optstring = "-hvswHa:c:d:x:";
+static const char *optstring = "-hvswtHa:c:d:x:";
 
 size_t Settings::ndigits(size_t n) const
 {
