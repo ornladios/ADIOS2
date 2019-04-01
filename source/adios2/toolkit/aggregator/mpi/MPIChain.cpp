@@ -71,9 +71,8 @@ void MPIChain::IExchange(BufferSTL &bufferSTL, const int step)
                                ", aggregation Irecv size at iteration " +
                                    std::to_string(step) + "\n");
 
-        MPI_Status receiveStatus;
         helper::CheckMPIReturn(
-            MPI_Wait(&receiveSizeRequest, &receiveStatus),
+            MPI_Wait(&receiveSizeRequest, MPI_STATUS_IGNORE),
             ", aggregation waiting for receiver size at iteration " +
                 std::to_string(step) + "\n");
 
@@ -103,11 +102,10 @@ void MPIChain::Wait(const int step)
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
     const bool receiver = (m_Rank < endRank) ? true : false;
 
-    MPI_Status status;
     if (receiver)
     {
         helper::CheckMPIReturn(
-            MPI_Wait(&m_DataRequests[2], &status),
+            MPI_Wait(&m_DataRequests[2], MPI_STATUS_IGNORE),
             ", aggregation waiting for receiver data at iteration " +
                 std::to_string(step) + "\n");
     }
@@ -115,12 +113,12 @@ void MPIChain::Wait(const int step)
     if (sender)
     {
         helper::CheckMPIReturn(
-            MPI_Wait(&m_DataRequests[0], &status),
+            MPI_Wait(&m_DataRequests[0], MPI_STATUS_IGNORE),
             ", aggregation waiting for sender size at iteration " +
                 std::to_string(step) + "\n");
 
         helper::CheckMPIReturn(
-            MPI_Wait(&m_DataRequests[1], &status),
+            MPI_Wait(&m_DataRequests[1], MPI_STATUS_IGNORE),
             ", aggregation waiting for sender data at iteration " +
                 std::to_string(step) + "\n");
     }
@@ -159,17 +157,15 @@ void MPIChain::HandshakeLinks()
                       &receiveRequest),
             "Irecv handshake with neighbor, MPIChain aggregator, at Open");
 
-        MPI_Status receiveStatus;
         helper::CheckMPIReturn(
-            MPI_Wait(&receiveRequest, &receiveStatus),
+            MPI_Wait(&receiveRequest, MPI_STATUS_IGNORE),
             "Irecv Wait handshake with neighbor, MPIChain aggregator, at Open");
     }
 
     if (m_Rank > 0)
     {
-        MPI_Status sendStatus;
         helper::CheckMPIReturn(
-            MPI_Wait(&sendRequest, &sendStatus),
+            MPI_Wait(&sendRequest, MPI_STATUS_IGNORE),
             "Isend wait handshake with neighbor, MPIChain aggregator, at Open");
     }
 }

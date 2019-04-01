@@ -83,6 +83,8 @@ using MPI_Op = int;
 
 #define MPI_MAX_PROCESSOR_NAME 32
 
+extern MPI_Status *MPI_STATUS_IGNORE;
+
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
 int MPI_Initialized(int *flag);

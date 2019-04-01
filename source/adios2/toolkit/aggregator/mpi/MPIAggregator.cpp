@@ -80,13 +80,12 @@ void MPIAggregator::WaitAbsolutePosition(const int step)
         return;
     }
 
-    MPI_Status status;
     const int destination = (step != m_Size - 1) ? step + 1 : 0;
 
     if (m_Rank == destination)
     {
         helper::CheckMPIReturn(
-            MPI_Wait(&m_AbsolutePositionRequests[1], &status),
+            MPI_Wait(&m_AbsolutePositionRequests[1], MPI_STATUS_IGNORE),
             ", aggregation Irecv Wait absolute position at iteration " +
                 std::to_string(step) + "\n");
     }
@@ -94,7 +93,7 @@ void MPIAggregator::WaitAbsolutePosition(const int step)
     if (m_Rank == step)
     {
         helper::CheckMPIReturn(
-            MPI_Wait(&m_AbsolutePositionRequests[0], &status),
+            MPI_Wait(&m_AbsolutePositionRequests[0], MPI_STATUS_IGNORE),
             ", aggregation Isend Wait absolute position at iteration " +
                 std::to_string(step) + "\n");
     }

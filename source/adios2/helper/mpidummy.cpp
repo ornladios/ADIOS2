@@ -34,6 +34,8 @@ namespace helper
 namespace mpi
 {
 
+MPI_Status *MPI_STATUS_IGNORE;
+
 static char mpierrmsg[MPI_MAX_ERROR_STRING];
 
 int MPI_Init(int * /*argc*/, char *** /*argv*/)
