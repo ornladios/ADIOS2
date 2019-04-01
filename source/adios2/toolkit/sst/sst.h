@@ -24,11 +24,12 @@ typedef struct _SstStream *SstStream;
 
 /*
  *  metadata and typedefs are tentative and may come from ADIOS2 constructors.
-*/
+ */
 typedef struct _SstFullMetadata *SstFullMetadata;
 typedef struct _SstData *SstData;
 
-typedef enum {
+typedef enum
+{
     SstSuccess,
     SstEndOfStream,
     SstFatalError,
@@ -36,7 +37,8 @@ typedef enum {
 } SstStatusValue;
 
 /* The SST version of enum class StepMode in ADIOSTypes.h */
-typedef enum {
+typedef enum
+{
     SstAppend, // writer modes ignored in SST
     SstUpdate, // writer modes ignored in SST
     SstNextAvailable,
@@ -56,14 +58,29 @@ typedef struct _SstStats
 
 typedef struct _SstParams *SstParams;
 
-typedef enum { SstMarshalFFS, SstMarshalBP } SstMarshalMethod;
+typedef enum
+{
+    SstMarshalFFS,
+    SstMarshalBP
+} SstMarshalMethod;
 
-typedef enum {
+typedef enum
+{
+    SstCPCommMin,
+    SstCPCommPeer
+} SstCPCommPattern;
+
+typedef enum
+{
     SstQueueFullBlock = 0,
     SstQueueFullDiscard = 1
 } SstQueueFullPolicy;
 
-typedef enum { SstCompressNone = 0, SstCompressZFP = 1 } SstCompressionMethod;
+typedef enum
+{
+    SstCompressNone = 0,
+    SstCompressZFP = 1
+} SstCompressionMethod;
 
 /*
  *  Writer-side operations

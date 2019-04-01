@@ -47,7 +47,11 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
 
     // set type
     int mgardType = -1;
-    if (type == "float")
+    if (type == helper::GetType<double>())
+    {
+        mgardType = 1;
+    }
+    else
     {
         if (m_DebugMode)
         {
@@ -55,10 +59,6 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
                 "ERROR: ADIOS2 operator "
                 "MGARD only supports double precision, in call to Put\n");
         }
-    }
-    else if (type == "double")
-    {
-        mgardType = 1;
     }
 
     int r[3];
@@ -72,18 +72,26 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     }
 
     // Parameters
-    auto itTolerance = parameters.find("tolerance");
-    if (m_DebugMode)
+    bool hasTolerance = false;
+    double tolerance;
+    auto itAccuracy = parameters.find("accuracy");
+    if (itAccuracy != parameters.end())
     {
-        if (itTolerance == parameters.end())
-        {
-            throw std::invalid_argument("ERROR: missing mandatory parameter "
-                                        "tolerance for MGARD compression "
-                                        "operator, in call to Put\n");
-        }
+        tolerance = std::stod(itAccuracy->second);
+        hasTolerance = true;
     }
-
-    double tolerance = std::stod(itTolerance->second);
+    auto itTolerance = parameters.find("tolerance");
+    if (itTolerance != parameters.end())
+    {
+        tolerance = std::stod(itTolerance->second);
+        hasTolerance = true;
+    }
+    if (!hasTolerance)
+    {
+        throw std::invalid_argument("ERROR: missing mandatory parameter "
+                                    "tolerance for MGARD compression "
+                                    "operator\n");
+    }
 
     int sizeOut = 0;
     unsigned char *dataOutPtr =
@@ -104,16 +112,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
     int mgardType = -1;
     size_t elementSize = 0;
 
-    if (type == "float")
-    {
-        if (m_DebugMode)
-        {
-            throw std::invalid_argument(
-                "ERROR: ADIOS2 operator "
-                "MGARD only supports double precision, in call to Get\n");
-        }
-    }
-    else if (type == "double")
+    if (type == helper::GetType<double>())
     {
         mgardType = 1;
         elementSize = 8;

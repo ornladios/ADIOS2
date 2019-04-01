@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "adios2/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h"
 #include <adios2.h>
 
 // matches Signature2 in ADIOS2
@@ -53,7 +52,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
     std::cout << "Data : " << std::endl;
 
 #define declare_type(T)                                                        \
-    if (type == adios2::helper::GetType<T>())                                  \
+    if (type == adios2::GetType<T>())                                          \
     {                                                                          \
         for (size_t i = 0; i < dumpsize; ++i)                                  \
         {                                                                      \
@@ -61,7 +60,7 @@ void UserCallBack(void *data, const std::string &doid, const std::string &var,
         }                                                                      \
         std::cout << std::endl;                                                \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 }
 

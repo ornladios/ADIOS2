@@ -11,6 +11,7 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 
+#include "Types.h"
 #include "Variable.h"
 
 #include "adios2/ADIOSMacros.h"
@@ -63,6 +64,8 @@ public:
     /**
      * Begin a logical adios2 step, overloaded version with timeoutSeconds = 0
      * and mode = NextAvailable
+     * Check each engine documentation for MPI collective/non-collective
+     * behavior.
      * @return current step status
      */
     StepStatus BeginStep();
@@ -70,6 +73,8 @@ public:
     /**
      * Begin a logical adios2 step, overloaded version for advanced stream
      * control
+     * Check each engine documentation for MPI collective/non-collective
+     * behavior.
      * @param mode see enum adios2::StepMode for options, NextAvailable is the
      * common use case
      * @param timeoutSeconds
@@ -83,6 +88,21 @@ public:
      * @return current logical step
      */
     size_t CurrentStep() const;
+
+    /**
+     * Put signature that provides access to the internal engine buffer for a
+     * pre-allocated variable. Returns a fixed size Span (based on C++20
+     * std::span) so applications can populate data value after this Put.
+     * Requires a call to PerformPuts, EndStep, or Close to extract the Min/Max
+     * bounds.
+     * @param variable input variable
+     * @param bufferID (default = 0) optional, if engine has multiple buffers
+     * @param value (default is zeros) optional initial value
+     * @return span to variable data in engine internal buffer
+     */
+    template <class T>
+    typename Variable<T>::Span
+    Put(Variable<T> variable, const size_t bufferID = 0, const T &value = {});
 
     /**
      * Put data associated with a Variable in the Engine
@@ -264,10 +284,58 @@ public:
     void Get(const std::string &variableName, std::vector<T> &dataV,
              const Mode launch = Mode::Deferred);
 
+    /**
+     * Get data associated with a Variable from the Engine. Data is
+     * associated with a block selection, and data is retrieved from
+     * variable's BlockInfo.
+     * @note Preliminary, experimental API, may change soon.
+     * @param variable contains variable metadata information
+     * @param info block info struct associated with block selection,
+     *   call will link with implementation's block info.
+     * @param launch mode policy
+     * <pre>
+     *      Mode::Deferred, lazy evaluation, do not use data until
+     * first PerformGets, EndStep, or Close. This is the preferred way.
+     *      Mode::Sync, data is obtained by the Engine and can be used
+     * immediately.
+     * Special case, only use if necessary.
+     * </pre>
+     * @exception std::invalid_argument for invalid variable or nullptr data
+     */
+    template <class T>
+    void Get(Variable<T> variable, typename Variable<T>::Info &info,
+             const Mode launch = Mode::Deferred);
+    /**
+     * Get data associated with a Variable from the Engine. Data is
+     * associated with a block selection, and data is retrieved from
+     * variable's BlockInfo. Overloaded version
+     * to get variable by name.
+     * @note Preliminary, experimental API, may change soon.
+     * @param variable contains variable metadata information
+     * @param info block info struct associated with block selection,
+     *   call will link with implementation's block info.
+     * @param launch mode policy
+     * <pre>
+     *      Mode::Deferred, lazy evaluation, do not use data until
+     * first PerformGets, EndStep, or Close. This is the preferred way.
+     *      Mode::Sync, data is obtained by the Engine and can be used
+     * immediately.
+     * Special case, only use if necessary.
+     * </pre>
+     * @exception std::invalid_argument for invalid variable or nullptr data
+     */
+    template <class T>
+    void Get(const std::string &variableName, typename Variable<T>::Info &info,
+             const Mode launch = Mode::Deferred);
+
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();
 
-    /** Ends current step, by default calls PerformsPut/Get internally*/
+    /**
+     * Ends current step, by default calls PerformsPut/Get internally
+     * Check each engine documentation for MPI collective/non-collective
+     * behavior.
+     */
     void EndStep();
 
     /**
@@ -278,6 +346,7 @@ public:
 
     /**
      * Closes current engine, after this call an engine becomes invalid
+     * MPI Collective, calls MPI_Comm_free for duplicated communicator at Open
      * @param transportIndex
      */
     void Close(const int transportIndex = -1);
@@ -317,6 +386,14 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
+                                                                               \
+    extern template typename Variable<T>::Span Engine::Put(                    \
+        Variable<T>, const size_t, const T &);
+
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
     extern template void Engine::Put<T>(Variable<T>, const T *, const Mode);   \
     extern template void Engine::Put<T>(const std::string &, const T *,        \
                                         const Mode);                           \
@@ -333,6 +410,11 @@ private:
                                         const Mode);                           \
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
+                                                                               \
+    extern template void Engine::Get<T>(                                       \
+        Variable<T>, typename Variable<T>::Info & info, const Mode);           \
+    extern template void Engine::Get<T>(                                       \
+        const std::string &, typename Variable<T>::Info &info, const Mode);    \
                                                                                \
     extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \

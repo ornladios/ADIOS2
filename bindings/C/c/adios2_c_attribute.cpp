@@ -12,33 +12,11 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/AttributeBase.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2_c_internal.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-namespace
-{
-const std::map<std::string, std::vector<adios2_type>>
-    adios2_attribute_types_map = {
-        {"char", {adios2_type_char}},
-        {"int", {adios2_type_int32_t, adios2_type_int}},
-        {"float", {adios2_type_float}},
-        {"double", {adios2_type_double}},
-        {"signed char", {adios2_type_int8_t, adios2_type_signed_char}},
-        {"short", {adios2_type_int16_t, adios2_type_short}},
-        {"long int", {adios2_type_int64_t, adios2_type_long_int}},
-        {"long long int", {adios2_type_int64_t, adios2_type_long_long_int}},
-        {"string", {adios2_type_string}},
-        {"unsigned char", {adios2_type_unsigned_char, adios2_type_uint8_t}},
-        {"unsigned short", {adios2_type_unsigned_short, adios2_type_uint16_t}},
-        {"unsigned int", {adios2_type_unsigned_int, adios2_type_uint32_t}},
-        {"unsigned long int",
-         {adios2_type_unsigned_long_int, adios2_type_uint64_t}},
-        {"unsigned long long int",
-         {adios2_type_unsigned_long_long_int, adios2_type_uint64_t}},
-};
-} // end anonymous namespace
 
 adios2_error adios2_attribute_name(char *name, size_t *size,
                                    const adios2_attribute *attribute)
@@ -47,15 +25,11 @@ adios2_error adios2_attribute_name(char *name, size_t *size,
     {
         adios2::helper::CheckForNullptr(
             attribute, "for attribute, in call to adios2_attribute_name");
-        adios2::helper::CheckForNullptr(
-            name, "for char* char, in call to adios2_attribute_name");
 
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
 
-        *size = attributeBase->m_Name.size();
-        attributeBase->m_Name.copy(name, *size);
-        return adios2_error_none;
+        return String2CAPI(attributeBase->m_Name, name, size);
     }
     catch (...)
     {
@@ -74,10 +48,19 @@ adios2_error adios2_attribute_type(adios2_type *type,
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
 
-        auto itType = adios2_attribute_types_map.find(attributeBase->m_Type);
-        *type = (itType == adios2_attribute_types_map.end())
-                    ? adios2_type_unknown
-                    : itType->second.front();
+        auto type_s = attributeBase->m_Type;
+        if (type_s == adios2::helper::GetType<std::string>())
+        {
+            *type = adios2_type_string;
+        }
+#define make_case(T)                                                           \
+    else if (type_s == adios2::helper::GetType<MapAdios2Type<T>::Type>())      \
+    {                                                                          \
+        *type = T;                                                             \
+    }
+        ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
+#undef make_case
+        else { *type = adios2_type_unknown; }
         return adios2_error_none;
     }
     catch (...)
@@ -96,16 +79,12 @@ adios2_error adios2_attribute_type_string(char *type, size_t *size,
             attribute, "for const adios2_attribute, in call to "
                        "adios2_attribute_type_string");
         adios2::helper::CheckForNullptr(
-            type, "for char* type, in call to adios2_attribute_type_string");
-        adios2::helper::CheckForNullptr(
             size,
             "for size_t* length, in call to adios2_attribute_type_string");
 
         const adios2::core::AttributeBase *attributeBase =
             reinterpret_cast<const adios2::core::AttributeBase *>(attribute);
-        *size = attributeBase->m_Type.size();
-        attributeBase->m_Type.copy(type, *size);
-        return adios2_error_none;
+        return String2CAPI(attributeBase->m_Type, type, size);
     }
     catch (...)
     {
@@ -173,7 +152,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             const adios2::core::Attribute<std::string> *attributeCpp =
                 dynamic_cast<const adios2::core::Attribute<std::string> *>(
@@ -215,7 +194,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
             *size = attributeCpp->m_Elements;                                  \
         }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(
             declare_template_instantiation)
 #undef declare_template_instantiation
 

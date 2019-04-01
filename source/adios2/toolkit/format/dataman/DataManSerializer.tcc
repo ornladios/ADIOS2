@@ -32,89 +32,159 @@ namespace adios2
 namespace format
 {
 
-template <class T>
-void DataManSerializer::Put(const core::Variable<T> &variable,
-                            const std::string &doid, const size_t step,
-                            const int rank, const std::string &address,
-                            const Params &params)
+template <>
+inline void DataManSerializer::CalculateMinMax<std::complex<float>>(
+    const std::complex<float> *data, const Dims &count, nlohmann::json &metaj)
 {
-    Put(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-        variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, doid,
-        step, rank, address, params);
+}
+
+template <>
+inline void DataManSerializer::CalculateMinMax<std::complex<double>>(
+    const std::complex<double> *data, const Dims &count, nlohmann::json &metaj)
+{
+}
+
+template <typename T>
+void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
+                                        nlohmann::json &metaj)
+{
+    size_t size = std::accumulate(count.begin(), count.end(), 1,
+                                  std::multiplies<size_t>());
+    T max = std::numeric_limits<T>::min();
+    T min = std::numeric_limits<T>::max();
+
+    for (size_t j = 0; j < size; ++j)
+    {
+        T value = data[j];
+        if (value > max)
+        {
+            max = value;
+        }
+        if (value < min)
+        {
+            min = value;
+        }
+    }
+
+    std::vector<char> vectorValue(sizeof(T));
+
+    reinterpret_cast<T *>(vectorValue.data())[0] = max;
+    metaj["+"] = vectorValue;
+
+    reinterpret_cast<T *>(vectorValue.data())[0] = min;
+    metaj["-"] = vectorValue;
 }
 
 template <class T>
-void DataManSerializer::Put(const T *inputData, const std::string &varName,
-                            const Dims &varShape, const Dims &varStart,
-                            const Dims &varCount, const Dims &varMemStart,
-                            const Dims &varMemCount, const std::string &doid,
-                            const size_t step, const int rank,
-                            const std::string &address, const Params &params)
+void DataManSerializer::PutVar(const core::Variable<T> &variable,
+                               const std::string &doid, const size_t step,
+                               const int rank, const std::string &address,
+                               const Params &params, VecPtr localBuffer,
+                               JsonPtr metadataJson)
 {
+    PutVar(variable.GetData(), variable.m_Name, variable.m_Shape,
+           variable.m_Start, variable.m_Count, variable.m_MemoryStart,
+           variable.m_MemoryCount, doid, step, rank, address, params,
+           localBuffer, metadataJson);
+}
+
+template <class T>
+void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
+                               const Dims &varShape, const Dims &varStart,
+                               const Dims &varCount, const Dims &varMemStart,
+                               const Dims &varMemCount, const std::string &doid,
+                               const size_t step, const int rank,
+                               const std::string &address, const Params &params,
+                               VecPtr localBuffer, JsonPtr metadataJson)
+{
+    Log(1,
+        "DataManSerializer::PutVar begin with Step " + std::to_string(step) +
+            " Var " + varName,
+        true, true);
+
+    if (localBuffer == nullptr)
+    {
+        localBuffer = m_LocalBuffer;
+    }
 
     nlohmann::json metaj;
 
+    metaj["A"] = address;
     metaj["N"] = varName;
     metaj["O"] = varStart;
     metaj["C"] = varCount;
     metaj["S"] = varShape;
-    metaj["D"] = doid;
-    metaj["M"] = m_IsRowMajor;
-    metaj["E"] = m_IsLittleEndian;
-    metaj["Y"] = GetType<T>();
-    metaj["P"] = m_Position;
+    metaj["Y"] = helper::GetType<T>();
+    metaj["P"] = localBuffer->size();
 
-    size_t datasize;
-    bool compressed = false;
-    const auto i = params.find("CompressionMethod");
-    if (i != params.end())
+    if (m_EnableStat)
     {
-        std::string compressionMethod = i->second;
-        std::transform(compressionMethod.begin(), compressionMethod.end(),
-                       compressionMethod.begin(), ::tolower);
-        if (compressionMethod == "zfp")
+        CalculateMinMax(inputData, varCount, metaj);
+    }
+
+    if (not m_IsRowMajor)
+    {
+        metaj["M"] = m_IsRowMajor;
+    }
+    if (not m_IsLittleEndian)
+    {
+        metaj["E"] = m_IsLittleEndian;
+    }
+
+    size_t datasize = 0;
+    bool compressed = false;
+    if (params.empty() == false)
+    {
+        const auto i = params.find("CompressionMethod");
+        if (i != params.end())
         {
-            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
-                                       varCount))
+            std::string compressionMethod = i->second;
+            std::transform(compressionMethod.begin(), compressionMethod.end(),
+                           compressionMethod.begin(), ::tolower);
+            if (compressionMethod == "zfp")
             {
-                compressed =
-                    Zfp<T>(metaj, datasize, inputData, varCount, params);
-                if (compressed)
+                if (IsCompressionAvailable(compressionMethod,
+                                           helper::GetType<T>(), varCount))
                 {
-                    metaj["Z"] = "zfp";
+                    compressed =
+                        PutZfp<T>(metaj, datasize, inputData, varCount, params);
+                    if (compressed)
+                    {
+                        metaj["Z"] = "zfp";
+                    }
                 }
             }
-        }
-        else if (compressionMethod == "sz")
-        {
-            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
-                                       varCount))
+            else if (compressionMethod == "sz")
             {
-                compressed =
-                    Sz<T>(metaj, datasize, inputData, varCount, params);
-                if (compressed)
+                if (IsCompressionAvailable(compressionMethod,
+                                           helper::GetType<T>(), varCount))
                 {
-                    metaj["Z"] = "sz";
+                    compressed =
+                        PutSz<T>(metaj, datasize, inputData, varCount, params);
+                    if (compressed)
+                    {
+                        metaj["Z"] = "sz";
+                    }
                 }
             }
-        }
-        else if (compressionMethod == "bzip2")
-        {
-            if (IsCompressionAvailable(compressionMethod, GetType<T>(),
-                                       varCount))
+            else if (compressionMethod == "bzip2")
             {
-                compressed =
-                    BZip2<T>(metaj, datasize, inputData, varCount, params);
-                if (compressed)
+                if (IsCompressionAvailable(compressionMethod,
+                                           helper::GetType<T>(), varCount))
                 {
-                    metaj["Z"] = "bzip2";
+                    compressed = PutBZip2<T>(metaj, datasize, inputData,
+                                             varCount, params);
+                    if (compressed)
+                    {
+                        metaj["Z"] = "bzip2";
+                    }
                 }
             }
-        }
-        else
-        {
-            throw(std::invalid_argument("Compression method " + i->second +
-                                        " not supported."));
+            else
+            {
+                throw(std::invalid_argument("Compression method " + i->second +
+                                            " not supported."));
+            }
         }
     }
 
@@ -125,31 +195,55 @@ void DataManSerializer::Put(const T *inputData, const std::string &varName,
     }
     metaj["I"] = datasize;
 
-    if (m_Buffer->capacity() < m_Position + datasize)
+    if (localBuffer->capacity() < localBuffer->size() + datasize)
     {
-        m_Buffer->reserve((m_Position + datasize) * 2);
+        localBuffer->reserve((localBuffer->size() + datasize) * 2);
     }
 
-    m_Buffer->resize(m_Position + datasize);
+    localBuffer->resize(localBuffer->size() + datasize);
 
     if (compressed)
     {
-        std::memcpy(m_Buffer->data() + m_Position, m_CompressBuffer.data(),
-                    datasize);
+        std::memcpy(localBuffer->data() + localBuffer->size() - datasize,
+                    m_CompressBuffer.data(), datasize);
     }
     else
     {
-        std::memcpy(m_Buffer->data() + m_Position, inputData, datasize);
+        std::memcpy(localBuffer->data() + localBuffer->size() - datasize,
+                    inputData, datasize);
     }
-    m_Position += datasize;
 
-    m_Metadata[std::to_string(step)][std::to_string(rank)].emplace_back(metaj);
+    if (metadataJson == nullptr)
+    {
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
+            std::move(metaj));
+    }
+    else
+    {
+        (*metadataJson)[std::to_string(step)][std::to_string(rank)]
+            .emplace_back(std::move(metaj));
+    }
+
+    if (m_Verbosity >= 100)
+    {
+        Log(100, "DataManSerializer::PutVar printing data", true, true);
+        for (size_t i = 0; i < datasize / sizeof(T); ++i)
+        {
+            std::cout << inputData[i] << "  ";
+        }
+        std::cout << std::endl;
+    }
+
+    Log(1,
+        "DataManSerializer::PutVar end with Step " + std::to_string(step) +
+            " Var " + varName,
+        true, true);
 }
 
 template <class T>
-bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
-                            const T *inputData, const Dims &varCount,
-                            const Params &params)
+bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
+                               const T *inputData, const Dims &varCount,
+                               const Params &params)
 {
 #ifdef ADIOS2_HAVE_ZFP
     Params p;
@@ -169,8 +263,9 @@ bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
                                              std::multiplies<size_t>()));
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
-                                       m_CompressBuffer.data(), p);
+        datasize =
+            compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
+                                m_CompressBuffer.data(), p);
         return true;
     }
     catch (std::exception &e)
@@ -186,9 +281,9 @@ bool DataManSerializer::Zfp(nlohmann::json &metaj, size_t &datasize,
 }
 
 template <class T>
-bool DataManSerializer::Sz(nlohmann::json &metaj, size_t &datasize,
-                           const T *inputData, const Dims &varCount,
-                           const Params &params)
+bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
+                              const T *inputData, const Dims &varCount,
+                              const Params &params)
 {
 #ifdef ADIOS2_HAVE_SZ
     Params p;
@@ -208,8 +303,9 @@ bool DataManSerializer::Sz(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressSZ compressor(p, false);
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
-                                       m_CompressBuffer.data(), p);
+        datasize =
+            compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
+                                m_CompressBuffer.data(), p);
         return true;
     }
     catch (std::exception &e)
@@ -225,9 +321,9 @@ bool DataManSerializer::Sz(nlohmann::json &metaj, size_t &datasize,
 }
 
 template <class T>
-bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
-                              const T *inputData, const Dims &varCount,
-                              const Params &params)
+bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
+                                 const T *inputData, const Dims &varCount,
+                                 const Params &params)
 {
 #ifdef ADIOS2_HAVE_BZIP2
     Params p;
@@ -248,8 +344,9 @@ bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressBZip2 compressor(p, false);
     try
     {
-        datasize = compressor.Compress(inputData, varCount, 4, GetType<T>(),
-                                       m_CompressBuffer.data(), p);
+        datasize =
+            compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
+                                m_CompressBuffer.data(), p);
         return true;
     }
     catch (std::exception &e)
@@ -265,22 +362,246 @@ bool DataManSerializer::BZip2(nlohmann::json &metaj, size_t &datasize,
 }
 
 template <class T>
-void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute,
-                                     const int rank)
+void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
 {
-    m_Metadata["A"][std::to_string(rank)].emplace_back();
-    auto &j = m_Metadata["A"][std::to_string(rank)].back();
-    j["N"] = attribute.m_Name;
-    j["Y"] = attribute.m_Type;
-    j["V"] = attribute.m_IsSingleValue;
+    nlohmann::json staticVar;
+    staticVar["N"] = attribute.m_Name;
+    staticVar["Y"] = attribute.m_Type;
+    staticVar["V"] = attribute.m_IsSingleValue;
     if (attribute.m_IsSingleValue)
     {
-        j["G"] = attribute.m_DataSingleValue;
+        staticVar["G"] = attribute.m_DataSingleValue;
     }
     else
     {
-        j["G"] = attribute.m_DataArray;
+        staticVar["G"] = attribute.m_DataArray;
     }
+
+    m_StaticDataJsonMutex.lock();
+    m_StaticDataJson["S"].emplace_back(std::move(staticVar));
+    m_StaticDataJsonMutex.unlock();
+}
+
+template <class T>
+int DataManSerializer::GetVar(T *outputData, const std::string &varName,
+                              const Dims &varStart, const Dims &varCount,
+                              const size_t step, const Dims &varMemStart,
+                              const Dims &varMemCount)
+{
+
+    DmvVecPtr vec = nullptr;
+
+    {
+        std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+        const auto &i = m_DataManVarMap.find(step);
+        if (i == m_DataManVarMap.end())
+        {
+            return -1; // step not found
+        }
+        else
+        {
+            vec = i->second;
+        }
+    }
+
+    if (vec == nullptr)
+    {
+        return -2; // step found but variable not found
+    }
+
+    char *input_data = nullptr;
+
+    for (const auto &j : *vec)
+    {
+        if (j.name == varName)
+        {
+            if (j.buffer == nullptr)
+            {
+                continue;
+            }
+            else
+            {
+                input_data = reinterpret_cast<char *>(j.buffer->data());
+            }
+            if (j.compression == "zfp")
+            {
+#ifdef ADIOS2_HAVE_ZFP
+                core::compress::CompressZfp decompressor(j.params, true);
+                std::vector<char> decompressBuffer;
+                size_t datasize =
+                    std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
+                                    std::multiplies<size_t>());
+
+                decompressBuffer.reserve(datasize);
+                try
+                {
+                    decompressor.Decompress(j.buffer->data() + j.position,
+                                            j.size, decompressBuffer.data(),
+                                            j.count, j.type, j.params);
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << "[DataManDeserializer::Get] Zfp "
+                                 "decompression failed with exception: "
+                              << e.what() << std::endl;
+                    return -4; // decompression failed
+                }
+
+                input_data = decompressBuffer.data();
+#else
+                throw std::runtime_error(
+                    "Data received is compressed using ZFP. However, ZFP "
+                    "library is not found locally and as a result it "
+                    "cannot be decompressed.");
+                return -101; // zfp library not found
+#endif
+            }
+            else if (j.compression == "sz")
+            {
+#ifdef ADIOS2_HAVE_SZ
+                core::compress::CompressSZ decompressor(j.params, true);
+                std::vector<char> decompressBuffer;
+                size_t datasize =
+                    std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
+                                    std::multiplies<size_t>());
+
+                decompressBuffer.reserve(datasize);
+                try
+                {
+                    decompressor.Decompress(j.buffer->data() + j.position,
+                                            j.size, decompressBuffer.data(),
+                                            j.count, j.type, j.params);
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << "[DataManDeserializer::Get] Zfp "
+                                 "decompression failed with exception: "
+                              << e.what() << std::endl;
+                    return -4; // decompression failed
+                }
+                input_data = decompressBuffer.data();
+#else
+                throw std::runtime_error(
+                    "Data received is compressed using SZ. However, SZ "
+                    "library is not found locally and as a result it "
+                    "cannot be decompressed.");
+                return -102; // sz library not found
+#endif
+            }
+            else if (j.compression == "bzip2")
+            {
+#ifdef ADIOS2_HAVE_BZIP2
+                core::compress::CompressBZip2 decompressor(j.params, true);
+                std::vector<char> decompressBuffer;
+                size_t datasize =
+                    std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
+                                    std::multiplies<size_t>());
+
+                decompressBuffer.reserve(datasize);
+                try
+                {
+                    decompressor.Decompress(j.buffer->data() + j.position,
+                                            j.size, decompressBuffer.data(),
+                                            datasize);
+                }
+                catch (std::exception &e)
+                {
+                    std::cout << "[DataManDeserializer::Get] Zfp "
+                                 "decompression failed with exception: "
+                              << e.what() << std::endl;
+                    return -4; // decompression failed
+                }
+                input_data = decompressBuffer.data();
+#else
+                throw std::runtime_error(
+                    "Data received is compressed using BZip2. However, "
+                    "BZip2 library is not found locally and as a result it "
+                    "cannot be decompressed.");
+                return -103; // bzip2 library not found
+#endif
+            }
+            else
+            {
+                if (m_Verbosity >= 5)
+                {
+                    std::cout
+                        << "DataManSerializer calling NdCopy with input start ";
+                    for (auto s : j.start)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << "count ";
+                    for (auto s : j.count)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << "output start ";
+                    for (auto s : varStart)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << "count ";
+                    for (auto s : varCount)
+                    {
+                        std::cout << s << ", ";
+                    }
+                    std::cout << std::endl;
+                }
+                if (j.start.size() > 0 && j.start.size() == j.count.size() &&
+                    j.start.size() == varStart.size() &&
+                    j.start.size() == varCount.size())
+                {
+                    if (m_ContiguousMajor)
+                    {
+                        helper::NdCopy<T>(input_data + j.position, j.start,
+                                          j.count, true, j.isLittleEndian,
+                                          reinterpret_cast<char *>(outputData),
+                                          varStart, varCount, true,
+                                          m_IsLittleEndian, j.start, j.count,
+                                          varMemStart, varMemCount);
+                    }
+                    else
+                    {
+                        helper::NdCopy<T>(
+                            input_data + j.position, j.start, j.count,
+                            j.isRowMajor, j.isLittleEndian,
+                            reinterpret_cast<char *>(outputData), varStart,
+                            varCount, m_IsRowMajor, m_IsLittleEndian, j.start,
+                            j.count, varMemStart, varMemCount);
+                    }
+                    if (m_Verbosity >= 100)
+                    {
+                        size_t datasize =
+                            std::accumulate(j.count.begin(), j.count.end(), 1,
+                                            std::multiplies<size_t>());
+                        std::cout
+                            << "DataManSerializer::GetVar printing input data"
+                            << std::endl;
+                        for (size_t i = 0; i < datasize; ++i)
+                        {
+                            std::cout << (reinterpret_cast<T *>(input_data +
+                                                                j.position))[i]
+                                      << "  ";
+                        }
+                        std::cout << std::endl;
+                    }
+                }
+            }
+        }
+    }
+    if (m_Verbosity >= 100)
+    {
+        size_t datasize = std::accumulate(varCount.begin(), varCount.end(), 1,
+                                          std::multiplies<size_t>());
+        std::cout << "DataManSerializer::GetVar printing output data"
+                  << std::endl;
+        for (size_t i = 0; i < datasize; ++i)
+        {
+            std::cout << outputData[i] << "  ";
+        }
+        std::cout << std::endl;
+    }
+    return 0;
 }
 
 } // namespace format

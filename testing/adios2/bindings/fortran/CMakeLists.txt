@@ -8,22 +8,16 @@ add_library(SmallTestData_f OBJECT SmallTestData_mod.f90)
 add_executable(TestBPWriteReadTypes_f $<TARGET_OBJECTS:SmallTestData_f>)
 target_link_libraries(TestBPWriteReadTypes_f adios2_f)
 
-add_executable(TestBPWriteReadTypesHighLevelAPI_f
-  $<TARGET_OBJECTS:SmallTestData_f>
-)
-target_link_libraries(TestBPWriteReadTypesHighLevelAPI_f adios2_f)
-
 add_executable(TestRemove_f $<TARGET_OBJECTS:SmallTestData_f>)
 target_link_libraries(TestRemove_f adios2_f)
 
 if(ADIOS2_HAVE_MPI)
+  add_executable(TestAdios2BindingsFortranIO_f TestAdios2BindingsFortranIO.f90)
+  target_link_libraries(TestAdios2BindingsFortranIO_f adios2_f MPI::MPI_Fortran)
+
   target_sources(TestBPWriteReadTypes_f PRIVATE TestBPWriteTypes.f90)
   target_link_libraries(TestBPWriteReadTypes_f MPI::MPI_Fortran)
   
-  target_sources(TestBPWriteReadTypesHighLevelAPI_f 
-                 PRIVATE TestBPWriteTypesHighLevelAPI.f90)
-  target_link_libraries(TestBPWriteReadTypesHighLevelAPI_f MPI::MPI_Fortran)
-
   target_sources(TestRemove_f PRIVATE TestRemove.f90)
   target_link_libraries(TestRemove_f MPI::MPI_Fortran)
   
@@ -92,6 +86,10 @@ if(ADIOS2_HAVE_MPI)
     ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
   )
   
+  add_test(NAME TestAdios2BindingsFortranIO_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestAdios2BindingsFortranIO_f>
+  )
+
   add_test(NAME BPWriteReadAttributes_f
     COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadAttributes_f>
   )
@@ -130,10 +128,6 @@ if(ADIOS2_HAVE_MPI)
   
   add_test(NAME BPWriteReadTypes_f
     COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypes_f>
-  )
-
-  add_test(NAME BPWriteReadTypesHighLevelAPI_f
-    COMMAND ${test_parameters} $<TARGET_FILE:TestBPWriteReadTypesHighLevelAPI_f>
   )
 
   add_test(NAME Remove_f
@@ -179,9 +173,6 @@ if(ADIOS2_HAVE_MPI)
 else()
   
   target_sources(TestBPWriteReadTypes_f PRIVATE TestBPWriteTypes_nompi.f90)
-
-  target_sources(TestBPWriteReadTypesHighLevelAPI_f 
-                 PRIVATE TestBPWriteTypesHighLevelAPI_nompi.f90)
   
   target_sources(TestRemove_f PRIVATE TestRemove_nompi.f90)
 

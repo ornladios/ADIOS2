@@ -9,7 +9,8 @@ Each IO holds its own set of Variables, each Variable is identified with a uniqu
 Variables Data Types
 --------------------
 
-Currently, only primitive types are supported in ADIOS2 with plans to extend to plain-old-data (POD) struct data types. Therefore, acceptable values for T in the Variable<T> (C++ only); are:
+Currently, only primitive types are supported in ADIOS2 with plans to extend to plain-old-data (POD) struct data types.
+Therefore, acceptable values for T in the ``Variable<T>`` (C++ only); are:
 
 .. code-block:: c++
 
@@ -66,7 +67,7 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
    .. note::
 
-      Variables of type string are defined just like global single values. In the current adios2 version multidimensional strings are supported for fixed size strings through variables of type `char`.
+      Variables of type string are defined just like global single values. In the current adios2 version multidimensional strings are supported for fixed size strings through variables of type ``char``.
 
 
 2. **Global Array**: the most common shape used for storing self-describing data used for analysis that lives in several MPI processes. The image below illustrates the definitions of the dimension components in a global array: shape, start, and count.

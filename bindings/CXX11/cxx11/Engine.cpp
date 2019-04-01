@@ -91,6 +91,14 @@ void Engine::Close(const int transportIndex)
 Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
 #define declare_template_instantiation(T)                                      \
+                                                                               \
+    template typename Variable<T>::Span Engine::Put(Variable<T>, const size_t, \
+                                                    const T &);
+
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
     template void Engine::Put<T>(Variable<T>, const T *, const Mode);          \
     template void Engine::Put<T>(const std::string &, const T *, const Mode);  \
     template void Engine::Put<T>(Variable<T>, const T &, const Mode);          \
@@ -104,6 +112,11 @@ Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
     template void Engine::Get<T>(Variable<T>, std::vector<T> &, const Mode);   \
     template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
                                  const Mode);                                  \
+                                                                               \
+    template void Engine::Get<T>(                                              \
+        Variable<T>, typename Variable<T>::Info & info, const Mode);           \
+    template void Engine::Get<T>(                                              \
+        const std::string &, typename Variable<T>::Info &info, const Mode);    \
                                                                                \
     template std::map<size_t, std::vector<typename Variable<T>::Info>>         \
     Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \

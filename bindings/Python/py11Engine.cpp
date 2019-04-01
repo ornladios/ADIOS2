@@ -49,7 +49,7 @@ void Engine::Put(Variable variable, const pybind11::array &array,
                  const Mode launch)
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::Put numpy array");
-    helper::CheckForNullptr(variable.m_Variable,
+    helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Put numpy array");
 
     const std::string type = variable.Type();
@@ -61,8 +61,9 @@ void Engine::Put(Variable variable, const pybind11::array &array,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        m_Engine->Put(*dynamic_cast<core::Variable<T> *>(variable.m_Variable), \
-                      reinterpret_cast<const T *>(array.data()), launch);      \
+        m_Engine->Put(                                                         \
+            *dynamic_cast<core::Variable<T> *>(variable.m_VariableBase),       \
+            reinterpret_cast<const T *>(array.data()), launch);                \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -79,10 +80,10 @@ void Engine::Put(Variable variable, const std::string &string)
 {
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::Put string");
-    helper::CheckForNullptr(variable.m_Variable,
+    helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Put string");
 
-    if (variable.Type() != GetType<std::string>())
+    if (variable.Type() != helper::GetType<std::string>())
     {
         throw std::invalid_argument(
             "ERROR: variable " + variable.Name() +
@@ -90,8 +91,8 @@ void Engine::Put(Variable variable, const std::string &string)
     }
 
     m_Engine->Put(
-        *dynamic_cast<core::Variable<std::string> *>(variable.m_Variable),
-        string);
+        *dynamic_cast<core::Variable<std::string> *>(variable.m_VariableBase),
+        string, adios2::Mode::Sync);
 }
 
 void Engine::PerformPuts()
@@ -106,7 +107,7 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
                             "for engine, in call to Engine::Get a numpy array");
 
     helper::CheckForNullptr(
-        variable.m_Variable,
+        variable.m_VariableBase,
         "for variable, in call to Engine::Get a numpy array");
 
     const std::string type = variable.Type();
@@ -118,9 +119,9 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        m_Engine->Get(*dynamic_cast<core::Variable<T> *>(variable.m_Variable), \
-                      reinterpret_cast<T *>(const_cast<void *>(array.data())), \
-                      launch);                                                 \
+        m_Engine->Get(                                                         \
+            *dynamic_cast<core::Variable<T> *>(variable.m_VariableBase),       \
+            reinterpret_cast<T *>(const_cast<void *>(array.data())), launch);  \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -140,16 +141,16 @@ void Engine::Get(Variable variable, std::string &string, const Mode launch)
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::Get a numpy array");
 
-    helper::CheckForNullptr(variable.m_Variable,
+    helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Get a string");
 
     const std::string type = variable.Type();
 
     if (type == helper::GetType<std::string>())
     {
-        m_Engine->Get(
-            *dynamic_cast<core::Variable<std::string> *>(variable.m_Variable),
-            string, launch);
+        m_Engine->Get(*dynamic_cast<core::Variable<std::string> *>(
+                          variable.m_VariableBase),
+                      string, launch);
     }
     else
     {

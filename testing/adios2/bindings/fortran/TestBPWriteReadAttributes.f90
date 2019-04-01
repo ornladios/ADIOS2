@@ -10,6 +10,7 @@ program TestBPWriteAttributes
     type(adios2_attribute), dimension(14) :: attributes, attributes_in
 
     integer :: ierr, i
+    character(len=:), allocatable :: attrName
     character(len=23):: iString_value
     integer(kind=1):: i8_value
     integer(kind=2):: i16_value
@@ -88,6 +89,11 @@ program TestBPWriteAttributes
     do i=1,14
         if( attributes(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_attribute'
     end do
+     
+    ! Testing adios2_attribute_name for just one case
+    call adios2_attribute_name(attrName, attributes(1), ierr)
+    if (attrName /= 'att_String') stop 'Invalid adios2_attribute_name'
+    deallocate(attrName)
 
     call adios2_open(bpWriter, ioWrite, "fattr_types.bp", adios2_mode_write, &
                      ierr)

@@ -14,6 +14,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 namespace
 {
 
@@ -200,6 +202,11 @@ void BPSteps1D(const size_t ghostCells)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -270,6 +277,11 @@ void BPSteps1D(const size_t ghostCells)
     // Reader
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -426,6 +438,11 @@ void BPSteps2D4x2(const size_t ghostCells)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Ny * mpiSize), Nx};
         const adios2::Dims start{static_cast<size_t>(Ny * mpiRank), 0};
         const adios2::Dims count{Ny, Nx};
@@ -496,6 +513,11 @@ void BPSteps2D4x2(const size_t ghostCells)
     // Reader
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -663,6 +685,11 @@ void BPSteps3D8x2x4(const size_t ghostCells)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nz * mpiSize), Ny, Nx};
         const adios2::Dims start{static_cast<size_t>(Nz * mpiRank), 0, 0};
         const adios2::Dims count{Nz, Ny, Nx};
@@ -743,6 +770,11 @@ void BPSteps3D8x2x4(const size_t ghostCells)
     // Reader
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -947,6 +979,12 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
+
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

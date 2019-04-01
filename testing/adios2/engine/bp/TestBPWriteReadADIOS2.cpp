@@ -15,6 +15,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 class BPWriteReadTestADIOS2 : public ::testing::Test
 {
 public:
@@ -46,7 +48,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -84,8 +86,15 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         io.AddTransport("file");
 
@@ -159,6 +168,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -347,7 +361,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -385,8 +399,15 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         io.AddTransport("file");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -451,6 +472,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -643,7 +669,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -682,8 +708,15 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         io.AddTransport("file");
 
@@ -745,6 +778,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -927,7 +965,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -963,8 +1001,15 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         io.AddTransport("file");
 
@@ -1026,6 +1071,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -1210,7 +1260,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -1246,8 +1296,15 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         io.AddTransport("file");
 
@@ -1309,6 +1366,11 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -1398,6 +1460,16 @@ TEST_F(BPWriteReadTestADIOS2, OpenEngineTwice)
     {
         adios2::IO io = adios.DeclareIO("TwoOpens");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         EXPECT_THROW(io.Open(fname, adios2::Mode::Write),
@@ -1435,6 +1507,11 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
 #endif
     {
         adios2::IO io = adios.DeclareIO("StartCountWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         io.DefineVariable<int64_t>(
             "range", {static_cast<std::size_t>(Nx * mpiSize)},
             {static_cast<std::size_t>(Nx * mpiRank)}, {Nx});
@@ -1447,6 +1524,11 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
     // Reader
     {
         adios2::IO io = adios.DeclareIO("StartCountRead");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
         adios2::Variable<int64_t> varRange =
             io.InquireVariable<int64_t>("range");
@@ -1487,6 +1569,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

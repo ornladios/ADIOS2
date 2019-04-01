@@ -30,6 +30,7 @@
 
 #include "sst_data.h"
 
+#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "dp_interface.h"
 
 #define DP_AV_DEF_SIZE 512
@@ -105,6 +106,7 @@ static void init_fabric(struct fabric_state *fabric)
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->ep_attr->type = FI_EP_RDM;
 
     ifname = getenv("FABRIC_IFACE");
 
@@ -129,8 +131,9 @@ static void init_fabric(struct fabric_state *fabric)
             useinfo = info;
             break;
         }
-        if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
-            strcmp(prov_name, "psm2") == 0 || !useinfo)
+        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
+            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0 ||
+            !useinfo)
         {
             useinfo = info;
         }
@@ -403,6 +406,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
                                    void *client_Data, attr_list attrs)
 {
+    TAU_START_FUNC();
     RdmaReadRequestMsg ReadRequestMsg = (RdmaReadRequestMsg)msg_v;
     Rdma_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
 
@@ -410,9 +414,10 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
     TimestepList tmp = WS_Stream->Timesteps;
     CP_Services Svcs = (CP_Services)client_Data;
 
-    Svcs->verbose(WS_Stream->CP_Stream, "Got a request to read remote memory "
-                                        "from reader rank %d: timestep %d, "
-                                        "offset %d, length %d\n",
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Got a request to read remote memory "
+                  "from reader rank %d: timestep %d, "
+                  "offset %d, length %d\n",
                   ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
                   ReadRequestMsg->Offset, ReadRequestMsg->Length);
     pthread_mutex_lock(&ts_mutex);
@@ -439,6 +444,7 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
             Svcs->sendToPeer(WS_Stream->CP_Stream, WSR_Stream->PeerCohort,
                              ReadRequestMsg->RequestingRank,
                              WS_Stream->ReadReplyFormat, &ReadReplyMsg);
+            TAU_STOP_FUNC();
             return;
         }
         tmp = tmp->Next;
@@ -455,6 +461,7 @@ static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
      * assert(0) here.  Probably this sort of error should close the link to
      * a reader though.
      */
+    TAU_STOP_FUNC();
 }
 
 typedef struct _RdmaCompletionHandle
@@ -471,6 +478,7 @@ typedef struct _RdmaCompletionHandle
 static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                  void *client_Data, attr_list attrs)
 {
+    TAU_START_FUNC();
     RdmaReadReplyMsg ReadReplyMsg = (RdmaReadReplyMsg)msg_v;
     Rdma_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
     FabricState Fabric = RS_Stream->Fabric;
@@ -526,6 +534,7 @@ static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
      * Signal the condition to wake the reader if they are waiting.
      */
     CMCondition_signal(cm, ReadReplyMsg->NotifyCondition);
+    TAU_STOP_FUNC();
 }
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
@@ -747,9 +756,10 @@ static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
-    Svcs->verbose(Stream->CP_Stream, "received notification that writer peer "
-                                     "%d has failed, failing any pending "
-                                     "requests\n",
+    Svcs->verbose(Stream->CP_Stream,
+                  "received notification that writer peer "
+                  "%d has failed, failing any pending "
+                  "requests\n",
                   FailedPeerRank);
     //   This is what EVPath does...
     //   FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
@@ -1007,6 +1017,7 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->ep_attr->type = FI_EP_RDM;
 
     ifname = getenv("FABRIC_IFACE");
 
@@ -1029,18 +1040,20 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
         domain_name = info->domain_attr->name;
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
-            Svcs->verbose(CP_Stream, "RDMA Dataplane found the requested "
-                                     "interface %s, provider type %s.\n",
+            Svcs->verbose(CP_Stream,
+                          "RDMA Dataplane found the requested "
+                          "interface %s, provider type %s.\n",
                           ifname, prov_name);
             Ret = 100;
             break;
         }
-        if (strcmp(prov_name, "verbs") == 0 || strcmp(prov_name, "gni") == 0 ||
-            strcmp(prov_name, "psm2") == 0)
+        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
+            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0)
         {
 
-            Svcs->verbose(CP_Stream, "RDMA Dataplane sees interface %s, "
-                                     "provider type %s, which should work.\n",
+            Svcs->verbose(CP_Stream,
+                          "RDMA Dataplane sees interface %s, "
+                          "provider type %s, which should work.\n",
                           domain_name, prov_name);
             Ret = 10;
         }

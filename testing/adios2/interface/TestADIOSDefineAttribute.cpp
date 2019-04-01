@@ -1,5 +1,6 @@
 #include <cstdint>
 
+#include <array>
 #include <iostream>
 #include <stdexcept>
 
@@ -540,9 +541,8 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
 
 TEST_F(ADIOSDefineAttributeTest, DefineAndRemove)
 {
-    auto lf_CheckRemove = [&](const std::string variableName) {
-
-        const bool isRemoved = io.RemoveAttribute(variableName);
+    auto lf_CheckRemove = [&](const std::string attributeName) {
+        const bool isRemoved = io.RemoveAttribute(attributeName);
         EXPECT_EQ(isRemoved, true);
     };
 
@@ -599,6 +599,48 @@ TEST_F(ADIOSDefineAttributeTest, DefineAndRemove)
     EXPECT_FALSE(attr_u64);
     EXPECT_FALSE(attr_r32);
     EXPECT_FALSE(attr_r64);
+}
+
+TEST_F(ADIOSDefineAttributeTest, DefineRemoveDefine)
+{
+    auto lf_CheckRemove = [&](const std::string attributeName) {
+        const bool isRemoved = io.RemoveAttribute(attributeName);
+        EXPECT_EQ(isRemoved, true);
+    };
+
+    io.DefineAttribute<std::string>("string_0", "attribute_0");
+    io.DefineAttribute<std::string>("string_1", "attribute_1");
+
+    lf_CheckRemove("string_0");
+
+    std::array<adios2::Attribute<std::string>, 2> attributes;
+
+    attributes[0] = io.InquireAttribute<std::string>("string_0");
+    EXPECT_FALSE(attributes[0]);
+
+    attributes[1] = io.InquireAttribute<std::string>("string_1");
+    EXPECT_TRUE(attributes[1]);
+    EXPECT_EQ(attributes[1].Name(), "string_1");
+    EXPECT_EQ(attributes[1].Data().front(), "attribute_1");
+
+    io.DefineAttribute<std::string>("string_0", "attribute_0_new");
+
+    // check again after defining variable
+    attributes[1] = io.InquireAttribute<std::string>("string_1");
+    EXPECT_TRUE(attributes[1]);
+    EXPECT_EQ(attributes[1].Name(), "string_1");
+    EXPECT_EQ(attributes[1].Data().front(), "attribute_1");
+
+    attributes[0] = io.InquireAttribute<std::string>("string_0");
+    EXPECT_TRUE(attributes[0]);
+    EXPECT_EQ(attributes[0].Name(), "string_0");
+    EXPECT_EQ(attributes[0].Data().front(), "attribute_0_new");
+
+    auto attribute2 =
+        io.DefineAttribute<std::string>("string_2", "attribute_2");
+    EXPECT_TRUE(attribute2);
+    EXPECT_EQ(attribute2.Name(), "string_2");
+    EXPECT_EQ(attribute2.Data().front(), "attribute_2");
 }
 
 TEST_F(ADIOSDefineAttributeTest, DefineAndRemoveAll)

@@ -48,6 +48,7 @@ namespace core
         info.StepsStart = stepsStart;                                          \
         info.StepsCount = stepsCount;                                          \
         info.Data = const_cast<T *>(data);                                     \
+        info.BufferP = info.Data;                                              \
         info.Operations = m_Operations;                                        \
         m_BlocksInfo.push_back(info);                                          \
         return m_BlocksInfo.back();                                            \
@@ -72,6 +73,18 @@ namespace core
     }                                                                          \
                                                                                \
     template <>                                                                \
+    Dims Variable<T>::Count() const                                            \
+    {                                                                          \
+        return DoCount();                                                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::SelectionSize() const                                  \
+    {                                                                          \
+        return DoSelectionSize();                                              \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
     {                                                                          \
         return DoMinMax(step);                                                 \
@@ -87,9 +100,67 @@ namespace core
     T Variable<T>::Max(const size_t step) const                                \
     {                                                                          \
         return MinMax(step).second;                                            \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    Variable<T>::AllStepsBlocksInfo() const                                    \
+    {                                                                          \
+        return DoAllStepsBlocksInfo();                                         \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
+                                                                               \
+    template <>                                                                \
+    Variable<T>::Span::Span(Engine &engine, const size_t size)                 \
+    : m_Engine(engine), m_Size(size)                                           \
+    {                                                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::Span::Size() const noexcept                            \
+    {                                                                          \
+        return m_Size;                                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T *Variable<T>::Span::Data() const noexcept                                \
+    {                                                                          \
+        return m_Engine.BufferData<T>(m_PayloadPosition);                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T &Variable<T>::Span::At(const size_t position)                            \
+    {                                                                          \
+        T &data = DoAt(position);                                              \
+        return data;                                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T &Variable<T>::Span::At(const size_t position) const                \
+    {                                                                          \
+        const T &data = DoAt(position);                                        \
+        return data;                                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T &Variable<T>::Span::Access(const size_t position)                        \
+    {                                                                          \
+        T &data = DoAccess(position);                                          \
+        return data;                                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T &Variable<T>::Span::Access(const size_t position) const            \
+    {                                                                          \
+        const T &data = DoAccess(position);                                    \
+        return data;                                                           \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace core

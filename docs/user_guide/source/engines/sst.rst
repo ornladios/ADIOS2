@@ -41,29 +41,29 @@ data producers such as computational physics codes and consumers such as
 analysis applications.  However, there are some uses of ADIOS2 APIs that
 work perfectly well with the ADIOS2 file engines, but which will not work or
 will perform badly with streaming.  For example, SST is based upon the *"step"* concept and
-ADIOS2 applications that use SST must call BeginStep() and EndStep().  On
-the writer side, the Put() calls between BeginStep and EndStep are the unit
+ADIOS2 applications that use SST must call ``BeginStep()`` and ``EndStep()``.  On
+the writer side, the ``Put()`` calls between ``BeginStep`` and ``EndStep`` are the unit
 of communication and represent the data that will be available between the
-corresponding Begin/EndStep calls on the reader.
+corresponding ``Begin``/``EndStep`` calls on the reader.
 
 Also, it is recommended that SST-based applications not use the ADIOS2
 Get() sync method unless there is only one data item to be read per step.
 This is because SST implements MxN data transfer (and avoids having to
 deliver all data to every reader), by queueing data on the writer ranks
 until it is known which reader rank requires it.  Normally this data fetch
-stage is initiated by PerformGets() or EndStep(), both of which fulfill any
-pending Get() deferred operations.  However, unlike Get() deferred, the
-semantics of Get() sync require the requested data to be fetched from the
+stage is initiated by ``PerformGets()`` or ``EndStep()``, both of which fulfill any
+pending ``Get()`` deferred operations.  However, unlike ``Get()`` deferred, the
+semantics of ``Get()`` sync require the requested data to be fetched from the
 writers before the call can return.   If there are multiple calls to
-Get() sync per step, each one may require a communication with many writers,
-something that would have only had to happen once if Get() differed were used
-instead.  Thus the use of Get() sync is likely to incur a substantial
+``Get()`` sync per step, each one may require a communication with many writers,
+something that would have only had to happen once if ``Get()`` differed were used
+instead.  Thus the use of ``Get()`` sync is likely to incur a substantial
 performance penalty.
 
 On the writer side, depending upon the chosen data marshaling option there
-may be some (relatively small) performance differences between Put() sync and
-Put() deferred, but they are unlikely to be as substantial as between
-Get() sync and Get() deferred.
+may be some (relatively small) performance differences between ``Put()`` sync and
+``Put()`` deferred, but they are unlikely to be as substantial as between
+``Get()`` sync and ``Get()`` deferred.
 
 Note that SST readers and writers do not necessarily move in lockstep, but
 depending upon the queue length parameters and queueing policies specified,
@@ -75,7 +75,7 @@ be partially dropped, delivered to a subset of ranks, or otherwise divided.
 The SST engine allows the user to customize the streaming operations through
 the following optional parameters:
 
-1. **RendezvousReaderCount**: Default **1**.  This integer value specifies
+1. ``RendezvousReaderCount``: Default **1**.  This integer value specifies
 the number of readers for which the writer should wait before the
 writer-side Open() returns.   The default of 1 implements an ADIOS1/flexpath
 style "rendezvous", in which an early-starting reader will wait for the
@@ -83,9 +83,9 @@ writer to start, or vice versa.  A number >1 will cause the writer to wait
 for more readers and a value of 0 will allow the writer to proceed without
 any readers present.  This value is interpreted by SST Writer engines only.
 
-2. **RegistrationMethod**:  Default **"File"**.  By default, SST reader and
+2. ``RegistrationMethod``:  Default **"File"**.  By default, SST reader and
 writer engines communicate network contact information via files in a shared
-filesystem.  Specifically, the "filename" parameter in the Open() call is
+filesystem.  Specifically, the ``"filename"`` parameter in the ``Open()`` call is
 interpreted as a path which the writer uses as the name of a file to which
 contact information is written, and from which a reader will attempt to read
 contact information.  As with other file-based engines, file creation and
@@ -106,13 +106,13 @@ from a network-based third-party server so that both the shared filesystem
 and interactivity can be avoided. This value is interpreted by both SST
 Writer and Reader engines.
 
-3. **QueueLimit**:  Default **0**.  This integer value specifies the number
+3. ``QueueLimit``:  Default **0**.  This integer value specifies the number
 of steps which the writer will allow to be queued before taking specific
 action (such as discarding data or waiting for readers to consume the
 data).  The default value of 0 is interpreted as no limit.  This value is
 interpreted by SST Writer engines only.
 
-4. **QueueFullPolicy**: Default **"Block"**.  This value controls what
+4. ``QueueFullPolicy``: Default **"Block"**.  This value controls what
 policy is invoked if a non-zero **QueueLimit** has been specified and new
 data would cause the queue limit to be reached.  Essentially, the
 **"Block"** option ensures data will not be discarded and if the queue fills
@@ -136,7 +136,7 @@ satisfying, but has a similar long-term effect upon the set of steps
 delivered to the readers.)  This value is interpreted by SST Writer engines
 only.
 
-5. **DataTransport**: Default **varies**.  This string value specifies
+5. ``DataTransport``: Default **varies**.  This string value specifies
 the underlying network communication mechanism to use for exchanging
 data in SST.  Generally this is chosen by SST based upon what is
 available on the current platform.  However, specifying this engine
@@ -152,7 +152,19 @@ applications running on different interconnects, the Wide Area Network
 (WAN) option should be chosen.  This value is interpreted by both SST
 Writer and Reader engines.
 
-5. **NetworkInterface**: Default **NULL**.  In situations in which
+6. ``DataTransport``: Default **tcp**.  This string value specifies
+the underlying network communication mechanism to use for performing
+control operations in SST.  SST can be configured to standard TCP
+sockets, which are very reliable and efficient, but which are limited
+in their scalability.  Alternatively, SST can use a reliable UDP
+protocol, that is more scalable, but as of ADIOS2 Release 2.3.1 still
+suffers from some reliability problems.  (**sockets** is accepted as
+equivalent to **tcp** and **udp**, **rudp**, and **enet** are
+equivalent to **scalable**.  Generally both the reader and writer
+should be using the same control transport.  This value is interpreted
+by both SST Writer and Reader engines.
+
+7. ``NetworkInterface``: Default **NULL**.  In situations in which
 there are multiple possible network interfaces available to SST, this
 string value specifies which should be used to generate SST's contact
 information for writers.  Generally this should *NOT* be specified
@@ -173,5 +185,6 @@ This value is interpreted by only by the SST Writer engine.
  QueueLimit               integer               **0** (no queue limits)
  QueueFullPolicy          string                **Block**, Discard
  DataTransport            string                **default varies by platform**, RDMA, WAN
+ ControlTransport         string                **TCP**, Scalable
  NetworkInterface         string                **NULL**
 =======================  ===================== =========================================================

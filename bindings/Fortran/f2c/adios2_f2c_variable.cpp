@@ -17,13 +17,21 @@ extern "C" {
 #endif
 
 void FC_GLOBAL(adios2_variable_name_f2c,
-               ADIOS2_VARIABLE_NAME_F2C)(char name[4096], int *size,
+               ADIOS2_VARIABLE_NAME_F2C)(char *name,
                                          const adios2_variable **variable,
                                          int *ierr)
 {
-    *size = -1;
     size_t sizeC;
     *ierr = static_cast<int>(adios2_variable_name(name, &sizeC, *variable));
+}
+
+void FC_GLOBAL(adios2_variable_name_length_f2c,
+               ADIOS2_VARIABLE_NAME_LENGTH_F2C)(
+    int *size, const adios2_variable **variable, int *ierr)
+{
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_variable_name(nullptr, &sizeC, *variable));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *size = static_cast<int>(sizeC);
@@ -104,14 +112,12 @@ void FC_GLOBAL(adios2_set_shape_f2c,
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
-
         output.resize(size);
 
         for (auto d = 0; d < size; ++d)
         {
             output[d] = dimensions[d];
         }
-
     };
 
     try
@@ -149,7 +155,6 @@ void FC_GLOBAL(adios2_set_selection_f2c,
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
-
         output.resize(size);
 
         for (auto d = 0; d < size; ++d)
@@ -188,14 +193,12 @@ void FC_GLOBAL(adios2_set_memory_selection_f2c,
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
-
         output.resize(size);
 
         for (auto d = 0; d < size; ++d)
         {
             output[d] = dimensions[d];
         }
-
     };
 
     try

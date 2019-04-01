@@ -52,6 +52,16 @@ std::string AddExtension(const std::string &name,
                          const std::string extension) noexcept;
 
 /**
+ * Check if a string ends with another substring
+ * @param str input string
+ * @param ending input string to compare with
+ * @param caseSensitive input flag
+ * @return true if the 'str' string ends with the string 'ending'
+ */
+bool EndsWith(const std::string &str, const std::string &ending,
+              const bool caseSensitive = true);
+
+/**
  * Get values for each param entry of a certain key in a vector.
  * If key not found then string in vector is empty.
  * @param key parameter to be extracted

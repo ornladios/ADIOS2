@@ -25,7 +25,7 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_BZip2)
     Dims start = {0, 0};
     Dims count = {10, 10};
     size_t steps = 200;
-    adios2::Params engineParams = {{"WorkflowMode", "p2p"}};
+    adios2::Params engineParams = {{"WorkflowMode", "stream"}};
     std::vector<adios2::Params> transportParams = {{
         {"Library", "ZMQ"},
         {"IPAddress", "127.0.0.1"},

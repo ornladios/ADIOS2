@@ -17,6 +17,8 @@ if(ADIOS2_HAVE_MPI)
                     SCRIPT TestBPWriteTypesHighLevelAPI.py)
     python_add_test(NAME PythonBPReadMultisteps ${test_parameters} 
                     SCRIPT TestBPReadMultisteps.py)
+    python_add_test(NAME PythonBPWriteRead2D ${test_parameters} 
+                    SCRIPT TestBPWriteRead2D.py)
     if (ADIOS2_HAVE_HDF5)
         python_add_test(NAME PythonBPWriteReadHighLevelAPI_HDF5 
                         SCRIPT TestBPWriteTypesHighLevelAPI_HDF5.py)

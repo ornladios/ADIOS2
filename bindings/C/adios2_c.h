@@ -13,7 +13,6 @@
 
 #include "adios2/ADIOSConfig.h"
 
-#include "c/adios2_c_FILE.h"
 #include "c/adios2_c_adios.h"
 #include "c/adios2_c_attribute.h"
 #include "c/adios2_c_engine.h"

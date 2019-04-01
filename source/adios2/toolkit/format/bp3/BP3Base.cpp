@@ -120,7 +120,6 @@ void BP3Base::InitParameters(const Params &parameters)
     if (m_Profiler.IsActive && useDefaultProfileUnits)
     {
         auto lf_EmplaceTimer = [&](const std::string process) {
-
             m_Profiler.Timers.emplace(
                 process,
                 profiling::Timer(process, DefaultTimeUnitEnum, m_DebugMode));
@@ -148,7 +147,6 @@ std::vector<std::string>
 BP3Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
 {
     auto lf_GetBPBaseName = [](const std::string &name) -> std::string {
-
         const std::string bpBaseName(helper::AddExtension(name, ".bp") +
                                      ".dir");
         return bpBaseName;
@@ -345,7 +343,6 @@ void BP3Base::InitParameterProfileUnits(const std::string value)
 {
     auto lf_EmplaceTimer = [&](const std::string process,
                                const TimeUnit timeUnit) {
-
         if (m_Profiler.Timers.count(process) == 1)
         {
             m_Profiler.Timers.erase(process);
@@ -624,7 +621,6 @@ BP3Base::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
-
         int id = METHOD_UNKNOWN;
         if (method == "File_NULL")
         {
@@ -882,7 +878,7 @@ std::string BP3Base::GetBPSubStreamName(const std::string &name,
     BP3Base::SetBP3Operations<T>(                                              \
         const std::vector<core::VariableBase::Operation> &) const;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format

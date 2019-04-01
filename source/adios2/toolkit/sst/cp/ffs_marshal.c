@@ -17,6 +17,7 @@
 
 #include "sst.h"
 
+#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
 #include "ffs_marshal.h"
 
@@ -785,6 +786,9 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
             Info->WriterInfo[i].RawBuffer =
                 realloc(Info->WriterInfo[i].RawBuffer, DataSize);
 
+            char tmpstr[256] = {0};
+            sprintf(tmpstr, "Request to rank %d, bytes", i);
+            TAU_SAMPLE_COUNTER(tmpstr, (double)DataSize);
             Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
                 Stream, i, Stream->ReaderTimestep, 0, DataSize,
                 Info->WriterInfo[i].RawBuffer, DP_TimestepInfo);
@@ -967,14 +971,14 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
                                    const size_t *SelectionCounts,
                                    const char *InData, char *OutData)
 {
-    int BlockSize;
-    int SourceBlockStride = 0;
-    int DestBlockStride = 0;
-    int SourceBlockStartOffset;
-    int DestBlockStartOffset;
-    int BlockCount;
-    int OperantDims;
-    int OperantElementSize;
+    size_t BlockSize;
+    size_t SourceBlockStride = 0;
+    size_t DestBlockStride = 0;
+    size_t SourceBlockStartOffset;
+    size_t DestBlockStartOffset;
+    size_t BlockCount;
+    size_t OperantDims;
+    size_t OperantElementSize;
 
     BlockSize = 1;
     OperantDims = Dims;
@@ -991,9 +995,9 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
         }
         else
         {
-            int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
-            int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
-                            SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+            size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                               SelectionOffsets[Dim] + SelectionCounts[Dim]);
             BlockSize *= (Right - Left);
             break;
         }
@@ -1009,9 +1013,9 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
     size_t *FirstIndex = malloc(Dims * sizeof(FirstIndex[0]));
     for (int Dim = 0; Dim < Dims; Dim++)
     {
-        int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
-        int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
-                        SelectionOffsets[Dim] + SelectionCounts[Dim]);
+        size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+        size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                           SelectionOffsets[Dim] + SelectionCounts[Dim]);
         if (Dim < OperantDims - 1)
         {
             BlockCount *= (Right - Left);
@@ -1032,7 +1036,7 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
 
     InData += SourceBlockStartOffset;
     OutData += DestBlockStartOffset;
-    int i;
+    size_t i;
     for (i = 0; i < BlockCount; i++)
     {
         memcpy(OutData, InData, BlockSize * ElementSize);
@@ -1232,6 +1236,8 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     struct FFSFormatBlock *Formats = NULL;
     FMFormat AttributeFormat = NULL;
 
+    TAU_START("Marshaling overhead in SstFFSWriterEndStep");
+
     CP_verbose(Stream, "Calling SstWriterEndStep\n");
     // if field lists have changed, register formats with FFS local context, add
     // to format chain
@@ -1362,6 +1368,9 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     //        printf("\nAttributeBlock is :\n");
     //        FMdump_encoded_data(AttributeFormat, AttributeRec.block, 1024000);
     //    }
+
+    TAU_STOP("Marshaling overhead in SstFFSWriterEndStep");
+
     SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
                                Formats, FreeTSInfo, TSInfo, &AttributeRec,
                                FreeAttrInfo, AttributeEncodeBuffer);
@@ -1562,8 +1571,9 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
 
     if (!MetaData->Metadata[WriterRank].block)
     {
-        fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == "
-                        "NULL for WriterRank = %d\n",
+        fprintf(stderr,
+                "FAILURE!   MetaData->Metadata[WriterRank]->block == "
+                "NULL for WriterRank = %d\n",
                 WriterRank);
     }
     FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,

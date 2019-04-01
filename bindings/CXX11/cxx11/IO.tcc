@@ -24,8 +24,8 @@ Variable<T> IO::DefineVariable(const std::string &name, const Dims &shape,
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name +
                                       ", in call to IO::DefineVariable");
-    return Variable<T>(
-        &m_IO->DefineVariable<T>(name, shape, start, count, constantDims));
+    return Variable<T>(&m_IO->DefineVariable<typename TypeInfo<T>::IOType>(
+        name, shape, start, count, constantDims));
 }
 
 template <class T>
@@ -33,7 +33,8 @@ Variable<T> IO::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name +
                                       ", in call to IO::InquireVariable");
-    return Variable<T>(m_IO->InquireVariable<T>(name));
+    return Variable<T>(
+        m_IO->InquireVariable<typename TypeInfo<T>::IOType>(name));
 }
 
 template <class T>
@@ -42,11 +43,13 @@ Attribute<T> IO::DefineAttribute(const std::string &name, const T *data,
                                  const std::string &variableName,
                                  const std::string separator)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     helper::CheckForNullptr(m_IO, "for attribute name " + name +
                                       " and variable name " + variableName +
                                       ", in call to IO::DefineAttribute");
     return Attribute<T>(
-        &m_IO->DefineAttribute(name, data, size, variableName, separator));
+        &m_IO->DefineAttribute(name, reinterpret_cast<const IOType *>(data),
+                               size, variableName, separator));
 }
 
 template <class T>
@@ -54,10 +57,12 @@ Attribute<T> IO::DefineAttribute(const std::string &name, const T &value,
                                  const std::string &variableName,
                                  const std::string separator)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     helper::CheckForNullptr(m_IO, "for attribute name " + name +
                                       ", in call to IO::DefineAttribute");
     return Attribute<T>(
-        &m_IO->DefineAttribute<T>(name, value, variableName, separator));
+        &m_IO->DefineAttribute(name, reinterpret_cast<const IOType &>(value),
+                               variableName, separator));
 }
 
 template <class T>
@@ -65,10 +70,11 @@ Attribute<T> IO::InquireAttribute(const std::string &name,
                                   const std::string &variableName,
                                   const std::string separator)
 {
+    using IOType = typename TypeInfo<T>::IOType;
     helper::CheckForNullptr(m_IO, "for attribute name " + name +
                                       ", in call to IO::InquireAttribute");
     return Attribute<T>(
-        m_IO->InquireAttribute<T>(name, variableName, separator));
+        m_IO->InquireAttribute<IOType>(name, variableName, separator));
 }
 
 } // end namespace adios2

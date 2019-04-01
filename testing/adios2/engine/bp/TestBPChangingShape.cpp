@@ -20,6 +20,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 class BPChangingShape : public ::testing::Test
 {
 public:
@@ -46,6 +48,12 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
 #endif
     // Writer
     adios2::IO outIO = adios.DeclareIO("Output");
+
+    if (!engineName.empty())
+    {
+        outIO.SetEngine(engineName);
+    }
+
     adios2::Engine writer = outIO.Open(fname, adios2::Mode::Write);
 
     const size_t dim0 = static_cast<size_t>(nproc);
@@ -85,6 +93,11 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
     // Reader
 
     adios2::IO inIO = adios.DeclareIO("Input");
+
+    if (!engineName.empty())
+    {
+        inIO.SetEngine(engineName);
+    }
     adios2::Engine reader = inIO.Open(fname, adios2::Mode::Read);
 
     if (!rank)
@@ -133,6 +146,12 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
+
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

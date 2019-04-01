@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+std::string engineName; // comes from command line
+
 void MGARDAccuracy1D(const double tolerance)
 {
     // Each process would write a 1x8 array and all processes would
@@ -47,6 +49,11 @@ void MGARDAccuracy1D(const double tolerance)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -80,6 +87,11 @@ void MGARDAccuracy1D(const double tolerance)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -178,6 +190,11 @@ void MGARDAccuracy2D(const double tolerance)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -211,6 +228,11 @@ void MGARDAccuracy2D(const double tolerance)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -311,6 +333,11 @@ void MGARDAccuracy3D(const double tolerance)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny, Nz};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
@@ -344,6 +371,11 @@ void MGARDAccuracy3D(const double tolerance)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -444,6 +476,11 @@ void MGARDAccuracy1DSel(const double tolerance)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -477,6 +514,11 @@ void MGARDAccuracy1DSel(const double tolerance)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -566,6 +608,11 @@ void MGARDAccuracy2DSel(const double tolerance)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -599,6 +646,11 @@ void MGARDAccuracy2DSel(const double tolerance)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -691,6 +743,11 @@ void MGARDAccuracy3DSel(const double tolerance)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny, Nz};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
@@ -724,6 +781,11 @@ void MGARDAccuracy3DSel(const double tolerance)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -829,6 +891,11 @@ void MGARDAccuracy2DSmallSel(const double tolerance)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -862,6 +929,11 @@ void MGARDAccuracy2DSmallSel(const double tolerance)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -945,6 +1017,10 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

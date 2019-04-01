@@ -14,6 +14,7 @@ typedef struct _CP_GlobalInfo
     FFSTypeHandle CombinedWriterInfoFormat;
     CMFormat WriterResponseFormat;
     FFSTypeHandle PerRankMetadataFormat;
+    FFSTypeHandle TimestepDistributionFormat;
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
@@ -86,7 +87,9 @@ typedef struct _CPTimestepEntry
     struct _SstData Data;
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
+    int NeverSent;
     void **DP_TimestepInfo;
+    int DPRegistered;
     SstData MetadataArray;
     DataFreeFunc FreeTimestep;
     void *FreeClientData;
@@ -105,7 +108,6 @@ struct _SstStream
 
     /* params */
     int RendezvousReaderCount;
-    char *DataTransport;
     SstRegistrationMethod RegistrationMethod;
 
     /* state */
@@ -127,7 +129,7 @@ struct _SstStream
 
     /* WRITER-SIDE FIELDS */
     int WriterTimestep;
-    int ReaderTimestep;
+    int LastReleasedTimestep;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
@@ -156,6 +158,7 @@ struct _SstStream
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
     int WriterCohortSize;
+    int ReaderTimestep;
     int *Peers;
     CP_PeerConnection *ConnectionsToWriter;
     enum StreamStatus Status;
@@ -300,7 +303,7 @@ struct _ReaderActivateMsg
 
 /*
  * The timestepMetadata message carries the metadata from all writer ranks.
- * One is sent to each reader.
+ * One is sent to each reader in peer mode, between rank 0's in min mode.
  */
 typedef struct _TimestepMetadataMsg
 {
@@ -312,6 +315,16 @@ typedef struct _TimestepMetadataMsg
     SstData AttributeData;
     void **DP_TimestepInfo;
 } * TSMetadataMsg;
+
+/*
+ * The timestepMetadataDistribution message carries the metadata from rank 0 to
+ * all reader ranks in min ode.
+ */
+typedef struct _TimestepMetadataDistributionMsg
+{
+    int ReturnValue;
+    TSMetadataMsg TSmsg;
+} * TSMetadataDistributionMsg;
 
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
@@ -413,3 +426,9 @@ extern void CP_verbose(SstStream Stream, char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params);
+
+typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string,
+                                  const char *data_string);
+extern char *IPDiagString;
+extern CPNetworkInfoFunc globalNetinfoCallback;
+extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);

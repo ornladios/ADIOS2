@@ -30,9 +30,9 @@ class ADIOS
 
 public:
 #ifdef ADIOS2_HAVE_MPI
-    ADIOS(const std::string &configFile, MPI_Comm comm,
+    ADIOS(const std::string &configFile, MPI4PY_Comm comm,
           const bool debugMode = true);
-    ADIOS(MPI_Comm comm, const bool debugMode = true);
+    ADIOS(MPI4PY_Comm comm, const bool debugMode = true);
 #else
     ADIOS(const std::string &configFile, const bool debugMode = true);
     ADIOS(const bool debugMode);
@@ -49,6 +49,10 @@ public:
                             const Params &parameters = Params());
 
     Operator InquireOperator(const std::string name);
+
+    bool RemoveIO(const std::string name);
+
+    void RemoveAllIOs();
 
     void FlushAll();
 

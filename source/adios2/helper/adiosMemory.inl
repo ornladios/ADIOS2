@@ -249,76 +249,76 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const bool isRowMajor, const bool reverseDimensions,
                           const bool endianReverse)
 {
-    auto lf_ClipRowMajor = [](
-        T *dest, const Dims &destStart, const Dims &destCount,
-        const char *contiguousMemory, const Box<Dims> &blockBox,
-        const Box<Dims> &intersectionBox, const bool isRowMajor,
-        const bool reverseDimensions, const bool endianReverse) {
+    auto lf_ClipRowMajor =
+        [](T *dest, const Dims &destStart, const Dims &destCount,
+           const char *contiguousMemory, const Box<Dims> &blockBox,
+           const Box<Dims> &intersectionBox, const bool isRowMajor,
+           const bool reverseDimensions, const bool endianReverse) {
+            const Dims &start = intersectionBox.first;
+            const Dims &end = intersectionBox.second;
+            const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
 
-        const Dims &start = intersectionBox.first;
-        const Dims &end = intersectionBox.second;
-        const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
+            Dims currentPoint(start); // current point for memory copy
+            const Box<Dims> selectionBox =
+                helper::StartEndBox(destStart, destCount, reverseDimensions);
 
-        Dims currentPoint(start); // current point for memory copy
-        const Box<Dims> selectionBox =
-            helper::StartEndBox(destStart, destCount, reverseDimensions);
+            const size_t dimensions = start.size();
+            bool run = true;
 
-        const size_t dimensions = start.size();
-        bool run = true;
-
-        const size_t intersectionStart =
-            helper::LinearIndex(blockBox, intersectionBox.first, true) *
-            sizeof(T);
-
-        while (run)
-        {
-            // here copy current linear memory between currentPoint and end
-            const size_t contiguousStart =
-                helper::LinearIndex(blockBox, currentPoint, true) * sizeof(T) -
-                intersectionStart;
-
-            const size_t variableStart =
-                helper::LinearIndex(selectionBox, currentPoint, true) *
+            const size_t intersectionStart =
+                helper::LinearIndex(blockBox, intersectionBox.first, true) *
                 sizeof(T);
 
-            char *rawVariableData = reinterpret_cast<char *>(dest);
-
-            CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
-                                 rawVariableData + variableStart,
-                                 endianReverse);
-
-            //            std::copy(contiguousMemory + contiguousStart,
-            //                      contiguousMemory + contiguousStart + stride,
-            //                      rawVariableData + variableStart);
-
-            // here update each index recursively, always starting from the 2nd
-            // fastest changing index, since fastest changing index is the
-            // continuous part in the previous std::copy
-            size_t p = dimensions - 2;
-            while (true)
+            while (run)
             {
-                ++currentPoint[p];
-                if (currentPoint[p] > end[p])
+                // here copy current linear memory between currentPoint and end
+                const size_t contiguousStart =
+                    helper::LinearIndex(blockBox, currentPoint, true) *
+                        sizeof(T) -
+                    intersectionStart;
+
+                const size_t variableStart =
+                    helper::LinearIndex(selectionBox, currentPoint, true) *
+                    sizeof(T);
+
+                char *rawVariableData = reinterpret_cast<char *>(dest);
+
+                CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
+                                     rawVariableData + variableStart,
+                                     endianReverse);
+
+                //            std::copy(contiguousMemory + contiguousStart,
+                //                      contiguousMemory + contiguousStart +
+                //                      stride, rawVariableData +
+                //                      variableStart);
+
+                // here update each index recursively, always starting from the
+                // 2nd fastest changing index, since fastest changing index is
+                // the continuous part in the previous std::copy
+                size_t p = dimensions - 2;
+                while (true)
                 {
-                    if (p == 0)
+                    ++currentPoint[p];
+                    if (currentPoint[p] > end[p])
                     {
-                        run = false; // we are done
-                        break;
+                        if (p == 0)
+                        {
+                            run = false; // we are done
+                            break;
+                        }
+                        else
+                        {
+                            currentPoint[p] = start[p];
+                            --p;
+                        }
                     }
                     else
                     {
-                        currentPoint[p] = start[p];
-                        --p;
+                        break; // break inner p loop
                     }
-                }
-                else
-                {
-                    break; // break inner p loop
-                }
-            } // dimension index update
-        }     // run
-
-    };
+                } // dimension index update
+            }     // run
+        };
 
     auto lf_ClipColumnMajor =
         [](T *dest, const Dims &destStart, const Dims &destCount,
@@ -387,7 +387,6 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 }
             } // dimension index update
         }
-
     };
 
     const Dims &start = intersectionBox.first;
@@ -560,10 +559,12 @@ NdCopyRecurDFSeqPaddingRevEndian(size_t curDim, const char *&inOvlpBase,
     else
     {
         for (size_t i = 0; i < ovlpCount[curDim]; i++)
+        {
             NdCopyRecurDFSeqPaddingRevEndian(
                 curDim + 1, inOvlpBase, outOvlpBase, inOvlpGapSize,
                 outOvlpGapSize, ovlpCount, minCountDim, blockSize, elmSize,
                 numElmsPerBlock);
+        }
     }
     inOvlpBase += inOvlpGapSize[curDim];
     outOvlpBase += outOvlpGapSize[curDim];
@@ -587,12 +588,14 @@ static void NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase,
     else
     {
         for (size_t i = 0; i < ovlpCount[curDim]; i++)
+        {
             NdCopyRecurDFNonSeqDynamic(
                 curDim + 1,
                 inBase + (inRltvOvlpSPos[curDim] + i) * inStride[curDim],
                 outBase + (outRltvOvlpSPos[curDim] + i) * outStride[curDim],
                 inRltvOvlpSPos, outRltvOvlpSPos, inStride, outStride, ovlpCount,
                 elmSize);
+        }
     }
 }
 
@@ -617,12 +620,14 @@ static void NdCopyRecurDFNonSeqDynamicRevEndian(
     else
     {
         for (size_t i = 0; i < ovlpCount[curDim]; i++)
+        {
             NdCopyRecurDFNonSeqDynamicRevEndian(
                 curDim + 1,
                 inBase + (inRltvOvlpSPos[curDim] + i) * inStride[curDim],
                 outBase + (outRltvOvlpSPos[curDim] + i) * outStride[curDim],
                 inRltvOvlpSPos, outRltvOvlpSPos, inStride, outStride, ovlpCount,
                 elmSize);
+        }
     }
 }
 
@@ -646,7 +651,9 @@ static void NdCopyIterDFSeqPadding(const char *&inOvlpBase, char *&outOvlpBase,
         do
         {
             if (curDim == 0)
+            {
                 return;
+            }
             inOvlpBase += inOvlpGapSize[curDim];
             outOvlpBase += outOvlpGapSize[curDim];
             pos[curDim] = 0;
@@ -681,7 +688,9 @@ static void NdCopyIterDFSeqPaddingRevEndian(
         do
         {
             if (curDim == 0)
+            {
                 return;
+            }
             inOvlpBase += inOvlpGapSize[curDim];
             outOvlpBase += outOvlpGapSize[curDim];
             pos[curDim] = 0;
@@ -717,7 +726,9 @@ static void NdCopyIterDFDynamic(const char *inBase, char *outBase,
         do
         {
             if (curDim == 0)
+            {
                 return;
+            }
             pos[curDim] = 0;
             curDim--;
         } while (pos[curDim] == ovlpCount[curDim]);
@@ -756,7 +767,9 @@ static void NdCopyIterDFDynamicRevEndian(const char *inBase, char *outBase,
         do
         {
             if (curDim == 0)
+            {
                 return;
+            }
             pos[curDim] = 0;
             curDim--;
         } while (pos[curDim] == ovlpCount[curDim]);
@@ -796,30 +809,44 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
     char *outOvlpBase = nullptr;
     auto GetInEnd = [](Dims &inEnd, const Dims &inStart, const Dims &inCount) {
         for (size_t i = 0; i < inStart.size(); i++)
+        {
             inEnd[i] = inStart[i] + inCount[i] - 1;
+        }
     };
     auto GetOutEnd = [](Dims &outEnd, const Dims &outStart,
                         const Dims &output_count) {
         for (size_t i = 0; i < outStart.size(); i++)
+        {
             outEnd[i] = outStart[i] + output_count[i] - 1;
+        }
     };
     auto GetOvlpStart = [](Dims &ovlpStart, const Dims &inStart,
                            const Dims &outStart) {
         for (size_t i = 0; i < ovlpStart.size(); i++)
+        {
             ovlpStart[i] = inStart[i] > outStart[i] ? inStart[i] : outStart[i];
+        }
     };
     auto GetOvlpEnd = [](Dims &ovlpEnd, Dims &inEnd, Dims &outEnd) {
         for (size_t i = 0; i < ovlpEnd.size(); i++)
+        {
             ovlpEnd[i] = inEnd[i] < outEnd[i] ? inEnd[i] : outEnd[i];
+        }
     };
     auto GetOvlpCount = [](Dims &ovlpCount, Dims &ovlpStart, Dims &ovlpEnd) {
         for (size_t i = 0; i < ovlpCount.size(); i++)
+        {
             ovlpCount[i] = ovlpEnd[i] - ovlpStart[i] + 1;
+        }
     };
     auto HasOvlp = [](Dims &ovlpStart, Dims &ovlpEnd) {
         for (size_t i = 0; i < ovlpStart.size(); i++)
+        {
             if (ovlpEnd[i] < ovlpStart[i])
+            {
                 return false;
+            }
+        }
         return true;
     };
 
@@ -829,8 +856,10 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // of the i'th dimension
         ioStride[ioStride.size() - 1] = elmSize;
         if (ioStride.size() > 1)
+        {
             ioStride[ioStride.size() - 2] =
                 ioCount[ioStride.size() - 1] * elmSize;
+        }
         if (ioStride.size() > 2)
         {
             size_t i = ioStride.size() - 3;
@@ -838,9 +867,13 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             {
                 ioStride[i] = ioCount[i + 1] * ioStride[i + 1];
                 if (i == 0)
+                {
                     break;
+                }
                 else
+                {
                     i--;
+                }
             }
         }
     };
@@ -850,20 +883,26 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
                             Dims &ovlpStart) {
         inOvlpBase = in;
         for (size_t i = 0; i < inStart.size(); i++)
+        {
             inOvlpBase = inOvlpBase + (ovlpStart[i] - inStart[i]) * inStride[i];
+        }
     };
     auto GetOutOvlpBase = [](char *&outOvlpBase, char *out,
                              const Dims &outStart, Dims &outStride,
                              Dims &ovlpStart) {
         outOvlpBase = out;
         for (size_t i = 0; i < outStart.size(); i++)
+        {
             outOvlpBase =
                 outOvlpBase + (ovlpStart[i] - outStart[i]) * outStride[i];
+        }
     };
     auto GetIoOvlpGapSize = [](Dims &ioOvlpGapSize, Dims &ioStride,
                                const Dims &ioCount, Dims &ovlpCount) {
         for (size_t i = 0; i < ioOvlpGapSize.size(); i++)
+        {
             ioOvlpGapSize[i] = (ioCount[i] - ovlpCount[i]) * ioStride[i];
+        }
     };
     auto GetMinContDim = [](const Dims &inCount, const Dims outCount,
                             Dims &ovlpCount) {
@@ -878,9 +917,13 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         while (true)
         {
             if (i == 0)
+            {
                 break;
+            }
             if ((inCount[i] != ovlpCount[i]) || (outCount[i] != ovlpCount[i]))
+            {
                 break;
+            }
             i--;
         }
         return i;
@@ -888,14 +931,18 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
     auto GetBlockSize = [](Dims &ovlpCount, size_t minContDim, size_t elmSize) {
         size_t res = elmSize;
         for (size_t i = minContDim; i < ovlpCount.size(); i++)
+        {
             res *= ovlpCount[i];
+        }
         return res;
     };
 
     auto GetRltvOvlpStartPos = [](Dims &ioRltvOvlpStart, const Dims &ioStart,
                                   Dims &ovlpStart) {
         for (size_t i = 0; i < ioStart.size(); i++)
+        {
             ioRltvOvlpStart[i] = ovlpStart[i] - ioStart[i];
+        }
     };
 
     // main flow
@@ -911,7 +958,9 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         GetOvlpEnd(ovlpEnd, inEnd, outEnd);
         GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
         if (!HasOvlp(ovlpStart, ovlpEnd))
+        {
             return 1; // no overlap found
+        }
         GetIoStrides(inStride, inMemCountNC, sizeof(T));
         GetIoStrides(outStride, outMemCountNC, sizeof(T));
         GetIoOvlpGapSize(inOvlpGapSize, inStride, inMemCountNC, ovlpCount);
@@ -928,30 +977,38 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             // warning: number of function stacks used is number of dimensions
             // of data.
             if (!safeMode)
+            {
                 NdCopyRecurDFSeqPadding(0, inOvlpBase, outOvlpBase,
                                         inOvlpGapSize, outOvlpGapSize,
                                         ovlpCount, minContDim, blockSize);
+            }
             else // safeMode
+            {
                 //      //alternative iterative version, 10% slower then
                 //      recursive
                 //      //use it when very high demension is used.
                 NdCopyIterDFSeqPadding(inOvlpBase, outOvlpBase, inOvlpGapSize,
                                        outOvlpGapSize, ovlpCount, minContDim,
                                        blockSize);
+            }
         }
         // different endianess mode
         else
         {
             if (!safeMode)
+            {
                 NdCopyRecurDFSeqPaddingRevEndian(
                     0, inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize,
                     ovlpCount, minContDim, blockSize, sizeof(T),
                     blockSize / sizeof(T));
+            }
             else
+            {
                 NdCopyIterDFSeqPaddingRevEndian(
                     inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize,
                     ovlpCount, minContDim, blockSize, sizeof(T),
                     blockSize / sizeof(T));
+            }
         }
     }
 
@@ -974,7 +1031,9 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             GetOvlpEnd(ovlpEnd, inEnd, outEnd);
             GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
             if (!HasOvlp(ovlpStart, ovlpEnd))
+            {
                 return 1; // no overlap found
+            }
 
             GetIoStrides(inStride, inCount, sizeof(T));
             GetIoStrides(outStride, outCount, sizeof(T));
@@ -997,7 +1056,9 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             GetOvlpEnd(ovlpEnd, inEnd, outEnd);
             GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
             if (!HasOvlp(ovlpStart, ovlpEnd))
+            {
                 return 1; // no overlap found
+            }
 
             // get normal order inStride
             GetIoStrides(inStride, inMemCountNC, sizeof(T));
@@ -1030,7 +1091,9 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
             GetOvlpEnd(ovlpEnd, inEnd, outEnd);
             GetOvlpCount(ovlpCount, ovlpStart, ovlpEnd);
             if (!HasOvlp(ovlpStart, ovlpEnd))
+            {
                 return 1; // no overlap found
+            }
 
             // get normal order outStride
             GetIoStrides(outStride, outMemCountNC, sizeof(T));
@@ -1054,28 +1117,36 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         if (inIsLittleEndian == outIsLittleEndian)
         {
             if (!safeMode)
+            {
                 NdCopyRecurDFNonSeqDynamic(0, inOvlpBase, outOvlpBase,
                                            inRltvOvlpStartPos,
                                            outRltvOvlpStartPos, inStride,
                                            outStride, ovlpCount, sizeof(T));
+            }
             else
+            {
                 NdCopyIterDFDynamic(inOvlpBase, outOvlpBase, inRltvOvlpStartPos,
                                     outRltvOvlpStartPos, inStride, outStride,
                                     ovlpCount, sizeof(T));
+            }
         }
         // different Endian"
         else
         {
             if (!safeMode)
+            {
                 NdCopyRecurDFNonSeqDynamicRevEndian(
                     0, inOvlpBase, outOvlpBase, inRltvOvlpStartPos,
                     outRltvOvlpStartPos, inStride, outStride, ovlpCount,
                     sizeof(T));
+            }
             else
+            {
                 NdCopyIterDFDynamicRevEndian(inOvlpBase, outOvlpBase,
                                              inRltvOvlpStartPos,
                                              outRltvOvlpStartPos, inStride,
                                              outStride, ovlpCount, sizeof(T));
+            }
         }
     }
     return 0;

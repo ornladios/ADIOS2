@@ -254,11 +254,11 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
 
     // Get type info
     int dtype;
-    if (varType == "double")
+    if (varType == helper::GetType<double>())
     {
         dtype = SZ_DOUBLE;
     }
-    else if (varType == "float")
+    else if (varType == helper::GetType<float>())
     {
         dtype = SZ_FLOAT;
     }
@@ -309,12 +309,12 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     // Get type info
     int dtype = 0;
     size_t typeSizeBytes = 0;
-    if (varType == "double")
+    if (varType == helper::GetType<double>())
     {
         dtype = SZ_DOUBLE;
         typeSizeBytes = 8;
     }
-    else if (varType == "float")
+    else if (varType == helper::GetType<float>())
     {
         dtype = SZ_FLOAT;
         typeSizeBytes = 4;

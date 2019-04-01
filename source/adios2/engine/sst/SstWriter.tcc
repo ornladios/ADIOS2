@@ -15,6 +15,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -26,6 +27,7 @@ namespace engine
 template <class T>
 void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
+    TAU_SCOPED_TIMER_FUNC();
     variable.SetData(values);
 
     if (m_BetweenStepPairs == false)
@@ -33,14 +35,6 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         throw std::logic_error("ERROR: When using the SST engine in ADIOS2, "
                                "Put() calls must appear between "
                                "BeginStep/EndStep pairs");
-    }
-    if (variable.m_Count.empty())
-    {
-        variable.m_Count = variable.m_Shape;
-    }
-    if (variable.m_Start.empty())
-    {
-        variable.m_Start.assign(variable.m_Count.size(), 0);
     }
 
     if (m_MarshalMethod == SstMarshalFFS)

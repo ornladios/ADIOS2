@@ -411,7 +411,7 @@ void HDF5NativeReader::ReadString(const std::string varName,
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
 
-    result.assign(val);
+    result.assign(val, typesize);
     free(val);
 
     H5Dclose(dataSetId);
@@ -498,7 +498,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -739,7 +739,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read1D8)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -1075,7 +1075,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
 
     { // ADIOS2 read back
 
-// Write test data using ADIOS2
+        // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -2898,7 +2898,7 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -2908,6 +2908,7 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
     adios2::IO io = adios.DeclareIO("TestIO");
 
     std::string var1Name = "var1";
+    // std::string var1Name = "/var1";
     std::string var2Name = "var2";
     std::string var3Name = "grp/var3";
     std::string var4Name = "var4";
@@ -2929,6 +2930,11 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
     std::string v4AttrName = "var4/unitName";
     std::string v4AttrValue = "kg";
 
+    std::string fantacyPathName = "no/such/path";
+    std::string longerV1AttrName1 = "var1/mesh/level";
+    std::string longerV1AttrName2 = "mesh/also/level";
+
+    int numAttr = 0;
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
     // before Write().
@@ -2942,12 +2948,31 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
         io.DefineVariable<double>(var3Name, shape, start, count);
 
         io.DefineAttribute<std::string>(ioAttrName, ioAttrValue);
+        numAttr++;
 
         io.DefineAttribute<int32_t>(v1AttrAName, v1AttrAValue);
+        numAttr++;
         io.DefineAttribute<int32_t>(v1AttrBName, v1AttrBValue);
+        numAttr++;
+
+        // this expects that  var and attr can have different names
+        io.DefineAttribute<double>(var1Name, v3AttrValue);
+        numAttr++;
+
+        // this allows attr can be path like (no need to exist)
+        io.DefineAttribute<int32_t>(fantacyPathName, v1AttrAValue);
+        numAttr++;
+
+        // this allows variable can attach attr with long name
+        io.DefineAttribute<int32_t>(longerV1AttrName1, v1AttrBValue);
+        numAttr++;
+        io.DefineAttribute<int32_t>(longerV1AttrName2, v1AttrBValue, var1Name);
+        numAttr++;
 
         io.DefineAttribute<std::string>(v2AttrName, v2AttrValue);
+        numAttr++;
         io.DefineAttribute<double>(v3AttrName, v3AttrValue);
+        numAttr++;
     }
 
     // Create the HDF5 Engine
@@ -3000,6 +3025,7 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
             engine.Put(var4, currentTestData.I32.data());
 
             io.DefineAttribute<std::string>(v4AttrName, v4AttrValue);
+            numAttr++;
         }
 
         // Advance to the next time step
@@ -3089,7 +3115,12 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
         const std::map<std::string, adios2::Params> &attributesInfo =
             io.AvailableAttributes();
 
-        EXPECT_EQ(6, attributesInfo.size());
+        EXPECT_EQ(numAttr, attributesInfo.size());
+
+        EXPECT_EQ(4, io.AvailableAttributes(var1Name).size());
+        EXPECT_EQ(1, io.AvailableAttributes(var2Name).size());
+        EXPECT_EQ(1, io.AvailableAttributes(var3Name).size());
+        EXPECT_EQ(1, io.AvailableAttributes(var4Name).size());
 
         std::cout << " other tests will follow after William make changes: "
                      "e.g. GetNumAttr(var) etc +  Write a bp file and read "

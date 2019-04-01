@@ -28,7 +28,8 @@ namespace adios2
 namespace interop
 {
 
-typedef enum {
+typedef enum
+{
     E_H5_DATASET = 0,
     E_H5_DATATYPE = 1,
     E_H5_GROUP = 2,
@@ -115,6 +116,11 @@ public:
     static const std::string PREFIX_BLOCKINFO;
     static const std::string PREFIX_STAT;
 
+    static const std::string PARAMETER_COLLECTIVE;
+    static const std::string PARAMETER_CHUNK_FLAG;
+    static const std::string PARAMETER_CHUNK_VARS;
+
+    void ParseParameters(core::IO &io);
     void Init(const std::string &name, MPI_Comm comm, bool toWrite);
 
     template <class T>
@@ -210,13 +216,17 @@ private:
     template <class T>
     void AddStats(const core::Variable<T> &variable, hid_t parentId,
                   std::vector<T> &stats);
+
+    hid_t m_ChunkPID;
+    int m_ChunkDim;
+    std::set<std::string> m_ChunkVarNames;
 };
 
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
     extern template void HDF5Common::Write(core::Variable<T> &variable,        \
                                            const T *value);
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace interop

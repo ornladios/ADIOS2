@@ -60,6 +60,12 @@ const helper::BlockOperationInfo &BP3Deserializer::InitPostOperatorBlockData(
     return blockOperationsInfo.at(index);
 }
 
+size_t BP3Deserializer::MetadataStart(const BufferSTL &bufferSTL)
+{
+    ParseMinifooter(bufferSTL);
+    return m_Minifooter.PGIndexStart;
+}
+
 // PRIVATE
 void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 {
@@ -122,7 +128,8 @@ void BP3Deserializer::ParsePGIndex(const BufferSTL &bufferSTL,
                                    const std::string hostLanguage)
 {
     const auto &buffer = bufferSTL.m_Buffer;
-    size_t position = m_Minifooter.PGIndexStart;
+    // always start from zero
+    size_t position = 0;
 
     m_MetadataSet.DataPGCount = helper::ReadValue<uint64_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
@@ -166,111 +173,28 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndex = [&](core::Engine &engine,
                                    const std::vector<char> &buffer,
                                    size_t position) {
-
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
 
-        case (type_string):
-        {
-            DefineVariableInEngineIO<std::string>(header, engine, buffer,
-                                                  position);
-            break;
-        }
-
-        case (type_byte):
-        {
-            DefineVariableInEngineIO<signed char>(header, engine, buffer,
-                                                  position);
-            break;
-        }
-
-        case (type_short):
-        {
-            DefineVariableInEngineIO<short>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_integer):
-        {
-            DefineVariableInEngineIO<int>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_long):
-        {
-            DefineVariableInEngineIO<int64_t>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_unsigned_byte):
-        {
-            DefineVariableInEngineIO<unsigned char>(header, engine, buffer,
-                                                    position);
-            break;
-        }
-
-        case (type_unsigned_short):
-        {
-            DefineVariableInEngineIO<unsigned short>(header, engine, buffer,
-                                                     position);
-            break;
-        }
-
-        case (type_unsigned_integer):
-        {
-            DefineVariableInEngineIO<unsigned int>(header, engine, buffer,
-                                                   position);
-            break;
-        }
-
-        case (type_unsigned_long):
-        {
-            DefineVariableInEngineIO<uint64_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_real):
-        {
-            DefineVariableInEngineIO<float>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_double):
-        {
-            DefineVariableInEngineIO<double>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_long_double):
-        {
-            DefineVariableInEngineIO<long double>(header, engine, buffer,
-                                                  position);
-            break;
-        }
-
-        case (type_complex):
-        {
-            DefineVariableInEngineIO<std::complex<float>>(header, engine,
-                                                          buffer, position);
-            break;
-        }
-
-        case (type_double_complex):
-        {
-            DefineVariableInEngineIO<std::complex<double>>(header, engine,
-                                                           buffer, position);
-            break;
-        }
+#define make_case(T)                                                           \
+    case (TypeTraits<T>::type_enum):                                           \
+    {                                                                          \
+        DefineVariableInEngineIO<T>(header, engine, buffer, position);         \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(make_case)
+#undef make_case
 
         } // end switch
     };
 
     const auto &buffer = bufferSTL.m_Buffer;
-    size_t position = m_Minifooter.VarsIndexStart;
+    size_t position = helper::GetDistance(
+        m_Minifooter.VarsIndexStart, m_Minifooter.PGIndexStart, m_DebugMode,
+        " BP3 variable index start < pg index start, in call to Open");
 
     const uint32_t count = helper::ReadValue<uint32_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
@@ -343,96 +267,23 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     auto lf_ReadElementIndex = [&](core::Engine &engine,
                                    const std::vector<char> &buffer,
                                    size_t position) {
-
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
 
         switch (header.DataType)
         {
 
-        case (type_string):
-        {
-            DefineAttributeInEngineIO<std::string>(header, engine, buffer,
-                                                   position);
-            break;
-        }
-
+#define make_case(T)                                                           \
+    case (TypeTraits<T>::type_enum):                                           \
+    {                                                                          \
+        DefineAttributeInEngineIO<T>(header, engine, buffer, position);        \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(make_case)
+#undef make_case
         case (type_string_array):
         {
             DefineAttributeInEngineIO<std::string>(header, engine, buffer,
-                                                   position);
-            break;
-        }
-
-        case (type_byte):
-        {
-            DefineAttributeInEngineIO<signed char>(header, engine, buffer,
-                                                   position);
-            break;
-        }
-
-        case (type_short):
-        {
-            DefineAttributeInEngineIO<short>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_integer):
-        {
-            DefineAttributeInEngineIO<int>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_long):
-        {
-            DefineAttributeInEngineIO<int64_t>(header, engine, buffer,
-                                               position);
-            break;
-        }
-
-        case (type_unsigned_byte):
-        {
-            DefineAttributeInEngineIO<unsigned char>(header, engine, buffer,
-                                                     position);
-            break;
-        }
-
-        case (type_unsigned_short):
-        {
-            DefineAttributeInEngineIO<unsigned short>(header, engine, buffer,
-                                                      position);
-            break;
-        }
-
-        case (type_unsigned_integer):
-        {
-            DefineAttributeInEngineIO<unsigned int>(header, engine, buffer,
-                                                    position);
-            break;
-        }
-
-        case (type_unsigned_long):
-        {
-            DefineAttributeInEngineIO<uint64_t>(header, engine, buffer,
-                                                position);
-            break;
-        }
-
-        case (type_real):
-        {
-            DefineAttributeInEngineIO<float>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_double):
-        {
-            DefineAttributeInEngineIO<double>(header, engine, buffer, position);
-            break;
-        }
-
-        case (type_long_double):
-        {
-            DefineAttributeInEngineIO<long double>(header, engine, buffer,
                                                    position);
             break;
         }
@@ -441,7 +292,11 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
     };
 
     const auto &buffer = bufferSTL.m_Buffer;
-    size_t position = m_Minifooter.AttributesIndexStart;
+
+    size_t position = helper::GetDistance(
+        m_Minifooter.AttributesIndexStart, m_Minifooter.PGIndexStart,
+        m_DebugMode,
+        " BP3 attributes index start < pg index start, in call to Open");
 
     const uint32_t count = helper::ReadValue<uint32_t>(
         buffer, position, m_Minifooter.IsLittleEndian);
@@ -485,7 +340,7 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
         subFileInfoPair.second =                                               \
             GetSubFileInfo(*io.InquireVariable<T>(variableName));              \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
     return m_DeferredVariablesMap;
@@ -513,7 +368,7 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
                                          m_IsRowMajor, m_ReverseDimensions);   \
         }                                                                      \
     }
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 }
 
@@ -534,7 +389,7 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
     template void BP3Deserializer::GetValueFromMetadata(                       \
         core::Variable<T> &variable, T *) const;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
@@ -552,6 +407,10 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
     template std::map<size_t, std::vector<typename core::Variable<T>::Info>>   \
     BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
                                                                                \
+    template std::vector<std::vector<typename core::Variable<T>::Info>>        \
+    BP3Deserializer::AllRelativeStepsBlocksInfo(const core::Variable<T> &)     \
+        const;                                                                 \
+                                                                               \
     template std::vector<typename core::Variable<T>::Info>                     \
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
@@ -565,7 +424,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         core::Variable<T> &, typename core::Variable<T>::Info &,               \
         const helper::SubStreamBoxInfo &, const bool, const size_t);
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace formata

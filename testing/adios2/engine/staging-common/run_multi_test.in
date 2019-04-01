@@ -61,6 +61,7 @@ unless($writer_pid)
     my $writer_arg_str = "";
     $writer_arg_str = join(" ", @writer_args) if (@writer_args);
     my $command = "$writer_exec_cmd $my_dirname/$writer_prog $engine $filename " . $writer_arg_str;
+    $command =~ s/^\s+//;
     print "TestDriver: EXECwriter $command writer PID $$\n" if $verbose;
     my $result = system (split / /,$command);
     print "TestDriver: System for writer returns ", $result, " \n";
@@ -87,6 +88,7 @@ if ($test_protocol eq "kill_readers") {
 	  #Child process is here
 	  print "TestDriver: System( $my_dirname/$reader_prog)\n" if $verbose;
 	  my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
+	  $command =~ s/^\s+//;
 	  my $result = system (split / /,$command);
 	  print "TestDriver: System for kill_readers Reader returns ", $result, " \n";
 	  exit $result;
@@ -142,6 +144,7 @@ if ($test_protocol eq "one_to_one") {
     {
 	#Child process is here
 	my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
+	$command =~ s/^\s+//;
 	print "TestDriver: EXECreader $command\n" if $verbose;
 	my $result = system (split / /,$command);
 	print "TestDriver: System() for one_to_one Reader returned $result\n" if $verbose;
@@ -149,15 +152,16 @@ if ($test_protocol eq "one_to_one") {
     }
     print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
     waitpid($reader_pid, 0);
-    print "TestDriver: Status of one_to_one reader was $?\n" if $verbose;
-    if ($? != 0) {
+    my $reader_exit = ${^CHILD_ERROR_NATIVE};
+    print "TestDriver: Status of one_to_one reader was $reader_exit\n" if $verbose;
+    if ($reader_exit != 0) {
 	$exit_value = 1; 
 	print "TestDriver: Setting failure return because of bad exit status ($?) on normal reader\n";
     }
     system("touch DieTest");
     my $ret = waitpid($writer_pid, 0);
     unlink("DieTest");
-    print "TestDriver: Status of writer was $? with return value $ret\n" if $verbose;
+    print "TestDriver: Status of writer was $?\n" if $verbose;
     if ($? != 0) {
 	$exit_value = 1; #failure
 	print "TestDriver: Setting failure return because of bad exit status ($?) of writer\n";

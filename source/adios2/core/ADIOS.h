@@ -94,7 +94,7 @@ public:
      */
     ADIOS(const ADIOS &adios) = delete;
 
-    ~ADIOS() = default;
+    ~ADIOS();
 
     /**
      * Declares a new IO class object and returns a reference to that object.
@@ -156,7 +156,7 @@ public:
                                  const Dims &)> &function,                     \
         const Params &parameters);
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     /** define CallBack2 */
@@ -168,7 +168,24 @@ public:
                                  const Dims &)> &function,
         const Params &parameters);
 
+    /**
+     * DANGER ZONE: removes a particular IO. This will effectively eliminate any
+     * parameter from the config.xml file
+     * @param name io input name
+     * @return true: IO was found and removed, false: IO not found and not
+     * removed
+     */
+    bool RemoveIO(const std::string name);
+
+    /**
+     * DANGER ZONE: removes all IOs created with DeclareIO. This will
+     * effectively eliminate any parameter from the config.xml file
+     */
+    void RemoveAllIOs() noexcept;
+
 private:
+    bool m_NeedMPICommFree;
+
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
 
@@ -185,9 +202,6 @@ private:
 
     /** operators created with DefineOperator */
     std::map<std::string, std::shared_ptr<Operator>> m_Operators;
-
-    /** throws exception if m_MPIComm = MPI_COMM_NULL */
-    void CheckMPI() const;
 
     void CheckOperator(const std::string name) const;
 

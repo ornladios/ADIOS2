@@ -5,9 +5,9 @@ Matlab simple bindings
 The ADIOS Matlab API supports reading data from ADIOS BP files with a 
 simplified API that consists of three functions:
 
-   * ADIOSOPEN     returns a structure with information on an ADIOS BP File (variables and attributes).
-   * ADIOSREAD     reads in a variable from the file. It expects the info structure returned by ADIOSOPEN.
-   * ADIOSCLOSE    closes the file.
+   * ``ADIOSOPEN``     returns a structure with information on an ADIOS BP File (variables and attributes).
+   * ``ADIOSREAD``     reads in a variable from the file. It expects the info structure returned by ``ADIOSOPEN``.
+   * ``ADIOSCLOSE``    closes the file.
 
 Organization of an ADIOS BP file
 --------------------------------
@@ -31,11 +31,11 @@ In the Matlab console use help for these functions
    >>> help adiosread
    >>> help adiosclose
 
-ADIOSOPEN
----------
+``ADIOSOPEN``
+-------------
 
-*FILE = adiosopen(PATH)* 
-   Open a file for reading pointed by *PATH* and return an information structure (*FILE*). 
+``FILE = adiosopen(PATH)`` 
+   Open a file for reading pointed by ``PATH`` and return an information structure (``FILE``). 
 
 The returned FILE structure contains the following information
 
@@ -63,30 +63,30 @@ The returned FILE structure contains the following information
            Value           Attribute value
 
 
-ADIOSREAD
----------
+``ADIOSREAD``
+-------------
 
-Read data from a BP file opened with *adiosopen*. 
-Provide the structure returned by *adiosopen* as the first input argument, 
+Read data from a BP file opened with ``adiosopen``. 
+Provide the structure returned by ``adiosopen`` as the first input argument, 
 and the path to a variable.
-Inspect *file.Variables* and *file.Attributes* for the list of variables 
+Inspect ``file.Variables`` and ``file.Attributes`` for the list of variables 
 and attributes available in a file.
 
-*data = adiosread(file, VARPATH)* 
+``data = adiosread(file, VARPATH)`` 
 
-Read the entire variable VARPATH from a BP file. *file* is the output of ADIOSOPEN. 
-*VARPATH* is a string to a variable or attribute. 
+Read the entire variable ``VARPATH`` from a BP file. ``file`` is the output of ``ADIOSOPEN``. 
+``VARPATH`` is a string to a variable or attribute. 
 If an N-dimensional array variable has multiple steps in the file 
 this function reads all steps and returns an N+1 dimensional array 
 where the last dimension equals the number of steps.
 
-*data = adiosread(file, INDEX)* 
+``data = adiosread(file, INDEX)`` 
 
 Read the entire variable from a BP file.
-*INDEX* points to a variable in the *file.Variables* array. 
+``INDEX`` points to a variable in the ``file.Variables`` array. 
 
 
-*data = adiosread(..., START, COUNT, STEPSTART, STEPCOUNT)*
+``data = adiosread(..., START, COUNT, STEPSTART, STEPCOUNT)``
 
 Read a portion of a variable. 
 
@@ -112,10 +112,10 @@ Read a portion of a variable.
                n, -1  will read all steps from 'n' to the last one
 
       
-ADIOSCLOSE
-----------
+``ADIOSCLOSE``
+--------------
 
-*adiosclose(file)* 
-    Close file and free internal data structures. *file* is the structure returned by *adiosopen*.
+``adiosclose(file)`` 
+    Close file and free internal data structures. ``file`` is the structure returned by ``adiosopen``.
         
                

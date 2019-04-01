@@ -63,6 +63,7 @@ public:
         Dims MemoryStart;
         Dims MemoryCount;
         std::vector<Operation> Operations;
+        size_t Step = 0;
         size_t StepsStart = 0;
         size_t StepsCount = 0;
         size_t BlockID = 0;
@@ -70,12 +71,49 @@ public:
         T Min = T();
         T Max = T();
         T Value = T();
+        T *BufferP = nullptr;
+        std::vector<T> BufferV;
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
     };
 
     /** use for multiblock info */
     std::vector<Info> m_BlocksInfo;
+
+    class Span
+    {
+    public:
+        std::pair<size_t, size_t> m_MinMaxDataPositions;
+        std::pair<size_t, size_t> m_MinMaxMetadataPositions;
+        size_t m_PayloadPosition = 0;
+        T m_Value = T{};
+
+        Span(Engine &engine, const size_t size);
+        ~Span() = default;
+
+        size_t Size() const noexcept;
+        T *Data() const noexcept;
+
+        T &At(const size_t position);
+        const T &At(const size_t position) const;
+
+        T &Access(const size_t position);
+        const T &Access(const size_t position) const;
+
+    private:
+        Engine &m_Engine;
+        size_t m_Size = 0;
+
+        T &DoAt(const size_t position);
+        const T &DoAt(const size_t position) const;
+
+        T &DoAccess(const size_t position);
+        const T &DoAccess(const size_t position) const;
+    };
+
+    /** Needs a map to preserve iterator as it resizes and the key to match the
+     * m_BlocksInfo index */
+    std::map<size_t, Span> m_BlocksSpan;
 
     Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
                 const Dims &count, const bool constantShape,
@@ -94,16 +132,32 @@ public:
 
     Dims Shape(const size_t step) const;
 
+    Dims Count() const;
+
+    size_t SelectionSize() const;
+
     std::pair<T, T> MinMax(const size_t step) const;
 
     T Min(const size_t step) const;
 
     T Max(const size_t step) const;
 
+    std::vector<std::vector<typename Variable<T>::Info>>
+    AllStepsBlocksInfo() const;
+
 private:
     Dims DoShape(const size_t step) const;
 
+    Dims DoCount() const;
+
+    size_t DoSelectionSize() const;
+
     std::pair<T, T> DoMinMax(const size_t step) const;
+
+    std::vector<std::vector<typename Variable<T>::Info>>
+    DoAllStepsBlocksInfo() const;
+
+    void CheckRandomAccess(const size_t step, const std::string hint) const;
 };
 
 } // end namespace core

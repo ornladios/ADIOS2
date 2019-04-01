@@ -240,62 +240,46 @@ hid_t HDF5Common::GetHDF5Type<std::string>()
 }
 
 template <>
-hid_t HDF5Common::GetHDF5Type<signed char>()
+hid_t HDF5Common::GetHDF5Type<int8_t>()
 {
-    return H5T_NATIVE_SCHAR;
+    return H5T_NATIVE_INT8;
 }
 
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned char>()
+hid_t HDF5Common::GetHDF5Type<uint8_t>()
 {
-    return H5T_NATIVE_UCHAR;
+    return H5T_NATIVE_UINT8;
 }
 
 template <>
-hid_t HDF5Common::GetHDF5Type<char>()
+hid_t HDF5Common::GetHDF5Type<int16_t>()
 {
-    return H5T_NATIVE_CHAR;
-}
-
-template <>
-hid_t HDF5Common::GetHDF5Type<short>()
-{
-    return H5T_NATIVE_SHORT;
+    return H5T_NATIVE_INT16;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned short>()
+hid_t HDF5Common::GetHDF5Type<uint16_t>()
 {
-    return H5T_NATIVE_USHORT;
+    return H5T_NATIVE_UINT16;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<int>()
+hid_t HDF5Common::GetHDF5Type<int32_t>()
 {
-    return H5T_NATIVE_INT;
+    return H5T_NATIVE_INT32;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned int>()
+hid_t HDF5Common::GetHDF5Type<uint32_t>()
 {
-    return H5T_NATIVE_UINT;
+    return H5T_NATIVE_UINT32;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<long int>()
+hid_t HDF5Common::GetHDF5Type<int64_t>()
 {
-    return H5T_NATIVE_LONG;
+    return H5T_NATIVE_INT64;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned long int>()
+hid_t HDF5Common::GetHDF5Type<uint64_t>()
 {
-    return H5T_NATIVE_ULONG;
-}
-template <>
-hid_t HDF5Common::GetHDF5Type<long long int>()
-{
-    return H5T_NATIVE_LLONG;
-}
-template <>
-hid_t HDF5Common::GetHDF5Type<unsigned long long int>()
-{
-    return H5T_NATIVE_ULLONG;
+    return H5T_NATIVE_UINT64;
 }
 template <>
 hid_t HDF5Common::GetHDF5Type<float>()

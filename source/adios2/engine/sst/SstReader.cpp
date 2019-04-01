@@ -17,6 +17,7 @@
 #include "SstReader.tcc"
 
 #include "SstParamParser.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -67,7 +68,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         return (void *)variable;                                               \
     }
 
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
         return (void *)NULL;
@@ -90,7 +91,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             {
                 return;
             }
-            else if (Type == "string")
+            else if (Type == helper::GetType<std::string>())
             {
                 Reader->m_IO.DefineAttribute<std::string>(attrName,
                                                           *(char **)data);
@@ -98,11 +99,10 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 #define declare_type(T)                                                        \
     else if (Type == helper::GetType<T>())                                     \
     {                                                                          \
-        std::cout << "Loading attribute matched type " << Type << std::endl;   \
         Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
     }
 
-            ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
             else
             {
@@ -112,7 +112,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         }
         catch (...)
         {
-            std::cout << "Load failed" << std::endl;
+            //            std::cout << "Load failed" << std::endl;
             return;
         }
         return;
@@ -149,7 +149,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         variable->m_AvailableStepsCount = 1;                                   \
         return (void *)variable;                                               \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         return (void *)NULL;
     };
@@ -164,6 +164,7 @@ SstReader::~SstReader() { SstStreamDestroy(m_Input); }
 
 StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {
+    TAU_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
     SstStepMode StepMode;
@@ -200,6 +201,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 
     if (m_WriterMarshalMethod == SstMarshalBP)
     {
+        TAU_SCOPED_TIMER(
+            "BP Marshaling Case - deserialize and install metadata");
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         // At begin step, you get metadata from the writers.  You need to
         // use this for two things: First, you need to create the
@@ -270,6 +273,7 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstStatusValue Result;
@@ -374,7 +378,7 @@ void SstReader::Init()
             }                                                                  \
         }                                                                      \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
 #undef declare_gets
 
 void SstReader::PerformGets()
@@ -409,7 +413,7 @@ void SstReader::PerformGets()
         ReadVariableBlocks(variable);                                          \
         variable.m_BlocksInfo.clear();                                         \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
 
@@ -456,7 +460,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
             "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace engine

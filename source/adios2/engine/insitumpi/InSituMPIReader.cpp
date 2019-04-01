@@ -488,7 +488,7 @@ void InSituMPIReader::AsyncRecvAllVariables()
         AsyncRecvVariable<T>(*variable, variablePair.second);                  \
     }
 
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 }
@@ -535,7 +535,7 @@ void InSituMPIReader::ProcessReceives()
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void InSituMPIReader::Init()
@@ -602,7 +602,7 @@ void InSituMPIReader::DoClose(const int transportIndex)
         return m_BP3Deserializer.BlocksInfo(variable, step);                   \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace engine

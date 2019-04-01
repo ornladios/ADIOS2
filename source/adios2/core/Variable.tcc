@@ -24,17 +24,7 @@ namespace core
 template <class T>
 Dims Variable<T>::DoShape(const size_t step) const
 {
-    if (m_DebugMode)
-    {
-        if (!m_FirstStreamingStep && step != DefaultSizeT)
-        {
-            throw std::invalid_argument("ERROR: can't pass a step input in "
-                                        "streaming (BeginStep/EndStep)"
-                                        "mode for variable " +
-                                        m_Name +
-                                        ", in call to Variable<T>::Shape\n");
-        }
-    }
+    CheckRandomAccess(step, "Shape");
 
     if (m_FirstStreamingStep && step == DefaultSizeT)
     {
@@ -66,15 +56,59 @@ Dims Variable<T>::DoShape(const size_t step) const
 }
 
 template <class T>
+Dims Variable<T>::DoCount() const
+{
+    auto lf_Step = [&]() -> size_t {
+        auto itStep =
+            std::next(m_AvailableStepBlockIndexOffsets.begin(), m_StepsStart);
+        if (itStep == m_AvailableStepBlockIndexOffsets.end())
+        {
+            auto it = m_AvailableStepBlockIndexOffsets.rbegin();
+            throw std::invalid_argument(
+                "ERROR: current relative step start for variable " + m_Name +
+                " is outside the scope of available steps " +
+                std::to_string(it->first - 1) + " in call to Count\n");
+        }
+        return itStep->first - 1;
+    };
+
+    if (m_Engine != nullptr && m_SelectionType == SelectionType::WriteBlock)
+    {
+        const size_t step =
+            !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
+
+        const std::vector<typename Variable<T>::Info> blocksInfo =
+            m_Engine->BlocksInfo<T>(*this, step);
+
+        if (m_DebugMode)
+        {
+            if (m_BlockID > blocksInfo.size())
+            {
+                throw std::invalid_argument(
+                    "ERROR: blockID " + std::to_string(m_BlockID) +
+                    " from SetBlockSelection is out of bounds for available "
+                    "blocks size " +
+                    std::to_string(blocksInfo.size()) + " for variable " +
+                    m_Name + " for step " + std::to_string(step) +
+                    ", in call to Variable<T>::Count()");
+            }
+        }
+
+        return blocksInfo[m_BlockID].Count;
+    }
+    return m_Count;
+}
+
+template <class T>
+size_t Variable<T>::DoSelectionSize() const
+{
+    return helper::GetTotalSize(DoCount()) * m_StepsCount;
+}
+
+template <class T>
 std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
 {
-    if (m_DebugMode && !m_FirstStreamingStep && step != DefaultSizeT)
-    {
-        throw std::invalid_argument(
-            "ERROR: can't pass a step input in streaming (BeginStep/EndStep)"
-            "mode for variable " +
-            m_Name + ", in call to Variable<T>:: Min Max or MinMax\n");
-    }
+    CheckRandomAccess(step, "MinMax");
 
     std::pair<T, T> minMax;
     minMax.first = {};
@@ -126,7 +160,6 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
             if (helper::LessThan<T>(minValue, minMax.first))
             {
                 minMax.first = minValue;
-                continue;
             }
 
             const T maxValue = isValue ? blockInfo.Value : blockInfo.Max;
@@ -143,6 +176,94 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         minMax.second = m_Max;
     }
     return minMax;
+}
+
+template <class T>
+std::vector<std::vector<typename Variable<T>::Info>>
+Variable<T>::DoAllStepsBlocksInfo() const
+{
+    if (m_DebugMode && m_Engine == nullptr)
+    {
+        if (m_Engine == nullptr)
+        {
+            throw std::invalid_argument(
+                "ERROR: from variable " + m_Name +
+                " function is only valid in read mode, in "
+                "call to Variable<T>::AllBlocksInfo\n");
+        }
+
+        if (!m_FirstStreamingStep)
+        {
+            throw std::invalid_argument("ERROR: from variable " + m_Name +
+                                        " function is not valid in "
+                                        "random-access read mode "
+                                        "(BeginStep/EndStep), in "
+                                        "call to Variable<T>::AllBlocksInfo\n");
+        }
+    }
+
+    return m_Engine->AllRelativeStepsBlocksInfo(*this);
+}
+
+template <class T>
+void Variable<T>::CheckRandomAccess(const size_t step,
+                                    const std::string hint) const
+{
+    if (m_DebugMode)
+    {
+        if (!m_FirstStreamingStep && step != DefaultSizeT)
+        {
+            throw std::invalid_argument(
+                "ERROR: can't pass a step input in "
+                "streaming (BeginStep/EndStep)"
+                "mode for variable " +
+                m_Name + ", in call to Variable<T>::" + hint + "\n");
+        }
+    }
+}
+
+// Variable<T>::Span functions
+template <class T>
+T &Variable<T>::Span::DoAt(const size_t position)
+{
+    if (position > m_Size)
+    {
+        throw std::invalid_argument(
+            "ERROR: position " + std::to_string(position) +
+            " is out of bounds for span of size " + std::to_string(m_Size) +
+            " , in call to T& Variable<T>::Span::At\n");
+    }
+
+    return DoAccess(position);
+}
+
+template <class T>
+const T &Variable<T>::Span::DoAt(const size_t position) const
+{
+    if (position > m_Size)
+    {
+        throw std::invalid_argument(
+            "ERROR: position " + std::to_string(position) +
+            " is out of bounds for span of size " + std::to_string(m_Size) +
+            " , in call to const T& Variable<T>::Span::At\n");
+    }
+
+    return DoAccess(position);
+}
+
+template <class T>
+T &Variable<T>::Span::DoAccess(const size_t position)
+{
+    T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
+    return data;
+}
+
+template <class T>
+const T &Variable<T>::Span::DoAccess(const size_t position) const
+{
+    const T &data =
+        *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
+    return data;
 }
 
 } // end namespace core

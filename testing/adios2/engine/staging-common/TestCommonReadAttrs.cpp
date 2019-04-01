@@ -59,6 +59,10 @@ static adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
+#ifdef ADIOS2_HAVE_MPI
+MPI_Comm testComm;
+#endif
+
 // ADIOS2 Common read
 TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 {
@@ -70,14 +74,14 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     const std::size_t NSteps = 10;
     int TimeGapDetected = 0;
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(testComm, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
 #endif
@@ -112,7 +116,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         const size_t currentStep = engine.CurrentStep();
         EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-        int writerSize;
+        size_t writerSize;
 
         auto attr_s1 = io.InquireAttribute<std::string>(s1_Single);
         auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
@@ -274,13 +278,14 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_time.Shape()[0], writerSize);
 
-        long unsigned int myStart = (writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myStart =
+            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
-            ((writerSize * Nx + mpiSize - 1) / mpiSize);
+            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
-            myLength = writerSize * Nx - myStart;
+            myLength = (long unsigned int)writerSize * Nx - myStart;
         }
         const adios2::Dims start{myStart};
         const adios2::Dims count{myLength};
@@ -377,6 +382,12 @@ int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(nullptr, nullptr);
+
+    int key;
+    MPI_Comm_rank(MPI_COMM_WORLD, &key);
+
+    const unsigned int color = 2;
+    MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
 #endif
 
     int result;

@@ -38,7 +38,6 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                                  const bool nodeLocal)
 {
     auto lf_CreateDirectories = [&](const std::vector<std::string> &fileNames) {
-
         for (const std::string fileName : fileNames)
         {
             const auto lastPathSeparator(fileName.find_last_of(PathSeparator));
@@ -131,8 +130,9 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
                     throw std::invalid_argument(
                         "ERROR: two IO AddTransport of the same type can't "
                         "have the same name : " +
-                        name + ", use Name=value parameter, in "
-                               "call to Open");
+                        name +
+                        ", use Name=value parameter, in "
+                        "call to Open");
                 }
             }
         }
@@ -310,7 +310,6 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 
     auto lf_GetLibrary = [](const std::string defaultLibrary,
                             const Params &parameters) -> std::string {
-
         std::string library(defaultLibrary);
         helper::SetParameterValue("Library", parameters, library);
         helper::SetParameterValue("library", parameters, library);
@@ -319,7 +318,6 @@ TransportMan::OpenFileTransport(const std::string &fileName,
 
     auto lf_GetTimeUnits = [&](const std::string defaultTimeUnit,
                                const Params &parameters) -> TimeUnit {
-
         std::string profileUnits(defaultTimeUnit);
         helper::SetParameterValue("ProfileUnits", parameters, profileUnits);
         helper::SetParameterValue("profileunits", parameters, profileUnits);

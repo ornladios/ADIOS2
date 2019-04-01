@@ -29,6 +29,9 @@ const std::string HDF5Common::ATTRNAME_NUM_STEPS = "NumSteps";
 const std::string HDF5Common::ATTRNAME_GIVEN_ADIOSNAME = "ADIOSName";
 const std::string HDF5Common::PREFIX_BLOCKINFO = "ADIOS_BLOCKINFO_";
 const std::string HDF5Common::PREFIX_STAT = "ADIOS_STAT_";
+const std::string HDF5Common::PARAMETER_COLLECTIVE = "H5CollectiveMPIO";
+const std::string HDF5Common::PARAMETER_CHUNK_FLAG = "H5ChunkDim";
+const std::string HDF5Common::PARAMETER_CHUNK_VARS = "H5ChunkVars";
 
 /*
    //need to know ndim before defining this.
@@ -58,9 +61,54 @@ HDF5Common::HDF5Common(const bool debugMode) : m_DebugMode(debugMode)
               H5T_NATIVE_DOUBLE);
 
     m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
+}
+
+void HDF5Common::ParseParameters(core::IO &io)
+{
 #ifdef ADIOS2_HAVE_MPI
-    H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+    auto itKey = io.m_Parameters.find(PARAMETER_COLLECTIVE);
+    if (itKey != io.m_Parameters.end())
+    {
+        if (itKey->second == "yes" || itKey->second == "true")
+            H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
+    }
 #endif
+
+    m_ChunkVarNames.clear();
+    m_ChunkPID = -1;
+    m_ChunkDim = 0;
+
+    {
+        std::vector<hsize_t> chunkDim;
+        auto chunkFlagKey = io.m_Parameters.find(PARAMETER_CHUNK_FLAG);
+        if (chunkFlagKey != io.m_Parameters.end())
+        { // note space is the delimiter
+            std::stringstream ss(chunkFlagKey->second);
+            int i;
+            while (ss >> i)
+                chunkDim.push_back(i);
+
+            m_ChunkPID = H5Pcreate(H5P_DATASET_CREATE);
+            m_ChunkDim = chunkDim.size();
+            if (m_ChunkDim > 0)
+                H5Pset_chunk(m_ChunkPID, chunkDim.size(), chunkDim.data());
+        }
+    }
+
+    //
+    // if no chunk dim specified, then ignore this parameter
+    //
+    if (-1 != m_ChunkPID)
+    {
+        auto chunkVarKey = io.m_Parameters.find(PARAMETER_CHUNK_VARS);
+        if (chunkVarKey != io.m_Parameters.end())
+        {
+            std::stringstream ss(chunkVarKey->second);
+            std::string token;
+            while (ss >> token)
+                m_ChunkVarNames.insert(token);
+        }
+    }
 }
 
 void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
@@ -104,7 +152,7 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
     else
     {
         // read a file collectively
-        m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+        m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, m_PropertyListId);
         if (m_FileId >= 0)
         {
             if (H5Lexists(m_FileId, ts0.c_str(), H5P_DEFAULT) != 0)
@@ -451,59 +499,37 @@ void HDF5Common::CreateVar(core::IO &io, hid_t datasetId,
         return;
     }
 
-    if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
+    if (H5Tequal(H5T_NATIVE_INT8, h5Type))
     {
-        AddVar<signed char>(io, name, datasetId, ts);
+        AddVar<int8_t>(io, name, datasetId, ts);
     }
-    else if (H5Tequal(H5T_NATIVE_CHAR, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT8, h5Type))
     {
-        AddVar<char>(io, name, datasetId, ts);
+        AddVar<uint8_t>(io, name, datasetId, ts);
     }
-    else if (H5Tequal(H5T_NATIVE_UCHAR, h5Type))
+    else if (H5Tequal(H5T_NATIVE_INT16, h5Type))
     {
-        AddVar<unsigned char>(io, name, datasetId, ts);
+        AddVar<int16_t>(io, name, datasetId, ts);
     }
-    else if (H5Tequal(H5T_NATIVE_SHORT, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT16, h5Type))
     {
-        AddVar<short>(io, name, datasetId, ts);
+        AddVar<uint16_t>(io, name, datasetId, ts);
     }
-    else if (H5Tequal(H5T_NATIVE_USHORT, h5Type))
+    else if (H5Tequal(H5T_NATIVE_INT32, h5Type))
     {
-        AddVar<unsigned short>(io, name, datasetId, ts);
+        AddVar<int32_t>(io, name, datasetId, ts);
     }
-    else if (H5Tequal(H5T_NATIVE_INT, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT32, h5Type))
     {
-        AddVar<int>(io, name, datasetId, ts);
+        AddVar<uint32_t>(io, name, datasetId, ts);
     }
-    else if (H5Tequal(H5T_NATIVE_UINT, h5Type))
+    else if (H5Tequal(H5T_NATIVE_INT64, h5Type))
     {
-        AddVar<unsigned int>(io, name, datasetId, ts);
-    }
-    else if (H5Tequal(H5T_STD_I64LE, h5Type))
-    {
-        /*
-         */
         AddVar<int64_t>(io, name, datasetId, ts);
     }
-    else if (H5Tequal(H5T_STD_U64LE, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT64, h5Type))
     {
         AddVar<uint64_t>(io, name, datasetId, ts);
-    }
-    else if (H5Tequal(H5T_NATIVE_LONG, h5Type))
-    {
-        AddVar<long>(io, name, datasetId, ts);
-    }
-    else if (H5Tequal(H5T_NATIVE_ULONG, h5Type))
-    {
-        AddVar<unsigned long>(io, name, datasetId, ts);
-    }
-    else if (H5Tequal(H5T_NATIVE_LLONG, h5Type))
-    {
-        AddVar<long long>(io, name, datasetId, ts);
-    }
-    else if (H5Tequal(H5T_NATIVE_ULLONG, h5Type))
-    {
-        AddVar<unsigned long long>(io, name, datasetId, ts);
     }
     else if (H5Tequal(H5T_NATIVE_FLOAT, h5Type))
     {
@@ -545,6 +571,9 @@ void HDF5Common::Close()
 
     H5Pclose(m_PropertyTxfID);
     H5Fclose(m_FileId);
+    if (-1 != m_ChunkPID)
+        H5Pclose(m_ChunkPID);
+
     m_FileId = -1;
     m_GroupId = -1;
 }
@@ -656,11 +685,7 @@ void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
     char *val = (char *)(calloc(typesize, sizeof(char)));
     hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
 
-    /*if (std::is_same<T, std::string> :: value)  { // double check
-      ((std::string*)values) ->assign(val);
-    }
-    */
-    result.assign(val);
+    result.assign(val, typesize);
     free(val);
 
     H5Tclose(h5Type);
@@ -689,7 +714,7 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
     std::string token;
     while ((pos = s.find(delimiter)) != std::string::npos)
     {
-        if (pos > 1)
+        if (pos > 0)
         { // "///a/b/c" == "a/b/c"
             token = s.substr(0, pos);
             list.push_back(token);
@@ -716,8 +741,17 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
         }
     }
 
+    hid_t varCreateProperty = H5P_DEFAULT;
+    if (-1 != m_ChunkPID)
+    {
+        if (m_ChunkVarNames.size() == 0) // applies to all var
+            varCreateProperty = m_ChunkPID;
+        else if (m_ChunkVarNames.find(varName) != m_ChunkVarNames.end())
+            varCreateProperty = m_ChunkPID;
+    }
+
     hid_t dsetID = H5Dcreate(topId, list.back().c_str(), h5Type, filespaceID,
-                             H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                             H5P_DEFAULT, varCreateProperty, H5P_DEFAULT);
 
     if (list.back().compare(varName) != 0)
     {
@@ -766,7 +800,7 @@ void HDF5Common::ReadADIOSName(hid_t dsetID, std::string &adiosName)
     H5Tclose(attrType);
     H5Aclose(attrID);
 
-    adiosName.assign(val);
+    adiosName.assign(val, typeSize);
     free(val);
 }
 
@@ -781,7 +815,7 @@ bool HDF5Common::OpenDataset(const std::string &varName,
     std::string token;
     while ((pos = s.find(delimiter)) != std::string::npos)
     {
-        if (pos > 1)
+        if (pos > 0)
         { // "///a/b/c" == "a/b/c"
             token = s.substr(0, pos);
             list.push_back(token);
@@ -850,15 +884,11 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName,
 
     if (H5S_SCALAR == stype)
     {
-        // char* val = (char*)(calloc(typeSize, sizeof(char)));
-        // char val[typeSize+1];
-        void *stringVal = calloc(typeSize, sizeof(char));
-        H5Aread(attrId, h5Type, (char *)stringVal);
+        auto val = std::unique_ptr<char[]>(new char[typeSize]);
+        H5Aread(attrId, h5Type, &val[0]);
 
-        std::string strValue((char *)stringVal);
-        free(stringVal);
+        auto strValue = std::string(&val[0], typeSize);
         io.DefineAttribute<std::string>(attrName, strValue);
-        // free(val);
     }
     else
     { // array
@@ -871,18 +901,18 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName,
         hsize_t dims[1];
         hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
 
-        char val[typeSize * dims[0]];
-        H5Aread(attrId, h5Type, val);
-        std::string strValue(val);
+        auto val = std::unique_ptr<char[]>(new char[typeSize * dims[0]]);
+        H5Aread(attrId, h5Type, val.get());
 
         std::vector<std::string> stringArray;
         for (int i = 0; i < dims[0]; i++)
         {
-            std::string input = strValue.substr(i * typeSize, typeSize);
+            auto input = std::string(&val[i * typeSize], typeSize);
             // remove the padded empty space;
             rtrim(input);
             stringArray.push_back(input);
         }
+
         io.DefineAttribute<std::string>(attrName, stringArray.data(), dims[0]);
     }
 }
@@ -897,13 +927,13 @@ void HDF5Common::AddNonStringAttribute(core::IO &io,
     { // SCALAR
         T val;
         H5Aread(attrId, h5Type, &val);
-        io.DefineAttribute<T>(attrName, val);
+        io.DefineAttribute(attrName, val);
     }
     else
     {
         T val[arraySize];
         H5Aread(attrId, h5Type, val);
-        io.DefineAttribute<T>(attrName, val, arraySize);
+        io.DefineAttribute(attrName, val, arraySize);
     }
 }
 
@@ -925,63 +955,37 @@ void HDF5Common::ReadInNonStringAttr(core::IO &io, const std::string &attrName,
     if (ndims == 1)
         hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
 
-    if (H5Tequal(H5T_NATIVE_SCHAR, h5Type))
+    if (H5Tequal(H5T_NATIVE_INT8, h5Type))
     {
-        AddNonStringAttribute<signed char>(io, attrName, attrId, h5Type,
-                                           dims[0]);
+        AddNonStringAttribute<int8_t>(io, attrName, attrId, h5Type, dims[0]);
     }
-    else if (H5Tequal(H5T_NATIVE_CHAR, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT8, h5Type))
     {
-        AddNonStringAttribute<char>(io, attrName, attrId, h5Type, dims[0]);
+        AddNonStringAttribute<uint8_t>(io, attrName, attrId, h5Type, dims[0]);
     }
-    else if (H5Tequal(H5T_NATIVE_UCHAR, h5Type))
+    else if (H5Tequal(H5T_NATIVE_INT16, h5Type))
     {
-        AddNonStringAttribute<unsigned char>(io, attrName, attrId, h5Type,
-                                             dims[0]);
+        AddNonStringAttribute<int16_t>(io, attrName, attrId, h5Type, dims[0]);
     }
-    else if (H5Tequal(H5T_NATIVE_SHORT, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT16, h5Type))
     {
-        AddNonStringAttribute<short>(io, attrName, attrId, h5Type, dims[0]);
+        AddNonStringAttribute<uint16_t>(io, attrName, attrId, h5Type, dims[0]);
     }
-    else if (H5Tequal(H5T_NATIVE_USHORT, h5Type))
+    else if (H5Tequal(H5T_NATIVE_INT32, h5Type))
     {
-        AddNonStringAttribute<unsigned short>(io, attrName, attrId, h5Type,
-                                              dims[0]);
+        AddNonStringAttribute<int32_t>(io, attrName, attrId, h5Type, dims[0]);
     }
-    else if (H5Tequal(H5T_NATIVE_INT, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT32, h5Type))
     {
-        AddNonStringAttribute<int>(io, attrName, attrId, h5Type, dims[0]);
+        AddNonStringAttribute<uint32_t>(io, attrName, attrId, h5Type, dims[0]);
     }
-    else if (H5Tequal(H5T_NATIVE_UINT, h5Type))
-    {
-        AddNonStringAttribute<unsigned int>(io, attrName, attrId, h5Type,
-                                            dims[0]);
-    }
-    else if (H5Tequal(H5T_STD_I64LE, h5Type))
+    else if (H5Tequal(H5T_NATIVE_INT64, h5Type))
     {
         AddNonStringAttribute<int64_t>(io, attrName, attrId, h5Type, dims[0]);
     }
-    else if (H5Tequal(H5T_STD_U64LE, h5Type))
+    else if (H5Tequal(H5T_NATIVE_UINT64, h5Type))
     {
         AddNonStringAttribute<uint64_t>(io, attrName, attrId, h5Type, dims[0]);
-    }
-    else if (H5Tequal(H5T_NATIVE_LONG, h5Type))
-    {
-        AddNonStringAttribute<long>(io, attrName, attrId, h5Type, dims[0]);
-    }
-    else if (H5Tequal(H5T_NATIVE_ULONG, h5Type))
-    {
-        AddNonStringAttribute<unsigned long>(io, attrName, attrId, h5Type,
-                                             dims[0]);
-    }
-    else if (H5Tequal(H5T_NATIVE_LLONG, h5Type))
-    {
-        AddNonStringAttribute<long long>(io, attrName, attrId, h5Type, dims[0]);
-    }
-    else if (H5Tequal(H5T_NATIVE_ULLONG, h5Type))
-    {
-        AddNonStringAttribute<unsigned long long>(io, attrName, attrId, h5Type,
-                                                  dims[0]);
     }
     else if (H5Tequal(H5T_NATIVE_FLOAT, h5Type))
     {
@@ -1021,7 +1025,7 @@ void HDF5Common::WriteStringAttr(core::IO &io,
         H5Tclose(h5Type);
         H5Aclose(attr);
     }
-    else if (adiosAttr->m_Elements > 1)
+    else if (adiosAttr->m_Elements >= 1)
     {
         // is array
         int max = 0;
@@ -1048,7 +1052,7 @@ void HDF5Common::WriteStringAttr(core::IO &io,
 
         hsize_t onedim[1] = {adiosAttr->m_Elements};
         hid_t s = H5Screate_simple(1, onedim, NULL);
-        hid_t attr = H5Acreate2(parentID, adiosAttr->m_Name.c_str(), h5Type, s,
+        hid_t attr = H5Acreate2(parentID, attrName.c_str(), h5Type, s,
                                 H5P_DEFAULT, H5P_DEFAULT);
         H5Awrite(attr, h5Type, all.c_str());
         H5Sclose(s);
@@ -1077,7 +1081,7 @@ void HDF5Common::WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
         H5Sclose(s);
         H5Aclose(attr);
     }
-    else if (adiosAttr->m_Elements > 1)
+    else if (adiosAttr->m_Elements >= 1)
     {
         hsize_t onedim[1] = {adiosAttr->m_Elements};
         hid_t s = H5Screate_simple(1, onedim, NULL);
@@ -1128,19 +1132,19 @@ void HDF5Common::LocateAttrParent(const std::string &attrName,
                 ts += delimiter;
                 ts += list[j].c_str();
             }
-            if (H5Lexists(m_FileId, ts.c_str(), H5P_DEFAULT) == 0)
+            if (H5Lexists(m_FileId, ts.c_str(), H5P_DEFAULT) <= 0)
                 continue;
             else
             {
                 topId = H5Dopen(m_FileId, ts.c_str(), H5P_DEFAULT);
                 break;
             }
-        }
+        } // for
 
         if (topId != m_FileId)
             parentChain.push_back(topId);
         return;
-    }
+    } // if
 
     // hid_t dsetID = H5Dopen(topId, list.back().c_str(), H5P_DEFAULT);
 
@@ -1174,7 +1178,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         std::string attrType = temp["Type"];
 
         hid_t parentID = m_FileId;
-#ifndef NO_ATTR_VAR_ASSOC
+#ifdef NO_ATTR_VAR_ASSOC
         std::vector<hid_t> chain;
         std::vector<std::string> list;
         LocateAttrParent(attrName, list, chain);
@@ -1184,6 +1188,11 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         {
             parentID = chain.back();
         }
+#else
+        // will list out all attr at root level
+        // to make it easy to be consistant with ADIOS2 attr symantic
+        std::vector<std::string> list;
+        list.push_back(attrName);
 #endif
         // if (H5Aexists(parentID, attrName.c_str()) > 0)
         if (H5Aexists(parentID, list.back().c_str()) > 0)
@@ -1195,7 +1204,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         {
             // not supported
         }
-        else if (attrType == "string")
+        else if (attrType == helper::GetType<std::string>())
         {
             // WriteStringAttr(io, attrName, parentID);
             core::Attribute<std::string> *adiosAttr =
@@ -1211,7 +1220,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
         core::Attribute<T> *adiosAttr = io.InquireAttribute<T>(attrName);      \
         WriteNonStringAttr(io, adiosAttr, parentID, list.back().c_str());      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 
@@ -1342,7 +1351,7 @@ void HDF5Common::StaticGetAdiosStepString(std::string &stepName, int ts)
 #define declare_template_instantiation(T)                                      \
     template void HDF5Common::Write(core::Variable<T> &, const T *);
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace interop

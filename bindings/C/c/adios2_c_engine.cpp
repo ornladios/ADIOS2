@@ -12,6 +12,7 @@
 
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2_c_internal.h"
 
 namespace
 {
@@ -88,6 +89,28 @@ adios2_step_status ToStepStatus(const adios2::StepStatus statusCpp,
 }
 } // end anonymous namespace
 
+adios2_error adios2_engine_name(char *name, size_t *size,
+                                const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for const adios2_engine, in call to adios2_engine_name");
+        adios2::helper::CheckForNullptr(
+            size, "for size_t* size, in call to adios2_engine_name");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        return String2CAPI(engineCpp->m_Name, name, size);
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_name"));
+    }
+}
+
 adios2_error adios2_begin_step(adios2_engine *engine,
                                const adios2_step_mode mode,
                                const float timeout_seconds,
@@ -150,11 +173,15 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
             reinterpret_cast<adios2::core::VariableBase *>(variable);
         const std::string type(variableBase->m_Type);
 
+        const adios2::Mode modeCpp = adios2_ToMode(
+            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
+                  "in call to adios2_put");
+
         if (type == "compound")
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             const std::string dataStr(reinterpret_cast<const char *>(data));
             adios2::core::Engine &engineCpp =
@@ -162,7 +189,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
 
             engineCpp.Put(*dynamic_cast<adios2::core::Variable<std::string> *>(
                               variableBase),
-                          dataStr);
+                          dataStr, modeCpp);
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
@@ -170,15 +197,11 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
         adios2::core::Engine &engineCpp =                                      \
             *reinterpret_cast<adios2::core::Engine *>(engine);                 \
                                                                                \
-        const adios2::Mode modeCpp = adios2_ToMode(                            \
-            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "  \
-                  "in call to adios2_put");                                    \
-                                                                               \
         engineCpp.Put(                                                         \
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<const T *>(data), modeCpp);                       \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         return adios2_error_none;
@@ -215,10 +238,10 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             const std::string dataStr(reinterpret_cast<const char *>(data));
-            engineCpp.Put(variable_name, dataStr);
+            engineCpp.Put(variable_name, dataStr, modeCpp);
         }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
@@ -226,7 +249,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         engineCpp.Put(variable_name, reinterpret_cast<const T *>(data),        \
                       modeCpp);                                                \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -274,7 +297,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             adios2::core::Engine &engineCpp =
                 *reinterpret_cast<adios2::core::Engine *>(engine);
@@ -297,7 +320,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<T *>(values), modeCpp);                           \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -331,7 +354,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
         {
             // not supported
         }
-        else if (type == "string")
+        else if (type == adios2::helper::GetType<std::string>())
         {
             std::string dataStr;
             engineCpp.Get(variable_name, dataStr);
@@ -342,7 +365,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
     {                                                                          \
         engineCpp.Get(variable_name, reinterpret_cast<T *>(data), modeCpp);    \
     }
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }

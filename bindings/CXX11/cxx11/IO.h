@@ -48,6 +48,7 @@ public:
      */
     IO() = default;
 
+    /** Use RAII */
     ~IO() = default;
 
     /** true: valid object, false: invalid object */
@@ -229,7 +230,8 @@ public:
 
     /**
      * Open an Engine to start heavy-weight input/output operations.
-     * Reuses ADIOS object communicator
+     * This version reuses the ADIOS object communicator
+     * MPI Collective function as it calls MPI_Comm_dup
      * @param name unique engine identifier
      * @param mode adios2::Mode::Write, adios2::Mode::Read, or
      *             adios2::Mode::Append (not yet support)
@@ -240,7 +242,9 @@ public:
 #ifdef ADIOS2_HAVE_MPI
     /**
      * Open an Engine to start heavy-weight input/output operations.
-     * New MPI communicator version
+     * This version allows passing a MPI communicator different from the one
+     * used in the ADIOS object contructor
+     * MPI Collective function as it calls MPI_Comm_dup
      * @param name unique engine identifier within IO
      * @param mode adios2::Mode::Write, adios2::Mode::Read, or
      *             adios2::Mode::Append (not yet support)

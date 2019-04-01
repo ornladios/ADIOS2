@@ -12,7 +12,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.3.0)
+project(ADIOS2 VERSION 2.3.1)
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
@@ -20,16 +20,15 @@ endif()
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
   CACHE STRING "Installation CMake subdirectory")
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
+
+# On Mac OS X, set the dir. included as part of the installed library's path:
+if (BUILD_SHARED_LIBS AND NOT DEFINED CMAKE_INSTALL_NAME_DIR)
+  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+endif ()
 
 list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -49,6 +48,15 @@ endif()
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
 #------------------------------------------------------------------------------#
+# RPATH defaults
+#------------------------------------------------------------------------------#
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
+  set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+endif()
+
+#------------------------------------------------------------------------------#
 # Silence MSVC warnings
 #------------------------------------------------------------------------------#
 
@@ -60,6 +68,11 @@ if(MSVC)
     -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
   )
 endif()
+
+#------------------------------------------------------------------------------#
+# Deal with any pre-installation cleanup tasks
+#------------------------------------------------------------------------------#
+add_subdirectory(cmake/install/pre)
 
 #------------------------------------------------------------------------------#
 # Top level options
@@ -81,17 +94,22 @@ endif()
 
 # Use meta-compile features if available, otherwise use specific language
 # features
-if(NOT (CMAKE_VERSION VERSION_LESS 3.9))
-  set(ADIOS2_CXX11_FEATURES cxx_std_11)
-  set(ADIOS2_C99_FEATURES c_std_99)
-else()
+if(CMAKE_VERSION VERSION_LESS 3.9 OR
+   CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_CXX11_FEATURES cxx_auto_type cxx_nullptr)
+else()
+  set(ADIOS2_CXX11_FEATURES cxx_std_11)
+endif()
+if(CMAKE_VERSION VERSION_LESS 3.9 OR
+   CMAKE_C_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
   set(ADIOS2_C99_FEATURES c_restrict)
+else()
+  set(ADIOS2_C99_FEATURES c_std_99)
 endif()
 
 include(CMakeDependentOption)
 
-# Setup shared library defaults.  If explicitly specified somehow, then default 
+# Setup shared library defaults.  If explicitly specified somehow, then default
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
@@ -132,8 +150,7 @@ if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-  BZip2 ZFP SZ MGARD MPI DataMan SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem
-  Endian_Reverse
+    BZip2 ZFP SZ MGARD MPI DataMan WDM SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
@@ -144,13 +161,6 @@ configure_file(
 
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
-)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
-  PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
-)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/upstream/FindMPI
-  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}/upstream
 )
 
 #------------------------------------------------------------------------------#
@@ -201,7 +211,12 @@ endif()
 #------------------------------------------------------------------------------#
 # Generating package configs
 #------------------------------------------------------------------------------#
-GenerateADIOSPackageConfig()
+add_subdirectory(cmake/install/packaging)
+
+#------------------------------------------------------------------------------#
+# Generating static adios-config
+#------------------------------------------------------------------------------#
+add_subdirectory(cmake/install/post)
 
 #------------------------------------------------------------------------------#
 # Configuration summary

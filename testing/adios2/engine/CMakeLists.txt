@@ -5,6 +5,7 @@
 
 add_subdirectory(bp)
 add_subdirectory(skeleton)
+add_subdirectory(inline)
 
 if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5)
@@ -21,6 +22,6 @@ endif()
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(common)
   add_subdirectory(insitumpi)
-  add_subdirectory(staging-common)
 endif()
 
+add_subdirectory(staging-common)

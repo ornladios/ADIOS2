@@ -28,7 +28,7 @@ std::vector<adios2::Params> transportParams = {{
 }};
 
 // data properties
-size_t steps = 100;
+size_t steps = 1;
 adios2::Dims shape({10, 10});
 adios2::Dims start({0, 0});
 adios2::Dims count({6, 8});

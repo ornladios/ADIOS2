@@ -253,7 +253,7 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
 
     if (adiostype == adios2_type_string)
     {
-        mexPrintf("Create Matlab string from C string [%s]\n", (char*)data);
+        mexPrintf("Create Matlab string from C string [%s]\n", (char *)data);
         out = mxCreateString((char *)data);
         mxFree(data);
     }
@@ -340,47 +340,27 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
     *complexity = mxREAL;
     switch (adiostype)
     {
-    case adios2_type_unsigned_char:
     case adios2_type_uint8_t:
         return mxUINT8_CLASS;
-    case adios2_type_char:
-    case adios2_type_signed_char:
     case adios2_type_int8_t:
         return mxINT8_CLASS;
 
     case adios2_type_string:
-    /* case adios2_type_string_array: */
+        /* case adios2_type_string_array: */
         return mxCHAR_CLASS;
 
-    case adios2_type_unsigned_short:
     case adios2_type_uint16_t:
         return mxUINT16_CLASS;
-    case adios2_type_short:
     case adios2_type_int16_t:
         return mxINT16_CLASS;
 
-    case adios2_type_unsigned_int:
     case adios2_type_uint32_t:
         return mxUINT32_CLASS;
-    case adios2_type_int:
     case adios2_type_int32_t:
         return mxINT32_CLASS;
 
-    case adios2_type_unsigned_long_int:
-        if (sizeof(long int) == 4)
-            return mxUINT32_CLASS;
-        else
-            return mxUINT64_CLASS;
-    case adios2_type_long_int:
-        if (sizeof(long int) == 4)
-            return mxINT32_CLASS;
-        else
-            return mxINT64_CLASS;
-
-    case adios2_type_unsigned_long_long_int:
     case adios2_type_uint64_t:
         return mxUINT64_CLASS;
-    case adios2_type_long_long_int:
     case adios2_type_int64_t:
         return mxINT64_CLASS;
 

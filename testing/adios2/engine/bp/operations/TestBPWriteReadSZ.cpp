@@ -13,6 +13,8 @@
 
 #include <gtest/gtest.h>
 
+std::string engineName; // comes from command line
+
 void SZAccuracy1D(const double accuracy)
 {
     // Each process would write a 1x8 array and all processes would
@@ -47,6 +49,16 @@ void SZAccuracy1D(const double accuracy)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -77,6 +89,16 @@ void SZAccuracy1D(const double accuracy)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -163,6 +185,16 @@ void SZAccuracy2D(const double accuracy)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -193,6 +225,16 @@ void SZAccuracy2D(const double accuracy)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -282,6 +324,16 @@ void SZAccuracy3D(const double accuracy)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny, Nz};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
@@ -312,6 +364,16 @@ void SZAccuracy3D(const double accuracy)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -401,6 +463,16 @@ void SZAccuracy1DSel(const double accuracy)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -431,6 +503,16 @@ void SZAccuracy1DSel(const double accuracy)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -519,6 +601,16 @@ void SZAccuracy2DSel(const double accuracy)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -549,6 +641,16 @@ void SZAccuracy2DSel(const double accuracy)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -640,6 +742,16 @@ void SZAccuracy3DSel(const double accuracy)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny, Nz};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
@@ -670,6 +782,16 @@ void SZAccuracy3DSel(const double accuracy)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -765,6 +887,16 @@ void SZAccuracy2DSmallSel(const double accuracy)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), Ny};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
@@ -795,6 +927,16 @@ void SZAccuracy2DSmallSel(const double accuracy)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -879,6 +1021,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

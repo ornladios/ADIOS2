@@ -2,7 +2,7 @@
 bpls
 ****
 
-The `bpls` utility is for examining and pretty-printing the content of ADIOS output files (BP and HDF5 files).
+The ``bpls`` utility is for examining and pretty-printing the content of ADIOS output files (BP and HDF5 files).
 By default, it lists the variables in the file including the type, name, and dimensionality. 
 
 Let's assume we run the Heat Transfer tutorial example and produce the output by
@@ -21,18 +21,19 @@ Let's assume we run the Heat Transfer tutorial example and produce the output by
       double   T     3*{15, 16}
       double   dT    3*{15, 16}
 
-In our example, we have two arrays, `T` and `dT`. Both are 2-dimensional `double` arrays, their global size is `15x16` and the file contains `3 output steps` of these arrays.
+In our example, we have two arrays, ``T`` and ``dT``.
+Both are 2-dimensional ``double`` arrays, their global size is ``15x16`` and the file contains ``3 output steps`` of these arrays.
 
 .. note::
 
-    bpls is written in C++ and therefore sees the order of the dimensions in `row major`. If the data was written from Fortran in column-major order, you will see the dimension order flipped when listing with bpls, just as a code written in C++ or python would see the data. 
+    bpls is written in C++ and therefore sees the order of the dimensions in *row major*. If the data was written from Fortran in column-major order, you will see the dimension order flipped when listing with bpls, just as a code written in C++ or python would see the data. 
 
  
 Here is the description of the most used options
-(use `bpls -h` to print help on all options for this utility).
+(use ``bpls -h`` to print help on all options for this utility).
 
 
-* **-l**
+* ``-l``
 
   Print the min/max of the arrays and the values of scalar values
   
@@ -43,9 +44,9 @@ Here is the description of the most used options
       double   dT    3*{15, 16} = -53.1922 / 49.7861
 
 
-* **-a** **-A**
+* ``-a`` ``-A``
 
-  List the attributes along with the variables. `-A` will print the attributes only.
+  List the attributes along with the variables. ``-A`` will print the attributes only.
 
   .. code-block:: bash
 
@@ -57,7 +58,7 @@ Here is the description of the most used options
       string   dT/description  attr   = "Temperature difference between two steps calculated in analysis"
 
 
-* `pattern`, **-e** 
+* ``pattern``, ``-e`` 
 
   Select which variables/attributes to list or dump. By default the pattern(s) are interpreted as shell file patterns.
 
@@ -84,7 +85,7 @@ Here is the description of the most used options
       string   T/description   attr   = "Temperature from simulation"
       string   T/unit          attr   = "C"
 
-* **-D**
+* ``-D``
 
   Print the decomposition of a variable. In the BP file, the data blocks written by different writers are stored separately and have their own size info and min/max statistics. This option is useful at code development to check if the output file is written the way intended.
 
@@ -106,14 +107,14 @@ Here is the description of the most used options
           block 1: [ 5: 9,  0:15] = 74.064 / 170.002
           block 2: [10:14,  0:15] = 48.0431 / 147.87
 
-  In this case we find 3 blocks per output step and 3 output steps. We can see that the variable `T` was decomposed in the first (slow) dimension. In the above example, the `T` variable in the simulation output (sim.bp) had 12 blocks per step, but the analysis code was running on 3 processes, effectively reorganizing the data into fewer larger blocks.
+  In this case we find 3 blocks per output step and 3 output steps. We can see that the variable ``T`` was decomposed in the first (slow) dimension. In the above example, the ``T`` variable in the simulation output (``sim.bp``) had 12 blocks per step, but the analysis code was running on 3 processes, effectively reorganizing the data into fewer larger blocks.
 
 
-* **-d**
+* ``-d``
 
-  Dump the data content of a variable. For pretty-printing, one should use the additional `-n` and `-f` options. For selecting only a subset of a variable, one should use the `-s` and `-c` options.
+  Dump the data content of a variable. For pretty-printing, one should use the additional ``-n`` and ``-f`` options. For selecting only a subset of a variable, one should use the ``-s`` and ``-c`` options.
 
-  By default, six values are printed per line and using C style `-g` prints for floating point values. 
+  By default, six values are printed per line and using C style ``-g`` prints for floating point values. 
 
   .. code-block:: bash
 
@@ -128,7 +129,7 @@ Here is the description of the most used options
 
 
 
-  For pretty-printing, use the additional `-n` and `-f` options. 
+  For pretty-printing, use the additional ``-n`` and ``-f`` options. 
 
   .. code-block:: bash
 
@@ -142,9 +143,9 @@ Here is the description of the most used options
         (2,14, 0)     96  96  93  93 106 117 111 102  93  85  75  70  81  94  95  95
 
 
-  For selecting a subset of a variable, use the `-s` and `-c` options. These options are N+1 dimensional for N-dimensional arrays with more than one steps. The first element of the options are used to select the starting step and the number of steps to print. 
+  For selecting a subset of a variable, use the ``-s`` and ``-c`` options. These options are N+1 dimensional for N-dimensional arrays with more than one steps. The first element of the options are used to select the starting step and the number of steps to print. 
 
-  The following example dumps a 4x4 small subset from the center of the array, one step from the second (middle) step: 
+  The following example dumps a ``4x4`` small subset from the center of the array, one step from the second (middle) step: 
 
   .. code-block:: bash
 
@@ -156,9 +157,9 @@ Here is the description of the most used options
         (1,8, 7)    145.794 133.44 121.086 108.49
         (1,9, 7)    144.09 131.737 119.383 106.787
 
-* **-y** **\-\-noindex**
+* ``-y`` ``--noindex``
 
-  Data can be dumped in a format that is easier to import later into other tools, like Excel. The leading array indexes can be omitted by using this option. Non-data lines, like the variable and slice info, are printed with a starting ";".
+  Data can be dumped in a format that is easier to import later into other tools, like Excel. The leading array indexes can be omitted by using this option. Non-data lines, like the variable and slice info, are printed with a starting ``;``.
 
   .. code-block:: bash
 

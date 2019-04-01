@@ -89,15 +89,15 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
 
     if (m_DebugMode)
     {
-        if (m_Type == helper::GetType<std::string>())
+        if (m_Type == helper::GetType<std::string>() &&
+            m_ShapeID != ShapeID::GlobalArray)
         {
-            throw std::invalid_argument(
-                "ERROR: string variable " + m_Name +
-                " is always LocalValue, it can't have a "
-                "selection, in call to SetSelection\n");
+            throw std::invalid_argument("ERROR: string variable " + m_Name +
+                                        " not a GlobalArray, it can't have a "
+                                        "selection, in call to SetSelection\n");
         }
 
-        if (m_SingleValue)
+        if (m_SingleValue && m_ShapeID != ShapeID::GlobalArray)
         {
             throw std::invalid_argument(
                 "ERROR: selection is not valid for single value variable " +
@@ -118,15 +118,6 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
                                         "same size as shape for variable " +
                                         m_Name + ", in call to SetSelection\n");
         }
-
-        //        if (m_ShapeID == ShapeID::LocalArray && !start.empty())
-        //        {
-        //            throw std::invalid_argument("ERROR: start argument must be
-        //            empty "
-        //                                        "for local array variable " +
-        //                                        m_Name + ", in call to
-        //                                        SetSelection\n");
-        //        }
 
         if (m_ShapeID == ShapeID::JoinedArray && !start.empty())
         {
@@ -263,11 +254,6 @@ void VariableBase::CheckDimensions(const std::string hint) const
     CheckDimensionsCommon(hint);
 }
 
-size_t VariableBase::SelectionSize() const noexcept
-{
-    return helper::GetTotalSize(m_Count) * m_StepsCount;
-}
-
 bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; };
 void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; };
 
@@ -316,7 +302,7 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
 // PRIVATE
 void VariableBase::InitShapeType()
 {
-    if (m_DebugMode && m_Type == GetType<std::string>())
+    if (m_DebugMode && m_Type == helper::GetType<std::string>())
     {
         if (m_Shape.empty())
         {
@@ -387,18 +373,18 @@ void VariableBase::InitShapeType()
         {
             if (m_DebugMode)
             {
-                auto lf_LargerThanError =
-                    [&](const unsigned int i, const std::string dims1,
-                        const size_t dims1Value, const std::string dims2,
-                        const size_t dims2Value) {
-
-                        const std::string iString(std::to_string(i));
-                        throw std::invalid_argument(
-                            "ERROR: " + dims1 + "[" + iString + "] = " +
-                            std::to_string(dims1Value) + " > " + dims2 + "[" +
-                            iString + "], = " + std::to_string(dims2Value) +
-                            " in DefineVariable " + m_Name + "\n");
-                    };
+                auto lf_LargerThanError = [&](const unsigned int i,
+                                              const std::string dims1,
+                                              const size_t dims1Value,
+                                              const std::string dims2,
+                                              const size_t dims2Value) {
+                    const std::string iString(std::to_string(i));
+                    throw std::invalid_argument(
+                        "ERROR: " + dims1 + "[" + iString +
+                        "] = " + std::to_string(dims1Value) + " > " + dims2 +
+                        "[" + iString + "], = " + std::to_string(dims2Value) +
+                        " in DefineVariable " + m_Name + "\n");
+                };
 
                 for (unsigned int i = 0; i < m_Shape.size(); ++i)
                 {

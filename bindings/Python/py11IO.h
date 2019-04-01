@@ -18,6 +18,7 @@
 #include "py11Attribute.h"
 #include "py11Engine.h"
 #include "py11Variable.h"
+#include "py11types.h"
 
 namespace adios2
 {
@@ -87,7 +88,7 @@ public:
     Engine Open(const std::string &name, const int openMode);
 
 #ifdef ADIOS2_HAVE_MPI
-    Engine Open(const std::string &name, const Mode mode, MPI_Comm comm);
+    Engine Open(const std::string &name, const int openMode, MPI4PY_Comm comm);
 #endif
 
     void FlushAll();

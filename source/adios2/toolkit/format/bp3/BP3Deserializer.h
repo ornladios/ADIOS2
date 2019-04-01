@@ -131,6 +131,10 @@ public:
     AllStepsBlocksInfo(const core::Variable<T> &variable) const;
 
     template <class T>
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+    AllRelativeStepsBlocksInfo(const core::Variable<T> &variable) const;
+
+    template <class T>
     std::vector<typename core::Variable<T>::Info>
     BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
 
@@ -160,6 +164,14 @@ public:
 
     // TODO: will deprecate
     bool m_PerformedGets = false;
+
+    /**
+     * Gets metadata start position from current m_Metadata buffer
+     * @param bufferSTL minifooter only buffer
+     * @return metadata start position (0 for metadata files, greater than zero
+     * for single bp files)
+     */
+    size_t MetadataStart(const BufferSTL &bufferSTL);
 
 private:
     std::map<std::string, helper::SubFileInfoMap> m_DeferredVariablesMap;
@@ -228,7 +240,7 @@ private:
     extern template void BP3Deserializer::GetValueFromMetadata(                \
         core::Variable<T> &variable, T *) const;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 #define declare_template_instantiation(T)                                      \
@@ -247,6 +259,10 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
                              std::vector<typename core::Variable<T>::Info>>    \
     BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &) const;      \
                                                                                \
+    extern template std::vector<std::vector<typename core::Variable<T>::Info>> \
+    BP3Deserializer::AllRelativeStepsBlocksInfo(const core::Variable<T> &)     \
+        const;                                                                 \
+                                                                               \
     extern template std::vector<typename core::Variable<T>::Info>              \
     BP3Deserializer::BlocksInfo(const core::Variable<T> &, const size_t)       \
         const;                                                                 \
@@ -260,7 +276,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         core::Variable<T> &, typename core::Variable<T>::Info &,               \
         const helper::SubStreamBoxInfo &, const bool, const size_t);
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format

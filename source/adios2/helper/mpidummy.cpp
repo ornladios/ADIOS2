@@ -54,6 +54,12 @@ int MPI_Initialized(int *flag)
     return MPI_SUCCESS;
 }
 
+int MPI_Finalized(int *flag)
+{
+    *flag = 0;
+    return MPI_SUCCESS;
+}
+
 int MPI_Comm_split(MPI_Comm /*comm*/, int /*color*/, int /*key*/,
                    MPI_Comm * /*comm_out*/)
 {
@@ -451,6 +457,12 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
     }
 
     return 0;
+}
+
+int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
+                  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+    return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
 }
 
 } // end namespace mpi

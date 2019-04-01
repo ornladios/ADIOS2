@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include <adios2/ADIOSTypes.h>
+
 namespace adios2
 {
 
@@ -31,14 +33,16 @@ class Attribute; // private implementation
 template <class T>
 class Attribute
 {
+    using IOType = typename TypeInfo<T>::IOType;
+
     friend class IO;
 
 public:
     /**
-    * Empty (default) constructor, use it as a placeholder for future
-    * attributes from IO:DefineAttribute<T> or IO:InquireAttribute<T>.
-    * Can be used with STL containers.
-    */
+     * Empty (default) constructor, use it as a placeholder for future
+     * attributes from IO:DefineAttribute<T> or IO:InquireAttribute<T>.
+     * Can be used with STL containers.
+     */
     Attribute<T>() = default;
     ~Attribute<T>() = default;
 
@@ -64,8 +68,8 @@ public:
     std::vector<T> Data() const;
 
 private:
-    Attribute<T>(core::Attribute<T> *attribute);
-    core::Attribute<T> *m_Attribute = nullptr;
+    Attribute<T>(core::Attribute<IOType> *attribute);
+    core::Attribute<IOType> *m_Attribute = nullptr;
 };
 
 } // end namespace adios2

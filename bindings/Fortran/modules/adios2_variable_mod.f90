@@ -20,11 +20,15 @@ contains
         integer, intent(out) :: ierr
 
         !local
-        character(len=4096) :: c_name
         integer :: length
 
-        call adios2_variable_name_f2c(c_name, length, variable%f2c, ierr)
-        call adios2_StringC2F(c_name, length, name)
+        if (allocated(name)) deallocate (name)
+
+        call adios2_variable_name_length_f2c(length, variable%f2c, ierr)
+        if (ierr == 0) then
+            allocate (character(length) :: name)
+            call adios2_variable_name_f2c(name, variable%f2c, ierr)
+        end if
 
     end subroutine
 

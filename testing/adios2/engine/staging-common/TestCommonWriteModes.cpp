@@ -62,7 +62,11 @@ static adios2::Params ParseEngineParams(std::string Input)
     return Ret;
 }
 
-// ADIOS2 SST write
+#ifdef ADIOS2_HAVE_MPI
+MPI_Comm testComm;
+#endif
+
+// ADIOS2 common write
 TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 {
     // form a mpiSize * Nx 1D array
@@ -72,14 +76,14 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     const std::size_t NSteps = 10;
 
 #ifdef ADIOS2_HAVE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+    adios2::ADIOS adios(testComm, adios2::DebugON);
 #else
     adios2::ADIOS adios(true);
 #endif
@@ -146,7 +150,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     {
         adios2::Mode WriteMode;
         // Generate test data for each process uniquely
-        generateCommonTestData(step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -231,6 +235,12 @@ int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI
     MPI_Init(nullptr, nullptr);
+
+    int key;
+    MPI_Comm_rank(MPI_COMM_WORLD, &key);
+
+    const unsigned int color = 1;
+    MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
 #endif
 
     int result;

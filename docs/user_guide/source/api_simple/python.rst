@@ -2,7 +2,7 @@
 Python simple bindings
 **********************
 
-Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, the rely on numpy and (optionally) on mpi4py.
+Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, the rely on numpy and (optionally) on ``mpi4py``.
 
 Write example
 -------------
@@ -71,7 +71,7 @@ Read "stepping/streaming" example
 
 .. caution::
    
-   When reading in stepping mode with the for-in directive, as in the example above, use the step handler (fh_step) inside the loop rather than the global handler (fh) 
+   When reading in stepping mode with the for-in directive, as in the example above, use the step handler (``fh_step``) inside the loop rather than the global handler (``fh``) 
 
 
 

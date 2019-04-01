@@ -38,7 +38,7 @@ void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
         CopyEndianReverse<T>(src, payloadStride, reinterpret_cast<T *>(dest)); \
     }
 
-        ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
     else
@@ -285,6 +285,11 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                         srcMemCount, endianReverse, destType);
     }
 }
+
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+template void CopyEndianReverse(const char *src, const size_t payloadStride,
+                                char *dest);
+#endif
 
 } // end namespace helper
 } // end namespace adios2

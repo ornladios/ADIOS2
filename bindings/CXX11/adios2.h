@@ -20,6 +20,7 @@
 #include "cxx11/Engine.h"
 #include "cxx11/IO.h"
 #include "cxx11/Operator.h"
+#include "cxx11/Types.h"
 #include "cxx11/Variable.h"
 #include "cxx11/fstream/ADIOS2fstream.h"
 

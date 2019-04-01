@@ -11,65 +11,39 @@
 #ifndef ADIOS2_BINDINGS_PYTHON_PY11TYPES_H_
 #define ADIOS2_BINDINGS_PYTHON_PY11TYPES_H_
 
-#include <string>
+#include <adios2.h>
 
 namespace adios2
 {
 namespace py11
 {
 
+#ifdef ADIOS2_HAVE_MPI
+
+/**
+ * MPI4PY_Comm provides automatic conversion of Python mpi4py communicators to
+ * the C++ MPI4PY_Comm type, which in itself implicitly converts to a MPI_Comm.
+ *
+ * The actual work is done by the caster in py11glue.cpp
+ */
+struct MPI4PY_Comm
+{
+    MPI_Comm comm;
+
+    // allow implicit conversion to MPI_Comm
+    operator MPI_Comm() { return comm; }
+};
+
+#endif
+
 #define ADIOS2_FOREACH_PYTHON_TYPE_1ARG(MACRO)                                 \
-    MACRO(std::string)                                                         \
-    MACRO(char)                                                                \
-    MACRO(signed char)                                                         \
-    MACRO(unsigned char)                                                       \
-    MACRO(short)                                                               \
-    MACRO(unsigned short)                                                      \
-    MACRO(int)                                                                 \
-    MACRO(unsigned int)                                                        \
-    MACRO(long int)                                                            \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long int)                                                   \
-    MACRO(unsigned long long int)                                              \
-    MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)                                                         \
-    MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)
+    ADIOS2_FOREACH_STDTYPE_1ARG(MACRO)
 
 #define ADIOS2_FOREACH_NUMPY_TYPE_1ARG(MACRO)                                  \
-    MACRO(char)                                                                \
-    MACRO(signed char)                                                         \
-    MACRO(unsigned char)                                                       \
-    MACRO(short)                                                               \
-    MACRO(unsigned short)                                                      \
-    MACRO(int)                                                                 \
-    MACRO(unsigned int)                                                        \
-    MACRO(long int)                                                            \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long int)                                                   \
-    MACRO(unsigned long long int)                                              \
-    MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)                                                         \
-    MACRO(std::complex<float>)                                                 \
-    MACRO(std::complex<double>)
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)
 
 #define ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(MACRO)                        \
-    MACRO(char)                                                                \
-    MACRO(signed char)                                                         \
-    MACRO(unsigned char)                                                       \
-    MACRO(short)                                                               \
-    MACRO(unsigned short)                                                      \
-    MACRO(int)                                                                 \
-    MACRO(unsigned int)                                                        \
-    MACRO(long int)                                                            \
-    MACRO(long long int)                                                       \
-    MACRO(unsigned long int)                                                   \
-    MACRO(unsigned long long int)                                              \
-    MACRO(float)                                                               \
-    MACRO(double)                                                              \
-    MACRO(long double)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)
 
 } // end namespace py11
 } // end namespace adios2

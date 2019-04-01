@@ -41,7 +41,7 @@ Params &Operator::GetParameters() noexcept { return m_Parameters; }
     {                                                                          \
         CheckCallbackType("Callback1");                                        \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void Operator::RunCallback2(void *arg0, const std::string &arg1,

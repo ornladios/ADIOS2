@@ -1,5 +1,6 @@
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <math.h>
 #include <stdexcept>
@@ -184,6 +185,25 @@ int main(int argc, char *argv[])
                         }
                         std::this_thread::sleep_for(
                             std::chrono::microseconds(cmdS->sleepTime_us));
+                        break;
+                    }
+                    case Operation::Busy:
+                    {
+                        auto cmdS =
+                            dynamic_cast<const CommandBusy *>(cmd.get());
+                        std::chrono::high_resolution_clock::time_point start =
+                            std::chrono::high_resolution_clock::now();
+                        if (!settings.myRank && settings.verbose)
+                        {
+                            double t = static_cast<double>(cmdS->busyTime_us) /
+                                       1000000.0;
+                            std::cout << "    Be busy for " << t << "  seconds "
+                                      << std::endl;
+                        }
+                        while (std::chrono::high_resolution_clock::now() <
+                               start +
+                                   std::chrono::microseconds(cmdS->busyTime_us))
+                            ;
                         break;
                     }
                     case Operation::Write:

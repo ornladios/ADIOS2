@@ -77,7 +77,8 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 
 .. caution::
 
-   Use the type read-only components for information purposes only. Changing their values directly, *e.g.* `variable%name = new_name` does not have any effect inside the adios2 library 
+   Use the type read-only components for information purposes only.
+   Changing their values directly, *e.g.* ``variable%name = new_name`` does not have any effect inside the adios2 library 
    
 
 :ref:`ADIOS` subroutines
@@ -254,8 +255,8 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 
 .. tip::
 
-   Always prefer using adios2_type_xxx parameters explicitly rather than raw numbers. 
-   `e.g.` use ``adios2_type_dp`` instead of ``3``
+   Always prefer using ``adios2_type_xxx`` parameters explicitly rather than raw numbers. 
+   *e.g.* use ``adios2_type_dp`` instead of ``3``
   
   
                
@@ -361,7 +362,9 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 
 ..  caution::
 
-   Use the adios2_remove_* subroutines with extreme CAUTION. They create outdated dangling information in the adios2_type handlers. If you don't need them, don't use them. 
+   Use the ``adios2_remove_*`` subroutines with extreme CAUTION.
+   They create outdated dangling information in the ``adios2_type`` handlers.
+   If you don't need them, don't use them. 
 
 
 * :f90:`subroutine adios2_remove_variable` remove existing variable by its unique name
@@ -472,7 +475,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 :ref:`Variable` subroutines
 ---------------------------
 
-* :f90:`subroutine adios2_set_shape` set new shape_dims if dims are variable in adios2_define_variable
+* :f90:`subroutine adios2_set_shape` set new ``shape_dims`` if dims are variable in ``adios2_define_variable``
    
    .. code-block:: fortran
    
@@ -638,7 +641,10 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       type(adios2_engine), intent(in) :: engine
       
       
-* :f90:`subroutine adios2_get` get variable data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`. Variable and data types must match, variable can be obtained from adios2_inquire_variable. Data must be pre-allocated.
+* :f90:`subroutine adios2_get` get variable data into adios2 for IO operations.
+Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`.
+Variable and data types must match, variable can be obtained from ``adios2_inquire_variable``.
+Data must be pre-allocated.
    
    .. code-block:: fortran
    
@@ -673,7 +679,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       integer, intent(in):: adios2_mode
       
       
-* :f90:`subroutine adios2_perform_gets` executes deferred calls to adios2_get
+* :f90:`subroutine adios2_perform_gets` executes deferred calls to ``adios2_get``
       
    .. code-block:: fortran
    

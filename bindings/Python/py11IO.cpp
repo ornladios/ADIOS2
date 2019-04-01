@@ -13,6 +13,10 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi4py/mpi4py.h>
+#endif
+
 #include "py11types.h"
 
 namespace adios2
@@ -203,7 +207,7 @@ Attribute IO::InquireAttribute(const std::string &name)
     {                                                                          \
         attribute = m_IO->InquireAttribute<T>(name);                           \
     }
-    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
     return Attribute(attribute);
@@ -243,12 +247,12 @@ Engine IO::Open(const std::string &name, const int mode)
 }
 
 #ifdef ADIOS2_HAVE_MPI
-Engine IO::Open(const std::string &name, const Mode mode, MPI_Comm comm)
+Engine IO::Open(const std::string &name, const int mode, MPI4PY_Comm comm)
 {
     helper::CheckForNullptr(m_IO,
                             "for engine " + name + ", in call to IO::Open");
-    return Engine(
-        &m_IO->Open(name, static_cast<adios2::Mode>(mode), m_IO->m_MPIComm));
+
+    return Engine(&m_IO->Open(name, static_cast<adios2::Mode>(mode), comm));
 }
 #endif
 

@@ -2,7 +2,8 @@
 Fortran simple bindings
 ***********************
 
-The Fortran simple API bindings are based on the C adios2_FILE* interface and the native Fortran IO ``advance`` parameter for stepping at write and read. They consists only on subroutines and a single ``type(adios2_file)`` handler for adios2 streams.
+The Fortran simple API bindings are based on the C ``adios2_FILE*`` interface and the native Fortran IO ``advance`` parameter for stepping at write and read.
+They consists only on subroutines and a single ``type(adios2_file)`` handler for adios2 streams.
 
 On the read side, allocatable arrays must be passed without pre-allocation. ADIOS2 allocates the array memory based on the read selection dimensions and steps. 
 

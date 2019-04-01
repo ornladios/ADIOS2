@@ -105,7 +105,6 @@ void FC_GLOBAL(adios2_inquire_operator_f2c,
                                             adios2_adios **adios,
                                             const char *op_name, int *ierr)
 {
-
     *op = adios2_inquire_operator(*adios, op_name);
     *ierr = (*op == NULL) ? static_cast<int>(adios2_error_exception)
                           : static_cast<int>(adios2_error_none);
@@ -115,6 +114,24 @@ void FC_GLOBAL(adios2_flush_all_f2c, ADIOS2_FLUSH_ALL_F2C)(adios2_adios **adios,
                                                            int *ierr)
 {
     *ierr = static_cast<int>(adios2_flush_all(*adios));
+}
+
+void FC_GLOBAL(adios2_remove_io_f2c,
+               ADIOS2_REMOVE_IO_F2C)(int *result, adios2_adios **adios,
+                                     const char *name, int *ierr)
+{
+    adios2_bool resultC;
+    *ierr = static_cast<int>(adios2_remove_io(&resultC, *adios, name));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *result = (resultC == adios2_true) ? 1 : 0;
+    }
+}
+
+void FC_GLOBAL(adios2_remove_all_ios_f2c,
+               ADIOS2_REMOVE_ALL_IOS_F2C)(adios2_adios **adios, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_remove_all_ios(*adios));
 }
 
 void FC_GLOBAL(adios2_finalize_f2c, ADIOS2_FINALIZE_F2C)(adios2_adios **adios,

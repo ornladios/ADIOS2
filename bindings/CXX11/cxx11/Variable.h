@@ -34,6 +34,7 @@ class Variable; // private implementation
 template <class T>
 class Variable
 {
+    using IOType = typename TypeInfo<T>::IOType;
 
     friend class IO;
     friend class Engine;
@@ -236,17 +237,71 @@ public:
     /** Contains sub-block information for a particular Variable<T> */
     struct Info
     {
-        adios2::Dims Start; ///< block start
-        adios2::Dims Count; ///< block count
-        T Min = T();        ///< block Min, if IsValue is false
-        T Max = T();        ///< block Max, if IsValue is false
-        T Value = T();      ///< block Value, if IsValue is true
-        bool IsValue;       ///< true: value, false: array
+        adios2::Dims Start;      ///< block start
+        adios2::Dims Count;      ///< block count
+        IOType Min = IOType();   ///< block Min, if IsValue is false
+        IOType Max = IOType();   ///< block Max, if IsValue is false
+        IOType Value = IOType(); ///< block Value, if IsValue is true
+        bool IsValue = false;    ///< true: value, false: array
+        size_t BlockID = 0;      ///< block ID for block selections
+        size_t Step = 0;
+        const T *Data() const;
+
+        // allow Engine to set m_Info
+        friend class Engine;
+
+    private:
+        class CoreInfo;
+        const CoreInfo *m_Info;
+    };
+
+    /**
+     * Read mode only and random-access (no BeginStep/EndStep) with file engines
+     * only. Allows inspection of variable info on a per relative step (returned
+     * vector index)
+     * basis
+     * @return first vector: relative steps, second vector: blocks info within a
+     * step
+     */
+    std::vector<std::vector<typename Variable<T>::Info>> AllStepsBlocksInfo();
+
+    class Span
+    {
+    public:
+        Span() = delete;
+        Span(const Span &) = delete;
+        Span(Span &&) = default;
+        ~Span() = default;
+
+        Span &operator=(const Span &) = delete;
+        Span &operator=(Span &&) = default;
+
+        size_t size() const noexcept;
+        T *data() const noexcept;
+
+        T &at(const size_t position);
+        const T &at(const size_t position) const;
+
+        T &operator[](const size_t position);
+        const T &operator[](const size_t position) const;
+
+        // engine allowed to set m_Span
+        friend class Engine;
+
+        ADIOS2_CLASS_iterator;
+        ADIOS2_iterators_functions(data(), size());
+
+    private:
+        class CoreSpan;
+        Span(CoreSpan *span);
+        CoreSpan *m_Span = nullptr;
     };
 
 private:
-    Variable<T>(core::Variable<T> *variable);
-    core::Variable<T> *m_Variable = nullptr;
+    Variable<T>(core::Variable<IOType> *variable);
+    core::Variable<IOType> *m_Variable = nullptr;
+
+    std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
 };
 
 } // end namespace adios2

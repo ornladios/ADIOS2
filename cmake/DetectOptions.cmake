@@ -67,6 +67,7 @@ if(CMAKE_Fortran_COMPILER_LOADED)
 endif()
 
 # MPI
+list(APPEND mpi_find_components OPTIONAL_COMPONENTS CXX)
 if(ADIOS2_USE_MPI STREQUAL AUTO)
   find_package(MPI COMPONENTS ${mpi_find_components})
 elseif(ADIOS2_USE_MPI)
@@ -76,24 +77,38 @@ if(MPI_FOUND)
   set(ADIOS2_HAVE_MPI TRUE)
 endif()
 
+# ZeroMQ
+if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
+    find_package(ZeroMQ 4.1)
+elseif(ADIOS2_USE_ZeroMQ)
+    find_package(ZeroMQ 4.1 REQUIRED)
+endif()
+if(ZeroMQ_FOUND)
+    set(ADIOS2_HAVE_ZeroMQ TRUE)
+endif()
+
 # DataMan
 # DataMan currently breaks the PGI compiler
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
-    if(ADIOS2_USE_DataMan STREQUAL AUTO)
-        set(ADIOS2_HAVE_DataMan TRUE)
-    elseif(ADIOS2_USE_DataMan)
-        set(ADIOS2_HAVE_DataMan TRUE)
+    if(ZeroMQ_FOUND)
+        if(ADIOS2_USE_DataMan STREQUAL AUTO)
+            set(ADIOS2_HAVE_DataMan TRUE)
+        elseif(ADIOS2_USE_DataMan)
+            set(ADIOS2_HAVE_DataMan TRUE)
+        endif()
     endif()
 endif()
 
-# ZeroMQ
-if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
-  find_package(ZeroMQ 4.1)
-elseif(ADIOS2_USE_ZeroMQ)
-  find_package(ZeroMQ 4.1 REQUIRED)
-endif()
-if(ZeroMQ_FOUND)
-  set(ADIOS2_HAVE_ZeroMQ TRUE)
+# WDM
+# WDM currently breaks the PGI compiler
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
+    if(ZeroMQ_FOUND AND MPI_FOUND)
+        if(ADIOS2_USE_WDM STREQUAL AUTO)
+            set(ADIOS2_HAVE_WDM TRUE)
+        elseif(ADIOS2_USE_WDM)
+            set(ADIOS2_HAVE_WDM TRUE)
+        endif()
+    endif()
 endif()
 
 # DataSpaces

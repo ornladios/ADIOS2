@@ -177,6 +177,68 @@ public:
     void open(const std::string &name, const openmode mode,
               const std::string configFile, const std::string ioInConfigFile);
 #endif
+
+    /**
+     * Set a single stream parameter based on Engine supported parameters.
+     * MUST be passed before the first call to write or read.
+     * See: https://adios2.readthedocs.io/en/latest/engines/engines.html
+     * @param key input parameter key
+     * @param value input parameter value
+     */
+    void set_parameter(const std::string key, const std::string value) noexcept;
+
+    /**
+     * Set stream parameters based on Engine supported parameters.
+     * MUST be passed before the first call to write or read.
+     * See: https://adios2.readthedocs.io/en/latest/engines/engines.html
+     * @param parameters input key/value parameters
+     */
+    void set_parameters(const adios2::Params &parameters) noexcept;
+
+    /**
+     * @brief Define attribute inside fstream or for a variable after write.
+     * Single value input version
+     * @param name unique attribute identifier IO object or for a Variable if
+     * variableName is not empty (associated to a variable)
+     * @param value single data value
+     * @param variableName default is empty, if not empty attributes is
+     * associated to a variable after a write
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default).
+     * Use adios2::endStep for true.
+     */
+    template <class T>
+    void write_attribute(const std::string &name, const T &value,
+                         const std::string &variableName = "",
+                         const std::string separator = "/",
+                         const bool endStep = false);
+
+    /**
+     * @brief Define attribute inside fstream or for a variable after write.
+     * Array input version
+     * @param name unique attribute identifier IO object or for a Variable if
+     * variableName is not empty (associated to a variable)
+     * @param data pointer to user data
+     * @param size number of data elements
+     * @param variableName default is empty, if not empty attributes is
+     * associated to a variable after a write
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default).
+     * Use adios2::endStep for true.
+     */
+    template <class T>
+    void write_attribute(const std::string &name, const T *data,
+                         const size_t elements,
+                         const std::string &variableName = "",
+                         const std::string separator = "/",
+                         const bool endStep = false);
+
     /**
      * writes a self-describing array variable
      * @param name variable name
@@ -187,8 +249,9 @@ public:
      * variables.
      * @param count variable dimension for current MPI rank. Local variables
      * only have count.
-     * @param endl similar to std::endl, end current step and flush (default).
-     * Use adios2::endl for true.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default).
+     * Use adios2::endStep for true.
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
@@ -197,20 +260,20 @@ public:
                const adios2::Dims &shape = adios2::Dims(),
                const adios2::Dims &start = adios2::Dims(),
                const adios2::Dims &count = adios2::Dims(),
-               const bool endl = false);
+               const bool endStep = false);
 
     /**
      * Write a self-describing single-value variable
      * @param name variable name
      * @param value variable data value (can be r-value)
-     * @param endl similar to std::endl, end current step and flush (default).
-     * Use adios2::endl for true.
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default). Use adios2::endStep for true.
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
     template <class T>
     void write(const std::string &name, const T &value,
-               const bool endl = false);
+               const bool endStep = false);
 
     /**
      * Reads into a pre-allocated pointer a selection piece in dimension. When
@@ -312,17 +375,6 @@ public:
     std::vector<T> read(const std::string &name);
 
     /**
-     * Return single value given name and step
-     * @param name variable name
-     * @param step input step
-     * @return value if name and step are found
-     * @exception throws exception if variable name, dimensions or step not
-     * found
-     */
-    template <class T>
-    T read(const std::string &name, const size_t step);
-
-    /**
      * Returns a vector with full variable dimensions for the current step
      * selection. Not be used with adios2::getstep as it throw an exception when
      * reading in stepping mode.
@@ -338,7 +390,7 @@ public:
      */
     template <class T>
     std::vector<T> read(const std::string &name, const size_t stepsStart,
-                        const size_t stepsCount);
+                        const size_t stepsCount = 1);
 
     /**
      * Reads a selection piece in dimension for current step (streaming mode:
@@ -375,6 +427,29 @@ public:
                         const Dims &count, const size_t stepsStart,
                         const size_t stepsCount);
 
+    /**
+     * Reads an attribute returning a vector
+     * For single values vector size = 1
+     * @param name attribute name
+     * @param variableName default is empty, if not empty look for an attribute
+     * associated to a variable
+     * @param separator default is "/", hierarchy between variable name and
+     * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
+     * used if variableName is empty.
+     * @return vector containing attribute values
+     */
+    template <class T>
+    std::vector<T> read_attribute(const std::string &name,
+                                  const std::string &variableName = "",
+                                  const std::string separator = "/");
+
+    /**
+     * At write: ends the current step
+     * At read: use it in streaming mode to inform the writer the reader
+     * consumed the information. No effect for file engines.
+     */
+    void end_step();
+
     /** close current stream becoming inaccessible */
     void close();
 
@@ -407,6 +482,21 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
+    extern template void fstream::write_attribute<T>(                          \
+        const std::string &, const T &, const std::string &,                   \
+        const std::string, const bool);                                        \
+                                                                               \
+    extern template void fstream::write_attribute<T>(                          \
+        const std::string &, const T *, const size_t, const std::string &,     \
+        const std::string, const bool);                                        \
+                                                                               \
+    extern template std::vector<T> fstream::read_attribute<T>(                 \
+        const std::string &, const std::string &, const std::string);
+
+ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
     extern template void fstream::write<T>(const std::string &, const T *,     \
                                            const Dims &, const Dims &,         \
                                            const Dims &, const bool);          \
@@ -417,6 +507,9 @@ private:
     extern template std::vector<T> fstream::read<T>(const std::string &);      \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
+        const std::string &, const size_t, const size_t);                      \
+                                                                               \
+    extern template std::vector<T> fstream::read<T>(                           \
         const std::string &, const Dims &, const Dims &);                      \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
@@ -424,6 +517,9 @@ private:
         const size_t);                                                         \
                                                                                \
     extern template void fstream::read<T>(const std::string &, T *);           \
+                                                                               \
+    extern template void fstream::read(const std::string &, T *, const size_t, \
+                                       const size_t);                          \
                                                                                \
     extern template void fstream::read<T>(const std::string &name, T &);       \
                                                                                \

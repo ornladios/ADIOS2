@@ -89,7 +89,11 @@ adios2_error adios2_set_step_selection(adios2_variable *variable,
 
 /**
  * Retrieve variable name
- * @param name output, must be pre-allocated
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param name output, string without trailing '\0', NULL or preallocated buffer
  * @param size output, name size without '\0'
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors
@@ -108,7 +112,11 @@ adios2_error adios2_variable_type(adios2_type *type,
 
 /**
  * Retrieve variable type in string form "char", "unsigned long", etc.
- * @param type output, string form "int", "char"
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param type output, string without trailing '\0', NULL or preallocated buffer
  * @param size output, type size without '\0'
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors

@@ -139,9 +139,8 @@ public:
     size_t NVARS = 1;
     size_t NBLOCKS = 1;
     size_t NSTEPS = 1;
-    int REDEFINE =
-        0; // 1: delete and redefine variable definitions at each step to
-           // test adios_delete_vardefs()
+    int REDEFINE = 0; // 1: delete and redefine variable definitions at each
+                      // step to test adios_delete_vardefs()
     char FILENAME[256];
 
     /* Variables to write */
@@ -310,9 +309,9 @@ public:
          * Offsets will change at writing for each block. */
         for (size_t i = 0; i < NVARS; i++)
         {
-            varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int,
-                                             2, shape, start, count,
-                                             adios2_constant_dims_false);
+            varW[i] = adios2_define_variable(
+                ioW, varnames[i], adios2_type_int32_t, 2, shape, start, count,
+                adios2_constant_dims_false);
         }
     }
 

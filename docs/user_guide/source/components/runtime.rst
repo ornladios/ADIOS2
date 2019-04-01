@@ -42,4 +42,4 @@ Each Engine should provide a set of available parameters as described in the :re
            
 .. warning::
    
-   Only XML files are supported in the current ADIOS2 version. Configuration files must have the .xml extension: config.xml, output.xml, etc.
+   Only XML files are supported in the current ADIOS2 version. Configuration files must have the ``.xml`` extension: ``config.xml``, ``output.xml``, etc.

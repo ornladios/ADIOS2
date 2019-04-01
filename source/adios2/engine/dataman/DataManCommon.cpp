@@ -25,23 +25,28 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
 {
 
     // initialize parameters
-    MPI_Comm_rank(mpiComm, &m_MPIRank);
-    MPI_Comm_size(mpiComm, &m_MPISize);
+    MPI_Comm_rank(mpiComm, &m_MpiRank);
+    MPI_Comm_size(mpiComm, &m_MpiSize);
     m_IsLittleEndian = helper::IsLittleEndian();
     m_IsRowMajor = helper::IsRowMajor(io.m_HostLanguage);
     GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
-    GetStringParameter(m_IO.m_Parameters, "Format", m_Format);
-    m_TransportChannels = m_IO.m_TransportsParameters.size();
-    if (m_TransportChannels == 0)
+    if (m_WorkflowMode != "file" && m_WorkflowMode != "stream")
     {
-        m_TransportChannels = 1;
+        throw(std::invalid_argument(
+            "WorkflowMode parameter for DataMan must be File or Stream"));
+    }
+    m_Channels = m_IO.m_TransportsParameters.size();
+    if (m_Channels == 0)
+    {
+        m_Channels = 1;
         m_IO.m_TransportsParameters.push_back({{"Library", "ZMQ"},
                                                {"IPAddress", "127.0.0.1"},
-                                               {"Port", "12306"}});
+                                               {"Port", "12306"},
+                                               {"Name", m_Name}});
     }
-    for (size_t i = 0; i < m_TransportChannels; ++i)
+    for (size_t i = 0; i < m_Channels; ++i)
     {
-        m_StreamNames.push_back(m_Name + std::to_string(i));
+        m_IO.m_TransportsParameters[i]["Name"] = m_Name + std::to_string(i);
     }
 }
 

@@ -15,6 +15,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -26,6 +27,7 @@ namespace engine
 template <class T>
 void SstReader::ReadVariableBlocks(Variable<T> &variable)
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::vector<void *> sstReadHandlers;
     std::vector<std::vector<char>> buffers;
 
@@ -55,6 +57,9 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         variable, blockInfo, subStreamInfo, buffer, payloadSize,
                         payloadStart, 0);
 
+                    std::stringstream ss;
+                    ss << "SST Bytes Read from remote rank " << rank;
+                    TAU_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
                     auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
                                                    payloadStart, payloadSize,
                                                    buffer, dp_info);
@@ -127,22 +132,22 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                 // if remote data buffer is compressed
                 if (subStreamInfo.OperationsInfo.size() > 0)
                 {
-                    //const bool identity =
+                    // const bool identity =
                     //    m_BP3Deserializer->IdentityOperation<T>(
                     //        blockInfo.Operations);
-                    //const helper::BlockOperationInfo
+                    // const helper::BlockOperationInfo
                     //    &blockOperationInfo =
                     //        m_BP3Deserializer->InitPostOperatorBlockData(
                     //            subStreamInfo.OperationsInfo,
                     //            variable.m_RawMemory[1],
                     //            identity);
-                    //m_BP3Deserializer->GetPreOperatorBlockData(
+                    // m_BP3Deserializer->GetPreOperatorBlockData(
                     //    buffers[iter], blockOperationInfo,
                     //    variable.m_RawMemory[0]);
-                    //helper::ClipVector(variable.m_RawMemory[0],
+                    // helper::ClipVector(variable.m_RawMemory[0],
                     //    subStreamInfo.Seeks.first,
                     //    subStreamInfo.Seeks.second);
-                    //m_BP3Deserializer->ClipContiguousMemory<T>(
+                    // m_BP3Deserializer->ClipContiguousMemory<T>(
                     //    blockInfo,
                     //    variable.m_RawMemory[0],
                     //    subStreamInfo.BlockBox,

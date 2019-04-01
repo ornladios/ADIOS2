@@ -1348,28 +1348,44 @@ INT_CMConnection_failed(CMConnection conn)
      }
  }
 
- extern void
- CMget_qual_hostname(CManager cm, char *buf, int len)
- {
-     get_IP_config(buf, len, NULL, NULL, NULL, NULL, NULL,
-		   CMstatic_trans_svcs.trace_out, cm);
- }
+extern void
+INT_CMget_qual_hostname(CManager cm, char *buf, int len)
+{
+    get_IP_config(buf, len, NULL, NULL, NULL, NULL, NULL,
+		  CMstatic_trans_svcs.trace_out, cm);
+}
 
- extern void
- CMget_port_range(CManager cm, int *high_bound, int *low_bound)
- {
-     get_IP_config(NULL, 0, NULL, low_bound, high_bound, NULL, NULL,
-		   CMstatic_trans_svcs.trace_out, cm);
- }
+extern void
+INT_CMget_port_range(CManager cm, int *high_bound, int *low_bound)
+{
+    get_IP_config(NULL, 0, NULL, low_bound, high_bound, NULL, NULL,
+		  CMstatic_trans_svcs.trace_out, cm);
+}
 
- extern int
- INT_CMget_self_ip_addr(CManager cm)
- {
-     int IP;
-     get_IP_config(NULL, 0, &IP, NULL, NULL, NULL, NULL,
-		   CMstatic_trans_svcs.trace_out, cm);
-     return IP;
- }
+extern int
+INT_CMget_self_ip_addr(CManager cm)
+{
+    int IP;
+    get_IP_config(NULL, 0, &IP, NULL, NULL, NULL, NULL,
+		  CMstatic_trans_svcs.trace_out, cm);
+    return IP;
+}
+
+extern char *IP_config_diagnostics;
+extern int IP_config_output_len;
+
+extern char *
+INT_CMget_ip_config_diagnostics(CManager cm)
+{
+    char *output;
+    IP_config_output_len = 0;   /* setup output */
+    get_IP_config(NULL, 0, NULL, NULL, NULL, NULL, NULL,
+		  CMstatic_trans_svcs.trace_out, cm);
+    IP_config_output_len = -1;   /* disable output */
+    output = IP_config_diagnostics;
+    IP_config_diagnostics = NULL;  /* not ours anymore */
+    return output;
+}
 
  #define CURRENT_HANDSHAKE_VERSION 1
 

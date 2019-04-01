@@ -40,9 +40,9 @@ void BP3Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
     size_t position = itStep->second.front();
 
     const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(GetDataType<T>()), false,
-            m_Minifooter.IsLittleEndian);
+        ReadElementIndexCharacteristics<T>(buffer, position,
+                                           TypeTraits<T>::type_enum, false,
+                                           m_Minifooter.IsLittleEndian);
 
     const size_t payloadOffset = characteristics.Statistics.PayloadOffset;
     variable.m_Data = reinterpret_cast<T *>(&buffer[payloadOffset]);
@@ -165,9 +165,9 @@ void BP3Deserializer::SetVariableBlockInfo(
         size_t position = blockIndexOffset;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, position, static_cast<DataTypes>(GetDataType<T>()),
-                false, m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(buffer, position,
+                                               TypeTraits<T>::type_enum, false,
+                                               m_Minifooter.IsLittleEndian);
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
 
@@ -283,9 +283,9 @@ void BP3Deserializer::SetVariableBlockInfo(
         size_t position = blockIndexOffset;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, position, static_cast<DataTypes>(GetDataType<T>()),
-                false, m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(buffer, position,
+                                               TypeTraits<T>::type_enum, false,
+                                               m_Minifooter.IsLittleEndian);
 
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
@@ -433,11 +433,11 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 
         // global values only read one block per step
         const size_t blocksStart = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? variable.m_Start.front()
+                                       ? blockInfo.Start.front()
                                        : 0;
 
         const size_t blocksCount = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? variable.m_Count.front()
+                                       ? blockInfo.Count.front()
                                        : 1;
 
         if (m_DebugMode)
@@ -455,7 +455,7 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
             }
         }
 
-        for (size_t b = blocksStart; b < blocksCount; ++b)
+        for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
         {
             size_t localPosition = positions[b];
             const Characteristics<T> characteristics =
@@ -577,6 +577,26 @@ BP3Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
             BlocksInfoCommon(variable, blockPositions);
     }
     return allStepsBlocksInfo;
+}
+
+template <class T>
+std::vector<std::vector<typename core::Variable<T>::Info>>
+BP3Deserializer::AllRelativeStepsBlocksInfo(
+    const core::Variable<T> &variable) const
+{
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+        allRelativeStepsBlocksInfo(
+            variable.m_AvailableStepBlockIndexOffsets.size());
+
+    size_t relativeStep = 0;
+    for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
+    {
+        const std::vector<size_t> &blockPositions = pair.second;
+        allRelativeStepsBlocksInfo[relativeStep] =
+            BlocksInfoCommon(variable, blockPositions);
+        ++relativeStep;
+    }
+    return allRelativeStepsBlocksInfo;
 }
 
 template <class T>
@@ -964,8 +984,7 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
         {
             const Characteristics<T> blockCharacteristics =
                 ReadElementIndexCharacteristics<T>(
-                    buffer, blockPosition,
-                    static_cast<DataTypes>(GetDataType<T>()), false,
+                    buffer, blockPosition, TypeTraits<T>::type_enum, false,
                     m_Minifooter.IsLittleEndian);
 
             // check if they intersect
@@ -1021,10 +1040,9 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         size_t position = blockIndexOffset;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                m_Metadata.m_Buffer, position,
-                static_cast<DataTypes>(GetDataType<T>()), false,
-                m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(m_Metadata.m_Buffer, position,
+                                               TypeTraits<T>::type_enum, false,
+                                               m_Minifooter.IsLittleEndian);
 
         typename core::Variable<T>::Info blockInfo;
         blockInfo.Shape = blockCharacteristics.Shape;
@@ -1057,9 +1075,15 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
             blockInfo.Start = Dims{n};
             blockInfo.Min = blockCharacteristics.Statistics.Value;
             blockInfo.Max = blockCharacteristics.Statistics.Value;
-            ++n;
         }
+        // bp index starts at 1
+        blockInfo.Step =
+            static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
+        blockInfo.BlockID = n;
+
         blocksInfo.push_back(blockInfo);
+
+        ++n;
     }
 
     return blocksInfo;

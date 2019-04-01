@@ -293,7 +293,7 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
         variable->m_BlocksInfo.clear();                                        \
     }
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 }
 
@@ -341,7 +341,7 @@ void InSituMPIWriter::EndStep()
     {                                                                          \
         PutDeferredCommon(variable, values);                                   \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void InSituMPIWriter::Init()

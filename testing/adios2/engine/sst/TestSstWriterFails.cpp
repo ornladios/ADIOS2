@@ -62,7 +62,7 @@ static adios2::Params ParseEngineParams(std::string Input)
 // ADIOS2 SST write
 TEST_F(SstWriteFails, InvalidPut)
 {
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);

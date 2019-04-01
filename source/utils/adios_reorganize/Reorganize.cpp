@@ -303,7 +303,7 @@ std::string Reorganize::VectorToString(const T &v)
 size_t
 Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
                       const int *np // number of processes in each dimension
-                      )
+)
 {
     size_t writesize = 0;
     if (vi.v == nullptr)
@@ -431,7 +431,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     {                                                                          \
         variable = io.InquireVariable<T>(variablePair.first);                  \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         varinfo[varidx].v = variable;
@@ -507,8 +507,9 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     if (nvars != varinfo.size())
     {
         std::cerr
-            << "ERROR rank " << rank << ": Invalid program state, number "
-                                        "of variables ("
+            << "ERROR rank " << rank
+            << ": Invalid program state, number "
+               "of variables ("
             << nvars
             << ") to read does not match the number of processed variables ("
             << varinfo.size() << ")" << std::endl;
@@ -549,7 +550,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         }
     }
@@ -589,7 +590,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         }
     }

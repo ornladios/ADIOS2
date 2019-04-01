@@ -26,8 +26,10 @@ contains
                                    TRIM(ADJUSTL(io_name))//char(0), ierr)
         if( ierr == 0 ) then
             io%valid = .true.
-            call adios2_io_engine_type_f2c(io%f2c, io%engine_type, length, ierr)
-            io%engine_type = trim(io%engine_type(1:length))
+            call adios2_io_engine_type_length_f2c(length, io%f2c, ierr)
+            if (length > 15) stop 'adios2_declare_io: engine_type too long!'
+            call adios2_io_engine_type_f2c(io%engine_type, io%f2c, ierr)
+            io%engine_type = io%engine_type(1:length)
         end if
 
     end subroutine
@@ -44,8 +46,10 @@ contains
                               TRIM(ADJUSTL(io_name))//char(0), ierr)
         if( ierr == 0 ) then
             io%valid = .true.
-            call adios2_io_engine_type_f2c(io%f2c, io%engine_type, length, ierr)
-            io%engine_type = trim(io%engine_type(1:length))
+            call adios2_io_engine_type_length_f2c(length, io%f2c, ierr)
+            if (length > 15) stop 'adios2_at_io: engine_type too long!'
+            call adios2_io_engine_type_f2c(io%engine_type, io%f2c, ierr)
+            io%engine_type = io%engine_type(1:length)
         end if
 
     end subroutine
@@ -74,7 +78,6 @@ contains
         character*(*), intent(in)  :: op_name
         integer, intent(out) :: ierr
         !local
-        character(len=1024) :: c_type
         integer :: length
 
         call adios2_inquire_operator_f2c(op%f2c, adios%f2c, &
@@ -83,8 +86,11 @@ contains
         if(ierr == adios2_found) then
             op%valid = .true.
             op%name = op_name
-            call adios2_operator_type_f2c(op%f2c, c_type, length, ierr)
-            op%type = TRIM(ADJUSTL(c_type))
+
+            call adios2_operator_type_length_f2c(length, op%f2c, ierr)
+            if (length > 64) stop 'adios2_inquire_operator: operator_type too long!'
+            call adios2_operator_type_f2c(op%type, op%f2c, ierr)
+            op%type = op%type(1:length)
         else
             op%valid = .false.
             op%name = ''
@@ -98,6 +104,32 @@ contains
         integer, intent(out) :: ierr
 
         call adios2_flush_all_f2c(adios%f2c, ierr)
+
+    end subroutine
+
+    subroutine adios2_remove_io(result, adios, name, ierr)
+        logical, intent(out):: result
+        type(adios2_adios), intent(in) :: adios
+        character*(*), intent(in):: name
+        integer, intent(out) :: ierr
+        ! local
+        integer resultInt
+
+        call adios2_remove_io_f2c(resultInt, adios, &
+                                  TRIM(ADJUSTL(name))//char(0), ierr)
+        if(resultInt == 0) then
+            result = .false.
+        else
+            result = .true.
+        end if
+
+    end subroutine
+
+    subroutine adios2_remove_all_ios(adios, ierr)
+        type(adios2_adios), intent(in) :: adios
+        integer, intent(out) :: ierr
+
+        call adios2_remove_all_ios_f2c(adios, ierr)
 
     end subroutine
 

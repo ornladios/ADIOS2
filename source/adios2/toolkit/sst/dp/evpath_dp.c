@@ -8,6 +8,7 @@
 
 #include "sst_data.h"
 
+#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "dp_interface.h"
 
 /*
@@ -224,6 +225,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_Data,
                                      attr_list attrs)
 {
+    TAU_START_FUNC();
     EvpathReadRequestMsg ReadRequestMsg = (EvpathReadRequestMsg)msg_v;
     Evpath_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
 
@@ -231,9 +233,10 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
     TimestepList tmp = WS_Stream->Timesteps;
     CP_Services Svcs = (CP_Services)client_Data;
 
-    Svcs->verbose(WS_Stream->CP_Stream, "Got a request to read remote memory "
-                                        "from reader rank %d: timestep %d, "
-                                        "offset %d, length %d\n",
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Got a request to read remote memory "
+                  "from reader rank %d: timestep %d, "
+                  "offset %d, length %d\n",
                   ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
                   ReadRequestMsg->Offset, ReadRequestMsg->Length);
     while (tmp != NULL)
@@ -269,6 +272,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                     .Conn,
                 WS_Stream->ReadReplyFormat, &ReadReplyMsg);
 
+            TAU_STOP_FUNC();
             return;
         }
         tmp = tmp->Next;
@@ -284,6 +288,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
      * assert(0) here.  Probably this sort of error should close the link to
      * a reader though.
      */
+    TAU_STOP_FUNC();
 }
 
 typedef struct _EvpathCompletionHandle
@@ -301,6 +306,7 @@ typedef struct _EvpathCompletionHandle
 static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                    void *client_Data, attr_list attrs)
 {
+    TAU_START_FUNC();
     EvpathReadReplyMsg ReadReplyMsg = (EvpathReadReplyMsg)msg_v;
     Evpath_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
     CP_Services Svcs = (CP_Services)client_Data;
@@ -311,6 +317,7 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
         Svcs->verbose(RS_Stream->CP_Stream, "Got a reply to remote memory "
                                             "read, but the condition is "
                                             "already signalled, returning\n");
+        TAU_STOP_FUNC();
         return;
     }
     Handle = CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
@@ -320,6 +327,7 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
         Svcs->verbose(
             RS_Stream->CP_Stream,
             "Got a reply to remote memory read, but condition not found\n");
+        TAU_STOP_FUNC();
         return;
     }
     Svcs->verbose(
@@ -338,6 +346,7 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
      * Signal the condition to wake the reader if they are waiting.
      */
     CMCondition_signal(cm, ReadReplyMsg->NotifyCondition);
+    TAU_STOP_FUNC();
 }
 
 static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
@@ -534,9 +543,10 @@ static void FailRequestsToRank(CP_Services Svcs, CManager cm,
         if (Tmp->Rank == FailedRank)
         {
             Tmp->Failed = 1;
-            Svcs->verbose(Tmp->CPStream, "Found a pending remote memory read "
-                                         "to failed writer rank %d, marking as "
-                                         "failed and signalling condition %d\n",
+            Svcs->verbose(Tmp->CPStream,
+                          "Found a pending remote memory read "
+                          "to failed writer rank %d, marking as "
+                          "failed and signalling condition %d\n",
                           Tmp->Rank, Tmp->CMcondition);
             CMCondition_signal(cm, Tmp->CMcondition);
             Svcs->verbose(Tmp->CPStream, "Did the signal of condition %d\n",
@@ -621,9 +631,10 @@ static int EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
         CMCondition_wait(Handle->cm, Handle->CMcondition);
     if (Handle->Failed)
     {
-        Svcs->verbose(Handle->CPStream, "Remote memory read to rank %d with "
-                                        "condition %d has FAILED because of "
-                                        "writer failure\n",
+        Svcs->verbose(Handle->CPStream,
+                      "Remote memory read to rank %d with "
+                      "condition %d has FAILED because of "
+                      "writer failure\n",
                       Handle->Rank, Handle->CMcondition);
         Ret = 0;
     }
@@ -645,9 +656,10 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     Evpath_RS_Stream Stream = (Evpath_RS_Stream)
         Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
-    Svcs->verbose(Stream->CP_Stream, "received notification that writer peer "
-                                     "%d has failed, failing any pending "
-                                     "requests\n",
+    Svcs->verbose(Stream->CP_Stream,
+                  "received notification that writer peer "
+                  "%d has failed, failing any pending "
+                  "requests\n",
                   FailedPeerRank);
     FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }

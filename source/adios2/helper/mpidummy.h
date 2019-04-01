@@ -79,12 +79,14 @@ using MPI_Op = int;
 #define MPI_ANY_TAG 0
 
 #define MPI_SUM 0
+#define MPI_MAX 1
 
 #define MPI_MAX_PROCESSOR_NAME 32
 
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
 int MPI_Initialized(int *flag);
+int MPI_Finalized(int *flag);
 
 int MPI_Barrier(MPI_Comm comm);
 int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
@@ -142,6 +144,9 @@ double MPI_Wtime();
 
 int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
+
+int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
+                  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 
 } // end namespace mpi
 } // end namespace helper

@@ -6,7 +6,7 @@ then
   exit 1
 fi
 
-ANALYZER_INSTALL_DIR="${HOME}/clang+llvm-6.0.0-x86_64-linux-gnu-ubuntu-14.04"
+ANALYZER_INSTALL_DIR="${HOME}/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04"
 
 # Make sure analyzer script find the right clang++
 export PATH="${ANALYZER_INSTALL_DIR}/bin:${PATH}"

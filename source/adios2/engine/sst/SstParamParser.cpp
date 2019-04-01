@@ -12,7 +12,6 @@ using namespace adios2::core;
 void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
 {
     auto lf_SetBoolParameter = [&](const std::string key, int &parameter) {
-
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
@@ -27,7 +26,6 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
         }
     };
     auto lf_SetIntParameter = [&](const std::string key, int &parameter) {
-
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
@@ -38,7 +36,6 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
     };
 
     auto lf_SetStringParameter = [&](const std::string key, char *&parameter) {
-
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
@@ -50,7 +47,6 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
 
     auto lf_SetRegMethodParameter = [&](const std::string key,
                                         size_t &parameter) {
-
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
@@ -84,7 +80,6 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
 
     auto lf_SetCompressionMethodParameter = [&](const std::string key,
                                                 size_t &parameter) {
-
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
@@ -113,7 +108,6 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
     // not really a parameter, but a convenient way to pass this around
     auto lf_SetIsRowMajorParameter = [&](const std::string key,
                                          int &parameter) {
-
         parameter = adios2::helper::IsRowMajor(io.m_HostLanguage);
         return true;
     };
@@ -133,6 +127,33 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             else if (method == "bp")
             {
                 parameter = SstMarshalBP;
+            }
+            else
+            {
+                throw std::invalid_argument(
+                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
+                    "\"");
+            }
+            return true;
+        }
+        return false;
+    };
+
+    auto lf_SetCPCommPatternParameter = [&](const std::string key,
+                                            size_t &parameter) {
+        auto itKey = io.m_Parameters.find(key);
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string method = itKey->second;
+            std::transform(method.begin(), method.end(), method.begin(),
+                           ::tolower);
+            if (method == "min")
+            {
+                parameter = SstCPCommMin;
+            }
+            else if (method == "peer")
+            {
+                parameter = SstCPCommPeer;
             }
             else
             {

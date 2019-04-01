@@ -17,30 +17,30 @@ Engine functionality works around two concepts from the application point-of-vie
 Engine API Functions
 --------------------
 
-Recall that Engines are created through the ``IO::Open`` function which must contain a Mode (Write, Read, Append). Therefore, the current functionalty of all Engines are provided through the basic API functions:
+Recall that Engines are created through the ``IO::Open`` function which must contain a Mode (``Write``, ``Read``, ``Append``). Therefore, the current functionalty of all Engines are provided through the basic API functions:
 
 For Publishing data (Write, Append mode)
 
-* **Put**
-   **Default mode: deferred (lazy evaluation).** Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. Use sync mode to allow the pointer memory to be reusable immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
+* ``Put``
+   **Default mode: deferred (lazy evaluation).** Data pointer (or array) to memory must not be reused until first encounter with ``PerformPuts``, ``EndStep`` or ``Close``. Use sync mode to allow the pointer memory to be reusable immediately. This is enabled by passing the flag ``adios2::Mode::Sync`` as the 3rd argument.
 
-* **PerformsPuts**
+* ``PerformsPuts``
    Executes all pending Put calls in deferred mode until this line.
 
 
 For Consuming data (Read mode)
 
-* **Get**
-   **Default mode: deferred (lazy evaluation).** Data pointer (or array) to memory must not be reused until first encounter with PerformPuts, EndStep or Close. Use sync mode to populate the data pointer memory immediately. This is enabled by passing the flag adios2::Mode::Sync as the 3rd argument.
+* ``Get``
+   **Default mode: deferred (lazy evaluation).** Data pointer (or array) to memory must not be reused until first encounter with ``PerformPuts``, ``EndStep`` or ``Close``. Use sync mode to populate the data pointer memory immediately. This is enabled by passing the flag ``adios2::Mode::Sync`` as the 3rd argument.
 
-* **PerformsGets**
+* ``PerformsGets``
    Executes all pending deferred Get calls in deferred mode until this line.
 
 Common Functionality (Write, Read, Append modes)
 
-   * **BeginStep**      Begin logical step and return status of stream to be read/written.
-   * **EndStep**        End logical step, flush to transports depending on IO parameters and engine default behavior.
-   * **Close**          Close current engine and underlying transports. Engine object can't be used after this.
+   * ``BeginStep``      Begin logical step and return status of stream to be read/written.
+   * ``EndStep``        End logical step, flush to transports depending on IO parameters and engine default behavior.
+   * ``Close``          Close current engine and underlying transports. Engine object can't be used after this.
 
 The following example illustrates the basic API usage in write mode for data generated at each application step:
 
@@ -96,19 +96,23 @@ The following example illustrates the basic API usage in write mode for data gen
 
 .. tip::
 
-   Prefer default Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until EndStep, Perform(Puts/Gets) or Close. Only use Sync if you really have to (*e.g.* reuse memory space from pointer). ADIOS2 prefers a step-based IO in which everything is known ahead of time when writing an entire step.
+   Prefer default Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until ``EndStep``, ``Perform``(``Puts``/``Gets``) or ``Close``.
+   Only use Sync if you really have to (*e.g.* reuse memory space from pointer).
+   ADIOS2 prefers a step-based IO in which everything is known ahead of time when writing an entire step.
 
 
 .. danger::
-   The default behavior of adios2 Put and Get calls IS NOT synchronized, but rather deferred. It's actually the opposite of MPI_Put and more like MPI_rPut.
-   Do not assume the data pointer is usable after a Put and Get, before EndStep, Close or the corresponding PerformPuts/PerformGets.
-   Be SAFE and consider using the adios2::Mode::Sync in the 3rd argument. Avoid using TEMPORARIES, r-values, and out-of-scope variables in Deferred mode.
+   The default behavior of adios2 ``Put`` and ``Get`` calls IS NOT synchronized, but rather deferred.
+   It's actually the opposite of ``MPI_Put`` and more like ``MPI_rPut``.
+   Do not assume the data pointer is usable after a ``Put`` and ``Get``, before ``EndStep``, ``Close`` or the corresponding ``PerformPuts``/``PerformGets``.
+   Be SAFE and consider using the ``adios2::Mode::Sync`` in the 3rd argument.
+   Avoid using TEMPORARIES, r-values, and out-of-scope variables in ``Deferred`` mode.
 
 
 Available Engines
 -----------------
 
-A particular engine is set within the IO object that creates it with the ``IO::SetEngine`` function in a case insensitive manner. If the SetEngine function is not invoked the default engine is the **BPFile** for writing and reading self-describing bp (binary-pack) files.
+A particular engine is set within the IO object that creates it with the ``IO::SetEngine`` function in a case insensitive manner. If the SetEngine function is not invoked the default engine is the ``BPFile`` for writing and reading self-describing bp (binary-pack) files.
 
 +-------------------------+---------+---------------------------------------------+
 | Application             | Engine  | Description                                 |

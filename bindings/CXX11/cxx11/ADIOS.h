@@ -42,7 +42,8 @@ class ADIOS
 public:
 #ifdef ADIOS2_HAVE_MPI
     /**
-     * Starting point for MPI apps. Creates an ADIOS object
+     * Starting point for MPI apps. Creates an ADIOS object.
+     * MPI Collective Operation as it call MPI_Comm_dup
      * @param comm defines domain scope from application
      * @param debugMode true: extra user-input debugging information, false: run
      * without checking user-input (stable workflows)
@@ -54,6 +55,8 @@ public:
     /**
      * Starting point for MPI apps. Creates an ADIOS object allowing a
      * runtime config file.
+     * MPI collective and it calls MPI_Comm_dup and MPI_Bcast to pass the
+     * configFile contents
      * @param configFile runtime config file
      * @param comm defines domain scope from application
      * @param debugMode true: extra user-input debugging information, false:
@@ -100,7 +103,9 @@ public:
      */
     ADIOS(ADIOS &&) = default;
 
-    /** Using RAII STL containers only */
+    /**
+     * MPI Collective calls MPI_Comm_free
+     * Uses RAII for all other members */
     ~ADIOS() = default;
 
     /**
@@ -176,6 +181,21 @@ public:
      * @exception std::runtime_error if any engine Flush fails
      */
     void FlushAll();
+
+    /**
+     * DANGER ZONE: removes a particular IO. This will effectively eliminate
+     * any parameter from the config.xml file
+     * @param name io input name
+     * @return true: IO was found and removed, false: IO not found and not
+     * removed
+     */
+    bool RemoveIO(const std::string name);
+
+    /**
+     * DANGER ZONE: removes all IOs created with DeclareIO. This will
+     * effectively eliminate any parameter from the config.xml file also.
+     */
+    void RemoveAllIOs() noexcept;
 
 private:
     std::shared_ptr<core::ADIOS> m_ADIOS;

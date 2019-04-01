@@ -23,134 +23,6 @@ namespace format
 {
 
 // PROTECTED
-template <>
-int8_t BP3Base::GetDataType<std::string>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_string);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<char>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_byte);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<signed char>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_byte);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<short>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_short);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<int>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_integer);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<long int>() const noexcept
-{
-    int8_t type = static_cast<int8_t>(type_long);
-    if (sizeof(long int) == sizeof(int))
-    {
-        type = static_cast<int8_t>(type_integer);
-    }
-
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<long long int>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_long);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<unsigned char>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_byte);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<unsigned short>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_short);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<unsigned int>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_integer);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<unsigned long int>() const noexcept
-{
-    int8_t type = static_cast<int8_t>(type_unsigned_long);
-    if (sizeof(unsigned long int) == sizeof(unsigned int))
-    {
-        type = static_cast<int8_t>(type_unsigned_integer);
-    }
-
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<unsigned long long int>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_unsigned_long);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<float>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_real);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<double>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_double);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<long double>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_long_double);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<cfloat>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_complex);
-    return type;
-}
-
-template <>
-int8_t BP3Base::GetDataType<cdouble>() const noexcept
-{
-    const int8_t type = static_cast<int8_t>(type_double_complex);
-    return type;
-}
 
 template <class T>
 BP3Base::Characteristics<T> BP3Base::ReadElementIndexCharacteristics(
@@ -255,7 +127,6 @@ inline void BP3Base::ParseCharacteristics(
         case (characteristic_dimensions):
         {
             auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
-
                 return std::all_of(
                     dimensions.begin(), dimensions.end(),
                     [](const size_t dimension) { return dimension == 0; });
@@ -426,7 +297,6 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
         case (characteristic_dimensions):
         {
             auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
-
                 return std::all_of(
                     dimensions.begin(), dimensions.end(),
                     [](const size_t dimension) { return dimension == 0; });
@@ -559,9 +429,9 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
                 }
                 case (statistic_cnt):
                 {
-                    throw std::invalid_argument(
-                        "ERROR: ADIOS2 default BP3 engine doesn't support "
-                        "count statistics\n");
+                    characteristics.Statistics.BitCount =
+                        helper::ReadValue<uint32_t>(buffer, position,
+                                                    isLittleEndian);
                 }
 
                 } // switch

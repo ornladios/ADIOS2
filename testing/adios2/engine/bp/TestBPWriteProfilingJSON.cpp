@@ -25,6 +25,8 @@
 
 using json = nlohmann::json;
 
+std::string engineName; // comes from command line
+
 class BPWriteProfilingJSONTest : public ::testing::Test
 {
 public:
@@ -90,8 +92,16 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         io.SetParameters({{"Threads", "2"}});
         io.AddTransport("file", {{"Library", "POSIX"}});
 
@@ -228,8 +238,16 @@ TEST_F(BPWriteProfilingJSONTest, ADIOS2BPWriteProfilingJSON_Off)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        // Create the BP Engine
-        io.SetEngine("BPFile");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         io.SetParameters({{"Profile", "Off"}});
         io.AddTransport("file", {{"Library", "POSIX"}});
 
@@ -306,6 +324,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

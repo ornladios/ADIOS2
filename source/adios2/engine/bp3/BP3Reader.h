@@ -37,7 +37,7 @@ public:
     BP3Reader(IO &io, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    virtual ~BP3Reader() = default;
+    ~BP3Reader() = default;
 
     StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
                          const float timeoutSeconds = -1.0) final;
@@ -64,7 +64,7 @@ private:
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     void DoClose(const int transportIndex = -1) final;
@@ -80,12 +80,15 @@ private:
 
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
+    DoAllStepsBlocksInfo(const Variable<T> &) const final;                     \
+                                                                               \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    DoAllRelativeStepsBlocksInfo(const Variable<T> &) const final;             \
                                                                                \
     std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
         const Variable<T> &variable, const size_t step) const final;
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 };
 

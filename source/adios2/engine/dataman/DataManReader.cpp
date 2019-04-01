@@ -25,7 +25,7 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : DataManCommon("DataManReader", io, name, mode, mpiComm),
-  m_DataManDeserializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian)
+  m_DataManSerializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -42,13 +42,18 @@ DataManReader::~DataManReader()
 StepStatus DataManReader::BeginStep(StepMode stepMode,
                                     const float timeoutSeconds)
 {
-    if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0 && m_FinalStep > 0)
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::BeginStep() begin. Last step "
+                  << m_CurrentStep << std::endl;
+    }
+
+    if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0)
     {
         return StepStatus::EndOfStream;
     }
 
-    std::shared_ptr<std::vector<format::DataManDeserializer::DataManVar>> vars =
-        nullptr;
+    format::DmvVecPtr vars = nullptr;
     auto start_time = std::chrono::system_clock::now();
 
     while (vars == nullptr)
@@ -63,12 +68,11 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         {
             if (duration.count() > timeoutSeconds)
             {
-                std::cout << "Dataman Reader timeing out" << std::endl;
                 return StepStatus::NotReady;
             }
         }
 
-        m_MetaDataMap = m_DataManDeserializer.GetMetaData();
+        m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
         if (stepMode == StepMode::NextAvailable)
         {
@@ -108,10 +112,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         }
     }
 
-    if (m_CurrentStep == 0)
-    {
-        m_DataManDeserializer.GetAttributes(m_IO);
-    }
+    m_DataManSerializer.GetAttributes(m_IO);
 
     for (const auto &i : *vars)
     {
@@ -126,7 +127,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {                                                                          \
         CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
             else
             {
@@ -135,6 +136,13 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
             }
         }
     }
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::BeginStep() end. Current step "
+                  << m_CurrentStep << std::endl;
+    }
+
     return StepStatus::OK;
 }
 
@@ -142,7 +150,21 @@ size_t DataManReader::CurrentStep() const { return m_CurrentStep; }
 
 void DataManReader::PerformGets() {}
 
-void DataManReader::EndStep() { m_DataManDeserializer.Erase(m_CurrentStep); }
+void DataManReader::EndStep()
+{
+
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::EndStep() start. Current step "
+                  << m_CurrentStep << std::endl;
+    }
+    m_DataManSerializer.Erase(m_CurrentStep);
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::EndStep() end. Current step "
+                  << m_CurrentStep << std::endl;
+    }
+}
 
 void DataManReader::Flush(const int transportIndex) {}
 
@@ -157,24 +179,24 @@ void DataManReader::Init()
     }
 
     // initialize transports
-    m_DataMan = std::make_shared<transportman::DataMan>(m_MPIComm, m_DebugMode);
-    m_DataMan->OpenWANTransports(m_StreamNames, m_IO.m_TransportsParameters,
-                                 Mode::Read, m_WorkflowMode, true);
+    m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
+    m_WANMan->OpenTransports(m_IO.m_TransportsParameters, Mode::Read,
+                             m_WorkflowMode, true);
 
     // start threads
     m_Listening = true;
-    m_DataThread = std::make_shared<std::thread>(&DataManReader::IOThread, this,
-                                                 m_DataMan);
+    m_DataThread =
+        std::make_shared<std::thread>(&DataManReader::IOThread, this, m_WANMan);
 }
 
-void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
+void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
 {
     while (m_Listening)
     {
-        std::shared_ptr<std::vector<char>> buffer = man->ReadWAN(0);
+        std::shared_ptr<std::vector<char>> buffer = man->Read(0);
         if (buffer != nullptr)
         {
-            int ret = m_DataManDeserializer.Put(buffer);
+            int ret = m_DataManSerializer.PutPack(buffer);
             if (ret > 0)
             {
                 m_FinalStep = ret;
@@ -202,7 +224,7 @@ void DataManReader::IOThread(std::shared_ptr<transportman::DataMan> man)
     {                                                                          \
         return BlocksInfoCommon(variable, step);                               \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void DataManReader::DoClose(const int transportIndex)
@@ -218,7 +240,7 @@ void DataManReader::DoClose(const int transportIndex)
             }
         }
     }
-    m_DataMan = nullptr;
+    m_WANMan = nullptr;
 }
 
 } // end namespace engine

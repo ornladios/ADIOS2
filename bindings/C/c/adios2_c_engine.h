@@ -18,7 +18,23 @@ extern "C" {
 #endif
 
 /**
+ * Return engine name string and length without '\0\ character
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param name output, string without trailing '\0', NULL or preallocated
+ * buffer
+ * @param size output, engine_type size without '\0'
+ * @param engine handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_engine_name(char *name, size_t *size,
+                                const adios2_engine *engine);
+
+/**
  * @brief Begin a logical adios2 step stream
+ * Check each engine documentation for MPI collective/non-collective behavior.
  * @param engine handler
  * @param mode see enum adios2_step_mode in adios2_c_types.h for options,
  * next_available is the common use case
@@ -151,8 +167,9 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
 adios2_error adios2_perform_gets(adios2_engine *engine);
 
 /**
- * terminates interaction with current step. By default puts/gets data to/from
+ * Terminates interaction with current step. By default puts/gets data to/from
  * all transports
+ * Check each engine documentation for MPI collective/non-collective behavior.
  * @param engine handler executing IO tasks
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
@@ -177,8 +194,9 @@ adios2_error adios2_flush_by_index(adios2_engine *engine,
 /**
  * Close all transports in adios2_Engine. Call is required to close system
  * resources.
+ * MPI Collective, calls MPI_Comm_free for duplicated communicator at Open
  * @param engine handler containing all transports to
- * be closed. engine becomes NULL after this function is called.
+ * be closed. NOTE: engines NEVER become NULL after this function is called.
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_close(adios2_engine *engine);
@@ -186,7 +204,7 @@ adios2_error adios2_close(adios2_engine *engine);
 /**
  * Close a particular transport from the index returned by adios2_add_transport
  * @param engine handler containing all transports to
- * be closed. NOTE: engine NEVER becomes NULL due to this function.
+ * be closed. NOTE: engines NEVER become NULL due to this function.
  * @param transport_index handler from adios2_add_transport
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
