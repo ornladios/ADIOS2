@@ -49,7 +49,7 @@ private:
     MPI_Comm m_MpiComm;
     int m_Timeout;
     Mode m_OpenMode;
-    int m_Verbosity = 0;
+    int m_Verbosity = 5;
 
     size_t m_MaxBufferSize;
 
