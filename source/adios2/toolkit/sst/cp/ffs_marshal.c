@@ -971,14 +971,14 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
                                    const size_t *SelectionCounts,
                                    const char *InData, char *OutData)
 {
-    int BlockSize;
-    int SourceBlockStride = 0;
-    int DestBlockStride = 0;
-    int SourceBlockStartOffset;
-    int DestBlockStartOffset;
-    int BlockCount;
-    int OperantDims;
-    int OperantElementSize;
+    size_t BlockSize;
+    size_t SourceBlockStride = 0;
+    size_t DestBlockStride = 0;
+    size_t SourceBlockStartOffset;
+    size_t DestBlockStartOffset;
+    size_t BlockCount;
+    size_t OperantDims;
+    size_t OperantElementSize;
 
     BlockSize = 1;
     OperantDims = Dims;
@@ -995,9 +995,9 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
         }
         else
         {
-            int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
-            int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
-                            SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+            size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                               SelectionOffsets[Dim] + SelectionCounts[Dim]);
             BlockSize *= (Right - Left);
             break;
         }
@@ -1013,9 +1013,9 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
     size_t *FirstIndex = malloc(Dims * sizeof(FirstIndex[0]));
     for (int Dim = 0; Dim < Dims; Dim++)
     {
-        int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
-        int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
-                        SelectionOffsets[Dim] + SelectionCounts[Dim]);
+        size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+        size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                           SelectionOffsets[Dim] + SelectionCounts[Dim]);
         if (Dim < OperantDims - 1)
         {
             BlockCount *= (Right - Left);
@@ -1036,7 +1036,7 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
 
     InData += SourceBlockStartOffset;
     OutData += DestBlockStartOffset;
-    int i;
+    size_t i;
     for (i = 0; i < BlockCount; i++)
     {
         memcpy(OutData, InData, BlockSize * ElementSize);

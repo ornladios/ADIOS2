@@ -48,6 +48,15 @@ endif()
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
 #------------------------------------------------------------------------------#
+# RPATH defaults
+#------------------------------------------------------------------------------#
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
+  set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+endif()
+
+#------------------------------------------------------------------------------#
 # Silence MSVC warnings
 #------------------------------------------------------------------------------#
 

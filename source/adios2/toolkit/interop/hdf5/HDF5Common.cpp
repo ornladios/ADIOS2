@@ -30,6 +30,8 @@ const std::string HDF5Common::ATTRNAME_GIVEN_ADIOSNAME = "ADIOSName";
 const std::string HDF5Common::PREFIX_BLOCKINFO = "ADIOS_BLOCKINFO_";
 const std::string HDF5Common::PREFIX_STAT = "ADIOS_STAT_";
 const std::string HDF5Common::PARAMETER_COLLECTIVE = "H5CollectiveMPIO";
+const std::string HDF5Common::PARAMETER_CHUNK_FLAG = "H5ChunkDim";
+const std::string HDF5Common::PARAMETER_CHUNK_VARS = "H5ChunkVars";
 
 /*
    //need to know ndim before defining this.
@@ -71,6 +73,42 @@ void HDF5Common::ParseParameters(core::IO &io)
             H5Pset_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
     }
 #endif
+
+    m_ChunkVarNames.clear();
+    m_ChunkPID = -1;
+    m_ChunkDim = 0;
+
+    {
+        std::vector<hsize_t> chunkDim;
+        auto chunkFlagKey = io.m_Parameters.find(PARAMETER_CHUNK_FLAG);
+        if (chunkFlagKey != io.m_Parameters.end())
+        { // note space is the delimiter
+            std::stringstream ss(chunkFlagKey->second);
+            int i;
+            while (ss >> i)
+                chunkDim.push_back(i);
+
+            m_ChunkPID = H5Pcreate(H5P_DATASET_CREATE);
+            m_ChunkDim = chunkDim.size();
+            if (m_ChunkDim > 0)
+                H5Pset_chunk(m_ChunkPID, chunkDim.size(), chunkDim.data());
+        }
+    }
+
+    //
+    // if no chunk dim specified, then ignore this parameter
+    //
+    if (-1 != m_ChunkPID)
+    {
+        auto chunkVarKey = io.m_Parameters.find(PARAMETER_CHUNK_VARS);
+        if (chunkVarKey != io.m_Parameters.end())
+        {
+            std::stringstream ss(chunkVarKey->second);
+            std::string token;
+            while (ss >> token)
+                m_ChunkVarNames.insert(token);
+        }
+    }
 }
 
 void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
@@ -533,6 +571,9 @@ void HDF5Common::Close()
 
     H5Pclose(m_PropertyTxfID);
     H5Fclose(m_FileId);
+    if (-1 != m_ChunkPID)
+        H5Pclose(m_ChunkPID);
+
     m_FileId = -1;
     m_GroupId = -1;
 }
@@ -700,8 +741,17 @@ void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type,
         }
     }
 
+    hid_t varCreateProperty = H5P_DEFAULT;
+    if (-1 != m_ChunkPID)
+    {
+        if (m_ChunkVarNames.size() == 0) // applies to all var
+            varCreateProperty = m_ChunkPID;
+        else if (m_ChunkVarNames.find(varName) != m_ChunkVarNames.end())
+            varCreateProperty = m_ChunkPID;
+    }
+
     hid_t dsetID = H5Dcreate(topId, list.back().c_str(), h5Type, filespaceID,
-                             H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                             H5P_DEFAULT, varCreateProperty, H5P_DEFAULT);
 
     if (list.back().compare(varName) != 0)
     {
