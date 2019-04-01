@@ -1455,10 +1455,10 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     // size_t elemsize;                   // size in bytes of one element
     uint64_t st, ct;
     std::vector<T> dataV;
-    uint64_t sum;      // working var to sum up things
-    uint64_t maxreadn; // max number of elements to read once up to a limit
-                       // (10MB of data)
-    uint64_t actualreadn;     // our decision how much to read at once
+    uint64_t sum;         // working var to sum up things
+    uint64_t maxreadn;    // max number of elements to read once up to a limit
+                          // (10MB of data)
+    uint64_t actualreadn; // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     bool incdim;              // used in incremental reading in
     int ndigits_dims[32];     // # of digits (to print) of each dimension
@@ -1702,10 +1702,10 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
     int tidx;
     uint64_t st, ct;
     std::vector<T> dataV;
-    uint64_t sum;      // working var to sum up things
-    uint64_t maxreadn; // max number of elements to read once up to a limit
-                       // (10MB of data)
-    uint64_t actualreadn;     // our decision how much to read at once
+    uint64_t sum;         // working var to sum up things
+    uint64_t maxreadn;    // max number of elements to read once up to a limit
+                          // (10MB of data)
+    uint64_t actualreadn; // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     bool incdim;              // used in incremental reading in
     int ndigits_dims[32];     // # of digits (to print) of each dimension
