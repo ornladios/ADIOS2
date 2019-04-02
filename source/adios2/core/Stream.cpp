@@ -69,7 +69,8 @@ bool Stream::GetStep()
         m_FirstStep = false;
     }
 
-    if (m_Engine->BeginStep() != StepStatus::OK)
+    StepStatus status = m_Engine->BeginStep();
+    if (status == StepStatus::EndOfStream || status == StepStatus::OtherError)
     {
         m_StepStatus = false;
         return false;
