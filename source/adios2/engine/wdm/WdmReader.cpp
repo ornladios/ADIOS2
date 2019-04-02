@@ -148,21 +148,34 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 
     while (vars == nullptr)
     {
-        if (BeginStepIterator(stepMode, vars) == StepStatus::OK)
+        auto stepStatus = BeginStepIterator(stepMode, vars);
+        if (stepStatus == StepStatus::OK)
         {
             m_RetryTimes = 0;
             break;
         }
-        auto nowTime = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            nowTime - startTime);
-        if (duration.count() > timeoutSeconds && timeoutSeconds >= 0)
+        else if (stepStatus == StepStatus::EndOfStream)
         {
-            Log(5,
-                "WdmReader::BeginStep() returned EndOfStream because of "
-                "timeout.",
-                true, true);
             return StepStatus::EndOfStream;
+        }
+        if (timeoutSeconds >= 0)
+        {
+            auto nowTime = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                nowTime - startTime);
+            if (duration.count() > timeoutSeconds)
+            {
+                Log(5,
+                    "WdmReader::BeginStep() returned EndOfStream because of "
+                    "timeout.",
+                    true, true);
+                return StepStatus::EndOfStream;
+            }
+            else
+            {
+                Log(5, "WdmReader::BeginStep() returned NotReady.", true, true);
+                return StepStatus::NotReady;
+            }
         }
     }
 
