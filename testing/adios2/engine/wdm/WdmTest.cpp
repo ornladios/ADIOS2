@@ -221,7 +221,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         GenData(myDComplexes, i, start, count, shape);
 
         adios2::StepStatus status =
-            dataManReader.BeginStep(StepMode::NextAvailable, 5);
+            dataManReader.BeginStep(StepMode::NextAvailable);
 
         if (status == adios2::StepStatus::OK)
         {
@@ -296,11 +296,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             VerifyData(myDComplexes.data(), currentStep, start, count, shape);
             dataManReader.EndStep();
         }
-        else
-        {
-            std::cout << "End of stream at Step " << i << std::endl;
-            break;
-        }
     }
     if (received_steps)
     {
@@ -329,7 +324,7 @@ TEST_F(WdmEngineTest, BaseTest)
     Dims shape = {10, (size_t)mpiSize * 2};
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
-    size_t steps = 1000;
+    size_t steps = 10000;
 
     if (mpiGroup == 0)
     {
