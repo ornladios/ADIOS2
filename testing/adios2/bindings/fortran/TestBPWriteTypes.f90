@@ -15,6 +15,9 @@
      character(len=:), allocatable :: varName
      character(len=:), allocatable :: engineType
 
+     ! read local value as global array
+     integer(kind=4), dimension(:), allocatable :: inRanks
+
      ! read handlers
      integer(kind=4) :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
@@ -112,7 +115,9 @@
      ! local value
      call adios2_define_variable(variables(14), ioWrite, "lvar_i32", &
                                  adios2_type_integer4, &
-                                 (/ adios2_local_value_dim /), (/ /), (/ /), &
+                                 1, (/ adios2_local_value_dim /), &
+                                 adios2_null_dims, &
+                                 adios2_null_dims, &
                                  adios2_constant_dims, ierr)
 
      do i=1,13
@@ -233,6 +238,13 @@
      call adios2_get(bpReader, variables(13), inString, ierr)
      call adios2_perform_gets(bpReader, ierr)
      if( inString /= data_Strings(1) ) stop 'gvar_Str read failed'
+
+     call adios2_inquire_variable(variables(14), ioRead, "lvar_i32", ierr)
+     allocate(inRanks(isize))
+     call adios2_get(bpReader, variables(14), inRanks, ierr)
+     call adios2_perform_gets(bpReader, ierr)
+     if( inRanks(irank+1) /= irank ) stop 'lvar_i32 read failed'
+     deallocate(inRanks)
 
      call adios2_close(bpReader, ierr)
 
