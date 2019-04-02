@@ -148,6 +148,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 			adiosVarType = itType->second;
 
 		}
+		/*
 		if(adiosVarType =="char")
 			AddVar<char>(m_IO, adiosName, shape);
 		else if(adiosVarType =="signed char")
@@ -176,6 +177,35 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 				AddVar<double>(m_IO, adiosName, shape);
 		else if(adiosVarType =="long double")
 						AddVar<long double>(m_IO, adiosName, shape);
+		else if(adiosVarType =="float complex")
+				AddVar<std::complex<float>>(m_IO, adiosName, shape);
+		else if(adiosVarType =="double complex")
+				AddVar<std::complex<double>>(m_IO, adiosName, shape);
+		else
+			AddVar<std::string>(m_IO, adiosName, shape);// used string for last value
+		*/
+		if(adiosVarType =="int8_t")
+			AddVar<int8_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="uint8_t")
+			AddVar<uint8_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="int16_t")
+			AddVar<int16_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="uint16_t")
+						AddVar<uint16_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="int32_t")
+						AddVar<int32_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="uint32_t")
+						AddVar<uint32_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="int64_t")
+						AddVar<int64_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="uint64_t")
+						AddVar<uint64_t>(m_IO, adiosName, shape);
+		else if(adiosVarType =="float")
+				AddVar<float>(m_IO, adiosName, shape);
+		else if(adiosVarType =="double")
+				AddVar<double>(m_IO, adiosName, shape);
+		else if(adiosVarType =="long double")
+				AddVar<long double>(m_IO, adiosName, shape);
 		else if(adiosVarType =="float complex")
 				AddVar<std::complex<float>>(m_IO, adiosName, shape);
 		else if(adiosVarType =="double complex")

@@ -62,24 +62,42 @@ private:
     std::vector<std::string> v_name_vector;
     std::vector<int> elemSize_vector;
     const std::map<std::string, int>varType_to_ds = {
-    		{"char", 1},
-			{"signed char", 2},
-			{"unsigned char", 3},
-			{"short", 4},
-			{"unsigned short", 5},
-			{"int", 6},
-			{"unsigned int", 7},
-			{"long int", 8},
-			{"long long int", 9},
-			{ "unsigned long int", 10},
-			{"unsigned long long int", 11},
-			{"float", 12},
-			{"double", 13},
-			{"long double", 14},
-			{"complex float", 15},
-			{"complex double", 16},
-			{"string", 17},
+    		{"int8_t", 1},
+			{"uint8_t", 2},
+			{"int16_t", 3},
+			{"uint16_t", 4},
+			{"int32_t", 5},
+			{"uint32_t", 6},
+			{"int64_t", 7},
+			{"uint64_t", 8},
+			{"float", 9},
+			{"double", 10},
+			{"long double", 11},
+			{"complex float", 12},
+			{"complex double", 13},
+			{"string", 14},
     };
+    /*
+    const std::map<std::string, int>varType_to_ds = {
+        		{"char", 1},
+    			{"signed char", 2},
+    			{"unsigned char", 3},
+    			{"short", 4},
+    			{"unsigned short", 5},
+    			{"int", 6},
+    			{"unsigned int", 7},
+    			{"long int", 8},
+    			{"long long int", 9},
+    			{ "unsigned long int", 10},
+    			{"unsigned long long int", 11},
+    			{"float", 12},
+    			{"double", 13},
+    			{"long double", 14},
+    			{"complex float", 15},
+    			{"complex double", 16},
+    			{"string", 17},
+        };
+        */
 
 #define declare_type(T)                                                          \
     void DoPutSync(Variable<T> &variable, const T *values) final;              \
