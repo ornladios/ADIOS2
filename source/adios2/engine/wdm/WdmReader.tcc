@@ -25,18 +25,27 @@ namespace engine
 template <class T>
 inline void WdmReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") begin", true, true);
+    Log(5,
+        "WdmReader::GetSync(" + variable.m_Name + ") begin " +
+            std::to_string(m_CurrentStep),
+        true, true);
 
     GetDeferredCommon(variable, data);
     PerformGets();
 
-    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") end", true, true);
+    Log(5,
+        "WdmReader::GetSync(" + variable.m_Name + ") end " +
+            std::to_string(m_CurrentStep),
+        true, true);
 }
 
 template <class T>
 void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") begin", true, true);
+    Log(5,
+        "WdmReader::GetDeferred(" + variable.m_Name + ") begin " +
+            std::to_string(m_CurrentStep),
+        true, true);
 
     if (variable.m_SingleValue)
     {
@@ -57,7 +66,28 @@ void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
     req.data = data;
     req.type = helper::GetType<T>();
 
-    Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") end", true, true);
+    if (m_Verbosity > 10)
+    {
+        std::cout << "WdmReader::GetDeferred (" << variable.m_Name
+                  << ") registered Start = ";
+        for (int i = 0; i < req.start.size(); ++i)
+        {
+            std::cout << req.start[i] << ", ";
+        }
+        std::cout << std::endl;
+        std::cout << "WdmReader::GetDeferred (" << variable.m_Name
+                  << ") registered Count = ";
+        for (int i = 0; i < req.count.size(); ++i)
+        {
+            std::cout << req.count[i] << ", ";
+        }
+        std::cout << std::endl;
+    }
+
+    Log(5,
+        "WdmReader::GetDeferred(" + variable.m_Name + ") end " +
+            std::to_string(m_CurrentStep),
+        true, true);
 }
 
 template <>
@@ -178,7 +208,7 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
         v->m_Engine = this;
         if (m_Verbosity >= 5)
         {
-            std::cout << "WdmReader::CheckIOVariable defined Variable" << name
+            std::cout << "WdmReader::CheckIOVariable defined Variable " << name
                       << " Dimension " << shape.size() << std::endl;
         }
     }
@@ -197,7 +227,7 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
         }
         if (m_Verbosity >= 5)
         {
-            std::cout << "WdmReader::CheckIOVariable Variable" << name
+            std::cout << "WdmReader::CheckIOVariable Variable " << name
                       << " existing, Dimension " << shape.size() << std::endl;
         }
     }
