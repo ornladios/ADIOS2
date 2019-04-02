@@ -227,7 +227,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         {
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
-            ASSERT_EQ(vars.size(), 10);
             if (print_lines == 0)
             {
                 std::cout << "All available variables : ";
@@ -237,6 +236,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 }
                 std::cout << std::endl;
             }
+            ASSERT_EQ(vars.size(), 10);
             size_t currentStep = dataManReader.CurrentStep();
             //            ASSERT_EQ(i, currentStep);
             adios2::Variable<char> bpChars =

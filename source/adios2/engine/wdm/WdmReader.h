@@ -37,8 +37,9 @@ public:
 
     ~WdmReader();
     StepStatus BeginStep(
-        StepMode mode = StepMode::NextAvailable,
+        StepMode stepMode = StepMode::NextAvailable,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStepIterator(StepMode stepMode, format::DmvVecPtr &vars);
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;
@@ -115,7 +116,7 @@ private:
     void Log(const int level, const std::string &message, const bool mpi,
              const bool endline);
 
-    int m_Verbosity = 0;
+    int m_Verbosity = 5;
 };
 
 } // end namespace engine
