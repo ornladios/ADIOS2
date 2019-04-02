@@ -79,6 +79,7 @@ module adios2_parameters_mod
     integer, parameter :: adios2_string_array_element_max_size = 4096
 
     integer(kind=8), parameter, dimension(1) :: adios2_null_dims = (/-1/)
+    integer(kind=8), parameter :: adios2_local_value_dim = -2
 
     logical, parameter :: adios2_advance_yes = .true.
     logical, parameter :: adios2_advance_no  = .false.

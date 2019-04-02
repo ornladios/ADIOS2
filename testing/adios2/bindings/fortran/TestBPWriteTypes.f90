@@ -5,18 +5,21 @@
      implicit none
 
      integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
-     integer :: inx, irank, isize, ierr, i, step_status
+     integer(kind=4) :: inx, irank, isize, ierr, i, step_status
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead
-     type(adios2_variable), dimension(13) :: variables
+     type(adios2_variable), dimension(14) :: variables
      type(adios2_engine) :: bpWriter, bpReader
      character(len=15) :: inString
      character(len=:), allocatable :: varName
      character(len=:), allocatable :: engineType
 
+     ! read local value as global array
+     integer(kind=4), dimension(:), allocatable :: inRanks
+
      ! read handlers
-     integer :: ndims
+     integer(kind=4) :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
 
      ! Launch MPI
@@ -109,6 +112,14 @@
      call adios2_define_variable(variables(13), ioWrite, "gvar_Str", &
                                  adios2_type_string, ierr)
 
+     ! local value
+     call adios2_define_variable(variables(14), ioWrite, "lvar_i32", &
+                                 adios2_type_integer4, &
+                                 1, (/ adios2_local_value_dim /), &
+                                 adios2_null_dims, &
+                                 adios2_null_dims, &
+                                 adios2_constant_dims, ierr)
+
      do i=1,13
         if( variables(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_variable'
      end do
@@ -164,6 +175,9 @@
          call adios2_put(bpWriter, variables(4), data_I64, ierr)
          call adios2_put(bpWriter, variables(5), data_R32, ierr)
          call adios2_put(bpWriter, variables(6), data_R64, ierr)
+
+         call adios2_put(bpWriter, variables(14), irank, ierr)
+
          call adios2_end_step(bpWriter, ierr)
      end do
 
@@ -224,6 +238,13 @@
      call adios2_get(bpReader, variables(13), inString, ierr)
      call adios2_perform_gets(bpReader, ierr)
      if( inString /= data_Strings(1) ) stop 'gvar_Str read failed'
+
+     call adios2_inquire_variable(variables(14), ioRead, "lvar_i32", ierr)
+     allocate(inRanks(isize))
+     call adios2_get(bpReader, variables(14), inRanks, ierr)
+     call adios2_perform_gets(bpReader, ierr)
+     if( inRanks(irank+1) /= irank ) stop 'lvar_i32 read failed'
+     deallocate(inRanks)
 
      call adios2_close(bpReader, ierr)
 
