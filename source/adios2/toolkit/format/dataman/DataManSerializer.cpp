@@ -612,7 +612,8 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                 var.count.size() != count.size() ||
                 start.size() != count.size())
             {
-                // requested shape does not match metadata
+                throw("DataManSerializer::PutDeferredRequest() requested "
+                      "start, count and shape do not match");
                 continue;
             }
             for (size_t i = 0; i < start.size(); ++i)
@@ -620,7 +621,8 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                 if (start[i] > var.start[i] + var.count[i] ||
                     start[i] + count[i] < var.start[i])
                 {
-                    // current iteration does not have the desired part
+                    throw("DataManSerializer::PutDeferredRequest() current "
+                          "iteration does not have the desired part");
                     continue;
                 }
             }
@@ -636,7 +638,21 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
 
     for (const auto &i : jmap)
     {
-        (*m_DeferredRequestsToSend)[i.first] = SerializeJson(i.second);
+        auto charVec = (*m_DeferredRequestsToSend)[i.first];
+        if (charVec == nullptr)
+        {
+            charVec = std::make_shared<std::vector<char>>();
+        }
+        nlohmann::json jsonSer;
+        if (charVec->size() > 0)
+        {
+            jsonSer = DeserializeJson(charVec->data(), charVec->size());
+        }
+        for (auto j = i.second.begin(); j != i.second.end(); ++j)
+        {
+            jsonSer.push_back(*j);
+        }
+        (*m_DeferredRequestsToSend)[i.first] = SerializeJson(jsonSer);
     }
 
     return 0;

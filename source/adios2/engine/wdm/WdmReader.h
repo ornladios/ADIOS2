@@ -44,7 +44,7 @@ public:
     void EndStep() final;
 
 private:
-    bool m_Tolerance = true;
+    bool m_Tolerance = false;
     format::DataManSerializer m_DataManSerializer;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
     std::shared_ptr<transportman::StagingMan> m_MetadataTransport;

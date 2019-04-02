@@ -77,8 +77,6 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
             "WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
     }
 
-    Log(5, "WdmWriter::BeginStep() after checking queue limit", true, true);
-
     ++m_CurrentStep;
     m_DataManSerializer.New(m_DefaultBufferSize);
 
