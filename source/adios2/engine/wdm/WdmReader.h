@@ -53,10 +53,11 @@ private:
     int m_MpiRank;
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 3;
-    int m_RetryMax = 3;
+    int m_RetryMax = 128;
     int m_RetryTimes = 0;
     size_t m_AppID;
     bool m_AttributesSet = false;
+    bool m_ConnectionLost = false;
 
     struct Request
     {
@@ -73,8 +74,6 @@ private:
     std::mutex m_RepliedMetadataMutex;
 
     void RequestMetadata(int64_t step = -5);
-    bool m_RequestingMetadata = true;
-    std::thread m_RequestMetadataThread;
 
     void Init() final;
     void InitParameters() final;
