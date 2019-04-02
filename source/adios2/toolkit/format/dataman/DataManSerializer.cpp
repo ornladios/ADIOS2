@@ -621,8 +621,6 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                 if (start[i] > var.start[i] + var.count[i] ||
                     start[i] + count[i] < var.start[i])
                 {
-                    throw("DataManSerializer::PutDeferredRequest() current "
-                          "iteration does not have the desired part");
                     continue;
                 }
             }
