@@ -221,13 +221,12 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         GenData(myDComplexes, i, start, count, shape);
 
         adios2::StepStatus status =
-            dataManReader.BeginStep(StepMode::NextAvailable, 5);
+            dataManReader.BeginStep(StepMode::NextAvailable);
 
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
-            ASSERT_EQ(vars.size(), 10);
             if (print_lines == 0)
             {
                 std::cout << "All available variables : ";
@@ -237,6 +236,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 }
                 std::cout << std::endl;
             }
+            ASSERT_EQ(vars.size(), 10);
             size_t currentStep = dataManReader.CurrentStep();
             //            ASSERT_EQ(i, currentStep);
             adios2::Variable<char> bpChars =
@@ -295,11 +295,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             VerifyData(myComplexes.data(), currentStep, start, count, shape);
             VerifyData(myDComplexes.data(), currentStep, start, count, shape);
             dataManReader.EndStep();
-        }
-        else
-        {
-            std::cout << "End of stream at Step " << i << std::endl;
-            break;
         }
     }
     if (received_steps)

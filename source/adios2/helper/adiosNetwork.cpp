@@ -15,6 +15,7 @@
 #ifndef _WIN32
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_WDM)
 
+#include <iostream>
 #include <thread>
 
 #include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
@@ -131,6 +132,8 @@ void HandshakeWriter(MPI_Comm mpiComm, size_t &appID,
         lockWrite.Close();
         remove(".staging.lock");
     }
+
+    appID = helper::BroadcastValue(appID, mpiComm);
 
     // Make full addresses
     for (int i = 0; i < channelsPerRank; ++i)
