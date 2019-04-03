@@ -43,19 +43,18 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
             std::to_string(m_CurrentStep),
         true, true);
 
-    if (m_QueueFullPolicy == "discard")
+    int64_t stepToErase = m_CurrentStep - m_QueueLimit;
+    if (stepToErase >= 0)
     {
-        int64_t stepToErase = m_CurrentStep - m_QueueLimit;
-        if (stepToErase >= 0)
-        {
-            Log(5,
-                "WdmWriter::BeginStep() reaching max buffer steps, removing "
-                "Step " +
-                    std::to_string(stepToErase),
-                true, true);
-            m_DataManSerializer.Erase(stepToErase);
-        }
+        Log(5,
+            "WdmWriter::BeginStep() reaching max buffer steps, removing "
+            "Step " +
+                std::to_string(stepToErase),
+            true, true);
+        m_DataManSerializer.Erase(stepToErase);
     }
+
+    /*
     else if (m_QueueFullPolicy == "block")
     {
         auto startTime = std::chrono::system_clock::now();
@@ -71,11 +70,7 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
             }
         }
     }
-    else
-    {
-        throw(std::invalid_argument(
-            "WdmWriter::ReplyThread: unknown QueueFullPolicy parameter"));
-    }
+    */
 
     ++m_CurrentStep;
     m_DataManSerializer.New(m_DefaultBufferSize);
@@ -147,9 +142,13 @@ void WdmWriter::InitParameters()
         {
             m_Verbosity = std::stoi(value);
         }
-        else if (key == "queuefullpolicy")
+        else if (key == "queuelimit")
         {
-            m_QueueFullPolicy = value;
+            m_QueueLimit = stoll(value);
+            if (m_QueueLimit < 100)
+            {
+                m_QueueLimit = 100;
+            }
         }
         else if (key == "port")
         {
@@ -189,22 +188,8 @@ void WdmWriter::ReplyThread(const std::string &address)
             {
                 if (step == -5) // let writer decide what to send
                 {
-                    if (m_QueueFullPolicy == "discard")
-                    {
-                        aggMetadata =
-                            m_DataManSerializer.GetAggregatedMetadataPack(-2);
-                    }
-                    else if (m_QueueFullPolicy == "block")
-                    {
-                        aggMetadata =
-                            m_DataManSerializer.GetAggregatedMetadataPack(-4);
-                    }
-                    else
-                    {
-                        throw(std::invalid_argument("WdmWriter::ReplyThread: "
-                                                    "unknown QueueFullPolicy "
-                                                    "parameter"));
-                    }
+                    aggMetadata =
+                        m_DataManSerializer.GetAggregatedMetadataPack(-2);
                 }
                 else
                 {
