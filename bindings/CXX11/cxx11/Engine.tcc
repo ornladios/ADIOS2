@@ -77,6 +77,12 @@ typename Variable<T>::Span Engine::Put(Variable<T> variable,
 }
 
 template <class T>
+typename Variable<T>::Span Engine::Put(Variable<T> variable)
+{
+    return Put(variable, 0, T());
+}
+
+template <class T>
 void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
