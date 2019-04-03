@@ -759,11 +759,11 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
             Dims d = get_global_array_signature(fp, io, variable);
-            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).data() : "__");
+            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
             for (size_t j = 1; j < variable->m_Shape.size(); j++)
             {
                 fprintf(outf, ", %s",
-                        d[j] > 0 ? std::to_string(d[j]).data() : "__");
+                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
             }
             fprintf(outf, "}");
         }
@@ -773,13 +773,13 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                 get_local_array_signature(fp, io, variable);
             Dims &d = signo.second;
             fprintf(outf, "[%s]*",
-                    signo.first > 0 ? std::to_string(signo.first).data()
+                    signo.first > 0 ? std::to_string(signo.first).c_str()
                                     : "__");
-            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).data() : "__");
+            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
             for (size_t j = 1; j < variable->m_Count.size(); j++)
             {
                 fprintf(outf, ", %s",
-                        d[j] > 0 ? std::to_string(d[j]).data() : "__");
+                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
             }
             fprintf(outf, "}");
         }
