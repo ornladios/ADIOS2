@@ -29,8 +29,6 @@ with adios2.open('out.bp', 'w', comm) as f:
     f.write('z', data[0], shape[0], start[0], count[0], end_step=True)
     f.write('z', data[1], shape[1], start[1], count[1], end_step=True)
 
- # bpls shows only size of initial step
-
 # Read back arrays
 with adios2.open('out.bp', 'r', comm) as f:
     for f_step in f:
