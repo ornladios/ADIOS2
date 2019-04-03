@@ -91,18 +91,29 @@ public:
 
     /**
      * Put signature that provides access to the internal engine buffer for a
-     * pre-allocated variable. Returns a fixed size Span (based on C++20
-     * std::span) so applications can populate data value after this Put.
-     * Requires a call to PerformPuts, EndStep, or Close to extract the Min/Max
-     * bounds.
+     * pre-allocated variable including a fill value. Returns a fixed size Span
+     * (based on C++20 std::span) so applications can populate data value after
+     * this Put. Requires a call to PerformPuts, EndStep, or Close to extract
+     * the Min/Max bounds.
      * @param variable input variable
-     * @param bufferID (default = 0) optional, if engine has multiple buffers
-     * @param value (default is zeros) optional initial value
+     * @param bufferID if engine has multiple buffers, input 0 when this
+     * information is not known
+     * @param value provide an initial fill value
      * @return span to variable data in engine internal buffer
      */
     template <class T>
-    typename Variable<T>::Span
-    Put(Variable<T> variable, const size_t bufferID = 0, const T &value = {});
+    typename Variable<T>::Span Put(Variable<T> variable, const size_t bufferID,
+                                   const T &value);
+
+    /**
+     * Put signature that provides access to an internal engine buffer (decided
+     * by the engine) for a pre-allocated variable with the default fill value
+     * T().
+     * @param variable input variable
+     * @return span to variable data in engine internal buffer
+     */
+    template <class T>
+    typename Variable<T>::Span Put(Variable<T> variable);
 
     /**
      * Put data associated with a Variable in the Engine
@@ -388,7 +399,9 @@ private:
 #define declare_template_instantiation(T)                                      \
                                                                                \
     extern template typename Variable<T>::Span Engine::Put(                    \
-        Variable<T>, const size_t, const T &);
+        Variable<T>, const size_t, const T &);                                 \
+                                                                               \
+    extern template typename Variable<T>::Span Engine::Put(Variable<T>);
 
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
