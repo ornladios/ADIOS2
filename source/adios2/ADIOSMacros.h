@@ -277,7 +277,7 @@
                                                                                \
     private:                                                                   \
         pointer ptr_;                                                          \
-    };
+    }
 
 #define ADIOS2_iterators_functions(DATA_FUNCTION, SIZE_FUNCTION)               \
     iterator begin() noexcept { return iterator(DATA_FUNCTION); }              \
