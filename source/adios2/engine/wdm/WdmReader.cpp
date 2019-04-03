@@ -72,9 +72,14 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
 
     if (m_MetaDataMap.empty())
     {
+        Log(5,
+            "WdmReader::BeginStepIterator() returned NotReady because the "
+            "metadata map is empty",
+            true, true);
         return StepStatus::NotReady;
     }
 
+    /*
     size_t maxStep = std::numeric_limits<size_t>::min();
     size_t minStep = std::numeric_limits<size_t>::max();
 
@@ -130,6 +135,42 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
                 break;
             }
         }
+    }
+    else
+    {
+        vars = currentStepIt->second;
+    }
+    */
+
+    size_t maxStep = std::numeric_limits<size_t>::min();
+    for (auto &i : m_MetaDataMap)
+    {
+        if (i.first > maxStep)
+        {
+            maxStep = i.first;
+        }
+    }
+    if (m_CurrentStep > maxStep)
+    {
+        Log(5,
+            "WdmReader::BeginStepIterator() returned NotReady because no new "
+            "step is received yet",
+            true, true);
+        return StepStatus::NotReady;
+    }
+    else
+    {
+        m_CurrentStep = maxStep;
+    }
+
+    auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
+    if (currentStepIt == m_MetaDataMap.end())
+    {
+        Log(5,
+            "WdmReader::BeginStepIterator() returned NotReady because the "
+            "current step is not existed in metadata map",
+            true, true);
+        return StepStatus::NotReady;
     }
     else
     {

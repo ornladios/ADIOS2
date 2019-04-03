@@ -799,6 +799,7 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
                                          const Dims &outCount, Dims &ovlpStart,
                                          Dims &ovlpCount)
 {
+
     if (inStart.size() != inCount.size() ||
         outStart.size() != outCount.size() || inStart.size() != outStart.size())
     {
