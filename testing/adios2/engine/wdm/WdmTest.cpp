@@ -324,7 +324,7 @@ TEST_F(WdmEngineTest, BaseTest)
     Dims shape = {10, (size_t)mpiSize * 2};
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
-    size_t steps = 10000;
+    size_t steps = 1000;
 
     if (mpiGroup == 0)
     {

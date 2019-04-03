@@ -70,6 +70,11 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     RequestMetadata();
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
+    if (m_MetaDataMap.empty())
+    {
+        return StepStatus::NotReady;
+    }
+
     size_t maxStep = std::numeric_limits<size_t>::min();
     size_t minStep = std::numeric_limits<size_t>::max();
 
@@ -93,6 +98,12 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
         }
         if (m_CurrentStep > maxStep)
         {
+            Log(5,
+                "WdmReader::BeginStepIterator() returned NotReady because "
+                "current step is larger than max step in buffer " +
+                    std::to_string(m_CurrentStep) + ">" +
+                    std::to_string(maxStep),
+                true, true);
             return StepStatus::NotReady;
         }
     }
@@ -127,8 +138,14 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
 
     if (vars == nullptr)
     {
+        Log(5,
+            "WdmReader::BeginStepIterator() returned NotReady because vars == "
+            "nullptr",
+            true, true);
         return StepStatus::NotReady;
     }
+
+    return StepStatus::OK;
 }
 
 StepStatus WdmReader::BeginStep(const StepMode stepMode,
@@ -344,6 +361,14 @@ void WdmReader::Init()
     srand(time(NULL));
     InitParameters();
     helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name);
+
+    if (m_Verbosity >= 5)
+    {
+        for (const auto &i : m_FullAddresses)
+        {
+            std::cout << i << std::endl;
+        }
+    }
 }
 
 void WdmReader::InitParameters()
