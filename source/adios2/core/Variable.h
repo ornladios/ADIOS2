@@ -130,17 +130,17 @@ public:
 
     size_t SubStreamsInfoSize();
 
-    Dims Shape(const size_t step) const;
+    Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
 
     Dims Count() const;
 
     size_t SelectionSize() const;
 
-    std::pair<T, T> MinMax(const size_t step) const;
+    std::pair<T, T> MinMax(const size_t step = adios2::DefaultSizeT) const;
 
-    T Min(const size_t step) const;
+    T Min(const size_t step = adios2::DefaultSizeT) const;
 
-    T Max(const size_t step) const;
+    T Max(const size_t step = adios2::DefaultSizeT) const;
 
     std::vector<std::vector<typename Variable<T>::Info>>
     AllStepsBlocksInfo() const;

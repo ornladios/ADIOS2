@@ -251,7 +251,7 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             helper::ValueToString(variable.m_AvailableStepsCount);             \
-        variablesInfo[name]["Shape"] = helper::VectorToCSV(variable.m_Shape);  \
+        variablesInfo[name]["Shape"] = helper::VectorToCSV(variable.Shape());  \
         if (variable.m_SingleValue)                                            \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "true";                       \
@@ -262,9 +262,9 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "false";                      \
             variablesInfo[name]["Min"] =                                       \
-                helper::ValueToString(variable.m_Min);                         \
+                helper::ValueToString(variable.Min());                         \
             variablesInfo[name]["Max"] =                                       \
-                helper::ValueToString(variable.m_Max);                         \
+                helper::ValueToString(variable.Max());                         \
         }                                                                      \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
