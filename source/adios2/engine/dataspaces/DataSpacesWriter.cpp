@@ -130,16 +130,18 @@ void DataSpacesWriter::WriteVarInfo()
 		std::string ds_file_var;
 		int var_num = ndim_vector.size();
 		int var_name_max_length = 128;
-		int buf_len = var_num * sizeof(int) +var_num * sizeof(int)+ MAX_DS_NDIM * var_num * sizeof(uint64_t) + var_num * var_name_max_length * sizeof(char);
+		int buf_len = sizeof(int)+ var_num * sizeof(int) +var_num * sizeof(int)+ MAX_DS_NDIM * var_num * sizeof(uint64_t) + var_num * var_name_max_length * sizeof(char);
 		int *dim_meta, *elemSize_meta;
 		uint64_t *gdim_meta;
+		int* nvar_buf;
+		nvar_buf = (int*)malloc(sizeof(int));
 		dim_meta = (int*) malloc(var_num* sizeof(int));
 		elemSize_meta = (int*) malloc(var_num*sizeof(int));
 		gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * var_num * sizeof(uint64_t));
 		memset(gdim_meta, 0, MAX_DS_NDIM * var_num * sizeof(uint64_t));
 		buffer = (char*) malloc(buf_len);
 		name_string= (char*) malloc(var_num * var_name_max_length * sizeof(char));
-
+		nvar_buf[0] = var_num;
 		for (nvars = 0; nvars < var_num; ++nvars) {
 			char *cstr = new char[v_name_vector.at(nvars).length() + 1];
 			strcpy(cstr, v_name_vector.at(nvars).c_str());
@@ -156,7 +158,8 @@ void DataSpacesWriter::WriteVarInfo()
 
 		}
 		//copy all the data into payload buffer
-		memcpy(buffer, dim_meta, var_num* sizeof(int));
+		memcpy(buffer, nvar_buf, sizeof(int));
+		memcpy(&buffer[sizeof(int)], dim_meta, var_num* sizeof(int));
 		memcpy(&buffer[var_num* sizeof(int)], elemSize_meta, var_num* sizeof(int));
 		memcpy(&buffer[2*var_num* sizeof(int)], gdim_meta, MAX_DS_NDIM * var_num * sizeof(uint64_t));
 		memcpy(&buffer[2*var_num* sizeof(int)+MAX_DS_NDIM * var_num * sizeof(uint64_t)], name_string, var_num * var_name_max_length * sizeof(char));
@@ -173,14 +176,16 @@ void DataSpacesWriter::WriteVarInfo()
 		dspaces_define_gdim(local_str, ndim, gdims);
 
 		dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
-		delete[] local_str;
+		//delete[] local_str;
 
+
+		/*
 		memset(lb, 0, MAX_DS_NDIM * sizeof(uint64_t));
 		memset(ub, 0, MAX_DS_NDIM * sizeof(uint64_t));
 		memset(gdims, 0, MAX_DS_NDIM * sizeof(uint64_t));
 		//store the latest version or step information for the file and how many variables are there in the file
 
-		int version_buf[2] = {var_num,0}; /* Put var_numbers in each step in DataSpaces */
+		int version_buf[2] = {var_num,0}; // Put var_numbers in each step in DataSpaces
 		int version_buf_len = 2;
 		local_file_var = "VERSION@"+f_Name;
 		local_str = new char[local_file_var.length() + 1];
@@ -194,13 +199,14 @@ void DataSpacesWriter::WriteVarInfo()
 		dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, version_buf);
 		delete[] local_str;
 
-		int l_version_buf[2] = {m_CurrentStep,0}; /* Put the latest version number to dataspaces*/
+		int l_version_buf[2] = {m_CurrentStep,0}; // Put the latest version number to dataspaces
 		local_file_var = "LATESTVERSION@"+f_Name;
 		local_str = new char[local_file_var.length() + 1];
 		strcpy(local_str, local_file_var.c_str());
 		dspaces_define_gdim(local_str, ndim, gdims);
 
 		dspaces_put(local_str, 0, elemsize, ndim, lb, ub, l_version_buf);
+		*/
 		dspaces_put_sync(); //wait on previous put to finish
 		delete[] local_str;
 		free(dim_meta);
