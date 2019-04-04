@@ -80,7 +80,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     MPI_Comm_size(testComm, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(testComm, adios2::DebugON);
@@ -121,8 +121,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             io.DefineVariable<double>("r64_2d", {}, {}, count2);
         auto local_var_r64_2d_rev =
             io.DefineVariable<double>("r64_2d_rev", {}, {}, count3);
-        auto local_var_time = io.DefineVariable<int64_t>("time", time_shape,
-                                                   time_start, time_count);
+        auto local_var_time = io.DefineVariable<int64_t>(
+            "time", time_shape, time_start, time_count);
         if (CompressSz)
         {
             adios2::Operator SzOp = adios.DefineOperator("szCompressor", "sz");

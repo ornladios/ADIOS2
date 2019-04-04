@@ -79,7 +79,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     MPI_Comm_size(testComm, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(testComm, adios2::DebugON);
@@ -114,12 +114,14 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         writerSize = var_time.Shape()[0];
 
-	int rankToRead = mpiRank;
-	if (writerSize < mpiSize) {
-	    rankToRead = mpiRank % writerSize;
-	}
+        int rankToRead = mpiRank;
+        if (writerSize < mpiSize)
+        {
+            rankToRead = mpiRank % writerSize;
+        }
 
-	//	std::cout << "The writer had " << writerSize << " mpiRanks, I'm rank " << mpiRank << " reading from Rank " << rankToRead << std::endl;
+        //	std::cout << "The writer had " << writerSize << " mpiRanks, I'm
+        //rank " << mpiRank << " reading from Rank " << rankToRead << std::endl;
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
