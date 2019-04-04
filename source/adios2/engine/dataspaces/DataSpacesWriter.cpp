@@ -214,6 +214,7 @@ void DataSpacesWriter::WriteVarInfo()
 		free(gdim_meta);
 		free(buffer);
 		free(name_string);
+		free(nvar_buf);
 	}
 	dspaces_unlock_on_write (meta_lk, &(m_data.mpi_comm));
 	ndim_vector.clear();
