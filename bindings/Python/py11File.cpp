@@ -148,6 +148,31 @@ void File::Write(const std::string &name, const pybind11::array &array,
 }
 
 void File::Write(const std::string &name, const pybind11::array &array,
+                 const Dims &shape, const Dims &start, const Dims &count,
+                 const adios2::vParams &operations, const bool endStep)
+{
+    if (false)
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (pybind11::isinstance<                                             \
+                 pybind11::array_t<T, pybind11::array::c_style>>(array))       \
+    {                                                                          \
+        m_Stream->Write(name, reinterpret_cast<const T *>(array.data()),       \
+                        shape, start, count, operations, endStep);             \
+    }
+    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: adios2 file write variable " + name +
+            ", either numpy type is not supported or is not "
+            "c_style memory contiguous, in call to write with operations\n");
+    }
+}
+
+void File::Write(const std::string &name, const pybind11::array &array,
                  const bool endStep)
 {
     Write(name, array, {}, {}, {}, endStep);

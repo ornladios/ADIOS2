@@ -101,6 +101,63 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
 }
 
 template <class T>
+void Stream::Write(const std::string &name, const T *data, const Dims &shape,
+                   const Dims &start, const Dims &count,
+                   const adios2::vParams &operations, const bool nextStep)
+{
+    Variable<T> *variable = m_IO->InquireVariable<T>(name);
+
+    if (variable == nullptr)
+    {
+        variable = &m_IO->DefineVariable<T>(name, shape, start, count, false);
+    }
+    else
+    {
+        if (!shape.empty() && !variable->m_SingleValue)
+        {
+            variable->SetShape(shape);
+        }
+
+        if (!start.empty() && !count.empty())
+        {
+            variable->SetSelection(Box<Dims>(start, count));
+        }
+    }
+
+    CheckOpen();
+    if (!m_StepStatus)
+    {
+        m_Engine->BeginStep();
+        m_StepStatus = true;
+    }
+
+    // boiler plate for operations
+    if (!operations.empty())
+    {
+        *variable->m_Operations.clear();
+        for (const auto &operation : operations)
+        {
+            const std::string opType = operation.first;
+            Operator *op = m_ADIOS->InquireOperator(opType);
+            if (op == nullptr)
+            {
+                op = &m_ADIOS->DefineOperator(opType, opType);
+            }
+
+            *variable->AddOperation(*op, operation.second);
+        }
+    }
+
+    m_Engine->Put(*variable, data, adios2::Mode::Sync);
+
+    if (nextStep)
+    {
+        m_Engine->EndStep();
+        m_StepStatus = false;
+    }
+}
+
+template <class T>
 void Stream::Write(const std::string &name, const T &datum, const bool nextStep)
 {
     const T datumLocal = datum;

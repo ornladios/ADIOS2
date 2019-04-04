@@ -78,6 +78,11 @@ public:
                const Dims &count = Dims{}, const bool nextStep = false);
 
     template <class T>
+    void Write(const std::string &name, const T *values, const Dims &shape,
+               const Dims &start, const Dims &count,
+               const adios2::vParams &operations, const bool nextStep = false);
+
+    template <class T>
     void Write(const std::string &name, const T &value,
                const bool nextStep = false);
 

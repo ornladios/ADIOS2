@@ -74,6 +74,10 @@ public:
                const bool endstep = false);
 
     void Write(const std::string &name, const pybind11::array &array,
+               const Dims &shape, const Dims &start, const Dims &count,
+               const adios2::vParams &operations, const bool endstep = false);
+
+    void Write(const std::string &name, const pybind11::array &array,
                const bool endstep = false);
 
     void Write(const std::string &name, const std::string &stringValue,
