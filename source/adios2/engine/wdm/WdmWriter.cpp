@@ -213,7 +213,10 @@ void WdmWriter::ReplyThread(const std::string &address)
         else if (request->size() > 16)
         {
             size_t step;
-            auto reply = m_DataManSerializer.GenerateReply(*request, step);
+            m_CompressionParamsMutex.lock();
+            std::unordered_map<std::string, Params> p = m_CompressionParams;
+            m_CompressionParamsMutex.unlock();
+            auto reply = m_DataManSerializer.GenerateReply(*request, step, p);
             tpm.SendReply(reply);
             if (reply->size() <= 16)
             {
