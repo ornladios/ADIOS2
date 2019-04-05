@@ -40,6 +40,23 @@ void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 template <class T>
 void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
+
+    for (const auto &op : variable.m_Operations)
+    {
+        std::lock_guard<std::mutex> l(m_CompressionParamsMutex);
+        std::string opName = op.Op->m_Type;
+        if (opName == "zfp" or opName == "bzip2" or opName == "sz")
+        {
+            m_CompressionParams[variable.m_Name]["CompressionMethod"] = opName;
+            for (const auto &p : op.Parameters)
+            {
+                m_CompressionParams[variable.m_Name][opName + ":" + p.first] =
+                    p.second;
+            }
+            break;
+        }
+    }
+
     Log(5,
         "WdmWriter::PutDeferred(" + variable.m_Name + ") start. Current step " +
             std::to_string(m_CurrentStep),

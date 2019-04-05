@@ -663,8 +663,9 @@ DeferredRequestMapPtr DataManSerializer::GetDeferredRequest()
     return t;
 }
 
-VecPtr DataManSerializer::GenerateReply(const std::vector<char> &request,
-                                        size_t &step)
+VecPtr DataManSerializer::GenerateReply(
+    const std::vector<char> &request, size_t &step,
+    const std::unordered_map<std::string, Params> &compressionParams)
 {
     auto replyMetaJ = std::make_shared<nlohmann::json>();
     auto replyLocalBuffer =
@@ -736,6 +737,12 @@ VecPtr DataManSerializer::GenerateReply(const std::vector<char> &request,
         {
             if (var.name == variable)
             {
+                Params compressionParamsVar;
+                auto compressionParamsIter = compressionParams.find(var.name);
+                if (compressionParamsIter != compressionParams.end())
+                {
+                    compressionParamsVar = compressionParamsIter->second;
+                }
                 Dims ovlpStart, ovlpCount;
                 bool ovlp = CalculateOverlap(var.start, var.count, start, count,
                                              ovlpStart, ovlpCount);
@@ -756,7 +763,8 @@ VecPtr DataManSerializer::GenerateReply(const std::vector<char> &request,
                ovlpCount, step);                                               \
         PutVar(reinterpret_cast<T *>(tmpBuffer.data()), variable, var.shape,   \
                ovlpStart, ovlpCount, ovlpStart, ovlpCount, var.doid, step,     \
-               var.rank, var.address, Params(), replyLocalBuffer, replyMetaJ); \
+               var.rank, var.address, compressionParamsVar, replyLocalBuffer,  \
+               replyMetaJ);                                                    \
     }
                     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

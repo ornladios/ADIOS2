@@ -60,6 +60,8 @@ private:
     bool m_Tolerance = true;
     bool m_AttributesSet = false;
     size_t m_AppID = 0;
+    std::unordered_map<std::string, Params> m_CompressionParams;
+    std::mutex m_CompressionParamsMutex;
 
     void Init() final;
     void InitParameters() final;

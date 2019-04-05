@@ -133,7 +133,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     size_t datasize = 0;
     bool compressed = false;
-    if (params.empty() == false)
+    if (not params.empty())
     {
         const auto i = params.find("CompressionMethod");
         if (i != params.end())
@@ -224,16 +224,6 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
             .emplace_back(std::move(metaj));
     }
 
-    if (m_Verbosity >= 100)
-    {
-        Log(100, "DataManSerializer::PutVar printing data", true, true);
-        for (size_t i = 0; i < datasize / sizeof(T); ++i)
-        {
-            std::cout << inputData[i] << "  ";
-        }
-        std::cout << std::endl;
-    }
-
     Log(1,
         "DataManSerializer::PutVar end with Step " + std::to_string(step) +
             " Var " + varName,
@@ -263,9 +253,9 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                              std::multiplies<size_t>()));
     try
     {
-        datasize =
-            compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
-                                m_CompressBuffer.data(), p);
+        datasize = compressor.Compress(inputData, varCount, sizeof(T),
+                                       helper::GetType<T>(),
+                                       m_CompressBuffer.data(), p);
         return true;
     }
     catch (std::exception &e)
@@ -303,9 +293,9 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressSZ compressor(p, false);
     try
     {
-        datasize =
-            compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
-                                m_CompressBuffer.data(), p);
+        datasize = compressor.Compress(inputData, varCount, sizeof(T),
+                                       helper::GetType<T>(),
+                                       m_CompressBuffer.data(), p);
         return true;
     }
     catch (std::exception &e)
@@ -344,9 +334,9 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressBZip2 compressor(p, false);
     try
     {
-        datasize =
-            compressor.Compress(inputData, varCount, 4, helper::GetType<T>(),
-                                m_CompressBuffer.data(), p);
+        datasize = compressor.Compress(inputData, varCount, sizeof(T),
+                                       helper::GetType<T>(),
+                                       m_CompressBuffer.data(), p);
         return true;
     }
     catch (std::exception &e)
@@ -409,6 +399,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
         return -2; // step found but variable not found
     }
 
+    bool decompressed = false;
     char *input_data = nullptr;
 
     for (const auto &j : *vec)
@@ -423,11 +414,11 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
             {
                 input_data = reinterpret_cast<char *>(j.buffer->data());
             }
+            std::vector<char> decompressBuffer;
             if (j.compression == "zfp")
             {
 #ifdef ADIOS2_HAVE_ZFP
                 core::compress::CompressZfp decompressor(j.params, true);
-                std::vector<char> decompressBuffer;
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());
@@ -438,6 +429,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
                                             j.count, j.type, j.params);
+                    decompressed = true;
                 }
                 catch (std::exception &e)
                 {
@@ -460,7 +452,6 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
             {
 #ifdef ADIOS2_HAVE_SZ
                 core::compress::CompressSZ decompressor(j.params, true);
-                std::vector<char> decompressBuffer;
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());
@@ -471,6 +462,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
                                             j.count, j.type, j.params);
+                    decompressed = true;
                 }
                 catch (std::exception &e)
                 {
@@ -492,7 +484,6 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
             {
 #ifdef ADIOS2_HAVE_BZIP2
                 core::compress::CompressBZip2 decompressor(j.params, true);
-                std::vector<char> decompressBuffer;
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());
@@ -503,6 +494,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
                                             datasize);
+                    decompressed = true;
                 }
                 catch (std::exception &e)
                 {
@@ -520,86 +512,32 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                 return -103; // bzip2 library not found
 #endif
             }
-            else
+            if (j.start.size() > 0 && j.start.size() == j.count.size() &&
+                j.start.size() == varStart.size() &&
+                j.start.size() == varCount.size())
             {
-                if (m_Verbosity >= 5)
+                if (not decompressed)
                 {
-                    std::cout
-                        << "DataManSerializer calling NdCopy with input start ";
-                    for (auto s : j.start)
-                    {
-                        std::cout << s << ", ";
-                    }
-                    std::cout << "count ";
-                    for (auto s : j.count)
-                    {
-                        std::cout << s << ", ";
-                    }
-                    std::cout << "output start ";
-                    for (auto s : varStart)
-                    {
-                        std::cout << s << ", ";
-                    }
-                    std::cout << "count ";
-                    for (auto s : varCount)
-                    {
-                        std::cout << s << ", ";
-                    }
-                    std::cout << std::endl;
+                    input_data += j.position;
                 }
-                if (j.start.size() > 0 && j.start.size() == j.count.size() &&
-                    j.start.size() == varStart.size() &&
-                    j.start.size() == varCount.size())
+                if (m_ContiguousMajor)
                 {
-                    if (m_ContiguousMajor)
-                    {
-                        helper::NdCopy<T>(input_data + j.position, j.start,
-                                          j.count, true, j.isLittleEndian,
-                                          reinterpret_cast<char *>(outputData),
-                                          varStart, varCount, true,
-                                          m_IsLittleEndian, j.start, j.count,
-                                          varMemStart, varMemCount);
-                    }
-                    else
-                    {
-                        helper::NdCopy<T>(
-                            input_data + j.position, j.start, j.count,
-                            j.isRowMajor, j.isLittleEndian,
-                            reinterpret_cast<char *>(outputData), varStart,
-                            varCount, m_IsRowMajor, m_IsLittleEndian, j.start,
-                            j.count, varMemStart, varMemCount);
-                    }
-                    if (m_Verbosity >= 100)
-                    {
-                        size_t datasize =
-                            std::accumulate(j.count.begin(), j.count.end(), 1,
-                                            std::multiplies<size_t>());
-                        std::cout
-                            << "DataManSerializer::GetVar printing input data"
-                            << std::endl;
-                        for (size_t i = 0; i < datasize; ++i)
-                        {
-                            std::cout << (reinterpret_cast<T *>(input_data +
-                                                                j.position))[i]
-                                      << "  ";
-                        }
-                        std::cout << std::endl;
-                    }
+                    helper::NdCopy<T>(
+                        input_data, j.start, j.count, true, j.isLittleEndian,
+                        reinterpret_cast<char *>(outputData), varStart,
+                        varCount, true, m_IsLittleEndian, j.start, j.count,
+                        varMemStart, varMemCount);
+                }
+                else
+                {
+                    helper::NdCopy<T>(
+                        input_data, j.start, j.count, j.isRowMajor,
+                        j.isLittleEndian, reinterpret_cast<char *>(outputData),
+                        varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
+                        j.start, j.count, varMemStart, varMemCount);
                 }
             }
         }
-    }
-    if (m_Verbosity >= 100)
-    {
-        size_t datasize = std::accumulate(varCount.begin(), varCount.end(), 1,
-                                          std::multiplies<size_t>());
-        std::cout << "DataManSerializer::GetVar printing output data"
-                  << std::endl;
-        for (size_t i = 0; i < datasize; ++i)
-        {
-            std::cout << outputData[i] << "  ";
-        }
-        std::cout << std::endl;
     }
     return 0;
 }
