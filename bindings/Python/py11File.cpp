@@ -134,7 +134,7 @@ void File::Write(const std::string &name, const pybind11::array &array,
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
         m_Stream->Write(name, reinterpret_cast<const T *>(array.data()),       \
-                        shape, start, count, endStep);                         \
+                        shape, start, count, vParams(), endStep);              \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type

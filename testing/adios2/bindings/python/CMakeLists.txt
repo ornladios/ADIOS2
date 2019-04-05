@@ -21,9 +21,16 @@ if(ADIOS2_HAVE_MPI)
                     SCRIPT TestBPWriteRead2D.py)
     python_add_test(NAME PythonBPChangingShapeHighLevelAPI ${test_parameters} 
                     SCRIPT TestBPChangingShapeHighLevelAPI.py)
+    
     if (ADIOS2_HAVE_HDF5)
         python_add_test(NAME PythonBPWriteReadHighLevelAPI_HDF5 
                         SCRIPT TestBPWriteTypesHighLevelAPI_HDF5.py)
     endif(ADIOS2_HAVE_HDF5)
+    
+    if (ADIOS2_HAVE_ZFP)
+        python_add_test(NAME PythonBPZfpHighLevelAPI ${test_parameters}
+                        SCRIPT TestBPZfpHighLevelAPI.py)
+    endif(ADIOS2_HAVE_ZFP)
+    
 endif()
 

@@ -23,7 +23,7 @@ namespace core
 template <class T>
 void Stream::WriteAttribute(const std::string &name, const T &value,
                             const std::string &variableName,
-                            const std::string separator, const bool nextStep)
+                            const std::string separator, const bool endStep)
 {
     m_IO->DefineAttribute<T>(name, value, variableName, separator);
     CheckOpen();
@@ -33,7 +33,7 @@ void Stream::WriteAttribute(const std::string &name, const T &value,
         m_StepStatus = true;
     }
 
-    if (nextStep)
+    if (endStep)
     {
         m_Engine->EndStep();
         m_StepStatus = false;
@@ -44,7 +44,7 @@ template <class T>
 void Stream::WriteAttribute(const std::string &name, const T *array,
                             const size_t elements,
                             const std::string &variableName,
-                            const std::string separator, const bool nextStep)
+                            const std::string separator, const bool endStep)
 {
     m_IO->DefineAttribute<T>(name, array, elements, variableName, separator);
     CheckOpen();
@@ -54,46 +54,7 @@ void Stream::WriteAttribute(const std::string &name, const T *array,
         m_StepStatus = true;
     }
 
-    if (nextStep)
-    {
-        m_Engine->EndStep();
-        m_StepStatus = false;
-    }
-}
-
-template <class T>
-void Stream::Write(const std::string &name, const T *data, const Dims &shape,
-                   const Dims &start, const Dims &count, const bool nextStep)
-{
-    Variable<T> *variable = m_IO->InquireVariable<T>(name);
-
-    if (variable == nullptr)
-    {
-        variable = &m_IO->DefineVariable<T>(name, shape, start, count, false);
-    }
-    else
-    {
-        if (!shape.empty() && !variable->m_SingleValue)
-        {
-            variable->SetShape(shape);
-        }
-
-        if (!start.empty() && !count.empty())
-        {
-            variable->SetSelection(Box<Dims>(start, count));
-        }
-    }
-
-    CheckOpen();
-    if (!m_StepStatus)
-    {
-        m_Engine->BeginStep();
-        m_StepStatus = true;
-    }
-
-    m_Engine->Put(*variable, data, adios2::Mode::Sync);
-
-    if (nextStep)
+    if (endStep)
     {
         m_Engine->EndStep();
         m_StepStatus = false;
@@ -103,7 +64,7 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
 template <class T>
 void Stream::Write(const std::string &name, const T *data, const Dims &shape,
                    const Dims &start, const Dims &count,
-                   const adios2::vParams &operations, const bool nextStep)
+                   const adios2::vParams &operations, const bool endStep)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
 
@@ -134,7 +95,7 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
     // boiler plate for operations
     if (!operations.empty())
     {
-        *variable->m_Operations.clear();
+        variable->m_Operations.clear();
         for (const auto &operation : operations)
         {
             const std::string opType = operation.first;
@@ -144,13 +105,13 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
                 op = &m_ADIOS->DefineOperator(opType, opType);
             }
 
-            *variable->AddOperation(*op, operation.second);
+            variable->AddOperation(*op, operation.second);
         }
     }
 
     m_Engine->Put(*variable, data, adios2::Mode::Sync);
 
-    if (nextStep)
+    if (endStep)
     {
         m_Engine->EndStep();
         m_StepStatus = false;
@@ -158,10 +119,10 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
 }
 
 template <class T>
-void Stream::Write(const std::string &name, const T &datum, const bool nextStep)
+void Stream::Write(const std::string &name, const T &datum, const bool endStep)
 {
     const T datumLocal = datum;
-    Write(name, &datumLocal, {}, {}, {}, nextStep);
+    Write(name, &datumLocal, {}, {}, {}, vParams(), endStep);
 }
 
 template <class T>
