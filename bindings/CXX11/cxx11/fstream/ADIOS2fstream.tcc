@@ -21,53 +21,64 @@ namespace adios2
 template <class T>
 void fstream::write_attribute(const std::string &name, const T &value,
                               const std::string &variableName,
-                              const std::string separator, const bool endl)
+                              const std::string separator, const bool endStep)
 {
     using IOType = typename TypeInfo<T>::IOType;
     m_Stream->WriteAttribute(name, reinterpret_cast<const IOType &>(value),
-                             variableName, separator, endl);
+                             variableName, separator, endStep);
 }
 
 template <class T>
 void fstream::write_attribute(const std::string &name, const T *data,
                               const size_t elements,
                               const std::string &variableName,
-                              const std::string separator, const bool endl)
+                              const std::string separator, const bool endStep)
 {
     using IOType = typename TypeInfo<T>::IOType;
     m_Stream->WriteAttribute(name, reinterpret_cast<const IOType *>(data),
-                             elements, variableName, separator, endl);
+                             elements, variableName, separator, endStep);
 }
 
 template <class T>
-void fstream::write(const std::string &name, const T *values, const Dims &shape,
-                    const Dims &start, const Dims &count, const bool endl)
+void fstream::write(const std::string &name, const T *data, const Dims &shape,
+                    const Dims &start, const Dims &count, const bool endStep)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Write(name, reinterpret_cast<const IOType *>(values), shape,
-                    start, count, endl);
+    m_Stream->Write(name, reinterpret_cast<const IOType *>(data), shape, start,
+                    count, vParams(), endStep);
 }
 
 template <class T>
-void fstream::write(const std::string &name, const T &value, const bool endl)
+void fstream::write(const std::string &name, const T *data,
+                    const adios2::Dims &shape, const adios2::Dims &start,
+                    const adios2::Dims &count,
+                    const adios2::vParams &operations, const bool endStep)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Write(name, reinterpret_cast<const IOType &>(value), endl);
+    m_Stream->Write(name, reinterpret_cast<const IOType *>(data), shape, start,
+                    count, operations, endStep);
 }
 
 template <class T>
-void fstream::read(const std::string &name, T *values)
+void fstream::write(const std::string &name, const T &value, const bool endStep)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Read(name, reinterpret_cast<IOType *>(values));
+    m_Stream->Write(name, reinterpret_cast<const IOType &>(value), endStep);
 }
 
 template <class T>
-void fstream::read(const std::string &name, T *values, const size_t stepStart,
+void fstream::read(const std::string &name, T *data)
+{
+    using IOType = typename TypeInfo<T>::IOType;
+    m_Stream->Read(name, reinterpret_cast<IOType *>(data));
+}
+
+template <class T>
+void fstream::read(const std::string &name, T *data, const size_t stepStart,
                    const size_t stepCount)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Read(name, reinterpret_cast<IOType *>(values),
+    m_Stream->Read(name, reinterpret_cast<IOType *>(data),
                    Box<size_t>{stepStart, stepCount});
 }
 
@@ -79,22 +90,21 @@ void fstream::read(const std::string &name, T &value)
 }
 
 template <class T>
-void fstream::read(const std::string &name, T *values,
-                   const Dims &selectionStart, const Dims &selectionCount)
+void fstream::read(const std::string &name, T *data, const Dims &selectionStart,
+                   const Dims &selectionCount)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Read(name, reinterpret_cast<IOType *>(values),
+    m_Stream->Read(name, reinterpret_cast<IOType *>(data),
                    Box<Dims>(selectionStart, selectionCount));
 }
 
 template <class T>
-void fstream::read(const std::string &name, T *values,
-                   const Dims &selectionStart, const Dims &selectionCount,
-                   const size_t stepSelectionStart,
+void fstream::read(const std::string &name, T *data, const Dims &selectionStart,
+                   const Dims &selectionCount, const size_t stepSelectionStart,
                    const size_t stepSelectionCount)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Read(name, reinterpret_cast<IOType *>(values),
+    m_Stream->Read(name, reinterpret_cast<IOType *>(data),
                    Box<Dims>(selectionStart, selectionCount),
                    Box<size_t>(stepSelectionStart, stepSelectionCount));
 }

@@ -158,7 +158,7 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T)                                      \
     template void Stream::Write<T>(const std::string &, const T *,             \
                                    const Dims &, const Dims &, const Dims &,   \
-                                   const bool);                                \
+                                   const vParams &, const bool);               \
                                                                                \
     template void Stream::Write<T>(const std::string &, const T &,             \
                                    const bool);                                \

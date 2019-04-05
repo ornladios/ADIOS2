@@ -29,6 +29,9 @@ if(ADIOS2_HAVE_ZFP)
   add_executable(TestBPWriteReadZfp TestBPWriteReadZfp.cpp)
   target_link_libraries(TestBPWriteReadZfp adios2 gtest)
   
+  add_executable(TestBPWriteReadZfpHighLevelAPI TestBPWriteReadZfpHighLevelAPI.cpp)
+  target_link_libraries(TestBPWriteReadZfpHighLevelAPI adios2 gtest)
+  
   add_executable(TestBPWriteReadZfpConfig TestBPWriteReadZfpConfig.cpp)
   target_link_libraries(TestBPWriteReadZfpConfig adios2 gtest)
   target_compile_definitions(TestBPWriteReadZfpConfig PRIVATE
@@ -42,6 +45,9 @@ if(ADIOS2_HAVE_ZFP)
   
   gtest_add_tests(TARGET TestBPWriteReadZfp ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
   gtest_add_tests(TARGET TestBPWriteReadZfp ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+  
+  gtest_add_tests(TARGET TestBPWriteReadZfpHighLevelAPI ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+  gtest_add_tests(TARGET TestBPWriteReadZfpHighLevelAPI ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 
   gtest_add_tests(TARGET TestBPWriteReadZfpConfig ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
   gtest_add_tests(TARGET TestBPWriteReadZfpConfig ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)

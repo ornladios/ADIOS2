@@ -242,7 +242,7 @@ public:
     /**
      * writes a self-describing array variable
      * @param name variable name
-     * @param values variable data values
+     * @param data variable data data
      * @param shape variable global MPI dimensions. Pass empty for local
      * variables.
      * @param start variable offset for current MPI rank. Pass empty for local
@@ -250,16 +250,43 @@ public:
      * @param count variable dimension for current MPI rank. Local variables
      * only have count.
      * @param endStep similar to std::endStep, end current step and flush
-     * (default).
-     * Use adios2::endStep for true.
+     * (default). Use adios2::endStep if true.
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
     template <class T>
-    void write(const std::string &name, const T *values,
+    void write(const std::string &name, const T *data,
                const adios2::Dims &shape = adios2::Dims(),
                const adios2::Dims &start = adios2::Dims(),
                const adios2::Dims &count = adios2::Dims(),
+               const bool endStep = false);
+
+    /**
+     * write overload that allows passing supported operations
+     * (e.g. lossy compression "zfp", "mgard", "sz") to a self-described array
+     * variable
+     * @param name variable name
+     * @param data variable data data
+     * @param shape variable global MPI dimensions. Pass empty for local
+     * variables.
+     * @param start variable offset for current MPI rank. Pass empty for local
+     * variables.
+     * @param count variable dimension for current MPI rank. Local variables
+     * only have count.
+     * @param operations vector of operations, each entry is a std::pair:
+     * <pre>
+     *     first: operator string: e.g. "zfp", "sz", "mgard"
+     * 	   second: adios2::Params key/value parameters map<string, string>
+     * </pre>
+     * @param endStep similar to std::endStep, end current step and flush
+     * (default). Use adios2::endStep if true.
+     * @exception std::invalid_argument (user input error) or
+     * std::runtime_error (system error)
+     */
+    template <class T>
+    void write(const std::string &name, const T *data,
+               const adios2::Dims &shape, const adios2::Dims &start,
+               const adios2::Dims &count, const adios2::vParams &operations,
                const bool endStep = false);
 
     /**
@@ -279,11 +306,11 @@ public:
      * Reads into a pre-allocated pointer a selection piece in dimension. When
      * used with adios2::getstep reads current step
      * @param name variable name
-     * @param values pre-allocated pointer to hold read values, if variable is
+     * @param data pre-allocated pointer to hold read data, if variable is
      * not found (name and type don't match) it becomes nullptr
      */
     template <class T>
-    void read(const std::string &name, T *values);
+    void read(const std::string &name, T *data);
 
     /**
      * Reads a value. When used with adios2::getstep reads current step value
@@ -300,7 +327,7 @@ public:
      * Read accessing steps in random access mode. Not be used with
      * adios2::getstep as it throw an exception when reading in stepping mode.
      * @param name variable name
-     * @param values pre-allocated pointer to hold read values, if variable is
+     * @param data pre-allocated pointer to hold read data, if variable is
      * not found (name and type don't match) it becomes nullptr
      * @param stepsStart variable initial step (relative to the variable first
      * appearance, not absolute step in stream)
@@ -310,7 +337,7 @@ public:
      * found
      */
     template <class T>
-    void read(const std::string &name, T *values, const size_t stepsStart,
+    void read(const std::string &name, T *data, const size_t stepsStart,
               const size_t stepsCount = 1);
 
     /**
@@ -331,7 +358,7 @@ public:
      * Reads into a pre-allocated pointer a selection piece in dimension. When
      * used with adios2::getstep reads current step
      * @param name variable name
-     * @param values pre-allocated pointer to hold read values, if variable is
+     * @param data pre-allocated pointer to hold read data, if variable is
      * not found (name and type don't match) it becomes nullptr
      * @param start variable local offset selection
      * @param count variable local dimension selection from start
@@ -339,7 +366,7 @@ public:
      * found
      */
     template <class T>
-    void read(const std::string &name, T *values, const adios2::Dims &start,
+    void read(const std::string &name, T *data, const adios2::Dims &start,
               const adios2::Dims &count);
 
     /**
@@ -347,7 +374,7 @@ public:
      * steps. Not be used with adios2::getstep as it throws an exception when
      * reading in stepping mode.
      * @param name variable name
-     * @param values pre-allocated pointer to hold read values, if variable is
+     * @param data pre-allocated pointer to hold read data, if variable is
      * not found (name and type don't match) it becomes a nullptr
      * @param start variable local offset selection
      * @param count variable local dimension selection from start
@@ -359,14 +386,14 @@ public:
      * found
      */
     template <class T>
-    void read(const std::string &name, T *values, const adios2::Dims &start,
+    void read(const std::string &name, T *data, const adios2::Dims &start,
               const adios2::Dims &count, const size_t stepsStart,
               const size_t stepsCount);
 
     /**
      * Reads entire variable for current step (streaming mode: step by step)
      * @param name variable name
-     * @return values of variable name for current step. Single values will have
+     * @return data of variable name for current step. Single data will have
      * a size=1 vector
      * @exception throws exception if variable name, dimensions or step not
      * found
@@ -383,7 +410,7 @@ public:
      * appearance, not absolute step in stream)
      * @param stepsCount variable number of steps form step_start, don't have to
      * be contiguous, necessarily
-     * @return values of variable name for current step, empty if exception is
+     * @return data of variable name for current step, empty if exception is
      * thrown
      * @exception throws exception if variable name, dimensions or step not
      * found
@@ -398,7 +425,7 @@ public:
      * @param name variable name
      * @param start variable local offset selection
      * @param count variable local dimension selection from start
-     * @return values of variable name for current step, empty if exception is
+     * @return data of variable name for current step, empty if exception is
      * thrown
      * @exception throws exception if variable name, dimensions or step not
      * found
@@ -418,7 +445,7 @@ public:
      * appearance, not absolute step in stream)
      * @param stepsCount variable number of steps form step_start, don't have to
      * be contiguous, necessarily
-     * @return variable values, empty if exception is thrown
+     * @return variable data, empty if exception is thrown
      * @exception throws exception if variable name, dimensions or step not
      * found
      */
@@ -429,14 +456,14 @@ public:
 
     /**
      * Reads an attribute returning a vector
-     * For single values vector size = 1
+     * For single data vector size = 1
      * @param name attribute name
      * @param variableName default is empty, if not empty look for an attribute
      * associated to a variable
      * @param separator default is "/", hierarchy between variable name and
      * attribute, e.g. variableName/attribute1, variableName::attribute1. Not
      * used if variableName is empty.
-     * @return vector containing attribute values
+     * @return vector containing attribute data
      */
     template <class T>
     std::vector<T> read_attribute(const std::string &name,
@@ -445,8 +472,8 @@ public:
 
     /**
      * At write: ends the current step
-     * At read: use it in streaming mode to inform the writer the reader
-     * consumed the information. No effect for file engines.
+     * At read: use it in streaming mode to inform the writer that the reader is
+     * done consuming the step. No effect for file engines.
      */
     void end_step();
 
@@ -500,6 +527,10 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
     extern template void fstream::write<T>(const std::string &, const T *,     \
                                            const Dims &, const Dims &,         \
                                            const Dims &, const bool);          \
+                                                                               \
+    extern template void fstream::write<T>(                                    \
+        const std::string &, const T *, const Dims &, const Dims &,            \
+        const Dims &, const vParams &, const bool);                            \
                                                                                \
     extern template void fstream::write<T>(const std::string &, const T &,     \
                                            const bool);                        \

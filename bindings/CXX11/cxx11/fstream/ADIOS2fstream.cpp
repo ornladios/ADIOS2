@@ -170,6 +170,10 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
                                     const Dims &, const Dims &, const Dims &,  \
                                     const bool);                               \
                                                                                \
+    template void fstream::write<T>(const std::string &, const T *,            \
+                                    const Dims &, const Dims &, const Dims &,  \
+                                    const vParams &, const bool);              \
+                                                                               \
     template void fstream::write<T>(const std::string &, const T &,            \
                                     const bool);                               \
                                                                                \

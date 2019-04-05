@@ -73,9 +73,10 @@ public:
                         const std::string separator, const bool nextStep);
 
     template <class T>
-    void Write(const std::string &name, const T *values,
-               const Dims &shape = Dims{}, const Dims &start = Dims{},
-               const Dims &count = Dims{}, const bool nextStep = false);
+    void Write(const std::string &name, const T *values, const Dims &shape,
+               const Dims &start, const Dims &count,
+               const vParams &operations = vParams(),
+               const bool endStep = false);
 
     template <class T>
     void Write(const std::string &name, const T &value,
@@ -166,9 +167,9 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
                                                                                \
-    extern template void Stream::Write<T>(const std::string &, const T *,      \
-                                          const Dims &, const Dims &,          \
-                                          const Dims &, const bool);           \
+    extern template void Stream::Write<T>(                                     \
+        const std::string &, const T *, const Dims &, const Dims &,            \
+        const Dims &, const vParams &, const bool);                            \
                                                                                \
     extern template void Stream::Write<T>(const std::string &, const T &,      \
                                           const bool);                         \
