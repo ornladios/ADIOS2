@@ -120,9 +120,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             rankToRead = mpiRank % writerSize;
         }
 
-        //	std::cout << "The writer had " << writerSize << " mpiRanks, I'm
-        //rank " << mpiRank << " reading from Rank " << rankToRead << std::endl;
-
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
 
