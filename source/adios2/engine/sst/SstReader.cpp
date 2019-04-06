@@ -131,12 +131,22 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
          * setup shape of array variable as global (I.E. Count == Shape,
          * Start == 0)
          */
-        for (int i = 0; i < DimCount; i++)
-        {
-            VecShape.push_back(Shape[i]);
-            VecStart.push_back(0);
-            VecCount.push_back(Shape[i]);
-        }
+	if (Shape) {
+	    for (int i = 0; i < DimCount; i++)
+		{
+		    VecShape.push_back(Shape[i]);
+		    VecStart.push_back(0);
+		    VecCount.push_back(Shape[i]);
+		}
+	} else {
+	    VecShape = {};
+	    VecStart = {};
+	    for (int i = 0; i < DimCount; i++)
+		{
+		    VecCount.push_back(Count[i]);
+		}
+	}
+	    
         if (Type == "compound")
         {
             return (void *)NULL;

@@ -1244,9 +1244,17 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     if (!Info->MetaFormat)
     {
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
-        FMFormat Format = FMregister_simple_format(
-            Info->LocalFMContext, "MetaData", Info->MetaFields,
-            FMstruct_size_field_list(Info->MetaFields, sizeof(char *)));
+        FMStructDescRec struct_list[4] = {
+            {NULL, NULL, 0, NULL},
+            {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
+            {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {NULL, NULL, 0, NULL}};
+        struct_list[0].format_name = "MetaData";
+        struct_list[0].field_list = Info->MetaFields;
+        struct_list[0].struct_size =
+            FMstruct_size_field_list(Info->MetaFields, sizeof(char *));
+        FMFormat Format =
+            register_data_format(Info->LocalFMContext, &struct_list[0]);
         Info->MetaFormat = Format;
         Block->FormatServerRep =
             get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
@@ -1667,7 +1675,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 VarRec->ElementSize = ElementSize;
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, ArrayName, Type, meta_base->Dims,
-                    meta_base->Shape, meta_base->Count, meta_base->Offsets);
+                    meta_base->Shape, meta_base->Offsets, meta_base->Count);
             }
             if (WriterRank == 0)
             {
@@ -1813,9 +1821,15 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 
         /* handle metadata */
         MetaEntry->Dims = DimCount;
-        MetaEntry->Shape = CopyDims(DimCount, Shape);
+        if (Shape)
+            MetaEntry->Shape = CopyDims(DimCount, Shape);
+        else
+            MetaEntry->Shape = NULL;
         MetaEntry->Count = CopyDims(DimCount, Count);
-        MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        if (Offsets)
+            MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        else
+            MetaEntry->Offsets = NULL;
 
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
             ZFPcompressionPossible(Type, DimCount))

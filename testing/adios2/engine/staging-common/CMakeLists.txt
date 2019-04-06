@@ -144,9 +144,6 @@ list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*FFS.*")
 # remove Fto anything tests that use CommMin because we can't spec it
 list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*CommMin.*")
 
-# remove Local tests that use FFS, this doesn't work yet
-list(FILTER SST_TESTS EXCLUDE REGEX "Local.*FFS")
-
 list( LENGTH SST_TESTS afterlistlen )
 message (STATUS "Staging tests list before was ${beforelistlen}, after is ${afterlistlen}")
 
