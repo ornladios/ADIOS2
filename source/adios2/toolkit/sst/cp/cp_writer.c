@@ -467,7 +467,6 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
     {
         if (List->Timestep < Ret)
         {
-            List->ReferenceCount++;
             Ret = List->Timestep;
             CP_verbose(
                 Stream,
@@ -881,24 +880,52 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
             if (List->Timestep == TS)
             {
                 FFSFormatList SavedFormats = List->Msg->Formats;
-                CP_verbose(Stream,
-                           "Sending Queued TimestepMetadata for timestep %d\n",
-                           TS);
-
                 if (TS == Reader->StartingTimestep)
                 {
                     /* For first Msg, send all previous formats */
                     List->Msg->Formats = Stream->PreviousFormats;
                 }
+                List->ReferenceCount++;
+                List->NeverSent = 0;
+                CP_verbose(Stream,
+                           "Sending Queued TimestepMetadata for timestep %d, "
+                           "reference count = %d\n",
+                           TS, List->ReferenceCount);
+
                 sendOneToWSRCohort(
                     Reader, Stream->CPInfo->DeliverTimestepMetadataFormat,
                     List->Msg, &List->Msg->RS_Stream);
-                List->NeverSent = 0;
                 if (TS == Reader->StartingTimestep)
                 {
                     /* restore Msg format list */
                     List->Msg->Formats = SavedFormats;
                 }
+            }
+            List = List->Next;
+        }
+    }
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+}
+
+static void IncrementSendCountsForQueued(WS_ReaderInfo Reader)
+{
+    SstStream Stream = Reader->ParentStream;
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    for (long TS = Reader->StartingTimestep; TS <= Stream->LastProvidedTimestep;
+         TS++)
+    {
+        CPTimestepList List = Stream->QueuedTimesteps;
+        while (List)
+        {
+            if (List->Timestep == TS)
+            {
+                FFSFormatList SavedFormats = List->Msg->Formats;
+                List->ReferenceCount++;
+                List->NeverSent = 0;
+                CP_verbose(Stream,
+                           "Master Sent Queued TimestepMetadata for timestep "
+                           "%d, reference count = %d\n",
+                           TS, List->ReferenceCount);
             }
             List = List->Next;
         }
@@ -1003,6 +1030,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
             }
             else
             {
+                IncrementSendCountsForQueued(reader);
                 MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
                           Stream->mpiComm);
             }
@@ -1464,6 +1492,7 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
             }
             else
             {
+                IncrementSendCountsForQueued(reader);
                 MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
                           Stream->mpiComm);
             }
@@ -1530,6 +1559,7 @@ static void DoWriterSideGlobalOp(SstStream Stream, int *DiscardIncomingTimestep)
                         }
                         else
                         {
+                            IncrementSendCountsForQueued(reader);
                             MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
                                       Stream->mpiComm);
                         }
