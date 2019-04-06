@@ -41,6 +41,10 @@
 #include "adios2/engine/ssc/SscWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_TABLE // external dependencies
+#include "adios2/engine/table/TableWriter.h"
+#endif
+
 #ifdef ADIOS2_HAVE_SST // external dependencies
 #include "adios2/engine/sst/SstReader.h"
 #include "adios2/engine/sst/SstWriter.h"
@@ -559,6 +563,17 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "SSC library, can't use SSC engine\n");
+#endif
+    }
+    else if (engineTypeLC == "table")
+    {
+#ifdef ADIOS2_HAVE_TABLE
+        if (mode == Mode::Write)
+            engine = std::make_shared<engine::TableWriter>(*this, name, mode, mpiComm);
+        else
+            throw std::invalid_argument("ERROR: Table engine only supports Write. It uses other engines as backend. Please use corresponding engines for Read\n");
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with Table library, can't use Table engine\n");
 #endif
     }
     else if (engineTypeLC == "sst" || engineTypeLC == "effis")
