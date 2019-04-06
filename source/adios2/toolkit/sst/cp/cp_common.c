@@ -131,7 +131,7 @@ static char *SstCommPatternStr[] = {"Min", "Peer"};
 
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
 {
-    if (!Stream->Verbose)
+    if (!Stream->CPVerbose)
         return;
 
     fprintf(stderr, "Param -   RegistrationMethod:%s\n",
@@ -1047,13 +1047,16 @@ SstStream CP_newStream()
     Stream->LastReleasedTimestep = -1;
     Stream->DiscardPriorTimestep =
         -1; // Timesteps prior to this discarded/released upon arrival
+    Stream->CPVerbose = 0;
+    Stream->DPVerbose = 0;
     if (getenv("SstVerbose"))
     {
-        Stream->Verbose = 1;
+        Stream->CPVerbose = 1;
+        Stream->DPVerbose = 1;
     }
-    else
+    if (getenv("SstCPVerbose"))
     {
-        Stream->Verbose = 0;
+        Stream->CPVerbose = 1;
     }
     return Stream;
 }
@@ -1162,7 +1165,7 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Stats)
 
 static void DP_verbose(SstStream s, char *Format, ...)
 {
-    if (s->Verbose)
+    if (s->DPVerbose)
     {
         va_list Args;
         va_start(Args, Format);
@@ -1178,9 +1181,10 @@ static void DP_verbose(SstStream s, char *Format, ...)
         va_end(Args);
     }
 }
+
 extern void CP_verbose(SstStream s, char *Format, ...)
 {
-    if (s->Verbose)
+    if (s->CPVerbose)
     {
         va_list Args;
         va_start(Args, Format);

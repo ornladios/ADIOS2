@@ -26,6 +26,7 @@ adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
 int IncreasingDelay = 0;
+int FirstTimestepMustBeZero = 0;
 int NonBlockingBeginStep = 0;
 int Latest = 0;
 int Discard = 0;
@@ -100,7 +101,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
-    unsigned int t = static_cast<unsigned int>(-1);
+    unsigned int ExpectedStep = static_cast<unsigned int>(-1);
 
     std::vector<std::time_t> write_times;
 
@@ -146,16 +147,34 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
         const size_t currentStep = engine.CurrentStep();
 
-        if ((t == static_cast<unsigned int>(-1)) || Latest || Discard)
+        if (FirstTimestepMustBeZero)
         {
-            if ((t != static_cast<unsigned int>(-1)) && (t != currentStep))
+            if (ExpectedStep == -1)
+            {
+                EXPECT_EQ(currentStep, 0);
+                std::cout << "Got my expected first timestep Zero!"
+                          << std::endl;
+                ExpectedStep = 0;
+            }
+            else if (ExpectedStep == 1)
+            {
+                /* we got that timestep 0 we expected, ExpectedStep got
+                 * incremented to 1, but now be happy with what is next */
+                ExpectedStep = (unsigned int)currentStep; // starting out
+            }
+        }
+        if ((ExpectedStep == static_cast<unsigned int>(-1)) || Latest ||
+            Discard)
+        {
+            if ((ExpectedStep != static_cast<unsigned int>(-1)) &&
+                (ExpectedStep != currentStep))
             {
                 SkippedSteps++;
             }
-            t = (unsigned int)currentStep; // starting out
+            ExpectedStep = (unsigned int)currentStep; // starting out
         }
 
-        EXPECT_EQ(currentStep, static_cast<size_t>(t));
+        EXPECT_EQ(currentStep, static_cast<size_t>(ExpectedStep));
 
         size_t writerSize;
 
@@ -290,7 +309,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         {
             engine.EndStep();
 
-            EXPECT_EQ(validateCommonTestData(myStart, myLength, t, 0), 0);
+            EXPECT_EQ(validateCommonTestData(myStart, myLength, currentStep, 0),
+                      0);
             write_times.push_back(write_time);
         }
         catch (...)
@@ -298,7 +318,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             std::cout << "Exception in EndStep, client failed";
         }
 
-        ++t;
+        ++ExpectedStep;
         if (NSteps != static_cast<unsigned int>(-1))
         {
             NSteps--;
@@ -398,6 +418,10 @@ int main(int argc, char **argv)
         {
             IncreasingDelay = 1;
             Discard = 1;
+        }
+        else if (std::string(argv[1]) == "--precious_first")
+        {
+            FirstTimestepMustBeZero = 1;
         }
         else if (std::string(argv[1]) == "--ignore_time_gap")
         {

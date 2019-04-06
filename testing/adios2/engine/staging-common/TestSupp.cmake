@@ -92,12 +92,16 @@ set (ZFPCompression.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg 
 set (ZFPCompression.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -p TestCommon -arg CompressionMethod:zfp,ENGINE_PARAMS" )
 
 # Test if writer will survive readers departing unexpectedly
-set (KillReadersSerialized_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 1 -warg RendezvousReaderCount:0,ControlTransport:sockets,ENGINE_PARAMS -rarg --ignore_time_gap")
+set (KillReadersSerialized_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 1 -warg RendezvousReaderCount:0,ENGINE_PARAMS -rarg --ignore_time_gap")
 set (KillReadersSerialized_TIMEOUT "300")
 set (KillReadersSerialized_PROPERTIES "RUN_SERIAL;1")
-set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 3 -warg RendezvousReaderCount:0,ControlTransport:sockets,ENGINE_PARAMS -rarg --ignore_time_gap")
+set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 3 -warg RendezvousReaderCount:0,ENGINE_PARAMS -rarg --ignore_time_gap")
 set (KillReaders3Max_TIMEOUT "300")
 set (KillReaders3Max_PROPERTIES "RUN_SERIAL;1")
+
+set (PreciousTimestep_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 2 -warg FirstTimestepPrecious:true,RendezvousReaderCount:0,ENGINE_PARAMS -rarg --ignore_time_gap -rarg --precious_first")
+set (PreciousTimestep_TIMEOUT "300")
+set (PreciousTimestep_PROPERTIES "RUN_SERIAL;1")
 
 # Readers using BeginStep with timeout.  Here we run the writer with a longer delay to make the reader timeout
 set (TimeoutReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -rarg --non_blocking -warg --ms_delay -warg 2000 -warg --engine_params -warg ENGINE_PARAMS")

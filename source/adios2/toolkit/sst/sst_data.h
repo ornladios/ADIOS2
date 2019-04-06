@@ -32,6 +32,7 @@ struct _SstBlock
     MACRO(QueueLimit, Int, int, 0)                                             \
     MACRO(QueueFullPolicy, QueueFullPolicy, size_t, 0)                         \
     MACRO(IsRowMajor, IsRowMajor, int, 0)                                      \
+    MACRO(FirstTimestepPrecious, Bool, int, 0)                                 \
     MACRO(ControlTransport, String, char *, NULL)                              \
     MACRO(NetworkInterface, String, char *, NULL)                              \
     MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommPeer)                 \

@@ -88,6 +88,7 @@ typedef struct _CPTimestepEntry
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
     int NeverSent;
+    int PreciousTimestep;
     void **DP_TimestepInfo;
     int DPRegistered;
     SstData MetadataArray;
@@ -111,7 +112,8 @@ struct _SstStream
     SstRegistrationMethod RegistrationMethod;
 
     /* state */
-    int Verbose;
+    int CPVerbose;
+    int DPVerbose;
     double OpenTimeSecs;
     struct timeval ValidStartTime;
     SstStats Stats;

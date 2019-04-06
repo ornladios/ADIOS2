@@ -469,10 +469,12 @@ static long earliestAvailableTimestepNumber(SstStream Stream,
         {
             List->ReferenceCount++;
             Ret = List->Timestep;
-            CP_verbose(Stream,
-                       "Earliest available : Writer-side Timestep %ld "
-                       "now has reference count %d\n",
-                       List->Timestep, List->ReferenceCount);
+            CP_verbose(
+                Stream,
+                "Earliest available : Writer-side Timestep %ld "
+                "now has reference count %d, never_send %d, precious %d\n",
+                List->Timestep, List->ReferenceCount, List->NeverSent,
+                List->PreciousTimestep);
         }
         List = List->Next;
     }
@@ -488,7 +490,7 @@ static void KillNeverSentTimesteps(SstStream Stream)
     List = Stream->QueuedTimesteps;
     while (List)
     {
-        if (List->NeverSent == 1)
+        if ((List->NeverSent) && (!List->PreciousTimestep))
         {
             /* dequeue and free */
             CPTimestepList ItemToFree = List;
@@ -534,11 +536,32 @@ static void DiscardReleasedTimesteps(SstStream Stream)
     List = Stream->QueuedTimesteps;
     while (List)
     {
-        if (List->Timestep <= Stream->LastReleasedTimestep)
+        if ((List->Timestep <= Stream->LastReleasedTimestep) &&
+            (List->PreciousTimestep == 0))
         {
             CP_verbose(Stream, "Zeroing the reference count of timestep %d\n",
                        List->Timestep);
             List->ReferenceCount = 0;
+        }
+        List = List->Next;
+    }
+    KillNeverSentTimesteps(Stream);
+}
+
+static void UntagPreciousTimesteps(SstStream Stream)
+{
+    CPTimestepList Last = NULL, List;
+    SST_ASSERT_LOCKED();
+    List = Stream->QueuedTimesteps;
+    while (List)
+    {
+        if (List->PreciousTimestep)
+        {
+            CP_verbose(Stream,
+                       "Precious Timestep %d untagged, reference count is %d\n",
+                       List->Timestep, List->ReferenceCount);
+            List->PreciousTimestep = 0;
+            List->NeverSent = 1; /* setup to die in kill */
         }
         List = List->Next;
     }
@@ -556,12 +579,16 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
         if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
         {
             List->ReferenceCount--;
-            CP_verbose(Stream,
-                       "SubRef : Writer-side Timestep %ld now has "
-                       "reference count %d\n",
-                       List->Timestep, List->ReferenceCount);
+            CP_verbose(
+                Stream,
+                "SubRef : Writer-side Timestep %ld "
+                "now has reference count %d, never_send %d, precious %d\n",
+                List->Timestep, List->ReferenceCount, List->NeverSent,
+                List->PreciousTimestep);
         }
         if ((List->ReferenceCount == 0) &&
+            (List->PreciousTimestep ==
+             0) &&                  /* don't kill precious timesteps here */
             (List->NeverSent == 0)) /* don't kill never sent timesteps here */
         {
             /* dequeue and free */
@@ -866,6 +893,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                 sendOneToWSRCohort(
                     Reader, Stream->CPInfo->DeliverTimestepMetadataFormat,
                     List->Msg, &List->Msg->RS_Stream);
+                List->NeverSent = 0;
                 if (TS == Reader->StartingTimestep)
                 {
                     /* restore Msg format list */
@@ -1055,6 +1083,7 @@ void SstWriterClose(SstStream Stream)
                             &Msg.RS_Stream);
 
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    UntagPreciousTimesteps(Stream);
     KillNeverSentTimesteps(Stream);
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 
@@ -1070,7 +1099,7 @@ void SstWriterClose(SstStream Stream)
         {
             CP_verbose(Stream,
                        "Waiting for timesteps to be released in WriterClose\n");
-            if (Stream->Verbose)
+            if (Stream->CPVerbose)
             {
                 CPTimestepList List = Stream->QueuedTimesteps;
                 char *StringList = malloc(1);
@@ -1750,6 +1779,10 @@ extern void SstInternalProvideTimestep(
      * still be discarded.*/
 
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    if (Stream->ConfigParams->FirstTimestepPrecious && (Timestep == 0))
+    {
+        Entry->PreciousTimestep = 1;
+    }
     Entry->ReferenceCount =
         1; /* holding one for us, so it doesn't disappear under us */
     Entry->DPRegistered = (Data != NULL);
