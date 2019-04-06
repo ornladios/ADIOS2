@@ -91,7 +91,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	if(nVars==0)
 			return StepStatus::EndOfStream;
 	int var_name_max_length = 128;
-	int buf_len = nVars * sizeof(int) + nVars * sizeof(int)+ MAX_DS_NDIM * nVars * sizeof(uint64_t) + nVars * var_name_max_length * sizeof(char);
+	int buf_len = sizeof(int) + nVars * sizeof(int) + nVars * sizeof(int)+ MAX_DS_NDIM * nVars * sizeof(uint64_t) + nVars * var_name_max_length * sizeof(char);
 	if(rank!=0)
 			buffer = (char*)malloc(buf_len);
 
@@ -107,9 +107,9 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * nVars * sizeof(uint64_t));
 	memset(gdim_meta, 0, MAX_DS_NDIM * nVars * sizeof(uint64_t));
 
-	memcpy(dim_meta, buffer,  nVars* sizeof(int));
-	memcpy(elemSize_meta, &buffer[nVars* sizeof(int)], nVars* sizeof(int));
-	memcpy(gdim_meta, &buffer[2*nVars* sizeof(int)], MAX_DS_NDIM * nVars * sizeof(uint64_t));
+	memcpy(dim_meta, &buffer[sizeof(int)],  nVars* sizeof(int));
+	memcpy(elemSize_meta, &buffer[sizeof(int)+ nVars* sizeof(int)], nVars* sizeof(int));
+	memcpy(gdim_meta, &buffer[sizeof(int) + 2*nVars* sizeof(int)], MAX_DS_NDIM * nVars * sizeof(uint64_t));
 
 	for (int var = 0; var < nVars; ++var) {
 
@@ -118,7 +118,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
 		std::string adiosName;
 		char *val = (char *)(calloc(var_name_max_length, sizeof(char)));
-		memcpy(val, &buffer[nVars* sizeof(int) + nVars *sizeof(int) + nVars*MAX_DS_NDIM*sizeof(uint64_t) + var * var_name_max_length], var_name_max_length*sizeof(char));
+		memcpy(val, &buffer[sizeof(int) + nVars* sizeof(int) + nVars *sizeof(int) + nVars*MAX_DS_NDIM*sizeof(uint64_t) + var * var_name_max_length], var_name_max_length*sizeof(char));
 		adiosName.assign(val);
 		free(val);
 
@@ -148,42 +148,6 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 			adiosVarType = itType->second;
 
 		}
-		/*
-		if(adiosVarType =="char")
-			AddVar<char>(m_IO, adiosName, shape);
-		else if(adiosVarType =="signed char")
-			AddVar<signed char>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned char")
-			AddVar<unsigned char>(m_IO, adiosName, shape);
-		else if(adiosVarType =="short")
-						AddVar<short>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned short")
-						AddVar<unsigned short>(m_IO, adiosName, shape);
-		else if(adiosVarType =="int")
-						AddVar<int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned int")
-						AddVar<unsigned int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="long int")
-						AddVar<long int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="long long int")
-						AddVar<long long int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned long int")
-						AddVar<unsigned long int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="unsigned long long int")
-						AddVar<unsigned long long int>(m_IO, adiosName, shape);
-		else if(adiosVarType =="float")
-				AddVar<float>(m_IO, adiosName, shape);
-		else if(adiosVarType =="double")
-				AddVar<double>(m_IO, adiosName, shape);
-		else if(adiosVarType =="long double")
-						AddVar<long double>(m_IO, adiosName, shape);
-		else if(adiosVarType =="float complex")
-				AddVar<std::complex<float>>(m_IO, adiosName, shape);
-		else if(adiosVarType =="double complex")
-				AddVar<std::complex<double>>(m_IO, adiosName, shape);
-		else
-			AddVar<std::string>(m_IO, adiosName, shape);// used string for last value
-		*/
 		if(adiosVarType =="int8_t")
 			AddVar<int8_t>(m_IO, adiosName, shape);
 		else if(adiosVarType =="uint8_t")

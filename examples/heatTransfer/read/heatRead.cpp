@@ -70,6 +70,8 @@ int main(int argc, char *argv[])
        communicator will just equal the MPI_COMM_WORLD.
      */
 
+    double totalTime = 0;
+    double runTime = MPI_Wtime();
     int wrank, wnproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &wnproc);
@@ -103,10 +105,14 @@ int main(int argc, char *argv[])
             inIO.AddTransport("File", {{"verbose", "4"}});
         }
 
-        adios2::IO outIO = ad.DeclareIO("readerOutput");
+        //adios2::IO outIO = ad.DeclareIO("readerOutput");
 
         adios2::Engine reader =
             inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
+        MPI_Barrier(mpiReaderComm);
+        if(!rank) {
+            std::cout << "inIO.Open() complete." << std::endl;
+        }
 
         std::vector<double> Tin;
         std::vector<double> Tout;
@@ -114,16 +120,24 @@ int main(int argc, char *argv[])
         adios2::Variable<double> vTin;
         adios2::Variable<double> vTout;
         adios2::Variable<double> vdT;
-        adios2::Engine writer;
+        //adios2::Engine writer;
         bool firstStep = true;
         int step = 0;
 
+        double stepTime;
+
+
         while (true)
         {
+            stepTime = MPI_Wtime();
+
             adios2::StepStatus status =
                 reader.BeginStep(adios2::StepMode::NextAvailable);
             if (status != adios2::StepStatus::OK)
             {
+                if(status != adios2::StepStatus::EndOfStream) {
+                    std::cout << "Rank " << rank << ": BeginStep failed (status " << (int)status << ")" << std::endl;
+                }
                 break;
             }
 
@@ -160,13 +174,16 @@ int main(int argc, char *argv[])
                 dT.resize(settings.readsize[0] * settings.readsize[1]);
 
                 /* Create output variables and open output stream */
-                vTout = outIO.DefineVariable<double>(
+                /*vTout = outIO.DefineVariable<double>(
                     "T", {gndx, gndy}, settings.offset, settings.readsize);
                 vdT = outIO.DefineVariable<double>(
                     "dT", {gndx, gndy}, settings.offset, settings.readsize);
                 writer = outIO.Open(settings.outputfile, adios2::Mode::Write,
                                     mpiReaderComm);
-
+                */
+                if(!rank) {
+                    std::cout << "Entering first step barrier..." << std::endl;
+                }
                 MPI_Barrier(mpiReaderComm); // sync processes just for stdout
             }
 
@@ -189,28 +206,43 @@ int main(int argc, char *argv[])
             /* Compute dT from current T (Tin) and previous T (Tout)
              * and save Tin in Tout for output and for future computation
              */
-            Compute(Tin, Tout, dT, firstStep);
+            //Compute(Tin, Tout, dT, firstStep);
+            MPI_Barrier(mpiReaderComm);
+            stepTime = MPI_Wtime() - stepTime;
+            totalTime += stepTime;
+
+            if(!rank) {
+                std::cout<<"Step " << step <<": read time = " << stepTime << std::endl;
+            }
+
 
             /* Output Tout and dT */
-            writer.BeginStep();
+            /*writer.BeginStep();
 
             if (vTout)
                 writer.Put<double>(vTout, Tout.data());
             if (vdT)
                 writer.Put<double>(vdT, dT.data());
             writer.EndStep();
-
+            */
             step++;
             firstStep = false;
         }
         reader.Close();
-        if (writer)
+        /* if (writer)
             writer.Close();
+        */
     }
     catch (std::invalid_argument &e) // command-line argument errors
     {
         std::cout << e.what() << std::endl;
         printUsage();
+    }
+
+    if(!rank) {
+        std::cout<<"Total read time = " << totalTime << std::endl;
+        runTime = MPI_Wtime() - runTime;
+        std::cout<<"Total reader run time = " << runTime << std::endl;
     }
 
     MPI_Finalize();

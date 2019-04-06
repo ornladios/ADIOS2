@@ -62,16 +62,31 @@ int main(int argc, char *argv[])
     {
         double timeStart = MPI_Wtime();
         Settings settings(argc, argv, rank, nproc);
+	MPI_Barrier(mpiHeatTransferComm);
+        double time_settings = MPI_Wtime();
         HeatTransfer ht(settings);
+	MPI_Barrier(mpiHeatTransferComm);
+        double time_htdeclare = MPI_Wtime();
         IO io(settings, mpiHeatTransferComm);
-
+	MPI_Barrier(mpiHeatTransferComm);
+	double time_io = MPI_Wtime();
         ht.init(false);
+	MPI_Barrier(mpiHeatTransferComm);
+	double time_init = MPI_Wtime();
         // ht.printT("Initialized T:", mpiHeatTransferComm);
         ht.heatEdges();
+	MPI_Barrier(mpiHeatTransferComm);
+        double time_heatEdges = MPI_Wtime();
         ht.exchange(mpiHeatTransferComm);
+	MPI_Barrier(mpiHeatTransferComm);
+        double time_exchange = MPI_Wtime();
         // ht.printT("Heated T:", mpiHeatTransferComm);
 
         io.write(0, ht, settings, mpiHeatTransferComm);
+	MPI_Barrier(mpiHeatTransferComm);
+        double time_iowrite = MPI_Wtime();
+
+        double stepTime, totalTime = 0;
 
         for (unsigned int t = 1; t <= settings.steps; ++t)
         {
@@ -84,13 +99,31 @@ int main(int argc, char *argv[])
                 ht.heatEdges();
             }
 
+            stepTime = MPI_Wtime();
             io.write(t, ht, settings, mpiHeatTransferComm);
+            stepTime = MPI_Wtime() - stepTime;
+            if(!rank) {
+                std::cout<<"Step " << t <<": write time = " << stepTime << std::endl;
+            }
+
+            totalTime += stepTime;
+           
+ 
         }
         MPI_Barrier(mpiHeatTransferComm);
 
         double timeEnd = MPI_Wtime();
-        if (rank == 0)
-            std::cout << "Total runtime = " << timeEnd - timeStart << "s\n";
+        if (rank == 0) {
+            std::cout<<"Total write time = " << totalTime << std::endl;
+            std::cout << "Total writer run time = " << timeEnd - timeStart << "s\n";
+	    std::cout<<"Settings Declare time = " << time_settings - timeStart << std::endl;
+	    std::cout<<"HT Declare time = " << time_htdeclare - time_settings<< std::endl;
+            std::cout<<"IO Declare time = " << time_io - time_htdeclare << std::endl;
+	    std::cout<<" ht init time = " << time_init - time_io<< std::endl;
+	    std::cout<<"ht.heatEdges time = " << time_heatEdges- time_init << std::endl;
+	    std::cout<<"ht.exchange time = " << time_exchange - time_heatEdges<< std::endl;
+	    std::cout<<"io.write time = " << time_iowrite - time_exchange<< std::endl;
+        }
     }
     catch (std::invalid_argument &e) // command-line argument errors
     {

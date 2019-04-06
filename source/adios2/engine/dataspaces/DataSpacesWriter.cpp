@@ -130,7 +130,7 @@ void DataSpacesWriter::WriteVarInfo()
 		std::string ds_file_var;
 		int var_num = ndim_vector.size();
 		int var_name_max_length = 128;
-		int buf_len = sizeof(int)+ var_num * sizeof(int) +var_num * sizeof(int)+ MAX_DS_NDIM * var_num * sizeof(uint64_t) + var_num * var_name_max_length * sizeof(char);
+		int buf_len = sizeof(int) + var_num * sizeof(int) +var_num * sizeof(int)+ MAX_DS_NDIM * var_num * sizeof(uint64_t) + var_num * var_name_max_length * sizeof(char);
 		int *dim_meta, *elemSize_meta;
 		uint64_t *gdim_meta;
 		int* nvar_buf;
@@ -160,9 +160,9 @@ void DataSpacesWriter::WriteVarInfo()
 		//copy all the data into payload buffer
 		memcpy(buffer, nvar_buf, sizeof(int));
 		memcpy(&buffer[sizeof(int)], dim_meta, var_num* sizeof(int));
-		memcpy(&buffer[var_num* sizeof(int)], elemSize_meta, var_num* sizeof(int));
-		memcpy(&buffer[2*var_num* sizeof(int)], gdim_meta, MAX_DS_NDIM * var_num * sizeof(uint64_t));
-		memcpy(&buffer[2*var_num* sizeof(int)+MAX_DS_NDIM * var_num * sizeof(uint64_t)], name_string, var_num * var_name_max_length * sizeof(char));
+		memcpy(&buffer[sizeof(int)+var_num* sizeof(int)], elemSize_meta, var_num* sizeof(int));
+		memcpy(&buffer[sizeof(int)+2*var_num* sizeof(int)], gdim_meta, MAX_DS_NDIM * var_num * sizeof(uint64_t));
+		memcpy(&buffer[sizeof(int)+2*var_num* sizeof(int)+MAX_DS_NDIM * var_num * sizeof(uint64_t)], name_string, var_num * var_name_max_length * sizeof(char));
 
 		//store metadata in DataSoaces
 		local_file_var = "VARMETA@"+f_Name;
