@@ -30,7 +30,7 @@ Please find [ADIOS2 User Guide at readthedocs](https://adios2.readthedocs.io)
     * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
 * bindings - public interface language bindings (C++11, C++98, C, Fortran, Python and Matlab)
 * testing - Tests using [gtest](https://github.com/google/googletest)
-  
+
 
 ## Getting Started
 
@@ -45,36 +45,29 @@ Step-by-step build guide:
 1. Clone the repository:
 
 ```bash
-$ mkdir adios2
-$ cd adios2
 $ git clone https://github.com/ornladios/ADIOS2.git
 ```
 
 2. Create a separate build directory in your work area:
 
 ```bash
-$ mkdir build
+ADIOS2$ mkdir build && cd build
 ```
 
 3. Configure the project with CMake:
 
 ```bash
-$ mkdir adios2
-$ cd adios2
-$ git clone https://github.com/ornladios/adios2.git source
-$ mkdir build
-$ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../source
+ADIOS2/build$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../source
 -- The C compiler identification is GNU 7.3.0
 -- The CXX compiler identification is GNU 7.3.0
 ...
 
 ADIOS2 build configuration:
   ADIOS Version: 2.3.1
-  C++ Compiler : GNU 7.3.0 
+  C++ Compiler : GNU 7.3.0
     /opt/ohpc/pub/compiler/gcc/7.3.0/bin/g++
 
-  Fortran Compiler : GNU 7.3.0 
+  Fortran Compiler : GNU 7.3.0
     /opt/ohpc/pub/compiler/gcc/7.3.0/bin/gfortran
 
   Installation prefix: /opt/adios2/2.3.1/gnu/openmpi
@@ -104,7 +97,7 @@ ADIOS2 build configuration:
 
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/chuck/adios2/build
+-- Build files have been written to: /home/chuck/ADIOS2/build
 
 ```
 
@@ -137,7 +130,7 @@ In addition to the `ADIOS2_USE_Feature` options, the following options are also 
 4. Compile:
 
 ```bash
-$ make -j8
+ADIOS2/build$ make -j8
 ```
 
 5. Run tests:
@@ -151,7 +144,7 @@ Test project /home/chuck/adios2/build
   2/295 Test   #2: HeatTransfer.BPFile.Read.MxM .............................................   Passed    0.55 sec
         Start   3: HeatTransfer.BPFile.Dump.MxM
   ...
-  
+
 $
 ```
 
