@@ -177,6 +177,23 @@ will result in SST generating contact information that uses the
 network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
+8. ``FirstTimestepPrecious``: Default **FALSE**.
+FirstTimestepPrecious is a boolean parameter that affects the queueing
+of the first timestep presented to the SST Writer engine. If
+FirstTimestepPrecious is **TRUE***, then the first timestep is
+effectively never removed from the output queue and will be presented
+as a first timestep to any reader that joins at a later time.  This
+can be used to convey run parameters or other information that every
+reader may need despite joining later in a data stream.  Note that
+this queued first timestep does count against the QueueLimit parameter
+above, so if a QueueLimit is specified, it should be a value larger
+than 1.  Further note while specifing this parameter guarantees that
+the preserved first timestep will be made available to new readers,
+other reader-side operations (like requesting the LatestAvailable
+timestep in BeginStep) might still cause the timestep to be skipped.
+This value is interpreted by only by the SST Writer engine.
+
+
 =======================  ===================== =========================================================
  **Key**                  **Value Format**      **Default** and Examples
 =======================  ===================== =========================================================
@@ -187,4 +204,5 @@ This value is interpreted by only by the SST Writer engine.
  DataTransport            string                **default varies by platform**, RDMA, WAN
  ControlTransport         string                **TCP**, Scalable
  NetworkInterface         string                **NULL**
+ FirstTimestepPrecious    boolean               **FALSE**, true, no, yes
 =======================  ===================== =========================================================
