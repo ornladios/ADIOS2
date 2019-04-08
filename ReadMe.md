@@ -57,7 +57,7 @@ ADIOS2$ mkdir build && cd build
 3. Configure the project with CMake:
 
 ```bash
-ADIOS2/build$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../source
+ADIOS2/build$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../
 -- The C compiler identification is GNU 7.3.0
 -- The CXX compiler identification is GNU 7.3.0
 ...
