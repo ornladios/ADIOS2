@@ -204,5 +204,5 @@ This value is interpreted by only by the SST Writer engine.
  DataTransport            string                **default varies by platform**, RDMA, WAN
  ControlTransport         string                **TCP**, Scalable
  NetworkInterface         string                **NULL**
- PreciousFirstTimestep    boolean               **FALSE**, true, no, yes
+ FirstTimestepPrecious    boolean               **FALSE**, true, no, yes
 =======================  ===================== =========================================================
