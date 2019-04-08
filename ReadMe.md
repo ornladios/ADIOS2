@@ -42,22 +42,17 @@ The following is a quick step-by-step build guide, find the full CMake-based ins
 
 Step-by-step build guide:
 
-1. Clone the repository:
+1. Clone the repository and create a build directory:
 
 ```bash
-$ git clone https://github.com/ornladios/ADIOS2.git
+$ git clone https://github.com/ornladios/ADIOS2.git ADIOS2
+$ mkdir adios2_build && cd adios2_build
 ```
 
-2. Create a separate build directory in your work area:
+2. Configure the project with CMake:
 
 ```bash
-ADIOS2$ mkdir build && cd build
-```
-
-3. Configure the project with CMake:
-
-```bash
-ADIOS2/build$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../
+adios2_build$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../ADIOS2
 -- The C compiler identification is GNU 7.3.0
 -- The CXX compiler identification is GNU 7.3.0
 ...
@@ -127,16 +122,16 @@ In addition to the `ADIOS2_USE_Feature` options, the following options are also 
 | `CMAKE_INSTALL_PREFIX` | /path/to/install (`/usr/local`)                           | Install location.                          |
 | `CMAKE_BUILD_TYPE`     | **`Debug`** / `Release` / `RelWithDebInfo` / `MinSizeRel` | The level of compiler optimization to use. |
 
-4. Compile:
+3. Compile:
 
 ```bash
-ADIOS2/build$ make -j8
+adios2_build$ make -j8
 ```
 
-5. Run tests:
+4. Run tests:
 
 ```bash
-$ ctest
+adios2_build$ ctest
 Test project /home/chuck/adios2/build
        Start   1: HeatTransfer.BPFile.Write.MxM
   1/295 Test   #1: HeatTransfer.BPFile.Write.MxM ............................................   Passed    1.25 sec
@@ -148,9 +143,9 @@ Test project /home/chuck/adios2/build
 $
 ```
 
-6.  Install:
+5.  Install:
 ```
-$ make install
+adios2_build$ make install
 [  7%] Built target adios2sys_objects
 ...
 [ 61%] Built target adios2
