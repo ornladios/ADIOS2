@@ -92,7 +92,7 @@ ADIOS2 build configuration:
 
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/chuck/ADIOS2/build
+-- Build files have been written to: /home/chuck/adios2_build
 
 ```
 
@@ -110,7 +110,7 @@ The following options can be specified with CMake's `-DVAR=VALUE` syntax to cont
 | `ADIOS2_USE_SST`     | **`AUTO`**/``ON``/``OFF`` | Enable Staging Engine                                                    |
 | `ADIOS2_USE_Fortran` | **`AUTO`**/``ON``/``OFF`` | Enable Fortran bindings                                                  |
 
-Note: The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similary, enabling MPI and Python bindings requires the presence of `mpi4py`.
+Note: The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similarly, enabling MPI and Python bindings requires the presence of `mpi4py`.
 
 In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library get's built:
 
@@ -132,7 +132,7 @@ adios2_build$ make -j8
 
 ```bash
 adios2_build$ ctest
-Test project /home/chuck/adios2/build
+Test project /home/chuck/adios2_build
        Start   1: HeatTransfer.BPFile.Write.MxM
   1/295 Test   #1: HeatTransfer.BPFile.Write.MxM ............................................   Passed    1.25 sec
         Start   2: HeatTransfer.BPFile.Read.MxM
