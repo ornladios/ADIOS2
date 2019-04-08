@@ -154,6 +154,8 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
             SstCommPatternStr[Params->CPCommPattern]);
     fprintf(stderr, "Param -   MarshalMethod:%s\n",
             SstMarshalStr[Params->MarshalMethod]);
+    fprintf(stderr, "Param -   FirstTimestepPrecious:%s\n",
+            Params->FirstTimestepPrecious ? "True" : "False");
     fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
             Params->IsRowMajor);
 }
