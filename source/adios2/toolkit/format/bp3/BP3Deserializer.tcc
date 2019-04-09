@@ -554,11 +554,44 @@ void BP3Deserializer::PostDataRead(
             ? Dims(blockInfo.Count.size(), 0)
             : blockInfo.Start;
 
-    helper::ClipContiguousMemory(
-        blockInfo.Data, blockInfoStart, blockInfo.Count,
-        m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
-        subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
-        endianReverse);
+    if (!blockInfo.MemoryStart.empty())
+    {
+        if (endianReverse)
+            throw std::invalid_argument("BP3Deserializer.tcc: endianReverse "
+                                        "not supported with MemorySelection");
+        if (m_ReverseDimensions)
+            throw std::invalid_argument(
+                "BP3Deserializer.tcc: ReverseDimensions not supported with "
+                "MemorySelection");
+
+        auto intersectStart = subStreamBoxInfo.IntersectionBox.first;
+        auto intersectCount = subStreamBoxInfo.IntersectionBox.second;
+        auto blockStart = subStreamBoxInfo.BlockBox.first;
+        auto blockCount = subStreamBoxInfo.BlockBox.second;
+        auto memoryStart = blockInfoStart;
+        for (int d = 0; d < intersectStart.size(); d++)
+        {
+            // change {intersect,block}Count from [start, end] to {start, count}
+            intersectCount[d] -= (intersectStart[d] - 1);
+            blockCount[d] -= (blockStart[d] - 1);
+            // shift everything by MemoryStart
+            intersectStart[d] += blockInfo.MemoryStart[d];
+            blockStart[d] += blockInfo.MemoryStart[d];
+        }
+        helper::NdCopy<T>(
+            m_ThreadBuffers[threadID][0].data(), intersectStart, intersectCount,
+            true, true, reinterpret_cast<char *>(blockInfo.Data),
+            intersectStart, intersectCount, true, true, intersectStart,
+            blockCount, memoryStart, blockInfo.MemoryCount, false);
+    }
+    else
+    {
+        helper::ClipContiguousMemory(
+            blockInfo.Data, blockInfoStart, blockInfo.Count,
+            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
+            endianReverse);
+    }
 }
 
 template <class T>

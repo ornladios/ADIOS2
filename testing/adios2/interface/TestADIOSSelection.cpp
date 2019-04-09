@@ -388,6 +388,220 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionReadStart)
     EXPECT_EQ(arr_read, ref);
 }
 
+TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionNone)
+{
+    // clang-format off
+    auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},
+			  {0.,  0.,  1.,  2.,  3., 0.},
+			  {0., 10., 11., 12., 13., 0.},
+			  {0., 20., 21., 22., 23., 0.},
+			  {0.,  0.,  0.,  0.,  0., 0.}});
+    auto ref = makeArray({{ 0.,  1.,  2.,  3.},
+			  {10., 11., 12., 13.},
+			  {20., 21., 22., 23.}});
+    // clang-format on
+
+    // write
+    auto writer =
+        m_IOWriter.Open("test_mem_selection_none.bp", adios2::Mode::Write);
+    auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
+    var.SetSelection({{0, 0}, {3, 4}});
+    var.SetMemorySelection({{1, 1}, {5, 6}});
+    writer.Put(var, arr.data());
+    writer.Close();
+
+    // read back
+    auto arr_read = MultiArrayT(ref.dims());
+    auto engine =
+        m_IOReader.Open("test_mem_selection_none.bp", adios2::Mode::Read);
+    var = m_IOReader.InquireVariable<DataType>("var");
+    var.SetSelection({{0, 0}, {3, 4}});
+    engine.Get(var, arr_read.data());
+    engine.Close();
+
+    EXPECT_EQ(arr_read, ref);
+}
+
+TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWrite)
+{
+    // clang-format off
+    auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},
+			  {0.,  0.,  1.,  2.,  3., 0.},
+			  {0., 10., 11., 12., 13., 0.},
+			  {0., 20., 21., 22., 23., 0.},
+			  {0.,  0.,  0.,  0.,  0., 0.}});
+    auto ref = makeArray({{ 0.,  1.},
+			  {10., 11.},
+			  {20., 21.}});
+    // clang-format on
+
+    // write
+    auto writer =
+        m_IOWriter.Open("test_mem_selection_write.bp", adios2::Mode::Write);
+    auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
+    var.SetSelection({{0, 0}, {3, 2}});
+    var.SetMemorySelection({{1, 1}, {5, 6}});
+    writer.Put(var, arr.data());
+    writer.Close();
+
+    // read back
+    auto arr_read = MultiArrayT(ref.dims());
+    auto engine =
+        m_IOReader.Open("test_mem_selection_write.bp", adios2::Mode::Read);
+    var = m_IOReader.InquireVariable<DataType>("var");
+    var.SetSelection({{0, 0}, {3, 2}});
+    engine.Get(var, arr_read.data());
+    engine.Close();
+
+    EXPECT_EQ(arr_read, ref);
+}
+
+TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWriteStart)
+{
+    // clang-format off
+    auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},
+			  {0.,  0.,  1.,  2.,  3., 0.},
+			  {0., 10., 11., 12., 13., 0.},
+			  {0., 20., 21., 22., 23., 0.},
+			  {0.,  0.,  0.,  0.,  0., 0.}});
+    auto ref = makeArray({{ 2.,  3.},
+			  {12., 13.},
+			  {22., 23.}});
+    // clang-format on
+
+    // write
+    auto writer = m_IOWriter.Open("test_mem_selection_write_start.bp",
+                                  adios2::Mode::Write);
+    auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
+    var.SetSelection({{0, 0}, {3, 2}});
+    var.SetMemorySelection({{1, 3}, {5, 6}});
+    writer.Put(var, arr.data());
+    writer.Close();
+
+    // read back
+    auto arr_read = MultiArrayT(ref.dims());
+    auto engine = m_IOReader.Open("test_mem_selection_write_start.bp",
+                                  adios2::Mode::Read);
+    var = m_IOReader.InquireVariable<DataType>("var");
+    var.SetSelection({{0, 0}, {3, 2}});
+    engine.Get(var, arr_read.data());
+    engine.Close();
+
+    EXPECT_EQ(arr_read, ref);
+}
+
+TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionRead)
+{
+    // clang-format off
+    auto arr = makeArray({{ 0.,  1.,  2.,  3.},
+			  {10., 11., 12., 13.},
+			  {20., 21., 22., 23.}});
+    auto ref = makeArray({{0.,  0.,  0., 0.},
+			  {0.,  0.,  1., 0.},
+			  {0., 10., 11., 0.},
+			  {0., 20., 21., 0.},
+			  {0.,  0.,  0., 0.}});
+    // clang-format on
+
+    auto writer =
+        m_IOWriter.Open("test_mem_selection_read.bp", adios2::Mode::Write);
+    auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
+    var.SetSelection({{0, 0}, {3, 4}});
+    writer.Put(var, arr.data());
+    writer.Close();
+
+    // read back
+    auto arr_read = MultiArrayT(ref.dims());
+    auto engine =
+        m_IOReader.Open("test_mem_selection_read.bp", adios2::Mode::Read);
+    var = m_IOReader.InquireVariable<DataType>("var");
+    var.SetSelection({{0, 0}, {3, 2}});
+    var.SetMemorySelection({{1, 1}, {5, 4}});
+    engine.Get(var, arr_read.data());
+    engine.Close();
+
+    EXPECT_EQ(arr_read, ref);
+}
+
+TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionReadStart)
+{
+    // clang-format off
+    auto arr = makeArray({{ 0.,  1.,  2.,  3.},
+			  {10., 11., 12., 13.},
+			  {20., 21., 22., 23.}});
+    auto ref = makeArray({{0.,  0.,  0., 0.},
+			  {0.,  2.,  3., 0.},
+			  {0., 12., 13., 0.},
+			  {0., 22., 23., 0.},
+			  {0.,  0.,  0., 0.}});
+    // clang-format on
+
+    auto writer = m_IOWriter.Open("test_mem_selection_read_start.bp",
+                                  adios2::Mode::Write);
+    auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
+    var.SetSelection({{0, 0}, {3, 4}});
+    writer.Put(var, arr.data());
+    writer.Close();
+
+    // read back
+    auto arr_read = MultiArrayT(ref.dims());
+    auto engine =
+        m_IOReader.Open("test_mem_selection_read_start.bp", adios2::Mode::Read);
+    var = m_IOReader.InquireVariable<DataType>("var");
+    var.SetSelection({{0, 2}, {3, 2}});
+    var.SetMemorySelection({{1, 1}, {5, 4}});
+    engine.Get(var, arr_read.data());
+    engine.Close();
+
+    EXPECT_EQ(arr_read, ref);
+}
+
+TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionComplex)
+{
+    // clang-format off
+    auto arr = makeArray({{0.,  0.,  0.,  0.,  0., 0.},
+			  {0.,  0.,  1.,  2.,  3., 0.},
+			  {0., 10., 11., 12., 13., 0.},
+			  {0., 20., 21., 22., 23., 0.},
+			  {0., 30., 31., 32., 33., 0.},
+			  {0.,  0.,  0.,  0.,  0., 0.}});
+    auto ref = makeArray({{0.,  0.,  0., 0.},
+			  {0., 11., 12., 0.},
+			  {0., 21., 22., 0.},
+			  {0.,  0.,  0., 0.}});
+    // clang-format on
+
+    auto writer =
+        m_IOWriter.Open("test_mem_selection_complex.bp", adios2::Mode::Write);
+    auto var = m_IOWriter.DefineVariable<DataType>("var", {4, 4});
+    // write in 4 quarters
+    var.SetSelection({{0, 0}, {2, 2}});
+    var.SetMemorySelection({{1, 1}, {6, 6}});
+    writer.Put(var, arr.data());
+    var.SetSelection({{2, 0}, {2, 2}});
+    var.SetMemorySelection({{3, 1}, {6, 6}});
+    writer.Put(var, arr.data());
+    var.SetSelection({{0, 2}, {2, 2}});
+    var.SetMemorySelection({{1, 3}, {6, 6}});
+    writer.Put(var, arr.data());
+    var.SetSelection({{2, 2}, {2, 2}});
+    var.SetMemorySelection({{3, 3}, {6, 6}});
+    writer.Put(var, arr.data());
+    writer.Close();
+
+    // read back center block, with bits from every block written
+    auto arr_read = MultiArrayT(ref.dims());
+    auto engine =
+        m_IOReader.Open("test_mem_selection_complex.bp", adios2::Mode::Read);
+    var = m_IOReader.InquireVariable<DataType>("var");
+    var.SetSelection({{1, 1}, {2, 2}});
+    var.SetMemorySelection({{1, 1}, {4, 4}});
+    engine.Get(var, arr_read.data());
+    engine.Close();
+
+    EXPECT_EQ(arr_read, ref);
+}
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

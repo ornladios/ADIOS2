@@ -174,7 +174,7 @@ public:
      * Set the local start (offset) point to the memory pointer passed at Put
      * and the memory local dimensions (count). Used for non-contiguous memory
      * writes and reads (e.g. multidimensional ghost-cells).
-     * Currently not working for calls to Get.
+     * Currently Get only works for formats based on BP3.
      * @param memorySelection {memoryStart, memoryCount}
      * <pre>
      * 		memoryStart: relative local offset of variable.start to the
