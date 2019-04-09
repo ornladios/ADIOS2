@@ -86,14 +86,14 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 		dspaces_unlock_on_read (meta_lk, &(m_data.mpi_comm));
 	}
 	MPI_Bcast(bcast_array, 2, MPI_INT, 0, m_data.mpi_comm);
-	nVars = bcast_array[0];
+	int buf_len = bcast_array[0];
+	int var_name_max_length = 128;
+	nVars = (buf_len)/(2*sizeof(int)+MAX_DS_NDIM*sizeof(uint64_t)+var_name_max_length*sizeof(char));
 	m_CurrentStep = bcast_array[1];
 	if(nVars==0)
-			return StepStatus::EndOfStream;
-	int var_name_max_length = 128;
-	int buf_len = sizeof(int) + nVars * sizeof(int) + nVars * sizeof(int)+ MAX_DS_NDIM * nVars * sizeof(uint64_t) + nVars * var_name_max_length * sizeof(char);
+		return StepStatus::EndOfStream;
 	if(rank!=0)
-			buffer = (char*)malloc(buf_len);
+		buffer = (char*)malloc(buf_len);
 
 	m_IO.RemoveAllVariables();
 
@@ -107,9 +107,9 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * nVars * sizeof(uint64_t));
 	memset(gdim_meta, 0, MAX_DS_NDIM * nVars * sizeof(uint64_t));
 
-	memcpy(dim_meta, &buffer[sizeof(int)],  nVars* sizeof(int));
-	memcpy(elemSize_meta, &buffer[sizeof(int)+ nVars* sizeof(int)], nVars* sizeof(int));
-	memcpy(gdim_meta, &buffer[sizeof(int) + 2*nVars* sizeof(int)], MAX_DS_NDIM * nVars * sizeof(uint64_t));
+	memcpy(dim_meta, buffer,  nVars* sizeof(int));
+	memcpy(elemSize_meta, &buffer[nVars* sizeof(int)], nVars* sizeof(int));
+	memcpy(gdim_meta, &buffer[2*nVars* sizeof(int)], MAX_DS_NDIM * nVars * sizeof(uint64_t));
 
 	for (int var = 0; var < nVars; ++var) {
 
@@ -118,7 +118,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
 		std::string adiosName;
 		char *val = (char *)(calloc(var_name_max_length, sizeof(char)));
-		memcpy(val, &buffer[sizeof(int) + nVars* sizeof(int) + nVars *sizeof(int) + nVars*MAX_DS_NDIM*sizeof(uint64_t) + var * var_name_max_length], var_name_max_length*sizeof(char));
+		memcpy(val, &buffer[nVars* sizeof(int) + nVars *sizeof(int) + nVars*MAX_DS_NDIM*sizeof(uint64_t) + var * var_name_max_length], var_name_max_length*sizeof(char));
 		adiosName.assign(val);
 		free(val);
 
@@ -131,7 +131,6 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 			{
 				if (isOrderC)
 				{
-					//uint64_t gdim_value = *(uint64_t*)buffer[]
 					shape[var_dim_size - i - 1] = static_cast<int>(gdim_meta[var*MAX_DS_NDIM+i]);
 				}
 				else
