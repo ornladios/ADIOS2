@@ -31,7 +31,13 @@ public:
     std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
                                        const int step) final;
 
+    std::vector<MPI_Request> IExchangeAbsolutePosition(BufferSTL &bufferSTL,
+                                                       const int step) final;
+
     void Wait(std::vector<MPI_Request> &request, const int step) final;
+
+    void WaitAbsolutePosition(std::vector<MPI_Request> &requests,
+                              const int step) final;
 
     void SwapBuffers(const int step) noexcept final;
 
@@ -40,6 +46,9 @@ public:
     BufferSTL &GetConsumerBuffer(BufferSTL &bufferSTL) final;
 
 private:
+    bool m_IsInExchangeAbsolutePosition = false;
+    size_t m_SizeSend = 0;
+
     /** current sender/receiver pair order (0: sender is original buffer and
     receiver is extra buffer, 1: sender is extra buffer and receiver is the
     original buffer)*/

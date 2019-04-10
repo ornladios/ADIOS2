@@ -97,6 +97,58 @@ std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
     return requests;
 }
 
+std::vector<MPI_Request>
+MPIChain::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
+{
+    if (m_Size == 1)
+    {
+        return std::vector<MPI_Request>();
+    }
+
+    if (m_IsInExchangeAbsolutePosition)
+    {
+        throw std::runtime_error("ERROR: MPIChain::IExchangeAbsolutePosition: "
+                                 "An existing exchange is still active.");
+    }
+
+    const int destination = (step != m_Size - 1) ? step + 1 : 0;
+    std::vector<MPI_Request> requests(2);
+
+    if (step == 0)
+    {
+        m_SizeSend =
+            (m_Rank == 0) ? bufferSTL.m_AbsolutePosition : bufferSTL.m_Position;
+    }
+
+    if (m_Rank == step)
+    {
+        const size_t position = (m_Rank == 0)
+                                    ? m_SizeSend
+                                    : m_SizeSend + bufferSTL.m_AbsolutePosition;
+
+        // While the MPI_Isend function should take a const void* as it's first
+        // argument, some MPICH implementations provide a broken signature
+        // which takes a non-const first argument.  The explicit const_cast
+        // here works around this.
+        helper::CheckMPIReturn(
+            MPI_Isend(const_cast<size_t *>(&position), 1, ADIOS2_MPI_SIZE_T,
+                      destination, 0, m_Comm, &requests[0]),
+            ", aggregation Isend absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+    else if (m_Rank == destination)
+    {
+        helper::CheckMPIReturn(
+            MPI_Irecv(&bufferSTL.m_AbsolutePosition, 1, ADIOS2_MPI_SIZE_T, step,
+                      0, m_Comm, &requests[1]),
+            ", aggregation Irecv absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+
+    m_IsInExchangeAbsolutePosition = true;
+    return requests;
+}
+
 void MPIChain::Wait(std::vector<MPI_Request> &requests, const int step)
 {
     if (m_Size == 1)
@@ -129,6 +181,41 @@ void MPIChain::Wait(std::vector<MPI_Request> &requests, const int step)
             ", aggregation waiting for sender data at iteration " +
                 std::to_string(step) + "\n");
     }
+}
+
+void MPIChain::WaitAbsolutePosition(std::vector<MPI_Request> &requests,
+                                    const int step)
+{
+    if (m_Size == 1)
+    {
+        return;
+    }
+
+    if (!m_IsInExchangeAbsolutePosition)
+    {
+        throw std::runtime_error("ERROR: MPIChain::WaitAbsolutePosition: An "
+                                 "existing exchange is not active.");
+    }
+
+    MPI_Status status;
+    const int destination = (step != m_Size - 1) ? step + 1 : 0;
+
+    if (m_Rank == destination)
+    {
+        helper::CheckMPIReturn(
+            MPI_Wait(&requests[1], &status),
+            ", aggregation Irecv Wait absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+
+    if (m_Rank == step)
+    {
+        helper::CheckMPIReturn(
+            MPI_Wait(&requests[0], &status),
+            ", aggregation Isend Wait absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+    m_IsInExchangeAbsolutePosition = false;
 }
 
 void MPIChain::SwapBuffers(const int /*step*/) noexcept
