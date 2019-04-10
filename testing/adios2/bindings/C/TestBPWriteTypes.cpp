@@ -138,7 +138,18 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_put(engineH, varR32, data_R32, adios2_mode_deferred);
         adios2_put(engineH, varR64, data_R64, adios2_mode_deferred);
 
+        size_t engineTypeSize;
+        adios2_engine_get_type(NULL, &engineTypeSize, engineH);
+        EXPECT_EQ(engineTypeSize, 3);
+
+        char *engineType = new char[engineTypeSize + 1]();
+        adios2_engine_get_type(engineType, &engineTypeSize, engineH);
+
+        EXPECT_EQ(std::string(engineType, engineTypeSize), "BP3");
+
         adios2_close(engineH);
+
+        delete[] engineType;
     }
 #ifdef ADIOS2_HAVE_MPI
     MPI_Barrier(MPI_COMM_WORLD);

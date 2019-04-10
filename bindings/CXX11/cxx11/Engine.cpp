@@ -41,83 +41,82 @@ std::string Engine::Type() const
 
 StepStatus Engine::BeginStep()
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return StepStatus::EndOfStream;
     }
-
-    helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");
     return m_Engine->BeginStep();
 }
 
 StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(
+        m_Engine, "in call to Engine::BeginStep(const StepMode, const float)");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return StepStatus::EndOfStream;
     }
-    helper::CheckForNullptr(
-        m_Engine, "in call to Engine::BeginStep(const StepMode, const float)");
     return m_Engine->BeginStep(mode, timeoutSeconds);
 }
 
 size_t Engine::CurrentStep() const
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(m_Engine, "in call to Engine::CurrentStep");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return MaxSizeT;
     }
-    helper::CheckForNullptr(m_Engine, "in call to Engine::CurrentStep");
     return m_Engine->CurrentStep();
 }
 
 void Engine::PerformPuts()
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformPuts");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return;
     }
-    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformPuts");
     m_Engine->PerformPuts();
 }
 
 void Engine::PerformGets()
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return;
     }
-    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");
     m_Engine->PerformGets();
 }
 
 void Engine::EndStep()
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(m_Engine, "in call to Engine::EndStep");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return;
     }
-    helper::CheckForNullptr(m_Engine, "in call to Engine::EndStep");
     m_Engine->EndStep();
 }
 
 void Engine::Flush(const int transportIndex)
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Flush");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return;
     }
-    helper::CheckForNullptr(m_Engine, "in call to Engine::Flush");
     m_Engine->Flush(transportIndex);
 }
 
 void Engine::Close(const int transportIndex)
 {
-    if (Type() == "null")
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Close");
+    if (m_Engine->m_EngineType == "NULL")
     {
         return;
     }
-    helper::CheckForNullptr(m_Engine, "in call to Engine::Close");
     m_Engine->Close(transportIndex);
 }
 
