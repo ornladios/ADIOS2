@@ -14,35 +14,59 @@
 namespace adios2
 {
 
-namespace
+std::string ToString(ShapeID value)
 {
+    switch (value)
+    {
+    case ShapeID::Unknown:
+        return "ShapeID::Unknown";
+    case ShapeID::GlobalValue:
+        return "ShapeID::GlobalValue";
+    case ShapeID::GlobalArray:
+        return "ShapeID::GlobalArray";
+    case ShapeID::JoinedArray:
+        return "ShapeID::JoinedArray";
+    case ShapeID::LocalValue:
+        return "ShapeID::LocalValue";
+    case ShapeID::LocalArray:
+        return "ShapeID::LocalArray";
+    default:
+        return "ToString: Unknown ShapeID";
+    }
+}
 
-std::map<ShapeID, std::string> MapShapeID2String = {
-    {ShapeID::Unknown, "ShapeID::Unknown"},
-    {ShapeID::GlobalValue, "ShapeID::GlobalValue"},
-    {ShapeID::GlobalArray, "ShapeID::GlobalArray"},
-    {ShapeID::JoinedArray, "ShapeID::JoinedArray"},
-    {ShapeID::LocalValue, "ShapeID::LocalValue"},
-    {ShapeID::LocalArray, "ShapeID::LocalArray"},
-};
+std::string ToString(IOMode value)
+{
+    switch (value)
+    {
+    case IOMode::Independent:
+        return "IOMode::Independent";
+    case IOMode::Collective:
+        return "IOMode::Collective";
+    default:
+        return "ToString: Unknown IOMode";
+    }
+}
 
-std::map<IOMode, std::string> MapIOMode2String = {
-    {IOMode::Independent, "IOMode::Independent"},
-    {IOMode::Collective, "IOMode::Collective"},
-};
-
-std::map<Mode, std::string> MapMode2String = {
-    {Mode::Undefined, "Mode::Undefined"}, {Mode::Write, "Mode::Write"},
-    {Mode::Read, "Mode::Read"},           {Mode::Append, "Mode::Append"},
-    {Mode::Sync, "Mode::Sync"},           {Mode::Deferred, "Mode::Deferred"},
-};
-
-} // end anonymous namespace
-
-std::string ToString(ShapeID value) { return MapShapeID2String.at(value); }
-
-std::string ToString(IOMode value) { return MapIOMode2String.at(value); }
-
-std::string ToString(Mode value) { return MapMode2String.at(value); }
+std::string ToString(Mode value)
+{
+    switch (value)
+    {
+    case Mode::Undefined:
+        return "Mode::Undefined";
+    case Mode::Write:
+        return "Mode::Write";
+    case Mode::Read:
+        return "Mode::Read";
+    case Mode::Append:
+        return "Mode::Append";
+    case Mode::Sync:
+        return "Mode::Sync";
+    case Mode::Deferred:
+        return "Mode::Deferred";
+    default:
+        return "ToString: Unknown Mode";
+    }
+}
 
 } // end namespace adios2
