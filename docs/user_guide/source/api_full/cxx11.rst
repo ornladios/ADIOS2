@@ -86,3 +86,32 @@ The following section provides a summary of the available functionality for each
    :project: CXX11
    :path: ../../bindings/CXX11/cxx11/
    :members:
+
+Debugging
+---------
+
+To help debugging, functionality is provided that creates
+human-readable representations of adios2 C++11 class instances and
+enums. To get a string representation, use ``ToString(object)``. You
+can also directly pass objects to ``ostream``s.
+
+Example:
+
+.. code-block:: c++
+
+    auto myVar = io.DefineVariable<double>("myVar");
+    std::cout << myVar << " has shape id " << myVar.ShapeID() << std::endl;
+
+    // will print:
+    // Variable<double>(Name: "myVar") has shape id ShapeID::GlobalValue
+
+    if (myVar.ShapeID() != adios2::ShapeID::GlobalArray)
+    {
+        throw std::invalid_argument("can't handle " +
+                                    ToString(myVar.ShapeID()) + " in " +
+                                    ToString(myVar));
+    }
+
+    // will throw exception like this:
+    // C++ exception with description "can't handle ShapeID::GlobalValue
+    // in Variable<double>(Name: "myVar")" thrown
