@@ -19,6 +19,12 @@ namespace adios2
 
 IO::operator bool() const noexcept { return (m_IO == nullptr) ? false : true; }
 
+std::string IO::Name() const
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::InConfigFile");
+    return m_IO->m_Name;
+}
+
 bool IO::InConfigFile() const
 {
     helper::CheckForNullptr(m_IO, "in call to IO::InConfigFile");

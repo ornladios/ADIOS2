@@ -55,6 +55,12 @@ public:
     explicit operator bool() const noexcept;
 
     /**
+     * Inspects IO name
+     * @return name
+     */
+    std::string Name() const;
+
+    /**
      * @brief Checks if IO exists in a config file passed to ADIOS object that
      * created this IO
      * @return true: in config file, false: not in config file
