@@ -225,7 +225,7 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
 #define declare_template_instantiation(T)                                      \
-    template std::string ToString(Variable<T> var);
+    template std::string ToString(const Variable<T> &var);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -80,11 +80,11 @@ Variable<T>::DoAllStepsBlocksInfo()
     return allStepsBlocksInfo;
 }
 
-template <typename T, typename std::enable_if<IsVariable<T>::value, int>::type>
-std::string ToString(T var)
+template <typename T>
+std::string ToString(const Variable<T> &variable)
 {
-    return std::string("Variable<") + var.Type() + ">(Name: \"" + var.Name() +
-           "\")";
+    return std::string("Variable<") + variable.Type() + ">(Name: \"" +
+           variable.Name() + "\")";
 }
 
 } // end namespace adios2
