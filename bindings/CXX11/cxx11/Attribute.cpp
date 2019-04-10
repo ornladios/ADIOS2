@@ -62,6 +62,13 @@ namespace adios2
             return reinterpret_cast<std::vector<T> &>(                         \
                 m_Attribute->m_DataArray);                                     \
         }                                                                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::string ToString(const Attribute<T> &attribute)                        \
+    {                                                                          \
+        return std::string("Attribute<") + attribute.Type() + ">(Name: \"" +   \
+               attribute.Name() + "\")";                                       \
     }
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)

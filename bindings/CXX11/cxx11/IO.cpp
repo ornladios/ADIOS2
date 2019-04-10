@@ -188,4 +188,9 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+std::string ToString(const IO &io)
+{
+    return std::string("IO(Name: \"" + io.Name() + "\")");
+}
+
 } // end namespace adios2

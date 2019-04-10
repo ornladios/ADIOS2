@@ -23,6 +23,8 @@ TEST(ADIOSInterface, MPICommRemoved)
 
 #endif
 
+/** ADIOS2_CXX11_API
+ */
 class ADIOS2_CXX11_API : public ::testing::Test
 {
 public:
@@ -44,6 +46,50 @@ public:
     int m_MpiSize = 1;
 };
 
+TEST_F(ADIOS2_CXX11_API, ToString)
+{
+    EXPECT_EQ(ToString(adios2::ShapeID::Unknown), "ShapeID::Unknown");
+    EXPECT_EQ(ToString(adios2::ShapeID::GlobalValue), "ShapeID::GlobalValue");
+    EXPECT_EQ(ToString(adios2::ShapeID::GlobalArray), "ShapeID::GlobalArray");
+    EXPECT_EQ(ToString(adios2::ShapeID::JoinedArray), "ShapeID::JoinedArray");
+    EXPECT_EQ(ToString(adios2::ShapeID::LocalValue), "ShapeID::LocalValue");
+    EXPECT_EQ(ToString(adios2::ShapeID::LocalArray), "ShapeID::LocalArray");
+
+    EXPECT_EQ(ToString(adios2::IOMode::Independent), "IOMode::Independent");
+    EXPECT_EQ(ToString(adios2::IOMode::Collective), "IOMode::Collective");
+
+    EXPECT_EQ(ToString(adios2::Mode::Undefined), "Mode::Undefined");
+    EXPECT_EQ(ToString(adios2::Mode::Write), "Mode::Write");
+    EXPECT_EQ(ToString(adios2::Mode::Read), "Mode::Read");
+    EXPECT_EQ(ToString(adios2::Mode::Append), "Mode::Append");
+    EXPECT_EQ(ToString(adios2::Mode::Sync), "Mode::Sync");
+    EXPECT_EQ(ToString(adios2::Mode::Deferred), "Mode::Deferred");
+}
+
+TEST_F(ADIOS2_CXX11_API, APIToString)
+{
+    auto io = m_Ad.DeclareIO("CXX11_API_TestIO");
+    EXPECT_EQ(ToString(io), "IO(Name: \"CXX11_API_TestIO\")");
+
+    auto variable = io.DefineVariable<double>("var_double");
+    EXPECT_EQ(ToString(variable), "Variable<double>(Name: \"var_double\")");
+
+    auto attribute = io.DefineAttribute<float>("attr_float", 1.f);
+    EXPECT_EQ(ToString(attribute), "Attribute<float>(Name: \"attr_float\")");
+
+    auto engine = io.Open("test.bp", adios2::Mode::Write);
+    EXPECT_EQ(ToString(engine), "Engine(Name: \"test.bp\", Type: \"BP3\")");
+}
+
+TEST_F(ADIOS2_CXX11_API, operatorLL)
+{
+    std::stringstream result;
+    result << adios2::Mode::Write;
+    EXPECT_EQ(result.str(), "Mode::Write");
+}
+
+/** ADIOS2_CXX11_API_IO
+ */
 class ADIOS2_CXX11_API_IO : public ADIOS2_CXX11_API
 {
 public:
