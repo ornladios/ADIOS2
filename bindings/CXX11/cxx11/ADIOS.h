@@ -50,7 +50,7 @@ public:
      * @exception std::invalid_argument in debugMode = true if user input is
      * incorrect
      */
-    ADIOS(MPI_Comm comm, const bool debugMode = true);
+    explicit ADIOS(MPI_Comm comm, const bool debugMode = true);
 
     /**
      * Starting point for MPI apps. Creates an ADIOS object allowing a
@@ -64,8 +64,8 @@ public:
      * @exception std::invalid_argument in debugMode = true if user input is
      * incorrect
      */
-    ADIOS(const std::string &configFile = "", MPI_Comm comm = MPI_COMM_SELF,
-          const bool debugMode = true);
+    explicit ADIOS(const std::string &configFile = "",
+                   MPI_Comm comm = MPI_COMM_SELF, const bool debugMode = true);
 #else
 
     /**
@@ -77,7 +77,7 @@ public:
      * @exception std::invalid_argument in debugMode = true if user input is
      * incorrect
      */
-    ADIOS(const std::string &configFile, const bool debugMode = true);
+    explicit ADIOS(const std::string &configFile, const bool debugMode = true);
 
     /**
      * Starting point for non-MPI apps. Creates an ADIOS object
@@ -86,7 +86,7 @@ public:
      * @exception std::invalid_argument in debugMode = true if user input is
      * incorrect
      */
-    ADIOS(const bool debugMode = true);
+    explicit ADIOS(const bool debugMode = true);
 #endif
 
     /** object inspection true: valid object, false: invalid object */
