@@ -10,6 +10,7 @@
  */
 
 #include "ADIOSTypes.h"
+#include "helper/adiosString.h" // DimsToString
 
 namespace adios2
 {
@@ -181,5 +182,7 @@ std::string ToString(SelectionType value)
         return "ToString: Unknown SelectionType";
     }
 }
+
+std::string ToString(const Dims &dims) { return helper::DimsToString(dims); }
 
 } // end namespace adios2

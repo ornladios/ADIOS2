@@ -126,6 +126,9 @@ TEST_F(ADIOS2_CXX11_API, APIToString)
 
     auto engine = io.Open("test.bp", adios2::Mode::Write);
     EXPECT_EQ(ToString(engine), "Engine(Name: \"test.bp\", Type: \"BP3\")");
+
+    auto dims = adios2::Dims{1, 2, 3};
+    EXPECT_EQ(adios2::ToString(dims), "Dims(3):[1, 2, 3]");
 }
 
 TEST_F(ADIOS2_CXX11_API, operatorLL)
