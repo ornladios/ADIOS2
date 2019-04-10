@@ -51,8 +51,6 @@ public:
      *  corresponds to m_Rank = 0 */
     int m_ConsumerRank = -1;
 
-    size_t m_SizeSend = 0;
-
     MPIAggregator();
 
     virtual ~MPIAggregator();
@@ -62,11 +60,11 @@ public:
     virtual std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
                                                const int step);
 
-    std::vector<MPI_Request> IExchangeAbsolutePosition(BufferSTL &bufferSTL,
-                                                       const int step);
+    virtual std::vector<MPI_Request>
+    IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step) = 0;
 
-    void WaitAbsolutePosition(std::vector<MPI_Request> &requests,
-                              const int step);
+    virtual void WaitAbsolutePosition(std::vector<MPI_Request> &requests,
+                                      const int step) = 0;
 
     virtual void Wait(std::vector<MPI_Request> &requests, const int step);
 
