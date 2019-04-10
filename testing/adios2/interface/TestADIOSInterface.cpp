@@ -64,6 +64,51 @@ TEST_F(ADIOS2_CXX11_API, ToString)
     EXPECT_EQ(ToString(adios2::Mode::Append), "Mode::Append");
     EXPECT_EQ(ToString(adios2::Mode::Sync), "Mode::Sync");
     EXPECT_EQ(ToString(adios2::Mode::Deferred), "Mode::Deferred");
+
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::GlobalReaders),
+              "ReadMultiplexPattern::GlobalReaders");
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::RoundRobin),
+              "ReadMultiplexPattern::RoundRobin");
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::FirstInFirstOut),
+              "ReadMultiplexPattern::FirstInFirstOut");
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::OpenAllSteps),
+              "ReadMultiplexPattern::OpenAllSteps");
+
+    EXPECT_EQ(ToString(adios2::StreamOpenMode::Wait), "StreamOpenMode::Wait");
+    EXPECT_EQ(ToString(adios2::StreamOpenMode::NoWait),
+              "StreamOpenMode::NoWait");
+
+    EXPECT_EQ(ToString(adios2::ReadMode::NonBlocking), "ReadMode::NonBlocking");
+    EXPECT_EQ(ToString(adios2::ReadMode::Blocking), "ReadMode::Blocking");
+
+    EXPECT_EQ(ToString(adios2::StepMode::Append), "StepMode::Append");
+    EXPECT_EQ(ToString(adios2::StepMode::Update), "StepMode::Update");
+    EXPECT_EQ(ToString(adios2::StepMode::NextAvailable),
+              "StepMode::NextAvailable");
+    EXPECT_EQ(ToString(adios2::StepMode::LatestAvailable),
+              "StepMode::LatestAvailable");
+
+    EXPECT_EQ(ToString(adios2::StepStatus::OK), "StepStatus::OK");
+    EXPECT_EQ(ToString(adios2::StepStatus::NotReady), "StepStatus::NotReady");
+    EXPECT_EQ(ToString(adios2::StepStatus::EndOfStream),
+              "StepStatus::EndOfStream");
+    EXPECT_EQ(ToString(adios2::StepStatus::OtherError),
+              "StepStatus::OtherError");
+
+    EXPECT_EQ(ToString(adios2::TimeUnit::Microseconds),
+              "TimeUnit::Microseconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Milliseconds),
+              "TimeUnit::Milliseconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Seconds), "TimeUnit::Seconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Minutes), "TimeUnit::Minutes");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Hours), "TimeUnit::Hours");
+
+    EXPECT_EQ(ToString(adios2::SelectionType::BoundingBox),
+              "SelectionType::BoundingBox");
+    EXPECT_EQ(ToString(adios2::SelectionType::Points), "SelectionType::Points");
+    EXPECT_EQ(ToString(adios2::SelectionType::WriteBlock),
+              "SelectionType::WriteBlock");
+    EXPECT_EQ(ToString(adios2::SelectionType::Auto), "SelectionType::Auto");
 }
 
 TEST_F(ADIOS2_CXX11_API, APIToString)
