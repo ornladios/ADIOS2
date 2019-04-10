@@ -48,6 +48,7 @@ public:
 private:
     bool m_IsInExchangeAbsolutePosition = false;
     size_t m_SizeSend = 0;
+    size_t m_ExchangeAbsolutePosition = 0;
 
     /** current sender/receiver pair order (0: sender is original buffer and
     receiver is extra buffer, 1: sender is extra buffer and receiver is the
