@@ -69,4 +69,117 @@ std::string ToString(Mode value)
     }
 }
 
+std::string ToString(ReadMultiplexPattern value)
+{
+    switch (value)
+    {
+    case ReadMultiplexPattern::GlobalReaders:
+        return "ReadMultiplexPattern::GlobalReaders";
+    case ReadMultiplexPattern::RoundRobin:
+        return "ReadMultiplexPattern::RoundRobin";
+    case ReadMultiplexPattern::FirstInFirstOut:
+        return "ReadMultiplexPattern::FirstInFirstOut";
+    case ReadMultiplexPattern::OpenAllSteps:
+        return "ReadMultiplexPattern::OpenAllSteps";
+    default:
+        return "ToString: Unknown ReadMultiplexPattern";
+    }
+}
+
+std::string ToString(StreamOpenMode value)
+{
+    switch (value)
+    {
+    case StreamOpenMode::Wait:
+        return "StreamOpenMode::Wait";
+    case StreamOpenMode::NoWait:
+        return "StreamOpenMode::NoWait";
+    default:
+        return "ToString: Unknown StreamOpenMode";
+    }
+}
+
+std::string ToString(ReadMode value)
+{
+    switch (value)
+    {
+    case ReadMode::NonBlocking:
+        return "ReadMode::NonBlocking";
+    case ReadMode::Blocking:
+        return "ReadMode::Blocking";
+    default:
+        return "ToString: Unknown ReadMode";
+    }
+}
+
+std::string ToString(StepMode value)
+{
+    switch (value)
+    {
+    case StepMode::Append:
+        return "StepMode::Append";
+    case StepMode::Update:
+        return "StepMode::Update";
+    case StepMode::NextAvailable:
+        return "StepMode::NextAvailable";
+    case StepMode::LatestAvailable:
+        return "StepMode::LatestAvailable";
+    default:
+        return "ToString: Unknown StepMode";
+    }
+}
+
+std::string ToString(StepStatus value)
+{
+    switch (value)
+    {
+    case StepStatus::OK:
+        return "StepStatus::OK";
+    case StepStatus::NotReady:
+        return "StepStatus::NotReady";
+    case StepStatus::EndOfStream:
+        return "StepStatus::EndOfStream";
+    case StepStatus::OtherError:
+        return "StepStatus::OtherError";
+    default:
+        return "ToString: Unknown StepStatus";
+    }
+}
+
+std::string ToString(TimeUnit value)
+{
+    switch (value)
+    {
+    case TimeUnit::Microseconds:
+        return "TimeUnit::Microseconds";
+    case TimeUnit::Milliseconds:
+        return "TimeUnit::Milliseconds";
+    case TimeUnit::Seconds:
+        return "TimeUnit::Seconds";
+    case TimeUnit::Minutes:
+        return "TimeUnit::Minutes";
+    case TimeUnit::Hours:
+        return "TimeUnit::Hours";
+    default:
+        return "ToString: Unknown TimeUnit";
+    }
+}
+
+std::string ToString(SelectionType value)
+{
+    switch (value)
+    {
+    case SelectionType::BoundingBox:
+        return "SelectionType::BoundingBox";
+    case SelectionType::Points:
+        return "SelectionType::Points";
+    case SelectionType::WriteBlock:
+        return "SelectionType::WriteBlock";
+    case SelectionType::Auto:
+        return "SelectionType::Auto";
+    default:
+        return "ToString: Unknown SelectionType";
+    }
+}
+
 } // end namespace adios2
