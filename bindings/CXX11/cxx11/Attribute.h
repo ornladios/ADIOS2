@@ -72,6 +72,9 @@ private:
     core::Attribute<IOType> *m_Attribute = nullptr;
 };
 
+template <typename T>
+std::string ToString(const Attribute<T> &attribute);
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_ATTRIBUTE_H_ */

@@ -224,6 +224,8 @@ private:
         const Params &parameters);
 };
 
+std::string ToString(const ADIOS &adios);
+
 } // end namespace adios2
 
 #include "ADIOS.inl"

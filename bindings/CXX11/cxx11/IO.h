@@ -381,6 +381,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+std::string ToString(const IO &io);
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_IO_H_ */

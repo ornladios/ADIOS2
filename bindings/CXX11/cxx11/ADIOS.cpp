@@ -125,4 +125,6 @@ void ADIOS::CheckPointer(const std::string hint)
     }
 }
 
+std::string ToString(const ADIOS &adios) { return std::string("ADIOS()"); }
+
 } // end namespace adios2

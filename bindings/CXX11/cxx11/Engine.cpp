@@ -129,4 +129,10 @@ ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+std::string ToString(const Engine &engine)
+{
+    return std::string("Engine(Name: \"" + engine.Name() + "\", Type: \"" +
+                       engine.Type() + "\")");
+}
+
 } // end namespace adios2
