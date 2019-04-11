@@ -21,6 +21,8 @@ if(ADIOS2_HAVE_MPI)
                     SCRIPT TestBPWriteRead2D.py)
     python_add_test(NAME PythonBPChangingShapeHighLevelAPI ${test_parameters} 
                     SCRIPT TestBPChangingShapeHighLevelAPI.py)
+    python_add_test(NAME PythonNullEngine ${test_parameters} 
+                    SCRIPT TestNullEngine.py)
     
     if (ADIOS2_HAVE_HDF5)
         python_add_test(NAME PythonBPWriteReadHighLevelAPI_HDF5 

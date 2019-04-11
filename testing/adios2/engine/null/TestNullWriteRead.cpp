@@ -6,7 +6,6 @@
 #include <cstring>
 
 #include <iostream>
-#include <numeric> //std::iota
 #include <stdexcept>
 
 #include <adios2.h>
@@ -23,15 +22,8 @@ public:
     SmallTestData m_TestData;
 };
 
-//******************************************************************************
-// 1D 1x8 test data
-//******************************************************************************
-
-// ADIOS2 BP write, native ADIOS1 read
 TEST_F(NullWriteReadTests, NullWriteRead1D8)
 {
-    // Each process would write a 1x8 array and all processes would
-    // form a mpiSize * Nx 1D array
     const std::string fname("NullWriteRead1D8.bp");
 
     int mpiRank = 0, mpiSize = 1;
@@ -45,8 +37,6 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
-
-// Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -136,23 +126,12 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
             nullWriter.EndStep();
         }
 
-        // Close the file
         nullWriter.Close();
     }
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
         io.SetEngine("NULL");
-        //        {
-        //            adios2::Engine nullReaderRandom =
-        //                io.Open(fname, adios2::Mode::Read);
-        //            auto var_r32 = io.InquireVariable<float>("r32");
-        //            EXPECT_FALSE(var_r32);
-        //            auto allBlocksInfo =
-        //            nullReaderRandom.AllStepsBlocksInfo(var_r32);
-        //            EXPECT_EQ(allBlocksInfo.empty(), true);
-        //            nullReaderRandom.Close();
-        //        }
 
         adios2::Engine nullReader = io.Open(fname, adios2::Mode::Read);
 
