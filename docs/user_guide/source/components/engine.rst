@@ -6,7 +6,7 @@ The Engine abstraction component serves as the base interface to the actual IO S
 
 Engine functionality works around two concepts from the application point-of-view:
 
-1. Self-describing variables are published and consumed in "steps" in either "File" mode (all steps are available) or "Streaming" mode (steps are available are they are produced).
+1. Self-describing variables are published and consumed in "steps" in either "File" random-access (all steps are available) or "Streaming" (steps are available as they are produced in a step-by-step fashion).
 2. Self-describing variables are published and consumed using a "sync" or "deferred" (lazy evaluation) policy.
 
 .. caution::
@@ -21,8 +21,48 @@ Recall that Engines are created through the ``IO::Open`` function which must con
 
 For Publishing data (Write, Append mode)
 
-* ``Put``
-   **Default mode: deferred (lazy evaluation).** Data pointer (or array) to memory must not be reused until first encounter with ``PerformPuts``, ``EndStep`` or ``Close``. Use sync mode to allow the pointer memory to be reusable immediately. This is enabled by passing the flag ``adios2::Mode::Sync`` as the 3rd argument.
+* ``Put`` : unique polymorphic abstraction used to pass variables data into an adios2 engine. Optionally, adios2 can provide direct access to its buffer memory 
+using an overload that returns a span to a variable block (non-owning contiguous memory piece) to be filled out by the application.
+
+Each engine will give a concrete meaning to  each functions signatures, but all of them must follow the same memory contracts to the "data pointer": the memory address itself, and the "data contents": memory bits (values).
+   
+   -  Put in Deferred or lazy evaluation mode (default and preferred way)
+   
+      .. code-block:: c++
+         
+         Put(variable, *data);
+         Put(variable, *data, adios2::Mode::Deferred);
+         
+      Deferred memory contracts: 
+      "data pointer" must not be modified (e.g. resize) until first encounter to `PerformPuts``, ``EndStep`` or ``Close``.
+      "data contents" might be modified until first encounter to `PerformPuts``, ``EndStep`` or ``Close``, it's recommended practice to set all data contents before Put.
+         
+   -  Put in Sync mode
+   
+      .. code-block:: c++
+         
+         Put(variable, *data, adios2::Mode::Sync);
+         
+      Sync memory contracts: 
+      "data pointer" and "data contents" can be modified after this call.
+   
+   - Put returning a ``adios2::Variable<T>::Span`` to access adios2 internal buffer
+
+      .. code-block:: c++
+         
+         // return a span into a block of memory for this variable dimensions filled with default values T()
+         adios2::Variable<T>::Span span = Put(variable);
+         // return a span into a block of memory for this variable dimensions with memory set to a pre-filled value
+         adios2::Variable<T>::Span span = Put(variable, bufferID, fill_value);
+         // not returning a span just sets a constant value to a variable block
+         Put(variable); // T()
+         Put(variable, bufferID, fill_value); 
+         
+      
+      Span memory contracts: 
+      "data pointer" must not be modified (e.g. resize) until first encounter to `PerformPuts``, ``EndStep`` or ``Close``.
+      span "data contents" must be modified until first encounter to `PerformPuts``, ``EndStep`` or ``Close``
+         
 
 * ``PerformsPuts``
    Executes all pending Put calls in deferred mode until this line.
@@ -67,8 +107,8 @@ The following example illustrates the basic API usage in write mode for data gen
       // as this is the default option
       engine.Put(variableW, dataW, adios2::Mode::Deferred);
       // effectively dataU, dataV, dataW memory subscription is "deferred"
-      // until the first call toPerformPuts, EndStep or Close.
-      // Application MUST NOT modify their contents.
+      // until the first call to PerformPuts, EndStep or Close.
+      // Application MUST NOT modify the data pointer (e.g. resize memory).
       engine.PerformPuts();
       // dataU, dataV, data4W subscribed
       // Application can modify their contents
@@ -79,7 +119,11 @@ The following example illustrates the basic API usage in write mode for data gen
       engine.Put(variableUi, dataU);
       engine.Put(variableVi, dataV);
       engine.Put(variableWi, dataW);
-      // Application MUST NOT modify dataU, dataV and dataW
+      // Application MUST NOT modify dataU, dataV and dataW pointers (e.g. resize),
+      // optionally data can be modified, but not recommended
+      dataU[0] = 10
+      dataV[0] = 10
+      dataW[0] = 10 
 
       engine.EndStep();
       // end of current logical step,

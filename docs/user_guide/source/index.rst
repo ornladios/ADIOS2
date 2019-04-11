@@ -17,7 +17,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    components/components
    engines/engines
    api_full/api_full
-   api_simple/api_simple
+   api_high/api_high
    utilities/utilities
    faq/faq
  
