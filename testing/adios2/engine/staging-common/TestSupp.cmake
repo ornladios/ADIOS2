@@ -103,6 +103,10 @@ set (PreciousTimestep_CMD "run_multi_test -test_protocol kill_readers  -verbose 
 set (PreciousTimestep_TIMEOUT "300")
 set (PreciousTimestep_PROPERTIES "RUN_SERIAL;1")
 
+set (PreciousTimestepDiscard_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 2 -warg FirstTimestepPrecious:true,RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS -rarg --ignore_time_gap -rarg --precious_first -rarg --discard -warg --ms_delay -warg 500")
+set (PreciousTimestepDiscard_TIMEOUT "300")
+set (PreciousTimestepDiscard_PROPERTIES "RUN_SERIAL;1")
+
 # Readers using BeginStep with timeout.  Here we run the writer with a longer delay to make the reader timeout
 set (TimeoutReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -rarg --non_blocking -warg --ms_delay -warg 2000 -warg --engine_params -warg ENGINE_PARAMS")
 set (TimeoutReader_TIMEOUT "60")
