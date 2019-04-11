@@ -7,7 +7,8 @@ C++ simple bindings
    DO NOT call ``use namespace adios2`` in your C++ code.
    Use ``adios2::fstream`` directly to prevent conflicts with ``std::stream``. 
 
-Write example:
+Write example
+-------------
 
 .. code-block:: c++
 
@@ -38,14 +39,15 @@ Write example:
        // T and P are std::vector<float>
        oStream.write( "temperature", T.data(), shape, start, count );
        // adios2::endl will advance the step after writing pressure
-       oStream.write( "pressure", P.data(), shape, start, count, adios2::endl );
+       oStream.write( "pressure", P.data(), shape, start, count, adios2::end_step );
        
    }
    
    // optional, but is good practice to indicate oStream shouldn't be used 
    oStream.close(); 
 
-Read "stepping/streaming" example:
+Read "stepping/streaming" example
+---------------------------------
 
 .. code-block:: c++
 
@@ -81,6 +83,7 @@ Read "stepping/streaming" example:
    }
    
 ``adios2::fstream`` API documentation
+-------------------------------------
 
 .. doxygenclass:: adios2::fstream
    :project: CXX11

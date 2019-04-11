@@ -9,7 +9,7 @@ Typical scenarios for using the simple APIs are:
 * Reading a file to perform data analysis with libraries (matplotlib, scipy, etc.)
 * Interactive: few calls make interactive usage easier. 
 * Saving data to files is small or personal projects
-* Online frameworks: *e.g.* Jupyter notebooks, see python-mpi examples running on [MyBinder](https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-mpi) 
+* Online frameworks: *e.g.* Jupyter notebooks, see python-mpi examples running on `MyBinder <https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-mpi>`_ 
 
 The designed functionality syntax is closely related to the native language IO bindings for formatted text files *e.g.* C++ ``fstream`` ``getline``, and Python file IO.
 The main function calls are: ``open`` (or constructor in C++), ``write``, ``read`` and ``close`` (or destructor in C++).

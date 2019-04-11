@@ -1,13 +1,14 @@
-**********************
-Python simple bindings
-**********************
+*********************
+Python high-level API
+*********************
 
-Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, the rely on numpy and (optionally) on ``mpi4py`` if ADIOS2 is compiled with MPI.
+Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, they rely on numpy and (optionally) on ``mpi4py`` if ADIOS2 is compiled with MPI.
 
 For online examples on MyBinder :
 
-- [Python-MPI Notebooks](https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-mpi)
-- [Python-noMPI Notebooks](https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-nompi)
+- `Python-MPI Notebooks <https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-mpi>`_
+
+- `Python-noMPI Notebooks <https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-nompi>`_
 
 
 Write example
@@ -40,7 +41,7 @@ Write example
          # temperature and pressure are numpy arrays
          fw.write("temperature", temperature, shape, start, count)
          # advances to next step
-         fw.write("pressure", pressure, shape, start, count, endl=True)
+         fw.write("pressure", pressure, shape, start, count, end_step=True)
 
 
 Read "stepping/streaming" example

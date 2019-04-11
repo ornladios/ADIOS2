@@ -26,7 +26,7 @@ using an overload that returns a span to a variable block (non-owning contiguous
 
 Each engine will give a concrete meaning to  each functions signatures, but all of them must follow the same memory contracts to the "data pointer": the memory address itself, and the "data contents": memory bits (values).
    
-   -  Put in Deferred or lazy evaluation mode (default and preferred way)
+   1.  Put in Deferred or lazy evaluation mode (default and preferred way)
    
       .. code-block:: c++
          
@@ -34,34 +34,43 @@ Each engine will give a concrete meaning to  each functions signatures, but all 
          Put(variable, *data, adios2::Mode::Deferred);
          
       Deferred memory contracts: 
-      "data pointer" must not be modified (e.g. resize) until first encounter to `PerformPuts``, ``EndStep`` or ``Close``.
-      "data contents" might be modified until first encounter to `PerformPuts``, ``EndStep`` or ``Close``, it's recommended practice to set all data contents before Put.
+      
+      - "data pointer" must not be modified (e.g. resize) until first encounter to `PerformPuts``, ``EndStep`` or ``Close``.
+      
+      - "data contents" might be modified until first encounter to `PerformPuts``, ``EndStep`` or ``Close``, it's recommended practice to set all data contents before Put.
          
-   -  Put in Sync mode
+   2.  Put in Sync mode
    
       .. code-block:: c++
          
          Put(variable, *data, adios2::Mode::Sync);
          
-      Sync memory contracts: 
-      "data pointer" and "data contents" can be modified after this call.
+      Sync memory contracts:
+      
+      - "data pointer" and "data contents" can be modified after this call.
    
-   - Put returning a ``adios2::Variable<T>::Span`` to access adios2 internal buffer
+   3. Put returning a ``adios2::Variable<T>::Span`` to access adios2 internal buffer
 
       .. code-block:: c++
          
-         // return a span into a block of memory for this variable dimensions filled with default values T()
+         // return a span into a block of memory
+
+         // set memory to default T()
          adios2::Variable<T>::Span span = Put(variable);
-         // return a span into a block of memory for this variable dimensions with memory set to a pre-filled value
+
+         // set buffer memory to a fill value
          adios2::Variable<T>::Span span = Put(variable, bufferID, fill_value);
-         // not returning a span just sets a constant value to a variable block
+
+         // not returning a span just sets a constant value 
          Put(variable); // T()
          Put(variable, bufferID, fill_value); 
          
       
       Span memory contracts: 
-      "data pointer" must not be modified (e.g. resize) until first encounter to `PerformPuts``, ``EndStep`` or ``Close``.
-      span "data contents" must be modified until first encounter to `PerformPuts``, ``EndStep`` or ``Close``
+      
+      - "data pointer" must not be modified (e.g. resize) until first encounter to `PerformPuts``, ``EndStep`` or ``Close``.
+      
+      - span "data contents" must be modified until first encounter to `PerformPuts``, ``EndStep`` or ``Close``
          
 
 * ``PerformsPuts``
