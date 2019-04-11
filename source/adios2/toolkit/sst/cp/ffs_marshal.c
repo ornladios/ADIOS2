@@ -718,6 +718,7 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
         // Build request structure and enter it into requests list
         FFSArrayRequest Req = malloc(sizeof(*Req));
         Req->VarRec = Var;
+        Req->RequestType = Global;
         // make a copy of Start and Count request
         Req->Start = malloc(sizeof(Start[0]) * Var->DimCount);
         memcpy(Req->Start, Start, sizeof(Start[0]) * Var->DimCount);
@@ -729,8 +730,49 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
     }
 }
 
+extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                   const char *Name, size_t DimCount,
+                                   const int BlockID, const size_t *Count,
+                                   void *Data)
+{
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    int GetFromWriter = 0;
+    FFSVarRec Var = LookupVarByKey(Stream, Variable);
+
+    // if Variable is in Metadata (I.E. DimCount == 0), move incoming data to
+    // Data area
+    if (DimCount == 0)
+    {
+        void *IncomingDataBase =
+            ((char *)Info->MetadataBaseAddrs[GetFromWriter]) +
+            Var->PerWriterMetaFieldDesc[GetFromWriter]->field_offset;
+        memcpy(Data, IncomingDataBase,
+               Var->PerWriterMetaFieldDesc[GetFromWriter]->field_size);
+    }
+    else
+    {
+        // Build request structure and enter it into requests list
+        FFSArrayRequest Req = malloc(sizeof(*Req));
+        memset(Req, 0, sizeof(*Req));
+        Req->VarRec = Var;
+        Req->RequestType = Local;
+        Req->NodeID = BlockID;
+        // make a copy of Count request
+        Req->Count = malloc(sizeof(Count[0]) * Var->DimCount);
+        memcpy(Req->Count, Count, sizeof(Count[0]) * Var->DimCount);
+        Req->Data = Data;
+        Req->Next = Info->PendingVarRequests;
+        Info->PendingVarRequests = Req;
+    }
+}
+
 static int NeedWriter(FFSArrayRequest Req, int i)
 {
+    if (Req->RequestType == Local)
+    {
+        return (Req->NodeID == i);
+    }
+    // else Global case
     for (int j = 0; j < Req->VarRec->DimCount; j++)
     {
         size_t SelOffset = Req->Start[j];
@@ -1168,6 +1210,23 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t IncomingSize = Reqs->VarRec->PerWriterIncomingSize[i];
                 int FreeIncoming = 0;
 
+                printf("Requests, request type = %d\n", Reqs->RequestType);
+                if (Reqs->RequestType == Local)
+                {
+                    printf("Got a local read, dim count %d, count %d\n",
+                           DimCount, SelSize[0]);
+                    RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    GlobalDimensions =
+                        calloc(DimCount, sizeof(GlobalDimensions[0]));
+                    if (SelOffset == NULL)
+                    {
+                        SelOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    }
+                    for (int i = 0; i < DimCount; i++)
+                    {
+                        GlobalDimensions[i] = RankSize[i];
+                    }
+                }
                 if ((Stream->WriterConfigParams->CompressionMethod ==
                      SstCompressZFP) &&
                     ZFPcompressionPossible(Type, DimCount))

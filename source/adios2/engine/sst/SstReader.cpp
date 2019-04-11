@@ -131,22 +131,25 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
          * setup shape of array variable as global (I.E. Count == Shape,
          * Start == 0)
          */
-	if (Shape) {
-	    for (int i = 0; i < DimCount; i++)
-		{
-		    VecShape.push_back(Shape[i]);
-		    VecStart.push_back(0);
-		    VecCount.push_back(Shape[i]);
-		}
-	} else {
-	    VecShape = {};
-	    VecStart = {};
-	    for (int i = 0; i < DimCount; i++)
-		{
-		    VecCount.push_back(Count[i]);
-		}
-	}
-	    
+        if (Shape)
+        {
+            for (int i = 0; i < DimCount; i++)
+            {
+                VecShape.push_back(Shape[i]);
+                VecStart.push_back(0);
+                VecCount.push_back(Shape[i]);
+            }
+        }
+        else
+        {
+            VecShape = {};
+            VecStart = {};
+            for (int i = 0; i < DimCount; i++)
+            {
+                VecCount.push_back(Count[i]);
+            }
+        }
+
         if (Type == "compound")
         {
             return (void *)NULL;
@@ -342,10 +345,29 @@ void SstReader::Init()
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            SstFFSGetDeferred(                                                 \
-                m_Input, (void *)&variable, variable.m_Name.c_str(),           \
-                variable.m_Start.size(), variable.m_Start.data(),              \
-                variable.m_Count.data(), data);                                \
+            size_t *Start = NULL;                                              \
+            size_t *Count = NULL;                                              \
+            size_t DimCount = 0;                                               \
+                                                                               \
+            if (variable.m_SelectionType ==                                    \
+                adios2::SelectionType::BoundingBox)                            \
+            {                                                                  \
+                DimCount = variable.m_Shape.size();                            \
+                Start = variable.m_Start.data();                               \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
+                                  variable.m_Name.c_str(), DimCount, Start,    \
+                                  Count, data);                                \
+            }                                                                  \
+            else if (variable.m_SelectionType ==                               \
+                     adios2::SelectionType::WriteBlock)                        \
+            {                                                                  \
+                DimCount = variable.m_Count.size();                            \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
+                                       variable.m_Name.c_str(), DimCount,      \
+                                       variable.m_BlockID, Count, data);       \
+            }                                                                  \
             SstFFSPerformGets(m_Input);                                        \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
@@ -362,10 +384,29 @@ void SstReader::Init()
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            SstFFSGetDeferred(                                                 \
-                m_Input, (void *)&variable, variable.m_Name.c_str(),           \
-                variable.m_Start.size(), variable.m_Start.data(),              \
-                variable.m_Count.data(), data);                                \
+            size_t *Start = NULL;                                              \
+            size_t *Count = NULL;                                              \
+            size_t DimCount = 0;                                               \
+                                                                               \
+            if (variable.m_SelectionType ==                                    \
+                adios2::SelectionType::BoundingBox)                            \
+            {                                                                  \
+                DimCount = variable.m_Shape.size();                            \
+                Start = variable.m_Start.data();                               \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
+                                  variable.m_Name.c_str(), DimCount, Start,    \
+                                  Count, data);                                \
+            }                                                                  \
+            else if (variable.m_SelectionType ==                               \
+                     adios2::SelectionType::WriteBlock)                        \
+            {                                                                  \
+                DimCount = variable.m_Count.size();                            \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
+                                       variable.m_Name.c_str(), DimCount,      \
+                                       variable.m_BlockID, Count, data);       \
+            }                                                                  \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
         {                                                                      \
