@@ -533,6 +533,9 @@ static void DiscardReleasedTimesteps(SstStream Stream)
     CPTimestepList Last = NULL, List;
     SST_ASSERT_LOCKED();
     List = Stream->QueuedTimesteps;
+    CP_verbose(Stream,
+               "Discard Released Timesteps called with LastReleased = %ld\n",
+               Stream->LastReleasedTimestep);
     while (List)
     {
         if ((List->Timestep <= Stream->LastReleasedTimestep) &&
@@ -567,7 +570,8 @@ static void UntagPreciousTimesteps(SstStream Stream)
     KillNeverSentTimesteps(Stream);
 }
 
-static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
+static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange,
+                                int SetLast)
 {
     CPTimestepList Last = NULL, List;
     int AnythingRemoved = 0;
@@ -610,7 +614,8 @@ static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange)
                                                       List->Timestep);
             }
             Stream->QueuedTimestepCount--;
-            Stream->LastReleasedTimestep = ItemToFree->Msg->Timestep;
+            if (SetLast)
+                Stream->LastReleasedTimestep = ItemToFree->Msg->Timestep;
             List = List->Next;
             ItemToFree->FreeTimestep(ItemToFree->FreeClientData);
             free(ItemToFree->Msg);
@@ -757,7 +762,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         SubRefRangeTimestep(Stream, MyStartingTimestep,
-                            GlobalStartingTimestep - 1);
+                            GlobalStartingTimestep - 1, 1 /* set last */);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
     CP_verbose(Stream,
@@ -1085,7 +1090,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                    CP_WSR_Stream->LastSentTimestep);
         SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
                             CP_WSR_Stream->OldestUnreleasedTimestep,
-                            CP_WSR_Stream->LastSentTimestep);
+                            CP_WSR_Stream->LastSentTimestep, 1 /* set last */);
         CP_WSR_Stream->OldestUnreleasedTimestep =
             CP_WSR_Stream->LastSentTimestep + 1;
     }
@@ -1298,20 +1303,25 @@ static void DoStreamDiscard(SstStream Stream)
     else
     {
         CPTimestepList Last = Stream->QueuedTimesteps;
-        while (Last->Next->Next != NULL)
+        while ((Last->Next->Next != NULL) &&
+               (!Last->Next->Next->PreciousTimestep))
         {
             Last = Last->Next;
         }
         CPTimestepList Entry = Last->Next;
         if (Entry->ReferenceCount != 0)
         {
+            fprintf(stderr, "\n\n\nREFERENCE COUNT CONDITION VIOLATION\n");
             fprintf(stderr,
-                    "\n\n\nREFERENCE COUNT CONDITION VIOLATION\n\n\n\n");
+                    "Timestep %ld, reference count %d, never sent %d, precious "
+                    "%d\n\n\n\n",
+                    Entry->Timestep, Entry->ReferenceCount, Entry->NeverSent,
+                    Entry->PreciousTimestep);
         }
         CP_verbose(Stream,
                    "Discarding timestep %d because of queue condition\n",
                    Entry->Timestep);
-        Last->Next = NULL;
+        Last->Next = Entry->Next;
         Entry->FreeTimestep(Entry->FreeClientData);
         free(Entry->MetadataArray);
         free(Entry->DP_TimestepInfo);
@@ -1905,7 +1915,7 @@ extern void SstInternalProvideTimestep(
         Entry->NeverSent = 0;
         Entry->ReferenceCount = 1; // make sure this dies
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-        SubRefRangeTimestep(Stream, Timestep, Timestep);
+        SubRefRangeTimestep(Stream, Timestep, Timestep, 0 /* don't set last */);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         TAU_STOP("provide timestep operations");
         return;
@@ -1920,7 +1930,7 @@ extern void SstInternalProvideTimestep(
                             Stream->CPInfo->DeliverTimestepMetadataFormat, Msg,
                             &Msg->RS_Stream);
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    SubRefRangeTimestep(Stream, Timestep, Timestep);
+    SubRefRangeTimestep(Stream, Timestep, Timestep, 1);
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     TAU_STOP("provide timestep operations");
 }
@@ -2093,7 +2103,8 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
 
     /* decrement the reference count for the released timestep */
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
-    SubRefRangeTimestep(ParentStream, Msg->Timestep, Msg->Timestep);
+    SubRefRangeTimestep(ParentStream, Msg->Timestep, Msg->Timestep,
+                        1 /* set last */);
     Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     pthread_cond_signal(&ParentStream->DataCondition);
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
