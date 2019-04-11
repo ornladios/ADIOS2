@@ -54,7 +54,7 @@ if rank == 0:
 
     if(var_inTemperature is False):
         raise ValueError('var_inTemperature is False')
-    
+
     assert var_inTemperature is not None
     readOffset = [2, 2]
     readSize = [4, 4]
