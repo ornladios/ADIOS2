@@ -17,6 +17,7 @@ subroutine adios2_get_by_name_string(engine, name, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
 
@@ -29,6 +30,7 @@ subroutine adios2_get_by_name_real(engine, name, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -43,6 +45,7 @@ subroutine adios2_get_by_name_dp(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -57,6 +60,7 @@ subroutine adios2_get_by_name_complex(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -71,6 +75,7 @@ subroutine adios2_get_by_name_complex_dp(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -85,6 +90,7 @@ subroutine adios2_get_by_name_integer1(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -99,6 +105,7 @@ subroutine adios2_get_by_name_integer2(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -113,6 +120,7 @@ subroutine adios2_get_by_name_integer4(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -127,6 +135,7 @@ subroutine adios2_get_by_name_integer8(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -142,6 +151,7 @@ subroutine adios2_get_by_name_real_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -156,6 +166,7 @@ subroutine adios2_get_by_name_dp_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -170,6 +181,7 @@ subroutine adios2_get_by_name_complex_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -184,6 +196,7 @@ subroutine adios2_get_by_name_complex_dp_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -198,6 +211,7 @@ subroutine adios2_get_by_name_integer1_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -212,6 +226,7 @@ subroutine adios2_get_by_name_integer2_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -226,6 +241,7 @@ subroutine adios2_get_by_name_integer4_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -240,6 +256,7 @@ subroutine adios2_get_by_name_integer8_1d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -255,6 +272,7 @@ subroutine adios2_get_by_name_real_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -269,6 +287,7 @@ subroutine adios2_get_by_name_dp_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -283,6 +302,7 @@ subroutine adios2_get_by_name_complex_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -297,6 +317,7 @@ subroutine adios2_get_by_name_complex_dp_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -311,6 +332,7 @@ subroutine adios2_get_by_name_integer1_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -325,6 +347,7 @@ subroutine adios2_get_by_name_integer2_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -339,6 +362,7 @@ subroutine adios2_get_by_name_integer4_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -353,6 +377,7 @@ subroutine adios2_get_by_name_integer8_2d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -368,6 +393,7 @@ subroutine adios2_get_by_name_real_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -382,6 +408,7 @@ subroutine adios2_get_by_name_dp_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -396,6 +423,7 @@ subroutine adios2_get_by_name_complex_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -410,6 +438,7 @@ subroutine adios2_get_by_name_complex_dp_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -424,6 +453,7 @@ subroutine adios2_get_by_name_integer1_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -438,6 +468,7 @@ subroutine adios2_get_by_name_integer2_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -452,6 +483,7 @@ subroutine adios2_get_by_name_integer4_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -466,6 +498,7 @@ subroutine adios2_get_by_name_integer8_3d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -481,6 +514,7 @@ subroutine adios2_get_by_name_real_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -495,6 +529,7 @@ subroutine adios2_get_by_name_dp_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -509,6 +544,7 @@ subroutine adios2_get_by_name_complex_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -523,6 +559,7 @@ subroutine adios2_get_by_name_complex_dp_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -537,6 +574,7 @@ subroutine adios2_get_by_name_integer1_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -551,6 +589,7 @@ subroutine adios2_get_by_name_integer2_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -565,6 +604,7 @@ subroutine adios2_get_by_name_integer4_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -579,6 +619,7 @@ subroutine adios2_get_by_name_integer8_4d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -594,6 +635,7 @@ subroutine adios2_get_by_name_real_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -608,6 +650,7 @@ subroutine adios2_get_by_name_dp_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -622,6 +665,7 @@ subroutine adios2_get_by_name_complex_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -636,6 +680,7 @@ subroutine adios2_get_by_name_complex_dp_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -650,6 +695,7 @@ subroutine adios2_get_by_name_integer1_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -664,6 +710,7 @@ subroutine adios2_get_by_name_integer2_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -678,6 +725,7 @@ subroutine adios2_get_by_name_integer4_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -692,6 +740,7 @@ subroutine adios2_get_by_name_integer8_5d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -707,6 +756,7 @@ subroutine adios2_get_by_name_real_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -721,6 +771,7 @@ subroutine adios2_get_by_name_dp_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -735,6 +786,7 @@ subroutine adios2_get_by_name_complex_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -749,6 +801,7 @@ subroutine adios2_get_by_name_complex_dp_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -763,6 +816,7 @@ subroutine adios2_get_by_name_integer1_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -777,6 +831,7 @@ subroutine adios2_get_by_name_integer2_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -791,6 +846,7 @@ subroutine adios2_get_by_name_integer4_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)
@@ -805,6 +861,7 @@ subroutine adios2_get_by_name_integer8_6d(engine, name, data, &
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_get_by_name_f2c(engine%f2c, &
                                 TRIM(ADJUSTL(name))//char(0), &
                                 data, launch, ierr)

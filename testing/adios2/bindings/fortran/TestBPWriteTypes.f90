@@ -140,11 +140,11 @@
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
      if( bpWriter%valid .eqv. .false. ) stop 'Invalid adios2_engine post-open'
-     if( TRIM(bpWriter%name) /= 'ftypes.bp') stop 'Invalid adios2_engine name'
+     if( TRIM(bpWriter%name) /= "ftypes.bp") stop 'Invalid adios2_engine name'
 
-     if( TRIM(bpWriter%type) /= 'bpfile') then
+     if( TRIM(bpWriter%type) /= 'BP3') then
         write(*,*) 'Engine Type ', TRIM(bpWriter%type)
-        stop 'Invalid adios2_engine name'
+        stop 'Invalid adios2_engine type'
      end if
      call adios2_io_engine_type(engineType, ioWrite, ierr)
      if( engineType /= 'bp') then ! FIXME, different from the above!

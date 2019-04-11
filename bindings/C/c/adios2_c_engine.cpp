@@ -101,11 +101,6 @@ adios2_error adios2_engine_name(char *name, size_t *size,
         const adios2::core::Engine *engineCpp =
             reinterpret_cast<const adios2::core::Engine *>(engine);
 
-        if (engineCpp->m_EngineType == "NULL")
-        {
-            return adios2_error_none;
-        }
-
         adios2::helper::CheckForNullptr(
             size, "for size_t* size, in call to adios2_engine_name");
 
@@ -129,11 +124,6 @@ adios2_error adios2_engine_get_type(char *type, size_t *size,
 
         const adios2::core::Engine *engineCpp =
             reinterpret_cast<const adios2::core::Engine *>(engine);
-
-        if (engineCpp->m_EngineType == "NULL")
-        {
-            return adios2_error_none;
-        }
 
         adios2::helper::CheckForNullptr(
             size, "for size_t* size, in call to adios2_engine_get_type");
