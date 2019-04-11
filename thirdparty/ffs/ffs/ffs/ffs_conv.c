@@ -1531,6 +1531,18 @@ new_convert_field(char *src_field_addr, char *dest_field_addr,
 	    if (conv->iovar->type_desc.type == FMType_pointer) {
 		array_of_pointers = (conv->iovar->type_desc.next->next->type == FMType_pointer);
 	    }
+	    /* changes here */
+	    if (data_already_copied &&
+		!conv->src_field.byte_swap &&
+		(conv->src_field.src_float_format == conv->src_field.target_float_format) &&
+		(conv->src_field.size == conv->dest_size) &&
+		(conv->subconversion == NULL) &&
+		(next->type != FMType_pointer) &&
+		(next->type != FMType_string) &&
+		((conv->src_field.data_type != string_type))) {
+		/* Nothing but data movement required */
+		    break;
+	    }
 	    for (i=0; i< elements ; i++) {
 		new_convert_field(new_src, new_dest, conv_status, conv,
 				  next, data_already_copied);
