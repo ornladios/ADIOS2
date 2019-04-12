@@ -114,6 +114,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         writerSize = var_time.Shape()[0];
 
+        //	std::cout << "Writer size is " << writerSize << std::endl;
+
         int rankToRead = mpiRank;
         if (writerSize < mpiSize)
         {

@@ -144,6 +144,10 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
                               const char *Name, size_t DimCount,
                               const size_t *Start, const size_t *Count,
                               void *Data);
+extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                   const char *Name, size_t DimCount,
+                                   const int BlockID, const size_t *Count,
+                                   void *Data);
 
 extern SstStatusValue SstFFSPerformGets(SstStream Stream);
 

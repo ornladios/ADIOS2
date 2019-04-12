@@ -718,6 +718,7 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
         // Build request structure and enter it into requests list
         FFSArrayRequest Req = malloc(sizeof(*Req));
         Req->VarRec = Var;
+        Req->RequestType = Global;
         // make a copy of Start and Count request
         Req->Start = malloc(sizeof(Start[0]) * Var->DimCount);
         memcpy(Req->Start, Start, sizeof(Start[0]) * Var->DimCount);
@@ -729,8 +730,49 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
     }
 }
 
+extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                   const char *Name, size_t DimCount,
+                                   const int BlockID, const size_t *Count,
+                                   void *Data)
+{
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    int GetFromWriter = 0;
+    FFSVarRec Var = LookupVarByKey(Stream, Variable);
+
+    // if Variable is in Metadata (I.E. DimCount == 0), move incoming data to
+    // Data area
+    if (DimCount == 0)
+    {
+        void *IncomingDataBase =
+            ((char *)Info->MetadataBaseAddrs[GetFromWriter]) +
+            Var->PerWriterMetaFieldDesc[GetFromWriter]->field_offset;
+        memcpy(Data, IncomingDataBase,
+               Var->PerWriterMetaFieldDesc[GetFromWriter]->field_size);
+    }
+    else
+    {
+        // Build request structure and enter it into requests list
+        FFSArrayRequest Req = malloc(sizeof(*Req));
+        memset(Req, 0, sizeof(*Req));
+        Req->VarRec = Var;
+        Req->RequestType = Local;
+        Req->NodeID = BlockID;
+        // make a copy of Count request
+        Req->Count = malloc(sizeof(Count[0]) * Var->DimCount);
+        memcpy(Req->Count, Count, sizeof(Count[0]) * Var->DimCount);
+        Req->Data = Data;
+        Req->Next = Info->PendingVarRequests;
+        Info->PendingVarRequests = Req;
+    }
+}
+
 static int NeedWriter(FFSArrayRequest Req, int i)
 {
+    if (Req->RequestType == Local)
+    {
+        return (Req->NodeID == i);
+    }
+    // else Global case
     for (int j = 0; j < Req->VarRec->DimCount; j++)
     {
         size_t SelOffset = Req->Start[j];
@@ -1168,6 +1210,20 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t IncomingSize = Reqs->VarRec->PerWriterIncomingSize[i];
                 int FreeIncoming = 0;
 
+                if (Reqs->RequestType == Local)
+                {
+                    RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    GlobalDimensions =
+                        calloc(DimCount, sizeof(GlobalDimensions[0]));
+                    if (SelOffset == NULL)
+                    {
+                        SelOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    }
+                    for (int i = 0; i < DimCount; i++)
+                    {
+                        GlobalDimensions[i] = RankSize[i];
+                    }
+                }
                 if ((Stream->WriterConfigParams->CompressionMethod ==
                      SstCompressZFP) &&
                     ZFPcompressionPossible(Type, DimCount))
@@ -1244,9 +1300,17 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     if (!Info->MetaFormat)
     {
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
-        FMFormat Format = FMregister_simple_format(
-            Info->LocalFMContext, "MetaData", Info->MetaFields,
-            FMstruct_size_field_list(Info->MetaFields, sizeof(char *)));
+        FMStructDescRec struct_list[4] = {
+            {NULL, NULL, 0, NULL},
+            {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
+            {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {NULL, NULL, 0, NULL}};
+        struct_list[0].format_name = "MetaData";
+        struct_list[0].field_list = Info->MetaFields;
+        struct_list[0].struct_size =
+            FMstruct_size_field_list(Info->MetaFields, sizeof(char *));
+        FMFormat Format =
+            register_data_format(Info->LocalFMContext, &struct_list[0]);
         Info->MetaFormat = Format;
         Block->FormatServerRep =
             get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
@@ -1667,7 +1731,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 VarRec->ElementSize = ElementSize;
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, ArrayName, Type, meta_base->Dims,
-                    meta_base->Shape, meta_base->Count, meta_base->Offsets);
+                    meta_base->Shape, meta_base->Offsets, meta_base->Count);
             }
             if (WriterRank == 0)
             {
@@ -1813,9 +1877,15 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 
         /* handle metadata */
         MetaEntry->Dims = DimCount;
-        MetaEntry->Shape = CopyDims(DimCount, Shape);
+        if (Shape)
+            MetaEntry->Shape = CopyDims(DimCount, Shape);
+        else
+            MetaEntry->Shape = NULL;
         MetaEntry->Count = CopyDims(DimCount, Count);
-        MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        if (Offsets)
+            MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        else
+            MetaEntry->Offsets = NULL;
 
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
             ZFPcompressionPossible(Type, DimCount))

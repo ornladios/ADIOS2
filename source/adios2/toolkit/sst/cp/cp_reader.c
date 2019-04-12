@@ -230,7 +230,6 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     writer_data_t ReturnData;
     struct _ReaderActivateMsg Msg;
     struct timeval Start, Stop, Diff;
-    int i;
     char *Filename = strdup(Name);
     CMConnection rank0_to_rank0_conn = NULL;
 
@@ -427,7 +426,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         }
     }
 
-    for (i = 0; i < ReturnData->WriterCohortSize; i++)
+    for (int i = 0; i < ReturnData->WriterCohortSize; i++)
     {
         attr_list attrs =
             attr_list_from_string(ReturnData->CP_WriterInfo[i]->ContactInfo);
@@ -933,14 +932,13 @@ static void FreeTimestep(SstStream Stream, long Timestep)
 
 static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
 {
-    struct _TimestepMetadataList *Next;
     TSMetadataList FoundTS = NULL;
     pthread_mutex_lock(&Stream->DataLock);
-    Next = Stream->Timesteps;
     CP_verbose(Stream, "Wait for next metadata after last timestep %d\n",
                LastTimestep);
     while (1)
     {
+        struct _TimestepMetadataList *Next;
         Next = Stream->Timesteps;
         while (Next)
         {
@@ -1090,7 +1088,6 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
 
 extern void SstReleaseStep(SstStream Stream)
 {
-    long MaxTimestep;
     long Timestep = Stream->ReaderTimestep;
     struct _ReleaseTimestepMsg Msg;
 
