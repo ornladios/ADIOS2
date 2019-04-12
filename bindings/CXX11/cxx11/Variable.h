@@ -234,17 +234,26 @@ public:
      */
     T Max(const size_t step = adios2::DefaultSizeT) const;
 
-    /** Contains sub-block information for a particular Variable<T> */
+    /** Contains block information for a particular Variable<T> */
     struct Info
     {
-        adios2::Dims Start;      ///< block start
-        adios2::Dims Count;      ///< block count
-        IOType Min = IOType();   ///< block Min, if IsValue is false
-        IOType Max = IOType();   ///< block Max, if IsValue is false
-        IOType Value = IOType(); ///< block Value, if IsValue is true
-        bool IsValue = false;    ///< true: value, false: array
-        size_t BlockID = 0;      ///< block ID for block selections
+        /** block start */
+        adios2::Dims Start;
+        /** block count */
+        adios2::Dims Count;
+        /** block Min, if IsValue is false */
+        IOType Min = IOType();
+        /** block Max, if IsValue is false */
+        IOType Max = IOType();
+        /** block Value, if IsValue is true */
+        IOType Value = IOType();
+        /** true: value, false: array */
+        bool IsValue = false;
+        /** blockID for Block Selection */
+        size_t BlockID = 0;
+        /** block corresponding step */
         size_t Step = 0;
+        /** reference to internal block data (used by inline Engine) */
         const T *Data() const;
 
         // allow Engine to set m_Info
@@ -268,27 +277,79 @@ public:
     class Span
     {
     public:
+        /** Span can only be created by an Engine */
         Span() = delete;
+        /** Span can't be copied */
         Span(const Span &) = delete;
+        /** Span can be moved */
         Span(Span &&) = default;
+        /**
+         * Memory is not owned, using RAII for members
+         */
         ~Span() = default;
 
+        /** Span can't be copied */
         Span &operator=(const Span &) = delete;
+        /** Span can only be moved */
         Span &operator=(Span &&) = default;
 
+        /**
+         * size of the span based on Variable block Count
+         * @return number of elements
+         */
         size_t size() const noexcept;
+
+        /**
+         * Pointer to span data, can be modified if new spans are added
+         * Follows rules of std::vector iterator invalidation.
+         * Call again to get an updated pointer.
+         * @return pointer to data
+         */
         T *data() const noexcept;
 
+        /**
+         * Safe access operator that checks bounds and throws an exception
+         * @param position input offset from 0 = data()
+         * @return span element at input position
+         * @throws std::invalid_argument if out of bounds
+         */
         T &at(const size_t position);
+
+        /**
+         * Safe const access operator that checks bounds and throws an exception
+         * @param position input offset from 0 = data()
+         * @return span const (read-only) element at input position
+         * @throws std::invalid_argument if out of bounds
+         */
         const T &at(const size_t position) const;
 
+        /**
+         * Access operator (unsafe without check overhead)
+         * @param position input offset from 0 = data()
+         * @return span element at input position
+         */
         T &operator[](const size_t position);
+
+        /**
+         * Access const operator (unsafe without check overhead)
+         * @param position input offset from 0 = data()
+         * @return span const (read-only) element at input position
+         */
         const T &operator[](const size_t position) const;
 
         // engine allowed to set m_Span
         friend class Engine;
 
+        /**
+         * Custom iterator class from:
+         * https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
+         */
         ADIOS2_CLASS_iterator;
+
+        /**
+         * Custom iterator class functions from:
+         * https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
+         */
         ADIOS2_iterators_functions(data(), size());
 
     private:

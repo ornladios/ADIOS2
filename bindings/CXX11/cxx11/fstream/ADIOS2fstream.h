@@ -234,7 +234,7 @@ public:
      */
     template <class T>
     void write_attribute(const std::string &name, const T *data,
-                         const size_t elements,
+                         const size_t size,
                          const std::string &variableName = "",
                          const std::string separator = "/",
                          const bool endStep = false);

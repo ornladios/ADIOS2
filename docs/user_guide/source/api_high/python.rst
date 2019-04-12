@@ -11,8 +11,8 @@ For online examples on MyBinder :
 - `Python-noMPI Notebooks <https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-nompi>`_
 
 
-Write example
--------------
+Python Write example
+--------------------
 
 .. code-block:: python
    
@@ -44,8 +44,8 @@ Write example
          fw.write("pressure", pressure, shape, start, count, end_step=True)
 
 
-Read "stepping/streaming" example
----------------------------------
+Python Read "step-by-step" example
+----------------------------------
 
 .. code-block:: python
    
@@ -68,9 +68,10 @@ Read "stepping/streaming" example
       
          for fstep in fh:
 
+            # inspect variables in current step
             step_vars = fstep.available_variables()
             
-            # inspect variables in step
+            # print variables information
             for name, info in step_vars.items():
                 print("variable_name: " + name)
                 for key, value in info.items():

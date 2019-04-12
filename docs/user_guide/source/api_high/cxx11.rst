@@ -7,8 +7,8 @@ C++ simple bindings
    DO NOT call ``use namespace adios2`` in your C++ code.
    Use ``adios2::fstream`` directly to prevent conflicts with ``std::stream``. 
 
-Write example
--------------
+C++11 Write example
+-------------------
 
 .. code-block:: c++
 
@@ -46,7 +46,7 @@ Write example
    // optional, but is good practice to indicate oStream shouldn't be used 
    oStream.close(); 
 
-Read "stepping/streaming" example
+C++11 Read "step-by-step" example
 ---------------------------------
 
 .. code-block:: c++
