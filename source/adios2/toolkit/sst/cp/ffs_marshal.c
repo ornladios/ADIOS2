@@ -1210,11 +1210,8 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t IncomingSize = Reqs->VarRec->PerWriterIncomingSize[i];
                 int FreeIncoming = 0;
 
-                printf("Requests, request type = %d\n", Reqs->RequestType);
                 if (Reqs->RequestType == Local)
                 {
-                    printf("Got a local read, dim count %d, count %d\n",
-                           DimCount, SelSize[0]);
                     RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
                     GlobalDimensions =
                         calloc(DimCount, sizeof(GlobalDimensions[0]));
