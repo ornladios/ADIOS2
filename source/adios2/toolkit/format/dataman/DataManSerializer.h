@@ -153,6 +153,10 @@ public:
                            const Dims &start, const Dims &count, void *data);
     DeferredRequestMapPtr GetDeferredRequest();
 
+    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
+                          const Dims &outStart, const Dims &outCount,
+                          Dims &ovlpStart, Dims &ovlpCount);
+
     size_t MinStep();
     size_t Steps();
 
@@ -179,9 +183,6 @@ private:
 
     void JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack);
 
-    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
-                          const Dims &outStart, const Dims &outCount,
-                          Dims &ovlpStart, Dims &ovlpCount);
 
     VecPtr SerializeJson(const nlohmann::json &message);
     nlohmann::json DeserializeJson(const char *start, size_t size);

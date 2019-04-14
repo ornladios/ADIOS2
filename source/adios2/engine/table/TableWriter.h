@@ -13,6 +13,9 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
+#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
 
 namespace adios2
 {
@@ -49,10 +52,30 @@ private:
     int m_Verbosity = 0;
     int m_CurrentStep = -1;
     int m_MpiRank;
+    int m_MpiSize;
+    int m_Timeout = 5;
+    size_t m_RowsPerRank = 128;
+    size_t m_AppID;
+    std::unordered_map<std::string, std::unordered_map<size_t, std::vector<char>>> m_AggregatorBuffers;
+    std::unordered_map<std::string, std::pair<size_t, size_t>> m_AggregatorRecord;
+    std::unordered_map<int, std::string> m_AllAddresses;
+    int m_Port = 6789;
+    int m_MaxRanksPerNode = 200;
+    bool m_Listening;
+    std::thread m_ReplyThread;
+    bool m_FirstPut = true;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
+    void ReplyThread();
+    void CheckFlush();
+
+    std::vector<int> WhichRanks(const Dims &start, const Dims &count);
+    int WhichRank(size_t row);
+
+    format::DataManSerializer m_DataManSerializer;
+    transportman::StagingMan m_SendStagingMan;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
