@@ -470,7 +470,7 @@ The following example illustrates the basic API usage in write mode for data gen
 
 .. tip::
 
-   Prefer default Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until ``EndStep``, ``Perform``(``Puts``/``Gets``) or ``Close``.
+   Prefer default Deferred (lazy evaluation) functions as they have the potential to group several variables with the trade-off of not being able to reuse the pointers memory space until ``EndStep``, ``PerformPuts``, ``PerformGets``, or ``Close``.
    Only use Sync if you really have to (*e.g.* reuse memory space from pointer).
    ADIOS2 prefers a step-based IO in which everything is known ahead of time when writing an entire step.
 

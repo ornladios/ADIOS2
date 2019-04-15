@@ -20,6 +20,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    api_high/api_high
    utilities/utilities
    faq/faq
+   advice/advice
  
 * :ref:`search`
    

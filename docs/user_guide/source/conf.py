@@ -94,6 +94,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns = [
+    # 'advice/advice.rst',
     'introduction/nutshell.rst',
     'introduction/adaptable_io.rst',
     # 'introduction/introduction.rst',
