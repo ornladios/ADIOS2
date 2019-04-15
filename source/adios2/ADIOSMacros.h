@@ -244,10 +244,6 @@
     MACRO(Sync)                                                                \
     MACRO(Deferred)
 
-/**
- * Custom iterators from:
- * https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
- */
 #define ADIOS2_CLASS_iterator                                                  \
     class iterator                                                             \
     {                                                                          \

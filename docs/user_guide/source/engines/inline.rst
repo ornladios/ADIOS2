@@ -1,6 +1,6 @@
-***************
+********************
 Inline for zero-copy
-***************
+********************
 
 The Inline engine provides in-process communication between the writer and reader, and seeks to avoid copying data buffers.
 

@@ -1,17 +1,17 @@
-#############################
-Simple Language Bindings APIs
-#############################
+#################################
+High-Level Language Bindings APIs
+#################################
 
-The current simple APIs are designed for simple and direct tasks in which performance is not a critical aspect. Unlike the :ref:`Full Language Bindings APIs` the simple APIs only require a single object/handler. Thus offering a nearly-flat learning curve for first-time users.
+The current simple APIs are designed for simple and direct tasks in which performance is not a critical aspect. Unlike the :ref:`Full Language Bindings APIs` the simple APIs only require a single object/handler offering native resemblance to C++ (fstream) and Python (file I/O) native implementations. Thus, offering a nearly-flat learning curve for first-time users.
 
 Typical scenarios for using the simple APIs are:
 
 * Reading a file to perform data analysis with libraries (matplotlib, scipy, etc.)
 * Interactive: few calls make interactive usage easier. 
 * Saving data to files is small or personal projects
-* Online frameworks: *e.g.* Jupyter notebooks
+* Online frameworks: *e.g.* Jupyter notebooks, see python-mpi examples running on `MyBinder <https://mybinder.org/v2/gh/ornladios/ADIOS2-Jupyter.git/python-mpi>`_ 
 
-The designed functionality syntax is closely related to the native language IO bindings for formatted text IO *e.g.* C++ ``fstream``, C ``FILE*``, Fortran and Python file IO.
+The designed functionality syntax is closely related to the native language IO bindings for formatted text files *e.g.* C++ ``fstream`` ``getline``, and Python file IO.
 The main function calls are: ``open`` (or constructor in C++), ``write``, ``read`` and ``close`` (or destructor in C++).
 In addition, ADIOS2 borrows the corresponding language native syntax for advancing lines to advance the step in write mode, and for a "step-by-step" streaming basis in read mode.
 See each language section in this chapter for a write/read example.
@@ -32,10 +32,6 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 +----------+----------+-------------------------+-----------------+
 | C++      | 11/newer | ``#include adios2.h``   | ``fstream``     |
 +----------+----------+-------------------------+-----------------+
-| C        | 99       | ``#include adios2_c.h`` | stdio ``FILE*`` |
-+----------+----------+-------------------------+-----------------+
-| Fortran  | 90       | ``use adios2``          | Fortran/stdio   |
-+----------+----------+-------------------------+-----------------+
 | Python   | 2.7/3    | ``import adios2``       | Python IO       |
 +----------+----------+-------------------------+-----------------+
 | Matlab   |          |                         |                 |
@@ -44,8 +40,6 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
 
 .. include:: cxx11.rst
-.. include:: c.rst
-.. include:: fortran.rst
 .. include:: python.rst
 .. include:: matlab.rst
 

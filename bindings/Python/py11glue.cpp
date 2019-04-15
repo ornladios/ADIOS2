@@ -743,25 +743,25 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("separator") = "/",
              pybind11::arg("end_step") = false,
              R"md(
-				 writes a self-describing single value array (numpy) variable
+			 writes a self-describing single value array (numpy) variable
 
-				 Parameters
-					 name
-						 attribute name
+			 Parameters
+				 name
+					 attribute name
 
-					 stringvalue:  
-						 attribute single string
+				 stringvalue:  
+					 attribute single string
 
-					 variablename:
-						 if attribute is associated with a variable
+				 variablename:
+					 if attribute is associated with a variable
 
-					 separator:
-						 concatenation string between variablename and attribute
-						 e.g. variablename + separator + name
-							  var/units. Not used if variablename is empty 
-					 endstep 
-						 end current step, begin next step and flush 
-						 (default = false).
+				 separator:
+					 concatenation string between variablename and attribute
+					 e.g. variablename + separator + name
+						  var/units. Not used if variablename is empty 
+				 endstep 
+					 end current step, begin next step and flush 
+					 (default = false).
 			)md")
 
         .def("write_attribute",
@@ -774,25 +774,25 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("separator") = "/",
              pybind11::arg("end_step") = false,
              R"md(
-				 writes a self-describing single value array (numpy) variable
+			 writes a self-describing single value array (numpy) variable
 
-				 Parameters
-					 name
-						 attribute name
+			 Parameters
+				 name
+					 attribute name
 
-					 stringarray:  
-						 attribute string array
+				 stringarray:  
+					 attribute string array
 
-					 variablename:
-						 if attribute is associated with a variable
+				 variablename:
+					 if attribute is associated with a variable
 
-					 separator:
-						 concatenation string between variablename and attribute
-						 e.g. variablename + separator + name
-							  var/units. Not used if variablename is empty 
-					 endstep 
-						 end current step, begin next step and flush 
-						 (default = false).
+				 separator:
+					 concatenation string between variablename and attribute
+					 e.g. variablename + separator + name
+						  var/units. Not used if variablename is empty 
+				 endstep 
+					 end current step, begin next step and flush 
+					 (default = false).
 			)md")
 
         .def("read_string",
@@ -923,22 +923,22 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("name"), pybind11::arg("variable_name") = "",
              pybind11::arg("separator") = "/",
              R"md(
-				 Reads a numpy based attribute
+			 Reads a numpy based attribute
 
-				 Parameters
-					 name
-						 attribute name
-					 
-					 variablename:
-						 if attribute is associated with a variable
+			 Parameters
+				 name
+					 attribute name
+				 
+				 variablename:
+					 if attribute is associated with a variable
 
-					 separator:
-						 concatenation string between variablename and attribute
-						 e.g. variablename + separator + name
-							  var/units. Not used if variablename is empty 
-				Returns
-		 			 array: numpy
-						 resulting array attribute data
+				 separator:
+					 concatenation string between variablename and attribute
+					 e.g. variablename + separator + name
+						  var/units. Not used if variablename is empty 
+			Returns
+				 array: numpy
+					 resulting array attribute data
 	    )md")
 
         .def("read_attribute_string",
@@ -949,22 +949,22 @@ PYBIND11_MODULE(adios2, m)
              pybind11::arg("name"), pybind11::arg("variable_name") = "",
              pybind11::arg("separator") = "/",
              R"md(
-				 Read a string attribute
+			 Read a string attribute
 
-				 Parameters
-					 name
-						 attribute name
-					 
-					 variablename:
-						 if attribute is associated with a variable
+			 Parameters
+				 name
+					 attribute name
+				 
+				 variablename:
+					 if attribute is associated with a variable
 
-					 separator:
-						 concatenation string between variablename and attribute
-						 e.g. variablename + separator + name
-							  var/units. Not used if variablename is empty 
-				Returns
-					 list: 
-						 resulting string list attribute data 
+				 separator:
+					 concatenation string between variablename and attribute
+					 e.g. variablename + separator + name
+						  var/units. Not used if variablename is empty 
+			Returns
+				 list: 
+					 resulting string list attribute data 
 		)md")
 
         .def("end_step", &adios2::py11::File::EndStep, R"md(

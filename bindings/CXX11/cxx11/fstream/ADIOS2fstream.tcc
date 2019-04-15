@@ -30,13 +30,13 @@ void fstream::write_attribute(const std::string &name, const T &value,
 
 template <class T>
 void fstream::write_attribute(const std::string &name, const T *data,
-                              const size_t elements,
+                              const size_t size,
                               const std::string &variableName,
                               const std::string separator, const bool endStep)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->WriteAttribute(name, reinterpret_cast<const IOType *>(data),
-                             elements, variableName, separator, endStep);
+    m_Stream->WriteAttribute(name, reinterpret_cast<const IOType *>(data), size,
+                             variableName, separator, endStep);
 }
 
 template <class T>

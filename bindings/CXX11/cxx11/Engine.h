@@ -246,8 +246,8 @@ public:
      * @param datum user data to be populated, r-value or single data value
      * @param launch mode policy, optional for API consistency, internally
      * is always sync
-     * @exception std::invalid_argument if variable is invalid or nullptr
-     * &datum
+     * @exception std::invalid_argument for invalid variableName (variable
+     * doesn't exist in IO) or nullptr data
      */
     template <class T>
     void Get(const std::string &variableName, T &datum,
@@ -277,7 +277,7 @@ public:
      * Get data associated with a Variable from the Engine.
      * Overloaded version that accepts a std::vector without pre-allocation.
      * @param variableName find variable by name inside IO that created this
-     * Engine with Open
+     * Engine with Open or BeginStep (streaming mode)
      * @param dataV user data vector to be associated with a variable, it
      * doesn't need to be pre-allocated. Engine will resize.
      * @param launch mode policy
@@ -289,7 +289,8 @@ public:
      * immediately.
      * Special case, only use if necessary.
      * </pre>
-     * @exception std::invalid_argument for invalid variable
+     * @exception std::invalid_argument for invalid variableName (variable
+     * doesn't exist in IO)
      */
     template <class T>
     void Get(const std::string &variableName, std::vector<T> &dataV,
@@ -322,7 +323,8 @@ public:
      * variable's BlockInfo. Overloaded version
      * to get variable by name.
      * @note Preliminary, experimental API, may change soon.
-     * @param variable contains variable metadata information
+     * @param variableName find variable by name inside IO that created this
+     * Engine with Open or BeginStep (streaming mode)
      * @param info block info struct associated with block selection,
      *   call will link with implementation's block info.
      * @param launch mode policy
@@ -333,7 +335,8 @@ public:
      * immediately.
      * Special case, only use if necessary.
      * </pre>
-     * @exception std::invalid_argument for invalid variable or nullptr data
+     * @exception std::invalid_argument for invalid variableName (variable
+     * doesn't exist in IO)
      */
     template <class T>
     void Get(const std::string &variableName, typename Variable<T>::Info &info,
