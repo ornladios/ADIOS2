@@ -593,7 +593,8 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! engine handler  
       type(adios2_engine), intent(in) :: engine
    
-* :f90:`subroutine adios2_put` put variable metadata and data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`. Variable and data types must match.
+* :f90:`subroutine adios2_put` put variable metadata and data into adios2 for IO operations. Default is deferred mode, optional sync mode, see :ref:`Put: modes and memory contracts`. Variable and data types must match.
+
    
    .. code-block:: fortran
    
@@ -642,9 +643,8 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
       
 * :f90:`subroutine adios2_get` get variable data into adios2 for IO operations.
-Default is deferred mode, optional sync mode, see :ref:`Engine API Functions`.
-Variable and data types must match, variable can be obtained from ``adios2_inquire_variable``.
-Data must be pre-allocated.
+Default is deferred mode, optional sync mode, see :ref:`Get: modes and memory contracts`. Variable and data types must match, variable can be obtained from ``adios2_inquire_variable``. Data must be pre-allocated.
+
    
    .. code-block:: fortran
    
