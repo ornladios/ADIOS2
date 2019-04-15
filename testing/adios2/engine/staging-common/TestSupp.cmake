@@ -99,6 +99,9 @@ set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -
 set (KillReaders3Max_TIMEOUT "300")
 set (KillReaders3Max_PROPERTIES "RUN_SERIAL;1")
 
+set (KillWriter_2x2_CMD "run_multi_test -test_protocol kill_writer  -verbose -nw 2 -nr 2 -interval 2 -warg RendezvousReaderCount:1,ENGINE_PARAMS -rarg --expect_writer_failure -rarg --num_steps --rarg 1000")
+set (KillWriterTimeout_2x2_CMD "run_multi_test -test_protocol kill_writer  -verbose -nw 2 -nr 2 -interval 2 -warg RendezvousReaderCount:1,ENGINE_PARAMS -rarg --expect_writer_failure -rarg --num_steps --rarg 1000 --rarg --non_blocking")
+
 set (PreciousTimestep_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 2 -warg FirstTimestepPrecious:true,RendezvousReaderCount:0,ENGINE_PARAMS -rarg --ignore_time_gap -rarg --precious_first")
 set (PreciousTimestep_TIMEOUT "300")
 set (PreciousTimestep_PROPERTIES "RUN_SERIAL;1")
