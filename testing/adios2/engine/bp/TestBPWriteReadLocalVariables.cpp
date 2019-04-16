@@ -1656,10 +1656,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
 {
     const std::string fname("BPWriteReadLocal1DSubFile.bp");
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
     const size_t Nx0 = 3 + static_cast<size_t>(mpiRank);

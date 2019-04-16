@@ -397,8 +397,6 @@ void InSituMPIReader::EndStep()
 void InSituMPIReader::SendReadSchedule(
     const std::map<std::string, helper::SubFileInfoMap> &variablesSubFileInfo)
 {
-    const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-
     // Serialized schedules, one per-writer
     std::map<int, std::vector<char>> serializedSchedules =
         insitumpi::SerializeLocalReadSchedule(m_RankAllPeers.size(),

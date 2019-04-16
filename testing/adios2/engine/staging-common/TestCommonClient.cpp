@@ -35,7 +35,7 @@ int SkippedSteps = 0;
 int DelayMS = 500;
 int LongFirstDelay = 0;
 // Number of steps
-std::size_t NSteps = 10;
+size_t NSteps = 10;
 std::string fname = "ADIOS2SstServer";
 std::string engine = "SST";
 
@@ -76,6 +76,8 @@ static adios2::Params ParseEngineParams(std::string Input)
 // ADIOS2 Sst read
 TEST_F(SstReadTest, ADIOS2SstRead)
 {
+    const size_t SIZE_T_MAX = std::numeric_limits<size_t>::max();
+
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
@@ -101,7 +103,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
-    unsigned int ExpectedStep = static_cast<unsigned int>(-1);
+    size_t ExpectedStep = SIZE_T_MAX;
 
     std::vector<std::time_t> write_times;
 
@@ -149,7 +151,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
         if (FirstTimestepMustBeZero)
         {
-            if (ExpectedStep == -1)
+            if (ExpectedStep == SIZE_T_MAX)
             {
                 EXPECT_EQ(currentStep, 0);
                 std::cout << "Got my expected first timestep Zero!"
@@ -160,21 +162,19 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             {
                 /* we got that timestep 0 we expected, ExpectedStep got
                  * incremented to 1, but now be happy with what is next */
-                ExpectedStep = (unsigned int)currentStep; // starting out
+                ExpectedStep = currentStep; // starting out
             }
         }
-        if ((ExpectedStep == static_cast<unsigned int>(-1)) || Latest ||
-            Discard)
+        if ((ExpectedStep == SIZE_T_MAX) || Latest || Discard)
         {
-            if ((ExpectedStep != static_cast<unsigned int>(-1)) &&
-                (ExpectedStep != currentStep))
+            if ((ExpectedStep != SIZE_T_MAX) && (ExpectedStep != currentStep))
             {
                 SkippedSteps++;
             }
-            ExpectedStep = (unsigned int)currentStep; // starting out
+            ExpectedStep = currentStep; // starting out
         }
 
-        EXPECT_EQ(currentStep, static_cast<size_t>(ExpectedStep));
+        EXPECT_EQ(currentStep, ExpectedStep);
 
         size_t writerSize;
 
@@ -319,7 +319,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
 
         ++ExpectedStep;
-        if (NSteps != static_cast<unsigned int>(-1))
+        if (NSteps != SIZE_T_MAX)
         {
             NSteps--;
             if (NSteps == 0)

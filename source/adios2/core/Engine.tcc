@@ -170,11 +170,9 @@ typename Variable<T>::Info *Engine::Get(Variable<T> &variable,
     case Mode::Deferred:
         // TODO different? Should use DoGetDeferred?
         return DoGetBlockSync(variable);
-        break;
     case Mode::Sync:
         // TODO should use DoGetSync()?
         return DoGetBlockSync(variable);
-        break;
     default:
         if (m_DebugMode)
         {
