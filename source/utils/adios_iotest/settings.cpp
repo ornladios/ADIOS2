@@ -158,7 +158,6 @@ int Settings::processArgs(int argc, char *argv[])
         default:
             throw std::invalid_argument("Invalid argument option " +
                                         std::string(optarg));
-            break;
         } /* end switch */
         if (c != 1)
         {

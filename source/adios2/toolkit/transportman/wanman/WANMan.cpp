@@ -192,7 +192,6 @@ void WANMan::WriteThread(std::shared_ptr<transport::SocketZmq> transport,
 {
     while (m_Writing)
     {
-        Transport::Status status;
         std::shared_ptr<std::vector<char>> buffer = PopBufferQueue(id);
         if (buffer != nullptr)
         {
@@ -209,7 +208,6 @@ void WANMan::ReadThread(std::shared_ptr<transport::SocketZmq> transport)
     std::vector<char> buffer(m_MaxReceiveBuffer);
     while (m_Reading)
     {
-        Transport::Status status;
         int ret = transport->Read(buffer.data(), m_MaxReceiveBuffer);
         if (ret > 0)
         {

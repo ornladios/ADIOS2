@@ -266,7 +266,6 @@ void PrintReadScheduleMap(const WriteScheduleMap &map) noexcept
         // <reader, <SubFileInfo>>
         for (const auto &readerPair : variableNamePair.second)
         {
-            const size_t readerRank = readerPair.first;
             std::cout << "{ reader = " << readerPair.first << " ";
             const std::vector<helper::SubFileInfo> &sfis = readerPair.second;
             for (const auto &sfi : sfis)

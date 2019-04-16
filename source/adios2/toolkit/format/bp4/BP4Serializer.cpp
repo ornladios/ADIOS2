@@ -1231,7 +1231,6 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 
             uint64_t setsCount = 0;
             // unsigned int currentTimeStep = 1;
-            bool marching = true;
 
             const size_t entryLengthPosition = positionOut;
             positionOut += headerSize;

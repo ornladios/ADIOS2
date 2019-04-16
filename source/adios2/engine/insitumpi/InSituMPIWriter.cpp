@@ -198,7 +198,6 @@ void InSituMPIWriter::PerformPuts()
         // exchange flags about fixed schedule
         if (m_CurrentStep == 0)
         {
-            MPI_Request request;
             int peerRank = m_RankDirectPeers[0];
             int fixed;
 

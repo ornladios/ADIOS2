@@ -251,7 +251,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     }
 
     const double div =
-        pow(10.0, static_cast<const double>(settings.ndigits(cfg.nSteps - 1)));
+        pow(10.0, static_cast<double>(settings.ndigits(cfg.nSteps - 1)));
     double myValue = static_cast<double>(settings.myRank) +
                      static_cast<double>(step - 1) / div;
 
