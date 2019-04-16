@@ -114,6 +114,14 @@ void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_engine **engine,
     *ierr = static_cast<int>(adios2_close(*engine));
 }
 
+void FC_GLOBAL(adios2_engine_get_type_f2c,
+               ADIOS2_ENGINE_GET_TYPE_F2C)(char *type, adios2_engine **engine,
+                                           int *ierr)
+{
+    size_t size;
+    *ierr = static_cast<int>(adios2_engine_get_type(type, &size, *engine));
+}
+
 #ifdef __cplusplus
 }
 #endif

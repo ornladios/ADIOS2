@@ -214,16 +214,17 @@ PYBIND11_MODULE(adios2, m)
 #endif
 
     pybind11::class_<adios2::py11::ADIOS>(m, "ADIOS")
+        // Python 2
         .def("__nonzero__",
              [](const adios2::py11::ADIOS &adios) {
-                 if (adios)
-                 {
-                     return true;
-                 }
-                 else
-                 {
-                     return false;
-                 };
+                 const bool opBool = adios ? true : false;
+                 return opBool;
+             })
+        // Python 3
+        .def("__bool__",
+             [](const adios2::py11::ADIOS &adios) {
+                 const bool opBool = adios ? true : false;
+                 return opBool;
              })
 #ifdef ADIOS2_HAVE_MPI
         .def(pybind11::init<const adios2::py11::MPI4PY_Comm, const bool>(),
@@ -268,16 +269,17 @@ PYBIND11_MODULE(adios2, m)
              "created with removed IO");
 
     pybind11::class_<adios2::py11::IO>(m, "IO")
+        // Python 2
         .def("__nonzero__",
              [](const adios2::py11::IO &io) {
-                 if (io)
-                 {
-                     return true;
-                 }
-                 else
-                 {
-                     return false;
-                 };
+                 const bool opBool = io ? true : false;
+                 return opBool;
+             })
+        // Python 3
+        .def("__bool__",
+             [](const adios2::py11::IO &io) {
+                 const bool opBool = io ? true : false;
+                 return opBool;
              })
         .def("SetEngine", &adios2::py11::IO::SetEngine)
         .def("SetParameters", &adios2::py11::IO::SetParameters,
@@ -362,16 +364,17 @@ PYBIND11_MODULE(adios2, m)
         .def("RemoveAllAttributes", &adios2::py11::IO::RemoveAllAttributes);
 
     pybind11::class_<adios2::py11::Variable>(m, "Variable")
+        // Python 2
         .def("__nonzero__",
              [](const adios2::py11::Variable &variable) {
-                 if (variable)
-                 {
-                     return true;
-                 }
-                 else
-                 {
-                     return false;
-                 };
+                 const bool opBool = variable ? true : false;
+                 return opBool;
+             })
+        // Python 3
+        .def("__bool__",
+             [](const adios2::py11::Variable &variable) {
+                 const bool opBool = variable ? true : false;
+                 return opBool;
              })
         .def("SetShape", &adios2::py11::Variable::SetShape)
         .def("SetBlockSelection", &adios2::py11::Variable::SetBlockSelection)
@@ -393,16 +396,17 @@ PYBIND11_MODULE(adios2, m)
         .def("Operations", &adios2::py11::Variable::Operations);
 
     pybind11::class_<adios2::py11::Attribute>(m, "Attribute")
+        // Python 2
         .def("__nonzero__",
              [](const adios2::py11::Attribute &attribute) {
-                 if (attribute)
-                 {
-                     return true;
-                 }
-                 else
-                 {
-                     return false;
-                 };
+                 const bool opBool = attribute ? true : false;
+                 return opBool;
+             })
+        // Python 3
+        .def("__bool__",
+             [](const adios2::py11::Attribute &attribute) {
+                 const bool opBool = attribute ? true : false;
+                 return opBool;
              })
         .def("Name", &adios2::py11::Attribute::Name)
         .def("Type", &adios2::py11::Attribute::Type)
@@ -410,16 +414,17 @@ PYBIND11_MODULE(adios2, m)
         .def("Data", &adios2::py11::Attribute::Data);
 
     pybind11::class_<adios2::py11::Engine>(m, "Engine")
+        // Python 2
         .def("__nonzero__",
              [](const adios2::py11::Engine &engine) {
-                 if (engine)
-                 {
-                     return true;
-                 }
-                 else
-                 {
-                     return false;
-                 };
+                 const bool opBool = engine ? true : false;
+                 return opBool;
+             })
+        // Python 3
+        .def("__bool__",
+             [](const adios2::py11::Engine &engine) {
+                 const bool opBool = engine ? true : false;
+                 return opBool;
              })
         .def("BeginStep",
              (adios2::StepStatus(adios2::py11::Engine::*)(
@@ -479,16 +484,17 @@ PYBIND11_MODULE(adios2, m)
         .def("Type", &adios2::py11::Engine::Type);
 
     pybind11::class_<adios2::py11::Operator>(m, "Operator")
+        // Python 2
         .def("__nonzero__",
              [](const adios2::py11::Operator &op) {
-                 if (op)
-                 {
-                     return true;
-                 }
-                 else
-                 {
-                     return false;
-                 };
+                 const bool opBool = op ? true : false;
+                 return opBool;
+             })
+        // Python 3
+        .def("__bool__",
+             [](const adios2::py11::Operator &op) {
+                 const bool opBool = op ? true : false;
+                 return opBool;
              })
         .def("Type", &adios2::py11::Operator::Type)
         .def("SetParameter", &adios2::py11::Operator::SetParameter)

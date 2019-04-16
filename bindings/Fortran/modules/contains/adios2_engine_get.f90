@@ -16,6 +16,7 @@ subroutine adios2_get_string(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_string, &
                                     'get string', ierr)
     if (ierr == 0) then
@@ -31,6 +32,7 @@ subroutine adios2_get_real(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_real, &
                                     'get real', ierr)
     if (ierr == 0) then
@@ -46,6 +48,7 @@ subroutine adios2_get_dp(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_dp, &
                                     'get dp', ierr)
     if (ierr == 0) then
@@ -61,6 +64,7 @@ subroutine adios2_get_complex(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex, &
                                     'get complex', ierr)
     if (ierr == 0) then
@@ -76,6 +80,7 @@ subroutine adios2_get_complex_dp(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                     'get complex_dp', ierr)
     if (ierr == 0) then
@@ -91,6 +96,7 @@ subroutine adios2_get_integer1(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer1, &
                                     'get integer1', ierr)
     if (ierr == 0) then
@@ -106,6 +112,7 @@ subroutine adios2_get_integer2(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer2, &
                                     'get integer2', ierr)
     if (ierr == 0) then
@@ -121,6 +128,7 @@ subroutine adios2_get_integer4(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer4, &
                                     'get integer4', ierr)
     if (ierr == 0) then
@@ -136,6 +144,7 @@ subroutine adios2_get_integer8(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer8, &
                                     'get integer8', ierr)
     if (ierr == 0) then
@@ -152,6 +161,7 @@ subroutine adios2_get_real_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_real, &
                                     'get real', ierr)
     if (ierr == 0) then
@@ -167,6 +177,7 @@ subroutine adios2_get_dp_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_dp, &
                                     'get dp', ierr)
     if (ierr == 0) then
@@ -182,6 +193,7 @@ subroutine adios2_get_complex_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex, &
                                     'get complex', ierr)
     if (ierr == 0) then
@@ -197,6 +209,7 @@ subroutine adios2_get_complex_dp_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                     'get complex_dp', ierr)
     if (ierr == 0) then
@@ -212,6 +225,7 @@ subroutine adios2_get_integer1_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer1, &
                                     'get integer1', ierr)
     if (ierr == 0) then
@@ -227,6 +241,7 @@ subroutine adios2_get_integer2_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer2, &
                                     'get integer2', ierr)
     if (ierr == 0) then
@@ -242,6 +257,7 @@ subroutine adios2_get_integer4_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer4, &
                                     'get integer4', ierr)
     if (ierr == 0) then
@@ -257,6 +273,7 @@ subroutine adios2_get_integer8_1d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer8, &
                                     'get integer8', ierr)
     if (ierr == 0) then
@@ -273,6 +290,7 @@ subroutine adios2_get_real_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_real, &
                                     'get real', ierr)
     if (ierr == 0) then
@@ -288,6 +306,7 @@ subroutine adios2_get_dp_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_dp, &
                                     'get dp', ierr)
     if (ierr == 0) then
@@ -303,6 +322,7 @@ subroutine adios2_get_complex_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex, &
                                     'get complex', ierr)
     if (ierr == 0) then
@@ -318,6 +338,7 @@ subroutine adios2_get_complex_dp_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                     'get complex_dp', ierr)
     if (ierr == 0) then
@@ -333,6 +354,7 @@ subroutine adios2_get_integer1_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer1, &
                                     'get integer1', ierr)
     if (ierr == 0) then
@@ -348,6 +370,7 @@ subroutine adios2_get_integer2_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer2, &
                                     'get integer2', ierr)
     if (ierr == 0) then
@@ -363,6 +386,7 @@ subroutine adios2_get_integer4_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer4, &
                                     'get integer4', ierr)
     if (ierr == 0) then
@@ -378,6 +402,7 @@ subroutine adios2_get_integer8_2d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer8, &
                                     'get integer8', ierr)
     if (ierr == 0) then
@@ -394,6 +419,7 @@ subroutine adios2_get_real_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_real, &
                                     'get real', ierr)
     if (ierr == 0) then
@@ -409,6 +435,7 @@ subroutine adios2_get_dp_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_dp, &
                                     'get dp', ierr)
     if (ierr == 0) then
@@ -424,6 +451,7 @@ subroutine adios2_get_complex_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex, &
                                     'get complex', ierr)
     if (ierr == 0) then
@@ -439,6 +467,7 @@ subroutine adios2_get_complex_dp_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                     'get complex_dp', ierr)
     if (ierr == 0) then
@@ -454,6 +483,7 @@ subroutine adios2_get_integer1_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer1, &
                                     'get integer1', ierr)
     if (ierr == 0) then
@@ -469,6 +499,7 @@ subroutine adios2_get_integer2_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer2, &
                                     'get integer2', ierr)
     if (ierr == 0) then
@@ -484,6 +515,7 @@ subroutine adios2_get_integer4_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer4, &
                                     'get integer4', ierr)
     if (ierr == 0) then
@@ -499,6 +531,7 @@ subroutine adios2_get_integer8_3d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer8, &
                                     'get integer8', ierr)
     if (ierr == 0) then
@@ -515,6 +548,7 @@ subroutine adios2_get_real_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_real, &
                                     'get real', ierr)
     if (ierr == 0) then
@@ -530,6 +564,7 @@ subroutine adios2_get_dp_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_dp, &
                                     'get dp', ierr)
     if (ierr == 0) then
@@ -545,6 +580,7 @@ subroutine adios2_get_complex_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex, &
                                     'get complex', ierr)
     if (ierr == 0) then
@@ -560,6 +596,7 @@ subroutine adios2_get_complex_dp_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                     'get complex_dp', ierr)
     if (ierr == 0) then
@@ -575,6 +612,7 @@ subroutine adios2_get_integer1_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer1, &
                                     'get integer1', ierr)
     if (ierr == 0) then
@@ -590,6 +628,7 @@ subroutine adios2_get_integer2_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer2, &
                                     'get integer2', ierr)
     if (ierr == 0) then
@@ -605,6 +644,7 @@ subroutine adios2_get_integer4_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer4, &
                                     'get integer4', ierr)
     if (ierr == 0) then
@@ -620,6 +660,7 @@ subroutine adios2_get_integer8_4d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer8, &
                                     'get integer8', ierr)
     if (ierr == 0) then
@@ -636,6 +677,7 @@ subroutine adios2_get_real_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_real, &
                                     'get real', ierr)
     if (ierr == 0) then
@@ -651,6 +693,7 @@ subroutine adios2_get_dp_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_dp, &
                                     'get dp', ierr)
     if (ierr == 0) then
@@ -666,6 +709,7 @@ subroutine adios2_get_complex_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex, &
                                     'get complex', ierr)
     if (ierr == 0) then
@@ -681,6 +725,7 @@ subroutine adios2_get_complex_dp_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                     'get complex_dp', ierr)
     if (ierr == 0) then
@@ -696,6 +741,7 @@ subroutine adios2_get_integer1_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer1, &
                                     'get integer1', ierr)
     if (ierr == 0) then
@@ -711,6 +757,7 @@ subroutine adios2_get_integer2_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer2, &
                                     'get integer2', ierr)
     if (ierr == 0) then
@@ -726,6 +773,7 @@ subroutine adios2_get_integer4_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer4, &
                                     'get integer4', ierr)
     if (ierr == 0) then
@@ -741,6 +789,7 @@ subroutine adios2_get_integer8_5d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer8, &
                                     'get integer8', ierr)
     if (ierr == 0) then
@@ -757,6 +806,7 @@ subroutine adios2_get_real_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_real, &
                                     'get real', ierr)
     if (ierr == 0) then
@@ -772,6 +822,7 @@ subroutine adios2_get_dp_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_dp, &
                                     'get dp', ierr)
     if (ierr == 0) then
@@ -787,6 +838,7 @@ subroutine adios2_get_complex_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex, &
                                     'get complex', ierr)
     if (ierr == 0) then
@@ -802,6 +854,7 @@ subroutine adios2_get_complex_dp_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_complex_dp, &
                                     'get complex_dp', ierr)
     if (ierr == 0) then
@@ -817,6 +870,7 @@ subroutine adios2_get_integer1_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer1, &
                                     'get integer1', ierr)
     if (ierr == 0) then
@@ -832,6 +886,7 @@ subroutine adios2_get_integer2_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer2, &
                                     'get integer2', ierr)
     if (ierr == 0) then
@@ -847,6 +902,7 @@ subroutine adios2_get_integer4_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer4, &
                                     'get integer4', ierr)
     if (ierr == 0) then
@@ -862,6 +918,7 @@ subroutine adios2_get_integer8_6d(engine, variable, data, launch, ierr)
     integer, intent(in):: launch
     integer, intent(out):: ierr
 
+    if(trim(engine%type) == "NULL") return
     call adios2_variable_check_type(variable, adios2_type_integer8, &
                                     'get integer8', ierr)
     if (ierr == 0) then

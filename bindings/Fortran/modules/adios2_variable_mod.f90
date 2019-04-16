@@ -136,7 +136,9 @@ contains
 
         if( variable%type /= adios2_type ) then
             write(0,*) 'ERROR: adios2 variable ', TRIM(variable%name)//char(0), &
-                       ' type mismatch, in call to adios2_', TRIM(hint)//char(0)
+                       ' type mismatch, in call to adios2_', TRIM(hint)//char(0), &
+                       'variable type: ', variable%type, ' expected type: ', &
+                       adios2_type
 
             ierr = adios2_error_invalid_argument
         end if

@@ -65,6 +65,9 @@ if(ADIOS2_HAVE_MPI)
   add_executable(TestBPMemorySelection3D_f TestBPWriteMemorySelectionRead3D.f90)
   target_link_libraries(TestBPMemorySelection3D_f adios2_f MPI::MPI_Fortran)
   
+  add_executable(TestNullEngine_f TestNullEngine.f90)
+  target_link_libraries(TestNullEngine_f adios2_f MPI::MPI_Fortran)
+  
   # F2C 
   add_executable(TestBPReadFBlocks_f2c TestF2C_BPReadFBlocks.cpp)
   target_link_libraries(TestBPReadFBlocks_f2c adios2 gtest MPI::MPI_C)
@@ -144,6 +147,10 @@ if(ADIOS2_HAVE_MPI)
   
   set_property(TEST TestBPReadFBlocks_f2c
     PROPERTY DEPENDS BPWriteReadHeatMap2D_f BPWriteReadHeatMap3D_f
+  )
+  
+  add_test(NAME TestNullEngine_f
+    COMMAND ${test_parameters} $<TARGET_FILE:TestNullEngine_f>
   )
   
   if(ADIOS2_HAVE_SZ)

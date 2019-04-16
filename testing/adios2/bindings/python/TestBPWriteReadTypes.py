@@ -15,7 +15,7 @@ import adios2
 
 
 def check_object(adios2_object, name):
-    if adios2_object is None:
+    if adios2_object is False:
         raise ValueError(str(name) + ' not found')
 
 

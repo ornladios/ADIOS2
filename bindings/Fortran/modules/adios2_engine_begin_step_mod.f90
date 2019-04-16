@@ -31,6 +31,11 @@ contains
         integer, intent(out) :: status
         integer, intent(out) :: ierr
 
+        if(trim(engine%type) == "NULL") then
+            status = adios2_step_status_end_of_stream
+            return
+        end if
+
         call adios2_begin_step_f2c(engine%f2c, step_mode, timeout_seconds, &
                                    status, ierr)
 
@@ -43,6 +48,11 @@ contains
         !local
         integer status
 
+        if(trim(engine%type) == "NULL") then
+            status = adios2_step_status_end_of_stream
+            return
+        end if
+
         call adios2_begin_step_f2c(engine%f2c, step_mode, -1._4, status, ierr)
 
     end subroutine
@@ -52,6 +62,11 @@ contains
         integer, intent(out) :: ierr
         !local
         integer status
+
+        if(trim(engine%type) == "NULL") then
+            status = adios2_step_status_end_of_stream
+            return
+        end if
 
         if( engine%mode == adios2_mode_read ) then
             call adios2_begin_step_f2c(engine%f2c, &
