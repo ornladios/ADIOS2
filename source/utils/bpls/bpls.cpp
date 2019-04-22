@@ -397,7 +397,7 @@ int bplsMain(int argc, char *argv[])
         return retval;
 
     /* Start working */
-    int len = strlen(vfile);
+    size_t len = strlen(vfile);
     if (vfile[len - 1] == '/')
     {
         vfile[len - 1] = '\0';
