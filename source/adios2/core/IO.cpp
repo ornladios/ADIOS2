@@ -435,12 +435,18 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 
     /* BPFile for read needs to use BP4 or BP3 depending on the file's version
      */
-    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp") &&
-        mode == Mode::Read)
+    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp"))
     {
-        if (adios2sys::SystemTools::FileIsDirectory(name))
+        if (mode == Mode::Read)
         {
-            engineTypeLC = "bp4";
+            if (adios2sys::SystemTools::FileIsDirectory(name))
+            {
+                engineTypeLC = "bp4";
+            }
+            else
+            {
+                engineTypeLC = "bp3";
+            }
         }
         else
         {
