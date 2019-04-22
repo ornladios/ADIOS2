@@ -49,7 +49,8 @@
 #include <fnmatch.h>
 #endif
 
-#include "adios2sys/CommandLineArguments.hxx"
+#include <adios2sys/CommandLineArguments.hxx>
+#include <adios2sys/SystemTools.hxx>
 #include <pugixml.hpp>
 
 namespace adios2
@@ -396,6 +397,11 @@ int bplsMain(int argc, char *argv[])
         return retval;
 
     /* Start working */
+    int len = strlen(vfile);
+    if (vfile[len - 1] == '/')
+    {
+        vfile[len - 1] = '\0';
+    }
     retval = doList(vfile);
 
     print_stop();
@@ -1159,6 +1165,12 @@ int doList(const char *path)
 
     if (verbose > 1)
         printf("\nADIOS Open: read header info from %s\n", path);
+
+    if (!adios2sys::SystemTools::FileExists(path))
+    {
+        fprintf(stderr, "\nError: input path %s does not exist\n", path);
+        return 4;
+    }
 
     // initialize BP reader
     if (verbose > 1)

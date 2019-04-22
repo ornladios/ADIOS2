@@ -27,6 +27,7 @@
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
+#include <adios2sys/SystemTools.hxx>      // FileIsDirectory()
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
 #include "adios2/engine/dataman/DataManReader.h"
@@ -432,8 +433,22 @@ Engine &IO::Open(const std::string &name, const Mode mode,
                        engineTypeLC.begin(), ::tolower);
     }
 
-    if (isDefaultEngine || engineTypeLC == "bpfile" || engineTypeLC == "bp3" ||
-        engineTypeLC == "bp")
+    /* BPFile for read needs to use BP4 or BP3 depending on the file's version
+     */
+    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp") &&
+        mode == Mode::Read)
+    {
+        if (adios2sys::SystemTools::FileIsDirectory(name))
+        {
+            engineTypeLC = "bp4";
+        }
+        else
+        {
+            engineTypeLC = "bp3";
+        }
+    }
+
+    if (isDefaultEngine || engineTypeLC == "bp3")
     {
         if (mode == Mode::Read)
         {
@@ -445,10 +460,8 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             engine =
                 std::make_shared<engine::BP3Writer>(*this, name, mode, mpiComm);
         }
-
-        m_EngineType = "bp";
     }
-    else if (engineTypeLC == "bp4" || engineTypeLC == "bp4file")
+    else if (engineTypeLC == "bp4")
     {
         if (mode == Mode::Read)
         {
@@ -460,8 +473,6 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             engine =
                 std::make_shared<engine::BP4Writer>(*this, name, mode, mpiComm);
         }
-
-        m_EngineType = "bp4file";
     }
     else if (engineTypeLC == "hdfmixer")
     {
