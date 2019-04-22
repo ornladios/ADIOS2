@@ -18,7 +18,7 @@
         	</operation>
         </variable>
         
-        <engine type="BP4File">
+        <engine type="BP4">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -67,7 +67,7 @@
         =======================================-->
 
     <io name="readerInput">
-        <engine type="BP4File">
+        <engine type="BP4">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
