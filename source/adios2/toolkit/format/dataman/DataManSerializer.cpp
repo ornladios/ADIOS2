@@ -976,6 +976,7 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
 void DataManSerializer::Log(const int level, const std::string &message,
                             const bool mpi, const bool endline)
 {
+    TAU_SCOPED_TIMER_FUNC();
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
