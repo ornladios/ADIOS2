@@ -100,7 +100,7 @@ subroutine testing_adios_io_engine()
   ! // FIXME, I'd like to check the engine's name, but there's no API to get it
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "bp") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "bpfile") stop "FAIL adios2_io_engine_type"
   deallocate(engine_type)
 
   call testing_adios_io_finalize()
@@ -135,7 +135,7 @@ subroutine testing_adios_io_engine_default()
   ! // FIXME, I'd like to check the engine's name, but there's no API to get it
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "bp") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "") stop "FAIL adios2_io_engine_type"
   deallocate(engine_type)
 
   call testing_adios_io_finalize

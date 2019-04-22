@@ -147,7 +147,7 @@
         stop 'Invalid adios2_engine type'
      end if
      call adios2_io_engine_type(engineType, ioWrite, ierr)
-     if( engineType /= 'bp') then ! FIXME, different from the above!
+     if( engineType /= 'bpfile') then ! FIXME, different from the above!
         write(*,*) 'Engine Type ', engineType
         stop 'Invalid type from adios2_engine_type'
      end if
