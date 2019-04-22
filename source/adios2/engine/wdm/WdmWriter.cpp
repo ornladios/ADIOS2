@@ -37,7 +37,7 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
 
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-
+    TAU_SCOPED_TIMER_FUNC();
     Log(5,
         "WdmWriter::BeginStep() begin. Last step " +
             std::to_string(m_CurrentStep),
@@ -93,6 +93,7 @@ void WdmWriter::PerformPuts() {}
 
 void WdmWriter::EndStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
     Log(5, "WdmWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep),
         true, false);
 
@@ -169,6 +170,7 @@ void WdmWriter::InitTransports()
 
 void WdmWriter::ReplyThread(const std::string &address)
 {
+    TAU_SCOPED_TIMER_FUNC();
     transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
     tpm.OpenTransport(address);
     while (m_Listening)

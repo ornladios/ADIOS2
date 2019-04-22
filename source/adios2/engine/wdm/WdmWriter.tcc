@@ -25,6 +25,7 @@ namespace engine
 template <class T>
 void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
+    TAU_SCOPED_TIMER_FUNC();
     Log(5,
         "WdmWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
             std::to_string(m_CurrentStep),
@@ -40,7 +41,7 @@ void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 template <class T>
 void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-
+    TAU_SCOPED_TIMER_FUNC();
     for (const auto &op : variable.m_Operations)
     {
         std::lock_guard<std::mutex> l(m_CompressionParamsMutex);
