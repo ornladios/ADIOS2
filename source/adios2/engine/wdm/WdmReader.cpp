@@ -65,8 +65,18 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     TAU_SCOPED_TIMER_FUNC();
     if (not m_AttributesSet)
     {
-        RequestMetadata(-3);
-        m_DataManSerializer.GetAttributes(m_IO);
+        while (true)
+        {
+            RequestMetadata(-3);
+            try
+            {
+                m_DataManSerializer.GetAttributes(m_IO);
+                break;
+            }
+            catch (...)
+            {
+            }
+        }
         m_AttributesSet = true;
     }
 
@@ -439,7 +449,7 @@ void WdmReader::InitParameters()
 
 void WdmReader::InitTransports() {}
 
-void WdmReader::RequestMetadata(int64_t step)
+void WdmReader::RequestMetadata(const int64_t step)
 {
     TAU_SCOPED_TIMER_FUNC();
     format::VecPtr reply = std::make_shared<std::vector<char>>();

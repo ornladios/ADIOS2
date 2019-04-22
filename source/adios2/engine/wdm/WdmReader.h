@@ -74,7 +74,7 @@ private:
     format::VecPtr m_RepliedMetadata;
     std::mutex m_RepliedMetadataMutex;
 
-    void RequestMetadata(int64_t step = -5);
+    void RequestMetadata(const int64_t step = -5);
 
     void Init() final;
     void InitParameters() final;
