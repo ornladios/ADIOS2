@@ -74,7 +74,10 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     */
 
     ++m_CurrentStep;
-    m_DataManSerializer.New(m_DefaultBufferSize);
+    if (m_CurrentStep % m_StepsPerAggregation == 0)
+    {
+        m_DataManSerializer.New(m_DefaultBufferSize);
+    }
 
     if (not m_AttributesSet)
     {
@@ -99,7 +102,10 @@ void WdmWriter::EndStep()
         true, false);
 
     m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-    m_DataManSerializer.AggregateMetadata(m_MPIComm);
+    if (m_CurrentStep % m_StepsPerAggregation == m_StepsPerAggregation - 1)
+    {
+        m_DataManSerializer.AggregateMetadata(m_MPIComm);
+    }
 
     Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
         true, true);

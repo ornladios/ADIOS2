@@ -63,12 +63,6 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
                                         format::DmvVecPtr &vars)
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (not m_AttributesSet)
-    {
-        RequestMetadata(-3);
-        m_DataManSerializer.GetAttributes(m_IO);
-        m_AttributesSet = true;
-    }
 
     RequestMetadata();
     m_MetaDataMap = m_DataManSerializer.GetMetaData();
@@ -410,6 +404,21 @@ void WdmReader::Init()
     InitParameters();
     helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name);
 
+    format::VecPtr reply = std::make_shared<std::vector<char>>();
+    if (m_MpiRank == 0)
+    {
+        std::vector<char> request(2 * sizeof(int64_t));
+        reinterpret_cast<int64_t *>(request.data())[0] = m_AppID;
+        reinterpret_cast<int64_t *>(request.data())[1] = -3;
+        std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
+        while (reply->size() < 4)
+        {
+            reply = m_MetadataTransport->Request(request, address);
+        }
+    }
+    m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
+    m_DataManSerializer.GetAttributes(m_IO);
+
     if (m_Verbosity >= 5)
     {
         for (const auto &i : m_FullAddresses)
@@ -439,7 +448,7 @@ void WdmReader::InitParameters()
 
 void WdmReader::InitTransports() {}
 
-void WdmReader::RequestMetadata(int64_t step)
+void WdmReader::RequestMetadata(const int64_t step)
 {
     TAU_SCOPED_TIMER_FUNC();
     format::VecPtr reply = std::make_shared<std::vector<char>>();

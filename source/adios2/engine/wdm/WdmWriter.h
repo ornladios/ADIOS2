@@ -50,6 +50,7 @@ private:
     int m_Port = 12307;
     int m_MaxRanksPerNode = 200;
     int m_MaxAppsPerNode = 10;
+    int m_StepsPerAggregation = 1;
 
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;

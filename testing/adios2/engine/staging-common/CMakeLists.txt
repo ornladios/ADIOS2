@@ -157,7 +157,7 @@ endforeach()
 #   Setup tests for WDM engine
 #
 if(ADIOS2_HAVE_WDM AND ADIOS2_HAVE_MPI)
-SET (WDM_TESTS "NoReaderNoWait;TimeoutReader;LatestReader;DiscardWriter")
+SET (WDM_TESTS "NoReaderNoWait")
 foreach(test ${WDM_TESTS})
     add_common_test(${test} WDM)
 endforeach()

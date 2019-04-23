@@ -305,7 +305,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
     }
-    //        ASSERT_EQ(i, steps);
     dataManReader.Close();
     print_lines = 0;
 }

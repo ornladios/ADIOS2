@@ -57,7 +57,6 @@ private:
     int m_RetryMax = 128;
     int m_RetryTimes = 0;
     size_t m_AppID;
-    bool m_AttributesSet = false;
     bool m_ConnectionLost = false;
 
     struct Request
@@ -74,7 +73,7 @@ private:
     format::VecPtr m_RepliedMetadata;
     std::mutex m_RepliedMetadataMutex;
 
-    void RequestMetadata(int64_t step = -5);
+    void RequestMetadata(const int64_t step = -5);
 
     void Init() final;
     void InitParameters() final;
