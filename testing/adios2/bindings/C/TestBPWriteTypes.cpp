@@ -381,10 +381,6 @@ TEST_F(ADIOS2_C_API_IO, Engine)
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
     EXPECT_EQ(engine_name, "ctypes.bp");
-
-    engine_type = testing::adios2_engine_type_as_string(ioH);
-    EXPECT_EQ(engine_type, "bp"); // FIXME? Is it expected that adios2_open
-                                  // changes the engine_type string?
 }
 
 TEST_F(ADIOS2_C_API_IO, EngineDefault)
@@ -403,10 +399,6 @@ TEST_F(ADIOS2_C_API_IO, EngineDefault)
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
     EXPECT_EQ(engine_name, "ctypes.bp");
-
-    engine_type = testing::adios2_engine_type_as_string(ioH);
-    EXPECT_EQ(engine_type, "bp"); // FIXME? Is it expected that adios2_open
-                                  // changes the engine_type string?
 }
 
 TEST_F(ADIOS2_C_API_IO, ReturnedStrings)

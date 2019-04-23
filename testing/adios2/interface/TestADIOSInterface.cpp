@@ -60,10 +60,6 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
     EXPECT_EQ(engine.Type(), "BP3");
-
-    EXPECT_EQ(m_Io.EngineType(),
-              "bp"); // FIXME? Is it expected that adios2_open
-                     // changes the engine_type string?
 }
 
 TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
@@ -74,10 +70,6 @@ TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
     EXPECT_EQ(engine.Type(), "BP3");
-
-    EXPECT_EQ(m_Io.EngineType(),
-              "bp"); // FIXME? Is it expected that adios2_open
-                     // changes the engine_type string?
 }
 
 template <class T>
