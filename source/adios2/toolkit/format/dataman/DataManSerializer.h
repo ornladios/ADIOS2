@@ -13,7 +13,7 @@
 
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/IO.h"
-//#include "adios2/core/Variable.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <mutex>
 #include <unordered_map>

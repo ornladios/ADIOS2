@@ -31,13 +31,14 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian())
 {
+    TAU_SCOPED_TIMER_FUNC();
     Init();
     Log(5, "WdmWriter::WdmWriter()", true, true);
 }
 
 StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-
+    TAU_SCOPED_TIMER_FUNC();
     Log(5,
         "WdmWriter::BeginStep() begin. Last step " +
             std::to_string(m_CurrentStep),
@@ -93,6 +94,7 @@ void WdmWriter::PerformPuts() {}
 
 void WdmWriter::EndStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
     Log(5, "WdmWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep),
         true, false);
 
@@ -121,6 +123,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void WdmWriter::Init()
 {
+    TAU_SCOPED_TIMER_FUNC();
     MPI_Comm_rank(m_MPIComm, &m_MpiRank);
     MPI_Comm_size(m_MPIComm, &m_MpiSize);
     srand(time(NULL));
@@ -132,6 +135,7 @@ void WdmWriter::Init()
 
 void WdmWriter::InitParameters()
 {
+    TAU_SCOPED_TIMER_FUNC();
     for (const auto &pair : m_IO.m_Parameters)
     {
         std::string key(pair.first);
@@ -159,6 +163,7 @@ void WdmWriter::InitParameters()
 
 void WdmWriter::InitTransports()
 {
+    TAU_SCOPED_TIMER_FUNC();
     m_Listening = true;
     for (const auto &address : m_FullAddresses)
     {
@@ -243,6 +248,7 @@ void WdmWriter::ReplyThread(const std::string &address)
 
 void WdmWriter::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER_FUNC();
     MPI_Barrier(m_MPIComm);
     m_Listening = false;
     for (auto &i : m_ReplyThreads)
@@ -261,6 +267,7 @@ void WdmWriter::DoClose(const int transportIndex)
 void WdmWriter::Log(const int level, const std::string &message, const bool mpi,
                     const bool endline)
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= level)
     {
         if (mpi)

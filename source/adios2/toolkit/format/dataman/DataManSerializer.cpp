@@ -34,6 +34,7 @@ DataManSerializer::DataManSerializer(bool isRowMajor,
 
 void DataManSerializer::New(size_t size)
 {
+    TAU_SCOPED_TIMER_FUNC();
     // make a new shared object each time because the old shared object could
     // still be alive and needed somewhere in the workflow, for example the
     // queue in transport manager. It will be automatically released when the
@@ -46,6 +47,7 @@ void DataManSerializer::New(size_t size)
 
 VecPtr DataManSerializer::GetLocalPack()
 {
+    TAU_SCOPED_TIMER_FUNC();
     auto metapack = SerializeJson(m_MetadataJson);
     size_t metasize = metapack->size();
     (reinterpret_cast<uint64_t *>(m_LocalBuffer->data()))[0] =
@@ -59,6 +61,7 @@ VecPtr DataManSerializer::GetLocalPack()
 
 void DataManSerializer::AggregateMetadata(const MPI_Comm mpiComm)
 {
+    TAU_SCOPED_TIMER_FUNC();
     int mpiSize;
     int mpiRank;
     MPI_Comm_size(mpiComm, &mpiSize);
@@ -114,6 +117,7 @@ void DataManSerializer::AggregateMetadata(const MPI_Comm mpiComm)
 VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
 {
 
+    TAU_SCOPED_TIMER_FUNC();
     VecPtr ret = nullptr;
 
     m_AggregatedMetadataJsonMutex.lock();
@@ -179,6 +183,7 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
 
 void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (input == nullptr)
     {
         Log(1,
@@ -231,6 +236,7 @@ void DataManSerializer::AccumulateAggregatedMetadata(const VecPtr input,
 
 VecPtr DataManSerializer::EndSignal(size_t step)
 {
+    TAU_SCOPED_TIMER_FUNC();
     nlohmann::json j;
     j["FinalStep"] = step;
     std::string s = j.dump() + '\0';
@@ -243,6 +249,7 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
                                                const std::string &type,
                                                const Dims &count)
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (method == "zfp")
     {
         if (type == helper::GetType<int32_t>() ||
@@ -282,6 +289,7 @@ bool DataManSerializer::IsCompressionAvailable(const std::string &method,
 
 void DataManSerializer::PutAttributes(core::IO &io)
 {
+    TAU_SCOPED_TIMER_FUNC();
     const auto &attributesDataMap = io.GetAttributesDataMap();
     for (const auto &attributePair : attributesDataMap)
     {
@@ -303,6 +311,7 @@ void DataManSerializer::PutAttributes(core::IO &io)
 
 void DataManSerializer::GetAttributes(core::IO &io)
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> lStaticDataJson(m_StaticDataJsonMutex);
     for (const auto &staticVar : m_StaticDataJson["S"])
     {
@@ -338,12 +347,14 @@ void DataManSerializer::GetAttributes(core::IO &io)
 
 void DataManSerializer::AttachAttributes()
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l1(m_StaticDataJsonMutex);
     m_MetadataJson["S"] = m_StaticDataJson["S"];
 }
 
 void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
 {
+    TAU_SCOPED_TIMER_FUNC();
 
     // the mutex has to be locked here through the entire function. Otherwise
     // reader engine could get incomplete step metadata. This function only
@@ -474,6 +485,7 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
 
 int DataManSerializer::PutPack(const VecPtr data)
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (data->size() == 0)
     {
         return -1;
@@ -506,6 +518,7 @@ int DataManSerializer::PutPack(const VecPtr data)
 
 void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
     std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
     if (allPreviousSteps)
@@ -562,12 +575,14 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
 
 const DmvVecPtrMap DataManSerializer::GetMetaData()
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     return m_DataManVarMap;
 }
 
 DmvVecPtr DataManSerializer::GetMetaData(const size_t step)
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     const auto &i = m_DataManVarMap.find(step);
     if (i != m_DataManVarMap.end())
@@ -585,6 +600,7 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                                           const Dims &count, void *data)
 {
 
+    TAU_SCOPED_TIMER_FUNC();
     DmvVecPtr varVec;
 
     m_DataManVarMapMutex.lock();
@@ -658,6 +674,7 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
 
 DeferredRequestMapPtr DataManSerializer::GetDeferredRequest()
 {
+    TAU_SCOPED_TIMER_FUNC();
     auto t = m_DeferredRequestsToSend;
     m_DeferredRequestsToSend = std::make_shared<DeferredRequestMap>();
     return t;
@@ -667,6 +684,7 @@ VecPtr DataManSerializer::GenerateReply(
     const std::vector<char> &request, size_t &step,
     const std::unordered_map<std::string, Params> &compressionParams)
 {
+    TAU_SCOPED_TIMER_FUNC();
     auto replyMetaJ = std::make_shared<nlohmann::json>();
     auto replyLocalBuffer =
         std::make_shared<std::vector<char>>(sizeof(uint64_t) * 2);
@@ -807,6 +825,7 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
                                          const Dims &outCount, Dims &ovlpStart,
                                          Dims &ovlpCount)
 {
+    TAU_SCOPED_TIMER_FUNC();
 
     if (inStart.size() != inCount.size() ||
         outStart.size() != outCount.size() || inStart.size() != outStart.size())
@@ -853,6 +872,7 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
 
 size_t DataManSerializer::MinStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     size_t minStep = std::numeric_limits<size_t>::max();
     for (const auto &i : m_DataManVarMap)
@@ -867,12 +887,14 @@ size_t DataManSerializer::MinStep()
 
 size_t DataManSerializer::Steps()
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     return m_DataManVarMap.size();
 }
 
 VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 {
+    TAU_SCOPED_TIMER_FUNC();
     auto pack = std::make_shared<std::vector<char>>();
     if (m_UseJsonSerialization == "msgpack")
     {
@@ -906,6 +928,7 @@ VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 nlohmann::json DataManSerializer::DeserializeJson(const char *start,
                                                   size_t size)
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 200)
     {
         std::cout << "DataManSerializer::DeserializeJson Json = ";
@@ -953,6 +976,7 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
 void DataManSerializer::Log(const int level, const std::string &message,
                             const bool mpi, const bool endline)
 {
+    TAU_SCOPED_TIMER_FUNC();
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 

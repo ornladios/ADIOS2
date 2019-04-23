@@ -25,6 +25,7 @@ namespace engine
 template <class T>
 inline void WdmReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
+    TAU_SCOPED_TIMER_FUNC();
     Log(5,
         "WdmReader::GetSync(" + variable.m_Name + ") begin " +
             std::to_string(m_CurrentStep),
@@ -42,6 +43,7 @@ inline void WdmReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
+    TAU_SCOPED_TIMER_FUNC();
     Log(5,
         "WdmReader::GetDeferred(" + variable.m_Name + ") begin " +
             std::to_string(m_CurrentStep),
@@ -128,6 +130,7 @@ template <typename T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 WdmReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::map<size_t, std::vector<typename Variable<T>::Info>> m;
     for (const auto &i : m_MetaDataMap)
     {
@@ -141,6 +144,7 @@ std::vector<typename Variable<T>::Info>
 WdmReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 10)
     {
         std::cout << "WdmReader::BlocksInfoCommon Step " << step << "\n";
@@ -185,6 +189,7 @@ template <typename T>
 void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count)
 {
+    TAU_SCOPED_TIMER_FUNC();
     bool singleValue = false;
     if (shape.size() == 1 and start.size() == 1 and count.size() == 1)
     {

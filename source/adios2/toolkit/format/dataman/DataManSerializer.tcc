@@ -48,6 +48,7 @@ template <typename T>
 void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
                                         nlohmann::json &metaj)
 {
+    TAU_SCOPED_TIMER_FUNC();
     size_t size = std::accumulate(count.begin(), count.end(), 1,
                                   std::multiplies<size_t>());
     T max = std::numeric_limits<T>::min();
@@ -82,6 +83,7 @@ void DataManSerializer::PutVar(const core::Variable<T> &variable,
                                const Params &params, VecPtr localBuffer,
                                JsonPtr metadataJson)
 {
+    TAU_SCOPED_TIMER_FUNC();
     PutVar(variable.GetData(), variable.m_Name, variable.m_Shape,
            variable.m_Start, variable.m_Count, variable.m_MemoryStart,
            variable.m_MemoryCount, doid, step, rank, address, params,
@@ -97,6 +99,7 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
                                const std::string &address, const Params &params,
                                VecPtr localBuffer, JsonPtr metadataJson)
 {
+    TAU_SCOPED_TIMER_FUNC();
     Log(1,
         "DataManSerializer::PutVar begin with Step " + std::to_string(step) +
             " Var " + varName,
@@ -235,6 +238,7 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
                                const T *inputData, const Dims &varCount,
                                const Params &params)
 {
+    TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_ZFP
     Params p;
     for (const auto &i : params)
@@ -275,6 +279,7 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
                               const T *inputData, const Dims &varCount,
                               const Params &params)
 {
+    TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_SZ
     Params p;
     for (const auto &i : params)
@@ -315,6 +320,7 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
                                  const T *inputData, const Dims &varCount,
                                  const Params &params)
 {
+    TAU_SCOPED_TIMER_FUNC();
 #ifdef ADIOS2_HAVE_BZIP2
     Params p;
     for (const auto &i : params)
@@ -354,6 +360,7 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
 template <class T>
 void DataManSerializer::PutAttribute(const core::Attribute<T> &attribute)
 {
+    TAU_SCOPED_TIMER_FUNC();
     nlohmann::json staticVar;
     staticVar["N"] = attribute.m_Name;
     staticVar["Y"] = attribute.m_Type;
@@ -378,6 +385,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                               const size_t step, const Dims &varMemStart,
                               const Dims &varMemCount)
 {
+    TAU_SCOPED_TIMER_FUNC();
 
     DmvVecPtr vec = nullptr;
 
