@@ -411,7 +411,7 @@ void WdmReader::Init()
         reinterpret_cast<int64_t *>(request.data())[0] = m_AppID;
         reinterpret_cast<int64_t *>(request.data())[1] = -3;
         std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
-        while (reply->size() < 4)
+        while (reply->size() < 6)
         {
             reply = m_MetadataTransport->Request(request, address);
         }
