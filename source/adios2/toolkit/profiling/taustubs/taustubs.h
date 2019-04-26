@@ -9,7 +9,8 @@
 
 /* This code won't compile on windows.  Disable it */
 #if !defined(_WIN32) && !defined(_WIN64)
-#define TAU_USE_STUBS
+/* DISABLE ENTIRELY BY DEFAULT */
+// #define TAU_USE_STUBS
 #endif
 
 #if defined(TAU_USE_STUBS)
