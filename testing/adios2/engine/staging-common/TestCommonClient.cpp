@@ -76,7 +76,10 @@ static adios2::Params ParseEngineParams(std::string Input)
 // ADIOS2 Sst read
 TEST_F(SstReadTest, ADIOS2SstRead)
 {
+// Apple Clang already defines this value.
+#if !defined(SIZE_T_MAX)
     const size_t SIZE_T_MAX = std::numeric_limits<size_t>::max();
+#endif
 
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
