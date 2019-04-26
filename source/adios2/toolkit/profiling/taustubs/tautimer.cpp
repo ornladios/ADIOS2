@@ -108,7 +108,6 @@ void open_preload_libraries(void)
         char *token = strtok((char *)preload, ":");
         while (token)
         {
-            printf("token: %s\n", token);
             /* then, dlopen() first and re-try the dlsym() call. */
             dlopen(token, RTLD_LAZY);
             token = strtok(NULL, ":");
