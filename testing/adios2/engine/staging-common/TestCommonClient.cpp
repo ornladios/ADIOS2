@@ -165,7 +165,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
         if ((ExpectedStep == adios2::MaxSizeT) || Latest || Discard)
         {
-            if ((ExpectedStep != adios2::MaxSizeT) && (ExpectedStep != currentStep))
+            if ((ExpectedStep != adios2::MaxSizeT) && 
+                (ExpectedStep != currentStep))
             {
                 SkippedSteps++;
             }
