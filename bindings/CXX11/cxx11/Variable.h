@@ -28,6 +28,8 @@ namespace core
 
 template <class T>
 class Variable; // private implementation
+
+class IO; // private implementation
 }
 /// \endcond
 
@@ -359,10 +361,12 @@ public:
     };
 
 private:
-    Variable<T>(core::Variable<IOType> *variable);
-    core::Variable<IOType> *m_Variable = nullptr;
+    Variable<T>(const std::string &name, core::IO *io);
     core::Variable<IOType> *CoreVariable();
     const core::Variable<IOType> *CoreVariable() const;
+
+    core::IO *m_CoreIO = nullptr;
+    std::string m_Name;
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
 };

@@ -20,22 +20,26 @@ namespace adios2
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
-    Variable<T>::Variable(core::Variable<IOType> *variable)                    \
-    : m_Variable(variable)                                                     \
+    Variable<T>::Variable(const std::string &name, core::IO *io)               \
+    : m_CoreIO(io), m_Name(name)                                               \
     {                                                                          \
     }                                                                          \
                                                                                \
     template <>                                                                \
     core::Variable<Variable<T>::IOType> *Variable<T>::CoreVariable()           \
     {                                                                          \
-        return m_Variable;                                                     \
+        adios2::helper::CheckForNullptr(m_CoreIO,                              \
+                                        "for m_CoreIO in CoreVariable()");     \
+        return m_CoreIO->InquireVariable<IOType>(m_Name);                      \
     }                                                                          \
                                                                                \
     template <>                                                                \
     const core::Variable<Variable<T>::IOType> *Variable<T>::CoreVariable()     \
         const                                                                  \
     {                                                                          \
-        return m_Variable;                                                     \
+        adios2::helper::CheckForNullptr(m_CoreIO,                              \
+                                        "for m_CoreIO in CoreVariable()");     \
+        return m_CoreIO->InquireVariable<IOType>(m_Name);                      \
     }                                                                          \
                                                                                \
     template <>                                                                \
@@ -95,9 +99,7 @@ namespace adios2
     template <>                                                                \
     std::string Variable<T>::Name() const                                      \
     {                                                                          \
-        helper::CheckForNullptr(CoreVariable(),                                \
-                                "in call to Variable<T>::Name");               \
-        return CoreVariable()->m_Name;                                         \
+        return m_Name;                                                         \
     }                                                                          \
                                                                                \
     template <>                                                                \
