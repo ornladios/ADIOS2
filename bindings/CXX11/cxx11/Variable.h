@@ -361,6 +361,8 @@ public:
 private:
     Variable<T>(core::Variable<IOType> *variable);
     core::Variable<IOType> *m_Variable = nullptr;
+    core::Variable<IOType> *CoreVariable();
+    const core::Variable<IOType> *CoreVariable() const;
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
 };

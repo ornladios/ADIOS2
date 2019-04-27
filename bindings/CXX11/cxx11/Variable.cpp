@@ -26,155 +26,175 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    core::Variable<Variable<T>::IOType> *Variable<T>::CoreVariable()           \
+    {                                                                          \
+        return m_Variable;                                                     \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const core::Variable<Variable<T>::IOType> *Variable<T>::CoreVariable()     \
+        const                                                                  \
+    {                                                                          \
+        return m_Variable;                                                     \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     Variable<T>::operator bool() const noexcept                                \
     {                                                                          \
-        return (m_Variable == nullptr) ? false : true;                         \
+        return (CoreVariable() == nullptr) ? false : true;                     \
     }                                                                          \
                                                                                \
     template <>                                                                \
     void Variable<T>::SetShape(const Dims &shape)                              \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::SetShape");           \
-        m_Variable->SetShape(shape);                                           \
+        CoreVariable()->SetShape(shape);                                       \
     }                                                                          \
                                                                                \
     template <>                                                                \
     void Variable<T>::SetBlockSelection(const size_t blockID)                  \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::SetBlockSelection");  \
-        m_Variable->SetBlockSelection(blockID);                                \
+        CoreVariable()->SetBlockSelection(blockID);                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
     void Variable<T>::SetSelection(const Box<Dims> &selection)                 \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::SetSelection");       \
-        m_Variable->SetSelection(selection);                                   \
+        CoreVariable()->SetSelection(selection);                               \
     }                                                                          \
                                                                                \
     template <>                                                                \
     void Variable<T>::SetMemorySelection(const Box<Dims> &memorySelection)     \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::SetMemorySelection"); \
-        m_Variable->SetMemorySelection(memorySelection);                       \
+        CoreVariable()->SetMemorySelection(memorySelection);                   \
     }                                                                          \
                                                                                \
     template <>                                                                \
     void Variable<T>::SetStepSelection(const Box<size_t> &stepSelection)       \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::SetStepSelection");   \
-        m_Variable->SetStepSelection(stepSelection);                           \
+        CoreVariable()->SetStepSelection(stepSelection);                       \
     }                                                                          \
                                                                                \
     template <>                                                                \
     size_t Variable<T>::SelectionSize() const                                  \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::SelectionSize");      \
-        return m_Variable->SelectionSize();                                    \
+        return CoreVariable()->SelectionSize();                                \
     }                                                                          \
                                                                                \
     template <>                                                                \
     std::string Variable<T>::Name() const                                      \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Name");   \
-        return m_Variable->m_Name;                                             \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Name");               \
+        return CoreVariable()->m_Name;                                         \
     }                                                                          \
                                                                                \
     template <>                                                                \
     std::string Variable<T>::Type() const                                      \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Type");   \
-        return m_Variable->m_Type;                                             \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Type");               \
+        return CoreVariable()->m_Type;                                         \
     }                                                                          \
     template <>                                                                \
     size_t Variable<T>::Sizeof() const                                         \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Sizeof"); \
-        return m_Variable->m_ElementSize;                                      \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Sizeof");             \
+        return CoreVariable()->m_ElementSize;                                  \
     }                                                                          \
                                                                                \
     template <>                                                                \
     adios2::ShapeID Variable<T>::ShapeID() const                               \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::ShapeID");            \
-        return m_Variable->m_ShapeID;                                          \
+        return CoreVariable()->m_ShapeID;                                      \
     }                                                                          \
                                                                                \
     template <>                                                                \
     Dims Variable<T>::Shape(const size_t step) const                           \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");  \
-        return m_Variable->Shape(step);                                        \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Shape");              \
+        return CoreVariable()->Shape(step);                                    \
     }                                                                          \
                                                                                \
     template <>                                                                \
     Dims Variable<T>::Start() const                                            \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Start");  \
-        return m_Variable->m_Start;                                            \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Start");              \
+        return CoreVariable()->m_Start;                                        \
     }                                                                          \
                                                                                \
     template <>                                                                \
     Dims Variable<T>::Count() const                                            \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Count");  \
-        return m_Variable->Count();                                            \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Count");              \
+        return CoreVariable()->Count();                                        \
     }                                                                          \
                                                                                \
     template <>                                                                \
     size_t Variable<T>::Steps() const                                          \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Steps");  \
-        return m_Variable->m_AvailableStepsCount;                              \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Steps");              \
+        return CoreVariable()->m_AvailableStepsCount;                          \
     }                                                                          \
                                                                                \
     template <>                                                                \
     size_t Variable<T>::StepsStart() const                                     \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::StepsStart");         \
-        return m_Variable->m_AvailableStepsStart;                              \
+        return CoreVariable()->m_AvailableStepsStart;                          \
     }                                                                          \
                                                                                \
     template <>                                                                \
     size_t Variable<T>::BlockID() const                                        \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::BlockID");            \
-        return m_Variable->m_BlockID;                                          \
+        return CoreVariable()->m_BlockID;                                      \
     }                                                                          \
                                                                                \
     template <>                                                                \
     size_t Variable<T>::AddOperation(const Operator op,                        \
                                      const Params &parameters)                 \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::AddOperator");        \
         if (!op)                                                               \
         {                                                                      \
             throw std::invalid_argument("ERROR: invalid operator, in call to " \
                                         "Variable<T>::AddOperator");           \
         }                                                                      \
-        return m_Variable->AddOperation(*op.m_Operator, parameters);           \
+        return CoreVariable()->AddOperation(*op.m_Operator, parameters);       \
     }                                                                          \
                                                                                \
     template <>                                                                \
     std::vector<typename Variable<T>::Operation> Variable<T>::Operations()     \
         const                                                                  \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable,                                    \
+        helper::CheckForNullptr(CoreVariable(),                                \
                                 "in call to Variable<T>::Operations");         \
         std::vector<Operation> operations;                                     \
-        operations.reserve(m_Variable->m_Operations.size());                   \
+        operations.reserve(CoreVariable()->m_Operations.size());               \
                                                                                \
-        for (const auto &op : m_Variable->m_Operations)                        \
+        for (const auto &op : CoreVariable()->m_Operations)                    \
         {                                                                      \
             operations.push_back(                                              \
                 Operation{Operator(op.Op), op.Parameters, op.Info});           \
@@ -185,22 +205,25 @@ namespace adios2
     template <>                                                                \
     std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::MinMax"); \
-        return m_Variable->MinMax(step);                                       \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::MinMax");             \
+        return CoreVariable()->MinMax(step);                                   \
     }                                                                          \
                                                                                \
     template <>                                                                \
     T Variable<T>::Min(const size_t step) const                                \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Min");    \
-        return m_Variable->Min(step);                                          \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Min");                \
+        return CoreVariable()->Min(step);                                      \
     }                                                                          \
                                                                                \
     template <>                                                                \
     T Variable<T>::Max(const size_t step) const                                \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Max");    \
-        return m_Variable->Max(step);                                          \
+        helper::CheckForNullptr(CoreVariable(),                                \
+                                "in call to Variable<T>::Max");                \
+        return CoreVariable()->Max(step);                                      \
     }                                                                          \
                                                                                \
     template <>                                                                \

@@ -60,12 +60,12 @@ template <class T>
 std::vector<std::vector<typename Variable<T>::Info>>
 Variable<T>::DoAllStepsBlocksInfo()
 {
-    helper::CheckForNullptr(m_Variable,
+    helper::CheckForNullptr(CoreVariable(),
                             "in call to Variable<T>::AllStepsBlocksInfo");
 
     // PRIVATE INPUT
     const std::vector<std::vector<typename core::Variable<IOType>::Info>>
-        coreAllStepsBlocksInfo = m_Variable->AllStepsBlocksInfo();
+        coreAllStepsBlocksInfo = CoreVariable()->AllStepsBlocksInfo();
 
     // PUBLIC OUTPUT
     std::vector<std::vector<typename Variable<T>::Info>> allStepsBlocksInfo(

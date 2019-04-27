@@ -71,12 +71,12 @@ typename Variable<T>::Span Engine::Put(Variable<T> variable,
         return typename Variable<T>::Span(nullptr);
     }
 
-    adios2::helper::CheckForNullptr(variable.m_Variable,
+    adios2::helper::CheckForNullptr(variable.CoreVariable(),
                                     "for variable in call to Engine::Array");
 
     typename Variable<T>::Span::CoreSpan *coreSpan =
         reinterpret_cast<typename Variable<T>::Span::CoreSpan *>(
-            &m_Engine->Put(*variable.m_Variable, bufferID,
+            &m_Engine->Put(*variable.CoreVariable(), bufferID,
                            reinterpret_cast<const IOType &>(value)));
 
     return typename Variable<T>::Span(coreSpan);
@@ -97,9 +97,9 @@ void Engine::Put(Variable<T> variable, const T *data, const Mode launch)
     {
         return;
     }
-    adios2::helper::CheckForNullptr(variable.m_Variable,
+    adios2::helper::CheckForNullptr(variable.CoreVariable(),
                                     "for variable in call to Engine::Put");
-    m_Engine->Put(*variable.m_Variable, reinterpret_cast<const IOType *>(data),
+    m_Engine->Put(*variable.CoreVariable(), reinterpret_cast<const IOType *>(data),
                   launch);
 }
 
@@ -125,9 +125,9 @@ void Engine::Put(Variable<T> variable, const T &datum, const Mode launch)
     {
         return;
     }
-    adios2::helper::CheckForNullptr(variable.m_Variable,
+    adios2::helper::CheckForNullptr(variable.CoreVariable(),
                                     "for variable in call to Engine::Put");
-    m_Engine->Put(*variable.m_Variable, reinterpret_cast<const IOType &>(datum),
+    m_Engine->Put(*variable.CoreVariable(), reinterpret_cast<const IOType &>(datum),
                   launch);
 }
 
@@ -154,9 +154,9 @@ void Engine::Get(Variable<T> variable, T *data, const Mode launch)
     {
         return;
     }
-    adios2::helper::CheckForNullptr(variable.m_Variable,
+    adios2::helper::CheckForNullptr(variable.CoreVariable(),
                                     "for variable in call to Engine::Get");
-    m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType *>(data),
+    m_Engine->Get(*variable.CoreVariable(), reinterpret_cast<IOType *>(data),
                   launch);
 }
 
@@ -181,9 +181,9 @@ void Engine::Get(Variable<T> variable, T &datum, const Mode /*launch*/)
     {
         return;
     }
-    adios2::helper::CheckForNullptr(variable.m_Variable,
+    adios2::helper::CheckForNullptr(variable.CoreVariable(),
                                     "for variable in call to Engine::Get");
-    m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType &>(datum));
+    m_Engine->Get(*variable.CoreVariable(), reinterpret_cast<IOType &>(datum));
 }
 
 template <class T>
@@ -209,9 +209,9 @@ void Engine::Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch)
     {
         return;
     }
-    adios2::helper::CheckForNullptr(variable.m_Variable,
+    adios2::helper::CheckForNullptr(variable.CoreVariable(),
                                     "for variable in call to Engine::Get");
-    m_Engine->Get(*variable.m_Variable,
+    m_Engine->Get(*variable.CoreVariable(),
                   reinterpret_cast<std::vector<IOType> &>(dataV), launch);
 }
 
@@ -240,10 +240,10 @@ void Engine::Get(Variable<T> variable, typename Variable<T>::Info &info,
     {
         return;
     }
-    adios2::helper::CheckForNullptr(variable.m_Variable,
+    adios2::helper::CheckForNullptr(variable.CoreVariable(),
                                     "for variable in call to Engine::Get");
     info.m_Info = reinterpret_cast<typename Variable<T>::Info::CoreInfo *>(
-        m_Engine->Get(*variable.m_Variable, launch));
+        m_Engine->Get(*variable.CoreVariable(), launch));
 }
 
 template <class T>
@@ -273,12 +273,12 @@ Engine::AllStepsBlocksInfo(const Variable<T> variable) const
     }
 
     adios2::helper::CheckForNullptr(
-        variable.m_Variable,
+        variable.CoreVariable(),
         "for variable in call to Engine::AllStepsBlocksInfo");
 
     const std::map<size_t, std::vector<typename core::Variable<IOType>::Info>>
         coreAllStepsBlockInfo =
-            m_Engine->AllStepsBlocksInfo(*variable.m_Variable);
+            m_Engine->AllStepsBlocksInfo(*variable.CoreVariable());
 
     std::map<size_t, std::vector<typename Variable<T>::Info>>
         allStepsBlocksInfo;
@@ -313,10 +313,10 @@ Engine::BlocksInfo(const Variable<T> variable, const size_t step) const
     }
 
     adios2::helper::CheckForNullptr(
-        variable.m_Variable, "for variable in call to Engine::BlocksInfo");
+        variable.CoreVariable(), "for variable in call to Engine::BlocksInfo");
 
     const auto blocksInfo =
-        m_Engine->BlocksInfo<IOType>(*variable.m_Variable, step);
+        m_Engine->BlocksInfo<IOType>(*variable.CoreVariable(), step);
     return ToBlocksInfo<T>(blocksInfo);
 }
 
