@@ -1,5 +1,6 @@
 #include <cstdint>
 
+#include <array>
 #include <iostream>
 #include <numeric>
 #include <stdexcept>
@@ -391,6 +392,51 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2Writers)
     this->CheckOutput("multi_put2writers2.bp");
 }
 #endif
+
+TEST_F(ADIOS2_CXX11_API_IO, StreamingWrite)
+{
+    adios2::Engine writer = m_Io.Open("xxx.bp", adios2::Mode::Write);
+
+    std::array<double, 3> x;
+    auto var = m_Io.DefineVariable<double>("x", {3}, {0}, {3});
+    for (int step = 0; step < 3; step++)
+    {
+        x = {10. + step, 20. + step, 30. + step};
+        writer.BeginStep();
+        if (step > 0)
+        {
+            writer.Put(var, x.data());
+        }
+        writer.EndStep();
+    }
+    writer.Close();
+}
+
+TEST_F(ADIOS2_CXX11_API_IO, StreamingRead)
+{
+    adios2::Engine reader = m_Io.Open("xxx.bp", adios2::Mode::Read);
+
+    std::array<double, 3> x;
+    auto var = m_Io.InquireVariable<double>("x");
+    for (int step = 0; step < 3; step++)
+    {
+        reader.BeginStep();
+        if (step == 0)
+        {
+            EXPECT_FALSE(var);
+            EXPECT_THROW(reader.Get(var, x.data()), std::invalid_argument);
+        }
+        else
+        {
+            EXPECT_TRUE(var);
+            reader.Get(var, x.data(), adios2::Mode::Sync);
+            EXPECT_EQ(
+                x, (std::array<double, 3>{10. + step, 20. + step, 30. + step}));
+        }
+        reader.EndStep();
+    }
+    reader.Close();
+}
 
 int main(int argc, char **argv)
 {
