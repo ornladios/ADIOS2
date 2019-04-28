@@ -28,8 +28,10 @@ namespace adios2
     template <>                                                                \
     core::Variable<Variable<T>::IOType> *Variable<T>::CoreVariable()           \
     {                                                                          \
-        adios2::helper::CheckForNullptr(m_CoreIO,                              \
-                                        "for m_CoreIO in CoreVariable()");     \
+        if (!m_CoreIO)                                                         \
+        {                                                                      \
+            return nullptr;                                                    \
+        }                                                                      \
         return m_CoreIO->InquireVariable<IOType>(m_Name);                      \
     }                                                                          \
                                                                                \
@@ -37,8 +39,10 @@ namespace adios2
     const core::Variable<Variable<T>::IOType> *Variable<T>::CoreVariable()     \
         const                                                                  \
     {                                                                          \
-        adios2::helper::CheckForNullptr(m_CoreIO,                              \
-                                        "for m_CoreIO in CoreVariable()");     \
+        if (!m_CoreIO)                                                         \
+        {                                                                      \
+            return nullptr;                                                    \
+        }                                                                      \
         return m_CoreIO->InquireVariable<IOType>(m_Name);                      \
     }                                                                          \
                                                                                \
