@@ -69,7 +69,6 @@ set (1x2.Local_CMD "run_staging_test -nw 1 -nr 2 -v -w TestCommonWriteLocal -r T
 set (3x5.Local_CMD "run_staging_test -nw 3 -nr 5 -v -w TestCommonWriteLocal -r TestCommonReadLocal -arg ENGINE_PARAMS")
 set (5x3.Local_CMD "run_staging_test -nw 5 -nr 3 -v -w TestCommonWriteLocal -r TestCommonReadLocal -arg ENGINE_PARAMS")
 set (DelayedReader_3x5_CMD "run_staging_test -rd 5 -nw 3 -nr 5 -p TestCommon -arg ENGINE_PARAMS")
-set (DelayedReaderBlocking_3x5_CMD "run_staging_test -rd 5 -nw 3 -nr 5 -v -p TestCommon -arg RendezvousReaderCount:0,QueueLimit:3,ENGINE_PARAMS -arg --expect_time_gap")
 set (FtoC.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -w TestCommonWrite_f -r TestCommonRead -arg ENGINE_PARAMS")
 set (FtoF.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -w TestCommonWrite_f -r TestCommonRead_f -arg ENGINE_PARAMS")
 
