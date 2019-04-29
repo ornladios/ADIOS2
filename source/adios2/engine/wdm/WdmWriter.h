@@ -50,7 +50,7 @@ private:
     int m_Port = 12307;
     int m_MaxRanksPerNode = 200;
     int m_MaxAppsPerNode = 10;
-    int m_StepsPerAggregation = 1;
+    int m_StepsPerAggregation = 10;
 
     format::DataManSerializer m_DataManSerializer;
     int64_t m_CurrentStep = -1;
@@ -61,6 +61,7 @@ private:
     bool m_Listening = false;
     bool m_Tolerance = true;
     bool m_AttributesSet = false;
+    bool m_CurrentStepActive = true;
     size_t m_AppID = 0;
     std::unordered_map<std::string, Params> m_CompressionParams;
     std::mutex m_CompressionParamsMutex;

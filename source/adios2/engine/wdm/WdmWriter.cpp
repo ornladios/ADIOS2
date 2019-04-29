@@ -44,45 +44,50 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
             std::to_string(m_CurrentStep),
         true, true);
 
-    int64_t stepToErase = m_CurrentStep - m_QueueLimit;
-    if (stepToErase >= 0)
-    {
-        Log(5,
-            "WdmWriter::BeginStep() reaching max buffer steps, removing "
-            "Step " +
-                std::to_string(stepToErase),
-            true, true);
-        m_DataManSerializer.Erase(stepToErase);
-    }
-
-    /*
-    else if (m_QueueFullPolicy == "block")
-    {
-        auto startTime = std::chrono::system_clock::now();
-        while (m_DataManSerializer.Steps() > m_QueueLimit)
-        {
-            auto nowTime = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                nowTime - startTime);
-            if (duration.count() > timeoutSeconds)
-            {
-                Log(5, "WdmWriter::BeginStep() returned NotReady", true, true);
-                return StepStatus::NotReady;
-            }
-        }
-    }
-    */
-
     ++m_CurrentStep;
     if (m_CurrentStep % m_StepsPerAggregation == 0)
     {
-        m_DataManSerializer.New(m_DefaultBufferSize);
-    }
+        int64_t stepToErase = m_CurrentStep - m_QueueLimit;
+        if (stepToErase >= 0)
+        {
+            Log(5,
+                "WdmWriter::BeginStep() reaching max buffer steps, removing "
+                "Step " +
+                    std::to_string(stepToErase),
+                true, true);
+            m_DataManSerializer.Erase(stepToErase);
+        }
 
-    if (not m_AttributesSet)
+        /*
+           else if (m_QueueFullPolicy == "block")
+           {
+           auto startTime = std::chrono::system_clock::now();
+           while (m_DataManSerializer.Steps() > m_QueueLimit)
+           {
+           auto nowTime = std::chrono::system_clock::now();
+           auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+           nowTime - startTime);
+           if (duration.count() > timeoutSeconds)
+           {
+           Log(5, "WdmWriter::BeginStep() returned NotReady", true, true);
+           return StepStatus::NotReady;
+           }
+           }
+           }
+           */
+
+        m_CurrentStepActive = true;
+        m_DataManSerializer.New(m_DefaultBufferSize);
+
+        if (not m_AttributesSet)
+        {
+            m_DataManSerializer.PutAttributes(m_IO);
+            m_AttributesSet = true;
+        }
+    }
+    else
     {
-        m_DataManSerializer.PutAttributes(m_IO);
-        m_AttributesSet = true;
+        m_CurrentStepActive = false;
     }
 
     Log(5,
@@ -101,9 +106,9 @@ void WdmWriter::EndStep()
     Log(5, "WdmWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep),
         true, false);
 
-    m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-    if (m_CurrentStep % m_StepsPerAggregation == m_StepsPerAggregation - 1)
+    if (m_CurrentStepActive)
     {
+        m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
         m_DataManSerializer.AggregateMetadata(m_MPIComm);
     }
 

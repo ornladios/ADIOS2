@@ -30,8 +30,11 @@ void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
         "WdmWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
             std::to_string(m_CurrentStep),
         true, true);
-    PutDeferredCommon(variable, data);
-    PerformPuts();
+    if (m_CurrentStepActive)
+    {
+        PutDeferredCommon(variable, data);
+        PerformPuts();
+    }
     Log(5,
         "WdmWriter::PutSync(" + variable.m_Name + ") end. Current step " +
             std::to_string(m_CurrentStep),
@@ -42,36 +45,42 @@ template <class T>
 void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
-    for (const auto &op : variable.m_Operations)
-    {
-        std::lock_guard<std::mutex> l(m_CompressionParamsMutex);
-        std::string opName = op.Op->m_Type;
-        if (opName == "zfp" or opName == "bzip2" or opName == "sz")
-        {
-            m_CompressionParams[variable.m_Name]["CompressionMethod"] = opName;
-            for (const auto &p : op.Parameters)
-            {
-                m_CompressionParams[variable.m_Name][opName + ":" + p.first] =
-                    p.second;
-            }
-            break;
-        }
-    }
-
     Log(5,
         "WdmWriter::PutDeferred(" + variable.m_Name + ") start. Current step " +
             std::to_string(m_CurrentStep),
         true, true);
-    if (variable.m_SingleValue)
+
+    if (m_CurrentStepActive)
     {
-        variable.m_Shape = Dims(1, 1);
-        variable.m_Start = Dims(1, 0);
-        variable.m_Count = Dims(1, 1);
+        for (const auto &op : variable.m_Operations)
+        {
+            std::lock_guard<std::mutex> l(m_CompressionParamsMutex);
+            std::string opName = op.Op->m_Type;
+            if (opName == "zfp" or opName == "bzip2" or opName == "sz")
+            {
+                m_CompressionParams[variable.m_Name]["CompressionMethod"] =
+                    opName;
+                for (const auto &p : op.Parameters)
+                {
+                    m_CompressionParams[variable.m_Name]
+                                       [opName + ":" + p.first] = p.second;
+                }
+                break;
+            }
+        }
+
+        if (variable.m_SingleValue)
+        {
+            variable.m_Shape = Dims(1, 1);
+            variable.m_Start = Dims(1, 0);
+            variable.m_Count = Dims(1, 1);
+        }
+        variable.SetData(data);
+        m_DataManSerializer.PutVar(
+            variable, m_Name, CurrentStep(), m_MpiRank,
+            m_FullAddresses[rand() % m_FullAddresses.size()], Params());
     }
-    variable.SetData(data);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
-                               m_FullAddresses[rand() % m_FullAddresses.size()],
-                               Params());
+
     Log(5,
         "WdmWriter::PutDeferred(" + variable.m_Name + ") end. Current step " +
             std::to_string(m_CurrentStep),
