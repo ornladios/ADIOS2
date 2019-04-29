@@ -50,13 +50,15 @@ WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
 WdmReader::~WdmReader()
 {
     TAU_SCOPED_TIMER_FUNC();
-    m_MetadataTransport = nullptr;
-    m_DataTransport = nullptr;
     if (m_Verbosity >= 5)
     {
         std::cout << "Staging Reader " << m_MpiRank << " destructor on "
                   << m_Name << "\n";
     }
+    m_MetadataTransport->CloseTransport();
+    m_DataTransport->CloseTransport();
+    m_DataTransport = nullptr;
+    m_MetadataTransport = nullptr;
 }
 
 StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
@@ -149,7 +151,7 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     }
     if (m_CurrentStep > maxStep)
     {
-        Log(5,
+        Log(50,
             "WdmReader::BeginStepIterator() returned NotReady because no new "
             "step is received yet",
             true, true);
@@ -207,7 +209,6 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
         auto stepStatus = BeginStepIterator(stepMode, vars);
         if (stepStatus == StepStatus::OK)
         {
-            m_RetryTimes = 0;
             break;
         }
         else if (stepStatus == StepStatus::EndOfStream)
@@ -225,7 +226,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
                     "WdmReader::BeginStep() returned EndOfStream because of "
                     "timeout.",
                     true, true);
-                return StepStatus::NotReady;
+                return StepStatus::EndOfStream;
             }
         }
     }
@@ -258,7 +259,6 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
             std::to_string(m_CurrentStep),
         true, true);
 
-    m_RetryTimes = 0;
     return StepStatus::OK;
 }
 

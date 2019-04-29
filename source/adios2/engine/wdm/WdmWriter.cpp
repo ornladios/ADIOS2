@@ -169,6 +169,10 @@ void WdmWriter::InitParameters()
         {
             m_Port = std::stoi(value);
         }
+        else if (key == "stepsperaggregation")
+        {
+            m_StepsPerAggregation = std::stoi(value);
+        }
     }
 }
 
@@ -259,7 +263,6 @@ void WdmWriter::ReplyThread(const std::string &address)
 
 void WdmWriter::DoClose(const int transportIndex)
 {
-    TAU_SCOPED_TIMER_FUNC();
     MPI_Barrier(m_MPIComm);
     m_Listening = false;
     for (auto &i : m_ReplyThreads)
