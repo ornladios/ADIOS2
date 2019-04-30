@@ -207,7 +207,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     bool received_steps = false;
     size_t i;
-    for (i = 0; i < 10; ++i)
+    for (i = 0; i < steps; ++i)
     {
         GenData(myChars, i, start, count, shape);
         GenData(myUChars, i, start, count, shape);
@@ -221,7 +221,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         GenData(myDComplexes, i, start, count, shape);
 
         adios2::StepStatus status =
-            dataManReader.BeginStep(StepMode::NextAvailable);
+            dataManReader.BeginStep(StepMode::NextAvailable, 5);
 
         if (status == adios2::StepStatus::OK)
         {
@@ -296,12 +296,20 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             VerifyData(myDComplexes.data(), currentStep, start, count, shape);
             dataManReader.EndStep();
         }
+        else if (status == adios2::StepStatus::EndOfStream)
+        {
+            std::cout << "[Rank " + std::to_string(mpiRank) +
+                             "] WdmTest reader end of stream!"
+                      << std::endl;
+            break;
+        }
     }
     if (received_steps)
     {
         auto attInt = dataManIO.InquireAttribute<int>("AttInt");
-        std::cout << "Attribute received " << attInt.Data()[0]
-                  << ", expected 110" << std::endl;
+        std::cout << "[Rank " + std::to_string(mpiRank) +
+                         "] Attribute received "
+                  << attInt.Data()[0] << ", expected 110" << std::endl;
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
     }
@@ -323,18 +331,17 @@ TEST_F(WdmEngineTest, BaseTest)
     Dims shape = {10, (size_t)mpiSize * 2};
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
-    size_t steps = 1000;
 
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, steps, adios2::Params());
+        Writer(shape, start, count, 1000, adios2::Params());
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     if (mpiGroup == 1)
     {
-        Reader(shape, start, count, steps, adios2::Params());
+        Reader(shape, start, count, 10, adios2::Params());
     }
 
     MPI_Barrier(MPI_COMM_WORLD);

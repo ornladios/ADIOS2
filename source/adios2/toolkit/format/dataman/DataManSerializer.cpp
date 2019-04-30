@@ -521,6 +521,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
     std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
+    std::lock_guard<std::mutex> l3(m_ProtectedStepsMutex);
     if (allPreviousSteps)
     {
         std::vector<DmvVecPtrMap::iterator> its;
@@ -529,7 +530,11 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         {
             if (it->first < step)
             {
-                its.push_back(it);
+                if (std::find(m_ProtectedSteps.begin(), m_ProtectedSteps.end(),
+                              it->first) == m_ProtectedSteps.end())
+                {
+                    its.push_back(it);
+                }
             }
         }
         for (auto it : its)
@@ -541,7 +546,6 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
                 true, true);
             m_DataManVarMap.erase(it);
         }
-
         if (m_AggregatedMetadataJson != nullptr)
         {
             std::vector<nlohmann::json::iterator> jits;
@@ -550,7 +554,12 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
             {
                 if (stoull(it.key()) < step)
                 {
-                    jits.push_back(it);
+                    if (std::find(m_ProtectedSteps.begin(),
+                                  m_ProtectedSteps.end(),
+                                  stoull(it.key())) == m_ProtectedSteps.end())
+                    {
+                        jits.push_back(it);
+                    }
                 }
             }
             for (auto it : jits)
@@ -971,6 +980,28 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
     }
 
     return message;
+}
+
+void DataManSerializer::ProtectStep(const size_t step)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    std::lock_guard<std::mutex> lDataManVarMapMutex(m_ProtectedStepsMutex);
+    if (std::find(m_ProtectedSteps.begin(), m_ProtectedSteps.end(), step) ==
+        m_ProtectedSteps.end())
+    {
+        m_ProtectedSteps.push_back(step);
+    }
+}
+
+void DataManSerializer::UnprotectStep(const size_t step)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    std::lock_guard<std::mutex> lDataManVarMapMutex(m_ProtectedStepsMutex);
+    auto it = std::find(m_ProtectedSteps.begin(), m_ProtectedSteps.end(), step);
+    if (it != m_ProtectedSteps.end())
+    {
+        m_ProtectedSteps.erase(it);
+    }
 }
 
 void DataManSerializer::Log(const int level, const std::string &message,

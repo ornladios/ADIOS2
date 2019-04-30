@@ -139,6 +139,9 @@ public:
 
     void Erase(const size_t step, const bool allPreviousSteps = false);
 
+    void ProtectStep(const size_t step);
+    void UnprotectStep(const size_t step);
+
     DmvVecPtr GetMetaData(const size_t step);
 
     const DmvVecPtrMap GetMetaData();
@@ -204,6 +207,9 @@ private:
     // (Staging engine) and reader (all engines), needs mutex for accessing
     DmvVecPtrMap m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
+
+    std::vector<size_t> m_ProtectedSteps;
+    std::mutex m_ProtectedStepsMutex;
 
     // Aggregated metadata json, used in writer, accessed from API thread and
     // reply thread, needs mutex

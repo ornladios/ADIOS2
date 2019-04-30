@@ -55,7 +55,6 @@ private:
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 3;
     int m_RetryMax = 128;
-    int m_RetryTimes = 0;
     size_t m_AppID;
     bool m_ConnectionLost = false;
 

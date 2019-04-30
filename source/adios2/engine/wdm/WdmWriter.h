@@ -61,6 +61,7 @@ private:
     bool m_Listening = false;
     bool m_Tolerance = true;
     bool m_AttributesSet = false;
+    bool m_CurrentStepActive = true;
     size_t m_AppID = 0;
     std::unordered_map<std::string, Params> m_CompressionParams;
     std::mutex m_CompressionParamsMutex;

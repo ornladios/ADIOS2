@@ -33,9 +33,10 @@ SocketZmqReqRep::SocketZmqReqRep(const int timeout) : SocketZmq(timeout)
 
 SocketZmqReqRep::~SocketZmqReqRep()
 {
-    if (m_Socket)
+    Close();
+    if (m_Context)
     {
-        zmq_close(m_Socket);
+        zmq_ctx_destroy(m_Context);
     }
 }
 
@@ -49,6 +50,7 @@ int SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
         m_Socket = zmq_socket(m_Context, ZMQ_REP);
         error = zmq_bind(m_Socket, fullAddress.c_str());
         zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
+        zmq_setsockopt(m_Socket, ZMQ_LINGER, &m_Timeout, sizeof(m_Timeout));
     }
     else if (openMode == Mode::Read)
     {
@@ -57,6 +59,7 @@ int SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
         error = zmq_connect(m_Socket, fullAddress.c_str());
         zmq_setsockopt(m_Socket, ZMQ_SNDTIMEO, &m_Timeout, sizeof(m_Timeout));
         zmq_setsockopt(m_Socket, ZMQ_RCVTIMEO, &m_Timeout, sizeof(m_Timeout));
+        zmq_setsockopt(m_Socket, ZMQ_LINGER, &m_Timeout, sizeof(m_Timeout));
     }
     else
     {
