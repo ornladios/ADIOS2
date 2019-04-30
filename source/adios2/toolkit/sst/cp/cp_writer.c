@@ -795,25 +795,6 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     MPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, MPI_LONG,
                   MPI_MAX, Stream->mpiComm);
 
-    /*
-     *  The earliestAvailableTimestepNumber subroutine also added to the
-     *  reference count of all existing timesteps, in case we will be making
-     *  it available to the joining reader.  Once we've determined what the
-     *  starting timestep we'll make available is (GlobalStartingTimestep),
-     *  decrement the ref count of others.
-     */
-    if (MyStartingTimestep != GlobalStartingTimestep)
-    {
-        CP_verbose(Stream,
-                   "In writer participate in reader open, releasing "
-                   "timesteps from %ld to %ld\n",
-                   MyStartingTimestep, GlobalStartingTimestep - 1);
-
-        PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-        SubRefRangeTimestep(Stream, MyStartingTimestep,
-                            GlobalStartingTimestep - 1, 0 /* set last */);
-        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
-    }
     CP_verbose(Stream,
                "My oldest timestep was %ld, global oldest timestep was %ld\n",
                MyStartingTimestep, GlobalStartingTimestep);
@@ -910,6 +891,71 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg,
     }
 }
 
+static void AddTSToSentList(SstStream Stream, WS_ReaderInfo Reader,
+                            long Timestep)
+{
+    struct _SentTimestepRec *Item = malloc(sizeof(*Item)),
+                            *List = Reader->SentTimestepList;
+    Item->Timestep = Timestep;
+    Item->Next = NULL;
+    if (List == NULL)
+    {
+        Reader->SentTimestepList = Item;
+    }
+    else
+    {
+        while (List->Next != NULL)
+        {
+            List = List->Next;
+        }
+        List->Next = Item;
+    }
+}
+
+static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader,
+                              long Timestep)
+{
+    struct _SentTimestepRec *List = Reader->SentTimestepList, *Last = NULL;
+    while (List)
+    {
+        int Freed = 0;
+        struct _SentTimestepRec *Next = List->Next;
+        if (List->Timestep == Timestep)
+        {
+            struct _SentTimestepRec *ItemToFree = List;
+            Freed = 1;
+            /* per reader release here */
+            SubRefRangeTimestep(Stream, ItemToFree->Timestep,
+                                ItemToFree->Timestep, 1);
+            free(ItemToFree);
+            if (Last)
+            {
+                Last->Next = Next;
+            }
+            else
+            {
+                Reader->SentTimestepList = Next;
+            }
+        }
+        if (!Freed)
+        {
+            Last = List;
+        }
+        List = Next;
+    }
+}
+
+static void DerefAllSentTimesteps(SstStream Stream, WS_ReaderInfo Reader)
+{
+    struct _SentTimestepRec *List = Reader->SentTimestepList;
+    while (List)
+    {
+        struct _SentTimestepRec *Next = List->Next;
+        DerefSentTimestep(Stream, Reader, List->Timestep);
+        List = Next;
+    }
+}
+
 static void SendTimestepEntryToSingleReader(SstStream Stream,
                                             CPTimestepList Entry,
                                             WS_ReaderInfo CP_WSR_Stream,
@@ -925,6 +971,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                        Entry->Timestep, rank);
         }
         Entry->ReferenceCount++;
+        AddTSToSentList(Stream, CP_WSR_Stream, Entry->Timestep);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         sendOneToWSRCohort(CP_WSR_Stream,
                            Stream->CPInfo->DeliverTimestepMetadataFormat,
@@ -1172,9 +1219,7 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
                    "%ld\n",
                    CP_WSR_Stream->OldestUnreleasedTimestep,
                    CP_WSR_Stream->LastSentTimestep);
-        SubRefRangeTimestep(CP_WSR_Stream->ParentStream,
-                            CP_WSR_Stream->OldestUnreleasedTimestep,
-                            CP_WSR_Stream->LastSentTimestep, 1 /* set last */);
+        DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
         CP_WSR_Stream->OldestUnreleasedTimestep =
             CP_WSR_Stream->LastSentTimestep + 1;
     }
@@ -1998,8 +2043,7 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
         ParentStream->ReleaseList[ParentStream->ReleaseCount].Reader = Reader;
         ParentStream->ReleaseCount++;
     }
-    SubRefRangeTimestep(ParentStream, Msg->Timestep, Msg->Timestep,
-                        1 /* set last */);
+    DerefSentTimestep(ParentStream, Reader, Msg->Timestep);
     QueueMaintenance(ParentStream);
     Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     pthread_cond_signal(&ParentStream->DataCondition);

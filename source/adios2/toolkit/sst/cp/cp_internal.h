@@ -56,6 +56,12 @@ enum StreamStatus
 static char *SSTStreamStatusStr[] = {"NotOpen", "Established", "PeerClosed",
                                      "PeerFailed", "Closed"};
 
+struct _SentTimestepRec
+{
+    long Timestep;
+    struct _SentTimestepRec *Next;
+};
+
 typedef struct _WS_ReaderInfo
 {
     SstStream ParentStream;
@@ -65,6 +71,7 @@ typedef struct _WS_ReaderInfo
     long LastSentTimestep;
     int LastReleasedTimestep;
     long OldestUnreleasedTimestep;
+    struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
