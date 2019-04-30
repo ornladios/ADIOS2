@@ -114,69 +114,85 @@ void DataManSerializer::AggregateMetadata(const MPI_Comm mpiComm)
     m_AggregatedMetadataJsonMutex.unlock();
 }
 
-VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t step)
+VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t stepRequested,
+                                                    int64_t &stepProvided,
+                                                    const int64_t appID)
 {
 
     TAU_SCOPED_TIMER_FUNC();
+
+    std::lock_guard<std::mutex> l(m_AggregatedMetadataJsonMutex);
+
     VecPtr ret = nullptr;
 
-    m_AggregatedMetadataJsonMutex.lock();
+    stepProvided = -1;
 
-    auto it = m_AggregatedMetadataJson.find(std::to_string(step));
-
-    if (it != m_AggregatedMetadataJson.end())
+    if (stepRequested == -1) // getting the earliest step
     {
-        nlohmann::json retJ;
-        retJ[std::to_string(step)] = *it;
-        ret = SerializeJson(retJ);
-    }
-    else
-    {
-        if (step == -1) // getting the earliest step
+        int64_t min = std::numeric_limits<int64_t>::max();
+        for (auto stepMapIt = m_AggregatedMetadataJson.begin();
+             stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
         {
-            int64_t min = std::numeric_limits<int64_t>::max();
-            for (auto stepMapIt = m_AggregatedMetadataJson.begin();
-                 stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
+            int64_t step = stoll(stepMapIt.key());
+            if (min > step)
             {
-                int64_t step = stoll(stepMapIt.key());
-                if (min > step)
-                {
-                    min = step;
-                }
+                min = step;
             }
+        }
+        if (min < std::numeric_limits<int64_t>::max())
+        {
             nlohmann::json retJ;
             retJ[std::to_string(min)] =
                 m_AggregatedMetadataJson[std::to_string(min)];
             ret = SerializeJson(retJ);
+            stepProvided = min;
         }
-        else if (step == -2) // getting the latest step
+    }
+    else if (stepRequested == -2) // getting the latest step
+    {
+        int64_t max = std::numeric_limits<int64_t>::min();
+        for (auto stepMapIt = m_AggregatedMetadataJson.begin();
+             stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
         {
-            int64_t max = std::numeric_limits<int64_t>::min();
-            for (auto stepMapIt = m_AggregatedMetadataJson.begin();
-                 stepMapIt != m_AggregatedMetadataJson.end(); ++stepMapIt)
+            int64_t step = stoll(stepMapIt.key());
+            if (max < step)
             {
-                int64_t step = stoll(stepMapIt.key());
-                if (max < step)
-                {
-                    max = step;
-                }
+                max = step;
             }
+        }
+        if (max >= 0)
+        {
             nlohmann::json retJ;
             retJ[std::to_string(max)] =
                 m_AggregatedMetadataJson[std::to_string(max)];
             ret = SerializeJson(retJ);
+            stepProvided = max;
         }
-        else if (step == -3) // getting static variables
+    }
+    else if (stepRequested == -3) // getting static variables
+    {
+        ret = SerializeJson(m_StaticDataJson);
+    }
+    else if (stepRequested == -4) // getting all steps
+    {
+        ret = SerializeJson(m_AggregatedMetadataJson);
+    }
+    else
+    {
+        auto it = m_AggregatedMetadataJson.find(std::to_string(stepRequested));
+        if (it != m_AggregatedMetadataJson.end())
         {
-            ret = SerializeJson(m_StaticDataJson);
-        }
-        else if (step == -4) // getting all steps
-        {
-            ret = SerializeJson(m_AggregatedMetadataJson);
+            nlohmann::json retJ;
+            retJ[std::to_string(stepRequested)] = *it;
+            ret = SerializeJson(retJ);
+            stepProvided = stepRequested;
         }
     }
 
-    m_AggregatedMetadataJsonMutex.unlock();
+    if (stepProvided > -1 and appID > -1)
+    {
+        ProtectStep(stepProvided, appID);
+    }
 
     return ret;
 }
@@ -207,32 +223,6 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
         }
     }
 }
-
-/*
-void DataManSerializer::AccumulateAggregatedMetadata(const VecPtr input,
-                                                     VecPtr output)
-{
-    if (input->empty())
-    {
-        Log(1, "DataManSerializer::AccumulateAggregatedMetadata tries to "
-               "deserialize "
-               "an empty json pack",
-            true, true);
-    }
-
-    nlohmann::json inputJ = DeserializeJson(input->data(), input->size());
-    nlohmann::json outputJ;
-    if (output->size() > 0)
-    {
-        outputJ = DeserializeJson(output->data(), output->size());
-    }
-    for (auto i = inputJ.begin(); i != inputJ.end(); ++i)
-    {
-        outputJ[i.key()] = i.value();
-    }
-    output = SerializeJson(outputJ);
-}
-*/
 
 VecPtr DataManSerializer::EndSignal(size_t step)
 {
@@ -521,7 +511,6 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l1(m_DataManVarMapMutex);
     std::lock_guard<std::mutex> l2(m_AggregatedMetadataJsonMutex);
-    std::lock_guard<std::mutex> l3(m_ProtectedStepsMutex);
     if (allPreviousSteps)
     {
         std::vector<DmvVecPtrMap::iterator> its;
@@ -530,8 +519,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
         {
             if (it->first < step)
             {
-                if (std::find(m_ProtectedSteps.begin(), m_ProtectedSteps.end(),
-                              it->first) == m_ProtectedSteps.end())
+                if (not IsStepProtected(it->first))
                 {
                     its.push_back(it);
                 }
@@ -554,9 +542,7 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
             {
                 if (stoull(it.key()) < step)
                 {
-                    if (std::find(m_ProtectedSteps.begin(),
-                                  m_ProtectedSteps.end(),
-                                  stoull(it.key())) == m_ProtectedSteps.end())
+                    if (not IsStepProtected(stoull(it.key())))
                     {
                         jits.push_back(it);
                     }
@@ -574,10 +560,13 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
             "DataManSerializer::Erase() trying to erase step " +
                 std::to_string(step),
             true, true);
-        m_DataManVarMap.erase(step);
-        if (m_AggregatedMetadataJson != nullptr)
+        if (not IsStepProtected(step))
         {
-            m_AggregatedMetadataJson.erase(std::to_string(step));
+            m_DataManVarMap.erase(step);
+            if (m_AggregatedMetadataJson != nullptr)
+            {
+                m_AggregatedMetadataJson.erase(std::to_string(step));
+            }
         }
     }
 }
@@ -982,26 +971,25 @@ nlohmann::json DataManSerializer::DeserializeJson(const char *start,
     return message;
 }
 
-void DataManSerializer::ProtectStep(const size_t step)
+void DataManSerializer::ProtectStep(const int64_t step, const int64_t id)
 {
     TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> lDataManVarMapMutex(m_ProtectedStepsMutex);
-    if (std::find(m_ProtectedSteps.begin(), m_ProtectedSteps.end(), step) ==
-        m_ProtectedSteps.end())
-    {
-        m_ProtectedSteps.push_back(step);
-    }
+    m_ProtectedSteps[id] = step;
 }
-
-void DataManSerializer::UnprotectStep(const size_t step)
+bool DataManSerializer::IsStepProtected(const int64_t step)
 {
     TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> lDataManVarMapMutex(m_ProtectedStepsMutex);
-    auto it = std::find(m_ProtectedSteps.begin(), m_ProtectedSteps.end(), step);
-    if (it != m_ProtectedSteps.end())
+    bool ret = false;
+    for (const auto &ps : m_ProtectedSteps)
     {
-        m_ProtectedSteps.erase(it);
+        if (ps.second == step)
+        {
+            ret = true;
+        }
     }
+    return ret;
 }
 
 void DataManSerializer::Log(const int level, const std::string &message,

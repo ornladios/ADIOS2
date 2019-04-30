@@ -69,8 +69,9 @@ void DataManWriter::EndStep()
     {
         m_DataManSerializer[0]->AggregateMetadata(m_MPIComm);
         m_AggregatedMetadataMutex.lock();
+        int64_t stepProvided;
         m_AggregatedMetadata =
-            m_DataManSerializer[0]->GetAggregatedMetadataPack(0);
+            m_DataManSerializer[0]->GetAggregatedMetadataPack(0, stepProvided);
         m_AggregatedMetadataMutex.unlock();
     }
 

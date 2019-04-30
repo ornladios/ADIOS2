@@ -78,69 +78,6 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
         return StepStatus::NotReady;
     }
 
-    /*
-    size_t maxStep = std::numeric_limits<size_t>::min();
-    size_t minStep = std::numeric_limits<size_t>::max();
-
-    for (auto &i : m_MetaDataMap)
-    {
-        if (i.first > maxStep)
-        {
-            maxStep = i.first;
-        }
-        if (i.first < minStep)
-        {
-            minStep = i.first;
-        }
-    }
-
-    if (stepMode == StepMode::NextAvailable)
-    {
-        if (m_CurrentStep < minStep)
-        {
-            m_CurrentStep = minStep;
-        }
-        if (m_CurrentStep > maxStep)
-        {
-            Log(5,
-                "WdmReader::BeginStepIterator() returned NotReady because "
-                "current step is larger than max step in buffer " +
-                    std::to_string(m_CurrentStep) + ">" +
-                    std::to_string(maxStep),
-                true, true);
-            return StepStatus::NotReady;
-        }
-    }
-    else if (stepMode == StepMode::LatestAvailable)
-    {
-        m_CurrentStep = maxStep;
-    }
-    else
-    {
-        throw(std::invalid_argument(
-            "[WdmReader::BeginStep] Step mode is not supported!"));
-    }
-
-    auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
-    if (currentStepIt == m_MetaDataMap.end())
-    {
-        for (int64_t step = m_CurrentStep + 1; step <= maxStep; ++step)
-        {
-            auto currentStepIt = m_MetaDataMap.find(step);
-            if (currentStepIt != m_MetaDataMap.end())
-            {
-                m_CurrentStep = step;
-                vars = currentStepIt->second;
-                break;
-            }
-        }
-    }
-    else
-    {
-        vars = currentStepIt->second;
-    }
-    */
-
     size_t maxStep = std::numeric_limits<size_t>::min();
     for (auto &i : m_MetaDataMap)
     {

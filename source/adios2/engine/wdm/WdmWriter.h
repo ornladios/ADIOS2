@@ -45,7 +45,6 @@ public:
 
 private:
     int m_Channels = 1;
-    int64_t m_QueueLimit = 3000;
     size_t m_DefaultBufferSize = 1024;
     int m_Port = 12307;
     int m_MaxRanksPerNode = 200;
