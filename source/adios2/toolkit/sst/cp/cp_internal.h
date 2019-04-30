@@ -350,11 +350,11 @@ typedef struct _ReturnMetadataInfo
 {
     int DiscardThisTimestep;
     int PendingReaderCount;
+    struct _TimestepMetadataMsg Msg;
     int ReleaseCount;
     ReleaseRecPtr ReleaseList;
     int ReaderCount;
     enum StreamStatus *ReaderStatus;
-    struct _TimestepMetadataMsg Msg;
 } * ReturnMetadataInfo;
 
 /*
