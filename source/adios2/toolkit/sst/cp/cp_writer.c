@@ -307,7 +307,6 @@ static void QueueMaintenance(SstStream Stream)
     CPTimestepList List;
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
-        ;
         CP_verbose(Stream, "Reader %d status %s has last released %ld\n", i,
                    SSTStreamStatusStr[Stream->Readers[i]->ReaderStatus],
                    Stream->Readers[i]->LastReleasedTimestep);
@@ -657,21 +656,18 @@ static void UntagPreciousTimesteps(SstStream Stream)
     }
 }
 
-static void SubRefRangeTimestep(SstStream Stream, long LowRange, long HighRange,
-                                int SetLast)
+static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
 {
     CPTimestepList Last = NULL, List;
     int AnythingRemoved = 0;
     List = Stream->QueuedTimesteps;
     SST_ASSERT_LOCKED();
-    CP_verbose(Stream,
-               "SubRef : Writer-side called with LowRange %d, HighrNge %d \n",
-               LowRange, HighRange);
+    CP_verbose(Stream, "SubRef : Writer-side called with TS %ld\n", Timestep);
     while (List)
     {
         CP_verbose(Stream, "SubRef : Writer-side Timestep %ld \n",
                    List->Timestep);
-        if ((List->Timestep >= LowRange) && (List->Timestep <= HighRange))
+        if (List->Timestep == Timestep)
         {
             List->ReferenceCount--;
             CP_verbose(Stream,
@@ -925,8 +921,7 @@ static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader,
             struct _SentTimestepRec *ItemToFree = List;
             Freed = 1;
             /* per reader release here */
-            SubRefRangeTimestep(Stream, ItemToFree->Timestep,
-                                ItemToFree->Timestep, 1);
+            SubRefTimestep(Stream, ItemToFree->Timestep, 1);
             free(ItemToFree);
             if (Last)
             {
@@ -1857,7 +1852,7 @@ extern void SstInternalProvideTimestep(
 
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         SendTimestepEntryToReaders(Stream, Entry);
-        SubRefRangeTimestep(Stream, Entry->Timestep, Entry->Timestep, 0);
+        SubRefTimestep(Stream, Entry->Timestep, 0);
         QueueMaintenance(Stream);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         TAU_STOP("provide timestep operations");
