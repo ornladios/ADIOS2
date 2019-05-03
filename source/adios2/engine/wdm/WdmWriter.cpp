@@ -29,7 +29,7 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("WdmWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian())
+                      helper::IsLittleEndian(), mpiComm)
 {
     TAU_SCOPED_TIMER_FUNC();
     Init();
@@ -79,10 +79,13 @@ void WdmWriter::EndStep()
     if (m_CurrentStepActive)
     {
         m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-        m_DataManSerializer.AggregateMetadata(m_MPIComm);
+        m_DataManSerializer.AggregateMetadata();
     }
 
-    m_DataManSerializer.Erase(m_CurrentStep - 1, true);
+    if (m_CurrentStep > 5)
+    {
+        m_DataManSerializer.Erase(m_CurrentStep - 5, true);
+    }
 
     Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
         true, true);
@@ -174,12 +177,12 @@ void WdmWriter::ReplyThread(const std::string &address)
                 if (stepRequested == -5) // let writer decide what to send
                 {
                     aggMetadata = m_DataManSerializer.GetAggregatedMetadataPack(
-                        -2, stepProvided);
+                        -2, stepProvided, m_AppID);
                 }
                 else
                 {
                     aggMetadata = m_DataManSerializer.GetAggregatedMetadataPack(
-                        stepRequested, stepProvided);
+                        stepRequested, stepProvided, m_AppID);
                 }
             }
             tpm.SendReply(aggMetadata);

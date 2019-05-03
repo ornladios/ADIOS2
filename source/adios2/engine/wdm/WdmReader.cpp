@@ -29,7 +29,7 @@ WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("WdmReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian()),
+                      helper::IsLittleEndian(), mpiComm),
   m_RepliedMetadata(std::make_shared<std::vector<char>>())
 {
     TAU_SCOPED_TIMER_FUNC();

@@ -334,7 +334,7 @@ TEST_F(WdmEngineTest, BaseTest)
 
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, 10000, adios2::Params());
+        Writer(shape, start, count, 1000, adios2::Params());
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));

@@ -84,7 +84,7 @@ class DataManSerializer
 {
 public:
     DataManSerializer(bool isRowMajor, const bool contiguousMajor,
-                      bool isLittleEndian);
+                      bool isLittleEndian, MPI_Comm mpiComm);
 
     // clear and allocate new buffer for writer
     void New(size_t size);
@@ -119,11 +119,11 @@ public:
     VecPtr GetLocalPack();
 
     // aggregate metadata across all writer ranks and put it into map
-    void AggregateMetadata(const MPI_Comm mpiComm);
+    void AggregateMetadata();
 
     VecPtr GetAggregatedMetadataPack(const int64_t stepRequested,
                                      int64_t &stepProvided,
-                                     const int64_t appID = -1);
+                                     const int64_t appID);
 
     static VecPtr EndSignal(size_t step);
 
@@ -210,7 +210,8 @@ private:
     DmvVecPtrMap m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
 
-    std::map<int64_t, int64_t> m_ProtectedSteps;
+    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsToAggregate;
+    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsAggregated;
     std::mutex m_ProtectedStepsMutex;
 
     // Aggregated metadata json, used in writer, accessed from API thread and
@@ -234,6 +235,9 @@ private:
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
     bool m_EnableStat = true;
+    int m_MpiRank;
+    int m_MpiSize;
+    MPI_Comm m_MpiComm;
 
     int m_Verbosity = 0;
 };
