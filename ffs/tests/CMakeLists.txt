@@ -15,6 +15,10 @@ ADD_EXECUTABLE(marshal_test2 marshal_test2.c)
 TARGET_LINK_LIBRARIES(marshal_test2 ffs)
 ADD_TEST(NAME marshal_test2 COMMAND marshal_test2)
 
+ADD_EXECUTABLE(adios2_bug adios2_bug.c)
+TARGET_LINK_LIBRARIES(adios2_bug ffs)
+ADD_TEST(NAME adios2_bug COMMAND adios2_bug)
+
 foreach (PROG ${PROGS} )
     ADD_EXECUTABLE(${PROG} ${PROG}.c test_funcs.c)
     TARGET_LINK_LIBRARIES(${PROG} ffs)
