@@ -136,7 +136,15 @@ satisfying, but has a similar long-term effect upon the set of steps
 delivered to the readers.)  This value is interpreted by SST Writer engines
 only.
 
-5. ``DataTransport``: Default **varies**.  This string value specifies
+5. ``ReserveQueueLimit``:  Default **0**.  This integer value specifies the
+number of steps which the writer will keep in the queue for the benefit
+of late-arriving readers.  This may consist of timesteps that have
+already been consumed by any readers, as well as timesteps that have not
+yet been consumed.  In some sense this is target queue minimum size,
+while QueueLimit is a maximum size.  This value is interpreted by SST
+Writer engines only. 
+
+6. ``DataTransport``: Default **varies**.  This string value specifies
 the underlying network communication mechanism to use for exchanging
 data in SST.  Generally this is chosen by SST based upon what is
 available on the current platform.  However, specifying this engine
@@ -152,7 +160,7 @@ applications running on different interconnects, the Wide Area Network
 (WAN) option should be chosen.  This value is interpreted by both SST
 Writer and Reader engines.
 
-6. ``DataTransport``: Default **tcp**.  This string value specifies
+7. ``ControlTransport``: Default **tcp**.  This string value specifies
 the underlying network communication mechanism to use for performing
 control operations in SST.  SST can be configured to standard TCP
 sockets, which are very reliable and efficient, but which are limited
@@ -164,7 +172,7 @@ equivalent to **scalable**.  Generally both the reader and writer
 should be using the same control transport.  This value is interpreted
 by both SST Writer and Reader engines.
 
-7. ``NetworkInterface``: Default **NULL**.  In situations in which
+8. ``NetworkInterface``: Default **NULL**.  In situations in which
 there are multiple possible network interfaces available to SST, this
 string value specifies which should be used to generate SST's contact
 information for writers.  Generally this should *NOT* be specified
@@ -177,7 +185,7 @@ will result in SST generating contact information that uses the
 network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
-8. ``FirstTimestepPrecious``: Default **FALSE**.
+9. ``FirstTimestepPrecious``: Default **FALSE**.
 FirstTimestepPrecious is a boolean parameter that affects the queueing
 of the first timestep presented to the SST Writer engine. If
 FirstTimestepPrecious is **TRUE***, then the first timestep is
@@ -187,7 +195,7 @@ can be used to convey run parameters or other information that every
 reader may need despite joining later in a data stream.  Note that
 this queued first timestep does count against the QueueLimit parameter
 above, so if a QueueLimit is specified, it should be a value larger
-than 1.  Further note while specifing this parameter guarantees that
+than 1.  Further note while specifying this parameter guarantees that
 the preserved first timestep will be made available to new readers,
 other reader-side operations (like requesting the LatestAvailable
 timestep in BeginStep) might still cause the timestep to be skipped.
@@ -201,6 +209,7 @@ This value is interpreted by only by the SST Writer engine.
  RegistrationMethod       string                **File**, Screen
  QueueLimit               integer               **0** (no queue limits)
  QueueFullPolicy          string                **Block**, Discard
+ ReserveQueueLimit        integer               **0** (no queue limits)
  DataTransport            string                **default varies by platform**, RDMA, WAN
  ControlTransport         string                **TCP**, Scalable
  NetworkInterface         string                **NULL**
