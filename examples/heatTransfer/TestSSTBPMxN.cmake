@@ -27,8 +27,7 @@ set_property(TEST HeatTransfer.SST.BP.Dump.MxN
 )
 
 add_test(NAME HeatTransfer.SST.BP.Validate.MxN
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.SST.BP.Dump.MxN.txt
 )
