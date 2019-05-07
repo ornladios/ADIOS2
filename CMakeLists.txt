@@ -182,15 +182,6 @@ add_subdirectory(source)
 add_subdirectory(bindings)
 
 #------------------------------------------------------------------------------#
-# Examples
-#------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
-option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
-if(ADIOS2_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif()
-
-#------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
 if(DEFINED BUILD_TESTING)
@@ -205,8 +196,22 @@ option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree"
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
+  find_program(DIFF_EXECUTABLE diff)
+  if(NOT DIFF_EXECUTABLE)
+    message(FATAL_ERROR "diff command is required for testing")
+  endif()
+
   enable_testing()
   add_subdirectory(testing)
+endif()
+
+#------------------------------------------------------------------------------#
+# Examples
+#------------------------------------------------------------------------------#
+option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
+option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
+if(ADIOS2_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 #------------------------------------------------------------------------------#

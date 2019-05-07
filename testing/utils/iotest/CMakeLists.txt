@@ -41,8 +41,7 @@ set_property(TEST Utils.IOTest.Pipe2.BP.DumpWrite
 )
 
 add_test(NAME Utils.IOTest.Pipe2.BP.ValidateWrite
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.BP.Write.bpls.txt
     ${WORKDIR}/IOTest.Pipe2.BP.Write.bpls.txt
   WORKING_DIRECTORY ${WORKDIR} 
@@ -72,8 +71,7 @@ set_property(TEST Utils.IOTest.Pipe2.BP.DumpRead
 )
 
 add_test(NAME Utils.IOTest.Pipe2.BP.ValidateRead
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.BP.Read.bpls.txt
     ${WORKDIR}/IOTest.Pipe2.BP.Read.bpls.txt
   WORKING_DIRECTORY ${WORKDIR} 
@@ -110,8 +108,7 @@ if (ADIOS2_HAVE_HDF5)
   )
 
   add_test(NAME Utils.IOTest.Pipe2.HDF5.ValidateWrite
-    COMMAND ${CMAKE_COMMAND}
-      -E compare_files
+    COMMAND ${DIFF_EXECUTABLE} -u
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Write.bpls.txt
       ${WORKDIR}/IOTest.Pipe2.HDF5.Write.bpls.txt
     WORKING_DIRECTORY ${WORKDIR} 
@@ -141,8 +138,7 @@ if (ADIOS2_HAVE_HDF5)
   )
 
   add_test(NAME Utils.IOTest.Pipe2.HDF5.ValidateRead
-    COMMAND ${CMAKE_COMMAND}
-      -E compare_files
+    COMMAND ${DIFF_EXECUTABLE} -u
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.HDF5.Read.bpls.txt
       ${WORKDIR}/IOTest.Pipe2.HDF5.Read.bpls.txt
     WORKING_DIRECTORY ${WORKDIR} 
@@ -182,8 +178,7 @@ if (${HAVE_2_PROCS})
   )
 
   add_test(NAME Utils.IOTest.Pipe2.ValidateInSituMPI
-    COMMAND ${CMAKE_COMMAND}
-      -E compare_files
+    COMMAND ${DIFF_EXECUTABLE} -u
       ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.InSituMPI.bpls.txt
       ${WORKDIR}/IOTest.Pipe2.InSituMPI.bpls.txt
     WORKING_DIRECTORY ${WORKDIR} 
@@ -219,8 +214,7 @@ if (${HAVE_2_PROCS})
 	)
 	
 	add_test(NAME Utils.IOTest.Pipe2.ValidateSST
-	  COMMAND ${CMAKE_COMMAND}
-	    -E compare_files
+          COMMAND ${DIFF_EXECUTABLE} -u
 	    ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SST.bpls.txt
 	    ${WORKDIR}/IOTest.Pipe2.SST.bpls.txt
 	  WORKING_DIRECTORY ${WORKDIR} 

@@ -33,8 +33,7 @@ set_property(TEST Utils.Bpls.h.Dump
 if(ADIOS2_HAVE_MPI)
 
 add_test(NAME Utils.Bpls.h.Validate
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsh.expected.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsh.result.txt
 )
@@ -72,8 +71,7 @@ set_property(TEST Utils.Bpls.la.Dump
 if(ADIOS2_HAVE_MPI)
 
 add_test(NAME Utils.Bpls.la.Validate
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsla.expected.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsla.result.txt
 )
@@ -99,8 +97,7 @@ set_property(TEST Utils.Bpls.Al.Dump
 if(ADIOS2_HAVE_MPI)
 
 add_test(NAME Utils.Bpls.Al.Validate
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsAl.expected.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsAl.result.txt
 )
@@ -125,8 +122,7 @@ set_property(TEST Utils.Bpls.ldDav.Dump
 if(ADIOS2_HAVE_MPI)
 
 add_test(NAME Utils.Bpls.ldDav.Validate
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldDav.expected.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsldDav.result.txt
 )
@@ -153,8 +149,7 @@ set_property(TEST Utils.Bpls.ldDavvv.Dump
 if(ADIOS2_HAVE_MPI)
 
 add_test(NAME Utils.Bpls.ldDavvv.Validate
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldDavvv.expected.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsldDavvv.result.txt
 )
@@ -179,8 +174,7 @@ endif(ADIOS2_HAVE_MPI)
 #)
 #
 #add_test(NAME Utils.Bpls.ldvarI16.Validate
-#  COMMAND ${CMAKE_COMMAND}
-#    -E compare_files
+#  COMMAND ${DIFF_EXECUTABLE} -u
 #    ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldvarI16.expected.txt
 #    ${CMAKE_CURRENT_BINARY_DIR}/TestUtilsCWriter.bplsldvarI16.result.txt
 #)

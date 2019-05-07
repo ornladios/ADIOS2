@@ -33,8 +33,7 @@ set_property(TEST HeatTransfer.BPFile.Dump.Mx1_zfp
 
 # TODO: find a validate method to a certain accuracy for lossy compression
 # add_test(NAME HeatTransfer.BPFile.Validate.Mx1_zfp
-#  COMMAND ${CMAKE_COMMAND}
-#    -E compare_files
+#  COMMAND ${DIFF_EXECUTABLE} -u
 #    ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
 #    ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.BPFile.Dump.Mx1_zfp.txt
 #)
