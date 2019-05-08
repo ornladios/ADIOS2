@@ -163,7 +163,8 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
                     "WdmReader::BeginStep() returned EndOfStream because of "
                     "timeout.",
                     true, true);
-                return StepStatus::EndOfStream;
+                --m_CurrentStep;
+                return StepStatus::NotReady;
             }
         }
     }
