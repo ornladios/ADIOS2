@@ -76,7 +76,7 @@ static adios2::Params ParseEngineParams(std::string Input)
 // ADIOS2 Sst read
 TEST_F(SstReadTest, ADIOS2SstRead)
 {
-    const size_t SIZE_T_MAX = std::numeric_limits<size_t>::max();
+    const size_t MYSIZE_T_MAX = std::numeric_limits<size_t>::max();
 
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -101,7 +101,18 @@ TEST_F(SstReadTest, ADIOS2SstRead)
     io.SetEngine(engine);
     io.SetParameters(engineParams);
 
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+    adios2::Engine engine;
+    if (Latest)
+    {
+        engine = io.Open(
+            fname,
+            adios2::Mode::ReadLatest); // always the the most recently available
+                                       // timestep, not necessarily next
+    }
+    else
+    {
+        engine = io.Open(fname, adios2::Mode::Read);
+    }
 
     size_t ExpectedStep = SIZE_T_MAX;
 
@@ -136,7 +147,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             /* would like to do blocking, but API is inconvenient, so specify an
              * hour timeout */
             Status =
-                engine.BeginStep(adios2::StepMode::LatestAvailable, 60 * 60.0);
+                engine.BeginStep(adios2::StepMode::NextAvailable, 60 * 60.0);
         }
         else
         {
@@ -153,7 +164,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
         if (FirstTimestepMustBeZero)
         {
-            if (ExpectedStep == SIZE_T_MAX)
+            if (ExpectedStep == MYSIZE_T_MAX)
             {
                 EXPECT_EQ(currentStep, 0);
                 std::cout << "Got my expected first timestep Zero!"
@@ -167,9 +178,9 @@ TEST_F(SstReadTest, ADIOS2SstRead)
                 ExpectedStep = currentStep; // starting out
             }
         }
-        if ((ExpectedStep == SIZE_T_MAX) || Latest || Discard)
+        if ((ExpectedStep == MYSIZE_T_MAX) || Latest || Discard)
         {
-            if ((ExpectedStep != SIZE_T_MAX) && (ExpectedStep != currentStep))
+            if ((ExpectedStep != MYSIZE_T_MAX) && (ExpectedStep != currentStep))
             {
                 SkippedSteps++;
             }
@@ -321,7 +332,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
 
         ++ExpectedStep;
-        if (NSteps != SIZE_T_MAX)
+        if (NSteps != MYSIZE_T_MAX)
         {
             NSteps--;
             if (NSteps == 0)

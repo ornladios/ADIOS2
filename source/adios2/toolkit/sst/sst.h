@@ -39,11 +39,24 @@ typedef enum
 /* The SST version of enum class StepMode in ADIOSTypes.h */
 typedef enum
 {
-    SstAppend, // writer modes ignored in SST
-    SstUpdate, // writer modes ignored in SST
-    SstNextAvailable,
-    SstLatestAvailable // reader advance mode
+    SstAppend,       // writer modes ignored in SST
+    SstUpdate,       // writer modes ignored in SST
+    SstNextAvailable // reader advance mode in SST
 } SstStepMode;
+
+/* The SST version of enum class Mode in ADIOSTypes.h */
+typedef enum
+{
+    SstOpenUndefined,
+    // open modes
+    SstOpenWrite,
+    SstOpenRead,
+    SstOpenReadLatest,
+    SstOpenAppend,
+    // launch execution modes
+    SstOpenSync,
+    SstOpenDeferred
+} SstOpenMode;
 
 /*
  * Struct that represents statistics tracked by SST
@@ -103,7 +116,7 @@ extern void SstWriterClose(SstStream stream);
  *  Reader-side operations
  */
 extern SstStream SstReaderOpen(const char *filename, SstParams Params,
-                               MPI_Comm comm);
+                               SstOpenMode Mode, MPI_Comm comm);
 extern void SstReaderGetParams(SstStream stream,
                                SstMarshalMethod *WriterMarshalMethod);
 extern SstFullMetadata SstGetCurMetadata(SstStream stream);
@@ -112,8 +125,7 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
 extern void SstReleaseStep(SstStream stream);
-extern SstStatusValue SstAdvanceStep(SstStream stream, SstStepMode mode,
-                                     const float timeout_sec);
+extern SstStatusValue SstAdvanceStep(SstStream stream, const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
 extern long SstCurrentStep(SstStream s);
 

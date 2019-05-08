@@ -210,6 +210,17 @@ std::string OpenModeToString(const Mode openMode, const bool oneLetter) noexcept
             openModeString = "Read";
         }
     }
+    else if (openMode == Mode::ReadLatest)
+    {
+        if (oneLetter)
+        {
+            openModeString = "l";
+        }
+        else
+        {
+            openModeString = "ReadLatest";
+        }
+    }
     return openModeString;
 }
 

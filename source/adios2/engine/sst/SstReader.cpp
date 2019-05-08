@@ -26,16 +26,35 @@ namespace core
 namespace engine
 {
 
-SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
+SstReader::SstReader(IO &io, const std::string &name, const Mode Mode,
                      MPI_Comm mpiComm)
-: Engine("SstReader", io, name, mode, mpiComm)
+: Engine("SstReader", io, name, Mode, mpiComm)
 {
+    SstOpenMode OpenMode = SstOpenUndefined;
     char *cstr = new char[name.length() + 1];
     std::strcpy(cstr, name.c_str());
 
     Init();
 
-    m_Input = SstReaderOpen(cstr, &Params, mpiComm);
+    switch (Mode)
+    {
+    case adios2::Mode::Undefined:
+    case adios2::Mode::Write:
+    case adios2::Mode::Append:
+    case adios2::Mode::Sync:
+    case adios2::Mode::Deferred:
+        throw std::invalid_argument(
+            "ERROR: SstReader::Open inappropriate StepMode specified" +
+            m_EndMessage);
+    case adios2::Mode::Read:
+        OpenMode = SstOpenRead;
+        break;
+    case adios2::Mode::ReadLatest:
+        OpenMode = SstOpenReadLatest;
+        break;
+    }
+
+    m_Input = SstReaderOpen(cstr, &Params, OpenMode, mpiComm);
     if (!m_Input)
     {
         throw std::invalid_argument("ERROR: SstReader did not find active "
@@ -191,13 +210,10 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     case adios2::StepMode::NextAvailable:
         StepMode = SstNextAvailable;
         break;
-    case adios2::StepMode::LatestAvailable:
-        StepMode = SstLatestAvailable;
-        break;
     }
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
-    result = SstAdvanceStep(m_Input, StepMode, timeout_sec);
+    result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;

@@ -47,9 +47,6 @@ adios2::StepMode ToStepMode(const adios2_step_mode mode,
     case (adios2_step_mode_append):
         stepModeCpp = adios2::StepMode::Append;
         break;
-    case (adios2_step_mode_latest_available):
-        stepModeCpp = adios2::StepMode::LatestAvailable;
-        break;
     case (adios2_step_mode_update):
         stepModeCpp = adios2::StepMode::Update;
         break;

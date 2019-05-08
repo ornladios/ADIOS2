@@ -97,7 +97,8 @@ void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
 {
     if (m_DebugMode)
     {
-        CommonChecks(variable, data, {{Mode::Read}}, "in call to Get");
+        CommonChecks(variable, data, {{Mode::Read, Mode::ReadLatest}},
+                     "in call to Get");
     }
 
     switch (launch)

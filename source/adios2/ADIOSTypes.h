@@ -58,6 +58,7 @@ enum class Mode
     // open modes
     Write,
     Read,
+    ReadLatest,
     Append,
     // launch execution modes
     Sync,
@@ -87,9 +88,8 @@ enum class ReadMode
 enum class StepMode
 {
     Append,
-    Update, // writer advance mode
-    NextAvailable,
-    LatestAvailable // reader advance mode
+    Update,       // writer advance mode
+    NextAvailable // reader advance mode
 };
 
 enum class StepStatus

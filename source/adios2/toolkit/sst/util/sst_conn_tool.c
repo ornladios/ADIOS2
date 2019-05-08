@@ -314,7 +314,8 @@ static void do_connect()
         Params.RegistrationMethod = SstRegisterFile;
     }
 
-    reader = SstReaderOpen("SstConnToolTemp", &Params, MPI_COMM_WORLD);
+    reader =
+        SstReaderOpen("SstConnToolTemp", &Params, SstOpenRead, MPI_COMM_WORLD);
     if (reader)
     {
         printf("Connection success, all is well!\n");

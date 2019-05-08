@@ -181,6 +181,7 @@ struct _SstStream
     SstFullMetadata CurrentMetadata;
     struct _SstParams *WriterConfigParams;
     void *ParamsBlock;
+    int LatestTimestepMode;
     long DiscardPriorTimestep; /* timesteps numerically less than this will be
                                   discarded with prejudice */
 

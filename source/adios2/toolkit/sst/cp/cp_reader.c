@@ -220,7 +220,8 @@ static int HasAllPeers(SstStream Stream)
     }
 }
 
-SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
+SstStream SstReaderOpen(const char *Name, SstParams Params, SstOpenMode Mode,
+                        MPI_Comm comm)
 {
     SstStream Stream;
     void *dpInfo;
@@ -237,6 +238,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->Role = ReaderRole;
     Stream->mpiComm = comm;
 
+    Stream->LatestTimestepMode = (Mode == SstOpenReadLatest);
     MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
@@ -1127,7 +1129,7 @@ extern void SstReleaseStep(SstStream Stream)
  * wait for metadata for Timestep indicated to arrive, or fail with EndOfStream
  * or Error
  */
-extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
+extern SstStatusValue SstAdvanceStepPeer(SstStream Stream,
                                          const float timeout_sec)
 {
 
@@ -1141,7 +1143,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         Stream->CurrentMetadata = NULL;
     }
 
-    if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
+    if ((timeout_sec >= 0.0) || (Stream->LatestTimestepMode))
     {
         struct _GlobalOpInfo
         {
@@ -1157,13 +1159,13 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         {
             global_info = malloc(sizeof(my_info) * Stream->CohortSize);
             CP_verbose(Stream,
-                       "In special case of advancestep, mode is %d, "
+                       "In special case of advancestep, latest mode is %d, "
                        "Timeout Sec is %g, flt_max is %g\n",
-                       mode, timeout_sec, FLT_MAX);
+                       Stream->LatestTimestepMode, timeout_sec, FLT_MAX);
         }
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
         my_info.timeout_sec = timeout_sec;
-        my_info.mode = mode;
+        my_info.mode = Stream->LatestTimestepMode;
         MPI_Gather(&my_info, sizeof(my_info), MPI_BYTE, global_info,
                    sizeof(my_info), MPI_BYTE, 0, Stream->mpiComm);
         if (Stream->Rank == 0)
@@ -1222,7 +1224,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                  * others will see shortly.  I'm going to go with Biggest
                  * until I have a reason to prefer one or the other.
                  */
-                if (mode == SstLatestAvailable)
+                if (Stream->LatestTimestepMode)
                 {
                     // latest available
                     CP_verbose(Stream,
@@ -1267,7 +1269,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
             CP_verbose(Stream, "AdvancestepPeer timing out on no data\n");
             return SstTimeout;
         }
-        if (mode == SstLatestAvailable)
+        if (Stream->LatestTimestepMode)
         {
             // latest available
             /* release all timesteps from before NextTimestep, then fall
@@ -1336,7 +1338,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
     }
 }
 
-extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
+extern SstStatusValue SstAdvanceStepMin(SstStream Stream,
                                         const float timeout_sec)
 {
     TSMetadataDistributionMsg ReturnData;
@@ -1352,7 +1354,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
 
         memset(&msg, 0, sizeof(msg));
         msg.TSmsg = NULL;
-        if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
+        if ((timeout_sec >= 0.0) || (Stream->LatestTimestepMode))
         {
             long NextTimestep = -1;
             long LatestTimestep = MaxQueuedMetadata(Stream);
@@ -1389,7 +1391,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             }
             else
             {
-                if (mode == SstLatestAvailable)
+                if (Stream->LatestTimestepMode)
                 {
                     // latest available
                     CP_verbose(Stream,
@@ -1422,7 +1424,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                 CP_verbose(Stream, "AdvancestepMin timing out on no data\n");
                 return_value = SstTimeout;
             }
-            else if (mode == SstLatestAvailable)
+            else if (Stream->LatestTimestepMode)
             {
                 // latest available
                 /* release all timesteps from before NextTimestep, then fall
@@ -1544,8 +1546,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     return ret;
 }
 
-extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
-                                     const float timeout_sec)
+extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
 {
 
     if (Stream->CurrentMetadata != NULL)
@@ -1556,11 +1557,11 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
 
     if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
     {
-        return SstAdvanceStepPeer(Stream, mode, timeout_sec);
+        return SstAdvanceStepPeer(Stream, timeout_sec);
     }
     else
     {
-        return SstAdvanceStepMin(Stream, mode, timeout_sec);
+        return SstAdvanceStepMin(Stream, timeout_sec);
     }
 }
 

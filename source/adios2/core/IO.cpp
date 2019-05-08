@@ -437,7 +437,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
      */
     if ((engineTypeLC == "bpfile" || engineTypeLC == "bp"))
     {
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
@@ -456,7 +456,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 
     if (isDefaultEngine || engineTypeLC == "bp3")
     {
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
         {
             engine =
                 std::make_shared<engine::BP3Reader>(*this, name, mode, mpiComm);
@@ -469,7 +469,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     }
     else if (engineTypeLC == "bp4")
     {
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
         {
             engine =
                 std::make_shared<engine::BP4Reader>(*this, name, mode, mpiComm);
@@ -484,7 +484,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_HDF5
 #if H5_VERSION_GE(1, 11, 0)
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
             engine = std::make_shared<engine::HDF5ReaderP>(*this, name, mode,
                                                            mpiComm);
         else
@@ -502,7 +502,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     else if (engineTypeLC == "dataman")
     {
 #ifdef ADIOS2_HAVE_DATAMAN
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
             engine = std::make_shared<engine::DataManReader>(*this, name, mode,
                                                              mpiComm);
         else
@@ -531,7 +531,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     else if (engineTypeLC == "sst" || engineTypeLC == "effis")
     {
 #ifdef ADIOS2_HAVE_SST
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
             engine =
                 std::make_shared<engine::SstReader>(*this, name, mode, mpiComm);
         else
@@ -559,7 +559,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     else if (engineTypeLC == "insitumpi")
     {
 #ifdef ADIOS2_HAVE_MPI
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
             engine = std::make_shared<engine::InSituMPIReader>(*this, name,
                                                                mode, mpiComm);
         else
@@ -572,7 +572,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     }
     else if (engineTypeLC == "skeleton")
     {
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
             engine = std::make_shared<engine::SkeletonReader>(*this, name, mode,
                                                               mpiComm);
         else
@@ -581,7 +581,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     }
     else if (engineTypeLC == "inline")
     {
-        if (mode == Mode::Read)
+        if ((mode == Mode::Read) || (mode == Mode::ReadLatest))
             engine = std::make_shared<engine::InlineReader>(*this, name, mode,
                                                             mpiComm);
         else
@@ -645,7 +645,8 @@ void IO::FlushAll()
     for (auto &enginePair : m_Engines)
     {
         auto &engine = enginePair.second;
-        if (engine->OpenMode() != Mode::Read)
+        if ((engine->OpenMode() != Mode::Read) ||
+            (engine->OpenMode() != Mode::ReadLatest))
         {
             enginePair.second->Flush();
         }

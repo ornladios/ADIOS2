@@ -37,7 +37,8 @@ Mode Engine::OpenMode() const noexcept { return m_OpenMode; }
 
 StepStatus Engine::BeginStep()
 {
-    if (m_OpenMode == Mode::Read)
+    if ((m_OpenMode == Mode::Read) || (m_OpenMode == Mode::ReadLatest))
+
     {
         return BeginStep(StepMode::NextAvailable, -1.0);
     }

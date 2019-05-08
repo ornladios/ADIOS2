@@ -61,7 +61,7 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
 
         m_Profiler.Bytes.emplace("write", 0);
     }
-    else if (openMode == Mode::Read)
+    else if ((openMode == Mode::Read) || (openMode == Mode::ReadLatest))
     {
         m_Profiler.Timers.emplace(
             "read", profiling::Timer("read", timeUnit, m_DebugMode));
