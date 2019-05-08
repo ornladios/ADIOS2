@@ -1103,6 +1103,7 @@ SstStream CP_newStream()
     {
         Stream->CPVerbose = 1;
     }
+    Stream->CPVerbose = 1;
     return Stream;
 }
 
