@@ -29,7 +29,7 @@ WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("WdmWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian())
+                      helper::IsLittleEndian(), mpiComm)
 {
     TAU_SCOPED_TIMER_FUNC();
     Init();
@@ -47,38 +47,8 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     ++m_CurrentStep;
     if (m_CurrentStep % m_StepsPerAggregation == 0)
     {
-        int64_t stepToErase = m_CurrentStep - m_QueueLimit;
-        if (stepToErase >= 0)
-        {
-            Log(5,
-                "WdmWriter::BeginStep() reaching max buffer steps, removing "
-                "Step " +
-                    std::to_string(stepToErase),
-                true, true);
-            m_DataManSerializer.Erase(stepToErase);
-        }
-
-        /*
-           else if (m_QueueFullPolicy == "block")
-           {
-           auto startTime = std::chrono::system_clock::now();
-           while (m_DataManSerializer.Steps() > m_QueueLimit)
-           {
-           auto nowTime = std::chrono::system_clock::now();
-           auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-           nowTime - startTime);
-           if (duration.count() > timeoutSeconds)
-           {
-           Log(5, "WdmWriter::BeginStep() returned NotReady", true, true);
-           return StepStatus::NotReady;
-           }
-           }
-           }
-           */
-
         m_CurrentStepActive = true;
         m_DataManSerializer.New(m_DefaultBufferSize);
-
         if (not m_AttributesSet)
         {
             m_DataManSerializer.PutAttributes(m_IO);
@@ -109,7 +79,12 @@ void WdmWriter::EndStep()
     if (m_CurrentStepActive)
     {
         m_DataManSerializer.PutPack(m_DataManSerializer.GetLocalPack());
-        m_DataManSerializer.AggregateMetadata(m_MPIComm);
+        m_DataManSerializer.AggregateMetadata();
+    }
+
+    if (m_CurrentStep > 5)
+    {
+        m_DataManSerializer.Erase(m_CurrentStep - 5, true);
     }
 
     Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
@@ -157,14 +132,6 @@ void WdmWriter::InitParameters()
         {
             m_Verbosity = std::stoi(value);
         }
-        else if (key == "queuelimit")
-        {
-            m_QueueLimit = stoll(value);
-            if (m_QueueLimit < 100)
-            {
-                m_QueueLimit = 100;
-            }
-        }
         else if (key == "port")
         {
             m_Port = std::stoi(value);
@@ -200,21 +167,22 @@ void WdmWriter::ReplyThread(const std::string &address)
         }
         if (request->size() == 2 * sizeof(int64_t))
         {
-            //            int64_t reader_id = reinterpret_cast<int64_t
-            //            *>(request->data())[0];
-            int64_t step = reinterpret_cast<int64_t *>(request->data())[1];
+            int64_t reader_id = reinterpret_cast<int64_t *>(request->data())[0];
+            int64_t stepRequested =
+                reinterpret_cast<int64_t *>(request->data())[1];
             std::shared_ptr<std::vector<char>> aggMetadata = nullptr;
+            int64_t stepProvided = -1;
             while (aggMetadata == nullptr)
             {
-                if (step == -5) // let writer decide what to send
+                if (stepRequested == -5) // let writer decide what to send
                 {
-                    aggMetadata =
-                        m_DataManSerializer.GetAggregatedMetadataPack(-2);
+                    aggMetadata = m_DataManSerializer.GetAggregatedMetadataPack(
+                        -2, stepProvided, m_AppID);
                 }
                 else
                 {
-                    aggMetadata =
-                        m_DataManSerializer.GetAggregatedMetadataPack(step);
+                    aggMetadata = m_DataManSerializer.GetAggregatedMetadataPack(
+                        stepRequested, stepProvided, m_AppID);
                 }
             }
             tpm.SendReply(aggMetadata);

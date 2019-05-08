@@ -84,7 +84,7 @@ class DataManSerializer
 {
 public:
     DataManSerializer(bool isRowMajor, const bool contiguousMajor,
-                      bool isLittleEndian);
+                      bool isLittleEndian, MPI_Comm mpiComm);
 
     // clear and allocate new buffer for writer
     void New(size_t size);
@@ -119,9 +119,11 @@ public:
     VecPtr GetLocalPack();
 
     // aggregate metadata across all writer ranks and put it into map
-    void AggregateMetadata(const MPI_Comm mpiComm);
+    void AggregateMetadata();
 
-    VecPtr GetAggregatedMetadataPack(const int64_t step);
+    VecPtr GetAggregatedMetadataPack(const int64_t stepRequested,
+                                     int64_t &stepProvided,
+                                     const int64_t appID);
 
     static VecPtr EndSignal(size_t step);
 
@@ -139,15 +141,13 @@ public:
 
     void Erase(const size_t step, const bool allPreviousSteps = false);
 
-    void ProtectStep(const size_t step);
-    void UnprotectStep(const size_t step);
+    bool IsStepProtected(const int64_t step);
 
     DmvVecPtr GetMetaData(const size_t step);
 
     const DmvVecPtrMap GetMetaData();
 
     void PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm);
-    //    void AccumulateAggregatedMetadata(const VecPtr input, VecPtr output);
 
     int PutDeferredRequest(const std::string &variable, const size_t step,
                            const Dims &start, const Dims &count, void *data);
@@ -168,6 +168,8 @@ private:
     template <class T>
     bool PutBZip2(nlohmann::json &metaj, size_t &datasize, const T *inputData,
                   const Dims &varCount, const Params &params);
+
+    void ProtectStep(const int64_t step, const int64_t id);
 
     template <class T>
     void PutAttribute(const core::Attribute<T> &attribute);
@@ -208,7 +210,8 @@ private:
     DmvVecPtrMap m_DataManVarMap;
     std::mutex m_DataManVarMapMutex;
 
-    std::vector<size_t> m_ProtectedSteps;
+    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsToAggregate;
+    std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsAggregated;
     std::mutex m_ProtectedStepsMutex;
 
     // Aggregated metadata json, used in writer, accessed from API thread and
@@ -232,6 +235,9 @@ private:
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;
     bool m_EnableStat = true;
+    int m_MpiRank;
+    int m_MpiSize;
+    MPI_Comm m_MpiComm;
 
     int m_Verbosity = 0;
 };
