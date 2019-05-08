@@ -211,6 +211,8 @@ static FMField CP_DP_ArrayReaderList[] = {
      FMOffset(struct _CombinedReaderInfo *, CP_ReaderInfo)},
     {"DP_ReaderInfo", "(*DP_STRUCT)[ReaderCohortSize]", 0,
      FMOffset(struct _CombinedReaderInfo *, DP_ReaderInfo)},
+    {"RankZeroID", "integer", sizeof(void *),
+     FMOffset(struct _CombinedReaderInfo *, RankZeroID)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DP_ReaderArrayStructs[] = {
@@ -347,9 +349,42 @@ static FMField TimestepMetadataDistributionList[] = {
      FMOffset(struct _TimestepMetadataDistributionMsg *, TSmsg)},
     {NULL, NULL, 0, 0}};
 
+static FMField ReleaseRecList[] = {{"Timestep", "integer", sizeof(long),
+                                    FMOffset(struct _ReleaseRec *, Timestep)},
+                                   {"Reader", "integer", sizeof(void *),
+                                    FMOffset(struct _ReleaseRec *, Reader)},
+                                   {NULL, NULL, 0, 0}};
+
+static FMField ReturnMetadataInfoList[] = {
+    {"DiscardThisTimestep", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, DiscardThisTimestep)},
+    {"PendingReaderCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, PendingReaderCount)},
+    {"ReleaseCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, ReleaseCount)},
+    {"ReleaseList", "ReleaseRec[ReleaseCount]", sizeof(struct _ReleaseRec),
+     FMOffset(struct _ReturnMetadataInfo *, ReleaseList)},
+    {"ReaderCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
+    {"ReaderStatus", "integer[ReaderCount]", sizeof(enum StreamStatus),
+     FMOffset(struct _ReturnMetadataInfo *, ReaderStatus)},
+    {"Msg", "timestepMetadata", sizeof(struct _TimestepMetadataMsg),
+     FMOffset(struct _ReturnMetadataInfo *, Msg)},
+    {NULL, NULL, 0, 0}};
+
 static FMStructDescRec TimestepMetadataDistributionStructs[] = {
     {"TimestepDistribution", TimestepMetadataDistributionList,
      sizeof(struct _TimestepMetadataDistributionMsg), NULL},
+    {"timestepMetadata", TimestepMetadataList,
+     sizeof(struct _TimestepMetadataMsg), NULL},
+    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
+    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
+    {NULL, NULL, 0, NULL}};
+
+static FMStructDescRec ReturnMetadataInfoStructs[] = {
+    {"ReturnMetadataInfo", ReturnMetadataInfoList,
+     sizeof(struct _TimestepMetadataDistributionMsg), NULL},
+    {"ReleaseRec", ReleaseRecList, sizeof(struct _ReleaseRec), NULL},
     {"timestepMetadata", TimestepMetadataList,
      sizeof(struct _TimestepMetadataMsg), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
@@ -603,8 +638,8 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
     // FFSTypeHandle ffs_type = FFSTypeHandle_from_encode(context, Buffer);
 
     FFSdecode_in_place(context, Buffer, &RetVal);
-    // printf("Decode for rank %d is : \n", Stream->rank);
-    // FMdump_data(FMFormat_of_original(ffs_type), RetVal, 1024000);
+    //    printf("Decode for rank %d is : \n", Stream->Rank);
+    //    FMdump_data(FMFormat_of_original(Type), RetVal, 1024000);
     *RetDataBlock = Buffer;
     return RetVal;
 }
@@ -788,6 +823,14 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
         TimestepMetadataDistributionStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
     CPInfo->TimestepDistributionFormat =
+        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
+    AddCustomStruct(CPInfo, CombinedMetadataStructs);
+
+    /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
+        ReturnMetadataInfoStructs, NULL, DPInfo->TimestepInfoFormats);
+    f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
+    CPInfo->ReturnMetadataInfoFormat =
         FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(CPInfo, CombinedMetadataStructs);

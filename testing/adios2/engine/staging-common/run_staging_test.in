@@ -81,7 +81,7 @@ fi
 # remove any lingering engine contact files (IF YOU ADD AN ENGINE, ADD TO THIS LIST)
 rm -f $filename.{sst,other}
 
-use_mpmd=1;
+use_mpmd=0;
 if [ $reader_delay -ne 0 ] ; then
     use_mpmd=0;
 fi

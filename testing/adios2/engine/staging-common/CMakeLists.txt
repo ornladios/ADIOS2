@@ -107,7 +107,7 @@ set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestRe
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;DelayedReaderBlocking_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
+  set (MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
   if (ADIOS_HAVE_Fortran)
     set (MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()

@@ -113,6 +113,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
         adios2::StepStatus Status;
 
+        ASSERT_FALSE(SstReadTest::HasNonfatalFailure()); // exit if we've failed
+                                                         // something
         if (NonBlockingBeginStep)
         {
             Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);

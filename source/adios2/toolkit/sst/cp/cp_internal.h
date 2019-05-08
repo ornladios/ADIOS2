@@ -15,6 +15,7 @@ typedef struct _CP_GlobalInfo
     CMFormat WriterResponseFormat;
     FFSTypeHandle PerRankMetadataFormat;
     FFSTypeHandle TimestepDistributionFormat;
+    FFSTypeHandle ReturnMetadataInfoFormat;
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
@@ -55,13 +56,22 @@ enum StreamStatus
 static char *SSTStreamStatusStr[] = {"NotOpen", "Established", "PeerClosed",
                                      "PeerFailed", "Closed"};
 
+struct _SentTimestepRec
+{
+    long Timestep;
+    struct _SentTimestepRec *Next;
+};
+
 typedef struct _WS_ReaderInfo
 {
     SstStream ParentStream;
     enum StreamStatus ReaderStatus;
+    void *RankZeroID;
     long StartingTimestep;
     long LastSentTimestep;
+    int LastReleasedTimestep;
     long OldestUnreleasedTimestep;
+    struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
@@ -87,7 +97,7 @@ typedef struct _CPTimestepEntry
     struct _SstData Data;
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
-    int NeverSent;
+    int Expired;
     int PreciousTimestep;
     void **DP_TimestepInfo;
     int DPRegistered;
@@ -156,6 +166,8 @@ struct _SstStream
     size_t DataSize;
     void *D; // building data block
     FFSFormatList PreviousFormats;
+    int ReleaseCount;
+    struct _ReleaseRec *ReleaseList;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
@@ -255,6 +267,7 @@ typedef struct _CombinedReaderInfo
     int ReaderCohortSize;
     CP_ReaderInitInfo *CP_ReaderInfo;
     void **DP_ReaderInfo;
+    void *RankZeroID;
 } * reader_data_t;
 
 /*
@@ -327,6 +340,29 @@ typedef struct _TimestepMetadataDistributionMsg
     int ReturnValue;
     TSMetadataMsg TSmsg;
 } * TSMetadataDistributionMsg;
+
+/*
+ * This is the structure that holds local metadata and the DP info related to
+ * it.
+ * This is gathered on writer side before distribution to readers.
+ */
+
+typedef struct _ReleaseRec
+{
+    long Timestep;
+    void *Reader;
+} * ReleaseRecPtr;
+
+typedef struct _ReturnMetadataInfo
+{
+    int DiscardThisTimestep;
+    int PendingReaderCount;
+    struct _TimestepMetadataMsg Msg;
+    int ReleaseCount;
+    ReleaseRecPtr ReleaseList;
+    int ReaderCount;
+    enum StreamStatus *ReaderStatus;
+} * ReturnMetadataInfo;
 
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
