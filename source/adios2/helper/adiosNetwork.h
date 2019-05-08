@@ -35,13 +35,14 @@ std::vector<std::string> AvailableIpAddresses() noexcept;
 
 void HandshakeWriter(MPI_Comm mpiComm, size_t &appID,
                      std::vector<std::string> &fullAddresses,
-                     const std::string &name, const int basePort,
-                     const int channelsPerRank, const int maxRanksPerNode = 100,
+                     const std::string &name, const std::string &engineName,
+                     const int basePort, const int channelsPerRank,
+                     const int maxRanksPerNode = 100,
                      const int maxAppsPerNode = 10);
 
 void HandshakeReader(MPI_Comm mpiComm, size_t &appID,
                      std::vector<std::string> &fullAddresses,
-                     const std::string &name);
+                     const std::string &name, const std::string &engineName);
 
 } // end namespace helper
 } // end namespace adios2

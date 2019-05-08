@@ -114,8 +114,9 @@ void WdmWriter::Init()
     MPI_Comm_size(m_MPIComm, &m_MpiSize);
     srand(time(NULL));
     InitParameters();
-    helper::HandshakeWriter(m_MPIComm, m_AppID, m_FullAddresses, m_Name, m_Port,
-                            m_Channels, m_MaxRanksPerNode, m_MaxAppsPerNode);
+    helper::HandshakeWriter(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc",
+                            m_Port, m_Channels, m_MaxRanksPerNode,
+                            m_MaxAppsPerNode);
     InitTransports();
 }
 

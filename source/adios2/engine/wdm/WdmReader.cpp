@@ -340,7 +340,7 @@ void WdmReader::Init()
     TAU_SCOPED_TIMER_FUNC();
     srand(time(NULL));
     InitParameters();
-    helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name);
+    helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc");
 
     format::VecPtr reply = std::make_shared<std::vector<char>>();
     if (m_MpiRank == 0)
