@@ -75,7 +75,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
         m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
-        if (stepMode == StepMode::NextAvailable)
+        if (OpenMode() == Mode::Read)
         {
             size_t minStep = std::numeric_limits<size_t>::max();
             ;
@@ -88,7 +88,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
             }
             m_CurrentStep = minStep;
         }
-        else if (stepMode == StepMode::LatestAvailable)
+        else if (OpenMode() == Mode::ReadLatest)
         {
             size_t maxStep = 0;
             for (const auto &i : m_MetaDataMap)
