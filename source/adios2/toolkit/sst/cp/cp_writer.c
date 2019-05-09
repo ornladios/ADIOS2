@@ -224,6 +224,7 @@ static void RemoveQueueEntries(SstStream Stream)
     CPTimestepList Last = NULL;
     CPTimestepList Prev = NULL;
 
+    CP_verbose(Stream, "In remove queue entries\n");
     while (List)
     {
         CPTimestepList Next = List->Next;
@@ -304,6 +305,7 @@ static void QueueMaintenance(SstStream Stream)
     long SmallestLastReleasedTimestep = LONG_MAX;
     long ReserveCount = Stream->ConfigParams->ReserveQueueLimit;
 
+    CP_verbose(Stream, "In queue maintenance\n");
     CPTimestepList List;
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
@@ -1207,13 +1209,13 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
 {
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
     SST_ASSERT_LOCKED();
+    CP_verbose(ParentStream,
+               "In Peerfailclosewsreader or stream %p, stream status is %s\n",
+               CP_WSR_Stream, SSTStreamStatusStr[CP_WSR_Stream->ReaderStatus]);
     if ((NewState == PeerClosed) || (NewState == Closed))
     {
         CP_verbose(ParentStream,
-                   "In PeerFailCloseWSReader, releasing timesteps from %ld to "
-                   "%ld\n",
-                   CP_WSR_Stream->OldestUnreleasedTimestep,
-                   CP_WSR_Stream->LastSentTimestep);
+                   "In PeerFailCloseWSReader, releasing sent timesteps\n");
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
         CP_WSR_Stream->OldestUnreleasedTimestep =
             CP_WSR_Stream->LastSentTimestep + 1;
@@ -1223,8 +1225,8 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0, CloseWSRStream,
                            CP_WSR_Stream);
     }
-    CP_verbose(ParentStream, "Moving stream %p to status %s\n", CP_WSR_Stream,
-               SSTStreamStatusStr[NewState]);
+    CP_verbose(ParentStream, "Moving Reader stream %p to status %s\n",
+               CP_WSR_Stream, SSTStreamStatusStr[NewState]);
     CP_WSR_Stream->ReaderStatus = NewState;
     pthread_cond_signal(&ParentStream->DataCondition);
 
