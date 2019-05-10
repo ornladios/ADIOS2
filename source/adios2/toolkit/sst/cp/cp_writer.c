@@ -224,7 +224,6 @@ static void RemoveQueueEntries(SstStream Stream)
     CPTimestepList Last = NULL;
     CPTimestepList Prev = NULL;
 
-    CP_verbose(Stream, "In remove queue entries\n");
     while (List)
     {
         CPTimestepList Next = List->Next;
@@ -309,7 +308,6 @@ static void QueueMaintenance(SstStream Stream)
         return;
 
     ReserveCount = Stream->ConfigParams->ReserveQueueLimit;
-    CP_verbose(Stream, "In queue maintenance\n");
     CPTimestepList List;
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
@@ -1216,9 +1214,6 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     SST_ASSERT_LOCKED();
     if (ParentStream->Status != Established)
         return;
-    CP_verbose(ParentStream,
-               "In Peerfailclosewsreader or stream %p, stream status is %s\n",
-               CP_WSR_Stream, SSTStreamStatusStr[CP_WSR_Stream->ReaderStatus]);
 
     if (CP_WSR_Stream->ReaderStatus == NewState)
         return;
