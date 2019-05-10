@@ -880,6 +880,7 @@ extern void SstStreamDestroy(SstStream Stream)
     struct _SstStream StackStream = *Stream;
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
+    Stream->Status = Closed;
     if (Stream->Role == ReaderRole)
     {
         Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
@@ -906,10 +907,13 @@ extern void SstStreamDestroy(SstStream Stream)
             }
             // Stream->Readers[i] is free'd in LastCall
         }
+        Stream->ReaderCount = 0;
         free(Stream->Readers);
+        Stream->Readers = NULL;
     }
 
     FFSFormatList FFSList = Stream->PreviousFormats;
+    Stream->PreviousFormats = NULL;
     while (FFSList)
     {
         FFSFormatList Tmp = FFSList->Next;
@@ -933,7 +937,10 @@ extern void SstStreamDestroy(SstStream Stream)
     {
         /* reader side */
         if (Stream->ReaderFFSContext)
+        {
             free_FFSContext(Stream->ReaderFFSContext);
+            Stream->ReaderFFSContext = NULL;
+        }
         for (int i = 0; i < Stream->WriterCohortSize; i++)
         {
             free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
@@ -948,11 +955,21 @@ extern void SstStreamDestroy(SstStream Stream)
     }
 
     if (Stream->Filename)
+    {
         free(Stream->Filename);
+        Stream->Filename = NULL;
+    }
     if (Stream->AbsoluteFilename)
+    {
         free(Stream->AbsoluteFilename);
+        Stream->AbsoluteFilename = NULL;
+    }
+
     if (Stream->ParamsBlock)
+    {
         free(Stream->ParamsBlock);
+        Stream->ParamsBlock = NULL;
+    }
     //   Stream is free'd in LastCall
 
     CPInfoRefCount--;

@@ -168,6 +168,7 @@ struct _SstStream
     FFSFormatList PreviousFormats;
     int ReleaseCount;
     struct _ReleaseRec *ReleaseList;
+    enum StreamStatus Status;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
@@ -175,7 +176,6 @@ struct _SstStream
     int ReaderTimestep;
     int *Peers;
     CP_PeerConnection *ConnectionsToWriter;
-    enum StreamStatus Status;
     int FinalTimestep;
     int CurrentWorkingTimestep;
     SstFullMetadata CurrentMetadata;

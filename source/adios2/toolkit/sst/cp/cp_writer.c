@@ -302,8 +302,12 @@ static void QueueMaintenance(SstStream Stream)
 {
     SST_ASSERT_LOCKED();
     long SmallestLastReleasedTimestep = LONG_MAX;
-    long ReserveCount = Stream->ConfigParams->ReserveQueueLimit;
+    long ReserveCount;
 
+    if (Stream->Status != Established)
+        return;
+
+    ReserveCount = Stream->ConfigParams->ReserveQueueLimit;
     CPTimestepList List;
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
@@ -1165,6 +1169,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         Stream->RendezvousReaderCount--;
     }
     Stream->Filename = Filename;
+    Stream->Status = Established;
     CP_verbose(Stream, "Finish opening Stream \"%s\"\n", Filename);
     AddToLastCallFreeList(Stream);
     return Stream;
@@ -1207,13 +1212,16 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
 {
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
     SST_ASSERT_LOCKED();
+    if (ParentStream->Status != Established)
+        return;
+
+    if (CP_WSR_Stream->ReaderStatus == NewState)
+        return;
+
     if ((NewState == PeerClosed) || (NewState == Closed))
     {
         CP_verbose(ParentStream,
-                   "In PeerFailCloseWSReader, releasing timesteps from %ld to "
-                   "%ld\n",
-                   CP_WSR_Stream->OldestUnreleasedTimestep,
-                   CP_WSR_Stream->LastSentTimestep);
+                   "In PeerFailCloseWSReader, releasing sent timesteps\n");
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
         CP_WSR_Stream->OldestUnreleasedTimestep =
             CP_WSR_Stream->LastSentTimestep + 1;
@@ -1223,8 +1231,8 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         CMadd_delayed_task(ParentStream->CPInfo->cm, 2, 0, CloseWSRStream,
                            CP_WSR_Stream);
     }
-    CP_verbose(ParentStream, "Moving stream %p to status %s\n", CP_WSR_Stream,
-               SSTStreamStatusStr[NewState]);
+    CP_verbose(ParentStream, "Moving Reader stream %p to status %s\n",
+               CP_WSR_Stream, SSTStreamStatusStr[NewState]);
     CP_WSR_Stream->ReaderStatus = NewState;
     pthread_cond_signal(&ParentStream->DataCondition);
 
@@ -1935,13 +1943,14 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
 
+    if (CP_WSR_Stream->ParentStream->Status != Established)
+        return;
+
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Reader Close message received for stream %p.  Setting state to "
                "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
     PTHREAD_MUTEX_LOCK(&CP_WSR_Stream->ParentStream->DataLock);
-    CP_WSR_Stream->ReaderStatus = PeerClosed;
-
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     PTHREAD_MUTEX_UNLOCK(&CP_WSR_Stream->ParentStream->DataLock);
     TAU_STOP_FUNC();
