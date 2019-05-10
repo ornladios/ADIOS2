@@ -880,6 +880,7 @@ extern void SstStreamDestroy(SstStream Stream)
     struct _SstStream StackStream = *Stream;
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
+    Stream->Status = Closed;
     if (Stream->Role == ReaderRole)
     {
         Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);

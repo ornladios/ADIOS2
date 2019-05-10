@@ -1167,6 +1167,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         Stream->RendezvousReaderCount--;
     }
     Stream->Filename = Filename;
+    Stream->Status = Established;
     CP_verbose(Stream, "Finish opening Stream \"%s\"\n", Filename);
     AddToLastCallFreeList(Stream);
     return Stream;
@@ -1209,6 +1210,8 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
 {
     SstStream ParentStream = CP_WSR_Stream->ParentStream;
     SST_ASSERT_LOCKED();
+    if (ParentStream->Status != Established)
+        return;
     CP_verbose(ParentStream,
                "In Peerfailclosewsreader or stream %p, stream status is %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[CP_WSR_Stream->ReaderStatus]);
