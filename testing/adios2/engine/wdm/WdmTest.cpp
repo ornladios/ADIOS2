@@ -114,7 +114,8 @@ void VerifyData(const T *data, size_t step, const Dims &start,
 }
 
 void Writer(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams)
+            const size_t steps, const adios2::Params &engineParams,
+            const std::string &name)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -152,8 +153,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
     dataManIO.DefineAttribute<int>("AttInt", 110);
-    adios2::Engine dataManWriter =
-        dataManIO.Open("stream", adios2::Mode::Write);
+    adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
@@ -184,13 +184,14 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
 }
 
 void Reader(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams)
+            const size_t steps, const adios2::Params &engineParams,
+            const std::string &name)
 {
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("wdm");
     dataManIO.SetParameters(engineParams);
-    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
+    adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
 
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -332,16 +333,19 @@ TEST_F(WdmEngineTest, BaseTest)
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
 
+    adios2::Params engineParams = {{"Port", "12306"}};
+    std::string filename = "BaseTest";
+
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, 1000, adios2::Params());
+        Writer(shape, start, count, 1000, engineParams, filename);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     if (mpiGroup == 1)
     {
-        Reader(shape, start, count, 10, adios2::Params());
+        Reader(shape, start, count, 10, engineParams, filename);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
