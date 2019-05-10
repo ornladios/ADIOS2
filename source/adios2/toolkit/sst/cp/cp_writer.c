@@ -303,8 +303,12 @@ static void QueueMaintenance(SstStream Stream)
 {
     SST_ASSERT_LOCKED();
     long SmallestLastReleasedTimestep = LONG_MAX;
-    long ReserveCount = Stream->ConfigParams->ReserveQueueLimit;
+    long ReserveCount;
 
+    if (Stream->Status != Established)
+        return;
+
+    ReserveCount = Stream->ConfigParams->ReserveQueueLimit;
     CP_verbose(Stream, "In queue maintenance\n");
     CPTimestepList List;
     for (int i = 0; i < Stream->ReaderCount; i++)
