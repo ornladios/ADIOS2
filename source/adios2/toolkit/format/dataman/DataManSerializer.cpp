@@ -345,6 +345,7 @@ void DataManSerializer::PutAttributes(core::IO &io)
 {
     TAU_SCOPED_TIMER_FUNC();
     const auto &attributesDataMap = io.GetAttributesDataMap();
+    bool attributePut = false;
     for (const auto &attributePair : attributesDataMap)
     {
         const std::string name(attributePair.first);
@@ -360,6 +361,22 @@ void DataManSerializer::PutAttributes(core::IO &io)
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
+    }
+
+    if (not m_StaticDataFinished)
+    {
+        if (not attributePut)
+        {
+            nlohmann::json staticVar;
+            staticVar["N"] = "NoAttributes";
+            staticVar["Y"] = "bool";
+            staticVar["V"] = true;
+            staticVar["G"] = true;
+            m_StaticDataJsonMutex.lock();
+            m_StaticDataJson["S"].emplace_back(std::move(staticVar));
+            m_StaticDataJsonMutex.unlock();
+        }
+        m_StaticDataFinished = true;
     }
 }
 
