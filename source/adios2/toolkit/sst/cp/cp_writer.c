@@ -1956,8 +1956,6 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
     PTHREAD_MUTEX_LOCK(&CP_WSR_Stream->ParentStream->DataLock);
-    CP_WSR_Stream->ReaderStatus = PeerClosed;
-
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     PTHREAD_MUTEX_UNLOCK(&CP_WSR_Stream->ParentStream->DataLock);
     TAU_STOP_FUNC();
