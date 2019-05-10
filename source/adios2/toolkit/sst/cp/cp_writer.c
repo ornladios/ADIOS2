@@ -1219,6 +1219,10 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     CP_verbose(ParentStream,
                "In Peerfailclosewsreader or stream %p, stream status is %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[CP_WSR_Stream->ReaderStatus]);
+
+    if (CP_WSR_Stream->ReaderStatus == NewState)
+        return;
+
     if ((NewState == PeerClosed) || (NewState == Closed))
     {
         CP_verbose(ParentStream,
