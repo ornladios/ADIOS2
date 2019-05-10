@@ -361,6 +361,7 @@ void DataManSerializer::PutAttributes(core::IO &io)
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
+        attributePut = true;
     }
 
     if (not m_StaticDataFinished)
