@@ -1944,6 +1944,9 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
 
+    if (CP_WSR_Stream->ParentStream->Status != Established)
+        return;
+
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Reader Close message received for stream %p.  Setting state to "
                "PeerClosed and releasing timesteps.\n",
