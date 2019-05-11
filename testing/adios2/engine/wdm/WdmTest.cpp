@@ -333,7 +333,7 @@ TEST_F(WdmEngineTest, BaseTest)
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
 
-    adios2::Params engineParams = {{"Port", "12306"}};
+    adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
     std::string filename = "BaseTest";
 
     if (mpiGroup == 0)
@@ -341,7 +341,7 @@ TEST_F(WdmEngineTest, BaseTest)
         Writer(shape, start, count, 1000, engineParams, filename);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     if (mpiGroup == 1)
     {
