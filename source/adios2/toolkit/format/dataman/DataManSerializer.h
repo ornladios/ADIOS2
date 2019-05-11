@@ -222,6 +222,7 @@ private:
     // for global variables and attributes, needs mutex
     nlohmann::json m_StaticDataJson;
     std::mutex m_StaticDataJsonMutex;
+    bool m_StaticDataFinished = false;
 
     // for generating deferred requests, only accessed from reader app thread,
     // does not need mutex
