@@ -54,16 +54,21 @@ if (("@MPIEXEC@" eq "") or ("@MPIEXEC@" eq "MPIEXEC_EXECUTABLE-NOTFOUND")) {
     $reader_exec_cmd = "";
 }
 
+if (($num_writers == 1) && ($test_protocol eq "kill_writer")) {
+    # don't use MPIexec here so that we can directly kill -2 the writer..
+    $writer_exec_cmd = "";
+}
 defined(my $writer_pid = fork) or die "Cannot fork $!";
 unless($writer_pid)
 {
     #Child process is here
+    setpgrp(0,0);
     my $writer_arg_str = "";
     $writer_arg_str = join(" ", @writer_args) if (@writer_args);
     my $command = "$writer_exec_cmd $my_dirname/$writer_prog $engine $filename " . $writer_arg_str;
     $command =~ s/^\s+//;
     print "TestDriver: EXECwriter $command writer PID $$\n" if $verbose;
-    my $result = system (split / /,$command);
+    my $result = exec (split / /,$command);
     print "TestDriver: System for writer returns ", $result, " \n";
     exit $result;
 }
@@ -82,14 +87,14 @@ if ($test_protocol eq "kill_readers") {
     print "TestDriver: Start, number of readers is " . scalar(@ReaderPIDs) . ", max readers is $max_readers\n" if $verbose;
     if (((scalar(@ReaderPIDs) <= 0) || ($r < 0.5))  && (scalar(@ReaderPIDs) != $max_readers)){
       # fork a reader
-      defined(my $reader_pid = fork) or die "Cannot fork $!";
+      defined(my $reader_pid = fork()) or die "Cannot fork $!";
       unless($reader_pid)
 	{
 	  #Child process is here
 	  my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
 	  $command =~ s/^\s+//;
-	  print "TestDriver: System( $command )\n" if $verbose;
-	  my $result = system (split / /,$command);
+	  print "TestDriver: exec ( $command )\n" if $verbose;
+	  my $result = exec (split / /,$command);
 	  print "TestDriver: System for multi_readers Reader returns ", $result, " \n";
 	  exit $result;
 	}
@@ -136,20 +141,28 @@ if ($test_protocol eq "kill_readers") {
   exit $exit_value;
 } # end kill_readers protocol
 
-if ($test_protocol eq "one_to_one") {
+if (($test_protocol eq "one_to_one") || ($test_protocol eq "kill_writer")) {
   
     defined(my $reader_pid = fork) or die "Cannot fork $!";
-    unless($reader_pid)
-    {
+    unless ($reader_pid) {
 	#Child process is here
 	my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
 	$command =~ s/^\s+//;
 	print "TestDriver: EXECreader $command\n" if $verbose;
-	my $result = system (split / /,$command);
+	my $result = exec (split / /,$command);
 	print "TestDriver: System() for one_to_one Reader returned $result\n" if $verbose;
 	exit $result;
     }
     print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
+    if ($test_protocol eq "kill_writer")  {
+	
+	print "TestDriver: waiting $interval in kill_writer\n" if $verbose;
+	select undef, undef, undef, $interval;
+	print "TestDriver: Killing the writer in kill_writer, pid $writer_pid\n" if $verbose;
+	system('ps');
+	kill -2, $writer_pid;
+	print "TestDriver: Killed the writer with -2 in kill_writer, pid $writer_pid\n" if $verbose;
+    }
     waitpid($reader_pid, 0);
     my $reader_exit = ${^CHILD_ERROR_NATIVE};
     print "TestDriver: Status of one_to_one reader was $reader_exit\n" if $verbose;
@@ -158,8 +171,13 @@ if ($test_protocol eq "one_to_one") {
 	print "TestDriver: Setting failure return because of bad exit status ($?) on normal reader\n";
     }
     system("touch DieTest");
+
     my $ret = waitpid($writer_pid, 0);
     unlink("DieTest");
+    if ($test_protocol eq "kill_writer")  {
+	$? = 0;
+    }
+	
     print "TestDriver: Status of writer was $?\n" if $verbose;
     if ($? != 0) {
 	$exit_value = 1; #failure
@@ -167,5 +185,5 @@ if ($test_protocol eq "one_to_one") {
     }
     exit $exit_value;
 
-} # end one_to_one protocol
+} # end one_to_one and kill_writer protocol
 

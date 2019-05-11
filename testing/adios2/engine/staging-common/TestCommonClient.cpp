@@ -24,6 +24,8 @@ public:
 
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
+int ExpectWriterFailure = 0;
+int WriterFailed = 0;
 int IgnoreTimeGap = 1;
 int IncreasingDelay = 0;
 int FirstTimestepMustBeZero = 0;
@@ -141,8 +143,13 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             Status = engine.BeginStep();
         }
 
-        if (Status == adios2::StepStatus::EndOfStream)
+        if (Status != adios2::StepStatus::OK)
         {
+            if (Status == adios2::StepStatus::OtherError)
+            {
+                WriterFailed = 1;
+                std::cout << "Noticed Writer failure" << std::endl;
+            }
             Continue = false;
             break;
         }
@@ -352,6 +359,15 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             EXPECT_FALSE(TimeGapDetected);
         }
     }
+    if (ExpectWriterFailure)
+    {
+        EXPECT_TRUE(WriterFailed);
+    }
+    if (WriterFailed)
+    {
+        EXPECT_TRUE(ExpectWriterFailure);
+    }
+
     if (Latest || Discard)
     {
         std::cout << "Total Skipped Timesteps is " << SkippedSteps << std::endl;
@@ -395,6 +411,11 @@ int main(int argc, char **argv)
         {
             TimeGapExpected++;
             IgnoreTimeGap = 0;
+        }
+        else if (std::string(argv[1]) == "--expect_writer_failure")
+        {
+            IncreasingDelay = 1;
+            ExpectWriterFailure++;
         }
         else if (std::string(argv[1]) == "--expect_contiguous_time")
         {
