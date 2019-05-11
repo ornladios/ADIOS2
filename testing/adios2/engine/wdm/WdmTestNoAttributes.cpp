@@ -323,7 +323,7 @@ TEST_F(WdmEngineTest, NoAttributes)
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
 
-    adios2::Params engineParams = {{"Port", "12406"}};
+    adios2::Params engineParams = {{"Port", "12406"}, {"Verbose", "11"}};
     std::string filename = "NoAttributes";
 
     if (mpiGroup == 0)
