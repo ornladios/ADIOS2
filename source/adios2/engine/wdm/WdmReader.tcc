@@ -186,14 +186,13 @@ WdmReader::BlocksInfoCommon(const Variable<T> &variable,
 }
 
 template <typename T>
-void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
-                                const Dims &start, const Dims &count)
+void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape)
 {
     TAU_SCOPED_TIMER_FUNC();
     bool singleValue = false;
-    if (shape.size() == 1 and start.size() == 1 and count.size() == 1)
+    if (shape.size() == 1)
     {
-        if (shape[0] == 1 and start[0] == 0 and count[0] == 1)
+        if (shape[0] == 1)
         {
             singleValue = true;
         }
@@ -207,7 +206,7 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
         }
         else
         {
-            m_IO.DefineVariable<T>(name, shape, start, count);
+            m_IO.DefineVariable<T>(name, shape, Dims(shape.size(), 0), shape);
         }
         v = m_IO.InquireVariable<T>(name);
         v->m_Engine = this;
@@ -224,10 +223,7 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
             if (v->m_Shape != shape)
             {
                 v->SetShape(shape);
-            }
-            if (v->m_Start != start || v->m_Count != count)
-            {
-                v->SetSelection({start, count});
+                v->SetSelection({Dims(shape.size(), 0), shape});
             }
         }
         if (m_Verbosity >= 5)

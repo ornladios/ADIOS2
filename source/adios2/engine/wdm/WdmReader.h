@@ -78,8 +78,7 @@ private:
     void InitParameters() final;
     void InitTransports() final;
     template <typename T>
-    void CheckIOVariable(const std::string &name, const Dims &shape,
-                         const Dims &start, const Dims &count);
+    void CheckIOVariable(const std::string &name, const Dims &shape);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \

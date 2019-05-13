@@ -180,7 +180,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
+        CheckIOVariable<T>(i.name, i.shape);                                   \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
