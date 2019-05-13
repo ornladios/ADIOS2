@@ -725,13 +725,18 @@ int DataManSerializer::PutDeferredRequest(const std::string &variable,
                       "start, count and shape do not match");
                 continue;
             }
+            bool toContinue = false;
             for (size_t i = 0; i < start.size(); ++i)
             {
-                if (start[i] > var.start[i] + var.count[i] ||
-                    start[i] + count[i] < var.start[i])
+                if (start[i] >= var.start[i] + var.count[i] ||
+                    start[i] + count[i] <= var.start[i])
                 {
-                    continue;
+                    toContinue = true;
                 }
+            }
+            if (toContinue)
+            {
+                continue;
             }
 
             jmap[var.address].emplace_back();
