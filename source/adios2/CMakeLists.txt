@@ -9,6 +9,10 @@ add_library(taustubs
   toolkit/profiling/taustubs/taustubs.h
 )
 
+target_include_directories(taustubs PRIVATE
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
+)
+
 add_library(adios2
   core/Attribute.cpp 
   core/AttributeBase.cpp

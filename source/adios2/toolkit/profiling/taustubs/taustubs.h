@@ -7,10 +7,13 @@
 #ifndef TAUSTUBS_H
 #define TAUSTUBS_H
 
+#include "adios2/ADIOSConfig.h"
+
 /* This code won't compile on windows.  Disable it */
 #if !defined(_WIN32) && !defined(_WIN64)
-/* DISABLE ENTIRELY BY DEFAULT */
-// #define TAU_USE_STUBS
+#ifdef ADIOS2_HAVE_PROFILING
+#define TAU_USE_STUBS
+#endif
 #endif
 
 #if defined(TAU_USE_STUBS)
