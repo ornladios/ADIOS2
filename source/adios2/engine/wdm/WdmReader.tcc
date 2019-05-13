@@ -206,7 +206,7 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape)
         }
         else
         {
-            m_IO.DefineVariable<T>(name, shape);
+            m_IO.DefineVariable<T>(name, shape, Dims(shape.size(), 0), shape);
         }
         v = m_IO.InquireVariable<T>(name);
         v->m_Engine = this;
@@ -223,6 +223,7 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape)
             if (v->m_Shape != shape)
             {
                 v->SetShape(shape);
+                v->SetSelection({Dims(shape.size(), 0), shape});
             }
         }
         if (m_Verbosity >= 5)
