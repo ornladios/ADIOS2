@@ -119,7 +119,7 @@ set (LatestReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -
 set (LatestReader_PROPERTIES "RUN_SERIAL;1")
 
 # A faster writer and a queue policy that will cause timesteps to be discarded
-set (DiscardWriter_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -warg --engine_params -warg QueueLimit:1,QueueFullPolicy:discard,ENGINE_PARAMS -warg --ms_delay -warg 500 -rarg --discard")
+set (DiscardWriter_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -warg --engine_params -warg QueueLimit:1,QueueFullPolicy:discard,ENGINE_PARAMS -warg --ms_delay -warg 250 -rarg --discard")
 
 function(remove_engine_params_placeholder dst_str src_str )
     string(REGEX REPLACE "([^ 		  ]*),ENGINE_PARAMS" "\\1" src_str "${src_str}")
