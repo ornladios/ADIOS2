@@ -322,9 +322,20 @@ static void QueueMaintenance(SstStream Stream)
                     Stream->Readers[i]->LastReleasedTimestep;
         }
     }
-    CP_verbose(Stream,
-               "QueueMaintenance, smallest last released = %ld, count = %d\n",
-               SmallestLastReleasedTimestep, Stream->QueuedTimestepCount);
+    if (SmallestLastReleasedTimestep != LONG_MAX)
+    {
+        CP_verbose(
+            Stream,
+            "QueueMaintenance, smallest last released = %ld, count = %d\n",
+            SmallestLastReleasedTimestep, Stream->QueuedTimestepCount);
+    }
+    else
+    {
+        CP_verbose(
+            Stream,
+            "QueueMaintenance, smallest last released = LONG_MAX, count = %d\n",
+            Stream->QueuedTimestepCount);
+    }
     /* Count precious */
     List = Stream->QueuedTimesteps;
     while (List)
