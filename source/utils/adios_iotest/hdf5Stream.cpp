@@ -167,6 +167,11 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
 
     for (auto ov : cmdW->variables)
     {
+        // Allocate memory on first access
+        if (!ov->data.size())
+        {
+            ov->data.resize(ov->datasize);
+        }
         if (step == 1)
         {
             if (!settings.myRank && settings.verbose)
@@ -259,6 +264,12 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
     {
         start[d] = ov->start[d - 1];
         count[d] = ov->count[d - 1];
+    }
+
+    // Allocate memory on first access
+    if (!ov->data.size())
+    {
+        ov->data.resize(ov->datasize);
     }
 
     hid_t memspace = H5Screate_simple(ndim, count, NULL);
