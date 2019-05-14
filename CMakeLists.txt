@@ -132,6 +132,7 @@ adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
+adios_option(Profiling "Enable support for profiling" AUTO)
 adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoprability" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
@@ -151,6 +152,7 @@ if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
+    BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
     BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})

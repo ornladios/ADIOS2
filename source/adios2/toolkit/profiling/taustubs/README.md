@@ -7,15 +7,13 @@ _Note:_ This library in ADIOS is a stub wrapper library for the TAU performance 
     - [ ] Replace TAU-specific symbols with generic versions that will be implemented by interested measurement libraries (i.e. Score-P). 
     - [ ] New environment variable specifying location of library containing function implementations.
 
-- [ ] Add a CMake option to disable the API entirely.
-
 - [ ] Add CMake support for linking in measurement libraries when static linking.
 
 - [ ] Investigate API call to trigger writing of performance data to the ADIOS2 archive (performance data stored with the science data).
 
 ## Overview
 
-These files contain a thin stub interface for instrumenting ADIOS2 code.  The interface can be compiled away entirely (that feature will eventually be configurable).  The function calls are "stubs" in the form of function pointers, initialized to ```nullptr```. The functions are optionally assigned at runtime using dlopen() (if necessary) and dlsym() calls, as is typical with plugin implementations. If the function pointers have the value ```nullptr```, then this library is a few more instructions than a no-op.  If the function pointers are assigned, the measurement library functions are called to perform the timing measurement.  The symbols are made available to the environment either through ```LD_PRELOAD``` settings or by linking in the measurement library.
+These files contain a thin stub interface for instrumenting ADIOS2 code.  The interface can be compiled away entirely by setting the `-DADIOS2_USE_Profiling=False` option when running cmake.  The function calls are "stubs" in the form of function pointers, initialized to ```nullptr```. The functions are optionally assigned at runtime using dlopen() (if necessary) and dlsym() calls, as is typical with plugin implementations. If the function pointers have the value ```nullptr```, then this library is a few more instructions than a no-op.  If the function pointers are assigned, the measurement library functions are called to perform the timing measurement.  The symbols are made available to the environment either through ```LD_PRELOAD``` settings or by linking in the measurement library.
 
 Convenience macros are provided for constructing descriptive timer names using pre-processor definitions such as ```__FILE__```, ```__LINE__```, and ```__func__```.  For C++ codes, there are also scoped timers to minimize instrumentation text and ensure timers are stopped in functions with multiple return locations or exceptions that throw outside of scope.
 

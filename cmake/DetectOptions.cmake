@@ -188,6 +188,12 @@ else()
   set(ADIOS2_HAVE_SysVShMem OFF)
 endif()
 
+if(ADIOS2_USE_Profiling STREQUAL AUTO AND SHARED_LIBS_SUPPORTED)
+  set(ADIOS2_HAVE_Profiling ON)
+elseif(ADIOS2_USE_Profiling)
+  set(ADIOS2_HAVE_Profiling ON)
+endif()
+
 if(ADIOS2_USE_Endian_Reverse STREQUAL ON)
   set(ADIOS2_HAVE_Endian_Reverse TRUE)
 endif()
