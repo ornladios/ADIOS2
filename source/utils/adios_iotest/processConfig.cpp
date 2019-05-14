@@ -749,61 +749,60 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             else if (key == "array")
             {
                 // process config line and get global array info
-                VariableInfo ov = processArray(words, settings);
-                ov.datasize = ov.elemsize;
-                std::vector<size_t> pos(
-                    ov.ndim); // Position of rank in N-dim space
-
+                std::shared_ptr<VariableInfo> ovp =
+                    std::make_shared<VariableInfo>(
+                        processArray(words, settings));
+                ovp->datasize = ovp->elemsize;
+                // Position of rank in N-dim space
+                std::vector<size_t> pos(ovp->ndim);
                 // Calculate rank's position in N-dim space
-                decompRowMajor(ov.ndim, settings.myRank, ov.decomp.data(),
+                decompRowMajor(ovp->ndim, settings.myRank, ovp->decomp.data(),
                                pos.data());
 
                 if (settings.isStrongScaling)
                 {
                     // Calculate the local size and offsets based on the
                     // definition
-                    for (size_t i = 0; i < ov.ndim; ++i)
+                    for (size_t i = 0; i < ovp->ndim; ++i)
                     {
-                        size_t count = ov.shape[i] / ov.decomp[i];
+                        size_t count = ovp->shape[i] / ovp->decomp[i];
                         size_t offs = count * pos[i];
-                        if (pos[i] == ov.decomp[i] - 1 && pos[i] != 0)
+                        if (pos[i] == ovp->decomp[i] - 1 && pos[i] != 0)
                         {
                             // last process in dim(i) need to write all the rest
                             // of dimension
-                            count = ov.shape[i] - offs;
+                            count = ovp->shape[i] - offs;
                         }
-                        ov.start.push_back(offs);
-                        ov.count.push_back(count);
-                        ov.datasize *= count;
+                        ovp->start.push_back(offs);
+                        ovp->count.push_back(count);
+                        ovp->datasize *= count;
                     }
                 }
                 else
                 {
                     // Calculate the local size and offsets based on the
                     // definition
-                    for (size_t i = 0; i < ov.ndim; ++i)
+                    for (size_t i = 0; i < ovp->ndim; ++i)
                     {
-                        size_t shape = ov.count[i] * ov.decomp[i];
-                        size_t offs = ov.count[i] * pos[i];
-                        ov.start.push_back(offs);
-                        ov.shape.push_back(shape);
-                        ov.datasize *= ov.count[i];
+                        size_t shape = ovp->count[i] * ovp->decomp[i];
+                        size_t offs = ovp->count[i] * pos[i];
+                        ovp->start.push_back(offs);
+                        ovp->shape.push_back(shape);
+                        ovp->datasize *= ovp->count[i];
                     }
                 }
 
-                // Allocate data array
-                ov.data.resize(ov.datasize);
+                // Postpone Allocating the data array until first use
+                // ovp->data.resize(ovp->datasize);
 
-                std::shared_ptr<VariableInfo> ovp =
-                    std::make_shared<VariableInfo>(ov);
                 currentVarList->push_back(ovp);
-                currentVarMap->emplace(ov.name, ovp);
+                currentVarMap->emplace(ovp->name, ovp);
 
                 /* DEBUG */
                 if (verbose0)
                 {
                     auto grpIt = cfg.groupVariablesMap.find(currentGroup);
-                    auto vIt = grpIt->second.find(ov.name);
+                    auto vIt = grpIt->second.find(ovp->name);
                     std::cout << "       DEBUG variable = " << vIt->second->name
                               << " type = " << vIt->second->type << " varmap = "
                               << static_cast<void *>(vIt->second.get())
@@ -812,20 +811,20 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 if (settings.verbose > 2)
                 {
                     std::cout << "--> rank = " << settings.myRank
-                              << ": Variable array name = " << ov.name
-                              << " type = " << ov.type
-                              << " elemsize = " << ov.elemsize
-                              << " local datasize = " << ov.datasize
-                              << " shape = " << DimsToString(ov.shape)
-                              << " start = " << DimsToString(ov.start)
-                              << " count = " << DimsToString(ov.count)
+                              << ": Variable array name = " << ovp->name
+                              << " type = " << ovp->type
+                              << " elemsize = " << ovp->elemsize
+                              << " local datasize = " << ovp->datasize
+                              << " shape = " << DimsToString(ovp->shape)
+                              << " start = " << DimsToString(ovp->start)
+                              << " count = " << DimsToString(ovp->count)
                               << std::endl;
                 }
                 else if (verbose0)
                 {
-                    std::cout << "--> Variable array name = " << ov.name
-                              << " type = " << ov.type
-                              << " elemsize = " << ov.elemsize << std::endl;
+                    std::cout << "--> Variable array name = " << ovp->name
+                              << " type = " << ovp->type
+                              << " elemsize = " << ovp->elemsize << std::endl;
                 }
             }
             else if (key == "link")

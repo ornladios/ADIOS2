@@ -95,6 +95,11 @@ void adiosStream::putADIOSArray(const std::shared_ptr<VariableInfo> ov)
 
 void adiosStream::getADIOSArray(std::shared_ptr<VariableInfo> ov)
 {
+    // Allocate memory on first access
+    if (!ov->data.size())
+    {
+        ov->data.resize(ov->datasize);
+    }
     if (ov->type == "double")
     {
         adios2::Variable<double> v = io.InquireVariable<double>(ov->name);
@@ -258,6 +263,11 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     std::map<std::string, adios2::Params> definedVars = io.AvailableVariables();
     for (auto ov : cmdW->variables)
     {
+        // Allocate memory on first access
+        if (!ov->data.size())
+        {
+            ov->data.resize(ov->datasize);
+        }
         // if the variable is not in the IO group it means
         // we have not defined it yet (e.g. a write-only variable or a linked
         // variable defined in another read group)
