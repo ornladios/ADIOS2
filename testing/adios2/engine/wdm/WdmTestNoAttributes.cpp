@@ -209,17 +209,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     size_t i;
     for (i = 0; i < steps; ++i)
     {
-        GenData(myChars, i, start, count, shape);
-        GenData(myUChars, i, start, count, shape);
-        GenData(myShorts, i, start, count, shape);
-        GenData(myUShorts, i, start, count, shape);
-        GenData(myInts, i, start, count, shape);
-        GenData(myUInts, i, start, count, shape);
-        GenData(myFloats, i, start, count, shape);
-        GenData(myDoubles, i, start, count, shape);
-        GenData(myComplexes, i, start, count, shape);
-        GenData(myDComplexes, i, start, count, shape);
-
         adios2::StepStatus status =
             dataManReader.BeginStep(StepMode::NextAvailable, 5);
 

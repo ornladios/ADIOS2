@@ -16,4 +16,8 @@ if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
     add_test(NAME WdmTestNoAttributes COMMAND "mpirun" "-n" "8" $<TARGET_FILE:WdmTestNoAttributes>)
 endif()
 
-
+if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
+    add_executable(WdmTestNoSelection WdmTestNoSelection.cpp)
+    target_link_libraries(WdmTestNoSelection adios2 gtest MPI::MPI_C)
+    add_test(NAME WdmTestNoSelection COMMAND "mpirun" "-n" "8" $<TARGET_FILE:WdmTestNoSelection>)
+endif()
