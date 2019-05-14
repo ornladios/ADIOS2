@@ -16,8 +16,8 @@ if(ADIOS2_HAVE_DataMan)
   add_subdirectory(dataman)
 endif()
 
-if(ADIOS2_HAVE_WDM)
-  add_subdirectory(wdm)
+if(ADIOS2_HAVE_SSC)
+  add_subdirectory(ssc)
 endif()
 
 if(ADIOS2_HAVE_SST)

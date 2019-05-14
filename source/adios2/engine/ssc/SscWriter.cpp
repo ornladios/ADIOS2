@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WdmWriter.cpp
+ * SscWriter.cpp
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#include "WdmWriter.h"
-#include "WdmWriter.tcc"
+#include "SscWriter.h"
+#include "SscWriter.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -25,22 +25,22 @@ namespace core
 namespace engine
 {
 
-WdmWriter::WdmWriter(IO &io, const std::string &name, const Mode mode,
+SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("WdmWriter", io, name, mode, mpiComm),
+: Engine("SscWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian(), mpiComm)
 {
     TAU_SCOPED_TIMER_FUNC();
     Init();
-    Log(5, "WdmWriter::WdmWriter()", true, true);
+    Log(5, "SscWriter::SscWriter()", true, true);
 }
 
-StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
+StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
     Log(5,
-        "WdmWriter::BeginStep() begin. Last step " +
+        "SscWriter::BeginStep() begin. Last step " +
             std::to_string(m_CurrentStep),
         true, true);
 
@@ -61,19 +61,19 @@ StepStatus WdmWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     Log(5,
-        "WdmWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep),
+        "SscWriter::BeginStep() end. New step " + std::to_string(m_CurrentStep),
         true, true);
     return StepStatus::OK;
 }
 
-size_t WdmWriter::CurrentStep() const { return m_CurrentStep; }
+size_t SscWriter::CurrentStep() const { return m_CurrentStep; }
 
-void WdmWriter::PerformPuts() {}
+void SscWriter::PerformPuts() {}
 
-void WdmWriter::EndStep()
+void SscWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    Log(5, "WdmWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep),
+    Log(5, "SscWriter::EndStep() begin. Step " + std::to_string(m_CurrentStep),
         true, false);
 
     if (m_CurrentStepActive)
@@ -87,27 +87,27 @@ void WdmWriter::EndStep()
         m_DataManSerializer.Erase(m_CurrentStep - 5, true);
     }
 
-    Log(5, "WdmWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
+    Log(5, "SscWriter::EndStep() end. Step " + std::to_string(m_CurrentStep),
         true, true);
 }
 
-void WdmWriter::Flush(const int transportIndex) {}
+void SscWriter::Flush(const int transportIndex) {}
 
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void WdmWriter::DoPutSync(Variable<T> &variable, const T *data)            \
+    void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PutSyncCommon(variable, data);                                         \
     }                                                                          \
-    void WdmWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
+    void SscWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
         PutDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void WdmWriter::Init()
+void SscWriter::Init()
 {
     TAU_SCOPED_TIMER_FUNC();
     MPI_Comm_rank(m_MPIComm, &m_MpiRank);
@@ -120,7 +120,7 @@ void WdmWriter::Init()
     InitTransports();
 }
 
-void WdmWriter::InitParameters()
+void SscWriter::InitParameters()
 {
     TAU_SCOPED_TIMER_FUNC();
     for (const auto &pair : m_IO.m_Parameters)
@@ -144,18 +144,18 @@ void WdmWriter::InitParameters()
     }
 }
 
-void WdmWriter::InitTransports()
+void SscWriter::InitTransports()
 {
     TAU_SCOPED_TIMER_FUNC();
     m_Listening = true;
     for (const auto &address : m_FullAddresses)
     {
         m_ReplyThreads.emplace_back(
-            std::thread(&WdmWriter::ReplyThread, this, address));
+            std::thread(&SscWriter::ReplyThread, this, address));
     }
 }
 
-void WdmWriter::ReplyThread(const std::string &address)
+void SscWriter::ReplyThread(const std::string &address)
 {
     transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
     tpm.OpenTransport(address);
@@ -191,7 +191,7 @@ void WdmWriter::ReplyThread(const std::string &address)
             if (m_Verbosity >= 100)
             {
                 Log(100,
-                    "WdmWriter::MetadataRepThread() sending metadata "
+                    "SscWriter::MetadataRepThread() sending metadata "
                     "pack, size =  " +
                         std::to_string(aggMetadata->size()),
                     true, true);
@@ -212,7 +212,7 @@ void WdmWriter::ReplyThread(const std::string &address)
                 if (m_Tolerance)
                 {
                     Log(1,
-                        "WdmWriter::ReplyThread received data request but "
+                        "SscWriter::ReplyThread received data request but "
                         "the step is already removed from buffer. Increase the"
                         "buffer size to prevent this from happening again.",
                         true, true);
@@ -220,7 +220,7 @@ void WdmWriter::ReplyThread(const std::string &address)
                 else
                 {
                     throw(std::runtime_error(
-                        "WdmWriter::ReplyThread received data request but the "
+                        "SscWriter::ReplyThread received data request but the "
                         "step is already removed from buffer. Increase the "
                         "buffer "
                         "size to prevent this from happening again."));
@@ -230,7 +230,7 @@ void WdmWriter::ReplyThread(const std::string &address)
     }
 }
 
-void WdmWriter::DoClose(const int transportIndex)
+void SscWriter::DoClose(const int transportIndex)
 {
     MPI_Barrier(m_MPIComm);
     m_Listening = false;
@@ -245,9 +245,9 @@ void WdmWriter::DoClose(const int transportIndex)
     remove(".staging");
     remove(std::string(m_Name + ".staging").c_str());
 
-    Log(5, "WdmWriter::DoClose(" + m_Name + ")", true, true);
+    Log(5, "SscWriter::DoClose(" + m_Name + ")", true, true);
 }
-void WdmWriter::Log(const int level, const std::string &message, const bool mpi,
+void SscWriter::Log(const int level, const std::string &message, const bool mpi,
                     const bool endline)
 {
     TAU_SCOPED_TIMER_FUNC();

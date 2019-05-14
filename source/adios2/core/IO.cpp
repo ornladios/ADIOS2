@@ -34,9 +34,9 @@
 #include "adios2/engine/dataman/DataManWriter.h"
 #endif
 
-#ifdef ADIOS2_HAVE_WDM // external dependencies
-#include "adios2/engine/wdm/WdmReader.h"
-#include "adios2/engine/wdm/WdmWriter.h"
+#ifdef ADIOS2_HAVE_SSC // external dependencies
+#include "adios2/engine/ssc/SscReader.h"
+#include "adios2/engine/ssc/SscWriter.h"
 #endif
 
 #ifdef ADIOS2_HAVE_SST // external dependencies
@@ -514,18 +514,18 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             "DataMan library, can't use DataMan engine\n");
 #endif
     }
-    else if (engineTypeLC == "wdm")
+    else if (engineTypeLC == "ssc")
     {
-#ifdef ADIOS2_HAVE_WDM
+#ifdef ADIOS2_HAVE_SSC
         if (mode == Mode::Read)
             engine =
-                std::make_shared<engine::WdmReader>(*this, name, mode, mpiComm);
+                std::make_shared<engine::SscReader>(*this, name, mode, mpiComm);
         else
             engine =
-                std::make_shared<engine::WdmWriter>(*this, name, mode, mpiComm);
+                std::make_shared<engine::SscWriter>(*this, name, mode, mpiComm);
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
-                                    "Wdm library, can't use Wdm engine\n");
+                                    "SSC library, can't use SSC engine\n");
 #endif
     }
     else if (engineTypeLC == "sst" || engineTypeLC == "effis")

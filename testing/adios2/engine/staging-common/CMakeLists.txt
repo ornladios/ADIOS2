@@ -154,13 +154,13 @@ endforeach()
 
 
 #
-#   Setup tests for WDM engine
+#   Setup tests for SSC engine
 #
-if(ADIOS2_HAVE_WDM AND ADIOS2_HAVE_MPI)
-SET (WDM_TESTS "NoReaderNoWait")
-foreach(test ${WDM_TESTS})
-    add_common_test(${test} WDM)
-endforeach()
+if(ADIOS2_HAVE_SSC AND ADIOS2_HAVE_MPI)
+    SET (SSC_TESTS "NoReaderNoWait")
+    foreach(test ${SSC_TESTS})
+        add_common_test(${test} SSC)
+    endforeach()
 endif()
 
 

@@ -19,10 +19,10 @@ size_t print_lines = 0;
 
 char runMode;
 
-class WdmEngineTest : public ::testing::Test
+class SscEngineTest : public ::testing::Test
 {
 public:
-    WdmEngineTest() = default;
+    SscEngineTest() = default;
 };
 
 template <class T>
@@ -121,7 +121,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
                                       std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("wdm");
+    dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
@@ -152,6 +152,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpComplexes", shape, start, count);
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
+    dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
     {
@@ -188,7 +189,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 {
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("Test");
-    dataManIO.SetEngine("wdm");
+    dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
 
@@ -209,6 +210,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     size_t i;
     for (i = 0; i < steps; ++i)
     {
+
         adios2::StepStatus status =
             dataManReader.BeginStep(StepMode::NextAvailable, 5);
 
@@ -288,16 +290,25 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         else if (status == adios2::StepStatus::EndOfStream)
         {
             std::cout << "[Rank " + std::to_string(mpiRank) +
-                             "] WdmTest reader end of stream!"
+                             "] SscTest reader end of stream!"
                       << std::endl;
             break;
         }
+    }
+    if (received_steps)
+    {
+        auto attInt = dataManIO.InquireAttribute<int>("AttInt");
+        std::cout << "[Rank " + std::to_string(mpiRank) +
+                         "] Attribute received "
+                  << attInt.Data()[0] << ", expected 110" << std::endl;
+        ASSERT_EQ(110, attInt.Data()[0]);
+        ASSERT_NE(111, attInt.Data()[0]);
     }
     dataManReader.Close();
     print_lines = 0;
 }
 
-TEST_F(WdmEngineTest, NoAttributes)
+TEST_F(SscEngineTest, BaseTest)
 {
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
@@ -312,8 +323,8 @@ TEST_F(WdmEngineTest, NoAttributes)
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
 
-    adios2::Params engineParams = {{"Port", "12406"}, {"Verbose", "0"}};
-    std::string filename = "NoAttributes";
+    adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
+    std::string filename = "BaseTest";
 
     if (mpiGroup == 0)
     {

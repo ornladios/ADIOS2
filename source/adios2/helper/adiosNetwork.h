@@ -13,7 +13,7 @@
 #define ADIOS2_HELPER_ADIOSNETWORK_H_
 
 #ifndef _WIN32
-#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_WDM)
+#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_SSC)
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <string>
@@ -47,6 +47,6 @@ void HandshakeReader(MPI_Comm mpiComm, size_t &appID,
 } // end namespace helper
 } // end namespace adios2
 
-#endif
-#endif
-#endif /* ADIOS2_HELPER_ADIOSNETWORK_H_ */
+#endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_SSC
+#endif // _WIN32
+#endif // ADIOS2_HELPER_ADIOSNETWORK_H_
