@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WdmWriter.tcc
+ * SscWriter.tcc
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_STAGINGWRITER_TCC_
-#define ADIOS2_ENGINE_STAGINGWRITER_TCC_
+#ifndef ADIOS2_ENGINE_SSCWRITER_TCC_
+#define ADIOS2_ENGINE_SSCWRITER_TCC_
 
-#include "WdmWriter.h"
+#include "SscWriter.h"
 
 #include <iostream>
 
@@ -23,11 +23,11 @@ namespace engine
 {
 
 template <class T>
-void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
+void SscWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
     Log(5,
-        "WdmWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
+        "SscWriter::PutSync(" + variable.m_Name + ") begin. Current step " +
             std::to_string(m_CurrentStep),
         true, true);
     if (m_CurrentStepActive)
@@ -36,17 +36,17 @@ void WdmWriter::PutSyncCommon(Variable<T> &variable, const T *data)
         PerformPuts();
     }
     Log(5,
-        "WdmWriter::PutSync(" + variable.m_Name + ") end. Current step " +
+        "SscWriter::PutSync(" + variable.m_Name + ") end. Current step " +
             std::to_string(m_CurrentStep),
         true, true);
 }
 
 template <class T>
-void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
+void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
     Log(5,
-        "WdmWriter::PutDeferred(" + variable.m_Name + ") start. Current step " +
+        "SscWriter::PutDeferred(" + variable.m_Name + ") start. Current step " +
             std::to_string(m_CurrentStep),
         true, true);
 
@@ -82,7 +82,7 @@ void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     }
 
     Log(5,
-        "WdmWriter::PutDeferred(" + variable.m_Name + ") end. Current step " +
+        "SscWriter::PutDeferred(" + variable.m_Name + ") end. Current step " +
             std::to_string(m_CurrentStep),
         true, true);
 }
@@ -91,4 +91,4 @@ void WdmWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_STAGINGWRITER_TCC_
+#endif // ADIOS2_ENGINE_SSCWRITER_TCC_

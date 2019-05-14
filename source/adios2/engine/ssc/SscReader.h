@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WdmReader.h
+ * SscReader.h
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_STAGINGREADER_H_
-#define ADIOS2_ENGINE_STAGINGREADER_H_
+#ifndef ADIOS2_ENGINE_SSCREADER_H_
+#define ADIOS2_ENGINE_SSCREADER_H_
 
 #include <queue>
 
@@ -29,13 +29,13 @@ namespace core
 namespace engine
 {
 
-class WdmReader : public Engine
+class SscReader : public Engine
 {
 public:
-    WdmReader(IO &adios, const std::string &name, const Mode mode,
+    SscReader(IO &adios, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    ~WdmReader();
+    ~SscReader();
     StepStatus BeginStep(
         StepMode stepMode = StepMode::NextAvailable,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
@@ -78,8 +78,7 @@ private:
     void InitParameters() final;
     void InitTransports() final;
     template <typename T>
-    void CheckIOVariable(const std::string &name, const Dims &shape,
-                         const Dims &start, const Dims &count);
+    void CheckIOVariable(const std::string &name, const Dims &shape);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -121,4 +120,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_STAGINGREADER_H_
+#endif // ADIOS2_ENGINE_SSCREADER_H_

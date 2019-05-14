@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WdmWriter.h
+ * SscWriter.h
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_STAGINGWRITER_H_
-#define ADIOS2_ENGINE_STAGINGWRITER_H_
+#ifndef ADIOS2_ENGINE_SSCWRITER_H_
+#define ADIOS2_ENGINE_SSCWRITER_H_
 
 #include <queue>
 
@@ -26,14 +26,14 @@ namespace core
 namespace engine
 {
 
-class WdmWriter : public Engine
+class SscWriter : public Engine
 {
 
 public:
-    WdmWriter(IO &adios, const std::string &name, const Mode mode,
+    SscWriter(IO &adios, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    ~WdmWriter() = default;
+    ~SscWriter() = default;
 
     StepStatus BeginStep(
         StepMode mode,
@@ -107,4 +107,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_STAGINGWRITER_H_
+#endif // ADIOS2_ENGINE_SSCWRITER_H_

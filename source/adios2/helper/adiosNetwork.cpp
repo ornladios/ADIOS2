@@ -13,7 +13,7 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #ifndef _WIN32
-#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_WDM)
+#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_SSC)
 
 #include <iostream>
 #include <thread>

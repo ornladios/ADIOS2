@@ -99,14 +99,14 @@ if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
     endif()
 endif()
 
-# WDM
-# WDM currently breaks the PGI compiler
+# SSC
+# SSC currently breaks the PGI compiler
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
     if(ZeroMQ_FOUND)
-        if(ADIOS2_USE_WDM STREQUAL AUTO)
-            set(ADIOS2_HAVE_WDM TRUE)
-        elseif(ADIOS2_USE_WDM)
-            set(ADIOS2_HAVE_WDM TRUE)
+        if(ADIOS2_USE_SSC STREQUAL AUTO)
+            set(ADIOS2_HAVE_SSC TRUE)
+        elseif(ADIOS2_USE_SSC)
+            set(ADIOS2_HAVE_SSC TRUE)
         endif()
     endif()
 endif()

@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WdmReader.cpp
+ * SscReader.cpp
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#include "WdmReader.h"
-#include "WdmReader.tcc"
+#include "SscReader.h"
+#include "SscReader.tcc"
 
-#include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <iostream>
@@ -25,9 +25,9 @@ namespace core
 namespace engine
 {
 
-WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
+SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("WdmReader", io, name, mode, mpiComm),
+: Engine("SscReader", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian(), mpiComm),
   m_RepliedMetadata(std::make_shared<std::vector<char>>())
@@ -37,7 +37,7 @@ WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
         mpiComm, Mode::Read, m_Timeout, 1e9);
     m_MetadataTransport = std::make_shared<transportman::StagingMan>(
         mpiComm, Mode::Read, m_Timeout, 1e8);
-    m_EndMessage = " in call to IO Open WdmReader " + m_Name + "\n";
+    m_EndMessage = " in call to IO Open SscReader " + m_Name + "\n";
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     Init();
     if (m_Verbosity >= 5)
@@ -47,7 +47,7 @@ WdmReader::WdmReader(IO &io, const std::string &name, const Mode mode,
     }
 }
 
-WdmReader::~WdmReader()
+SscReader::~SscReader()
 {
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
@@ -61,7 +61,7 @@ WdmReader::~WdmReader()
     m_MetadataTransport = nullptr;
 }
 
-StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
+StepStatus SscReader::BeginStepIterator(StepMode stepMode,
                                         format::DmvVecPtr &vars)
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -72,7 +72,7 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     if (m_MetaDataMap.empty())
     {
         Log(5,
-            "WdmReader::BeginStepIterator() returned NotReady because the "
+            "SscReader::BeginStepIterator() returned NotReady because the "
             "metadata map is empty",
             true, true);
         return StepStatus::NotReady;
@@ -89,7 +89,7 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     if (m_CurrentStep > maxStep)
     {
         Log(50,
-            "WdmReader::BeginStepIterator() returned NotReady because no new "
+            "SscReader::BeginStepIterator() returned NotReady because no new "
             "step is received yet",
             true, true);
         return StepStatus::NotReady;
@@ -103,7 +103,7 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     if (currentStepIt == m_MetaDataMap.end())
     {
         Log(5,
-            "WdmReader::BeginStepIterator() returned NotReady because the "
+            "SscReader::BeginStepIterator() returned NotReady because the "
             "current step is not existed in metadata map",
             true, true);
         return StepStatus::NotReady;
@@ -116,7 +116,7 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     if (vars == nullptr)
     {
         Log(5,
-            "WdmReader::BeginStepIterator() returned NotReady because vars == "
+            "SscReader::BeginStepIterator() returned NotReady because vars == "
             "nullptr",
             true, true);
         return StepStatus::NotReady;
@@ -125,13 +125,13 @@ StepStatus WdmReader::BeginStepIterator(StepMode stepMode,
     return StepStatus::OK;
 }
 
-StepStatus WdmReader::BeginStep(const StepMode stepMode,
+StepStatus SscReader::BeginStep(const StepMode stepMode,
                                 const float timeoutSeconds)
 {
 
     TAU_SCOPED_TIMER_FUNC();
     Log(5,
-        "WdmReader::BeginStep() start. Last step " +
+        "SscReader::BeginStep() start. Last step " +
             std::to_string(m_CurrentStep),
         true, true);
 
@@ -160,7 +160,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
             if (duration.count() > timeoutSeconds)
             {
                 Log(5,
-                    "WdmReader::BeginStep() returned EndOfStream because of "
+                    "SscReader::BeginStep() returned EndOfStream because of "
                     "timeout.",
                     true, true);
                 --m_CurrentStep;
@@ -180,7 +180,7 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
 #define declare_type(T)                                                        \
     else if (i.type == helper::GetType<T>())                                   \
     {                                                                          \
-        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
+        CheckIOVariable<T>(i.name, i.shape);                                   \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -193,24 +193,24 @@ StepStatus WdmReader::BeginStep(const StepMode stepMode,
     }
 
     Log(5,
-        "WdmReader::BeginStep() start. Last step " +
+        "SscReader::BeginStep() start. Last step " +
             std::to_string(m_CurrentStep),
         true, true);
 
     return StepStatus::OK;
 }
 
-void WdmReader::PerformGets()
+void SscReader::PerformGets()
 {
 
     TAU_SCOPED_TIMER_FUNC();
-    Log(5, "WdmReader::PerformGets() begin", true, true);
+    Log(5, "SscReader::PerformGets() begin", true, true);
 
     auto requests = m_DataManSerializer.GetDeferredRequest();
 
     if (m_Verbosity >= 10)
     {
-        Log(10, "WdmReader::PerformGets() processing deferred requests ", true,
+        Log(10, "SscReader::PerformGets() processing deferred requests ", true,
             true);
         for (const auto &i : *requests)
         {
@@ -253,7 +253,7 @@ void WdmReader::PerformGets()
         else
         {
             Log(6,
-                "WdmReader::PerformGets() put reply of size " +
+                "SscReader::PerformGets() put reply of size " +
                     std::to_string(reply->size()) + " into serializer",
                 true, true);
             m_DataManSerializer.PutPack(reply);
@@ -283,7 +283,7 @@ void WdmReader::PerformGets()
                                    req.variable, req.start, req.count,         \
                                    req.step);                                  \
         Log(6,                                                                 \
-            "WdmReader::PerformGets() get variable " + req.variable +          \
+            "SscReader::PerformGets() get variable " + req.variable +          \
                 " from serializer",                                            \
             true, true);                                                       \
     }
@@ -293,41 +293,41 @@ void WdmReader::PerformGets()
 
     m_DeferredRequests.clear();
 
-    Log(5, "WdmReader::PerformGets() end", true, true);
+    Log(5, "SscReader::PerformGets() end", true, true);
 }
 
-size_t WdmReader::CurrentStep() const { return m_CurrentStep; }
+size_t SscReader::CurrentStep() const { return m_CurrentStep; }
 
-void WdmReader::EndStep()
+void SscReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    Log(5, "WdmReader::EndStep() start. Step " + std::to_string(m_CurrentStep),
+    Log(5, "SscReader::EndStep() start. Step " + std::to_string(m_CurrentStep),
         true, true);
 
     PerformGets();
     m_DataManSerializer.Erase(CurrentStep(), true);
 
-    Log(5, "WdmReader::EndStep() end. Step " + std::to_string(m_CurrentStep),
+    Log(5, "SscReader::EndStep() end. Step " + std::to_string(m_CurrentStep),
         true, true);
 }
 
 // PRIVATE
 
 #define declare_type(T)                                                        \
-    void WdmReader::DoGetSync(Variable<T> &variable, T *data)                  \
+    void SscReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
-    void WdmReader::DoGetDeferred(Variable<T> &variable, T *data)              \
+    void SscReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
-    WdmReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
+    SscReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
         return AllStepsBlocksInfoCommon(variable);                             \
     }                                                                          \
-    std::vector<typename Variable<T>::Info> WdmReader::DoBlocksInfo(           \
+    std::vector<typename Variable<T>::Info> SscReader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
         return BlocksInfoCommon(variable, step);                               \
@@ -335,7 +335,7 @@ void WdmReader::EndStep()
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void WdmReader::Init()
+void SscReader::Init()
 {
     TAU_SCOPED_TIMER_FUNC();
     srand(time(NULL));
@@ -366,7 +366,7 @@ void WdmReader::Init()
     }
 }
 
-void WdmReader::InitParameters()
+void SscReader::InitParameters()
 {
     TAU_SCOPED_TIMER_FUNC();
     for (const auto &pair : m_IO.m_Parameters)
@@ -384,9 +384,9 @@ void WdmReader::InitParameters()
     }
 }
 
-void WdmReader::InitTransports() {}
+void SscReader::InitTransports() {}
 
-void WdmReader::RequestMetadata(const int64_t step)
+void SscReader::RequestMetadata(const int64_t step)
 {
     TAU_SCOPED_TIMER_FUNC();
     format::VecPtr reply = std::make_shared<std::vector<char>>();
@@ -401,7 +401,7 @@ void WdmReader::RequestMetadata(const int64_t step)
     m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
 }
 
-void WdmReader::DoClose(const int transportIndex)
+void SscReader::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 5)
@@ -411,7 +411,7 @@ void WdmReader::DoClose(const int transportIndex)
     }
 }
 
-void WdmReader::Log(const int level, const std::string &message, const bool mpi,
+void SscReader::Log(const int level, const std::string &message, const bool mpi,
                     const bool endline)
 {
     TAU_SCOPED_TIMER_FUNC();

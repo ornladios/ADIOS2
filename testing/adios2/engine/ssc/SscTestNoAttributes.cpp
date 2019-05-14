@@ -19,10 +19,10 @@ size_t print_lines = 0;
 
 char runMode;
 
-class WdmEngineTest : public ::testing::Test
+class SscEngineTest : public ::testing::Test
 {
 public:
-    WdmEngineTest() = default;
+    SscEngineTest() = default;
 };
 
 template <class T>
@@ -120,8 +120,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("wdm");
+    adios2::IO dataManIO = adios.DeclareIO("staging");
+    dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
@@ -187,8 +187,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const std::string &name)
 {
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
-    adios2::IO dataManIO = adios.DeclareIO("Test");
-    dataManIO.SetEngine("wdm");
+    adios2::IO dataManIO = adios.DeclareIO("staging");
+    dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
 
@@ -209,17 +209,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     size_t i;
     for (i = 0; i < steps; ++i)
     {
-        GenData(myChars, i, start, count, shape);
-        GenData(myUChars, i, start, count, shape);
-        GenData(myShorts, i, start, count, shape);
-        GenData(myUShorts, i, start, count, shape);
-        GenData(myInts, i, start, count, shape);
-        GenData(myUInts, i, start, count, shape);
-        GenData(myFloats, i, start, count, shape);
-        GenData(myDoubles, i, start, count, shape);
-        GenData(myComplexes, i, start, count, shape);
-        GenData(myDComplexes, i, start, count, shape);
-
         adios2::StepStatus status =
             dataManReader.BeginStep(StepMode::NextAvailable, 5);
 
@@ -299,7 +288,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         else if (status == adios2::StepStatus::EndOfStream)
         {
             std::cout << "[Rank " + std::to_string(mpiRank) +
-                             "] WdmTest reader end of stream!"
+                             "] SscTest reader end of stream!"
                       << std::endl;
             break;
         }
@@ -308,7 +297,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     print_lines = 0;
 }
 
-TEST_F(WdmEngineTest, NoAttributes)
+TEST_F(SscEngineTest, NoAttributes)
 {
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
