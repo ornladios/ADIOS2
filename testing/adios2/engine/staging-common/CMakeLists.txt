@@ -102,7 +102,7 @@ set (FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
-set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriter_1x2;KillWriterTimeout_1x2;TimeoutReader;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
+set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
 
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")

@@ -677,11 +677,8 @@ static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
     int AnythingRemoved = 0;
     List = Stream->QueuedTimesteps;
     SST_ASSERT_LOCKED();
-    CP_verbose(Stream, "SubRef : Writer-side called with TS %ld\n", Timestep);
     while (List)
     {
-        CP_verbose(Stream, "SubRef : Writer-side Timestep %ld \n",
-                   List->Timestep);
         if (List->Timestep == Timestep)
         {
             List->ReferenceCount--;
