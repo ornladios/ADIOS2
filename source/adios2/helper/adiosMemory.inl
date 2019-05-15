@@ -30,6 +30,42 @@ namespace adios2
 namespace helper
 {
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+template <class T>
+inline void CopyEndianReverse(const char *src, const size_t payloadStride,
+                              T *dest)
+{
+    if (sizeof(T) == 1)
+    {
+        std::copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+        return;
+    }
+
+    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+    std::reverse(dest, dest + payloadStride / sizeof(T));
+}
+
+template <>
+inline void CopyEndianReverse<std::complex<float>>(const char *src,
+                                                   const size_t payloadStride,
+                                                   std::complex<float> *dest)
+{
+    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+    float *destF = reinterpret_cast<float *>(dest);
+    std::reverse(destF, destF + payloadStride / sizeof(float));
+}
+
+template <>
+inline void CopyEndianReverse<std::complex<double>>(const char *src,
+                                                    const size_t payloadStride,
+                                                    std::complex<double> *dest)
+{
+    std::reverse_copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
+    double *destF = reinterpret_cast<double *>(dest);
+    std::reverse(destF, destF + payloadStride / sizeof(double));
+}
+#endif
+
 template <class T>
 void InsertToBuffer(std::vector<char> &buffer, const T *source,
                     const size_t elements) noexcept
@@ -278,14 +314,10 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                     intersectionStart;
 
                 const size_t variableStart =
-                    helper::LinearIndex(selectionBox, currentPoint, true) *
-                    sizeof(T);
-
-                char *rawVariableData = reinterpret_cast<char *>(dest);
+                    helper::LinearIndex(selectionBox, currentPoint, true);
 
                 CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
-                                     rawVariableData + variableStart,
-                                     endianReverse);
+                                     dest + variableStart, endianReverse);
 
                 //            std::copy(contiguousMemory + contiguousStart,
                 //                      contiguousMemory + contiguousStart +
@@ -351,14 +383,10 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                 intersectionStart;
 
             const size_t variableStart =
-                helper::LinearIndex(selectionBox, currentPoint, false) *
-                sizeof(T);
-
-            char *rawVariableData = reinterpret_cast<char *>(dest);
+                helper::LinearIndex(selectionBox, currentPoint, false);
 
             CopyContiguousMemory(contiguousMemory + contiguousStart, stride,
-                                 rawVariableData + variableStart,
-                                 endianReverse);
+                                 dest + variableStart, endianReverse);
 
             //            std::copy(contiguousMemory + contiguousStart,
             //                      contiguousMemory + contiguousStart + stride,
@@ -392,19 +420,13 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
     const Dims &start = intersectionBox.first;
     if (start.size() == 1) // 1D copy memory
     {
-        const size_t normalizedStart =
-            (start.front() - destStart.front()) * sizeof(T);
-        char *rawVariableData = reinterpret_cast<char *>(dest);
+        const size_t normalizedStart = start.front() - destStart.front();
 
         const Dims &start = intersectionBox.first;
         const Dims &end = intersectionBox.second;
         const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
 
-        CopyContiguousMemory(contiguousMemory, stride,
-                             rawVariableData + normalizedStart);
-
-        //        std::copy(contiguousMemory, contiguousMemory + stride,
-        //                  rawVariableData + normalizedStart);
+        CopyContiguousMemory(contiguousMemory, stride, dest + normalizedStart);
         return;
     }
 
