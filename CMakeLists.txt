@@ -153,7 +153,6 @@ endif()
 
 set(ADIOS2_CONFIG_OPTS
     BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
-    BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
