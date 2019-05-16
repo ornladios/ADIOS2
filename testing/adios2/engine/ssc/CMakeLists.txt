@@ -21,3 +21,10 @@ if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
     target_link_libraries(SscTestNoSelection adios2 gtest MPI::MPI_C)
     add_test(NAME SscTestNoSelection COMMAND "mpirun" "-n" "8" $<TARGET_FILE:SscTestNoSelection>)
 endif()
+
+if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_ZeroMQ)
+    add_executable(SscTest4d SscTest4d.cpp)
+    target_link_libraries(SscTest4d adios2 gtest MPI::MPI_C)
+    add_test(NAME SscTest4d COMMAND "mpirun" "-n" "8" $<TARGET_FILE:SscTest4d>)
+endif()
+
