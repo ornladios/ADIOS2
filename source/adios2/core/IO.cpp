@@ -27,7 +27,8 @@
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
-#include <adios2sys/SystemTools.hxx>      // FileIsDirectory()
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2sys/SystemTools.hxx> // FileIsDirectory()
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
 #include "adios2/engine/dataman/DataManReader.h"
@@ -79,6 +80,7 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
 void IO::SetParameters(const Params &parameters) noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     m_Parameters.clear();
 
     for (const auto &parameter : parameters)
@@ -89,6 +91,7 @@ void IO::SetParameters(const Params &parameters) noexcept
 
 void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     m_Parameters[key] = value;
 }
 
@@ -96,6 +99,7 @@ Params &IO::GetParameters() noexcept { return m_Parameters; }
 
 size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
+    TAU_SCOPED_TIMER("IO::other");
     Params parametersMap(parameters);
     if (m_DebugMode)
     {
@@ -118,6 +122,7 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
 void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
+    TAU_SCOPED_TIMER("IO::other");
     if (m_DebugMode)
     {
         if (transportIndex >= m_TransportsParameters.size())
@@ -148,6 +153,7 @@ bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
 bool IO::RemoveVariable(const std::string &name) noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveVariable");
     bool isRemoved = false;
     auto itVariable = m_Variables.find(name);
     // variable exists
@@ -183,6 +189,7 @@ bool IO::RemoveVariable(const std::string &name) noexcept
 
 void IO::RemoveAllVariables() noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveAllVariables");
     m_Variables.clear();
 #define declare_type(T) GetVariableMap<T>().clear();
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -192,6 +199,7 @@ void IO::RemoveAllVariables() noexcept
 
 bool IO::RemoveAttribute(const std::string &name) noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveAttribute");
     bool isRemoved = false;
     auto itAttribute = m_Attributes.find(name);
     // attribute exists
@@ -226,6 +234,7 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
 
 void IO::RemoveAllAttributes() noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveAllAttributes");
     m_Attributes.clear();
 
 #define declare_type(T) GetAttributeMap<T>().clear();
@@ -235,6 +244,7 @@ void IO::RemoveAllAttributes() noexcept
 
 std::map<std::string, Params> IO::GetAvailableVariables() noexcept
 {
+    TAU_SCOPED_TIMER("IO::GetAvailableVariables");
     std::map<std::string, Params> variablesInfo;
     for (const auto &variablePair : m_Variables)
     {
@@ -278,6 +288,7 @@ std::map<std::string, Params>
 IO::GetAvailableAttributes(const std::string &variableName,
                            const std::string separator) noexcept
 {
+    TAU_SCOPED_TIMER("IO::GetAvailableAttributes");
     std::map<std::string, Params> attributesInfo;
     const std::string variablePrefix = variableName + separator;
 
@@ -337,6 +348,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
 
 std::string IO::InquireVariableType(const std::string &name) const noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     auto itVariable = m_Variables.find(name);
     if (itVariable == m_Variables.end())
     {
@@ -372,6 +384,7 @@ std::string IO::InquireAttributeType(const std::string &name,
                                      const std::string &variableName,
                                      const std::string separator) const noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
@@ -386,6 +399,7 @@ std::string IO::InquireAttributeType(const std::string &name,
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     m_Operations.push_back(Operation{&op, parameters, Params()});
     return m_Operations.size() - 1;
 }
@@ -393,6 +407,7 @@ size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
 Engine &IO::Open(const std::string &name, const Mode mode,
                  MPI_Comm mpiComm_orig)
 {
+    TAU_SCOPED_TIMER("IO::Open");
     auto itEngineFound = m_Engines.find(name);
     const bool isEngineFound = (itEngineFound != m_Engines.end());
     bool isEngineActive = false;
@@ -626,6 +641,7 @@ Engine &IO::Open(const std::string &name, const Mode mode)
 
 Engine &IO::GetEngine(const std::string &name)
 {
+    TAU_SCOPED_TIMER("IO::other");
     auto itEngine = m_Engines.find(name);
     if (m_DebugMode)
     {
@@ -642,6 +658,7 @@ Engine &IO::GetEngine(const std::string &name)
 
 void IO::FlushAll()
 {
+    TAU_SCOPED_TIMER("IO::FlushAll");
     for (auto &enginePair : m_Engines)
     {
         auto &engine = enginePair.second;
@@ -655,6 +672,7 @@ void IO::FlushAll()
 void IO::ResetVariablesStepSelection(const bool zeroStart,
                                      const std::string hint)
 {
+    TAU_SCOPED_TIMER("IO::other");
     const auto &variablesData = GetVariablesDataMap();
 
     for (const auto &variableData : variablesData)
