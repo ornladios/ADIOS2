@@ -12,6 +12,7 @@
  */
 
 #include "adios2/helper/adiosMath.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include "InSituMPIFunctions.h"
 #include "InSituMPISchedules.h"
@@ -32,6 +33,7 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
 : Engine("InSituMPIWriter", io, name, mode, mpiComm),
   m_BP3Serializer(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::Open");
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
     Init();
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
@@ -67,6 +69,7 @@ InSituMPIWriter::~InSituMPIWriter() {}
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::BeginStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " BeginStep()\n";
@@ -128,6 +131,7 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void InSituMPIWriter::PerformPuts()
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::PerformPuts");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " PerformPuts()\n";
@@ -268,6 +272,7 @@ void InSituMPIWriter::PerformPuts()
 
 void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::AsyncSendVariable");
     const std::string type(m_IO.InquireVariableType(variableName));
 
     if (type == "compound")
@@ -298,6 +303,7 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 
 void InSituMPIWriter::EndStep()
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::EndStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " EndStep()\n";
@@ -307,9 +313,12 @@ void InSituMPIWriter::EndStep()
         PerformPuts();
     }
 
+    TAU_START("InSituMPIWriter::CompleteRequests");
     insitumpi::CompleteRequests(m_MPIRequests, true, m_WriterRank);
     m_MPIRequests.clear();
+    TAU_STOP("InSituMPIWriter::CompleteRequests");
 
+    TAU_START("WaitForReaderAck");
     // Wait for final acknowledgment from the readers
     int dummy = 0;
     if (m_BP3Serializer.m_RankMPI == 0 && m_RankDirectPeers.size() > 0)
@@ -319,6 +328,7 @@ void InSituMPIWriter::EndStep()
                  insitumpi::MpiTags::ReadCompleted, m_CommWorld, &status);
     }
     MPI_Bcast(&dummy, 1, MPI_INT, 0, m_MPIComm);
+    TAU_STOP("WaitForReaderAck");
 
     if (m_Verbosity == 5)
     {
@@ -332,12 +342,14 @@ void InSituMPIWriter::EndStep()
 #define declare_type(T)                                                        \
     void InSituMPIWriter::DoPutSync(Variable<T> &variable, const T *values)    \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIWriter::Put");                              \
         PutSyncCommon(variable, variable.SetBlockInfo(values, m_CurrentStep)); \
         variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
     void InSituMPIWriter::DoPutDeferred(Variable<T> &variable,                 \
                                         const T *values)                       \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIWriter::Put");                              \
         PutDeferredCommon(variable, values);                                   \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -373,6 +385,7 @@ void InSituMPIWriter::InitTransports()
 
 void InSituMPIWriter::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::Close");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
@@ -409,6 +422,7 @@ void InSituMPIWriter::DoClose(const int transportIndex)
 void InSituMPIWriter::ReceiveReadSchedule(
     insitumpi::WriteScheduleMap &writeScheduleMap)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::ReceiveReadSchedule");
     // Reader ID -> length of serialized read schedule
     std::map<int, int> rsLengths;
     // Reader ID -> serialized read schedule
