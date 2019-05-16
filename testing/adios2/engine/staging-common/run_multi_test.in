@@ -2,10 +2,8 @@
 # This script has been build to run the tests in the bin directory.
 use Getopt::Long;
 use List::Util qw(shuffle);
-use File::Path qw(remove_tree);
 use strict;
 use warnings;
-use Cwd qw(cwd);
 
 ##Parse Args
 my $verbose = 0;	# option variable with default value (false)
@@ -50,13 +48,6 @@ my $result = 1;
 my $writer_exec_cmd = "@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_writers";
 my $reader_exec_cmd = "@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ $num_readers";
 
-my $dir = cwd;
-my $test_dir_name = "$dir/${filename}_testdir";
-remove_tree($test_dir_name);
-mkdir ($test_dir_name);
-print "TestDriver: CHDIR to $test_dir_name\n" if $verbose;
-chdir ($test_dir_name) or die "Cannot chdir to $test_dir_name\n";
-
 if (("@MPIEXEC@" eq "") or ("@MPIEXEC@" eq "MPIEXEC_EXECUTABLE-NOTFOUND")) {
     # NO MPI
     $writer_exec_cmd = "";
@@ -72,7 +63,7 @@ unless($writer_pid)
     my $command = "$writer_exec_cmd $my_dirname/$writer_prog $engine $filename " . $writer_arg_str;
     $command =~ s/^\s+//;
     print "TestDriver: EXECwriter $command writer PID $$\n" if $verbose;
-    my $result = exec (split / /,$command);
+    my $result = system (split / /,$command);
     print "TestDriver: System for writer returns ", $result, " \n";
     exit $result;
 }
@@ -91,14 +82,14 @@ if ($test_protocol eq "kill_readers") {
     print "TestDriver: Start, number of readers is " . scalar(@ReaderPIDs) . ", max readers is $max_readers\n" if $verbose;
     if (((scalar(@ReaderPIDs) <= 0) || ($r < 0.5))  && (scalar(@ReaderPIDs) != $max_readers)){
       # fork a reader
-      defined(my $reader_pid = fork()) or die "Cannot fork $!";
+      defined(my $reader_pid = fork) or die "Cannot fork $!";
       unless($reader_pid)
 	{
 	  #Child process is here
 	  my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
 	  $command =~ s/^\s+//;
-	  print "TestDriver: exec ( $command )\n" if $verbose;
-	  my $result = exec (split / /,$command);
+	  print "TestDriver: System( $command )\n" if $verbose;
+	  my $result = system (split / /,$command);
 	  print "TestDriver: System for multi_readers Reader returns ", $result, " \n";
 	  exit $result;
 	}
@@ -126,7 +117,7 @@ if ($test_protocol eq "kill_readers") {
     print "TestDriver: TEST TIME REMAINING is $time_remaining \n" if $verbose;
   }
   print "TestDriver: Killing the writer\n" if $verbose;
-  system("touch $test_dir_name/DieTest");
+  system("touch DieTest");
   foreach my $readerPID (@ReaderPIDs) {
       waitpid($readerPID, 0);
       print "TestDriver: Status of final reader was $?\n" if $verbose;
@@ -136,37 +127,29 @@ if ($test_protocol eq "kill_readers") {
       }
   }    
   my $ret = waitpid($writer_pid, 0);
-  unlink("$test_dir_name/DieTest");
+  unlink("DieTest");
   print "TestDriver: Status of writer was $? with return value $ret\n" if $verbose;
   if ($? != 0) {
     $exit_value = 1; #failure
     print "TestDriver: Setting failure return because of bad exit status ($?) of writer\n";
   }
-  chdir "..";
-  remove_tree($test_dir_name);
   exit $exit_value;
 } # end kill_readers protocol
 
-if (($test_protocol eq "one_to_one") || ($test_protocol eq "kill_writer")) {
+if ($test_protocol eq "one_to_one") {
   
     defined(my $reader_pid = fork) or die "Cannot fork $!";
-    unless ($reader_pid) {
+    unless($reader_pid)
+    {
 	#Child process is here
 	my $command = "$reader_exec_cmd $my_dirname/$reader_prog $engine $filename " . join(" ", @reader_args);
 	$command =~ s/^\s+//;
 	print "TestDriver: EXECreader $command\n" if $verbose;
-	my $result = exec (split / /,$command);
+	my $result = system (split / /,$command);
 	print "TestDriver: System() for one_to_one Reader returned $result\n" if $verbose;
 	exit $result;
     }
     print "TestDriver: Reader PID: $reader_pid\n" if $verbose;
-    if ($test_protocol eq "kill_writer")  {
-	
-	print "TestDriver: waiting $interval in kill_writer\n" if $verbose;
-	select undef, undef, undef, $interval;
-	print "TestDriver: Killing the writer in kill_writer, pid $writer_pid\n" if $verbose;
-	kill 'KILL', $writer_pid;
-    }
     waitpid($reader_pid, 0);
     my $reader_exit = ${^CHILD_ERROR_NATIVE};
     print "TestDriver: Status of one_to_one reader was $reader_exit\n" if $verbose;
@@ -174,22 +157,15 @@ if (($test_protocol eq "one_to_one") || ($test_protocol eq "kill_writer")) {
 	$exit_value = 1; 
 	print "TestDriver: Setting failure return because of bad exit status ($?) on normal reader\n";
     }
-    system("touch $test_dir_name/DieTest");
-
+    system("touch DieTest");
     my $ret = waitpid($writer_pid, 0);
-    unlink("$test_dir_name/DieTest");
-    if ($test_protocol eq "kill_writer")  {
-	$? = 0;
-    }
-	
+    unlink("DieTest");
     print "TestDriver: Status of writer was $?\n" if $verbose;
     if ($? != 0) {
 	$exit_value = 1; #failure
 	print "TestDriver: Setting failure return because of bad exit status ($?) of writer\n";
     }
-    chdir "..";
-    remove_tree($test_dir_name);
     exit $exit_value;
 
-} # end one_to_one and kill_writer protocol
+} # end one_to_one protocol
 
