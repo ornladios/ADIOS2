@@ -1247,6 +1247,11 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                 /* force everyone to close */
                 NextTimestep = -2;
             }
+            if ((NextTimestep == -1) && (Stream->Status == PeerFailed))
+            {
+                /* force everyone to return failed */
+                NextTimestep = -3;
+            }
             MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
         else
@@ -1261,6 +1266,15 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                        "SstAdvanceStep returning EndOfStream at timestep %d\n",
                        Stream->ReaderTimestep);
             return SstEndOfStream;
+        }
+        if (NextTimestep == -3)
+        {
+            /* there was a peerFailed setting on rank0, we'll fail */
+            Stream->Status = PeerFailed;
+            CP_verbose(Stream,
+                       "SstAdvanceStep returning EndOfStream at timestep %d\n",
+                       Stream->ReaderTimestep);
+            return SstFatalError;
         }
         if (NextTimestep == -1)
         {
@@ -1409,7 +1423,15 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                                NextTimestep);
                 }
             }
-            if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
+            if (Stream->Status == PeerFailed)
+            {
+                CP_verbose(Stream,
+                           "SstAdvanceStepMin returning FatalError because of "
+                           "conn failure at timestep %d\n",
+                           Stream->ReaderTimestep);
+                return_value = SstFatalError;
+            }
+            else if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
             {
                 CP_verbose(
                     Stream,

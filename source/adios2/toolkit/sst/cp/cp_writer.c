@@ -322,9 +322,20 @@ static void QueueMaintenance(SstStream Stream)
                     Stream->Readers[i]->LastReleasedTimestep;
         }
     }
-    CP_verbose(Stream,
-               "QueueMaintenance, smallest last released = %ld, count = %d\n",
-               SmallestLastReleasedTimestep, Stream->QueuedTimestepCount);
+    if (SmallestLastReleasedTimestep != LONG_MAX)
+    {
+        CP_verbose(
+            Stream,
+            "QueueMaintenance, smallest last released = %ld, count = %d\n",
+            SmallestLastReleasedTimestep, Stream->QueuedTimestepCount);
+    }
+    else
+    {
+        CP_verbose(
+            Stream,
+            "QueueMaintenance, smallest last released = LONG_MAX, count = %d\n",
+            Stream->QueuedTimestepCount);
+    }
     /* Count precious */
     List = Stream->QueuedTimesteps;
     while (List)
@@ -666,11 +677,8 @@ static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
     int AnythingRemoved = 0;
     List = Stream->QueuedTimesteps;
     SST_ASSERT_LOCKED();
-    CP_verbose(Stream, "SubRef : Writer-side called with TS %ld\n", Timestep);
     while (List)
     {
-        CP_verbose(Stream, "SubRef : Writer-side Timestep %ld \n",
-                   List->Timestep);
         if (List->Timestep == Timestep)
         {
             List->ReferenceCount--;

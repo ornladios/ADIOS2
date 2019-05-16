@@ -978,12 +978,15 @@ extern void SstStreamDestroy(SstStream Stream)
         CP_verbose(
             Stream,
             "Reference count now zero, Destroying process SST info cache\n");
+        // wait .1 sec for last messages
+        CMusleep(CPInfo->cm, 10000);
         CManager_close(CPInfo->cm);
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
         if (CPInfo->fm_c)
             free_FMcontext(CPInfo->fm_c);
         FreeCustomStructs(CPInfo);
+        CP_verbose(Stream, "Freeing LastCallList\n");
         for (int i = 0; i < CPInfo->LastCallFreeCount; i++)
         {
             free(CPInfo->LastCallFreeList[i]);
