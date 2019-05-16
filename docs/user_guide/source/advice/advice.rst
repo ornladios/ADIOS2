@@ -3,6 +3,7 @@ Advice
 ******
 
 This list is similar to the Advice sections for each chapter in `The C++ Programming Language, Fourth Edition by Bjarne Stroustrup <http://www.stroustrup.com/4th.html>`_
+The goal is to provide specific advice and good practices about the use of ADIOS2 in other projects. 
 
 1. Run with debug mode as ON in the ``ADIOS`` constructor or ``adios2_init`` when developing with ADIOS 2 
 

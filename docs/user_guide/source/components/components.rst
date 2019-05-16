@@ -10,4 +10,3 @@ ADIOS2 Interface Components
 .. include:: engine.rst
 .. include:: operator.rst
 .. include:: runtime.rst
-.. include:: advice.rst

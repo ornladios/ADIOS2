@@ -189,7 +189,7 @@ public:
     };
 
     /**
-     * EXPERIMENTAL: Adds operation and parameters to current Variable object
+     *Adds operation and parameters to current Variable object
      * @param op operator to be added
      * @param parameters key/value settings particular to the Variable, not to
      * be confused by op own parameters
@@ -199,7 +199,7 @@ public:
                         const adios2::Params &parameters = adios2::Params());
 
     /**
-     * EXPERIMENTAL: inspects current operators added with AddOperator
+     * Inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
     std::vector<Operation> Operations() const;
@@ -274,6 +274,9 @@ public:
      */
     std::vector<std::vector<typename Variable<T>::Info>> AllStepsBlocksInfo();
 
+    /**
+     * Variable<T>::Span class that allows exposing buffer memory to the user
+     */
     class Span
     {
     public:
@@ -340,16 +343,12 @@ public:
         // engine allowed to set m_Span
         friend class Engine;
 
-        /**
-         * Custom iterator class from:
-         * https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
-         */
+        // Custom iterator class from:
+        // https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
         ADIOS2_CLASS_iterator;
 
-        /**
-         * Custom iterator class functions from:
-         * https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
-         */
+        // Custom iterator class functions from:
+        // https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
         ADIOS2_iterators_functions(data(), size());
 
     private:
