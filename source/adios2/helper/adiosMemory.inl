@@ -426,7 +426,8 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
         const Dims &end = intersectionBox.second;
         const size_t stride = (end.back() - start.back() + 1) * sizeof(T);
 
-        CopyContiguousMemory(contiguousMemory, stride, dest + normalizedStart);
+        CopyContiguousMemory(contiguousMemory, stride, dest + normalizedStart,
+                             endianReverse);
         return;
     }
 

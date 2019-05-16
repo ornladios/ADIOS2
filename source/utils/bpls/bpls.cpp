@@ -2594,6 +2594,11 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
     for (int step = 0; step < nsteps; step++)
     {
         Dims d = variable->Shape(step);
+        if (d.empty())
+        {
+            continue;
+        }
+
         for (int k = 0; k < ndim; k++)
         {
             if (firstStep)
