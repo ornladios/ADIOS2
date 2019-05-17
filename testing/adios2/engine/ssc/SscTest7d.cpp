@@ -54,32 +54,24 @@ void PrintData(const T *data, const size_t step, const Dims &start,
     std::cout << "]" << std::endl;
 }
 
-template<class T>
-void cell_0(std::vector<size_t> start,std::vector<size_t> count,
-           std::vector<size_t> shape, size_t n0, size_t y, std::vector<T> &vec )
+template <class T>
+void Cell0(std::vector<size_t> start, std::vector<size_t> count,
+           std::vector<size_t> shape, size_t n0, size_t y, std::vector<T> &vec)
 {
-    size_t z,i0;
-
-    for (size_t i=0; i<count[0]; i++)
+    for (size_t i = 0; i < count[0]; i++)
     {
-        i0=n0*count[0]+i;
-        z=y*shape[0]+(i+start[0]);
-        vec[i0]=z;
+        vec[n0 * count[0] + i] = y * shape[0] + (i + start[0]);
     }
 }
 
-
-template<class T>
-void cell_N(std::vector<size_t> start,std::vector<size_t> count,
+template <class T>
+void CellN(std::vector<size_t> start, std::vector<size_t> count,
            std::vector<size_t> shape, size_t n0, size_t y, std::vector<T> &vec)
 {
-    size_t z,i0;
-//    size_t N=shape.size();
-
-    for (size_t i=0; i<count[0]; i++)
+    for (size_t i = 0; i < count[0]; i++)
     {
-        i0=n0*count[0]+i;
-        z=y*shape[0]+(i+start[0]);
+        size_t i0 = n0 * count[0] + i;
+        size_t z = y * shape[0] + (i + start[0]);
 
         auto start_next = start;
         auto count_next = count;
@@ -88,29 +80,27 @@ void cell_N(std::vector<size_t> start,std::vector<size_t> count,
         count_next.erase(count_next.begin());
         shape_next.erase(shape_next.begin());
 
-        if(start_next.size()==1)
+        if (start_next.size() == 1)
         {
-            cell_0(start_next,count_next,shape_next, i0,z,vec);
+            Cell0(start_next, count_next, shape_next, i0, z, vec);
         }
         else
         {
-            cell_N(start_next,count_next,shape_next, i0,z,vec);
+            CellN(start_next, count_next, shape_next, i0, z, vec);
         }
     }
 }
 
-
-template<class T>
-void GenData(std::vector<T> &vec, const size_t step, const std::vector<size_t> &start, const std::vector<size_t> &count, const std::vector<size_t> &shape)
+template <class T>
+void GenData(std::vector<T> &vec, const size_t step,
+             const std::vector<size_t> &start, const std::vector<size_t> &count,
+             const std::vector<size_t> &shape)
 {
-    size_t total_size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
+    size_t total_size = std::accumulate(count.begin(), count.end(), 1,
+                                        std::multiplies<size_t>());
     vec.resize(total_size);
-
-    size_t z=0,i0=0;
-    cell_N(start,count,shape, i0,z,vec);
-
+    CellN(start, count, shape, 0, 0, vec);
 }
-
 
 template <class T>
 void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
@@ -358,8 +348,8 @@ TEST_F(SscEngineTest, BaseTest7d)
     MPI_Comm_size(mpiComm, &mpiSize);
 
     Dims shape = {10, 2, 2, (size_t)mpiSize, 2, 8, 10};
-    Dims start = {0, 0,0, (size_t)mpiRank,0, 0, 0};
-    Dims count = {10,2,2, 1,2, 8, 10};
+    Dims start = {0, 0, 0, (size_t)mpiRank, 0, 0, 0};
+    Dims count = {10, 2, 2, 1, 2, 8, 10};
 
     adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
     std::string filename = "BaseTest";
