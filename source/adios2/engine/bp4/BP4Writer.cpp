@@ -15,6 +15,7 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 namespace adios2
@@ -32,6 +33,7 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
   m_FileMetadataManager(mpiComm, m_DebugMode),
   m_FileMetadataIndexManager(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("BP4Writer::Open");
     m_IO.m_ReadStreaming = false;
     m_EndMessage = " in call to IO Open BP4Writer " + m_Name + "\n";
     Init();
@@ -41,6 +43,7 @@ BP4Writer::~BP4Writer() = default;
 
 StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("BP4Writer::BeginStep");
     m_BP4Serializer.m_DeferredVariables.clear();
     m_BP4Serializer.m_DeferredVariablesDataSize = 0;
     m_IO.m_ReadStreaming = false;
@@ -54,6 +57,7 @@ size_t BP4Writer::CurrentStep() const
 
 void BP4Writer::PerformPuts()
 {
+    TAU_SCOPED_TIMER("BP4Writer::PerformPuts");
     if (m_BP4Serializer.m_DeferredVariables.empty())
     {
         return;
@@ -90,6 +94,7 @@ void BP4Writer::PerformPuts()
 
 void BP4Writer::EndStep()
 {
+    TAU_SCOPED_TIMER("BP4Writer::EndStep");
     if (m_BP4Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();
@@ -109,6 +114,7 @@ void BP4Writer::EndStep()
 
 void BP4Writer::Flush(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP4Writer::Flush");
     DoFlush(false, transportIndex);
     m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Data);
 
@@ -233,6 +239,7 @@ void BP4Writer::DoFlush(const bool isFinal, const int transportIndex)
 
 void BP4Writer::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP4Writer::Close");
     if (m_BP4Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();
@@ -282,6 +289,7 @@ void BP4Writer::DoClose(const int transportIndex)
 
 void BP4Writer::WriteProfilingJSONFile()
 {
+    TAU_SCOPED_TIMER("BP4Writer::WriteProfilingJSONFile");
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
@@ -320,6 +328,7 @@ void BP4Writer::PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
                                                 const uint8_t version,
                                                 const bool addSubfiles)
 {
+    TAU_SCOPED_TIMER("BP4Writer::PopulateMetadataIndexFileHeader");
     auto lf_CopyVersionChar = [](const std::string version,
                                  std::vector<char> &buffer, size_t &position) {
         helper::CopyToBuffer(buffer, position, version.c_str());
@@ -373,6 +382,7 @@ void BP4Writer::PopulateMetadataIndexFileContent(
     const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
     std::vector<char> &buffer, size_t &position)
 {
+    TAU_SCOPED_TIMER("BP4Writer::PopulateMetadataIndexFileContent");
     helper::CopyToBuffer(buffer, position, &currentStep);
     helper::CopyToBuffer(buffer, position, &mpirank);
     helper::CopyToBuffer(buffer, position, &pgIndexStart);
@@ -383,7 +393,7 @@ void BP4Writer::PopulateMetadataIndexFileContent(
 
 void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
-
+    TAU_SCOPED_TIMER("BP4Writer::WriteCollectiveMetadataFile");
     m_BP4Serializer.AggregateCollectiveMetadata(
         m_MPIComm, m_BP4Serializer.m_Metadata, true);
 
@@ -505,6 +515,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
 void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP4Writer::WriteData");
     size_t dataSize = m_BP4Serializer.m_Data.m_Position;
 
     if (isFinal)
@@ -525,6 +536,7 @@ void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
 
 void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP4Writer::AggregateWriteData");
     m_BP4Serializer.CloseStream(m_IO, false);
 
     // async?

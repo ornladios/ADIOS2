@@ -15,6 +15,7 @@
 #include "InSituMPIReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -32,6 +33,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
 : Engine("InSituMPIReader", io, name, mode, mpiComm),
   m_BP3Deserializer(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::Open");
     m_EndMessage = " in call to IO Open InSituMPIReader " + m_Name + "\n";
     Init();
 
@@ -110,6 +112,7 @@ void InSituMPIReader::ClearMetadataBuffer()
 StepStatus InSituMPIReader::BeginStep(const StepMode mode,
                                       const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::BeginStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " BeginStep()\n";
@@ -297,6 +300,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
 
 void InSituMPIReader::PerformGets()
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::PerformGets");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " PerformGets()\n";
@@ -371,6 +375,7 @@ int InSituMPIReader::Statistics(uint64_t bytesInPlace, uint64_t bytesCopied)
 
 void InSituMPIReader::EndStep()
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::EndStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank
@@ -397,6 +402,7 @@ void InSituMPIReader::EndStep()
 void InSituMPIReader::SendReadSchedule(
     const std::map<std::string, helper::SubFileInfoMap> &variablesSubFileInfo)
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::SendReadSchedule");
     // Serialized schedules, one per-writer
     std::map<int, std::vector<char>> serializedSchedules =
         insitumpi::SerializeLocalReadSchedule(m_RankAllPeers.size(),
@@ -457,11 +463,14 @@ void InSituMPIReader::SendReadSchedule(
 
         i++;
     }
+    TAU_START("InSituMPIReader::CompleteRequests");
     insitumpi::CompleteRequests(request, false, m_ReaderRank);
+    TAU_STOP("InSituMPIReader::CompleteRequests");
 }
 
 void InSituMPIReader::AsyncRecvAllVariables()
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::AsyncRecvAllVariables");
     // <variable, <writer, <steps, <SubFileInfo>>>>
     for (const auto &variablePair : m_ReadScheduleMap)
     {
@@ -493,9 +502,12 @@ void InSituMPIReader::AsyncRecvAllVariables()
 
 void InSituMPIReader::ProcessReceives()
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::ProcessReceives");
     const int nRequests = m_OngoingReceives.size();
 
+    TAU_START("InSituMPIReader::CompleteRequests");
     insitumpi::CompleteRequests(m_MPIRequests, false, m_ReaderRank);
+    TAU_STOP("InSituMPIReader::CompleteRequests");
 
     // Send final acknowledgment to the Writer
     int dummy = 1;
@@ -527,10 +539,12 @@ void InSituMPIReader::ProcessReceives()
 #define declare_type(T)                                                        \
     void InSituMPIReader::DoGetSync(Variable<T> &variable, T *data)            \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIReader::Get");                              \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void InSituMPIReader::DoGetDeferred(Variable<T> &variable, T *data)        \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIReader::Get");                              \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -566,6 +580,7 @@ void InSituMPIReader::InitTransports()
 
 void InSituMPIReader::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("InSituMPIReader::Close");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Close(" << m_Name
@@ -591,12 +606,14 @@ void InSituMPIReader::DoClose(const int transportIndex)
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     InSituMPIReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const   \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIReader::AllStepsBlocksInfo");               \
         return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> InSituMPIReader::DoBlocksInfo(     \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIReader::BlocksInfo");                       \
         return m_BP3Deserializer.BlocksInfo(variable, step);                   \
     }
 
