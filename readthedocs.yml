@@ -1,10 +1,9 @@
 # .readthedocs.yml
-version: 2
+version: 1
+
+requirements_file: docs/requirements.txt
 
 python:
-   version: 3.7
-   install:
-      - requirements: docs/requirements.txt
-      - method: pip
-   system_packages: true
-
+   version: 3.5
+   use_system_site_packages: true
+   
