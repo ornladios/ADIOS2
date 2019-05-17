@@ -28,7 +28,7 @@
 # add_common_test(1x1 SST) ends up doing:
 # 
 #  add_test(NAME "Staging.1x1.SST"
-#          COMMAND "run_staging_test -e SST -f Staging.1x1.SST -nw 1 -nr 1 -v -p TestCommon")
+#          COMMAND "run_staging_test -e SST -f Staging.1x1.SST -nw 1 -nr 1")
 #  set_tests_properties(${testname} PROPERTIES TIMEOUT 30 RUN_SERIAL 1)
 #
 #    RUNNING TESTS WITH DIFFERENT ENGINE PARAMETERS
@@ -37,6 +37,7 @@
 # with different engine parameters, *_CMD strings can also contain the
 # string "ENGINE_PARAMS".  This string is treated specially by the
 # function MutateTestSet().  This function is takes a list of tests
+
 # (I.E. things with _CMD strings defined like above) and creates a new
 # set of tests where a specified engine parameter gets added to the in
 # the location of the ENGINE_PARAMS string.  MutateTestSet takes 4 parameters:
@@ -58,75 +59,76 @@
 #
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
-set (1x1_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg ENGINE_PARAMS")
-set (2x1_CMD "run_staging_test -nw 2 -nr 1 -v -p TestCommon -arg ENGINE_PARAMS")
-set (1x2_CMD "run_staging_test -nw 1 -nr 2 -v -p TestCommon -arg ENGINE_PARAMS")
-set (3x5_CMD "run_staging_test -nw 3 -nr 5 -v -p TestCommon -arg ENGINE_PARAMS")
-set (5x3_CMD "run_staging_test -nw 5 -nr 3 -v -p TestCommon -arg ENGINE_PARAMS")
-set (1x1.Local_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWriteLocal -r TestCommonReadLocal -arg ENGINE_PARAMS")
-set (2x1.Local_CMD "run_staging_test -nw 2 -nr 1 -v -w TestCommonWriteLocal -r TestCommonReadLocal -arg ENGINE_PARAMS")
-set (1x2.Local_CMD "run_staging_test -nw 1 -nr 2 -v -w TestCommonWriteLocal -r TestCommonReadLocal -arg ENGINE_PARAMS")
-set (3x5.Local_CMD "run_staging_test -nw 3 -nr 5 -v -w TestCommonWriteLocal -r TestCommonReadLocal -arg ENGINE_PARAMS")
-set (5x3.Local_CMD "run_staging_test -nw 5 -nr 3 -v -w TestCommonWriteLocal -r TestCommonReadLocal -arg ENGINE_PARAMS")
-set (DelayedReader_3x5_CMD "run_staging_test -rd 5 -nw 3 -nr 5 -p TestCommon -arg ENGINE_PARAMS")
-set (FtoC.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -w TestCommonWrite_f -r TestCommonRead -arg ENGINE_PARAMS")
-set (FtoF.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -w TestCommonWrite_f -r TestCommonRead_f -arg ENGINE_PARAMS")
+set (1x1_CMD "run_test.py -nw 1 -nr 1 --warg=ENGINE_PARAMS")
+set (2x1_CMD "run_test.py -nw 2 -nr 1 --warg=ENGINE_PARAMS")
+set (1x2_CMD "run_test.py -nw 1 -nr 2 --warg=ENGINE_PARAMS")
+set (3x5_CMD "run_test.py -nw 3 -nr 5 --warg=ENGINE_PARAMS")
+set (5x3_CMD "run_test.py -nw 5 -nr 3 --warg=ENGINE_PARAMS")
+set (1x1.Local_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
+set (2x1.Local_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
+set (1x2.Local_CMD "run_test.py -nw 1 -nr 2  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
+set (3x5.Local_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
+set (5x3.Local_CMD "run_test.py -nw 5 -nr 3  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
+set (DelayedReader_3x5_CMD "run_test.py -rd 5 -nw 3 -nr 5 --warg=ENGINE_PARAMS")
+set (FtoC.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead --warg=ENGINE_PARAMS")
+set (FtoF.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead_f --warg=ENGINE_PARAMS")
 
 # NoReaderNoWait runs a writer with the RendezvousReaderCount = 0 and then never spawns a reader.  The test should run to termination and execute cleanly
-set (NoReaderNoWait_CMD "run_staging_test -nw 1 -nr 0 -v -p TestCommon -arg RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS")
+set (NoReaderNoWait_CMD "run_test.py -nw 1 -nr 0 --warg=RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS")
 
 # The Modes test checks to see that we can mix and match Put Sync and Deferred modes and still get good data
-set (Modes_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWriteModes -r TestCommonRead -arg ENGINE_PARAMS")
+set (Modes_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteModes -r TestCommonRead --warg=ENGINE_PARAMS")
 
 # 1x1.Attrs tests writing and reading of attributes defined before Open
-set (1x1.Attrs_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWriteAttrs -r TestCommonReadAttrs -arg ENGINE_PARAMS")
+set (1x1.Attrs_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteAttrs -r TestCommonReadAttrs --warg=ENGINE_PARAMS")
 
 # Basic Fortran tests, Fortran to C, C to Fortran and Fortran to Fortran
-set (FtoC.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWrite_f -r TestCommonRead -arg ENGINE_PARAMS")
-set (CtoF.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWrite -r TestCommonRead_f -arg ENGINE_PARAMS")
-set (FtoF.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -w TestCommonWrite_f -r TestCommonRead_f -arg ENGINE_PARAMS")
+set (FtoC.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite_f -r TestCommonRead --warg=ENGINE_PARAMS")
+set (CtoF.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite -r TestCommonRead_f --warg=ENGINE_PARAMS")
+set (FtoF.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite_f -r TestCommonRead_f --warg=ENGINE_PARAMS")
 
 # Tests for ZFP compression (where supported by an engine param)
-set (ZFPCompression.1x1_CMD "run_staging_test -nw 1 -nr 1 -v -p TestCommon -arg CompressionMethod:zfp,ENGINE_PARAMS" )
-set (ZFPCompression.3x5_CMD "run_staging_test -nw 3 -nr 5 -v -p TestCommon -arg CompressionMethod:zfp,ENGINE_PARAMS" )
+set (ZFPCompression.1x1_CMD "run_test.py -nw 1 -nr 1 --warg=CompressionMethod:zfp,ENGINE_PARAMS" )
+set (ZFPCompression.3x5_CMD "run_test.py -nw 3 -nr 5 --warg=CompressionMethod:zfp,ENGINE_PARAMS" )
 
 # Test if writer will survive readers departing unexpectedly
-set (KillReadersSerialized_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 1 -warg RendezvousReaderCount:0,ENGINE_PARAMS -rarg --ignore_time_gap")
+set (KillReadersSerialized_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount:0,ENGINE_PARAMS --rarg=--ignore_time_gap")
 set (KillReadersSerialized_TIMEOUT "300")
 set (KillReadersSerialized_PROPERTIES "RUN_SERIAL;1")
-set (KillReaders3Max_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 3 -warg RendezvousReaderCount:0,ENGINE_PARAMS -rarg --ignore_time_gap")
+set (KillReaders3Max_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount:0,ENGINE_PARAMS --rarg=--ignore_time_gap")
 set (KillReaders3Max_TIMEOUT "300")
 set (KillReaders3Max_PROPERTIES "RUN_SERIAL;1")
 
-set (KillWriter_1x2_CMD "run_multi_test -test_protocol kill_writer  -verbose -nw 1 -nr 2 -interval 2 -warg RendezvousReaderCount:1,ENGINE_PARAMS -rarg --expect_writer_failure -rarg --num_steps --rarg 1000")
-set (KillWriterTimeout_1x2_CMD "run_multi_test -test_protocol kill_writer  -verbose -nw 1 -nr 2 -interval 2 -warg RendezvousReaderCount:1,ENGINE_PARAMS -rarg --expect_writer_failure -rarg --num_steps --rarg 1000 --rarg --non_blocking")
+set (KillWriter_2x2_CMD "run_test.py --test_protocol kill_writer   -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount:1,ENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
+set (KillWriterTimeout_2x2_CMD "run_test.py --test_protocol kill_writer -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount:1,ENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
 
-set (PreciousTimestep_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 2 -warg FirstTimestepPrecious:true,RendezvousReaderCount:0,ENGINE_PARAMS -rarg --ignore_time_gap -rarg --precious_first")
+set (PreciousTimestep_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious:true,RendezvousReaderCount:0,ENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
+
 set (PreciousTimestep_TIMEOUT "300")
 set (PreciousTimestep_PROPERTIES "RUN_SERIAL;1")
 
-set (PreciousTimestepDiscard_CMD "run_multi_test -test_protocol kill_readers  -verbose -nw 3 -nr 2 -max_readers 2 -warg FirstTimestepPrecious:true,RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS -rarg --ignore_time_gap -rarg --precious_first -rarg --discard -warg --ms_delay -warg 500")
+set (PreciousTimestepDiscard_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious:true,RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500")
 set (PreciousTimestepDiscard_TIMEOUT "300")
 set (PreciousTimestepDiscard_PROPERTIES "RUN_SERIAL;1")
 
 # Readers using BeginStep with timeout.  Here we run the writer with a longer delay to make the reader timeout
-set (TimeoutReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -rarg --non_blocking -warg --ms_delay -warg 2000 -warg --engine_params -warg ENGINE_PARAMS")
+set (TimeoutReader_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --rarg=--non_blocking --warg=--ms_delay --warg=2000 --warg=--engine_params --warg=ENGINE_PARAMS")
 set (TimeoutReader_TIMEOUT "60")
 set (TimeoutReader_PROPERTIES "RUN_SERIAL;1")
 
 # Readers using LatestAvailable   Writer runs faster than reader, so we expect misses
-set (LatestReader_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -warg --ms_delay -warg 250 -warg --engine_params -warg ENGINE_PARAMS -rarg --latest -rarg --long_first_delay")
+set (LatestReader_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --warg=--engine_params --warg=ENGINE_PARAMS --rarg=--latest --rarg=--long_first_delay")
 set (LatestReader_PROPERTIES "RUN_SERIAL;1")
 
 # A faster writer and a queue policy that will cause timesteps to be discarded
-set (DiscardWriter_CMD "run_multi_test -test_protocol one_to_one -verbose -nw 1 -nr 1 -warg --engine_params -warg QueueLimit:1,QueueFullPolicy:discard,ENGINE_PARAMS -warg --ms_delay -warg 250 -rarg --discard")
+set (DiscardWriter_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit:1,QueueFullPolicy:discard,ENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
 
 function(remove_engine_params_placeholder dst_str src_str )
     string(REGEX REPLACE "([^ 		  ]*),ENGINE_PARAMS" "\\1" src_str "${src_str}")
     if ("${src_str}" MATCHES "ENGINE_PARAMS")
        # empty engine params remains
-       string(REGEX REPLACE "-warg *--engine_params *-warg *ENGINE_PARAMS" "" src_str "${src_str}")       
-       string(REGEX REPLACE "-warg *--engine_params *-rarg *ENGINE_PARAMS" "" src_str "${src_str}")       
+       string(REGEX REPLACE "--warg=--engine_params --warg=ENGINE_PARAMS" "" src_str "${src_str}")       
+       string(REGEX REPLACE "--rarg=--engine_params --rarg=ENGINE_PARAMS" "" src_str "${src_str}")       
        string(REGEX REPLACE "-arg *ENGINE_PARAMS" "" src_str "${src_str}")
     endif()
   set(${dst_str} ${src_str} PARENT_SCOPE)
@@ -170,14 +172,13 @@ endfunction()
 
 function(add_common_test basename engine)
     set(testname "Staging.${basename}.${engine}")
-    set(filename "Staging.${basename}.${engine}")
     if ("${${basename}_CMD}" STREQUAL "") 
        message(SEND_ERROR "Staging-Common test ${basename} has no defined ${basename}_CMD")
     endif()
     string (CONCAT command "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/" ${${basename}_CMD})
     remove_engine_params_placeholder(command  "${command}")
     separate_arguments(command)
-    list(INSERT command 1 "-e" "${engine}" "-f" "${filename}")
+    list(INSERT command 1 "${engine}" "${testname}")
     add_test(
     	NAME ${testname}
 	COMMAND ${command})

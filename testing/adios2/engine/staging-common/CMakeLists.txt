@@ -84,14 +84,8 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 configure_file(
-  run_staging_test.in
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
-  @ONLY
-)
-
-configure_file(
-  run_multi_test.in
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test
+  run_test.in
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.py
   @ONLY
 )
 
@@ -102,7 +96,7 @@ set (FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
-set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
+set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;KillWriter_2x2;KillWriterTimeout_2x2;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
 
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")
