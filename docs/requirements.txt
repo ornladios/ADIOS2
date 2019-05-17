@@ -1,4 +1,4 @@
 blockdiag
 sphinxcontrib-blockdiag
 sphinx_rtd_theme
-breathe
+breathe>=4.13
