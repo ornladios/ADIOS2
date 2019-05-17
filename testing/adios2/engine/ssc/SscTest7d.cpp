@@ -346,7 +346,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     print_lines = 0;
 }
 
-TEST_F(SscEngineTest, BaseTest)
+TEST_F(SscEngineTest, BaseTest7d)
 {
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
@@ -357,9 +357,9 @@ TEST_F(SscEngineTest, BaseTest)
     MPI_Comm_rank(mpiComm, &mpiRank);
     MPI_Comm_size(mpiComm, &mpiSize);
 
-    Dims shape = {(size_t)mpiSize, (size_t)mpiSize, 10};
-    Dims start = {(size_t)mpiRank, (size_t)mpiRank, 0};
-    Dims count = {1, 1, 10};
+    Dims shape = {10, 2, 2, (size_t)mpiSize, 2, 8, 10};
+    Dims start = {0, 0,0, (size_t)mpiRank,0, 0, 0};
+    Dims count = {10,2,2, 1,2, 8, 10};
 
     adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
     std::string filename = "BaseTest";
