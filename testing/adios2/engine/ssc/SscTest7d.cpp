@@ -356,14 +356,14 @@ TEST_F(SscEngineTest, BaseTest7d)
 
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, 1000, engineParams, filename);
+        Writer(shape, start, count, 200, engineParams, filename);
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     if (mpiGroup == 1)
     {
-        Reader(shape, start, count, 10, engineParams, filename);
+        Reader(shape, start, count, 1, engineParams, filename);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
