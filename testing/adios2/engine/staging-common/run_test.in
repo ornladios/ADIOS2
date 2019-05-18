@@ -69,8 +69,8 @@ def do_one_client_test(writer_cmd, reader_cmd) :
     
 def do_kill_writer_test(writer_cmd, reader_cmd, interval) :
     return_code = 0;
-    writer = subprocess.Popen(writer_cmd);
-    reader = subprocess.Popen(reader_cmd);
+    writer = subprocess.Popen(writer_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=False);
+    reader = subprocess.Popen(reader_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=False);
     print "TestDriver: Waiting " + str(interval) + " seconds";
     time.sleep(interval);
     print "TestDriver: Killing Writer";
@@ -86,7 +86,7 @@ def do_kill_writer_test(writer_cmd, reader_cmd, interval) :
     
 def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval) :
     return_code = 0;
-    writer = subprocess.Popen(writer_cmd);
+    writer = subprocess.Popen(writer_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=False);
     start = time.time();
     timeout = time.time() + duration;
     readers = [];
@@ -94,7 +94,7 @@ def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval) :
         print ("TestDriver: Beginning interval at time " + str(time.time() - start));
         if (((len(readers) == 0) or (random.randint(0,1) == 0)) and (len(readers) < args.max_readers)) :
 	    print "TestDriver: Forking a reader";
-            reader = subprocess.Popen(reader_cmd);
+            reader = subprocess.Popen(reader_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=False);
             readers.append(reader);
 	    print "TestDriver: There are now " + str(len(readers)) + " readers";
         else :
