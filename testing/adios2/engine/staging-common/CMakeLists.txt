@@ -84,25 +84,42 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 configure_file(
-  run_staging_test.in
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_staging_test
+  run_test.in
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_test.py
   @ONLY
 )
 
-configure_file(
-  run_multi_test.in
-  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/run_multi_test
-  @ONLY
-)
+include (TestSupp.cmake )
 
-include ( TestSupp.cmake )
+if (ADIOS2_HAVE_MPI) 
+   # we want to know if mpiexec is a shell script or a binary executable
+   file(READ ${MPIEXEC} MPIFILEDATA LIMIT 1024 HEX)
+   string(LENGTH ${MPIFILEDATA} DATALENGTH)
+   math(EXPR last_hex_index "(${DATALENGTH} / 2) - 1")
+   foreach(hex_index RANGE ${last_hex_index})
+      math (EXPR str_loc "2*${hex_index}")
+      string(SUBSTRING "${MPIFILEDATA}" "${str_loc}" "2" char)
+      #math (EXPR dec_char "0x${char}" )
+      from_hex(${char} dec_char)
+      if ((${dec_char} LESS 9) OR (${dec_char} GREATER 126) OR ((${dec_char} GREATER 13) AND (${dec_char} LESS 32)))
+          #  message ("$character ${char} is outside of the printable/character ascii range")
+	  set (MPIEXEC_IS_BINARY TRUE)
+	  break()
+      endif()
+   endforeach()
+endif()
 
 set (TEST_SET "1x1;NoReaderNoWait;Modes;1x1.Attrs;1x1.Local")
 set (FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
-set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
+
+set (SPECIAL_TESTS "TimeoutReader;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
+if (MPIEXEC_IS_BINARY)
+    # run_test.py can only kill readers/writers if mpiexec is not a shell script
+    list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriter_2x2;KillWriterTimeout_2x2")
+endif()
 
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")
@@ -137,15 +154,10 @@ MutateTestSet( BP_SST_TESTS "BP" "MarshalMethod:BP" "${COMM_MIN_SST_TESTS};${COM
 set (SST_TESTS "")
 LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
 
-list( LENGTH SST_TESTS beforelistlen )
-
 # remove Fto anything tests that use FFS because we can't spec it
 list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*FFS.*")
 # remove Fto anything tests that use CommMin because we can't spec it
 list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*CommMin.*")
-
-list( LENGTH SST_TESTS afterlistlen )
-message (STATUS "Staging tests list before was ${beforelistlen}, after is ${afterlistlen}")
 
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)

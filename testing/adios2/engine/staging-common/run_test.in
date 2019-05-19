@@ -1,0 +1,216 @@
+#!/usr/bin/python
+# This script has been build to run the tests in the bin directory.
+import argparse
+import subprocess
+import os
+import sys
+import shutil
+import time
+import random
+import atexit
+
+
+def test_setup(testname) :
+    testdir = testname + "_testdir"
+    if os.path.exists(testdir):
+        shutil.rmtree(testdir)
+    os.mkdir(testdir)
+    os.chdir(testdir)
+    
+def test_teardown(testname) :
+    testdir = testname + "_testdir"
+    os.chdir('..')
+    shutil.rmtree(testdir)
+
+def touch(path):
+    with open(path, 'a'):
+        os.utime(path, None)
+
+def clean_server_kill(writer):
+    touch('DieTest');
+    writer.wait()
+    os.remove('DieTest')
+    
+def do_simple_test(writer_cmd, reader_cmd, reader_delay) :
+    return_code = 0;
+    writer = subprocess.Popen(writer_cmd);
+
+    if reader_cmd is not None :
+        time.sleep(reader_delay)
+        reader = subprocess.Popen(reader_cmd);
+        reader.wait();
+        print "TestDriver: Reader exit status was " + str(reader.returncode);
+        if reader.returncode != 0 :
+            print "TestDriver: Reader failed, causing test failure"
+            return_code = 1
+
+    writer.wait();
+    print("TestDriver: Writer exit status was " + str(writer.returncode));
+    if writer.returncode != 0 :
+        print "TestDriver: Writer failed, causing test failure"
+        return_code = 1
+    return return_code    
+    
+def do_one_client_test(writer_cmd, reader_cmd) :
+    return_code = 0;
+    writer = subprocess.Popen(writer_cmd);
+    reader = subprocess.Popen(reader_cmd);
+    reader.wait();
+    print "TestDriver: Reader exit status was " + str(reader.returncode);
+    if reader.returncode != 0 :
+        print "TestDriver: Reader failed, causing test failure"
+        return_code = 1
+    clean_server_kill(writer);
+    print("TestDriver: Writer exit status was " + str(writer.returncode));
+    if writer.returncode != 0 :
+        print "TestDriver: Writer failed, causing test failure"
+        return_code = 1
+    return return_code    
+    
+def do_kill_writer_test(writer_cmd, reader_cmd, interval) :
+    return_code = 0;
+    writer = subprocess.Popen(writer_cmd);
+    reader = subprocess.Popen(reader_cmd);
+    print "TestDriver: Waiting " + str(interval) + " seconds";
+    time.sleep(interval);
+    print "TestDriver: Killing Writer";
+    writer.terminate();
+    writer.wait();
+    reader.wait();
+    print("TestDriver: Reader exit status was " + str(reader.returncode));
+    if reader.returncode != 0 :
+        print("TestDriver: Reader failed, causing test failure")
+        return_code = 1
+    print("TestDriver: Writer exit status was " + str(writer.returncode)) + " (ignored)";
+    return return_code    
+    
+def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval) :
+    return_code = 0;
+    writer = subprocess.Popen(writer_cmd);
+    start = time.time();
+    timeout = time.time() + duration;
+    readers = [];
+    while (time.time() < timeout) :
+        print ("TestDriver: Beginning interval at time " + str(time.time() - start));
+        if (((len(readers) == 0) or (random.randint(0,1) == 0)) and (len(readers) < args.max_readers)) :
+	    print "TestDriver: Forking a reader";
+            reader = subprocess.Popen(reader_cmd);
+            readers.append(reader);
+	    print "TestDriver: There are now " + str(len(readers)) + " readers";
+        else :
+            reader_index = random.randrange(0,len(readers))
+            print "TestDriver: Killing a reader " + str(reader_index) + " out of " + str(len(readers));
+            readers[reader_index].poll();
+            if readers[reader_index].returncode is not None :
+                # if reader has already exited, we want to know if it thinks it succeeded and fail otherwise
+                if readers[reader_index].returncode != 0 :
+                    print("TestDriver: Unterminated Reader failed, causing test failure (return code) " + str(readers[reader_index].returncode) )
+                    return_code = 1
+                
+            else :
+                # if reader hasn't already exited, kill it and ignore the exit status
+                readers[reader_index].terminate();
+                readers[reader_index].wait();
+            readers.pop(reader_index);
+        print("Sleeping for time interval " + str(interval));
+        sys.stdout.flush()
+        time.sleep(interval);
+    for reader in readers :
+        reader.wait();
+        print("TestDriver: Surviving reader exit status was " + str(reader.returncode));
+        if reader.returncode != 0 :
+            print("TestDriver: Reader failed, causing test failure");
+            return_code = 1;
+            sys.stdout.flush()
+    clean_server_kill(writer);
+    print("TestDriver: Writer exit status was " + str(writer.returncode));
+    if writer.returncode != 0 :
+        print("TestDriver: Writer failed, causing test failure")
+        return_code = 1
+    return return_code    
+    
+
+script_directory = sys.path[0]; #os.path.basename(os.path.dirname(os.path.realpath(__file__)));
+
+parser = argparse.ArgumentParser(description='Run a staging test.')
+
+parser.add_argument('--verbose', '-v', action='count')
+parser.add_argument('--num_writers', '-nw', type=int, default=1)
+parser.add_argument('--num_readers', '-nr', type=int, default=1)
+parser.add_argument('--warg', action='append', type=str, nargs="?")
+parser.add_argument('--rarg', action='append', type=str, nargs="?")
+parser.add_argument('--writer', '-w')
+parser.add_argument('--reader', '-r')
+parser.add_argument('--max_readers', '-mr', type=int, default=1)
+parser.add_argument('--duration', type=int, default=60)
+parser.add_argument('--interval', type=int, default=5)
+parser.add_argument('--reader_delay', '-rd', type=int, default=0)
+parser.add_argument('--test_protocol', '-tp', choices=['simple', 'kill_readers', 'one_client', 'kill_writer'], default='simple')
+parser.add_argument('engine', default = 'sst')
+parser.add_argument('filename', default = 'tmp')
+
+args = parser.parse_args()
+
+if args.test_protocol == 'simple' :
+    if args.writer is None:
+        args.writer = 'TestCommonWrite'
+    if args.reader is None:
+        args.reader = 'TestCommonRead'
+else :
+    if args.writer is None:
+        args.writer = 'TestCommonServer'
+    if args.reader is None:
+        args.reader = 'TestCommonClient'
+        
+writer_exec_cmd = '@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_writers);
+reader_exec_cmd = '@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_readers);
+
+if ("@MPIEXEC@" == "") or ("@MPIEXEC@" == "MPIEXEC_EXECUTABLE-NOTFOUND"):
+    # NO MPI
+    writer_exec_cmd = '';
+    reader_exec_cmd = '';
+
+print ("Script directory is " + script_directory);
+print ("current working directory is " + os.getcwd());
+
+writer_executable = os.path.abspath(os.path.join(script_directory, args.writer));
+writer_command_line = writer_exec_cmd.split()
+writer_command_line.extend([writer_executable, args.engine, args.filename])
+
+if args.warg is not None:
+   writer_command_line.extend(args.warg)
+
+reader_executable = os.path.abspath(os.path.join(script_directory, args.reader));
+reader_command_line = reader_exec_cmd.split()
+reader_command_line.extend([reader_executable, args.engine, args.filename])
+
+if args.rarg is not None:
+   reader_command_line.extend(args.rarg)
+
+if args.num_readers == 0:
+    reader_command_line = None;
+
+print("TestDriver: Writer command line : " + " ".join(writer_command_line));
+if reader_command_line is not None:
+    print("TestDriver: Reader command line : " + " ".join(reader_command_line));
+
+test_setup(args.filename)
+atexit.register(test_teardown, args.filename)
+if args.test_protocol == 'simple':
+    return_code = do_simple_test(writer_command_line, reader_command_line, args.reader_delay);
+
+elif args.test_protocol == 'kill_readers':
+    return_code = do_kill_readers_test(writer_command_line, reader_command_line, args.duration, args.interval);
+
+elif args.test_protocol == 'one_client':
+    return_code = do_one_client_test(writer_command_line, reader_command_line);
+
+elif args.test_protocol == 'kill_writer':
+    return_code = do_kill_writer_test(writer_command_line, reader_command_line, args.interval);
+
+if return_code != 0 :
+    print("TestDriver: Exiting with overall failure code");
+else :
+    print("TestDriver: exiting with success condition");
+
+sys.exit(return_code);
