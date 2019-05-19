@@ -89,6 +89,24 @@ configure_file(
   @ONLY
 )
 
+if (ADIOS2_HAVE_MPI) 
+   # we want to know if mpiexec is a shell script or a binary executable
+   file(READ ${MPIEXEC} MPIFILEDATA LIMIT 1024 HEX)
+   string(LENGTH ${MPIFILEDATA} DATALENGTH)
+   math(EXPR last_hex_index "${DATALENGTH} / 2")
+   foreach(hex_index RANGE ${last_hex_index})
+      string(SUBSTRING "${MPIFILEDATA}" "${hex_index}" "2" char)
+      message("${char}")
+      message("0x${char} * 1" )
+      math (EXPR dec_char "0x${char} * 1" )
+      if ((${dec_char} LESS 9) OR (${dec_char} GREATER 126) OR ((${dec_char} GREATER 13) AND (${dec_char} LESS 32)))
+          #  message ("$character ${char} is outside of the printable/character ascii range")
+	  set (MPIEXEC_IS_BINARY TRUE)
+	  break()
+      endif()
+   endforeach()
+endif()
+
 include ( TestSupp.cmake )
 
 set (TEST_SET "1x1;NoReaderNoWait;Modes;1x1.Attrs;1x1.Local")
@@ -96,7 +114,12 @@ set (FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
-set (SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;TimeoutReader;KillWriter_2x2;KillWriterTimeout_2x2;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
+
+set (SPECIAL_TESTS "TimeoutReader;LatestReader;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
+if (MPIEXEC_IS_BINARY)
+    # run_test.py can only kill readers/writers if mpiexec is not a shell script
+    list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriter_2x2;KillWriterTimeout_2x2")
+endif()
 
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")
