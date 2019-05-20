@@ -25,11 +25,6 @@ set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
-# On Mac OS X, set the dir. included as part of the installed library's path:
-if (BUILD_SHARED_LIBS AND NOT DEFINED CMAKE_INSTALL_NAME_DIR)
-  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-endif ()
-
 list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
@@ -46,15 +41,6 @@ endif()
 
 # Let windows builds auto-export dll symbols
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-
-#------------------------------------------------------------------------------#
-# RPATH defaults
-#------------------------------------------------------------------------------#
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
-  set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
-endif()
 
 #------------------------------------------------------------------------------#
 # Silence MSVC warnings
@@ -146,11 +132,6 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
-# Various homebrew MPI fortran installations break rpath usage on OSX
-if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
-  set(CMAKE_MACOSX_RPATH OFF)
-endif()
-
 set(ADIOS2_CONFIG_OPTS
     BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
 )
@@ -164,6 +145,31 @@ configure_file(
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
+
+#------------------------------------------------------------------------------#
+# Some specialized shared library and RPATH handling
+#------------------------------------------------------------------------------#
+if(BUILD_SHARED_LIBS)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+  if(APPLE)
+    # On Mac OS X, set the dir included as part of the installed library's path:
+    if(NOT DEFINED CMAKE_INSTALL_NAME_DIR)
+      set(CMAKE_INSTALL_NAME_DIR
+        "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    endif ()
+
+    # Various homebrew MPI fortran installations break rpath usage on OSX
+    if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
+      set(CMAKE_MACOSX_RPATH OFF)
+    endif()
+
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    # Linux needs some specialized RPATH handling
+    string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+  endif()
+endif()
 
 #------------------------------------------------------------------------------#
 # Third party libraries
