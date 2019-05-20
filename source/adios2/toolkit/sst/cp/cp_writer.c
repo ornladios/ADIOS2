@@ -224,6 +224,7 @@ static void RemoveQueueEntries(SstStream Stream)
     CPTimestepList Last = NULL;
     CPTimestepList Prev = NULL;
 
+    SST_ASSERT_LOCKED();
     while (List)
     {
         CPTimestepList Next = List->Next;
@@ -240,6 +241,7 @@ static void RemoveQueueEntries(SstStream Stream)
             }
 
             Stream->QueuedTimestepCount--;
+//            printf("Rank %d FreeingTimestep %ld, reference count %d\n", Stream->Rank, ItemToFree->Timestep, ItemToFree->ReferenceCount);
             CP_verbose(Stream,
                        "Remove queue Entries removing Timestep %ld (exp %d, "
                        "Prec %d, Ref %d), Count now %d\n",
@@ -978,6 +980,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                        Entry->Timestep, rank);
         }
         Entry->ReferenceCount++;
+//        printf("Rank %d Sending Timestep %ld to reader cohort %d\n", Stream->Rank, Entry->Timestep, rank);
         AddTSToSentList(Stream, CP_WSR_Stream, Entry->Timestep);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         sendOneToWSRCohort(CP_WSR_Stream,
@@ -1039,16 +1042,25 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                 continue; /* do nothing if we've fallen out of established */
             if (List->Timestep == TS)
             {
+                printf("Rank %d Would send Timestep %ld\n", Stream->Rank, List->Timestep);
                 FFSFormatList SavedFormats = List->Msg->Formats;
                 if (List->Expired && !List->PreciousTimestep)
                 {
-                    List = List->Next;
                     CP_verbose(Stream,
                                "Reader send queued skipping  TS %d, expired "
                                "and not precious\n",
                                List->Timestep, TS);
+                    List = List->Next;
                     continue; /* do nothing timestep is expired, but not
                                  precious */
+                }
+                if (List->Pending)
+                {
+                    CP_verbose(Stream,
+                               "Reader send queued skipping  TS %d PENDING\n",
+                               List->Timestep, TS);
+                    List = List->Next;
+                    continue; /* do nothing timestep is queued but pending */
                 }
                 if (TS == Reader->StartingTimestep)
                 {
@@ -1061,6 +1073,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                            TS, List->ReferenceCount);
 
                 SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
+                printf("Rank %d Sending Queued Timestep %ld, reference count now %d\n", Stream->Rank, List->Timestep, List->ReferenceCount);
                 if (TS == Reader->StartingTimestep)
                 {
                     /* restore Msg format list */
@@ -1323,7 +1336,9 @@ void SstWriterClose(SstStream Stream)
          * timesteps, other ranks can follow suit after barrier
          */
         MPI_Barrier(Stream->mpiComm);
+        PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         ReleaseAndDiscardRemainingTimesteps(Stream);
+        PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
     }
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
@@ -1426,7 +1441,7 @@ static FFSFormatList AddUniqueFormats(FFSFormatList List,
 }
 
 static void FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
-                            MetadataPlusDPInfo *pointers)
+                            MetadataPlusDPInfo *pointers, int PendingReaderCount)
 {
     FFSFormatList XmitFormats = NULL;
 
@@ -1477,7 +1492,7 @@ static void FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
     Stream->PreviousFormats =
         AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
 
-    if (Stream->NewReaderPresent)
+    if (Stream->NewReaderPresent || PendingReaderCount)
     {
         /*
          *  If there is a new reader cohort, those ranks will need all prior
@@ -1552,6 +1567,39 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
     QueueMaintenance(Stream);
     CP_verbose(Stream, "DONE Release List\n");
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+}
+
+static int
+HandlePendingReader(SstStream Stream)
+{
+    WS_ReaderInfo reader;
+    CP_verbose(Stream,
+               "Writer side ReaderLateArrival accepting incoming reader\n");
+    reader = WriterParticipateInReaderOpen(Stream);
+    if (!reader)
+    {
+        CP_error(Stream, "Potential reader registration failed\n");
+        return 0;
+    }
+    if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
+    {
+        waitForReaderResponseAndSendQueued(reader);
+    }
+    else
+    {
+        if (Stream->Rank == 0)
+        {
+            waitForReaderResponseAndSendQueued(reader);
+            MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                      Stream->mpiComm);
+        }
+        else
+        {
+            MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                      Stream->mpiComm);
+        }
+    }
+    return 1;
 }
 
 /*
@@ -1797,7 +1845,7 @@ extern void SstInternalProvideTimestep(
         }
         Stream->ReleaseCount = 0;
         Stream->ReleaseList = NULL;
-        FillMetadataMsg(Stream, &TimestepMetaData.Msg, pointers);
+        FillMetadataMsg(Stream, &TimestepMetaData.Msg, pointers, TimestepMetaData.PendingReaderCount);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat,
@@ -1824,6 +1872,7 @@ extern void SstInternalProvideTimestep(
     Entry->MetadataArray = Msg->Metadata;
     Entry->DP_TimestepInfo = Msg->DP_TimestepInfo;
     Entry->DataBlockToFree = data_block2;
+    Entry->Pending = 1;
 
     ProcessReaderStatusList(Stream, ReturnData);
 
@@ -1831,6 +1880,11 @@ extern void SstInternalProvideTimestep(
         (Stream->Rank != 0))
     {
         ProcessReleaseList(Stream, ReturnData);
+    }
+
+    while (PendingReaderCount--)
+    {
+        (void) HandlePendingReader(Stream);
     }
 
     if (ReturnData->DiscardThisTimestep)
@@ -1853,6 +1907,7 @@ extern void SstInternalProvideTimestep(
 
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
         Entry->Expired = 1;
+        Entry->Pending = 0;
         Entry->ReferenceCount = 0;
         QueueMaintenance(Stream);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
@@ -1867,41 +1922,12 @@ extern void SstInternalProvideTimestep(
                    Timestep, Entry->ReferenceCount - 1);
 
         PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+        Entry->Pending = 0;
         SendTimestepEntryToReaders(Stream, Entry);
         SubRefTimestep(Stream, Entry->Timestep, 0);
         QueueMaintenance(Stream);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         TAU_STOP("provide timestep operations");
-    }
-    while (PendingReaderCount--)
-    {
-        WS_ReaderInfo reader;
-        CP_verbose(Stream,
-                   "Writer side ReaderLateArrival accepting incoming reader\n");
-        reader = WriterParticipateInReaderOpen(Stream);
-        if (!reader)
-        {
-            CP_error(Stream, "Potential reader registration failed\n");
-            break;
-        }
-        if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
-        {
-            waitForReaderResponseAndSendQueued(reader);
-        }
-        else
-        {
-            if (Stream->Rank == 0)
-            {
-                waitForReaderResponseAndSendQueued(reader);
-                MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                          Stream->mpiComm);
-            }
-            else
-            {
-                MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                          Stream->mpiComm);
-            }
-        }
     }
 }
 

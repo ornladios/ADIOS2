@@ -98,6 +98,7 @@ typedef struct _CPTimestepEntry
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
     int Expired;
+    int Pending;
     int PreciousTimestep;
     void **DP_TimestepInfo;
     int DPRegistered;
