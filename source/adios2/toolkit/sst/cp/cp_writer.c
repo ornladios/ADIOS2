@@ -241,7 +241,9 @@ static void RemoveQueueEntries(SstStream Stream)
             }
 
             Stream->QueuedTimestepCount--;
-//            printf("Rank %d FreeingTimestep %ld, reference count %d\n", Stream->Rank, ItemToFree->Timestep, ItemToFree->ReferenceCount);
+            //            printf("Rank %d FreeingTimestep %ld, reference count
+            //            %d\n", Stream->Rank, ItemToFree->Timestep,
+            //            ItemToFree->ReferenceCount);
             CP_verbose(Stream,
                        "Remove queue Entries removing Timestep %ld (exp %d, "
                        "Prec %d, Ref %d), Count now %d\n",
@@ -980,7 +982,8 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                        Entry->Timestep, rank);
         }
         Entry->ReferenceCount++;
-//        printf("Rank %d Sending Timestep %ld to reader cohort %d\n", Stream->Rank, Entry->Timestep, rank);
+        //        printf("Rank %d Sending Timestep %ld to reader cohort %d\n",
+        //        Stream->Rank, Entry->Timestep, rank);
         AddTSToSentList(Stream, CP_WSR_Stream, Entry->Timestep);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         sendOneToWSRCohort(CP_WSR_Stream,
@@ -1042,7 +1045,8 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                 continue; /* do nothing if we've fallen out of established */
             if (List->Timestep == TS)
             {
-                printf("Rank %d Would send Timestep %ld\n", Stream->Rank, List->Timestep);
+                printf("Rank %d Would send Timestep %ld\n", Stream->Rank,
+                       List->Timestep);
                 FFSFormatList SavedFormats = List->Msg->Formats;
                 if (List->Expired && !List->PreciousTimestep)
                 {
@@ -1073,7 +1077,9 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                            TS, List->ReferenceCount);
 
                 SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
-                printf("Rank %d Sending Queued Timestep %ld, reference count now %d\n", Stream->Rank, List->Timestep, List->ReferenceCount);
+                printf("Rank %d Sending Queued Timestep %ld, reference count "
+                       "now %d\n",
+                       Stream->Rank, List->Timestep, List->ReferenceCount);
                 if (TS == Reader->StartingTimestep)
                 {
                     /* restore Msg format list */
@@ -1441,7 +1447,8 @@ static FFSFormatList AddUniqueFormats(FFSFormatList List,
 }
 
 static void FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
-                            MetadataPlusDPInfo *pointers, int PendingReaderCount)
+                            MetadataPlusDPInfo *pointers,
+                            int PendingReaderCount)
 {
     FFSFormatList XmitFormats = NULL;
 
@@ -1569,8 +1576,7 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
-static int
-HandlePendingReader(SstStream Stream)
+static int HandlePendingReader(SstStream Stream)
 {
     WS_ReaderInfo reader;
     CP_verbose(Stream,
@@ -1590,13 +1596,11 @@ HandlePendingReader(SstStream Stream)
         if (Stream->Rank == 0)
         {
             waitForReaderResponseAndSendQueued(reader);
-            MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                      Stream->mpiComm);
+            MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0, Stream->mpiComm);
         }
         else
         {
-            MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                      Stream->mpiComm);
+            MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0, Stream->mpiComm);
         }
     }
     return 1;
@@ -1845,7 +1849,8 @@ extern void SstInternalProvideTimestep(
         }
         Stream->ReleaseCount = 0;
         Stream->ReleaseList = NULL;
-        FillMetadataMsg(Stream, &TimestepMetaData.Msg, pointers, TimestepMetaData.PendingReaderCount);
+        FillMetadataMsg(Stream, &TimestepMetaData.Msg, pointers,
+                        TimestepMetaData.PendingReaderCount);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat,
@@ -1884,7 +1889,7 @@ extern void SstInternalProvideTimestep(
 
     while (PendingReaderCount--)
     {
-        (void) HandlePendingReader(Stream);
+        (void)HandlePendingReader(Stream);
     }
 
     if (ReturnData->DiscardThisTimestep)
