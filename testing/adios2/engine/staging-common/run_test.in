@@ -23,7 +23,7 @@ def test_teardown(testname) :
     shutil.rmtree(testdir)
 
 def touch(path):
-    with open(path, 'a'):
+    with open(path, 'w+'):
         os.utime(path, None)
 
 def clean_server_kill(writer):
@@ -55,6 +55,7 @@ def do_one_client_test(writer_cmd, reader_cmd) :
     return_code = 0;
     writer = subprocess.Popen(writer_cmd);
     reader = subprocess.Popen(reader_cmd);
+    print "TestDriver: Waiting for Reader"
     reader.wait();
     print "TestDriver: Reader exit status was " + str(reader.returncode);
     if reader.returncode != 0 :
@@ -112,15 +113,24 @@ def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval) :
                 readers[reader_index].terminate();
                 readers[reader_index].wait();
             readers.pop(reader_index);
-        print("Sleeping for time interval " + str(interval));
+        print("TestDriver: Sleeping for time interval " + str(interval));
         sys.stdout.flush()
         time.sleep(interval);
+    print("TestDriver:  Done with test")
     for reader in readers :
-        reader.wait();
-        print("TestDriver: Surviving reader exit status was " + str(reader.returncode));
-        if reader.returncode != 0 :
-            print("TestDriver: Reader failed, causing test failure");
-            return_code = 1;
+        reader.poll();
+        if reader.returncode is not None :
+            # if reader has already exited, we want to know if it thinks it succeeded and fail otherwise
+            if reader.returncode != 0 :
+                print("TestDriver: Unterminated Reader failed, causing test failure (return code) " + str(reader.returncode) )
+                return_code = 1
+            else :
+                print("TestDriver: Surviving Reader succeeded")
+        else :
+            # if reader hasn't already exited, kill it and ignore the exit status
+            print("TestDriver: Killing surviving Reader")
+            reader.terminate();
+            reader.wait();
             sys.stdout.flush()
     clean_server_kill(writer);
     print("TestDriver: Writer exit status was " + str(writer.returncode));
