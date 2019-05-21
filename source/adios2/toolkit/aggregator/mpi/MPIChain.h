@@ -28,15 +28,16 @@ public:
 
     void Init(const size_t subStreams, MPI_Comm parentComm) final;
 
-    std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
-                                       const int step) final;
+    std::vector<std::vector<MPI_Request>> IExchange(BufferSTL &bufferSTL,
+                                                    const int step) final;
 
-    std::vector<MPI_Request> IExchangeAbsolutePosition(BufferSTL &bufferSTL,
-                                                       const int step) final;
+    std::vector<std::vector<MPI_Request>>
+    IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step) final;
 
-    void Wait(std::vector<MPI_Request> &request, const int step) final;
+    void Wait(std::vector<std::vector<MPI_Request>> &request,
+              const int step) final;
 
-    void WaitAbsolutePosition(std::vector<MPI_Request> &requests,
+    void WaitAbsolutePosition(std::vector<std::vector<MPI_Request>> &requests,
                               const int step) final;
 
     void SwapBuffers(const int step) noexcept final;

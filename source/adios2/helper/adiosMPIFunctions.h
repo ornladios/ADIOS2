@@ -117,6 +117,16 @@ std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,
                           const std::string hint = "",
                           const int rankSource = 0);
 
+template <class T>
+std::vector<MPI_Request> Isend64(const T *buffer, const size_t count,
+                                 int destination, int tag, MPI_Comm mpiComm,
+                                 const std::string &hint);
+
+template <class T>
+std::vector<MPI_Request> Irecv64(T *buffer, const size_t count, int source,
+                                 int tag, MPI_Comm mpiComm,
+                                 const std::string &hint);
+
 } // end namespace helper
 } // end namespace adios2
 

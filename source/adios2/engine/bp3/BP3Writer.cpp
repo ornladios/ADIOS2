@@ -344,10 +344,10 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     // async?
     for (int r = 0; r < m_BP3Serializer.m_Aggregator.m_Size; ++r)
     {
-        std::vector<MPI_Request> dataRequests =
+        std::vector<std::vector<MPI_Request>> dataRequests =
             m_BP3Serializer.m_Aggregator.IExchange(m_BP3Serializer.m_Data, r);
 
-        std::vector<MPI_Request> absolutePositionRequests =
+        std::vector<std::vector<MPI_Request>> absolutePositionRequests =
             m_BP3Serializer.m_Aggregator.IExchangeAbsolutePosition(
                 m_BP3Serializer.m_Data, r);
 

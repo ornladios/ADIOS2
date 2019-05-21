@@ -31,18 +31,6 @@ MPIAggregator::~MPIAggregator()
 
 void MPIAggregator::Init(const size_t subStreams, MPI_Comm parentComm) {}
 
-std::vector<MPI_Request> MPIAggregator::IExchange(BufferSTL & /**bufferSTL*/,
-                                                  const int /** step*/)
-{
-    std::vector<MPI_Request> requests;
-    return requests;
-}
-
-void MPIAggregator::Wait(std::vector<MPI_Request> & /**requests*/,
-                         const int /**step*/)
-{
-}
-
 void MPIAggregator::SwapBuffers(const int step) noexcept {}
 
 void MPIAggregator::ResetBuffers() noexcept {}

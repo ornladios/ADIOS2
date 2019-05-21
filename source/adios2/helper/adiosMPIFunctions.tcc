@@ -254,6 +254,98 @@ void GathervArrays(const size_t *source, const size_t sourceCount,
     }
 }
 
+template <>
+std::vector<MPI_Request> Isend64<char>(const char *buffer, const size_t count,
+                                       int dest, int tag, MPI_Comm mpiComm,
+                                       const std::string &hint)
+{
+    const size_t batches = count / DefaultMaxFileBatchSize;
+    std::vector<MPI_Request> requests(batches + 1);
+
+    if (batches > 1)
+    {
+        size_t position = 0;
+        for (size_t b = 0; b < batches; ++b)
+        {
+            int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
+            CheckMPIReturn(
+                MPI_Isend(const_cast<char *>(buffer + position), batchSize,
+                          MPI_CHAR, dest, tag, mpiComm, &requests[b]),
+                "in call to Isend64 batch " + std::to_string(b) + "/" +
+                    std::to_string(batches) + " " + hint + "\n");
+
+            position += DefaultMaxFileBatchSize;
+        }
+        const size_t remainder = count % DefaultMaxFileBatchSize;
+        if (remainder > 0)
+        {
+            int batchSize = static_cast<int>(remainder);
+            CheckMPIReturn(MPI_Isend(const_cast<char *>(buffer + position),
+                                     batchSize, MPI_CHAR, dest, tag, mpiComm,
+                                     &requests[batches - 1]),
+                           "in call to Isend64 last batch " + hint + "\n");
+        }
+    }
+    else
+    {
+        int batchSize = static_cast<int>(count);
+        CheckMPIReturn(MPI_Isend(const_cast<char *>(buffer), batchSize,
+                                 MPI_CHAR, dest, tag, mpiComm, &requests[0]),
+                       " in call to Isend64 with single batch " + hint + "\n");
+    }
+
+    return requests;
+}
+
+template <>
+std::vector<MPI_Request> Irecv64<char>(char *buffer, const size_t count,
+                                       int source, int tag, MPI_Comm mpiComm,
+                                       const std::string &hint)
+{
+    const size_t batches = count / DefaultMaxFileBatchSize;
+    std::vector<MPI_Request> requests(batches + 1);
+
+    if (requests.size() != batches + 1)
+    {
+        throw std::runtime_error(
+            "ERROR: number of Irecv requests doesn't match number of batches = "
+            "count/DefaultMaxFileBatchSize\n");
+    }
+
+    if (batches > 1)
+    {
+        size_t position = 0;
+        for (size_t b = 0; b < batches; ++b)
+        {
+            int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
+            CheckMPIReturn(MPI_Irecv(buffer + position, batchSize, MPI_CHAR,
+                                     source, tag, mpiComm, &requests[b]),
+                           "in call to Irecv64 batch " + std::to_string(b) +
+                               "/" + std::to_string(batches) + " " + hint +
+                               "\n");
+
+            position += DefaultMaxFileBatchSize;
+        }
+        const size_t remainder = count % DefaultMaxFileBatchSize;
+        if (remainder > 0)
+        {
+            int batchSize = static_cast<int>(remainder);
+            CheckMPIReturn(MPI_Irecv(buffer + position, batchSize, MPI_CHAR,
+                                     source, tag, mpiComm,
+                                     &requests[batches - 1]),
+                           "in call to Irecv64 last batch " + hint + "\n");
+        }
+    }
+    else
+    {
+        int batchSize = static_cast<int>(count);
+        CheckMPIReturn(MPI_Irecv(buffer, batchSize, MPI_CHAR, source, tag,
+                                 mpiComm, &requests[0]),
+                       " in call to Isend64 with single batch " + hint + "\n");
+    }
+    return requests;
+}
+
 } // end namespace helper
 } // end namespace adios2
 
