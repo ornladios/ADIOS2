@@ -31,6 +31,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
     std::vector<void *> sstReadHandlers;
     std::vector<std::vector<char>> buffers;
 
+    size_t threadID = 0;
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
@@ -55,10 +56,13 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
 
                     m_BP3Deserializer->PreDataRead(
                         variable, blockInfo, subStreamInfo, buffer, payloadSize,
-                        payloadStart, 0);
+                        payloadStart, threadID);
 
                     std::stringstream ss;
                     ss << "SST Bytes Read from remote rank " << rank;
+                    std::cout << "PreRead " << variable.m_Name
+                              << " subblock to buffer " << (void *)buffer
+                              << "  threadID = " << threadID << std::endl;
                     TAU_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
                     auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
                                                    payloadStart, payloadSize,
@@ -104,6 +108,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         sstReadHandlers.push_back(ret);
                     }
                 }
+                ++threadID;
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
@@ -119,7 +124,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
     }
 
     size_t iter = 0;
-
+    threadID = 0;
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
@@ -153,9 +158,13 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     //    subStreamInfo.BlockBox,
                     //    subStreamInfo.IntersectionBox);
 
+                    std::cout << "Post Read " << variable.m_Name
+                              << " subblock threadID = " << threadID
+                              << std::endl;
+
                     m_BP3Deserializer->PostDataRead(
                         variable, blockInfo, subStreamInfo,
-                        helper::IsRowMajor(m_IO.m_HostLanguage), 0);
+                        helper::IsRowMajor(m_IO.m_HostLanguage), threadID);
                     ++iter;
                 }
                 // if remote data buffer is not compressed
@@ -183,6 +192,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         ++iter;
                     }
                 }
+                ++threadID;
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
