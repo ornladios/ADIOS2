@@ -27,6 +27,8 @@ std::string engine = "SST";
 
 int CompressSz = 0;
 int CompressZfp = 0;
+int ZeroDataVar = 0;
+int ZeroDataRank = 0;
 
 static std::string Trim(std::string &str)
 {
@@ -89,12 +91,30 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 #endif
     adios2::IO io = adios.DeclareIO("TestIO");
 
+    std::size_t r64_Nx = Nx;
+    if (ZeroDataVar)
+    {
+        assert(mpiSize >= 2);
+        if (mpiRank == 0)
+        {
+            r64_Nx = 0;
+        }
+        else if (mpiRank == 1)
+        {
+            r64_Nx = 2 * Nx;
+        }
+    }
+    std::cout << "Nx is set to " << r64_Nx << " on Rank " << mpiRank
+              << std::endl;
+
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
     // before Write().
     {
         adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
         adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
+        adios2::Dims count_r64{static_cast<unsigned int>(r64_Nx)};
+        adios2::Dims start_r64{static_cast<unsigned int>(Nx * mpiRank)};
         adios2::Dims count{static_cast<unsigned int>(Nx)};
         adios2::Dims shape2{static_cast<unsigned int>(Nx * mpiSize), 2};
         adios2::Dims start2{static_cast<unsigned int>(Nx * mpiRank), 0};
@@ -106,13 +126,21 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
         adios2::Dims time_count{1};
 
+        if (ZeroDataVar)
+        {
+            if (mpiRank == 1)
+            {
+                start_r64[0] = 0;
+            }
+        }
         auto scalar_r64 = io.DefineVariable<double>("scalar_r64");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
+        auto var_r64 =
+            io.DefineVariable<double>("r64", shape, start_r64, count_r64);
         auto var_c32 =
             io.DefineVariable<std::complex<float>>("c32", shape, start, count);
         auto var_c64 =
@@ -149,7 +177,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     for (size_t step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize, Nx, r64_Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -170,16 +198,25 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Make a 1D selection to describe the local dimensions of the
         // variable we write and its offsets in the global spaces
         adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+        adios2::Box<adios2::Dims> sel_r64({mpiRank * Nx}, {r64_Nx});
         adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
         adios2::Box<adios2::Dims> sel_time(
             {static_cast<unsigned long>(mpiRank)}, {1});
+        if (ZeroDataVar)
+        {
+            if (mpiRank == 1)
+            {
+                sel_r64.first[0] = 0;
+            }
+        }
+
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
         var_i32.SetSelection(sel);
         var_i64.SetSelection(sel);
         var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
+        var_r64.SetSelection(sel_r64);
         var_c32.SetSelection(sel);
         var_c64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);
@@ -227,8 +264,8 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
-
-    while ((argc > 1) && (argv[1][0] == '-'))
+    int bare_arg = 0;
+    while (argc > 1)
     {
         if (std::string(argv[1]) == "--expect_time_gap")
         {
@@ -241,6 +278,14 @@ int main(int argc, char **argv)
         else if (std::string(argv[1]) == "--compress_zfp")
         {
             CompressZfp++;
+        }
+        else if (std::string(argv[1]) == "--zero_data_var")
+        {
+            ZeroDataVar++;
+        }
+        else if (std::string(argv[1]) == "--zero_data_rank")
+        {
+            ZeroDataRank++;
         }
         else if (std::string(argv[1]) == "--filename")
         {
@@ -256,31 +301,33 @@ int main(int argc, char **argv)
         }
         else
         {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
+            if (bare_arg == 0)
+            {
+                /* first arg without -- is engine */
+                engine = std::string(argv[1]);
+                bare_arg++;
+            }
+            else if (bare_arg == 1)
+            {
+                /* second arg without -- is filename */
+                fname = std::string(argv[1]);
+                bare_arg++;
+            }
+            else if (bare_arg == 2)
+            {
+                engineParams = ParseEngineParams(argv[1]);
+                bare_arg++;
+            }
+            else
+            {
+
+                throw std::invalid_argument("Unknown argument \"" +
+                                            std::string(argv[1]) + "\"");
+            }
         }
         argv++;
         argc--;
     }
-    if (argc > 1)
-    {
-        /* first arg without -- is engine */
-        engine = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* second arg without -- is filename */
-        fname = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        engineParams = ParseEngineParams(argv[1]);
-    }
-
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

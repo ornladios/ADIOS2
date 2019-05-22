@@ -141,7 +141,7 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
     while ((std::time(NULL) < EndTime) && !GlobalCloseNow)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize, Nx, Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope

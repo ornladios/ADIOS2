@@ -124,7 +124,7 @@ endif()
 set (MPI_TESTS "")
 set (MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
+  set (MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar")
   if (ADIOS_HAVE_Fortran)
     set (MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()
@@ -163,7 +163,7 @@ foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
 
-
+set_tests_properties(Staging.2x1ZeroDataVar.CommMin.BP.SST Staging.2x1ZeroDataVar.CommPeer.BP.SST  PROPERTIES WILL_FAIL TRUE)
 
 #
 #   Setup tests for SSC engine
