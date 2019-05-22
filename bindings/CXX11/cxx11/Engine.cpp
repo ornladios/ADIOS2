@@ -120,6 +120,16 @@ void Engine::Close(const int transportIndex)
     m_Engine->Close(transportIndex);
 }
 
+size_t Engine::Steps() const
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Steps");
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return 0;
+    }
+    return m_Engine->Steps();
+}
+
 Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
 #define declare_template_instantiation(T)                                      \

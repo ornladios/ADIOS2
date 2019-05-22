@@ -253,5 +253,11 @@ std::string Engine::Type() const
     return m_Engine->m_EngineType;
 }
 
+size_t Engine::Steps() const
+{
+    helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Steps");
+    return m_Engine->Steps();
+}
+
 } // end namespace py11
 } // end namespace adios2

@@ -78,6 +78,8 @@ void Engine::Close(const int transportIndex)
 
 void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 
+size_t Engine::Steps() const { return DoSteps(); }
+
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}
@@ -153,6 +155,12 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+size_t Engine::DoSteps() const
+{
+    ThrowUp("DoPut");
+    return MaxSizeT;
+}
 
 // PRIVATE
 void Engine::ThrowUp(const std::string function) const

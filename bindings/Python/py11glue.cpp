@@ -481,7 +481,9 @@ PYBIND11_MODULE(adios2, m)
 
         .def("Name", &adios2::py11::Engine::Name)
 
-        .def("Type", &adios2::py11::Engine::Type);
+        .def("Type", &adios2::py11::Engine::Type)
+
+        .def("Steps", &adios2::py11::Engine::Steps);
 
     pybind11::class_<adios2::py11::Operator>(m, "Operator")
         // Python 2

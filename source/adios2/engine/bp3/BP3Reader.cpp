@@ -246,6 +246,11 @@ void BP3Reader::DoClose(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+size_t BP3Reader::DoSteps() const
+{
+    return m_BP3Deserializer.m_MetadataSet.StepsCount;
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

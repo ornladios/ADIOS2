@@ -497,6 +497,8 @@ public:
      */
     size_t currentstep() const noexcept;
 
+    size_t steps() const;
+
 protected:
     std::shared_ptr<core::Stream> m_Stream;
 
