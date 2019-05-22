@@ -60,9 +60,6 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
 
                     std::stringstream ss;
                     ss << "SST Bytes Read from remote rank " << rank;
-                    std::cout << "PreRead " << variable.m_Name
-                              << " subblock to buffer " << (void *)buffer
-                              << "  threadID = " << threadID << std::endl;
                     TAU_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
                     auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
                                                    payloadStart, payloadSize,
@@ -157,10 +154,6 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     //    variable.m_RawMemory[0],
                     //    subStreamInfo.BlockBox,
                     //    subStreamInfo.IntersectionBox);
-
-                    std::cout << "Post Read " << variable.m_Name
-                              << " subblock threadID = " << threadID
-                              << std::endl;
 
                     m_BP3Deserializer->PostDataRead(
                         variable, blockInfo, subStreamInfo,
