@@ -163,7 +163,9 @@ foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
 
-set_tests_properties(Staging.2x1ZeroDataVar.CommMin.BP.SST Staging.2x1ZeroDataVar.CommPeer.BP.SST  PROPERTIES WILL_FAIL TRUE)
+if (ADIOS2_HAVE_MPI)
+   set_tests_properties(Staging.2x1ZeroDataVar.CommMin.BP.SST Staging.2x1ZeroDataVar.CommPeer.BP.SST  PROPERTIES WILL_FAIL TRUE)
+endif()
 
 #
 #   Setup tests for SSC engine
