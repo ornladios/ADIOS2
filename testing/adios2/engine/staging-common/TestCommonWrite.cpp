@@ -177,7 +177,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     for (size_t step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize, Nx, r64_Nx);
+        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx,
+                               (int)r64_Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope

@@ -118,7 +118,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         size_t writerSize;
 
-        generateCommonTestData(0, mpiRank, mpiSize, Nx, Nx);
+        generateCommonTestData((int)0, mpiRank, mpiSize, (int)Nx, (int)Nx);
         auto attr_s1 = io.InquireAttribute<std::string>(s1_Single);
         auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
         auto attr_i8 = io.InquireAttribute<int8_t>(i8_Single);

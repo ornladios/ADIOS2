@@ -159,7 +159,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     //                                        data_S1array.data(),
     //                                        data_S1array.size());
 
-    generateCommonTestData(0, mpiRank, mpiSize, Nx, Nx);
+    generateCommonTestData((int)0, mpiRank, mpiSize, (int)Nx, (int)Nx);
     io.DefineAttribute<int8_t>(i8_Single, data_I8.front());
     io.DefineAttribute<int16_t>(i16_Single, data_I16.front());
     io.DefineAttribute<int32_t>(i32_Single, data_I32.front());
@@ -177,7 +177,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     for (size_t step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize, Nx, Nx);
+        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx, (int)Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
