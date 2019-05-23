@@ -185,7 +185,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         if (myStart + myLength > writerSize * Nx)
         {
-            myLength = (long unsigned int)writerSize * Nx - myStart;
+            myLength = (long unsigned int)writerSize * (int)Nx - myStart;
         }
         const adios2::Dims start{myStart};
         const adios2::Dims count{myLength};
