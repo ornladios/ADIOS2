@@ -170,7 +170,8 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     }
     else
     {
-        std::snprintf(mpierrmsg, ier, "could not gather data\n");
+        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
+                      "could not gather data\n");
     }
 
     return ier;
@@ -247,7 +248,8 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     }
     else
     {
-        std::snprintf(mpierrmsg, ier, "could not scatter data\n");
+        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
+                      "could not scatter data\n");
     }
 
     return ier;
