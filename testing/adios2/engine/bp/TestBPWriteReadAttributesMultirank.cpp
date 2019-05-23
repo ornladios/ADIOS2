@@ -93,7 +93,7 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
         auto var = ioRead.InquireVariable<int>(varpath);
         EXPECT_TRUE(var);
         ASSERT_EQ(var.Name(), varpath);
-        ASSERT_EQ(var.Type(), "int");
+        ASSERT_EQ(var.Type(), "int32_t");
 
         int value;
         bpRead.Get(varpath, &value);
