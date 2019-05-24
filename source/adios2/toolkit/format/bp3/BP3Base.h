@@ -280,7 +280,7 @@ public:
 
     void ProfilerStop(const std::string process) noexcept;
 
-protected:
+    // protected:
     /** might be used in large payload copies to buffer */
     unsigned int m_Threads = 1;
     const bool m_DebugMode = false;

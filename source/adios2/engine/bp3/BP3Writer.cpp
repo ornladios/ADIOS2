@@ -189,6 +189,11 @@ void BP3Writer::InitTransports()
         m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
                                     m_BP3Serializer.m_Profiler.IsActive);
+        if (m_OpenMode == Mode::Append)
+        {
+            m_BP3Serializer.m_Data.m_AbsolutePosition =
+                m_FileDataManager.GetFileSize();
+        }
     }
 }
 
@@ -196,9 +201,118 @@ void BP3Writer::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
-        throw std::invalid_argument(
-            "ADIOS2: OpenMode Append hasn't been implemented, yet");
-        // TODO: Get last pg timestep and update timestep counter in
+        MPI_Comm comm = m_BP3Serializer.m_MPIComm;
+        bool debugMode = true; // FIXME
+        format::BP3Deserializer deserializer(comm,
+                                             debugMode); // FIXME debugMode
+
+        if (deserializer.m_RankMPI == 0)
+        {
+            std::vector<Params> defaultTransportParameters{
+                {{"transport", "File"}}};
+            const bool profile = deserializer.m_Profiler.IsActive;
+            transportman::TransportMan file_manager(comm, debugMode);
+            file_manager.OpenFiles({m_Name}, adios2::Mode::Read,
+                                   defaultTransportParameters, profile);
+
+            // FIXME copy&pasted
+            const size_t fileSize = file_manager.GetFileSize();
+            // handle single bp files from ADIOS 1.x by getting onl the metadata
+            // in buffer
+
+            // Load/Read Minifooter
+            const size_t miniFooterSize =
+                deserializer.m_MetadataSet.MiniFooterSize;
+            const size_t miniFooterStart = helper::GetDistance(
+                fileSize, miniFooterSize, m_DebugMode,
+                " fileSize < miniFooterSize, in call to Open");
+
+            deserializer.m_Metadata.Resize(
+                miniFooterSize, "allocating metadata buffer to inspect bp "
+                                "minifooter, in call to "
+                                "Open");
+
+            file_manager.ReadFile(deserializer.m_Metadata.m_Buffer.data(),
+                                  miniFooterSize, miniFooterStart);
+
+            // Load/Read Metadata
+            const size_t metadataStart =
+                deserializer.MetadataStart(deserializer.m_Metadata);
+            const size_t metadataSize = helper::GetDistance(
+                fileSize, metadataStart, m_DebugMode,
+                " fileSize < miniFooterSize, in call to Open");
+
+            deserializer.m_Metadata.Resize(
+                metadataSize, "allocating metadata buffer, in call to Open");
+
+            file_manager.ReadFile(deserializer.m_Metadata.m_Buffer.data(),
+                                  metadataSize, metadataStart);
+
+            file_manager.CloseFiles();
+
+            // mini footer
+            deserializer.ParseMinifooter(deserializer.m_Metadata);
+
+            const auto &buffer = deserializer.m_Metadata.m_Buffer;
+            size_t position = 0;
+
+            // pg index
+            auto DataPGCount = helper::ReadValue<uint64_t>(
+                buffer, position, deserializer.m_Minifooter.IsLittleEndian);
+            auto length = helper::ReadValue<uint64_t>(
+                buffer, position, deserializer.m_Minifooter.IsLittleEndian);
+            printf("pgcount %lld length %lld\n", DataPGCount, length);
+
+            auto &pg_index = m_BP3Serializer.m_MetadataSet.PGIndex.Buffer;
+            pg_index.insert(pg_index.end(), buffer.begin() + position,
+                            buffer.begin() + position + length);
+            m_BP3Serializer.m_MetadataSet.DataPGCount = DataPGCount;
+
+            // variables
+            auto lf_ReadElementIndex = [&](const std::vector<char> &buffer,
+                                           size_t position) {
+                auto orig_position = position;
+                const auto header = deserializer.ReadElementIndexHeader(
+                    buffer, position, deserializer.m_Minifooter.IsLittleEndian);
+
+                format::BP3Base::SerialElementIndex index(header.MemberID,
+                                                          header.Length + 4);
+                index.Buffer.insert(
+                    index.Buffer.begin(), buffer.begin() + orig_position,
+                    buffer.begin() + orig_position + header.Length + 4);
+                index.Count = header.CharacteristicsSetsCount;
+                m_BP3Serializer.m_MetadataSet.VarsIndices.emplace(header.Name,
+                                                                  index);
+            };
+
+            {
+                auto position = helper::GetDistance(
+                    deserializer.m_Minifooter.VarsIndexStart,
+                    deserializer.m_Minifooter.PGIndexStart, m_DebugMode,
+                    " BP3 variable index start < pg index "
+                    "start, in call to Open");
+
+                const uint32_t count = helper::ReadValue<uint32_t>(
+                    buffer, position, deserializer.m_Minifooter.IsLittleEndian);
+                const uint64_t length = helper::ReadValue<uint64_t>(
+                    buffer, position, deserializer.m_Minifooter.IsLittleEndian);
+
+                const size_t startPosition = position;
+                size_t localPosition = 0;
+
+                while (localPosition < length)
+                {
+                    lf_ReadElementIndex(buffer, position);
+
+                    const size_t elementIndexSize =
+                        static_cast<size_t>(helper::ReadValue<uint32_t>(
+                            buffer, position,
+                            deserializer.m_Minifooter.IsLittleEndian));
+                    position += elementIndexSize;
+                    localPosition = position - startPosition;
+                }
+            }
+        }
     }
     else
     {
@@ -298,7 +412,8 @@ void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
         const std::vector<std::string> bpMetadataFileNames =
             m_BP3Serializer.GetBPMetadataFileNames(transportsNames);
 
-        m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
+        // we don't append here ever, just rewrite completely
+        m_FileMetadataManager.OpenFiles(bpMetadataFileNames, Mode::Write,
                                         m_IO.m_TransportsParameters,
                                         m_BP3Serializer.m_Profiler.IsActive);
 

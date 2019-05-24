@@ -392,6 +392,31 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2Writers)
 }
 #endif
 
+TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Append)
+{
+    using T = typename TypeParam::DataType;
+
+    std::string filename = "append.bp";
+    this->GenerateOutput(filename);
+
+    auto writer = this->m_Io.Open(filename, adios2::Mode::Append);
+    auto var2 = this->m_Io.template DefineVariable<T>("var2", this->m_Shape);
+
+    MyData<T> myData(this->m_Selections);
+    for (int b = 0; b < myData.NBlocks(); ++b)
+    {
+        myData[b][0] = 1000 + b;
+    }
+
+    for (int b = 0; b < myData.NBlocks(); ++b)
+    {
+        var2.SetSelection(myData.Selection(b));
+        writer.Put(var2, &myData[b][0], TypeParam::PutMode);
+    }
+
+    writer.Close();
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

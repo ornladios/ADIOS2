@@ -173,7 +173,6 @@ public:
      */
     size_t MetadataStart(const BufferSTL &bufferSTL);
 
-private:
     std::map<std::string, helper::SubFileInfoMap> m_DeferredVariablesMap;
 
     static std::mutex m_Mutex;
@@ -184,6 +183,7 @@ private:
     void ParseVariablesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
     void ParseAttributesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
 
+private:
     /**
      * Reads a variable index element (serialized) and calls IO.DefineVariable
      * to deserialize the Variable metadata
