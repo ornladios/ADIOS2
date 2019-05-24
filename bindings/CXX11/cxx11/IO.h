@@ -55,6 +55,12 @@ public:
     explicit operator bool() const noexcept;
 
     /**
+     * Inspects IO name
+     * @return name
+     */
+    std::string Name() const;
+
+    /**
      * @brief Checks if IO exists in a config file passed to ADIOS object that
      * created this IO
      * @return true: in config file, false: not in config file
@@ -374,6 +380,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         const std::string &, const std::string &, const std::string);
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+std::string ToString(const IO &io);
 
 } // end namespace adios2
 

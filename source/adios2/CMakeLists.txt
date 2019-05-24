@@ -14,6 +14,8 @@ target_include_directories(taustubs PRIVATE
 )
 
 add_library(adios2
+  ADIOSTypes.cpp
+  
   core/Attribute.cpp 
   core/AttributeBase.cpp
   core/ADIOS.cpp

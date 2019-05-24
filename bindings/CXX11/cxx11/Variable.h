@@ -364,6 +364,9 @@ private:
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
 };
 
+template <typename T>
+std::string ToString(const Variable<T> &variable);
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_H_ */

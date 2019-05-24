@@ -19,6 +19,12 @@ namespace adios2
 
 IO::operator bool() const noexcept { return (m_IO == nullptr) ? false : true; }
 
+std::string IO::Name() const
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::InConfigFile");
+    return m_IO->m_Name;
+}
+
 bool IO::InConfigFile() const
 {
     helper::CheckForNullptr(m_IO, "in call to IO::InConfigFile");
@@ -181,5 +187,10 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+std::string ToString(const IO &io)
+{
+    return std::string("IO(Name: \"" + io.Name() + "\")");
+}
 
 } // end namespace adios2

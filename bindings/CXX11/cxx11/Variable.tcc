@@ -80,6 +80,13 @@ Variable<T>::DoAllStepsBlocksInfo()
     return allStepsBlocksInfo;
 }
 
+template <typename T>
+std::string ToString(const Variable<T> &variable)
+{
+    return std::string("Variable<") + variable.Type() + ">(Name: \"" +
+           variable.Name() + "\")";
+}
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_TCC_ */
