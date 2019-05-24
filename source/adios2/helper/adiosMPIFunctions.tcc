@@ -259,11 +259,14 @@ std::vector<MPI_Request> Isend64<char>(const char *buffer, const size_t count,
                                        int dest, int tag, MPI_Comm mpiComm,
                                        const std::string &hint)
 {
-    const size_t batches = count / DefaultMaxFileBatchSize;
-    std::vector<MPI_Request> requests(batches + 1);
 
-    if (batches > 1)
+    std::vector<MPI_Request> requests(1);
+
+    if (count > DefaultMaxFileBatchSize)
     {
+        const size_t batches = count / DefaultMaxFileBatchSize;
+        requests.resize(batches + 1);
+
         size_t position = 0;
         for (size_t b = 0; b < batches; ++b)
         {
