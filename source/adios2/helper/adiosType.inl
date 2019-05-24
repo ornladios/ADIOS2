@@ -33,42 +33,42 @@ inline std::string GetType<std::string>() noexcept
 template <>
 inline std::string GetType<int8_t>() noexcept
 {
-    return "signed char";
+    return "int8_t";
 }
 template <>
 inline std::string GetType<uint8_t>() noexcept
 {
-    return "unsigned char";
+    return "uint8_t";
 }
 template <>
 inline std::string GetType<int16_t>() noexcept
 {
-    return "short";
+    return "int16_t";
 }
 template <>
 inline std::string GetType<uint16_t>() noexcept
 {
-    return "unsigned short";
+    return "uint16_t";
 }
 template <>
 inline std::string GetType<int32_t>() noexcept
 {
-    return "int";
+    return "int32_t";
 }
 template <>
 inline std::string GetType<uint32_t>() noexcept
 {
-    return "unsigned int";
+    return "uint32_t";
 }
 template <>
 inline std::string GetType<int64_t>() noexcept
 {
-    return "long long int";
+    return "int64_t";
 }
 template <>
 inline std::string GetType<uint64_t>() noexcept
 {
-    return "unsigned long long int";
+    return "uint64_t";
 }
 template <>
 inline std::string GetType<float>() noexcept

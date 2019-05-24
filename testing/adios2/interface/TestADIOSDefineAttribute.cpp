@@ -147,27 +147,28 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeI8.Name(), i8_Single);
     EXPECT_EQ(attributeI8.Data()[0], currentTestData.I8.front());
     EXPECT_EQ(attributeI8.Data().size(), 1);
-    EXPECT_EQ(attributeI8.Type(), "signed char");
+    EXPECT_EQ(attributeI8.Type(), "int8_t");
 
     ASSERT_EQ(attributeI16.Data().size() == 1, true);
     ASSERT_EQ(attributeI16.Data().empty(), false);
     EXPECT_EQ(attributeI16.Name(), i16_Single);
     EXPECT_EQ(attributeI16.Data()[0], currentTestData.I16.front());
     EXPECT_EQ(attributeI16.Data().size(), 1);
-    EXPECT_EQ(attributeI16.Type(), "short");
+    EXPECT_EQ(attributeI16.Type(), "int16_t");
 
     ASSERT_EQ(attributeI32.Data().size() == 1, true);
     ASSERT_EQ(attributeI32.Data().empty(), false);
     EXPECT_EQ(attributeI32.Name(), i32_Single);
     EXPECT_EQ(attributeI32.Data()[0], currentTestData.I32.front());
     EXPECT_EQ(attributeI32.Data().size(), 1);
-    EXPECT_EQ(attributeI32.Type(), "int");
+    EXPECT_EQ(attributeI32.Type(), "int32_t");
 
     ASSERT_EQ(attributeI64.Data().size() == 1, true);
     ASSERT_EQ(attributeI64.Data().empty(), false);
     EXPECT_EQ(attributeI64.Name(), i64_Single);
     EXPECT_EQ(attributeI64.Data()[0], currentTestData.I64.front());
     EXPECT_EQ(attributeI64.Data().size(), 1);
+    EXPECT_EQ(attributeI64.Type(), "int64_t");
     EXPECT_EQ(sizeof(attributeI64.Data()[0]), 8);
 
     ASSERT_EQ(attributeU8.Data().size() == 1, true);
@@ -175,27 +176,28 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeU8.Name(), u8_Single);
     EXPECT_EQ(attributeU8.Data()[0], currentTestData.U8.front());
     EXPECT_EQ(attributeU8.Data().size(), 1);
-    EXPECT_EQ(attributeU8.Type(), "unsigned char");
+    EXPECT_EQ(attributeU8.Type(), "uint8_t");
 
     ASSERT_EQ(attributeU16.Data().size() == 1, true);
     ASSERT_EQ(attributeU16.Data().empty(), false);
     EXPECT_EQ(attributeU16.Name(), u16_Single);
     EXPECT_EQ(attributeU16.Data()[0], currentTestData.U16.front());
     EXPECT_EQ(attributeU16.Data().size(), 1);
-    EXPECT_EQ(attributeU16.Type(), "unsigned short");
+    EXPECT_EQ(attributeU16.Type(), "uint16_t");
 
     ASSERT_EQ(attributeU32.Data().size() == 1, true);
     ASSERT_EQ(attributeU32.Data().empty(), false);
     EXPECT_EQ(attributeU32.Name(), u32_Single);
     EXPECT_EQ(attributeU32.Data()[0], currentTestData.U32.front());
     EXPECT_EQ(attributeU32.Data().size(), 1);
-    EXPECT_EQ(attributeU32.Type(), "unsigned int");
+    EXPECT_EQ(attributeU32.Type(), "uint32_t");
 
     ASSERT_EQ(attributeU64.Data().size() == 1, true);
     ASSERT_EQ(attributeU64.Data().empty(), false);
     EXPECT_EQ(attributeU64.Name(), u64_Single);
     EXPECT_EQ(attributeU64.Data()[0], currentTestData.U64.front());
     EXPECT_EQ(attributeU64.Data().size(), 1);
+    EXPECT_EQ(attributeU64.Type(), "uint64_t");
     EXPECT_EQ(sizeof(attributeU64.Data()[0]), 8);
 
     ASSERT_EQ(attributeFloat.Data().size() == 1, true);
@@ -300,48 +302,50 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     ASSERT_EQ(attributeI8.Data().empty(), false);
     EXPECT_EQ(attributeI8.Name(), i8_Single);
     EXPECT_EQ(attributeI8.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeI8.Type(), "signed char");
+    EXPECT_EQ(attributeI8.Type(), "int8_t");
 
     ASSERT_EQ(attributeI16.Data().size() == 1, false);
     ASSERT_EQ(attributeI16.Data().empty(), false);
     EXPECT_EQ(attributeI16.Name(), i16_Single);
     EXPECT_EQ(attributeI16.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeI16.Type(), "short");
+    EXPECT_EQ(attributeI16.Type(), "int16_t");
 
     ASSERT_EQ(attributeI32.Data().size() == 1, false);
     ASSERT_EQ(attributeI32.Data().empty(), false);
     EXPECT_EQ(attributeI32.Name(), i32_Single);
     EXPECT_EQ(attributeI32.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeI32.Type(), "int");
+    EXPECT_EQ(attributeI32.Type(), "int32_t");
 
     ASSERT_EQ(attributeI64.Data().size() == 1, false);
     ASSERT_EQ(attributeI64.Data().empty(), false);
     EXPECT_EQ(attributeI64.Name(), i64_Single);
     EXPECT_EQ(attributeI64.Data().size(), numberOfElements);
+    EXPECT_EQ(attributeI64.Type(), "int64_t");
     EXPECT_EQ(sizeof(attributeI64.Data()[0]), 8);
 
     ASSERT_EQ(attributeU8.Data().size() == 1, false);
     ASSERT_EQ(attributeU8.Data().empty(), false);
     EXPECT_EQ(attributeU8.Name(), u8_Single);
     EXPECT_EQ(attributeU8.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeU8.Type(), "unsigned char");
+    EXPECT_EQ(attributeU8.Type(), "uint8_t");
 
     ASSERT_EQ(attributeU16.Data().size() == 1, false);
     ASSERT_EQ(attributeU16.Data().empty(), false);
     EXPECT_EQ(attributeU16.Name(), u16_Single);
     EXPECT_EQ(attributeU16.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeU16.Type(), "unsigned short");
+    EXPECT_EQ(attributeU16.Type(), "uint16_t");
 
     ASSERT_EQ(attributeU32.Data().size() == 1, false);
     ASSERT_EQ(attributeU32.Data().empty(), false);
     EXPECT_EQ(attributeU32.Name(), u32_Single);
     EXPECT_EQ(attributeU32.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeU32.Type(), "unsigned int");
+    EXPECT_EQ(attributeU32.Type(), "uint32_t");
 
     ASSERT_EQ(attributeU64.Data().size() == 1, false);
     ASSERT_EQ(attributeU64.Data().empty(), false);
     EXPECT_EQ(attributeU64.Name(), u64_Single);
     EXPECT_EQ(attributeU64.Data().size(), numberOfElements);
+    EXPECT_EQ(attributeU64.Type(), "uint64_t");
     EXPECT_EQ(sizeof(attributeU64.Data()[0]), 8);
 
     ASSERT_EQ(attributeFloat.Data().size() == 1, false);
@@ -469,48 +473,50 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     ASSERT_EQ(attributeI8.Data().empty(), false);
     EXPECT_EQ(attributeI8.Name(), i8_Single);
     EXPECT_EQ(attributeI8.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeI8.Type(), "signed char");
+    EXPECT_EQ(attributeI8.Type(), "int8_t");
 
     ASSERT_EQ(attributeI16.Data().size() == 1, false);
     ASSERT_EQ(attributeI16.Data().empty(), false);
     EXPECT_EQ(attributeI16.Name(), i16_Single);
     EXPECT_EQ(attributeI16.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeI16.Type(), "short");
+    EXPECT_EQ(attributeI16.Type(), "int16_t");
 
     ASSERT_EQ(attributeI32.Data().size() == 1, false);
     ASSERT_EQ(attributeI32.Data().empty(), false);
     EXPECT_EQ(attributeI32.Name(), i32_Single);
     EXPECT_EQ(attributeI32.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeI32.Type(), "int");
+    EXPECT_EQ(attributeI32.Type(), "int32_t");
 
     ASSERT_EQ(attributeI64.Data().size() == 1, false);
     ASSERT_EQ(attributeI64.Data().empty(), false);
     EXPECT_EQ(attributeI64.Name(), i64_Single);
     EXPECT_EQ(attributeI64.Data().size(), numberOfElements);
+    EXPECT_EQ(attributeI64.Type(), "int64_t");
     EXPECT_EQ(sizeof(attributeI64.Data()[0]), 8);
 
     ASSERT_EQ(attributeU8.Data().size() == 1, false);
     ASSERT_EQ(attributeU8.Data().empty(), false);
     EXPECT_EQ(attributeU8.Name(), u8_Single);
     EXPECT_EQ(attributeU8.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeU8.Type(), "unsigned char");
+    EXPECT_EQ(attributeU8.Type(), "uint8_t");
 
     ASSERT_EQ(attributeU16.Data().size() == 1, false);
     ASSERT_EQ(attributeU16.Data().empty(), false);
     EXPECT_EQ(attributeU16.Name(), u16_Single);
     EXPECT_EQ(attributeU16.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeU16.Type(), "unsigned short");
+    EXPECT_EQ(attributeU16.Type(), "uint16_t");
 
     ASSERT_EQ(attributeU32.Data().size() == 1, false);
     ASSERT_EQ(attributeU32.Data().empty(), false);
     EXPECT_EQ(attributeU32.Name(), u32_Single);
     EXPECT_EQ(attributeU32.Data().size(), numberOfElements);
-    EXPECT_EQ(attributeU32.Type(), "unsigned int");
+    EXPECT_EQ(attributeU32.Type(), "uint32_t");
 
     ASSERT_EQ(attributeU64.Data().size() == 1, false);
     ASSERT_EQ(attributeU64.Data().empty(), false);
     EXPECT_EQ(attributeU64.Name(), u64_Single);
     EXPECT_EQ(attributeU64.Data().size(), numberOfElements);
+    EXPECT_EQ(attributeU64.Type(), "uint64_t");
     EXPECT_EQ(sizeof(attributeU64.Data()[0]), 8);
 
     ASSERT_EQ(attributeFloat.Data().size() == 1, false);

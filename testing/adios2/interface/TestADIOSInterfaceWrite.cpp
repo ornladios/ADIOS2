@@ -58,7 +58,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_1x10)
     EXPECT_EQ(var_int8_t.Count().size(), 1);
     EXPECT_EQ(var_int8_t.Count()[0], 10);
     EXPECT_EQ(var_int8_t.Name(), name);
-    EXPECT_EQ(var_int8_t.Type(), "signed char");
+    EXPECT_EQ(var_int8_t.Type(), "int8_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
@@ -91,7 +91,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
     EXPECT_EQ(var_int16_t.Count().size(), 1);
     EXPECT_EQ(var_int16_t.Count()[0], 10);
     EXPECT_EQ(var_int16_t.Name(), name);
-    EXPECT_EQ(var_int16_t.Type(), "short");
+    EXPECT_EQ(var_int16_t.Type(), "int16_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_1x10)
@@ -124,7 +124,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_1x10)
     EXPECT_EQ(var_int32_t.Count().size(), 1);
     EXPECT_EQ(var_int32_t.Count()[0], 10);
     EXPECT_EQ(var_int32_t.Name(), name);
-    EXPECT_EQ(var_int32_t.Type(), "int");
+    EXPECT_EQ(var_int32_t.Type(), "int32_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
@@ -159,6 +159,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
     EXPECT_EQ(var_int64_t.Count()[0], 10);
     EXPECT_EQ(var_int64_t.Name(), name);
     EXPECT_EQ(var_int64_t.Sizeof(), 8);
+    EXPECT_EQ(var_int64_t.Type(), "int64_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
@@ -192,7 +193,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
     EXPECT_EQ(var_uint8_t.Count().size(), 1);
     EXPECT_EQ(var_uint8_t.Count()[0], 10);
     EXPECT_EQ(var_uint8_t.Name(), name);
-    EXPECT_EQ(var_uint8_t.Type(), "unsigned char");
+    EXPECT_EQ(var_uint8_t.Type(), "uint8_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_1x10)
@@ -226,7 +227,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_1x10)
     EXPECT_EQ(var_uint16_t.Count().size(), 1);
     EXPECT_EQ(var_uint16_t.Count()[0], 10);
     EXPECT_EQ(var_uint16_t.Name(), name);
-    EXPECT_EQ(var_uint16_t.Type(), "unsigned short");
+    EXPECT_EQ(var_uint16_t.Type(), "uint16_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_1x10)
@@ -260,7 +261,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_1x10)
     EXPECT_EQ(var_uint32_t.Count().size(), 1);
     EXPECT_EQ(var_uint32_t.Count()[0], 10);
     EXPECT_EQ(var_uint32_t.Name(), name);
-    EXPECT_EQ(var_uint32_t.Type(), "unsigned int");
+    EXPECT_EQ(var_uint32_t.Type(), "uint32_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
@@ -295,6 +296,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
     EXPECT_EQ(var_uint64_t.Count()[0], 10);
     EXPECT_EQ(var_uint64_t.Name(), name);
     EXPECT_EQ(var_uint64_t.Sizeof(), 8);
+    EXPECT_EQ(var_uint64_t.Type(), "uint64_t");
 }
 
 // Rinse  and repeat for remaining types
@@ -332,7 +334,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_2x5)
     EXPECT_EQ(var_int8_t.Count()[0], 2);
     EXPECT_EQ(var_int8_t.Count()[1], 5);
     EXPECT_EQ(var_int8_t.Name(), name);
-    EXPECT_EQ(var_int8_t.Type(), "signed char");
+    EXPECT_EQ(var_int8_t.Type(), "int8_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_2x5)
@@ -367,7 +369,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_2x5)
     EXPECT_EQ(var_int16_t.Count()[0], 2);
     EXPECT_EQ(var_int16_t.Count()[1], 5);
     EXPECT_EQ(var_int16_t.Name(), name);
-    EXPECT_EQ(var_int16_t.Type(), "short");
+    EXPECT_EQ(var_int16_t.Type(), "int16_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_2x5)
@@ -402,7 +404,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_2x5)
     EXPECT_EQ(var_int32_t.Count()[0], 2);
     EXPECT_EQ(var_int32_t.Count()[1], 5);
     EXPECT_EQ(var_int32_t.Name(), name);
-    EXPECT_EQ(var_int32_t.Type(), "int");
+    EXPECT_EQ(var_int32_t.Type(), "int32_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
@@ -438,6 +440,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
     EXPECT_EQ(var_int64_t.Count()[1], 5);
     EXPECT_EQ(var_int64_t.Name(), name);
     EXPECT_EQ(var_int64_t.Sizeof(), 8);
+    EXPECT_EQ(var_int64_t.Type(), "int64_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
@@ -472,7 +475,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
     EXPECT_EQ(var_uint8_t.Count()[0], 2);
     EXPECT_EQ(var_uint8_t.Count()[1], 5);
     EXPECT_EQ(var_uint8_t.Name(), name);
-    EXPECT_EQ(var_uint8_t.Type(), "unsigned char");
+    EXPECT_EQ(var_uint8_t.Type(), "uint8_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_2x5)
@@ -507,7 +510,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_2x5)
     EXPECT_EQ(var_uint16_t.Count()[0], 2);
     EXPECT_EQ(var_uint16_t.Count()[1], 5);
     EXPECT_EQ(var_uint16_t.Name(), name);
-    EXPECT_EQ(var_uint16_t.Type(), "unsigned short");
+    EXPECT_EQ(var_uint16_t.Type(), "uint16_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_2x5)
@@ -542,7 +545,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_2x5)
     EXPECT_EQ(var_uint32_t.Count()[0], 2);
     EXPECT_EQ(var_uint32_t.Count()[1], 5);
     EXPECT_EQ(var_uint32_t.Name(), name);
-    EXPECT_EQ(var_uint32_t.Type(), "unsigned int");
+    EXPECT_EQ(var_uint32_t.Type(), "uint32_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
@@ -578,6 +581,7 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
     EXPECT_EQ(var_uint64_t.Count()[1], 5);
     EXPECT_EQ(var_uint64_t.Name(), name);
     EXPECT_EQ(var_uint64_t.Sizeof(), 8);
+    EXPECT_EQ(var_uint64_t.Type(), "uint64_t");
 }
 
 TEST_F(ADIOSInterfaceWriteTest, Exceptions)

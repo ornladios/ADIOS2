@@ -179,6 +179,39 @@ static char *TranslateADIOS2Type2FFS(const char *Type)
     {
         return strdup("complex8");
     }
+    else if (strcmp(Type, "int8_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int16_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int32_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int64_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "uint8_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint16_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint32_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint64_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+
     return strdup(Type);
 }
 
@@ -186,40 +219,40 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
 {
     if (strcmp(Type, "integer") == 0)
     {
-        if (size == sizeof(int))
+        if (size == 1)
         {
-            return strdup("int");
+            return strdup("int8_t");
         }
-        else if (size == sizeof(long))
+        else if (size == 2)
         {
-            return strdup("long int");
+            return strdup("int16_t");
         }
-        else if (size == sizeof(char))
+        else if (size == 4)
         {
-            return strdup("char");
+            return strdup("int32_t");
         }
-        else if (size == sizeof(short))
+        else if (size == 8)
         {
-            return strdup("short");
+            return strdup("int64_t");
         }
     }
     else if (strcmp(Type, "unsigned integer") == 0)
     {
-        if (size == sizeof(int))
+        if (size == 1)
         {
-            return strdup("unsigned int");
+            return strdup("uint8_t");
         }
-        else if (size == sizeof(long))
+        else if (size == 2)
         {
-            return strdup("unsigned long int");
+            return strdup("uint16_t");
         }
-        else if (size == sizeof(char))
+        else if (size == 4)
         {
-            return strdup("unsigned char");
+            return strdup("uint32_t");
         }
-        else if (size == sizeof(short))
+        else if (size == 8)
         {
-            return strdup("unsigned short");
+            return strdup("uint64_t");
         }
     }
     else if ((strcmp(Type, "double") == 0) || (strcmp(Type, "float") == 0))

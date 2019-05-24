@@ -2076,24 +2076,22 @@ void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
 }
 
 const std::map<std::string, enum ADIOS_DATATYPES> adios_types_map = {
-    {"char", adios_unsigned_byte},
-    {"int", adios_integer},
+    {"uint8_t", adios_unsigned_byte},
+    {"int32_t", adios_integer},
     {"float", adios_real},
     {"double", adios_double},
     {"float complex", adios_complex},
     {"double complex", adios_double_complex},
-    {"long double complex", adios_long_double_complex},
-    {"signed char", adios_byte},
-    {"short", adios_short},
-    {"long int", adios_long},
-    {"long long int", adios_long},
+    {"int8_t", adios_byte},
+    {"int16_t", adios_short},
+    {"int64_t", adios_long},
+    {"int64_t", adios_long},
     {"string", adios_string},
-    {"string array", adios_string_array},
-    {"unsigned char", adios_unsigned_byte},
-    {"unsigned short", adios_unsigned_short},
-    {"unsigned int", adios_unsigned_integer},
-    {"unsigned long int", adios_unsigned_long},
-    {"unsigned long long int", adios_unsigned_long}};
+    {"uint8_t", adios_unsigned_byte},
+    {"uint16_t", adios_unsigned_short},
+    {"uint32_t", adios_unsigned_integer},
+    {"uint64_t", adios_unsigned_long},
+    {"uint64_t", adios_unsigned_long}};
 
 enum ADIOS_DATATYPES type_to_enum(std::string type)
 {
