@@ -141,7 +141,7 @@ typedef enum
 
 static size_t adios2_string_array_element_max_size = 4096;
 
-const uint64_t adios2_local_value_dim = ULLONG_MAX - 2;
+static const uint64_t adios2_local_value_dim = ULLONG_MAX - 2;
 
 #ifdef __cplusplus
 } // end extern C
