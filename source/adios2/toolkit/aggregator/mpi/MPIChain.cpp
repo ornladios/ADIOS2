@@ -7,7 +7,6 @@
  *  Created on: Feb 21, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
-
 #include "MPIChain.h"
 
 #include "adios2/ADIOSMPI.h"
@@ -58,13 +57,19 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
                                ", aggregation Isend size at iteration " +
                                    std::to_string(step) + "\n");
 
-        const std::vector<MPI_Request> requestsISend64 = helper::Isend64(
-            sendBuffer.m_Buffer.data(), sendBuffer.m_Position, m_Rank - 1, 1,
-            m_Comm,
-            ", aggregation Isend64 data at iteration " + std::to_string(step));
+        // only send data if buffer larger than 0
+        if (sendBuffer.m_Position > 0)
+        {
 
-        requests[0].insert(requests[0].end(), requestsISend64.begin(),
-                           requestsISend64.end());
+            const std::vector<MPI_Request> requestsISend64 =
+                helper::Isend64(sendBuffer.m_Buffer.data(),
+                                sendBuffer.m_Position, m_Rank - 1, 1, m_Comm,
+                                ", aggregation Isend64 data at iteration " +
+                                    std::to_string(step));
+
+            requests[0].insert(requests[0].end(), requestsISend64.begin(),
+                               requestsISend64.end());
+        }
     }
     // receive size, resize receiving buffer and receive data
     if (receiver)
@@ -89,10 +94,15 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
             "in aggregation, when resizing receiving buffer to size " +
                 std::to_string(bufferSize));
 
-        requests[1] = helper::Irecv64(
-            receiveBuffer.m_Buffer.data(), receiveBuffer.m_Position, m_Rank + 1,
-            1, m_Comm,
-            ", aggregation Irecv64 data at iteration " + std::to_string(step));
+        // only receive data if buffer is larger than 0
+        if (bufferSize > 0)
+        {
+            requests[1] =
+                helper::Irecv64(receiveBuffer.m_Buffer.data(),
+                                receiveBuffer.m_Position, m_Rank + 1, 1, m_Comm,
+                                ", aggregation Irecv64 data at iteration " +
+                                    std::to_string(step));
+        }
     }
 
     return requests;
