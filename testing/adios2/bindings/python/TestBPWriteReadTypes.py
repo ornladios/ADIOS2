@@ -114,11 +114,12 @@ for key, value in ioParams.items():
     print("\t" + key + ": " + value)
 
 ioWriter.LockDefinitions()
+nsteps = 3
 
 # ADIOS Engine
 writer = ioWriter.Open("npTypes.bp", adios2.Mode.Write)
 
-for i in range(0, 3):
+for i in range(0, nsteps):
 
     data.update(rank, i, size)
 
@@ -245,6 +246,9 @@ for name, info in variablesInfo.items():
 result = adios.RemoveIO('writer')
 if(result is False):
     raise ValueError('Could not remove IO writer')
+
+assert (reader.Steps() == nsteps)
+
 
 reader.Close()
 
