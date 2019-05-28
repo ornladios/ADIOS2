@@ -6,6 +6,7 @@
 
      integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
      integer(kind=4) :: inx, irank, isize, ierr, i, step_status
+     integer(kind=8) :: nsteps
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead
@@ -191,6 +192,9 @@
      call adios2_declare_io(ioRead, adios, "ioRead", ierr)
      ! Open bpReader engine
      call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_read, ierr)
+
+     call adios2_steps(nsteps, bpReader, ierr)
+     if(nsteps /= 3)  write(*,*) 'nsteps: ', nsteps !stop 'ftypes.bp must have 3 steps'
 
      call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
      if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'

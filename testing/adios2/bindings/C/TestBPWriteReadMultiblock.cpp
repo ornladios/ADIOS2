@@ -203,6 +203,10 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
         adios2_engine *engineH =
             adios2_open(ioH, "cmblocks.bp", adios2_mode_read);
 
+        size_t nsteps;
+        adios2_steps(&nsteps, engineH);
+        EXPECT_EQ(nsteps, steps);
+
         while (adios2_begin_step(engineH, adios2_step_mode_next_available, 0.,
                                  &status) == adios2_error_none)
         {

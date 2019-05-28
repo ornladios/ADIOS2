@@ -213,7 +213,7 @@ adios2_error adios2_steps(size_t *steps, const adios2_engine *engine)
             return adios2_error_none;
         }
 
-        *steps = engineCpp->CurrentStep();
+        *steps = engineCpp->Steps();
         return adios2_error_none;
     }
     catch (...)

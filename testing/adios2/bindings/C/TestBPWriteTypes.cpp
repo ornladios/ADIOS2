@@ -159,6 +159,10 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_engine *engineH =
             adios2_open(ioH, "ctypes.bp", adios2_mode_read);
 
+        size_t steps;
+        adios2_steps(&steps, engineH);
+        EXPECT_EQ(steps, 1);
+
         adios2_bool result;
         char name[30];
         size_t name_size;
