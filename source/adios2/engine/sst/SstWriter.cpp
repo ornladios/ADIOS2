@@ -123,6 +123,7 @@ void SstWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
     m_BetweenStepPairs = false;
+    SstWriterDefinitionLock(m_Output, m_IO.m_DefinitionsLocked);
     if (m_MarshalMethod == SstMarshalFFS)
     {
         TAU_SCOPED_TIMER("Marshaling Overhead");

@@ -60,6 +60,7 @@
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
 set (1x1_CMD "run_test.py -nw 1 -nr 1 --warg=ENGINE_PARAMS")
+set (1x1LOCKED_CMD "run_test.py -nw 1 -nr 1 --warg=--lock_definitions --rarg=--lock_definitions --warg=QueueLimit:2,QueueFullPolicy:block,ENGINE_PARAMS")
 set (2x1_CMD "run_test.py -nw 2 -nr 1 --warg=ENGINE_PARAMS")
 set (1x2_CMD "run_test.py -nw 1 -nr 2 --warg=ENGINE_PARAMS")
 set (3x5_CMD "run_test.py -nw 3 -nr 5 --warg=ENGINE_PARAMS")

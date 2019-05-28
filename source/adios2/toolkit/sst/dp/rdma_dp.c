@@ -1104,8 +1104,10 @@ extern CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.waitForCompletion = RdmaWaitForCompletion;
     RdmaDPInterface.notifyConnFailure = RdmaNotifyConnFailure;
     RdmaDPInterface.provideTimestep = RdmaProvideTimestep;
+    RdmaDPInterface.readerRegTimestep = NULL;
     RdmaDPInterface.releaseTimestep = RdmaReleaseTimestep;
-    RdmaDPInterface.destroyReader = RdmaDestroyReader;
+    RdmaDPInterface.readerReleaseTimestep =
+        NULL : RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;
     RdmaDPInterface.getPriority = RdmaGetPriority;

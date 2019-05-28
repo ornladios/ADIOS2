@@ -98,6 +98,7 @@ extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
                                DataFreeFunc FreeAttribute,
                                void *FreeAttributeClientData);
 extern void SstWriterClose(SstStream stream);
+extern void SstWriterDefinitionLock(SstStream stream, int WriterDefinitionLock);
 
 /*
  *  Reader-side operations
@@ -111,7 +112,7 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  size_t offset, size_t length, void *buffer,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
-extern void SstReleaseStep(SstStream stream);
+extern void SstReleaseStep(SstStream stream, int LocalDefinitionsLocked);
 extern SstStatusValue SstAdvanceStep(SstStream stream, SstStepMode mode,
                                      const float timeout_sec);
 extern void SstReaderClose(SstStream stream);

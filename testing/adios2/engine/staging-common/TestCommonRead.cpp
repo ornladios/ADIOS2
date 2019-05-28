@@ -23,6 +23,8 @@ public:
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
+int LockDefinitions = 0;
+
 std::string fname = "ADIOS2Common";
 std::string engine = "SST";
 
@@ -248,6 +250,10 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
         engine.Get(var_time, (int64_t *)&write_time);
+        if (LockDefinitions)
+        {
+            io.LockDefinitions();
+        }
         engine.EndStep();
 
         EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32), 0);
@@ -294,10 +300,10 @@ int main(int argc, char **argv)
     MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
 #endif
 
-    int result;
+    int result, bare_args = 0;
     ::testing::InitGoogleTest(&argc, argv);
 
-    while ((argc > 1) && (argv[1][0] == '-'))
+    while (argc > 1)
     {
         if (std::string(argv[1]) == "--expect_time_gap")
         {
@@ -309,6 +315,10 @@ int main(int argc, char **argv)
         {
             TimeGapExpected = 0;
             IgnoreTimeGap = 0;
+        }
+        else if (std::string(argv[1]) == "--lock_definitions")
+        {
+            LockDefinitions++;
         }
         else if (std::string(argv[1]) == "--compress_sz")
         {
@@ -331,31 +341,31 @@ int main(int argc, char **argv)
             argc--;
         }
         else
-
         {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
+            if (bare_args == 0)
+            {
+                /* first arg without -- is engine */
+                engine = std::string(argv[1]);
+            }
+            if (bare_args == 1)
+            {
+                /* second arg without -- is filename */
+                fname = std::string(argv[1]);
+            }
+            if (bare_args == 2)
+            {
+                /* third arg without -- is engine params */
+                engineParams = ParseEngineParams(argv[1]);
+            }
+            if (bare_args > 2)
+            {
+                throw std::invalid_argument("Unknown argument \"" +
+                                            std::string(argv[1]) + "\"");
+            }
+            bare_args++;
         }
         argv++;
         argc--;
-    }
-    if (argc > 1)
-    {
-        /* first arg without -- is engine */
-        engine = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* second arg without -- is filename */
-        fname = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        engineParams = ParseEngineParams(argv[1]);
     }
 
     result = RUN_ALL_TESTS();

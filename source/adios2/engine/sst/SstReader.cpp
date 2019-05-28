@@ -323,7 +323,7 @@ void SstReader::EndStep()
     {
         // unknown marshaling method, shouldn't happen
     }
-    SstReleaseStep(m_Input);
+    SstReleaseStep(m_Input, m_IO.m_DefinitionsLocked);
 }
 
 void SstReader::Flush(const int transportIndex) {}

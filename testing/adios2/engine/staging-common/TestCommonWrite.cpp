@@ -27,6 +27,7 @@ std::string engine = "SST";
 
 int CompressSz = 0;
 int CompressZfp = 0;
+int LockDefinitions = 0;
 
 static std::string Trim(std::string &str)
 {
@@ -206,6 +207,10 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Advance to the next time step
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
+        if (LockDefinitions)
+        {
+            io.LockDefinitions();
+        }
         engine.EndStep();
     }
 
@@ -225,10 +230,10 @@ int main(int argc, char **argv)
     MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
 #endif
 
-    int result;
+    int result, bare_args = 0;
     ::testing::InitGoogleTest(&argc, argv);
 
-    while ((argc > 1) && (argv[1][0] == '-'))
+    while (argc > 1)
     {
         if (std::string(argv[1]) == "--expect_time_gap")
         {
@@ -241,6 +246,10 @@ int main(int argc, char **argv)
         else if (std::string(argv[1]) == "--compress_zfp")
         {
             CompressZfp++;
+        }
+        else if (std::string(argv[1]) == "--lock_definitions")
+        {
+            LockDefinitions++;
         }
         else if (std::string(argv[1]) == "--filename")
         {
@@ -256,31 +265,31 @@ int main(int argc, char **argv)
         }
         else
         {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
+            if (bare_args == 0)
+            {
+                /* first arg without -- is engine */
+                engine = std::string(argv[1]);
+            }
+            if (bare_args == 1)
+            {
+                /* second arg without -- is filename */
+                fname = std::string(argv[1]);
+            }
+            if (bare_args == 2)
+            {
+                /* third arg without -- is engine params */
+                engineParams = ParseEngineParams(argv[1]);
+            }
+            if (bare_args > 2)
+            {
+                throw std::invalid_argument("Unknown argument \"" +
+                                            std::string(argv[1]) + "\"");
+            }
+            bare_args++;
         }
         argv++;
         argc--;
     }
-    if (argc > 1)
-    {
-        /* first arg without -- is engine */
-        engine = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* second arg without -- is filename */
-        fname = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        engineParams = ParseEngineParams(argv[1]);
-    }
-
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI
