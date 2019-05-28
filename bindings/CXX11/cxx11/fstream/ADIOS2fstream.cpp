@@ -140,6 +140,8 @@ adios2::Mode fstream::ToMode(const openmode mode) const noexcept
     return modeCpp;
 }
 
+size_t fstream::steps() const { return m_Stream->Steps(); }
+
 // PRIVATE
 void fstream::CheckOpen(const std::string &name) const
 {

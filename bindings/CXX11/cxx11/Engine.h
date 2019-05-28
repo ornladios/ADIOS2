@@ -394,6 +394,13 @@ public:
     std::vector<typename Variable<T>::Info>
     BlocksInfo(const Variable<T> variable, const size_t step) const;
 
+    /**
+     * Inspect total number of available steps, use for file engines in read
+     * mode only
+     * @return available steps in engine
+     */
+    size_t Steps() const;
+
 private:
     Engine(core::Engine *engine);
     core::Engine *m_Engine = nullptr;

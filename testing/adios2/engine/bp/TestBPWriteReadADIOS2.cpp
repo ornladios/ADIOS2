@@ -176,6 +176,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
+        EXPECT_EQ(bpReader.Steps(), NSteps);
+
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
         ASSERT_EQ(var_iString.Shape().size(), 0);
@@ -480,6 +482,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
+        EXPECT_EQ(bpReader.Steps(), NSteps);
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
         ASSERT_EQ(var_iString.Shape().size(), 0);
@@ -786,6 +789,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
+        EXPECT_EQ(bpReader.Steps(), NSteps);
+
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -1078,6 +1083,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        EXPECT_EQ(bpReader.Steps(), NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);

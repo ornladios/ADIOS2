@@ -116,6 +116,8 @@ public:
 
     size_t CurrentStep() const;
 
+    size_t Steps() const;
+
 private:
     std::shared_ptr<core::Stream> m_Stream;
 

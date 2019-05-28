@@ -122,6 +122,12 @@ size_t Stream::CurrentStep() const
     return m_Engine->CurrentStep();
 }
 
+size_t Stream::Steps() const
+{
+    const size_t steps = (m_Engine != nullptr) ? m_Engine->Steps() : 0;
+    return steps;
+}
+
 // PRIVATE
 void Stream::CheckOpen()
 {

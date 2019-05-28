@@ -89,6 +89,8 @@ private:
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+    size_t DoSteps() const final;
 };
 
 } // end namespace engine

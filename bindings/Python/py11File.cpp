@@ -371,7 +371,9 @@ void File::Close()
     m_Stream.reset();
 }
 
-size_t File::CurrentStep() const { return m_Stream->CurrentStep(); };
+size_t File::CurrentStep() const { return m_Stream->CurrentStep(); }
+
+size_t File::Steps() const { return m_Stream->Steps(); }
 
 // PRIVATE
 adios2::Mode File::ToMode(const std::string mode) const

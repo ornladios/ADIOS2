@@ -122,6 +122,8 @@ public:
 
     size_t CurrentStep() const;
 
+    size_t Steps() const;
+
 private:
     /** Stream, IO and Engine names  */
     std::string m_Name;

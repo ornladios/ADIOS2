@@ -207,6 +207,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
         float gr32 = -1.f;
         double gr64 = -1.f;
 
+        EXPECT_EQ(iStream.steps(), NSteps);
+
         size_t t = 0;
         for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)
         {
@@ -522,7 +524,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
         const adios2::Dims count{Ny, Nx};
         const adios2::Box<adios2::Dims> sel(start, count);
 
-        // for (size_t t = 0; t < NSteps; ++t)
+        EXPECT_EQ(iStream.steps(), NSteps);
+
         size_t t = 0;
         adios2::fstep iStep;
         while (adios2::getstep(iStream, iStep))
@@ -647,7 +650,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
         const adios2::Dims count{Ny, Nx};
         const adios2::Box<adios2::Dims> sel(start, count);
 
-        // for (size_t t = 0; t < NSteps; ++t)
+        EXPECT_EQ(iStream.steps(), NSteps);
         size_t t = 0;
 
         for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)

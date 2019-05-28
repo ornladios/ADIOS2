@@ -197,6 +197,32 @@ adios2_error adios2_current_step(size_t *current_step,
     }
 }
 
+adios2_error adios2_steps(size_t *steps, const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for adios2_engine, in call to adios2_steps");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            *steps = 0;
+            return adios2_error_none;
+        }
+
+        *steps = engineCpp->Steps();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_steps"));
+    }
+}
+
 adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
                         const void *data, const adios2_mode mode)
 {

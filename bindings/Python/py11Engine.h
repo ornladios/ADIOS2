@@ -63,6 +63,7 @@ public:
 
     std::string Name() const;
     std::string Type() const;
+    size_t Steps() const;
 
 private:
     Engine(core::Engine *engine);

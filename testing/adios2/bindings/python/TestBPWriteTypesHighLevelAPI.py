@@ -109,6 +109,9 @@ data = SmallTestData()
 
 with adios2.open("types_np.bp", "r", comm) as fr:
 
+    # file only
+    assert(fr.steps() == 5)
+
     for fr_step in fr:
 
         step = fr_step.current_step()

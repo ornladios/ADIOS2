@@ -481,7 +481,9 @@ PYBIND11_MODULE(adios2, m)
 
         .def("Name", &adios2::py11::Engine::Name)
 
-        .def("Type", &adios2::py11::Engine::Type);
+        .def("Type", &adios2::py11::Engine::Type)
+
+        .def("Steps", &adios2::py11::Engine::Steps);
 
     pybind11::class_<adios2::py11::Operator>(m, "Operator")
         // Python 2
@@ -989,9 +991,17 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("current_step", &adios2::py11::File::CurrentStep, R"md(
-            Return current step when using for-in loops, read mode only
+            Inspect current step when using for-in loops, read mode only
 
             Returns
                 current step
-        )md");
+        )md")
+
+        .def("steps", &adios2::py11::File::Steps, R"md(
+			Inspect total number of available steps, use for file engines in 
+            read mode only
+
+			Returns
+				steps
+		)md");
 }
