@@ -78,4 +78,14 @@ contains
 
     end subroutine
 
+    subroutine adios2_steps(steps, engine, ierr)
+        integer(kind=8), intent(out) :: steps
+        type(adios2_engine), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        if(trim(engine%type) == "NULL") return
+        call adios2_steps_f2c(steps, engine%f2c, ierr)
+
+    end subroutine
+
 end module

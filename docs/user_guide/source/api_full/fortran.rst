@@ -580,7 +580,22 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       
       ! populated with current_step value
       integer(kind=8), intent(out) :: current_step 
+
+* :f90:`subroutine adios2_steps` Inspect total number of available steps, 
+      use for file engines in read mode only
+   
+   .. code-block:: fortran
+   
+      ! Full signature
+      subroutine adios2_steps(steps, engine, ierr)
       
+      ! WHERE:
+      ! engine handler  
+      type(adios2_engine), intent(in) :: engine
+      
+      ! populated with steps value
+      integer(kind=8), intent(out) :: steps 
+
       
 * :f90:`subroutine adios2_end_step` ends current step and default behavior is to execute transport IO (flush or read). 
    
