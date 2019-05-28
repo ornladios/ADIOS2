@@ -933,6 +933,12 @@ static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader,
             struct _SentTimestepRec *ItemToFree = List;
             Freed = 1;
             /* per reader release here */
+            if (Stream->DP_Interface->readerReleaseTimestep)
+            {
+                (Stream->DP_Interface->readerReleaseTimestep)(
+                    &Svcs, Reader->DP_WSR_Stream, List->Timestep);
+            }
+
             SubRefTimestep(Stream, ItemToFree->Timestep, 1);
             free(ItemToFree);
             if (Last)
@@ -979,6 +985,15 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         }
         Entry->ReferenceCount++;
         AddTSToSentList(Stream, CP_WSR_Stream, Entry->Timestep);
+        if (Stream->DP_Interface->readerRegisterTimestep)
+        {
+            int ReadPatternFixed = CP_WSR_Stream->ReaderDefinitionsLocked &
+                                   Stream->WriterDefinitionsLocked;
+            (Stream->DP_Interface->readerRegisterTimestep)(
+                &Svcs, CP_WSR_Stream->DP_WSR_Stream, Entry->Timestep,
+                ReadPatternFixed);
+        }
+
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         sendOneToWSRCohort(CP_WSR_Stream,
                            Stream->CPInfo->DeliverTimestepMetadataFormat,
@@ -1905,6 +1920,12 @@ extern void SstInternalProvideTimestep(
     }
 }
 
+extern void SstWriterDefinitionLock(SstStream Stream,
+                                    int WriterDefinitionsLocked)
+{
+    Stream->WriterDefinitionsLocked = WriterDefinitionsLocked;
+}
+
 extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
                                SstData Data, long Timestep,
                                DataFreeFunc FreeTimestep, void *FreeClientData,
@@ -2044,6 +2065,7 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     /* decrement the reference count for the released timestep */
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
     Reader->LastReleasedTimestep = Msg->Timestep;
+    Reader->ReaderDefinitionsLocked |= Msg->ReaderDefinitionsLocked;
     if ((ParentStream->Rank == 0) &&
         (ParentStream->ConfigParams->CPCommPattern == SstCPCommMin))
     {

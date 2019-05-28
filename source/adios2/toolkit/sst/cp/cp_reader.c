@@ -1086,7 +1086,7 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
     }
 }
 
-extern void SstReleaseStep(SstStream Stream)
+extern void SstReleaseStep(SstStream Stream, int DefinitionsLocked)
 {
     long Timestep = Stream->ReaderTimestep;
     struct _ReleaseTimestepMsg Msg;
@@ -1104,7 +1104,7 @@ extern void SstReleaseStep(SstStream Stream)
 
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = Timestep;
-
+    Msg.ReaderDefinitionsLocked = DefinitionsLocked;
     /*
      * send each writer rank a release for this timestep (actually goes to WSR
      * Streams)

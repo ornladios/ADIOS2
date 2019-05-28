@@ -664,6 +664,20 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
+static void EvpathReaderRegisterTimestep(CP_Services Svcs,
+                                         DP_WS_Stream Stream_v, long Timestep,
+                                         int ReadPatternFixed)
+{
+    printf("Got a per reader registraion for timestep %ld, patern fixed %d\n",
+           Timestep, ReadPatternFixed);
+}
+
+static void EvpathReaderReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
+                                        long Timestep)
+{
+    printf("Got a per reader release for timestep %ld\n", Timestep);
+}
+
 static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                   struct _SstData *Data,
                                   struct _SstData *LocalMetadata, long Timestep,
@@ -789,6 +803,8 @@ extern CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.notifyConnFailure = EvpathNotifyConnFailure;
     evpathDPInterface.provideTimestep = EvpathProvideTimestep;
     evpathDPInterface.releaseTimestep = EvpathReleaseTimestep;
+    evpathDPInterface.readerRegisterTimestep = EvpathReaderRegisterTimestep;
+    evpathDPInterface.readerReleaseTimestep = EvpathReaderReleaseTimestep;
     evpathDPInterface.destroyReader = EvpathDestroyReader;
     evpathDPInterface.destroyWriter = EvpathDestroyWriter;
     evpathDPInterface.destroyWriterPerReader = EvpathDestroyWriterPerReader;

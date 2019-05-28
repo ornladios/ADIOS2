@@ -396,6 +396,8 @@ static FMField ReleaseTimestepList[] = {
      FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
     {"Timestep", "integer", sizeof(int),
      FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
+    {"ReaderDefinitionsLocked", "integer", sizeof(int),
+     FMOffset(struct _ReleaseTimestepMsg *, ReaderDefinitionsLocked)},
     {NULL, NULL, 0, 0}};
 
 static FMField PeerSetupList[] = {

@@ -70,6 +70,7 @@ typedef struct _WS_ReaderInfo
     long StartingTimestep;
     long LastSentTimestep;
     int LastReleasedTimestep;
+    int ReaderDefinitionsLocked;
     long OldestUnreleasedTimestep;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
@@ -142,12 +143,14 @@ struct _SstStream
     /* WRITER-SIDE FIELDS */
     int WriterTimestep;
     int LastReleasedTimestep;
+    int ReaderDefinitionsLocked;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
     SstQueueFullPolicy QueueFullPolicy;
     int LastProvidedTimestep;
     int NewReaderPresent;
+    int WriterDefinitionsLocked;
 
     /* rendezvous condition */
     int FirstReaderCondition;
@@ -373,6 +376,7 @@ struct _ReleaseTimestepMsg
 {
     void *WSR_Stream;
     int Timestep;
+    int ReaderDefinitionsLocked;
 };
 
 /*
