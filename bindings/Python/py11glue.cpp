@@ -627,7 +627,7 @@ PYBIND11_MODULE(adios2, m)
                      variable dimension for current MPI rank. 
                      Pass a numpy array for local variables.
 
-                 endstep 
+                 end_step 
                      end current step, begin next step and flush (default = false).
         )md")
 
@@ -664,15 +664,17 @@ PYBIND11_MODULE(adios2, m)
 					 variable dimension for current MPI rank. 
 					 Pass a numpy array for local variables.
 
-				 endstep 
+				 end_step 
 					 end current step, begin next step and flush (default = false).
 		)md")
 
         .def("write",
-             (void (adios2::py11::File::*)(
-                 const std::string &, const pybind11::array &, const bool)) &
+             (void (adios2::py11::File::*)(const std::string &,
+                                           const pybind11::array &, const bool,
+                                           const bool)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
+             pybind11::arg("local_value") = false,
              pybind11::arg("end_step") = false, R"md(
 		        writes a self-describing single value array (numpy) variable
 
@@ -682,17 +684,22 @@ PYBIND11_MODULE(adios2, m)
 
 					 array: numpy 
 						 variable data single value
-
-					 endstep 
+                     
+                     local_value					 
+						 true: local value, false: global value
+							
+					 end_step 
 						 end current step, begin next step and flush 
 						 (default = false).
 		)md")
 
         .def("write",
              (void (adios2::py11::File::*)(const std::string &,
-                                           const std::string &, const bool)) &
+                                           const std::string &, const bool,
+                                           const bool)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("string"),
+             pybind11::arg("local_value") = false,
              pybind11::arg("end_step") = false, R"md(
 			 writes a self-describing single value string variable
 
@@ -703,7 +710,10 @@ PYBIND11_MODULE(adios2, m)
 				 string 
 					 variable data single value
 
-				 endstep 
+                 local_value					 
+				     true: local value, false: global value
+
+				 end_step 
 					 end current step, begin next step and flush 
 					 (default = false).
 		)md")
@@ -734,7 +744,7 @@ PYBIND11_MODULE(adios2, m)
 					 concatenation string between variablename and attribute
 					 e.g. variablename + separator + name
 						  var/units. Not used if variablename is empty 
-				 endstep 
+				 end_step 
 					 end current step, begin next step and flush 
 					 (default = false).
 		)md")
@@ -765,7 +775,7 @@ PYBIND11_MODULE(adios2, m)
 					 concatenation string between variablename and attribute
 					 e.g. variablename + separator + name
 						  var/units. Not used if variablename is empty 
-				 endstep 
+				 end_step 
 					 end current step, begin next step and flush 
 					 (default = false).
 			)md")
@@ -796,17 +806,17 @@ PYBIND11_MODULE(adios2, m)
 					 concatenation string between variablename and attribute
 					 e.g. variablename + separator + name
 						  var/units. Not used if variablename is empty 
-				 endstep 
+				 end_step 
 					 end current step, begin next step and flush 
 					 (default = false).
 			)md")
 
         .def("read_string",
              (std::vector<std::string>(adios2::py11::File::*)(
-                 const std::string &)) &
+                 const std::string &, const size_t)) &
                  adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"),
+             pybind11::arg("name"), pybind11::arg("block_id") = 0,
              R"md(
              Reads string value for current step 
              (use for streaming mode step by step)
@@ -814,6 +824,9 @@ PYBIND11_MODULE(adios2, m)
              Parameters
                  name
                      string variable name
+				 
+                 block_id
+                     required for local variables
 
              Returns
                  list string
@@ -823,11 +836,12 @@ PYBIND11_MODULE(adios2, m)
 
         .def("read_string",
              (std::vector<std::string>(adios2::py11::File::*)(
-                 const std::string &, const size_t, const size_t)) &
+                 const std::string &, const size_t, const size_t,
+                 const size_t)) &
                  adios2::py11::File::ReadString,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("step_start"),
-             pybind11::arg("step_count"),
+             pybind11::arg("step_count"), pybind11::arg("block_id") = 0,
              R"md(
              Reads string value for a certain step 
              (random access mode)
@@ -835,8 +849,15 @@ PYBIND11_MODULE(adios2, m)
              Parameters
                  name
                      string variable name
-                 step
-                     input step to be read
+
+                 step_start 
+                     variable step start
+
+                 step_count 
+                     variable number of steps to read from step_start
+
+                 block_id
+                     required for local variables
 
              Returns
                  string list
@@ -844,16 +865,20 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("read",
-             (pybind11::array(adios2::py11::File::*)(const std::string &)) &
+             (pybind11::array(adios2::py11::File::*)(const std::string &,
+                                                     const size_t)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), R"md(
+             pybind11::arg("name"), pybind11::arg("block_id") = 0, R"md(
              Reads entire variable for current step 
              (streaming mode step by step)
 
              Parameters
                  name
                         variable name
+
+                 block_id
+                        required for local array variables
 
              Returns
                  array: numpy
@@ -862,13 +887,14 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("read",
-             (pybind11::array(adios2::py11::File::*)(const std::string &,
-                                                     const adios2::Dims &,
-                                                     const adios2::Dims &)) &
+             (pybind11::array(adios2::py11::File::*)(
+                 const std::string &, const adios2::Dims &,
+                 const adios2::Dims &, const size_t)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("start"),
-             pybind11::arg("count"), R"md(
+             pybind11::arg("count"), pybind11::arg("block_id") = 0,
+             R"md(
              Reads a selection piece in dimension for current step 
              (streaming mode step by step)
 
@@ -881,6 +907,9 @@ PYBIND11_MODULE(adios2, m)
 
                  count
                      variable local dimension selection from start
+                 
+                 block_id
+                     required for local array variables
 
              Returns
                  array: numpy
@@ -888,15 +917,16 @@ PYBIND11_MODULE(adios2, m)
                      empty if exception is thrown
         )md")
 
-        .def("read",
-             (pybind11::array(adios2::py11::File::*)(
-                 const std::string &, const adios2::Dims &,
-                 const adios2::Dims &, const size_t, const size_t)) &
-                 adios2::py11::File::Read,
-             pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("start"),
-             pybind11::arg("count"), pybind11::arg("step_start"),
-             pybind11::arg("step_count"), R"md(
+        .def(
+            "read",
+            (pybind11::array(adios2::py11::File::*)(
+                const std::string &, const adios2::Dims &, const adios2::Dims &,
+                const size_t, const size_t, const size_t)) &
+                adios2::py11::File::Read,
+            pybind11::return_value_policy::take_ownership,
+            pybind11::arg("name"), pybind11::arg("start"),
+            pybind11::arg("count"), pybind11::arg("step_start"),
+            pybind11::arg("step_count"), pybind11::arg("block_id") = 0, R"md(
              Random access read allowed to select steps, 
              only valid with File Engines
 
@@ -910,11 +940,14 @@ PYBIND11_MODULE(adios2, m)
                  count 
                      variable local dimensions from offset
 
-                 stepstart 
+                 step_start 
                      variable step start
 
-                 stepcount 
-                     variable number of steps to read 
+                 step_count 
+                     variable number of steps to read from step_start
+
+                 block_id
+                     required for local array variables
 
              Returns
                  array: numpy

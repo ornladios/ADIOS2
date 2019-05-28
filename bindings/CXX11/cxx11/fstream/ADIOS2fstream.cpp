@@ -175,35 +175,38 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
                                     const vParams &, const bool);              \
                                                                                \
     template void fstream::write<T>(const std::string &, const T &,            \
-                                    const bool);                               \
-                                                                               \
-    template std::vector<T> fstream::read<T>(const std::string &);             \
+                                    const bool, const bool);                   \
                                                                                \
     template std::vector<T> fstream::read<T>(const std::string &,              \
-                                             const size_t, const size_t);      \
+                                             const size_t);                    \
                                                                                \
-    template std::vector<T> fstream::read<T>(const std::string &,              \
-                                             const Dims &, const Dims &);      \
+    template std::vector<T> fstream::read<T>(                                  \
+        const std::string &, const size_t, const size_t, const size_t);        \
                                                                                \
-    template std::vector<T> fstream::read<T>(const std::string &,              \
-                                             const Dims &, const Dims &,       \
-                                             const size_t, const size_t);      \
+    template std::vector<T> fstream::read<T>(                                  \
+        const std::string &, const Dims &, const Dims &, const size_t);        \
                                                                                \
-    template void fstream::read<T>(const std::string &, T *);                  \
+    template std::vector<T> fstream::read<T>(                                  \
+        const std::string &, const Dims &, const Dims &, const size_t,         \
+        const size_t, const size_t);                                           \
+                                                                               \
+    template void fstream::read<T>(const std::string &, T *, const size_t);    \
                                                                                \
     template void fstream::read(const std::string &, T *, const size_t,        \
-                                const size_t);                                 \
-                                                                               \
-    template void fstream::read<T>(const std::string &name, T &);              \
+                                const size_t, const size_t);                   \
                                                                                \
     template void fstream::read<T>(const std::string &name, T &,               \
                                    const size_t);                              \
                                                                                \
-    template void fstream::read<T>(const std::string &, T *, const Dims &,     \
-                                   const Dims &);                              \
+    template void fstream::read<T>(const std::string &name, T &, const size_t, \
+                                   const size_t);                              \
                                                                                \
     template void fstream::read<T>(const std::string &, T *, const Dims &,     \
-                                   const Dims &, const size_t, const size_t);
+                                   const Dims &, const size_t);                \
+                                                                               \
+    template void fstream::read<T>(const std::string &, T *, const Dims &,     \
+                                   const Dims &, const size_t, const size_t,   \
+                                   const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

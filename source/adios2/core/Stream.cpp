@@ -160,30 +160,32 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
                                    const Dims &, const Dims &, const Dims &,   \
                                    const vParams &, const bool);               \
                                                                                \
-    template void Stream::Write<T>(const std::string &, const T &,             \
+    template void Stream::Write<T>(const std::string &, const T &, const bool, \
                                    const bool);                                \
                                                                                \
-    template void Stream::Read<T>(const std::string &, T *);                   \
+    template void Stream::Read<T>(const std::string &, T *, const size_t);     \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *,                    \
-                                  const Box<size_t> &);                        \
-                                                                               \
-    template void Stream::Read<T>(const std::string &, T *,                    \
-                                  const Box<Dims> &);                          \
+                                  const Box<size_t> &, const size_t);          \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
-                                  const Box<size_t> &);                        \
+                                  const size_t);                               \
                                                                                \
-    template std::vector<T> Stream::Read<T>(const std::string &);              \
+    template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
+                                  const Box<size_t> &, const size_t);          \
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &,               \
-                                            const Box<size_t> &);              \
+                                            const size_t);                     \
                                                                                \
     template std::vector<T> Stream::Read<T>(                                   \
-        const std::string &, const Box<Dims> &, const Box<size_t> &);          \
+        const std::string &, const Box<size_t> &, const size_t);               \
+                                                                               \
+    template std::vector<T> Stream::Read<T>(                                   \
+        const std::string &, const Box<Dims> &, const Box<size_t> &,           \
+        const size_t);                                                         \
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &,               \
-                                            const Box<Dims> &);
+                                            const Box<Dims> &, const size_t);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

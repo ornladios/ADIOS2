@@ -119,14 +119,23 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
 }
 
 template <class T>
-void Stream::Write(const std::string &name, const T &datum, const bool endStep)
+void Stream::Write(const std::string &name, const T &datum, const bool isLocal,
+                   const bool endStep)
 {
     const T datumLocal = datum;
-    Write(name, &datumLocal, {}, {}, {}, vParams(), endStep);
+    if (isLocal)
+    {
+        Write(name, &datumLocal, {adios2::LocalValueDim}, {}, {}, vParams(),
+              endStep);
+    }
+    else
+    {
+        Write(name, &datumLocal, {}, {}, {}, vParams(), endStep);
+    }
 }
 
 template <class T>
-void Stream::Read(const std::string &name, T *values)
+void Stream::Read(const std::string &name, T *values, const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -137,12 +146,13 @@ void Stream::Read(const std::string &name, T *values)
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     GetPCommon(*variable, values);
 }
 
 template <class T>
 void Stream::Read(const std::string &name, T *values,
-                  const Box<size_t> &stepSelection)
+                  const Box<size_t> &stepSelection, const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -153,13 +163,14 @@ void Stream::Read(const std::string &name, T *values,
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetStepSelection(stepSelection);
     GetPCommon(*variable, values);
 }
 
 template <class T>
 void Stream::Read(const std::string &name, T *values,
-                  const Box<Dims> &selection)
+                  const Box<Dims> &selection, const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -170,13 +181,15 @@ void Stream::Read(const std::string &name, T *values,
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     GetPCommon(*variable, values);
 }
 
 template <class T>
 void Stream::Read(const std::string &name, T *values,
-                  const Box<Dims> &selection, const Box<size_t> &stepSelection)
+                  const Box<Dims> &selection, const Box<size_t> &stepSelection,
+                  const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -187,37 +200,42 @@ void Stream::Read(const std::string &name, T *values,
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     variable->SetStepSelection(stepSelection);
     GetPCommon(*variable, values);
 }
 
 template <class T>
-std::vector<T> Stream::Read(const std::string &name)
+std::vector<T> Stream::Read(const std::string &name, const size_t blockID)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
     {
         return std::vector<T>();
     }
+    SetBlockSelectionCommon(*variable, blockID);
     return GetCommon(*variable);
 }
 
 template <class T>
 std::vector<T> Stream::Read(const std::string &name,
-                            const Box<size_t> &stepsSelection)
+                            const Box<size_t> &stepsSelection,
+                            const size_t blockID)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
     {
         return std::vector<T>();
     }
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetStepSelection(stepsSelection);
     return GetCommon(*variable);
 }
 
 template <class T>
-std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection)
+std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
+                            const size_t blockID)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
@@ -225,13 +243,15 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection)
         return std::vector<T>();
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     return GetCommon(*variable);
 }
 
 template <class T>
 std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
-                            const Box<size_t> &stepSelection)
+                            const Box<size_t> &stepSelection,
+                            const size_t blockID)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
@@ -239,6 +259,7 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
         return std::vector<T>();
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     variable->SetStepSelection(stepSelection);
     return GetCommon(*variable);
@@ -312,6 +333,21 @@ void Stream::CheckPCommon(const std::string &name, const T *values) const
             "ERROR: passed null values pointer for variable " + name +
             ", in call to read pointer\n");
     }
+}
+
+template <class T>
+void Stream::SetBlockSelectionCommon(Variable<T> &variable,
+                                     const size_t blockID)
+{
+    if (variable.m_ShapeID != ShapeID::LocalArray && blockID != 0)
+    {
+        throw std::invalid_argument(
+            "ERROR: in variable " + variable.m_Name +
+            " only set blockID > 0 for variables "
+            "with ShapeID::LocalArray, in call to read\n");
+    }
+
+    variable.SetBlockSelection(blockID);
 }
 
 } // end namespace core

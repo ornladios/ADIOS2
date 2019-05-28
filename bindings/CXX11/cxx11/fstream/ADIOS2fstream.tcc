@@ -60,103 +60,102 @@ void fstream::write(const std::string &name, const T *data,
 }
 
 template <class T>
-void fstream::write(const std::string &name, const T &value, const bool endStep)
+void fstream::write(const std::string &name, const T &value,
+                    const bool isLocalValue, const bool endStep)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Write(name, reinterpret_cast<const IOType &>(value), endStep);
+    m_Stream->Write(name, reinterpret_cast<const IOType &>(value), isLocalValue,
+                    endStep);
 }
 
 template <class T>
-void fstream::read(const std::string &name, T *data)
+void fstream::read(const std::string &name, T *data, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Read(name, reinterpret_cast<IOType *>(data));
+    m_Stream->Read(name, reinterpret_cast<IOType *>(data), blockID);
 }
 
 template <class T>
 void fstream::read(const std::string &name, T *data, const size_t stepStart,
-                   const size_t stepCount)
+                   const size_t stepCount, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
     m_Stream->Read(name, reinterpret_cast<IOType *>(data),
-                   Box<size_t>{stepStart, stepCount});
+                   Box<size_t>{stepStart, stepCount}, blockID);
 }
 
 template <class T>
-void fstream::read(const std::string &name, T &value)
+void fstream::read(const std::string &name, T &value, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    m_Stream->Read(name, &reinterpret_cast<IOType &>(value));
+    m_Stream->Read(name, &reinterpret_cast<IOType &>(value), blockID);
 }
 
 template <class T>
 void fstream::read(const std::string &name, T *data, const Dims &selectionStart,
-                   const Dims &selectionCount)
+                   const Dims &selectionCount, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
     m_Stream->Read(name, reinterpret_cast<IOType *>(data),
-                   Box<Dims>(selectionStart, selectionCount));
+                   Box<Dims>(selectionStart, selectionCount), blockID);
 }
 
 template <class T>
-void fstream::read(const std::string &name, T *data, const Dims &selectionStart,
-                   const Dims &selectionCount, const size_t stepSelectionStart,
-                   const size_t stepSelectionCount)
+void fstream::read(const std::string &name, T *data, const Dims &start,
+                   const Dims &count, const size_t stepStart,
+                   const size_t stepCount, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
     m_Stream->Read(name, reinterpret_cast<IOType *>(data),
-                   Box<Dims>(selectionStart, selectionCount),
-                   Box<size_t>(stepSelectionStart, stepSelectionCount));
+                   Box<Dims>(start, count), Box<size_t>(stepStart, stepCount),
+                   blockID);
 }
 
 template <class T>
-void fstream::read(const std::string &name, T &value,
-                   const size_t stepSelectionStart)
+void fstream::read(const std::string &name, T &value, const size_t stepStart,
+                   const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
     m_Stream->Read(name, &reinterpret_cast<IOType &>(value),
-                   Box<size_t>(stepSelectionStart, 1));
+                   Box<size_t>(stepStart, 1), blockID);
 }
 
 template <class T>
-std::vector<T> fstream::read(const std::string &name)
+std::vector<T> fstream::read(const std::string &name, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    auto vec = m_Stream->Read<IOType>(name);
+    auto vec = m_Stream->Read<IOType>(name, blockID);
     return reinterpret_cast<std::vector<T> &>(vec);
 }
 
 template <class T>
 std::vector<T> fstream::read(const std::string &name, const size_t stepsStart,
-                             const size_t stepsCount)
+                             const size_t stepsCount, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    auto vec =
-        m_Stream->Read<IOType>(name, Box<size_t>(stepsStart, stepsCount));
+    auto vec = m_Stream->Read<IOType>(name, Box<size_t>(stepsStart, stepsCount),
+                                      blockID);
     return reinterpret_cast<std::vector<T> &>(vec);
 }
 
 template <class T>
-std::vector<T> fstream::read(const std::string &name,
-                             const Dims &selectionStart,
-                             const Dims &selectionCount)
+std::vector<T> fstream::read(const std::string &name, const Dims &start,
+                             const Dims &count, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    auto vec =
-        m_Stream->Read<IOType>(name, Box<Dims>(selectionStart, selectionCount));
+    auto vec = m_Stream->Read<IOType>(name, Box<Dims>(start, count), blockID);
     return reinterpret_cast<std::vector<T> &>(vec);
 }
 
 template <class T>
-std::vector<T>
-fstream::read(const std::string &name, const Dims &selectionStart,
-              const Dims &selectionCount, const size_t stepSelectionStart,
-              const size_t stepSelectionCount)
+std::vector<T> fstream::read(const std::string &name, const Dims &start,
+                             const Dims &count, const size_t stepStart,
+                             const size_t stepCount, const size_t blockID)
 {
     using IOType = typename TypeInfo<T>::IOType;
-    auto vec = m_Stream->Read<IOType>(
-        name, Box<Dims>(selectionStart, selectionCount),
-        Box<size_t>(stepSelectionStart, stepSelectionCount));
+    auto vec =
+        m_Stream->Read<IOType>(name, Box<Dims>(start, count),
+                               Box<size_t>(stepStart, stepCount), blockID);
     return reinterpret_cast<std::vector<T> &>(vec);
 }
 
