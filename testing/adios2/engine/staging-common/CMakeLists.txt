@@ -91,7 +91,7 @@ configure_file(
 
 include (TestSupp.cmake )
 
-if (ADIOS2_HAVE_MPI) 
+if (ADIOS2_HAVE_MPI AND NOT ("${MPIEXEC_EXECUTABLE}" STREQUAL "MPIEXEC_EXECUTABLE-NOTFOUND"))
    # we want to know if mpiexec is a shell script or a binary executable
    file(READ ${MPIEXEC_EXECUTABLE} MPIFILEDATA LIMIT 1024 HEX)
    string(LENGTH ${MPIFILEDATA} DATALENGTH)
