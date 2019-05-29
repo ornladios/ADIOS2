@@ -68,7 +68,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
                           adios2::GlobalValue);
 
             // local value
-            const int32_t localValue = mpiRank + step;
+            const int32_t localValue = static_cast<int32_t>(mpiRank + step);
             oStream.write("ranksLocalValue", localValue, adios2::LocalValue);
             oStream.write("ranksLocalValueString", std::to_string(localValue),
                           adios2::LocalValue);
@@ -234,7 +234,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
                           adios2::GlobalValue);
 
             // local value
-            const int32_t localValue = mpiRank + step;
+            const int32_t localValue = static_cast<int32_t>(mpiRank + step);
             oStream.write("ranksLocalValue", localValue, adios2::LocalValue);
             oStream.write("ranksLocalValueString", std::to_string(localValue),
                           adios2::LocalValue);
@@ -452,7 +452,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
                           adios2::GlobalValue);
 
             // local value
-            const int32_t localValue = mpiRank + step;
+            const int32_t localValue = static_cast<int32_t>(mpiRank + step);
             oStream.write("ranksLocalValue", localValue, adios2::LocalValue);
             oStream.write("ranksLocalValueString", std::to_string(localValue),
                           adios2::LocalValue);
