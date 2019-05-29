@@ -172,10 +172,10 @@ else :
     if args.reader is None:
         args.reader = 'TestCommonClient'
         
-writer_exec_cmd = '@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_writers);
-reader_exec_cmd = '@MPIEXEC@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_readers);
+writer_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_writers);
+reader_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_readers);
 
-if ("@MPIEXEC@" == "") or ("@MPIEXEC@" == "MPIEXEC_EXECUTABLE-NOTFOUND"):
+if ("@MPIEXEC_EXECUTABLE@" == "") or ("@MPIEXEC_EXECUTABLE@" == "MPIEXEC_EXECUTABLE-NOTFOUND"):
     # NO MPI
     writer_exec_cmd = '';
     reader_exec_cmd = '';
