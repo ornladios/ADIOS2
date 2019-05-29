@@ -1075,9 +1075,6 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                            TS, List->ReferenceCount);
 
                 SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
-                printf("Rank %d Sending Queued Timestep %ld, reference count "
-                       "now %d\n",
-                       Stream->Rank, List->Timestep, List->ReferenceCount);
                 if (TS == Reader->StartingTimestep)
                 {
                     /* restore Msg format list */
