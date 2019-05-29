@@ -50,6 +50,22 @@ adios2_error adios2_set_parameter(adios2_io *io, const char *key,
                                   const char *value);
 
 /**
+ * Return IO parameter value string and length without '\0\ character
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param value output
+ * @param size output, value size without '\0'
+ * @param io input handler
+ * @param key input parameter key, if not found return size = 0 and value is
+ * untouched
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_get_parameter(char *value, size_t *size,
+                                  const adios2_io *io, const char *key);
+
+/**
  * @brief Add a transport to current io handler. Must be supported by current
  * engine type.
  * @param transport_index handler used for setting transport parameters or at

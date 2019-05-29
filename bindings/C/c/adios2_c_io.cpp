@@ -72,6 +72,36 @@ adios2_error adios2_set_parameter(adios2_io *io, const char *key,
     }
 }
 
+adios2_error adios2_get_parameter(char *value, size_t *size,
+                                  const adios2_io *io, const char *key)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for const adios2_io, in call to adios2_get_parameter");
+
+        const adios2::core::IO *ioCpp =
+            reinterpret_cast<const adios2::core::IO *>(io);
+
+        adios2::helper::CheckForNullptr(
+            size, "for size_t* size, in call to adios2_get_parameter");
+
+        auto itParameter = ioCpp->m_Parameters.find(key);
+        if (itParameter == ioCpp->m_Parameters.end())
+        {
+            *size = 0;
+            return adios2_error_none;
+        }
+
+        return String2CAPI(itParameter->second, value, size);
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_get_parameter"));
+    }
+}
+
 adios2_error adios2_add_transport(size_t *transport_index, adios2_io *io,
                                   const char *type)
 {
