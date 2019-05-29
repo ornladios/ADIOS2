@@ -36,6 +36,7 @@ using MPI_Op = int;
 #define MPI_ERR_TYPE 3    /* Invalid datatype argument */
 #define MPI_ERR_TAG 4     /* Invalid tag argument */
 #define MPI_ERR_COMM 5    /* Invalid communicator */
+#define MPI_ERR_ROOT 6    /* Invalid root process */
 #define MPI_ERR_INTERN 17 /* Invalid memory */
 #define MPI_MAX_ERROR_STRING 512
 #define MPI_MODE_RDONLY 1

@@ -107,11 +107,19 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     int ier = MPI_SUCCESS;
     int n;
     size_t nsent = 0, nrecv = 0;
-    if (!sendbuf && !recvbuf)
+    if (sendcnt > 0 && !sendbuf)
     {
-        return ier;
+        return MPI_ERR_BUFFER;
     }
-    if (comm == MPI_COMM_NULL || root)
+    if (recvcnt > 0 && !recvbuf)
+    {
+        return MPI_ERR_BUFFER;
+    }
+    if (root != 0)
+    {
+        return MPI_ERR_ROOT;
+    }
+    if (comm == MPI_COMM_NULL)
     {
         return MPI_ERR_COMM;
     }
@@ -155,7 +163,7 @@ int MPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     int ier = MPI_SUCCESS;
     if (*recvcnts != sendcnt)
     {
-        ier = MPI_ERR_BUFFER;
+        ier = MPI_ERR_COUNT;
         return ier;
     }
 
@@ -179,14 +187,21 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     int ier = MPI_SUCCESS;
     int n;
     size_t nsent = 0, nrecv = 0;
-    if (!sendbuf || !recvbuf)
+    if (sendcnt > 0 && !sendbuf)
     {
-        ier = MPI_ERR_BUFFER;
+        return MPI_ERR_BUFFER;
     }
-
-    if (comm == MPI_COMM_NULL || root)
+    if (recvcnt > 0 && !recvbuf)
     {
-        ier = MPI_ERR_COMM;
+        return MPI_ERR_BUFFER;
+    }
+    if (root != 0)
+    {
+        return MPI_ERR_ROOT;
+    }
+    if (comm == MPI_COMM_NULL)
+    {
+        return MPI_ERR_COMM;
     }
 
     ier = MPI_Type_size(sendtype, &n);
