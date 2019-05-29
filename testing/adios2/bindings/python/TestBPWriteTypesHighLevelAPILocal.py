@@ -10,7 +10,6 @@
 
 from adios2NPTypes import SmallTestData
 from mpi4py import MPI
-import numpy as np
 import adios2
 
 
