@@ -519,7 +519,7 @@ public:
      * Return current step when getstep is called in a loop, read mode only
      * @return current step
      */
-    size_t currentstep() const noexcept;
+    size_t current_step() const noexcept;
 
 protected:
     std::shared_ptr<core::Stream> m_Stream;

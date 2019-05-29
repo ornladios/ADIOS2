@@ -244,8 +244,9 @@ pybind11::array File::Read(const std::string &name, const size_t blockID)
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            const Dims zerosStart(variable.m_Shape.size(), 0);                 \
-            return Read(name, zerosStart, variable.m_Shape);                   \
+            const Dims shape = variable.Shape();                               \
+            const Dims zerosStart(shape.size(), 0);                            \
+            return Read(name, zerosStart, shape);                              \
         }                                                                      \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)

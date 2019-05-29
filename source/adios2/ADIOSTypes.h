@@ -182,8 +182,9 @@ constexpr uint64_t JoinedDim = MaxU64 - 1;
 constexpr uint64_t LocalValueDim = MaxU64 - 2;
 constexpr uint64_t IrregularDim = MaxU64 - 3;
 constexpr bool ConstantDims = true;
-constexpr bool endl = true;
 constexpr bool end_step = true;
+constexpr bool LocalValue = true;
+constexpr bool GlobalValue = false;
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;

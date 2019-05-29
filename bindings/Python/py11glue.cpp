@@ -116,6 +116,8 @@ PYBIND11_MODULE(adios2, m)
     m.attr("ConstantDims") = true;
     m.attr("VariableDims") = false;
     m.attr("LocalValueDim") = adios2::LocalValueDim;
+    m.attr("GlobalValue") = false;
+    m.attr("LocalValue") = true;
 
     // enum classes
     pybind11::enum_<adios2::Mode>(m, "Mode")

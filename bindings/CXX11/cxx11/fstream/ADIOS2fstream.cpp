@@ -120,7 +120,10 @@ bool getstep(adios2::fstream &stream, adios2::fstep &step)
     return step.m_Stream->GetStep();
 }
 
-size_t fstream::currentstep() const noexcept { return m_Stream->CurrentStep(); }
+size_t fstream::current_step() const noexcept
+{
+    return m_Stream->CurrentStep();
+}
 
 adios2::Mode fstream::ToMode(const openmode mode) const noexcept
 {

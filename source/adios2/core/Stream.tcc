@@ -339,15 +339,20 @@ template <class T>
 void Stream::SetBlockSelectionCommon(Variable<T> &variable,
                                      const size_t blockID)
 {
-    if (variable.m_ShapeID != ShapeID::LocalArray && blockID != 0)
+    if (variable.m_ShapeID == ShapeID::LocalArray)
     {
-        throw std::invalid_argument(
-            "ERROR: in variable " + variable.m_Name +
-            " only set blockID > 0 for variables "
-            "with ShapeID::LocalArray, in call to read\n");
+        variable.SetBlockSelection(blockID);
     }
-
-    variable.SetBlockSelection(blockID);
+    else
+    {
+        if (blockID != 0)
+        {
+            throw std::invalid_argument(
+                "ERROR: in variable " + variable.m_Name +
+                " only set blockID > 0 for variables "
+                "with ShapeID::LocalArray, in call to read\n");
+        }
+    }
 }
 
 } // end namespace core
