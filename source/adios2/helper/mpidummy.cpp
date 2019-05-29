@@ -34,17 +34,13 @@ namespace helper
 namespace mpi
 {
 
-static char mpierrmsg[MPI_MAX_ERROR_STRING];
-
 int MPI_Init(int * /*argc*/, char *** /*argv*/)
 {
-    mpierrmsg[0] = '\0';
     return MPI_SUCCESS;
 }
 
 int MPI_Finalize()
 {
-    mpierrmsg[0] = '\0';
     return MPI_SUCCESS;
 }
 
@@ -147,11 +143,6 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     {
         std::memcpy(recvbuf, sendbuf, nsent);
     }
-    else
-    {
-        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
-                      "could not gather data\n");
-    }
 
     return ier;
 }
@@ -227,11 +218,6 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     {
         std::memcpy(recvbuf, sendbuf, nsent);
     }
-    else
-    {
-        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
-                      "could not scatter data\n");
-    }
 
     return ier;
 }
@@ -306,8 +292,6 @@ int MPI_File_open(MPI_Comm /*comm*/, const char *filename, int amode,
     *fh = std::fopen(filename, mode.c_str());
     if (!*fh)
     {
-        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING, "File not found: %s",
-                      filename);
         return -1;
     }
     return MPI_SUCCESS;
@@ -335,11 +319,6 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
     bytes_read = std::fread(buf, 1, bytes_to_read, fh);
     if (bytes_read != bytes_to_read)
     {
-        std::snprintf(mpierrmsg, MPI_MAX_ERROR_STRING,
-                      "could not read %llu bytes. read only: %llu"
-                      "\n",
-                      (unsigned long long)bytes_to_read,
-                      (unsigned long long)bytes_read);
         return -2;
     }
     *status = bytes_read;
@@ -356,15 +335,6 @@ int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
 int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)
 {
     *count = static_cast<int>(*status);
-    return MPI_SUCCESS;
-}
-
-int MPI_Error_string(int /*errorcode*/, char *string, int *resultlen)
-{
-    // std::sprintf(string, "Dummy lib does not know error strings.
-    // Code=%d\n",errorcode);
-    std::strcpy(string, mpierrmsg);
-    *resultlen = static_cast<int>(std::strlen(string));
     return MPI_SUCCESS;
 }
 
