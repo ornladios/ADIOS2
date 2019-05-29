@@ -57,6 +57,27 @@ contains
                                       TRIM(ADJUSTL(value))//char(0), ierr)
     end subroutine
 
+    subroutine adios2_get_parameter(value, io, key, ierr)
+        character(len=:), allocatable, intent(out) :: value
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: key
+        integer, intent(out) :: ierr
+
+        !local
+        integer :: length
+
+        if (allocated(value)) deallocate (value)
+
+        call adios2_get_parameter_length_f2c(length, io%f2c, &
+                                             TRIM(ADJUSTL(key))//char(0), ierr)
+        if (ierr == 0) then
+            allocate (character(length) :: value)
+            call adios2_get_parameter_f2c(value, io%f2c, &
+                                          TRIM(ADJUSTL(key))//char(0), ierr)
+        end if
+
+    end subroutine
+
     subroutine adios2_add_transport(transport_index, io, type, ierr)
         integer, intent(out):: transport_index
         type(adios2_io), intent(in) :: io

@@ -35,6 +35,27 @@ void FC_GLOBAL(adios2_set_parameter_f2c,
     *ierr = static_cast<int>(adios2_set_parameter(*io, key, value));
 }
 
+void FC_GLOBAL(adios2_get_parameter_f2c,
+               ADIOS2_GET_PARAMETER_F2C)(char *value, const adios2_io **io,
+                                         const char *key, int *ierr)
+{
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(value, &sizeC, *io, key));
+}
+
+void FC_GLOBAL(adios2_get_parameter_length_f2c,
+               ADIOS2_GET_PARAMETER_LENGTH_F2C)(int *size, const adios2_io **io,
+                                                const char *key, int *ierr)
+{
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(nullptr, &sizeC, *io, key));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *size = static_cast<int>(sizeC);
+    }
+}
+
 void FC_GLOBAL(adios2_add_transport_f2c,
                ADIOS2_ADD_TRANSPORT_F2C)(int *transport_index, adios2_io **io,
                                          const char *transport_type, int *ierr)

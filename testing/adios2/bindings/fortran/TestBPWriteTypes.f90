@@ -13,7 +13,7 @@
      type(adios2_variable), dimension(14) :: variables
      type(adios2_engine) :: bpWriter, bpReader
      character(len=15) :: inString
-     character(len=:), allocatable :: varName
+     character(len=:), allocatable :: varName, param_value
      character(len=:), allocatable :: engineType
 
      ! read local value as global array
@@ -60,6 +60,12 @@
 
      call adios2_set_engine(ioWrite, 'bpfile', ierr)
 
+     call adios2_set_parameter(ioWrite, 'ProfileUnits', 'Microseconds', ierr)
+
+     call adios2_get_parameter(param_value, ioWrite, 'ProfileUnits', ierr)
+     if( param_value /= "Microseconds") stop 'Failed adios2_get_parameter ProfileUnits'
+
+     deallocate(param_value)
      ! Defines a variable to be written in bp format
      call adios2_define_variable(variables(1), ioWrite, "var_I8", &
                                  adios2_type_integer1, 1, &
