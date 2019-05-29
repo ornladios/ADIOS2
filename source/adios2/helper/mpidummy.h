@@ -126,6 +126,8 @@ int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status);
 
+int MPI_Type_size(MPI_Datatype datatype, int *size);
+
 int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info,
                   MPI_File *fh);
 int MPI_File_close(MPI_File *fh);

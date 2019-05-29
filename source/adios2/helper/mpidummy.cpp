@@ -105,57 +105,28 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                MPI_Comm comm)
 {
     int ier = MPI_SUCCESS;
-    size_t n = 0, nsent = 0, nrecv = 0;
+    int n;
+    size_t nsent = 0, nrecv = 0;
     if (!sendbuf && !recvbuf)
     {
         return ier;
     }
     if (comm == MPI_COMM_NULL || root)
     {
-        ier = MPI_ERR_COMM;
+        return MPI_ERR_COMM;
     }
 
-    switch (sendtype)
+    ier = MPI_Type_size(sendtype, &n);
+    if (ier != MPI_SUCCESS)
     {
-    case MPI_CHAR:
-        n = sizeof(char);
-        break;
-    case MPI_INT:
-        n = sizeof(int);
-        break;
-    case MPI_UNSIGNED:
-        n = sizeof(unsigned int);
-        break;
-    case MPI_UNSIGNED_LONG:
-        n = sizeof(unsigned long);
-        break;
-    case MPI_UNSIGNED_LONG_LONG:
-        n = sizeof(unsigned long long);
-        break;
-    default:
-        return MPI_ERR_TYPE;
+        return ier;
     }
     nsent = n * sendcnt;
 
-    switch (recvtype)
+    ier = MPI_Type_size(recvtype, &n);
+    if (ier != MPI_SUCCESS)
     {
-    case MPI_CHAR:
-        n = sizeof(char);
-        break;
-    case MPI_INT:
-        n = sizeof(int);
-        break;
-    case MPI_UNSIGNED:
-        n = sizeof(unsigned int);
-        break;
-    case MPI_UNSIGNED_LONG:
-        n = sizeof(unsigned long);
-        break;
-    case MPI_UNSIGNED_LONG_LONG:
-        n = sizeof(unsigned long long);
-        break;
-    default:
-        return MPI_ERR_TYPE;
+        return ier;
     }
     nrecv = n * recvcnt;
 
@@ -206,7 +177,8 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                 MPI_Comm comm)
 {
     int ier = MPI_SUCCESS;
-    size_t n = 0, nsent = 0, nrecv = 0;
+    int n;
+    size_t nsent = 0, nrecv = 0;
     if (!sendbuf || !recvbuf)
     {
         ier = MPI_ERR_BUFFER;
@@ -217,23 +189,17 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         ier = MPI_ERR_COMM;
     }
 
-    switch (sendtype)
+    ier = MPI_Type_size(sendtype, &n);
+    if (ier != MPI_SUCCESS)
     {
-    case MPI_INT:
-        n = sizeof(int);
-        break;
-    default:
-        return MPI_ERR_TYPE;
+        return ier;
     }
     nsent = n * sendcnt;
 
-    switch (recvtype)
+    ier = MPI_Type_size(recvtype, &n);
+    if (ier != MPI_SUCCESS)
     {
-    case MPI_INT:
-        n = sizeof(int);
-        break;
-    default:
-        return MPI_ERR_TYPE;
+        return ier;
     }
     nrecv = n * recvcnt;
 
@@ -465,6 +431,35 @@ int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
     return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
+}
+
+int MPI_Type_size(MPI_Datatype datatype, int *size)
+{
+    if (datatype == MPI_CHAR)
+    {
+        *size = sizeof(char);
+    }
+    else if (datatype == MPI_INT)
+    {
+        *size = sizeof(int);
+    }
+    else if (datatype == MPI_UNSIGNED)
+    {
+        *size = sizeof(unsigned int);
+    }
+    else if (datatype == MPI_UNSIGNED_LONG)
+    {
+        *size = sizeof(unsigned long);
+    }
+    else if (datatype == MPI_UNSIGNED_LONG_LONG)
+    {
+        *size = sizeof(unsigned long long);
+    }
+    else
+    {
+        return MPI_ERR_TYPE;
+    }
+    return MPI_SUCCESS;
 }
 
 } // end namespace mpi
