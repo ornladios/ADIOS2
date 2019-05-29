@@ -1045,8 +1045,6 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                 continue; /* do nothing if we've fallen out of established */
             if (List->Timestep == TS)
             {
-                printf("Rank %d Would send Timestep %ld\n", Stream->Rank,
-                       List->Timestep);
                 FFSFormatList SavedFormats = List->Msg->Formats;
                 if (List->Expired && !List->PreciousTimestep)
                 {
