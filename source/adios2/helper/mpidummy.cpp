@@ -140,19 +140,19 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     switch (recvtype)
     {
     case MPI_CHAR:
-        nrecv = sizeof(char);
+        n = sizeof(char);
         break;
     case MPI_INT:
-        nrecv = sizeof(int);
+        n = sizeof(int);
         break;
     case MPI_UNSIGNED:
-        nrecv = sizeof(unsigned int);
+        n = sizeof(unsigned int);
         break;
     case MPI_UNSIGNED_LONG:
-        nrecv = sizeof(unsigned long);
+        n = sizeof(unsigned long);
         break;
     case MPI_UNSIGNED_LONG_LONG:
-        nrecv = sizeof(unsigned long long);
+        n = sizeof(unsigned long long);
         break;
     default:
         return MPI_ERR_TYPE;
@@ -230,7 +230,7 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     switch (recvtype)
     {
     case MPI_INT:
-        nrecv = sizeof(int);
+        n = sizeof(int);
         break;
     default:
         return MPI_ERR_TYPE;
