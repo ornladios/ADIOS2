@@ -188,6 +188,7 @@ else()
   set(ADIOS2_HAVE_SysVShMem OFF)
 endif()
 
+#Profiling
 if(ADIOS2_USE_Profiling STREQUAL AUTO)
   if(BUILD_SHARED_LIBS)
     set(ADIOS2_HAVE_Profiling ON)
