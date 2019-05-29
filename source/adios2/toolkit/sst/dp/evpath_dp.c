@@ -281,8 +281,10 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
      * Shouldn't ever get here because we should never get a request for a
      * timestep that we don't have.
      */
-    fprintf(stderr, "Writer rank %d - Failed to read Timestep %ld, not found\n",
+    fprintf(stderr,
+            "Writer rank %d - Failed to read Timestep %ld, not found DYING\n",
             WSR_Stream->WS_Stream->Rank, ReadRequestMsg->Timestep);
+    exit(1);
     /*
      * in the interest of not failing a writer on a reader failure, don't
      * assert(0) here.  Probably this sort of error should close the link to
