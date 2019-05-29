@@ -119,8 +119,10 @@ public:
 
 private:
     std::shared_ptr<core::Stream> m_Stream;
-
     adios2::Mode ToMode(const std::string mode) const;
+
+    template <class T>
+    pybind11::array DoRead(core::Variable<T> &variable, const size_t blockID);
 };
 
 } // end namespace py11

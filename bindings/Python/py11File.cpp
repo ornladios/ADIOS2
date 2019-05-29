@@ -9,6 +9,7 @@
  */
 
 #include "py11File.h"
+#include "py11File.tcc"
 
 #include <algorithm>
 #include <iostream>
@@ -231,23 +232,7 @@ pybind11::array File::Read(const std::string &name, const size_t blockID)
     {                                                                          \
         core::Variable<T> &variable =                                          \
             *m_Stream->m_IO->InquireVariable<T>(name);                         \
-        Dims pyCount;                                                          \
-        if (variable.m_SingleValue)                                            \
-        {                                                                      \
-            pyCount = {1};                                                     \
-            pybind11::array pyArray(pybind11::dtype::of<T>(), pyCount);        \
-            m_Stream->Read<T>(                                                 \
-                name,                                                          \
-                reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),     \
-                blockID);                                                      \
-            return pyArray;                                                    \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            const Dims shape = variable.Shape();                               \
-            const Dims zerosStart(shape.size(), 0);                            \
-            return Read(name, zerosStart, shape);                              \
-        }                                                                      \
+        return DoRead(variable, blockID);                                      \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
