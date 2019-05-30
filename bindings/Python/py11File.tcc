@@ -50,6 +50,8 @@ pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
             return pyArray;
         }
     }
+
+    return pybind11::array();
 }
 
 } // end namespace py11
