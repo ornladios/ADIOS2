@@ -293,6 +293,8 @@ public:
      * Write a self-describing single-value variable
      * @param name variable name
      * @param value variable data value (can be r-value)
+     * @param isLocalValue true: local value (returned as GlobalArray), false:
+     * global value (returned as global value)
      * @param endStep similar to std::endStep, end current step and flush
      * (default). Use adios2::endStep for true.
      * @exception std::invalid_argument (user input error) or
@@ -300,28 +302,33 @@ public:
      */
     template <class T>
     void write(const std::string &name, const T &value,
-               const bool endStep = false);
+               const bool isLocalValue = false, const bool endStep = false);
 
     /**
-     * Reads into a pre-allocated pointer a selection piece in dimension. When
+     * Reads into a pre-allocated pointer. When
      * used with adios2::getstep reads current step
      * @param name variable name
-     * @param data pre-allocated pointer to hold read data, if variable is
-     * not found (name and type don't match) it becomes nullptr
+     * @param data pre-allocated pointer to hold read data
+     * @param blockID required for local variables, specify current block to be
+     * selected
+     * @exception throws exception if variable name, dimensions or step not
+     * found
      */
     template <class T>
-    void read(const std::string &name, T *data);
+    void read(const std::string &name, T *data, const size_t blockID = 0);
 
     /**
      * Reads a value. When used with adios2::getstep reads current step value
      * @param name variable name
      * @param value output value, if variable is not found (name and type don't
      * match) the returned value address becomes nullptr
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @exception throws exception if variable name, dimensions or step not
      * found
      */
     template <class T>
-    void read(const std::string &name, T &value);
+    void read(const std::string &name, T &value, const size_t blockID = 0);
 
     /**
      * Read accessing steps in random access mode. Not be used with
@@ -333,12 +340,14 @@ public:
      * appearance, not absolute step in stream)
      * @param stepsCount variable number of steps form step_start, don't have to
      * be contiguous, necessarily
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @exception throws exception if variable name, dimensions or step not
      * found
      */
     template <class T>
     void read(const std::string &name, T *data, const size_t stepsStart,
-              const size_t stepsCount = 1);
+              const size_t stepsCount = 1, const size_t blockID = 0);
 
     /**
      * Reads into a single value for a single step. Not be used with
@@ -348,11 +357,14 @@ public:
      * if variable is not found (name, type and step don't match) the returned
      * value address becomes nullptr
      * @param step selected single step
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @exception throws exception if variable name, dimensions or step not
      * found
      */
     template <class T>
-    void read(const std::string &name, T &value, const size_t step);
+    void read(const std::string &name, T &value, const size_t step,
+              const size_t blockID = 0);
 
     /**
      * Reads into a pre-allocated pointer a selection piece in dimension. When
@@ -362,12 +374,14 @@ public:
      * not found (name and type don't match) it becomes nullptr
      * @param start variable local offset selection
      * @param count variable local dimension selection from start
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @exception throws exception if variable name, dimensions or step not
      * found
      */
     template <class T>
     void read(const std::string &name, T *data, const adios2::Dims &start,
-              const adios2::Dims &count);
+              const adios2::Dims &count, const size_t blockID = 0);
 
     /**
      * Reads into a pre-allocated pointer a selection piece in dimensions and
@@ -382,24 +396,28 @@ public:
      * appearance, not absolute step in stream)
      * @param stepsCount variable number of steps form step_start, don't have to
      * be necessarily contiguous
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @exception throws exception if variable name, dimensions or step not
      * found
      */
     template <class T>
     void read(const std::string &name, T *data, const adios2::Dims &start,
               const adios2::Dims &count, const size_t stepsStart,
-              const size_t stepsCount);
+              const size_t stepsCount, const size_t blockID = 0);
 
     /**
      * Reads entire variable for current step (streaming mode: step by step)
      * @param name variable name
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @return data of variable name for current step. Single data will have
      * a size=1 vector
      * @exception throws exception if variable name, dimensions or step not
      * found
      */
     template <class T>
-    std::vector<T> read(const std::string &name);
+    std::vector<T> read(const std::string &name, const size_t blockID = 0);
 
     /**
      * Returns a vector with full variable dimensions for the current step
@@ -410,6 +428,8 @@ public:
      * appearance, not absolute step in stream)
      * @param stepsCount variable number of steps form step_start, don't have to
      * be contiguous, necessarily
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @return data of variable name for current step, empty if exception is
      * thrown
      * @exception throws exception if variable name, dimensions or step not
@@ -417,7 +437,7 @@ public:
      */
     template <class T>
     std::vector<T> read(const std::string &name, const size_t stepsStart,
-                        const size_t stepsCount = 1);
+                        const size_t stepsCount = 1, const size_t blockID = 0);
 
     /**
      * Reads a selection piece in dimension for current step (streaming mode:
@@ -425,6 +445,8 @@ public:
      * @param name variable name
      * @param start variable local offset selection
      * @param count variable local dimension selection from start
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @return data of variable name for current step, empty if exception is
      * thrown
      * @exception throws exception if variable name, dimensions or step not
@@ -432,7 +454,7 @@ public:
      */
     template <class T>
     std::vector<T> read(const std::string &name, const Dims &start,
-                        const Dims &count);
+                        const Dims &count, const size_t blockID = 0);
 
     /**
      * Reads a selection piece in dimension and a selection piece in steps
@@ -445,6 +467,8 @@ public:
      * appearance, not absolute step in stream)
      * @param stepsCount variable number of steps form step_start, don't have to
      * be contiguous, necessarily
+     * @param blockID required for local variables, specify current block to
+     * be selected
      * @return variable data, empty if exception is thrown
      * @exception throws exception if variable name, dimensions or step not
      * found
@@ -452,7 +476,7 @@ public:
     template <class T>
     std::vector<T> read(const std::string &name, const Dims &start,
                         const Dims &count, const size_t stepsStart,
-                        const size_t stepsCount);
+                        const size_t stepsCount, const size_t blockID = 0);
 
     /**
      * Reads an attribute returning a vector
@@ -495,7 +519,7 @@ public:
      * Return current step when getstep is called in a loop, read mode only
      * @return current step
      */
-    size_t currentstep() const noexcept;
+    size_t current_step() const noexcept;
 
     size_t steps() const;
 
@@ -535,39 +559,42 @@ ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
         const Dims &, const vParams &, const bool);                            \
                                                                                \
     extern template void fstream::write<T>(const std::string &, const T &,     \
-                                           const bool);                        \
+                                           const bool, const bool);            \
                                                                                \
-    extern template std::vector<T> fstream::read<T>(const std::string &);      \
-                                                                               \
-    extern template std::vector<T> fstream::read<T>(                           \
-        const std::string &, const size_t, const size_t);                      \
+    extern template std::vector<T> fstream::read<T>(const std::string &,       \
+                                                    const size_t);             \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
-        const std::string &, const Dims &, const Dims &);                      \
+        const std::string &, const size_t, const size_t, const size_t);        \
+                                                                               \
+    extern template std::vector<T> fstream::read<T>(                           \
+        const std::string &, const Dims &, const Dims &, const size_t);        \
                                                                                \
     extern template std::vector<T> fstream::read<T>(                           \
         const std::string &, const Dims &, const Dims &, const size_t,         \
-        const size_t);                                                         \
+        const size_t, const size_t);                                           \
                                                                                \
-    extern template void fstream::read<T>(const std::string &, T *);           \
+    extern template void fstream::read<T>(const std::string &, T *,            \
+                                          const size_t);                       \
                                                                                \
     extern template void fstream::read(const std::string &, T *, const size_t, \
-                                       const size_t);                          \
-                                                                               \
-    extern template void fstream::read<T>(const std::string &name, T &);       \
+                                       const size_t, const size_t);            \
                                                                                \
     extern template void fstream::read<T>(const std::string &name, T &,        \
                                           const size_t);                       \
                                                                                \
-    extern template void fstream::read<T>(const std::string &, T *,            \
-                                          const Dims &, const Dims &);         \
+    extern template void fstream::read<T>(const std::string &name, T &,        \
+                                          const size_t);                       \
                                                                                \
-    extern template void fstream::read<T>(const std::string &, T *,            \
-                                          const size_t, const size_t);         \
+    extern template void fstream::read<T>(                                     \
+        const std::string &, T *, const Dims &, const Dims &, const size_t);   \
                                                                                \
-    extern template void fstream::read<T>(const std::string &, T *,            \
-                                          const Dims &, const Dims &,          \
-                                          const size_t, const size_t);
+    extern template void fstream::read<T>(                                     \
+        const std::string &, T *, const size_t, const size_t, const size_t);   \
+                                                                               \
+    extern template void fstream::read<T>(                                     \
+        const std::string &, T *, const Dims &, const Dims &, const size_t,    \
+        const size_t, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

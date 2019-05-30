@@ -212,7 +212,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
         size_t t = 0;
         for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)
         {
-            if (iStep.currentstep() == 0)
+            if (iStep.current_step() == 0)
             {
                 iStep.read("gi8", gi8);
                 iStep.read("gi16", gi16);
@@ -505,7 +505,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
             oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::endl);
+                          adios2::end_step);
         }
 
         // Close the file
@@ -631,7 +631,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
             oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::endl);
+                          adios2::end_step);
         }
 
         EXPECT_THROW(oStream.write<int16_t>("i8", 1), std::invalid_argument);

@@ -5,7 +5,7 @@ pybind11_add_module(adios2py MODULE
   py11Attribute.cpp
   py11Engine.cpp
   py11Operator.cpp
-  py11File.cpp
+  py11File.cpp py11File.tcc
   py11glue.cpp
 )
 target_link_libraries(adios2py PRIVATE adios2)

@@ -9,6 +9,7 @@
  */
 
 #include "py11File.h"
+#include "py11File.tcc"
 
 #include <algorithm>
 #include <iostream>
@@ -173,15 +174,22 @@ void File::Write(const std::string &name, const pybind11::array &array,
 }
 
 void File::Write(const std::string &name, const pybind11::array &array,
-                 const bool endStep)
+                 const bool isLocalValue, const bool endStep)
 {
-    Write(name, array, {}, {}, {}, endStep);
+    if (isLocalValue)
+    {
+        Write(name, array, {adios2::LocalValueDim}, {}, {}, endStep);
+    }
+    else
+    {
+        Write(name, array, {}, {}, {}, endStep);
+    }
 }
 
 void File::Write(const std::string &name, const std::string &stringValue,
-                 const bool endStep)
+                 const bool isLocalValue, const bool endStep)
 {
-    m_Stream->Write(name, stringValue, endStep);
+    m_Stream->Write(name, stringValue, isLocalValue, endStep);
 }
 
 bool File::GetStep() const
@@ -189,25 +197,29 @@ bool File::GetStep() const
     return const_cast<File *>(this)->m_Stream->GetStep();
 }
 
-std::vector<std::string> File::ReadString(const std::string &name)
+std::vector<std::string> File::ReadString(const std::string &name,
+                                          const size_t blockID)
 {
-    return m_Stream->Read<std::string>(name);
+    return m_Stream->Read<std::string>(name, blockID);
 }
 
 std::vector<std::string> File::ReadString(const std::string &name,
                                           const size_t stepStart,
-                                          const size_t stepCount)
+                                          const size_t stepCount,
+                                          const size_t blockID)
 {
-    return m_Stream->Read<std::string>(name, Box<size_t>(stepStart, stepCount));
+    return m_Stream->Read<std::string>(name, Box<size_t>(stepStart, stepCount),
+                                       blockID);
 }
 
-pybind11::array File::Read(const std::string &name)
+pybind11::array File::Read(const std::string &name, const size_t blockID)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
     if (type == helper::GetType<std::string>())
     {
-        const std::string value = m_Stream->Read<std::string>(name).front();
+        const std::string value =
+            m_Stream->Read<std::string>(name, blockID).front();
         pybind11::array pyArray(pybind11::dtype::of<char>(),
                                 Dims{value.size()});
         char *pyPtr =
@@ -220,20 +232,7 @@ pybind11::array File::Read(const std::string &name)
     {                                                                          \
         core::Variable<T> &variable =                                          \
             *m_Stream->m_IO->InquireVariable<T>(name);                         \
-        Dims pyCount;                                                          \
-        if (variable.m_SingleValue)                                            \
-        {                                                                      \
-            pyCount = {1};                                                     \
-            pybind11::array pyArray(pybind11::dtype::of<T>(), pyCount);        \
-            m_Stream->Read<T>(name, reinterpret_cast<T *>(                     \
-                                        const_cast<void *>(pyArray.data())));  \
-            return pyArray;                                                    \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            const Dims zerosStart(variable.m_Shape.size(), 0);                 \
-            return Read(name, zerosStart, variable.m_Shape);                   \
-        }                                                                      \
+        return DoRead(variable, blockID);                                      \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -246,8 +245,8 @@ pybind11::array File::Read(const std::string &name)
     return pybind11::array();
 }
 
-pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
-                           const Dims &selectionCount)
+pybind11::array File::Read(const std::string &name, const Dims &start,
+                           const Dims &count, const size_t blockID)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
@@ -257,10 +256,10 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        pybind11::array pyArray(pybind11::dtype::of<T>(), selectionCount);     \
+        pybind11::array pyArray(pybind11::dtype::of<T>(), count);              \
         m_Stream->Read<T>(                                                     \
             name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            Box<Dims>(selectionStart, selectionCount));                        \
+            Box<Dims>(start, count), blockID);                                 \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -271,17 +270,16 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
         ", type can't be mapped to a numpy type, in call to read\n");
 }
 
-pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
-                           const Dims &selectionCount,
-                           const size_t stepSelectionStart,
-                           const size_t stepSelectionCount)
+pybind11::array File::Read(const std::string &name, const Dims &start,
+                           const Dims &count, const size_t stepStart,
+                           const size_t stepCount, const size_t blockID)
 {
     // shape of the returned numpy array
-    Dims shapePy(selectionCount.size() + 1);
-    shapePy[0] = stepSelectionCount;
+    Dims shapePy(count.size() + 1);
+    shapePy[0] = stepCount;
     for (auto i = 1; i < shapePy.size(); ++i)
     {
-        shapePy[i] = selectionCount[i - 1];
+        shapePy[i] = count[i - 1];
     }
 
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
@@ -295,8 +293,8 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
         pybind11::array pyArray(pybind11::dtype::of<T>(), shapePy);            \
         m_Stream->Read<T>(                                                     \
             name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            Box<Dims>(selectionStart, selectionCount),                         \
-            Box<size_t>(stepSelectionStart, stepSelectionCount));              \
+            Box<Dims>(start, count), Box<size_t>(stepStart, stepCount),        \
+            blockID);                                                          \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
