@@ -51,6 +51,22 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
         adios2_set_parameter(ioH, "Threads", "1");
 
+        size_t length;
+
+        char *profileUnits;
+        adios2_get_parameter(NULL, &length, ioH, "ProfileUnits");
+        profileUnits = (char *)calloc(length + 1, sizeof(char));
+        adios2_get_parameter(profileUnits, &length, ioH, "ProfileUnits");
+        EXPECT_EQ(std::string(profileUnits), "Microseconds");
+        free(profileUnits);
+
+        char *threads;
+        adios2_get_parameter(NULL, &length, ioH, "Threads");
+        threads = (char *)calloc(length + 1, sizeof(char));
+        adios2_get_parameter(threads, &length, ioH, "Threads");
+        EXPECT_EQ(std::string(threads), "1");
+        free(threads);
+
         // Set transport and parameters
         size_t transportID;
         adios2_add_transport(&transportID, ioH, "File");
