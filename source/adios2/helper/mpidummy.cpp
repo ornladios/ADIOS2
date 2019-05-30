@@ -31,18 +31,12 @@ namespace adios2
 {
 namespace helper
 {
-namespace mpi
+namespace mpidummy
 {
 
-int MPI_Init(int * /*argc*/, char *** /*argv*/)
-{
-    return MPI_SUCCESS;
-}
+int MPI_Init(int * /*argc*/, char *** /*argv*/) { return MPI_SUCCESS; }
 
-int MPI_Finalize()
-{
-    return MPI_SUCCESS;
-}
+int MPI_Finalize() { return MPI_SUCCESS; }
 
 int MPI_Initialized(int *flag)
 {
@@ -94,7 +88,9 @@ int MPI_Comm_free(MPI_Comm *comm)
     return MPI_SUCCESS;
 }
 
+#ifndef ADIOS2_HAVE_MPI
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm) { return comm; }
+#endif
 
 int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
@@ -120,14 +116,14 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         return MPI_ERR_COMM;
     }
 
-    ier = MPI_Type_size(sendtype, &n);
+    ier = mpidummy::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
     }
     nsent = n * sendcnt;
 
-    ier = MPI_Type_size(recvtype, &n);
+    ier = mpidummy::MPI_Type_size(recvtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
@@ -158,8 +154,8 @@ int MPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         return ier;
     }
 
-    ier = MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts, recvtype,
-                     root, comm);
+    ier = mpidummy::MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts,
+                               recvtype, root, comm);
     return ier;
 }
 
@@ -167,8 +163,8 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm)
 {
-    return MPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-                      recvtype, 0, comm);
+    return mpidummy::MPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
+                                recvcount, recvtype, 0, comm);
 }
 
 int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
@@ -195,14 +191,14 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         return MPI_ERR_COMM;
     }
 
-    ier = MPI_Type_size(sendtype, &n);
+    ier = mpidummy::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
     }
     nsent = n * sendcnt;
 
-    ier = MPI_Type_size(recvtype, &n);
+    ier = mpidummy::MPI_Type_size(recvtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
@@ -234,8 +230,8 @@ int MPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 
     if (ier == MPI_SUCCESS)
     {
-        ier = MPI_Scatter(sendbuf, *sendcnts, sendtype, recvbuf, recvcnt,
-                          recvtype, root, comm);
+        ier = mpidummy::MPI_Scatter(sendbuf, *sendcnts, sendtype, recvbuf,
+                                    recvcnt, recvtype, root, comm);
     }
 
     return ier;
@@ -270,6 +266,8 @@ int MPI_Isend(const void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
 }
 
 int MPI_Wait(MPI_Request * /*request*/, MPI_Status * /*status*/) { return 0; }
+
+#ifndef ADIOS2_HAVE_MPI
 
 int MPI_File_open(MPI_Comm /*comm*/, const char *filename, int amode,
                   MPI_Info /*info*/, MPI_File *fh)
@@ -338,6 +336,8 @@ int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)
     return MPI_SUCCESS;
 }
 
+#endif
+
 double MPI_Wtime()
 {
     std::chrono::duration<double> now =
@@ -355,25 +355,26 @@ int MPI_Get_processor_name(char *name, int *resultlen)
 int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
-    switch (datatype)
+    if (datatype == MPI_CHAR)
     {
-    case MPI_CHAR:
         if (op == MPI_SUM)
         {
             char *recvBuffer = reinterpret_cast<char *>(recvbuf);
             const char *sendBuffer = reinterpret_cast<const char *>(sendbuf);
             *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
         }
-        break;
-    case MPI_INT:
+    }
+    else if (datatype == MPI_INT)
+    {
         if (op == MPI_SUM)
         {
             int *recvBuffer = reinterpret_cast<int *>(recvbuf);
             const int *sendBuffer = reinterpret_cast<const int *>(sendbuf);
             *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
         }
-        break;
-    case MPI_UNSIGNED:
+    }
+    else if (datatype == MPI_UNSIGNED)
+    {
         if (op == MPI_SUM)
         {
             unsigned int *recvBuffer =
@@ -382,8 +383,9 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                 reinterpret_cast<const unsigned int *>(sendbuf);
             *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
         }
-        break;
-    case MPI_UNSIGNED_LONG:
+    }
+    else if (datatype == MPI_UNSIGNED_LONG)
+    {
         if (op == MPI_SUM)
         {
             unsigned long int *recvBuffer =
@@ -392,8 +394,9 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                 reinterpret_cast<const unsigned long int *>(sendbuf);
             *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
         }
-        break;
-    case MPI_UNSIGNED_LONG_LONG:
+    }
+    else if (datatype == MPI_UNSIGNED_LONG_LONG)
+    {
         if (op == MPI_SUM)
         {
             unsigned long long int *recvBuffer =
@@ -404,8 +407,9 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                 std::accumulate(sendBuffer, sendBuffer + count,
                                 static_cast<unsigned long long int>(0));
         }
-        break;
-    default:
+    }
+    else
+    {
         return MPI_ERR_TYPE;
     }
 
@@ -415,7 +419,7 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
 int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-    return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
+    return mpidummy::MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
 }
 
 int MPI_Type_size(MPI_Datatype datatype, int *size)
@@ -447,6 +451,6 @@ int MPI_Type_size(MPI_Datatype datatype, int *size)
     return MPI_SUCCESS;
 }
 
-} // end namespace mpi
+} // end namespace mpidummy
 } // end namespace helper
 } // end namespace adios2

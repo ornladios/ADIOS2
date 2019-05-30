@@ -13,11 +13,20 @@
 #include <cstdint>
 #include <cstdio>
 
+#include "adios2/ADIOSConfig.h"
+
+// If MPI is available, use the types and constants from that implementation,
+// rather than our fake ones, though we stll provide the fake implementations
+// (in a separate namespace)
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#else
+
 namespace adios2
 {
 namespace helper
 {
-namespace mpi
+namespace mpidummy
 {
 
 using MPI_Comm = int;
@@ -83,6 +92,18 @@ using MPI_Op = int;
 #define MPI_MAX 1
 
 #define MPI_MAX_PROCESSOR_NAME 32
+}
+}
+}
+
+#endif
+
+namespace adios2
+{
+namespace helper
+{
+namespace mpidummy
+{
 
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
@@ -97,7 +118,9 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm);
 int MPI_Comm_rank(MPI_Comm comm, int *rank);
 int MPI_Comm_size(MPI_Comm comm, int *size);
 int MPI_Comm_free(MPI_Comm *comm);
+#ifndef ADIOS2_HAVE_MPI
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
+#endif
 
 int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,

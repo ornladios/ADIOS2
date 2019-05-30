@@ -186,9 +186,9 @@ if(ADIOS2_HAVE_MPI)
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
   )
   target_link_libraries(adios2 PUBLIC MPI::MPI_C)
-else()
-  target_sources(adios2 PRIVATE helper/mpidummy.cpp)
 endif()
+
+target_sources(adios2 PRIVATE helper/mpidummy.cpp helper/mpiwrap.cpp)
 
 if(ADIOS2_HAVE_HDF5)
   if(HDF5_C_INCLUDE_DIRS)

@@ -8,12 +8,7 @@
 
 #include "adios2/ADIOSConfig.h"
 
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "adios2/helper/mpidummy.h"
-using namespace adios2::helper::mpi;
-#endif
+#include "adios2/helper/mpiwrap.h"
 
 #include <climits> //UXXX_MAX
 #include <cstdint> //SIZE_MAX

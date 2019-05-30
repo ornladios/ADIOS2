@@ -40,7 +40,7 @@ size_t BroadcastValue(const size_t &input, MPI_Comm mpiComm,
         output = input;
     }
 
-    MPI_Bcast(&output, 1, ADIOS2_MPI_SIZE_T, rankSource, mpiComm);
+    SMPI_Bcast(&output, 1, ADIOS2_MPI_SIZE_T, rankSource, mpiComm);
 
     return output;
 }
@@ -64,8 +64,8 @@ std::string BroadcastValue(const std::string &input, MPI_Comm mpiComm,
         output.resize(length);
     }
 
-    MPI_Bcast(const_cast<char *>(output.data()), static_cast<int>(length),
-              MPI_CHAR, rankSource, mpiComm);
+    SMPI_Bcast(const_cast<char *>(output.data()), static_cast<int>(length),
+               MPI_CHAR, rankSource, mpiComm);
 
     return output;
 }
@@ -77,8 +77,8 @@ unsigned int ReduceValues(const unsigned int source, MPI_Comm mpiComm,
 {
     unsigned int sourceLocal = source;
     unsigned int reduceValue = 0;
-    MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
-               rankDestination, mpiComm);
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
+                rankDestination, mpiComm);
     return reduceValue;
 }
 
@@ -88,8 +88,8 @@ unsigned long int ReduceValues(const unsigned long int source, MPI_Comm mpiComm,
 {
     unsigned long int sourceLocal = source;
     unsigned long int reduceValue = 0;
-    MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
-               rankDestination, mpiComm);
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
+                rankDestination, mpiComm);
     return reduceValue;
 }
 
@@ -100,8 +100,8 @@ unsigned long long int ReduceValues(const unsigned long long int source,
 {
     unsigned long long int sourceLocal = source;
     unsigned long long int reduceValue = 0;
-    MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG, operation,
-               rankDestination, mpiComm);
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG,
+                operation, rankDestination, mpiComm);
     return reduceValue;
 }
 
@@ -133,8 +133,8 @@ void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,
     char *buffer = vector.data();
     while (inputSize > 0)
     {
-        MPI_Bcast(buffer, static_cast<int>(blockSize), MPI_CHAR, rankSource,
-                  mpiComm);
+        SMPI_Bcast(buffer, static_cast<int>(blockSize), MPI_CHAR, rankSource,
+                   mpiComm);
         buffer += blockSize;
         inputSize -= blockSize;
         blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
