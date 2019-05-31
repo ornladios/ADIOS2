@@ -438,7 +438,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     }
 
     MPI_Comm mpiComm;
-    MPI_Comm_dup(mpiComm_orig, &mpiComm);
+    SMPI_Comm_dup(mpiComm_orig, &mpiComm);
     std::shared_ptr<Engine> engine;
     const bool isDefaultEngine = m_EngineType.empty() ? true : false;
     std::string engineTypeLC = m_EngineType;
