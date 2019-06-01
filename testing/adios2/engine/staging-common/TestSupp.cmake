@@ -60,11 +60,14 @@
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
 set (1x1_CMD "run_test.py -nw 1 -nr 1 --warg=ENGINE_PARAMS")
-set (1x1LOCKED_CMD "run_test.py -nw 1 -nr 1 --warg=--lock_definitions --rarg=--lock_definitions --warg=QueueLimit:2,QueueFullPolicy:block,ENGINE_PARAMS")
+set (1x1.100step_CMD "run_test.py -nw 1 -nr 1 --warg=ENGINE_PARAMS --warg=--nsteps --warg=100 --rarg=--nsteps --rarg=100")
+set (1x1.100step.LOCKED_CMD "run_test.py -nw 1 -nr 1 --warg=--lock_definitions --rarg=--lock_definitions  --warg=--nsteps --warg=100 --rarg=--nsteps --rarg=100 --warg=QueueLimit:2,QueueFullPolicy:block,ENGINE_PARAMS")
 set (2x1_CMD "run_test.py -nw 2 -nr 1 --warg=ENGINE_PARAMS")
 set (1x2_CMD "run_test.py -nw 1 -nr 2 --warg=ENGINE_PARAMS")
 set (3x5_CMD "run_test.py -nw 3 -nr 5 --warg=ENGINE_PARAMS")
 set (5x3_CMD "run_test.py -nw 5 -nr 3 --warg=ENGINE_PARAMS")
+set (3x5.100step.LOCKED_CMD "run_test.py -nw 3 -nr 5 --warg=--nsteps --warg=100 --rarg=--nsteps --rarg=100--warg=--lock_definitions --rarg=--lock_definitions --warg=QueueLimit:2,QueueFullPolicy:block,ENGINE_PARAMS")
+set (5x3.100step.LOCKED_CMD "run_test.py -nw 5 -nr 3 --warg=--nsteps --warg=100 --rarg=--nsteps --rarg=100--warg=--lock_definitions --rarg=--lock_definitions --warg=QueueLimit:2,QueueFullPolicy:block,ENGINE_PARAMS")
 set (1x1.Local_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
 set (2x1.Local_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
 set (1x2.Local_CMD "run_test.py -nw 1 -nr 2  -w TestCommonWriteLocal -r TestCommonReadLocal --warg=ENGINE_PARAMS")
@@ -73,6 +76,10 @@ set (5x3.Local_CMD "run_test.py -nw 5 -nr 3  -w TestCommonWriteLocal -r TestComm
 set (DelayedReader_3x5_CMD "run_test.py -rd 5 -nw 3 -nr 5 --warg=ENGINE_PARAMS")
 set (FtoC.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead --warg=ENGINE_PARAMS")
 set (FtoF.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead_f --warg=ENGINE_PARAMS")
+set (1x1.10000step_TIMEOUT "3000")
+set (1x1.10000step.LOCKED_TIMEOUT "3000")
+set (1x4.10000step_TIMEOUT "3000")
+set (1x4.10000step.LOCKED_TIMEOUT "3000")
 
 # NoReaderNoWait runs a writer with the RendezvousReaderCount = 0 and then never spawns a reader.  The test should run to termination and execute cleanly
 set (NoReaderNoWait_CMD "run_test.py -nw 1 -nr 0 --warg=RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS")

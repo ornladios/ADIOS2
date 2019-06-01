@@ -225,15 +225,22 @@ typedef void (*CP_DP_ProvideTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
  * CP_DP_PerReaderTimestepRegFuncc is the type of a dataplane function that
  * notifies DataPlane that a particular timestep (which has been previosly
  * registered via the CP_DP_ProvideTimestepFunc will be provided to a
- * specific reader.  The ReaderPatternFixed parameter is true if both the
- * reader and the writer have agreed that no reader will request any data
- * from a writer from whom they did not request data on the just prior
- * timestep.
+ * specific reader.
  */
 typedef void (*CP_DP_PerReaderTimestepRegFunc)(CP_Services Svcs,
                                                DP_WSR_Stream Stream,
                                                long Timestep,
-                                               int ReadPatternFixed);
+                                               int WriterDefinitionsLocked);
+
+/*!
+ * CP_DP_ReadPatternLockedFunc is the type of a dataplane function
+ * that notifies writer-side DataPlane that the reader has specified
+ * that his read pattern will not change.  This is only called if the
+ * writer has also specified that his write geometry will not change.
+ */
+typedef void (*CP_DP_ReadPatternLockedFunc)(CP_Services Svcs,
+                                            DP_WSR_Stream Stream,
+                                            long EffectiveTimestep);
 
 /*!
  * CP_DP_ReleaseTimestepFunc is the type of a dataplane function that
@@ -299,6 +306,7 @@ struct _CP_DP_Interface
     CP_DP_PerReaderTimestepRegFunc readerRegisterTimestep;
     CP_DP_ReleaseTimestepFunc releaseTimestep;
     CP_DP_PerReaderReleaseTimestepFunc readerReleaseTimestep;
+    CP_DP_ReadPatternLockedFunc readPatternLocked;
 
     CP_DP_DestroyReaderFunc destroyReader;
     CP_DP_DestroyWriterFunc destroyWriter;

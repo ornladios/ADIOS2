@@ -364,6 +364,10 @@ static FMField ReturnMetadataInfoList[] = {
      FMOffset(struct _ReturnMetadataInfo *, ReleaseCount)},
     {"ReleaseList", "ReleaseRec[ReleaseCount]", sizeof(struct _ReleaseRec),
      FMOffset(struct _ReturnMetadataInfo *, ReleaseList)},
+    {"LockDefnsCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, LockDefnsCount)},
+    {"LockDefnsList", "ReleaseRec[LockDefnsCount]", sizeof(struct _ReleaseRec),
+     FMOffset(struct _ReturnMetadataInfo *, LockDefnsList)},
     {"ReaderCount", "integer", sizeof(int),
      FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
     {"ReaderStatus", "integer[ReaderCount]", sizeof(enum StreamStatus),
@@ -396,8 +400,13 @@ static FMField ReleaseTimestepList[] = {
      FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
     {"Timestep", "integer", sizeof(int),
      FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
-    {"ReaderDefinitionsLocked", "integer", sizeof(int),
-     FMOffset(struct _ReleaseTimestepMsg *, ReaderDefinitionsLocked)},
+    {NULL, NULL, 0, 0}};
+
+static FMField LockReaderDefinitionsList[] = {
+    {"WSR_Stream", "integer", sizeof(void *),
+     FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
+    {"Timestep", "integer", sizeof(int),
+     FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMField PeerSetupList[] = {
@@ -851,6 +860,11 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
         sizeof(struct _ReleaseTimestepMsg));
     CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,
                        NULL);
+    CPInfo->LockReaderDefinitionsFormat = CMregister_simple_format(
+        CPInfo->cm, "LockReaderDefinitions", LockReaderDefinitionsList,
+        sizeof(struct _LockReaderDefinitionsMsg));
+    CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
+                       CP_LockReaderDefinitionsHandler, NULL);
     CPInfo->WriterCloseFormat =
         CMregister_simple_format(CPInfo->cm, "WriterClose", WriterCloseList,
                                  sizeof(struct _WriterCloseMsg));

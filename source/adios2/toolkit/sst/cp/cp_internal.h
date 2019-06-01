@@ -20,6 +20,7 @@ typedef struct _CP_GlobalInfo
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
     CMFormat ReleaseTimestepFormat;
+    CMFormat LockReaderDefinitionsFormat;
     CMFormat WriterCloseFormat;
     CMFormat ReaderCloseFormat;
     int CustomStructCount;
@@ -171,6 +172,8 @@ struct _SstStream
     FFSFormatList PreviousFormats;
     int ReleaseCount;
     struct _ReleaseRec *ReleaseList;
+    int LockDefnsCount;
+    struct _ReleaseRec *LockDefnsList;
     enum StreamStatus Status;
 
     /* READER-SIDE FIELDS */
@@ -364,6 +367,8 @@ typedef struct _ReturnMetadataInfo
     int ReleaseCount;
     ReleaseRecPtr ReleaseList;
     int ReaderCount;
+    ReleaseRecPtr LockDefnsList;
+    int LockDefnsCount;
     enum StreamStatus *ReaderStatus;
 } * ReturnMetadataInfo;
 
@@ -376,7 +381,16 @@ struct _ReleaseTimestepMsg
 {
     void *WSR_Stream;
     int Timestep;
-    int ReaderDefinitionsLocked;
+};
+
+/*
+ * The LockReaderDefinitions message informs the writers that this reader has
+ * fixed its read schedule. One is sent to each writer rank.
+ */
+struct _LockReaderDefinitionsMsg
+{
+    void *WSR_Stream;
+    int Timestep;
 };
 
 /*
@@ -451,6 +465,9 @@ extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn,
 extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       void *msg_v, void *client_data,
                                       attr_list attrs);
+extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
+                                            void *Msg_v, void *client_data,
+                                            attr_list attrs);
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_data, attr_list attrs);
 extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,

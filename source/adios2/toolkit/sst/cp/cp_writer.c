@@ -991,7 +991,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                                    Stream->WriterDefinitionsLocked;
             (Stream->DP_Interface->readerRegisterTimestep)(
                 &Svcs, CP_WSR_Stream->DP_WSR_Stream, Entry->Timestep,
-                ReadPatternFixed);
+                Stream->WriterDefinitionsLocked);
         }
 
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
@@ -1569,6 +1569,49 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
+static void ProcessLockDefnsList(SstStream Stream, ReturnMetadataInfo Metadata)
+{
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    CP_verbose(Stream, "DOING Lock Definitions List\n");
+    for (int i = 0; i < Metadata->LockDefnsCount; i++)
+    {
+        CPTimestepList List = Stream->QueuedTimesteps;
+        CP_verbose(Stream, "LockDefns List, TS %ld\n",
+                   Metadata->LockDefnsList[i].Timestep);
+        while (List)
+        {
+            if (List->Timestep == Metadata->LockDefnsList[i].Timestep)
+            {
+                /* find local reader that matches global reader and notify local
+                 * DP of definition lock */
+                int j;
+                for (j = 0; j < Stream->ReaderCount; j++)
+                {
+                    if (Stream->Readers[j]->RankZeroID ==
+                        Metadata->LockDefnsList[i].Reader)
+                    {
+                        break;
+                    }
+                }
+                assert(j < Stream->ReaderCount);
+                WS_ReaderInfo Reader = (WS_ReaderInfo)Stream->Readers[j];
+
+                Reader->ReaderDefinitionsLocked = 1;
+                if (Stream->DP_Interface->readPatternLocked)
+                {
+                    Stream->DP_Interface->readPatternLocked(
+                        &Svcs, Reader->DP_WSR_Stream, List->Timestep);
+                }
+                CP_verbose(Stream, "LockDefns List, FOUND TS %ld\n",
+                           Metadata->LockDefnsList[i].Timestep);
+            }
+            List = List->Next;
+        }
+    }
+    CP_verbose(Stream, "DONE LockDefns List\n");
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+}
+
 /*
  *
 Protocol notes:
@@ -1803,6 +1846,8 @@ extern void SstInternalProvideTimestep(
         TimestepMetaData.DiscardThisTimestep = DiscardThisTimestep;
         TimestepMetaData.ReleaseCount = Stream->ReleaseCount;
         TimestepMetaData.ReleaseList = Stream->ReleaseList;
+        TimestepMetaData.LockDefnsCount = Stream->LockDefnsCount;
+        TimestepMetaData.LockDefnsList = Stream->LockDefnsList;
         TimestepMetaData.ReaderStatus =
             malloc(sizeof(enum StreamStatus) * Stream->ReaderCount);
         TimestepMetaData.ReaderCount = Stream->ReaderCount;
@@ -1812,12 +1857,15 @@ extern void SstInternalProvideTimestep(
         }
         Stream->ReleaseCount = 0;
         Stream->ReleaseList = NULL;
+        Stream->LockDefnsCount = 0;
+        Stream->LockDefnsList = NULL;
         FillMetadataMsg(Stream, &TimestepMetaData.Msg, pointers);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat,
             &data_block2);
         free(TimestepMetaData.ReleaseList);
+        free(TimestepMetaData.LockDefnsList);
     }
     else
     {
@@ -1845,6 +1893,7 @@ extern void SstInternalProvideTimestep(
     if ((Stream->ConfigParams->CPCommPattern == SstCPCommMin) &&
         (Stream->Rank != 0))
     {
+        ProcessLockDefnsList(Stream, ReturnData);
         ProcessReleaseList(Stream, ReturnData);
     }
 
@@ -1920,10 +1969,9 @@ extern void SstInternalProvideTimestep(
     }
 }
 
-extern void SstWriterDefinitionLock(SstStream Stream,
-                                    int WriterDefinitionsLocked)
+extern void SstWriterDefinitionLock(SstStream Stream, long EffectiveTimestep)
 {
-    Stream->WriterDefinitionsLocked = WriterDefinitionsLocked;
+    Stream->WriterDefinitionsLocked = 1;
 }
 
 extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
@@ -1933,7 +1981,6 @@ extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
                                DataFreeFunc FreeAttributeData,
                                void *FreeAttributeClientData)
 {
-
     SstInternalProvideTimestep(Stream, LocalMetadata, Data, Timestep, NULL,
                                FreeTimestep, FreeClientData, AttributeData,
                                FreeAttributeData, FreeAttributeClientData);
@@ -2065,7 +2112,6 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     /* decrement the reference count for the released timestep */
     PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
     Reader->LastReleasedTimestep = Msg->Timestep;
-    Reader->ReaderDefinitionsLocked |= Msg->ReaderDefinitionsLocked;
     if ((ParentStream->Rank == 0) &&
         (ParentStream->ConfigParams->CPCommPattern == SstCPCommMin))
     {
@@ -2081,6 +2127,54 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     QueueMaintenance(ParentStream);
     Reader->OldestUnreleasedTimestep = Msg->Timestep + 1;
     pthread_cond_signal(&ParentStream->DataCondition);
+    PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
+    TAU_STOP_FUNC();
+}
+
+extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
+                                            void *Msg_v, void *client_data,
+                                            attr_list attrs)
+{
+    TAU_START_FUNC();
+    struct _ReleaseTimestepMsg *Msg = (struct _ReleaseTimestepMsg *)Msg_v;
+    WS_ReaderInfo Reader = (WS_ReaderInfo)Msg->WSR_Stream;
+    SstStream ParentStream = Reader->ParentStream;
+    CPTimestepList Entry = NULL;
+    int ReaderNum = -1;
+
+    for (int i = 0; i < ParentStream->ReaderCount; i++)
+    {
+        if (Reader == ParentStream->Readers[i])
+        {
+            ReaderNum = i;
+        }
+    }
+    CP_verbose(ParentStream,
+               "Received a lock reader definitions message "
+               "for timestep %d from reader cohort %d\n",
+               Msg->Timestep, ReaderNum);
+
+    /* decrement the reference count for the released timestep */
+    PTHREAD_MUTEX_LOCK(&ParentStream->DataLock);
+    if ((ParentStream->Rank == 0) &&
+        (ParentStream->ConfigParams->CPCommPattern == SstCPCommMin))
+    {
+        ParentStream->LockDefnsList =
+            realloc(ParentStream->LockDefnsList,
+                    sizeof(ParentStream->LockDefnsList[0]) *
+                        (ParentStream->LockDefnsCount + 1));
+        ParentStream->LockDefnsList[ParentStream->LockDefnsCount].Timestep =
+            Msg->Timestep;
+        ParentStream->LockDefnsList[ParentStream->LockDefnsCount].Reader =
+            Reader;
+        ParentStream->LockDefnsCount++;
+    }
+    Reader->ReaderDefinitionsLocked = 1;
+    if (ParentStream->DP_Interface->readPatternLocked)
+    {
+        ParentStream->DP_Interface->readPatternLocked(
+            &Svcs, Reader->DP_WSR_Stream, Msg->Timestep);
+    }
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
     TAU_STOP_FUNC();
 }

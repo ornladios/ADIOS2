@@ -24,6 +24,8 @@ adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
 int LockDefinitions = 0;
+// Number of steps
+std::size_t NSteps = 100;
 
 std::string fname = "ADIOS2Common";
 std::string engine = "SST";
@@ -73,8 +75,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
 
-    // Number of steps
-    const std::size_t NSteps = 10;
     int TimeGapDetected = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
@@ -337,6 +337,12 @@ int main(int argc, char **argv)
         else if (std::string(argv[1]) == "--engine")
         {
             engine = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
+        else if (std::string(argv[1]) == "--nsteps")
+        {
+            NSteps = std::stol(argv[2]);
             argv++;
             argc--;
         }

@@ -98,7 +98,9 @@ extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
                                DataFreeFunc FreeAttribute,
                                void *FreeAttributeClientData);
 extern void SstWriterClose(SstStream stream);
-extern void SstWriterDefinitionLock(SstStream stream, int WriterDefinitionLock);
+/*  SstWriterDefinitionLock is called once only, on transition from unlock to
+ * locked definitions */
+extern void SstWriterDefinitionLock(SstStream stream, long EffectiveTimestep);
 
 /*
  *  Reader-side operations
@@ -112,11 +114,14 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  size_t offset, size_t length, void *buffer,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
-extern void SstReleaseStep(SstStream stream, int LocalDefinitionsLocked);
+extern void SstReleaseStep(SstStream stream);
 extern SstStatusValue SstAdvanceStep(SstStream stream, SstStepMode mode,
                                      const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
 extern long SstCurrentStep(SstStream s);
+/*  SstReaderDefinitionLock is called once only, on transition from unlock to
+ * locked definitions */
+extern void SstReaderDefinitionLock(SstStream stream, long EffectiveTimestep);
 
 /*
  *  Calls that support FFS-based marshaling, source code in cp/ffs_marshal.c

@@ -28,6 +28,8 @@ std::string engine = "SST";
 int CompressSz = 0;
 int CompressZfp = 0;
 int LockDefinitions = 0;
+// Number of steps
+std::size_t NSteps = 10000;
 
 static std::string Trim(std::string &str)
 {
@@ -72,9 +74,6 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 {
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
-
-    // Number of steps
-    const std::size_t NSteps = 10;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
@@ -260,6 +259,12 @@ int main(int argc, char **argv)
         else if (std::string(argv[1]) == "--engine")
         {
             engine = std::string(argv[2]);
+            argv++;
+            argc--;
+        }
+        else if (std::string(argv[1]) == "--nsteps")
+        {
+            NSteps = std::stol(argv[2]);
             argv++;
             argc--;
         }

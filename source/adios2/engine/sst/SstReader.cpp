@@ -287,6 +287,11 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 void SstReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
+    if (m_IO.m_DefinitionsLocked && !m_DefinitionsNotified)
+    {
+        SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));
+        m_DefinitionsNotified = true;
+    }
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstStatusValue Result;
@@ -323,7 +328,7 @@ void SstReader::EndStep()
     {
         // unknown marshaling method, shouldn't happen
     }
-    SstReleaseStep(m_Input, m_IO.m_DefinitionsLocked);
+    SstReleaseStep(m_Input);
 }
 
 void SstReader::Flush(const int transportIndex) {}
