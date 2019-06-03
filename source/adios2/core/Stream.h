@@ -13,7 +13,6 @@
 
 #include <memory> //std::shared_ptr
 
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"

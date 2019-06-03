@@ -18,7 +18,6 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2

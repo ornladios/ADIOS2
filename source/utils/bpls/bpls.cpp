@@ -1181,11 +1181,7 @@ int doList(const char *path)
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
-#ifdef ADIOS2_HAVE_MPI
-    core::ADIOS adios(MPI_COMM_SELF, true, "C++");
-#else
     core::ADIOS adios(true, "C++");
-#endif
     core::IO &io = adios.DeclareIO("bpls");
     core::Engine *fp = nullptr;
     std::vector<std::string> engineList = getEnginesList(path);
@@ -2931,9 +2927,6 @@ char *mystrndup(const char *s, size_t n)
 
 int main(int argc, char *argv[])
 {
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Init(&argc, &argv);
-#endif
     int retval = 1;
     try
     {
@@ -2944,8 +2937,5 @@ int main(int argc, char *argv[])
         std::cout << "\nbpls caught an exception\n";
         std::cout << e.what() << std::endl;
     }
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Finalize();
-#endif
     return retval;
 }

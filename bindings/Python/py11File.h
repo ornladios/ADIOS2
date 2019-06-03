@@ -13,7 +13,6 @@
 
 #include <pybind11/numpy.h>
 
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/Stream.h"
 

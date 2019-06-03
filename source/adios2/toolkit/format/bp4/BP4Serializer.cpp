@@ -335,7 +335,7 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL, true);
 
     int rank;
-    MPI_Comm_rank(comm, &rank);
+    SMPI_Comm_rank(comm, &rank);
     if (rank == 0)
     {
         /* no more minifooter in the global metadata*/
@@ -821,7 +821,7 @@ void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
     auto &buffer = bufferSTL.m_Buffer;
     auto &position = bufferSTL.m_Position;
     int rank;
-    MPI_Comm_rank(comm, &rank);
+    SMPI_Comm_rank(comm, &rank);
 
     size_t countPosition = position;
     const size_t totalCount = helper::ReduceValues<size_t>(count, comm);
@@ -872,7 +872,7 @@ void BP4Serializer::AggregateMergeIndex(
     std::vector<char>().swap(gatheredSerialIndices);
 
     int rank;
-    MPI_Comm_rank(comm, &rank);
+    SMPI_Comm_rank(comm, &rank);
 
     if (rank == 0)
     {
@@ -922,7 +922,7 @@ std::vector<char> BP4Serializer::SerializeIndices(
     serializedIndices.reserve(serializedIndicesSize);
 
     int rank;
-    MPI_Comm_rank(comm, &rank);
+    SMPI_Comm_rank(comm, &rank);
 
     for (const auto &indexPair : indices)
     {
@@ -1045,7 +1045,7 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     // BODY OF FUNCTION starts here
     const size_t serializedSize = serialized.size();
     int rank;
-    MPI_Comm_rank(comm, &rank);
+    SMPI_Comm_rank(comm, &rank);
 
     if (rank != 0 || serializedSize < 8)
     {

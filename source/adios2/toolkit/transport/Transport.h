@@ -17,7 +17,7 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPICommOnly.h"
+#include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 

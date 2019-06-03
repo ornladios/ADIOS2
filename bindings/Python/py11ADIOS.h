@@ -17,7 +17,6 @@
 #include <memory> //std::shared_ptr
 #include <string>
 
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/ADIOS.h"
 
 namespace adios2

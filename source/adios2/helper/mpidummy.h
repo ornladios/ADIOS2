@@ -13,11 +13,20 @@
 #include <cstdint>
 #include <cstdio>
 
+#include "adios2/ADIOSConfig.h"
+
+// If MPI is available, use the types and constants from that implementation,
+// rather than our fake ones, though we stll provide the fake implementations
+// (in a separate namespace)
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#else
+
 namespace adios2
 {
 namespace helper
 {
-namespace mpi
+namespace mpidummy
 {
 
 using MPI_Comm = int;
@@ -36,6 +45,7 @@ using MPI_Op = int;
 #define MPI_ERR_TYPE 3    /* Invalid datatype argument */
 #define MPI_ERR_TAG 4     /* Invalid tag argument */
 #define MPI_ERR_COMM 5    /* Invalid communicator */
+#define MPI_ERR_ROOT 6    /* Invalid root process */
 #define MPI_ERR_INTERN 17 /* Invalid memory */
 #define MPI_MAX_ERROR_STRING 512
 #define MPI_MODE_RDONLY 1
@@ -82,6 +92,18 @@ using MPI_Op = int;
 #define MPI_MAX 1
 
 #define MPI_MAX_PROCESSOR_NAME 32
+}
+}
+}
+
+#endif
+
+namespace adios2
+{
+namespace helper
+{
+namespace mpidummy
+{
 
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
@@ -96,7 +118,9 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm);
 int MPI_Comm_rank(MPI_Comm comm, int *rank);
 int MPI_Comm_size(MPI_Comm comm, int *size);
 int MPI_Comm_free(MPI_Comm *comm);
+#ifndef ADIOS2_HAVE_MPI
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
+#endif
 
 int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
@@ -126,6 +150,8 @@ int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status);
 
+int MPI_Type_size(MPI_Datatype datatype, int *size);
+
 int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info,
                   MPI_File *fh);
 int MPI_File_close(MPI_File *fh);
@@ -135,7 +161,6 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
 int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
 
 int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count);
-int MPI_Error_string(int errorcode, char *string, int *resultlen);
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *comm_out);
 
 int MPI_Get_processor_name(char *name, int *resultlen);
