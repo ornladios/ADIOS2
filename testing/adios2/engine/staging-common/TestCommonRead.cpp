@@ -25,7 +25,7 @@ int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
 int LockDefinitions = 0;
 // Number of steps
-std::size_t NSteps = 100;
+std::size_t NSteps = 10;
 
 std::string fname = "ADIOS2Common";
 std::string engine = "SST";

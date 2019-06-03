@@ -187,6 +187,7 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream,
     pointers = (struct _CP_DP_PairInfo **)CP_consolidateDataToRankZero(
         Stream, &combined_init, Stream->CPInfo->PerRankReaderInfoFormat,
         ret_data_block);
+    free(cpInfo.ContactInfo);
     return (void **)pointers;
 }
 
@@ -1569,6 +1570,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             Mdata->DP_TimestepInfo = MetadataMsg->DP_TimestepInfo;
         }
         Stream->CurrentWorkingTimestep = MetadataMsg->Timestep;
+        //        Mdata->FreeBlock = free_block;
         Stream->CurrentMetadata = Mdata;
 
         CP_verbose(Stream, "SstAdvanceStep returning Success on timestep %d\n",
@@ -1585,6 +1587,7 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
 
     if (Stream->CurrentMetadata != NULL)
     {
+        free(Stream->CurrentMetadata->WriterMetadata);
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
     }

@@ -438,7 +438,9 @@ static int HandleRequestWithPreloaded(CP_Services Svcs,
     }
     pthread_mutex_unlock(&RS_Stream->DataLock);
     if (!Entry)
+    {
         return 0;
+    }
     Svcs->verbose(RS_Stream->CP_Stream,
                   "Satisfying remote memory read with preload from writer rank "
                   "%d for timestep %ld\n",

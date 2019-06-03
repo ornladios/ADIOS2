@@ -29,7 +29,7 @@ int CompressSz = 0;
 int CompressZfp = 0;
 int LockDefinitions = 0;
 // Number of steps
-std::size_t NSteps = 10000;
+std::size_t NSteps = 10;
 
 static std::string Trim(std::string &str)
 {

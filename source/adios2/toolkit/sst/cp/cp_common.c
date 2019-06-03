@@ -1031,7 +1031,9 @@ extern char *CP_GetContactString(SstStream Stream)
     {
         set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
     }
-    return attr_list_to_string(ContactList);
+    char *ret = attr_list_to_string(ContactList);
+    free_attr_list(ListenList);
+    return ret;
 }
 
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
