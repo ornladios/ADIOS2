@@ -659,6 +659,7 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     Info->VarList =
         realloc(Info->VarList, sizeof(Info->VarList[0]) * (Info->VarCount + 1));
+    memset(&Info->VarList[Info->VarCount], 0, sizeof(Info->VarList[0]));
     Info->VarList[Info->VarCount].VarName = strdup(ArrayName);
     Info->VarList[Info->VarCount].PerWriterMetaFieldDesc =
         calloc(sizeof(FMFieldList), Stream->WriterCohortSize);
@@ -849,6 +850,8 @@ static void ClearReadRequests(SstStream Stream)
     {
         FFSArrayRequest PrevReq = Req;
         Req = Req->Next;
+        free(PrevReq->Count);
+        free(PrevReq->Start);
         free(PrevReq);
     }
     Info->PendingVarRequests = NULL;
@@ -1584,6 +1587,9 @@ extern void FFSClearTimestepData(SstStream Stream)
         free(Info->VarList[i].PerWriterStart);
         free(Info->VarList[i].PerWriterCounts);
         free(Info->VarList[i].PerWriterIncomingData);
+        free(Info->VarList[i].PerWriterIncomingSize);
+        if (Info->VarList[i].Type)
+            free(Info->VarList[i].Type);
     }
     Info->VarCount = 0;
 }
@@ -1768,9 +1774,11 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 VarRec->DimCount = 0;
                 VarRec->Variable = Stream->VarSetupUpcall(
                     Stream->SetupUpcallReader, FieldName, Type, field_data);
+                free(Type);
             }
             VarRec->PerWriterMetaFieldDesc[WriterRank] = &FieldList[i];
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
+            free(FieldName);
             i++;
         }
         /* real variable count is in j, i tracks the entries in the metadata */

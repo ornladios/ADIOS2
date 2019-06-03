@@ -970,6 +970,11 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->Peers);
     }
 
+    if (Stream->ConfigParams->DataTransport)
+        free(Stream->ConfigParams->DataTransport);
+    if (Stream->ConfigParams->DataTransport)
+        free(Stream->ConfigParams->ControlTransport);
+
     if (Stream->Filename)
     {
         free(Stream->Filename);

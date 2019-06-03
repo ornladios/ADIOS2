@@ -222,6 +222,8 @@ static FMStructDescRec EvpathPreloadStructs[] = {
 
 static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
                                  void *client_Data, attr_list attrs);
+static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
+                                  long Timestep);
 
 static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
                                      void **ReaderContactInfoPtr,
@@ -281,6 +283,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
 static void EvpathDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
     Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
+    DiscardPriorPreloaded(Svcs, RS_Stream, -1);
     free(RS_Stream);
 }
 
@@ -447,6 +450,42 @@ static int HandleRequestWithPreloaded(CP_Services Svcs,
                   Rank, Timestep);
     memcpy(Buffer, Entry->Data + Offset, Length);
     return 1;
+}
+
+static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
+                                  long Timestep)
+{
+    RSTimestepList Entry, Last = NULL;
+    pthread_mutex_lock(&RS_Stream->DataLock);
+    Entry = RS_Stream->QueuedTimesteps;
+
+    while (Entry)
+    {
+        RSTimestepList Next = Entry->Next;
+        if ((Entry->Timestep < Timestep) || (Timestep == -1))
+        {
+            RSTimestepList ItemToFree = Entry;
+            CManager cm = Svcs->getCManager(RS_Stream->CP_Stream);
+            if (Last)
+            {
+                Last->Next = Entry->Next;
+            }
+            else
+            {
+                RS_Stream->QueuedTimesteps = Entry->Next;
+            }
+            /* free item */
+            CMreturn_buffer(cm, ItemToFree->Data);
+
+            free(ItemToFree);
+        }
+        else
+        {
+            Last = Entry;
+        }
+        Entry = Next;
+    }
+    pthread_mutex_unlock(&RS_Stream->DataLock);
 }
 
 static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
@@ -713,8 +752,16 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     EvpathPerTimestepInfo TimestepInfo = (EvpathPerTimestepInfo)DP_TimestepInfo;
     struct _EvpathReadRequestMsg ReadRequestMsg;
 
-    int HadPreload = HandleRequestWithPreloaded(Svcs, Stream, Rank, Timestep,
-                                                Offset, Length, Buffer);
+    int HadPreload;
+    static long LastRequestedTimestep = -1;
+
+    if ((LastRequestedTimestep != -1) && (LastRequestedTimestep != Timestep))
+    {
+        DiscardPriorPreloaded(Svcs, Stream, Timestep);
+    }
+    LastRequestedTimestep = Timestep;
+    HadPreload = HandleRequestWithPreloaded(Svcs, Stream, Rank, Timestep,
+                                            Offset, Length, Buffer);
     ret->CPStream = Stream->CP_Stream;
     ret->DPStream = Stream;
     ret->Failed = 0;
