@@ -14,7 +14,6 @@
 #include <mpi.h>
 #else
 #include "mpidummy.h"
-using namespace adios2::helper::mpidummy;
 #endif
 
 // SMPI_* work just as the original MPI_* functions, but will also

@@ -27,12 +27,26 @@
 #pragma warning(disable : 4477) // strcpy, sprintf
 #endif
 
+// Use some preprocessor hackery to achieve two objectives:
+// - If we don't build with a real MPI, these functions below will go in the
+//   global namespace (they're extern "C" in this case, anyway).
+// - If we do have a real MPI, we put these functions into the helper::mpidummy
+//   namespace so they can be used from the SMPI_* wrappers
+
+#ifdef ADIOS2_HAVE_MPI
 namespace adios2
 {
 namespace helper
 {
 namespace mpidummy
 {
+#define MPIDUMMY mpidummy
+
+#else
+
+#define MPIDUMMY
+
+#endif
 
 int MPI_Init(int * /*argc*/, char *** /*argv*/) { return MPI_SUCCESS; }
 
@@ -116,14 +130,14 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         return MPI_ERR_COMM;
     }
 
-    ier = mpidummy::MPI_Type_size(sendtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
     }
     nsent = n * sendcnt;
 
-    ier = mpidummy::MPI_Type_size(recvtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(recvtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
@@ -154,7 +168,7 @@ int MPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         return ier;
     }
 
-    ier = mpidummy::MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts,
+    ier = MPIDUMMY::MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts,
                                recvtype, root, comm);
     return ier;
 }
@@ -163,7 +177,7 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm)
 {
-    return mpidummy::MPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
+    return MPIDUMMY::MPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
                                 recvcount, recvtype, 0, comm);
 }
 
@@ -191,14 +205,14 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         return MPI_ERR_COMM;
     }
 
-    ier = mpidummy::MPI_Type_size(sendtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
     }
     nsent = n * sendcnt;
 
-    ier = mpidummy::MPI_Type_size(recvtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(recvtype, &n);
     if (ier != MPI_SUCCESS)
     {
         return ier;
@@ -230,7 +244,7 @@ int MPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 
     if (ier == MPI_SUCCESS)
     {
-        ier = mpidummy::MPI_Scatter(sendbuf, *sendcnts, sendtype, recvbuf,
+        ier = MPIDUMMY::MPI_Scatter(sendbuf, *sendcnts, sendtype, recvbuf,
                                     recvcnt, recvtype, root, comm);
     }
 
@@ -356,7 +370,7 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
     int ier, size_of_type;
-    ier = mpidummy::MPI_Type_size(datatype, &size_of_type);
+    ier = MPIDUMMY::MPI_Type_size(datatype, &size_of_type);
     if (ier != MPI_SUCCESS)
     {
         return ier;
@@ -369,7 +383,7 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
 int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-    return mpidummy::MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
+    return MPIDUMMY::MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
 }
 
 int MPI_Type_size(MPI_Datatype datatype, int *size)
@@ -401,6 +415,8 @@ int MPI_Type_size(MPI_Datatype datatype, int *size)
     return MPI_SUCCESS;
 }
 
+#ifdef ADIOS2_HAVE_MPI
 } // end namespace mpidummy
 } // end namespace helper
 } // end namespace adios2
+#endif

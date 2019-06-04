@@ -16,18 +16,10 @@
 #include "adios2/ADIOSConfig.h"
 
 // If MPI is available, use the types and constants from that implementation,
-// rather than our fake ones, though we stll provide the fake implementations
-// (in a separate namespace)
+// rather than our fake ones
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #else
-
-namespace adios2
-{
-namespace helper
-{
-namespace mpidummy
-{
 
 using MPI_Comm = int;
 using MPI_Status = std::uint64_t;
@@ -92,18 +84,25 @@ using MPI_Op = int;
 #define MPI_MAX 1
 
 #define MPI_MAX_PROCESSOR_NAME 32
-}
-}
-}
 
 #endif
 
+// Use some preprocessor hackery to achieve two objectives:
+// - If we don't build with a real MPI, these functions below will go in the
+//   global namespace (as extern "C").
+// - If we do have a real MPI, we put these functions into the helper::mpidummy
+//   namespace so they can be used from the SMPI_* wrappers
+
+#ifdef ADIOS2_HAVE_MPI
 namespace adios2
 {
 namespace helper
 {
 namespace mpidummy
 {
+#else
+extern "C" {
+#endif
 
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
@@ -173,8 +172,12 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
 int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 
+#ifdef ADIOS2_HAVE_MPI
 } // end namespace mpi
 } // end namespace helper
 } // end namespace adios
+#else
+} // end extern "C"
+#endif
 
 #endif /* ADIOS2_MPIDUMMY_H_ */
