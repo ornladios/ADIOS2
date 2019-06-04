@@ -1556,7 +1556,8 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
                                List->Timestep);
                     Stream->Readers[j]->LastReleasedTimestep = List->Timestep;
                 }
-                CP_verbose(Stream, "Release List, and set ref count of timestep %ld\n",
+                CP_verbose(Stream,
+                           "Release List, and set ref count of timestep %ld\n",
                            Metadata->ReleaseList[i].Timestep);
                 List->ReferenceCount = 0;
             }
@@ -2018,7 +2019,8 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
 
-    if ((CP_WSR_Stream->ParentStream == NULL) || (CP_WSR_Stream->ParentStream->Status != Established))
+    if ((CP_WSR_Stream->ParentStream == NULL) ||
+        (CP_WSR_Stream->ParentStream->Status != Established))
         return;
 
     CP_verbose(CP_WSR_Stream->ParentStream,
