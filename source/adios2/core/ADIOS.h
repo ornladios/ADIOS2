@@ -184,8 +184,6 @@ public:
     void RemoveAllIOs() noexcept;
 
 private:
-    bool m_NeedMPICommFree;
-
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
 

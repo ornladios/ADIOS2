@@ -140,10 +140,6 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     {
         RETURN_CHECK(MPI_ERR_ROOT);
     }
-    if (comm == MPI_COMM_NULL)
-    {
-        RETURN_CHECK(MPI_ERR_COMM);
-    }
 
     ier = MPIDUMMY::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
@@ -222,10 +218,6 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     if (root != 0)
     {
         RETURN_CHECK(MPI_ERR_ROOT);
-    }
-    if (comm == MPI_COMM_NULL)
-    {
-        RETURN_CHECK(MPI_ERR_COMM);
     }
 
     ier = MPIDUMMY::MPI_Type_size(sendtype, &n);

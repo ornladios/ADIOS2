@@ -31,7 +31,7 @@ Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
 
 Stream::Stream(const std::string &name, const Mode mode,
                const std::string engineType, const std::string hostLanguage)
-: Stream(name, mode, MPI_COMM_SELF, engineType, hostLanguage)
+: Stream(name, mode, MPI_COMM_NULL, engineType, hostLanguage)
 {
 }
 
@@ -51,7 +51,7 @@ Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
 Stream::Stream(const std::string &name, const Mode mode,
                const std::string configFile, const std::string ioInConfigFile,
                const std::string hostLanguage)
-: Stream(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile, hostLanguage)
+: Stream(name, mode, MPI_COMM_NULL, configFile, ioInConfigFile, hostLanguage)
 {
 }
 
