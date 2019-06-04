@@ -1528,7 +1528,6 @@ static void ProcessReaderStatusList(SstStream Stream,
 static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
 {
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    CP_verbose(Stream, "DOING Release List\n");
     for (int i = 0; i < Metadata->ReleaseCount; i++)
     {
         CPTimestepList List = Stream->QueuedTimesteps;
@@ -1557,7 +1556,7 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
                                List->Timestep);
                     Stream->Readers[j]->LastReleasedTimestep = List->Timestep;
                 }
-                CP_verbose(Stream, "Release List, FOUND TS %ld\n",
+                CP_verbose(Stream, "Release List, and set ref count of timestep %ld\n",
                            Metadata->ReleaseList[i].Timestep);
                 List->ReferenceCount = 0;
             }
@@ -1565,14 +1564,12 @@ static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
         }
     }
     QueueMaintenance(Stream);
-    CP_verbose(Stream, "DONE Release List\n");
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
 static void ProcessLockDefnsList(SstStream Stream, ReturnMetadataInfo Metadata)
 {
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
-    CP_verbose(Stream, "DOING Lock Definitions List\n");
     for (int i = 0; i < Metadata->LockDefnsCount; i++)
     {
         CPTimestepList List = Stream->QueuedTimesteps;
@@ -1608,7 +1605,6 @@ static void ProcessLockDefnsList(SstStream Stream, ReturnMetadataInfo Metadata)
             List = List->Next;
         }
     }
-    CP_verbose(Stream, "DONE LockDefns List\n");
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
@@ -2022,7 +2018,7 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
 
-    if (CP_WSR_Stream->ParentStream->Status != Established)
+    if ((CP_WSR_Stream->ParentStream == NULL) || (CP_WSR_Stream->ParentStream->Status != Established))
         return;
 
     CP_verbose(CP_WSR_Stream->ParentStream,

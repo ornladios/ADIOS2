@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
@@ -1005,6 +1006,7 @@ extern void SstStreamDestroy(SstStream Stream)
         // wait .1 sec for last messages
         CMusleep(CPInfo->cm, 10000);
         CManager_close(CPInfo->cm);
+        usleep(100000);
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
         if (CPInfo->fm_c)
