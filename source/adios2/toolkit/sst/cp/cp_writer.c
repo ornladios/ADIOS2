@@ -1865,7 +1865,10 @@ extern void SstInternalProvideTimestep(
             Stream, &TimestepMetaData, Stream->CPInfo->ReturnMetadataInfoFormat,
             &data_block2);
         free(TimestepMetaData.ReleaseList);
+        free(TimestepMetaData.ReaderStatus);
         free(TimestepMetaData.LockDefnsList);
+        free(TimestepMetaData.Msg.Metadata);
+        free(TimestepMetaData.Msg.AttributeData);
     }
     else
     {

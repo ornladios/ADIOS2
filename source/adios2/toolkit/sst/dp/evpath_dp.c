@@ -875,7 +875,7 @@ static void EvpathReaderRegisterTimestep(CP_Services Svcs,
         {
             if (tmp->Timestep == Timestep)
             {
-                ReaderRequestTrackPtr ReqTrk = malloc(sizeof(*tmp) * 2);
+                ReaderRequestTrackPtr ReqTrk = calloc(1, sizeof(*ReqTrk));
                 ReqTrk->Reader = WSR_Stream;
                 ReqTrk->RequestList = calloc(1, WSR_Stream->ReaderCohortSize);
                 ReqTrk->Next = tmp->ReaderRequests;
@@ -971,8 +971,8 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 {
     Evpath_WS_Stream Stream = (Evpath_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
-    struct _EvpathPerTimestepInfo *Info =
-        malloc(sizeof(struct _EvpathPerTimestepInfo));
+    struct _EvpathPerTimestepInfo *Info = NULL;
+    //        malloc(sizeof(struct _EvpathPerTimestepInfo));
 
     //  This section exercised the CP's ability to distribute DP per timestep
     //  info. Commenting out as needed for EVPath for now
@@ -1016,6 +1016,19 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
             free(List->DP_TimestepInfo->CheckString);
         if (List->DP_TimestepInfo)
             free(List->DP_TimestepInfo);
+        if (List->ReaderRequests)
+        {
+            ReaderRequestTrackPtr tmp = List->ReaderRequests;
+            while (tmp)
+            {
+                ReaderRequestTrackPtr Next = tmp->Next;
+                if (tmp->RequestList)
+                    free(tmp->RequestList);
+                free(tmp);
+                tmp = Next;
+            }
+        }
+
         free(List);
     }
     else
@@ -1031,6 +1044,19 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                     free(List->DP_TimestepInfo->CheckString);
                 if (List->DP_TimestepInfo)
                     free(List->DP_TimestepInfo);
+                if (List->ReaderRequests)
+                {
+                    ReaderRequestTrackPtr tmp = List->ReaderRequests;
+                    while (tmp)
+                    {
+                        ReaderRequestTrackPtr Next = tmp->Next;
+                        if (tmp->RequestList)
+                            free(tmp->RequestList);
+                        free(tmp);
+                        tmp = Next;
+                    }
+                }
+
                 free(List);
                 return;
             }

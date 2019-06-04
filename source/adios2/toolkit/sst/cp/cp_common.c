@@ -969,7 +969,10 @@ extern void SstStreamDestroy(SstStream Stream)
             free(Stream->ConnectionsToWriter);
         free(Stream->Peers);
     }
-
+    else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
+    {
+        FFSFreeMarshalData(Stream);
+    }
     if (Stream->ConfigParams->DataTransport)
         free(Stream->ConfigParams->DataTransport);
     if (Stream->ConfigParams->DataTransport)
