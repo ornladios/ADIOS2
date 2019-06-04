@@ -222,6 +222,27 @@ typedef void (*CP_DP_ProvideTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
                                           void **TimestepInfoPtr);
 
 /*!
+ * CP_DP_PerReaderTimestepRegFuncc is the type of a dataplane function that
+ * notifies DataPlane that a particular timestep (which has been previosly
+ * registered via the CP_DP_ProvideTimestepFunc will be provided to a
+ * specific reader.
+ */
+typedef void (*CP_DP_PerReaderTimestepRegFunc)(CP_Services Svcs,
+                                               DP_WSR_Stream Stream,
+                                               long Timestep,
+                                               int WriterDefinitionsLocked);
+
+/*!
+ * CP_DP_ReadPatternLockedFunc is the type of a dataplane function
+ * that notifies writer-side DataPlane that the reader has specified
+ * that his read pattern will not change.  This is only called if the
+ * writer has also specified that his write geometry will not change.
+ */
+typedef void (*CP_DP_ReadPatternLockedFunc)(CP_Services Svcs,
+                                            DP_WSR_Stream Stream,
+                                            long EffectiveTimestep);
+
+/*!
  * CP_DP_ReleaseTimestepFunc is the type of a dataplane function that
  * informs the dataplane that the data associated with timestep `timestep`
  * will no longer be the subject of remote read requests, so its resources
@@ -229,6 +250,19 @@ typedef void (*CP_DP_ProvideTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
  */
 typedef void (*CP_DP_ReleaseTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
                                           long Timestep);
+
+/*!
+ * CP_DP_PerReaderReleaseTimestepFunc is the type of a dataplane function
+ * that informs the dataplane that a particular reader is finished with a
+ * particular timestep and the dataplane will no will no longer be receive
+ * read requests from that particular reader.  DP can count on: 1) receiving
+ * one of these calls to match eash PerReaderTimestepRegFunc call, and 2)
+ * receiving these calls prior to the call to the overall
+ * ReleaseTimestepFunc.
+ */
+typedef void (*CP_DP_PerReaderReleaseTimestepFunc)(CP_Services Svcs,
+                                                   DP_WSR_Stream Stream,
+                                                   long Timestep);
 
 /*!
  * CP_DP_GetPriorityFunc is the type of a dataplane initialization
@@ -269,7 +303,10 @@ struct _CP_DP_Interface
     CP_DP_NotifyConnFailureFunc notifyConnFailure;
 
     CP_DP_ProvideTimestepFunc provideTimestep;
+    CP_DP_PerReaderTimestepRegFunc readerRegisterTimestep;
     CP_DP_ReleaseTimestepFunc releaseTimestep;
+    CP_DP_PerReaderReleaseTimestepFunc readerReleaseTimestep;
+    CP_DP_ReadPatternLockedFunc readPatternLocked;
 
     CP_DP_DestroyReaderFunc destroyReader;
     CP_DP_DestroyWriterFunc destroyWriter;

@@ -364,6 +364,10 @@ static FMField ReturnMetadataInfoList[] = {
      FMOffset(struct _ReturnMetadataInfo *, ReleaseCount)},
     {"ReleaseList", "ReleaseRec[ReleaseCount]", sizeof(struct _ReleaseRec),
      FMOffset(struct _ReturnMetadataInfo *, ReleaseList)},
+    {"LockDefnsCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, LockDefnsCount)},
+    {"LockDefnsList", "ReleaseRec[LockDefnsCount]", sizeof(struct _ReleaseRec),
+     FMOffset(struct _ReturnMetadataInfo *, LockDefnsList)},
     {"ReaderCount", "integer", sizeof(int),
      FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
     {"ReaderStatus", "integer[ReaderCount]", sizeof(enum StreamStatus),
@@ -396,6 +400,13 @@ static FMField ReleaseTimestepList[] = {
      FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
     {"Timestep", "integer", sizeof(int),
      FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
+    {NULL, NULL, 0, 0}};
+
+static FMField LockReaderDefinitionsList[] = {
+    {"WSR_Stream", "integer", sizeof(void *),
+     FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
+    {"Timestep", "integer", sizeof(int),
+     FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMField PeerSetupList[] = {
@@ -849,6 +860,11 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
         sizeof(struct _ReleaseTimestepMsg));
     CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,
                        NULL);
+    CPInfo->LockReaderDefinitionsFormat = CMregister_simple_format(
+        CPInfo->cm, "LockReaderDefinitions", LockReaderDefinitionsList,
+        sizeof(struct _LockReaderDefinitionsMsg));
+    CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
+                       CP_LockReaderDefinitionsHandler, NULL);
     CPInfo->WriterCloseFormat =
         CMregister_simple_format(CPInfo->cm, "WriterClose", WriterCloseList,
                                  sizeof(struct _WriterCloseMsg));
@@ -953,6 +969,14 @@ extern void SstStreamDestroy(SstStream Stream)
             free(Stream->ConnectionsToWriter);
         free(Stream->Peers);
     }
+    else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
+    {
+        FFSFreeMarshalData(Stream);
+    }
+    if (Stream->ConfigParams->DataTransport)
+        free(Stream->ConfigParams->DataTransport);
+    if (Stream->ConfigParams->DataTransport)
+        free(Stream->ConfigParams->ControlTransport);
 
     if (Stream->Filename)
     {
@@ -1015,7 +1039,9 @@ extern char *CP_GetContactString(SstStream Stream)
     {
         set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
     }
-    return attr_list_to_string(ContactList);
+    char *ret = attr_list_to_string(ContactList);
+    free_attr_list(ListenList);
+    return ret;
 }
 
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
@@ -1112,7 +1138,7 @@ SstStream CP_newStream()
     Stream->LastReleasedTimestep = -1;
     Stream->DiscardPriorTimestep =
         -1; // Timesteps prior to this discarded/released upon arrival
-    Stream->CPVerbose = 0;
+    Stream->CPVerbose = 1;
     Stream->DPVerbose = 0;
     if (getenv("SstVerbose"))
     {
