@@ -51,10 +51,18 @@ public:
      */
     bool load(handle src, bool)
     {
+        // Import mpi4py if it does not exist.
+        if (!PyMPIComm_Get)
+        {
+            if (import_mpi4py() < 0)
+            {
+                throw std::runtime_error(
+                        "ERROR: mpi4py not loaded correctly\n"); /* Python 2.X */
+            }
+        }
         // If src is not actually a MPI4PY communicator, the next
         // call returns nullptr, and we return false to indicate the conversion
         // failed.
-
         MPI_Comm *mpiCommPtr = PyMPIComm_Get(src.ptr());
         if (mpiCommPtr == nullptr)
         {
@@ -86,31 +94,22 @@ adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
     return adios2::py11::File(name, mode, comm, configfile, ioinconfigfile);
 }
 
-#else
-adios2::py11::File Open(const std::string &name, const std::string mode,
+#endif
+adios2::py11::File OpenNoComm(const std::string &name, const std::string mode,
                         const std::string enginetype)
 {
     return adios2::py11::File(name, mode, enginetype);
 }
 
-adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
+adios2::py11::File OpenConfigNoComm(const std::string &name, const std::string mode,
                               const std::string configfile,
                               const std::string ioinconfigfile)
 {
     return adios2::py11::File(name, mode, configfile, ioinconfigfile);
 }
-#endif
 
 PYBIND11_MODULE(adios2, m)
 {
-#ifdef ADIOS2_HAVE_MPI
-    if (import_mpi4py() < 0)
-    {
-        throw std::runtime_error(
-            "ERROR: mpi4py not loaded correctly\n"); /* Python 2.X */
-    }
-#endif
-
     m.attr("DebugON") = true;
     m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
@@ -204,16 +203,15 @@ PYBIND11_MODULE(adios2, m)
                   handler to adios File for the simple Python API
     )md");
 
-#else
-    m.def("open", &Open, "High-level API, file object open",
+#endif
+    m.def("open", &OpenNoComm, "High-level API, file object open",
           pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("engine_type") = "BPFile");
 
-    m.def("open", &OpenConfig,
+    m.def("open", &OpenConfigNoComm,
           "High-level API, file object open with a runtime config file",
           pybind11::arg("name"), pybind11::arg("mode"),
           pybind11::arg("config_file"), pybind11::arg("io_in_config_file"));
-#endif
 
     pybind11::class_<adios2::py11::ADIOS>(m, "ADIOS")
         // Python 2
@@ -237,7 +235,7 @@ PYBIND11_MODULE(adios2, m)
              "adios2 module starting point, constructs an ADIOS class object",
              pybind11::arg("configFile"), pybind11::arg("comm"),
              pybind11::arg("debugMode") = true)
-#else
+#endif
         .def(pybind11::init<const bool>(),
              "adios2 module starting point "
              "non-MPI, constructs an ADIOS class "
@@ -247,7 +245,6 @@ PYBIND11_MODULE(adios2, m)
              "adios2 module starting point non-MPI, constructs an ADIOS class "
              "object",
              pybind11::arg("configFile"), pybind11::arg("debugMode") = true)
-#endif
         .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
              "spawn IO object component returning a IO object with a unique "
              "name, throws an exception if IO with the same name is declared "

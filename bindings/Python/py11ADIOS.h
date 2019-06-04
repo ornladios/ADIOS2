@@ -32,10 +32,9 @@ public:
     ADIOS(const std::string &configFile, MPI4PY_Comm comm,
           const bool debugMode = true);
     ADIOS(MPI4PY_Comm comm, const bool debugMode = true);
-#else
+#endif
     ADIOS(const std::string &configFile, const bool debugMode = true);
     ADIOS(const bool debugMode);
-#endif
     ~ADIOS() = default;
 
     /** object inspection true: valid object, false: invalid object */
