@@ -6,6 +6,7 @@
  */
 
 #include "mpiwrap.h"
+#include "mpidummy.h"
 
 static inline bool SMPI_Available()
 {

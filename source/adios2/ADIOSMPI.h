@@ -6,8 +6,6 @@
 #ifndef ADIOS2_ADIOSMPI_H_
 #define ADIOS2_ADIOSMPI_H_
 
-#include "adios2/ADIOSConfig.h"
-
 #include "adios2/helper/mpiwrap.h"
 
 #include <climits> //UXXX_MAX
