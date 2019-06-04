@@ -90,8 +90,7 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
-            adios2_begin_step(nullReader, adios2_step_mode_next_available, 0.,
-                              &status);
+            adios2_begin_step(nullReader, adios2_step_mode_read, 0., &status);
             EXPECT_EQ(status, adios2_step_status_end_of_stream);
 
             adios2_variable *var = adios2_inquire_variable(io, "r64");

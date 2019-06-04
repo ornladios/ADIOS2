@@ -39,7 +39,7 @@ public:
 
     virtual ~BP4Reader() = default;
 
-    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;

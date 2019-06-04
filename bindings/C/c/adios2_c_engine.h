@@ -52,7 +52,7 @@ adios2_error adios2_engine_get_type(char *type, size_t *size,
  * Check each engine documentation for MPI collective/non-collective behavior.
  * @param engine handler
  * @param mode see enum adios2_step_mode in adios2_c_types.h for options,
- * next_available is the common use case
+ * read is the common use case
  * @param timeout_seconds provide a time out in Engine opened in read mode
  * @param status output from enum adios2_step_status in adios2_c_types.h
  * @return adios2_error 0: success, see enum adios2_error for errors

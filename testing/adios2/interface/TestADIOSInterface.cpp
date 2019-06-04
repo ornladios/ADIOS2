@@ -83,10 +83,7 @@ TEST_F(ADIOS2_CXX11_API, ToString)
 
     EXPECT_EQ(ToString(adios2::StepMode::Append), "StepMode::Append");
     EXPECT_EQ(ToString(adios2::StepMode::Update), "StepMode::Update");
-    EXPECT_EQ(ToString(adios2::StepMode::NextAvailable),
-              "StepMode::NextAvailable");
-    EXPECT_EQ(ToString(adios2::StepMode::LatestAvailable),
-              "StepMode::LatestAvailable");
+    EXPECT_EQ(ToString(adios2::StepMode::Read), "StepMode::Read");
 
     EXPECT_EQ(ToString(adios2::StepStatus::OK), "StepStatus::OK");
     EXPECT_EQ(ToString(adios2::StepStatus::NotReady), "StepStatus::NotReady");

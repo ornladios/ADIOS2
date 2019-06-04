@@ -70,7 +70,7 @@ contains
 
         if( engine%mode == adios2_mode_read ) then
             call adios2_begin_step_f2c(engine%f2c, &
-                                       adios2_step_mode_next_available, -1._4, &
+                                       adios2_step_mode_read, -1._4, &
                                        status, ierr)
         else
             call adios2_begin_step_f2c(engine%f2c, &

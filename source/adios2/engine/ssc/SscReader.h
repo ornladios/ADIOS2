@@ -37,7 +37,7 @@ public:
 
     ~SscReader();
     StepStatus BeginStep(
-        StepMode stepMode = StepMode::NextAvailable,
+        StepMode stepMode = StepMode::Read,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     StepStatus BeginStepIterator(StepMode stepMode, format::DmvVecPtr &vars);
     void PerformGets() final;

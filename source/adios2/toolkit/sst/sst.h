@@ -115,8 +115,7 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
 extern void SstReleaseStep(SstStream stream);
-extern SstStatusValue SstAdvanceStep(SstStream stream, SstStepMode mode,
-                                     const float timeout_sec);
+extern SstStatusValue SstAdvanceStep(SstStream stream, const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
 extern long SstCurrentStep(SstStream s);
 /*  SstReaderDefinitionLock is called once only, on transition from unlock to

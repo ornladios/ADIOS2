@@ -38,17 +38,14 @@ adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string &hint)
 adios2::StepMode ToStepMode(const adios2_step_mode mode,
                             const std::string &hint)
 {
-    adios2::StepMode stepModeCpp = adios2::StepMode::NextAvailable;
+    adios2::StepMode stepModeCpp = adios2::StepMode::Read;
     switch (mode)
     {
-    case (adios2_step_mode_next_available):
-        stepModeCpp = adios2::StepMode::NextAvailable;
-        break;
     case (adios2_step_mode_append):
         stepModeCpp = adios2::StepMode::Append;
         break;
-    case (adios2_step_mode_latest_available):
-        stepModeCpp = adios2::StepMode::LatestAvailable;
+    case (adios2_step_mode_read):
+        stepModeCpp = adios2::StepMode::Read;
         break;
     case (adios2_step_mode_update):
         stepModeCpp = adios2::StepMode::Update;

@@ -41,6 +41,7 @@ protected:
     int m_MpiSize;
     int m_Channels;
     std::string m_WorkflowMode = "stream";
+    bool m_ProvideLatest = false;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;

@@ -63,7 +63,7 @@ public:
 
     /**
      * Begin a logical adios2 step, overloaded version with timeoutSeconds = 0
-     * and mode = NextAvailable
+     * and mode = Read
      * Check each engine documentation for MPI collective/non-collective
      * behavior.
      * @return current step status
@@ -75,7 +75,7 @@ public:
      * control
      * Check each engine documentation for MPI collective/non-collective
      * behavior.
-     * @param mode see enum adios2::StepMode for options, NextAvailable is the
+     * @param mode see enum adios2::StepMode for options, Read is the
      * common use case
      * @param timeoutSeconds
      * @return current step status

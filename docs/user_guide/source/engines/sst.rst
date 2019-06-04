@@ -198,20 +198,29 @@ above, so if a QueueLimit is specified, it should be a value larger
 than 1.  Further note while specifying this parameter guarantees that
 the preserved first timestep will be made available to new readers,
 other reader-side operations (like requesting the LatestAvailable
-timestep in BeginStep) might still cause the timestep to be skipped.
+timestep in Engine parameters) might still cause the timestep to be skipped.
 This value is interpreted by only by the SST Writer engine.
+
+10. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
+AlwaysProvideLatestTimestep is a boolean parameter that affects what
+of the available timesteps will be provided to the reader engine.  If
+AlwaysProvideLatestTimestep is **TRUE***, then if there are multiple
+timesteps available to the reader, older timesteps will be skipped and
+the reader will see only the newest available upon BeginStep.
+This value is interpreted by only by the SST Reader engine.
 
 
 =======================  ===================== =========================================================
  **Key**                  **Value Format**      **Default** and Examples
 =======================  ===================== =========================================================
- RendezvousReaderCount    integer               **1**
- RegistrationMethod       string                **File**, Screen
- QueueLimit               integer               **0** (no queue limits)
- QueueFullPolicy          string                **Block**, Discard
- ReserveQueueLimit        integer               **0** (no queue limits)
- DataTransport            string                **default varies by platform**, RDMA, WAN
- ControlTransport         string                **TCP**, Scalable
- NetworkInterface         string                **NULL**
- FirstTimestepPrecious    boolean               **FALSE**, true, no, yes
+ RendezvousReaderCount      integer             **1**
+ RegistrationMethod         string              **File**, Screen
+ QueueLimit                 integer             **0** (no queue limits)
+ QueueFullPolicy            string              **Block**, Discard
+ ReserveQueueLimit          integer             **0** (no queue limits)
+ DataTransport              string              **default varies by platform**, RDMA, WAN
+ ControlTransport           string              **TCP**, Scalable
+ NetworkInterface           string              **NULL**
+ FirstTimestepPrecious      boolean             **FALSE**, true, no, yes
+AlwaysProvideLatestTimestep boolean             **FALSE**, true, no, yes
 =======================  ===================== =========================================================

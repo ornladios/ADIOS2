@@ -290,13 +290,9 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
     if (!settings.myRank && settings.verbose)
     {
         std::cout << "    Read ";
-        if (cmdR->stepMode == adios2::StepMode::NextAvailable)
+        if (cmdR->stepMode == adios2::StepMode::Read)
         {
             std::cout << "next available step from ";
-        }
-        else
-        {
-            std::cout << "latest step from ";
         }
 
         std::cout << cmdR->streamName << " using the group " << cmdR->groupName;

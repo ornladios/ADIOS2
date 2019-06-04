@@ -34,7 +34,7 @@ CommandWrite::~CommandWrite(){};
 
 CommandRead::CommandRead(std::string stream, std::string group,
                          const float timeoutSec)
-: Command(Operation::Read), stepMode(adios2::StepMode::NextAvailable),
+: Command(Operation::Read), stepMode(adios2::StepMode::Read),
   streamName(stream), groupName(group), timeout_sec(timeoutSec){};
 CommandRead::~CommandRead(){};
 
@@ -341,7 +341,7 @@ void printConfig(const Config &cfg)
         {
             auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
             std::cout << "        Read ";
-            if (cmdR->stepMode == adios2::StepMode::NextAvailable)
+            if (cmdR->stepMode == adios2::StepMode::Read)
             {
                 std::cout << "next available step from ";
             }

@@ -229,8 +229,8 @@ public:
 
         while (true)
         {
-            adios2::StepStatus status = reader.BeginStep(
-                adios2::StepMode::NextAvailable, reader_timeout);
+            adios2::StepStatus status =
+                reader.BeginStep(adios2::StepMode::Read, reader_timeout);
             if (status != adios2::StepStatus::OK)
             {
                 break;
