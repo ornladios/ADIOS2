@@ -30,7 +30,8 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     m_IsLittleEndian = helper::IsLittleEndian();
     m_IsRowMajor = helper::IsRowMajor(io.m_HostLanguage);
     GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
-    GetBoolParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep", m_ProvideLatest);
+    GetBoolParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
+                     m_ProvideLatest);
     if (m_WorkflowMode != "file" && m_WorkflowMode != "stream")
     {
         throw(std::invalid_argument(
