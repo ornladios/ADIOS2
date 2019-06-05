@@ -38,8 +38,8 @@ public:
     /** if true will do more checks, exceptions, warnings, expect slower code */
     const bool m_DebugMode = true;
 
-    /** Passed from parallel constructor, MPI_Comm is a pointer itself. */
-    MPI_Comm m_MPIComm;
+    /** Get the communicator passed to constructor for parallel case.  */
+    MPI_Comm GetComm() const { return m_MPIComm; }
 
     /** Changed by language bindings in constructor */
     const std::string m_HostLanguage = "C++";
@@ -184,6 +184,9 @@ public:
     void RemoveAllIOs() noexcept;
 
 private:
+    /** Passed from parallel constructor, MPI_Comm is a pointer itself. */
+    MPI_Comm m_MPIComm;
+
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
 

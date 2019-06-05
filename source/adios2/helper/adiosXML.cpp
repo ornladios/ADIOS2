@@ -151,7 +151,7 @@ void ParseConfigXML(
 
     auto lf_FileContents = [&](const std::string &configXML) -> std::string {
         const std::string fileContents(helper::BroadcastFile(
-            configXML, adios.m_MPIComm,
+            configXML, adios.GetComm(),
             "when parsing configXML file, in call to the ADIOS constructor"));
 
         if (adios.m_DebugMode)
