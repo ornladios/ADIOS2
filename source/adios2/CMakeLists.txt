@@ -32,6 +32,7 @@ add_library(adios2
   operator/callback/Signature2.cpp
 
 #helper
+  helper/adiosComm.h  helper/adiosComm.cpp
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
   helper/adiosMemory.cpp
