@@ -277,11 +277,6 @@
 
 #define ADIOS2_iterators_functions(DATA_FUNCTION, SIZE_FUNCTION)               \
     iterator begin() noexcept { return iterator(DATA_FUNCTION); }              \
-    iterator end() noexcept                                                    \
-    {                                                                          \
-        return iterator(DATA_FUNCTION + SIZE_FUNCTION);                        \
-    }                                                                          \
-    iterator rbegin() noexcept { return --end(); }                             \
-    iterator rend() noexcept { return --begin(); }
+    iterator end() noexcept { return iterator(DATA_FUNCTION + SIZE_FUNCTION); }
 
 #endif /* ADIOS2_ADIOSMACROS_H */
