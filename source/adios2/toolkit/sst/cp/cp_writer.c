@@ -2017,16 +2017,19 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
 {
     TAU_START_FUNC();
     struct _ReaderCloseMsg *Msg = (struct _ReaderCloseMsg *)Msg_v;
-    WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
 
+    printf("Starting CP_ReaderCloseHandler, conn %p, Msg %p\n", conn, Msg);
+    WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
     if ((CP_WSR_Stream->ParentStream == NULL) ||
         (CP_WSR_Stream->ParentStream->Status != Established))
         return;
+    printf("2 CP_ReaderCloseHandler, conn %p, Msg %p\n", conn, Msg);
 
     CP_verbose(CP_WSR_Stream->ParentStream,
                "Reader Close message received for stream %p.  Setting state to "
                "PeerClosed and releasing timesteps.\n",
                CP_WSR_Stream);
+    printf("3 CP_ReaderCloseHandler, conn %p, Msg %p\n", conn, Msg);
     PTHREAD_MUTEX_LOCK(&CP_WSR_Stream->ParentStream->DataLock);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     PTHREAD_MUTEX_UNLOCK(&CP_WSR_Stream->ParentStream->DataLock);

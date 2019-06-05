@@ -1006,7 +1006,9 @@ extern void SstStreamDestroy(SstStream Stream)
         // wait .1 sec for last messages
         CMusleep(CPInfo->cm, 10000);
         CManager_close(CPInfo->cm);
+        printf("Done with CManager_close\n");
         usleep(100000);
+        printf("Freeing 1n");
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
         if (CPInfo->fm_c)
