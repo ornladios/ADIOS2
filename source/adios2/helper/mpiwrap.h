@@ -77,6 +77,12 @@ int SMPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int SMPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                  void *recvbuf, const int *recvcounts, const int *displs,
                  MPI_Datatype recvtype, int root, MPI_Comm comm);
+int SMPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                   MPI_Comm comm);
+int SMPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                    void *recvbuf, int *recvcounts, int *displs,
+                    MPI_Datatype recvtype, MPI_Comm comm);
 int SMPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                 MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm);
 int SMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,

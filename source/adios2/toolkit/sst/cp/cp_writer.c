@@ -765,8 +765,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
                                  ReturnData->CP_ReaderInfo);
 
     int GlobalSuccess = 0;
-    MPI_Allreduce(&MySuccess, &GlobalSuccess, 1, MPI_INT, MPI_LAND,
-                  Stream->mpiComm);
+    SMPI_Allreduce(&MySuccess, &GlobalSuccess, 1, MPI_INT, MPI_LAND,
+                   Stream->mpiComm);
 
     if (!GlobalSuccess)
     {
@@ -795,8 +795,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (MyStartingTimestep == -1)
         MyStartingTimestep = 0;
 
-    MPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, MPI_LONG,
-                  MPI_MAX, Stream->mpiComm);
+    SMPI_Allreduce(&MyStartingTimestep, &GlobalStartingTimestep, 1, MPI_LONG,
+                   MPI_MAX, Stream->mpiComm);
 
     CP_verbose(Stream,
                "My oldest timestep was %ld, global oldest timestep was %ld\n",
@@ -1096,8 +1096,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     Stream->mpiComm = comm;
 
-    MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
-    MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
+    SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
+    SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
     Stream->DP_Interface = SelectDP(&Svcs, Stream, Stream->ConfigParams);
 
@@ -1155,7 +1155,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
             assert(Stream->ReadRequestQueue);
             PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         }
-        MPI_Barrier(Stream->mpiComm);
+        SMPI_Barrier(Stream->mpiComm);
 
         struct timeval Start, Stop, Diff;
         gettimeofday(&Start, NULL);
@@ -1168,20 +1168,20 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
         if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
         {
             waitForReaderResponseAndSendQueued(reader);
-            MPI_Barrier(Stream->mpiComm);
+            SMPI_Barrier(Stream->mpiComm);
         }
         else
         {
             if (Stream->Rank == 0)
             {
                 waitForReaderResponseAndSendQueued(reader);
-                MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                          Stream->mpiComm);
+                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                           Stream->mpiComm);
             }
             else
             {
-                MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                          Stream->mpiComm);
+                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                           Stream->mpiComm);
             }
         }
         Stream->RendezvousReaderCount--;
@@ -1332,7 +1332,7 @@ void SstWriterClose(SstStream Stream)
          * if we're CommMin, getting here implies that Rank 0 has released all
          * timesteps, other ranks can follow suit after barrier
          */
-        MPI_Barrier(Stream->mpiComm);
+        SMPI_Barrier(Stream->mpiComm);
         ReleaseAndDiscardRemainingTimesteps(Stream);
     }
     gettimeofday(&CloseTime, NULL);
@@ -1952,13 +1952,13 @@ extern void SstInternalProvideTimestep(
             if (Stream->Rank == 0)
             {
                 waitForReaderResponseAndSendQueued(reader);
-                MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                          Stream->mpiComm);
+                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                           Stream->mpiComm);
             }
             else
             {
-                MPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
-                          Stream->mpiComm);
+                SMPI_Bcast(&reader->ReaderStatus, 1, MPI_INT, 0,
+                           Stream->mpiComm);
             }
         }
     }

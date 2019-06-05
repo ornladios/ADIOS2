@@ -10,6 +10,7 @@ add_library(sst
   cp/cp_common.c
   cp/ffs_marshal.c
   ${PROJECT_SOURCE_DIR}/source/adios2/helper/mpidummy.cpp
+  ${PROJECT_SOURCE_DIR}/source/adios2/helper/mpiwrap.cpp
 )
 
 target_link_libraries(sst PRIVATE taustubs)

@@ -554,8 +554,8 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
     {
         RecvCounts = malloc(Stream->CohortSize * sizeof(int));
     }
-    MPI_Gather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT, 0,
-               Stream->mpiComm);
+    SMPI_Gather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT, 0,
+                Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -588,8 +588,8 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    MPI_Gatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                MPI_CHAR, 0, Stream->mpiComm);
+    SMPI_Gatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
+                 MPI_CHAR, 0, Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     if (Stream->Rank == 0)
@@ -627,17 +627,17 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
         FFSBuffer Buf = create_FFSBuffer();
         char *tmp =
             FFSencode(Buf, FMFormat_of_original(Type), root_info, &DataSize);
-        MPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
-        MPI_Bcast(tmp, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(tmp, DataSize, MPI_CHAR, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
         memcpy(Buffer, tmp, DataSize);
         free_FFSBuffer(Buf);
     }
     else
     {
-        MPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
-        MPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+        SMPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
     }
 
     FFSContext context = Stream->CPInfo->ffs_c;
@@ -664,8 +664,8 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 
     RecvCounts = malloc(Stream->CohortSize * sizeof(int));
 
-    MPI_Allgather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT,
-                  Stream->mpiComm);
+    SMPI_Allgather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT,
+                   Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -696,8 +696,8 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    MPI_Allgatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                   MPI_CHAR, Stream->mpiComm);
+    SMPI_Allgatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
+                    MPI_CHAR, Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     FFSContext context = Stream->CPInfo->ffs_c;
