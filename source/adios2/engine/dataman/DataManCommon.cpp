@@ -65,6 +65,25 @@ bool DataManCommon::GetStringParameter(Params &params, std::string key,
     return false;
 }
 
+bool DataManCommon::GetBoolParameter(Params &params, std::string key,
+                                     bool &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        if (it->second == "yes" || it->second == "true")
+        {
+            value = true;
+        }
+        else if (it->second == "no" || it->second == "false")
+        {
+            value = false;
+        }
+        return true;
+    }
+    return false;
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
