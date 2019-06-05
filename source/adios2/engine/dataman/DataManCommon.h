@@ -61,6 +61,7 @@ protected:
 
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
+    bool GetBoolParameter(Params &params, std::string key, bool &value);
 
 }; // end class DataManCommon
 
