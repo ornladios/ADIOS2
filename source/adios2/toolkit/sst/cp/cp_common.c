@@ -1139,10 +1139,11 @@ SstStream CP_newStream()
     Stream->LastReleasedTimestep = -1;
     Stream->DiscardPriorTimestep =
         -1; // Timesteps prior to this discarded/released upon arrival
-    Stream->CPVerbose = 1;
+    Stream->CPVerbose = 0;
     Stream->DPVerbose = 0;
     if (getenv("SstVerbose"))
     {
+        Stream->CPVerbose = 1;
         Stream->DPVerbose = 1;
     }
     if (getenv("SstCPVerbose"))
