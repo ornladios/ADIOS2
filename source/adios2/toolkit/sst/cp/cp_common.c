@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
@@ -1006,11 +1005,7 @@ extern void SstStreamDestroy(SstStream Stream)
             Stream,
             "Reference count now zero, Destroying process SST info cache\n");
         // wait .1 sec for last messages
-        CMusleep(CPInfo->cm, 10000);
         CManager_close(CPInfo->cm);
-        printf("Done with CManager_close\n");
-        usleep(100000);
-        printf("Freeing 1n");
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
         if (CPInfo->fm_c)
@@ -1148,7 +1143,6 @@ SstStream CP_newStream()
     Stream->DPVerbose = 0;
     if (getenv("SstVerbose"))
     {
-        Stream->CPVerbose = 1;
         Stream->DPVerbose = 1;
     }
     if (getenv("SstCPVerbose"))

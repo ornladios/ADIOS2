@@ -1597,7 +1597,6 @@ extern void FFSClearTimestepData(SstStream Stream)
 {
 
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
-    printf("Calling FFSClearTimestepData\n");
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
         if (Info->WriterInfo[i].RawBuffer)
