@@ -1057,11 +1057,11 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                 FFSFormatList SavedFormats = List->Msg->Formats;
                 if (List->Expired && !List->PreciousTimestep)
                 {
-                    List = List->Next;
                     CP_verbose(Stream,
                                "Reader send queued skipping  TS %d, expired "
                                "and not precious\n",
                                List->Timestep, TS);
+                    List = List->Next;
                     continue; /* do nothing timestep is expired, but not
                                  precious */
                 }
