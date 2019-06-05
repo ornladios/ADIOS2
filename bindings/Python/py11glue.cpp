@@ -57,7 +57,7 @@ public:
             if (import_mpi4py() < 0)
             {
                 throw std::runtime_error(
-                        "ERROR: mpi4py not loaded correctly\n"); /* Python 2.X */
+                    "ERROR: mpi4py not loaded correctly\n"); /* Python 2.X */
             }
         }
         // If src is not actually a MPI4PY communicator, the next
@@ -96,14 +96,15 @@ adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
 
 #endif
 adios2::py11::File OpenNoComm(const std::string &name, const std::string mode,
-                        const std::string enginetype)
+                              const std::string enginetype)
 {
     return adios2::py11::File(name, mode, enginetype);
 }
 
-adios2::py11::File OpenConfigNoComm(const std::string &name, const std::string mode,
-                              const std::string configfile,
-                              const std::string ioinconfigfile)
+adios2::py11::File OpenConfigNoComm(const std::string &name,
+                                    const std::string mode,
+                                    const std::string configfile,
+                                    const std::string ioinconfigfile)
 {
     return adios2::py11::File(name, mode, configfile, ioinconfigfile);
 }
