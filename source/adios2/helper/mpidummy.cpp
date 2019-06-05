@@ -355,65 +355,15 @@ int MPI_Get_processor_name(char *name, int *resultlen)
 int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
-    if (datatype == MPI_CHAR)
+    int ier, size_of_type;
+    ier = mpidummy::MPI_Type_size(datatype, &size_of_type);
+    if (ier != MPI_SUCCESS)
     {
-        if (op == MPI_SUM)
-        {
-            char *recvBuffer = reinterpret_cast<char *>(recvbuf);
-            const char *sendBuffer = reinterpret_cast<const char *>(sendbuf);
-            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
-        }
-    }
-    else if (datatype == MPI_INT)
-    {
-        if (op == MPI_SUM)
-        {
-            int *recvBuffer = reinterpret_cast<int *>(recvbuf);
-            const int *sendBuffer = reinterpret_cast<const int *>(sendbuf);
-            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
-        }
-    }
-    else if (datatype == MPI_UNSIGNED)
-    {
-        if (op == MPI_SUM)
-        {
-            unsigned int *recvBuffer =
-                reinterpret_cast<unsigned int *>(recvbuf);
-            const unsigned int *sendBuffer =
-                reinterpret_cast<const unsigned int *>(sendbuf);
-            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
-        }
-    }
-    else if (datatype == MPI_UNSIGNED_LONG)
-    {
-        if (op == MPI_SUM)
-        {
-            unsigned long int *recvBuffer =
-                reinterpret_cast<unsigned long int *>(recvbuf);
-            const unsigned long int *sendBuffer =
-                reinterpret_cast<const unsigned long int *>(sendbuf);
-            *recvBuffer = std::accumulate(sendBuffer, sendBuffer + count, 0);
-        }
-    }
-    else if (datatype == MPI_UNSIGNED_LONG_LONG)
-    {
-        if (op == MPI_SUM)
-        {
-            unsigned long long int *recvBuffer =
-                reinterpret_cast<unsigned long long int *>(recvbuf);
-            const unsigned long long int *sendBuffer =
-                reinterpret_cast<const unsigned long long int *>(sendbuf);
-            *recvBuffer =
-                std::accumulate(sendBuffer, sendBuffer + count,
-                                static_cast<unsigned long long int>(0));
-        }
-    }
-    else
-    {
-        return MPI_ERR_TYPE;
+        return ier;
     }
 
-    return 0;
+    std::memcpy(recvbuf, sendbuf, count * static_cast<size_t>(size_of_type));
+    return MPI_SUCCESS;
 }
 
 int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
