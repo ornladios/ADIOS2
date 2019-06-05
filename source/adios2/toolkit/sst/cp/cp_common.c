@@ -897,6 +897,7 @@ extern void SstStreamDestroy(SstStream Stream)
     struct _SstStream StackStream = *Stream;
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
+    pthread_mutex_lock(&Stream->DataLock);
     Stream->Status = Closed;
     if (Stream->Role == ReaderRole)
     {
@@ -995,6 +996,7 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->ParamsBlock);
         Stream->ParamsBlock = NULL;
     }
+    pthread_mutex_unlock(&Stream->DataLock);
     //   Stream is free'd in LastCall
 
     CPInfoRefCount--;
