@@ -128,7 +128,7 @@ IO &ADIOS::DeclareIO(const std::string name)
     }
 
     auto ioPair = m_IOs.emplace(
-        name, IO(*this, name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
+        name, IO(*this, name, false, m_HostLanguage, m_DebugMode));
     IO &io = ioPair.first->second;
     io.SetDeclared();
     return io;

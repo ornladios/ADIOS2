@@ -73,12 +73,10 @@ namespace adios2
 namespace core
 {
 
-IO::IO(ADIOS &adios, const std::string name, MPI_Comm mpiComm,
-       const bool inConfigFile, const std::string hostLanguage,
-       const bool debugMode)
-: m_ADIOS(adios), m_Name(name), m_MPIComm(mpiComm),
-  m_InConfigFile(inConfigFile), m_HostLanguage(hostLanguage),
-  m_DebugMode(debugMode)
+IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
+       const std::string hostLanguage, const bool debugMode)
+: m_ADIOS(adios), m_Name(name), m_InConfigFile(inConfigFile),
+  m_HostLanguage(hostLanguage), m_DebugMode(debugMode)
 {
 }
 
@@ -698,7 +696,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 
 Engine &IO::Open(const std::string &name, const Mode mode)
 {
-    return Open(name, mode, m_MPIComm);
+    return Open(name, mode, m_ADIOS.m_MPIComm);
 }
 
 Engine &IO::GetEngine(const std::string &name)
