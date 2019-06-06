@@ -196,6 +196,14 @@ int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                                 recvcount, recvtype, 0, comm);
 }
 
+int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int *recvcounts, int *displs,
+                   MPI_Datatype recvtype, MPI_Comm comm)
+{
+    return MPIDUMMY::MPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf,
+                                 recvcounts, displs, recvtype, 0, comm);
+}
+
 int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                 void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
                 MPI_Comm comm)
@@ -413,6 +421,10 @@ int MPI_Type_size(MPI_Datatype datatype, int *size)
     else if (datatype == MPI_INT)
     {
         *size = sizeof(int);
+    }
+    else if (datatype == MPI_LONG)
+    {
+        *size = sizeof(long);
     }
     else if (datatype == MPI_UNSIGNED)
     {

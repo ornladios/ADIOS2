@@ -8,11 +8,6 @@
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 
 #include "sst.h"
 

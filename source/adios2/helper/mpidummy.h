@@ -80,8 +80,20 @@ typedef int MPI_Op;
 #define MPI_ANY_SOURCE 0
 #define MPI_ANY_TAG 0
 
-#define MPI_SUM 0
-#define MPI_MAX 1
+#define MPI_MAX 0
+#define MPI_MIN 1
+#define MPI_SUM 2
+#define MPI_PROD 3
+#define MPI_LAND 4
+#define MPI_BAND 5
+#define MPI_LOR 6
+#define MPI_BOR 7
+#define MPI_LXOR 8
+#define MPI_BXOR 9
+#define MPI_MAXLOC 10
+#define MPI_MINLOC 11
+#define MPI_REPLACE 12
+#define MPI_NO_OP 13
 
 #define MPI_MAX_PROCESSOR_NAME 32
 
@@ -132,6 +144,9 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm);
+int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int *recvcounts, int *displs,
+                   MPI_Datatype recvtype, MPI_Comm comm);
 
 int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                 void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
