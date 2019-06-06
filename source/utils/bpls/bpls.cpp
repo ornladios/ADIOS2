@@ -1465,7 +1465,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     int tidx;                          // 0 or 1 to account for time dimension
     uint64_t nelems;                   // number of elements to read
     // size_t elemsize;                   // size in bytes of one element
-    uint64_t st, ct;
+    uint64_t stepStart, stepCount;
     std::vector<T> dataV;
     uint64_t sum;         // working var to sum up things
     uint64_t maxreadn;    // max number of elements to read once up to a limit
@@ -1484,33 +1484,35 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     nelems = 1;
     tidx = 0;
 
+    // calculate the starting step and number of steps requested
+    if (istart[0] < 0) // negative index means last-|index|
+        stepStart = nsteps + istart[0];
+    else
+        stepStart = istart[0];
+    if (icount[0] < 0) // negative index means last-|index|+1-start
+        stepCount = nsteps + icount[0] + 1 - stepStart;
+    else
+        stepCount = icount[0];
+
+    if (verbose > 2)
+        printf("    j=0, stepStart=%" PRIu64 " stepCount=%" PRIu64 "\n",
+               stepStart, stepCount);
+
     if (nsteps > 1)
     {
-        if (istart[0] < 0) // negative index means last-|index|
-            st = nsteps + istart[0];
-        else
-            st = istart[0];
-        if (icount[0] < 0) // negative index means last-|index|+1-start
-            ct = nsteps + icount[0] + 1 - st;
-        else
-            ct = icount[0];
-
-        if (verbose > 2)
-            printf("    j=0, st=%" PRIu64 " ct=%" PRIu64 "\n", st, ct);
-
-        start_t[0] = st;
-        count_t[0] = ct;
-        nelems *= ct;
+        start_t[0] = stepStart;
+        count_t[0] = stepCount;
+        nelems *= stepCount;
         if (verbose > 1)
             printf("    s[0]=%" PRIu64 ", c[0]=%" PRIu64 ", n=%" PRIu64 "\n",
                    start_t[0], count_t[0], nelems);
-
         tidx = 1;
     }
     tdims = ndim + tidx;
 
     for (j = 0; j < ndim; j++)
     {
+        uint64_t st, ct;
         if (istart[j + tidx] < 0) // negative index means last-|index|
             st = variable->m_Shape[j] + istart[j + tidx];
         else
@@ -1648,16 +1650,16 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
         }
 
-        if (nsteps > 1)
+        size_t absstep = relative_to_absolute_step(variable, stepStart);
+        if (verbose > 2)
         {
-            if (verbose > 2)
-            {
-                printf("set Step selection: from %" PRIu64 " read %" PRIu64
-                       " steps\n",
-                       s[0], c[0]);
-            }
-            variable->SetStepSelection({s[0], c[0]});
+            printf("set Step selection: from relative step %" PRIu64
+                   " (absolute step %" PRIu64 ") read %" PRIu64 " steps\n",
+                   stepStart, absstep, stepCount);
         }
+        /* FIXME: this does not work if the steps are not contiguous in the
+         * file */
+        variable->SetStepSelection({absstep, stepCount});
 
         dataV.resize(variable->SelectionSize());
         fp->Get(*variable, dataV, adios2::Mode::Sync);
@@ -2577,17 +2579,42 @@ void print_endline(void)
 }
 
 template <class T>
+size_t relative_to_absolute_step(core::Variable<T> *variable,
+                                 const size_t relstep)
+{
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = std::next(indices.begin(), 0);
+    size_t absstep = itStep->first - 1;
+
+    for (int step = 0; step < relstep; step++)
+    {
+        ++itStep;
+        absstep = itStep->first - 1;
+    }
+    return absstep;
+}
+
+template <class T>
 Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                                 core::Variable<T> *variable)
 {
     const size_t ndim = variable->m_Shape.size();
-    const size_t nsteps = variable->m_AvailableStepsCount;
+    const size_t nsteps = variable->m_StepsCount;
     Dims dims(ndim, 0);
     bool firstStep = true;
 
+    // looping over the absolute step indexes
+    // is not supported by a simple API function
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = std::next(indices.begin(), 0);
+
     for (int step = 0; step < nsteps; step++)
     {
-        Dims d = variable->Shape(step);
+        const size_t absstep = itStep->first;
+        std::cout << "\n  check step " << absstep - 1;
+        Dims d = variable->Shape(absstep - 1);
         if (d.empty())
         {
             continue;
@@ -2605,6 +2632,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
             }
         }
         firstStep = false;
+        ++itStep;
     }
     return dims;
 }
