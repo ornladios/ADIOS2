@@ -274,10 +274,16 @@ std::map<std::string, Params> IO::AvailableAttributes()
     return m_IO->GetAvailableAttributes();
 }
 
-void IO::LockDefinitions()
+void IO::LockWriterDefinitions()
 {
-    helper::CheckForNullptr(m_IO, "in call to IO::LockDefinitions");
-    m_IO->LockDefinitions();
+    helper::CheckForNullptr(m_IO, "in call to IO::LockWriterDefinitions");
+    m_IO->LockWriterDefinitions();
+}
+
+void IO::LockReaderSelections()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::LockReaderSelections");
+    m_IO->LockReaderSelections();
 }
 
 std::string IO::VariableType(const std::string &name) const

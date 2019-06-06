@@ -320,7 +320,16 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
  * handling.
  * @param io handler
  */
-adios2_error adios2_lock_definitions(adios2_io *io);
+adios2_error adios2_lock_writer_definitions(adios2_io *io);
+
+/**
+ * Promise that the reader data selections of are fixed and
+ * will not change in future timesteps. This information, provided
+ * before the EndStep() representing a fixed read pattern, may be
+ * utilized by the input Engine to optimize data flow.
+ * @param io handler
+ */
+adios2_error adios2_lock_reader_selections(adios2_io *io);
 
 #ifdef __cplusplus
 } // end extern C

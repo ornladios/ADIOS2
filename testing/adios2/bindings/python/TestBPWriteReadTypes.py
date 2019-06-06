@@ -113,7 +113,7 @@ print("Final IO parameters")
 for key, value in ioParams.items():
     print("\t" + key + ": " + value)
 
-ioWriter.LockDefinitions()
+ioWriter.LockWriterDefinitions()
 nsteps = 3
 
 # ADIOS Engine

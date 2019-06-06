@@ -146,7 +146,7 @@ void InSituMPIWriter::PerformPuts()
     if (m_RankDirectPeers.size() > 0)
     {
 
-        if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked)
+        if (m_CurrentStep == 0 || !m_IO.m_WriterDefinitionsLocked)
         {
             // Create local metadata and send to reader peers
             // std::vector<char> mdVar = m_BP3Serializer.SerializeIndices(
@@ -208,7 +208,7 @@ void InSituMPIWriter::PerformPuts()
             if (m_BP3Serializer.m_RankMPI == 0)
             {
                 // send flag about this sender's fixed schedule
-                fixed = (int)m_IO.m_DefinitionsLocked;
+                fixed = (int)m_IO.m_WriterDefinitionsLocked;
                 MPI_Send(&fixed, 1, MPI_INT, peerRank,
                          insitumpi::MpiTags::FixedRemoteSchedule, m_CommWorld);
 
@@ -227,7 +227,7 @@ void InSituMPIWriter::PerformPuts()
                 {
                     std::cout << "InSituMPI Writer " << m_WriterRank
                               << " fixed Writer schedule = "
-                              << m_IO.m_DefinitionsLocked
+                              << m_IO.m_WriterDefinitionsLocked
                               << " fixed Reader schedule = "
                               << m_RemoteDefinitionsLocked << std::endl;
                 }

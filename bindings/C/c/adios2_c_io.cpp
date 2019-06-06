@@ -745,13 +745,29 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
     }
 }
 
-adios2_error adios2_lock_definitions(adios2_io *io)
+adios2_error adios2_lock_writer_definitions(adios2_io *io)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_lock_writer_definitions");
+        reinterpret_cast<adios2::core::IO *>(io)->LockWriterDefinitions();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_type"));
+    }
+}
+
+adios2_error adios2_lock_reader_selections(adios2_io *io)
 {
     try
     {
         adios2::helper::CheckForNullptr(
             io, "for adios2_io, in call to adios2_lock_definitions");
-        reinterpret_cast<adios2::core::IO *>(io)->LockDefinitions();
+        reinterpret_cast<adios2::core::IO *>(io)->LockReaderSelections();
         return adios2_error_none;
     }
     catch (...)

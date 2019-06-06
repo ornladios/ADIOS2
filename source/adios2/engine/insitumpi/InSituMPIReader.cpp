@@ -48,7 +48,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     {
         std::cout << "InSituMPI Reader " << m_ReaderRank << " Open(" << m_Name
                   << "). Fixed Read schedule = "
-                  << (m_IO.m_DefinitionsLocked ? "yes" : "no")
+                  << (m_IO.m_ReaderSelectionsLocked ? "yes" : "no")
                   << ". #readers=" << m_ReaderNproc
                   << " #writers=" << m_RankAllPeers.size()
                   << " #appsize=" << m_GlobalNproc
@@ -288,7 +288,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
                           << " fixed Writer schedule = "
                           << m_RemoteDefinitionsLocked
                           << " fixed Reader schedule = "
-                          << m_IO.m_DefinitionsLocked << std::endl;
+                          << m_IO.m_ReaderSelectionsLocked << std::endl;
             }
         }
     }
@@ -317,7 +317,7 @@ void InSituMPIReader::PerformGets()
     {
         if (m_ReaderRootRank == m_ReaderRank)
         {
-            int fixed = (int)m_IO.m_DefinitionsLocked;
+            int fixed = (int)m_IO.m_ReaderSelectionsLocked;
             MPI_Send(&fixed, 1, MPI_INT, m_WriteRootGlobalRank,
                      insitumpi::MpiTags::FixedRemoteSchedule, m_CommWorld);
         }
@@ -325,7 +325,7 @@ void InSituMPIReader::PerformGets()
 
     // Create read schedule per writer
     // const std::map<std::string, SubFileInfoMap> variablesSubFileInfo =
-    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked)
+    if (m_CurrentStep == 0 || !m_IO.m_ReaderSelectionsLocked)
     {
         m_ReadScheduleMap.clear();
         m_ReadScheduleMap =
@@ -337,13 +337,13 @@ void InSituMPIReader::PerformGets()
     int nRequests = insitumpi::FixSeeksToZeroOffset(
         m_ReadScheduleMap, helper::IsRowMajor(m_IO.m_HostLanguage));
 
-    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked)
+    if (m_CurrentStep == 0 || !m_IO.m_ReaderSelectionsLocked)
     {
         // Send schedule to writers
         SendReadSchedule(m_ReadScheduleMap);
     }
 
-    if (m_CurrentStep == 0 || !m_IO.m_DefinitionsLocked ||
+    if (m_CurrentStep == 0 || !m_IO.m_ReaderSelectionsLocked ||
         !m_RemoteDefinitionsLocked)
     {
         // Allocate the MPI_Request and OngoingReceives vectors

@@ -55,7 +55,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     // Promise that we are not going to change the variable sizes nor add new
     // variables
-    bpio.LockDefinitions();
+    bpio.LockWriterDefinitions();
 
     bpWriter = bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
 }

@@ -96,7 +96,11 @@ public:
 
     /** true: No more definitions or changes to existing variables are allowed
      */
-    bool m_DefinitionsLocked = false;
+    bool m_WriterDefinitionsLocked = false;
+
+    /** true: The read pattern is fixed and will not change.
+     */
+    bool m_ReaderSelectionsLocked = false;
 
     /**
      * @brief Constructor called from ADIOS factory class DeclareIO function.
@@ -412,7 +416,15 @@ public:
      * constant for the entire lifetime of the output and may optimize metadata
      * handling.
      */
-    void LockDefinitions() noexcept;
+    void LockWriterDefinitions() noexcept;
+
+    /**
+     * @brief Promise that the reader data selections of are fixed and
+     * will not change in future timesteps. This information, provided
+     * before the EndStep() representing a fixed read pattern, may be
+     * utilized by the input Engine to optimize data flow.
+     */
+    void LockReaderSelections() noexcept;
 
 private:
     /** true: exist in config file (XML) */

@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
             {
                 // Promise that we are not going to change the variable sizes
                 // nor add new variables
-                inIO.LockDefinitions();
+                inIO.LockReaderSelections();
 
                 unsigned int gndx = vTin.Shape()[0];
                 unsigned int gndy = vTin.Shape()[1];
