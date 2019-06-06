@@ -13,11 +13,6 @@
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 #include <pthread.h>
 
 #include "sst.h"
@@ -238,8 +233,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->Role = ReaderRole;
     Stream->mpiComm = comm;
 
-    MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
-    MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
+    SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
+    SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
@@ -1116,7 +1111,7 @@ extern void SstReleaseStep(SstStream Stream)
         pthread_mutex_unlock(&Stream->DataLock);
     }
 
-    MPI_Barrier(Stream->mpiComm);
+    SMPI_Barrier(Stream->mpiComm);
 
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = Timestep;
@@ -1174,8 +1169,8 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
         my_info.timeout_sec = timeout_sec;
         my_info.mode = mode;
-        MPI_Gather(&my_info, sizeof(my_info), MPI_BYTE, global_info,
-                   sizeof(my_info), MPI_BYTE, 0, Stream->mpiComm);
+        SMPI_Gather(&my_info, sizeof(my_info), MPI_BYTE, global_info,
+                    sizeof(my_info), MPI_BYTE, 0, Stream->mpiComm);
         if (Stream->Rank == 0)
         {
             long Biggest = -1;
@@ -1262,11 +1257,11 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                 /* force everyone to return failed */
                 NextTimestep = -3;
             }
-            MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            SMPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
         else
         {
-            MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            SMPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
         if (NextTimestep == -2)
         {
@@ -1615,7 +1610,7 @@ extern void SstReaderClose(SstStream Stream)
     struct timeval CloseTime, Diff;
     struct _ReaderCloseMsg Msg;
     /* wait until each reader rank has done SstReaderClose() */
-    MPI_Barrier(Stream->mpiComm);
+    SMPI_Barrier(Stream->mpiComm);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
     memset(&Msg, 0, sizeof(Msg));

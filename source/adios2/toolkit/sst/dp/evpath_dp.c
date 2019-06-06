@@ -249,7 +249,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
 
     pthread_mutex_init(&Stream->DataLock, NULL);
 
-    MPI_Comm_rank(comm, &Stream->Rank);
+    SMPI_Comm_rank(comm, &Stream->Rank);
 
     set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
                     "sockets");
@@ -528,7 +528,7 @@ static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
 
     memset(Stream, 0, sizeof(struct _Evpath_WS_Stream));
 
-    MPI_Comm_rank(comm, &Stream->Rank);
+    SMPI_Comm_rank(comm, &Stream->Rank);
 
     /*
      * save the CP_stream value of later use
@@ -590,7 +590,7 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
     EvpathReaderContactInfo *providedReaderInfo =
         (EvpathReaderContactInfo *)providedReaderInfo_v;
 
-    MPI_Comm_rank(comm, &Rank);
+    SMPI_Comm_rank(comm, &Rank);
     sprintf(EvpathContactString, "Writer Rank %d, test contact", Rank);
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */

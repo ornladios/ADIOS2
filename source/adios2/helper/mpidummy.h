@@ -10,34 +10,26 @@
 #ifndef ADIOS2_HELPER_MPIDUMMY_H_
 #define ADIOS2_HELPER_MPIDUMMY_H_
 
-#include <cstdint>
-#include <cstdio>
+#include "stdint.h"
+#include "stdio.h"
 
 #include "adios2/ADIOSConfig.h"
 
 // If MPI is available, use the types and constants from that implementation,
-// rather than our fake ones, though we stll provide the fake implementations
-// (in a separate namespace)
+// rather than our fake ones
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #else
 
-namespace adios2
-{
-namespace helper
-{
-namespace mpidummy
-{
-
-using MPI_Comm = int;
-using MPI_Status = std::uint64_t;
-using MPI_Request = std::uint64_t;
-using MPI_File = std::FILE *;
-using MPI_Info = int;
-using MPI_Datatype = int;
-using MPI_Offset = long int;
-using MPI_Fint = int;
-using MPI_Op = int;
+typedef int MPI_Comm;
+typedef uint64_t MPI_Status;
+typedef uint64_t MPI_Request;
+typedef FILE *MPI_File;
+typedef int MPI_Info;
+typedef int MPI_Datatype;
+typedef long int MPI_Offset;
+typedef int MPI_Fint;
+typedef int MPI_Op;
 
 #define MPI_SUCCESS 0
 #define MPI_ERR_BUFFER 1  /* Invalid buffer pointer */
@@ -88,22 +80,43 @@ using MPI_Op = int;
 #define MPI_ANY_SOURCE 0
 #define MPI_ANY_TAG 0
 
-#define MPI_SUM 0
-#define MPI_MAX 1
+#define MPI_MAX 0
+#define MPI_MIN 1
+#define MPI_SUM 2
+#define MPI_PROD 3
+#define MPI_LAND 4
+#define MPI_BAND 5
+#define MPI_LOR 6
+#define MPI_BOR 7
+#define MPI_LXOR 8
+#define MPI_BXOR 9
+#define MPI_MAXLOC 10
+#define MPI_MINLOC 11
+#define MPI_REPLACE 12
+#define MPI_NO_OP 13
 
 #define MPI_MAX_PROCESSOR_NAME 32
-}
-}
-}
 
 #endif
 
+// Use some preprocessor hackery to achieve two objectives:
+// - If we don't build with a real MPI, these functions below will go in the
+//   global namespace (as extern "C").
+// - If we do have a real MPI, we put these functions into the helper::mpidummy
+//   namespace so they can be used from the SMPI_* wrappers
+
+#ifdef ADIOS2_HAVE_MPI
 namespace adios2
 {
 namespace helper
 {
 namespace mpidummy
 {
+#else
+#ifdef __cplusplus
+extern "C" {
+#endif
+#endif
 
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
@@ -131,6 +144,9 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm);
+int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int *recvcounts, int *displs,
+                   MPI_Datatype recvtype, MPI_Comm comm);
 
 int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                 void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
@@ -173,8 +189,14 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
 int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 
+#ifdef ADIOS2_HAVE_MPI
 } // end namespace mpi
 } // end namespace helper
 } // end namespace adios
+#else
+#ifdef __cplusplus
+} // end extern "C"
+#endif
+#endif
 
 #endif /* ADIOS2_MPIDUMMY_H_ */

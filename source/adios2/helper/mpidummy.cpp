@@ -15,10 +15,12 @@
 
 #include <cinttypes>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <numeric>
 
 #include <chrono>
+#include <iostream>
 #include <string>
 
 // remove warnings on Windows
@@ -27,65 +29,92 @@
 #pragma warning(disable : 4477) // strcpy, sprintf
 #endif
 
+// Use some preprocessor hackery to achieve two objectives:
+// - If we don't build with a real MPI, these functions below will go in the
+//   global namespace (they're extern "C" in this case, anyway).
+// - If we do have a real MPI, we put these functions into the helper::mpidummy
+//   namespace so they can be used from the SMPI_* wrappers
+
+#ifdef ADIOS2_HAVE_MPI
 namespace adios2
 {
 namespace helper
 {
 namespace mpidummy
 {
+#define MPIDUMMY mpidummy
 
-int MPI_Init(int * /*argc*/, char *** /*argv*/) { return MPI_SUCCESS; }
+#else
 
-int MPI_Finalize() { return MPI_SUCCESS; }
+#define MPIDUMMY
+
+#endif
+
+static inline int CheckReturn(int ier)
+{
+    if (ier != MPI_SUCCESS)
+    {
+        std::cerr << "mpidummy: MPI function returned error code " << ier
+                  << ". Aborting!" << std::endl;
+        std::abort();
+    }
+    return ier;
+}
+
+#define RETURN_CHECK(ier) return CheckReturn(ier)
+
+int MPI_Init(int * /*argc*/, char *** /*argv*/) { RETURN_CHECK(MPI_SUCCESS); }
+
+int MPI_Finalize() { RETURN_CHECK(MPI_SUCCESS); }
 
 int MPI_Initialized(int *flag)
 {
     *flag = 1;
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Finalized(int *flag)
 {
     *flag = 0;
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Comm_split(MPI_Comm /*comm*/, int /*color*/, int /*key*/,
                    MPI_Comm * /*comm_out*/)
 {
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
-int MPI_Barrier(MPI_Comm /*comm*/) { return MPI_SUCCESS; }
+int MPI_Barrier(MPI_Comm /*comm*/) { RETURN_CHECK(MPI_SUCCESS); }
 
 int MPI_Bcast(void * /*buffer*/, int /*count*/, MPI_Datatype /*datatype*/,
               int /*root*/, MPI_Comm /*comm*/)
 {
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
     *newcomm = comm;
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Comm_rank(MPI_Comm /*comm*/, int *rank)
 {
     *rank = 0;
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Comm_size(MPI_Comm /*comm*/, int *size)
 {
     *size = 1;
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Comm_free(MPI_Comm *comm)
 {
     *comm = 0;
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 #ifndef ADIOS2_HAVE_MPI
@@ -101,32 +130,32 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     size_t nsent = 0, nrecv = 0;
     if (sendcnt > 0 && !sendbuf)
     {
-        return MPI_ERR_BUFFER;
+        RETURN_CHECK(MPI_ERR_BUFFER);
     }
     if (recvcnt > 0 && !recvbuf)
     {
-        return MPI_ERR_BUFFER;
+        RETURN_CHECK(MPI_ERR_BUFFER);
     }
     if (root != 0)
     {
-        return MPI_ERR_ROOT;
+        RETURN_CHECK(MPI_ERR_ROOT);
     }
     if (comm == MPI_COMM_NULL)
     {
-        return MPI_ERR_COMM;
+        RETURN_CHECK(MPI_ERR_COMM);
     }
 
-    ier = mpidummy::MPI_Type_size(sendtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
     {
-        return ier;
+        RETURN_CHECK(ier);
     }
     nsent = n * sendcnt;
 
-    ier = mpidummy::MPI_Type_size(recvtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(recvtype, &n);
     if (ier != MPI_SUCCESS)
     {
-        return ier;
+        RETURN_CHECK(ier);
     }
     nrecv = n * recvcnt;
 
@@ -140,7 +169,7 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         std::memcpy(recvbuf, sendbuf, nsent);
     }
 
-    return ier;
+    RETURN_CHECK(ier);
 }
 
 int MPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
@@ -151,20 +180,28 @@ int MPI_Gatherv(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     if (*recvcnts != sendcnt)
     {
         ier = MPI_ERR_COUNT;
-        return ier;
+        RETURN_CHECK(ier);
     }
 
-    ier = mpidummy::MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts,
+    ier = MPIDUMMY::MPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, *recvcnts,
                                recvtype, root, comm);
-    return ier;
+    RETURN_CHECK(ier);
 }
 
 int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm)
 {
-    return mpidummy::MPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
+    return MPIDUMMY::MPI_Gather(sendbuf, sendcount, sendtype, recvbuf,
                                 recvcount, recvtype, 0, comm);
+}
+
+int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int *recvcounts, int *displs,
+                   MPI_Datatype recvtype, MPI_Comm comm)
+{
+    return MPIDUMMY::MPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf,
+                                 recvcounts, displs, recvtype, 0, comm);
 }
 
 int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
@@ -176,32 +213,32 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     size_t nsent = 0, nrecv = 0;
     if (sendcnt > 0 && !sendbuf)
     {
-        return MPI_ERR_BUFFER;
+        RETURN_CHECK(MPI_ERR_BUFFER);
     }
     if (recvcnt > 0 && !recvbuf)
     {
-        return MPI_ERR_BUFFER;
+        RETURN_CHECK(MPI_ERR_BUFFER);
     }
     if (root != 0)
     {
-        return MPI_ERR_ROOT;
+        RETURN_CHECK(MPI_ERR_ROOT);
     }
     if (comm == MPI_COMM_NULL)
     {
-        return MPI_ERR_COMM;
+        RETURN_CHECK(MPI_ERR_COMM);
     }
 
-    ier = mpidummy::MPI_Type_size(sendtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
     {
-        return ier;
+        RETURN_CHECK(ier);
     }
     nsent = n * sendcnt;
 
-    ier = mpidummy::MPI_Type_size(recvtype, &n);
+    ier = MPIDUMMY::MPI_Type_size(recvtype, &n);
     if (ier != MPI_SUCCESS)
     {
-        return ier;
+        RETURN_CHECK(ier);
     }
     nrecv = n * recvcnt;
 
@@ -215,7 +252,7 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
         std::memcpy(recvbuf, sendbuf, nsent);
     }
 
-    return ier;
+    RETURN_CHECK(ier);
 }
 
 int MPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
@@ -230,18 +267,18 @@ int MPI_Scatterv(const void *sendbuf, const int *sendcnts, const int *displs,
 
     if (ier == MPI_SUCCESS)
     {
-        ier = mpidummy::MPI_Scatter(sendbuf, *sendcnts, sendtype, recvbuf,
+        ier = MPIDUMMY::MPI_Scatter(sendbuf, *sendcnts, sendtype, recvbuf,
                                     recvcnt, recvtype, root, comm);
     }
 
-    return ier;
+    RETURN_CHECK(ier);
 }
 
 int MPI_Recv(void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
              int /*source*/, int /*tag*/, MPI_Comm /*comm*/,
              MPI_Status * /*status*/)
 {
-    return 0;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Irecv(void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
@@ -249,23 +286,26 @@ int MPI_Irecv(void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
               MPI_Request * /*request*/)
 
 {
-    return 0;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Send(const void * /*sendbuffer*/, int /*count*/, MPI_Datatype /*type*/,
              int /*destination*/, int /*tag*/, MPI_Comm /*comm*/)
 {
-    return 0;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Isend(const void * /*recvbuffer*/, int /*count*/, MPI_Datatype /*type*/,
               int /*source*/, int /*tag*/, MPI_Comm /*comm*/,
               MPI_Request * /*request*/)
 {
-    return 0;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
-int MPI_Wait(MPI_Request * /*request*/, MPI_Status * /*status*/) { return 0; }
+int MPI_Wait(MPI_Request * /*request*/, MPI_Status * /*status*/)
+{
+    RETURN_CHECK(MPI_SUCCESS);
+}
 
 #ifndef ADIOS2_HAVE_MPI
 
@@ -292,7 +332,7 @@ int MPI_File_open(MPI_Comm /*comm*/, const char *filename, int amode,
     {
         return -1;
     }
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_File_close(MPI_File *fh) { return fclose(*fh); }
@@ -305,7 +345,7 @@ int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
     std::fseek(fh, curpos, SEEK_SET); // go back where we were
     *size = static_cast<MPI_Offset>(endpos);
     // printf("MPI_File_get_size: fh=%d, size=%lld\n", fh, *size);
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
@@ -322,7 +362,7 @@ int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
     *status = bytes_read;
     // printf("MPI_File_read: fh=%d, count=%d, typesize=%d, bytes read=%lld\n",
     // fh, count, datatype, *status);
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
@@ -333,7 +373,7 @@ int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
 int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)
 {
     *count = static_cast<int>(*status);
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 #endif
@@ -349,27 +389,27 @@ int MPI_Get_processor_name(char *name, int *resultlen)
 {
     std::sprintf(name, "0");
     *resultlen = 1;
-    return 0;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
     int ier, size_of_type;
-    ier = mpidummy::MPI_Type_size(datatype, &size_of_type);
+    ier = MPIDUMMY::MPI_Type_size(datatype, &size_of_type);
     if (ier != MPI_SUCCESS)
     {
-        return ier;
+        RETURN_CHECK(ier);
     }
 
     std::memcpy(recvbuf, sendbuf, count * static_cast<size_t>(size_of_type));
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
 int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-    return mpidummy::MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
+    return MPIDUMMY::MPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0, comm);
 }
 
 int MPI_Type_size(MPI_Datatype datatype, int *size)
@@ -381,6 +421,10 @@ int MPI_Type_size(MPI_Datatype datatype, int *size)
     else if (datatype == MPI_INT)
     {
         *size = sizeof(int);
+    }
+    else if (datatype == MPI_LONG)
+    {
+        *size = sizeof(long);
     }
     else if (datatype == MPI_UNSIGNED)
     {
@@ -396,11 +440,13 @@ int MPI_Type_size(MPI_Datatype datatype, int *size)
     }
     else
     {
-        return MPI_ERR_TYPE;
+        RETURN_CHECK(MPI_ERR_TYPE);
     }
-    return MPI_SUCCESS;
+    RETURN_CHECK(MPI_SUCCESS);
 }
 
+#ifdef ADIOS2_HAVE_MPI
 } // end namespace mpidummy
 } // end namespace helper
 } // end namespace adios2
+#endif
