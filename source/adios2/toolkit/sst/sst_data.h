@@ -10,6 +10,7 @@ struct _SstFullMetadata
     int WriterCohortSize;
     struct _SstData **WriterMetadata;
     void **DP_TimestepInfo;
+    void *FreeBlock;
 };
 
 struct _SstData

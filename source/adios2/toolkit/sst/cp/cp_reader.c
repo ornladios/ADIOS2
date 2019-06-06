@@ -187,6 +187,7 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream,
     pointers = (struct _CP_DP_PairInfo **)CP_consolidateDataToRankZero(
         Stream, &combined_init, Stream->CPInfo->PerRankReaderInfoFormat,
         ret_data_block);
+    free(cpInfo.ContactInfo);
     return (void **)pointers;
 }
 
@@ -357,6 +358,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
             Stream, NULL, Stream->CPInfo->CombinedWriterInfoFormat,
             &free_block);
     }
+
+    free(data_block);
 
     if (ReturnData->WriterCohortSize == -1)
     {
@@ -1086,6 +1089,19 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
     }
 }
 
+extern void SstReaderDefinitionLock(SstStream Stream, long EffectiveTimestep)
+{
+    long Timestep = Stream->ReaderTimestep;
+    struct _LockReaderDefinitionsMsg Msg;
+    Stream->ReaderDefinitionsLocked = 1;
+
+    memset(&Msg, 0, sizeof(Msg));
+    Msg.Timestep = EffectiveTimestep;
+
+    sendOneToEachWriterRank(Stream, Stream->CPInfo->LockReaderDefinitionsFormat,
+                            &Msg, &Msg.WSR_Stream);
+}
+
 extern void SstReleaseStep(SstStream Stream)
 {
     long Timestep = Stream->ReaderTimestep;
@@ -1134,12 +1150,6 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
     TSMetadataList Entry;
 
     TAU_START("Waiting on metadata per rank per timestep");
-
-    if (Stream->CurrentMetadata != NULL)
-    {
-        free(Stream->CurrentMetadata);
-        Stream->CurrentMetadata = NULL;
-    }
 
     if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
     {
@@ -1311,6 +1321,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         }
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
+        memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = Entry->MetadataMsg->CohortSize;
         Mdata->WriterMetadata =
             malloc(sizeof(Mdata->WriterMetadata[0]) * Mdata->WriterCohortSize);
@@ -1358,6 +1369,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     SstStatusValue ret;
 
     void *free_block;
+
     if (Stream->Rank == 0)
     {
         struct _TimestepMetadataDistributionMsg msg;
@@ -1508,7 +1520,6 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             Stream, NULL, Stream->CPInfo->CombinedWriterInfoFormat,
             &free_block);
     }
-
     ret = ReturnData->ReturnValue;
 
     if (ReturnData->ReturnValue != SstSuccess)
@@ -1539,6 +1550,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         }
         Stream->ReaderTimestep = MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
+        memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = MetadataMsg->CohortSize;
         Mdata->WriterMetadata =
             malloc(sizeof(Mdata->WriterMetadata[0]) * Mdata->WriterCohortSize);
@@ -1556,6 +1568,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             Mdata->DP_TimestepInfo = MetadataMsg->DP_TimestepInfo;
         }
         Stream->CurrentWorkingTimestep = MetadataMsg->Timestep;
+        Mdata->FreeBlock = free_block;
         Stream->CurrentMetadata = Mdata;
 
         CP_verbose(Stream, "SstAdvanceStep returning Success on timestep %d\n",
@@ -1572,6 +1585,14 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
 
     if (Stream->CurrentMetadata != NULL)
     {
+        if (Stream->CurrentMetadata->FreeBlock)
+        {
+            free(Stream->CurrentMetadata->FreeBlock);
+        }
+        if (Stream->CurrentMetadata->WriterMetadata)
+        {
+            free(Stream->CurrentMetadata->WriterMetadata);
+        }
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
     }
@@ -1606,6 +1627,10 @@ extern void SstReaderClose(SstStream Stream)
     CMsleep(Stream->CPInfo->cm, 1);
     if (Stream->CurrentMetadata != NULL)
     {
+        if (Stream->CurrentMetadata->FreeBlock)
+            free(Stream->CurrentMetadata->FreeBlock);
+        if (Stream->CurrentMetadata->WriterMetadata)
+            free(Stream->CurrentMetadata->WriterMetadata);
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
     }

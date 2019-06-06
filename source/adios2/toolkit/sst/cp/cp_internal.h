@@ -20,6 +20,7 @@ typedef struct _CP_GlobalInfo
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
     CMFormat ReleaseTimestepFormat;
+    CMFormat LockReaderDefinitionsFormat;
     CMFormat WriterCloseFormat;
     CMFormat ReaderCloseFormat;
     int CustomStructCount;
@@ -70,6 +71,7 @@ typedef struct _WS_ReaderInfo
     long StartingTimestep;
     long LastSentTimestep;
     int LastReleasedTimestep;
+    int ReaderDefinitionsLocked;
     long OldestUnreleasedTimestep;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
@@ -98,7 +100,6 @@ typedef struct _CPTimestepEntry
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
     int Expired;
-    int Pending;
     int PreciousTimestep;
     void **DP_TimestepInfo;
     int DPRegistered;
@@ -143,12 +144,14 @@ struct _SstStream
     /* WRITER-SIDE FIELDS */
     int WriterTimestep;
     int LastReleasedTimestep;
+    int ReaderDefinitionsLocked;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
     SstQueueFullPolicy QueueFullPolicy;
     int LastProvidedTimestep;
     int NewReaderPresent;
+    int WriterDefinitionsLocked;
 
     /* rendezvous condition */
     int FirstReaderCondition;
@@ -169,6 +172,8 @@ struct _SstStream
     FFSFormatList PreviousFormats;
     int ReleaseCount;
     struct _ReleaseRec *ReleaseList;
+    int LockDefnsCount;
+    struct _ReleaseRec *LockDefnsList;
     enum StreamStatus Status;
 
     /* READER-SIDE FIELDS */
@@ -362,6 +367,8 @@ typedef struct _ReturnMetadataInfo
     int ReleaseCount;
     ReleaseRecPtr ReleaseList;
     int ReaderCount;
+    ReleaseRecPtr LockDefnsList;
+    int LockDefnsCount;
     enum StreamStatus *ReaderStatus;
 } * ReturnMetadataInfo;
 
@@ -371,6 +378,16 @@ typedef struct _ReturnMetadataInfo
  * One is sent to each writer rank.
  */
 struct _ReleaseTimestepMsg
+{
+    void *WSR_Stream;
+    int Timestep;
+};
+
+/*
+ * The LockReaderDefinitions message informs the writers that this reader has
+ * fixed its read schedule. One is sent to each writer rank.
+ */
+struct _LockReaderDefinitionsMsg
 {
     void *WSR_Stream;
     int Timestep;
@@ -448,6 +465,9 @@ extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn,
 extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       void *msg_v, void *client_data,
                                       attr_list attrs);
+extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
+                                            void *Msg_v, void *client_data,
+                                            attr_list attrs);
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_data, attr_list attrs);
 extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
