@@ -2613,7 +2613,6 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
     for (int step = 0; step < nsteps; step++)
     {
         const size_t absstep = itStep->first;
-        std::cout << "\n  check step " << absstep - 1;
         Dims d = variable->Shape(absstep - 1);
         if (d.empty())
         {
