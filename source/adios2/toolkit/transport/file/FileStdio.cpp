@@ -49,8 +49,8 @@ void FileStdio::Open(const std::string &name, const Mode openMode)
         m_File = std::fopen(name.c_str(), "wb");
         break;
     case (Mode::Append):
-        // m_File = std::fopen(name.c_str(), "rwb");
-        m_File = std::fopen(name.c_str(), "a+b");
+         m_File = std::fopen(name.c_str(), "rwb");
+        //m_File = std::fopen(name.c_str(), "a+b");
         break;
     case (Mode::Read):
         m_File = std::fopen(name.c_str(), "rb");

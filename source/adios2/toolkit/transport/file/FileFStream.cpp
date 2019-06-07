@@ -42,8 +42,7 @@ void FileFStream::Open(const std::string &name, const Mode openMode)
         ProfilerStart("open");
         // m_FileStream.open(name, std::fstream::in | std::fstream::out |
         //                            std::fstream::binary);
-        m_FileStream.open(name, std::fstream::in | std::fstream::out |
-                                    std::fstream::app | std::fstream::binary);
+        m_FileStream.open(name, std::fstream::in | std::fstream::out | std::fstream::binary);
         ProfilerStop("open");
         break;
 

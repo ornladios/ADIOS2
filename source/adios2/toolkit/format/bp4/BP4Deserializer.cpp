@@ -104,7 +104,7 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
     position = 0;
     m_Minifooter.VersionTag.assign(&buffer[position], 28);
 
-    position += 48;
+    position += 64;
     while (position < bufferSize)
     {
         std::vector<uint64_t> ptrs;
