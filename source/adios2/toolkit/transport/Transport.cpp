@@ -20,8 +20,6 @@ Transport::Transport(const std::string type, const std::string library,
                      MPI_Comm mpiComm, const bool debugMode)
 : m_Type(type), m_Library(library), m_MPIComm(mpiComm), m_DebugMode(debugMode)
 {
-    SMPI_Comm_rank(m_MPIComm, &m_RankMPI);
-    SMPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
 void Transport::IWrite(const char *buffer, size_t size, Status &status,

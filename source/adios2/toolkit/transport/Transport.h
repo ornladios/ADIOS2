@@ -34,8 +34,6 @@ public:
     Mode m_OpenMode = Mode::Undefined; ///< at Open from ADIOSTypes.h
     bool m_IsOpen = false; ///< true: open for communication, false: unreachable
     MPI_Comm m_MPIComm;    ///< current MPI communicator
-    int m_RankMPI = 0;     ///< from MPI_Comm_Rank
-    int m_SizeMPI = 1;     ///< from MPI_Comm_Size
     profiling::IOChrono m_Profiler; ///< profiles Open, Write/Read, Close
 
     struct Status
