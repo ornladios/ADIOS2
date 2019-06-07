@@ -2584,7 +2584,7 @@ size_t relative_to_absolute_step(core::Variable<T> *variable,
 {
     const std::map<size_t, std::vector<size_t>> &indices =
         variable->m_AvailableStepBlockIndexOffsets;
-    auto itStep = std::next(indices.begin(), 0);
+    auto itStep = indices.begin();
     size_t absstep = itStep->first - 1;
 
     for (int step = 0; step < relstep; step++)
@@ -2608,7 +2608,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
     // is not supported by a simple API function
     const std::map<size_t, std::vector<size_t>> &indices =
         variable->m_AvailableStepBlockIndexOffsets;
-    auto itStep = std::next(indices.begin(), 0);
+    auto itStep = indices.begin();
 
     for (int step = 0; step < nsteps; step++)
     {
