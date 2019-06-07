@@ -1874,6 +1874,7 @@ extern void SstInternalProvideTimestep(
     *Msg = ReturnData->Msg;
     Msg->CohortSize = Stream->CohortSize;
     Msg->Timestep = Timestep;
+    TAU_STOP("Metadata Consolidation time in EndStep()");
 
     /*
      * lock this Stream's data and queue the timestep
@@ -1892,6 +1893,7 @@ extern void SstInternalProvideTimestep(
         ProcessReleaseList(Stream, ReturnData);
     }
 
+    TAU_START("provide timestep operations");
     if (ReturnData->DiscardThisTimestep)
     {
         /* Data was actually discarded, but we want to send a message to each
@@ -1915,7 +1917,6 @@ extern void SstInternalProvideTimestep(
         Entry->ReferenceCount = 0;
         QueueMaintenance(Stream);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
-        TAU_STOP("provide timestep operations");
     }
     else
     {
@@ -1930,7 +1931,6 @@ extern void SstInternalProvideTimestep(
         SubRefTimestep(Stream, Entry->Timestep, 0);
         QueueMaintenance(Stream);
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
-        TAU_STOP("provide timestep operations");
     }
     while (PendingReaderCount--)
     {
@@ -1962,6 +1962,7 @@ extern void SstInternalProvideTimestep(
             }
         }
     }
+    TAU_STOP("provide timestep operations");
 }
 
 extern void SstWriterDefinitionLock(SstStream Stream, long EffectiveTimestep)
