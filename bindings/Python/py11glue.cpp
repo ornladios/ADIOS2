@@ -11,6 +11,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <sstream>
 #include <stdexcept>
 
 #include <adios2.h>
@@ -118,6 +119,11 @@ PYBIND11_MODULE(adios2, m)
     m.attr("LocalValueDim") = adios2::LocalValueDim;
     m.attr("GlobalValue") = false;
     m.attr("LocalValue") = true;
+
+    std::ostringstream versionss;
+    versionss << ADIOS2_VERSION_MAJOR << "." << ADIOS2_VERSION_MINOR << "."
+              << ADIOS2_VERSION_PATCH;
+    m.attr("__version__") = versionss.str();
 
     // enum classes
     pybind11::enum_<adios2::Mode>(m, "Mode")
