@@ -21,11 +21,11 @@
 
 // compress
 #ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZip2.h"
+#include "adios2/operator/compress/CompressBZIP2.h"
 #endif
 
 #ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZfp.h"
+#include "adios2/operator/compress/CompressZFP.h"
 #endif
 
 #ifdef ADIOS2_HAVE_SZ
@@ -34,6 +34,10 @@
 
 #ifdef ADIOS2_HAVE_MGARD
 #include "adios2/operator/compress/CompressMGARD.h"
+#endif
+
+#ifdef ADIOS2_HAVE_BZIP2
+#include "adios2/operator/compress/CompressBZIP2.h"
 #endif
 
 // callbacks
@@ -184,7 +188,7 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
 #ifdef ADIOS2_HAVE_BZIP2
         auto itPair = m_Operators.emplace(
             name,
-            std::make_shared<compress::CompressBZip2>(parameters, m_DebugMode));
+            std::make_shared<compress::CompressBZIP2>(parameters, m_DebugMode));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(
@@ -197,7 +201,7 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
 #ifdef ADIOS2_HAVE_ZFP
         auto itPair = m_Operators.emplace(
             name,
-            std::make_shared<compress::CompressZfp>(parameters, m_DebugMode));
+            std::make_shared<compress::CompressZFP>(parameters, m_DebugMode));
         operatorPtr = itPair.first->second;
 #else
         throw std::invalid_argument(

@@ -105,10 +105,11 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
+adios_option(BZIP2     "Enable support for BZIP2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
 adios_option(MGARD     "Enable support for MGARD transforms" AUTO)
+adios_option(PNG       "Enable support for PNG transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
 adios_option(SSC       "Enable support for SSC" AUTO)
@@ -133,7 +134,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-    BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
+    BZIP2 ZFP SZ MGARD PNG MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(

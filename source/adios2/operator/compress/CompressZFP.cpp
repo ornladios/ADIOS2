@@ -2,13 +2,13 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * CompressZfp.cpp
+ * CompressZFP.cpp
  *
  *  Created on: Jul 25, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "CompressZfp.h"
+#include "CompressZFP.h"
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -19,12 +19,12 @@ namespace core
 namespace compress
 {
 
-CompressZfp::CompressZfp(const Params &parameters, const bool debugMode)
+CompressZFP::CompressZFP(const Params &parameters, const bool debugMode)
 : Operator("zfp", parameters, debugMode)
 {
 }
 
-size_t CompressZfp::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
+size_t CompressZFP::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
                                     const std::string type,
                                     const Params &parameters) const
 {
@@ -36,9 +36,10 @@ size_t CompressZfp::DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
     return maxSize;
 }
 
-size_t CompressZfp::Compress(const void *dataIn, const Dims &dimensions,
+size_t CompressZFP::Compress(const void *dataIn, const Dims &dimensions,
                              const size_t elementSize, const std::string type,
-                             void *bufferOut, const Params &parameters) const
+                             void *bufferOut, const Params &parameters,
+                             Params &info) const
 {
 
     zfp_field *field = GetZFPField(dataIn, dimensions, type);
@@ -65,7 +66,7 @@ size_t CompressZfp::Compress(const void *dataIn, const Dims &dimensions,
     return sizeOut;
 }
 
-size_t CompressZfp::Decompress(const void *bufferIn, const size_t sizeIn,
+size_t CompressZFP::Decompress(const void *bufferIn, const size_t sizeIn,
                                void *dataOut, const Dims &dimensions,
                                const std::string type,
                                const Params &parameters) const
@@ -115,7 +116,7 @@ size_t CompressZfp::Decompress(const void *bufferIn, const size_t sizeIn,
 }
 
 // PRIVATE
-zfp_type CompressZfp::GetZfpType(const std::string type) const
+zfp_type CompressZFP::GetZfpType(const std::string type) const
 {
     zfp_type zfpType = zfp_type_none;
 
@@ -152,7 +153,7 @@ zfp_type CompressZfp::GetZfpType(const std::string type) const
     return zfpType;
 }
 
-zfp_field *CompressZfp::GetZFPField(const void *data, const Dims &dimensions,
+zfp_field *CompressZFP::GetZFPField(const void *data, const Dims &dimensions,
                                     const std::string type) const
 {
     auto lf_CheckField = [](const zfp_field *field,
@@ -211,7 +212,7 @@ zfp_field *CompressZfp::GetZFPField(const void *data, const Dims &dimensions,
     return field;
 }
 
-zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
+zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions,
                                       const std::string type,
                                       const Params &parameters) const
 {
@@ -252,7 +253,7 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
 
     if (hasAccuracy)
     {
-        const double accuracy = helper::StringToDouble(
+        const double accuracy = helper::StringTo<double>(
             itAccuracy->second, m_DebugMode,
             "setting Tolerance in call to CompressZfp\n");
 
@@ -261,8 +262,8 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
     else if (hasRate)
     {
         const double rate =
-            helper::StringToDouble(itRate->second, m_DebugMode,
-                                   "setting Rate in call to CompressZfp\n");
+            helper::StringTo<double>(itRate->second, m_DebugMode,
+                                     "setting Rate in call to CompressZfp\n");
         // TODO support last argument write random access?
         zfp_stream_set_rate(stream, rate, GetZfpType(type),
                             static_cast<unsigned int>(dimensions.size()), 0);
@@ -270,8 +271,9 @@ zfp_stream *CompressZfp::GetZFPStream(const Dims &dimensions,
     else if (hasPrecision)
     {
         const unsigned int precision =
-            helper::StringToUInt(itPrecision->second, m_DebugMode,
-                                 "setting Precision in call to CompressZfp\n");
+            static_cast<unsigned int>(helper::StringTo<uint32_t>(
+                itPrecision->second, m_DebugMode,
+                "setting Precision in call to CompressZfp\n"));
         zfp_stream_set_precision(stream, precision);
     }
 

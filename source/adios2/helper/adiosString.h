@@ -107,29 +107,11 @@ std::string GetParameter(const std::string key, const adios2::Params &params,
  */
 void SetParameterValueInt(const std::string key, const Params &parameters,
                           int &value, const bool debugMode,
-                          const std::string hint);
+                          const std::string &hint);
 
-/**
- * function that cast a string to a double verifying validity of the cast with
- * exceptions in debugMode
- * @param value string to be casted
- * @param debugMode check for string conversion
- * @param hint passed for extra debugging info if exception is thrown
- * @return value as a double
- */
-double StringToDouble(const std::string value, const bool debugMode,
-                      const std::string hint);
-
-/**
- * function that cast a string to unsigned int verifying validity of the cast
- * with exceptions in debugMode
- * @param value string to be casted
- * @param debugMode check for string conversion
- * @param hint passed for extra debugging info if exception is thrown
- * @return value as unsigned int
- */
-unsigned int StringToUInt(const std::string value, const bool debugMode,
-                          const std::string hint);
+template <class T>
+void SetParameterValue(const std::string key, const Params &parameters,
+                       T &value, const bool debugMode, const std::string &hint);
 
 /**
  * Returns a single string with dimension values
@@ -149,6 +131,19 @@ std::string DimsToString(const Dims &dimensions);
  */
 std::string GlobalName(const std::string &localName, const std::string &prefix,
                        const std::string separator) noexcept;
+
+/**
+ * function that cast a string to a fixed width type verifying validity of the
+ * cast with exceptions in debugMode. ONly int32_t, uint32_t, int64_t, uint64_t,
+ * float, double are supported
+ * @param input to be converted
+ * @param debugMode check for string conversion
+ * @param hint passed for extra debugging info if exception is thrown
+ * @return cast input string to output value of type T
+ */
+template <class T>
+T StringTo(const std::string &input, const bool debugMode,
+           const std::string &hint);
 
 } // end namespace helper
 } // end namespace adios2

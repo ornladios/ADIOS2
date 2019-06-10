@@ -14,13 +14,13 @@
 #include "DataManSerializer.h"
 
 #ifdef ADIOS2_HAVE_ZFP
-#include "adios2/operator/compress/CompressZfp.h"
+#include "adios2/operator/compress/CompressZFP.h"
 #endif
 #ifdef ADIOS2_HAVE_SZ
 #include "adios2/operator/compress/CompressSZ.h"
 #endif
 #ifdef ADIOS2_HAVE_BZIP2
-#include "adios2/operator/compress/CompressBZip2.h"
+#include "adios2/operator/compress/CompressBZIP2.h"
 #endif
 
 #include "adios2/helper/adiosFunctions.h"
@@ -251,15 +251,16 @@ bool DataManSerializer::PutZfp(nlohmann::json &metaj, size_t &datasize,
             p[key] = i.second;
         }
     }
-    core::compress::CompressZfp compressor(p, false);
+    core::compress::CompressZFP compressor(p, false);
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
     try
     {
+        Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetType<T>(),
-                                       m_CompressBuffer.data(), p);
+                                       m_CompressBuffer.data(), p, info);
         return true;
     }
     catch (std::exception &e)
@@ -298,9 +299,10 @@ bool DataManSerializer::PutSz(nlohmann::json &metaj, size_t &datasize,
     core::compress::CompressSZ compressor(p, false);
     try
     {
+        Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetType<T>(),
-                                       m_CompressBuffer.data(), p);
+                                       m_CompressBuffer.data(), p, info);
         return true;
     }
     catch (std::exception &e)
@@ -337,12 +339,13 @@ bool DataManSerializer::PutBZip2(nlohmann::json &metaj, size_t &datasize,
     m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(),
                                              sizeof(T),
                                              std::multiplies<size_t>()));
-    core::compress::CompressBZip2 compressor(p, false);
+    core::compress::CompressBZIP2 compressor(p, false);
     try
     {
+        Params info;
         datasize = compressor.Compress(inputData, varCount, sizeof(T),
                                        helper::GetType<T>(),
-                                       m_CompressBuffer.data(), p);
+                                       m_CompressBuffer.data(), p, info);
         return true;
     }
     catch (std::exception &e)
@@ -426,7 +429,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
             if (j.compression == "zfp")
             {
 #ifdef ADIOS2_HAVE_ZFP
-                core::compress::CompressZfp decompressor(j.params, true);
+                core::compress::CompressZFP decompressor(j.params, true);
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());
@@ -491,7 +494,7 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
             else if (j.compression == "bzip2")
             {
 #ifdef ADIOS2_HAVE_BZIP2
-                core::compress::CompressBZip2 decompressor(j.params, true);
+                core::compress::CompressBZIP2 decompressor(j.params, true);
                 size_t datasize =
                     std::accumulate(j.count.begin(), j.count.end(), sizeof(T),
                                     std::multiplies<size_t>());
@@ -499,9 +502,10 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                 decompressBuffer.reserve(datasize);
                 try
                 {
+                    Params info;
                     decompressor.Decompress(j.buffer->data() + j.position,
                                             j.size, decompressBuffer.data(),
-                                            datasize);
+                                            datasize, info);
                     decompressed = true;
                 }
                 catch (std::exception &e)
@@ -514,8 +518,8 @@ int DataManSerializer::GetVar(T *outputData, const std::string &varName,
                 input_data = decompressBuffer.data();
 #else
                 throw std::runtime_error(
-                    "Data received is compressed using BZip2. However, "
-                    "BZip2 library is not found locally and as a result it "
+                    "Data received is compressed using BZIP2. However, "
+                    "BZIP2 library is not found locally and as a result it "
                     "cannot be decompressed.");
                 return -103; // bzip2 library not found
 #endif

@@ -970,11 +970,11 @@ void BP4Serializer::PutCharacteristicOperation(
     std::vector<char> &buffer) noexcept
 {
     // TODO: we only take the first operation for now
-    const std::map<size_t, std::shared_ptr<BP4Operation>> bp4Operations =
-        SetBP4Operations<T>(blockInfo.Operations);
+    const std::map<size_t, std::shared_ptr<BPOperation>> bpOperations =
+        SetBPOperations<T>(blockInfo.Operations);
 
-    const size_t operationIndex = bp4Operations.begin()->first;
-    std::shared_ptr<BP4Operation> bp4Operation = bp4Operations.begin()->second;
+    const size_t operationIndex = bpOperations.begin()->first;
+    std::shared_ptr<BPOperation> bp4Operation = bpOperations.begin()->second;
 
     auto &operation = blockInfo.Operations[operationIndex];
 
@@ -1003,23 +1003,23 @@ void BP4Serializer::PutOperationPayloadInBuffer(
     const typename core::Variable<T>::Info &blockInfo)
 {
     // TODO: we only take the first operation for now
-    const std::map<size_t, std::shared_ptr<BP4Operation>> bp4Operations =
-        SetBP4Operations<T>(blockInfo.Operations);
+    const std::map<size_t, std::shared_ptr<BPOperation>> bpOperations =
+        SetBPOperations<T>(blockInfo.Operations);
 
-    const size_t operationIndex = bp4Operations.begin()->first;
-    const std::shared_ptr<BP4Operation> bp4Operation =
-        bp4Operations.begin()->second;
+    const size_t operationIndex = bpOperations.begin()->first;
+    const std::shared_ptr<BPOperation> bpOperation =
+        bpOperations.begin()->second;
 
-    bp4Operation->SetData(variable, blockInfo,
-                          blockInfo.Operations[operationIndex], m_Data);
+    bpOperation->SetData(variable, blockInfo,
+                         blockInfo.Operations[operationIndex], m_Data);
 
     // update metadata
     bool isFound = false;
     SerialElementIndex &variableIndex = GetSerialElementIndex(
         variable.m_Name, m_MetadataSet.VarsIndices, isFound);
-    bp4Operation->UpdateMetadata(variable, blockInfo,
-                                 blockInfo.Operations[operationIndex],
-                                 variableIndex.Buffer);
+    bpOperation->UpdateMetadata(variable, blockInfo,
+                                blockInfo.Operations[operationIndex],
+                                variableIndex.Buffer);
 }
 
 } // end namespace format

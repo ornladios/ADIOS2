@@ -16,9 +16,11 @@
 #include "adios2/ADIOSTypes.h"            //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
 
-#include "adios2/toolkit/format/bp4/operation/BP4MGARD.h"
-#include "adios2/toolkit/format/bp4/operation/BP4SZ.h"
-#include "adios2/toolkit/format/bp4/operation/BP4Zfp.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPBZIP2.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPMGARD.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPPNG.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPSZ.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPZFP.h"
 
 namespace adios2
 {
@@ -26,15 +28,18 @@ namespace format
 {
 
 const std::set<std::string> BP4Base::m_TransformTypes = {
-    {"unknown", "none", "identity", "sz", "zfp", "mgard"}};
+    {"unknown", "none", "identity", "bzip2", "sz", "zfp", "mgard", "png"}};
 
 const std::map<int, std::string> BP4Base::m_TransformTypesToNames = {
-    {transform_unknown, "unknown"},   {transform_none, "none"},
-    {transform_identity, "identity"}, {transform_sz, "sz"},
-    {transform_zfp, "zfp"},           {transform_mgard, "mgard"},
-    //{transform_mgard, "mgard"},
+    {transform_unknown, "unknown"},
+    {transform_none, "none"},
+    {transform_identity, "identity"},
+    {transform_sz, "sz"},
+    {transform_zfp, "zfp"},
+    {transform_mgard, "mgard"},
+    {transform_png, "png"},
+    {transform_bzip2, "bzip2"}
     // {transform_zlib, "zlib"},
-    //    {transform_bzip2, "bzip2"},
     //    {transform_szip, "szip"},
     //    {transform_isobar, "isobar"},
     //    {transform_aplod, "aplod"},
@@ -884,27 +889,32 @@ void BP4Base::InitParameterSubStreams(const std::string value)
     }
 }
 
-std::shared_ptr<BP4Operation>
-BP4Base::SetBP4Operation(const std::string type) const noexcept
+std::shared_ptr<BPOperation>
+BP4Base::SetBPOperation(const std::string type) const noexcept
 {
-    std::shared_ptr<BP4Operation> bp4Op;
+    std::shared_ptr<BPOperation> bpOp;
     if (type == "sz")
     {
-        bp4Op = std::make_shared<BP4SZ>();
+        bpOp = std::make_shared<BPSZ>();
     }
     else if (type == "zfp")
     {
-        bp4Op = std::make_shared<BP4Zfp>();
+        bpOp = std::make_shared<BPZFP>();
     }
     else if (type == "mgard")
     {
-        bp4Op = std::make_shared<BP4MGARD>();
+        bpOp = std::make_shared<BPMGARD>();
     }
     else if (type == "bzip2")
     {
-        // TODO
+        bpOp = std::make_shared<BPBZIP2>();
     }
-    return bp4Op;
+    else if (type == "png")
+    {
+        bpOp = std::make_shared<BPPNG>();
+    }
+
+    return bpOp;
 }
 
 // PRIVATE
@@ -945,8 +955,8 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
         const std::vector<char> &, size_t &, const BP4Base::DataTypes,         \
         const bool, const bool) const;                                         \
                                                                                \
-    template std::map<size_t, std::shared_ptr<BP4Operation>>                   \
-    BP4Base::SetBP4Operations<T>(                                              \
+    template std::map<size_t, std::shared_ptr<BPOperation>>                    \
+    BP4Base::SetBPOperations<T>(                                               \
         const std::vector<core::VariableBase::Operation> &) const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)

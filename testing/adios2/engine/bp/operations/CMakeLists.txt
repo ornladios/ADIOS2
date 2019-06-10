@@ -65,3 +65,14 @@ if(ADIOS2_HAVE_MGARD)
   gtest_add_tests(TARGET TestBPWriteReadMGARD ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 endif()
 
+if(ADIOS2_HAVE_BZIP2)
+  add_executable(TestBPWriteReadBZIP2 TestBPWriteReadBZIP2.cpp)
+  target_link_libraries(TestBPWriteReadBZIP2 adios2 gtest)
+  
+  if(ADIOS2_HAVE_MPI)
+    target_link_libraries(TestBPWriteReadBZIP2 MPI::MPI_C)
+  endif()
+  
+  gtest_add_tests(TARGET TestBPWriteReadBZIP2 ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+  gtest_add_tests(TARGET TestBPWriteReadBZIP2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+endif()
