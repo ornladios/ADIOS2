@@ -24,7 +24,7 @@ TEST(ADIOS2HelperString, ADIOS2HelperStringFNF)
                  std::ios_base::failure);
 }
 
-TEST(ADIOS2HelperString, ADIOS2HelperStringParameterMap)
+TEST(ADIOS2HelperString, ADIOS2HelperStringParameterMapFromVector)
 {
 
     const bool debugMode = true;
@@ -35,18 +35,50 @@ TEST(ADIOS2HelperString, ADIOS2HelperStringParameterMap)
                                                "param3=3"};
 
     adios2::Params parameters =
-        adios2::helper::BuildParametersMap(param_in, debugMode);
-
-    ASSERT_THROW(adios2::helper::BuildParametersMap(badparam_in, debugMode),
-                 std::invalid_argument);
-    ASSERT_THROW(adios2::helper::BuildParametersMap(emptyparam_in, debugMode),
-                 std::invalid_argument);
-    ASSERT_THROW(adios2::helper::BuildParametersMap(dupparam_in, debugMode),
-                 std::invalid_argument);
+        adios2::helper::BuildParametersMap(param_in, '=', debugMode);
 
     ASSERT_EQ(parameters.find("param1")->second, "1");
     ASSERT_EQ(parameters.find("param2")->second, "2");
     ASSERT_EQ(parameters.find("param3")->second, "3");
+
+    ASSERT_THROW(
+        adios2::helper::BuildParametersMap(badparam_in, '=', debugMode),
+        std::invalid_argument);
+    ASSERT_THROW(
+        adios2::helper::BuildParametersMap(emptyparam_in, '=', debugMode),
+        std::invalid_argument);
+    ASSERT_THROW(
+        adios2::helper::BuildParametersMap(dupparam_in, '=', debugMode),
+        std::invalid_argument);
+}
+
+TEST(ADIOS2HelperString, ADIOS2HelperStringParameterMapFromString)
+{
+
+    const bool debugMode = true;
+    const std::string badparam_in = "badparam";
+    const std::string emptyparam_in = "emptyparam=";
+    const std::string dupparam_in = "dupparam = 1 , dupparam=2";
+    const std::string param_in =
+        "param1=1, param2=2,                                       "
+        "                    param3=3";
+
+    adios2::Params parameters =
+        adios2::helper::BuildParametersMap(param_in, '=', ',', debugMode);
+
+    ASSERT_EQ(parameters.find("param1")->second, "1");
+    ASSERT_EQ(parameters.find("param2")->second, "2");
+    ASSERT_EQ(parameters.find("param3")->second, "3");
+
+    ASSERT_THROW(
+        adios2::helper::BuildParametersMap(badparam_in, '=', ',', debugMode),
+        std::invalid_argument);
+    ASSERT_THROW(
+        adios2::helper::BuildParametersMap(emptyparam_in, '=', ',', debugMode),
+        std::invalid_argument);
+    ASSERT_THROW(
+        adios2::helper::BuildParametersMap(dupparam_in, '=', ',', debugMode),
+        std::invalid_argument);
 }
 
 TEST(ADIOS2HelperString, ADIOS2HelperStringAddExtension)

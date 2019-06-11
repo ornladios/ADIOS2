@@ -49,7 +49,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         // Set engine parameters
         adios2_set_engine(ioH, "BPFile");
         adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
-        adios2_set_parameter(ioH, "Threads", "1");
+        adios2_set_parameters(ioH, "Threads=2, CollectiveMetadata = OFF");
 
         size_t length;
 
@@ -64,8 +64,18 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_get_parameter(NULL, &length, ioH, "Threads");
         threads = (char *)calloc(length + 1, sizeof(char));
         adios2_get_parameter(threads, &length, ioH, "Threads");
-        EXPECT_EQ(std::string(threads), "1");
+        EXPECT_EQ(std::string(threads), "2");
         free(threads);
+
+        char *collmd;
+        adios2_get_parameter(NULL, &length, ioH, "CollectiveMetadata");
+        collmd = (char *)calloc(length + 1, sizeof(char));
+        adios2_get_parameter(collmd, &length, ioH, "CollectiveMetadata");
+        EXPECT_EQ(std::string(collmd), "OFF");
+        free(collmd);
+
+        // set back the default to make sure writing/reading works
+        adios2_set_parameters(ioH, "Threads=1, CollectiveMetadata = ON");
 
         // Set transport and parameters
         size_t transportID;

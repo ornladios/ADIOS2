@@ -218,7 +218,7 @@ Params Reorganize::parseParams(const std::string &param_str)
         kvs.push_back(kv);
     }
 
-    return helper::BuildParametersMap(kvs, true);
+    return helper::BuildParametersMap(kvs, '=', true);
 }
 
 void Reorganize::ParseArguments()

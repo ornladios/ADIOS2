@@ -133,6 +133,12 @@ public:
     void SetParameters(const Params &parameters = Params()) noexcept;
 
     /**
+     * @brief Version that passes a single string to fill out many parameters.
+     * initializer string = "param1=value1 , param2 = value2"
+     */
+    void SetParameters(const std::string &parameters);
+
+    /**
      * @brief Sets a single parameter overwriting value if key exists;
      * @param key parameter key
      * @param value parameter value

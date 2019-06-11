@@ -47,6 +47,16 @@ contains
 
     end subroutine
 
+    subroutine adios2_set_parameters(io, parameters, ierr)
+        type(adios2_io), intent(in) :: io
+        character*(*), intent(in) :: parameters
+        integer, intent(out) :: ierr
+
+        call adios2_set_parameters_f2c(io%f2c, &
+                                       TRIM(ADJUSTL(parameters))//char(0), &
+                                       ierr)
+    end subroutine
+
     subroutine adios2_set_parameter(io, key, value, ierr)
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: key

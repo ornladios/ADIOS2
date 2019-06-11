@@ -89,6 +89,13 @@ void IO::SetParameters(const Params &parameters) noexcept
     }
 }
 
+void IO::SetParameters(const std::string &parameters)
+{
+    adios2::Params parameterMap =
+        adios2::helper::BuildParametersMap(parameters, '=', ',', false);
+    SetParameters(parameterMap);
+}
+
 void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
     TAU_SCOPED_TIMER("IO::other");

@@ -49,6 +49,12 @@ void IO::SetParameters(const Params &parameters)
     m_IO->SetParameters(parameters);
 }
 
+void IO::SetParameters(const std::string &parameters)
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::SetParameters");
+    m_IO->SetParameters(parameters);
+}
+
 Params IO::Parameters() const
 {
     helper::CheckForNullptr(m_IO, "in call to IO:::Parameters");

@@ -65,7 +65,19 @@
      call adios2_get_parameter(param_value, ioWrite, 'ProfileUnits', ierr)
      if( param_value /= "Microseconds") stop 'Failed adios2_get_parameter ProfileUnits'
 
+     call adios2_set_parameters(ioWrite, 'Threads=2, CollectiveMetadata = OFF', ierr)
+
+     call adios2_get_parameter(param_value, ioWrite, 'Threads', ierr)
+     if( param_value /= "2") stop 'Failed adios2_get_parameter Threads'
+
+     call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
+     if( param_value /= "OFF") stop 'Failed adios2_get_parameter CollectiveMetadata'
+
      deallocate(param_value)
+
+     ! set back the default to make sure writing/reading works
+     call adios2_set_parameters(ioWrite, 'Threads=1, CollectiveMetadata = ON', ierr)
+
      ! Defines a variable to be written in bp format
      call adios2_define_variable(variables(1), ioWrite, "var_I8", &
                                  adios2_type_integer1, 1, &

@@ -40,6 +40,14 @@ adios2_error adios2_in_config_file(adios2_bool *result, const adios2_io *io);
 adios2_error adios2_set_engine(adios2_io *io, const char *engine_type);
 
 /**
+ * @brief Set several parameters at once.
+ * @param io handler
+ * @param string parameters in the format  "param1=value1 , param2 = value2"
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_parameters(adios2_io *io, const char *parameters);
+
+/**
  * @brief Set a single parameter. Overwrites value if key exists
  * @param io handler
  * @param key parameter key
