@@ -555,8 +555,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       type(adios2_engine), intent(in) :: engine
       
       ! step_mode parameter:
-      !                      adios2_step_mode_next_available (read mode default)
-      !                      adios2_step_mode_last_available
+      !                      adios2_step_mode_read (read mode default)
       !                      adios2_step_mode_append (write mode default)
       integer, intent(in):: adios2_step_mode
       

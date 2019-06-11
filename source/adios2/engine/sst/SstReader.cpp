@@ -180,7 +180,6 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     TAU_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
-    SstStepMode StepMode;
     switch (Mode)
     {
     case adios2::StepMode::Append:
@@ -188,16 +187,12 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         throw std::invalid_argument(
             "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
             m_EndMessage);
-    case adios2::StepMode::NextAvailable:
-        StepMode = SstNextAvailable;
-        break;
-    case adios2::StepMode::LatestAvailable:
-        StepMode = SstLatestAvailable;
+    case adios2::StepMode::Read:
         break;
     }
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
-    result = SstAdvanceStep(m_Input, StepMode, timeout_sec);
+    result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;

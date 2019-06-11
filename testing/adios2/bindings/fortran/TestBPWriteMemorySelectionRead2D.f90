@@ -144,7 +144,7 @@ program TestBPWriteMemorySelectionRead2D
 
   do
 
-    call adios2_begin_step(bpReader, adios2_step_mode_next_available, 0., &
+    call adios2_begin_step(bpReader, adios2_step_mode_read, 0., &
                            step_status, ierr)
 
     if(step_status == adios2_step_status_end_of_stream) exit

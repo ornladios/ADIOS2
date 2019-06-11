@@ -139,8 +139,7 @@ PYBIND11_MODULE(adios2, m)
     pybind11::enum_<adios2::StepMode>(m, "StepMode")
         .value("Append", adios2::StepMode::Append)
         .value("Update", adios2::StepMode::Update)
-        .value("NextAvailable", adios2::StepMode::NextAvailable)
-        .value("LatestAvailable", adios2::StepMode::LatestAvailable)
+        .value("Read", adios2::StepMode::Read)
         .export_values();
 
     pybind11::enum_<adios2::StepStatus>(m, "StepStatus")

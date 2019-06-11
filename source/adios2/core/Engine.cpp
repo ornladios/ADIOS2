@@ -39,7 +39,7 @@ StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(StepMode::NextAvailable, -1.0);
+        return BeginStep(StepMode::Read, -1.0);
     }
     else
     {

@@ -1574,8 +1574,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     return ret;
 }
 
-extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
-                                     const float timeout_sec)
+extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
 {
 
     if (Stream->CurrentMetadata != NULL)
@@ -1592,6 +1591,11 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
         Stream->CurrentMetadata = NULL;
     }
 
+    SstStepMode mode = SstNextAvailable;
+    if (Stream->ConfigParams->AlwaysProvideLatestTimestep)
+    {
+        mode = SstLatestAvailable;
+    }
     if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
     {
         return SstAdvanceStepPeer(Stream, mode, timeout_sec);

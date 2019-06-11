@@ -157,7 +157,7 @@
      call adios2_open(bpReader, ioRead, "ftypes_local.bp", adios2_mode_read, ierr)
 
      do
-         call adios2_begin_step(bpReader, adios2_step_mode_next_available, 0.0, &
+         call adios2_begin_step(bpReader, adios2_step_mode_read, 0.0, &
                                 step_status, ierr)
          if (step_status == adios2_step_status_end_of_stream) exit
 

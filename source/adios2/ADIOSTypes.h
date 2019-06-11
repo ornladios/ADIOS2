@@ -88,8 +88,7 @@ enum class StepMode
 {
     Append,
     Update, // writer advance mode
-    NextAvailable,
-    LatestAvailable // reader advance mode
+    Read    // reader advance mode
 };
 
 enum class StepStatus

@@ -65,8 +65,7 @@ module adios2_parameters_mod
     ! Step Mode
     integer, parameter :: adios2_step_mode_append = 0
     integer, parameter :: adios2_step_mode_update = 1
-    integer, parameter :: adios2_step_mode_next_available = 2
-    integer, parameter :: adios2_step_mode_latest_available = 3
+    integer, parameter :: adios2_step_mode_read = 2
 
     ! Step Status
     integer, parameter :: adios2_step_status_other_error = -1

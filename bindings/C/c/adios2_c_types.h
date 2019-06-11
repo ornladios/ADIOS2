@@ -117,8 +117,7 @@ typedef enum
 {
     adios2_step_mode_append = 0,
     adios2_step_mode_update = 1,
-    adios2_step_mode_next_available = 2,
-    adios2_step_mode_latest_available = 3
+    adios2_step_mode_read = 2,
 } adios2_step_mode;
 
 typedef enum

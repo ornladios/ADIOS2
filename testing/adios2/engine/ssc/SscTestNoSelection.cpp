@@ -211,8 +211,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     size_t i;
     for (i = 0; i < steps; ++i)
     {
-        adios2::StepStatus status =
-            dataManReader.BeginStep(StepMode::NextAvailable, 5);
+        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
 
         if (status == adios2::StepStatus::OK)
         {

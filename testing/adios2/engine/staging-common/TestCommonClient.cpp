@@ -100,6 +100,10 @@ TEST_F(SstReadTest, ADIOS2SstRead)
     // Create the Engine
     io.SetEngine(engine);
     io.SetParameters(engineParams);
+    if (Latest)
+    {
+        io.SetParameters({{"AlwaysProvideLatestTimestep", "true"}});
+    }
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
@@ -117,13 +121,13 @@ TEST_F(SstReadTest, ADIOS2SstRead)
                                                          // something
         if (NonBlockingBeginStep)
         {
-            Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
+            Status = engine.BeginStep(adios2::StepMode::Read, 0.0);
 
             while (Status == adios2::StepStatus::NotReady)
             {
                 BeginStepFailedPolls++;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
+                Status = engine.BeginStep(adios2::StepMode::Read, 0.0);
             }
         }
         else if (Latest)
@@ -135,8 +139,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             }
             /* would like to do blocking, but API is inconvenient, so specify an
              * hour timeout */
-            Status =
-                engine.BeginStep(adios2::StepMode::LatestAvailable, 60 * 60.0);
+            Status = engine.BeginStep(adios2::StepMode::Read, 60 * 60.0);
         }
         else
         {

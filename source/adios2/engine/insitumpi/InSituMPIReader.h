@@ -45,7 +45,7 @@ public:
                     MPI_Comm mpiComm);
 
     ~InSituMPIReader();
-    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
     size_t CurrentStep() const final;

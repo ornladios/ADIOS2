@@ -120,10 +120,8 @@ std::string ToString(StepMode value)
         return "StepMode::Append";
     case StepMode::Update:
         return "StepMode::Update";
-    case StepMode::NextAvailable:
-        return "StepMode::NextAvailable";
-    case StepMode::LatestAvailable:
-        return "StepMode::LatestAvailable";
+    case StepMode::Read:
+        return "StepMode::Read";
     default:
         return "ToString: Unknown StepMode";
     }
