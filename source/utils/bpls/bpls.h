@@ -95,6 +95,9 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                  int blockid);
 
 template <class T>
+size_t relative_to_absolute_step(core::Variable<T> *variable,
+                                 const size_t relstep);
+template <class T>
 Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                                 core::Variable<T> *variable);
 template <class T>
