@@ -150,15 +150,10 @@ void DataManWriter::MetadataThread(const std::string &address)
     while (m_Listening)
     {
         auto request = tpm.ReceiveRequest();
-        if (request == nullptr)
+        if (request && request->size() > 0)
         {
-            continue;
-        }
-        if (request->size() >= 0)
-        {
-            m_AggregatedMetadataMutex.lock();
+            std::lock_guard<std::mutex> lck(m_AggregatedMetadataMutex);
             tpm.SendReply(m_AggregatedMetadata);
-            m_AggregatedMetadataMutex.unlock();
         }
     }
 }
