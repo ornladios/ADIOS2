@@ -91,7 +91,7 @@
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
      do i = 1, 3
-         call adios2_begin_step(bpWriter, adios2_step_mode_append, 0.0, &
+         call adios2_begin_step(bpWriter, adios2_step_mode_append, -1.0, &
                                step_status, ierr)
          ! Put array contents to bp buffer, based on var1 metadata
          if (irank == 0 .and. i == 1) then
