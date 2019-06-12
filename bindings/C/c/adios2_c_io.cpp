@@ -55,6 +55,22 @@ adios2_error adios2_set_engine(adios2_io *io, const char *engine_type)
     }
 }
 
+adios2_error adios2_set_parameters(adios2_io *io, const char *parameters)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_set_parameters");
+        reinterpret_cast<adios2::core::IO *>(io)->SetParameters(parameters);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_parameters"));
+    }
+}
+
 adios2_error adios2_set_parameter(adios2_io *io, const char *key,
                                   const char *value)
 {
@@ -99,6 +115,22 @@ adios2_error adios2_get_parameter(char *value, size_t *size,
     {
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_get_parameter"));
+    }
+}
+
+adios2_error adios2_clear_parameters(adios2_io *io)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_clear_parameters");
+        reinterpret_cast<adios2::core::IO *>(io)->ClearParameters();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_clear_parameters"));
     }
 }
 
