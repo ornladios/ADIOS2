@@ -72,9 +72,11 @@ endif()
 
 
 if(CMAKE_BUILD_TYPE MATCHES "Release" AND NOT MSVC)
-  set(CMAKE_CXXFLAGS "-g -O3 -march-native -ffast-math -Wfatal-errors")
-elseif(NOT MSVC)
-  set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O2 -Wfatal-errors -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS "-g -O3 -march-native -ffast-math -Wfatal-errors")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang" OR
+       "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
+       "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O0 -Wfatal-errors -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
 endif()
 
 
