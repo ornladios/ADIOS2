@@ -81,8 +81,6 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 void IO::SetParameters(const Params &parameters) noexcept
 {
     TAU_SCOPED_TIMER("IO::other");
-    m_Parameters.clear();
-
     for (const auto &parameter : parameters)
     {
         m_Parameters[parameter.first] = parameter.second;
@@ -91,6 +89,7 @@ void IO::SetParameters(const Params &parameters) noexcept
 
 void IO::SetParameters(const std::string &parameters)
 {
+    TAU_SCOPED_TIMER("IO::other");
     adios2::Params parameterMap =
         adios2::helper::BuildParametersMap(parameters, '=', ',', false);
     SetParameters(parameterMap);
@@ -103,6 +102,12 @@ void IO::SetParameter(const std::string key, const std::string value) noexcept
 }
 
 Params &IO::GetParameters() noexcept { return m_Parameters; }
+
+void IO::ClearParameters() noexcept
+{
+    TAU_SCOPED_TIMER("IO::other");
+    m_Parameters.clear();
+}
 
 size_t IO::AddTransport(const std::string type, const Params &parameters)
 {

@@ -74,6 +74,13 @@ adios2_error adios2_get_parameter(char *value, size_t *size,
                                   const adios2_io *io, const char *key);
 
 /**
+ * @brief Clear all parameters.
+ * @param io handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_clear_parameters(adios2_io *io);
+
+/**
  * @brief Add a transport to current io handler. Must be supported by current
  * engine type.
  * @param transport_index handler used for setting transport parameters or at

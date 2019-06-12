@@ -58,6 +58,32 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        // Test setting parameters
+        {
+            io.SetParameter("ProfileUnits", "Microseconds");
+            io.SetParameters("Threads=2, CollectiveMetadata = OFF");
+            adios2::Params parameters = io.Parameters();
+
+            auto ProfileUnits = parameters.find("ProfileUnits");
+            EXPECT_NE(ProfileUnits, parameters.end());
+            EXPECT_EQ(ProfileUnits->second, "Microseconds");
+
+            auto Threads = parameters.find("Threads");
+            EXPECT_NE(Threads, parameters.end());
+            EXPECT_EQ(Threads->second, "2");
+
+            auto CollectiveMetadata = parameters.find("CollectiveMetadata");
+            EXPECT_NE(CollectiveMetadata, parameters.end());
+            EXPECT_EQ(CollectiveMetadata->second, "OFF");
+
+            io.ClearParameters();
+
+            // should not find parameters anymore
+            parameters = io.Parameters();
+            CollectiveMetadata = parameters.find("CollectiveMetadata");
+            EXPECT_EQ(CollectiveMetadata, parameters.end());
+        }
+
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
         // before Write().

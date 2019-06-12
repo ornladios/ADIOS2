@@ -85,7 +85,12 @@ contains
             call adios2_get_parameter_f2c(value, io%f2c, &
                                           TRIM(ADJUSTL(key))//char(0), ierr)
         end if
+    end subroutine
 
+    subroutine adios2_clear_parameters(io, ierr)
+        type(adios2_io), intent(in) :: io
+        integer, intent(out) :: ierr
+        call adios2_clear_parameters_f2c(io%f2c, ierr)
     end subroutine
 
     subroutine adios2_add_transport(transport_index, io, type, ierr)

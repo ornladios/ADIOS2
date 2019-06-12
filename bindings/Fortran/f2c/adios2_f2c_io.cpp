@@ -63,6 +63,12 @@ void FC_GLOBAL(adios2_get_parameter_length_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_clear_parameters_f2c,
+               ADIOS2_CLEAR_PARAMETERS_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_clear_parameters(*io));
+}
+
 void FC_GLOBAL(adios2_add_transport_f2c,
                ADIOS2_ADD_TRANSPORT_F2C)(int *transport_index, adios2_io **io,
                                          const char *transport_type, int *ierr)

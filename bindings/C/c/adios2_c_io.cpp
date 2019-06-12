@@ -118,6 +118,22 @@ adios2_error adios2_get_parameter(char *value, size_t *size,
     }
 }
 
+adios2_error adios2_clear_parameters(adios2_io *io)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_clear_parameters");
+        reinterpret_cast<adios2::core::IO *>(io)->ClearParameters();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_clear_parameters"));
+    }
+}
+
 adios2_error adios2_add_transport(size_t *transport_index, adios2_io *io,
                                   const char *type)
 {

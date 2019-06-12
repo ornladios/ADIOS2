@@ -55,6 +55,12 @@ void IO::SetParameters(const std::string &parameters)
     m_IO->SetParameters(parameters);
 }
 
+void IO::ClearParameters()
+{
+    helper::CheckForNullptr(m_IO, "in call to IO::ClearParameters");
+    m_IO->ClearParameters();
+}
+
 Params IO::Parameters() const
 {
     helper::CheckForNullptr(m_IO, "in call to IO:::Parameters");

@@ -73,10 +73,13 @@
      call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
      if( param_value /= "OFF") stop 'Failed adios2_get_parameter CollectiveMetadata'
 
+     ! set back the default to make sure writing/reading test works
+     call adios2_clear_parameters(ioWrite, ierr)
+     call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
+     if( param_value /= "") stop 'Still Could retrieve parameter CollectiveMetadata after clearing all parameters'
+
      deallocate(param_value)
 
-     ! set back the default to make sure writing/reading works
-     call adios2_set_parameters(ioWrite, 'Threads=1, CollectiveMetadata = ON', ierr)
 
      ! Defines a variable to be written in bp format
      call adios2_define_variable(variables(1), ioWrite, "var_I8", &

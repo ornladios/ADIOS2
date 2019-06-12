@@ -75,7 +75,9 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         free(collmd);
 
         // set back the default to make sure writing/reading works
-        adios2_set_parameters(ioH, "Threads=1, CollectiveMetadata = ON");
+        adios2_clear_parameters(ioH);
+        adios2_get_parameter(NULL, &length, ioH, "CollectiveMetadata");
+        EXPECT_EQ(length, 0);
 
         // Set transport and parameters
         size_t transportID;

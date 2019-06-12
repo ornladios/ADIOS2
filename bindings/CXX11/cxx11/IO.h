@@ -98,6 +98,13 @@ public:
     void SetParameters(const std::string &parameters);
 
     /**
+     * @brief Remove all existing parameters.
+     * Replaces any existing parameter.
+     * initializer string = "param1=value1 , param2 = value2"
+     */
+    void ClearParameters();
+
+    /**
      * Return current parameters set from either SetParameters/SetParameter
      * functions or from config XML for currrent IO object
      * @return string key/value map of current parameters (not modifiable)
