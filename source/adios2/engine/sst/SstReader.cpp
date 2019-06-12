@@ -287,7 +287,7 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 void SstReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (m_IO.m_ReaderSelectionsLocked && !m_DefinitionsNotified)
+    if (m_ReaderSelectionsLocked && !m_DefinitionsNotified)
     {
         SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));
         m_DefinitionsNotified = true;

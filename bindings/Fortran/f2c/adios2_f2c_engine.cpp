@@ -61,6 +61,20 @@ void FC_GLOBAL(adios2_steps_f2c, ADIOS2_STEPS_F2C)(int64_t *steps,
     }
 }
 
+void FC_GLOBAL(adios2_lock_writer_definitions_f2c,
+               ADIOS2_LOCK_WRITER_DEFINITIONS_F2C)(adios2_engine **engine,
+                                                   int *ierr)
+{
+    *ierr = static_cast<int>(adios2_lock_writer_definitions(*engine));
+}
+
+void FC_GLOBAL(adios2_lock_reader_selections_f2c,
+               ADIOS2_LOCK_READER_SELECTIONS_F2C)(adios2_engine **engine,
+                                                  int *ierr)
+{
+    *ierr = static_cast<int>(adios2_lock_reader_selections(*engine));
+}
+
 // ******** PUTS */
 void FC_GLOBAL(adios2_put_f2c, ADIOS2_PUT_F2C)(adios2_engine **engine,
                                                adios2_variable **variable,

@@ -235,6 +235,25 @@ adios2_error adios2_close(adios2_engine *engine);
 adios2_error adios2_close_by_index(adios2_engine *engine,
                                    const int transport_index);
 
+/**
+ * Promise that no more definitions or changes to defined variables will
+ * occur. Useful information if called before the first adios2_end_step() of
+ * an output Engine, as it will know that the definitions are complete and
+ * constant for the entire lifetime of the output and may optimize metadata
+ * handling.
+ * @param engine handler
+ */
+adios2_error adios2_lock_writer_definitions(adios2_engine *engine);
+
+/**
+ * Promise that the reader data selections of are fixed and
+ * will not change in future timesteps. This information, provided
+ * before the EndStep() representing a fixed read pattern, may be
+ * utilized by the input Engine to optimize data flow.
+ * @param engine handler
+ */
+adios2_error adios2_lock_reader_selections(adios2_engine *engine);
+
 #ifdef __cplusplus
 } // end extern C
 #endif

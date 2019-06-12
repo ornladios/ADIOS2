@@ -90,6 +90,28 @@ void Engine::PerformGets()
     m_Engine->PerformGets();
 }
 
+void Engine::LockWriterDefinitions()
+{
+    helper::CheckForNullptr(m_Engine,
+                            "in call to Engine::LockWriterDefinitions");
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return;
+    }
+    m_Engine->LockWriterDefinitions();
+}
+
+void Engine::LockReaderSelections()
+{
+    helper::CheckForNullptr(m_Engine,
+                            "in call to Engine::LockReaderSelections");
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return;
+    }
+    m_Engine->LockReaderSelections();
+}
+
 void Engine::EndStep()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::EndStep");

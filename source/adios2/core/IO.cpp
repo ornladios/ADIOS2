@@ -702,9 +702,6 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
     }
 }
 
-void IO::LockWriterDefinitions() noexcept { m_WriterDefinitionsLocked = true; };
-void IO::LockReaderSelections() noexcept { m_ReaderSelectionsLocked = true; };
-
 // PRIVATE
 int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
     noexcept

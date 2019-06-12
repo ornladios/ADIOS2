@@ -80,6 +80,15 @@ void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 
 size_t Engine::Steps() const { return DoSteps(); }
 
+void Engine::LockWriterDefinitions() noexcept
+{
+    m_WriterDefinitionsLocked = true;
+};
+void Engine::LockReaderSelections() noexcept
+{
+    m_ReaderSelectionsLocked = true;
+};
+
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}
