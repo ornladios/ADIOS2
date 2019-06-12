@@ -32,9 +32,6 @@ public:
     void Resize(const size_t size, const std::string hint);
 
     size_t GetAvailableSize() const;
-
-private:
-    const bool m_DebugMode = false;
 };
 
 } // end namespace adios2

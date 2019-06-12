@@ -70,6 +70,14 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+
+if(CMAKE_BUILD_TYPE MATCHES "Release" AND NOT MSVC)
+  set(CMAKE_CXXFLAGS "-g -O3 -march-native -ffast-math -Wfatal-errors")
+elseif(NOT MSVC)
+  set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -O2 -Wfatal-errors -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer")
+endif()
+
+
 # Force C++11 and C99
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
