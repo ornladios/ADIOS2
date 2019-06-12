@@ -113,11 +113,12 @@ print("Final IO parameters")
 for key, value in ioParams.items():
     print("\t" + key + ": " + value)
 
-ioWriter.LockWriterDefinitions()
 nsteps = 3
 
 # ADIOS Engine
 writer = ioWriter.Open("npTypes.bp", adios2.Mode.Write)
+
+writer.LockWriterDefinitions()
 
 for i in range(0, nsteps):
 

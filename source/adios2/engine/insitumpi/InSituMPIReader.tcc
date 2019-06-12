@@ -72,7 +72,7 @@ void InSituMPIReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::cout << "InSituMPI Reader " << m_ReaderRank << " GetDeferred("
                   << variable.m_Name << ")\n";
     }
-    if (m_IO.m_ReaderSelectionsLocked && m_RemoteDefinitionsLocked &&
+    if (m_ReaderSelectionsLocked && m_RemoteDefinitionsLocked &&
         m_CurrentStep > 0)
     {
         variable.SetData(data);
