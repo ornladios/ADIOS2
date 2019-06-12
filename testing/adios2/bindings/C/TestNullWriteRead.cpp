@@ -66,7 +66,8 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            adios2_begin_step(nullWriter, adios2_step_mode_append, 0., &status);
+            adios2_begin_step(nullWriter, adios2_step_mode_append, -1.,
+                              &status);
             adios2_put(nullWriter, var, nullptr, adios2_mode_deferred);
             adios2_perform_puts(nullWriter);
             adios2_end_step(nullWriter);
@@ -90,7 +91,7 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
 
         for (size_t t = 0; t < NSteps; ++t)
         {
-            adios2_begin_step(nullReader, adios2_step_mode_read, 0., &status);
+            adios2_begin_step(nullReader, adios2_step_mode_read, -1., &status);
             EXPECT_EQ(status, adios2_step_status_end_of_stream);
 
             adios2_variable *var = adios2_inquire_variable(io, "r64");

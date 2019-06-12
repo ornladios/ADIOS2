@@ -67,7 +67,7 @@ void LocalAggregate1D(const std::string substreams)
         adios2_step_status step_status;
         for (size_t i = 0; i < NSteps; ++i)
         {
-            adios2_begin_step(bpWriter, adios2_step_mode_read, 0.,
+            adios2_begin_step(bpWriter, adios2_step_mode_read, -1.,
                               &step_status);
 
             std::iota(inumbers.begin() + i * Nx, inumbers.begin() + i * Nx + Nx,
@@ -105,7 +105,8 @@ void LocalAggregate1D(const std::string substreams)
         adios2_step_status step_status;
         while (true)
         {
-            adios2_begin_step(bpReader, adios2_step_mode_read, 0, &step_status);
+            adios2_begin_step(bpReader, adios2_step_mode_read, -1,
+                              &step_status);
 
             if (step_status == adios2_step_status_end_of_stream)
             {
@@ -205,7 +206,7 @@ void LocalAggregate1DBlock0(const std::string substreams)
         adios2_step_status step_status;
         for (size_t i = 0; i < NSteps; ++i)
         {
-            adios2_begin_step(bpWriter, adios2_step_mode_read, 0.,
+            adios2_begin_step(bpWriter, adios2_step_mode_read, -1.,
                               &step_status);
 
             std::iota(inumbers.begin() + i * Nx, inumbers.begin() + i * Nx + Nx,
@@ -251,8 +252,9 @@ void LocalAggregate1DBlock0(const std::string substreams)
         adios2_step_status step_status;
         while (true)
         {
-            adios2_begin_step(bpReader, adios2_step_mode_read, 0, &step_status);
-            adios2_begin_step(bpReader0, adios2_step_mode_read, 0,
+            adios2_begin_step(bpReader, adios2_step_mode_read, -1,
+                              &step_status);
+            adios2_begin_step(bpReader0, adios2_step_mode_read, -1,
                               &step_status);
 
             if (step_status == adios2_step_status_end_of_stream)
