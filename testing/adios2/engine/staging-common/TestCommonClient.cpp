@@ -28,6 +28,7 @@ int ExpectWriterFailure = 0;
 int WriterFailed = 0;
 int IgnoreTimeGap = 1;
 int IncreasingDelay = 0;
+int DelayWhileHoldingStep = 0;
 int FirstTimestepMustBeZero = 0;
 int NonBlockingBeginStep = 0;
 int Latest = 0;
@@ -316,6 +317,12 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
         engine.Get(var_time, (int64_t *)&write_time);
+        if (IncreasingDelay && DelayWhileHoldingStep)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(
+                DelayMS)); /* sleep for DelayMS milliseconds */
+            DelayMS += 200;
+        }
         try
         {
             engine.EndStep();
@@ -338,7 +345,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
                 break;
             }
         }
-        if (IncreasingDelay)
+        if (IncreasingDelay && !DelayWhileHoldingStep)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(
                 DelayMS)); /* sleep for DelayMS milliseconds */
@@ -443,6 +450,10 @@ int main(int argc, char **argv)
         {
             IncreasingDelay = 1;
             Discard = 1;
+        }
+        else if (std::string(argv[1]) == "--delay_while_holding")
+        {
+            DelayWhileHoldingStep = 1;
         }
         else if (std::string(argv[1]) == "--precious_first")
         {

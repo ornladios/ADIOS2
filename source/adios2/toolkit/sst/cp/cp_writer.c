@@ -1133,7 +1133,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, MPI_Comm comm)
     if (Stream->Rank == 0)
     {
         CP_verbose(Stream, "Writer stream params are:\n");
-        CP_dumpParams(Stream, Stream->ConfigParams);
+        CP_dumpParams(Stream, Stream->ConfigParams, 0 /* writer side */);
     }
 
     if (globalNetinfoCallback)
