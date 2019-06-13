@@ -120,6 +120,9 @@ set (TimeoutReader_PROPERTIES "RUN_SERIAL;1")
 set (LatestReader_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --warg=--engine_params --warg=ENGINE_PARAMS --rarg=--latest --rarg=--long_first_delay")
 set (LatestReader_PROPERTIES "RUN_SERIAL;1")
 
+set (LatestReaderHold_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --warg=--engine_params --warg=ENGINE_PARAMS --rarg=--latest --rarg=--long_first_delay --rarg=--delay_while_holding")
+set (LatestReaderHold_PROPERTIES "RUN_SERIAL;1")
+
 # A faster writer and a queue policy that will cause timesteps to be discarded
 set (DiscardWriter_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit:1,QueueFullPolicy:discard,ENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
 

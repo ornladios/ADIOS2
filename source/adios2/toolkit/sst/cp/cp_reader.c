@@ -160,6 +160,7 @@ static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
 
 extern long SstCurrentStep(SstStream Stream) { return Stream->ReaderTimestep; }
 
+static void releasePriorTimesteps(SstStream Stream, long Latest);
 static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
                                     void **WS_StreamPtr);
 
@@ -366,8 +367,11 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     if (Stream->Rank == 0)
     {
         CP_verbose(Stream,
-                   "Opening Reader Stream.  Writer stream params are:\n");
-        CP_dumpParams(Stream, ReturnData->WriterConfigParams);
+                   "Opening Reader Stream.\nWriter stream params are:\n");
+        CP_dumpParams(Stream, ReturnData->WriterConfigParams,
+                      0 /* writer side */);
+        CP_verbose(Stream, "Reader stream params are:\n");
+        CP_dumpParams(Stream, Stream->ConfigParams, 1 /* reader side */);
     }
 
     //    printf("I am reader rank %d, my info on writers is:\n", Stream->Rank);
@@ -557,7 +561,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         else
         {
             CP_verbose(Stream,
-                       "Received discard notice for imestep %d, "
+                       "Received discard notice for timestep %d, "
                        "ignoring in PRIOR DISCARD\n",
                        tsm->Timestep);
         }
@@ -589,6 +593,21 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
 
     pthread_cond_signal(&Stream->DataCondition);
     pthread_mutex_unlock(&Stream->DataLock);
+    if ((Stream->WriterConfigParams->CPCommPattern == SstCPCommMin) &&
+        (Stream->ConfigParams->AlwaysProvideLatestTimestep))
+    {
+        /*
+         * IFF we are in CommMin mode, AND we are to always provide
+         * the newest timestep, then when a new timestep arrives then
+         * we want to release timesteps that are older than it, NOT
+         * INCLUDING ANY TIMESTEP IN CURRENT USE.
+         */
+        CP_verbose(Stream,
+                   "Got a new timestep in AlwaysProvideLatestTimestep mode, "
+                   "discard older than %d\n",
+                   tsm->Timestep);
+        releasePriorTimesteps(Stream, tsm->Timestep);
+    }
 }
 
 void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v,
@@ -846,7 +865,8 @@ static void releasePriorTimesteps(SstStream Stream, long Latest)
     Last = NULL;
     while (Next)
     {
-        if (Next->MetadataMsg->Timestep < Latest)
+        if ((Next->MetadataMsg->Timestep < Latest) &&
+            (Next->MetadataMsg->Timestep != Stream->CurrentWorkingTimestep))
         {
             struct _TimestepMetadataList *This = Next;
             struct _ReleaseTimestepMsg Msg;

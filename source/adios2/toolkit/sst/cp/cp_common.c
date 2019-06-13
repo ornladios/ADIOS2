@@ -124,35 +124,47 @@ static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstCommPatternStr[] = {"Min", "Peer"};
 
-extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
+extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
+                          int ReaderSide)
 {
     if (!Stream->CPVerbose)
         return;
 
     fprintf(stderr, "Param -   RegistrationMethod:%s\n",
             SstRegStr[Params->RegistrationMethod]);
-    fprintf(stderr, "Param -   RendezvousReaderCount:%d\n",
-            Params->RendezvousReaderCount);
-    fprintf(stderr, "Param -   QueueLimit:%d %s\n", Params->QueueLimit,
-            (Params->QueueLimit == 0) ? "(unlimited)" : "");
-    fprintf(stderr, "Param -   QueueFullPolicy:%s\n",
-            SstQueueFullStr[Params->QueueFullPolicy]);
+    if (!ReaderSide)
+    {
+        fprintf(stderr, "Param -   RendezvousReaderCount:%d\n",
+                Params->RendezvousReaderCount);
+        fprintf(stderr, "Param -   QueueLimit:%d %s\n", Params->QueueLimit,
+                (Params->QueueLimit == 0) ? "(unlimited)" : "");
+        fprintf(stderr, "Param -   QueueFullPolicy:%s\n",
+                SstQueueFullStr[Params->QueueFullPolicy]);
+    }
     fprintf(stderr, "Param -   DataTransport:%s\n",
             Params->DataTransport ? Params->DataTransport : "");
     fprintf(stderr, "Param -   ControlTransport:%s\n",
             Params->ControlTransport);
     fprintf(stderr, "Param -   NetworkInterface:%s\n",
-            Params->NetworkInterface ? Params->NetworkInterface : "");
-    fprintf(stderr, "Param -   CompressionMethod:%s\n",
-            SstCompressStr[Params->CompressionMethod]);
-    fprintf(stderr, "Param -   CPCommPattern:%s\n",
-            SstCommPatternStr[Params->CPCommPattern]);
-    fprintf(stderr, "Param -   MarshalMethod:%s\n",
-            SstMarshalStr[Params->MarshalMethod]);
-    fprintf(stderr, "Param -   FirstTimestepPrecious:%s\n",
-            Params->FirstTimestepPrecious ? "True" : "False");
-    fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
-            Params->IsRowMajor);
+            Params->NetworkInterface ? Params->NetworkInterface : "(default)");
+    if (!ReaderSide)
+    {
+        fprintf(stderr, "Param -   CompressionMethod:%s\n",
+                SstCompressStr[Params->CompressionMethod]);
+        fprintf(stderr, "Param -   CPCommPattern:%s\n",
+                SstCommPatternStr[Params->CPCommPattern]);
+        fprintf(stderr, "Param -   MarshalMethod:%s\n",
+                SstMarshalStr[Params->MarshalMethod]);
+        fprintf(stderr, "Param -   FirstTimestepPrecious:%s\n",
+                Params->FirstTimestepPrecious ? "True" : "False");
+        fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
+                Params->IsRowMajor);
+    }
+    if (ReaderSide)
+    {
+        fprintf(stderr, "Param -   AlwaysProvideLatestTimestep:%s\n",
+                Params->AlwaysProvideLatestTimestep ? "True" : "False");
+    }
 }
 
 static FMField CP_SstParamsList_RAW[] = {
