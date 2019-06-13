@@ -134,11 +134,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-<<<<<<< HEAD
-    BZip2 ZFP SZ MGARD MPI DataMan WDM SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem Endian_Reverse
-=======
-    BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
->>>>>>> 3ba37f6b7718ef543828b54fe4f94b5aae174a85
+    BZip2 ZFP SZ MGARD MPI DataMan SSC SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(

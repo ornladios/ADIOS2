@@ -113,9 +113,9 @@ endif()
 
 # DataSpaces
 if(ADIOS2_USE_DATASPACES STREQUAL AUTO)
-  find_package(DATASPACES)
+  find_package(DATASPACES 1.8)
 elseif(ADIOS2_USE_DATASPACES)
-  find_package(DATASPACES REQUIRED)
+  find_package(DATASPACES 1.8 REQUIRED)
 endif()
 if(DATASPACES_FOUND)
   set(ADIOS2_HAVE_DATASPACES TRUE)
