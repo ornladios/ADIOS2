@@ -39,8 +39,13 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name, const Mode m
 		m_data.appid = std::stoi(appID->second);
 	}else{
 		m_data.appid = 0;
-
 	}
+    auto latest = m_IO.m_Parameters.find("AlwaysProvideLatestTimestep");
+    if (latest != m_IO.m_Parameters.end() && (latest->second == "yes" || latest->second == "true")) {
+        m_ProvideLatest = true;    
+    } else {
+        m_ProvideLatest = false;
+    }
     ret = adios_read_dataspaces_init(&mpiComm, &m_data);
     if(ret < 0){
     	fprintf(stderr, "DataSpaces did not initialize properly %d\n", ret);
@@ -71,14 +76,13 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 	strcpy(meta_lk, lk_name.c_str());
 
 	int nVars=0;
-	if(mode == StepMode::NextAvailable){
+	if(!m_ProvideLatest){
 		dspaces_lock_on_read (meta_lk, &(m_data.mpi_comm));
 		if(rank==0){
 			buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0], &bcast_array[1]);
 		}
 		dspaces_unlock_on_read (meta_lk, &(m_data.mpi_comm));
-	}
-	if(mode == StepMode::LatestAvailable){
+	} else {
 		dspaces_lock_on_read (meta_lk, &(m_data.mpi_comm));
 		if(rank==0){
 				buffer = dspaces_get_latest_meta(m_CurrentStep, fstr, &bcast_array[0], &bcast_array[1]);

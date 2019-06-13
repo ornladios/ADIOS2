@@ -49,6 +49,7 @@ private:
     int latestStep;
     int nVars;
     int m_CurrentStep;
+    bool m_ProvideLatest;
     /*
     const std::map<int, std::string>ds_to_varType = {
                 {1, "char"},
