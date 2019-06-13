@@ -11,9 +11,7 @@
 #ifndef ADIOS2_OPERATOR_COMPRESS_COMPRESSPNG_H_
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSPNG_H_
 
-extern "C" {
-#include <png.h>
-}
+#include <set>
 
 #include "adios2/core/Operator.h"
 
@@ -71,14 +69,15 @@ private:
      */
     void CheckStatus(const int status, const std::string hint) const;
 
-    static const std::map<std::string, uint32_t> m_Formats;
+    static const std::map<std::string, uint32_t> m_ColorTypes;
+    static const std::map<std::string, std::set<uint32_t>> m_BitDepths;
 
-    size_t DoBufferMaxSize(const void *dataIn, const Dims &dimensions,
-                           const std::string type,
-                           const Params &parameters) const final;
-
-    png_image GetPNGImage(const Dims &dimensions = Dims(),
-                          const Params &parameters = Params()) const;
+    /** Used as a bridge to the callback function */
+    struct DestInfo
+    {
+        char *BufferOut = nullptr;
+        size_t Offset = 0;
+    };
 };
 
 } // end namespace compress
