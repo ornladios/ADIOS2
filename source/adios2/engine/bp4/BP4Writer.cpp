@@ -612,16 +612,18 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
 {
     TAU_SCOPED_TIMER("BP4Writer::WriteData");
-    size_t dataSize = m_BP4Serializer.m_Data.m_Position;
+    size_t dataSize; // = m_BP4Serializer.m_Data.m_Position;
 
     if (isFinal)
     {
         m_BP4Serializer.CloseData(m_IO);
         dataSize = m_BP4Serializer.m_Data.m_Position;
+        // write data + footer
     }
     else
     {
-        m_BP4Serializer.CloseStream(m_IO);
+        dataSize = m_BP4Serializer.CloseStream(m_IO, false);
+        // write data only without footer
     }
 
     m_FileDataManager.WriteFiles(m_BP4Serializer.m_Data.m_Buffer.data(),

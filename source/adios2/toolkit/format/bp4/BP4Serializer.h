@@ -86,8 +86,10 @@ public:
     /**
      * Finishes bp buffer by serializing data and adding trailing metadata
      * @param io
+     * @return the position of the data buffer before writing the metadata
+     * footer into it (in case someone wants to write only the data portion)
      */
-    void CloseData(core::IO &io);
+    size_t CloseData(core::IO &io);
 
     /**
      * Closes bp buffer for streaming mode...must reset metadata for the next
@@ -95,10 +97,12 @@ public:
      * @param io object containing all attributes
      * @param addMetadata true: process metadata and add to data buffer
      * (minifooter)
+     * @return the position of the data buffer before writing the metadata
+     * footer into it (in case someone wants to write only the data portion)
      */
-    void CloseStream(core::IO &io, const bool addMetadata = true);
-    void CloseStream(core::IO &io, size_t &metadataStart, size_t &metadataCount,
-                     const bool addMetadata = true);
+    size_t CloseStream(core::IO &io, const bool addMetadata = true);
+    size_t CloseStream(core::IO &io, size_t &metadataStart,
+                       size_t &metadataCount, const bool addMetadata = true);
 
     void ResetIndices();
 
@@ -158,11 +162,13 @@ private:
      * specialized functions
      * @param attribute input
      * @param stats BP4 Stats
+     * @param headerID  short string to identify block ("[AMD")
      * @return attribute length position
      */
     template <class T>
     size_t PutAttributeHeaderInData(const core::Attribute<T> &attribute,
-                                    Stats<T> &stats) noexcept;
+                                    Stats<T> &stats, const char *headerID,
+                                    const size_t headerIDLength) noexcept;
 
     /**
      * Called from WriteAttributeInData specialized functions

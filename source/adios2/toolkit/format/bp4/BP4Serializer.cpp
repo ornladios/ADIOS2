@@ -44,6 +44,11 @@ void BP4Serializer::PutProcessGroupIndex(
 
     std::vector<char> &dataBuffer = m_Data.m_Buffer;
     size_t &dataPosition = m_Data.m_Position;
+    const size_t pgBeginPosition = dataPosition;
+
+    // write a block identifier [PGI
+    const char pgi[] = "[PGI"; //  don't write \0!
+    helper::CopyToBuffer(dataBuffer, dataPosition, pgi, sizeof(pgi) - 1);
 
     m_MetadataSet.DataPGLengthPosition = dataPosition;
     dataPosition += 8; // skip pg length (8)
@@ -106,8 +111,7 @@ void BP4Serializer::PutProcessGroupIndex(
     }
 
     // update absolute position
-    m_Data.m_AbsolutePosition +=
-        dataPosition - m_MetadataSet.DataPGLengthPosition;
+    m_Data.m_AbsolutePosition += dataPosition - pgBeginPosition;
     // pg vars count and position
     m_MetadataSet.DataPGVarsCount = 0;
     m_MetadataSet.DataPGVarsCountPosition = dataPosition;
@@ -133,16 +137,17 @@ void BP4Serializer::SerializeData(core::IO &io, const bool advanceStep)
     ProfilerStop("buffering");
 }
 
-void BP4Serializer::CloseData(core::IO &io)
+size_t BP4Serializer::CloseData(core::IO &io)
 {
     ProfilerStart("buffering");
-
+    size_t dataEndsAt = m_Data.m_Position;
     if (!m_IsClosed)
     {
         if (m_MetadataSet.DataPGIsOpen)
         {
             SerializeDataBuffer(io);
         }
+        dataEndsAt = m_Data.m_Position;
 
         SerializeMetadataInData();
 
@@ -156,16 +161,17 @@ void BP4Serializer::CloseData(core::IO &io)
     }
 
     ProfilerStop("buffering");
+    return dataEndsAt;
 }
 
-void BP4Serializer::CloseStream(core::IO &io, const bool addMetadata)
+size_t BP4Serializer::CloseStream(core::IO &io, const bool addMetadata)
 {
     ProfilerStart("buffering");
     if (m_MetadataSet.DataPGIsOpen)
     {
         SerializeDataBuffer(io);
     }
-
+    size_t dataEndsAt = m_Data.m_Position;
     SerializeMetadataInData(false, addMetadata);
 
     if (m_Profiler.IsActive)
@@ -173,10 +179,12 @@ void BP4Serializer::CloseStream(core::IO &io, const bool addMetadata)
         m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
     }
     ProfilerStop("buffering");
+
+    return dataEndsAt;
 }
 
-void BP4Serializer::CloseStream(core::IO &io, size_t &metadataStart,
-                                size_t &metadataCount, const bool addMetadata)
+size_t BP4Serializer::CloseStream(core::IO &io, size_t &metadataStart,
+                                  size_t &metadataCount, const bool addMetadata)
 {
 
     ProfilerStart("buffering");
@@ -184,9 +192,8 @@ void BP4Serializer::CloseStream(core::IO &io, size_t &metadataStart,
     {
         SerializeDataBuffer(io);
     }
-
+    size_t dataEndsAt = m_Data.m_Position;
     metadataStart = m_Data.m_Position;
-
     SerializeMetadataInData(false, addMetadata);
 
     metadataCount = m_Data.m_Position - metadataStart;
@@ -196,6 +203,7 @@ void BP4Serializer::CloseStream(core::IO &io, size_t &metadataStart,
         m_Profiler.Bytes.at("buffering") += m_Data.m_Position;
     }
     ProfilerStop("buffering");
+    return dataEndsAt;
 }
 
 void BP4Serializer::ResetIndices()
@@ -632,24 +640,29 @@ void BP4Serializer::SerializeDataBuffer(core::IO &io) noexcept
     size_t attributesSizeInData = GetAttributesSizeInData(io);
     if (attributesSizeInData)
     {
-        attributesSizeInData += 12; // count + length
-        m_Data.Resize(position + attributesSizeInData,
+        attributesSizeInData += 12; // count + length + end ID
+        m_Data.Resize(position + attributesSizeInData + 4,
                       "when writing Attributes in rank=0\n");
 
         PutAttributes(io);
     }
     else
     {
-        m_Data.Resize(position + 12, "for empty Attributes\n");
+        m_Data.Resize(position + 12 + 4, "for empty Attributes\n");
         // Attribute index header for zero attributes: 0, 0LL
         // Resize() already takes care of this
         position += 12;
         absolutePosition += 12;
     }
 
-    // Finish writing pg group length without record itself
-    const uint64_t dataPGLength =
-        position - m_MetadataSet.DataPGLengthPosition - 8;
+    // write a block identifier PGI]
+    const char pgiend[] = "PGI]"; // no \0
+    helper::CopyToBuffer(buffer, position, pgiend, sizeof(pgiend) - 1);
+    absolutePosition += sizeof(pgiend) - 1;
+
+    // Finish writing pg group length INCLUDING the record itself and
+    // including the closing padding but NOT the opening [PGI
+    const uint64_t dataPGLength = position - m_MetadataSet.DataPGLengthPosition;
     helper::CopyToBuffer(buffer, m_MetadataSet.DataPGLengthPosition,
                          &dataPGLength);
 
@@ -692,6 +705,8 @@ void BP4Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
             }
         };
 
+    size_t dataEndsAt = m_Data.m_Position;
+
     // Finish writing metadata counts and lengths
     // PG Index
     const uint64_t pgCount = m_MetadataSet.DataPGCount;
@@ -725,6 +740,14 @@ void BP4Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     // must replace with growth buffer strategy?
     m_Data.Resize(position + footerSize,
                   " when writing metadata in bp data buffer");
+
+    /*
+    std::cout << " -- Write footer at position " << std::to_string(position)
+              << " with footer length " << std::to_string(footerSize)
+              << " in buffer  = "
+              << std::to_string(reinterpret_cast<std::uintptr_t>(buffer.data()))
+              << std::endl;
+    */
 
     // write pg index
     helper::CopyToBuffer(buffer, position, &pgCount);

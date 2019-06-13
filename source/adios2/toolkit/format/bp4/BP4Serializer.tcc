@@ -56,9 +56,20 @@ inline void BP4Serializer::PutVariableMetadata(
         true; // flag to indicate this variable is put at current step
     stats.MemberID = variableIndex.MemberID;
 
+    /*const size_t startingPos = m_Data.m_Position;*/
     lf_SetOffset(stats.Offset);
     PutVariableMetadataInData(variable, blockInfo, stats);
     lf_SetOffset(stats.PayloadOffset);
+
+    /*
+    std::cout << " -- Var name=" << variable.m_Name
+              << " buffer startPos = " << std::to_string(startingPos)
+              << " offset = " << std::to_string(stats.Offset)
+              << " payload offset = " << std::to_string(stats.PayloadOffset)
+              << " position = " << std::to_string(m_Data.m_Position)
+              << " abs.position = " << std::to_string(m_Data.m_AbsolutePosition)
+              << std::endl;
+    */
 
     // write to metadata  index
     PutVariableMetadataInIndex(variable, blockInfo, stats, isNew,
@@ -75,6 +86,7 @@ inline void BP4Serializer::PutVariablePayload(
     const bool sourceRowMajor) noexcept
 {
     ProfilerStart("buffering");
+    /*const size_t startingPos = m_Data.m_Position;*/
     if (blockInfo.Operations.empty())
     {
         PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
@@ -83,6 +95,22 @@ inline void BP4Serializer::PutVariablePayload(
     {
         PutOperationPayloadInBuffer(variable, blockInfo);
     }
+
+    /*
+    std::cout << " -- Var payload name=" << variable.m_Name
+              << " startPos = " << std::to_string(startingPos)
+              << " end position = " << std::to_string(m_Data.m_Position)
+              << " end abs.position = "
+              << std::to_string(m_Data.m_AbsolutePosition) << " value[0] = "
+              << std::to_string(
+                     *reinterpret_cast<double *>(&m_Data.m_Buffer[startingPos]))
+              << " value[last] = "
+              << std::to_string(*reinterpret_cast<double *>(
+                     m_Data.m_Buffer.data() + m_Data.m_Position - 8))
+              << " 4 bytes ahead = '"
+              << std::string(m_Data.m_Buffer.data() + startingPos - 4, 4) << "'"
+              << std::endl;
+    */
 
     ProfilerStop("buffering");
 }
@@ -443,7 +471,9 @@ void BP4Serializer::PutVariableMetadataInData(
     helper::CopyToBuffer(buffer, position, &stats.MemberID);
 
     PutNameRecord(variable.m_Name, buffer, position);
-    position += 2; // skip path
+    // path is empty now, write a 0 length to skip it
+    const uint16_t zero16 = 0;
+    helper::CopyToBuffer(buffer, position, &zero16);
 
     const uint8_t dataType = TypeTraits<T>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
