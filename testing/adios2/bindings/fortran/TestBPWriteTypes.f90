@@ -5,18 +5,22 @@
      implicit none
 
      integer(kind=8), dimension(1) :: shape_dims, start_dims, count_dims
-     integer :: inx, irank, isize, ierr, i, step_status
+     integer(kind=4) :: inx, irank, isize, ierr, i, step_status
+     integer(kind=8) :: nsteps
 
      type(adios2_adios) :: adios
      type(adios2_io) :: ioWrite, ioRead
-     type(adios2_variable), dimension(13) :: variables
+     type(adios2_variable), dimension(14) :: variables
      type(adios2_engine) :: bpWriter, bpReader
      character(len=15) :: inString
-     character(len=:), allocatable :: varName
+     character(len=:), allocatable :: varName, param_value
      character(len=:), allocatable :: engineType
 
+     ! read local value as global array
+     integer(kind=4), dimension(:), allocatable :: inRanks
+
      ! read handlers
-     integer :: ndims
+     integer(kind=4) :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
 
      ! Launch MPI
@@ -55,6 +59,27 @@
      if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_at_io'
 
      call adios2_set_engine(ioWrite, 'bpfile', ierr)
+
+     call adios2_set_parameter(ioWrite, 'ProfileUnits', 'Microseconds', ierr)
+
+     call adios2_get_parameter(param_value, ioWrite, 'ProfileUnits', ierr)
+     if( param_value /= "Microseconds") stop 'Failed adios2_get_parameter ProfileUnits'
+
+     call adios2_set_parameters(ioWrite, 'Threads=2, CollectiveMetadata = OFF', ierr)
+
+     call adios2_get_parameter(param_value, ioWrite, 'Threads', ierr)
+     if( param_value /= "2") stop 'Failed adios2_get_parameter Threads'
+
+     call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
+     if( param_value /= "OFF") stop 'Failed adios2_get_parameter CollectiveMetadata'
+
+     ! set back the default to make sure writing/reading test works
+     call adios2_clear_parameters(ioWrite, ierr)
+     call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
+     if( param_value /= "") stop 'Still Could retrieve parameter CollectiveMetadata after clearing all parameters'
+
+     deallocate(param_value)
+
 
      ! Defines a variable to be written in bp format
      call adios2_define_variable(variables(1), ioWrite, "var_I8", &
@@ -109,6 +134,14 @@
      call adios2_define_variable(variables(13), ioWrite, "gvar_Str", &
                                  adios2_type_string, ierr)
 
+     ! local value
+     call adios2_define_variable(variables(14), ioWrite, "lvar_i32", &
+                                 adios2_type_integer4, &
+                                 1, (/ adios2_local_value_dim /), &
+                                 adios2_null_dims, &
+                                 adios2_null_dims, &
+                                 adios2_constant_dims, ierr)
+
      do i=1,13
         if( variables(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_variable'
      end do
@@ -129,14 +162,14 @@
      call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
      if( bpWriter%valid .eqv. .false. ) stop 'Invalid adios2_engine post-open'
-     if( TRIM(bpWriter%name) /= 'ftypes.bp') stop 'Invalid adios2_engine name'
+     if( TRIM(bpWriter%name) /= "ftypes.bp") stop 'Invalid adios2_engine name'
 
-     if( TRIM(bpWriter%type) /= 'bpfile') then
+     if( TRIM(bpWriter%type) /= 'BP3') then
         write(*,*) 'Engine Type ', TRIM(bpWriter%type)
-        stop 'Invalid adios2_engine name'
+        stop 'Invalid adios2_engine type'
      end if
      call adios2_io_engine_type(engineType, ioWrite, ierr)
-     if( engineType /= 'bp') then ! FIXME, different from the above!
+     if( engineType /= 'bpfile') then ! FIXME, different from the above!
         write(*,*) 'Engine Type ', engineType
         stop 'Invalid type from adios2_engine_type'
      end if
@@ -145,7 +178,7 @@
 
      ! Put array contents to bp buffer, based on var1 metadata
      do i = 1, 3
-         call adios2_begin_step(bpWriter, adios2_step_mode_append, 0.0, &
+         call adios2_begin_step(bpWriter, adios2_step_mode_append, -1.0, &
                                 step_status, ierr)
 
          if (irank == 0 .and. i == 1) then
@@ -164,6 +197,9 @@
          call adios2_put(bpWriter, variables(4), data_I64, ierr)
          call adios2_put(bpWriter, variables(5), data_R32, ierr)
          call adios2_put(bpWriter, variables(6), data_R64, ierr)
+
+         call adios2_put(bpWriter, variables(14), irank, ierr)
+
          call adios2_end_step(bpWriter, ierr)
      end do
 
@@ -177,6 +213,9 @@
      call adios2_declare_io(ioRead, adios, "ioRead", ierr)
      ! Open bpReader engine
      call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_read, ierr)
+
+     call adios2_steps(nsteps, bpReader, ierr)
+     if(nsteps /= 3)  write(*,*) 'nsteps: ', nsteps !stop 'ftypes.bp must have 3 steps'
 
      call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
      if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'
@@ -224,6 +263,13 @@
      call adios2_get(bpReader, variables(13), inString, ierr)
      call adios2_perform_gets(bpReader, ierr)
      if( inString /= data_Strings(1) ) stop 'gvar_Str read failed'
+
+     call adios2_inquire_variable(variables(14), ioRead, "lvar_i32", ierr)
+     allocate(inRanks(isize))
+     call adios2_get(bpReader, variables(14), inRanks, ierr)
+     call adios2_perform_gets(bpReader, ierr)
+     if( inRanks(irank+1) /= irank ) stop 'lvar_i32 read failed'
+     deallocate(inRanks)
 
      call adios2_close(bpReader, ierr)
 

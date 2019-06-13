@@ -55,6 +55,22 @@ adios2_error adios2_set_engine(adios2_io *io, const char *engine_type)
     }
 }
 
+adios2_error adios2_set_parameters(adios2_io *io, const char *parameters)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_set_parameters");
+        reinterpret_cast<adios2::core::IO *>(io)->SetParameters(parameters);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_parameters"));
+    }
+}
+
 adios2_error adios2_set_parameter(adios2_io *io, const char *key,
                                   const char *value)
 {
@@ -69,6 +85,52 @@ adios2_error adios2_set_parameter(adios2_io *io, const char *key,
     {
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_set_parameter"));
+    }
+}
+
+adios2_error adios2_get_parameter(char *value, size_t *size,
+                                  const adios2_io *io, const char *key)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for const adios2_io, in call to adios2_get_parameter");
+
+        const adios2::core::IO *ioCpp =
+            reinterpret_cast<const adios2::core::IO *>(io);
+
+        adios2::helper::CheckForNullptr(
+            size, "for size_t* size, in call to adios2_get_parameter");
+
+        auto itParameter = ioCpp->m_Parameters.find(key);
+        if (itParameter == ioCpp->m_Parameters.end())
+        {
+            *size = 0;
+            return adios2_error_none;
+        }
+
+        return String2CAPI(itParameter->second, value, size);
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_get_parameter"));
+    }
+}
+
+adios2_error adios2_clear_parameters(adios2_io *io)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_clear_parameters");
+        reinterpret_cast<adios2::core::IO *>(io)->ClearParameters();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_clear_parameters"));
     }
 }
 

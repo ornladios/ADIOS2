@@ -24,8 +24,11 @@ public:
 
 adios2::Params engineParams = {}; // parsed from command line
 int TimeGapExpected = 0;
+int ExpectWriterFailure = 0;
+int WriterFailed = 0;
 int IgnoreTimeGap = 1;
 int IncreasingDelay = 0;
+int FirstTimestepMustBeZero = 0;
 int NonBlockingBeginStep = 0;
 int Latest = 0;
 int Discard = 0;
@@ -34,7 +37,7 @@ int SkippedSteps = 0;
 int DelayMS = 500;
 int LongFirstDelay = 0;
 // Number of steps
-std::size_t NSteps = 10;
+size_t NSteps = 10;
 std::string fname = "ADIOS2SstServer";
 std::string engine = "SST";
 
@@ -97,10 +100,14 @@ TEST_F(SstReadTest, ADIOS2SstRead)
     // Create the Engine
     io.SetEngine(engine);
     io.SetParameters(engineParams);
+    if (Latest)
+    {
+        io.SetParameters({{"AlwaysProvideLatestTimestep", "true"}});
+    }
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
 
-    unsigned int t = static_cast<unsigned int>(-1);
+    size_t ExpectedStep = adios2::MaxSizeT;
 
     std::vector<std::time_t> write_times;
 
@@ -110,15 +117,17 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
         adios2::StepStatus Status;
 
+        ASSERT_FALSE(SstReadTest::HasNonfatalFailure()); // exit if we've failed
+                                                         // something
         if (NonBlockingBeginStep)
         {
-            Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
+            Status = engine.BeginStep(adios2::StepMode::Read, 0.0);
 
             while (Status == adios2::StepStatus::NotReady)
             {
                 BeginStepFailedPolls++;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                Status = engine.BeginStep(adios2::StepMode::NextAvailable, 0.0);
+                Status = engine.BeginStep(adios2::StepMode::Read, 0.0);
             }
         }
         else if (Latest)
@@ -130,32 +139,53 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             }
             /* would like to do blocking, but API is inconvenient, so specify an
              * hour timeout */
-            Status =
-                engine.BeginStep(adios2::StepMode::LatestAvailable, 60 * 60.0);
+            Status = engine.BeginStep(adios2::StepMode::Read, 60 * 60.0);
         }
         else
         {
             Status = engine.BeginStep();
         }
 
-        if (Status == adios2::StepStatus::EndOfStream)
+        if (Status != adios2::StepStatus::OK)
         {
+            if (Status == adios2::StepStatus::OtherError)
+            {
+                WriterFailed = 1;
+                std::cout << "Noticed Writer failure" << std::endl;
+            }
             Continue = false;
             break;
         }
 
         const size_t currentStep = engine.CurrentStep();
 
-        if ((t == static_cast<unsigned int>(-1)) || Latest || Discard)
+        if (FirstTimestepMustBeZero)
         {
-            if ((t != static_cast<unsigned int>(-1)) && (t != currentStep))
+            if (ExpectedStep == adios2::MaxSizeT)
+            {
+                EXPECT_EQ(currentStep, 0);
+                std::cout << "Got my expected first timestep Zero!"
+                          << std::endl;
+                ExpectedStep = 0;
+            }
+            else if (ExpectedStep == 1)
+            {
+                /* we got that timestep 0 we expected, ExpectedStep got
+                 * incremented to 1, but now be happy with what is next */
+                ExpectedStep = currentStep; // starting out
+            }
+        }
+        if ((ExpectedStep == adios2::MaxSizeT) || Latest || Discard)
+        {
+            if ((ExpectedStep != adios2::MaxSizeT) &&
+                (ExpectedStep != currentStep))
             {
                 SkippedSteps++;
             }
-            t = (unsigned int)currentStep; // starting out
+            ExpectedStep = currentStep; // starting out
         }
 
-        EXPECT_EQ(currentStep, static_cast<size_t>(t));
+        EXPECT_EQ(currentStep, ExpectedStep);
 
         size_t writerSize;
 
@@ -290,7 +320,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         {
             engine.EndStep();
 
-            EXPECT_EQ(validateCommonTestData(myStart, myLength, t, 0), 0);
+            EXPECT_EQ(validateCommonTestData(myStart, myLength, currentStep, 0),
+                      0);
             write_times.push_back(write_time);
         }
         catch (...)
@@ -298,8 +329,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             std::cout << "Exception in EndStep, client failed";
         }
 
-        ++t;
-        if (NSteps != static_cast<unsigned int>(-1))
+        ++ExpectedStep;
+        if (NSteps != adios2::MaxSizeT)
         {
             NSteps--;
             if (NSteps == 0)
@@ -331,6 +362,15 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             EXPECT_FALSE(TimeGapDetected);
         }
     }
+    if (ExpectWriterFailure)
+    {
+        EXPECT_TRUE(WriterFailed);
+    }
+    if (WriterFailed)
+    {
+        EXPECT_TRUE(ExpectWriterFailure);
+    }
+
     if (Latest || Discard)
     {
         std::cout << "Total Skipped Timesteps is " << SkippedSteps << std::endl;
@@ -375,6 +415,11 @@ int main(int argc, char **argv)
             TimeGapExpected++;
             IgnoreTimeGap = 0;
         }
+        else if (std::string(argv[1]) == "--expect_writer_failure")
+        {
+            IncreasingDelay = 1;
+            ExpectWriterFailure++;
+        }
         else if (std::string(argv[1]) == "--expect_contiguous_time")
         {
             TimeGapExpected = 0;
@@ -398,6 +443,10 @@ int main(int argc, char **argv)
         {
             IncreasingDelay = 1;
             Discard = 1;
+        }
+        else if (std::string(argv[1]) == "--precious_first")
+        {
+            FirstTimestepMustBeZero = 1;
         }
         else if (std::string(argv[1]) == "--ignore_time_gap")
         {

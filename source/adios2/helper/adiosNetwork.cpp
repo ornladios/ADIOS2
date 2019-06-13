@@ -13,8 +13,9 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #ifndef _WIN32
-#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_WDM)
+#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_SSC)
 
+#include <iostream>
 #include <thread>
 
 #include <arpa/inet.h> //AvailableIpAddresses() inet_ntoa
@@ -71,15 +72,21 @@ std::vector<std::string> AvailableIpAddresses() noexcept
 
 void HandshakeWriter(MPI_Comm mpiComm, size_t &appID,
                      std::vector<std::string> &fullAddresses,
-                     const std::string &name, const int basePort,
-                     const int channelsPerRank, const int maxRanksPerNode,
-                     const int maxAppsPerNode)
+                     const std::string &name, const std::string &engineName,
+                     const int basePort, const int channelsPerRank,
+                     const int maxRanksPerNode, const int maxAppsPerNode)
 {
 
     int mpiRank;
     int mpiSize;
     MPI_Comm_rank(mpiComm, &mpiRank);
     MPI_Comm_size(mpiComm, &mpiSize);
+
+    const std::string globalFilename = ".socket";
+    const std::string globalLockFilename = ".socket.lock";
+
+    const std::string engineFilename = name + "." + engineName;
+    const std::string engineLockFilename = name + "." + engineName + ".lock";
 
     // Get IP address
     auto ips = helper::AvailableIpAddresses();
@@ -97,7 +104,7 @@ void HandshakeWriter(MPI_Comm mpiComm, size_t &appID,
         {
             try
             {
-                lockCheck.Open(".staging.lock", Mode::Read);
+                lockCheck.Open(globalLockFilename, Mode::Read);
                 lockCheck.Close();
             }
             catch (...)
@@ -106,12 +113,12 @@ void HandshakeWriter(MPI_Comm mpiComm, size_t &appID,
             }
         }
         transport::FileFStream lockWrite(mpiComm, false);
-        lockWrite.Open(".staging.lock", Mode::Write);
+        lockWrite.Open(globalLockFilename, Mode::Write);
 
         transport::FileFStream numRead(mpiComm, false);
         try
         {
-            numRead.Open(".staging", Mode::Read);
+            numRead.Open(globalFilename, Mode::Read);
             auto size = numRead.GetSize();
             std::vector<char> numAppsChar(size);
             numRead.Read(numAppsChar.data(), numAppsChar.size());
@@ -123,14 +130,16 @@ void HandshakeWriter(MPI_Comm mpiComm, size_t &appID,
         {
         }
         transport::FileFStream numWrite(mpiComm, false);
-        numWrite.Open(".staging", Mode::Write);
+        numWrite.Open(globalFilename, Mode::Write);
         std::string numAppsString = std::to_string(appID);
         numWrite.Write(numAppsString.data(), numAppsString.size());
         numWrite.Close();
 
         lockWrite.Close();
-        remove(".staging.lock");
+        remove(globalLockFilename.c_str());
     }
+
+    appID = helper::BroadcastValue(appID, mpiComm);
 
     // Make full addresses
     for (int i = 0; i < channelsPerRank; ++i)
@@ -166,20 +175,23 @@ void HandshakeWriter(MPI_Comm mpiComm, size_t &appID,
         }
         std::string globalAddressesStr = globalAddressesJson.dump();
         transport::FileFStream lockstream(mpiComm, false);
-        lockstream.Open(name + ".staging.lock", Mode::Write);
+        lockstream.Open(engineLockFilename, Mode::Write);
         transport::FileFStream ipstream(mpiComm, false);
-        ipstream.Open(name + ".staging", Mode::Write);
+        ipstream.Open(engineFilename, Mode::Write);
         ipstream.Write(globalAddressesStr.data(), globalAddressesStr.size());
         ipstream.Close();
         lockstream.Close();
-        remove(std::string(name + ".staging.lock").c_str());
+        remove(engineLockFilename.c_str());
     }
 }
 
 void HandshakeReader(MPI_Comm mpiComm, size_t &appID,
                      std::vector<std::string> &fullAddresses,
-                     const std::string &name)
+                     const std::string &name, const std::string &engineName)
 {
+    const std::string engineLockFilename = name + "." + engineName + ".lock";
+    const std::string engineFilename = name + "." + engineName;
+
     auto ips = helper::AvailableIpAddresses();
     if (ips.empty())
     {
@@ -197,7 +209,7 @@ void HandshakeReader(MPI_Comm mpiComm, size_t &appID,
     {
         try
         {
-            ipstream.Open(name + ".staging", Mode::Read);
+            ipstream.Open(engineFilename, Mode::Read);
             break;
         }
         catch (...)
@@ -211,7 +223,7 @@ void HandshakeReader(MPI_Comm mpiComm, size_t &appID,
     {
         try
         {
-            lockstream.Open(name + ".staging.lock", Mode::Read);
+            lockstream.Open(engineLockFilename, Mode::Read);
             lockstream.Close();
         }
         catch (...)

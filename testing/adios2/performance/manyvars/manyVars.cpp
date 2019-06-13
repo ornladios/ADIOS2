@@ -381,8 +381,7 @@ public:
         }
 
         adios2_step_status status;
-        adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0,
-                          &status);
+        adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
 
         log("  Check variable definitions... %s\n", FILENAME);
         tb = MPI_Wtime();
@@ -404,8 +403,7 @@ public:
             ts = 0;
             if (step > 0)
             {
-                adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0,
-                                  &status);
+                adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
             }
             for (size_t block = 0; block < NBLOCKS; block++)
             {

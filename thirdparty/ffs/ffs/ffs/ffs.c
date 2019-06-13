@@ -572,6 +572,11 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 	    }
 	}
 	size = determine_size(f, buf, parent_offset, t->next);
+	if (size == 0)  {
+	    quick_put_ulong(&src_spec, 0,
+			    (char*)buf->tmp_buffer + data_offset);
+	    return 1;
+	}
 	if ((marshal_info == NULL) || (marshal_info->type != FFSSubsampleArrayField)) {
 	    if (!s->copy_all && field_is_flat(f, t->next)) {
 		/* leave data where it sits */

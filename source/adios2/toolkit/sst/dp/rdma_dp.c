@@ -7,11 +7,6 @@
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 
 #include <SSTConfig.h>
 
@@ -1104,7 +1099,9 @@ extern CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.waitForCompletion = RdmaWaitForCompletion;
     RdmaDPInterface.notifyConnFailure = RdmaNotifyConnFailure;
     RdmaDPInterface.provideTimestep = RdmaProvideTimestep;
+    RdmaDPInterface.readerRegisterTimestep = NULL;
     RdmaDPInterface.releaseTimestep = RdmaReleaseTimestep;
+    RdmaDPInterface.readerReleaseTimestep = NULL;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;

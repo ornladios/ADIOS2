@@ -33,11 +33,26 @@ adios2_error adios2_engine_name(char *name, size_t *size,
                                 const adios2_engine *engine);
 
 /**
+ * Return engine type string and length without '\0\ character
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param type output, string without trailing '\0', NULL or preallocated
+ * buffer
+ * @param size output, engine_type size without '\0'
+ * @param engine handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_engine_get_type(char *type, size_t *size,
+                                    const adios2_engine *engine);
+
+/**
  * @brief Begin a logical adios2 step stream
  * Check each engine documentation for MPI collective/non-collective behavior.
  * @param engine handler
  * @param mode see enum adios2_step_mode in adios2_c_types.h for options,
- * next_available is the common use case
+ * read is the common use case
  * @param timeout_seconds provide a time out in Engine opened in read mode
  * @param status output from enum adios2_step_status in adios2_c_types.h
  * @return adios2_error 0: success, see enum adios2_error for errors
@@ -54,6 +69,15 @@ adios2_error adios2_begin_step(adios2_engine *engine,
  */
 adios2_error adios2_current_step(size_t *current_step,
                                  const adios2_engine *engine);
+
+/**
+ * Inspect total number of available steps, use for file engines in read mode
+ * only
+ * @param steps output available steps in engine
+ * @param engine input handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_steps(size_t *steps, const adios2_engine *engine);
 
 //***************** PUT *****************
 /**

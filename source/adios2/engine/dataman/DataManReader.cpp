@@ -25,7 +25,8 @@ namespace engine
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
 : DataManCommon("DataManReader", io, name, mode, mpiComm),
-  m_DataManSerializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian)
+  m_DataManSerializer(m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian,
+                      mpiComm)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -74,7 +75,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
 
         m_MetaDataMap = m_DataManSerializer.GetMetaData();
 
-        if (stepMode == StepMode::NextAvailable)
+        if (!m_ProvideLatest)
         {
             size_t minStep = std::numeric_limits<size_t>::max();
             ;
@@ -87,7 +88,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
             }
             m_CurrentStep = minStep;
         }
-        else if (stepMode == StepMode::LatestAvailable)
+        else
         {
             size_t maxStep = 0;
             for (const auto &i : m_MetaDataMap)
@@ -98,11 +99,6 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                 }
             }
             m_CurrentStep = maxStep;
-        }
-        else
-        {
-            throw(std::invalid_argument(
-                "[DataManReader::BeginStep] Step mode is not supported!"));
         }
 
         auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);

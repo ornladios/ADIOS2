@@ -49,7 +49,8 @@
 #include <fnmatch.h>
 #endif
 
-#include "adios2sys/CommandLineArguments.hxx"
+#include <adios2sys/CommandLineArguments.hxx>
+#include <adios2sys/SystemTools.hxx>
 #include <pugixml.hpp>
 
 namespace adios2
@@ -206,7 +207,7 @@ int process_unused_args(adios2sys::CommandLineArguments &arg)
     arg.GetUnusedArguments(&nuargs, &uargs);
 
     std::vector<char *> retry_args;
-    retry_args.push_back(new char[4]{});
+    retry_args.push_back(new char[4]());
 
     // first arg is argv[0], so skip that
     for (int i = 1; i < nuargs; i++)
@@ -396,6 +397,11 @@ int bplsMain(int argc, char *argv[])
         return retval;
 
     /* Start working */
+    size_t len = strlen(vfile);
+    if (vfile[len - 1] == '/')
+    {
+        vfile[len - 1] = '\0';
+    }
     retval = doList(vfile);
 
     print_stop();
@@ -758,10 +764,13 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
 
         if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
-            fprintf(outf, "{%zu", variable->m_Shape[0]);
+            Dims d = get_global_array_signature(fp, io, variable);
+            fprintf(outf, "{%s",
+                    d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
             for (size_t j = 1; j < variable->m_Shape.size(); j++)
             {
-                fprintf(outf, ", %zu", variable->m_Shape[j]);
+                fprintf(outf, ", %s",
+                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
             }
             fprintf(outf, "}");
         }
@@ -771,13 +780,14 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                 get_local_array_signature(fp, io, variable);
             Dims &d = signo.second;
             fprintf(outf, "[%s]*",
-                    signo.first > 0 ? std::to_string(signo.first).data()
+                    signo.first > 0 ? std::to_string(signo.first).c_str()
                                     : "__");
-            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).data() : "__");
+            fprintf(outf, "{%s",
+                    d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
             for (size_t j = 1; j < variable->m_Count.size(); j++)
             {
                 fprintf(outf, ", %s",
-                        d[j] > 0 ? std::to_string(d[j]).data() : "__");
+                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
             }
             fprintf(outf, "}");
         }
@@ -1156,6 +1166,12 @@ int doList(const char *path)
     if (verbose > 1)
         printf("\nADIOS Open: read header info from %s\n", path);
 
+    if (!adios2sys::SystemTools::FileExists(path))
+    {
+        fprintf(stderr, "\nError: input path %s does not exist\n", path);
+        return 4;
+    }
+
     // initialize BP reader
     if (verbose > 1)
         adios_verbose = 3; // print info lines
@@ -1165,11 +1181,7 @@ int doList(const char *path)
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
-#ifdef ADIOS2_HAVE_MPI
-    core::ADIOS adios(MPI_COMM_SELF, true, "C++");
-#else
     core::ADIOS adios(true, "C++");
-#endif
     core::IO &io = adios.DeclareIO("bpls");
     core::Engine *fp = nullptr;
     std::vector<std::string> engineList = getEnginesList(path);
@@ -1453,7 +1465,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     int tidx;                          // 0 or 1 to account for time dimension
     uint64_t nelems;                   // number of elements to read
     // size_t elemsize;                   // size in bytes of one element
-    uint64_t st, ct;
+    uint64_t stepStart, stepCount;
     std::vector<T> dataV;
     uint64_t sum;         // working var to sum up things
     uint64_t maxreadn;    // max number of elements to read once up to a limit
@@ -1472,33 +1484,35 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     nelems = 1;
     tidx = 0;
 
+    // calculate the starting step and number of steps requested
+    if (istart[0] < 0) // negative index means last-|index|
+        stepStart = nsteps + istart[0];
+    else
+        stepStart = istart[0];
+    if (icount[0] < 0) // negative index means last-|index|+1-start
+        stepCount = nsteps + icount[0] + 1 - stepStart;
+    else
+        stepCount = icount[0];
+
+    if (verbose > 2)
+        printf("    j=0, stepStart=%" PRIu64 " stepCount=%" PRIu64 "\n",
+               stepStart, stepCount);
+
     if (nsteps > 1)
     {
-        if (istart[0] < 0) // negative index means last-|index|
-            st = nsteps + istart[0];
-        else
-            st = istart[0];
-        if (icount[0] < 0) // negative index means last-|index|+1-start
-            ct = nsteps + icount[0] + 1 - st;
-        else
-            ct = icount[0];
-
-        if (verbose > 2)
-            printf("    j=0, st=%" PRIu64 " ct=%" PRIu64 "\n", st, ct);
-
-        start_t[0] = st;
-        count_t[0] = ct;
-        nelems *= ct;
+        start_t[0] = stepStart;
+        count_t[0] = stepCount;
+        nelems *= stepCount;
         if (verbose > 1)
             printf("    s[0]=%" PRIu64 ", c[0]=%" PRIu64 ", n=%" PRIu64 "\n",
                    start_t[0], count_t[0], nelems);
-
         tidx = 1;
     }
     tdims = ndim + tidx;
 
     for (j = 0; j < ndim; j++)
     {
+        uint64_t st, ct;
         if (istart[j + tidx] < 0) // negative index means last-|index|
             st = variable->m_Shape[j] + istart[j + tidx];
         else
@@ -1636,16 +1650,16 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
         }
 
-        if (nsteps > 1)
+        size_t absstep = relative_to_absolute_step(variable, stepStart);
+        if (verbose > 2)
         {
-            if (verbose > 2)
-            {
-                printf("set Step selection: from %" PRIu64 " read %" PRIu64
-                       " steps\n",
-                       s[0], c[0]);
-            }
-            variable->SetStepSelection({s[0], c[0]});
+            printf("set Step selection: from relative step %" PRIu64
+                   " (absolute step %" PRIu64 ") read %" PRIu64 " steps\n",
+                   stepStart, absstep, stepCount);
         }
+        /* FIXME: this does not work if the steps are not contiguous in the
+         * file */
+        variable->SetStepSelection({absstep, stepCount});
 
         dataV.resize(variable->SelectionSize());
         fp->Get(*variable, dataV, adios2::Mode::Sync);
@@ -2060,24 +2074,22 @@ void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
 }
 
 const std::map<std::string, enum ADIOS_DATATYPES> adios_types_map = {
-    {"char", adios_unsigned_byte},
-    {"int", adios_integer},
+    {"uint8_t", adios_unsigned_byte},
+    {"int32_t", adios_integer},
     {"float", adios_real},
     {"double", adios_double},
     {"float complex", adios_complex},
     {"double complex", adios_double_complex},
-    {"long double complex", adios_long_double_complex},
-    {"signed char", adios_byte},
-    {"short", adios_short},
-    {"long int", adios_long},
-    {"long long int", adios_long},
+    {"int8_t", adios_byte},
+    {"int16_t", adios_short},
+    {"int64_t", adios_long},
+    {"int64_t", adios_long},
     {"string", adios_string},
-    {"string array", adios_string_array},
-    {"unsigned char", adios_unsigned_byte},
-    {"unsigned short", adios_unsigned_short},
-    {"unsigned int", adios_unsigned_integer},
-    {"unsigned long int", adios_unsigned_long},
-    {"unsigned long long int", adios_unsigned_long}};
+    {"uint8_t", adios_unsigned_byte},
+    {"uint16_t", adios_unsigned_short},
+    {"uint32_t", adios_unsigned_integer},
+    {"uint64_t", adios_unsigned_long},
+    {"uint64_t", adios_unsigned_long}};
 
 enum ADIOS_DATATYPES type_to_enum(std::string type)
 {
@@ -2567,6 +2579,64 @@ void print_endline(void)
 }
 
 template <class T>
+size_t relative_to_absolute_step(core::Variable<T> *variable,
+                                 const size_t relstep)
+{
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = indices.begin();
+    size_t absstep = itStep->first - 1;
+
+    for (int step = 0; step < relstep; step++)
+    {
+        ++itStep;
+        absstep = itStep->first - 1;
+    }
+    return absstep;
+}
+
+template <class T>
+Dims get_global_array_signature(core::Engine *fp, core::IO *io,
+                                core::Variable<T> *variable)
+{
+    const size_t ndim = variable->m_Shape.size();
+    const size_t nsteps = variable->m_StepsCount;
+    Dims dims(ndim, 0);
+    bool firstStep = true;
+
+    // looping over the absolute step indexes
+    // is not supported by a simple API function
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = indices.begin();
+
+    for (int step = 0; step < nsteps; step++)
+    {
+        const size_t absstep = itStep->first;
+        Dims d = variable->Shape(absstep - 1);
+        if (d.empty())
+        {
+            continue;
+        }
+
+        for (int k = 0; k < ndim; k++)
+        {
+            if (firstStep)
+            {
+                dims[k] = d[k];
+            }
+            else if (dims[k] != d[k])
+            {
+                dims[k] = 0;
+            }
+        }
+        firstStep = false;
+        ++itStep;
+    }
+    return dims;
+}
+
+template <class T>
 std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
                                                   core::IO *io,
                                                   core::Variable<T> *variable)
@@ -2884,9 +2954,6 @@ char *mystrndup(const char *s, size_t n)
 
 int main(int argc, char *argv[])
 {
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Init(&argc, &argv);
-#endif
     int retval = 1;
     try
     {
@@ -2897,8 +2964,5 @@ int main(int argc, char *argv[])
         std::cout << "\nbpls caught an exception\n";
         std::cout << e.what() << std::endl;
     }
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Finalize();
-#endif
     return retval;
 }

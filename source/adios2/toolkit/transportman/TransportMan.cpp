@@ -58,13 +58,13 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
     else
     {
         int rank;
-        MPI_Comm_rank(m_MPIComm, &rank);
+        SMPI_Comm_rank(m_MPIComm, &rank);
         if (rank == 0)
         {
             lf_CreateDirectories(fileNames);
         }
 
-        helper::CheckMPIReturn(MPI_Barrier(m_MPIComm),
+        helper::CheckMPIReturn(SMPI_Barrier(m_MPIComm),
                                "Barrier in TransportMan.MkDirsBarrier");
     }
 }

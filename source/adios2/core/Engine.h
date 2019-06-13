@@ -24,7 +24,6 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/IO.h"
@@ -426,6 +425,8 @@ public:
     T *BufferData(const size_t payloadOffset,
                   const size_t bufferID = 0) noexcept;
 
+    size_t Steps() const;
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
@@ -442,6 +443,9 @@ protected:
 
     /** keep track if the current Engine is marked for destruction in IO */
     bool m_IsClosed = false;
+
+    /** carries the number of available steps in each Engine */
+    size_t m_Steps = 0;
 
     /** Called from constructors */
     virtual void Init();
@@ -507,6 +511,8 @@ protected:
 
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+    virtual size_t DoSteps() const;
 
 private:
     /** Throw exception by Engine virtual functions not implemented/supported by

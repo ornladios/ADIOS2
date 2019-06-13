@@ -222,44 +222,62 @@ void Variable<T>::CheckRandomAccess(const size_t step,
     }
 }
 
-// Variable<T>::Span functions
+// Span functions
 template <class T>
-T &Variable<T>::Span::DoAt(const size_t position)
+Span<T>::Span(Engine &engine, const size_t size)
+: m_Engine(engine), m_Size(size)
+{
+}
+
+template <class T>
+size_t Span<T>::Size() const noexcept
+{
+    return m_Size;
+}
+
+template <class T>
+T *Span<T>::Data() const noexcept
+{
+    return m_Engine.BufferData<T>(m_PayloadPosition);
+}
+
+template <class T>
+T &Span<T>::At(const size_t position)
 {
     if (position > m_Size)
     {
         throw std::invalid_argument(
             "ERROR: position " + std::to_string(position) +
             " is out of bounds for span of size " + std::to_string(m_Size) +
-            " , in call to T& Variable<T>::Span::At\n");
+            " , in call to T& Span<T>::At\n");
     }
 
-    return DoAccess(position);
+    return (*this)[position];
 }
 
 template <class T>
-const T &Variable<T>::Span::DoAt(const size_t position) const
+const T &Span<T>::At(const size_t position) const
 {
     if (position > m_Size)
     {
         throw std::invalid_argument(
             "ERROR: position " + std::to_string(position) +
             " is out of bounds for span of size " + std::to_string(m_Size) +
-            " , in call to const T& Variable<T>::Span::At\n");
+            " , in call to const T& Span<T>::At\n");
     }
 
-    return DoAccess(position);
+    return (*this)[position];
 }
 
 template <class T>
-T &Variable<T>::Span::DoAccess(const size_t position)
+T &Span<T>::operator[](const size_t position)
 {
     T &data = *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));
     return data;
 }
 
 template <class T>
-const T &Variable<T>::Span::DoAccess(const size_t position) const
+const T &Span<T>::operator[](const size_t position) const
 {
     const T &data =
         *m_Engine.BufferData<T>(m_PayloadPosition + position * sizeof(T));

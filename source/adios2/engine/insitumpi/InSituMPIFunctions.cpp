@@ -43,7 +43,7 @@ std::vector<int> FindPeers(const MPI_Comm comm, const std::string &name,
         return peerlist;
     }
 
-    mylist.reserve(nproc);
+    mylist.resize(nproc);
     MPI_Gather(&wrank, 1, MPI_INT, mylist.data(), 1, MPI_INT, 0, comm);
 
     std::string ofName;

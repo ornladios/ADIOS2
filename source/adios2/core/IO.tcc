@@ -21,6 +21,7 @@
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -32,6 +33,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
                                 const Dims &start, const Dims &count,
                                 const bool constantDims)
 {
+    TAU_SCOPED_TIMER("IO::DefineVariable");
     if (m_DebugMode)
     {
         auto itVariable = m_Variables.find(name);
@@ -72,6 +74,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
 template <class T>
 Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 {
+    TAU_SCOPED_TIMER("IO::InquireVariable");
     auto itVariable = m_Variables.find(name);
 
     if (itVariable == m_Variables.end())
@@ -100,6 +103,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                                   const std::string &variableName,
                                   const std::string separator)
 {
+    TAU_SCOPED_TIMER("IO::DefineAttribute");
     if (m_DebugMode)
     {
         if (!variableName.empty() && InquireVariableType(variableName).empty())
@@ -136,6 +140,7 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
                                   const std::string &variableName,
                                   const std::string separator)
 {
+    TAU_SCOPED_TIMER("IO::DefineAttribute");
     if (m_DebugMode)
     {
         if (!variableName.empty() && InquireVariableType(variableName).empty())
@@ -156,12 +161,13 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array,
     }
 
     auto &attributeMap = GetAttributeMap<T>();
-    const unsigned int size = static_cast<unsigned int>(attributeMap.size());
+    const unsigned int newIndex =
+        attributeMap.empty() ? 0 : attributeMap.rbegin()->first + 1;
 
-    auto itAttributePair =
-        attributeMap.emplace(size, Attribute<T>(globalName, array, elements));
+    auto itAttributePair = attributeMap.emplace(
+        newIndex, Attribute<T>(globalName, array, elements));
     m_Attributes.emplace(globalName,
-                         std::make_pair(helper::GetType<T>(), size));
+                         std::make_pair(helper::GetType<T>(), newIndex));
 
     return itAttributePair.first->second;
 }
@@ -171,6 +177,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
                                    const std::string &variableName,
                                    const std::string separator) noexcept
 {
+    TAU_SCOPED_TIMER("IO::InquireAttribute");
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
     auto itAttribute = m_Attributes.find(globalName);

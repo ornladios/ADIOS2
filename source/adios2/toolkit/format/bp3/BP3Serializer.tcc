@@ -69,7 +69,17 @@ inline void BP3Serializer::PutVariablePayload(
         {
             T *itBegin = reinterpret_cast<T *>(m_Data.m_Buffer.data() +
                                                m_Data.m_Position);
-            std::fill_n(itBegin, blockSize, span->m_Value);
+
+            // TODO: does std::fill_n have a bug in gcc or due to optimizations
+            // this is impossible? This seg faults in Release mode only . Even
+            // RelWithDebInfo works, replacing with explicit loop below using
+            // access operator []
+            // std::fill_n(itBegin, blockSize, span->m_Value);
+
+            for (auto i = 0; i < blockSize; ++i)
+            {
+                itBegin[i] = span->m_Value;
+            }
         }
 
         m_Data.m_Position += blockSize * sizeof(T);

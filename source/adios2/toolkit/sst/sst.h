@@ -10,6 +10,8 @@
 #ifndef SST_H_
 #define SST_H_
 
+#include "adios2/helper/mpiwrap.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -98,6 +100,9 @@ extern void SstProvideTimestep(SstStream s, SstData LocalMetadata,
                                DataFreeFunc FreeAttribute,
                                void *FreeAttributeClientData);
 extern void SstWriterClose(SstStream stream);
+/*  SstWriterDefinitionLock is called once only, on transition from unlock to
+ * locked definitions */
+extern void SstWriterDefinitionLock(SstStream stream, long EffectiveTimestep);
 
 /*
  *  Reader-side operations
@@ -112,10 +117,12 @@ extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep,
                                  void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
 extern void SstReleaseStep(SstStream stream);
-extern SstStatusValue SstAdvanceStep(SstStream stream, SstStepMode mode,
-                                     const float timeout_sec);
+extern SstStatusValue SstAdvanceStep(SstStream stream, const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
 extern long SstCurrentStep(SstStream s);
+/*  SstReaderDefinitionLock is called once only, on transition from unlock to
+ * locked definitions */
+extern void SstReaderDefinitionLock(SstStream stream, long EffectiveTimestep);
 
 /*
  *  Calls that support FFS-based marshaling, source code in cp/ffs_marshal.c
@@ -144,6 +151,10 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
                               const char *Name, size_t DimCount,
                               const size_t *Start, const size_t *Count,
                               void *Data);
+extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                   const char *Name, size_t DimCount,
+                                   const int BlockID, const size_t *Count,
+                                   void *Data);
 
 extern SstStatusValue SstFFSPerformGets(SstStream Stream);
 

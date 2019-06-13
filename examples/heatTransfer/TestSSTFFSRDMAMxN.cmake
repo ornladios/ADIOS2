@@ -27,8 +27,7 @@ set_property(TEST HeatTransfer.SST.FFS.RDMA.Dump.MxN
 )
 
 add_test(NAME HeatTransfer.SST.FFS.RDMA.Validate.MxN
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.SST.FFS.RDMA.Dump.MxN.txt
 )

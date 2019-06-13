@@ -12,6 +12,7 @@
 #include "BP3Reader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -26,18 +27,20 @@ BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
   m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
   m_SubFileManager(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("BP3Reader::Open");
     Init();
 }
 
 StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("BP3Reader::BeginStep");
     if (m_DebugMode)
     {
-        if (mode != StepMode::NextAvailable)
+        if (mode != StepMode::Read)
         {
             throw std::invalid_argument(
                 "ERROR: mode is not supported yet, "
-                "only NextAvailable is valid for "
+                "only Read is valid for "
                 "engine BP3 with adios2::Mode::Read, in call to "
                 "BeginStep\n");
         }
@@ -77,10 +80,15 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
 size_t BP3Reader::CurrentStep() const { return m_CurrentStep; }
 
-void BP3Reader::EndStep() { PerformGets(); }
+void BP3Reader::EndStep()
+{
+    TAU_SCOPED_TIMER("BP3Reader::EndStep");
+    PerformGets();
+}
 
 void BP3Reader::PerformGets()
 {
+    TAU_SCOPED_TIMER("BP3Reader::PerformGets");
     if (m_BP3Deserializer.m_DeferredVariables.empty())
     {
         return;
@@ -194,10 +202,12 @@ void BP3Reader::InitBuffer()
 #define declare_type(T)                                                        \
     void BP3Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::Get");                                    \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void BP3Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::Get");                                    \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -205,6 +215,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void BP3Reader::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP3Reader::Close");
     PerformGets();
     m_SubFileManager.CloseFiles();
     m_FileManager.CloseFiles();
@@ -214,23 +225,31 @@ void BP3Reader::DoClose(const int transportIndex)
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     BP3Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::AllStepsBlocksInfo");                     \
         return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
     std::vector<std::vector<typename Variable<T>::Info>>                       \
     BP3Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");             \
         return m_BP3Deserializer.AllRelativeStepsBlocksInfo(variable);         \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> BP3Reader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::BlocksInfo");                             \
         return m_BP3Deserializer.BlocksInfo(variable, step);                   \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+size_t BP3Reader::DoSteps() const
+{
+    return m_BP3Deserializer.m_MetadataSet.StepsCount;
+}
 
 } // end namespace engine
 } // end namespace core

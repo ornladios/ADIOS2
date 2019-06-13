@@ -95,6 +95,11 @@ void adiosStream::putADIOSArray(const std::shared_ptr<VariableInfo> ov)
 
 void adiosStream::getADIOSArray(std::shared_ptr<VariableInfo> ov)
 {
+    // Allocate memory on first access
+    if (!ov->data.size())
+    {
+        ov->data.resize(ov->datasize);
+    }
     if (ov->type == "double")
     {
         adios2::Variable<double> v = io.InquireVariable<double>(ov->name);
@@ -143,13 +148,9 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
     if (!settings.myRank && settings.verbose)
     {
         std::cout << "    Read ";
-        if (cmdR->stepMode == adios2::StepMode::NextAvailable)
+        if (cmdR->stepMode == adios2::StepMode::Read)
         {
-            std::cout << "next available step from ";
-        }
-        else
-        {
-            std::cout << "latest step from ";
+            std::cout << "got a step from ";
         }
 
         std::cout << cmdR->streamName << " with timeout value "
@@ -251,13 +252,18 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     }
 
     const double div =
-        pow(10.0, static_cast<const double>(settings.ndigits(cfg.nSteps - 1)));
+        pow(10.0, static_cast<double>(settings.ndigits(cfg.nSteps - 1)));
     double myValue = static_cast<double>(settings.myRank) +
                      static_cast<double>(step - 1) / div;
 
     std::map<std::string, adios2::Params> definedVars = io.AvailableVariables();
     for (auto ov : cmdW->variables)
     {
+        // Allocate memory on first access
+        if (!ov->data.size())
+        {
+            ov->data.resize(ov->datasize);
+        }
         // if the variable is not in the IO group it means
         // we have not defined it yet (e.g. a write-only variable or a linked
         // variable defined in another read group)

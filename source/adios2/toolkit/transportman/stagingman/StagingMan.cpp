@@ -50,6 +50,7 @@ StagingMan::Request(const std::vector<char> &request,
             now_time - start_time);
         if (duration.count() > m_Timeout)
         {
+            m_Transport.Close();
             return reply;
         }
     }
@@ -64,6 +65,7 @@ StagingMan::Request(const std::vector<char> &request,
             now_time - start_time);
         if (duration.count() > m_Timeout)
         {
+            m_Transport.Close();
             return reply;
         }
     }
@@ -78,6 +80,7 @@ StagingMan::Request(const std::vector<char> &request,
             now_time - start_time);
         if (duration.count() > m_Timeout)
         {
+            m_Transport.Close();
             return reply;
         }
     }

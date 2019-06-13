@@ -41,7 +41,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
     EXPECT_EQ(globalvalue.Start().size(), 0);
     EXPECT_EQ(globalvalue.Count().size(), 0);
     EXPECT_EQ(globalvalue.Name(), name);
-    EXPECT_EQ(globalvalue.Type(), "int");
+    EXPECT_EQ(globalvalue.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
@@ -60,7 +60,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
     EXPECT_EQ(localvalue.Start().size(), 1);
     EXPECT_EQ(localvalue.Count().size(), 1);
     EXPECT_EQ(localvalue.Name(), "localvalue");
-    EXPECT_EQ(localvalue.Type(), "int");
+    EXPECT_EQ(localvalue.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
@@ -102,7 +102,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
     EXPECT_EQ(globalarray.Count()[1], Ny);
     EXPECT_EQ(globalarray.Count()[2], Nz);
     EXPECT_EQ(globalarray.Name(), "globalarray");
-    EXPECT_EQ(globalarray.Type(), "int");
+    EXPECT_EQ(globalarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
@@ -150,7 +150,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
     EXPECT_EQ(globalarray.Count()[1], Ny);
     EXPECT_EQ(globalarray.Count()[2], Nz);
     EXPECT_EQ(globalarray.Name(), "globalarray");
-    EXPECT_EQ(globalarray.Type(), "int");
+    EXPECT_EQ(globalarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
@@ -198,7 +198,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
     EXPECT_EQ(globalarray.Count()[1], Ny);
     EXPECT_EQ(globalarray.Count()[2], Nz);
     EXPECT_EQ(globalarray.Name(), "globalarray");
-    EXPECT_EQ(globalarray.Type(), "int");
+    EXPECT_EQ(globalarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayInvalidLocalValueDim)
@@ -230,7 +230,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArray)
     EXPECT_EQ(localarray.Count()[1], n / 2);
     EXPECT_EQ(localarray.Count()[2], 30);
     EXPECT_EQ(localarray.Name(), "localarray");
-    EXPECT_EQ(localarray.Type(), "int");
+    EXPECT_EQ(localarray.Type(), "int32_t");
     EXPECT_EQ(localarray.ShapeID(), adios2::ShapeID::LocalArray);
 }
 
@@ -266,7 +266,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
     EXPECT_EQ(localArray.Count()[1], 0);
     EXPECT_EQ(localArray.Count()[2], 0);
     EXPECT_EQ(localArray.Name(), "localArray");
-    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.Type(), "int32_t");
     EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 
     // Make a 3D selection to describe the local dimensions of the
@@ -282,7 +282,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
     EXPECT_EQ(localArray.Count()[1], Ny);
     EXPECT_EQ(localArray.Count()[2], Nz);
     EXPECT_EQ(localArray.Name(), "localArray");
-    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.Type(), "int32_t");
     EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 
     // TODO: Put must not allow start in LocalArrays
@@ -318,7 +318,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
     EXPECT_EQ(localArray.Count()[1], Ny);
     EXPECT_EQ(localArray.Count()[2], Nz);
     EXPECT_EQ(localArray.Name(), "localArray");
-    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.Type(), "int32_t");
     EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 }
 
@@ -354,7 +354,7 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayFirstDim)
     EXPECT_EQ(joinedarray.Count()[1], n);
     EXPECT_EQ(joinedarray.Count()[2], 30);
     EXPECT_EQ(joinedarray.Name(), "joinedarray");
-    EXPECT_EQ(joinedarray.Type(), "int");
+    EXPECT_EQ(joinedarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
@@ -382,7 +382,7 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
     EXPECT_EQ(joinedarray.Count()[1], 10);
     EXPECT_EQ(joinedarray.Count()[2], 30);
     EXPECT_EQ(joinedarray.Name(), "joinedarray");
-    EXPECT_EQ(joinedarray.Type(), "int");
+    EXPECT_EQ(joinedarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayTooManyJoinedDims)

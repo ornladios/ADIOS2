@@ -128,7 +128,6 @@ void InSituMPIReader::AsyncRecvVariable(
                 }
 
                 const auto &seek = sfi.Seeks;
-                const size_t blockStart = seek.first;
                 const size_t blockSize = seek.second - seek.first;
                 m_MPIRequests.emplace_back();
                 const int index = m_MPIRequests.size() - 1;

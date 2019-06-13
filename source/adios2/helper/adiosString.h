@@ -39,7 +39,20 @@ std::string FileToString(const std::string &fileName, const std::string hint);
  * @return a map with unique key=field, value=corresponding value
  */
 Params BuildParametersMap(const std::vector<std::string> &parameters,
-                          const bool debugMode);
+                          const char delimKeyValue = '=',
+                          const bool debugMode = false);
+
+/**
+ * Transforms a string to a map of parameters
+ * @param parameters string of parameters with format "key=value,
+ * key2=value2, ..."
+ * @param debugMode true=check parameters format, false=no checks
+ * @return a map with unique key/value pairs
+ */
+Params BuildParametersMap(const std::string &input,
+                          const char delimKeyValue = '=',
+                          const char delimItem = ',',
+                          const bool debugMode = false);
 
 /**
  * Add name extension if not existing at the end of name

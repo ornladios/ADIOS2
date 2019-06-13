@@ -17,7 +17,6 @@
 #include <memory> //std::shared_ptr
 #include <string>
 
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/ADIOS.h"
 
 namespace adios2
@@ -33,10 +32,9 @@ public:
     ADIOS(const std::string &configFile, MPI4PY_Comm comm,
           const bool debugMode = true);
     ADIOS(MPI4PY_Comm comm, const bool debugMode = true);
-#else
+#endif
     ADIOS(const std::string &configFile, const bool debugMode = true);
     ADIOS(const bool debugMode);
-#endif
     ~ADIOS() = default;
 
     /** object inspection true: valid object, false: invalid object */

@@ -39,7 +39,7 @@ StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(StepMode::NextAvailable, -1.0);
+        return BeginStep(StepMode::Read, -1.0);
     }
     else
     {
@@ -69,7 +69,7 @@ void Engine::Close(const int transportIndex)
 
     if (transportIndex == -1)
     {
-        helper::CheckMPIReturn(MPI_Comm_free(&m_MPIComm),
+        helper::CheckMPIReturn(SMPI_Comm_free(&m_MPIComm),
                                "freeing comm in Engine " + m_Name +
                                    ", in call to Close");
         m_IsClosed = true;
@@ -77,6 +77,8 @@ void Engine::Close(const int transportIndex)
 }
 
 void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
+
+size_t Engine::Steps() const { return DoSteps(); }
 
 // PROTECTED
 void Engine::Init() {}
@@ -153,6 +155,12 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+size_t Engine::DoSteps() const
+{
+    ThrowUp("DoPut");
+    return MaxSizeT;
+}
 
 // PRIVATE
 void Engine::ThrowUp(const std::string function) const

@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WdmReader.tcc
+ * SscReader.tcc
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_STAGINGREADER_TCC_
-#define ADIOS2_ENGINE_STAGINGREADER_TCC_
+#ifndef ADIOS2_ENGINE_SSCREADER_TCC_
+#define ADIOS2_ENGINE_SSCREADER_TCC_
 
-#include "WdmReader.h"
+#include "SscReader.h"
 
 #include <iostream>
 
@@ -23,20 +23,31 @@ namespace engine
 {
 
 template <class T>
-inline void WdmReader::GetSyncCommon(Variable<T> &variable, T *data)
+inline void SscReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") begin", true, true);
+    TAU_SCOPED_TIMER_FUNC();
+    Log(5,
+        "SscReader::GetSync(" + variable.m_Name + ") begin " +
+            std::to_string(m_CurrentStep),
+        true, true);
 
     GetDeferredCommon(variable, data);
     PerformGets();
 
-    Log(5, "WdmReader::GetSync(" + variable.m_Name + ") end", true, true);
+    Log(5,
+        "SscReader::GetSync(" + variable.m_Name + ") end " +
+            std::to_string(m_CurrentStep),
+        true, true);
 }
 
 template <class T>
-void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
+void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") begin", true, true);
+    TAU_SCOPED_TIMER_FUNC();
+    Log(5,
+        "SscReader::GetDeferred(" + variable.m_Name + ") begin " +
+            std::to_string(m_CurrentStep),
+        true, true);
 
     if (variable.m_SingleValue)
     {
@@ -57,25 +68,46 @@ void WdmReader::GetDeferredCommon(Variable<T> &variable, T *data)
     req.data = data;
     req.type = helper::GetType<T>();
 
-    Log(5, "WdmReader::GetDeferred(" + variable.m_Name + ") end", true, true);
+    if (m_Verbosity > 10)
+    {
+        std::cout << "SscReader::GetDeferred (" << variable.m_Name
+                  << ") registered Start = ";
+        for (int i = 0; i < req.start.size(); ++i)
+        {
+            std::cout << req.start[i] << ", ";
+        }
+        std::cout << std::endl;
+        std::cout << "SscReader::GetDeferred (" << variable.m_Name
+                  << ") registered Count = ";
+        for (int i = 0; i < req.count.size(); ++i)
+        {
+            std::cout << req.count[i] << ", ";
+        }
+        std::cout << std::endl;
+    }
+
+    Log(5,
+        "SscReader::GetDeferred(" + variable.m_Name + ") end " +
+            std::to_string(m_CurrentStep),
+        true, true);
 }
 
 template <>
-inline void WdmReader::AccumulateMinMax<std::complex<float>>(
+inline void SscReader::AccumulateMinMax<std::complex<float>>(
     std::complex<float> &min, std::complex<float> &max,
     const std::vector<char> &minVec, const std::vector<char> &maxVec) const
 {
 }
 
 template <>
-inline void WdmReader::AccumulateMinMax<std::complex<double>>(
+inline void SscReader::AccumulateMinMax<std::complex<double>>(
     std::complex<double> &min, std::complex<double> &max,
     const std::vector<char> &minVec, const std::vector<char> &maxVec) const
 {
 }
 
 template <typename T>
-void WdmReader::AccumulateMinMax(T &min, T &max,
+void SscReader::AccumulateMinMax(T &min, T &max,
                                  const std::vector<char> &minVec,
                                  const std::vector<char> &maxVec) const
 {
@@ -96,8 +128,9 @@ void WdmReader::AccumulateMinMax(T &min, T &max,
 
 template <typename T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
-WdmReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
+SscReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::map<size_t, std::vector<typename Variable<T>::Info>> m;
     for (const auto &i : m_MetaDataMap)
     {
@@ -108,12 +141,13 @@ WdmReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
 
 template <typename T>
 std::vector<typename Variable<T>::Info>
-WdmReader::BlocksInfoCommon(const Variable<T> &variable,
+SscReader::BlocksInfoCommon(const Variable<T> &variable,
                             const size_t step) const
 {
+    TAU_SCOPED_TIMER_FUNC();
     if (m_Verbosity >= 10)
     {
-        std::cout << "WdmReader::BlocksInfoCommon Step " << step << "\n";
+        std::cout << "SscReader::BlocksInfoCommon Step " << step << "\n";
     }
     std::vector<typename Variable<T>::Info> v;
     auto it = m_MetaDataMap.find(step);
@@ -152,13 +186,13 @@ WdmReader::BlocksInfoCommon(const Variable<T> &variable,
 }
 
 template <typename T>
-void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
-                                const Dims &start, const Dims &count)
+void SscReader::CheckIOVariable(const std::string &name, const Dims &shape)
 {
+    TAU_SCOPED_TIMER_FUNC();
     bool singleValue = false;
-    if (shape.size() == 1 and start.size() == 1 and count.size() == 1)
+    if (shape.size() == 1)
     {
-        if (shape[0] == 1 and start[0] == 0 and count[0] == 1)
+        if (shape[0] == 1)
         {
             singleValue = true;
         }
@@ -172,13 +206,13 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
         }
         else
         {
-            m_IO.DefineVariable<T>(name, shape, start, count);
+            m_IO.DefineVariable<T>(name, shape, Dims(shape.size(), 0), shape);
         }
         v = m_IO.InquireVariable<T>(name);
         v->m_Engine = this;
         if (m_Verbosity >= 5)
         {
-            std::cout << "WdmReader::CheckIOVariable defined Variable" << name
+            std::cout << "SscReader::CheckIOVariable defined Variable " << name
                       << " Dimension " << shape.size() << std::endl;
         }
     }
@@ -189,15 +223,12 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
             if (v->m_Shape != shape)
             {
                 v->SetShape(shape);
-            }
-            if (v->m_Start != start || v->m_Count != count)
-            {
-                v->SetSelection({start, count});
+                v->SetSelection({Dims(shape.size(), 0), shape});
             }
         }
         if (m_Verbosity >= 5)
         {
-            std::cout << "WdmReader::CheckIOVariable Variable" << name
+            std::cout << "SscReader::CheckIOVariable Variable " << name
                       << " existing, Dimension " << shape.size() << std::endl;
         }
     }
@@ -208,4 +239,4 @@ void WdmReader::CheckIOVariable(const std::string &name, const Dims &shape,
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_STAGINGREADER_TCC_
+#endif // ADIOS2_ENGINE_SSCREADER_TCC_

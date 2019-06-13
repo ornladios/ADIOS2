@@ -25,14 +25,13 @@ ADIOS::ADIOS(MPI_Comm comm, const bool debugMode) : ADIOS("", comm, debugMode)
 {
 }
 
-#else
+#endif
 ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 : m_ADIOS(std::make_shared<core::ADIOS>(configFile, debugMode, "C++"))
 {
 }
 
 ADIOS::ADIOS(const bool debugMode) : ADIOS("", debugMode) {}
-#endif
 
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 

@@ -28,8 +28,101 @@ namespace core
 
 template <class T>
 class Variable; // private implementation
+
+template <class T>
+class Span; // private implementation
 }
 /// \endcond
+
+namespace detail
+{
+/**
+ * Span<T> class that allows exposing buffer memory to the user
+ */
+template <class T>
+class Span
+{
+    using IOType = typename TypeInfo<T>::IOType;
+
+public:
+    /** Span can only be created by an Engine */
+    Span() = delete;
+    /** Span can't be copied */
+    Span(const Span &) = delete;
+    /** Span can be moved */
+    Span(Span &&) = default;
+    /**
+     * Memory is not owned, using RAII for members
+     */
+    ~Span() = default;
+
+    /** Span can't be copied */
+    Span &operator=(const Span &) = delete;
+    /** Span can only be moved */
+    Span &operator=(Span &&) = default;
+
+    /**
+     * size of the span based on Variable block Count
+     * @return number of elements
+     */
+    size_t size() const noexcept;
+
+    /**
+     * Pointer to span data, can be modified if new spans are added
+     * Follows rules of std::vector iterator invalidation.
+     * Call again to get an updated pointer.
+     * @return pointer to data
+     */
+    T *data() const noexcept;
+
+    /**
+     * Safe access operator that checks bounds and throws an exception
+     * @param position input offset from 0 = data()
+     * @return span element at input position
+     * @throws std::invalid_argument if out of bounds
+     */
+    T &at(const size_t position);
+
+    /**
+     * Safe const access operator that checks bounds and throws an exception
+     * @param position input offset from 0 = data()
+     * @return span const (read-only) element at input position
+     * @throws std::invalid_argument if out of bounds
+     */
+    const T &at(const size_t position) const;
+
+    /**
+     * Access operator (unsafe without check overhead)
+     * @param position input offset from 0 = data()
+     * @return span element at input position
+     */
+    T &operator[](const size_t position);
+
+    /**
+     * Access const operator (unsafe without check overhead)
+     * @param position input offset from 0 = data()
+     * @return span const (read-only) element at input position
+     */
+    const T &operator[](const size_t position) const;
+
+    // engine allowed to set m_Span
+    friend class adios2::Engine;
+
+    // Custom iterator class from:
+    // https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
+    ADIOS2_CLASS_iterator;
+
+    // Custom iterator class functions from:
+    // https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
+    ADIOS2_iterators_functions(data(), size());
+
+private:
+    using CoreSpan = core::Span<IOType>;
+    Span(CoreSpan *span);
+    CoreSpan *m_Span = nullptr;
+};
+
+} // end namespace detail
 
 template <class T>
 class Variable
@@ -189,7 +282,7 @@ public:
     };
 
     /**
-     * EXPERIMENTAL: Adds operation and parameters to current Variable object
+     *Adds operation and parameters to current Variable object
      * @param op operator to be added
      * @param parameters key/value settings particular to the Variable, not to
      * be confused by op own parameters
@@ -199,7 +292,7 @@ public:
                         const adios2::Params &parameters = adios2::Params());
 
     /**
-     * EXPERIMENTAL: inspects current operators added with AddOperator
+     * Inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
     std::vector<Operation> Operations() const;
@@ -234,17 +327,26 @@ public:
      */
     T Max(const size_t step = adios2::DefaultSizeT) const;
 
-    /** Contains sub-block information for a particular Variable<T> */
+    /** Contains block information for a particular Variable<T> */
     struct Info
     {
-        adios2::Dims Start;      ///< block start
-        adios2::Dims Count;      ///< block count
-        IOType Min = IOType();   ///< block Min, if IsValue is false
-        IOType Max = IOType();   ///< block Max, if IsValue is false
-        IOType Value = IOType(); ///< block Value, if IsValue is true
-        bool IsValue = false;    ///< true: value, false: array
-        size_t BlockID = 0;      ///< block ID for block selections
+        /** block start */
+        adios2::Dims Start;
+        /** block count */
+        adios2::Dims Count;
+        /** block Min, if IsValue is false */
+        IOType Min = IOType();
+        /** block Max, if IsValue is false */
+        IOType Max = IOType();
+        /** block Value, if IsValue is true */
+        IOType Value = IOType();
+        /** true: value, false: array */
+        bool IsValue = false;
+        /** blockID for Block Selection */
+        size_t BlockID = 0;
+        /** block corresponding step */
         size_t Step = 0;
+        /** reference to internal block data (used by inline Engine) */
         const T *Data() const;
 
         // allow Engine to set m_Info
@@ -265,37 +367,7 @@ public:
      */
     std::vector<std::vector<typename Variable<T>::Info>> AllStepsBlocksInfo();
 
-    class Span
-    {
-    public:
-        Span() = delete;
-        Span(const Span &) = delete;
-        Span(Span &&) = default;
-        ~Span() = default;
-
-        Span &operator=(const Span &) = delete;
-        Span &operator=(Span &&) = default;
-
-        size_t size() const noexcept;
-        T *data() const noexcept;
-
-        T &at(const size_t position);
-        const T &at(const size_t position) const;
-
-        T &operator[](const size_t position);
-        const T &operator[](const size_t position) const;
-
-        // engine allowed to set m_Span
-        friend class Engine;
-
-        ADIOS2_CLASS_iterator;
-        ADIOS2_iterators_functions(data(), size());
-
-    private:
-        class CoreSpan;
-        Span(CoreSpan *span);
-        CoreSpan *m_Span = nullptr;
-    };
+    using Span = adios2::detail::Span<T>;
 
 private:
     Variable<T>(core::Variable<IOType> *variable);
@@ -303,6 +375,9 @@ private:
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
 };
+
+template <typename T>
+std::string ToString(const Variable<T> &variable);
 
 } // end namespace adios2
 

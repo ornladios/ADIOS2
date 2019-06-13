@@ -6,11 +6,6 @@
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 #include <pthread.h>
 
 #include "adios2/ADIOSConfig.h"
@@ -179,6 +174,39 @@ static char *TranslateADIOS2Type2FFS(const char *Type)
     {
         return strdup("complex8");
     }
+    else if (strcmp(Type, "int8_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int16_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int32_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int64_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "uint8_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint16_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint32_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint64_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+
     return strdup(Type);
 }
 
@@ -186,40 +214,40 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
 {
     if (strcmp(Type, "integer") == 0)
     {
-        if (size == sizeof(int))
+        if (size == 1)
         {
-            return strdup("int");
+            return strdup("int8_t");
         }
-        else if (size == sizeof(long))
+        else if (size == 2)
         {
-            return strdup("long int");
+            return strdup("int16_t");
         }
-        else if (size == sizeof(char))
+        else if (size == 4)
         {
-            return strdup("char");
+            return strdup("int32_t");
         }
-        else if (size == sizeof(short))
+        else if (size == 8)
         {
-            return strdup("short");
+            return strdup("int64_t");
         }
     }
     else if (strcmp(Type, "unsigned integer") == 0)
     {
-        if (size == sizeof(int))
+        if (size == 1)
         {
-            return strdup("unsigned int");
+            return strdup("uint8_t");
         }
-        else if (size == sizeof(long))
+        else if (size == 2)
         {
-            return strdup("unsigned long int");
+            return strdup("uint16_t");
         }
-        else if (size == sizeof(char))
+        else if (size == 4)
         {
-            return strdup("unsigned char");
+            return strdup("uint32_t");
         }
-        else if (size == sizeof(short))
+        else if (size == 8)
         {
-            return strdup("unsigned short");
+            return strdup("uint64_t");
         }
     }
     else if ((strcmp(Type, "double") == 0) || (strcmp(Type, "float") == 0))
@@ -659,6 +687,7 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     Info->VarList =
         realloc(Info->VarList, sizeof(Info->VarList[0]) * (Info->VarCount + 1));
+    memset(&Info->VarList[Info->VarCount], 0, sizeof(Info->VarList[0]));
     Info->VarList[Info->VarCount].VarName = strdup(ArrayName);
     Info->VarList[Info->VarCount].PerWriterMetaFieldDesc =
         calloc(sizeof(FMFieldList), Stream->WriterCohortSize);
@@ -718,6 +747,7 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
         // Build request structure and enter it into requests list
         FFSArrayRequest Req = malloc(sizeof(*Req));
         Req->VarRec = Var;
+        Req->RequestType = Global;
         // make a copy of Start and Count request
         Req->Start = malloc(sizeof(Start[0]) * Var->DimCount);
         memcpy(Req->Start, Start, sizeof(Start[0]) * Var->DimCount);
@@ -729,8 +759,49 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
     }
 }
 
+extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                   const char *Name, size_t DimCount,
+                                   const int BlockID, const size_t *Count,
+                                   void *Data)
+{
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    int GetFromWriter = 0;
+    FFSVarRec Var = LookupVarByKey(Stream, Variable);
+
+    // if Variable is in Metadata (I.E. DimCount == 0), move incoming data to
+    // Data area
+    if (DimCount == 0)
+    {
+        void *IncomingDataBase =
+            ((char *)Info->MetadataBaseAddrs[GetFromWriter]) +
+            Var->PerWriterMetaFieldDesc[GetFromWriter]->field_offset;
+        memcpy(Data, IncomingDataBase,
+               Var->PerWriterMetaFieldDesc[GetFromWriter]->field_size);
+    }
+    else
+    {
+        // Build request structure and enter it into requests list
+        FFSArrayRequest Req = malloc(sizeof(*Req));
+        memset(Req, 0, sizeof(*Req));
+        Req->VarRec = Var;
+        Req->RequestType = Local;
+        Req->NodeID = BlockID;
+        // make a copy of Count request
+        Req->Count = malloc(sizeof(Count[0]) * Var->DimCount);
+        memcpy(Req->Count, Count, sizeof(Count[0]) * Var->DimCount);
+        Req->Data = Data;
+        Req->Next = Info->PendingVarRequests;
+        Info->PendingVarRequests = Req;
+    }
+}
+
 static int NeedWriter(FFSArrayRequest Req, int i)
 {
+    if (Req->RequestType == Local)
+    {
+        return (Req->NodeID == i);
+    }
+    // else Global case
     for (int j = 0; j < Req->VarRec->DimCount; j++)
     {
         size_t SelOffset = Req->Start[j];
@@ -807,6 +878,8 @@ static void ClearReadRequests(SstStream Stream)
     {
         FFSArrayRequest PrevReq = Req;
         Req = Req->Next;
+        free(PrevReq->Count);
+        free(PrevReq->Start);
         free(PrevReq);
     }
     Info->PendingVarRequests = NULL;
@@ -1168,6 +1241,20 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t IncomingSize = Reqs->VarRec->PerWriterIncomingSize[i];
                 int FreeIncoming = 0;
 
+                if (Reqs->RequestType == Local)
+                {
+                    RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    GlobalDimensions =
+                        calloc(DimCount, sizeof(GlobalDimensions[0]));
+                    if (SelOffset == NULL)
+                    {
+                        SelOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    }
+                    for (int i = 0; i < DimCount; i++)
+                    {
+                        GlobalDimensions[i] = RankSize[i];
+                    }
+                }
                 if ((Stream->WriterConfigParams->CompressionMethod ==
                      SstCompressZFP) &&
                     ZFPcompressionPossible(Type, DimCount))
@@ -1244,9 +1331,17 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     if (!Info->MetaFormat)
     {
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
-        FMFormat Format = FMregister_simple_format(
-            Info->LocalFMContext, "MetaData", Info->MetaFields,
-            FMstruct_size_field_list(Info->MetaFields, sizeof(char *)));
+        FMStructDescRec struct_list[4] = {
+            {NULL, NULL, 0, NULL},
+            {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
+            {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {NULL, NULL, 0, NULL}};
+        struct_list[0].format_name = "MetaData";
+        struct_list[0].field_list = Info->MetaFields;
+        struct_list[0].struct_size =
+            FMstruct_size_field_list(Info->MetaFields, sizeof(char *));
+        FMFormat Format =
+            register_data_format(Info->LocalFMContext, &struct_list[0]);
         Info->MetaFormat = Format;
         Block->FormatServerRep =
             get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
@@ -1520,6 +1615,9 @@ extern void FFSClearTimestepData(SstStream Stream)
         free(Info->VarList[i].PerWriterStart);
         free(Info->VarList[i].PerWriterCounts);
         free(Info->VarList[i].PerWriterIncomingData);
+        free(Info->VarList[i].PerWriterIncomingSize);
+        if (Info->VarList[i].Type)
+            free(Info->VarList[i].Type);
     }
     Info->VarCount = 0;
 }
@@ -1667,7 +1765,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 VarRec->ElementSize = ElementSize;
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, ArrayName, Type, meta_base->Dims,
-                    meta_base->Shape, meta_base->Count, meta_base->Offsets);
+                    meta_base->Shape, meta_base->Offsets, meta_base->Count);
             }
             if (WriterRank == 0)
             {
@@ -1704,9 +1802,11 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 VarRec->DimCount = 0;
                 VarRec->Variable = Stream->VarSetupUpcall(
                     Stream->SetupUpcallReader, FieldName, Type, field_data);
+                free(Type);
             }
             VarRec->PerWriterMetaFieldDesc[WriterRank] = &FieldList[i];
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
+            free(FieldName);
             i++;
         }
         /* real variable count is in j, i tracks the entries in the metadata */
@@ -1813,9 +1913,15 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 
         /* handle metadata */
         MetaEntry->Dims = DimCount;
-        MetaEntry->Shape = CopyDims(DimCount, Shape);
+        if (Shape)
+            MetaEntry->Shape = CopyDims(DimCount, Shape);
+        else
+            MetaEntry->Shape = NULL;
         MetaEntry->Count = CopyDims(DimCount, Count);
-        MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        if (Offsets)
+            MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        else
+            MetaEntry->Offsets = NULL;
 
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
             ZFPcompressionPossible(Type, DimCount))

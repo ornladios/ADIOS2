@@ -9,7 +9,6 @@
  */
 
 #include "adiosMemory.h"
-#include "adiosMemory.tcc"
 
 #include <algorithm>
 
@@ -285,11 +284,6 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                         srcMemCount, endianReverse, destType);
     }
 }
-
-#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
-template void CopyEndianReverse(const char *src, const size_t payloadStride,
-                                char *dest);
-#endif
 
 } // end namespace helper
 } // end namespace adios2

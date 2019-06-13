@@ -11,7 +11,9 @@
 #ifndef ADIOS2_BINDINGS_C_ADIOS2_C_TYPES_H_
 #define ADIOS2_BINDINGS_C_ADIOS2_C_TYPES_H_
 
-#include <stddef.h> //std::size_t
+#include <limits.h> // ULLONG_MAX
+#include <stddef.h> // size_t
+#include <stdint.h> // uint64_t
 
 #include "adios2/ADIOSConfig.h"
 
@@ -115,8 +117,7 @@ typedef enum
 {
     adios2_step_mode_append = 0,
     adios2_step_mode_update = 1,
-    adios2_step_mode_next_available = 2,
-    adios2_step_mode_latest_available = 3
+    adios2_step_mode_read = 2,
 } adios2_step_mode;
 
 typedef enum
@@ -138,6 +139,8 @@ typedef enum
 } adios2_shapeid;
 
 static size_t adios2_string_array_element_max_size = 4096;
+
+static const uint64_t adios2_local_value_dim = ULLONG_MAX - 2;
 
 #ifdef __cplusplus
 } // end extern C

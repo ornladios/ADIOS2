@@ -65,8 +65,7 @@ module adios2_parameters_mod
     ! Step Mode
     integer, parameter :: adios2_step_mode_append = 0
     integer, parameter :: adios2_step_mode_update = 1
-    integer, parameter :: adios2_step_mode_next_available = 2
-    integer, parameter :: adios2_step_mode_latest_available = 3
+    integer, parameter :: adios2_step_mode_read = 2
 
     ! Step Status
     integer, parameter :: adios2_step_status_other_error = -1
@@ -79,6 +78,7 @@ module adios2_parameters_mod
     integer, parameter :: adios2_string_array_element_max_size = 4096
 
     integer(kind=8), parameter, dimension(1) :: adios2_null_dims = (/-1/)
+    integer(kind=8), parameter :: adios2_local_value_dim = -2
 
     logical, parameter :: adios2_advance_yes = .true.
     logical, parameter :: adios2_advance_no  = .false.

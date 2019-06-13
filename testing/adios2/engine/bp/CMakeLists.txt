@@ -64,6 +64,9 @@ target_link_libraries(TestBPWriteReadLocalVariables adios2 gtest)
 add_executable(TestBPWriteReadLocalVariablesSel TestBPWriteReadLocalVariablesSel.cpp)
 target_link_libraries(TestBPWriteReadLocalVariablesSel adios2 gtest)
 
+add_executable(TestBPWriteReadLocalVariablesSelHighLevel TestBPWriteReadLocalVariablesSelHighLevel.cpp)
+target_link_libraries(TestBPWriteReadLocalVariablesSelHighLevel adios2 gtest)
+
 add_executable(TestBPChangingShape TestBPChangingShape.cpp)
 target_link_libraries(TestBPChangingShape adios2 gtest)
 
@@ -91,6 +94,7 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPWriteMemorySelectionRead MPI::MPI_C)
   target_link_libraries(TestBPWriteReadLocalVariables MPI::MPI_C)
   target_link_libraries(TestBPWriteReadLocalVariablesSel MPI::MPI_C)
+  target_link_libraries(TestBPWriteReadLocalVariablesSelHighLevel MPI::MPI_C)
   target_link_libraries(TestBPChangingShape MPI::MPI_C)
   target_link_libraries(TestBPWriteReadBlockInfo MPI::MPI_C)
   target_link_libraries(TestBPWriteReadVariableSpan MPI::MPI_C)
@@ -122,6 +126,7 @@ gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY 
 gtest_add_tests(TARGET TestBPWriteMemorySelectionRead ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSelHighLevel ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 
 gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
@@ -140,6 +145,7 @@ gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY 
 gtest_add_tests(TARGET TestBPWriteMemorySelectionRead ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSelHighLevel ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 
 # BP3 only for now

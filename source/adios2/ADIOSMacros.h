@@ -244,10 +244,6 @@
     MACRO(Sync)                                                                \
     MACRO(Deferred)
 
-/**
- * Custom iterators from:
- * https://gist.github.com/jeetsukumaran/307264#file-custom_iterator-cpp-L26
- */
 #define ADIOS2_CLASS_iterator                                                  \
     class iterator                                                             \
     {                                                                          \
@@ -277,15 +273,10 @@
                                                                                \
     private:                                                                   \
         pointer ptr_;                                                          \
-    };
+    }
 
 #define ADIOS2_iterators_functions(DATA_FUNCTION, SIZE_FUNCTION)               \
     iterator begin() noexcept { return iterator(DATA_FUNCTION); }              \
-    iterator end() noexcept                                                    \
-    {                                                                          \
-        return iterator(DATA_FUNCTION + SIZE_FUNCTION);                        \
-    }                                                                          \
-    iterator rbegin() noexcept { return --end(); }                             \
-    iterator rend() noexcept { return --begin(); }
+    iterator end() noexcept { return iterator(DATA_FUNCTION + SIZE_FUNCTION); }
 
 #endif /* ADIOS2_ADIOSMACROS_H */

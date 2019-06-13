@@ -1,4 +1,5 @@
-blockdiag
-sphinxcontrib-blockdiag
-sphinx_rtd_theme
-breathe
+sphinx>=2.0.1
+blockdiag>=1.5.4
+sphinxcontrib-blockdiag>=1.5.5
+sphinx_rtd_theme>=0.4.1
+breathe>=4.13

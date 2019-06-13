@@ -25,11 +25,6 @@ set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
-# On Mac OS X, set the dir. included as part of the installed library's path:
-if (BUILD_SHARED_LIBS AND NOT DEFINED CMAKE_INSTALL_NAME_DIR)
-  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-endif ()
-
 list(INSERT CMAKE_MODULE_PATH 0 "${PROJECT_SOURCE_DIR}/cmake")
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
@@ -46,15 +41,6 @@ endif()
 
 # Let windows builds auto-export dll symbols
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-
-#------------------------------------------------------------------------------#
-# RPATH defaults
-#------------------------------------------------------------------------------#
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
-  set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
-endif()
 
 #------------------------------------------------------------------------------#
 # Silence MSVC warnings
@@ -125,14 +111,15 @@ adios_option(SZ        "Enable support for SZ transforms" AUTO)
 adios_option(MGARD     "Enable support for MGARD transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
-adios_option(WDM       "Enable support for WDM" AUTO)
 adios_option(DATASPACES       "Enable support for DATASPACES" AUTO)
+adios_option(SSC       "Enable support for SSC" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5      "Enable support for the HDF5 engine" AUTO)
 adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
+adios_option(Profiling "Enable support for profiling" AUTO)
 adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoprability" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
@@ -146,13 +133,12 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
-# Various homebrew MPI fortran installations break rpath usage on OSX
-if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
-  set(CMAKE_MACOSX_RPATH OFF)
-endif()
-
 set(ADIOS2_CONFIG_OPTS
+<<<<<<< HEAD
     BZip2 ZFP SZ MGARD MPI DataMan WDM SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem Endian_Reverse
+=======
+    BZip2 ZFP SZ MGARD MPI DataMan SSC SST ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
+>>>>>>> 3ba37f6b7718ef543828b54fe4f94b5aae174a85
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
@@ -164,6 +150,31 @@ configure_file(
 install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
+
+#------------------------------------------------------------------------------#
+# Some specialized shared library and RPATH handling
+#------------------------------------------------------------------------------#
+if(BUILD_SHARED_LIBS)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+  if(APPLE)
+    # On Mac OS X, set the dir included as part of the installed library's path:
+    if(NOT DEFINED CMAKE_INSTALL_NAME_DIR)
+      set(CMAKE_INSTALL_NAME_DIR
+        "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    endif ()
+
+    # Various homebrew MPI fortran installations break rpath usage on OSX
+    if(APPLE AND ADIOS2_HAVE_Fortran AND ADIOS2_HAVE_MPI)
+      set(CMAKE_MACOSX_RPATH OFF)
+    endif()
+
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    # Linux needs some specialized RPATH handling
+    string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_LIBDIR}")
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+  endif()
+endif()
 
 #------------------------------------------------------------------------------#
 # Third party libraries
@@ -183,15 +194,6 @@ add_subdirectory(source)
 add_subdirectory(bindings)
 
 #------------------------------------------------------------------------------#
-# Examples
-#------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
-option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
-if(ADIOS2_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif()
-
-#------------------------------------------------------------------------------#
 # Testing
 #------------------------------------------------------------------------------#
 if(DEFINED BUILD_TESTING)
@@ -206,8 +208,22 @@ option(ADIOS2_BUILD_TESTING "Build the ADIOS2 testing tree"
 include(CTest)
 set(BUILD_TESTING ${ADIOS2_BUILD_TESTING})
 if(BUILD_TESTING)
+  find_program(DIFF_EXECUTABLE diff)
+  if(NOT DIFF_EXECUTABLE)
+    message(FATAL_ERROR "diff command is required for testing")
+  endif()
+
   enable_testing()
   add_subdirectory(testing)
+endif()
+
+#------------------------------------------------------------------------------#
+# Examples
+#------------------------------------------------------------------------------#
+option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
+option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
+if(ADIOS2_BUILD_EXAMPLES)
+  add_subdirectory(examples)
 endif()
 
 #------------------------------------------------------------------------------#

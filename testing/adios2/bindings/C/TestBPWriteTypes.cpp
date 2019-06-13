@@ -49,7 +49,35 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         // Set engine parameters
         adios2_set_engine(ioH, "BPFile");
         adios2_set_parameter(ioH, "ProfileUnits", "Microseconds");
-        adios2_set_parameter(ioH, "Threads", "1");
+        adios2_set_parameters(ioH, "Threads=2, CollectiveMetadata = OFF");
+
+        size_t length;
+
+        char *profileUnits;
+        adios2_get_parameter(NULL, &length, ioH, "ProfileUnits");
+        profileUnits = (char *)calloc(length + 1, sizeof(char));
+        adios2_get_parameter(profileUnits, &length, ioH, "ProfileUnits");
+        EXPECT_EQ(std::string(profileUnits), "Microseconds");
+        free(profileUnits);
+
+        char *threads;
+        adios2_get_parameter(NULL, &length, ioH, "Threads");
+        threads = (char *)calloc(length + 1, sizeof(char));
+        adios2_get_parameter(threads, &length, ioH, "Threads");
+        EXPECT_EQ(std::string(threads), "2");
+        free(threads);
+
+        char *collmd;
+        adios2_get_parameter(NULL, &length, ioH, "CollectiveMetadata");
+        collmd = (char *)calloc(length + 1, sizeof(char));
+        adios2_get_parameter(collmd, &length, ioH, "CollectiveMetadata");
+        EXPECT_EQ(std::string(collmd), "OFF");
+        free(collmd);
+
+        // set back the default to make sure writing/reading works
+        adios2_clear_parameters(ioH);
+        adios2_get_parameter(NULL, &length, ioH, "CollectiveMetadata");
+        EXPECT_EQ(length, 0);
 
         // Set transport and parameters
         size_t transportID;
@@ -138,7 +166,18 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_put(engineH, varR32, data_R32, adios2_mode_deferred);
         adios2_put(engineH, varR64, data_R64, adios2_mode_deferred);
 
+        size_t engineTypeSize;
+        adios2_engine_get_type(NULL, &engineTypeSize, engineH);
+        EXPECT_EQ(engineTypeSize, 3);
+
+        char *engineType = new char[engineTypeSize + 1]();
+        adios2_engine_get_type(engineType, &engineTypeSize, engineH);
+
+        EXPECT_EQ(std::string(engineType, engineTypeSize), "BP3");
+
         adios2_close(engineH);
+
+        delete[] engineType;
     }
 #ifdef ADIOS2_HAVE_MPI
     MPI_Barrier(MPI_COMM_WORLD);
@@ -147,6 +186,10 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
         adios2_engine *engineH =
             adios2_open(ioH, "ctypes.bp", adios2_mode_read);
+
+        size_t steps;
+        adios2_steps(&steps, engineH);
+        EXPECT_EQ(steps, 1);
 
         adios2_bool result;
         char name[30];
@@ -370,10 +413,6 @@ TEST_F(ADIOS2_C_API_IO, Engine)
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
     EXPECT_EQ(engine_name, "ctypes.bp");
-
-    engine_type = testing::adios2_engine_type_as_string(ioH);
-    EXPECT_EQ(engine_type, "bp"); // FIXME? Is it expected that adios2_open
-                                  // changes the engine_type string?
 }
 
 TEST_F(ADIOS2_C_API_IO, EngineDefault)
@@ -392,10 +431,6 @@ TEST_F(ADIOS2_C_API_IO, EngineDefault)
     // there's no API to get it
     std::string engine_name = testing::adios2_engine_name_as_string(engineH);
     EXPECT_EQ(engine_name, "ctypes.bp");
-
-    engine_type = testing::adios2_engine_type_as_string(ioH);
-    EXPECT_EQ(engine_type, "bp"); // FIXME? Is it expected that adios2_open
-                                  // changes the engine_type string?
 }
 
 TEST_F(ADIOS2_C_API_IO, ReturnedStrings)

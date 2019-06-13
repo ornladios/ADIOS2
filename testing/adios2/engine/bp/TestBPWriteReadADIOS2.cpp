@@ -58,6 +58,32 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        // Test setting parameters
+        {
+            io.SetParameter("ProfileUnits", "Microseconds");
+            io.SetParameters("Threads=2, CollectiveMetadata = OFF");
+            adios2::Params parameters = io.Parameters();
+
+            auto ProfileUnits = parameters.find("ProfileUnits");
+            EXPECT_NE(ProfileUnits, parameters.end());
+            EXPECT_EQ(ProfileUnits->second, "Microseconds");
+
+            auto Threads = parameters.find("Threads");
+            EXPECT_NE(Threads, parameters.end());
+            EXPECT_EQ(Threads->second, "2");
+
+            auto CollectiveMetadata = parameters.find("CollectiveMetadata");
+            EXPECT_NE(CollectiveMetadata, parameters.end());
+            EXPECT_EQ(CollectiveMetadata->second, "OFF");
+
+            io.ClearParameters();
+
+            // should not find parameters anymore
+            parameters = io.Parameters();
+            CollectiveMetadata = parameters.find("CollectiveMetadata");
+            EXPECT_EQ(CollectiveMetadata, parameters.end());
+        }
+
         // Declare 1D variables (NumOfProcesses * Nx)
         // The local process' part (start, count) can be defined now or later
         // before Write().
@@ -175,6 +201,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        EXPECT_EQ(bpReader.Steps(), NSteps);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -480,6 +508,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
+        EXPECT_EQ(bpReader.Steps(), NSteps);
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
         ASSERT_EQ(var_iString.Shape().size(), 0);
@@ -786,6 +815,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
+        EXPECT_EQ(bpReader.Steps(), NSteps);
+
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
@@ -1078,6 +1109,8 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         }
 
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        EXPECT_EQ(bpReader.Steps(), NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);

@@ -28,11 +28,45 @@ void FC_GLOBAL(adios2_set_engine_f2c,
     *ierr = static_cast<int>(adios2_set_engine(*io, engine_type));
 }
 
+void FC_GLOBAL(adios2_set_parameters_f2c,
+               ADIOS2_SET_PARAMETERS_F2C)(adios2_io **io,
+                                          const char *parameters, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_set_parameters(*io, parameters));
+}
+
 void FC_GLOBAL(adios2_set_parameter_f2c,
                ADIOS2_SET_PARAMETER_F2C)(adios2_io **io, const char *key,
                                          const char *value, int *ierr)
 {
     *ierr = static_cast<int>(adios2_set_parameter(*io, key, value));
+}
+
+void FC_GLOBAL(adios2_get_parameter_f2c,
+               ADIOS2_GET_PARAMETER_F2C)(char *value, const adios2_io **io,
+                                         const char *key, int *ierr)
+{
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(value, &sizeC, *io, key));
+}
+
+void FC_GLOBAL(adios2_get_parameter_length_f2c,
+               ADIOS2_GET_PARAMETER_LENGTH_F2C)(int *size, const adios2_io **io,
+                                                const char *key, int *ierr)
+{
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(nullptr, &sizeC, *io, key));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *size = static_cast<int>(sizeC);
+    }
+}
+
+void FC_GLOBAL(adios2_clear_parameters_f2c,
+               ADIOS2_CLEAR_PARAMETERS_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_clear_parameters(*io));
 }
 
 void FC_GLOBAL(adios2_add_transport_f2c,
@@ -114,6 +148,24 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
                 "adios2_define_variable");
         }
 
+        // Check for local value
+        if (*ndims == 1)
+        {
+            if (shape[0] == -2)
+            {
+                size_t shapeC[1];
+                shapeC[0] = adios2_local_value_dim;
+
+                *variable = adios2_define_variable(
+                    *io, name, static_cast<adios2_type>(*type), *ndims, shapeC,
+                    nullptr, nullptr,
+                    static_cast<adios2_constant_dims>(*constant_dims));
+                *ierr = (*variable == NULL)
+                            ? static_cast<int>(adios2_error_exception)
+                            : static_cast<int>(adios2_error_none);
+                return;
+            }
+        }
         // Check for local variables
         if (shape[0] == -1)
         {

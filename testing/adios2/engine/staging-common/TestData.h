@@ -84,7 +84,7 @@ void generateCommonTestData(int step, int rank, int size)
     }
 }
 
-int validateCommonTestData(int start, int length, int step,
+int validateCommonTestData(int start, int length, size_t step,
                            int missing_end_data)
 {
     int failures = 0;

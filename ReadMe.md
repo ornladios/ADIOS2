@@ -30,7 +30,7 @@ Please find [ADIOS2 User Guide at readthedocs](https://adios2.readthedocs.io)
     * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
 * bindings - public interface language bindings (C++11, C++98, C, Fortran, Python and Matlab)
 * testing - Tests using [gtest](https://github.com/google/googletest)
-  
+
 
 ## Getting Started
 
@@ -42,39 +42,27 @@ The following is a quick step-by-step build guide, find the full CMake-based ins
 
 Step-by-step build guide:
 
-1. Clone the repository:
+1. Clone the repository and create a build directory:
 
 ```bash
-$ mkdir adios2
-$ cd adios2
-$ git clone https://github.com/ornladios/ADIOS2.git
+$ git clone https://github.com/ornladios/ADIOS2.git ADIOS2
+$ mkdir adios2_build && cd adios2_build
 ```
 
-2. Create a separate build directory in your work area:
+2. Configure the project with CMake:
 
 ```bash
-$ mkdir build
-```
-
-3. Configure the project with CMake:
-
-```bash
-$ mkdir adios2
-$ cd adios2
-$ git clone https://github.com/ornladios/adios2.git source
-$ mkdir build
-$ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../source
+adios2_build$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../ADIOS2
 -- The C compiler identification is GNU 7.3.0
 -- The CXX compiler identification is GNU 7.3.0
 ...
 
 ADIOS2 build configuration:
   ADIOS Version: 2.3.1
-  C++ Compiler : GNU 7.3.0 
+  C++ Compiler : GNU 7.3.0
     /opt/ohpc/pub/compiler/gcc/7.3.0/bin/g++
 
-  Fortran Compiler : GNU 7.3.0 
+  Fortran Compiler : GNU 7.3.0
     /opt/ohpc/pub/compiler/gcc/7.3.0/bin/gfortran
 
   Installation prefix: /opt/adios2/2.3.1/gnu/openmpi
@@ -104,7 +92,7 @@ ADIOS2 build configuration:
 
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/chuck/adios2/build
+-- Build files have been written to: /home/chuck/adios2_build
 
 ```
 
@@ -122,7 +110,7 @@ The following options can be specified with CMake's `-DVAR=VALUE` syntax to cont
 | `ADIOS2_USE_SST`     | **`AUTO`**/``ON``/``OFF`` | Enable Staging Engine                                                    |
 | `ADIOS2_USE_Fortran` | **`AUTO`**/``ON``/``OFF`` | Enable Fortran bindings                                                  |
 
-Note: The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similary, enabling MPI and Python bindings requires the presence of `mpi4py`.
+Note: The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similarly, enabling MPI and Python bindings requires the presence of `mpi4py`.
 
 In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library get's built:
 
@@ -134,30 +122,30 @@ In addition to the `ADIOS2_USE_Feature` options, the following options are also 
 | `CMAKE_INSTALL_PREFIX` | /path/to/install (`/usr/local`)                           | Install location.                          |
 | `CMAKE_BUILD_TYPE`     | **`Debug`** / `Release` / `RelWithDebInfo` / `MinSizeRel` | The level of compiler optimization to use. |
 
-4. Compile:
+3. Compile:
 
 ```bash
-$ make -j8
+adios2_build$ make -j8
 ```
 
-5. Run tests:
+4. Run tests:
 
 ```bash
-$ ctest
-Test project /home/chuck/adios2/build
+adios2_build$ ctest
+Test project /home/chuck/adios2_build
        Start   1: HeatTransfer.BPFile.Write.MxM
   1/295 Test   #1: HeatTransfer.BPFile.Write.MxM ............................................   Passed    1.25 sec
         Start   2: HeatTransfer.BPFile.Read.MxM
   2/295 Test   #2: HeatTransfer.BPFile.Read.MxM .............................................   Passed    0.55 sec
         Start   3: HeatTransfer.BPFile.Dump.MxM
   ...
-  
+
 $
 ```
 
-6.  Install:
+5.  Install:
 ```
-$ make install
+adios2_build$ make install
 [  7%] Built target adios2sys_objects
 ...
 [ 61%] Built target adios2

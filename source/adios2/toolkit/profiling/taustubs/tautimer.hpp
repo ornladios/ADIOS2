@@ -6,9 +6,13 @@
 
 #pragma once
 
+#include "adios2/ADIOSConfig.h"
+
 /* This code won't compile on windows.  Disable it */
 #if !defined(_WIN32) && !defined(_WIN64)
+#ifdef ADIOS2_HAVE_PROFILING
 #define TAU_USE_STUBS
+#endif
 #endif
 
 #if defined(TAU_USE_STUBS)
@@ -64,6 +68,12 @@ public:
 #define TAU_REGISTER_THREAD() taustubs::TauTimer::RegisterThread();
 #define TAU_START(_timer_name) taustubs::TauTimer::Start(_timer_name);
 #define TAU_STOP(_timer_name) taustubs::TauTimer::Stop(_timer_name);
+#define TAU_START_FUNC()                                                       \
+    std::stringstream __ss##finfo;                                             \
+    __ss##finfo << __func__ << " [{" << __FILE__ << "} {" << __LINE__          \
+                << ",0}]";                                                     \
+    taustubs::TauTimer::Start(__ss##finfo.str());
+#define TAU_STOP_FUNC() taustubs::TauTimer::Stop(__ss##finfo.str())
 #define TAU_SAMPLE_COUNTER(_name, _value)                                      \
     taustubs::TauTimer::SampleCounter(_name, _value);
 #define TAU_METADATA(_name, _value) taustubs::TauTimer::MetaData(_name, _value);

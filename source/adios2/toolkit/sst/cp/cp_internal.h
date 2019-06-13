@@ -15,10 +15,12 @@ typedef struct _CP_GlobalInfo
     CMFormat WriterResponseFormat;
     FFSTypeHandle PerRankMetadataFormat;
     FFSTypeHandle TimestepDistributionFormat;
+    FFSTypeHandle ReturnMetadataInfoFormat;
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
     CMFormat ReleaseTimestepFormat;
+    CMFormat LockReaderDefinitionsFormat;
     CMFormat WriterCloseFormat;
     CMFormat ReaderCloseFormat;
     int CustomStructCount;
@@ -55,13 +57,23 @@ enum StreamStatus
 static char *SSTStreamStatusStr[] = {"NotOpen", "Established", "PeerClosed",
                                      "PeerFailed", "Closed"};
 
+struct _SentTimestepRec
+{
+    long Timestep;
+    struct _SentTimestepRec *Next;
+};
+
 typedef struct _WS_ReaderInfo
 {
     SstStream ParentStream;
     enum StreamStatus ReaderStatus;
+    void *RankZeroID;
     long StartingTimestep;
     long LastSentTimestep;
+    int LastReleasedTimestep;
+    int ReaderDefinitionsLocked;
     long OldestUnreleasedTimestep;
+    struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     void *RS_StreamID;
     int ReaderCohortSize;
@@ -87,7 +99,8 @@ typedef struct _CPTimestepEntry
     struct _SstData Data;
     struct _TimestepMetadataMsg *Msg;
     int ReferenceCount;
-    int NeverSent;
+    int Expired;
+    int PreciousTimestep;
     void **DP_TimestepInfo;
     int DPRegistered;
     SstData MetadataArray;
@@ -111,7 +124,8 @@ struct _SstStream
     SstRegistrationMethod RegistrationMethod;
 
     /* state */
-    int Verbose;
+    int CPVerbose;
+    int DPVerbose;
     double OpenTimeSecs;
     struct timeval ValidStartTime;
     SstStats Stats;
@@ -130,12 +144,14 @@ struct _SstStream
     /* WRITER-SIDE FIELDS */
     int WriterTimestep;
     int LastReleasedTimestep;
+    int ReaderDefinitionsLocked;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
     SstQueueFullPolicy QueueFullPolicy;
     int LastProvidedTimestep;
     int NewReaderPresent;
+    int WriterDefinitionsLocked;
 
     /* rendezvous condition */
     int FirstReaderCondition;
@@ -154,6 +170,11 @@ struct _SstStream
     size_t DataSize;
     void *D; // building data block
     FFSFormatList PreviousFormats;
+    int ReleaseCount;
+    struct _ReleaseRec *ReleaseList;
+    int LockDefnsCount;
+    struct _ReleaseRec *LockDefnsList;
+    enum StreamStatus Status;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
@@ -161,7 +182,6 @@ struct _SstStream
     int ReaderTimestep;
     int *Peers;
     CP_PeerConnection *ConnectionsToWriter;
-    enum StreamStatus Status;
     int FinalTimestep;
     int CurrentWorkingTimestep;
     SstFullMetadata CurrentMetadata;
@@ -253,6 +273,7 @@ typedef struct _CombinedReaderInfo
     int ReaderCohortSize;
     CP_ReaderInitInfo *CP_ReaderInfo;
     void **DP_ReaderInfo;
+    void *RankZeroID;
 } * reader_data_t;
 
 /*
@@ -327,11 +348,46 @@ typedef struct _TimestepMetadataDistributionMsg
 } * TSMetadataDistributionMsg;
 
 /*
+ * This is the structure that holds local metadata and the DP info related to
+ * it.
+ * This is gathered on writer side before distribution to readers.
+ */
+
+typedef struct _ReleaseRec
+{
+    long Timestep;
+    void *Reader;
+} * ReleaseRecPtr;
+
+typedef struct _ReturnMetadataInfo
+{
+    int DiscardThisTimestep;
+    int PendingReaderCount;
+    struct _TimestepMetadataMsg Msg;
+    int ReleaseCount;
+    ReleaseRecPtr ReleaseList;
+    int ReaderCount;
+    ReleaseRecPtr LockDefnsList;
+    int LockDefnsCount;
+    enum StreamStatus *ReaderStatus;
+} * ReturnMetadataInfo;
+
+/*
  * The ReleaseTimestep message informs the writers that this reader is done with
  * a particular timestep.
  * One is sent to each writer rank.
  */
 struct _ReleaseTimestepMsg
+{
+    void *WSR_Stream;
+    int Timestep;
+};
+
+/*
+ * The LockReaderDefinitions message informs the writers that this reader has
+ * fixed its read schedule. One is sent to each writer rank.
+ */
+struct _LockReaderDefinitionsMsg
 {
     void *WSR_Stream;
     int Timestep;
@@ -409,6 +465,9 @@ extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn,
 extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       void *msg_v, void *client_data,
                                       attr_list attrs);
+extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
+                                            void *Msg_v, void *client_data,
+                                            attr_list attrs);
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_data, attr_list attrs);
 extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,

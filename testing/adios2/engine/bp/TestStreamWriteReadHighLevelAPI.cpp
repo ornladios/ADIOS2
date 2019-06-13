@@ -207,10 +207,12 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
         float gr32 = -1.f;
         double gr64 = -1.f;
 
+        EXPECT_EQ(iStream.steps(), NSteps);
+
         size_t t = 0;
         for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)
         {
-            if (iStep.currentstep() == 0)
+            if (iStep.current_step() == 0)
             {
                 iStep.read("gi8", gi8);
                 iStep.read("gi16", gi16);
@@ -503,7 +505,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
             oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::endl);
+                          adios2::end_step);
         }
 
         // Close the file
@@ -522,7 +524,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
         const adios2::Dims count{Ny, Nx};
         const adios2::Box<adios2::Dims> sel(start, count);
 
-        // for (size_t t = 0; t < NSteps; ++t)
+        EXPECT_EQ(iStream.steps(), NSteps);
+
         size_t t = 0;
         adios2::fstep iStep;
         while (adios2::getstep(iStream, iStep))
@@ -628,7 +631,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
             oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::endl);
+                          adios2::end_step);
         }
 
         EXPECT_THROW(oStream.write<int16_t>("i8", 1), std::invalid_argument);
@@ -647,7 +650,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
         const adios2::Dims count{Ny, Nx};
         const adios2::Box<adios2::Dims> sel(start, count);
 
-        // for (size_t t = 0; t < NSteps; ++t)
+        EXPECT_EQ(iStream.steps(), NSteps);
         size_t t = 0;
 
         for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)

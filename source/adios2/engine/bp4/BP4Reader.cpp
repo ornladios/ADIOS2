@@ -12,6 +12,7 @@
 #include "BP4Reader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -27,17 +28,19 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
   m_SubFileManager(mpiComm, m_DebugMode),
   m_FileMetadataIndexManager(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("BP4Reader::Open");
     Init();
 }
 
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("BP4Reader::BeginStep");
     if (m_DebugMode)
     {
-        if (mode != StepMode::NextAvailable)
+        if (mode != StepMode::Read)
         {
             throw std::invalid_argument("ERROR: mode is not supported yet, "
-                                        "only NextAvailable is valid for "
+                                        "only Read is valid for "
                                         "engine BP4Reader, in call to "
                                         "BeginStep\n");
         }
@@ -101,10 +104,15 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
 size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
 
-void BP4Reader::EndStep() { PerformGets(); }
+void BP4Reader::EndStep()
+{
+    TAU_SCOPED_TIMER("BP4Reader::EndStep");
+    PerformGets();
+}
 
 void BP4Reader::PerformGets()
 {
+    TAU_SCOPED_TIMER("BP4Reader::PerformGets");
     if (m_BP4Deserializer.m_DeferredVariables.empty())
     {
         return;
@@ -219,10 +227,12 @@ void BP4Reader::InitBuffer()
 #define declare_type(T)                                                        \
     void BP4Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP4Reader::Get");                                    \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP4Reader::Get");                                    \
         GetDeferredCommon(variable, data);                                     \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -230,6 +240,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void BP4Reader::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP4Reader::Close");
     PerformGets();
     m_SubFileManager.CloseFiles();
     m_FileManager.CloseFiles();
@@ -239,17 +250,24 @@ void BP4Reader::DoClose(const int transportIndex)
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     BP4Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP4Reader::AllStepsBlocksInfo");                     \
         return m_BP4Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> BP4Reader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP4Reader::BlocksInfo");                             \
         return m_BP4Deserializer.BlocksInfo(variable, step);                   \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+size_t BP4Reader::DoSteps() const
+{
+    return m_BP4Deserializer.m_MetadataSet.StepsCount;
+}
 
 } // end namespace engine
 } // end namespace core

@@ -55,6 +55,12 @@ public:
     explicit operator bool() const noexcept;
 
     /**
+     * Inspects IO name
+     * @return name
+     */
+    std::string Name() const;
+
+    /**
      * @brief Checks if IO exists in a config file passed to ADIOS object that
      * created this IO
      * @return true: in config file, false: not in config file
@@ -83,6 +89,20 @@ public:
      * key/value parameters
      */
     void SetParameters(const adios2::Params &parameters = adios2::Params());
+
+    /**
+     * @brief Version that passes a single string to fill out many parameters.
+     * Replaces any existing parameter.
+     * initializer string = "param1=value1 , param2 = value2"
+     */
+    void SetParameters(const std::string &parameters);
+
+    /**
+     * @brief Remove all existing parameters.
+     * Replaces any existing parameter.
+     * initializer string = "param1=value1 , param2 = value2"
+     */
+    void ClearParameters();
 
     /**
      * Return current parameters set from either SetParameters/SetParameter
@@ -374,6 +394,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         const std::string &, const std::string &, const std::string);
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+std::string ToString(const IO &io);
 
 } // end namespace adios2
 

@@ -78,6 +78,8 @@ private:
     core::Operator *m_Operator = nullptr;
 };
 
+std::string ToString(const IO &io);
+
 } // end namespace adios2
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_OPERATOR_H_ */

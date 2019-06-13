@@ -13,7 +13,6 @@
 
 #include <memory> //std::shared_ptr
 
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"
@@ -73,42 +72,48 @@ public:
                         const std::string separator, const bool nextStep);
 
     template <class T>
-    void Write(const std::string &name, const T *values,
-               const Dims &shape = Dims{}, const Dims &start = Dims{},
-               const Dims &count = Dims{}, const bool nextStep = false);
+    void Write(const std::string &name, const T *values, const Dims &shape,
+               const Dims &start, const Dims &count,
+               const vParams &operations = vParams(),
+               const bool endStep = false);
 
     template <class T>
-    void Write(const std::string &name, const T &value,
-               const bool nextStep = false);
+    void Write(const std::string &name, const T &value, const bool isLocalValue,
+               const bool endStep);
 
     bool GetStep();
 
     template <class T>
-    void Read(const std::string &name, T *values);
+    void Read(const std::string &name, T *values, const size_t blockID);
 
     template <class T>
-    void Read(const std::string &name, T *values, const Box<size_t> &step);
-
-    template <class T>
-    void Read(const std::string &name, T *values, const Box<Dims> &selection);
+    void Read(const std::string &name, T *values, const Box<size_t> &step,
+              const size_t blockID);
 
     template <class T>
     void Read(const std::string &name, T *values, const Box<Dims> &selection,
-              const Box<size_t> &stepSelection);
+              const size_t blockID);
 
     template <class T>
-    std::vector<T> Read(const std::string &name);
+    void Read(const std::string &name, T *values, const Box<Dims> &selection,
+              const Box<size_t> &stepSelection, const size_t blockID);
+
+    template <class T>
+    std::vector<T> Read(const std::string &name, const size_t blockID);
 
     template <class T>
     std::vector<T> Read(const std::string &name,
-                        const Box<size_t> &stepsSelection);
-
-    template <class T>
-    std::vector<T> Read(const std::string &name, const Box<Dims> &selection);
+                        const Box<size_t> &stepsSelection,
+                        const size_t blockID);
 
     template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
-                        const Box<size_t> &stepsSelection);
+                        const size_t blockID);
+
+    template <class T>
+    std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
+                        const Box<size_t> &stepsSelection,
+                        const size_t blockID);
 
     template <class T>
     void ReadAttribute(const std::string &name, T *data,
@@ -120,6 +125,8 @@ public:
     void Close();
 
     size_t CurrentStep() const;
+
+    size_t Steps() const;
 
 private:
     /** Stream, IO and Engine names  */
@@ -146,6 +153,9 @@ private:
     void CheckPCommon(const std::string &name, const T *values) const;
 
     void CheckOpen();
+
+    template <class T>
+    void SetBlockSelectionCommon(Variable<T> &variable, const size_t blockID);
 };
 
 #define declare_template_instantiation(T)                                      \
@@ -166,34 +176,38 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 // Explicit declaration of the public template methods
 #define declare_template_instantiation(T)                                      \
                                                                                \
-    extern template void Stream::Write<T>(const std::string &, const T *,      \
-                                          const Dims &, const Dims &,          \
-                                          const Dims &, const bool);           \
+    extern template void Stream::Write<T>(                                     \
+        const std::string &, const T *, const Dims &, const Dims &,            \
+        const Dims &, const vParams &, const bool);                            \
                                                                                \
     extern template void Stream::Write<T>(const std::string &, const T &,      \
-                                          const bool);                         \
-                                                                               \
-    extern template void Stream::Read<T>(const std::string &, T *);            \
+                                          const bool, const bool);             \
                                                                                \
     extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const Box<size_t> &);                 \
+                                         const size_t);                        \
                                                                                \
     extern template void Stream::Read<T>(const std::string &, T *,             \
-                                         const Box<Dims> &);                   \
+                                         const Box<size_t> &, const size_t);   \
                                                                                \
-    extern template void Stream::Read<T>(                                      \
-        const std::string &, T *, const Box<Dims> &, const Box<size_t> &);     \
+    extern template void Stream::Read<T>(const std::string &, T *,             \
+                                         const Box<Dims> &, const size_t);     \
                                                                                \
-    extern template std::vector<T> Stream::Read<T>(const std::string &);       \
-                                                                               \
-    extern template std::vector<T> Stream::Read(const std::string &,           \
-                                                const Box<size_t> &);          \
-                                                                               \
-    extern template std::vector<T> Stream::Read<T>(                            \
-        const std::string &, const Box<Dims> &, const Box<size_t> &);          \
+    extern template void Stream::Read<T>(const std::string &, T *,             \
+                                         const Box<Dims> &,                    \
+                                         const Box<size_t> &, const size_t);   \
                                                                                \
     extern template std::vector<T> Stream::Read<T>(const std::string &,        \
-                                                   const Box<Dims> &);
+                                                   const size_t);              \
+                                                                               \
+    extern template std::vector<T> Stream::Read(                               \
+        const std::string &, const Box<size_t> &, const size_t);               \
+                                                                               \
+    extern template std::vector<T> Stream::Read<T>(                            \
+        const std::string &, const Box<Dims> &, const Box<size_t> &,           \
+        const size_t);                                                         \
+                                                                               \
+    extern template std::vector<T> Stream::Read<T>(                            \
+        const std::string &, const Box<Dims> &, const size_t);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

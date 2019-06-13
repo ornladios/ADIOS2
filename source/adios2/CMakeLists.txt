@@ -9,7 +9,13 @@ add_library(taustubs
   toolkit/profiling/taustubs/taustubs.h
 )
 
+target_include_directories(taustubs PRIVATE
+      $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
+)
+
 add_library(adios2
+  ADIOSTypes.cpp
+  
   core/Attribute.cpp 
   core/AttributeBase.cpp
   core/ADIOS.cpp
@@ -28,7 +34,7 @@ add_library(adios2
 #helper
   helper/adiosDynamicBinder.h  helper/adiosDynamicBinder.cpp
   helper/adiosMath.cpp
-  helper/adiosMemory.cpp helper/adiosMemory.tcc
+  helper/adiosMemory.cpp
   helper/adiosMPIFunctions.cpp
   helper/adiosNetwork.cpp
   helper/adiosString.cpp
@@ -48,6 +54,8 @@ add_library(adios2
 
   engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
   engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
+  
+  engine/null/NullEngine.cpp
 
 #toolkit
   toolkit/format/BufferSTL.cpp
@@ -127,14 +135,14 @@ if(ADIOS2_HAVE_DataMan)
     target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
-if(ADIOS2_HAVE_WDM)
+if(ADIOS2_HAVE_SSC)
     target_sources(adios2 PRIVATE
         toolkit/format/dataman/DataManSerializer.cpp
         toolkit/format/dataman/DataManSerializer.tcc
-        engine/wdm/WdmReader.cpp
-        engine/wdm/WdmReader.tcc
-        engine/wdm/WdmWriter.cpp
-        engine/wdm/WdmWriter.tcc
+        engine/ssc/SscReader.cpp
+        engine/ssc/SscReader.tcc
+        engine/ssc/SscWriter.cpp
+        engine/ssc/SscWriter.tcc
         )
     target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
@@ -187,9 +195,9 @@ if(ADIOS2_HAVE_MPI)
     engine/insitumpi/InSituMPIFunctions.cpp engine/insitumpi/InSituMPISchedules.cpp
   )
   target_link_libraries(adios2 PUBLIC MPI::MPI_C)
-else()
-  target_sources(adios2 PRIVATE helper/mpidummy.cpp)
 endif()
+
+target_sources(adios2 PRIVATE helper/mpidummy.cpp helper/mpiwrap.cpp)
 
 if(ADIOS2_HAVE_HDF5)
   if(HDF5_C_INCLUDE_DIRS)
@@ -224,7 +232,7 @@ set_target_properties(adios2 PROPERTIES
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSTypes.inl ADIOSMPICommOnly.h
+install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSTypes.inl
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
 )
 

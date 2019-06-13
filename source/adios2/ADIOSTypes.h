@@ -88,8 +88,7 @@ enum class StepMode
 {
     Append,
     Update, // writer advance mode
-    NextAvailable,
-    LatestAvailable // reader advance mode
+    Read    // reader advance mode
 };
 
 enum class StepStatus
@@ -182,7 +181,9 @@ constexpr uint64_t JoinedDim = MaxU64 - 1;
 constexpr uint64_t LocalValueDim = MaxU64 - 2;
 constexpr uint64_t IrregularDim = MaxU64 - 3;
 constexpr bool ConstantDims = true;
-constexpr bool endl = true;
+constexpr bool end_step = true;
+constexpr bool LocalValue = true;
+constexpr bool GlobalValue = false;
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;
@@ -198,6 +199,31 @@ using Box = std::pair<T, T>;
  */
 template <typename T, typename Enable = void>
 struct TypeInfo;
+
+/**
+ * ToString
+ * makes a string from an enum class like ShapeID etc, for debugging etc
+ * It is also overloaded elsewhere to allow for a readable representation of
+ * Variable, Attribute, etc.
+ */
+
+std::string ToString(ShapeID value);
+std::string ToString(IOMode value);
+std::string ToString(Mode value);
+std::string ToString(ReadMultiplexPattern value);
+std::string ToString(StreamOpenMode value);
+std::string ToString(ReadMode value);
+std::string ToString(StepMode value);
+std::string ToString(StepStatus value);
+std::string ToString(TimeUnit value);
+std::string ToString(SelectionType value);
+
+/**
+ * os << [adios2_type] enables output of adios2 enums/classes directly
+ * to output streams (e.g. std::cout), if ToString() can handle [adios2_type].
+ */
+template <typename T, typename Enable = decltype(ToString(std::declval<T>()))>
+std::ostream &operator<<(std::ostream &os, const T &value);
 
 } // end namespace adios2
 

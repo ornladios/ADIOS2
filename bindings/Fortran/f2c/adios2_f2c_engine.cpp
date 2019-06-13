@@ -47,6 +47,20 @@ void FC_GLOBAL(adios2_current_step_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_steps_f2c, ADIOS2_STEPS_F2C)(int64_t *steps,
+                                                   const adios2_engine **engine,
+                                                   int *ierr)
+{
+    *steps = -1;
+    size_t stepsC;
+    *ierr = static_cast<int>(adios2_current_step(&stepsC, *engine));
+
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *steps = static_cast<int64_t>(stepsC);
+    }
+}
+
 // ******** PUTS */
 void FC_GLOBAL(adios2_put_f2c, ADIOS2_PUT_F2C)(adios2_engine **engine,
                                                adios2_variable **variable,
@@ -112,6 +126,14 @@ void FC_GLOBAL(adios2_close_f2c, ADIOS2_CLOSE_F2C)(adios2_engine **engine,
                                                    int *ierr)
 {
     *ierr = static_cast<int>(adios2_close(*engine));
+}
+
+void FC_GLOBAL(adios2_engine_get_type_f2c,
+               ADIOS2_ENGINE_GET_TYPE_F2C)(char *type, adios2_engine **engine,
+                                           int *ierr)
+{
+    size_t size;
+    *ierr = static_cast<int>(adios2_engine_get_type(type, &size, *engine));
 }
 
 #ifdef __cplusplus

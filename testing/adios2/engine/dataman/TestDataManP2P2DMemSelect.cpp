@@ -241,8 +241,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
         GenData(myDoubles, i, memStart, memCount, shape);
         GenData(myComplexes, i, memStart, memCount, shape);
         GenData(myDComplexes, i, memStart, memCount, shape);
-        adios2::StepStatus status =
-            dataManReader.BeginStep(StepMode::NextAvailable, 5);
+        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;

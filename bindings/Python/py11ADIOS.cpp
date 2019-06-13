@@ -29,7 +29,7 @@ ADIOS::ADIOS(MPI4PY_Comm mpiComm, const bool debugMode)
 : ADIOS("", mpiComm, debugMode)
 {
 }
-#else
+#endif
 ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 : m_ADIOS(
       std::make_shared<adios2::core::ADIOS>(configFile, debugMode, "Python"))
@@ -37,7 +37,6 @@ ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 }
 
 ADIOS::ADIOS(const bool debugMode) : ADIOS("", debugMode) {}
-#endif
 
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 

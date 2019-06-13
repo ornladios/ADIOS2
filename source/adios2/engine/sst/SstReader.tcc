@@ -31,6 +31,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
     std::vector<void *> sstReadHandlers;
     std::vector<std::vector<char>> buffers;
 
+    size_t threadID = 0;
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
@@ -55,7 +56,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
 
                     m_BP3Deserializer->PreDataRead(
                         variable, blockInfo, subStreamInfo, buffer, payloadSize,
-                        payloadStart, 0);
+                        payloadStart, threadID);
 
                     std::stringstream ss;
                     ss << "SST Bytes Read from remote rank " << rank;
@@ -104,6 +105,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         sstReadHandlers.push_back(ret);
                     }
                 }
+                ++threadID;
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
@@ -119,7 +121,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
     }
 
     size_t iter = 0;
-
+    threadID = 0;
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
@@ -155,7 +157,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
 
                     m_BP3Deserializer->PostDataRead(
                         variable, blockInfo, subStreamInfo,
-                        helper::IsRowMajor(m_IO.m_HostLanguage), 0);
+                        helper::IsRowMajor(m_IO.m_HostLanguage), threadID);
                     ++iter;
                 }
                 // if remote data buffer is not compressed
@@ -183,6 +185,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         ++iter;
                     }
                 }
+                ++threadID;
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);

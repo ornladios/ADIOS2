@@ -24,7 +24,7 @@ set(ENV{CC}  pgcc)
 set(ENV{CXX} pgc++)
 set(ENV{FC}  pgfortran)
 #set(ENV{CFLAGS} -Werror)
-#set(ENV{CXXFLAGS} -Werror)
+set(ENV{CXXFLAGS} --brief_diagnostics)
 #set(ENV{FFLAGS} "-warn errors")
 
 set(dashboard_cache "

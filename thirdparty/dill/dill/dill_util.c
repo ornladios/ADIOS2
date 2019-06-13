@@ -1,5 +1,8 @@
 #include "config.h"
 
+#ifndef NATIVE_ARCH
+#define NATIVE_ARCH "UNKNOWN"
+#endif
 #ifdef LINUX_KERNEL_MODULE
 #ifndef MODULE
 #define MODULE

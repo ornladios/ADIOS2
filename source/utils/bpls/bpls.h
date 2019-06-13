@@ -7,7 +7,6 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
@@ -95,6 +94,12 @@ template <class T>
 int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                  int blockid);
 
+template <class T>
+size_t relative_to_absolute_step(core::Variable<T> *variable,
+                                 const size_t relstep);
+template <class T>
+Dims get_global_array_signature(core::Engine *fp, core::IO *io,
+                                core::Variable<T> *variable);
 template <class T>
 std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
                                                   core::IO *io,

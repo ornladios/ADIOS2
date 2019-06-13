@@ -131,12 +131,25 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
          * setup shape of array variable as global (I.E. Count == Shape,
          * Start == 0)
          */
-        for (int i = 0; i < DimCount; i++)
+        if (Shape)
         {
-            VecShape.push_back(Shape[i]);
-            VecStart.push_back(0);
-            VecCount.push_back(Shape[i]);
+            for (int i = 0; i < DimCount; i++)
+            {
+                VecShape.push_back(Shape[i]);
+                VecStart.push_back(0);
+                VecCount.push_back(Shape[i]);
+            }
         }
+        else
+        {
+            VecShape = {};
+            VecStart = {};
+            for (int i = 0; i < DimCount; i++)
+            {
+                VecCount.push_back(Count[i]);
+            }
+        }
+
         if (Type == "compound")
         {
             return (void *)NULL;
@@ -167,7 +180,6 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     TAU_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
-    SstStepMode StepMode;
     switch (Mode)
     {
     case adios2::StepMode::Append:
@@ -175,16 +187,12 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         throw std::invalid_argument(
             "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
             m_EndMessage);
-    case adios2::StepMode::NextAvailable:
-        StepMode = SstNextAvailable;
-        break;
-    case adios2::StepMode::LatestAvailable:
-        StepMode = SstLatestAvailable;
+    case adios2::StepMode::Read:
         break;
     }
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
-    result = SstAdvanceStep(m_Input, StepMode, timeout_sec);
+    result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;
@@ -274,6 +282,11 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 void SstReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
+    if (m_IO.m_DefinitionsLocked && !m_DefinitionsNotified)
+    {
+        SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));
+        m_DefinitionsNotified = true;
+    }
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstStatusValue Result;
@@ -332,10 +345,29 @@ void SstReader::Init()
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            SstFFSGetDeferred(                                                 \
-                m_Input, (void *)&variable, variable.m_Name.c_str(),           \
-                variable.m_Start.size(), variable.m_Start.data(),              \
-                variable.m_Count.data(), data);                                \
+            size_t *Start = NULL;                                              \
+            size_t *Count = NULL;                                              \
+            size_t DimCount = 0;                                               \
+                                                                               \
+            if (variable.m_SelectionType ==                                    \
+                adios2::SelectionType::BoundingBox)                            \
+            {                                                                  \
+                DimCount = variable.m_Shape.size();                            \
+                Start = variable.m_Start.data();                               \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
+                                  variable.m_Name.c_str(), DimCount, Start,    \
+                                  Count, data);                                \
+            }                                                                  \
+            else if (variable.m_SelectionType ==                               \
+                     adios2::SelectionType::WriteBlock)                        \
+            {                                                                  \
+                DimCount = variable.m_Count.size();                            \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
+                                       variable.m_Name.c_str(), DimCount,      \
+                                       variable.m_BlockID, Count, data);       \
+            }                                                                  \
             SstFFSPerformGets(m_Input);                                        \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
@@ -352,10 +384,29 @@ void SstReader::Init()
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            SstFFSGetDeferred(                                                 \
-                m_Input, (void *)&variable, variable.m_Name.c_str(),           \
-                variable.m_Start.size(), variable.m_Start.data(),              \
-                variable.m_Count.data(), data);                                \
+            size_t *Start = NULL;                                              \
+            size_t *Count = NULL;                                              \
+            size_t DimCount = 0;                                               \
+                                                                               \
+            if (variable.m_SelectionType ==                                    \
+                adios2::SelectionType::BoundingBox)                            \
+            {                                                                  \
+                DimCount = variable.m_Shape.size();                            \
+                Start = variable.m_Start.data();                               \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
+                                  variable.m_Name.c_str(), DimCount, Start,    \
+                                  Count, data);                                \
+            }                                                                  \
+            else if (variable.m_SelectionType ==                               \
+                     adios2::SelectionType::WriteBlock)                        \
+            {                                                                  \
+                DimCount = variable.m_Count.size();                            \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
+                                       variable.m_Name.c_str(), DimCount,      \
+                                       variable.m_BlockID, Count, data);       \
+            }                                                                  \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
         {                                                                      \

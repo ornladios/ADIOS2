@@ -282,7 +282,7 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
         AggregateCollectiveMetadataIndices(comm, bufferSTL);
 
     int rank;
-    MPI_Comm_rank(comm, &rank);
+    SMPI_Comm_rank(comm, &rank);
     if (rank == 0)
     {
         PutMinifooter(static_cast<uint64_t>(indicesPosition[0]),
@@ -770,8 +770,8 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 {
     TAU_SCOPED_TIMER_FUNC();
     int rank, size;
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
+    SMPI_Comm_rank(comm, &rank);
+    SMPI_Comm_size(comm, &size);
 
     // pre-allocate with rank 0 data
     size_t pgCount = 0; //< tracks global PG count

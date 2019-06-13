@@ -13,11 +13,6 @@
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 #include <pthread.h>
 
 #include "sst.h"
@@ -187,6 +182,7 @@ static void **ParticipateInReaderInitDataExchange(SstStream Stream,
     pointers = (struct _CP_DP_PairInfo **)CP_consolidateDataToRankZero(
         Stream, &combined_init, Stream->CPInfo->PerRankReaderInfoFormat,
         ret_data_block);
+    free(cpInfo.ContactInfo);
     return (void **)pointers;
 }
 
@@ -230,7 +226,6 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     writer_data_t ReturnData;
     struct _ReaderActivateMsg Msg;
     struct timeval Start, Stop, Diff;
-    int i;
     char *Filename = strdup(Name);
     CMConnection rank0_to_rank0_conn = NULL;
 
@@ -238,8 +233,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->Role = ReaderRole;
     Stream->mpiComm = comm;
 
-    MPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
-    MPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
+    SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
+    SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
@@ -359,6 +354,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
             &free_block);
     }
 
+    free(data_block);
+
     if (ReturnData->WriterCohortSize == -1)
     {
         /* Rank 0 found no writer at that contact point, fail the stream */
@@ -427,7 +424,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
         }
     }
 
-    for (i = 0; i < ReturnData->WriterCohortSize; i++)
+    for (int i = 0; i < ReturnData->WriterCohortSize; i++)
     {
         attr_list attrs =
             attr_list_from_string(ReturnData->CP_WriterInfo[i]->ContactInfo);
@@ -933,14 +930,13 @@ static void FreeTimestep(SstStream Stream, long Timestep)
 
 static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
 {
-    struct _TimestepMetadataList *Next;
     TSMetadataList FoundTS = NULL;
     pthread_mutex_lock(&Stream->DataLock);
-    Next = Stream->Timesteps;
     CP_verbose(Stream, "Wait for next metadata after last timestep %d\n",
                LastTimestep);
     while (1)
     {
+        struct _TimestepMetadataList *Next;
         Next = Stream->Timesteps;
         while (Next)
         {
@@ -1088,9 +1084,21 @@ static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg,
     }
 }
 
+extern void SstReaderDefinitionLock(SstStream Stream, long EffectiveTimestep)
+{
+    long Timestep = Stream->ReaderTimestep;
+    struct _LockReaderDefinitionsMsg Msg;
+    Stream->ReaderDefinitionsLocked = 1;
+
+    memset(&Msg, 0, sizeof(Msg));
+    Msg.Timestep = EffectiveTimestep;
+
+    sendOneToEachWriterRank(Stream, Stream->CPInfo->LockReaderDefinitionsFormat,
+                            &Msg, &Msg.WSR_Stream);
+}
+
 extern void SstReleaseStep(SstStream Stream)
 {
-    long MaxTimestep;
     long Timestep = Stream->ReaderTimestep;
     struct _ReleaseTimestepMsg Msg;
 
@@ -1103,7 +1111,7 @@ extern void SstReleaseStep(SstStream Stream)
         pthread_mutex_unlock(&Stream->DataLock);
     }
 
-    MPI_Barrier(Stream->mpiComm);
+    SMPI_Barrier(Stream->mpiComm);
 
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = Timestep;
@@ -1138,12 +1146,6 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
     TAU_START("Waiting on metadata per rank per timestep");
 
-    if (Stream->CurrentMetadata != NULL)
-    {
-        free(Stream->CurrentMetadata);
-        Stream->CurrentMetadata = NULL;
-    }
-
     if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
     {
         struct _GlobalOpInfo
@@ -1167,8 +1169,8 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         my_info.LatestTimestep = MaxQueuedMetadata(Stream);
         my_info.timeout_sec = timeout_sec;
         my_info.mode = mode;
-        MPI_Gather(&my_info, sizeof(my_info), MPI_BYTE, global_info,
-                   sizeof(my_info), MPI_BYTE, 0, Stream->mpiComm);
+        SMPI_Gather(&my_info, sizeof(my_info), MPI_BYTE, global_info,
+                    sizeof(my_info), MPI_BYTE, 0, Stream->mpiComm);
         if (Stream->Rank == 0)
         {
             long Biggest = -1;
@@ -1250,11 +1252,16 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                 /* force everyone to close */
                 NextTimestep = -2;
             }
-            MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            if ((NextTimestep == -1) && (Stream->Status == PeerFailed))
+            {
+                /* force everyone to return failed */
+                NextTimestep = -3;
+            }
+            SMPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
         else
         {
-            MPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
+            SMPI_Bcast(&NextTimestep, 1, MPI_LONG, 0, Stream->mpiComm);
         }
         if (NextTimestep == -2)
         {
@@ -1264,6 +1271,15 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                        "SstAdvanceStep returning EndOfStream at timestep %d\n",
                        Stream->ReaderTimestep);
             return SstEndOfStream;
+        }
+        if (NextTimestep == -3)
+        {
+            /* there was a peerFailed setting on rank0, we'll fail */
+            Stream->Status = PeerFailed;
+            CP_verbose(Stream,
+                       "SstAdvanceStep returning EndOfStream at timestep %d\n",
+                       Stream->ReaderTimestep);
+            return SstFatalError;
         }
         if (NextTimestep == -1)
         {
@@ -1300,6 +1316,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         }
         Stream->ReaderTimestep = Entry->MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
+        memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = Entry->MetadataMsg->CohortSize;
         Mdata->WriterMetadata =
             malloc(sizeof(Mdata->WriterMetadata[0]) * Mdata->WriterCohortSize);
@@ -1347,6 +1364,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     SstStatusValue ret;
 
     void *free_block;
+
     if (Stream->Rank == 0)
     {
         struct _TimestepMetadataDistributionMsg msg;
@@ -1412,7 +1430,15 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                                NextTimestep);
                 }
             }
-            if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
+            if (Stream->Status == PeerFailed)
+            {
+                CP_verbose(Stream,
+                           "SstAdvanceStepMin returning FatalError because of "
+                           "conn failure at timestep %d\n",
+                           Stream->ReaderTimestep);
+                return_value = SstFatalError;
+            }
+            else if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
             {
                 CP_verbose(
                     Stream,
@@ -1489,7 +1515,6 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             Stream, NULL, Stream->CPInfo->CombinedWriterInfoFormat,
             &free_block);
     }
-
     ret = ReturnData->ReturnValue;
 
     if (ReturnData->ReturnValue != SstSuccess)
@@ -1520,6 +1545,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         }
         Stream->ReaderTimestep = MetadataMsg->Timestep;
         SstFullMetadata Mdata = malloc(sizeof(struct _SstFullMetadata));
+        memset(Mdata, 0, sizeof(struct _SstFullMetadata));
         Mdata->WriterCohortSize = MetadataMsg->CohortSize;
         Mdata->WriterMetadata =
             malloc(sizeof(Mdata->WriterMetadata[0]) * Mdata->WriterCohortSize);
@@ -1537,6 +1563,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             Mdata->DP_TimestepInfo = MetadataMsg->DP_TimestepInfo;
         }
         Stream->CurrentWorkingTimestep = MetadataMsg->Timestep;
+        Mdata->FreeBlock = free_block;
         Stream->CurrentMetadata = Mdata;
 
         CP_verbose(Stream, "SstAdvanceStep returning Success on timestep %d\n",
@@ -1547,16 +1574,28 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
     return ret;
 }
 
-extern SstStatusValue SstAdvanceStep(SstStream Stream, SstStepMode mode,
-                                     const float timeout_sec)
+extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
 {
 
     if (Stream->CurrentMetadata != NULL)
     {
+        if (Stream->CurrentMetadata->FreeBlock)
+        {
+            free(Stream->CurrentMetadata->FreeBlock);
+        }
+        if (Stream->CurrentMetadata->WriterMetadata)
+        {
+            free(Stream->CurrentMetadata->WriterMetadata);
+        }
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
     }
 
+    SstStepMode mode = SstNextAvailable;
+    if (Stream->ConfigParams->AlwaysProvideLatestTimestep)
+    {
+        mode = SstLatestAvailable;
+    }
     if (Stream->WriterConfigParams->CPCommPattern == SstCPCommPeer)
     {
         return SstAdvanceStepPeer(Stream, mode, timeout_sec);
@@ -1575,7 +1614,7 @@ extern void SstReaderClose(SstStream Stream)
     struct timeval CloseTime, Diff;
     struct _ReaderCloseMsg Msg;
     /* wait until each reader rank has done SstReaderClose() */
-    MPI_Barrier(Stream->mpiComm);
+    SMPI_Barrier(Stream->mpiComm);
     gettimeofday(&CloseTime, NULL);
     timersub(&CloseTime, &Stream->ValidStartTime, &Diff);
     memset(&Msg, 0, sizeof(Msg));
@@ -1587,6 +1626,10 @@ extern void SstReaderClose(SstStream Stream)
     CMsleep(Stream->CPInfo->cm, 1);
     if (Stream->CurrentMetadata != NULL)
     {
+        if (Stream->CurrentMetadata->FreeBlock)
+            free(Stream->CurrentMetadata->FreeBlock);
+        if (Stream->CurrentMetadata->WriterMetadata)
+            free(Stream->CurrentMetadata->WriterMetadata);
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
     }

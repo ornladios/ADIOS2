@@ -117,9 +117,12 @@ void HDF5Common::Init(const std::string &name, MPI_Comm comm, bool toWrite)
     m_PropertyListId = H5Pcreate(H5P_FILE_ACCESS);
 
 #ifdef ADIOS2_HAVE_MPI
-    H5Pset_fapl_mpio(m_PropertyListId, comm, MPI_INFO_NULL);
-    MPI_Comm_rank(comm, &m_CommRank);
-    MPI_Comm_size(comm, &m_CommSize);
+    SMPI_Comm_rank(comm, &m_CommRank);
+    SMPI_Comm_size(comm, &m_CommSize);
+    if (m_CommSize != 1)
+    {
+        H5Pset_fapl_mpio(m_PropertyListId, comm, MPI_INFO_NULL);
+    }
 #endif
 
     // std::string ts0 = "/AdiosStep0";

@@ -12,7 +12,6 @@
 #define UTILS_REORGANIZE_REORGANIZE_H_
 
 #include "adios2.h"
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/IO.h" // DataMap
 #include "utils/Utils.h"
 

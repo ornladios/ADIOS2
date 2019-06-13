@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
             stepTime = MPI_Wtime();
 
             adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable);
+                reader.BeginStep(adios2::StepMode::Read);
             if (status != adios2::StepStatus::OK)
             {
                 if(status != adios2::StepStatus::EndOfStream) {

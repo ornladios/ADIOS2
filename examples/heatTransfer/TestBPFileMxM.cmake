@@ -32,8 +32,7 @@ set_property(TEST HeatTransfer.BPFile.Dump.MxM
 )
 
 add_test(NAME HeatTransfer.BPFile.Validate.MxM
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.BPFile.Dump.MxM.txt
 )
@@ -74,8 +73,7 @@ set_property(TEST HeatTransfer.BP4File.Dump.MxM
 )
 
 add_test(NAME HeatTransfer.BP4File.Validate.MxM
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.BP4File.Dump.MxM.txt
 )

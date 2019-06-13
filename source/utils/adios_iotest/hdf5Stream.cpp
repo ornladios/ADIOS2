@@ -167,6 +167,11 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
 
     for (auto ov : cmdW->variables)
     {
+        // Allocate memory on first access
+        if (!ov->data.size())
+        {
+            ov->data.resize(ov->datasize);
+        }
         if (step == 1)
         {
             if (!settings.myRank && settings.verbose)
@@ -261,6 +266,12 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
         count[d] = ov->count[d - 1];
     }
 
+    // Allocate memory on first access
+    if (!ov->data.size())
+    {
+        ov->data.resize(ov->datasize);
+    }
+
     hid_t memspace = H5Screate_simple(ndim, count, NULL);
     hid_t dxpl_id = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl_id, H5FD_MPIO_COLLECTIVE);
@@ -279,13 +290,9 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
     if (!settings.myRank && settings.verbose)
     {
         std::cout << "    Read ";
-        if (cmdR->stepMode == adios2::StepMode::NextAvailable)
+        if (cmdR->stepMode == adios2::StepMode::Read)
         {
             std::cout << "next available step from ";
-        }
-        else
-        {
-            std::cout << "latest step from ";
         }
 
         std::cout << cmdR->streamName << " using the group " << cmdR->groupName;

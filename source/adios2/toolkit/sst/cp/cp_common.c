@@ -8,11 +8,6 @@
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 
 #include "sst.h"
 
@@ -131,7 +126,7 @@ static char *SstCommPatternStr[] = {"Min", "Peer"};
 
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
 {
-    if (!Stream->Verbose)
+    if (!Stream->CPVerbose)
         return;
 
     fprintf(stderr, "Param -   RegistrationMethod:%s\n",
@@ -154,6 +149,8 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params)
             SstCommPatternStr[Params->CPCommPattern]);
     fprintf(stderr, "Param -   MarshalMethod:%s\n",
             SstMarshalStr[Params->MarshalMethod]);
+    fprintf(stderr, "Param -   FirstTimestepPrecious:%s\n",
+            Params->FirstTimestepPrecious ? "True" : "False");
     fprintf(stderr, "Param -   IsRowMajor:%d  (not user settable) \n",
             Params->IsRowMajor);
 }
@@ -209,6 +206,8 @@ static FMField CP_DP_ArrayReaderList[] = {
      FMOffset(struct _CombinedReaderInfo *, CP_ReaderInfo)},
     {"DP_ReaderInfo", "(*DP_STRUCT)[ReaderCohortSize]", 0,
      FMOffset(struct _CombinedReaderInfo *, DP_ReaderInfo)},
+    {"RankZeroID", "integer", sizeof(void *),
+     FMOffset(struct _CombinedReaderInfo *, RankZeroID)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DP_ReaderArrayStructs[] = {
@@ -345,9 +344,46 @@ static FMField TimestepMetadataDistributionList[] = {
      FMOffset(struct _TimestepMetadataDistributionMsg *, TSmsg)},
     {NULL, NULL, 0, 0}};
 
+static FMField ReleaseRecList[] = {{"Timestep", "integer", sizeof(long),
+                                    FMOffset(struct _ReleaseRec *, Timestep)},
+                                   {"Reader", "integer", sizeof(void *),
+                                    FMOffset(struct _ReleaseRec *, Reader)},
+                                   {NULL, NULL, 0, 0}};
+
+static FMField ReturnMetadataInfoList[] = {
+    {"DiscardThisTimestep", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, DiscardThisTimestep)},
+    {"PendingReaderCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, PendingReaderCount)},
+    {"ReleaseCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, ReleaseCount)},
+    {"ReleaseList", "ReleaseRec[ReleaseCount]", sizeof(struct _ReleaseRec),
+     FMOffset(struct _ReturnMetadataInfo *, ReleaseList)},
+    {"LockDefnsCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, LockDefnsCount)},
+    {"LockDefnsList", "ReleaseRec[LockDefnsCount]", sizeof(struct _ReleaseRec),
+     FMOffset(struct _ReturnMetadataInfo *, LockDefnsList)},
+    {"ReaderCount", "integer", sizeof(int),
+     FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
+    {"ReaderStatus", "integer[ReaderCount]", sizeof(enum StreamStatus),
+     FMOffset(struct _ReturnMetadataInfo *, ReaderStatus)},
+    {"Msg", "timestepMetadata", sizeof(struct _TimestepMetadataMsg),
+     FMOffset(struct _ReturnMetadataInfo *, Msg)},
+    {NULL, NULL, 0, 0}};
+
 static FMStructDescRec TimestepMetadataDistributionStructs[] = {
     {"TimestepDistribution", TimestepMetadataDistributionList,
      sizeof(struct _TimestepMetadataDistributionMsg), NULL},
+    {"timestepMetadata", TimestepMetadataList,
+     sizeof(struct _TimestepMetadataMsg), NULL},
+    {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
+    {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
+    {NULL, NULL, 0, NULL}};
+
+static FMStructDescRec ReturnMetadataInfoStructs[] = {
+    {"ReturnMetadataInfo", ReturnMetadataInfoList,
+     sizeof(struct _TimestepMetadataDistributionMsg), NULL},
+    {"ReleaseRec", ReleaseRecList, sizeof(struct _ReleaseRec), NULL},
     {"timestepMetadata", TimestepMetadataList,
      sizeof(struct _TimestepMetadataMsg), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
@@ -359,6 +395,13 @@ static FMField ReleaseTimestepList[] = {
      FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
     {"Timestep", "integer", sizeof(int),
      FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
+    {NULL, NULL, 0, 0}};
+
+static FMField LockReaderDefinitionsList[] = {
+    {"WSR_Stream", "integer", sizeof(void *),
+     FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
+    {"Timestep", "integer", sizeof(int),
+     FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMField PeerSetupList[] = {
@@ -511,8 +554,8 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
     {
         RecvCounts = malloc(Stream->CohortSize * sizeof(int));
     }
-    MPI_Gather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT, 0,
-               Stream->mpiComm);
+    SMPI_Gather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT, 0,
+                Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -545,8 +588,8 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    MPI_Gatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                MPI_CHAR, 0, Stream->mpiComm);
+    SMPI_Gatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
+                 MPI_CHAR, 0, Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     if (Stream->Rank == 0)
@@ -584,25 +627,25 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
         FFSBuffer Buf = create_FFSBuffer();
         char *tmp =
             FFSencode(Buf, FMFormat_of_original(Type), root_info, &DataSize);
-        MPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
-        MPI_Bcast(tmp, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(tmp, DataSize, MPI_CHAR, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
         memcpy(Buffer, tmp, DataSize);
         free_FFSBuffer(Buf);
     }
     else
     {
-        MPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
+        SMPI_Bcast(&DataSize, 1, MPI_INT, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
-        MPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
+        SMPI_Bcast(Buffer, DataSize, MPI_CHAR, 0, Stream->mpiComm);
     }
 
     FFSContext context = Stream->CPInfo->ffs_c;
     // FFSTypeHandle ffs_type = FFSTypeHandle_from_encode(context, Buffer);
 
     FFSdecode_in_place(context, Buffer, &RetVal);
-    // printf("Decode for rank %d is : \n", Stream->rank);
-    // FMdump_data(FMFormat_of_original(ffs_type), RetVal, 1024000);
+    //    printf("Decode for rank %d is : \n", Stream->Rank);
+    //    FMdump_data(FMFormat_of_original(Type), RetVal, 1024000);
     *RetDataBlock = Buffer;
     return RetVal;
 }
@@ -621,8 +664,8 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 
     RecvCounts = malloc(Stream->CohortSize * sizeof(int));
 
-    MPI_Allgather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT,
-                  Stream->mpiComm);
+    SMPI_Allgather(&DataSize, 1, MPI_INT, RecvCounts, 1, MPI_INT,
+                   Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -653,8 +696,8 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    MPI_Allgatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                   MPI_CHAR, Stream->mpiComm);
+    SMPI_Allgatherv(Buffer, DataSize, MPI_CHAR, RecvBuffer, RecvCounts, Displs,
+                    MPI_CHAR, Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     FFSContext context = Stream->CPInfo->ffs_c;
@@ -790,6 +833,14 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(CPInfo, CombinedMetadataStructs);
 
+    /*gse*/ CombinedMetadataStructs = combineCpDpFormats(
+        ReturnMetadataInfoStructs, NULL, DPInfo->TimestepInfoFormats);
+    f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
+    CPInfo->ReturnMetadataInfoFormat =
+        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
+    AddCustomStruct(CPInfo, CombinedMetadataStructs);
+
     CPInfo->PeerSetupFormat = CMregister_simple_format(
         CPInfo->cm, "PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg));
     CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
@@ -804,6 +855,11 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
         sizeof(struct _ReleaseTimestepMsg));
     CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,
                        NULL);
+    CPInfo->LockReaderDefinitionsFormat = CMregister_simple_format(
+        CPInfo->cm, "LockReaderDefinitions", LockReaderDefinitionsList,
+        sizeof(struct _LockReaderDefinitionsMsg));
+    CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
+                       CP_LockReaderDefinitionsHandler, NULL);
     CPInfo->WriterCloseFormat =
         CMregister_simple_format(CPInfo->cm, "WriterClose", WriterCloseList,
                                  sizeof(struct _WriterCloseMsg));
@@ -835,6 +891,8 @@ extern void SstStreamDestroy(SstStream Stream)
     struct _SstStream StackStream = *Stream;
     CP_verbose(Stream, "Destroying stream %p, name %s\n", Stream,
                Stream->Filename);
+    pthread_mutex_lock(&Stream->DataLock);
+    Stream->Status = Closed;
     if (Stream->Role == ReaderRole)
     {
         Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
@@ -861,10 +919,13 @@ extern void SstStreamDestroy(SstStream Stream)
             }
             // Stream->Readers[i] is free'd in LastCall
         }
+        Stream->ReaderCount = 0;
         free(Stream->Readers);
+        Stream->Readers = NULL;
     }
 
     FFSFormatList FFSList = Stream->PreviousFormats;
+    Stream->PreviousFormats = NULL;
     while (FFSList)
     {
         FFSFormatList Tmp = FFSList->Next;
@@ -888,7 +949,10 @@ extern void SstStreamDestroy(SstStream Stream)
     {
         /* reader side */
         if (Stream->ReaderFFSContext)
+        {
             free_FFSContext(Stream->ReaderFFSContext);
+            Stream->ReaderFFSContext = NULL;
+        }
         for (int i = 0; i < Stream->WriterCohortSize; i++)
         {
             free_attr_list(Stream->ConnectionsToWriter[i].ContactList);
@@ -901,13 +965,32 @@ extern void SstStreamDestroy(SstStream Stream)
             free(Stream->ConnectionsToWriter);
         free(Stream->Peers);
     }
+    else if (Stream->ConfigParams->MarshalMethod == SstMarshalFFS)
+    {
+        FFSFreeMarshalData(Stream);
+    }
+    if (Stream->ConfigParams->DataTransport)
+        free(Stream->ConfigParams->DataTransport);
+    if (Stream->ConfigParams->DataTransport)
+        free(Stream->ConfigParams->ControlTransport);
 
     if (Stream->Filename)
+    {
         free(Stream->Filename);
+        Stream->Filename = NULL;
+    }
     if (Stream->AbsoluteFilename)
+    {
         free(Stream->AbsoluteFilename);
+        Stream->AbsoluteFilename = NULL;
+    }
+
     if (Stream->ParamsBlock)
+    {
         free(Stream->ParamsBlock);
+        Stream->ParamsBlock = NULL;
+    }
+    pthread_mutex_unlock(&Stream->DataLock);
     //   Stream is free'd in LastCall
 
     CPInfoRefCount--;
@@ -916,12 +999,14 @@ extern void SstStreamDestroy(SstStream Stream)
         CP_verbose(
             Stream,
             "Reference count now zero, Destroying process SST info cache\n");
+        // wait .1 sec for last messages
         CManager_close(CPInfo->cm);
         if (CPInfo->ffs_c)
             free_FFSContext(CPInfo->ffs_c);
         if (CPInfo->fm_c)
             free_FMcontext(CPInfo->fm_c);
         FreeCustomStructs(CPInfo);
+        CP_verbose(Stream, "Freeing LastCallList\n");
         for (int i = 0; i < CPInfo->LastCallFreeCount; i++)
         {
             free(CPInfo->LastCallFreeList[i]);
@@ -950,7 +1035,9 @@ extern char *CP_GetContactString(SstStream Stream)
     {
         set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
     }
-    return attr_list_to_string(ContactList);
+    char *ret = attr_list_to_string(ContactList);
+    free_attr_list(ListenList);
+    return ret;
 }
 
 extern CP_GlobalInfo CP_getCPInfo(CP_DP_Interface DPInfo)
@@ -1047,13 +1134,16 @@ SstStream CP_newStream()
     Stream->LastReleasedTimestep = -1;
     Stream->DiscardPriorTimestep =
         -1; // Timesteps prior to this discarded/released upon arrival
+    Stream->CPVerbose = 0;
+    Stream->DPVerbose = 0;
     if (getenv("SstVerbose"))
     {
-        Stream->Verbose = 1;
+        Stream->CPVerbose = 1;
+        Stream->DPVerbose = 1;
     }
-    else
+    if (getenv("SstCPVerbose"))
     {
-        Stream->Verbose = 0;
+        Stream->CPVerbose = 1;
     }
     return Stream;
 }
@@ -1162,7 +1252,7 @@ extern void SstSetStatsSave(SstStream Stream, SstStats Stats)
 
 static void DP_verbose(SstStream s, char *Format, ...)
 {
-    if (s->Verbose)
+    if (s->DPVerbose)
     {
         va_list Args;
         va_start(Args, Format);
@@ -1178,9 +1268,10 @@ static void DP_verbose(SstStream s, char *Format, ...)
         va_end(Args);
     }
 }
+
 extern void CP_verbose(SstStream s, char *Format, ...)
 {
-    if (s->Verbose)
+    if (s->CPVerbose)
     {
         va_list Args;
         va_start(Args, Format);

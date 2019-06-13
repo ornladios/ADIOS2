@@ -63,7 +63,7 @@ public:
 
     /**
      * Begin a logical adios2 step, overloaded version with timeoutSeconds = 0
-     * and mode = NextAvailable
+     * and mode = Read
      * Check each engine documentation for MPI collective/non-collective
      * behavior.
      * @return current step status
@@ -75,7 +75,7 @@ public:
      * control
      * Check each engine documentation for MPI collective/non-collective
      * behavior.
-     * @param mode see enum adios2::StepMode for options, NextAvailable is the
+     * @param mode see enum adios2::StepMode for options, Read is the
      * common use case
      * @param timeoutSeconds
      * @return current step status
@@ -91,18 +91,29 @@ public:
 
     /**
      * Put signature that provides access to the internal engine buffer for a
-     * pre-allocated variable. Returns a fixed size Span (based on C++20
-     * std::span) so applications can populate data value after this Put.
-     * Requires a call to PerformPuts, EndStep, or Close to extract the Min/Max
-     * bounds.
+     * pre-allocated variable including a fill value. Returns a fixed size Span
+     * (based on C++20 std::span) so applications can populate data value after
+     * this Put. Requires a call to PerformPuts, EndStep, or Close to extract
+     * the Min/Max bounds.
      * @param variable input variable
-     * @param bufferID (default = 0) optional, if engine has multiple buffers
-     * @param value (default is zeros) optional initial value
+     * @param bufferID if engine has multiple buffers, input 0 when this
+     * information is not known
+     * @param value provide an initial fill value
      * @return span to variable data in engine internal buffer
      */
     template <class T>
-    typename Variable<T>::Span
-    Put(Variable<T> variable, const size_t bufferID = 0, const T &value = {});
+    typename Variable<T>::Span Put(Variable<T> variable, const size_t bufferID,
+                                   const T &value);
+
+    /**
+     * Put signature that provides access to an internal engine buffer (decided
+     * by the engine) for a pre-allocated variable with the default fill value
+     * T().
+     * @param variable input variable
+     * @return span to variable data in engine internal buffer
+     */
+    template <class T>
+    typename Variable<T>::Span Put(Variable<T> variable);
 
     /**
      * Put data associated with a Variable in the Engine
@@ -235,8 +246,8 @@ public:
      * @param datum user data to be populated, r-value or single data value
      * @param launch mode policy, optional for API consistency, internally
      * is always sync
-     * @exception std::invalid_argument if variable is invalid or nullptr
-     * &datum
+     * @exception std::invalid_argument for invalid variableName (variable
+     * doesn't exist in IO) or nullptr data
      */
     template <class T>
     void Get(const std::string &variableName, T &datum,
@@ -266,7 +277,7 @@ public:
      * Get data associated with a Variable from the Engine.
      * Overloaded version that accepts a std::vector without pre-allocation.
      * @param variableName find variable by name inside IO that created this
-     * Engine with Open
+     * Engine with Open or BeginStep (streaming mode)
      * @param dataV user data vector to be associated with a variable, it
      * doesn't need to be pre-allocated. Engine will resize.
      * @param launch mode policy
@@ -278,7 +289,8 @@ public:
      * immediately.
      * Special case, only use if necessary.
      * </pre>
-     * @exception std::invalid_argument for invalid variable
+     * @exception std::invalid_argument for invalid variableName (variable
+     * doesn't exist in IO)
      */
     template <class T>
     void Get(const std::string &variableName, std::vector<T> &dataV,
@@ -311,7 +323,8 @@ public:
      * variable's BlockInfo. Overloaded version
      * to get variable by name.
      * @note Preliminary, experimental API, may change soon.
-     * @param variable contains variable metadata information
+     * @param variableName find variable by name inside IO that created this
+     * Engine with Open or BeginStep (streaming mode)
      * @param info block info struct associated with block selection,
      *   call will link with implementation's block info.
      * @param launch mode policy
@@ -322,7 +335,8 @@ public:
      * immediately.
      * Special case, only use if necessary.
      * </pre>
-     * @exception std::invalid_argument for invalid variable or nullptr data
+     * @exception std::invalid_argument for invalid variableName (variable
+     * doesn't exist in IO)
      */
     template <class T>
     void Get(const std::string &variableName, typename Variable<T>::Info &info,
@@ -380,6 +394,13 @@ public:
     std::vector<typename Variable<T>::Info>
     BlocksInfo(const Variable<T> variable, const size_t step) const;
 
+    /**
+     * Inspect total number of available steps, use for file engines in read
+     * mode only
+     * @return available steps in engine
+     */
+    size_t Steps() const;
+
 private:
     Engine(core::Engine *engine);
     core::Engine *m_Engine = nullptr;
@@ -388,7 +409,9 @@ private:
 #define declare_template_instantiation(T)                                      \
                                                                                \
     extern template typename Variable<T>::Span Engine::Put(                    \
-        Variable<T>, const size_t, const T &);
+        Variable<T>, const size_t, const T &);                                 \
+                                                                               \
+    extern template typename Variable<T>::Span Engine::Put(Variable<T>);
 
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -424,6 +447,8 @@ ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+std::string ToString(const Engine &engine);
 
 } // end namespace adios2
 

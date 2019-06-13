@@ -10,6 +10,7 @@ struct _SstFullMetadata
     int WriterCohortSize;
     struct _SstData **WriterMetadata;
     void **DP_TimestepInfo;
+    void *FreeBlock;
 };
 
 struct _SstData
@@ -30,12 +31,15 @@ struct _SstBlock
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \
+    MACRO(ReserveQueueLimit, Int, int, 0)                                      \
     MACRO(QueueFullPolicy, QueueFullPolicy, size_t, 0)                         \
     MACRO(IsRowMajor, IsRowMajor, int, 0)                                      \
+    MACRO(FirstTimestepPrecious, Bool, int, 0)                                 \
     MACRO(ControlTransport, String, char *, NULL)                              \
     MACRO(NetworkInterface, String, char *, NULL)                              \
-    MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommPeer)                 \
-    MACRO(CompressionMethod, CompressionMethod, size_t, 0)
+    MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommMin)                  \
+    MACRO(CompressionMethod, CompressionMethod, size_t, 0)                     \
+    MACRO(AlwaysProvideLatestTimestep, Bool, int, 0)
 
 typedef enum
 {

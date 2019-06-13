@@ -19,10 +19,10 @@ size_t print_lines = 0;
 
 char runMode;
 
-class WdmEngineTest : public ::testing::Test
+class SscEngineTest : public ::testing::Test
 {
 public:
-    WdmEngineTest() = default;
+    SscEngineTest() = default;
 };
 
 template <class T>
@@ -114,13 +114,14 @@ void VerifyData(const T *data, size_t step, const Dims &start,
 }
 
 void Writer(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams)
+            const size_t steps, const adios2::Params &engineParams,
+            const std::string &name)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("wdm");
+    dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
@@ -152,8 +153,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
     dataManIO.DefineAttribute<int>("AttInt", 110);
-    adios2::Engine dataManWriter =
-        dataManIO.Open("stream", adios2::Mode::Write);
+    adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
@@ -184,13 +184,14 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
 }
 
 void Reader(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams)
+            const size_t steps, const adios2::Params &engineParams,
+            const std::string &name)
 {
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
     adios2::IO dataManIO = adios.DeclareIO("Test");
-    dataManIO.SetEngine("wdm");
+    dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
-    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
+    adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
 
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -207,27 +208,15 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     bool received_steps = false;
     size_t i;
-    for (i = 0; i < 10; ++i)
+    for (i = 0; i < steps; ++i)
     {
-        GenData(myChars, i, start, count, shape);
-        GenData(myUChars, i, start, count, shape);
-        GenData(myShorts, i, start, count, shape);
-        GenData(myUShorts, i, start, count, shape);
-        GenData(myInts, i, start, count, shape);
-        GenData(myUInts, i, start, count, shape);
-        GenData(myFloats, i, start, count, shape);
-        GenData(myDoubles, i, start, count, shape);
-        GenData(myComplexes, i, start, count, shape);
-        GenData(myDComplexes, i, start, count, shape);
 
-        adios2::StepStatus status =
-            dataManReader.BeginStep(StepMode::NextAvailable, 5);
+        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
 
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
             const auto &vars = dataManIO.AvailableVariables();
-            ASSERT_EQ(vars.size(), 10);
             if (print_lines == 0)
             {
                 std::cout << "All available variables : ";
@@ -237,6 +226,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 }
                 std::cout << std::endl;
             }
+            ASSERT_EQ(vars.size(), 10);
             size_t currentStep = dataManReader.CurrentStep();
             //            ASSERT_EQ(i, currentStep);
             adios2::Variable<char> bpChars =
@@ -296,26 +286,28 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             VerifyData(myDComplexes.data(), currentStep, start, count, shape);
             dataManReader.EndStep();
         }
-        else
+        else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "End of stream at Step " << i << std::endl;
+            std::cout << "[Rank " + std::to_string(mpiRank) +
+                             "] SscTest reader end of stream!"
+                      << std::endl;
             break;
         }
     }
     if (received_steps)
     {
         auto attInt = dataManIO.InquireAttribute<int>("AttInt");
-        std::cout << "Attribute received " << attInt.Data()[0]
-                  << ", expected 110" << std::endl;
+        std::cout << "[Rank " + std::to_string(mpiRank) +
+                         "] Attribute received "
+                  << attInt.Data()[0] << ", expected 110" << std::endl;
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
     }
-    //        ASSERT_EQ(i, steps);
     dataManReader.Close();
     print_lines = 0;
 }
 
-TEST_F(WdmEngineTest, BaseTest)
+TEST_F(SscEngineTest, BaseTest)
 {
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
@@ -329,18 +321,20 @@ TEST_F(WdmEngineTest, BaseTest)
     Dims shape = {10, (size_t)mpiSize * 2};
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
-    size_t steps = 1000;
+
+    adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
+    std::string filename = "BaseTest";
 
     if (mpiGroup == 0)
     {
-        Writer(shape, start, count, steps, adios2::Params());
+        Writer(shape, start, count, 1000, engineParams, filename);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     if (mpiGroup == 1)
     {
-        Reader(shape, start, count, steps, adios2::Params());
+        Reader(shape, start, count, 10, engineParams, filename);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);

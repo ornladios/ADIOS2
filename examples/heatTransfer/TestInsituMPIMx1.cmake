@@ -27,8 +27,7 @@ set_property(TEST HeatTransfer.InsituMPI.Dump.Mx1
 )
 
 add_test(NAME HeatTransfer.InsituMPI.Validate.Mx1
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.InsituMPI.Dump.Mx1.txt
 )

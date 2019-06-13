@@ -13,8 +13,6 @@
 
 #include "adios2_c_types.h"
 
-#include "adios2/ADIOSMPICommOnly.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

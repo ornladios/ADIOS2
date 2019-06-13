@@ -94,6 +94,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns = [
+    # 'advice/advice.rst',
     'introduction/nutshell.rst',
     'introduction/adaptable_io.rst',
     # 'introduction/introduction.rst',
@@ -119,12 +120,10 @@ exclude_patterns = [
     'components/io.rst',
     # 'components/components.rst',
     'components/overview.rst',
-    'api_simple/fortran.rst',
-    'api_simple/matlab.rst',
-    'api_simple/python.rst',
-    'api_simple/cxx11.rst',
-    'api_simple/c.rst',
-    # 'api_simple/api_simple.rst',
+    'api_high/matlab.rst',
+    'api_high/python.rst',
+    'api_high/cxx11.rst',
+    # 'api_high/api_high.rst',
     'utilities/adios2-config.rst',
     'utilities/adios_reorganize.rst',
     # 'utilities/utilities.rst',

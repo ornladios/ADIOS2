@@ -39,10 +39,26 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 
     if (m_MarshalMethod == SstMarshalFFS)
     {
+        size_t *Shape = NULL;
+        size_t *Start = NULL;
+        size_t *Count = NULL;
+        size_t DimCount = 0;
+
+        if (variable.m_ShapeID == ShapeID::GlobalArray)
+        {
+            DimCount = variable.m_Shape.size();
+            Shape = variable.m_Shape.data();
+            Start = variable.m_Start.data();
+            Count = variable.m_Count.data();
+        }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            DimCount = variable.m_Count.size();
+            Count = variable.m_Count.data();
+        }
         SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
-                      variable.m_Type.c_str(), variable.m_ElementSize,
-                      variable.m_Shape.size(), variable.m_Shape.data(),
-                      variable.m_Count.data(), variable.m_Start.data(), values);
+                      variable.m_Type.c_str(), variable.m_ElementSize, DimCount,
+                      Shape, Count, Start, values);
     }
     else if (m_MarshalMethod == SstMarshalBP)
     {

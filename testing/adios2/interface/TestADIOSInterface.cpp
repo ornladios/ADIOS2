@@ -23,6 +23,8 @@ TEST(ADIOSInterface, MPICommRemoved)
 
 #endif
 
+/** ADIOS2_CXX11_API
+ */
 class ADIOS2_CXX11_API : public ::testing::Test
 {
 public:
@@ -44,6 +46,92 @@ public:
     int m_MpiSize = 1;
 };
 
+TEST_F(ADIOS2_CXX11_API, ToString)
+{
+    EXPECT_EQ(ToString(adios2::ShapeID::Unknown), "ShapeID::Unknown");
+    EXPECT_EQ(ToString(adios2::ShapeID::GlobalValue), "ShapeID::GlobalValue");
+    EXPECT_EQ(ToString(adios2::ShapeID::GlobalArray), "ShapeID::GlobalArray");
+    EXPECT_EQ(ToString(adios2::ShapeID::JoinedArray), "ShapeID::JoinedArray");
+    EXPECT_EQ(ToString(adios2::ShapeID::LocalValue), "ShapeID::LocalValue");
+    EXPECT_EQ(ToString(adios2::ShapeID::LocalArray), "ShapeID::LocalArray");
+
+    EXPECT_EQ(ToString(adios2::IOMode::Independent), "IOMode::Independent");
+    EXPECT_EQ(ToString(adios2::IOMode::Collective), "IOMode::Collective");
+
+    EXPECT_EQ(ToString(adios2::Mode::Undefined), "Mode::Undefined");
+    EXPECT_EQ(ToString(adios2::Mode::Write), "Mode::Write");
+    EXPECT_EQ(ToString(adios2::Mode::Read), "Mode::Read");
+    EXPECT_EQ(ToString(adios2::Mode::Append), "Mode::Append");
+    EXPECT_EQ(ToString(adios2::Mode::Sync), "Mode::Sync");
+    EXPECT_EQ(ToString(adios2::Mode::Deferred), "Mode::Deferred");
+
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::GlobalReaders),
+              "ReadMultiplexPattern::GlobalReaders");
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::RoundRobin),
+              "ReadMultiplexPattern::RoundRobin");
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::FirstInFirstOut),
+              "ReadMultiplexPattern::FirstInFirstOut");
+    EXPECT_EQ(ToString(adios2::ReadMultiplexPattern::OpenAllSteps),
+              "ReadMultiplexPattern::OpenAllSteps");
+
+    EXPECT_EQ(ToString(adios2::StreamOpenMode::Wait), "StreamOpenMode::Wait");
+    EXPECT_EQ(ToString(adios2::StreamOpenMode::NoWait),
+              "StreamOpenMode::NoWait");
+
+    EXPECT_EQ(ToString(adios2::ReadMode::NonBlocking), "ReadMode::NonBlocking");
+    EXPECT_EQ(ToString(adios2::ReadMode::Blocking), "ReadMode::Blocking");
+
+    EXPECT_EQ(ToString(adios2::StepMode::Append), "StepMode::Append");
+    EXPECT_EQ(ToString(adios2::StepMode::Update), "StepMode::Update");
+    EXPECT_EQ(ToString(adios2::StepMode::Read), "StepMode::Read");
+
+    EXPECT_EQ(ToString(adios2::StepStatus::OK), "StepStatus::OK");
+    EXPECT_EQ(ToString(adios2::StepStatus::NotReady), "StepStatus::NotReady");
+    EXPECT_EQ(ToString(adios2::StepStatus::EndOfStream),
+              "StepStatus::EndOfStream");
+    EXPECT_EQ(ToString(adios2::StepStatus::OtherError),
+              "StepStatus::OtherError");
+
+    EXPECT_EQ(ToString(adios2::TimeUnit::Microseconds),
+              "TimeUnit::Microseconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Milliseconds),
+              "TimeUnit::Milliseconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Seconds), "TimeUnit::Seconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Minutes), "TimeUnit::Minutes");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Hours), "TimeUnit::Hours");
+
+    EXPECT_EQ(ToString(adios2::SelectionType::BoundingBox),
+              "SelectionType::BoundingBox");
+    EXPECT_EQ(ToString(adios2::SelectionType::Points), "SelectionType::Points");
+    EXPECT_EQ(ToString(adios2::SelectionType::WriteBlock),
+              "SelectionType::WriteBlock");
+    EXPECT_EQ(ToString(adios2::SelectionType::Auto), "SelectionType::Auto");
+}
+
+TEST_F(ADIOS2_CXX11_API, APIToString)
+{
+    auto io = m_Ad.DeclareIO("CXX11_API_TestIO");
+    EXPECT_EQ(ToString(io), "IO(Name: \"CXX11_API_TestIO\")");
+
+    auto variable = io.DefineVariable<double>("var_double");
+    EXPECT_EQ(ToString(variable), "Variable<double>(Name: \"var_double\")");
+
+    auto attribute = io.DefineAttribute<float>("attr_float", 1.f);
+    EXPECT_EQ(ToString(attribute), "Attribute<float>(Name: \"attr_float\")");
+
+    auto engine = io.Open("test.bp", adios2::Mode::Write);
+    EXPECT_EQ(ToString(engine), "Engine(Name: \"test.bp\", Type: \"BP3\")");
+}
+
+TEST_F(ADIOS2_CXX11_API, operatorLL)
+{
+    std::stringstream result;
+    result << adios2::Mode::Write;
+    EXPECT_EQ(result.str(), "Mode::Write");
+}
+
+/** ADIOS2_CXX11_API_IO
+ */
 class ADIOS2_CXX11_API_IO : public ADIOS2_CXX11_API
 {
 public:
@@ -60,10 +148,6 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
     EXPECT_EQ(engine.Type(), "BP3");
-
-    EXPECT_EQ(m_Io.EngineType(),
-              "bp"); // FIXME? Is it expected that adios2_open
-                     // changes the engine_type string?
 }
 
 TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
@@ -74,10 +158,6 @@ TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
     EXPECT_EQ(engine.Type(), "BP3");
-
-    EXPECT_EQ(m_Io.EngineType(),
-              "bp"); // FIXME? Is it expected that adios2_open
-                     // changes the engine_type string?
 }
 
 template <class T>

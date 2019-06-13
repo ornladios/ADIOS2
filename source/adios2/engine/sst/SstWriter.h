@@ -68,6 +68,7 @@ private:
     SstStream m_Output;
     long m_WriterStep = -1;
     bool m_BetweenStepPairs = false;
+    bool m_DefinitionsNotified = false;
     size_t m_FFSMarshaledAttributesCount = 0;
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \

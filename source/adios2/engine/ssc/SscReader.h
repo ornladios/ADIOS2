@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WdmReader.h
+ * SscReader.h
  *
  *  Created on: Nov 1, 2018
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_STAGINGREADER_H_
-#define ADIOS2_ENGINE_STAGINGREADER_H_
+#ifndef ADIOS2_ENGINE_SSCREADER_H_
+#define ADIOS2_ENGINE_SSCREADER_H_
 
 #include <queue>
 
@@ -17,9 +17,9 @@
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
-
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include "adios2/toolkit/transportman/stagingman/StagingMan.h"
 
 namespace adios2
@@ -29,22 +29,23 @@ namespace core
 namespace engine
 {
 
-class WdmReader : public Engine
+class SscReader : public Engine
 {
 public:
-    WdmReader(IO &adios, const std::string &name, const Mode mode,
+    SscReader(IO &adios, const std::string &name, const Mode mode,
               MPI_Comm mpiComm);
 
-    ~WdmReader();
+    ~SscReader();
     StepStatus BeginStep(
-        StepMode mode = StepMode::NextAvailable,
+        StepMode stepMode = StepMode::Read,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStepIterator(StepMode stepMode, format::DmvVecPtr &vars);
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;
 
 private:
-    bool m_Tolerance = true;
+    bool m_Tolerance = false;
     format::DataManSerializer m_DataManSerializer;
     std::shared_ptr<transportman::StagingMan> m_DataTransport;
     std::shared_ptr<transportman::StagingMan> m_MetadataTransport;
@@ -54,9 +55,7 @@ private:
     std::vector<std::string> m_FullAddresses;
     int m_Timeout = 3;
     int m_RetryMax = 128;
-    int m_RetryTimes = 0;
     size_t m_AppID;
-    bool m_AttributesSet = false;
     bool m_ConnectionLost = false;
 
     struct Request
@@ -73,14 +72,13 @@ private:
     format::VecPtr m_RepliedMetadata;
     std::mutex m_RepliedMetadataMutex;
 
-    void RequestMetadata(int64_t step = -5);
+    void RequestMetadata(const int64_t step = -5);
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     template <typename T>
-    void CheckIOVariable(const std::string &name, const Dims &shape,
-                         const Dims &start, const Dims &count);
+    void CheckIOVariable(const std::string &name, const Dims &shape);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -122,4 +120,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif // ADIOS2_ENGINE_STAGINGREADER_H_
+#endif // ADIOS2_ENGINE_SSCREADER_H_

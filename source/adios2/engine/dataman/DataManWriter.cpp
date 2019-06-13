@@ -67,10 +67,12 @@ void DataManWriter::EndStep()
 
     if (m_CurrentStep == 0)
     {
-        m_DataManSerializer[0]->AggregateMetadata(m_MPIComm);
+        m_DataManSerializer[0]->AggregateMetadata();
         m_AggregatedMetadataMutex.lock();
+        int64_t stepProvided;
         m_AggregatedMetadata =
-            m_DataManSerializer[0]->GetAggregatedMetadataPack(0);
+            m_DataManSerializer[0]->GetAggregatedMetadataPack(0, stepProvided,
+                                                              -1);
         m_AggregatedMetadataMutex.unlock();
     }
 
@@ -114,7 +116,7 @@ void DataManWriter::Init()
     {
         m_DataManSerializer.push_back(
             std::make_shared<format::DataManSerializer>(
-                m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian));
+                m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian, m_MPIComm));
     }
 }
 
@@ -148,15 +150,10 @@ void DataManWriter::MetadataThread(const std::string &address)
     while (m_Listening)
     {
         auto request = tpm.ReceiveRequest();
-        if (request == nullptr)
+        if (request && request->size() > 0)
         {
-            continue;
-        }
-        if (request->size() >= 0)
-        {
-            m_AggregatedMetadataMutex.lock();
+            std::lock_guard<std::mutex> lck(m_AggregatedMetadataMutex);
             tpm.SendReply(m_AggregatedMetadata);
-            m_AggregatedMetadataMutex.unlock();
         }
     }
 }

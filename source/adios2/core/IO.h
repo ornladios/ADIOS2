@@ -21,7 +21,6 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"
@@ -134,6 +133,14 @@ public:
     void SetParameters(const Params &parameters = Params()) noexcept;
 
     /**
+     * @brief Version that passes a single string to fill out many parameters.
+     * initializer string = "param1=value1 , param2 = value2"
+     * This function will throw std::invalid_argument for entries that
+     * cannot be parsed into key=value pairs.
+     */
+    void SetParameters(const std::string &parameters);
+
+    /**
      * @brief Sets a single parameter overwriting value if key exists;
      * @param key parameter key
      * @param value parameter value
@@ -142,6 +149,9 @@ public:
 
     /** @brief Retrieve current parameters map */
     Params &GetParameters() noexcept;
+
+    /** @brief Delete all parameters */
+    void ClearParameters() noexcept;
 
     /**
      * @brief Adds a transport and its parameters for the IO Engine
