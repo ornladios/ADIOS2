@@ -150,8 +150,17 @@ void BP3Reader::InitTransports()
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
         const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-        m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
-                                m_IO.m_TransportsParameters, profile);
+        try
+        {
+            m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
+                                    m_IO.m_TransportsParameters, profile);
+        }
+        catch (...)
+        {
+            const std::string bpName = helper::AddExtension(m_Name, ".bp");
+            m_FileManager.OpenFiles({bpName}, adios2::Mode::Read,
+                                    m_IO.m_TransportsParameters, profile);
+        }
     }
 }
 
