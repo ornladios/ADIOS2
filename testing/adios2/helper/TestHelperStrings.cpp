@@ -135,8 +135,7 @@ TEST(ADIOS2HelperString, ADIOS2HelperStringConversion)
 
     const double diff = std::abs(
         adios2::helper::StringTo<double>(dbl, debugMode, hint) - 123.123);
-    const double epsilon = std::numeric_limits<double>::epsilon();
-    ASSERT_GT(diff, epsilon);
+    ASSERT_LT(diff, 1E-4);
 
     ASSERT_THROW(adios2::helper::StringTo<double>(notnum, debugMode, hint),
                  std::invalid_argument);

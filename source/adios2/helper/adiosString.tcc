@@ -126,7 +126,7 @@ double StringTo(const std::string &input, const bool debugMode,
     {
         try
         {
-            const float out = std::stod(input);
+            const double out = std::stod(input);
             return out;
         }
         catch (...)
