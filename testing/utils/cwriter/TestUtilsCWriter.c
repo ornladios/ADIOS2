@@ -17,7 +17,7 @@
 #include <mpi.h>
 #endif
 
-#include "SmallTestData_c.h"
+#include "../SmallTestData_c.h"
 
 int main(int argc, char *argv[])
 {
