@@ -255,7 +255,7 @@ zfp_stream *CompressZFP::GetZFPStream(const Dims &dimensions,
     {
         const double accuracy = helper::StringTo<double>(
             itAccuracy->second, m_DebugMode,
-            "setting Tolerance in call to CompressZfp\n");
+            "setting accuracy in call to CompressZfp\n");
 
         zfp_stream_set_accuracy(stream, accuracy);
     }

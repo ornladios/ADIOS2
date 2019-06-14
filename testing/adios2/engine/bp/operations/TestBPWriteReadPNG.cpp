@@ -22,16 +22,15 @@ static T Random100()
     return std::rand() % 100;
 }
 
-void PNGAccuracy2D(const int compressionLevel)
+void PNGAccuracy2D(const std::string compressionLevel)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRPNG2D_" + std::to_string(compressionLevel) +
-                            ".bp");
+    const std::string fname("BPWRPNG2D_" + compressionLevel + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
-    const size_t height = 2;
+    const size_t height = 40;
     const size_t width = 80;
 
     // Number of steps
@@ -50,11 +49,11 @@ void PNGAccuracy2D(const int compressionLevel)
     {
         i8s[i] = Random100<int8_t>();
         i16s[i] = Random100<int16_t>();
-        i32s[i] = i;
+        i32s[i] = Random100<int32_t>();
         u8s[i] = Random100<uint8_t>();
         u16s[i] = Random100<uint16_t>();
-        u32s[i] = i;
-        r32s[i] = i;
+        u32s[i] = Random100<uint32_t>();
+        r32s[i] = Random100<float>();
     }
 
 #ifdef ADIOS2_HAVE_MPI
@@ -102,28 +101,48 @@ void PNGAccuracy2D(const int compressionLevel)
                                                 adios2::ConstantDims);
 
         // add operations
-        adios2::Operator PNGOp = adios.DefineOperator("PNGCompressor", "PNG");
+        adios2::Operator PNGOp =
+            adios.DefineOperator("PNGCompressor", adios2::ops::PNG);
 
-        //        var_i8.AddOperation(
-        //            PNGOp, {{"compression_level",
-        //            std::to_string(compressionLevel)}});
-        //        var_i16.AddOperation(
-        //            PNGOp, {{"compression_level",
-        //            std::to_string(compressionLevel)}});
+        var_i8.AddOperation(PNGOp, {{adios2::ops::png::key::COLOR_TYPE,
+                                     adios2::ops::png::value::COLOR_TYPE_GRAY},
+                                    {adios2::ops::png::key::COMPRESSION_LEVEL,
+                                     compressionLevel}});
+
+        var_i16.AddOperation(
+            PNGOp,
+            {{adios2::ops::png::key::COLOR_TYPE,
+              adios2::ops::png::value::COLOR_TYPE_GRAY_ALPHA},
+             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
+
         var_i32.AddOperation(
-            PNGOp, {{"compression_level", std::to_string(compressionLevel)}});
+            PNGOp,
+            {{adios2::ops::png::key::COLOR_TYPE,
+              adios2::ops::png::value::COLOR_TYPE_RGB_ALPHA},
+             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
 
-        //        var_u8.AddOperation(
-        //            PNGOp, {{"compression_level",
-        //            std::to_string(compressionLevel)}});
-        //        var_u16.AddOperation(
-        //            PNGOp, {{"compression_level",
-        //            std::to_string(compressionLevel)}});
+        var_u8.AddOperation(PNGOp, {{adios2::ops::png::key::COLOR_TYPE,
+                                     adios2::ops::png::value::COLOR_TYPE_GRAY},
+                                    {adios2::ops::png::key::COMPRESSION_LEVEL,
+                                     compressionLevel}});
+
+        var_u16.AddOperation(
+            PNGOp,
+            {{adios2::ops::png::key::COLOR_TYPE,
+              adios2::ops::png::value::COLOR_TYPE_GRAY_ALPHA},
+             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
+
         var_u32.AddOperation(
-            PNGOp, {{"compression_level", std::to_string(compressionLevel)}});
+            PNGOp,
+            {{adios2::ops::png::key::COLOR_TYPE,
+              adios2::ops::png::value::COLOR_TYPE_RGB_ALPHA},
+             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
 
-        var_r32.AddOperation(
-            PNGOp, {{"compression_level", std::to_string(compressionLevel)}});
+        var_u32.AddOperation(PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL,
+                                      compressionLevel}});
+
+        var_r32.AddOperation(PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL,
+                                      compressionLevel}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -252,14 +271,12 @@ void PNGAccuracy2D(const int compressionLevel)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                //                EXPECT_EQ(decompressedi8s[i], i8s[i]) << msg;
-                //                EXPECT_EQ(decompressedi16s[i], i16s[i]) <<
-                //                msg;
+                EXPECT_EQ(decompressedi8s[i], i8s[i]) << msg;
+                EXPECT_EQ(decompressedi16s[i], i16s[i]) << msg;
                 ASSERT_EQ(decompressedi32s[i], i32s[i]) << msg;
 
-                //                EXPECT_EQ(decompressedu8s[i], u8s[i]) << msg;
-                //                EXPECT_EQ(decompressedu16s[i], u16s[i]) <<
-                //                msg;
+                EXPECT_EQ(decompressedu8s[i], u8s[i]) << msg;
+                EXPECT_EQ(decompressedu16s[i], u16s[i]) << msg;
                 EXPECT_EQ(decompressedu32s[i], u32s[i]) << msg;
 
                 EXPECT_EQ(decompressedr32s[i], r32s[i]) << msg;
@@ -273,11 +290,11 @@ void PNGAccuracy2D(const int compressionLevel)
     }
 }
 
-void PNGAccuracy2DSel(const double accuracy)
+void PNGAccuracy2DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRPNG2DSel_" + std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRPNG2DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -327,12 +344,13 @@ void PNGAccuracy2DSel(const double accuracy)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator PNGOp = adios.DefineOperator("PNGCompressor", "PNG");
+        adios2::Operator PNGOp =
+            adios.DefineOperator("PNGCompressor", adios2::ops::PNG);
 
-        var_r32.AddOperation(PNGOp,
-                             {{"compression_level", std::to_string(accuracy)}});
-        var_r64.AddOperation(PNGOp,
-                             {{"compression_level", std::to_string(accuracy)}});
+        var_r32.AddOperation(
+            PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL, accuracy}});
+        var_r64.AddOperation(
+            PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -410,17 +428,27 @@ void PNGAccuracy2DSel(const double accuracy)
     }
 }
 
-class BPWriteReadPNG : public ::testing::TestWithParam<double>
+class BPWRPNG : public ::testing::TestWithParam<std::string>
 {
 public:
-    BPWriteReadPNG() = default;
+    BPWRPNG() = default;
     virtual void SetUp(){};
     virtual void TearDown(){};
 };
 
-TEST_P(BPWriteReadPNG, BPWriteReadPNG2D) { PNGAccuracy2D(GetParam()); }
+TEST_P(BPWRPNG, BPWRPNG2D) { PNGAccuracy2D(GetParam()); }
 
-INSTANTIATE_TEST_CASE_P(PNGAccuracy, BPWriteReadPNG, ::testing::Values(1));
+INSTANTIATE_TEST_CASE_P(
+    PNGAccuracy, BPWRPNG,
+    ::testing::Values(adios2::ops::png::value::COMPRESSION_LEVEL_1,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_2,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_3,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_4,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_5,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_6,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_7,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_8,
+                      adios2::ops::png::value::COMPRESSION_LEVEL_9));
 
 int main(int argc, char **argv)
 {

@@ -51,7 +51,7 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
     {
         const std::string hint(" in call to CompressBZIP2 Compress " + type +
                                "\n");
-        helper::SetParameterValueInt("blockSize100K", parameters, blockSize100k,
+        helper::SetParameterValueInt("blockSize100k", parameters, blockSize100k,
                                      m_DebugMode, hint);
         helper::SetParameterValueInt("verbosity", parameters, verbosity,
                                      m_DebugMode, hint);
@@ -127,9 +127,13 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
     int small = 0;
     int verbosity = 0;
 
-    const size_t batches = static_cast<size_t>(helper::StringTo<uint32_t>(
-        info.at("batches"), m_DebugMode,
-        "when extracting batches in ADIOS2 BZIP2 Decompress"));
+    auto itBatches = info.find("batches");
+    const size_t batches =
+        (itBatches == info.end())
+            ? 1
+            : static_cast<size_t>(helper::StringTo<uint32_t>(
+                  itBatches->second, m_DebugMode,
+                  "when extracting batches in ADIOS2 BZIP2 Decompress"));
 
     size_t expectedSizeOut = 0;
 
@@ -166,7 +170,7 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
                                                 sourceLen, small, verbosity);
         if (m_DebugMode)
         {
-            CheckStatus(status, "in call to CompressBZIP2 Decompress\n");
+            CheckStatus(status, "in call to ADIOS2 BZIP2 Decompress\n");
             // TODO verify size of decompressed buffer
         }
         expectedSizeOut += static_cast<size_t>(destLen);
