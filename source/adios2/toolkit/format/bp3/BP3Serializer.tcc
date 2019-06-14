@@ -882,18 +882,20 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                                                       const DataTypes dataType,
                                                       std::vector<char> &buffer)
 {
+    const bool isLittleEndian = helper::IsLittleEndian();
     const uint8_t characteristicsCount =
-        helper::ReadValue<uint8_t>(buffer, currentPosition);
+        helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
 
     const uint32_t characteristicsLength =
-        helper::ReadValue<uint32_t>(buffer, currentPosition);
+        helper::ReadValue<uint32_t>(buffer, currentPosition, isLittleEndian);
 
     const size_t endPosition =
         currentPosition + static_cast<size_t>(characteristicsLength);
 
     while (currentPosition < endPosition)
     {
-        const uint8_t id = helper::ReadValue<uint8_t>(buffer, currentPosition);
+        const uint8_t id =
+            helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
 
         switch (id)
         {
@@ -915,7 +917,9 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
             {
                 // first get the length of the string
                 const size_t length = static_cast<size_t>(
-                    helper::ReadValue<uint16_t>(buffer, currentPosition));
+
+                    helper::ReadValue<uint16_t>(buffer, currentPosition,
+                                                isLittleEndian));
 
                 currentPosition += length;
             }
@@ -940,8 +944,8 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_offset):
         {
-            const uint64_t currentOffset =
-                helper::ReadValue<uint64_t>(buffer, currentPosition);
+            const uint64_t currentOffset = helper::ReadValue<uint64_t>(
+                buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedOffset =
                 currentOffset +
@@ -953,8 +957,8 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_payload_offset):
         {
-            const uint64_t currentPayloadOffset =
-                helper::ReadValue<uint64_t>(buffer, currentPosition);
+            const uint64_t currentPayloadOffset = helper::ReadValue<uint64_t>(
+                buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedPayloadOffset =
                 currentPayloadOffset +
@@ -968,7 +972,9 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         case (characteristic_dimensions):
         {
             const size_t dimensionsSize = static_cast<size_t>(
-                helper::ReadValue<uint8_t>(buffer, currentPosition));
+
+                helper::ReadValue<uint8_t>(buffer, currentPosition,
+                                           isLittleEndian));
 
             currentPosition +=
                 3 * sizeof(uint64_t) * dimensionsSize + 2; // 2 is for length
