@@ -31,6 +31,13 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
     std::vector<void *> sstReadHandlers;
     std::vector<std::vector<char>> buffers;
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    const bool endianReverse = helper::IsLittleEndian() !=
+                               m_BP3Deserializer->m_Minifooter.IsLittleEndian;
+#else
+    constexpr bool endianReverse = false;
+#endif
+
     size_t threadID = 0;
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
@@ -48,7 +55,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];
                 }
                 // if remote data buffer is compressed
-                if (subStreamInfo.OperationsInfo.size() > 0)
+                if (subStreamInfo.OperationsInfo.size() > 0 || endianReverse)
                 {
                     // TODO test with compression
                     char *buffer = nullptr;
@@ -132,7 +139,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
                 // if remote data buffer is compressed
-                if (subStreamInfo.OperationsInfo.size() > 0)
+                if (subStreamInfo.OperationsInfo.size() > 0 || endianReverse)
                 {
                     // const bool identity =
                     //    m_BP3Deserializer->IdentityOperation<T>(
