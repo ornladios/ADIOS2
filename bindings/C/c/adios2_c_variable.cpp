@@ -12,32 +12,10 @@
 
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2_c_internal.h"
 
 namespace
 {
-const std::map<std::string, std::vector<adios2_type>>
-    adios2_variable_types_map = {
-        {"char", {adios2_type_char}},
-        {"int", {adios2_type_int32_t, adios2_type_int}},
-        {"float", {adios2_type_float}},
-        {"double", {adios2_type_double}},
-        {"float complex", {adios2_type_float_complex}},
-        {"double complex", {adios2_type_double_complex}},
-        {"signed char", {adios2_type_int8_t, adios2_type_signed_char}},
-        {"short", {adios2_type_int16_t, adios2_type_short}},
-        {"long int", {adios2_type_int64_t, adios2_type_long_int}},
-        {"long long int", {adios2_type_int64_t, adios2_type_long_long_int}},
-        {"string", {adios2_type_string}},
-        // TODO {"string array", {adios2_type_string_array}},
-        {"unsigned char", {adios2_type_unsigned_char, adios2_type_uint8_t}},
-        {"unsigned short", {adios2_type_unsigned_short, adios2_type_uint16_t}},
-        {"unsigned int", {adios2_type_unsigned_int, adios2_type_uint32_t}},
-        {"unsigned long int",
-         {adios2_type_unsigned_long_int, adios2_type_uint64_t}},
-        {"unsigned long long int",
-         {adios2_type_unsigned_long_long_int, adios2_type_uint64_t}},
-};
-
 adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
                                 const std::string &hint)
 {
@@ -79,6 +57,52 @@ adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
 extern "C" {
 #endif
 
+adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
+                              const size_t *shape)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call to "
+                                        "adios2_set_shape");
+        adios2::helper::CheckForNullptr(shape, "for start, in call to "
+                                               "adios2_set_shape");
+
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+
+        const adios2::Dims shapeV(shape, shape + ndims);
+        variableBase->SetShape(shapeV);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_shape"));
+    }
+}
+
+adios2_error adios2_set_block_selection(adios2_variable *variable,
+                                        const size_t block_id)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call to "
+                                        "adios2_set_block_selection");
+
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+        variableBase->SetBlockSelection(block_id);
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_block_selection"));
+    }
+}
+
 adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
                                   const size_t *start, const size_t *count)
 {
@@ -104,6 +128,37 @@ adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
     {
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_set_selection"));
+    }
+}
+
+adios2_error adios2_set_memory_selection(adios2_variable *variable,
+                                         const size_t ndims,
+                                         const size_t *memory_start,
+                                         const size_t *memory_count)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(variable,
+                                        "for adios2_variable, in call to "
+                                        "adios2_set_memory_selection");
+        adios2::helper::CheckForNullptr(memory_start,
+                                        "for start, in call to "
+                                        "adios2_set_memory_selection");
+        adios2::helper::CheckForNullptr(memory_count,
+                                        "for count, in call to "
+                                        "adios2_set_memory_selection");
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+
+        const adios2::Dims memoryStartV(memory_start, memory_start + ndims);
+        const adios2::Dims memoryCountV(memory_count, memory_count + ndims);
+        variableBase->SetMemorySelection({memoryStartV, memoryCountV});
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_memory_selection"));
     }
 }
 
@@ -138,15 +193,11 @@ adios2_error adios2_variable_name(char *name, size_t *size,
             variable,
             "for const adios2_variable, in call to adios2_variable_name");
         adios2::helper::CheckForNullptr(
-            name, "for char* name, in call to adios2_variable_name");
-        adios2::helper::CheckForNullptr(
             size, "for size_t* length, in call to adios2_variable_name");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->m_Name.size();
-        variableBase->m_Name.copy(name, *size);
-        return adios2_error_none;
+        return String2CAPI(variableBase->m_Name, name, size);
     }
     catch (...)
     {
@@ -167,10 +218,19 @@ adios2_error adios2_variable_type(adios2_type *type,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        auto itType = adios2_variable_types_map.find(variableBase->m_Type);
-        *type = (itType == adios2_variable_types_map.end())
-                    ? adios2_type_unknown
-                    : itType->second.front();
+        const std::string typeCpp = variableBase->m_Type;
+        if (typeCpp == adios2::helper::GetType<std::string>())
+        {
+            *type = adios2_type_string;
+        }
+#define make_case(T)                                                           \
+    else if (typeCpp == adios2::helper::GetType<MapAdios2Type<T>::Type>())     \
+    {                                                                          \
+        *type = T;                                                             \
+    }
+        ADIOS2_FOREACH_C_TYPE_1ARG(make_case)
+#undef make_case
+        else { *type = adios2_type_unknown; }
         return adios2_error_none;
     }
     catch (...)
@@ -189,15 +249,11 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
                                         "for const adios2_variable, in call to "
                                         "adios2_variable_type_string");
         adios2::helper::CheckForNullptr(
-            type, "for char* type, in call to adios2_variable_type_string");
-        adios2::helper::CheckForNullptr(
             size, "for size_t* length, in call to adios2_variable_type_string");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->m_Type.size();
-        variableBase->m_Type.copy(type, *size);
-        return adios2_error_none;
+        return String2CAPI(variableBase->m_Type, type, size);
     }
     catch (...)
     {
@@ -262,8 +318,22 @@ adios2_error adios2_variable_shape(size_t *shape,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        std::copy(variableBase->m_Shape.begin(), variableBase->m_Shape.end(),
-                  shape);
+        const std::string typeCpp = variableBase->m_Type;
+        if (typeCpp == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    {                                                                          \
+        const adios2::core::Variable<T> *variable =                            \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        const adios2::Dims shapeCpp =                                          \
+            variable->Shape(adios2::EngineCurrentStep);                        \
+        std::copy(shapeCpp.begin(), shapeCpp.end(), shape);                    \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
         return adios2_error_none;
     }
@@ -311,8 +381,21 @@ adios2_error adios2_variable_count(size_t *count,
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        std::copy(variableBase->m_Count.begin(), variableBase->m_Count.end(),
-                  count);
+        const std::string typeCpp = variableBase->m_Type;
+        if (typeCpp == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    {                                                                          \
+        const adios2::core::Variable<T> *variable =                            \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        const adios2::Dims countCpp = variable->Count();                       \
+        std::copy(countCpp.begin(), countCpp.end(), count);                    \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
         return adios2_error_none;
     }
@@ -373,7 +456,23 @@ adios2_error adios2_selection_size(size_t *size,
                                         "adios2_selection_size");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
-        *size = variableBase->SelectionSize();
+
+        const std::string typeCpp = variableBase->m_Type;
+
+        if (typeCpp == "compound")
+        {
+            // not supported
+        }
+#define declare_template_instantiation(T)                                      \
+    else if (typeCpp == adios2::helper::GetType<T>())                          \
+    {                                                                          \
+        const adios2::core::Variable<T> *variable =                            \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
+        *size = variable->SelectionSize();                                     \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
         return adios2_error_none;
     }
     catch (...)
@@ -466,7 +565,7 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
         *minT = variableT->m_Min;                                              \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -503,7 +602,7 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
         *maxT = variableT->m_Max;                                              \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }

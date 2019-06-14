@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.2)
-project(EVPath VERSION 4.4.0 LANGUAGES C)
+project(EVPath VERSION 4.4.0 LANGUAGES C CXX)
 
+# Enable <PackageName>_ROOT variables for dependency searching
+# CMake v3.12
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
+endif()
+
+# Let option(...) setings work with non-cache variables.  Useful for including
+# EVPath as a third party dependency in another project.
+# CMake v3.13
+if(POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
 endif()
 
 # Some boilerplate to setup nice output directories
@@ -63,24 +72,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-# Setup PIC defaults.  If explicitly specified somehow, then default 
-# to that.  Otherwise base the default on whether or not shared libs are even
-# supported.
-if(DEFINED EVPATH_ENABLE_PIC)
-  set(EVPATH_ENABLE_PIC_DEFAULT ${EVPATH_ENABLE_PIC})
-elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-  set(EVPATH_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
-else()
-  set(EVPATH_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(EVPATH_ENABLE_PIC
-  "Build with Position Independent Code" ${EVPATH_ENABLE_PIC_DEFAULT}
-  "SHARED_LIBS_SUPPORTED" OFF
-)
-mark_as_advanced(EVPATH_ENABLE_PIC)
-set(CMAKE_POSITION_INDEPENDENT_CODE ${EVPATH_ENABLE_PIC})
-mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
-
 if(MSVC)
   # Force to always compile with W4
   if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
@@ -93,29 +84,6 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ")
 endif()
-
-# use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
-
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-
-# the RPATH to be used when installing, but only if it's not a system directory
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-  "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-if(isSystemDir EQUAL -1)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-endif()
-
-set(CMAKE_MACOSX_RPATH 1)
 
 add_library(EVPath
   cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c 
@@ -148,7 +116,7 @@ set(_pkg_config_private_libs)
 include(CheckCSourceCompiles)
 set(LIBM_TEST_SOURCE "#include<math.h>\nfloat f; int main(){sqrt(f);return 0;}")
 check_c_source_compiles("${LIBM_TEST_SOURCE}" HAVE_MATH)
-if(NOT HAVE_SQRT)
+if(NOT HAVE_MATH)
   set(CMAKE_REQUIRED_LIBRARIES m)
   check_c_source_compiles("${LIBM_TEST_SOURCE}" HAVE_LIBM_MATH)
   unset(CMAKE_REQUIRED_LIBRARIES)
@@ -166,10 +134,29 @@ mark_as_advanced(EVPATH_LIBRARY_PREFIX)
 set_target_properties(EVPath PROPERTIES
   OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}evpath)
 
+set(IPCONFIG_ENVVAR_PREFIX "CM_" CACHE STRING
+  "Prefix to prepend to the networking environment variable names")
+mark_as_advanced(IPCONFIG_ENVVAR_PREFIX)
+if (NOT EVPATH_LIBRARY_PREFIX STREQUAL "")
+   STRING (TOUPPER ${EVPATH_LIBRARY_PREFIX} IPCONFIG_ENVVAR_PREFIX)
+endif()
+   
+mark_as_advanced(EVPATH_LIBRARY_PREFIX)
+
 set(EVPATH_TRANSPORT_DEP_LIBS)
 
 if(NOT DEFINED CM_SELF_FORMATS)
   set(CM_SELF_FORMATS 1)
+endif()
+
+if (DEFINED EVPATH_NO_RDMA) 
+  option(EVPATH_NO_RDMA "Don't use any RDMA library"
+    "${EVPATH_NO_RDMA}")
+  if (EVPATH_NO_RDMA)
+    SET (EVPATH_USE_LIBFABRIC OFF)
+    SET (EVPATH_USE_NNTI OFF)
+    SET (EVPATH_USE_IBVERBS OFF)
+  endif()
 endif()
 
 cmake_dependent_option(EVPATH_TRANSPORT_MODULES
@@ -196,7 +183,16 @@ if(Threads_FOUND)
   list(APPEND _pkg_config_private_libs ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-find_package(NVML)
+if(DEFINED EVPATH_USE_NVML)
+  option(EVPATH_USE_NVML "Use the NVidia management library"
+    "${EVPATH_USE_NVML}")
+  if(EVPATH_USE_NVML)
+    find_package(NVML REQUIRED)
+  endif()
+else()
+  find_package(NVML)
+  option(EVPATH_USE_NVML "Use the NVidia management library" ${NVML_FOUND})
+endif()
 if(NVML_FOUND)
   if(NOT BUILD_SHARED_LIBS)
     list(APPEND EXTRA_INSTALL_PACKAGES NVML)
@@ -252,7 +248,15 @@ set(RUN_NNTI_TESTS FALSE)
 
 # enet transport
 set(RUN_ENET_TESTS FALSE)
-find_package(enet 1.3.13)
+if(DEFINED EVPATH_USE_ENET)
+  option(EVPATH_USE_ENET "Build the enet transport" "${EVPATH_USE_ENET}")
+  if(EVPATH_USE_ENET)
+    find_package(enet 1.3.13 REQUIRED)
+  endif()
+else()
+  find_package(enet 1.3.13)
+  option(EVPATH_USE_ENET "Build the enet transport" ${ENET_FOUND})
+endif()
 if(ENET_FOUND)
   set(RUN_ENET_TESTS TRUE)
   if(EVPATH_TRANSPORT_MODULES)
@@ -273,8 +277,53 @@ else()
   message(STATUS " - Enet library was not found.  This is not a fatal error, just that the Enet transport will not be built.")
 endif()
 
+# udt4 transport
+set(RUN_UDT4_TESTS FALSE)
+if(NOT(DEFINED EVPATH_USE_UDT4))
+  #UDT4 not particularly functional, default to not building
+  set(EVPATH_USE_UDT4 FALSE)
+endif()
+if(DEFINED EVPATH_USE_UDT4)
+  option(EVPATH_USE_UDT4 "Build the udt4 transport" "${EVPATH_USE_UDT4}")
+  if(EVPATH_USE_UDT4)
+    find_package(udt4 4.11 REQUIRED)
+  endif()
+else()
+  find_package(udt4 4.11)
+  option(EVPATH_USE_UDT4 "Build the udt4 transport" ${UDT4_FOUND})
+endif()
+if(UDT4_FOUND)
+  set(RUN_UDT4_TESTS FALSE)   # DON'T TEST.  UDT4 NOT USEFUL
+  if(EVPATH_TRANSPORT_MODULES)
+    add_library(cmudt4 MODULE cmudt4.cpp ip_config.c)
+    set_target_properties(cmudt4 PROPERTIES
+      OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmudt4)
+
+    target_link_libraries(cmudt4 evpath udt4::udt4)
+    list(APPEND EVPATH_TRANSPORT_TARGETS cmudt4)
+  else()
+    target_sources(EVPath PRIVATE cmudt4.cpp)
+    target_link_libraries(EVPath PRIVATE udt4::udt4)
+    _pkg_get_target_prefix(udt4::udt4 udt4_PREFIX)
+    list(APPEND _pkg_config_pfxs "${udt4_PREFIX}")
+    list(APPEND _pkg_config_private_reqs "udt4 >= ${udt4_VERSION}")
+  endif()
+else()
+  message(STATUS " - Udt4 library was not found.  This is not a fatal error, just that the Udt4 transport will not be built.")
+endif()
+
 # libfabric transport
-find_package(LIBFABRIC)
+if(DEFINED EVPATH_USE_LIBFABRIC)
+  option(EVPATH_USE_LIBFABRIC "Build the libfabric transport"
+    "${EVPATH_USE_LIBFABRIC}")
+  if(EVPATH_USE_LIBFABRIC)
+    find_package(LIBFABRIC REQUIRED)
+  endif()
+else()
+  find_package(LIBFABRIC)
+  option(EVPATH_USE_LIBFABRIC "Build the libfabric transport"
+    ${LIBFABRIC_FOUND})
+endif()
 if(LIBFABRIC_FOUND) 
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmfabric MODULE cmfabric.c ip_config.c)
@@ -292,13 +341,25 @@ if(LIBFABRIC_FOUND)
     list(APPEND _pkg_config_private_reqs "libfabric >= ${LIBFABRIC_VERSION}")
   endif()
 else()
-  message(STATUS " - LibFabric package was not found.  This is not a fatal error, just that the fabric transport will not be built.")
+  if (EVPATH_USE_LIBFABRIC)
+    message(STATUS " - LibFabric package was not found.  This is not a fatal error, just that the fabric transport will not be built.")
+  endif()
 endif()
 
 # ibverbs transport
 set(RUN_IB_TESTS FALSE)
-CHECK_LIBRARY_EXISTS(ibverbs ibv_create_qp "" HAVE_IBVERBS)
-if(HAVE_IBVERBS)
+if(DEFINED EVPATH_USE_IBVERBS)
+  option(EVPATH_USE_IBVERBS "Build the libfabric transport"
+    "${EVPATH_USE_IBVERBS}")
+  if(EVPATH_USE_IBVERBS)
+    find_package(IBVERBS REQUIRED)
+  endif()
+else()
+  find_package(IBVERBS)
+  option(EVPATH_USE_IBVERBS "Build the libfabric transport" ${IBVERBS_FOUND})
+endif()
+set(HAVE_IBVERBS ${IBVERBS_FOUND})
+if(IBVERBS_FOUND)
   if(BUILD_TESTING)
     if(NOT CMAKE_CROSSCOMPILING)
       message(STATUS "Check MEMLOCK rlimit for IB tests")
@@ -324,12 +385,12 @@ if(HAVE_IBVERBS)
     add_library(cmib MODULE cmib.c)
     set_target_properties(cmib PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}cmib)
-    target_link_libraries(cmib evpath ibverbs)
+    target_link_libraries(cmib evpath ${IBVERBS_LIBRARIES})
     list(APPEND EVPATH_TRANSPORT_TARGETS cmib)
   else()
     target_sources(EVPath PRIVATE cmib.c)
-    target_link_libraries(EVPath PRIVATE ibverbs)
-    list(APPEND _pkg_config_private_libs ibverbs)
+    target_link_libraries(EVPath PRIVATE ${IBVERBS_LIBRARIES})
+    list(APPEND _pkg_config_private_libs ${IBVERBS_LIBRARIES})
   endif()
   set(IB_FOUND 1)
 endif()
@@ -344,10 +405,16 @@ if(NOT (DEFINED CercsArch))
   mark_as_advanced(CercsArch)
 endif()
 
-CHECK_LIBRARY_EXISTS(ugni GNI_CqCreate "" HAVE_UGNI)
-
-if(HAVE_IBVERBS OR HAVE_UGNI)
-  find_package(NNTI)
+if(IBVERBS_FOUND)
+  if(DEFINED EVPATH_USE_NNTI)
+    option(EVPATH_USE_NNTI "Build with nnti support" "${EVPATH_USE_NNTI}")
+    if(EVPATH_USE_NNTI)
+      find_package(NNTI REQUIRED)
+    endif()
+  else()
+    find_package(NNTI)
+    option(EVPATH_USE_NNTI "Build the nnti transport" ${NNTI_FOUND})
+  endif()
   if(NNTI_FOUND)
     if(CercsArch STREQUAL "ppc64")
       set(RUN_NNTI_TESTS FALSE)
@@ -367,17 +434,15 @@ if(HAVE_IBVERBS OR HAVE_UGNI)
       list(APPEND _pkg_config_private_libs ${NNTI_LIBRARIES})
     endif()
   endif()
+else()
+  set(EVPATH_USE_NNTI FALSE "Build the nnti transport" FORCE)
 endif()
 
-# Extra find module dependencies
-foreach(P ${EXTRA_INSTALL_PACKAGES})
-  configure_file(
-    ${EVPath_SOURCE_DIR}/cmake/Find${P}.cmake
-    ${EVPath_BINARY_DIR}/Find${P}.cmake
-    COPYONLY)
-  install(FILES ${EVPath_BINARY_DIR}/Find${P}.cmake
-    DESTINATION ${CMAKE_INSTALL_CMAKEDIR})
-endforeach()
+# Install extra find module dependencies
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+  FILES_MATCHING PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
+)
 
 add_custom_command(
   OUTPUT "cm_interface.c" "revp.c" "revpath.h"
@@ -502,11 +567,8 @@ install(TARGETS EVPath ${EVPATH_TRANSPORT_TARGETS} EXPORT EVPathTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-set(EVPATH_LIBRARY_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(EVPATH_LIBRARY_BUILD_DIR ${PROJECT_BINARY_DIR}/lib)
 set(EVPATH_LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lib)
-
-add_executable(cmprobe cmprobe.c)
-target_link_libraries(cmprobe evpath atl::atl)
 
 if(CMAKE_C_COMPILER_ID MATCHES "Intel") 
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -shared-intel")
@@ -518,6 +580,9 @@ if(SSH)
 endif() 
 
 if(BUILD_TESTING) 
+  add_executable(cmprobe cmprobe.c)
+  target_link_libraries(cmprobe evpath atl::atl)
+
   enable_testing()
 
   add_subdirectory(tests)
@@ -554,6 +619,11 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfig.cmake
   @ONLY
 )
+configure_file(
+  EVPathConfigCommon.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfigCommon.cmake
+  @ONLY
+)
 
 # Additionally, when cmake has found a EVPathConfig.cmake, it can check for a
 # EVPathConfigVersion.cmake in the same directory when figuring out the version
@@ -568,10 +638,15 @@ configure_file(
 # Install these two files into the same directory as the generated exports-file.
 install(
   FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfigCommon.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/EVPathConfigVersion.cmake
   DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 )
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/EVPathConfigInstall.cmake
+  RENAME EVPathConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
+)
+
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake
@@ -591,7 +666,14 @@ if(NOT EVPATH_QUIET)
   message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
   message(STATUS "BUILD_TESTING = ${BUILD_TESTING}  (options are: ON, OFF)")
   message(STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}  (options are: ON, OFF, default OFF)")
+  message(STATUS "EVPATH_USE_NVML = ${EVPATH_USE_NVML}")
+  message(STATUS "EVPATH_USE_ENET = ${EVPATH_USE_ENET}")
+  message(STATUS "EVPATH_USE_UDT4 = ${EVPATH_USE_UDT4}")
+  message(STATUS "EVPATH_USE_LIBFABRIC = ${EVPATH_USE_LIBFABRIC}")
+  message(STATUS "EVPATH_USE_IBVERBS = ${EVPATH_USE_IBVERBS}")
+  message(STATUS "EVPATH_USE_NNTI = ${EVPATH_USE_NNTI}")
   message(STATUS "EVPATH_TRANSPORT_MODULES = ${EVPATH_TRANSPORT_MODULES} (${EVPATH_TRANSPORT_TARGETS})")
   message(STATUS "Change a value with: cmake -D<Variable>=<Value>" )
+  message(STATUS "To turn off all RDMA transports (fabric,ib,nnti) in EVPATH set EVPATH_NO_RDMA=1" )
   message(STATUS "-----------------------------------------------------------------------------" )
 endif()

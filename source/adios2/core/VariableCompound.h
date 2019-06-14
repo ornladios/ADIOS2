@@ -60,7 +60,7 @@ public:
 #define declare_template_instantiation(T)                                      \
     extern template void VariableCompound::InsertMember<T>(                    \
         const std::string &, const size_t);
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

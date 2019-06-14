@@ -9,8 +9,10 @@
  */
 
 #include "Variable.h"
+#include "Variable.tcc"
 
 #include "adios2/ADIOSMacros.h"
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
 
 namespace adios2
@@ -39,9 +41,14 @@ namespace core
         info.Shape = m_Shape;                                                  \
         info.Start = m_Start;                                                  \
         info.Count = m_Count;                                                  \
+        info.BlockID = m_BlockID;                                              \
+        info.Selection = m_SelectionType;                                      \
+        info.MemoryStart = m_MemoryStart;                                      \
+        info.MemoryCount = m_MemoryCount;                                      \
         info.StepsStart = stepsStart;                                          \
         info.StepsCount = stepsCount;                                          \
         info.Data = const_cast<T *>(data);                                     \
+        info.BufferP = info.Data;                                              \
         info.Operations = m_Operations;                                        \
         m_BlocksInfo.push_back(info);                                          \
         return m_BlocksInfo.back();                                            \
@@ -57,9 +64,56 @@ namespace core
     T *Variable<T>::GetData() const noexcept                                   \
     {                                                                          \
         return m_Data;                                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    Dims Variable<T>::Shape(const size_t step) const                           \
+    {                                                                          \
+        return DoShape(step);                                                  \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    Dims Variable<T>::Count() const                                            \
+    {                                                                          \
+        return DoCount();                                                      \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::SelectionSize() const                                  \
+    {                                                                          \
+        return DoSelectionSize();                                              \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
+    {                                                                          \
+        return DoMinMax(step);                                                 \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Min(const size_t step) const                                \
+    {                                                                          \
+        return MinMax(step).first;                                             \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Max(const size_t step) const                                \
+    {                                                                          \
+        return MinMax(step).second;                                            \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    Variable<T>::AllStepsBlocksInfo() const                                    \
+    {                                                                          \
+        return DoAllStepsBlocksInfo();                                         \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_template_instantiation(T) template class Span<T>;
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_type
 
 } // end namespace core

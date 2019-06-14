@@ -12,6 +12,7 @@
  */
 
 #include "adios2/helper/adiosMath.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include "InSituMPIFunctions.h"
 #include "InSituMPISchedules.h"
@@ -32,34 +33,43 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
 : Engine("InSituMPIWriter", io, name, mode, mpiComm),
   m_BP3Serializer(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::Open");
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
     Init();
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 
     m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, true, m_CommWorld);
+    for (int i = 0; i < m_RankAllPeers.size(); i++)
+    {
+        m_RankToPeerID[m_RankAllPeers[i]] = i;
+    }
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
     MPI_Comm_rank(mpiComm, &m_WriterRank);
     MPI_Comm_size(mpiComm, &m_WriterNproc);
     m_RankDirectPeers =
         insitumpi::AssignPeers(m_WriterRank, m_WriterNproc, m_RankAllPeers);
+    int primaryContact = insitumpi::ConnectDirectPeers(
+        m_CommWorld, true, (m_BP3Serializer.m_RankMPI == 0), m_GlobalRank,
+        m_RankDirectPeers);
+    m_AmIPrimaryContact = static_cast<bool>(primaryContact);
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " Open(" << m_Name
                   << "). #readers=" << m_RankAllPeers.size()
                   << " #writers=" << m_WriterNproc
                   << " #appsize=" << m_GlobalNproc
-                  << " #direct peers=" << m_RankDirectPeers.size() << std::endl;
+                  << " #direct_peers=" << m_RankDirectPeers.size()
+                  << " primary_contact=" << (m_AmIPrimaryContact ? "yes" : "no")
+                  << std::endl;
     }
-    insitumpi::ConnectDirectPeers(m_CommWorld, true,
-                                  (m_BP3Serializer.m_RankMPI == 0),
-                                  m_GlobalRank, m_RankDirectPeers);
 }
 
 InSituMPIWriter::~InSituMPIWriter() {}
 
 StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::BeginStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " BeginStep()\n";
@@ -72,20 +82,33 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     m_CurrentStep++; // 0 is the first step
-    if (m_Verbosity == 5)
+    if (m_AmIPrimaryContact)
     {
-        std::cout << "InSituMPI Writer " << m_WriterRank << " new step "
-                  << m_CurrentStep << " for " << m_Name << ". Notify peers..."
-                  << std::endl;
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank << " new step "
+                      << m_CurrentStep << " for " << m_Name
+                      << ". Notify peers..." << std::endl;
+        }
+        // Send the step to all reader peers, asynchronously
+        // We need to call Wait on all Isend/Irecv calls at some point otherwise
+        // MPI_Comm_free() will never release the communicator
+        for (auto peerRank : m_RankDirectPeers)
+        {
+            m_MPIRequests.emplace_back();
+            MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
+                      insitumpi::MpiTags::Step, m_CommWorld,
+                      &m_MPIRequests.back());
+        }
     }
-    // Send the step to all reader peers, asynchronously
-    // We need to call Wait on all Isend/Irecv calls at some point otherwise
-    // MPI_Comm_free() will never release the communicator
-    for (auto peerRank : m_RankDirectPeers)
+    else
     {
-        m_MPIRequests.emplace_back();
-        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, m_CommWorld, &m_MPIRequests.back());
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank << " new step "
+                      << m_CurrentStep << " for " << m_Name
+                      << ". Notify nobody." << std::endl;
+        }
     }
 
     m_NCallsPerformPuts = 0;
@@ -108,6 +131,7 @@ StepStatus InSituMPIWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 
 void InSituMPIWriter::PerformPuts()
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::PerformPuts");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " PerformPuts()\n";
@@ -178,7 +202,6 @@ void InSituMPIWriter::PerformPuts()
         // exchange flags about fixed schedule
         if (m_CurrentStep == 0)
         {
-            MPI_Request request;
             int peerRank = m_RankDirectPeers[0];
             int fixed;
 
@@ -211,41 +234,11 @@ void InSituMPIWriter::PerformPuts()
             }
         }
 
+        // Receive read schedule from writers
         if (m_CurrentStep == 0 || !m_RemoteDefinitionsLocked)
         {
-            // Collect the read requests from ALL readers
-            // FIXME: How do we make this Irecv from all readers
-            // std::vector<MPI_Request> requests(m_RankAllPeers.size());
-            std::vector<MPI_Status> statuses(m_RankAllPeers.size());
-            std::vector<std::vector<char>> serializedSchedules(
-                m_RankAllPeers.size());
-            for (int peerID = 0; peerID < m_RankAllPeers.size(); peerID++)
-            {
-                int rsLen;
-                MPI_Recv(&rsLen, 1, MPI_INT, m_RankAllPeers[peerID],
-                         insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
-                         &statuses[peerID]);
-                serializedSchedules[peerID].resize(rsLen);
-                MPI_Recv(serializedSchedules[peerID].data(), rsLen, MPI_CHAR,
-                         m_RankAllPeers[peerID],
-                         insitumpi::MpiTags::ReadSchedule, m_CommWorld,
-                         &statuses[peerID]);
-                if (m_Verbosity == 5)
-                {
-                    std::cout << "InSituMPI Writer " << m_WriterRank
-                              << " received read schedule from Reader  "
-                              << peerID << " global rank "
-                              << m_RankAllPeers[peerID] << " length = " << rsLen
-                              << std::endl;
-                }
-            }
+            ReceiveReadSchedule(m_WriteScheduleMap);
 
-            // build (and remember for fixed schedule) the read request table
-            // std::map<std::string, std::map<size_t, std::vector<SubFileInfo>>>
-            // map
-            m_WriteScheduleMap.clear();
-            m_WriteScheduleMap =
-                insitumpi::DeserializeReadSchedule(serializedSchedules);
             if (m_Verbosity == 5)
             {
                 std::cout << "InSituMPI Writer " << m_WriterRank
@@ -279,6 +272,7 @@ void InSituMPIWriter::PerformPuts()
 
 void InSituMPIWriter::AsyncSendVariable(std::string variableName)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::AsyncSendVariable");
     const std::string type(m_IO.InquireVariableType(variableName));
 
     if (type == "compound")
@@ -303,12 +297,13 @@ void InSituMPIWriter::AsyncSendVariable(std::string variableName)
         variable->m_BlocksInfo.clear();                                        \
     }
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 }
 
 void InSituMPIWriter::EndStep()
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::EndStep");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " EndStep()\n";
@@ -318,36 +313,12 @@ void InSituMPIWriter::EndStep()
         PerformPuts();
     }
 
-    // TODO: Blocking wait for all data transfers to finish
-    const int nRequests = m_MPIRequests.size();
-    std::vector<MPI_Status> statuses(nRequests);
-    int ierr;
-
-    ierr = MPI_Waitall(nRequests, m_MPIRequests.data(), statuses.data());
-
-    if (ierr == MPI_ERR_IN_STATUS)
-    {
-        for (int i = 0; i < nRequests; i++)
-        {
-            if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
-            {
-                std::cerr << "InSituMPI Writer " << m_WriterRank
-                          << " Pending transfer error when waiting for all "
-                             "data transfers to complete. request id = "
-                          << i << std::endl;
-            }
-            else if (statuses[i].MPI_ERROR != MPI_SUCCESS)
-            {
-                std::cerr << "InSituMPI Writer " << m_WriterRank
-                          << " MPI Error when waiting for all data transfers "
-                             "to complete. Error code = "
-                          << ierr << std::endl;
-            }
-        }
-    }
-
+    TAU_START("InSituMPIWriter::CompleteRequests");
+    insitumpi::CompleteRequests(m_MPIRequests, true, m_WriterRank);
     m_MPIRequests.clear();
+    TAU_STOP("InSituMPIWriter::CompleteRequests");
 
+    TAU_START("WaitForReaderAck");
     // Wait for final acknowledgment from the readers
     int dummy = 0;
     if (m_BP3Serializer.m_RankMPI == 0 && m_RankDirectPeers.size() > 0)
@@ -357,6 +328,7 @@ void InSituMPIWriter::EndStep()
                  insitumpi::MpiTags::ReadCompleted, m_CommWorld, &status);
     }
     MPI_Bcast(&dummy, 1, MPI_INT, 0, m_MPIComm);
+    TAU_STOP("WaitForReaderAck");
 
     if (m_Verbosity == 5)
     {
@@ -370,15 +342,17 @@ void InSituMPIWriter::EndStep()
 #define declare_type(T)                                                        \
     void InSituMPIWriter::DoPutSync(Variable<T> &variable, const T *values)    \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIWriter::Put");                              \
         PutSyncCommon(variable, variable.SetBlockInfo(values, m_CurrentStep)); \
         variable.m_BlocksInfo.clear();                                         \
     }                                                                          \
     void InSituMPIWriter::DoPutDeferred(Variable<T> &variable,                 \
                                         const T *values)                       \
     {                                                                          \
+        TAU_SCOPED_TIMER("InSituMPIWriter::Put");                              \
         PutDeferredCommon(variable, values);                                   \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void InSituMPIWriter::Init()
@@ -411,19 +385,115 @@ void InSituMPIWriter::InitTransports()
 
 void InSituMPIWriter::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("InSituMPIWriter::Close");
     if (m_Verbosity == 5)
     {
         std::cout << "InSituMPI Writer " << m_WriterRank << " Close(" << m_Name
                   << ")\n";
     }
-    m_CurrentStep = -1; // -1 will indicate end of stream
-    // Send -1 to all reader peers, asynchronously
-    MPI_Request request;
-    for (auto peerRank : m_RankDirectPeers)
+    if (m_AmIPrimaryContact)
     {
-        MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
-                  insitumpi::MpiTags::Step, m_CommWorld, &request);
+        m_CurrentStep = -1; // -1 will indicate end of stream
+        // Send -1 to all reader peers, asynchronously
+        // We need to call Wait on all Isend/Irecv calls at some point otherwise
+        // MPI_Comm_free() will never release the communicator
+        for (auto peerRank : m_RankDirectPeers)
+        {
+            m_MPIRequests.emplace_back();
+            MPI_Isend(&m_CurrentStep, 1, MPI_INT, peerRank,
+                      insitumpi::MpiTags::Step, m_CommWorld,
+                      &m_MPIRequests.back());
+        }
+        // The completion of the -1 step message is waited upon here
+        // because the destructor may be called after MPI_Finalize()
+        // so this is the last safe point to do this.
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank
+                      << " needs to wait on " << m_MPIRequests.size()
+                      << " outstanding MPI async message request..."
+                      << std::endl;
+        }
+        insitumpi::CompleteRequests(m_MPIRequests, true, m_WriterRank);
+        m_MPIRequests.clear();
     }
+}
+
+void InSituMPIWriter::ReceiveReadSchedule(
+    insitumpi::WriteScheduleMap &writeScheduleMap)
+{
+    TAU_SCOPED_TIMER("InSituMPIWriter::ReceiveReadSchedule");
+    // Reader ID -> length of serialized read schedule
+    std::map<int, int> rsLengths;
+    // Reader ID -> serialized read schedule
+    std::map<int, std::vector<char>> serializedSchedules;
+    // Writer ID -> number of peer readers
+    std::vector<int> nReaderPerWriter(m_WriterNproc);
+    // Number of peer readers for this writer
+    int nPeerReaders;
+
+    // Writer root receives nReaderPerWriter from reader root
+    if (m_WriterRank == 0)
+    {
+        MPI_Recv(nReaderPerWriter.data(), nReaderPerWriter.size(), MPI_INT,
+                 m_RankDirectPeers[0], insitumpi::MpiTags::NumReaderPerWriter,
+                 m_CommWorld, MPI_STATUS_IGNORE);
+    }
+
+    // Each writer receives the number of its peer readers
+    MPI_Scatter(nReaderPerWriter.data(), 1, MPI_INT, &nPeerReaders, 1, MPI_INT,
+                0, m_MPIComm);
+
+    std::vector<MPI_Request> requests(nPeerReaders);
+    // Reader global rank -> length of serialized read schedule
+    std::vector<int> rsLengthsTmp(nPeerReaders);
+
+    // Receive the size of each read schedule from readers
+    // We use MPI_ANY_SOURCE here because at this point
+    // we don't know who our peer readers are
+    for (auto i = 0; i < nPeerReaders; i++)
+    {
+        MPI_Irecv(&rsLengthsTmp[i], 1, MPI_INT, MPI_ANY_SOURCE,
+                  insitumpi::MpiTags::ReadScheduleLength, m_CommWorld,
+                  &requests[i]);
+    }
+    std::vector<MPI_Status> statuses =
+        insitumpi::CompleteRequests(requests, true, m_WriterRank);
+
+    // Now we can figure out who our peer readers are
+    for (auto i = 0; i < nPeerReaders; i++)
+    {
+        const auto peerID = m_RankToPeerID[statuses[i].MPI_SOURCE];
+        rsLengths[peerID] = rsLengthsTmp[i];
+    }
+
+    // Fianlly, we receive the read schedules from our peer readers
+    auto i = 0;
+    for (const auto &rsLenPair : rsLengths)
+    {
+        const auto peerID = rsLenPair.first;
+        const auto rsLen = rsLenPair.second;
+
+        serializedSchedules[peerID].resize(rsLen);
+        MPI_Irecv(serializedSchedules[peerID].data(), rsLen, MPI_CHAR,
+                  m_RankAllPeers[peerID], insitumpi::MpiTags::ReadSchedule,
+                  m_CommWorld, &requests[i]);
+
+        if (m_Verbosity == 5)
+        {
+            std::cout << "InSituMPI Writer " << m_WriterRank
+                      << " receiving read schedule from Reader  " << peerID
+                      << " global rank " << m_RankAllPeers[peerID]
+                      << " length = " << rsLengths[peerID] << std::endl;
+        }
+
+        i++;
+    }
+    insitumpi::CompleteRequests(requests, true, m_WriterRank);
+
+    // Build (and remember for fixed schedule) the read request table
+    writeScheduleMap.clear();
+    writeScheduleMap = insitumpi::DeserializeReadSchedule(serializedSchedules);
 }
 
 } // end namespace engine

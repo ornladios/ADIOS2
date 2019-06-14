@@ -11,7 +11,7 @@
         ====================================-->
 
     <io name="writer">
-        <engine type="BPFile">
+        <engine type="BP3">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -62,7 +62,7 @@
         =======================================-->
 
     <io name="readerInput">
-        <engine type="BPFile">
+        <engine type="BP3">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -93,7 +93,7 @@
         =======================================-->
     
     <io name="readerOutput">
-        <engine type="BPFile">
+        <engine type="BP3">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 

@@ -42,9 +42,8 @@ public:
                    MPI_Comm mpiComm);
 
     ~SkeletonReader();
-    StepStatus BeginStep(
-        StepMode mode = StepMode::NextAvailable,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
+                         const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;
@@ -67,7 +66,7 @@ private:
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     void DoClose(const int transportIndex = -1);

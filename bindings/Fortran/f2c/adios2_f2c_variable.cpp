@@ -17,13 +17,21 @@ extern "C" {
 #endif
 
 void FC_GLOBAL(adios2_variable_name_f2c,
-               ADIOS2_VARIABLE_NAME_F2C)(char name[4096], int *size,
+               ADIOS2_VARIABLE_NAME_F2C)(char *name,
                                          const adios2_variable **variable,
                                          int *ierr)
 {
-    *size = -1;
     size_t sizeC;
     *ierr = static_cast<int>(adios2_variable_name(name, &sizeC, *variable));
+}
+
+void FC_GLOBAL(adios2_variable_name_length_f2c,
+               ADIOS2_VARIABLE_NAME_LENGTH_F2C)(
+    int *size, const adios2_variable **variable, int *ierr)
+{
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_variable_name(nullptr, &sizeC, *variable));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *size = static_cast<int>(sizeC);
@@ -97,6 +105,49 @@ void FC_GLOBAL(adios2_variable_steps_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_set_shape_f2c,
+               ADIOS2_SET_SHAPE_F2C)(adios2_variable **variable,
+                                     const int *ndims, const int64_t *shape,
+                                     int *ierr)
+{
+    auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
+                            std::vector<std::size_t> &output) {
+        output.resize(size);
+
+        for (auto d = 0; d < size; ++d)
+        {
+            output[d] = dimensions[d];
+        }
+    };
+
+    try
+    {
+        if (shape == nullptr || ndims == nullptr)
+        {
+            throw std::invalid_argument(
+                "ERROR: either shape_dims, or ndims is a null pointer, in call "
+                "to adios2_set_shape\n");
+        }
+        std::vector<std::size_t> shapeV;
+        lf_IntToSizeT(shape, *ndims, shapeV);
+        *ierr = static_cast<int>(
+            adios2_set_shape(*variable, *ndims, shapeV.data()));
+    }
+    catch (...)
+    {
+        *ierr = static_cast<int>(
+            adios2::helper::ExceptionToError("adios2_set_shape"));
+    }
+}
+
+void FC_GLOBAL(adios2_set_block_selection_f2c,
+               ADIOS2_SET_BLOCK_SELECTION_F2C)(adios2_variable **variable,
+                                               const int64_t *block_id,
+                                               int *ierr)
+{
+    *ierr = static_cast<int>(adios2_set_block_selection(*variable, *block_id));
+}
+
 void FC_GLOBAL(adios2_set_selection_f2c,
                ADIOS2_SET_SELECTION_F2C)(adios2_variable **variable,
                                          const int *ndims, const int64_t *start,
@@ -104,14 +155,12 @@ void FC_GLOBAL(adios2_set_selection_f2c,
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             std::vector<std::size_t> &output) {
-
         output.resize(size);
 
-        for (unsigned int d = 0; d < size; ++d)
+        for (auto d = 0; d < size; ++d)
         {
             output[d] = dimensions[d];
         }
-
     };
 
     try
@@ -132,6 +181,45 @@ void FC_GLOBAL(adios2_set_selection_f2c,
     {
         *ierr = static_cast<int>(
             adios2::helper::ExceptionToError("adios2_set_selection"));
+    }
+}
+
+void FC_GLOBAL(adios2_set_memory_selection_f2c,
+               ADIOS2_SET_MEMORY_SELECTION_F2C)(adios2_variable **variable,
+                                                const int *ndims,
+                                                const int64_t *memory_start,
+                                                const int64_t *memory_count,
+                                                int *ierr)
+{
+    auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
+                            std::vector<std::size_t> &output) {
+        output.resize(size);
+
+        for (auto d = 0; d < size; ++d)
+        {
+            output[d] = dimensions[d];
+        }
+    };
+
+    try
+    {
+        if (memory_start == nullptr || memory_count == nullptr ||
+            ndims == nullptr)
+        {
+            throw std::invalid_argument("ERROR: either start_dims, count_dims "
+                                        "or ndims is a null pointer, in call "
+                                        "to adios2_set_memory_selection\n");
+        }
+        std::vector<std::size_t> memoryStartV, memoryCountV;
+        lf_IntToSizeT(memory_start, *ndims, memoryStartV);
+        lf_IntToSizeT(memory_count, *ndims, memoryCountV);
+        *ierr = static_cast<int>(adios2_set_memory_selection(
+            *variable, *ndims, memoryStartV.data(), memoryCountV.data()));
+    }
+    catch (...)
+    {
+        *ierr = static_cast<int>(
+            adios2::helper::ExceptionToError("adios2_set_memory_selection"));
     }
 }
 
@@ -213,6 +301,22 @@ void FC_GLOBAL(adios2_set_operation_parameter_f2c,
         *ierr = static_cast<int>(
             adios2::helper::ExceptionToError("adios2_set_operation_parameter"));
     }
+}
+
+void FC_GLOBAL(adios2_variable_min_f2c,
+               ADIOS2_VARIABLE_MIN_F2C)(void *min,
+                                        const adios2_variable **variable,
+                                        int *ierr)
+{
+    *ierr = static_cast<int>(adios2_variable_min(min, *variable));
+}
+
+void FC_GLOBAL(adios2_variable_max_f2c,
+               ADIOS2_VARIABLE_MAX_F2C)(void *max,
+                                        const adios2_variable **variable,
+                                        int *ierr)
+{
+    *ierr = static_cast<int>(adios2_variable_max(max, *variable));
 }
 
 #ifdef __cplusplus

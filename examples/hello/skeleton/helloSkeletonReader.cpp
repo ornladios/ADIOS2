@@ -11,10 +11,10 @@
 
 int main(int argc, char *argv[])
 {
-    int wrank = 0, wnproc = 1;
     int rank = 0, nproc = 1;
 
 #ifdef ADIOS2_HAVE_MPI
+    int wrank = 0, wnproc = 1;
     MPI_Comm mpiReaderComm;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
         while (true)
         {
             adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable, 60.0f);
+                reader.BeginStep(adios2::StepMode::Read, 60.0f);
             if (status != adios2::StepStatus::OK)
             {
                 break;

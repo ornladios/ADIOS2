@@ -39,7 +39,20 @@ std::string FileToString(const std::string &fileName, const std::string hint);
  * @return a map with unique key=field, value=corresponding value
  */
 Params BuildParametersMap(const std::vector<std::string> &parameters,
-                          const bool debugMode);
+                          const char delimKeyValue = '=',
+                          const bool debugMode = false);
+
+/**
+ * Transforms a string to a map of parameters
+ * @param parameters string of parameters with format "key=value,
+ * key2=value2, ..."
+ * @param debugMode true=check parameters format, false=no checks
+ * @return a map with unique key/value pairs
+ */
+Params BuildParametersMap(const std::string &input,
+                          const char delimKeyValue = '=',
+                          const char delimItem = ',',
+                          const bool debugMode = false);
 
 /**
  * Add name extension if not existing at the end of name
@@ -50,6 +63,16 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
  */
 std::string AddExtension(const std::string &name,
                          const std::string extension) noexcept;
+
+/**
+ * Check if a string ends with another substring
+ * @param str input string
+ * @param ending input string to compare with
+ * @param caseSensitive input flag
+ * @return true if the 'str' string ends with the string 'ending'
+ */
+bool EndsWith(const std::string &str, const std::string &ending,
+              const bool caseSensitive = true);
 
 /**
  * Get values for each param entry of a certain key in a vector.

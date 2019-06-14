@@ -4,26 +4,26 @@ Full Language Bindings APIs
 
 .. note::
 
-   Product Application Developers targeting finer-level control for their IO tasks for optimization should use the current full APIs. If you want to use ADIOS2 in simple use cases (*e.g.* reading a file for analysis, interactive Python, or saving some data for a small project) please refer to the :ref:`Simple Language Bindings APIs` for a flat learning curve.  
+   Product Application Developers targeting finer-level control for their IO tasks for optimization should use the current full APIs. If you want to use ADIOS2 in simple use cases (*e.g.* reading a file for analysis, interactive Python, or saving some data for a small project) please refer to the :ref:`High-Level Language Bindings APIs` for a flat learning curve.  
 
 
 Currently ADIOS2 support bindings for the following languages and their minimum standards:
 
-+----------+----------+---------------------+
-| Language | Standard | Interface           |
-+----------+----------+---------------------+
-|          | 11/newer | #include adios2.h   |
-| C++      |          |                     |
-|          | older    | use C bindings      |
-+----------+----------+---------------------+
-| C        | 99       | #include adios2_c.h |
-+----------+----------+---------------------+
-| Fortran  | 90       | use adios2          |
-+----------+----------+---------------------+
-|          | 2.7      | import adios2       |
-| Python   |          |                     |
-|          | 3        | import adios2       |
-+----------+----------+---------------------+
++----------+----------+-------------------------+
+| Language | Standard | Interface               |
++----------+----------+-------------------------+
+|          | 11/newer | ``#include adios2.h``   |
+| C++      |          |                         |
+|          | older    | use C bindings          |
++----------+----------+-------------------------+
+| C        | 99       | ``#include adios2_c.h`` |
++----------+----------+-------------------------+
+| Fortran  | 90       | ``use adios2``          |
++----------+----------+-------------------------+
+|          | 2.7      | ``import adios2``       |
+| Python   |          |                         |
+|          | 3        | ``import adios2``       |
++----------+----------+-------------------------+
 
 .. tip::
 
@@ -32,7 +32,7 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 
 .. caution::
 
-   Statically linked libraries (\*.a) might result in conflicting ABIs between an older C++ project, the C bindings, and the adios native C++11 library. Test to make sure it works for your platform. 
+   Statically linked libraries (``*.a``) might result in conflicting ABIs between an older C++ project, the C bindings, and the adios native C++11 library. Test to make sure it works for your platform. 
 
 
 The current interaction flow for each language binding API with the ADIOS2 library is specified as follows

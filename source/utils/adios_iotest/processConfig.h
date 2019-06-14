@@ -35,6 +35,7 @@ struct VariableInfo
 enum Operation
 {
     Sleep,
+    Busy,
     Write,
     Read
 };
@@ -56,6 +57,14 @@ public:
     ~CommandSleep();
 };
 
+class CommandBusy : public Command
+{
+public:
+    const size_t busyTime_us = 0; // in microseconds
+    CommandBusy(size_t time);
+    ~CommandBusy();
+};
+
 class CommandWrite : public Command
 {
 public:
@@ -74,7 +83,8 @@ public:
     const std::string groupName;
     const float timeout_sec;
     std::vector<std::shared_ptr<VariableInfo>> variables;
-    CommandRead(std::string stream, std::string group);
+    CommandRead(std::string stream, std::string group,
+                const float timeoutSec = -1.0);
     ~CommandRead();
 };
 

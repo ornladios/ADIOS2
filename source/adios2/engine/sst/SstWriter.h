@@ -35,9 +35,8 @@ public:
 
     virtual ~SstWriter();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
@@ -49,7 +48,7 @@ private:
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &variable, const T *values) final;              \
     void DoPutDeferred(Variable<T> &, const T *) final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>
@@ -69,12 +68,15 @@ private:
     SstStream m_Output;
     long m_WriterStep = -1;
     bool m_BetweenStepPairs = false;
+    bool m_DefinitionsNotified = false;
+    size_t m_FFSMarshaledAttributesCount = 0;
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \
     Typedecl m_##Param = Default;
     SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_locals)
 #undef declare_locals
 
+    void FFSMarshalAttributes();
     void DoClose(const int transportIndex = -1) final;
 };
 

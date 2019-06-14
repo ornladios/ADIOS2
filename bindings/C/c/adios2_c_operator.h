@@ -13,16 +13,18 @@
 
 #include "adios2_c_types.h"
 
-#include "adios2/ADIOSMPICommOnly.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
  * Retrieve operator type
- * @param type (e.g. sz, zfp) must be a pre-allocated char (e.g. 50)
- * @param size type char size
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param type output, string without trailing '\0', NULL or preallocated buffer
+ * @param size output, type size without '\0'
  * @param op operator handler to be inspected
  * @return adios2_error 0: success, see enum adios2_error for errors
  */

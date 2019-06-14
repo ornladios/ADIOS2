@@ -247,7 +247,7 @@ private:
 #define declare_explicit_instantiation(T)       \
     extern template void Foo::Bar1<T>();
 
-ADIOS_FOREACH_TYPE_1ARG(declare_explicit_instantiation)
+ADIOS_FOREACH_STDTYPE_1ARG(declare_explicit_instantiation)
 #undef(declare_explicit_instantiation)
 } // end namespace adios
 
@@ -339,7 +339,7 @@ void Foo::Bar3Helper()
 #define define_explicit_instantiation(T)  \
     template void Foo::Bar1<T>();
 
-ADIOS_FOREACH_TYPE_1ARG(define_explicit_instantiation)
+ADIOS_FOREACH_STDTYPE_1ARG(define_explicit_instantiation)
 #undef(define_explicit_instantiation)
 
 } // end namespace adios

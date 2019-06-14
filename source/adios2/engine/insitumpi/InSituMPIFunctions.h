@@ -35,6 +35,7 @@ enum MpiTags
     FixedRemoteSchedule,
     MetadataLength,
     Metadata,
+    NumReaderPerWriter,
     ReadScheduleLength,
     ReadSchedule,
     Data,
@@ -59,11 +60,19 @@ std::vector<int> AssignPeers(const int rank, const int nproc,
 // on the Writer and Reader side at the same time.
 // IAmSender is true on the writers, false on the readers.
 // IAmWriterRoot is true only on one writer who will send the global metadata.
-// return global rank of writer root on the reader who is connected to writer
-// root, -1 everywhere else.
+// return:
+//    on Reader: global rank of writer root on the reader who is connected
+//       to writer root, -1 everywhere else.
+//    on Writer: 1 on a writer who is the first rank connected to a particular
+//       reader, 0 everywhere else (i.e. one Writer selected for each Reader)
 int ConnectDirectPeers(const MPI_Comm commWorld, const bool IAmSender,
                        const bool IAmWriterRoot, const int globalRank,
                        const std::vector<int> &peers);
+
+// Wait for multiple MPI requests to complete and check errors
+std::vector<MPI_Status> CompleteRequests(std::vector<MPI_Request> &requests,
+                                         const bool IAmWriter,
+                                         const int localRank);
 
 } // end namespace insitumpi
 

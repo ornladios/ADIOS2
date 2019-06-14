@@ -7,7 +7,6 @@
  *  Created on: Feb 21, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
-
 #include "MPIChain.h"
 
 #include "adios2/ADIOSMPI.h"
@@ -33,12 +32,12 @@ void MPIChain::Init(const size_t subStreams, MPI_Comm parentComm)
     }
 }
 
-std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
-                                             const int step)
+std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
+                                                          const int step)
 {
     if (m_Size == 1)
     {
-        return std::vector<MPI_Request>();
+        return std::vector<std::vector<MPI_Request>>();
     }
 
     BufferSTL &sendBuffer = GetSender(bufferSTL);
@@ -46,22 +45,31 @@ std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
     const bool receiver = (m_Rank < endRank) ? true : false;
 
-    std::vector<MPI_Request> requests(3);
+    std::vector<std::vector<MPI_Request>> requests(2);
 
     if (sender) // sender
     {
+        requests[0].resize(1);
+
         helper::CheckMPIReturn(MPI_Isend(&sendBuffer.m_Position, 1,
                                          ADIOS2_MPI_SIZE_T, m_Rank - 1, 0,
-                                         m_Comm, &requests[0]),
+                                         m_Comm, &requests[0][0]),
                                ", aggregation Isend size at iteration " +
                                    std::to_string(step) + "\n");
 
-        helper::CheckMPIReturn(
-            MPI_Isend(sendBuffer.m_Buffer.data(),
-                      static_cast<int>(sendBuffer.m_Position), MPI_CHAR,
-                      m_Rank - 1, 1, m_Comm, &requests[1]),
-            ", aggregation Isend data at iteration " + std::to_string(step) +
-                "\n");
+        // only send data if buffer larger than 0
+        if (sendBuffer.m_Position > 0)
+        {
+
+            const std::vector<MPI_Request> requestsISend64 =
+                helper::Isend64(sendBuffer.m_Buffer.data(),
+                                sendBuffer.m_Position, m_Rank - 1, 1, m_Comm,
+                                ", aggregation Isend64 data at iteration " +
+                                    std::to_string(step));
+
+            requests[0].insert(requests[0].end(), requestsISend64.begin(),
+                               requestsISend64.end());
+        }
     }
     // receive size, resize receiving buffer and receive data
     if (receiver)
@@ -86,18 +94,71 @@ std::vector<MPI_Request> MPIChain::IExchange(BufferSTL &bufferSTL,
             "in aggregation, when resizing receiving buffer to size " +
                 std::to_string(bufferSize));
 
-        helper::CheckMPIReturn(
-            MPI_Irecv(receiveBuffer.m_Buffer.data(),
-                      static_cast<int>(receiveBuffer.m_Position), MPI_CHAR,
-                      m_Rank + 1, 1, m_Comm, &requests[2]),
-            ", aggregation Irecv data at iteration " + std::to_string(step) +
-                "\n");
+        // only receive data if buffer is larger than 0
+        if (bufferSize > 0)
+        {
+            requests[1] =
+                helper::Irecv64(receiveBuffer.m_Buffer.data(),
+                                receiveBuffer.m_Position, m_Rank + 1, 1, m_Comm,
+                                ", aggregation Irecv64 data at iteration " +
+                                    std::to_string(step));
+        }
     }
 
     return requests;
 }
 
-void MPIChain::Wait(std::vector<MPI_Request> &requests, const int step)
+std::vector<std::vector<MPI_Request>>
+MPIChain::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
+{
+    if (m_Size == 1)
+    {
+        return std::vector<std::vector<MPI_Request>>();
+    }
+
+    if (m_IsInExchangeAbsolutePosition)
+    {
+        throw std::runtime_error("ERROR: MPIChain::IExchangeAbsolutePosition: "
+                                 "An existing exchange is still active.");
+    }
+
+    const int destination = (step != m_Size - 1) ? step + 1 : 0;
+    std::vector<std::vector<MPI_Request>> requests(2,
+                                                   std::vector<MPI_Request>(1));
+
+    if (step == 0)
+    {
+        m_SizeSend =
+            (m_Rank == 0) ? bufferSTL.m_AbsolutePosition : bufferSTL.m_Position;
+    }
+
+    if (m_Rank == step)
+    {
+        m_ExchangeAbsolutePosition =
+            (m_Rank == 0) ? m_SizeSend
+                          : m_SizeSend + bufferSTL.m_AbsolutePosition;
+
+        helper::CheckMPIReturn(
+            MPI_Isend(&m_ExchangeAbsolutePosition, 1, ADIOS2_MPI_SIZE_T,
+                      destination, 0, m_Comm, &requests[0][0]),
+            ", aggregation Isend absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+    else if (m_Rank == destination)
+    {
+        helper::CheckMPIReturn(
+            MPI_Irecv(&bufferSTL.m_AbsolutePosition, 1, ADIOS2_MPI_SIZE_T, step,
+                      0, m_Comm, &requests[1][0]),
+            ", aggregation Irecv absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+
+    m_IsInExchangeAbsolutePosition = true;
+    return requests;
+}
+
+void MPIChain::Wait(std::vector<std::vector<MPI_Request>> &requests,
+                    const int step)
 {
     if (m_Size == 1)
     {
@@ -111,24 +172,60 @@ void MPIChain::Wait(std::vector<MPI_Request> &requests, const int step)
     MPI_Status status;
     if (receiver)
     {
-        helper::CheckMPIReturn(
-            MPI_Wait(&requests[2], &status),
-            ", aggregation waiting for receiver data at iteration " +
-                std::to_string(step) + "\n");
+        for (auto &req : requests[1])
+        {
+            helper::CheckMPIReturn(
+                MPI_Wait(&req, &status),
+                ", aggregation waiting for receiver request at iteration " +
+                    std::to_string(step) + "\n");
+        }
     }
 
     if (sender)
     {
-        helper::CheckMPIReturn(
-            MPI_Wait(&requests[0], &status),
-            ", aggregation waiting for sender size at iteration " +
-                std::to_string(step) + "\n");
+        for (auto &req : requests[0])
+        {
+            helper::CheckMPIReturn(
+                MPI_Wait(&req, &status),
+                ", aggregation waiting for sender request at iteration " +
+                    std::to_string(step) + "\n");
+        }
+    }
+}
 
+void MPIChain::WaitAbsolutePosition(
+    std::vector<std::vector<MPI_Request>> &requests, const int step)
+{
+    if (m_Size == 1)
+    {
+        return;
+    }
+
+    if (!m_IsInExchangeAbsolutePosition)
+    {
+        throw std::runtime_error("ERROR: MPIChain::WaitAbsolutePosition: An "
+                                 "existing exchange is not active.");
+    }
+
+    MPI_Status status;
+    const int destination = (step != m_Size - 1) ? step + 1 : 0;
+
+    if (m_Rank == destination)
+    {
         helper::CheckMPIReturn(
-            MPI_Wait(&requests[1], &status),
-            ", aggregation waiting for sender data at iteration " +
+            MPI_Wait(&requests[1][0], &status),
+            ", aggregation Irecv Wait absolute position at iteration " +
                 std::to_string(step) + "\n");
     }
+
+    if (m_Rank == step)
+    {
+        helper::CheckMPIReturn(
+            MPI_Wait(&requests[0][0], &status),
+            ", aggregation Isend Wait absolute position at iteration " +
+                std::to_string(step) + "\n");
+    }
+    m_IsInExchangeAbsolutePosition = false;
 }
 
 void MPIChain::SwapBuffers(const int /*step*/) noexcept

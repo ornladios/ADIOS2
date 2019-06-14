@@ -33,7 +33,7 @@ contains
         if( ierr == 0 ) then
             engine%valid = .true.
             engine%name = name
-            engine%type = io%engine_type
+            call adios2_engine_get_type_f2c(engine%type, engine%f2c, ierr)
             engine%mode = adios2_mode
         end if
 
@@ -54,7 +54,7 @@ contains
         if( ierr == 0 ) then
             engine%valid = .true.
             engine%name = name
-            engine%type = io%engine_type
+            call adios2_engine_get_type_f2c(engine%type, engine%f2c, ierr)
             engine%mode = adios2_mode
         end if
 

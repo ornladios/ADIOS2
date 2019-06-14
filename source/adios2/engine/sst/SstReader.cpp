@@ -17,6 +17,7 @@
 #include "SstReader.tcc"
 
 #include "SstParamParser.h"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -67,10 +68,54 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         return (void *)variable;                                               \
     }
 
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
         return (void *)NULL;
+    };
+
+    auto attrFFSCallback = [](void *reader, const char *attrName,
+                              const char *type, void *data) {
+        class SstReader::SstReader *Reader =
+            reinterpret_cast<class SstReader::SstReader *>(reader);
+        if (attrName == NULL)
+        {
+            // if attrName is NULL, prepare for attr reinstallation
+            Reader->m_IO.RemoveAllAttributes();
+            return;
+        }
+        std::string Type(type);
+        try
+        {
+            if (Type == "compound")
+            {
+                return;
+            }
+            else if (Type == helper::GetType<std::string>())
+            {
+                Reader->m_IO.DefineAttribute<std::string>(attrName,
+                                                          *(char **)data);
+            }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Reader->m_IO.DefineAttribute<T>(attrName, *(T *)data);                 \
+    }
+
+            ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            else
+            {
+                std::cout << "Loading attribute matched no type " << Type
+                          << std::endl;
+            }
+        }
+        catch (...)
+        {
+            //            std::cout << "Load failed" << std::endl;
+            return;
+        }
+        return;
     };
 
     auto arrayFFSCallback = [](void *reader, const char *variableName,
@@ -86,12 +131,25 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
          * setup shape of array variable as global (I.E. Count == Shape,
          * Start == 0)
          */
-        for (int i = 0; i < DimCount; i++)
+        if (Shape)
         {
-            VecShape.push_back(Shape[i]);
-            VecStart.push_back(0);
-            VecCount.push_back(Shape[i]);
+            for (int i = 0; i < DimCount; i++)
+            {
+                VecShape.push_back(Shape[i]);
+                VecStart.push_back(0);
+                VecCount.push_back(Shape[i]);
+            }
         }
+        else
+        {
+            VecShape = {};
+            VecStart = {};
+            for (int i = 0; i < DimCount; i++)
+            {
+                VecCount.push_back(Count[i]);
+            }
+        }
+
         if (Type == "compound")
         {
             return (void *)NULL;
@@ -104,29 +162,46 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         variable->m_AvailableStepsCount = 1;                                   \
         return (void *)variable;                                               \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         return (void *)NULL;
     };
 
-    SstReaderInitFFSCallback(m_Input, this, varFFSCallback, arrayFFSCallback);
+    SstReaderInitFFSCallback(m_Input, this, varFFSCallback, arrayFFSCallback,
+                             attrFFSCallback);
 
     delete[] cstr;
 }
 
 SstReader::~SstReader() { SstStreamDestroy(m_Input); }
 
-StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
+StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {
+    TAU_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
+    switch (Mode)
+    {
+    case adios2::StepMode::Append:
+    case adios2::StepMode::Update:
+        throw std::invalid_argument(
+            "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
+            m_EndMessage);
+    case adios2::StepMode::Read:
+        break;
+    }
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
-    result = SstAdvanceStep(m_Input, (int)mode, timeout_sec);
+    result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;
     }
+    if (result == SstTimeout)
+    {
+        return StepStatus::NotReady;
+    }
+
     if (result != SstSuccess)
     {
         return StepStatus::OtherError;
@@ -134,6 +209,8 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
 
     if (m_WriterMarshalMethod == SstMarshalBP)
     {
+        TAU_SCOPED_TIMER(
+            "BP Marshaling Case - deserialize and install metadata");
         m_CurrentStepMetaData = SstGetCurMetadata(m_Input);
         // At begin step, you get metadata from the writers.  You need to
         // use this for two things: First, you need to create the
@@ -181,8 +258,7 @@ StepStatus SstReader::BeginStep(StepMode mode, const float timeout_sec)
                     (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
 
         m_IO.RemoveAllVariables();
-        m_IO.RemoveAllAttributes();
-        m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, m_IO);
+        m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, *this);
         m_IO.ResetVariablesStepSelection(true,
                                          "in call to SST Reader BeginStep");
     }
@@ -205,6 +281,12 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
+    if (m_IO.m_DefinitionsLocked && !m_DefinitionsNotified)
+    {
+        SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));
+        m_DefinitionsNotified = true;
+    }
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstStatusValue Result;
@@ -263,10 +345,29 @@ void SstReader::Init()
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            SstFFSGetDeferred(                                                 \
-                m_Input, (void *)&variable, variable.m_Name.c_str(),           \
-                variable.m_Start.size(), variable.m_Start.data(),              \
-                variable.m_Count.data(), data);                                \
+            size_t *Start = NULL;                                              \
+            size_t *Count = NULL;                                              \
+            size_t DimCount = 0;                                               \
+                                                                               \
+            if (variable.m_SelectionType ==                                    \
+                adios2::SelectionType::BoundingBox)                            \
+            {                                                                  \
+                DimCount = variable.m_Shape.size();                            \
+                Start = variable.m_Start.data();                               \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
+                                  variable.m_Name.c_str(), DimCount, Start,    \
+                                  Count, data);                                \
+            }                                                                  \
+            else if (variable.m_SelectionType ==                               \
+                     adios2::SelectionType::WriteBlock)                        \
+            {                                                                  \
+                DimCount = variable.m_Count.size();                            \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
+                                       variable.m_Name.c_str(), DimCount,      \
+                                       variable.m_BlockID, Count, data);       \
+            }                                                                  \
             SstFFSPerformGets(m_Input);                                        \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
@@ -283,10 +384,29 @@ void SstReader::Init()
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            SstFFSGetDeferred(                                                 \
-                m_Input, (void *)&variable, variable.m_Name.c_str(),           \
-                variable.m_Start.size(), variable.m_Start.data(),              \
-                variable.m_Count.data(), data);                                \
+            size_t *Start = NULL;                                              \
+            size_t *Count = NULL;                                              \
+            size_t DimCount = 0;                                               \
+                                                                               \
+            if (variable.m_SelectionType ==                                    \
+                adios2::SelectionType::BoundingBox)                            \
+            {                                                                  \
+                DimCount = variable.m_Shape.size();                            \
+                Start = variable.m_Start.data();                               \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetDeferred(m_Input, (void *)&variable,                  \
+                                  variable.m_Name.c_str(), DimCount, Start,    \
+                                  Count, data);                                \
+            }                                                                  \
+            else if (variable.m_SelectionType ==                               \
+                     adios2::SelectionType::WriteBlock)                        \
+            {                                                                  \
+                DimCount = variable.m_Count.size();                            \
+                Count = variable.m_Count.data();                               \
+                SstFFSGetLocalDeferred(m_Input, (void *)&variable,             \
+                                       variable.m_Name.c_str(), DimCount,      \
+                                       variable.m_BlockID, Count, data);       \
+            }                                                                  \
         }                                                                      \
         if (m_WriterMarshalMethod == SstMarshalBP)                             \
         {                                                                      \
@@ -309,7 +429,7 @@ void SstReader::Init()
             }                                                                  \
         }                                                                      \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_gets)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
 #undef declare_gets
 
 void SstReader::PerformGets()
@@ -344,7 +464,7 @@ void SstReader::PerformGets()
         ReadVariableBlocks(variable);                                          \
         variable.m_BlocksInfo.clear();                                         \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
 
@@ -391,7 +511,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
             "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 } // end namespace engine

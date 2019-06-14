@@ -9,6 +9,9 @@
 /* Define to 1 if you have the enet header and libraries */
 #cmakedefine ENET_FOUND
 
+/* Define to 1 if you have the udt4 header and libraries */
+#cmakedefine UDT4_FOUND
+
 /* Define to 1 if you have the IB header and libraries */
 #cmakedefine IB_FOUND 
 
@@ -189,5 +192,7 @@
 #define CM_DEFAULT_TRANSPORT "@CM_DEFAULT_TRANSPORT@"
 
 #define CM_LIBRARY_PREFIX "@EVPATH_LIBRARY_PREFIX@"
+
+#define IPCONFIG_ENVVAR_PREFIX "@IPCONFIG_ENVVAR_PREFIX@"
 
 #endif

@@ -32,6 +32,10 @@
 #include "adios2/operator/compress/CompressSZ.h"
 #endif
 
+#ifdef ADIOS2_HAVE_MGARD
+#include "adios2/operator/compress/CompressMGARD.h"
+#endif
+
 // callbacks
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
@@ -43,13 +47,28 @@ namespace core
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode, const std::string hostLanguage)
-: m_MPIComm(mpiComm), m_ConfigFile(configFile), m_DebugMode(debugMode),
-  m_HostLanguage(hostLanguage)
+: m_ConfigFile(configFile), m_DebugMode(debugMode), m_HostLanguage(hostLanguage)
 {
-    if (m_DebugMode)
+    if (m_DebugMode && mpiComm == MPI_COMM_NULL)
     {
-        CheckMPI();
+        throw std::ios_base::failure(
+            "ERROR: MPI communicator is MPI_COMM_NULL, "
+            " in call to ADIOS constructor\n");
     }
+
+    int flag;
+    MPI_Initialized(&flag);
+    if (flag)
+    {
+        MPI_Comm_dup(mpiComm, &m_MPIComm);
+        m_NeedMPICommFree = true;
+    }
+    else
+    {
+        m_MPIComm = mpiComm;
+        m_NeedMPICommFree = false;
+    }
+
     if (!configFile.empty())
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
@@ -75,6 +94,16 @@ ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode,
 ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
 : ADIOS("", MPI_COMM_SELF, debugMode, hostLanguage)
 {
+}
+
+ADIOS::~ADIOS()
+{
+    int flag;
+    MPI_Finalized(&flag);
+    if (!flag && m_NeedMPICommFree)
+    {
+        MPI_Comm_free(&m_MPIComm);
+    }
 }
 
 IO &ADIOS::DeclareIO(const std::string name)
@@ -189,6 +218,19 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
             "SZ library (minimum v2.0.2.0), in call to DefineOperator\n");
 #endif
     }
+    else if (typeLowerCase == "mgard")
+    {
+#ifdef ADIOS2_HAVE_MGARD
+        auto itPair = m_Operators.emplace(
+            name,
+            std::make_shared<compress::CompressMGARD>(parameters, m_DebugMode));
+        operatorPtr = itPair.first->second;
+#else
+        throw std::invalid_argument(
+            "ERROR: this version of ADIOS2 didn't compile with the "
+            "MGARD library (minimum v0.0.0.1), in call to DefineOperator\n");
+#endif
+    }
     else
     {
         if (m_DebugMode)
@@ -237,7 +279,7 @@ Operator *ADIOS::InquireOperator(const std::string name) noexcept
         return *itPair.first->second;                                          \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 Operator &ADIOS::DefineCallBack(
@@ -256,16 +298,19 @@ Operator &ADIOS::DefineCallBack(
     return *itPair.first->second;
 }
 
-// PRIVATE FUNCTIONS
-void ADIOS::CheckMPI() const
+bool ADIOS::RemoveIO(const std::string name)
 {
-    if (m_MPIComm == MPI_COMM_NULL)
+    if (m_IOs.erase(name) == 1)
     {
-        throw std::ios_base::failure("ERROR: MPI communicator is MPI_COMM_NULL,"
-                                     " in call to ADIOS constructor\n");
+        return true;
     }
+
+    return false;
 }
 
+void ADIOS::RemoveAllIOs() noexcept { m_IOs.clear(); }
+
+// PRIVATE FUNCTIONS
 void ADIOS::CheckOperator(const std::string name) const
 {
     if (m_DebugMode)

@@ -14,6 +14,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 class BPWriteFlushRead : public ::testing::Test
 {
 public:
@@ -48,7 +50,7 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -58,6 +60,11 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
     {
         adios2::IO io1D = adios.DeclareIO("Flush1D");
         adios2::IO io2D = adios.DeclareIO("Flush2D");
+        if (!engineName.empty())
+        {
+            io1D.SetEngine(engineName);
+            io2D.SetEngine(engineName);
+        }
 
         io1D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
         io2D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
@@ -124,8 +131,10 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                                         adios2::ConstantDims);
         }
 
-        adios2::Engine bpWriter1D = io1D.Open("Flush1D", adios2::Mode::Write);
-        adios2::Engine bpWriter2D = io2D.Open("Flush2D", adios2::Mode::Write);
+        adios2::Engine bpWriter1D =
+            io1D.Open("Flush1D.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter2D =
+            io2D.Open("Flush2D.bp", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -168,7 +177,12 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
         {
             adios2::IO io = adios.DeclareIO("ReadIO1");
 
-            adios2::Engine bpReader = io.Open("Flush1D", adios2::Mode::Read);
+            if (!engineName.empty())
+            {
+                io.SetEngine(engineName);
+            }
+
+            adios2::Engine bpReader = io.Open("Flush1D.bp", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
@@ -316,7 +330,12 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
         {
             adios2::IO io = adios.DeclareIO("ReadIO2");
 
-            adios2::Engine bpReader = io.Open("Flush2D", adios2::Mode::Read);
+            if (!engineName.empty())
+            {
+                io.SetEngine(engineName);
+            }
+
+            adios2::Engine bpReader = io.Open("Flush2D.bp", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
@@ -493,7 +512,7 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -503,6 +522,12 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
     {
         adios2::IO io1D = adios.DeclareIO("Flush1D");
         adios2::IO io2D = adios.DeclareIO("Flush2D");
+
+        if (!engineName.empty())
+        {
+            io1D.SetEngine(engineName);
+            io2D.SetEngine(engineName);
+        }
 
         io1D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
         io2D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
@@ -573,9 +598,9 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
         }
 
         adios2::Engine bpWriter1D =
-            io1D.Open("Flush1Dstdio", adios2::Mode::Write);
+            io1D.Open("Flush1Dstdio.bp", adios2::Mode::Write);
         adios2::Engine bpWriter2D =
-            io2D.Open("Flush2Dstdio", adios2::Mode::Write);
+            io2D.Open("Flush2Dstdio.bp", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -618,8 +643,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
         {
             adios2::IO io = adios.DeclareIO("ReadIO1");
 
+            if (!engineName.empty())
+            {
+                io.SetEngine(engineName);
+            }
+
             adios2::Engine bpReader =
-                io.Open("Flush1Dstdio", adios2::Mode::Read);
+                io.Open("Flush1Dstdio.bp", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
@@ -767,8 +797,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
         {
             adios2::IO io = adios.DeclareIO("ReadIO2");
 
+            if (!engineName.empty())
+            {
+                io.SetEngine(engineName);
+            }
+
             adios2::Engine bpReader =
-                io.Open("Flush2Dstdio", adios2::Mode::Read);
+                io.Open("Flush2Dstdio.bp", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
@@ -945,7 +980,7 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using BP
+    // Write test data using BP
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -955,6 +990,12 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
     {
         adios2::IO io1D = adios.DeclareIO("Flush1D");
         adios2::IO io2D = adios.DeclareIO("Flush2D");
+
+        if (!engineName.empty())
+        {
+            io1D.SetEngine(engineName);
+            io2D.SetEngine(engineName);
+        }
 
         io1D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
         io2D.SetParameter("FlushStepsCount", std::to_string(NSteps + 1));
@@ -1025,9 +1066,9 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
         }
 
         adios2::Engine bpWriter1D =
-            io1D.Open("Flush1Dfstream", adios2::Mode::Write);
+            io1D.Open("Flush1Dfstream.bp", adios2::Mode::Write);
         adios2::Engine bpWriter2D =
-            io2D.Open("Flush2Dfstream", adios2::Mode::Write);
+            io2D.Open("Flush2Dfstream.bp", adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -1070,8 +1111,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
         {
             adios2::IO io = adios.DeclareIO("ReadIO1");
 
+            if (!engineName.empty())
+            {
+                io.SetEngine(engineName);
+            }
+
             adios2::Engine bpReader =
-                io.Open("Flush1Dfstream", adios2::Mode::Read);
+                io.Open("Flush1Dfstream.bp", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
@@ -1219,8 +1265,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
         {
             adios2::IO io = adios.DeclareIO("ReadIO2");
 
+            if (!engineName.empty())
+            {
+                io.SetEngine(engineName);
+            }
+
             adios2::Engine bpReader =
-                io.Open("Flush2Dfstream", adios2::Mode::Read);
+                io.Open("Flush2Dfstream.bp", adios2::Mode::Read);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
@@ -1389,6 +1440,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

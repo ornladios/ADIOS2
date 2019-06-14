@@ -25,22 +25,25 @@ public:
 
     ~BP3SZ() = default;
 
+    using BP3Operation::SetData;
+    using BP3Operation::SetMetadata;
+    using BP3Operation::UpdateMetadata;
 #define declare_type(T)                                                        \
     void SetData(const core::Variable<T> &variable,                            \
                  const typename core::Variable<T>::Info &blockInfo,            \
                  const typename core::Variable<T>::Operation &operation,       \
-                 BufferSTL &bufferSTL) const noexcept final;                   \
+                 BufferSTL &bufferSTL) const noexcept override;                \
                                                                                \
     void SetMetadata(const core::Variable<T> &variable,                        \
                      const typename core::Variable<T>::Info &blockInfo,        \
                      const typename core::Variable<T>::Operation &operation,   \
-                     std::vector<char> &buffer) const noexcept final;          \
+                     std::vector<char> &buffer) const noexcept override;       \
                                                                                \
     void UpdateMetadata(                                                       \
         const core::Variable<T> &variable,                                     \
         const typename core::Variable<T>::Info &blockInfo,                     \
         const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept final;
+        std::vector<char> &buffer) const noexcept override;
 
     ADIOS2_FOREACH_SZ_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -82,4 +85,4 @@ private:
 } // end namespace format
 } // end namespace adios2
 
-#endif /* SOURCE_ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3SZ_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BP3_OPERATION_BP3SZ_H_ */

@@ -30,8 +30,7 @@ add_test(NAME Skeleton.Reader
 if(ADIOS2_HAVE_MPI)
 
 add_test(NAME Skeleton.Writer.Validate
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonWriterExpectedOutput.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestSkeletonWriterOutput.txt
 )
@@ -41,8 +40,7 @@ set_property(TEST Skeleton.Writer.Validate
 
 
 add_test(NAME Skeleton.Reader.Validate
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestSkeletonReaderExpectedOutput.txt
     ${CMAKE_CURRENT_BINARY_DIR}/TestSkeletonReaderOutput.txt
 )

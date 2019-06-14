@@ -12,10 +12,12 @@ manipulation that builds on top of the library. The are located in the inside th
 
 Currently supported tools are:
 
-* *bpls* : exploration of bp/hdf5 files data and metadata in human readable outputs   
-* *adios_reorganize*
-* *adios2-config*
+* ``bpls`` : exploration of bp/hdf5 files data and metadata in human readable formats   
+* ``adios_reorganize``
+* ``adios2-config``
+* ``sst_conn_tool`` : SST staging engine connectivity diagnostic tool
 
 .. include:: bpls.rst
 .. include:: adios_reorganize.rst
 .. include:: adios2-config.rst
+.. include:: sst_conn_tool.rst

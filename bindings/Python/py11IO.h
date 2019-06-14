@@ -8,14 +8,17 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_BINDINGS_PYTHON_PY11IO_H_
-#define ADIOS2_BINDINGS_PYTHON_PY11IO_H_
+#ifndef ADIOS2_BINDINGS_PYTHON_IO_H_
+#define ADIOS2_BINDINGS_PYTHON_IO_H_
 
 #include <pybind11/numpy.h>
 
 #include <string>
 
+#include "py11Attribute.h"
 #include "py11Engine.h"
+#include "py11Variable.h"
+#include "py11types.h"
 
 namespace adios2
 {
@@ -24,55 +27,87 @@ namespace py11
 
 class IO
 {
+    friend class ADIOS;
 
 public:
-    core::IO &m_IO;
-
-    IO(core::IO &io, const bool debugMode);
+    IO() = default;
 
     ~IO() = default;
 
-    void SetEngine(const std::string type) noexcept;
-    unsigned int AddTransport(const std::string type, const Params &parameters);
-    void SetParameters(const Params &parameters) noexcept;
-    void SetParameter(const std::string key, const std::string value) noexcept;
+    explicit operator bool() const noexcept;
 
-    Params Parameters() const noexcept;
+    bool InConfigFile() const;
 
-    core::VariableBase *DefineVariable(const std::string &name,
-                                       std::string &stringValue);
+    void SetEngine(const std::string type);
 
-    core::VariableBase *DefineVariable(const std::string &name,
-                                       const Dims &shape, const Dims &start,
-                                       const Dims &count,
-                                       const bool isConstantDims,
-                                       pybind11::array &array);
+    void SetParameter(const std::string key, const std::string value);
 
-    core::VariableBase *InquireVariable(const std::string &name) noexcept;
+    void SetParameters(const Params &parameters);
 
-    core::AttributeBase *DefineAttribute(const std::string &name,
-                                         pybind11::array &array);
+    Params Parameters() const;
 
-    core::AttributeBase *InquireAttribute(const std::string &name) noexcept;
+    size_t AddTransport(const std::string type, const Params &parameters);
 
-    core::AttributeBase *
-    DefineAttribute(const std::string &name,
-                    const std::vector<std::string> &strings);
+    void SetTransportParameter(const size_t transportIndex,
+                               const std::string key, const std::string value);
 
-    std::map<std::string, Params> AvailableVariables() noexcept;
+    Variable DefineVariable(const std::string &name);
 
-    std::map<std::string, Params> AvailableAttributes() noexcept;
+    Variable DefineVariable(const std::string &name,
+                            const pybind11::array &array, const Dims &shape,
+                            const Dims &start, const Dims &count,
+                            const bool isConstantDims);
+
+    Variable InquireVariable(const std::string &name);
+
+    Attribute DefineAttribute(const std::string &name,
+                              const pybind11::array &array,
+                              const std::string &variableName = "",
+                              const std::string separator = "/");
+
+    Attribute DefineAttribute(const std::string &name,
+                              const std::string &stringValue,
+                              const std::string &variableName = "",
+                              const std::string separator = "/");
+
+    Attribute DefineAttribute(const std::string &name,
+                              const std::vector<std::string> &strings,
+                              const std::string &variableName = "",
+                              const std::string separator = "/");
+
+    Attribute InquireAttribute(const std::string &name);
+
+    bool RemoveVariable(const std::string &name);
+
+    void RemoveAllVariables();
+
+    bool RemoveAttribute(const std::string &name);
+
+    void RemoveAllAttributes();
 
     Engine Open(const std::string &name, const int openMode);
 
+#ifdef ADIOS2_HAVE_MPI
+    Engine Open(const std::string &name, const int openMode, MPI4PY_Comm comm);
+#endif
+
     void FlushAll();
 
-    void LockDefinitions() noexcept;
+    void LockDefinitions();
 
-    std::string EngineType() const noexcept;
+    std::map<std::string, Params> AvailableVariables();
+
+    std::map<std::string, Params> AvailableAttributes();
+
+    std::string VariableType(const std::string &name) const;
+
+    std::string AttributeType(const std::string &name) const;
+
+    std::string EngineType() const;
 
 private:
-    const bool m_DebugMode;
+    IO(core::IO *io);
+    core::IO *m_IO = nullptr;
 };
 
 } // end namespace py11

@@ -12,6 +12,7 @@
 #include "BP3Reader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -22,22 +23,24 @@ namespace engine
 
 BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("BPFileReader", io, name, mode, mpiComm),
+: Engine("BP3", io, name, mode, mpiComm),
   m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
   m_SubFileManager(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("BP3Reader::Open");
     Init();
 }
 
 StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("BP3Reader::BeginStep");
     if (m_DebugMode)
     {
-        if (mode != StepMode::NextAvailable)
+        if (mode != StepMode::Read)
         {
             throw std::invalid_argument(
                 "ERROR: mode is not supported yet, "
-                "only NextAvailable is valid for "
+                "only Read is valid for "
                 "engine BP3 with adios2::Mode::Read, in call to "
                 "BeginStep\n");
         }
@@ -77,10 +80,15 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
 size_t BP3Reader::CurrentStep() const { return m_CurrentStep; }
 
-void BP3Reader::EndStep() { PerformGets(); }
+void BP3Reader::EndStep()
+{
+    TAU_SCOPED_TIMER("BP3Reader::EndStep");
+    PerformGets();
+}
 
 void BP3Reader::PerformGets()
 {
+    TAU_SCOPED_TIMER("BP3Reader::PerformGets");
     if (m_BP3Deserializer.m_DeferredVariables.empty())
     {
         return;
@@ -105,7 +113,7 @@ void BP3Reader::PerformGets()
         ReadVariableBlocks(variable);                                          \
         variable.m_BlocksInfo.clear();                                         \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -141,49 +149,82 @@ void BP3Reader::InitTransports()
 
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
-        const std::string metadataFile(
-            m_BP3Deserializer.GetBPMetadataFileName(m_Name));
-
         const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-        m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
-                                m_IO.m_TransportsParameters, profile);
+        try
+        {
+            m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
+                                    m_IO.m_TransportsParameters, profile);
+        }
+        catch (...)
+        {
+            const std::string bpName = helper::AddExtension(m_Name, ".bp");
+            m_FileManager.OpenFiles({bpName}, adios2::Mode::Read,
+                                    m_IO.m_TransportsParameters, profile);
+        }
     }
 }
 
 void BP3Reader::InitBuffer()
 {
-    // Put all metadata in buffer
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
-        const size_t fileSize = m_FileManager.GetFileSize(0);
+        const size_t fileSize = m_FileManager.GetFileSize();
+        // handle single bp files from ADIOS 1.x by getting onl the metadata in
+        // buffer
+
+        // Load/Read Minifooter
+        const size_t miniFooterSize =
+            m_BP3Deserializer.m_MetadataSet.MiniFooterSize;
+        const size_t miniFooterStart =
+            helper::GetDistance(fileSize, miniFooterSize, m_DebugMode,
+                                " fileSize < miniFooterSize, in call to Open");
+
         m_BP3Deserializer.m_Metadata.Resize(
-            fileSize,
-            "allocating metadata buffer, in call to BPFileReader Open");
+            miniFooterSize,
+            "allocating metadata buffer to inspect bp minifooter, in call to "
+            "Open");
 
         m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
-                               fileSize);
+                               miniFooterSize, miniFooterStart);
+
+        // Load/Read Metadata
+        const size_t metadataStart =
+            m_BP3Deserializer.MetadataStart(m_BP3Deserializer.m_Metadata);
+        const size_t metadataSize =
+            helper::GetDistance(fileSize, metadataStart, m_DebugMode,
+                                " fileSize < miniFooterSize, in call to Open");
+
+        m_BP3Deserializer.m_Metadata.Resize(
+            metadataSize, "allocating metadata buffer, in call to Open");
+
+        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
+                               metadataSize, metadataStart);
     }
-    // broadcast buffer to all ranks from zero
+
+    // broadcast metadata buffer to all ranks from zero
     helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
 
-    // fills IO with Variables and Attributes
-    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, m_IO);
+    // fills IO with available Variables and Attributes
+    m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);
 }
 
 #define declare_type(T)                                                        \
     void BP3Reader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::Get");                                    \
         GetSyncCommon(variable, data);                                         \
     }                                                                          \
     void BP3Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::Get");                                    \
         GetDeferredCommon(variable, data);                                     \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void BP3Reader::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP3Reader::Close");
     PerformGets();
     m_SubFileManager.CloseFiles();
     m_FileManager.CloseFiles();
@@ -193,17 +234,31 @@ void BP3Reader::DoClose(const int transportIndex)
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     BP3Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::AllStepsBlocksInfo");                     \
         return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
+    }                                                                          \
+                                                                               \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    BP3Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
+    {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");             \
+        return m_BP3Deserializer.AllRelativeStepsBlocksInfo(variable);         \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::Info> BP3Reader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::BlocksInfo");                             \
         return m_BP3Deserializer.BlocksInfo(variable, step);                   \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+size_t BP3Reader::DoSteps() const
+{
+    return m_BP3Deserializer.m_MetadataSet.StepsCount;
+}
 
 } // end namespace engine
 } // end namespace core

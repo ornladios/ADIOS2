@@ -150,7 +150,6 @@ void ParseConfigXML(
                            " in call to ADIOS constructor");
 
     auto lf_FileContents = [&](const std::string &configXML) -> std::string {
-
         const std::string fileContents(helper::BroadcastFile(
             configXML, adios.m_MPIComm,
             "when parsing configXML file, in call to the ADIOS constructor"));
@@ -167,7 +166,6 @@ void ParseConfigXML(
     };
 
     auto lf_GetParametersXML = [&](const pugi::xml_node &node) -> Params {
-
         const std::string errorMessage("in node " + std::string(node.value()) +
                                        ", " + hint);
         Params parameters;
@@ -186,7 +184,6 @@ void ParseConfigXML(
     };
 
     auto lf_OperatorXML = [&](const pugi::xml_node &operatorNode) {
-
         const pugi::xml_attribute name =
             helper::XMLAttribute("name", operatorNode, adios.m_DebugMode, hint);
 
@@ -205,7 +202,6 @@ void ParseConfigXML(
     // node is the variable node
     auto lf_IOVariableXML = [&](const pugi::xml_node &node,
                                 core::IO &currentIO) {
-
         const std::string variableName = std::string(
             helper::XMLAttribute("name", node, adios.m_DebugMode, hint)
                 .value());
@@ -287,7 +283,6 @@ void ParseConfigXML(
     };
 
     auto lf_IOXML = [&](const pugi::xml_node &io) {
-
         const pugi::xml_attribute ioName =
             helper::XMLAttribute("name", io, adios.m_DebugMode, hint);
 

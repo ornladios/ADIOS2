@@ -25,14 +25,13 @@ ADIOS::ADIOS(MPI_Comm comm, const bool debugMode) : ADIOS("", comm, debugMode)
 {
 }
 
-#else
+#endif
 ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
 : m_ADIOS(std::make_shared<core::ADIOS>(configFile, debugMode, "C++"))
 {
 }
 
 ADIOS::ADIOS(const bool debugMode) : ADIOS("", debugMode) {}
-#endif
 
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
@@ -68,6 +67,18 @@ Operator ADIOS::InquireOperator(const std::string name)
     return Operator(m_ADIOS->InquireOperator(name));
 }
 
+bool ADIOS::RemoveIO(const std::string name)
+{
+    CheckPointer("for io name " + name + ", in call to ADIOS::RemoveIO");
+    return m_ADIOS->RemoveIO(name);
+}
+
+void ADIOS::RemoveAllIOs() noexcept
+{
+    CheckPointer("in call to ADIOS::RemoveAllIOs");
+    m_ADIOS->RemoveAllIOs();
+}
+
 // PRIVATE
 
 #define declare_type(T)                                                        \
@@ -79,7 +90,14 @@ Operator ADIOS::InquireOperator(const std::string name)
                                  const Dims &)> &function,                     \
         const Params &parameters)                                              \
     {                                                                          \
-        return Operator(&m_ADIOS->DefineCallBack(name, function, parameters)); \
+        using IOType = typename TypeInfo<T>::IOType;                           \
+                                                                               \
+        const auto &io_function = reinterpret_cast<const std::function<void(   \
+            const IOType *, const std::string &, const std::string &,          \
+            const std::string &, const size_t, const Dims &, const Dims &,     \
+            const Dims &)> &>(function);                                       \
+        return Operator(                                                       \
+            &m_ADIOS->DefineCallBack(name, io_function, parameters));          \
     }
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type

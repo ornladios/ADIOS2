@@ -6,6 +6,7 @@ Name: Dill
 Description: Instruction-level in-memory code generation
 URL: https://github.com/GTkorvo/dill.git
 Version: @DILL_VERSION@
+Requires: @_pkg_config_req_pkg@
 Cflags: -I${includedir}
 Libs: -L${libdir} -l@DILL_LIBRARY_PREFIX@dill
 Libs.private: @_pkg_config_private_libs@

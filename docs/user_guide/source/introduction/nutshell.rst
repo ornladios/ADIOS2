@@ -44,3 +44,34 @@ The key aspects of the ADIOS2 infrastructure include:
    and developers to release a new version every 6 months.
 
 **ADIOS2 is funded by the Department of Energy, as part of the Exascale Computing Program.** 
+
+************************
+What ADIOS2 is and isn't
+************************
+
+**ADIOS2 is:**:
+
+1. **A Unified I/O Performance Framework**: using the same abstraction API ADIOS2 would Transport and Transform groups of self-describing data variables and attributes across different media (file, wide-area-network, in-memory staging, etc.) with performance an ease of use as the main goals.
+
+2. **MPI-based**: out-of-box MPI-based, non-MPI is optional at build time.
+
+3. **Group-based**: adios2 favors a deferred/prefetch/grouped variables transport mode by default. Sync mode, one variable at a time, is the special case.
+
+4. **Step-based**: to resemble actual production of data in "steps" of variable groups, for either streaming or random-access (file) media
+
+5. **Free and open-source** 
+
+
+**ADIOS2 is not**:
+
+1. **A File-only I/O library**
+
+2. **MPI-only**
+
+3. **A Database**
+
+4. **A Data Hierarchy Model**: they build on top of the adios2 library according to the application
+
+5. **A Memory Manager Library**: we don't own or manage the application's memory
+
+6. **Difficult**

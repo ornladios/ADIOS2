@@ -1050,6 +1050,29 @@ CMregressive_probe_bandwidth (CMConnection conn, long size, attr_list attrs);
 extern int
 CMget_self_ip_addr(CManager cm);
 
+/*@}*/
+/*!
+ * Try to return the qualified name of the current host.
+ */
+/*NOLOCK*/
+extern void
+CMget_qual_hostname(CManager cm, char *buf, int len);
+
+/*@}*/
+/*!
+ * Try to return the port range in use.
+ */
+/*NOLOCK*/
+extern void
+CMget_port_range(CManager cm, int *high_bound, int *low_bound);
+
+/*!
+ * Return a caller-owned string that give information about network interfaces, etc.
+ */
+/*NOLOCK*/
+extern char *
+CMget_ip_config_diagnostics(CManager cm);
+
 /** @defgroup evpath EVPath functions and types
  * @{
  */

@@ -19,8 +19,12 @@ extern "C" {
 
 /**
  * Retrieve attribute name
- * @param name output name, must be pre-allocated
- * @param size name size
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param name output, string without trailing '\0', NULL or preallocated buffer
+ * @param size output, name size without '\0'
  * @param attribute handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
@@ -38,7 +42,11 @@ adios2_error adios2_attribute_type(adios2_type *type,
 
 /**
  * Retrieve attribute type in string form "char", "unsigned long", etc.
- * @param type output, string form "int", "char"
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param type output, string without trailing '\0', NULL or preallocated buffer
  * @param size output, type size without '\0'
  * @param attribute handler
  * @return adios2_error 0: success, see enum adios2_error for errors
@@ -54,6 +62,16 @@ adios2_error adios2_attribute_type_string(char *type, size_t *size,
  */
 adios2_error adios2_attribute_is_value(adios2_bool *result,
                                        const adios2_attribute *attribute);
+
+/**
+ * Returns the number of elements (as in C++ STL size() function) if attribute
+ * is a 1D array. If single value returns 1
+ * @param size output, number of elements in attribute
+ * @param attribute handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_attribute_size(size_t *size,
+                                   const adios2_attribute *attribute);
 
 /**
  * Retrieve attribute data pointer (read-only)

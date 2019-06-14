@@ -15,15 +15,29 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/ADIOSMacros.h"
+
 #include "adios2/engine/bp3/BP3Reader.h"
 #include "adios2/engine/bp3/BP3Writer.h"
+#include "adios2/engine/bp4/BP4Reader.h"
+#include "adios2/engine/bp4/BP4Writer.h"
+#include "adios2/engine/inline/InlineReader.h"
+#include "adios2/engine/inline/InlineWriter.h"
+#include "adios2/engine/null/NullEngine.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
+
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
+#include <adios2sys/SystemTools.hxx> // FileIsDirectory()
 
 #ifdef ADIOS2_HAVE_DATAMAN // external dependencies
 #include "adios2/engine/dataman/DataManReader.h"
 #include "adios2/engine/dataman/DataManWriter.h"
+#endif
+
+#ifdef ADIOS2_HAVE_SSC // external dependencies
+#include "adios2/engine/ssc/SscReader.h"
+#include "adios2/engine/ssc/SscWriter.h"
 #endif
 
 #ifdef ADIOS2_HAVE_SST // external dependencies
@@ -71,23 +85,38 @@ void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
 
 void IO::SetParameters(const Params &parameters) noexcept
 {
-    m_Parameters.clear();
-
+    TAU_SCOPED_TIMER("IO::other");
     for (const auto &parameter : parameters)
     {
         m_Parameters[parameter.first] = parameter.second;
     }
 }
 
+void IO::SetParameters(const std::string &parameters)
+{
+    TAU_SCOPED_TIMER("IO::other");
+    adios2::Params parameterMap =
+        adios2::helper::BuildParametersMap(parameters, '=', ',', false);
+    SetParameters(parameterMap);
+}
+
 void IO::SetParameter(const std::string key, const std::string value) noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     m_Parameters[key] = value;
 }
 
 Params &IO::GetParameters() noexcept { return m_Parameters; }
 
+void IO::ClearParameters() noexcept
+{
+    TAU_SCOPED_TIMER("IO::other");
+    m_Parameters.clear();
+}
+
 size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
+    TAU_SCOPED_TIMER("IO::other");
     Params parametersMap(parameters);
     if (m_DebugMode)
     {
@@ -110,6 +139,7 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
 void IO::SetTransportParameter(const size_t transportIndex,
                                const std::string key, const std::string value)
 {
+    TAU_SCOPED_TIMER("IO::other");
     if (m_DebugMode)
     {
         if (transportIndex >= m_TransportsParameters.size())
@@ -140,6 +170,7 @@ bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
 bool IO::RemoveVariable(const std::string &name) noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveVariable");
     bool isRemoved = false;
     auto itVariable = m_Variables.find(name);
     // variable exists
@@ -157,11 +188,11 @@ bool IO::RemoveVariable(const std::string &name) noexcept
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        auto variableMap = GetVariableMap<T>();                                \
+        auto &variableMap = GetVariableMap<T>();                               \
         variableMap.erase(index);                                              \
         isRemoved = true;                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -175,21 +206,23 @@ bool IO::RemoveVariable(const std::string &name) noexcept
 
 void IO::RemoveAllVariables() noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveAllVariables");
     m_Variables.clear();
 #define declare_type(T) GetVariableMap<T>().clear();
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     m_Compound.clear();
 }
 
 bool IO::RemoveAttribute(const std::string &name) noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveAttribute");
     bool isRemoved = false;
     auto itAttribute = m_Attributes.find(name);
     // attribute exists
     if (itAttribute != m_Attributes.end())
     {
-        // first remove the Variable object
+        // first remove the Attribute object
         const std::string type(itAttribute->second.first);
         const unsigned int index(itAttribute->second.second);
 
@@ -200,11 +233,11 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        auto variableMap = GetVariableMap<T>();                                \
-        variableMap.erase(index);                                              \
+        auto &attributeMap = GetAttributeMap<T>();                             \
+        attributeMap.erase(index);                                             \
         isRemoved = true;                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 
@@ -218,15 +251,17 @@ bool IO::RemoveAttribute(const std::string &name) noexcept
 
 void IO::RemoveAllAttributes() noexcept
 {
+    TAU_SCOPED_TIMER("IO::RemoveAllAttributes");
     m_Attributes.clear();
 
 #define declare_type(T) GetAttributeMap<T>().clear();
-    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 }
 
 std::map<std::string, Params> IO::GetAvailableVariables() noexcept
 {
+    TAU_SCOPED_TIMER("IO::GetAvailableVariables");
     std::map<std::string, Params> variablesInfo;
     for (const auto &variablePair : m_Variables)
     {
@@ -243,7 +278,7 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         Variable<T> &variable = *InquireVariable<T>(name);                     \
         variablesInfo[name]["AvailableStepsCount"] =                           \
             helper::ValueToString(variable.m_AvailableStepsCount);             \
-        variablesInfo[name]["Shape"] = helper::VectorToCSV(variable.m_Shape);  \
+        variablesInfo[name]["Shape"] = helper::VectorToCSV(variable.Shape());  \
         if (variable.m_SingleValue)                                            \
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "true";                       \
@@ -254,12 +289,12 @@ std::map<std::string, Params> IO::GetAvailableVariables() noexcept
         {                                                                      \
             variablesInfo[name]["SingleValue"] = "false";                      \
             variablesInfo[name]["Min"] =                                       \
-                helper::ValueToString(variable.m_Min);                         \
+                helper::ValueToString(variable.Min());                         \
             variablesInfo[name]["Max"] =                                       \
-                helper::ValueToString(variable.m_Max);                         \
+                helper::ValueToString(variable.Max());                         \
         }                                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 
@@ -270,6 +305,7 @@ std::map<std::string, Params>
 IO::GetAvailableAttributes(const std::string &variableName,
                            const std::string separator) noexcept
 {
+    TAU_SCOPED_TIMER("IO::GetAvailableAttributes");
     std::map<std::string, Params> attributesInfo;
     const std::string variablePrefix = variableName + separator;
 
@@ -320,7 +356,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
                 "{ " + helper::VectorToCSV(attribute.m_DataArray) + " }";      \
         }                                                                      \
     }
-        ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
     } // end for
@@ -329,6 +365,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
 
 std::string IO::InquireVariableType(const std::string &name) const noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     auto itVariable = m_Variables.find(name);
     if (itVariable == m_Variables.end())
     {
@@ -353,7 +390,7 @@ std::string IO::InquireVariableType(const std::string &name) const noexcept
             return std::string();                                              \
         }                                                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 
@@ -364,6 +401,7 @@ std::string IO::InquireAttributeType(const std::string &name,
                                      const std::string &variableName,
                                      const std::string separator) const noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     const std::string globalName =
         helper::GlobalName(name, variableName, separator);
 
@@ -378,6 +416,7 @@ std::string IO::InquireAttributeType(const std::string &name,
 
 size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
 {
+    TAU_SCOPED_TIMER("IO::other");
     m_Operations.push_back(Operation{&op, parameters, Params()});
     return m_Operations.size() - 1;
 }
@@ -385,6 +424,7 @@ size_t IO::AddOperation(Operator &op, const Params &parameters) noexcept
 Engine &IO::Open(const std::string &name, const Mode mode,
                  MPI_Comm mpiComm_orig)
 {
+    TAU_SCOPED_TIMER("IO::Open");
     auto itEngineFound = m_Engines.find(name);
     const bool isEngineFound = (itEngineFound != m_Engines.end());
     bool isEngineActive = false;
@@ -415,7 +455,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     }
 
     MPI_Comm mpiComm;
-    MPI_Comm_dup(mpiComm_orig, &mpiComm);
+    SMPI_Comm_dup(mpiComm_orig, &mpiComm);
     std::shared_ptr<Engine> engine;
     const bool isDefaultEngine = m_EngineType.empty() ? true : false;
     std::string engineTypeLC = m_EngineType;
@@ -425,8 +465,28 @@ Engine &IO::Open(const std::string &name, const Mode mode,
                        engineTypeLC.begin(), ::tolower);
     }
 
-    if (isDefaultEngine || engineTypeLC == "bpfile" || engineTypeLC == "bp3" ||
-        engineTypeLC == "bp")
+    /* BPFile for read needs to use BP4 or BP3 depending on the file's version
+     */
+    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp"))
+    {
+        if (mode == Mode::Read)
+        {
+            if (adios2sys::SystemTools::FileIsDirectory(name))
+            {
+                engineTypeLC = "bp4";
+            }
+            else
+            {
+                engineTypeLC = "bp3";
+            }
+        }
+        else
+        {
+            engineTypeLC = "bp3";
+        }
+    }
+
+    if (isDefaultEngine || engineTypeLC == "bp3")
     {
         if (mode == Mode::Read)
         {
@@ -438,8 +498,19 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             engine =
                 std::make_shared<engine::BP3Writer>(*this, name, mode, mpiComm);
         }
-
-        m_EngineType = "bp";
+    }
+    else if (engineTypeLC == "bp4")
+    {
+        if (mode == Mode::Read)
+        {
+            engine =
+                std::make_shared<engine::BP4Reader>(*this, name, mode, mpiComm);
+        }
+        else
+        {
+            engine =
+                std::make_shared<engine::BP4Writer>(*this, name, mode, mpiComm);
+        }
     }
     else if (engineTypeLC == "hdfmixer")
     {
@@ -475,7 +546,21 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             "DataMan library, can't use DataMan engine\n");
 #endif
     }
-    else if (engineTypeLC == "sst")
+    else if (engineTypeLC == "ssc")
+    {
+#ifdef ADIOS2_HAVE_SSC
+        if (mode == Mode::Read)
+            engine =
+                std::make_shared<engine::SscReader>(*this, name, mode, mpiComm);
+        else
+            engine =
+                std::make_shared<engine::SscWriter>(*this, name, mode, mpiComm);
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "SSC library, can't use SSC engine\n");
+#endif
+    }
+    else if (engineTypeLC == "sst" || engineTypeLC == "effis")
     {
 #ifdef ADIOS2_HAVE_SST
         if (mode == Mode::Read)
@@ -540,6 +625,20 @@ Engine &IO::Open(const std::string &name, const Mode mode,
             engine = std::make_shared<engine::SkeletonWriter>(*this, name, mode,
                                                               mpiComm);
     }
+    else if (engineTypeLC == "inline")
+    {
+        if (mode == Mode::Read)
+            engine = std::make_shared<engine::InlineReader>(*this, name, mode,
+                                                            mpiComm);
+        else
+            engine = std::make_shared<engine::InlineWriter>(*this, name, mode,
+                                                            mpiComm);
+    }
+    else if (engineTypeLC == "null")
+    {
+        engine =
+            std::make_shared<engine::NullEngine>(*this, name, mode, mpiComm);
+    }
     else
     {
         if (m_DebugMode)
@@ -571,8 +670,26 @@ Engine &IO::Open(const std::string &name, const Mode mode)
     return Open(name, mode, m_MPIComm);
 }
 
+Engine &IO::GetEngine(const std::string &name)
+{
+    TAU_SCOPED_TIMER("IO::other");
+    auto itEngine = m_Engines.find(name);
+    if (m_DebugMode)
+    {
+        if (itEngine == m_Engines.end())
+        {
+            throw std::invalid_argument(
+                "ERROR: engine name " + name +
+                " could not be found, in call to GetEngine\n");
+        }
+    }
+    // return a reference
+    return *itEngine->second.get();
+}
+
 void IO::FlushAll()
 {
+    TAU_SCOPED_TIMER("IO::FlushAll");
     for (auto &enginePair : m_Engines)
     {
         auto &engine = enginePair.second;
@@ -586,6 +703,7 @@ void IO::FlushAll()
 void IO::ResetVariablesStepSelection(const bool zeroStart,
                                      const std::string hint)
 {
+    TAU_SCOPED_TIMER("IO::other");
     const auto &variablesData = GetVariablesDataMap();
 
     for (const auto &variableData : variablesData)
@@ -608,8 +726,9 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
         Variable<T> *variable = InquireVariable<T>(name);                      \
         variable->CheckRandomAccessConflict(hint);                             \
         variable->ResetStepsSelection(zeroStart);                              \
+        variable->m_RandomAccess = false;                                      \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
     }
 }
@@ -667,7 +786,7 @@ void IO::CheckTransportType(const std::string type) const
                                                 const Dims &, const bool);     \
     template Variable<T> *IO::InquireVariable<T>(const std::string &) noexcept;
 
-ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
 
 #define declare_template_instantiation(T)                                      \
@@ -680,7 +799,7 @@ ADIOS2_FOREACH_TYPE_1ARG(define_template_instantiation)
     template Attribute<T> *IO::InquireAttribute<T>(                            \
         const std::string &, const std::string &, const std::string) noexcept;
 
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

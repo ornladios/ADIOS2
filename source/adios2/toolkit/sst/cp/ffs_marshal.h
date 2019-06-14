@@ -19,6 +19,11 @@ struct FFSWriterMarshalBase
     int DataFieldCount;
     FMFieldList DataFields;
     FMFormat DataFormat;
+    int AttributeFieldCount;
+    FMFieldList AttributeFields;
+    FMFormat AttributeFormat;
+    void *AttributeData;
+    int AttributeSize;
     int CompressZFP;
     attr_list ZFPParams;
 };
@@ -39,9 +44,17 @@ typedef struct FFSVarRec
     size_t *PerWriterIncomingSize; // important for compression
 } * FFSVarRec;
 
+enum FFSRequestTypeEnum
+{
+    Global = 0,
+    Local = 1
+};
+
 typedef struct FFSArrayRequest
 {
     FFSVarRec VarRec;
+    enum FFSRequestTypeEnum RequestType;
+    size_t NodeID;
     size_t *Start;
     size_t *Count;
     void *Data;

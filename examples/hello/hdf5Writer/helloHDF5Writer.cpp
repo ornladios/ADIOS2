@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     /** Application variable */
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     std::vector<int> myInts = {0, -1, -2, -3, -4, -5, -6, -7, -8, -9};
+    double myScalar = 1.234;
     const std::size_t Nx = myFloats.size();
 
     try
@@ -47,6 +48,8 @@ int main(int argc, char *argv[])
         adios2::Variable<int> h5Ints = hdf5IO.DefineVariable<int>(
             "h5Ints", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
+        adios2::Variable<double> h5ScalarDouble =
+            hdf5IO.DefineVariable<double>("h5ScalarDouble");
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine hdf5Writer =
             hdf5IO.Open("myVector.h5", adios2::Mode::Write);
@@ -54,6 +57,7 @@ int main(int argc, char *argv[])
         /** Write variable for buffering */
         hdf5Writer.Put<float>(h5Floats, myFloats.data());
         hdf5Writer.Put(h5Ints, myInts.data());
+        hdf5Writer.Put(h5ScalarDouble, &myScalar);
 
         std::vector<int64_t> m_globalDims = {10, 20, 30, 40};
         hdf5IO.DefineAttribute<std::string>(

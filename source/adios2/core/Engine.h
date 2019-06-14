@@ -24,7 +24,6 @@
 /// \endcond
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/ADIOSTypes.h"
 #include "adios2/core/IO.h"
@@ -47,6 +46,9 @@ public:
 public:
     /** from derived class */
     const std::string m_EngineType;
+
+    /** IO class object that creates this Engine at Open */
+    IO &m_IO;
 
     /** Unique name for this Engine within m_IO */
     const std::string m_Name;
@@ -90,15 +92,27 @@ public:
      * @param timeoutSeconds (not yet implemented)
      * @return current step status
      */
-    virtual StepStatus
-    BeginStep(StepMode mode,
-              const float timeoutSeconds = std::numeric_limits<float>::max());
+    virtual StepStatus BeginStep(StepMode mode,
+                                 const float timeoutSeconds = -1.0);
 
     /**
      * Returns current step information for each engine.
      * @return current step
      */
     virtual size_t CurrentStep() const;
+
+    /**
+     * Put signature that pre-allocates a Variable in Buffer returning a Span of
+     * the payload memory from variable.m_Count
+     * @param variable input variable to be allocated
+     * @param bufferID
+     * @param value
+     * @return span to the buffer internal memory that be populated by the
+     * application
+     */
+    template <class T>
+    typename Variable<T>::Span &
+    Put(Variable<T> &variable, const size_t bufferID = 0, const T &value = T{});
 
     /**
      * @brief Put associates variable and data into adios2 in Engine Write mode.
@@ -156,7 +170,7 @@ public:
      * @param datum contains user defined single value
      */
     template <class T>
-    void Put(Variable<T> &variable, const T &datum);
+    void Put(Variable<T> &variable, const T &datum, const Mode launch);
 
     /**
      * @brief Put version for single value datum using variable name. Throws
@@ -179,7 +193,8 @@ public:
      * </pre>
      */
     template <class T>
-    void Put(const std::string &variableName, const T &datum);
+    void Put(const std::string &variableName, const T &datum,
+             const Mode launch);
 
     /**
      * @brief Get associates an existing variable selections and populates data
@@ -280,6 +295,64 @@ public:
              const Mode launch = Mode::Deferred);
 
     /**
+     * @brief Get version retrieves an existing variable's block selections and
+     * sets the input data pointer
+     * from adios2 Engine Write mode directly to Read Mode. If the data is not
+     * available (likely for all Engines except Inline), return null, or TODO
+     * allocate and fill in a buffer.
+     *
+     * Polymorphic function.
+     * Check your Engine documentation for specific behavior.
+     * In general, it will register variable metadata and data for populating
+     * data values at Read.
+     * @param variable contains metadata and selections for getting the variable
+     * @param executeMode
+     * @return pointer to variable's block info for this block selection.
+     * <pre>
+     * Deferred (default): lazy evaluation, data is not populated until EndStep
+     *      Close, or PerformPuts
+     * Sync: data is ready after this call
+     * </pre>
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user
+     * inputs
+     * std::runtime_error: always if system failures are caught
+     * </pre>
+     */
+    template <class T>
+    typename Variable<T>::Info *Get(Variable<T> &variable,
+                                    const Mode launch = Mode::Deferred);
+
+    /**
+     * @brief Get version for block selection that accepts a variableName as
+     * input.
+     *
+     * Throws an exception if variable is not found in IO that created the
+     * current engine.
+     *
+     * @param variableName input variable name (Variable must exist in IO that
+     * created current Engine with Open)
+     * @param executeMode
+     * @return pointer to variable's block info for this block selection.
+     * <pre>
+     * Deferred (default): lazy evaluation, data is not populated until EndStep
+     *      Close, or PerformPuts.
+     * Sync: data is ready after this call
+     * </pre>
+     * @exception
+     * <pre>
+     * std::invalid_argument: in debug mode, additional checks for user
+     * inputs, also thrown if variable is not
+     * found.
+     * std::runtime_error: always if system failures are caught
+     * </pre>
+     */
+    template <class T>
+    typename Variable<T>::Info *Get(const std::string &variableName,
+                                    const Mode launch = Mode::Deferred);
+
+    /**
      * Reader application indicates that no more data will be read from the
      * current stream before advancing.
      * This is necessary to allow writers to advance as soon as possible.
@@ -326,6 +399,16 @@ public:
     AllStepsBlocksInfo(const Variable<T> &variable) const;
 
     /**
+     * This function is internal, for public interface use
+     * Variable<T>::AllStepsBlocksInfo
+     * @param variable
+     * @return
+     */
+    template <class T>
+    std::vector<std::vector<typename Variable<T>::Info>>
+    AllRelativeStepsBlocksInfo(const Variable<T> &variable) const;
+
+    /**
      * Extracts all available blocks information for a particular
      * variable and step.
      * Valid in read mode only.
@@ -338,10 +421,13 @@ public:
     std::vector<typename Variable<T>::Info>
     BlocksInfo(const Variable<T> &variable, const size_t step) const;
 
-protected:
-    /** IO class object that creates this Engine at Open */
-    IO &m_IO;
+    template <class T>
+    T *BufferData(const size_t payloadOffset,
+                  const size_t bufferID = 0) noexcept;
 
+    size_t Steps() const;
+
+protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
     MPI_Comm m_MPIComm;
@@ -358,6 +444,9 @@ protected:
     /** keep track if the current Engine is marked for destruction in IO */
     bool m_IsClosed = false;
 
+    /** carries the number of available steps in each Engine */
+    size_t m_Steps = 0;
+
     /** Called from constructors */
     virtual void Init();
 
@@ -367,17 +456,27 @@ protected:
     /** From IO AddTransport */
     virtual void InitTransports();
 
+// Put
+#define declare_type(T)                                                        \
+    virtual void DoPut(Variable<T> &variable,                                  \
+                       typename Variable<T>::Span &span, const size_t blockID, \
+                       const T &value);
+
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
 #define declare_type(T)                                                        \
     virtual void DoPutSync(Variable<T> &, const T *);                          \
     virtual void DoPutDeferred(Variable<T> &, const T *);
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 // Get
 #define declare_type(T)                                                        \
     virtual void DoGetSync(Variable<T> &, T *);                                \
-    virtual void DoGetDeferred(Variable<T> &, T *);
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    virtual void DoGetDeferred(Variable<T> &, T *);                            \
+    virtual typename Variable<T>::Info *DoGetBlockSync(Variable<T> &);
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     virtual void DoClose(const int transportIndex) = 0;
@@ -397,11 +496,23 @@ protected:
     virtual std::map<size_t, std::vector<typename Variable<T>::Info>>          \
     DoAllStepsBlocksInfo(const Variable<T> &variable) const;                   \
                                                                                \
+    virtual std::vector<std::vector<typename Variable<T>::Info>>               \
+    DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const;           \
+                                                                               \
     virtual std::vector<typename Variable<T>::Info> DoBlocksInfo(              \
         const Variable<T> &variable, const size_t step) const;
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+#define declare_type(T, L)                                                     \
+    virtual T *DoBufferData_##L(const size_t payloadPosition,                  \
+                                const size_t bufferID) noexcept;
+
+    ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
+
+    virtual size_t DoSteps() const;
 
 private:
     /** Throw exception by Engine virtual functions not implemented/supported by
@@ -436,8 +547,9 @@ private:
     extern template void Engine::Put<T>(const std::string &, const T *,        \
                                         const Mode);                           \
                                                                                \
-    extern template void Engine::Put<T>(Variable<T> &, const T &);             \
-    extern template void Engine::Put<T>(const std::string &, const T &);       \
+    extern template void Engine::Put<T>(Variable<T> &, const T &, const Mode); \
+    extern template void Engine::Put<T>(const std::string &, const T &,        \
+                                        const Mode);                           \
                                                                                \
     extern template void Engine::Get<T>(Variable<T> &, T *, const Mode);       \
     extern template void Engine::Get<T>(const std::string &, T *, const Mode); \
@@ -451,16 +563,31 @@ private:
     extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
                                         const Mode);                           \
                                                                                \
+    extern template typename Variable<T>::Info *Engine::Get<T>(Variable<T> &,  \
+                                                               const Mode);    \
+    extern template typename Variable<T>::Info *Engine::Get<T>(                \
+        const std::string &, const Mode);                                      \
+                                                                               \
     extern template Variable<T> &Engine::FindVariable(                         \
         const std::string &variableName, const std::string hint);              \
                                                                                \
     extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
-    Engine::AllStepsBlocksInfo(const Variable<T> &variable) const;             \
+    Engine::AllStepsBlocksInfo(const Variable<T> &) const;                     \
+                                                                               \
+    extern template std::vector<std::vector<typename Variable<T>::Info>>       \
+    Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;             \
                                                                                \
     extern template std::vector<typename Variable<T>::Info>                    \
-    Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const;
+    Engine::BlocksInfo(const Variable<T> &, const size_t) const;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    extern template typename Variable<T>::Span &Engine::Put(                   \
+        Variable<T> &, const size_t, const T &);
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

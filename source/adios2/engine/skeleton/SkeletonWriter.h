@@ -39,9 +39,8 @@ public:
 
     ~SkeletonWriter() = default;
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
@@ -62,7 +61,7 @@ private:
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
     void DoPutDeferred(Variable<T> &, const T *) final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     /**

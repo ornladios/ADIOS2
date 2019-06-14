@@ -24,6 +24,7 @@ HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
 : Engine("HDF5Writer", io, name, mode, mpiComm), m_H5File(io.m_DebugMode)
 {
+    m_IO.m_ReadStreaming = false;
     m_EndMessage = ", in call to IO HDF5Writer Open " + m_Name + "\n";
     Init();
 }
@@ -32,6 +33,7 @@ HDF5WriterP::~HDF5WriterP() { DoClose(); }
 
 StepStatus HDF5WriterP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    m_IO.m_ReadStreaming = false;
     return StepStatus::OK;
 }
 
@@ -74,7 +76,7 @@ void HDF5WriterP::Init()
     {
         m_H5File.Init(m_Name, m_MPIComm, true);
     }
-
+    m_H5File.ParseParameters(m_IO);
 #endif
 }
 
@@ -87,7 +89,7 @@ void HDF5WriterP::Init()
     {                                                                          \
         DoPutSyncCommon(variable, values);                                     \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 template <class T>

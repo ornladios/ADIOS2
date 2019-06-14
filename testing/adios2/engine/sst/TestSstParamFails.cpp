@@ -12,8 +12,6 @@
 
 #include <gtest/gtest.h>
 
-#include "TestData.h"
-
 class SstParamFailTest : public ::testing::Test
 {
 public:

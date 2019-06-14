@@ -40,7 +40,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using HDF5
+    // Write test data using HDF5
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -215,21 +215,21 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 EXPECT_FALSE(var_u64);
 
                 ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_i8.Steps(), 1);
+                ASSERT_EQ(var_i8.Steps(), NSteps / 2 + NSteps % 2);
                 ASSERT_EQ(var_i8.Shape()[0], static_cast<size_t>(mpiSize * Nx));
 
                 ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_i16.Steps(), 1);
+                ASSERT_EQ(var_i16.Steps(), NSteps / 2 + NSteps % 2);
                 ASSERT_EQ(var_i16.Shape()[0],
                           static_cast<size_t>(mpiSize * Nx));
 
                 ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_i32.Steps(), 1);
+                ASSERT_EQ(var_i32.Steps(), NSteps / 2 + NSteps % 2);
                 ASSERT_EQ(var_i32.Shape()[0],
                           static_cast<size_t>(mpiSize * Nx));
 
                 ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_i64.Steps(), 1);
+                ASSERT_EQ(var_i64.Steps(), NSteps / 2 + NSteps % 2);
                 ASSERT_EQ(var_i64.Shape()[0],
                           static_cast<size_t>(mpiSize * Nx));
 
@@ -256,19 +256,19 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 EXPECT_TRUE(var_u64);
 
                 ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_u8.Steps(), 1);
+                ASSERT_EQ(var_u8.Steps(), NSteps / 2);
                 ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx);
 
                 ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_u16.Steps(), 1);
+                ASSERT_EQ(var_u16.Steps(), NSteps / 2);
                 ASSERT_EQ(var_u16.Shape()[0], mpiSize * Nx);
 
                 ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_u32.Steps(), 1);
+                ASSERT_EQ(var_u32.Steps(), NSteps / 2);
                 ASSERT_EQ(var_u32.Shape()[0], mpiSize * Nx);
 
                 ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_u64.Steps(), 1);
+                ASSERT_EQ(var_u64.Steps(), NSteps / 2);
                 ASSERT_EQ(var_u64.Shape()[0], mpiSize * Nx);
 
                 var_u8.SetSelection(sel);
@@ -293,11 +293,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
                 EXPECT_TRUE(var_r64);
 
                 ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_r32.Steps(), 1);
+                ASSERT_EQ(var_r32.Steps(), NSteps - 1);
                 ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
 
                 ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_r64.Steps(), 1);
+                ASSERT_EQ(var_r64.Steps(), NSteps - 1);
                 ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
                 var_r32.SetSelection(sel);
@@ -311,11 +311,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
             EXPECT_TRUE(var_cr64);
 
             ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_cr32.Steps(), 1);
+            ASSERT_EQ(var_cr32.Steps(), NSteps);
             ASSERT_EQ(var_cr32.Shape()[0], mpiSize * Nx);
 
             ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_cr64.Steps(), 1);
+            ASSERT_EQ(var_cr64.Steps(), NSteps);
             ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
 
             var_cr32.SetSelection(sel);
@@ -389,7 +389,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -474,70 +474,70 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
             ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8.Steps(), 1);
+            ASSERT_EQ(var_i8.Steps(), NSteps);
             ASSERT_EQ(var_i8.Shape()[0], Ny);
             ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
             EXPECT_TRUE(var_i16);
             ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16.Steps(), 1);
+            ASSERT_EQ(var_i16.Steps(), NSteps);
             ASSERT_EQ(var_i16.Shape()[0], Ny);
             ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
             EXPECT_TRUE(var_i32);
             ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32.Steps(), 1);
+            ASSERT_EQ(var_i32.Steps(), NSteps);
             ASSERT_EQ(var_i32.Shape()[0], Ny);
             ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
             EXPECT_TRUE(var_i64);
             ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64.Steps(), 1);
+            ASSERT_EQ(var_i64.Steps(), NSteps);
             ASSERT_EQ(var_i64.Shape()[0], Ny);
             ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
             EXPECT_TRUE(var_u8);
             ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8.Steps(), 1);
+            ASSERT_EQ(var_u8.Steps(), NSteps);
             ASSERT_EQ(var_u8.Shape()[0], Ny);
             ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
             EXPECT_TRUE(var_u16);
             ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16.Steps(), 1);
+            ASSERT_EQ(var_u16.Steps(), NSteps);
             ASSERT_EQ(var_u16.Shape()[0], Ny);
             ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
             EXPECT_TRUE(var_u32);
             ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32.Steps(), 1);
+            ASSERT_EQ(var_u32.Steps(), NSteps);
             ASSERT_EQ(var_u32.Shape()[0], Ny);
             ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             EXPECT_TRUE(var_u64);
             ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64.Steps(), 1);
+            ASSERT_EQ(var_u64.Steps(), NSteps);
             ASSERT_EQ(var_u64.Shape()[0], Ny);
             ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_r32 = io.InquireVariable<float>("r32");
             EXPECT_TRUE(var_r32);
             ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32.Steps(), 1);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
             ASSERT_EQ(var_r32.Shape()[0], Ny);
             ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_r64 = io.InquireVariable<double>("r64");
             EXPECT_TRUE(var_r64);
             ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64.Steps(), 1);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
             ASSERT_EQ(var_r64.Shape()[0], Ny);
             ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
@@ -637,7 +637,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -724,70 +724,70 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_TRUE(var_i8);
             ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i8.Steps(), 1);
+            ASSERT_EQ(var_i8.Steps(), NSteps);
             ASSERT_EQ(var_i8.Shape()[0], Ny);
             ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_i16 = io.InquireVariable<int16_t>("i16");
             EXPECT_TRUE(var_i16);
             ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i16.Steps(), 1);
+            ASSERT_EQ(var_i16.Steps(), NSteps);
             ASSERT_EQ(var_i16.Shape()[0], Ny);
             ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_i32 = io.InquireVariable<int32_t>("i32");
             EXPECT_TRUE(var_i32);
             ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i32.Steps(), 1);
+            ASSERT_EQ(var_i32.Steps(), NSteps);
             ASSERT_EQ(var_i32.Shape()[0], Ny);
             ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_i64 = io.InquireVariable<int64_t>("i64");
             EXPECT_TRUE(var_i64);
             ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_i64.Steps(), 1);
+            ASSERT_EQ(var_i64.Steps(), NSteps);
             ASSERT_EQ(var_i64.Shape()[0], Ny);
             ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u8 = io.InquireVariable<uint8_t>("u8");
             EXPECT_TRUE(var_u8);
             ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u8.Steps(), 1);
+            ASSERT_EQ(var_u8.Steps(), NSteps);
             ASSERT_EQ(var_u8.Shape()[0], Ny);
             ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u16 = io.InquireVariable<uint16_t>("u16");
             EXPECT_TRUE(var_u16);
             ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u16.Steps(), 1);
+            ASSERT_EQ(var_u16.Steps(), NSteps);
             ASSERT_EQ(var_u16.Shape()[0], Ny);
             ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u32 = io.InquireVariable<uint32_t>("u32");
             EXPECT_TRUE(var_u32);
             ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u32.Steps(), 1);
+            ASSERT_EQ(var_u32.Steps(), NSteps);
             ASSERT_EQ(var_u32.Shape()[0], Ny);
             ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             EXPECT_TRUE(var_u64);
             ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_u64.Steps(), 1);
+            ASSERT_EQ(var_u64.Steps(), NSteps);
             ASSERT_EQ(var_u64.Shape()[0], Ny);
             ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_r32 = io.InquireVariable<float>("r32");
             EXPECT_TRUE(var_r32);
             ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32.Steps(), 1);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
             ASSERT_EQ(var_r32.Shape()[0], Ny);
             ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
             auto var_r64 = io.InquireVariable<double>("r64");
             EXPECT_TRUE(var_r64);
             ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r64.Steps(), 1);
+            ASSERT_EQ(var_r64.Steps(), NSteps);
             ASSERT_EQ(var_r64.Shape()[0], Ny);
             ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
@@ -889,7 +889,7 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -937,9 +937,12 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
             EXPECT_TRUE(varR32);
             reader.EndStep();
 
-            adios2::Variable<double> varR64 = io.DefineVariable<double>(
-                "r64", shape, start, count, adios2::ConstantDims);
-            EXPECT_TRUE(varR64);
+            if (step == 0)
+            {
+                adios2::Variable<double> varR64 = io.DefineVariable<double>(
+                    "r64", shape, start, count, adios2::ConstantDims);
+                EXPECT_TRUE(varR64);
+            }
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             writer.BeginStep();

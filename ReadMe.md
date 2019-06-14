@@ -10,8 +10,8 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6eeb5a8ac3e34d2599cfdea5bdc3390f)](https://www.codacy.com/app/chuckatkins/ADIOS2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ornladios/ADIOS2&amp;utm_campaign=Badge_Grade)
 
 
-# Adaptable Input / Output System (ADIOS) v2.2.0
-This is v2.2.0 of the ADIOS I/O system, developed as part of the
+# Adaptable Input / Output System (ADIOS) v2.3.1
+This is v2.3.1 of the ADIOS I/O system, developed as part of the
 U.S. Department of Energy Exascale Computing Program.
 
 ## License
@@ -30,7 +30,7 @@ Please find [ADIOS2 User Guide at readthedocs](https://adios2.readthedocs.io)
     * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
 * bindings - public interface language bindings (C++11, C++98, C, Fortran, Python and Matlab)
 * testing - Tests using [gtest](https://github.com/google/googletest)
-  
+
 
 ## Getting Started
 
@@ -42,52 +42,44 @@ The following is a quick step-by-step build guide, find the full CMake-based ins
 
 Step-by-step build guide:
 
-1. Clone the repository:
+1. Clone the repository and create a build directory:
 
 ```bash
-$ mkdir adios2
-$ cd adios2
-$ git clone https://github.com/ornladios/ADIOS2.git
+$ git clone https://github.com/ornladios/ADIOS2.git ADIOS2
+$ mkdir adios2_build && cd adios2_build
 ```
 
-2. Create a separate build directory in your work area:
+2. Configure the project with CMake:
 
 ```bash
-$ mkdir build
-```
-
-3. Configure the project with CMake:
-
-```bash
-$ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.2.0/gnu/openmpi ../ADIOS2
--- The C compiler identification is GNU 6.3.1
--- The CXX compiler identification is GNU 6.3.1
+adios2_build$ cmake -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1/gnu/openmpi ../ADIOS2
+-- The C compiler identification is GNU 7.3.0
+-- The CXX compiler identification is GNU 7.3.0
 ...
 
 ADIOS2 build configuration:
-  ADIOS Version: 2.2.0
-  C++ Compiler : GNU 5.4.0 
-    /usr/bin/c++
+  ADIOS Version: 2.3.1
+  C++ Compiler : GNU 7.3.0
+    /opt/ohpc/pub/compiler/gcc/7.3.0/bin/g++
 
-  Fortran Compiler : GNU 5.4.0 
-    /usr/bin/gfortran
+  Fortran Compiler : GNU 7.3.0
+    /opt/ohpc/pub/compiler/gcc/7.3.0/bin/gfortran
 
-  Installation prefix: /opt/adios2
+  Installation prefix: /opt/adios2/2.3.1/gnu/openmpi
         bin: bin
         lib: lib
     include: include
       cmake: lib/cmake/adios2
-     python: lib/python3.5/site-packages
 
   Features:
     Library Type: shared
-    Build Type:   Debug
+    Build Type:   Release
     Testing: ON
     Build Options:
       BZip2    : ON
-      ZFP      : ON
-      SZ       : ON
+      ZFP      : OFF
+      SZ       : OFF
+      MGARD    : OFF
       MPI      : ON
       DataMan  : ON
       SST      : ON
@@ -96,81 +88,80 @@ ADIOS2 build configuration:
       Python   : ON
       Fortran  : ON
       SysVShMem: ON
+      Endian_Reverse: OFF
 
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/chuck/Code/adios2/build
-$
+-- Build files have been written to: /home/chuck/adios2_build
+
 ```
 
 The following options can be specified with CMake's `-DVAR=VALUE` syntax to control which features get enabled or disabled:
 
-| CMake Option         | Values              | Description                                                                      |
-| :------------------- | :-------------------------: | :------------------------------------------------------------------------------- |
-| `ADIOS2_USE_BZip2`   | **`AUTO`**/``ON``/``OFF`` | Enable [BZip2](http://www.bzip.org/) compression (not implemented).              |
-| `ADIOS2_USE_ZFP`     | **`AUTO`**/``ON``/``OFF`` | Enable [ZFP](https://github.com/LLNL/zfp) compression (not implemented).         |
-| `ADIOS2_USE_MPI`     | **`AUTO`**/``ON``/``OFF`` | Enable MPI.                                                                      |
-| `ADIOS2_USE_DataMan` | **`AUTO`**/``ON``/``OFF`` | Enable the DataMan engine for WAN transports.                                    |
-| `ADIOS2_USE_ZeroMQ`  | **`AUTO`**/``ON``/``OFF`` | Enable ZeroMQ for the DataMan engine.                                            |
-| `ADIOS2_USE_HDF5`    | **`AUTO`**/``ON``/``OFF`` | Enable the [HDF5](https://www.hdfgroup.org) engine.                              |
-| `ADIOS2_USE_Python`  | **`AUTO`**/``ON``/``OFF`` | Enable the Python >= 2.7 bindings. Need mpi4py and numpy |
-| `ADIOS2_USE_SST`  | **`AUTO`**/``ON``/``OFF`` | Enable Staging Engine |
-| `ADIOS2_USE_Fortran`  | **`AUTO`**/``ON``/``OFF`` | Enable Fortran bindings |
+| CMake Option         | Values                    | Description                                                              |
+| :------------------- | :------------------------ | :----------------------------------------------------------------------- |
+| `ADIOS2_USE_BZip2`   | **`AUTO`**/``ON``/``OFF`` | Enable [BZip2](http://www.bzip.org/) compression (not implemented).      |
+| `ADIOS2_USE_ZFP`     | **`AUTO`**/``ON``/``OFF`` | Enable [ZFP](https://github.com/LLNL/zfp) compression (not implemented). |
+| `ADIOS2_USE_MPI`     | **`AUTO`**/``ON``/``OFF`` | Enable MPI.                                                              |
+| `ADIOS2_USE_DataMan` | **`AUTO`**/``ON``/``OFF`` | Enable the DataMan engine for WAN transports.                            |
+| `ADIOS2_USE_ZeroMQ`  | **`AUTO`**/``ON``/``OFF`` | Enable ZeroMQ for the DataMan engine.                                    |
+| `ADIOS2_USE_HDF5`    | **`AUTO`**/``ON``/``OFF`` | Enable the [HDF5](https://www.hdfgroup.org) engine.                      |
+| `ADIOS2_USE_Python`  | **`AUTO`**/``ON``/``OFF`` | Enable the Python >= 2.7 bindings. Need mpi4py and numpy                 |
+| `ADIOS2_USE_SST`     | **`AUTO`**/``ON``/``OFF`` | Enable Staging Engine                                                    |
+| `ADIOS2_USE_Fortran` | **`AUTO`**/``ON``/``OFF`` | Enable Fortran bindings                                                  |
 
-Note: The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similary, enabling MPI and Python bindings requires the presence of `mpi4py`.
+Note: The `ADIOS2_USE_HDF5` option requires the use of a matching serial or parallel version depending on whether `ADIOS2_USE_MPI` is enabled.  Similarly, enabling MPI and Python bindings requires the presence of `mpi4py`.
 
 In addition to the `ADIOS2_USE_Feature` options, the following options are also available to control how the library get's built:
 
-| CMake Options              | Values                                                    | Description                                                                           |
-| :------------------------- | :-------------------------------------------------------: | :------------------------------------------------------------------------------------ |
-| `BUILD_SHARED_LIBS` | **`ON`**/`OFF`                                            | Build shared libraries.                                                               |
-| `ADIOS2_ENABLE_PIC`        | **`ON`**/`OFF`                                            | Enable Position Independent Code for static libraries.                                |
-| `ADIOS2_BUILD_EXAMPLES`    | **`ON`**/`OFF`                                            | Build examples.                                                                       |
-| `ADIOS2_BUILD_TESTING`     | **`ON`**/`OFF`                                            | Build test code.                                                                      |
-| `CMAKE_INSTALL_PREFIX`     | /path/to/install (`/usr/local`)                           | Install location.                                                                     |
-| `CMAKE_BUILD_TYPE`         | **`Debug`** / `Release` / `RelWithDebInfo` / `MinSizeRel` | The level of compiler optimization to use.                                            |
+| CMake Options          | Values                                                    | Description                                |
+| :--------------------- | :-------------------------------------------------------- | :----------------------------------------- |
+| `BUILD_SHARED_LIBS`    | **`ON`**/`OFF`                                            | Build shared libraries.                    |
+| `ADIOS2_BUILD_EXAMPLE` | **`ON`**/`OFF`                                            | Build examples.                            |
+| `ADIOS2_BUILD_TESTING` | **`ON`**/`OFF`                                            | Build test code.                           |
+| `CMAKE_INSTALL_PREFIX` | /path/to/install (`/usr/local`)                           | Install location.                          |
+| `CMAKE_BUILD_TYPE`     | **`Debug`** / `Release` / `RelWithDebInfo` / `MinSizeRel` | The level of compiler optimization to use. |
 
-4. Compile:
+3. Compile:
 
 ```bash
-$ make -j8
+adios2_build$ make -j8
 ```
 
-5. Run tests:
+4. Run tests:
 
 ```bash
-$ ctest
-Test project /home/chuck/Code/adios2/build
-      Test project /home/wfg/workspace/build
-        Start   1: ADIOSInterfaceWriteTest.DefineVar_int8_t_1x10
-  1/113 Test   #1: ADIOSInterfaceWriteTest.DefineVar_int8_t_1x10 ............................   Passed    0.07 sec
-        Start   2: ADIOSInterfaceWriteTest.DefineVar_int16_t_1x10
-  2/113 Test   #2: ADIOSInterfaceWriteTest.DefineVar_int16_t_1x10 ...........................   Passed    0.07 sec
-        Start   3: ADIOSInterfaceWriteTest.DefineVar_int32_t_1x10
+adios2_build$ ctest
+Test project /home/chuck/adios2_build
+       Start   1: HeatTransfer.BPFile.Write.MxM
+  1/295 Test   #1: HeatTransfer.BPFile.Write.MxM ............................................   Passed    1.25 sec
+        Start   2: HeatTransfer.BPFile.Read.MxM
+  2/295 Test   #2: HeatTransfer.BPFile.Read.MxM .............................................   Passed    0.55 sec
+        Start   3: HeatTransfer.BPFile.Dump.MxM
   ...
-  
+
 $
 ```
 
-6.  Install:
+5.  Install:
 ```
-$ make install
+adios2_build$ make install
 [  7%] Built target adios2sys_objects
 ...
 [ 61%] Built target adios2
 [ 68%] Built target adios2py
 ...
 Install the project...
--- Install configuration: "Debug"
--- Installing: /opt/adios2/2.2.0/gnu/openmpi/include/adios2/ADIOSConfig.h
+-- Install configuration: "Release"
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/include/adios2/ADIOSConfig.h
 ...
--- Installing: /opt/adios2/2.2.0/gnu/openmpi/bin/adios2-config
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/bin/adios2-config
 ...
--- Installing: /opt/adios2/2.2.0/gnu/openmpi/include/adios2.h
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/include/adios2.h
 ...
--- Installing: /opt/adios2/2.2.0/gnu/openmpi/lib/libadios2.so.2.0.0
--- Installing: /opt/adios2/2.2.0/gnu/openmpi/lib/libadios2.so.2
--- Installing: /opt/adios2/2.2.0/gnu/openmpi/lib/libadios2.so
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/lib/libadios2.so.2.3.1
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/lib/libadios2.so.2
+-- Installing: /opt/adios2/2.3.1/gnu/openmpi/lib/libadios2.so
 ...
 $
 ```

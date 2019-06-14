@@ -15,6 +15,7 @@
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 namespace adios2
@@ -26,20 +27,19 @@ namespace engine
 
 BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
-: Engine("BPFileWriter", io, name, mode, mpiComm),
-  m_BP3Serializer(mpiComm, m_DebugMode),
+: Engine("BP3", io, name, mode, mpiComm), m_BP3Serializer(mpiComm, m_DebugMode),
   m_FileDataManager(mpiComm, m_DebugMode),
   m_FileMetadataManager(mpiComm, m_DebugMode)
 {
+    TAU_SCOPED_TIMER("BP3Writer::Open");
     m_IO.m_ReadStreaming = false;
     m_EndMessage = " in call to IO Open BPFileWriter " + m_Name + "\n";
     Init();
 }
 
-BP3Writer::~BP3Writer() = default;
-
 StepStatus BP3Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 {
+    TAU_SCOPED_TIMER("BP3Writer::BeginStep");
     m_BP3Serializer.m_DeferredVariables.clear();
     m_BP3Serializer.m_DeferredVariablesDataSize = 0;
     m_IO.m_ReadStreaming = false;
@@ -53,6 +53,7 @@ size_t BP3Writer::CurrentStep() const
 
 void BP3Writer::PerformPuts()
 {
+    TAU_SCOPED_TIMER("BP3Writer::PerformPuts");
     if (m_BP3Serializer.m_DeferredVariables.empty())
     {
         return;
@@ -73,15 +74,9 @@ void BP3Writer::PerformPuts()
     {                                                                          \
         Variable<T> &variable = FindVariable<T>(                               \
             variableName, "in call to PerformPuts, EndStep or Close");         \
-                                                                               \
-        for (const auto &blockInfo : variable.m_BlocksInfo)                    \
-        {                                                                      \
-            PutSyncCommon(variable, blockInfo);                                \
-        }                                                                      \
-        variable.m_BlocksInfo.clear();                                         \
+        PerformPutCommon(variable);                                            \
     }
-
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
     m_BP3Serializer.m_DeferredVariables.clear();
@@ -89,6 +84,7 @@ void BP3Writer::PerformPuts()
 
 void BP3Writer::EndStep()
 {
+    TAU_SCOPED_TIMER("BP3Writer::EndStep");
     if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();
@@ -108,6 +104,7 @@ void BP3Writer::EndStep()
 
 void BP3Writer::Flush(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP3Writer::Flush");
     DoFlush(false, transportIndex);
     m_BP3Serializer.ResetBuffer(m_BP3Serializer.m_Data);
 
@@ -126,17 +123,31 @@ void BP3Writer::Init()
 }
 
 #define declare_type(T)                                                        \
+    void BP3Writer::DoPut(Variable<T> &variable,                               \
+                          typename Variable<T>::Span &span,                    \
+                          const size_t bufferID, const T &value)               \
+    {                                                                          \
+        TAU_SCOPED_TIMER("BP3Writer::Put");                                    \
+        return PutCommon(variable, span, bufferID, value);                     \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
     void BP3Writer::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Writer::Put");                                    \
         PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        variable.m_BlocksInfo.clear();                                         \
+        variable.m_BlocksInfo.pop_back();                                      \
     }                                                                          \
     void BP3Writer::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
+        TAU_SCOPED_TIMER("BP3Writer::Put");                                    \
         PutDeferredCommon(variable, data);                                     \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void BP3Writer::InitParameters()
@@ -169,7 +180,8 @@ void BP3Writer::InitTransports()
     }
 
     m_BP3Serializer.ProfilerStart("mkdir");
-    m_FileDataManager.MkDirsBarrier(bpSubStreamNames);
+    m_FileDataManager.MkDirsBarrier(bpSubStreamNames,
+                                    m_BP3Serializer.m_NodeLocal);
     m_BP3Serializer.ProfilerStop("mkdir");
 
     if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
@@ -210,6 +222,7 @@ void BP3Writer::DoFlush(const bool isFinal, const int transportIndex)
 
 void BP3Writer::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP3Writer::Close");
     if (m_BP3Serializer.m_DeferredVariables.size() > 0)
     {
         PerformPuts();
@@ -237,6 +250,7 @@ void BP3Writer::DoClose(const int transportIndex)
 
 void BP3Writer::WriteProfilingJSONFile()
 {
+    TAU_SCOPED_TIMER("BP3Writer::WriteProfilingJSONFile");
     auto transportTypes = m_FileDataManager.GetTransportsTypes();
     auto transportProfilers = m_FileDataManager.GetTransportsProfilers();
 
@@ -270,6 +284,7 @@ void BP3Writer::WriteProfilingJSONFile()
 
 void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
+    TAU_SCOPED_TIMER("BP3Writer::WriteCollectiveMetadataFile");
     m_BP3Serializer.AggregateCollectiveMetadata(
         m_MPIComm, m_BP3Serializer.m_Metadata, true);
 
@@ -302,6 +317,7 @@ void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
 
 void BP3Writer::WriteData(const bool isFinal, const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP3Writer::WriteData");
     size_t dataSize = m_BP3Serializer.m_Data.m_Position;
 
     if (isFinal)
@@ -322,15 +338,16 @@ void BP3Writer::WriteData(const bool isFinal, const int transportIndex)
 
 void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 {
+    TAU_SCOPED_TIMER("BP3Writer::AggregateWriteData");
     m_BP3Serializer.CloseStream(m_IO, false);
 
     // async?
     for (int r = 0; r < m_BP3Serializer.m_Aggregator.m_Size; ++r)
     {
-        std::vector<MPI_Request> dataRequests =
+        std::vector<std::vector<MPI_Request>> dataRequests =
             m_BP3Serializer.m_Aggregator.IExchange(m_BP3Serializer.m_Data, r);
 
-        std::vector<MPI_Request> absolutePositionRequests =
+        std::vector<std::vector<MPI_Request>> absolutePositionRequests =
             m_BP3Serializer.m_Aggregator.IExchangeAbsolutePosition(
                 m_BP3Serializer.m_Data, r);
 
@@ -376,6 +393,16 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     m_BP3Serializer.m_Aggregator.ResetBuffers();
 }
+
+#define declare_type(T, L)                                                     \
+    T *BP3Writer::DoBufferData_##L(const size_t payloadPosition,               \
+                                   const size_t bufferID) noexcept             \
+    {                                                                          \
+        return BufferDataCommon<T>(payloadPosition, bufferID);                 \
+    }
+
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
 
 } // end namespace engine
 } // end namespace core

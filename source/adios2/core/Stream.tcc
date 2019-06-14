@@ -21,8 +21,50 @@ namespace core
 {
 
 template <class T>
+void Stream::WriteAttribute(const std::string &name, const T &value,
+                            const std::string &variableName,
+                            const std::string separator, const bool endStep)
+{
+    m_IO->DefineAttribute<T>(name, value, variableName, separator);
+    CheckOpen();
+    if (!m_StepStatus)
+    {
+        m_Engine->BeginStep();
+        m_StepStatus = true;
+    }
+
+    if (endStep)
+    {
+        m_Engine->EndStep();
+        m_StepStatus = false;
+    }
+}
+
+template <class T>
+void Stream::WriteAttribute(const std::string &name, const T *array,
+                            const size_t elements,
+                            const std::string &variableName,
+                            const std::string separator, const bool endStep)
+{
+    m_IO->DefineAttribute<T>(name, array, elements, variableName, separator);
+    CheckOpen();
+    if (!m_StepStatus)
+    {
+        m_Engine->BeginStep();
+        m_StepStatus = true;
+    }
+
+    if (endStep)
+    {
+        m_Engine->EndStep();
+        m_StepStatus = false;
+    }
+}
+
+template <class T>
 void Stream::Write(const std::string &name, const T *data, const Dims &shape,
-                   const Dims &start, const Dims &count, const bool endStep)
+                   const Dims &start, const Dims &count,
+                   const adios2::vParams &operations, const bool endStep)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
 
@@ -32,7 +74,7 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
     }
     else
     {
-        if (!shape.empty())
+        if (!shape.empty() && !variable->m_SingleValue)
         {
             variable->SetShape(shape);
         }
@@ -50,6 +92,23 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
         m_StepStatus = true;
     }
 
+    // boiler plate for operations
+    if (!operations.empty())
+    {
+        variable->m_Operations.clear();
+        for (const auto &operation : operations)
+        {
+            const std::string opType = operation.first;
+            Operator *op = m_ADIOS->InquireOperator(opType);
+            if (op == nullptr)
+            {
+                op = &m_ADIOS->DefineOperator(opType, opType);
+            }
+
+            variable->AddOperation(*op, operation.second);
+        }
+    }
+
     m_Engine->Put(*variable, data, adios2::Mode::Sync);
 
     if (endStep)
@@ -60,14 +119,23 @@ void Stream::Write(const std::string &name, const T *data, const Dims &shape,
 }
 
 template <class T>
-void Stream::Write(const std::string &name, const T &datum, const bool endStep)
+void Stream::Write(const std::string &name, const T &datum, const bool isLocal,
+                   const bool endStep)
 {
     const T datumLocal = datum;
-    Write(name, &datumLocal, {}, {}, {}, endStep);
+    if (isLocal)
+    {
+        Write(name, &datumLocal, {adios2::LocalValueDim}, {}, {}, vParams(),
+              endStep);
+    }
+    else
+    {
+        Write(name, &datumLocal, {}, {}, {}, vParams(), endStep);
+    }
 }
 
 template <class T>
-void Stream::Read(const std::string &name, T *values)
+void Stream::Read(const std::string &name, T *values, const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -78,12 +146,13 @@ void Stream::Read(const std::string &name, T *values)
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     GetPCommon(*variable, values);
 }
 
 template <class T>
 void Stream::Read(const std::string &name, T *values,
-                  const Box<size_t> &stepSelection)
+                  const Box<size_t> &stepSelection, const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -94,13 +163,14 @@ void Stream::Read(const std::string &name, T *values,
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetStepSelection(stepSelection);
     GetPCommon(*variable, values);
 }
 
 template <class T>
 void Stream::Read(const std::string &name, T *values,
-                  const Box<Dims> &selection)
+                  const Box<Dims> &selection, const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -111,13 +181,15 @@ void Stream::Read(const std::string &name, T *values,
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     GetPCommon(*variable, values);
 }
 
 template <class T>
 void Stream::Read(const std::string &name, T *values,
-                  const Box<Dims> &selection, const Box<size_t> &stepSelection)
+                  const Box<Dims> &selection, const Box<size_t> &stepSelection,
+                  const size_t blockID)
 {
     CheckPCommon(name, values);
 
@@ -128,24 +200,42 @@ void Stream::Read(const std::string &name, T *values,
         return;
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     variable->SetStepSelection(stepSelection);
     GetPCommon(*variable, values);
 }
 
 template <class T>
-std::vector<T> Stream::Read(const std::string &name)
+std::vector<T> Stream::Read(const std::string &name, const size_t blockID)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
     {
         return std::vector<T>();
     }
+    SetBlockSelectionCommon(*variable, blockID);
     return GetCommon(*variable);
 }
 
 template <class T>
-std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection)
+std::vector<T> Stream::Read(const std::string &name,
+                            const Box<size_t> &stepsSelection,
+                            const size_t blockID)
+{
+    Variable<T> *variable = m_IO->InquireVariable<T>(name);
+    if (variable == nullptr)
+    {
+        return std::vector<T>();
+    }
+    SetBlockSelectionCommon(*variable, blockID);
+    variable->SetStepSelection(stepsSelection);
+    return GetCommon(*variable);
+}
+
+template <class T>
+std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
+                            const size_t blockID)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
@@ -153,13 +243,15 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection)
         return std::vector<T>();
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     return GetCommon(*variable);
 }
 
 template <class T>
 std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
-                            const Box<size_t> &stepSelection)
+                            const Box<size_t> &stepSelection,
+                            const size_t blockID)
 {
     Variable<T> *variable = m_IO->InquireVariable<T>(name);
     if (variable == nullptr)
@@ -167,9 +259,34 @@ std::vector<T> Stream::Read(const std::string &name, const Box<Dims> &selection,
         return std::vector<T>();
     }
 
+    SetBlockSelectionCommon(*variable, blockID);
     variable->SetSelection(selection);
     variable->SetStepSelection(stepSelection);
     return GetCommon(*variable);
+}
+
+template <class T>
+void Stream::ReadAttribute(const std::string &name, T *data,
+                           const std::string &variableName,
+                           const std::string separator)
+{
+    Attribute<T> *attribute =
+        m_IO->InquireAttribute<T>(name, variableName, separator);
+
+    if (attribute == nullptr)
+    {
+        return;
+    }
+
+    if (attribute->m_IsSingleValue)
+    {
+        data[0] = attribute->m_DataSingleValue;
+    }
+    else
+    {
+        std::copy(attribute->m_DataArray.begin(), attribute->m_DataArray.end(),
+                  data);
+    }
 }
 
 // PRIVATE
@@ -215,6 +332,26 @@ void Stream::CheckPCommon(const std::string &name, const T *values) const
         throw std::runtime_error(
             "ERROR: passed null values pointer for variable " + name +
             ", in call to read pointer\n");
+    }
+}
+
+template <class T>
+void Stream::SetBlockSelectionCommon(Variable<T> &variable,
+                                     const size_t blockID)
+{
+    if (variable.m_ShapeID == ShapeID::LocalArray)
+    {
+        variable.SetBlockSelection(blockID);
+    }
+    else
+    {
+        if (blockID != 0)
+        {
+            throw std::invalid_argument(
+                "ERROR: in variable " + variable.m_Name +
+                " only set blockID > 0 for variables "
+                "with ShapeID::LocalArray, in call to read\n");
+        }
     }
 }
 

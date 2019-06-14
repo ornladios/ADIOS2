@@ -15,6 +15,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -26,9 +27,18 @@ namespace engine
 template <class T>
 void SstReader::ReadVariableBlocks(Variable<T> &variable)
 {
+    TAU_SCOPED_TIMER_FUNC();
     std::vector<void *> sstReadHandlers;
     std::vector<std::vector<char>> buffers;
 
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    const bool endianReverse = helper::IsLittleEndian() !=
+                               m_BP3Deserializer->m_Minifooter.IsLittleEndian;
+#else
+    constexpr bool endianReverse = false;
+#endif
+
+    size_t threadID = 0;
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
@@ -45,31 +55,23 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                     dp_info = m_CurrentStepMetaData->DP_TimestepInfo[rank];
                 }
                 // if remote data buffer is compressed
-                if (subStreamInfo.OperationsInfo.size() > 0)
+                if (subStreamInfo.OperationsInfo.size() > 0 || endianReverse)
                 {
-                    const bool identity =
-                        m_BP3Deserializer->IdentityOperation<T>(
-                            blockInfo.Operations);
-                    const helper::BlockOperationInfo &blockOperationInfo =
-                        m_BP3Deserializer->InitPostOperatorBlockData(
-                            subStreamInfo.OperationsInfo,
-                            variable.m_RawMemory[1], identity);
-                    // if identity is true, just read the entire block content
-                    buffers.emplace_back();
-                    buffers.back().resize(blockOperationInfo.PayloadSize);
-                    char *output =
-                        identity ? reinterpret_cast<char *>(blockInfo.Data)
-                                 : buffers.back().data();
+                    // TODO test with compression
+                    char *buffer = nullptr;
+                    size_t payloadSize = 0, payloadStart = 0;
 
-                    auto ret = SstReadRemoteMemory(
-                        m_Input, rank, CurrentStep(),
-                        blockOperationInfo.PayloadOffset,
-                        blockOperationInfo.PayloadSize, output, dp_info);
+                    m_BP3Deserializer->PreDataRead(
+                        variable, blockInfo, subStreamInfo, buffer, payloadSize,
+                        payloadStart, threadID);
+
+                    std::stringstream ss;
+                    ss << "SST Bytes Read from remote rank " << rank;
+                    TAU_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
+                    auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
+                                                   payloadStart, payloadSize,
+                                                   buffer, dp_info);
                     sstReadHandlers.push_back(ret);
-                    if (identity)
-                    {
-                        continue;
-                    }
                 }
                 // if remote data buffer is not compressed
                 else
@@ -110,6 +112,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         sstReadHandlers.push_back(ret);
                     }
                 }
+                ++threadID;
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);
@@ -125,7 +128,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
     }
 
     size_t iter = 0;
-
+    threadID = 0;
     for (typename Variable<T>::Info &blockInfo : variable.m_BlocksInfo)
     {
         T *originalBlockData = blockInfo.Data;
@@ -135,26 +138,33 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                 stepPair.second;
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
-                const size_t rank = subStreamInfo.SubStreamID;
                 // if remote data buffer is compressed
-                if (subStreamInfo.OperationsInfo.size() > 0)
+                if (subStreamInfo.OperationsInfo.size() > 0 || endianReverse)
                 {
-                    const bool identity =
-                        m_BP3Deserializer->IdentityOperation<T>(
-                            blockInfo.Operations);
-                    const helper::BlockOperationInfo &blockOperationInfo =
-                        m_BP3Deserializer->InitPostOperatorBlockData(
-                            subStreamInfo.OperationsInfo,
-                            variable.m_RawMemory[1], identity);
-                    m_BP3Deserializer->GetPreOperatorBlockData(
-                        buffers[iter], blockOperationInfo,
-                        variable.m_RawMemory[0]);
-                    helper::ClipVector(variable.m_RawMemory[0],
-                                       subStreamInfo.Seeks.first,
-                                       subStreamInfo.Seeks.second);
-                    m_BP3Deserializer->ClipContiguousMemory<T>(
-                        blockInfo, variable.m_RawMemory[0],
-                        subStreamInfo.BlockBox, subStreamInfo.IntersectionBox);
+                    // const bool identity =
+                    //    m_BP3Deserializer->IdentityOperation<T>(
+                    //        blockInfo.Operations);
+                    // const helper::BlockOperationInfo
+                    //    &blockOperationInfo =
+                    //        m_BP3Deserializer->InitPostOperatorBlockData(
+                    //            subStreamInfo.OperationsInfo,
+                    //            variable.m_RawMemory[1],
+                    //            identity);
+                    // m_BP3Deserializer->GetPreOperatorBlockData(
+                    //    buffers[iter], blockOperationInfo,
+                    //    variable.m_RawMemory[0]);
+                    // helper::ClipVector(variable.m_RawMemory[0],
+                    //    subStreamInfo.Seeks.first,
+                    //    subStreamInfo.Seeks.second);
+                    // m_BP3Deserializer->ClipContiguousMemory<T>(
+                    //    blockInfo,
+                    //    variable.m_RawMemory[0],
+                    //    subStreamInfo.BlockBox,
+                    //    subStreamInfo.IntersectionBox);
+
+                    m_BP3Deserializer->PostDataRead(
+                        variable, blockInfo, subStreamInfo,
+                        helper::IsRowMajor(m_IO.m_HostLanguage), threadID);
                     ++iter;
                 }
                 // if remote data buffer is not compressed
@@ -182,6 +192,7 @@ void SstReader::ReadVariableBlocks(Variable<T> &variable)
                         ++iter;
                     }
                 }
+                ++threadID;
             }
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);

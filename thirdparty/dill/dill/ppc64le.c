@@ -1553,24 +1553,24 @@ ppc64le_flush(void *base, void *limit)
 #ifdef __GNUC__
 	/* flush every 8 bytes of preallocated insn stream. */
 	while((char*)ptr < (char*) limit) {
-	    ptr = (char *)ptr + 128;
 	    asm volatile ("dcbst 0, %0" : /* */ : "r" (ptr));
+	    ptr = (char *)ptr + 128;
 	}
 	asm volatile("sync");
 	while((char*)ptr < (char*) limit) {
-	    ptr = (char *)ptr + 128;
 	    asm volatile ("icbi 0, %0" : /* */ : "r" (ptr));
+	    ptr = (char *)ptr + 128;
 	}
 	asm volatile("isync");
 #else
 	while((char*)ptr < (char*) limit) {
-	    ptr = (char *)ptr + 128;
 	    asm("dcbst 0, %r0");
+	    ptr = (char *)ptr + 128;
 	}
 	asm ("sync");
 	while((char*)ptr < (char*) limit) {
-	    ptr = (char *)ptr + 128;
 	    asm("icbi 0, %r0");
+	    ptr = (char *)ptr + 128;
 	}
 	asm ("isync");
 #endif

@@ -143,6 +143,46 @@ Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
     return intersectionBox;
 }
 
+Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
+                                 const Dims &start2,
+                                 const Dims &count2) noexcept
+{
+    Box<Dims> intersectionStartCount;
+    const size_t dimensionsSize = start1.size();
+
+    for (auto d = 0; d < dimensionsSize; ++d)
+    {
+        // Don't intercept
+        const size_t end1 = start1[d] + count1[d] - 1;
+        const size_t end2 = start2[d] + count2[d] - 1;
+
+        if (start2[d] > end1 || end2 < start1[d])
+        {
+            return intersectionStartCount;
+        }
+    }
+
+    intersectionStartCount.first.reserve(dimensionsSize);
+    intersectionStartCount.second.reserve(dimensionsSize);
+
+    for (auto d = 0; d < dimensionsSize; ++d)
+    {
+        const size_t intersectionStart =
+            (start1[d] < start2[d]) ? start2[d] : start1[d];
+
+        // end, must be inclusive
+        const size_t end1 = start1[d] + count1[d] - 1;
+        const size_t end2 = start2[d] + count2[d] - 1;
+        const size_t intersectionEnd = (end1 > end2) ? end2 : end1;
+
+        intersectionStartCount.first.push_back(intersectionStart);
+        intersectionStartCount.second.push_back(intersectionEnd -
+                                                intersectionStart + 1);
+    }
+
+    return intersectionStartCount;
+}
+
 bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
 {
     const size_t dimensionsSize = box1.first.size();
@@ -200,12 +240,11 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
     return true;
 }
 
-size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
+size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
                    const bool isRowMajor) noexcept
 {
     auto lf_RowMajor = [](const Dims &count,
                           const Dims &normalizedPoint) -> size_t {
-
         const size_t countSize = count.size();
         size_t linearIndex = normalizedPoint[countSize - 1]; // fastest
         size_t product = 1;
@@ -220,7 +259,6 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
 
     auto lf_ColumnMajor = [](const Dims &count,
                              const Dims &normalizedPoint) -> size_t {
-
         const size_t countSize = count.size();
         size_t linearIndex = normalizedPoint[0]; // fastest
         size_t product = 1;
@@ -232,12 +270,6 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
         }
         return linearIndex;
     };
-
-    const Box<Dims> localBoxStartCount =
-        StartCountBox(localBox.first, localBox.second);
-
-    const Dims &start = localBoxStartCount.first;
-    const Dims &count = localBoxStartCount.second;
 
     if (count.size() == 1)
     {
@@ -262,6 +294,35 @@ size_t LinearIndex(const Box<Dims> &localBox, const Dims &point,
     }
 
     return linearIndex;
+}
+
+size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
+                   const bool isRowMajor) noexcept
+{
+    const Box<Dims> localBoxStartCount =
+        StartCountBox(startEndBox.first, startEndBox.second);
+
+    const Dims &start = localBoxStartCount.first;
+    const Dims &count = localBoxStartCount.second;
+
+    return LinearIndex(start, count, point, isRowMajor);
+}
+
+size_t GetDistance(const size_t end, const size_t start, const bool debugMode,
+                   const std::string &hint)
+{
+    if (debugMode)
+    {
+        if (end < start)
+        {
+            throw std::invalid_argument(
+                "ERROR: end position: " + std::to_string(end) +
+                " is smaller than start position " + std::to_string(start) +
+                ", " + hint);
+        }
+    }
+
+    return end - start;
 }
 
 } // end namespace helper

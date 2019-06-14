@@ -8,12 +8,10 @@ add_subdirectory(hello)
 add_subdirectory(useCases)
 
 if(ADIOS2_HAVE_MPI)
-  if(MPIEXEC_MAX_NUMPROCS GREATER 3)
+  #if(MPIEXEC_MAX_NUMPROCS GREATER 3)
     add_subdirectory(heatTransfer)
-  endif()
+  #endif()
 endif()
-
-add_subdirectory(highLevelAPI)
 
 if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
   add_subdirectory(experimental)

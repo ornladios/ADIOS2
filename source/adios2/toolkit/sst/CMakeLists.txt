@@ -9,8 +9,13 @@ add_library(sst
   cp/cp_writer.c
   cp/cp_common.c
   cp/ffs_marshal.c
+  ${PROJECT_SOURCE_DIR}/source/adios2/helper/mpidummy.cpp
+  ${PROJECT_SOURCE_DIR}/source/adios2/helper/mpiwrap.cpp
 )
-if(ADIOS2_SST_HAVE_LIBFABRIC AND ADIOS2_HAVE_MPI)
+
+target_link_libraries(sst PRIVATE taustubs)
+
+if(ADIOS2_SST_HAVE_LIBFABRIC)
   target_sources(sst PRIVATE dp/rdma_dp.c)
   target_link_libraries(sst PRIVATE libfabric::libfabric)
   set(CMAKE_REQUIRED_INCLUDES ${LIBFABRIC_INCLUDE_DIRS})
@@ -52,6 +57,7 @@ endif()
 
 target_include_directories(sst PRIVATE
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/source>
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/source>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
@@ -65,3 +71,5 @@ install(TARGETS sst EXPORT adios2Exports
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+add_subdirectory(util)

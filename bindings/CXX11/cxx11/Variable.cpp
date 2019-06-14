@@ -8,6 +8,7 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "Variable.h"
+#include "Variable.tcc"
 
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Variable.h"
@@ -19,7 +20,8 @@ namespace adios2
 #define declare_type(T)                                                        \
                                                                                \
     template <>                                                                \
-    Variable<T>::Variable(core::Variable<T> *variable) : m_Variable(variable)  \
+    Variable<T>::Variable(core::Variable<IOType> *variable)                    \
+    : m_Variable(variable)                                                     \
     {                                                                          \
     }                                                                          \
                                                                                \
@@ -30,11 +32,35 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    void Variable<T>::SetShape(const Dims &shape)                              \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::SetShape");           \
+        m_Variable->SetShape(shape);                                           \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    void Variable<T>::SetBlockSelection(const size_t blockID)                  \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::SetBlockSelection");  \
+        m_Variable->SetBlockSelection(blockID);                                \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     void Variable<T>::SetSelection(const Box<Dims> &selection)                 \
     {                                                                          \
         helper::CheckForNullptr(m_Variable,                                    \
                                 "in call to Variable<T>::SetSelection");       \
         m_Variable->SetSelection(selection);                                   \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    void Variable<T>::SetMemorySelection(const Box<Dims> &memorySelection)     \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::SetMemorySelection"); \
+        m_Variable->SetMemorySelection(memorySelection);                       \
     }                                                                          \
                                                                                \
     template <>                                                                \
@@ -82,10 +108,10 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    Dims Variable<T>::Shape() const                                            \
+    Dims Variable<T>::Shape(const size_t step) const                           \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");  \
-        return m_Variable->m_Shape;                                            \
+        return m_Variable->Shape(step);                                        \
     }                                                                          \
                                                                                \
     template <>                                                                \
@@ -99,7 +125,7 @@ namespace adios2
     Dims Variable<T>::Count() const                                            \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Count");  \
-        return m_Variable->m_Count;                                            \
+        return m_Variable->Count();                                            \
     }                                                                          \
                                                                                \
     template <>                                                                \
@@ -115,6 +141,14 @@ namespace adios2
         helper::CheckForNullptr(m_Variable,                                    \
                                 "in call to Variable<T>::StepsStart");         \
         return m_Variable->m_AvailableStepsStart;                              \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    size_t Variable<T>::BlockID() const                                        \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable,                                    \
+                                "in call to Variable<T>::BlockID");            \
+        return m_Variable->m_BlockID;                                          \
     }                                                                          \
                                                                                \
     template <>                                                                \
@@ -149,20 +183,54 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
-    T Variable<T>::Min() const                                                 \
+    std::pair<T, T> Variable<T>::MinMax(const size_t step) const               \
     {                                                                          \
-        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Min");    \
-        return m_Variable->m_Min;                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::MinMax"); \
+        return m_Variable->MinMax(step);                                       \
     }                                                                          \
                                                                                \
     template <>                                                                \
-    T Variable<T>::Max() const                                                 \
+    T Variable<T>::Min(const size_t step) const                                \
+    {                                                                          \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Min");    \
+        return m_Variable->Min(step);                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    T Variable<T>::Max(const size_t step) const                                \
     {                                                                          \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Max");    \
-        return m_Variable->m_Max;                                              \
+        return m_Variable->Max(step);                                          \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    Variable<T>::AllStepsBlocksInfo()                                          \
+    {                                                                          \
+        return DoAllStepsBlocksInfo();                                         \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
+    const T *Variable<T>::Info::Data() const                                   \
+    {                                                                          \
+        const core::Variable<T>::Info *coreInfo =                              \
+            reinterpret_cast<const core::Variable<T>::Info *>(m_Info);         \
+                                                                               \
+        return m_Info ? (coreInfo->BufferP ? coreInfo->BufferP                 \
+                                           : coreInfo->BufferV.data())         \
+                      : nullptr;                                               \
     }
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
+
+#define declare_template_instantiation(T)                                      \
+    template std::string ToString(const Variable<T> &var);
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T) template class detail::Span<T>;
+ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
 
 } // end namespace adios2

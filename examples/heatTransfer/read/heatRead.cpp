@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
         {
             // if not defined by user, we can change the default settings
             // BPFile is the default engine
-            inIO.SetEngine("BPFile");
+            inIO.SetEngine("BP3");
             inIO.SetParameters({{"num_threads", "1"}});
 
             // ISO-POSIX file output is the default transport (called "File")
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         while (true)
         {
             adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable, 0.0f);
+                reader.BeginStep(adios2::StepMode::Read);
             if (status != adios2::StepStatus::OK)
             {
                 break;

@@ -300,8 +300,8 @@ struct _CMFormat {
 
 #define CManager_lock(cm) IntCManager_lock(cm, __FILE__, __LINE__)
 #define CManager_unlock(cm) IntCManager_unlock(cm, __FILE__, __LINE__)
-extern void IntCManager_lock(CManager cm, char *file, int line);
-extern void IntCManager_unlock(CManager cm, char *file, int line);
+extern void IntCManager_lock(CManager cm, const char *file, int line);
+extern void IntCManager_unlock(CManager cm, const char *file, int line);
 extern int CManager_locked(CManager cm);
 extern void CMControlList_lock(CMControlList cl);
 extern void CMControlList_unlock(CMControlList cl);
@@ -314,11 +314,6 @@ extern void IntCMConn_write_lock(CMConnection cl, char *file,
 extern void IntCMConn_write_unlock(CMConnection cl, char *file,
 					 int line);
 extern int CMConn_write_locked(CMConnection cl);
-
-typedef enum _CMTraceType {
-    CMAlwaysTrace, CMControlVerbose, CMConnectionVerbose, CMLowLevelVerbose, CMDataVerbose, CMTransportVerbose, CMFormatVerbose, CMFreeVerbose, CMAttrVerbose, CMBufferVerbose, EVerbose, EVWarning, CMIBTransportVerbose, EVdfgVerbose, 
-    CMLastTraceType /* add before this one */
-} CMTraceType;
 
 extern void 
 CMtrace_out(CManager cm, CMTraceType trace_type, char *format, ...);
@@ -335,7 +330,8 @@ CMWriteQueuedData(transport_entry trans, CMConnection conn);
 extern CMincoming_format_list
 CMidentify_CMformat(CManager cm, FFSTypeHandle format);
 
-extern void CMtransport_trace(CManager cm, char *format, ...);
+extern void CMtransport_trace(CManager cm, const char *format, ...);
+extern void CMtransport_verbose(CManager cm, CMTraceType trace, const char *format, ...);
 
 extern void
 CM_fd_add_select(CManager cm, int fd, select_list_func handler_func,
@@ -500,6 +496,9 @@ INT_CMget_static_trans_services();
 
 extern void INT_CMsleep(CManager cm, int secs);
 extern int INT_CMget_self_ip_addr(CManager cm);
+extern void INT_CMget_port_range(CManager cm, int *high, int *low);
+extern char *INT_CMget_ip_config_diagnostics(CManager cm);
+extern void INT_CMget_qual_hostname(CManager cm, char *buf, int len);
 extern attr_list INT_CMConnection_get_attrs(CMConnection conn);
 extern void * INT_CMcreate_compat_info(CMFormat format, char *xform_code,
 			int *len_p);

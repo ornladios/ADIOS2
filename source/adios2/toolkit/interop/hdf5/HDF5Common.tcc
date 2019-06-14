@@ -15,6 +15,8 @@
 #include <iostream>
 #include <vector>
 
+#include "adios2/helper/adiosFunctions.h"
+
 namespace adios2
 {
 namespace interop
@@ -46,23 +48,21 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
             H5Dcreate(m_GroupId, variable.m_Name.c_str(), h5Type, filespaceID,
                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                       */
-
-        hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
-#ifdef ADIOS2_HAVE_MPI
-        H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
-#endif
-
-        herr_t status;
+        /*
+                hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
+        #ifdef ADIOS2_HAVE_MPI
+                H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
+        #endif
+        */
         if (std::is_same<T, std::string>::value)
         {
-            status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID,
-                              ((std::string *)values)->data());
+            H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID,
+                     ((std::string *)values)->data());
             H5Tclose(h5Type);
         }
         else
         {
-            status =
-                H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
+            H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID, values);
         }
         H5Sclose(filespaceID);
         //	CloseDataset(dsetID);
@@ -121,16 +121,18 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, offset.data(), NULL,
                         count.data(), NULL);
 
-    //  Create property list for collective dataset write.
+    /*
+        //  Create property list for collective dataset write.
 
-    hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
-#ifdef ADIOS2_HAVE_MPI
-    H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
-#endif
+        hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
+    #ifdef ADIOS2_HAVE_MPI
+        H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
+    #endif
+    */
     herr_t status;
 
-    status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, plistID, values);
-
+    status =
+        H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID, values);
     if (status < 0)
     {
         if (m_DebugMode)
@@ -140,12 +142,97 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
         }
     }
 
+    size_t valuesSize = adios2::helper::GetTotalSize(variable.m_Count);
+    T min, max;
+    adios2::helper::GetMinMaxThreads(values, valuesSize, min, max, 1);
+
+#ifdef NO_STAT
+    int chainSize = chain.size();
+    hid_t parentId = m_GroupId;
+    if (chainSize > 1)
+    {
+        parentId = chain[chainSize - 2];
+    }
+    AddBlockInfo(variable, parentId);
+
+    std::vector<T> stats = {min, max};
+    AddStats(variable, parentId, stats);
+#endif
     //    CloseDataset(dsetID);
     H5Sclose(fileSpace);
     H5Sclose(memSpace);
-    H5Pclose(plistID);
+    //    H5Pclose(plistID);
 }
 
+template <class T>
+void HDF5Common::AddStats(const core::Variable<T> &variable, hid_t parentId,
+                          std::vector<T> &stats)
+{
+
+    hid_t h5Type = GetHDF5Type<T>();
+
+    std::string statInfo_name = PREFIX_STAT + variable.m_Name;
+    hsize_t numStat = stats.size(); // min, max etc
+    hsize_t statDim[2] = {(hsize_t)m_CommSize, numStat};
+    hid_t statSpace_id = H5Screate_simple(numStat, statDim, NULL);
+    hid_t statId =
+        H5Dcreate(parentId, statInfo_name.c_str(), h5Type, statSpace_id,
+                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hsize_t statLocalDim[1] = {numStat};
+    hid_t statLocal_id = H5Screate_simple(1, statLocalDim, NULL);
+
+    hsize_t statOffset[2] = {(hsize_t)m_CommRank, 0};
+    hsize_t statCount[2] = {1, numStat};
+    H5Sselect_hyperslab(statSpace_id, H5S_SELECT_SET, statOffset, NULL,
+                        statCount, NULL);
+
+    H5Dwrite(statId, h5Type, statLocal_id, statSpace_id, m_PropertyTxfID,
+             stats.data());
+
+    H5Sclose(statLocal_id);
+    H5Sclose(statSpace_id);
+    H5Dclose(statId);
+    //     H5Pclose(plistID);
+}
+
+template <class T>
+void HDF5Common::AddBlockInfo(const core::Variable<T> &variable, hid_t parentId)
+{
+    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
+    hsize_t metaDim[2];
+    metaDim[1] = dimSize * 2;
+    metaDim[0] = m_CommSize;
+    hid_t metaSpace_id = H5Screate_simple(2, metaDim, NULL);
+    std::string blockInfo_name = PREFIX_BLOCKINFO + variable.m_Name;
+    hid_t metaId =
+        H5Dcreate(parentId, blockInfo_name.c_str(), H5T_NATIVE_HSIZE,
+                  metaSpace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    size_t blocks[dimSize * 2];
+    for (int i = 0; i < dimSize; i++)
+    {
+        blocks[i + dimSize] = variable.m_Count[i];
+        blocks[i] = variable.m_Start[i];
+    }
+    hsize_t blockDim[1] = {(hsize_t)(dimSize * 2)};
+    hid_t metaLocal_id = H5Screate_simple(1, blockDim, NULL);
+
+    hsize_t metaOffset[2] = {(hsize_t)m_CommRank, 0};
+    hsize_t metaCount[2] = {1, (hsize_t)(dimSize * 2)};
+    H5Sselect_hyperslab(metaSpace_id, H5S_SELECT_SET, metaOffset, NULL,
+                        metaCount, NULL);
+
+    H5Dwrite(metaId, H5T_NATIVE_HSIZE, metaLocal_id, metaSpace_id,
+             m_PropertyTxfID, blocks);
+
+    H5Sclose(metaLocal_id);
+    H5Sclose(metaSpace_id);
+    H5Dclose(metaId);
+
+    //      H5Pclose(plistID);
+}
+//
+//
 template <>
 hid_t HDF5Common::GetHDF5Type<std::string>()
 {
@@ -153,62 +240,46 @@ hid_t HDF5Common::GetHDF5Type<std::string>()
 }
 
 template <>
-hid_t HDF5Common::GetHDF5Type<signed char>()
+hid_t HDF5Common::GetHDF5Type<int8_t>()
 {
-    return H5T_NATIVE_SCHAR;
+    return H5T_NATIVE_INT8;
 }
 
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned char>()
+hid_t HDF5Common::GetHDF5Type<uint8_t>()
 {
-    return H5T_NATIVE_UCHAR;
+    return H5T_NATIVE_UINT8;
 }
 
 template <>
-hid_t HDF5Common::GetHDF5Type<char>()
+hid_t HDF5Common::GetHDF5Type<int16_t>()
 {
-    return H5T_NATIVE_CHAR;
-}
-
-template <>
-hid_t HDF5Common::GetHDF5Type<short>()
-{
-    return H5T_NATIVE_SHORT;
+    return H5T_NATIVE_INT16;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned short>()
+hid_t HDF5Common::GetHDF5Type<uint16_t>()
 {
-    return H5T_NATIVE_USHORT;
+    return H5T_NATIVE_UINT16;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<int>()
+hid_t HDF5Common::GetHDF5Type<int32_t>()
 {
-    return H5T_NATIVE_INT;
+    return H5T_NATIVE_INT32;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned int>()
+hid_t HDF5Common::GetHDF5Type<uint32_t>()
 {
-    return H5T_NATIVE_UINT;
+    return H5T_NATIVE_UINT32;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<long int>()
+hid_t HDF5Common::GetHDF5Type<int64_t>()
 {
-    return H5T_NATIVE_LONG;
+    return H5T_NATIVE_INT64;
 }
 template <>
-hid_t HDF5Common::GetHDF5Type<unsigned long int>()
+hid_t HDF5Common::GetHDF5Type<uint64_t>()
 {
-    return H5T_NATIVE_ULONG;
-}
-template <>
-hid_t HDF5Common::GetHDF5Type<long long int>()
-{
-    return H5T_NATIVE_LLONG;
-}
-template <>
-hid_t HDF5Common::GetHDF5Type<unsigned long long int>()
-{
-    return H5T_NATIVE_ULLONG;
+    return H5T_NATIVE_UINT64;
 }
 template <>
 hid_t HDF5Common::GetHDF5Type<float>()

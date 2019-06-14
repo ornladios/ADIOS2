@@ -8,7 +8,6 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "adiosSystem.h"
-
 #include <chrono> //system_clock, now
 #include <ctime>
 #include <iostream>  //std::cerr

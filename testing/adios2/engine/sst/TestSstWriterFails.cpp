@@ -13,8 +13,6 @@
 
 #include <gtest/gtest.h>
 
-#include "TestData.h"
-
 class SstWriteFails : public ::testing::Test
 {
 public:
@@ -64,7 +62,7 @@ static adios2::Params ParseEngineParams(std::string Input)
 // ADIOS2 SST write
 TEST_F(SstWriteFails, InvalidPut)
 {
-// Write test data using ADIOS2
+    // Write test data using ADIOS2
 
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
@@ -84,7 +82,7 @@ TEST_F(SstWriteFails, InvalidPut)
 
     adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
-    const adios2::Mode sync = adios2::Mode::Sync;
+    double data_scalar_R64 = 0.0;
 
     EXPECT_THROW(engine.Put(scalar_r64, data_scalar_R64), std::logic_error);
 

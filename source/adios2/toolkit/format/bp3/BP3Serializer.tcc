@@ -13,7 +13,7 @@
 
 #include "BP3Serializer.h"
 
-#include <algorithm> // std::all_of
+#include <algorithm> // std::all_of, std::fill_n
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -23,24 +23,15 @@ namespace format
 {
 
 template <class T>
-inline void BP3Serializer::PutVariableMetadata(
+void BP3Serializer::PutVariableMetadata(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
-    auto lf_SetOffset = [&](uint64_t &offset) {
-        if (m_Aggregator.m_IsActive && !m_Aggregator.m_IsConsumer)
-        {
-            offset = static_cast<uint64_t>(m_Data.m_Position);
-        }
-        else
-        {
-            offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition);
-        }
-    };
-
     ProfilerStart("buffering");
 
-    Stats<T> stats = GetBPStats<T>(blockInfo);
+    Stats<T> stats =
+        GetBPStats<T>(variable.m_SingleValue, blockInfo, sourceRowMajor);
 
     // Get new Index or point to existing index
     bool isNew = true; // flag to check if variable is new
@@ -48,13 +39,17 @@ inline void BP3Serializer::PutVariableMetadata(
         variable.m_Name, m_MetadataSet.VarsIndices, isNew);
     stats.MemberID = variableIndex.MemberID;
 
-    lf_SetOffset(stats.Offset);
+    SetDataOffset(stats.Offset);
     PutVariableMetadataInData(variable, blockInfo, stats);
-    lf_SetOffset(stats.PayloadOffset);
+    SetDataOffset(stats.PayloadOffset);
+    if (span != nullptr)
+    {
+        span->m_PayloadPosition = m_Data.m_Position;
+    }
 
     // write to metadata  index
-    PutVariableMetadataInIndex(variable, blockInfo, stats, isNew,
-                               variableIndex);
+    PutVariableMetadataInIndex(variable, blockInfo, stats, isNew, variableIndex,
+                               span);
     ++m_MetadataSet.DataPGVarsCount;
 
     ProfilerStop("buffering");
@@ -63,12 +58,39 @@ inline void BP3Serializer::PutVariableMetadata(
 template <class T>
 inline void BP3Serializer::PutVariablePayload(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor, typename core::Variable<T>::Span *span) noexcept
 {
     ProfilerStart("buffering");
+    if (span != nullptr)
+    {
+        const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
+        if (span->m_Value != T{})
+        {
+            T *itBegin = reinterpret_cast<T *>(m_Data.m_Buffer.data() +
+                                               m_Data.m_Position);
+
+            // TODO: does std::fill_n have a bug in gcc or due to optimizations
+            // this is impossible? This seg faults in Release mode only . Even
+            // RelWithDebInfo works, replacing with explicit loop below using
+            // access operator []
+            // std::fill_n(itBegin, blockSize, span->m_Value);
+
+            for (auto i = 0; i < blockSize; ++i)
+            {
+                itBegin[i] = span->m_Value;
+            }
+        }
+
+        m_Data.m_Position += blockSize * sizeof(T);
+        m_Data.m_AbsolutePosition += blockSize * sizeof(T);
+        ProfilerStop("buffering");
+        return;
+    }
+
     if (blockInfo.Operations.empty())
     {
-        PutPayloadInBuffer(variable, blockInfo);
+        PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
     }
     else
     {
@@ -76,6 +98,33 @@ inline void BP3Serializer::PutVariablePayload(
     }
 
     ProfilerStop("buffering");
+}
+
+template <class T>
+void BP3Serializer::PutSpanMetadata(
+    const core::Variable<T> &variable,
+    const typename core::Variable<T>::Span &span) noexcept
+{
+    if (m_StatsLevel == 0)
+    {
+        // Get Min/Max from populated data
+        ProfilerStart("minmax");
+        T min, max;
+        helper::GetMinMaxThreads(span.Data(), span.Size(), min, max, m_Threads);
+        ProfilerStop("minmax");
+
+        // Put min/max in variable index
+        SerialElementIndex &variableIndex =
+            m_MetadataSet.VarsIndices.at(variable.m_Name);
+        auto &buffer = variableIndex.Buffer;
+
+        const size_t minPosition = span.m_MinMaxMetadataPositions.first;
+        const size_t maxPosition = span.m_MinMaxMetadataPositions.second;
+        std::copy(&min, &min + 1,
+                  reinterpret_cast<T *>(buffer.data() + minPosition));
+        std::copy(&max, &max + 1,
+                  reinterpret_cast<T *>(buffer.data() + maxPosition));
+    }
 }
 
 // PRIVATE
@@ -95,7 +144,6 @@ BP3Serializer::PutAttributeHeaderInData(const core::Attribute<T> &attribute,
     PutNameRecord(attribute.m_Name, buffer, position);
     position += 2; // skip path
 
-    // TODO: attribute from Variable??
     constexpr int8_t no = 'n';
     helper::CopyToBuffer(buffer, position,
                          &no); // not associated with a Variable
@@ -131,7 +179,7 @@ BP3Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
 
-    uint8_t dataType = GetDataType<std::string>();
+    uint8_t dataType = TypeTraits<std::string>::type_enum;
     if (!attribute.m_IsSingleValue)
     {
         dataType = type_string_array;
@@ -182,7 +230,7 @@ void BP3Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
 
-    uint8_t dataType = GetDataType<T>();
+    uint8_t dataType = TypeTraits<T>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
@@ -274,7 +322,7 @@ void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     PutNameRecord(attribute.m_Name, buffer);
     buffer.insert(buffer.end(), 2, '\0'); // skip path
 
-    uint8_t dataType = GetDataType<T>(); // dataType
+    uint8_t dataType = TypeTraits<T>::type_enum; // dataType
 
     if (dataType == type_string && !attribute.m_IsSingleValue)
     {
@@ -333,13 +381,16 @@ void BP3Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     helper::CopyToBuffer(buffer, backPosition,
                          &characteristicsLength); // length
 
-    // Finish characteristic count length
+    // Remember this attribute and its serialized piece
     m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
+    m_SerializedAttributes.emplace(attribute.m_Name);
 }
 
 template <>
 inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
-    const typename core::Variable<std::string>::Info & /*blockInfo*/) noexcept
+    const bool /*singleValue*/,
+    const typename core::Variable<std::string>::Info & /*blockInfo*/,
+    const bool /*isRowMajor*/) noexcept
 {
     Stats<std::string> stats;
     stats.Step = m_MetadataSet.TimeStep;
@@ -348,21 +399,50 @@ inline BP3Serializer::Stats<std::string> BP3Serializer::GetBPStats(
 }
 
 template <class T>
-BP3Serializer::Stats<T> BP3Serializer::GetBPStats(
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+BP3Serializer::Stats<T>
+BP3Serializer::GetBPStats(const bool singleValue,
+                          const typename core::Variable<T>::Info &blockInfo,
+                          const bool isRowMajor) noexcept
 {
     Stats<T> stats;
-    const std::size_t valuesSize = helper::GetTotalSize(blockInfo.Count);
+    stats.Step = m_MetadataSet.TimeStep;
+    stats.FileIndex = GetFileIndex();
+
+    // added to support span
+    if (blockInfo.Data == nullptr)
+    {
+        stats.Min = {};
+        stats.Max = {};
+        return stats;
+    }
+
+    if (singleValue)
+    {
+        stats.Value = *blockInfo.Data;
+        stats.Min = stats.Value;
+        stats.Max = stats.Value;
+        return stats;
+    }
 
     if (m_StatsLevel == 0)
     {
         ProfilerStart("minmax");
-        helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
-                                 stats.Max, m_Threads);
+        if (blockInfo.MemoryStart.empty())
+        {
+            const std::size_t valuesSize =
+                helper::GetTotalSize(blockInfo.Count);
+            helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
+                                     stats.Max, m_Threads);
+        }
+        else // non-contiguous memory min/max
+        {
+            helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
+                                       blockInfo.MemoryStart, blockInfo.Count,
+                                       isRowMajor, stats.Min, stats.Max);
+        }
         ProfilerStop("minmax");
     }
-    stats.Step = m_MetadataSet.TimeStep;
-    stats.FileIndex = GetFileIndex();
+
     return stats;
 }
 
@@ -385,7 +465,7 @@ void BP3Serializer::PutVariableMetadataInData(
     PutNameRecord(variable.m_Name, buffer, position);
     position += 2; // skip path
 
-    const uint8_t dataType = GetDataType<T>();
+    const uint8_t dataType = TypeTraits<T>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
 
     constexpr char no = 'n'; // isDimension
@@ -436,7 +516,7 @@ inline void BP3Serializer::PutVariableMetadataInData(
     PutNameRecord(variable.m_Name, buffer, position);
     position += 2; // skip path
 
-    const uint8_t dataType = GetDataType<std::string>();
+    const uint8_t dataType = TypeTraits<std::string>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
 
     constexpr char no = 'n'; // is dimension is deprecated
@@ -469,7 +549,8 @@ template <class T>
 void BP3Serializer::PutVariableMetadataInIndex(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
-    const bool isNew, SerialElementIndex &index) noexcept
+    const bool isNew, SerialElementIndex &index,
+    typename core::Variable<T>::Span *span) noexcept
 {
     auto &buffer = index.Buffer;
 
@@ -481,7 +562,7 @@ void BP3Serializer::PutVariableMetadataInIndex(
         PutNameRecord(variable.m_Name, buffer);
         buffer.insert(buffer.end(), 2, '\0'); // skip path
 
-        const uint8_t dataType = GetDataType<T>();
+        const uint8_t dataType = TypeTraits<T>::type_enum;
         helper::InsertToBuffer(buffer, &dataType);
 
         // Characteristics Sets Count in Metadata
@@ -502,15 +583,16 @@ void BP3Serializer::PutVariableMetadataInIndex(
         }
     }
 
-    PutVariableCharacteristics(variable, blockInfo, stats, buffer);
+    PutVariableCharacteristics(variable, blockInfo, stats, buffer, span);
 }
 
 template <class T>
-void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
+void BP3Serializer::PutBoundsRecord(const bool singleValue,
+                                    const Stats<T> &stats,
                                     uint8_t &characteristicsCounter,
                                     std::vector<char> &buffer) noexcept
 {
-    if (isScalar)
+    if (singleValue)
     {
         PutCharacteristicRecord(characteristic_value, characteristicsCounter,
                                 stats.Min, buffer);
@@ -521,7 +603,6 @@ void BP3Serializer::PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
         {
             PutCharacteristicRecord(characteristic_min, characteristicsCounter,
                                     stats.Min, buffer);
-
             PutCharacteristicRecord(characteristic_max, characteristicsCounter,
                                     stats.Max, buffer);
         }
@@ -587,7 +668,8 @@ template <>
 inline void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<std::string> &variable,
     const core::Variable<std::string>::Info &blockInfo,
-    const Stats<std::string> &stats, std::vector<char> &buffer) noexcept
+    const Stats<std::string> &stats, std::vector<char> &buffer,
+    typename core::Variable<std::string>::Span * /*span*/) noexcept
 {
     const size_t characteristicsCountPosition = buffer.size();
     // skip characteristics count(1) + length (4)
@@ -641,7 +723,7 @@ template <class T>
 void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
-    std::vector<char> &buffer) noexcept
+    std::vector<char> &buffer, typename core::Variable<T>::Span *span) noexcept
 {
     // going back at the end
     const size_t characteristicsCountPosition = buffer.size();
@@ -656,8 +738,15 @@ void BP3Serializer::PutVariableCharacteristics(
     PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
                             stats.FileIndex, buffer);
 
-    if (blockInfo.Data != nullptr)
+    if (blockInfo.Data != nullptr || span != nullptr)
     {
+        if (m_StatsLevel == 0 && span != nullptr)
+        {
+            span->m_MinMaxMetadataPositions.first = buffer.size() + 1;
+            span->m_MinMaxMetadataPositions.second =
+                buffer.size() + 2 + sizeof(T);
+        }
+
         PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                         buffer);
     }
@@ -755,7 +844,8 @@ void BP3Serializer::PutVariableCharacteristics(
 template <>
 inline void BP3Serializer::PutPayloadInBuffer(
     const core::Variable<std::string> &variable,
-    const typename core::Variable<std::string>::Info &blockInfo) noexcept
+    const typename core::Variable<std::string>::Info &blockInfo,
+    const bool /* sourceRowMajor*/) noexcept
 {
     PutNameRecord(*blockInfo.Data, m_Data.m_Buffer, m_Data.m_Position);
     m_Data.m_AbsolutePosition += blockInfo.Data->size() + 2;
@@ -764,12 +854,25 @@ inline void BP3Serializer::PutPayloadInBuffer(
 template <class T>
 void BP3Serializer::PutPayloadInBuffer(
     const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo) noexcept
+    const typename core::Variable<T>::Info &blockInfo,
+    const bool sourceRowMajor) noexcept
 {
     const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     ProfilerStart("memcpy");
-    helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
-                                blockInfo.Data, blockSize, m_Threads);
+    if (!blockInfo.MemoryStart.empty())
+    {
+        helper::CopyMemory(
+            reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
+            blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
+            blockInfo.Start, blockInfo.Count, sourceRowMajor, false, Dims(),
+            Dims(), blockInfo.MemoryStart, blockInfo.MemoryCount);
+        m_Data.m_Position += blockSize * sizeof(T);
+    }
+    else
+    {
+        helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
+                                    blockInfo.Data, blockSize, m_Threads);
+    }
     ProfilerStop("memcpy");
     m_Data.m_AbsolutePosition += blockSize * sizeof(T); // payload size
 }
@@ -779,18 +882,20 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                                                       const DataTypes dataType,
                                                       std::vector<char> &buffer)
 {
+    const bool isLittleEndian = helper::IsLittleEndian();
     const uint8_t characteristicsCount =
-        helper::ReadValue<uint8_t>(buffer, currentPosition);
+        helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
 
     const uint32_t characteristicsLength =
-        helper::ReadValue<uint32_t>(buffer, currentPosition);
+        helper::ReadValue<uint32_t>(buffer, currentPosition, isLittleEndian);
 
     const size_t endPosition =
         currentPosition + static_cast<size_t>(characteristicsLength);
 
     while (currentPosition < endPosition)
     {
-        const uint8_t id = helper::ReadValue<uint8_t>(buffer, currentPosition);
+        const uint8_t id =
+            helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
 
         switch (id)
         {
@@ -812,7 +917,9 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
             {
                 // first get the length of the string
                 const size_t length = static_cast<size_t>(
-                    helper::ReadValue<uint16_t>(buffer, currentPosition));
+
+                    helper::ReadValue<uint16_t>(buffer, currentPosition,
+                                                isLittleEndian));
 
                 currentPosition += length;
             }
@@ -827,18 +934,18 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_min):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_max):
         {
-            currentPosition += sizeof(typename TypeInfo<T>::ValueType);
+            currentPosition += sizeof(T);
             break;
         }
         case (characteristic_offset):
         {
-            const uint64_t currentOffset =
-                helper::ReadValue<uint64_t>(buffer, currentPosition);
+            const uint64_t currentOffset = helper::ReadValue<uint64_t>(
+                buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedOffset =
                 currentOffset +
@@ -850,8 +957,8 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_payload_offset):
         {
-            const uint64_t currentPayloadOffset =
-                helper::ReadValue<uint64_t>(buffer, currentPosition);
+            const uint64_t currentPayloadOffset = helper::ReadValue<uint64_t>(
+                buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedPayloadOffset =
                 currentPayloadOffset +
@@ -865,7 +972,9 @@ void BP3Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         case (characteristic_dimensions):
         {
             const size_t dimensionsSize = static_cast<size_t>(
-                helper::ReadValue<uint8_t>(buffer, currentPosition));
+
+                helper::ReadValue<uint8_t>(buffer, currentPosition,
+                                           isLittleEndian));
 
             currentPosition +=
                 3 * sizeof(uint64_t) * dimensionsSize + 2; // 2 is for length
@@ -937,7 +1046,7 @@ void BP3Serializer::PutCharacteristicOperation(
     helper::InsertToBuffer(buffer, type.c_str(), type.size());
 
     // pre-transform type
-    const uint8_t dataType = GetDataType<T>();
+    const uint8_t dataType = TypeTraits<T>::type_enum;
     helper::InsertToBuffer(buffer, &dataType);
     // pre-transform dimensions
     const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());

@@ -123,30 +123,25 @@ void CompressBZip2::CheckStatus(const int status, const std::string hint) const
 {
     switch (status)
     {
-
     case (BZ_CONFIG_ERROR):
         throw std::invalid_argument(
             "ERROR: BZ_CONFIG_ERROR, bzip2 library is not configured "
             "correctly" +
             hint);
-        break;
 
     case (BZ_PARAM_ERROR):
         throw std::invalid_argument(
             "ERROR: BZ_PARAM_ERROR bufferOut stream might be null" + hint);
-        break;
 
     case (BZ_MEM_ERROR):
         throw std::ios_base::failure(
             "ERROR: BZ_MEM_ERROR bzip2 detected insufficient memory " + hint);
-        break;
 
     case (BZ_OUTBUFF_FULL):
         throw std::ios_base::failure("ERROR: BZ_OUTBUFF_FULL bzip2 detected "
                                      "size of compressed data is larger than "
                                      "destination length " +
                                      hint);
-        break;
 
     // decompression
     case (BZ_DATA_ERROR):
@@ -154,20 +149,19 @@ void CompressBZip2::CheckStatus(const int status, const std::string hint) const
                                     "detected integrity errors in compressed "
                                     "data " +
                                     hint);
-        break;
 
     case (BZ_DATA_ERROR_MAGIC):
         throw std::invalid_argument("ERROR: BZ_DATA_ERROR_MAGIC, bzip2 library "
                                     "detected wrong magic numbers in "
                                     "compressed data " +
                                     hint);
-        break;
 
     case (BZ_UNEXPECTED_EOF):
         throw std::invalid_argument("ERROR: BZ_UNEXPECTED_EOF, bzip2 library "
                                     "detected unexpected end of "
                                     "compressed data " +
                                     hint);
+    default:
         break;
     }
 }

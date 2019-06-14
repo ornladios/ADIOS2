@@ -14,7 +14,6 @@
 #include <hdf5.h>
 
 #include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/interop/hdf5/HDF5Common.h"
@@ -42,9 +41,8 @@ public:
 
     ~HDF5WriterP();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = -1.0) final;
     void EndStep() final;
 
     void PerformPuts() final;
@@ -58,7 +56,7 @@ private:
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &variable, const T *values) final;              \
     void DoPutDeferred(Variable<T> &variable, const T *values) final;
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>

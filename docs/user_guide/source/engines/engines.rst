@@ -14,12 +14,11 @@ Parameters are passed at:
 
 2. Compile time ``IO::AddTransport`` (``adios2_set_transport_parameter`` in C, Fortran)
 
-3. :ref:`Runtime Configuration Files` in the :ref:`ADIOS` component.  
+3. :ref:`Runtime Configuration Files` in the :ref:`ADIOS` component.
 
-.. include:: bpfile.rst
+.. include:: bp3.rst
 .. include:: hdf5.rst
+.. include:: insitu_mpi.rst
 .. include:: dataman.rst
 .. include:: sst.rst
-
-
-   
+.. include:: inline.rst

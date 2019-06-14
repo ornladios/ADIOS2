@@ -48,12 +48,13 @@ public:
 
     /**
      * Put in buffer metadata for a given variable
-     * @param variable
      */
     template <class T>
     void PutVariableMetadata(
         const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo) noexcept;
+        const typename core::Variable<T>::Info &blockInfo,
+        const bool sourceRowMajor = true,
+        typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     /**
      * Put in buffer variable payload. Expensive part.
@@ -62,7 +63,13 @@ public:
     template <class T>
     void PutVariablePayload(
         const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo) noexcept;
+        const typename core::Variable<T>::Info &blockInfo,
+        const bool sourceRowMajor = true,
+        typename core::Variable<T>::Span *span = nullptr) noexcept;
+
+    template <class T>
+    void PutSpanMetadata(const core::Variable<T> &variable,
+                         const typename core::Variable<T>::Span &span) noexcept;
 
     /**
      *  Serializes data buffer and close current process group
@@ -220,11 +227,13 @@ private:
     /**
      * Get variable statistics
      * @param variable
+     * @param isRowMajor
      * @return stats BP3 Stats
      */
     template <class T>
-    Stats<T>
-    GetBPStats(const typename core::Variable<T>::Info &blockInfo) noexcept;
+    Stats<T> GetBPStats(const bool singleValue,
+                        const typename core::Variable<T>::Info &blockInfo,
+                        const bool isRowMajor) noexcept;
 
     template <class T>
     void
@@ -236,14 +245,15 @@ private:
     void PutVariableMetadataInIndex(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::Info &blockInfo,
-        const Stats<T> &stats, const bool isNew,
-        SerialElementIndex &index) noexcept;
+        const Stats<T> &stats, const bool isNew, SerialElementIndex &index,
+        typename core::Variable<T>::Span *span) noexcept;
 
     template <class T>
     void PutVariableCharacteristics(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::Info &blockInfo,
-        const Stats<T> &stats, std::vector<char> &buffer) noexcept;
+        const Stats<T> &stats, std::vector<char> &buffer,
+        typename core::Variable<T>::Span *span) noexcept;
 
     template <class T>
     void PutVariableCharacteristics(
@@ -290,7 +300,7 @@ private:
 
     /** Writes min max */
     template <class T>
-    void PutBoundsRecord(const bool isScalar, const Stats<T> &stats,
+    void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
                          uint8_t &characteristicsCounter,
                          std::vector<char> &buffer) noexcept;
 
@@ -387,9 +397,9 @@ private:
      * @param variable input from which Payload is taken
      */
     template <class T>
-    void PutPayloadInBuffer(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::Info &blockInfo) noexcept;
+    void PutPayloadInBuffer(const core::Variable<T> &variable,
+                            const typename core::Variable<T>::Info &blockInfo,
+                            const bool sourceRowMajor = true) noexcept;
 
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
@@ -399,6 +409,8 @@ private:
     uint32_t GetFileIndex() const noexcept;
 
     size_t GetAttributesSizeInData(core::IO &io) const noexcept;
+
+    void SetDataOffset(uint64_t &offset) noexcept;
 
     template <class T>
     size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
@@ -418,15 +430,23 @@ private:
 };
 
 #define declare_template_instantiation(T)                                      \
-    extern template void BP3Serializer::PutVariablePayload(                    \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;                    \
-                                                                               \
     extern template void BP3Serializer::PutVariableMetadata(                   \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::Info &) noexcept;
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool, typename core::Variable<T>::Span *) noexcept;              \
+                                                                               \
+    extern template void BP3Serializer::PutVariablePayload(                    \
+        const core::Variable<T> &, const typename core::Variable<T>::Info &,   \
+        const bool, typename core::Variable<T>::Span *) noexcept;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    extern template void BP3Serializer::PutSpanMetadata(                       \
+        const core::Variable<T> &,                                             \
+        const typename core::Variable<T>::Span &) noexcept;
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace format

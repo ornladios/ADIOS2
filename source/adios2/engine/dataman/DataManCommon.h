@@ -14,7 +14,11 @@
 #include "adios2/ADIOSConfig.h"
 #include "adios2/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
-#include "adios2/toolkit/transportman/dataman/DataMan.h"
+#include "adios2/helper/adiosSystem.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.h"
+#include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
+#include "adios2/toolkit/transport/file/FileFStream.h"
+#include "adios2/toolkit/transportman/wanman/WANMan.h"
 
 namespace adios2
 {
@@ -33,28 +37,31 @@ public:
     virtual ~DataManCommon() = default;
 
 protected:
-    int m_MPIRank;
-    int m_MPISize;
-    int m_TransportChannels;
-    std::string m_Format = "dataman";
-    std::string m_WorkflowMode = "p2p";
+    int m_MpiRank;
+    int m_MpiSize;
+    int m_Channels;
+    std::string m_WorkflowMode = "stream";
+    bool m_ProvideLatest = false;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;
 
     bool m_IsLittleEndian;
     bool m_IsRowMajor;
+    bool m_ContiguousMajor = true;
+
+    int m_Verbosity = 0;
+
+    transport::FileFStream m_FileTransport;
 
     std::vector<std::string> m_StreamNames;
-    std::vector<core::Operator *> m_Callbacks;
-    std::mutex m_CallbackMutex;
 
-    std::shared_ptr<transportman::DataMan> m_DataMan;
+    std::shared_ptr<transportman::WANMan> m_WANMan;
     std::shared_ptr<std::thread> m_DataThread;
 
-    virtual void IOThread(std::shared_ptr<transportman::DataMan> man) = 0;
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
+    bool GetBoolParameter(Params &params, std::string key, bool &value);
 
 }; // end class DataManCommon
 

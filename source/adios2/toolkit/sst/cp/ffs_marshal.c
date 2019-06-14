@@ -6,17 +6,13 @@
 #include "adios2/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 #include <pthread.h>
 
 #include "adios2/ADIOSConfig.h"
 
 #include "sst.h"
 
+#include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
 #include "ffs_marshal.h"
 
@@ -50,6 +46,35 @@ static char *ConcatName(const char *base_name, const char *postfix)
     strcat(Ret, base_name);
     strcat(Ret, postfix);
     return Ret;
+}
+
+static char *BuildVarName(const char *base_name, const char *type,
+                          const int element_size)
+{
+    int Len = strlen(base_name) + strlen(type) + strlen("SST_") + 16;
+    char *Ret = malloc(Len);
+    sprintf(Ret, "SST%d_%d_", element_size, (int)strlen(type));
+    strcat(Ret, type);
+    strcat(Ret, "_");
+    strcat(Ret, base_name);
+    return Ret;
+}
+
+static void BreakdownVarName(const char *Name, char **base_name_p,
+                             char **type_p, int *element_size_p)
+{
+    int TypeLen;
+    int ElementSize;
+    const char *NameStart;
+    char *TypeStart = strchr(Name, '_') + 1;
+    TypeStart = strchr(TypeStart, '_') + 1;
+    sscanf(Name, "SST%d_%d_", &ElementSize, &TypeLen);
+    NameStart = TypeStart + TypeLen + 1;
+    *element_size_p = ElementSize;
+    *type_p = malloc(TypeLen + 1);
+    strncpy(*type_p, TypeStart, TypeLen);
+    (*type_p)[TypeLen] = 0;
+    *base_name_p = strdup(NameStart);
 }
 
 static char *BuildArrayName(const char *base_name, const char *type,
@@ -149,6 +174,39 @@ static char *TranslateADIOS2Type2FFS(const char *Type)
     {
         return strdup("complex8");
     }
+    else if (strcmp(Type, "int8_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int16_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int32_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "int64_t") == 0)
+    {
+        return strdup("integer");
+    }
+    else if (strcmp(Type, "uint8_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint16_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint32_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+    else if (strcmp(Type, "uint64_t") == 0)
+    {
+        return strdup("unsigned integer");
+    }
+
     return strdup(Type);
 }
 
@@ -156,40 +214,40 @@ static char *TranslateFFSType2ADIOS(const char *Type, int size)
 {
     if (strcmp(Type, "integer") == 0)
     {
-        if (size == sizeof(int))
+        if (size == 1)
         {
-            return strdup("int");
+            return strdup("int8_t");
         }
-        else if (size == sizeof(long))
+        else if (size == 2)
         {
-            return strdup("long int");
+            return strdup("int16_t");
         }
-        else if (size == sizeof(char))
+        else if (size == 4)
         {
-            return strdup("char");
+            return strdup("int32_t");
         }
-        else if (size == sizeof(short))
+        else if (size == 8)
         {
-            return strdup("short");
+            return strdup("int64_t");
         }
     }
     else if (strcmp(Type, "unsigned integer") == 0)
     {
-        if (size == sizeof(int))
+        if (size == 1)
         {
-            return strdup("unsigned int");
+            return strdup("uint8_t");
         }
-        else if (size == sizeof(long))
+        else if (size == 2)
         {
-            return strdup("unsigned long int");
+            return strdup("uint16_t");
         }
-        else if (size == sizeof(char))
+        else if (size == 4)
         {
-            return strdup("unsigned char");
+            return strdup("uint32_t");
         }
-        else if (size == sizeof(short))
+        else if (size == 8)
         {
-            return strdup("unsigned short");
+            return strdup("uint64_t");
         }
     }
     else if ((strcmp(Type, "double") == 0) || (strcmp(Type, "float") == 0))
@@ -244,6 +302,26 @@ static void RecalcMarshalStorageSize(SstStream Stream)
         memset(Stream->M + Stream->MetadataSize, 0,
                NewMetaSize - Stream->MetadataSize);
         Stream->MetadataSize = NewMetaSize;
+    }
+}
+
+static void RecalcAttributeStorageSize(SstStream Stream)
+{
+    struct FFSWriterMarshalBase *Info = Stream->WriterMarshalData;
+    if (Info->AttributeFieldCount)
+    {
+        FMFieldList LastAttributeField;
+        size_t NewAttributeSize;
+        LastAttributeField =
+            &Info->AttributeFields[Info->AttributeFieldCount - 1];
+        NewAttributeSize = (LastAttributeField->field_offset +
+                            LastAttributeField->field_size + 7) &
+                           ~7;
+        Info->AttributeData =
+            realloc(Info->AttributeData, NewAttributeSize + 8);
+        memset(Info->AttributeData + Info->AttributeSize, 0,
+               NewAttributeSize - Info->AttributeSize);
+        Info->AttributeSize = NewAttributeSize;
     }
 }
 
@@ -533,6 +611,11 @@ static void FreeTSInfo(void *ClientData)
     free(TSInfo);
 }
 
+static void FreeAttrInfo(void *ClientData)
+{
+    free_FFSBuffer((FFSBuffer)ClientData);
+}
+
 static size_t *CopyDims(const size_t Count, const size_t *Vals)
 {
     size_t *Ret = malloc(Count * sizeof(Ret[0]));
@@ -604,6 +687,7 @@ static FFSVarRec CreateVarRec(SstStream Stream, const char *ArrayName)
     struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
     Info->VarList =
         realloc(Info->VarList, sizeof(Info->VarList[0]) * (Info->VarCount + 1));
+    memset(&Info->VarList[Info->VarCount], 0, sizeof(Info->VarList[0]));
     Info->VarList[Info->VarCount].VarName = strdup(ArrayName);
     Info->VarList[Info->VarCount].PerWriterMetaFieldDesc =
         calloc(sizeof(FMFieldList), Stream->WriterCohortSize);
@@ -630,10 +714,12 @@ extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
 
 void SstReaderInitFFSCallback(SstStream Stream, void *Reader,
                               VarSetupUpcallFunc VarCallback,
-                              ArraySetupUpcallFunc ArrayCallback)
+                              ArraySetupUpcallFunc ArrayCallback,
+                              AttrSetupUpcallFunc AttrCallback)
 {
     Stream->VarSetupUpcall = VarCallback;
     Stream->ArraySetupUpcall = ArrayCallback;
+    Stream->AttrSetupUpcall = AttrCallback;
     Stream->SetupUpcallReader = Reader;
 }
 
@@ -661,6 +747,7 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
         // Build request structure and enter it into requests list
         FFSArrayRequest Req = malloc(sizeof(*Req));
         Req->VarRec = Var;
+        Req->RequestType = Global;
         // make a copy of Start and Count request
         Req->Start = malloc(sizeof(Start[0]) * Var->DimCount);
         memcpy(Req->Start, Start, sizeof(Start[0]) * Var->DimCount);
@@ -672,8 +759,49 @@ extern void SstFFSGetDeferred(SstStream Stream, void *Variable,
     }
 }
 
+extern void SstFFSGetLocalDeferred(SstStream Stream, void *Variable,
+                                   const char *Name, size_t DimCount,
+                                   const int BlockID, const size_t *Count,
+                                   void *Data)
+{
+    struct FFSReaderMarshalBase *Info = Stream->ReaderMarshalData;
+    int GetFromWriter = 0;
+    FFSVarRec Var = LookupVarByKey(Stream, Variable);
+
+    // if Variable is in Metadata (I.E. DimCount == 0), move incoming data to
+    // Data area
+    if (DimCount == 0)
+    {
+        void *IncomingDataBase =
+            ((char *)Info->MetadataBaseAddrs[GetFromWriter]) +
+            Var->PerWriterMetaFieldDesc[GetFromWriter]->field_offset;
+        memcpy(Data, IncomingDataBase,
+               Var->PerWriterMetaFieldDesc[GetFromWriter]->field_size);
+    }
+    else
+    {
+        // Build request structure and enter it into requests list
+        FFSArrayRequest Req = malloc(sizeof(*Req));
+        memset(Req, 0, sizeof(*Req));
+        Req->VarRec = Var;
+        Req->RequestType = Local;
+        Req->NodeID = BlockID;
+        // make a copy of Count request
+        Req->Count = malloc(sizeof(Count[0]) * Var->DimCount);
+        memcpy(Req->Count, Count, sizeof(Count[0]) * Var->DimCount);
+        Req->Data = Data;
+        Req->Next = Info->PendingVarRequests;
+        Info->PendingVarRequests = Req;
+    }
+}
+
 static int NeedWriter(FFSArrayRequest Req, int i)
 {
+    if (Req->RequestType == Local)
+    {
+        return (Req->NodeID == i);
+    }
+    // else Global case
     for (int j = 0; j < Req->VarRec->DimCount; j++)
     {
         size_t SelOffset = Req->Start[j];
@@ -729,6 +857,9 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
             Info->WriterInfo[i].RawBuffer =
                 realloc(Info->WriterInfo[i].RawBuffer, DataSize);
 
+            char tmpstr[256] = {0};
+            sprintf(tmpstr, "Request to rank %d, bytes", i);
+            TAU_SAMPLE_COUNTER(tmpstr, (double)DataSize);
             Info->WriterInfo[i].ReadHandle = SstReadRemoteMemory(
                 Stream, i, Stream->ReaderTimestep, 0, DataSize,
                 Info->WriterInfo[i].RawBuffer, DP_TimestepInfo);
@@ -747,6 +878,8 @@ static void ClearReadRequests(SstStream Stream)
     {
         FFSArrayRequest PrevReq = Req;
         Req = Req->Next;
+        free(PrevReq->Count);
+        free(PrevReq->Start);
         free(PrevReq);
     }
     Info->PendingVarRequests = NULL;
@@ -911,14 +1044,14 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
                                    const size_t *SelectionCounts,
                                    const char *InData, char *OutData)
 {
-    int BlockSize;
-    int SourceBlockStride = 0;
-    int DestBlockStride = 0;
-    int SourceBlockStartOffset;
-    int DestBlockStartOffset;
-    int BlockCount;
-    int OperantDims;
-    int OperantElementSize;
+    size_t BlockSize;
+    size_t SourceBlockStride = 0;
+    size_t DestBlockStride = 0;
+    size_t SourceBlockStartOffset;
+    size_t DestBlockStartOffset;
+    size_t BlockCount;
+    size_t OperantDims;
+    size_t OperantElementSize;
 
     BlockSize = 1;
     OperantDims = Dims;
@@ -935,9 +1068,9 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
         }
         else
         {
-            int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
-            int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
-                            SelectionOffsets[Dim] + SelectionCounts[Dim]);
+            size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+            size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                               SelectionOffsets[Dim] + SelectionCounts[Dim]);
             BlockSize *= (Right - Left);
             break;
         }
@@ -953,9 +1086,9 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
     size_t *FirstIndex = malloc(Dims * sizeof(FirstIndex[0]));
     for (int Dim = 0; Dim < Dims; Dim++)
     {
-        int Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
-        int Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
-                        SelectionOffsets[Dim] + SelectionCounts[Dim]);
+        size_t Left = MAX(PartialOffsets[Dim], SelectionOffsets[Dim]);
+        size_t Right = MIN(PartialOffsets[Dim] + PartialCounts[Dim],
+                           SelectionOffsets[Dim] + SelectionCounts[Dim]);
         if (Dim < OperantDims - 1)
         {
             BlockCount *= (Right - Left);
@@ -976,7 +1109,7 @@ void ExtractSelectionFromPartialRM(int ElementSize, size_t Dims,
 
     InData += SourceBlockStartOffset;
     OutData += DestBlockStartOffset;
-    int i;
+    size_t i;
     for (i = 0; i < BlockCount; i++)
     {
         memcpy(OutData, InData, BlockSize * ElementSize);
@@ -1108,6 +1241,20 @@ static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 size_t IncomingSize = Reqs->VarRec->PerWriterIncomingSize[i];
                 int FreeIncoming = 0;
 
+                if (Reqs->RequestType == Local)
+                {
+                    RankOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    GlobalDimensions =
+                        calloc(DimCount, sizeof(GlobalDimensions[0]));
+                    if (SelOffset == NULL)
+                    {
+                        SelOffset = calloc(DimCount, sizeof(RankOffset[0]));
+                    }
+                    for (int i = 0; i < DimCount; i++)
+                    {
+                        GlobalDimensions[i] = RankSize[i];
+                    }
+                }
                 if ((Stream->WriterConfigParams->CompressionMethod ==
                      SstCompressZFP) &&
                     ZFPcompressionPossible(Type, DimCount))
@@ -1174,6 +1321,9 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     struct FFSWriterMarshalBase *Info =
         (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
     struct FFSFormatBlock *Formats = NULL;
+    FMFormat AttributeFormat = NULL;
+
+    TAU_START("Marshaling overhead in SstFFSWriterEndStep");
 
     CP_verbose(Stream, "Calling SstWriterEndStep\n");
     // if field lists have changed, register formats with FFS local context, add
@@ -1181,9 +1331,17 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     if (!Info->MetaFormat)
     {
         struct FFSFormatBlock *Block = malloc(sizeof(*Block));
-        FMFormat Format = FMregister_simple_format(
-            Info->LocalFMContext, "MetaData", Info->MetaFields,
-            FMstruct_size_field_list(Info->MetaFields, sizeof(char *)));
+        FMStructDescRec struct_list[4] = {
+            {NULL, NULL, 0, NULL},
+            {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
+            {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {NULL, NULL, 0, NULL}};
+        struct_list[0].format_name = "MetaData";
+        struct_list[0].field_list = Info->MetaFields;
+        struct_list[0].struct_size =
+            FMstruct_size_field_list(Info->MetaFields, sizeof(char *));
+        FMFormat Format =
+            register_data_format(Info->LocalFMContext, &struct_list[0]);
         Info->MetaFormat = Format;
         Block->FormatServerRep =
             get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
@@ -1222,14 +1380,39 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
             Formats = Block;
         }
     }
+    if (Info->AttributeFields)
+    {
+        struct FFSFormatBlock *Block = malloc(sizeof(*Block));
+        FMFormat Format = FMregister_simple_format(
+            Info->LocalFMContext, "Attributes", Info->AttributeFields,
+            FMstruct_size_field_list(Info->AttributeFields, sizeof(char *)));
+        AttributeFormat = Format;
+        Block->FormatServerRep =
+            get_server_rep_FMformat(Format, &Block->FormatServerRepLen);
+        Block->FormatIDRep =
+            get_server_ID_FMformat(Format, &Block->FormatIDRepLen);
+        Block->Next = NULL;
+        if (Formats)
+        {
+            Block->Next = Formats;
+            Formats = Block;
+        }
+        else
+        {
+            Formats = Block;
+        }
+    }
     // Encode Metadata and Data to create contiguous data blocks
     FFSTimestepInfo TSInfo = malloc(sizeof(*TSInfo));
     FFSBuffer MetaEncodeBuffer = create_FFSBuffer();
     FFSBuffer DataEncodeBuffer = create_FFSBuffer();
+    FFSBuffer AttributeEncodeBuffer = NULL;
     struct _SstData DataRec;
     struct _SstData MetaDataRec;
+    struct _SstData AttributeRec;
     int MetaDataSize;
     int DataSize;
+    int AttributeSize = 0;
     struct FFSMetadataInfoStruct *MBase;
     DataRec.block =
         FFSencode(DataEncodeBuffer, Info->DataFormat, Stream->D, &DataSize);
@@ -1242,6 +1425,19 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
         FFSencode(MetaEncodeBuffer, Info->MetaFormat, Stream->M, &MetaDataSize);
     MetaDataRec.DataSize = MetaDataSize;
     TSInfo->MetaEncodeBuffer = MetaEncodeBuffer;
+
+    if (Info->AttributeFields)
+    {
+        AttributeEncodeBuffer = create_FFSBuffer();
+        AttributeRec.block = FFSencode(AttributeEncodeBuffer, AttributeFormat,
+                                       Info->AttributeData, &AttributeSize);
+        AttributeRec.DataSize = AttributeSize;
+    }
+    else
+    {
+        AttributeRec.block = NULL;
+        AttributeRec.DataSize = 0;
+    }
 
     /* free all those copied dimensions, etc */
     MBase = Stream->M;
@@ -1263,13 +1459,109 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     //    FMdump_encoded_data(Info->MetaFormat, MetaDataRec.block, 1024000);
     //    printf("\nDatablock is :\n");
     //    FMdump_encoded_data(Info->DataFormat, DataRec.block, 1024000);
+    //    if (AttributeEncodeBuffer) {
+    //        printf("\nAttributeBlock is :\n");
+    //        FMdump_encoded_data(AttributeFormat, AttributeRec.block, 1024000);
+    //    }
+
+    TAU_STOP("Marshaling overhead in SstFFSWriterEndStep");
+
     SstInternalProvideTimestep(Stream, &MetaDataRec, &DataRec, Timestep,
-                               Formats, FreeTSInfo, TSInfo);
+                               Formats, FreeTSInfo, TSInfo, &AttributeRec,
+                               FreeAttrInfo, AttributeEncodeBuffer);
     while (Formats)
     {
         struct FFSFormatBlock *Tmp = Formats->Next;
         free(Formats);
         Formats = Tmp;
+    }
+    if (Info->AttributeFields)
+        free_FMfield_list(Info->AttributeFields);
+    Info->AttributeFields = NULL;
+    Info->AttributeFieldCount = 0;
+    if (Info->AttributeData)
+        free(Info->AttributeData);
+    Info->AttributeData = NULL;
+    Info->AttributeSize = 0;
+}
+
+static void LoadAttributes(SstStream Stream, TSMetadataMsg MetaData)
+{
+    static int DumpMetadata = -1;
+    Stream->AttrSetupUpcall(Stream->SetupUpcallReader, NULL, NULL, NULL);
+    for (int WriterRank = 0; WriterRank < Stream->WriterCohortSize;
+         WriterRank++)
+    {
+        FMFieldList FieldList;
+        FMStructDescList FormatList;
+        void *BaseData;
+        FFSTypeHandle FFSformat;
+
+        if (MetaData->AttributeData[WriterRank].DataSize == 0)
+            return;
+
+        FFSformat = FFSTypeHandle_from_encode(
+            Stream->ReaderFFSContext,
+            MetaData->AttributeData[WriterRank].block);
+        if (!FFShas_conversion(FFSformat))
+        {
+            FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
+            FMFormat Format = FMformat_from_ID(
+                FMC, MetaData->AttributeData[WriterRank].block);
+            FMStructDescList List =
+                FMcopy_struct_list(format_list_of_FMFormat(Format));
+            FMlocalize_structs(List);
+            establish_conversion(Stream->ReaderFFSContext, FFSformat, List);
+            FMfree_struct_list(List);
+        }
+
+        if (FFSdecode_in_place_possible(FFSformat))
+        {
+            FFSdecode_in_place(Stream->ReaderFFSContext,
+                               MetaData->AttributeData[WriterRank].block,
+                               &BaseData);
+        }
+        else
+        {
+            int DecodedLength = FFS_est_decode_length(
+                Stream->ReaderFFSContext,
+                MetaData->AttributeData[WriterRank].block,
+                MetaData->AttributeData[WriterRank].DataSize);
+            BaseData = malloc(DecodedLength);
+            FFSBuffer decode_buf =
+                create_fixed_FFSBuffer(BaseData, DecodedLength);
+            FFSdecode_to_buffer(Stream->ReaderFFSContext,
+                                MetaData->AttributeData[WriterRank].block,
+                                decode_buf);
+        }
+        if (DumpMetadata == -1)
+        {
+            DumpMetadata = (getenv("SstDumpMetadata") != NULL);
+        }
+        if (DumpMetadata && (Stream->Rank == 0))
+        {
+            printf("\nIncomingAttributeDatablock from WriterRank %d is %p :\n",
+                   WriterRank, BaseData);
+            FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+            printf("\n\n");
+        }
+        FormatList = format_list_of_FMFormat(FMFormat_of_original(FFSformat));
+        FieldList = FormatList[0].field_list;
+        int i = 0;
+        int j = 0;
+        while (FieldList[i].field_name)
+        {
+            char *FieldName = strdup(FieldList[i].field_name + 4); // skip SST_
+            void *field_data = (char *)BaseData + FieldList[i].field_offset;
+
+            char *Type;
+            int ElemSize;
+            BreakdownVarName(FieldList[i].field_name, &FieldName, &Type,
+                             &ElemSize);
+            Stream->AttrSetupUpcall(Stream->SetupUpcallReader, FieldName, Type,
+                                    field_data);
+            i++;
+        }
     }
 }
 
@@ -1323,6 +1615,9 @@ extern void FFSClearTimestepData(SstStream Stream)
         free(Info->VarList[i].PerWriterStart);
         free(Info->VarList[i].PerWriterCounts);
         free(Info->VarList[i].PerWriterIncomingData);
+        free(Info->VarList[i].PerWriterIncomingSize);
+        if (Info->VarList[i].Type)
+            free(Info->VarList[i].Type);
     }
     Info->VarCount = 0;
 }
@@ -1372,20 +1667,21 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             calloc(sizeof(Info->DataFieldLists[0]), Stream->WriterCohortSize);
     }
 
-    if (!MetaData->Metadata[WriterRank]->block)
+    if (!MetaData->Metadata[WriterRank].block)
     {
-        fprintf(stderr, "FAILURE!   MetaData->Metadata[WriterRank]->block == "
-                        "NULL for WriterRank = %d\n",
+        fprintf(stderr,
+                "FAILURE!   MetaData->Metadata[WriterRank]->block == "
+                "NULL for WriterRank = %d\n",
                 WriterRank);
     }
-    FFSformat = FFSTypeHandle_from_encode(
-        Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block);
+    FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,
+                                          MetaData->Metadata[WriterRank].block);
 
     if (!FFShas_conversion(FFSformat))
     {
         FMContext FMC = FMContext_from_FFS(Stream->ReaderFFSContext);
         FMFormat Format =
-            FMformat_from_ID(FMC, MetaData->Metadata[WriterRank]->block);
+            FMformat_from_ID(FMC, MetaData->Metadata[WriterRank].block);
         FMStructDescList List =
             FMcopy_struct_list(format_list_of_FMFormat(Format));
         FMlocalize_structs(List);
@@ -1396,17 +1692,17 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     if (FFSdecode_in_place_possible(FFSformat))
     {
         FFSdecode_in_place(Stream->ReaderFFSContext,
-                           MetaData->Metadata[WriterRank]->block, &BaseData);
+                           MetaData->Metadata[WriterRank].block, &BaseData);
     }
     else
     {
         int DecodedLength = FFS_est_decode_length(
-            Stream->ReaderFFSContext, MetaData->Metadata[WriterRank]->block,
-            MetaData->Metadata[WriterRank]->DataSize);
+            Stream->ReaderFFSContext, MetaData->Metadata[WriterRank].block,
+            MetaData->Metadata[WriterRank].DataSize);
         BaseData = malloc(DecodedLength);
         FFSBuffer decode_buf = create_fixed_FFSBuffer(BaseData, DecodedLength);
         FFSdecode_to_buffer(Stream->ReaderFFSContext,
-                            MetaData->Metadata[WriterRank]->block, decode_buf);
+                            MetaData->Metadata[WriterRank].block, decode_buf);
     }
     if (DumpMetadata == -1)
     {
@@ -1469,7 +1765,7 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 VarRec->ElementSize = ElementSize;
                 VarRec->Variable = Stream->ArraySetupUpcall(
                     Stream->SetupUpcallReader, ArrayName, Type, meta_base->Dims,
-                    meta_base->Shape, meta_base->Count, meta_base->Offsets);
+                    meta_base->Shape, meta_base->Offsets, meta_base->Count);
             }
             if (WriterRank == 0)
             {
@@ -1506,9 +1802,11 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
                 VarRec->DimCount = 0;
                 VarRec->Variable = Stream->VarSetupUpcall(
                     Stream->SetupUpcallReader, FieldName, Type, field_data);
+                free(Type);
             }
             VarRec->PerWriterMetaFieldDesc[WriterRank] = &FieldList[i];
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
+            free(FieldName);
             i++;
         }
         /* real variable count is in j, i tracks the entries in the metadata */
@@ -1516,7 +1814,8 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
     }
 }
 
-extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
+extern void FFSMarshalInstallPreciousMetadata(SstStream Stream,
+                                              TSMetadataMsg MetaData)
 {
     if (!Stream->ReaderFFSContext)
     {
@@ -1526,6 +1825,13 @@ extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
     }
 
     LoadFormats(Stream, MetaData->Formats);
+
+    LoadAttributes(Stream, MetaData);
+}
+
+extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData)
+{
+    FFSMarshalInstallPreciousMetadata(Stream, MetaData);
 
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
@@ -1607,9 +1913,15 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
 
         /* handle metadata */
         MetaEntry->Dims = DimCount;
-        MetaEntry->Shape = CopyDims(DimCount, Shape);
+        if (Shape)
+            MetaEntry->Shape = CopyDims(DimCount, Shape);
+        else
+            MetaEntry->Shape = NULL;
         MetaEntry->Count = CopyDims(DimCount, Count);
-        MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        if (Offsets)
+            MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+        else
+            MetaEntry->Offsets = NULL;
 
         if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) &&
             ZFPcompressionPossible(Type, DimCount))
@@ -1632,5 +1944,88 @@ extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
             DataEntry->Array = malloc(ElemCount * ElemSize);
             memcpy(DataEntry->Array, Data, ElemCount * ElemSize);
         }
+    }
+}
+
+extern void SstFFSMarshalAttribute(SstStream Stream, const char *Name,
+                                   const char *Type, size_t ElemSize,
+                                   size_t ElemCount, const void *Data)
+{
+
+    struct FFSWriterMarshalBase *Info;
+    Info = (struct FFSWriterMarshalBase *)Stream->WriterMarshalData;
+    const char *String = NULL;
+    const char *DataAddress = Data;
+
+    if (strcmp(Type, "string") == 0)
+    {
+        ElemSize = sizeof(char *);
+        String = Data;
+        DataAddress = (const char *)&String;
+    }
+    if (ElemCount == -1)
+    {
+        // simple field, only simple attribute name and value
+        char *SstName = BuildVarName(Name, Type, ElemSize);
+        AddField(&Info->AttributeFields, &Info->AttributeFieldCount, SstName,
+                 Type, ElemSize);
+        free(SstName);
+        RecalcAttributeStorageSize(Stream);
+        int DataOffset =
+            Info->AttributeFields[Info->AttributeFieldCount - 1].field_offset;
+        memcpy(Info->AttributeData + DataOffset, DataAddress, ElemSize);
+    }
+    else
+    {
+        /* // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
+         */
+        /* // and Offsets matching _MetaArrayRec */
+        /* char *ArrayName = BuildStaticArrayName(Name, Type, ElemCount); */
+        /* AddField(&Info->AttributeFields, &Info->AttributeFieldCount,
+         * ArrayName, Type, */
+        /*          sizeof(size_t)); */
+        /* free(ArrayName); */
+        /* Rec->MetaOffset = */
+        /*     Info->MetaFields[Info->MetaFieldCount - 1].field_offset; */
+        /* char *ShapeName = ConcatName(Name, "Shape"); */
+        /* char *CountName = ConcatName(Name, "Count"); */
+        /* char *OffsetsName = ConcatName(Name, "Offsets"); */
+        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
+         * ShapeName, */
+        /*                    "integer", sizeof(size_t), DimCount); */
+        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount,
+         * CountName, */
+        /*                    "integer", sizeof(size_t), DimCount); */
+        /* AddFixedArrayField(&Info->MetaFields, &Info->MetaFieldCount, */
+        /*                    OffsetsName, "integer", sizeof(size_t), DimCount);
+         */
+        /* free(ShapeName); */
+        /* free(CountName); */
+        /* free(OffsetsName); */
+        /* RecalcMarshalStorageSize(Stream); */
+
+        /* if ((Stream->ConfigParams->CompressionMethod == SstCompressZFP) && */
+        /*     ZFPcompressionPossible(Type, DimCount)) */
+        /* { */
+        /*     Type = "char"; */
+        /*     ElemSize = 1; */
+        /* } */
+        /* // To Data, add FMFields for ElemCount and Array matching _ArrayRec
+         */
+        /* char *ElemCountName = ConcatName(Name, "ElemCount"); */
+        /* AddField(&Info->DataFields, &Info->DataFieldCount, ElemCountName, */
+        /*          "integer", sizeof(size_t)); */
+        /* Rec->DataOffset = */
+        /*     Info->DataFields[Info->DataFieldCount - 1].field_offset; */
+        /* char *SstName = ConcatName(Name, ""); */
+        /* AddVarArrayField(&Info->DataFields, &Info->DataFieldCount, SstName,
+         */
+        /*                  Type, ElemSize, ElemCountName); */
+        /* free(SstName); */
+        /* free(ElemCountName); */
+        /* RecalcMarshalStorageSize(Stream); */
+        /* // Changing the formats renders these invalid */
+        /* Info->MetaFormat = NULL; */
+        /* Info->DataFormat = NULL; */
     }
 }

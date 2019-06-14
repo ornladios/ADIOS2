@@ -20,15 +20,14 @@ add_test(NAME HeatTransfer.InsituMPI.Dump.MxN
     -DARGS=-d 
     -DINPUT_FILE=HeatTransfer.InsituMPI.Read.MxN.bp
     -DOUTPUT_FILE=HeatTransfer.InsituMPI.Dump.MxN.txt
-    -P "${PROJECT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bpls.cmake"
+    -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST HeatTransfer.InsituMPI.Dump.MxN
   PROPERTY DEPENDS HeatTransfer.InsituMPI.Read.MxN
 )
 
 add_test(NAME HeatTransfer.InsituMPI.Validate.MxN
-  COMMAND ${CMAKE_COMMAND}
-    -E compare_files
+  COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.InsituMPI.Dump.MxN.txt
 )

@@ -45,9 +45,7 @@ public:
     virtual ~SstReader();
 
     StepStatus BeginStep();
-    StepStatus
-    BeginStep(StepMode mode,
-              const float timeoutSeconds = std::numeric_limits<float>::max());
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0);
     size_t CurrentStep() const final;
     void EndStep();
     void PerformGets();
@@ -62,6 +60,7 @@ private:
     void Init();
     SstStream m_Input;
     SstMarshalMethod m_WriterMarshalMethod;
+    bool m_DefinitionsNotified = false;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
@@ -84,7 +83,7 @@ private:
     std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
         const Variable<T> &variable, const size_t step) const final;
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     void DoClose(const int transportIndex = -1) final;

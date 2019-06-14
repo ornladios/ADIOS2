@@ -28,11 +28,45 @@ void FC_GLOBAL(adios2_set_engine_f2c,
     *ierr = static_cast<int>(adios2_set_engine(*io, engine_type));
 }
 
+void FC_GLOBAL(adios2_set_parameters_f2c,
+               ADIOS2_SET_PARAMETERS_F2C)(adios2_io **io,
+                                          const char *parameters, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_set_parameters(*io, parameters));
+}
+
 void FC_GLOBAL(adios2_set_parameter_f2c,
                ADIOS2_SET_PARAMETER_F2C)(adios2_io **io, const char *key,
                                          const char *value, int *ierr)
 {
     *ierr = static_cast<int>(adios2_set_parameter(*io, key, value));
+}
+
+void FC_GLOBAL(adios2_get_parameter_f2c,
+               ADIOS2_GET_PARAMETER_F2C)(char *value, const adios2_io **io,
+                                         const char *key, int *ierr)
+{
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(value, &sizeC, *io, key));
+}
+
+void FC_GLOBAL(adios2_get_parameter_length_f2c,
+               ADIOS2_GET_PARAMETER_LENGTH_F2C)(int *size, const adios2_io **io,
+                                                const char *key, int *ierr)
+{
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(nullptr, &sizeC, *io, key));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *size = static_cast<int>(sizeC);
+    }
+}
+
+void FC_GLOBAL(adios2_clear_parameters_f2c,
+               ADIOS2_CLEAR_PARAMETERS_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_clear_parameters(*io));
 }
 
 void FC_GLOBAL(adios2_add_transport_f2c,
@@ -61,9 +95,6 @@ void FC_GLOBAL(adios2_set_transport_parameter_f2c,
         throw std::invalid_argument("ERROR: transport_index can't be negative, "
                                     "in call to "
                                     "adios2_set_transport_parameter");
-        *ierr = static_cast<int>(
-            adios2::helper::ExceptionToError("adios2_set_transport_parameter"));
-        return;
     }
     const std::size_t transport_indexC =
         static_cast<std::size_t>(*transport_index);
@@ -93,7 +124,6 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
 {
     auto lf_IntToSizeT = [](const int64_t *dimensions, const int size,
                             const std::string hint) -> adios2::Dims {
-
         adios2::Dims output(static_cast<size_t>(size));
 
         for (auto d = 0; d < size; ++d)
@@ -118,6 +148,24 @@ void FC_GLOBAL(adios2_define_variable_f2c, ADIOS2_DEFINE_VARIABLE_F2C)(
                 "adios2_define_variable");
         }
 
+        // Check for local value
+        if (*ndims == 1)
+        {
+            if (shape[0] == -2)
+            {
+                size_t shapeC[1];
+                shapeC[0] = adios2_local_value_dim;
+
+                *variable = adios2_define_variable(
+                    *io, name, static_cast<adios2_type>(*type), *ndims, shapeC,
+                    nullptr, nullptr,
+                    static_cast<adios2_constant_dims>(*constant_dims));
+                *ierr = (*variable == NULL)
+                            ? static_cast<int>(adios2_error_exception)
+                            : static_cast<int>(adios2_error_none);
+                return;
+            }
+        }
         // Check for local variables
         if (shape[0] == -1)
         {
@@ -172,11 +220,11 @@ void FC_GLOBAL(adios2_inquire_variable_f2c,
 }
 
 void FC_GLOBAL(adios2_remove_variable_f2c,
-               ADIOS2_REMOVE_VARIABLE_F2C)(adios2_io **io, const char *name,
-                                           int *result, int *ierr)
+               ADIOS2_REMOVE_VARIABLE_F2C)(int *result, adios2_io **io,
+                                           const char *name, int *ierr)
 {
     adios2_bool resultC;
-    *ierr = static_cast<int>(adios2_remove_variable(*io, name, &resultC));
+    *ierr = static_cast<int>(adios2_remove_variable(&resultC, *io, name));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *result = (resultC == adios2_true) ? 1 : 0;
@@ -282,11 +330,11 @@ void FC_GLOBAL(adios2_inquire_variable_attribute_f2c,
 }
 
 void FC_GLOBAL(adios2_remove_attribute_f2c,
-               ADIOS2_REMOVE_ATTRIBUTE_F2C)(adios2_io **io, const char *name,
-                                            int *result, int *ierr)
+               ADIOS2_REMOVE_ATTRIBUTE_F2C)(int *result, adios2_io **io,
+                                            const char *name, int *ierr)
 {
     adios2_bool resultC;
-    *ierr = static_cast<int>(adios2_remove_attribute(*io, name, &resultC));
+    *ierr = static_cast<int>(adios2_remove_attribute(&resultC, *io, name));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *result = (resultC == adios2_true) ? 1 : 0;
@@ -335,13 +383,21 @@ void FC_GLOBAL(adios2_lock_definitions_f2c,
 }
 
 void FC_GLOBAL(adios2_io_engine_type_f2c,
-               ADIOS2_IO_ENGINE_TYPE_F2C)(const adios2_io **io,
-                                          char engine_type[32], int *size,
+               ADIOS2_IO_ENGINE_TYPE_F2C)(char *type, const adios2_io **io,
                                           int *ierr)
+{
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_engine_type(type, &sizeC, *io));
+}
+
+void FC_GLOBAL(adios2_io_engine_type_length_f2c,
+               ADIOS2_io_ENGINE_TYPE_LENGTH_F2C)(int *size,
+                                                 const adios2_io **io,
+                                                 int *ierr)
 {
     *size = -1;
     size_t sizeC;
-    *ierr = static_cast<int>(adios2_engine_type(engine_type, &sizeC, *io));
+    *ierr = static_cast<int>(adios2_engine_type(nullptr, &sizeC, *io));
     if (*ierr == static_cast<int>(adios2_error_none))
     {
         *size = static_cast<int>(sizeC);

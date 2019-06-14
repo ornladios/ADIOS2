@@ -49,7 +49,9 @@
 #include <fnmatch.h>
 #endif
 
-#include "adios2sys/CommandLineArguments.hxx"
+#include <adios2sys/CommandLineArguments.hxx>
+#include <adios2sys/SystemTools.hxx>
+#include <pugixml.hpp>
 
 namespace adios2
 {
@@ -205,7 +207,7 @@ int process_unused_args(adios2sys::CommandLineArguments &arg)
     arg.GetUnusedArguments(&nuargs, &uargs);
 
     std::vector<char *> retry_args;
-    retry_args.push_back(new char[4]);
+    retry_args.push_back(new char[4]());
 
     // first arg is argv[0], so skip that
     for (int i = 1; i < nuargs; i++)
@@ -395,6 +397,11 @@ int bplsMain(int argc, char *argv[])
         return retval;
 
     /* Start working */
+    size_t len = strlen(vfile);
+    if (vfile[len - 1] == '/')
+    {
+        vfile[len - 1] = '\0';
+    }
     retval = doList(vfile);
 
     print_stop();
@@ -550,10 +557,88 @@ static inline int ndigits(size_t n)
     return snprintf(digitstr, 32, "%zu", n);
 }
 
+template <class T>
+int printAttributeValue(core::Engine *fp, core::IO *io,
+                        core::Attribute<T> *attribute)
+{
+    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
+    if (attribute->m_IsSingleValue)
+    {
+        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
+                   true);
+    }
+    else
+    {
+        fprintf(outf, "{");
+        size_t nelems = attribute->m_DataArray.size();
+        for (size_t j = 0; j < nelems; j++)
+        {
+            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
+                       true);
+            if (j < nelems - 1)
+            {
+                fprintf(outf, ", ");
+            }
+        }
+        fprintf(outf, "}");
+    }
+    return 0;
+}
+
+template <>
+int printAttributeValue(core::Engine *fp, core::IO *io,
+                        core::Attribute<std::string> *attribute)
+{
+    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
+    bool xmlprint = helper::EndsWith(attribute->m_Name, "xml", false);
+    bool printDataAnyway = true;
+
+    if (attribute->m_IsSingleValue)
+    {
+        if (xmlprint)
+        {
+            printDataAnyway =
+                print_data_xml(attribute->m_DataSingleValue.data(),
+                               attribute->m_DataSingleValue.length());
+        }
+        if (printDataAnyway)
+        {
+            print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
+                       true);
+        }
+    }
+    else
+    {
+        fprintf(outf, "{");
+        size_t nelems = attribute->m_DataArray.size();
+        for (size_t j = 0; j < nelems; j++)
+        {
+            if (xmlprint)
+            {
+                printDataAnyway =
+                    print_data_xml(attribute->m_DataArray[j].data(),
+                                   attribute->m_DataArray[j].length());
+            }
+            if (printDataAnyway)
+            {
+                print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
+                           true);
+            }
+            if (j < nelems - 1)
+            {
+                fprintf(outf, ", ");
+            }
+        }
+        fprintf(outf, "}");
+    }
+    return 0;
+}
+
 int nEntriesMatched = 0;
 
 int doList_vars(core::Engine *fp, core::IO *io)
 {
+
     const core::DataMap &variables = io->GetVariablesDataMap();
     const core::DataMap &attributes = io->GetAttributesDataMap();
 
@@ -578,7 +663,8 @@ int doList_vars(core::Engine *fp, core::IO *io)
 
     // size_t nNames = entries.size();
 
-    // calculate max length of variable names and type names in the first round
+    // calculate max length of variable names and type names in the first
+    // round
     int maxlen = 4; // need int for printf formatting
     int maxtypelen = 7;
     for (const auto &entrypair : entries)
@@ -621,7 +707,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
         core::Attribute<T> *a = io->InquireAttribute<T>(name);                 \
         retval = printAttributeValue(fp, io, a);                               \
     }
-                    ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(
+                    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
                         declare_template_instantiation)
 #undef declare_template_instantiation
                     fprintf(outf, "\n");
@@ -644,7 +730,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
         core::Variable<T> *v = io->InquireVariable<T>(name);                   \
         retval = printVariableInfo(fp, io, v);                                 \
     }
-                ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
             }
         }
@@ -665,17 +751,43 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
     int retval = 0;
 
-    if (!variable->m_SingleValue || nsteps > 1)
+    bool isGlobalValue = (nsteps == 1);
+    isGlobalValue &= variable->m_SingleValue;
+    isGlobalValue &= (variable->m_ShapeID != ShapeID::GlobalArray);
+
+    if (!isGlobalValue)
     {
         fprintf(outf, "  ");
+
         if (nsteps > 1)
             fprintf(outf, "%zu*", nsteps);
-        if (variable->m_Shape.size() > 0)
+
+        if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
-            fprintf(outf, "{%zu", variable->m_Shape[0]);
+            Dims d = get_global_array_signature(fp, io, variable);
+            fprintf(outf, "{%s",
+                    d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
             for (size_t j = 1; j < variable->m_Shape.size(); j++)
             {
-                fprintf(outf, ", %zu", variable->m_Shape[j]);
+                fprintf(outf, ", %s",
+                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
+            }
+            fprintf(outf, "}");
+        }
+        else if (variable->m_ShapeID == ShapeID::LocalArray)
+        {
+            std::pair<size_t, Dims> signo =
+                get_local_array_signature(fp, io, variable);
+            Dims &d = signo.second;
+            fprintf(outf, "[%s]*",
+                    signo.first > 0 ? std::to_string(signo.first).c_str()
+                                    : "__");
+            fprintf(outf, "{%s",
+                    d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
+            for (size_t j = 1; j < variable->m_Count.size(); j++)
+            {
+                fprintf(outf, ", %s",
+                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
             }
             fprintf(outf, "}");
         }
@@ -799,7 +911,7 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     }
     else
     {
-        // scalar
+        // single GlobalValue without timesteps
         fprintf(outf, "  scalar");
         if (longopt)
         {
@@ -817,39 +929,17 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     if (dump && !show_decomp)
     {
         // print variable content
-        retval = readVar(fp, io, variable);
+        if (variable->m_ShapeID == ShapeID::LocalArray)
+        {
+            print_decomp(fp, io, variable);
+        }
+        else
+        {
+            retval = readVar(fp, io, variable);
+        }
         fprintf(outf, "\n");
     }
     return retval;
-}
-
-template <class T>
-int printAttributeValue(core::Engine *fp, core::IO *io,
-                        core::Attribute<T> *attribute)
-{
-    enum ADIOS_DATATYPES adiosvartype = type_to_enum(attribute->m_Type);
-
-    if (attribute->m_IsSingleValue)
-    {
-        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
-                   true);
-    }
-    else
-    {
-        fprintf(outf, "{");
-        size_t nelems = attribute->m_DataArray.size();
-        for (size_t j = 0; j < nelems; j++)
-        {
-            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
-                       true);
-            if (j < nelems - 1)
-            {
-                fprintf(outf, ", ");
-            }
-        }
-        fprintf(outf, "}");
-    }
-    return 0;
 }
 
 #define PRINT_ARRAY(str, ndim, dims, loopvar, format)                          \
@@ -893,7 +983,8 @@ void printMeshes(core::Engine *fp)
     int mpi_comm_dummy = 0;
     if (fp->nmeshes == 0)
     {
-        fprintf(outf, "Mesh info: There are no meshes defined in this file\n");
+        fprintf(outf, "Mesh info: There are no meshes defined in this
+    file\n");
         return;
     }
     fprintf(outf, "Mesh info: \n");
@@ -906,10 +997,12 @@ void printMeshes(core::Engine *fp)
             if (meshid != mi->id)
                 fprintf(
                     outf,
-                    "  bpls warning: meshid (=%d) != inquired mesh id (%d)\n",
+                    "  bpls warning: meshid (=%d) != inquired mesh id
+    (%d)\n",
                     meshid, mi->id);
             if (strcmp(fp->mesh_namelist[meshid], mi->name))
-                fprintf(outf, "  bpls warning: mesh name in list (=\"%s\") != "
+                fprintf(outf, "  bpls warning: mesh name in list (=\"%s\")
+    != "
                               "inquired mesh name (\"%s\")\n",
                         fp->mesh_namelist[meshid], mi->name);
             if (mi->file_name)
@@ -925,7 +1018,8 @@ void printMeshes(core::Engine *fp)
             {
             case ADIOS_MESH_UNIFORM:
                 fprintf(outf, "uniform\n");
-                PRINT_ARRAY64("    dimensions:   ", mi->uniform->num_dimensions,
+                PRINT_ARRAY64("    dimensions:   ",
+    mi->uniform->num_dimensions,
                               mi->uniform->dimensions, j)
                 if (mi->uniform->origins)
                 {
@@ -986,7 +1080,8 @@ void printMeshes(core::Engine *fp)
                             mi->structured->points[0]);
                     for (i = 1; i < mi->structured->num_dimensions; i++)
                     {
-                        fprintf(outf, ", \"%s\"", mi->structured->points[i]);
+                        fprintf(outf, ", \"%s\"",
+    mi->structured->points[i]);
                     }
                     fprintf(outf, "\n");
                 }
@@ -1009,7 +1104,8 @@ void printMeshes(core::Engine *fp)
                             mi->unstructured->points[0]);
                     for (i = 1; i < mi->unstructured->nvar_points; i++)
                     {
-                        fprintf(outf, ", \"%s\"", mi->unstructured->points[i]);
+                        fprintf(outf, ", \"%s\"",
+    mi->unstructured->points[i]);
                     }
                     fprintf(outf, "\n");
                 }
@@ -1070,6 +1166,12 @@ int doList(const char *path)
     if (verbose > 1)
         printf("\nADIOS Open: read header info from %s\n", path);
 
+    if (!adios2sys::SystemTools::FileExists(path))
+    {
+        fprintf(stderr, "\nError: input path %s does not exist\n", path);
+        return 4;
+    }
+
     // initialize BP reader
     if (verbose > 1)
         adios_verbose = 3; // print info lines
@@ -1079,11 +1181,7 @@ int doList(const char *path)
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
-#ifdef ADIOS2_HAVE_MPI
-    core::ADIOS adios(MPI_COMM_SELF, true, "C++");
-#else
     core::ADIOS adios(true, "C++");
-#endif
     core::IO &io = adios.DeclareIO("bpls");
     core::Engine *fp = nullptr;
     std::vector<std::string> engineList = getEnginesList(path);
@@ -1110,7 +1208,8 @@ int doList(const char *path)
     {
         //, variables, timesteps, and attributes
         // all parameters are integers,
-        // besides the last parameter, which is an array of strings for holding
+        // besides the last parameter, which is an array of strings for
+        // holding
         // the
         // list of group names
         // ntsteps = fp->tidx_stop - fp->tidx_start + 1;
@@ -1366,14 +1465,12 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     int tidx;                          // 0 or 1 to account for time dimension
     uint64_t nelems;                   // number of elements to read
     // size_t elemsize;                   // size in bytes of one element
-    uint64_t st, ct;
+    uint64_t stepStart, stepCount;
     std::vector<T> dataV;
-    uint64_t sum; // working var to sum up things
-    uint64_t
-        maxreadn; // max number of elements to read once up to a limit (10MB
-                  // of
-                  // data)
-    uint64_t actualreadn;     // our decision how much to read at once
+    uint64_t sum;         // working var to sum up things
+    uint64_t maxreadn;    // max number of elements to read once up to a limit
+                          // (10MB of data)
+    uint64_t actualreadn; // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     bool incdim;              // used in incremental reading in
     int ndigits_dims[32];     // # of digits (to print) of each dimension
@@ -1387,33 +1484,35 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     nelems = 1;
     tidx = 0;
 
+    // calculate the starting step and number of steps requested
+    if (istart[0] < 0) // negative index means last-|index|
+        stepStart = nsteps + istart[0];
+    else
+        stepStart = istart[0];
+    if (icount[0] < 0) // negative index means last-|index|+1-start
+        stepCount = nsteps + icount[0] + 1 - stepStart;
+    else
+        stepCount = icount[0];
+
+    if (verbose > 2)
+        printf("    j=0, stepStart=%" PRIu64 " stepCount=%" PRIu64 "\n",
+               stepStart, stepCount);
+
     if (nsteps > 1)
     {
-        if (istart[0] < 0) // negative index means last-|index|
-            st = nsteps + istart[0];
-        else
-            st = istart[0];
-        if (icount[0] < 0) // negative index means last-|index|+1-start
-            ct = nsteps + icount[0] + 1 - st;
-        else
-            ct = icount[0];
-
-        if (verbose > 2)
-            printf("    j=0, st=%" PRIu64 " ct=%" PRIu64 "\n", st, ct);
-
-        start_t[0] = st;
-        count_t[0] = ct;
-        nelems *= ct;
+        start_t[0] = stepStart;
+        count_t[0] = stepCount;
+        nelems *= stepCount;
         if (verbose > 1)
             printf("    s[0]=%" PRIu64 ", c[0]=%" PRIu64 ", n=%" PRIu64 "\n",
                    start_t[0], count_t[0], nelems);
-
         tidx = 1;
     }
     tdims = ndim + tidx;
 
     for (j = 0; j < ndim; j++)
     {
+        uint64_t st, ct;
         if (istart[j + tidx] < 0) // negative index means last-|index|
             st = variable->m_Shape[j] + istart[j + tidx];
         else
@@ -1447,6 +1546,10 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
     maxreadn = (uint64_t)MAX_BUFFERSIZE / elemsize;
     if (nelems < maxreadn)
+        maxreadn = nelems;
+
+    bool xmlprint = helper::EndsWith(variable->m_Name, ".xml", false);
+    if (xmlprint && nelems > maxreadn)
         maxreadn = nelems;
 
     // special case: string. Need to use different elemsize
@@ -1522,8 +1625,15 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         }
 
         // read a slice finally
-        Dims startv = helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx);
-        Dims countv = helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx);
+        const Dims startv =
+            variable->m_ShapeID == ShapeID::GlobalArray
+                ? helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx)
+                : Dims();
+        const Dims countv =
+            variable->m_ShapeID == ShapeID::GlobalArray
+                ? helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx)
+                : Dims();
+
         if (verbose > 2)
         {
             printf("set selection: ");
@@ -1534,19 +1644,22 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
         if (!variable->m_SingleValue)
         {
-            variable->SetSelection({startv, countv});
+            if (variable->m_ShapeID == ShapeID::GlobalArray)
+            {
+                variable->SetSelection({startv, countv});
+            }
         }
 
-        if (nsteps > 1)
+        size_t absstep = relative_to_absolute_step(variable, stepStart);
+        if (verbose > 2)
         {
-            if (verbose > 2)
-            {
-                printf("set Step selection: from %" PRIu64 " read %" PRIu64
-                       " steps\n",
-                       s[0], c[0]);
-            }
-            variable->SetStepSelection({s[0], c[0]});
+            printf("set Step selection: from relative step %" PRIu64
+                   " (absolute step %" PRIu64 ") read %" PRIu64 " steps\n",
+                   stepStart, absstep, stepCount);
         }
+        /* FIXME: this does not work if the steps are not contiguous in the
+         * file */
+        variable->SetStepSelection({absstep, stepCount});
 
         dataV.resize(variable->SelectionSize());
         fp->Get(*variable, dataV, adios2::Mode::Sync);
@@ -1603,20 +1716,17 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
     int tidx;
     uint64_t st, ct;
     std::vector<T> dataV;
-    uint64_t sum; // working var to sum up things
-    uint64_t
-        maxreadn; // max number of elements to read once up to a limit (10MB
-                  // of
-                  // data)
-    uint64_t actualreadn;     // our decision how much to read at once
+    uint64_t sum;         // working var to sum up things
+    uint64_t maxreadn;    // max number of elements to read once up to a limit
+                          // (10MB of data)
+    uint64_t actualreadn; // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
-    int status;
-    bool incdim;          // used in incremental reading in
-    int ndigits_dims[32]; // # of digits (to print) of each dimension
+    bool incdim;              // used in incremental reading in
+    int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
     const int nsteps = static_cast<int>(variable->GetAvailableStepsCount());
-    const int ndim = static_cast<int>(variable->m_Shape.size());
+    const int ndim = static_cast<int>(variable->m_Count.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
 
@@ -1690,7 +1800,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         maxreadn = nelems;
 
     // allocate data array
-    // data = (void *)malloc(maxreadn * elemsize + 8); // +8 for just to be sure
+    // data = (void *)malloc(maxreadn * elemsize + 8); // +8 for just to be
+    // sure
 
     // determine strategy how to read in:
     //  - at once
@@ -1771,12 +1882,16 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
         /* In current implementation we read with global selection, so
          * we need to adjust start_t for global offsets here.
-         * TODO: this will change in the future to block reading with relative
+         * TODO: this will change in the future to block reading with
+         * relative
          * selection
          */
-        for (j = 0; j < ndim; j++)
+        if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
-            startv[j] += blockinfo.Start[j];
+            for (j = 0; j < ndim; j++)
+            {
+                startv[j] += blockinfo.Start[j];
+            }
         }
 
         if (verbose > 2)
@@ -1789,6 +1904,10 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
 
         if (!variable->m_SingleValue)
         {
+            if (variable->m_ShapeID == ShapeID::LocalArray)
+            {
+                variable->SetBlockSelection(blockid);
+            }
             variable->SetSelection({startv, countv});
         }
 
@@ -1864,7 +1983,7 @@ bool matchesAMask(const char *name)
                 (pmatch[0].rm_so == 0 ||
                  pmatch[0].rm_so == startpos) && // from the beginning
                 pmatch[0].rm_eo == strlen(name)  // to the very end of the name
-                )
+            )
 #else
             bool matches = std::regex_match(name, varregex[i]);
             if (!matches && name[0] == '/')
@@ -1955,24 +2074,22 @@ void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
 }
 
 const std::map<std::string, enum ADIOS_DATATYPES> adios_types_map = {
-    {"char", adios_unsigned_byte},
-    {"int", adios_integer},
+    {"uint8_t", adios_unsigned_byte},
+    {"int32_t", adios_integer},
     {"float", adios_real},
     {"double", adios_double},
     {"float complex", adios_complex},
     {"double complex", adios_double_complex},
-    {"long double complex", adios_long_double_complex},
-    {"signed char", adios_byte},
-    {"short", adios_short},
-    {"long int", adios_long},
-    {"long long int", adios_long},
+    {"int8_t", adios_byte},
+    {"int16_t", adios_short},
+    {"int64_t", adios_long},
+    {"int64_t", adios_long},
     {"string", adios_string},
-    {"string array", adios_string_array},
-    {"unsigned char", adios_unsigned_byte},
-    {"unsigned short", adios_unsigned_short},
-    {"unsigned int", adios_unsigned_integer},
-    {"unsigned long int", adios_unsigned_long},
-    {"unsigned long long int", adios_unsigned_long}};
+    {"uint8_t", adios_unsigned_byte},
+    {"uint16_t", adios_unsigned_short},
+    {"uint32_t", adios_unsigned_integer},
+    {"uint64_t", adios_unsigned_long},
+    {"uint64_t", adios_unsigned_long}};
 
 enum ADIOS_DATATYPES type_to_enum(std::string type)
 {
@@ -2016,11 +2133,11 @@ int print_data_as_string(const void *data, int maxlen,
         }
         break;
     default:
-        fprintf(stderr, "Error in bpls code: cannot use print_data_as_string() "
-                        "for type \"%d\"\n",
+        fprintf(stderr,
+                "Error in bpls code: cannot use print_data_as_string() "
+                "for type \"%d\"\n",
                 adiosvartype);
         return -1;
-        break;
     }
     return 0;
 }
@@ -2244,6 +2361,27 @@ int print_data_characteristics(void *min, void *max, double *avg,
     return 0;
 }
 
+/* s is a character array not necessarily null terminated.
+ * return false on OK print, true if it not XML (not printed)*/
+bool print_data_xml(const char *s, const size_t length)
+{
+    pugi::xml_document document;
+    auto parse_result = document.load_buffer(s, length);
+    if (!parse_result)
+    {
+        /*throw std::invalid_argument(
+            "ERROR: XML: parse error in XML string, description: " +
+            std::string(parse_result.description()) +
+            ", check with any XML editor if format is ill-formed\n ");*/
+        return true;
+    }
+    std::cout << std::endl;
+    document.save(std::cout, PUGIXML_TEXT("  "),
+                  pugi::format_default | pugi::format_no_declaration);
+    std::cout << std::flush;
+    return false;
+}
+
 int print_data(const void *data, int item, enum ADIOS_DATATYPES adiosvartype,
                bool allowformat)
 {
@@ -2441,11 +2579,115 @@ void print_endline(void)
 }
 
 template <class T>
+size_t relative_to_absolute_step(core::Variable<T> *variable,
+                                 const size_t relstep)
+{
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = indices.begin();
+    size_t absstep = itStep->first - 1;
+
+    for (int step = 0; step < relstep; step++)
+    {
+        ++itStep;
+        absstep = itStep->first - 1;
+    }
+    return absstep;
+}
+
+template <class T>
+Dims get_global_array_signature(core::Engine *fp, core::IO *io,
+                                core::Variable<T> *variable)
+{
+    const size_t ndim = variable->m_Shape.size();
+    const size_t nsteps = variable->m_StepsCount;
+    Dims dims(ndim, 0);
+    bool firstStep = true;
+
+    // looping over the absolute step indexes
+    // is not supported by a simple API function
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = indices.begin();
+
+    for (int step = 0; step < nsteps; step++)
+    {
+        const size_t absstep = itStep->first;
+        Dims d = variable->Shape(absstep - 1);
+        if (d.empty())
+        {
+            continue;
+        }
+
+        for (int k = 0; k < ndim; k++)
+        {
+            if (firstStep)
+            {
+                dims[k] = d[k];
+            }
+            else if (dims[k] != d[k])
+            {
+                dims[k] = 0;
+            }
+        }
+        firstStep = false;
+        ++itStep;
+    }
+    return dims;
+}
+
+template <class T>
+std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
+                                                  core::IO *io,
+                                                  core::Variable<T> *variable)
+{
+    const size_t ndim = variable->m_Count.size();
+    size_t nblocks = 0;
+    Dims dims(ndim, 0);
+    std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
+        fp->AllStepsBlocksInfo(*variable);
+
+    bool firstStep = true;
+    bool firstBlock = true;
+
+    for (auto &blockpair : allblocks)
+    {
+        std::vector<typename adios2::core::Variable<T>::Info> &blocks =
+            blockpair.second;
+        const size_t blocksSize = blocks.size();
+        if (firstStep)
+        {
+            nblocks = blocksSize;
+        }
+        else if (nblocks != blocksSize)
+        {
+            nblocks = 0;
+        }
+
+        for (size_t j = 0; j < blocksSize; j++)
+        {
+            for (size_t k = 0; k < ndim; k++)
+            {
+                if (firstBlock)
+                {
+                    dims[k] = blocks[j].Count[k];
+                }
+                else if (dims[k] != blocks[j].Count[k])
+                {
+                    dims[k] = 0;
+                }
+            }
+            firstBlock = false;
+        }
+        firstStep = false;
+    }
+    return std::make_pair(nblocks, dims);
+}
+
+template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
-    // size_t nsteps = variable->GetAvailableStepsCount();
-    size_t ndim = variable->m_Shape.size();
     enum ADIOS_DATATYPES adiosvartype = type_to_enum(variable->m_Type);
     std::map<size_t, std::vector<typename core::Variable<T>::Info>> allblocks =
         fp->AllStepsBlocksInfo(*variable);
@@ -2455,7 +2697,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     }
     size_t laststep = allblocks.rbegin()->first;
     int ndigits_nsteps = ndigits(laststep);
-    if (ndim == 0)
+    if (variable->m_ShapeID == ShapeID::GlobalValue ||
+        variable->m_ShapeID == ShapeID::LocalValue)
     {
         // scalars
         for (auto &blockpair : allblocks)
@@ -2463,8 +2706,18 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             size_t step = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
-            fprintf(outf, "%zu instances available\n", blocks.size());
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
+                    step);
+            if (blocks.size() == 1)
+            {
+                fprintf(outf, " = ");
+                print_data(&blocks[0].Value, 0, adiosvartype, true);
+                fprintf(outf, "\n");
+            }
+            else
+            {
+                fprintf(outf, "%zu instances available\n", blocks.size());
+            }
             if (dump)
             {
                 fprintf(outf, "               ");
@@ -2494,32 +2747,62 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     else
     {
         // arrays
+        size_t ndim = variable->m_Count.size();
         int ndigits_nblocks;
-        int ndigits_dims[32];
+        int ndigits_dims[32] = {
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+        };
         for (size_t k = 0; k < ndim; k++)
         {
             // get digit lengths for each dimension
-            ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+            if (variable->m_ShapeID == ShapeID::GlobalArray)
+            {
+                ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+            }
+            else
+            {
+                ndigits_dims[k] = ndigits(variable->m_Count[k] - 1);
+            }
         }
 
+        size_t stepRelative = 0;
         for (auto &blockpair : allblocks)
         {
-            size_t step = blockpair.first;
+            size_t stepAbsolute = blockpair.first;
             std::vector<typename adios2::core::Variable<T>::Info> &blocks =
                 blockpair.second;
-            fprintf(outf, "        step %*zu: ", ndigits_nsteps, step);
+            const size_t blocksSize = blocks.size();
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
+                    stepAbsolute);
             fprintf(outf, "\n");
-            ndigits_nblocks = ndigits(blocks.size() - 1);
-            for (size_t j = 0; j < blocks.size(); j++)
+            ndigits_nblocks = ndigits(blocksSize - 1);
+
+            for (size_t j = 0; j < blocksSize; j++)
             {
-                fprintf(outf, "          block %*zu: [", ndigits_nblocks, j);
+                fprintf(outf, "%c         block %*zu: [", commentchar,
+                        ndigits_nblocks, j);
+
+                // just in case ndim for a block changes in LocalArrays:
+                ndim = variable->m_Count.size();
+
                 for (size_t k = 0; k < ndim; k++)
                 {
                     if (blocks[j].Count[k])
                     {
-                        fprintf(outf, "%*" PRIu64 ":%*" PRIu64, ndigits_dims[k],
-                                blocks[j].Start[k], ndigits_dims[k],
-                                blocks[j].Start[k] + blocks[j].Count[k] - 1);
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
+                        {
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                    blocks[j].Start[k], ndigits_dims[k],
+                                    blocks[j].Start[k] + blocks[j].Count[k] -
+                                        1);
+                        }
+                        else
+                        {
+                            // blockStart is empty vector for LocalArrays
+                            fprintf(outf, "0:%*zu", ndigits_dims[k],
+                                    blocks[j].Count[k] - 1);
+                        }
                     }
                     else
                     {
@@ -2549,9 +2832,10 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 fprintf(outf, "\n");
                 if (dump)
                 {
-                    readVarBlock(fp, io, variable, step, j, blocks[j]);
+                    readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
                 }
             }
+            ++stepRelative;
         }
     }
 }
@@ -2578,8 +2862,9 @@ void parseDimSpec(const std::string &str, int64_t *dims)
         dims[i] = (int64_t)strtoll(token, (char **)NULL, 0);
         if (errno)
         {
-            fprintf(stderr, "Error: could not convert field into a value: "
-                            "%s from \"%s\"\n",
+            fprintf(stderr,
+                    "Error: could not convert field into a value: "
+                    "%s from \"%s\"\n",
                     token, str.c_str());
             exit(200);
         }
@@ -2597,8 +2882,9 @@ void parseDimSpec(const std::string &str, int64_t *dims)
     // check if number of dims specified is larger than we can handle
     if (token != NULL)
     {
-        fprintf(stderr, "Error: More dimensions specified in \"%s\" than we "
-                        "can handle (%d)\n",
+        fprintf(stderr,
+                "Error: More dimensions specified in \"%s\" than we "
+                "can handle (%d)\n",
                 str.c_str(), MAX_DIMS);
         exit(200);
     }
@@ -2616,8 +2902,9 @@ int compile_regexp_masks(void)
         if (errcode)
         {
             regerror(errcode, &(varregex[i]), buf, sizeof(buf));
-            fprintf(stderr, "Error: \"%s\" is an invalid extended regular "
-                            "expression: %s\n",
+            fprintf(stderr,
+                    "Error: \"%s\" is an invalid extended regular "
+                    "expression: %s\n",
                     varmask[i], buf);
             return 2;
         }
@@ -2632,8 +2919,9 @@ int compile_regexp_masks(void)
         }
         catch (std::regex_error &e)
         {
-            fprintf(stderr, "Error: \"%s\" is an invalid extended regular "
-                            "expression. C++ regex error code: %d\n",
+            fprintf(stderr,
+                    "Error: \"%s\" is an invalid extended regular "
+                    "expression. C++ regex error code: %d\n",
                     varmask[i],
                     e.code() == std::regex_constants::error_badrepeat);
             return 2;
@@ -2666,12 +2954,15 @@ char *mystrndup(const char *s, size_t n)
 
 int main(int argc, char *argv[])
 {
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Init(&argc, &argv);
-#endif
-    int retval = adios2::utils::bplsMain(argc, argv);
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Finalize();
-#endif
+    int retval = 1;
+    try
+    {
+        retval = adios2::utils::bplsMain(argc, argv);
+    }
+    catch (std::exception &e)
+    {
+        std::cout << "\nbpls caught an exception\n";
+        std::cout << e.what() << std::endl;
+    }
     return retval;
 }

@@ -2,7 +2,7 @@ FROM fedora:latest
 
 # Install core dev packages
 RUN dnf -y install gcc gcc-c++ gcc-gfortran cmake git make curl file \
-        zlib zlib-devel bzip2-libs bzip2-devel hdf5 hdf5-devel \
+        zlib zlib-devel bzip2-libs bzip2-devel hdf5 hdf5-devel vim valgrind \
         python3-devel python3-numpy zeromq zeromq-devel libubsan
 
 # Cleanup headers and packages
@@ -15,9 +15,13 @@ RUN export uid=1001 gid=1001 && \
     echo "adios2:x:${uid}:" >> /etc/group && \
     chown ${uid}:${gid} -R /home/adios2
 
+# Install and initialize git-lfs
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash && \
+    dnf install -y git-lfs && \
+    runuser -l adios2 -c 'git lfs install'
+
 # Misc cleanup of unneeded files
-RUN rm -rfv /tmp/* \
-  && rm -rf /var/cache/dnf
+RUN rm -rfv /tmp/* /var/cache/dnf
 
 USER adios2
 ENV HOME /home/adios2

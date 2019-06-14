@@ -48,10 +48,17 @@ public:
      */
     IO() = default;
 
+    /** Use RAII */
     ~IO() = default;
 
     /** true: valid object, false: invalid object */
     explicit operator bool() const noexcept;
+
+    /**
+     * Inspects IO name
+     * @return name
+     */
+    std::string Name() const;
 
     /**
      * @brief Checks if IO exists in a config file passed to ADIOS object that
@@ -82,6 +89,20 @@ public:
      * key/value parameters
      */
     void SetParameters(const adios2::Params &parameters = adios2::Params());
+
+    /**
+     * @brief Version that passes a single string to fill out many parameters.
+     * Replaces any existing parameter.
+     * initializer string = "param1=value1 , param2 = value2"
+     */
+    void SetParameters(const std::string &parameters);
+
+    /**
+     * @brief Remove all existing parameters.
+     * Replaces any existing parameter.
+     * initializer string = "param1=value1 , param2 = value2"
+     */
+    void ClearParameters();
 
     /**
      * Return current parameters set from either SetParameters/SetParameter
@@ -229,7 +250,8 @@ public:
 
     /**
      * Open an Engine to start heavy-weight input/output operations.
-     * Reuses ADIOS object communicator
+     * This version reuses the ADIOS object communicator
+     * MPI Collective function as it calls MPI_Comm_dup
      * @param name unique engine identifier
      * @param mode adios2::Mode::Write, adios2::Mode::Read, or
      *             adios2::Mode::Append (not yet support)
@@ -240,7 +262,9 @@ public:
 #ifdef ADIOS2_HAVE_MPI
     /**
      * Open an Engine to start heavy-weight input/output operations.
-     * New MPI communicator version
+     * This version allows passing a MPI communicator different from the one
+     * used in the ADIOS object contructor
+     * MPI Collective function as it calls MPI_Comm_dup
      * @param name unique engine identifier within IO
      * @param mode adios2::Mode::Write, adios2::Mode::Read, or
      *             adios2::Mode::Append (not yet support)
@@ -370,6 +394,8 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
         const std::string &, const std::string &, const std::string);
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+std::string ToString(const IO &io);
 
 } // end namespace adios2
 

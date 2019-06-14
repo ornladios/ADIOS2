@@ -23,9 +23,13 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"xml", required_argument, NULL, 'x'},
                            {"strong-scaling", no_argument, NULL, 's'},
                            {"weak-scaling", no_argument, NULL, 'w'},
+                           {"timer", no_argument, NULL, 't'},
+#ifdef ADIOS2_HAVE_HDF5
+                           {"hdf5", no_argument, NULL, 'H'},
+#endif
                            {NULL, 0, NULL, 0}};
 
-static const char *optstring = "-hvswa:c:d:x:";
+static const char *optstring = "-hvswtHa:c:d:x:";
 
 size_t Settings::ndigits(size_t n) const
 {
@@ -49,8 +53,13 @@ void Settings::displayHelp()
         << "  -s OR -w:  strong or weak scaling. \n"
         << "             Dimensions in config are treated accordingly\n"
         << "  -x file    ADIOS configuration XML file\n"
+#ifdef ADIOS2_HAVE_HDF5
+        << "  --hdf5     Use native Parallel HDF5 instead of ADIOS for I/O"
+#endif
         << "  -v         increase verbosity\n"
-        << "  -h         display this help\n\n";
+        << "  -h         display this help\n"
+        << "  -t         print and dump the timing measured by the I/O "
+           "timer\n\n";
 }
 
 size_t Settings::stringToNumber(const std::string &varName,
@@ -85,8 +94,10 @@ int Settings::processArgs(int argc, char *argv[])
         case 'c':
             configFileName = optarg;
             break;
-        case 'x':
-            adiosConfigFileName = optarg;
+        case 'd':
+            processDecomp[nDecomp] =
+                stringToNumber("decomposition in dimension 1", optarg);
+            ++nDecomp;
             break;
         case 'h':
             if (!myRank)
@@ -94,14 +105,11 @@ int Settings::processArgs(int argc, char *argv[])
                 displayHelp();
             }
             return 1;
-        case 'd':
-            processDecomp[nDecomp] =
-                stringToNumber("decomposition in dimension 1", optarg);
-            ++nDecomp;
+#ifdef ADIOS2_HAVE_HDF5
+        case 'H':
+            iolib = IOLib::HDF5;
             break;
-        case 'v':
-            ++verbose;
-            break;
+#endif
         case 's':
             if (scalingDefined && !isStrongScaling)
             {
@@ -111,6 +119,9 @@ int Settings::processArgs(int argc, char *argv[])
             isStrongScaling = true;
             scalingDefined = true;
             break;
+        case 'v':
+            ++verbose;
+            break;
         case 'w':
             if (scalingDefined && isStrongScaling)
             {
@@ -119,6 +130,12 @@ int Settings::processArgs(int argc, char *argv[])
             }
             isStrongScaling = false;
             scalingDefined = true;
+            break;
+        case 't':
+            ioTimer = true;
+            break;
+        case 'x':
+            adiosConfigFileName = optarg;
             break;
         case 1:
             /* This means a field is unknown, or could be multiple arg or bad
@@ -141,7 +158,6 @@ int Settings::processArgs(int argc, char *argv[])
         default:
             throw std::invalid_argument("Invalid argument option " +
                                         std::string(optarg));
-            break;
         } /* end switch */
         if (c != 1)
         {

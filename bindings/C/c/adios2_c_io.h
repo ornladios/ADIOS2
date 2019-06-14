@@ -40,6 +40,14 @@ adios2_error adios2_in_config_file(adios2_bool *result, const adios2_io *io);
 adios2_error adios2_set_engine(adios2_io *io, const char *engine_type);
 
 /**
+ * @brief Set several parameters at once.
+ * @param io handler
+ * @param string parameters in the format  "param1=value1 , param2 = value2"
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_parameters(adios2_io *io, const char *parameters);
+
+/**
  * @brief Set a single parameter. Overwrites value if key exists
  * @param io handler
  * @param key parameter key
@@ -48,6 +56,29 @@ adios2_error adios2_set_engine(adios2_io *io, const char *engine_type);
  */
 adios2_error adios2_set_parameter(adios2_io *io, const char *key,
                                   const char *value);
+
+/**
+ * Return IO parameter value string and length without '\0\ character
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param value output
+ * @param size output, value size without '\0'
+ * @param io input handler
+ * @param key input parameter key, if not found return size = 0 and value is
+ * untouched
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_get_parameter(char *value, size_t *size,
+                                  const adios2_io *io, const char *key);
+
+/**
+ * @brief Clear all parameters.
+ * @param io handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_clear_parameters(adios2_io *io);
 
 /**
  * @brief Add a transport to current io handler. Must be supported by current
@@ -194,7 +225,6 @@ adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
                                                     const char *name,
                                                     const char *variable_name,
                                                     const char *separator);
-
 /**
  * Returns an array of attribute handlers for all attribute present in the io
  * group
@@ -210,14 +240,14 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
 /**
  * @brief DANGEROUS! Removes a variable identified by name. Might create
  * dangling pointers
- * @param io handler variable io owner
- * @param name unique variable name within io handler
  * @param result output adios2_true(1): found and removed variable,
  *                      adios2_false(0): not found, nothing to remove
+ * @param io handler variable io owner
+ * @param name unique variable name within io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_remove_variable(adios2_io *io, const char *name,
-                                    adios2_bool *result);
+adios2_error adios2_remove_variable(adios2_bool *result, adios2_io *io,
+                                    const char *name);
 
 /**
  * @brief DANGEROUS! Removes all existing variables in current IO object.
@@ -230,14 +260,14 @@ adios2_error adios2_remove_all_variables(adios2_io *io);
 /**
  * @brief DANGEROUS! Removes an attribute identified by name. Might create
  * dangling pointers
- * @param io handler attribute io owner
- * @param name unique attribute name within io handler
  * @param result output adios2_true(1): found and removed attribute,
  *                      adios2_false(0): not found, nothing to remove
+ * @param io handler attribute io owner
+ * @param name unique attribute name within io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_remove_attribute(adios2_io *io, const char *name,
-                                     adios2_bool *result);
+adios2_error adios2_remove_attribute(adios2_bool *result, adios2_io *io,
+                                     const char *name);
 
 /**
  * @brief DANGEROUS! Removes all existing attributes in current IO object.
@@ -248,7 +278,9 @@ adios2_error adios2_remove_attribute(adios2_io *io, const char *name,
 adios2_error adios2_remove_all_attributes(adios2_io *io);
 
 /**
- * @brief Open an Engine to start heavy-weight input/output operations.
+ * Open an Engine to start heavy-weight input/output operations.
+ * In MPI version reuses the communicator from adios2_init or adios2_init_config
+ * MPI Collective function as it calls MPI_Comm_dup
  * @param io engine owner
  * @param name unique engine identifier
  * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append (not yet
@@ -260,8 +292,8 @@ adios2_engine *adios2_open(adios2_io *io, const char *name,
 
 #ifdef ADIOS2_HAVE_MPI
 /**
- * @brief Open an Engine to start heavy-weight input/output operations. In MPI
- * version reuses the communicator from adios2_init or adios2_init_config
+ * Open an Engine to start heavy-weight input/output operations.
+ * MPI Collective function as it calls MPI_Comm_dup
  * @param io engine owner
  * @param name unique engine identifier
  * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append (not yet
@@ -282,9 +314,13 @@ adios2_error adios2_flush_all_engines(adios2_io *io);
 
 /**
  * return engine type string and length without null character
- * @param engine_type output filled with current engine type, must be
- * pre-allocated. Engine types are short (~ 15 characters)
- * @param size of resulting engine_type
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param engine_type output, string without trailing '\0', NULL or preallocated
+ * buffer
+ * @param size output, engine_type size without '\0'
  * @param io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */

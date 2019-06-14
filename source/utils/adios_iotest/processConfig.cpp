@@ -24,13 +24,18 @@ CommandSleep::CommandSleep(size_t time)
 : Command(Operation::Sleep), sleepTime_us(time){};
 CommandSleep::~CommandSleep(){};
 
+CommandBusy::CommandBusy(size_t time)
+: Command(Operation::Busy), busyTime_us(time){};
+CommandBusy::~CommandBusy(){};
+
 CommandWrite::CommandWrite(std::string stream, std::string group)
 : Command(Operation::Write), streamName(stream), groupName(group){};
 CommandWrite::~CommandWrite(){};
 
-CommandRead::CommandRead(std::string stream, std::string group)
-: Command(Operation::Read), stepMode(adios2::StepMode::NextAvailable),
-  streamName(stream), groupName(group), timeout_sec(84600){};
+CommandRead::CommandRead(std::string stream, std::string group,
+                         const float timeoutSec)
+: Command(Operation::Read), stepMode(adios2::StepMode::Read),
+  streamName(stream), groupName(group), timeout_sec(timeoutSec){};
 CommandRead::~CommandRead(){};
 
 std::vector<std::string> FileToLines(std::ifstream &configfile)
@@ -241,13 +246,15 @@ VariableInfo processArray(std::vector<std::string> &words,
     {
         if (settings.isStrongScaling)
         {
-            ov.shape.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.shape.push_back(
+                stringToSizet(words, static_cast<int>(4 + i),
+                              "dimension " + std::to_string(i + 1)));
         }
         else
         {
-            ov.count.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.count.push_back(
+                stringToSizet(words, static_cast<int>(4 + i),
+                              "dimension " + std::to_string(i + 1)));
         }
     }
 
@@ -306,6 +313,13 @@ void printConfig(const Config &cfg)
                       << " microseconds " << std::endl;
             break;
         }
+        case Operation::Busy:
+        {
+            auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
+            std::cout << "          Be busy for " << cmdS->busyTime_us
+                      << " microseconds " << std::endl;
+            break;
+        }
         case Operation::Write:
         {
             auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
@@ -327,7 +341,7 @@ void printConfig(const Config &cfg)
         {
             auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
             std::cout << "        Read ";
-            if (cmdR->stepMode == adios2::StepMode::NextAvailable)
+            if (cmdR->stepMode == adios2::StepMode::Read)
             {
                 std::cout << "next available step from ";
             }
@@ -379,7 +393,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
             {
                 const auto f = cfg.condMap.at(cmd->conditionalStream);
             }
-            catch (std::exception &e)
+            catch (std::exception &)
             {
                 throw std::invalid_argument(
                     "Name used in conditional is not a read stream: '" +
@@ -393,7 +407,7 @@ void globalChecks(const Config &cfg, const Settings &settings)
         {
             const auto f = cfg.condMap.at(it.first);
         }
-        catch (std::exception &e)
+        catch (std::exception &)
         {
             throw std::invalid_argument(
                 "Name used in step over command is not a read stream: '" +
@@ -545,6 +559,23 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     cfg.commands.push_back(cmd);
                 }
             }
+            else if (key == "busy")
+            {
+                if (currentAppId == settings.appId)
+                {
+                    double d = stringToDouble(words, 1, "busy");
+                    if (verbose0)
+                    {
+                        std::cout
+                            << "--> Command Busy for: " << std::setprecision(7)
+                            << d << " seconds" << std::endl;
+                    }
+                    size_t t_us = static_cast<size_t>(d * 1000000);
+                    auto cmd = std::make_shared<CommandBusy>(t_us);
+                    cmd->conditionalStream = conditionalStream;
+                    cfg.commands.push_back(cmd);
+                }
+            }
             else if (key == "write")
             {
                 if (currentAppId == settings.appId)
@@ -582,11 +613,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument(
-                                "Group '" + groupName + "' used in 'write' "
+                            throw std::invalid_argument("Group '" + groupName +
+                                                        "' used in 'write' "
                                                         "command has no "
                                                         "variable '" +
-                                words[widx] + "' defined.");
+                                                        words[widx] +
+                                                        "' defined.");
                         }
                         cmd->variables.push_back(vIt->second);
                         ++widx;
@@ -640,14 +672,14 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                             "It must be either 'next' or 'latest'");
                     }
 
-                    double d = FLT_MAX;
+                    double d = -1.0;
                     if (words.size() >= 4)
                     {
                         // next word is timeout
                         d = stringToDouble(words, 4, "read timeout");
                         if (d < 0.0)
                         {
-                            d = FLT_MAX;
+                            d = -1.0;
                         }
                     }
 
@@ -656,7 +688,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         std::cout << "--> Command Read mode = " << mode
                                   << "  input = " << words[2]
                                   << "  group = " << groupName << " timeout = ";
-                        if (d == FLT_MAX)
+                        if (d < 0.0)
                         {
                             std::cout << "forever";
                         }
@@ -667,7 +699,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         std::cout << std::endl;
                     }
                     auto cmd =
-                        std::make_shared<CommandRead>(streamName, groupName);
+                        std::make_shared<CommandRead>(streamName, groupName, d);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                     cfg.condMap[streamName] = adios2::StepStatus::OK;
@@ -679,11 +711,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument(
-                                "Group '" + groupName + "' used in 'write' "
+                            throw std::invalid_argument("Group '" + groupName +
+                                                        "' used in 'write' "
                                                         "command has no "
                                                         "variable '" +
-                                words[widx] + "' defined.");
+                                                        words[widx] +
+                                                        "' defined.");
                         }
                         if (verbose0)
                         {
@@ -716,59 +749,60 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             else if (key == "array")
             {
                 // process config line and get global array info
-                VariableInfo ov = processArray(words, settings);
-                ov.datasize = ov.elemsize;
-                size_t pos[ov.ndim]; // Position of rank in N-dim space
-
+                std::shared_ptr<VariableInfo> ovp =
+                    std::make_shared<VariableInfo>(
+                        processArray(words, settings));
+                ovp->datasize = ovp->elemsize;
+                // Position of rank in N-dim space
+                std::vector<size_t> pos(ovp->ndim);
                 // Calculate rank's position in N-dim space
-                decompRowMajor(ov.ndim, settings.myRank, ov.decomp.data(), pos);
+                decompRowMajor(ovp->ndim, settings.myRank, ovp->decomp.data(),
+                               pos.data());
 
                 if (settings.isStrongScaling)
                 {
                     // Calculate the local size and offsets based on the
                     // definition
-                    for (size_t i = 0; i < ov.ndim; ++i)
+                    for (size_t i = 0; i < ovp->ndim; ++i)
                     {
-                        size_t count = ov.shape[i] / ov.decomp[i];
+                        size_t count = ovp->shape[i] / ovp->decomp[i];
                         size_t offs = count * pos[i];
-                        if (pos[i] == ov.decomp[i] - 1 && pos[i] != 0)
+                        if (pos[i] == ovp->decomp[i] - 1 && pos[i] != 0)
                         {
                             // last process in dim(i) need to write all the rest
                             // of dimension
-                            count = ov.shape[i] - offs;
+                            count = ovp->shape[i] - offs;
                         }
-                        ov.start.push_back(offs);
-                        ov.count.push_back(count);
-                        ov.datasize *= count;
+                        ovp->start.push_back(offs);
+                        ovp->count.push_back(count);
+                        ovp->datasize *= count;
                     }
                 }
                 else
                 {
                     // Calculate the local size and offsets based on the
                     // definition
-                    for (size_t i = 0; i < ov.ndim; ++i)
+                    for (size_t i = 0; i < ovp->ndim; ++i)
                     {
-                        size_t shape = ov.count[i] * ov.decomp[i];
-                        size_t offs = ov.count[i] * pos[i];
-                        ov.start.push_back(offs);
-                        ov.shape.push_back(shape);
-                        ov.datasize *= ov.count[i];
+                        size_t shape = ovp->count[i] * ovp->decomp[i];
+                        size_t offs = ovp->count[i] * pos[i];
+                        ovp->start.push_back(offs);
+                        ovp->shape.push_back(shape);
+                        ovp->datasize *= ovp->count[i];
                     }
                 }
 
-                // Allocate data array
-                ov.data.resize(ov.datasize);
+                // Postpone Allocating the data array until first use
+                // ovp->data.resize(ovp->datasize);
 
-                std::shared_ptr<VariableInfo> ovp =
-                    std::make_shared<VariableInfo>(ov);
                 currentVarList->push_back(ovp);
-                currentVarMap->emplace(ov.name, ovp);
+                currentVarMap->emplace(ovp->name, ovp);
 
                 /* DEBUG */
                 if (verbose0)
                 {
                     auto grpIt = cfg.groupVariablesMap.find(currentGroup);
-                    auto vIt = grpIt->second.find(ov.name);
+                    auto vIt = grpIt->second.find(ovp->name);
                     std::cout << "       DEBUG variable = " << vIt->second->name
                               << " type = " << vIt->second->type << " varmap = "
                               << static_cast<void *>(vIt->second.get())
@@ -777,20 +811,20 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 if (settings.verbose > 2)
                 {
                     std::cout << "--> rank = " << settings.myRank
-                              << ": Variable array name = " << ov.name
-                              << " type = " << ov.type
-                              << " elemsize = " << ov.elemsize
-                              << " local datasize = " << ov.datasize
-                              << " shape = " << DimsToString(ov.shape)
-                              << " start = " << DimsToString(ov.start)
-                              << " count = " << DimsToString(ov.count)
+                              << ": Variable array name = " << ovp->name
+                              << " type = " << ovp->type
+                              << " elemsize = " << ovp->elemsize
+                              << " local datasize = " << ovp->datasize
+                              << " shape = " << DimsToString(ovp->shape)
+                              << " start = " << DimsToString(ovp->start)
+                              << " count = " << DimsToString(ovp->count)
                               << std::endl;
                 }
                 else if (verbose0)
                 {
-                    std::cout << "--> Variable array name = " << ov.name
-                              << " type = " << ov.type
-                              << " elemsize = " << ov.elemsize << std::endl;
+                    std::cout << "--> Variable array name = " << ovp->name
+                              << " type = " << ovp->type
+                              << " elemsize = " << ovp->elemsize << std::endl;
                 }
             }
             else if (key == "link")
@@ -825,11 +859,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         auto vIt = grpIt->second.find(words[widx]);
                         if (vIt == grpIt->second.end())
                         {
-                            throw std::invalid_argument(
-                                "Group '" + groupName + "' used in 'link' "
+                            throw std::invalid_argument("Group '" + groupName +
+                                                        "' used in 'link' "
                                                         "command has no "
                                                         "variable '" +
-                                words[widx] + "' defined.");
+                                                        words[widx] +
+                                                        "' defined.");
                         }
                         if (verbose0)
                         {

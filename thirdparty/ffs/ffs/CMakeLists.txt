@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
+
 project(FFS VERSION 1.6.0)
 
 # Some boilerplate to setup nice output directories
@@ -50,23 +54,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS
   "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED}
   "SHARED_LIBS_SUPPORTED" OFF)
 mark_as_advanced(BUILD_SHARED_LIBS)
-
-# Setup PIC defaults.  If explicitly specified somehow, then default
-# to that.  Otherwise base the default on whether or not shared libs are even
-# supported.
-if(DEFINED FFS_ENABLE_PIC)
-  set(FFS_ENABLE_PIC_DEFAULT ${FFS_ENABLE_PIC})
-elseif(DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
-  set(FFS_ENABLE_PIC_DEFAULT ${CMAKE_POSITION_INDEPENDENT_CODE})
-else()
-  set(FFS_ENABLE_PIC_DEFAULT ${SHARED_LIBS_SUPPORTED})
-endif()
-cmake_dependent_option(FFS_ENABLE_PIC
-  "Build with Position Independent Code" ${FFS_ENABLE_PIC_DEFAULT}
-  "SHARED_LIBS_SUPPORTED" OFF)
-mark_as_advanced(FFS_ENABLE_PIC)
-set(CMAKE_POSITION_INDEPENDENT_CODE ${FFS_ENABLE_PIC})
-mark_as_advanced(CMAKE_POSITION_INDEPENDENT_CODE)
 
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
@@ -192,6 +179,7 @@ if(FFS_USE_DILL)
   find_package(dill 2.3.1 REQUIRED)
   set(HAVE_DILL_H ON)
   set(FFS_CONVERSION_GENERATION_DEFAULT ${DILL_HAS_NATIVE_DCG})
+  set(FFS_CONVERSION_GENERATION_DEFAULT 0)
   set(DO_DCG TRUE)
   target_link_libraries(ffs PRIVATE dill::dill)
   list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
@@ -331,6 +319,11 @@ install(
 install(EXPORT ffs-targets NAMESPACE ffs::
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT dev)
 
+include(CTest)
+if(BUILD_TESTING)
+  enable_testing()
+endif()
+
 # display status message for important variables
 option(FFS_LIBRARIES_ONLY "Whether or not to build the associated executables"
   OFF)
@@ -343,13 +336,10 @@ if(NOT FFS_QUIET)
   message(STATUS "FFS_USE_DILL = ${FFS_USE_DILL}")
   message(STATUS "FFS_USE_ATL = ${FFS_USE_ATL}")
   message(STATUS "FFS_LIBRARIES_ONLY = ${FFS_LIBRARIES_ONLY}")
+  message(STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}")
+  message(STATUS "BUILD_TESTING = ${BUILD_TESTING}")
   message(STATUS "Change a value with: cmake -D<Variable>=<Value>")
   message(STATUS "-----------------------------------------------------------------------------")
-endif()
-
-include(CTest)
-if(BUILD_TESTING)
-  enable_testing()
 endif()
 
 add_subdirectory(fm)

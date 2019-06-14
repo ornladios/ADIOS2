@@ -9,6 +9,7 @@
  */
 
 #include "py11File.h"
+#include "py11File.tcc"
 
 #include <algorithm>
 #include <iostream>
@@ -32,21 +33,22 @@ File::File(const std::string &name, const std::string mode, MPI_Comm comm,
 {
 }
 
+File::File(const std::string &name, const std::string mode, MPI_Comm comm,
+           const std::string &configFile, const std::string ioInConfigFile)
+: m_Name(name), m_Mode(mode),
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
+                                          ioInConfigFile, "Python"))
+{
+}
+
 File::File(const std::string &name, const std::string mode,
            const std::string engineType)
 : File(name, mode, MPI_COMM_SELF, engineType)
 {
 }
 
-File::File(const std::string &name, const std::string mode, MPI_Comm comm,
-           const std::string configFile, const std::string ioInConfigFile)
-: m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), comm, configFile,
-                                          ioInConfigFile, "Python"))
-{
-}
 File::File(const std::string &name, const std::string mode,
-           const std::string configFile, const std::string ioInConfigFile)
+           const std::string &configFile, const std::string ioInConfigFile)
 : File(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile)
 {
 }
@@ -76,9 +78,54 @@ std::map<std::string, adios2::Params> File::AvailableAttributes() noexcept
     return m_Stream->m_IO->GetAvailableAttributes();
 }
 
+void File::WriteAttribute(const std::string &name, const pybind11::array &array,
+                          const std::string &variableName,
+                          const std::string separator, const bool endStep)
+{
+    if (false)
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (pybind11::isinstance<                                             \
+                 pybind11::array_t<T, pybind11::array::c_style>>(array))       \
+    {                                                                          \
+        m_Stream->WriteAttribute(name,                                         \
+                                 reinterpret_cast<const T *>(array.data()),    \
+                                 static_cast<size_t>(array.size()),            \
+                                 variableName, separator, endStep);            \
+    }
+    ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: adios2 file write attribute " + name +
+            ", either numpy type is not supported or is not "
+            "c_style memory contiguous, in call to write\n");
+    }
+}
+
+void File::WriteAttribute(const std::string &name,
+                          const std::string &stringValue,
+                          const std::string &variableName,
+                          const std::string separator, const bool endStep)
+{
+    m_Stream->WriteAttribute(name, stringValue, variableName, separator,
+                             endStep);
+}
+
+void File::WriteAttribute(const std::string &name,
+                          const std::vector<std::string> &stringArray,
+                          const std::string &variableName,
+                          const std::string separator, const bool endStep)
+{
+    m_Stream->WriteAttribute(name, stringArray.data(), stringArray.size(),
+                             variableName, separator, endStep);
+}
+
 void File::Write(const std::string &name, const pybind11::array &array,
                  const Dims &shape, const Dims &start, const Dims &count,
-                 const bool endl)
+                 const bool endStep)
 {
     if (false)
     {
@@ -88,7 +135,7 @@ void File::Write(const std::string &name, const pybind11::array &array,
                  pybind11::array_t<T, pybind11::array::c_style>>(array))       \
     {                                                                          \
         m_Stream->Write(name, reinterpret_cast<const T *>(array.data()),       \
-                        shape, start, count, endl);                            \
+                        shape, start, count, vParams(), endStep);              \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -96,21 +143,53 @@ void File::Write(const std::string &name, const pybind11::array &array,
     {
         throw std::invalid_argument(
             "ERROR: adios2 file write variable " + name +
-            ", either numpy type is not supported or is"
+            ", either numpy type is not supported or is not "
             "c_style memory contiguous, in call to write\n");
     }
 }
 
 void File::Write(const std::string &name, const pybind11::array &array,
-                 const bool endl)
+                 const Dims &shape, const Dims &start, const Dims &count,
+                 const adios2::vParams &operations, const bool endStep)
 {
-    Write(name, array, {}, {}, {}, endl);
+    if (false)
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (pybind11::isinstance<                                             \
+                 pybind11::array_t<T, pybind11::array::c_style>>(array))       \
+    {                                                                          \
+        m_Stream->Write(name, reinterpret_cast<const T *>(array.data()),       \
+                        shape, start, count, operations, endStep);             \
+    }
+    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: adios2 file write variable " + name +
+            ", either numpy type is not supported or is not "
+            "c_style memory contiguous, in call to write with operations\n");
+    }
+}
+
+void File::Write(const std::string &name, const pybind11::array &array,
+                 const bool isLocalValue, const bool endStep)
+{
+    if (isLocalValue)
+    {
+        Write(name, array, {adios2::LocalValueDim}, {}, {}, endStep);
+    }
+    else
+    {
+        Write(name, array, {}, {}, {}, endStep);
+    }
 }
 
 void File::Write(const std::string &name, const std::string &stringValue,
-                 const bool endl)
+                 const bool isLocalValue, const bool endStep)
 {
-    m_Stream->Write(name, stringValue, endl);
+    m_Stream->Write(name, stringValue, isLocalValue, endStep);
 }
 
 bool File::GetStep() const
@@ -118,25 +197,29 @@ bool File::GetStep() const
     return const_cast<File *>(this)->m_Stream->GetStep();
 }
 
-std::string File::ReadString(const std::string &name)
+std::vector<std::string> File::ReadString(const std::string &name,
+                                          const size_t blockID)
 {
-    return m_Stream->Read<std::string>(name).front();
+    return m_Stream->Read<std::string>(name, blockID);
 }
 
-std::string File::ReadString(const std::string &name, const size_t step)
+std::vector<std::string> File::ReadString(const std::string &name,
+                                          const size_t stepStart,
+                                          const size_t stepCount,
+                                          const size_t blockID)
 {
-    std::string value;
-    m_Stream->Read<std::string>(name, &value, Box<size_t>(step, 1));
-    return value;
+    return m_Stream->Read<std::string>(name, Box<size_t>(stepStart, stepCount),
+                                       blockID);
 }
 
-pybind11::array File::Read(const std::string &name)
+pybind11::array File::Read(const std::string &name, const size_t blockID)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
-    if (type == "string")
+    if (type == helper::GetType<std::string>())
     {
-        const std::string value = m_Stream->Read<std::string>(name).front();
+        const std::string value =
+            m_Stream->Read<std::string>(name, blockID).front();
         pybind11::array pyArray(pybind11::dtype::of<char>(),
                                 Dims{value.size()});
         char *pyPtr =
@@ -149,20 +232,7 @@ pybind11::array File::Read(const std::string &name)
     {                                                                          \
         core::Variable<T> &variable =                                          \
             *m_Stream->m_IO->InquireVariable<T>(name);                         \
-        Dims pyCount;                                                          \
-        if (variable.m_SingleValue)                                            \
-        {                                                                      \
-            pyCount = {1};                                                     \
-            pybind11::array pyArray(pybind11::dtype::of<T>(), pyCount);        \
-            m_Stream->Read<T>(name, reinterpret_cast<T *>(                     \
-                                        const_cast<void *>(pyArray.data())));  \
-            return pyArray;                                                    \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            const Dims zerosStart(variable.m_Shape.size(), 0);                 \
-            return Read(name, zerosStart, variable.m_Shape);                   \
-        }                                                                      \
+        return DoRead(variable, blockID);                                      \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -175,8 +245,8 @@ pybind11::array File::Read(const std::string &name)
     return pybind11::array();
 }
 
-pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
-                           const Dims &selectionCount)
+pybind11::array File::Read(const std::string &name, const Dims &start,
+                           const Dims &count, const size_t blockID)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
@@ -186,10 +256,10 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        pybind11::array pyArray(pybind11::dtype::of<T>(), selectionCount);     \
+        pybind11::array pyArray(pybind11::dtype::of<T>(), count);              \
         m_Stream->Read<T>(                                                     \
             name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            Box<Dims>(selectionStart, selectionCount));                        \
+            Box<Dims>(start, count), blockID);                                 \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -200,17 +270,16 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
         ", type can't be mapped to a numpy type, in call to read\n");
 }
 
-pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
-                           const Dims &selectionCount,
-                           const size_t stepSelectionStart,
-                           const size_t stepSelectionCount)
+pybind11::array File::Read(const std::string &name, const Dims &start,
+                           const Dims &count, const size_t stepStart,
+                           const size_t stepCount, const size_t blockID)
 {
     // shape of the returned numpy array
-    Dims shapePy(selectionCount.size() + 1);
-    shapePy[0] = stepSelectionCount;
+    Dims shapePy(count.size() + 1);
+    shapePy[0] = stepCount;
     for (auto i = 1; i < shapePy.size(); ++i)
     {
-        shapePy[i] = selectionCount[i - 1];
+        shapePy[i] = count[i - 1];
     }
 
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
@@ -224,8 +293,8 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
         pybind11::array pyArray(pybind11::dtype::of<T>(), shapePy);            \
         m_Stream->Read<T>(                                                     \
             name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            Box<Dims>(selectionStart, selectionCount),                         \
-            Box<size_t>(stepSelectionStart, stepSelectionCount));              \
+            Box<Dims>(start, count), Box<size_t>(stepStart, stepCount),        \
+            blockID);                                                          \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -239,13 +308,70 @@ pybind11::array File::Read(const std::string &name, const Dims &selectionStart,
     return pybind11::array();
 }
 
+pybind11::array File::ReadAttribute(const std::string &name,
+                                    const std::string &variableName,
+                                    const std::string separator)
+{
+    const std::string type =
+        m_Stream->m_IO->InquireAttributeType(name, variableName, separator);
+
+    if (type.empty())
+    {
+    }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(   \
+            name, variableName, separator);                                    \
+        pybind11::array pyArray(pybind11::dtype::of<T>(),                      \
+                                attribute->m_Elements);                        \
+        m_Stream->ReadAttribute<T>(                                            \
+            name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
+            variableName, separator);                                          \
+        return pyArray;                                                        \
+    }
+    ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument(
+            "ERROR: adios2 file read attribute " + name +
+            ", type can't be mapped to a numpy type, in call to read\n");
+    }
+    return pybind11::array();
+}
+
+std::vector<std::string>
+File::ReadAttributeString(const std::string &name,
+                          const std::string &variableName,
+                          const std::string separator)
+{
+    const core::Attribute<std::string> *attribute =
+        m_Stream->m_IO->InquireAttribute<std::string>(name, variableName,
+                                                      separator);
+
+    if (attribute == nullptr)
+    {
+        return std::vector<std::string>();
+    }
+
+    std::vector<std::string> data(attribute->m_Elements);
+    m_Stream->ReadAttribute<std::string>(name, data.data(), variableName,
+                                         separator);
+    return data;
+}
+
+void File::EndStep() { m_Stream->EndStep(); }
+
 void File::Close()
 {
     m_Stream->Close();
     m_Stream.reset();
 }
 
-size_t File::CurrentStep() const { return m_Stream->CurrentStep(); };
+size_t File::CurrentStep() const { return m_Stream->CurrentStep(); }
+
+size_t File::Steps() const { return m_Stream->Steps(); }
 
 // PRIVATE
 adios2::Mode File::ToMode(const std::string mode) const

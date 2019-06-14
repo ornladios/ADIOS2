@@ -45,9 +45,8 @@ public:
                     MPI_Comm mpiComm);
 
     ~InSituMPIReader();
-    StepStatus BeginStep(
-        StepMode mode = StepMode::NextAvailable,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
+                         const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;
@@ -98,7 +97,7 @@ private:
     std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
         const Variable<T> &variable, const size_t step) const final;
 
-    ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     template <class T>

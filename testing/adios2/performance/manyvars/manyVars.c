@@ -21,6 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WIN32
+#define strncasecmp _strnicmp
+#endif
+
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -257,9 +261,9 @@ void define_vars()
      * Offsets will change at writing for each block. */
     for (i = 0; i < NVARS; i++)
     {
-        varW[i] =
-            adios2_define_variable(ioW, varnames[i], adios2_type_int, 2, shape,
-                                   start, count, adios2_constant_dims_false);
+        varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int32_t,
+                                         2, shape, start, count,
+                                         adios2_constant_dims_false);
     }
 }
 
@@ -378,7 +382,7 @@ int read_file()
     }
 
     adios2_step_status status;
-    adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0, &status);
+    adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
 
     log("  Check variable definitions... %s\n", FILENAME);
     tb = MPI_Wtime();
@@ -400,8 +404,7 @@ int read_file()
         ts = 0;
         if (step > 0)
         {
-            adios2_begin_step(engineR, adios2_step_mode_next_available, 0.0,
-                              &status);
+            adios2_begin_step(engineR, adios2_step_mode_read, 0.0, &status);
         }
         for (block = 0; block < NBLOCKS; block++)
         {

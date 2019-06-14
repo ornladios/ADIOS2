@@ -20,6 +20,30 @@ extern "C" {
 #endif
 
 /**
+ * Set new shape, care must be taken when reading back the variable for
+ * different steps. Only applies to Global arrays.
+ * @param variable handler for which new selection will be applied to
+ * @param ndims number of dimensions for start and count
+ * @param shape new shape dimensions array
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
+                              const size_t *shape);
+
+/**
+ * Read mode only. Required for reading local variables. For Global Arrays it
+ * will Set
+ * the appropriate Start and Count Selection for the global array
+ * coordinates.
+ * @param variable handler for which new selection will be applied to
+ * @param block_id variable block index defined at write time. Blocks can be
+ * inspected with bpls -D variableName
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_block_selection(adios2_variable *variable,
+                                        const size_t block_id);
+
+/**
  * Set new start and count dimensions
  * @param variable handler for which new selection will be applied to
  * @param ndims number of dimensions for start and count
@@ -29,6 +53,27 @@ extern "C" {
  */
 adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
                                   const size_t *start, const size_t *count);
+
+/**
+ * Set the local start (offset) point to the memory pointer passed at Put
+ * and the memory local dimensions (count). Used for non-contiguous memory
+ * writes and reads (e.g. multidimensional ghost-cells).
+ * Currently not working for calls to Get.
+ * @param variable handler for which new memory selection will be applied to
+ * @param ndims number of dimensions for memory_start and memory_count
+ * @param memory_start relative local offset of variable.start to the
+ * contiguous memory pointer passed at Put from which data starts. e.g. if
+ * variable start = {rank*Ny,0} and there is 1 ghost cell per dimension,
+ * then memory_start = {1,1}
+ * @param memory_count local dimensions for the contiguous memory pointer
+ * passed at adios2_put, e.g. if there is 1 ghost cell per dimension and
+ * variable count = {Ny,Nx}, then memory_count = {Ny+2,Nx+2}
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_memory_selection(adios2_variable *variable,
+                                         const size_t ndims,
+                                         const size_t *memory_start,
+                                         const size_t *memory_count);
 
 /**
  * Set new step selection using step_start and step_count. Used mostly for
@@ -44,7 +89,11 @@ adios2_error adios2_set_step_selection(adios2_variable *variable,
 
 /**
  * Retrieve variable name
- * @param name output, must be pre-allocated
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param name output, string without trailing '\0', NULL or preallocated buffer
  * @param size output, name size without '\0'
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors
@@ -63,7 +112,11 @@ adios2_error adios2_variable_type(adios2_type *type,
 
 /**
  * Retrieve variable type in string form "char", "unsigned long", etc.
- * @param type output, string form "int", "char"
+ * For safe use, call this function first with NULL name parameter
+ * to get the size, then preallocate the buffer (with room for '\0'
+ * if desired), then call the function again with the buffer.
+ * Then '\0' terminate it if desired.
+ * @param type output, string without trailing '\0', NULL or preallocated buffer
  * @param size output, type size without '\0'
  * @param variable handler
  * @return adios2_error 0: success, see enum adios2_error for errors

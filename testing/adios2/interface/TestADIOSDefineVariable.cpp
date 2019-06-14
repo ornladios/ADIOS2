@@ -1,5 +1,6 @@
 #include <cstdint>
 
+#include <array>
 #include <iostream>
 #include <stdexcept>
 
@@ -40,7 +41,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
     EXPECT_EQ(globalvalue.Start().size(), 0);
     EXPECT_EQ(globalvalue.Count().size(), 0);
     EXPECT_EQ(globalvalue.Name(), name);
-    EXPECT_EQ(globalvalue.Type(), "int");
+    EXPECT_EQ(globalvalue.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
@@ -56,10 +57,10 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(localvalue.Shape().size(), 1);
     EXPECT_EQ(localvalue.Shape()[0], adios2::LocalValueDim);
-    EXPECT_EQ(localvalue.Start().size(), 0);
-    EXPECT_EQ(localvalue.Count().size(), 0);
+    EXPECT_EQ(localvalue.Start().size(), 1);
+    EXPECT_EQ(localvalue.Count().size(), 1);
     EXPECT_EQ(localvalue.Name(), "localvalue");
-    EXPECT_EQ(localvalue.Type(), "int");
+    EXPECT_EQ(localvalue.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
@@ -101,7 +102,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
     EXPECT_EQ(globalarray.Count()[1], Ny);
     EXPECT_EQ(globalarray.Count()[2], Nz);
     EXPECT_EQ(globalarray.Name(), "globalarray");
-    EXPECT_EQ(globalarray.Type(), "int");
+    EXPECT_EQ(globalarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
@@ -149,7 +150,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
     EXPECT_EQ(globalarray.Count()[1], Ny);
     EXPECT_EQ(globalarray.Count()[2], Nz);
     EXPECT_EQ(globalarray.Name(), "globalarray");
-    EXPECT_EQ(globalarray.Type(), "int");
+    EXPECT_EQ(globalarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
@@ -197,7 +198,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
     EXPECT_EQ(globalarray.Count()[1], Ny);
     EXPECT_EQ(globalarray.Count()[2], Nz);
     EXPECT_EQ(globalarray.Name(), "globalarray");
-    EXPECT_EQ(globalarray.Type(), "int");
+    EXPECT_EQ(globalarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayInvalidLocalValueDim)
@@ -229,7 +230,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArray)
     EXPECT_EQ(localarray.Count()[1], n / 2);
     EXPECT_EQ(localarray.Count()[2], 30);
     EXPECT_EQ(localarray.Name(), "localarray");
-    EXPECT_EQ(localarray.Type(), "int");
+    EXPECT_EQ(localarray.Type(), "int32_t");
     EXPECT_EQ(localarray.ShapeID(), adios2::ShapeID::LocalArray);
 }
 
@@ -265,16 +266,13 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
     EXPECT_EQ(localArray.Count()[1], 0);
     EXPECT_EQ(localArray.Count()[2], 0);
     EXPECT_EQ(localArray.Name(), "localArray");
-    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.Type(), "int32_t");
     EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write
     adios2::Box<adios2::Dims> sel({}, {Nx, Ny, Nz});
     localArray.SetSelection(sel);
-
-    adios2::Box<adios2::Dims> selbad(start, count);
-    EXPECT_THROW(localArray.SetSelection(selbad), std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(localArray.Shape().size(), 0);
@@ -284,8 +282,12 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
     EXPECT_EQ(localArray.Count()[1], Ny);
     EXPECT_EQ(localArray.Count()[2], Nz);
     EXPECT_EQ(localArray.Name(), "localArray");
-    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.Type(), "int32_t");
     EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
+
+    // TODO: Put must not allow start in LocalArrays
+    // adios2::Box<adios2::Dims> selbad(start, count);
+    // EXPECT_THROW(localArray.SetSelection(selbad), std::invalid_argument);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
@@ -316,7 +318,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
     EXPECT_EQ(localArray.Count()[1], Ny);
     EXPECT_EQ(localArray.Count()[2], Nz);
     EXPECT_EQ(localArray.Name(), "localArray");
-    EXPECT_EQ(localArray.Type(), "int");
+    EXPECT_EQ(localArray.Type(), "int32_t");
     EXPECT_EQ(localArray.ShapeID(), adios2::ShapeID::LocalArray);
 }
 
@@ -352,7 +354,7 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayFirstDim)
     EXPECT_EQ(joinedarray.Count()[1], n);
     EXPECT_EQ(joinedarray.Count()[2], 30);
     EXPECT_EQ(joinedarray.Name(), "joinedarray");
-    EXPECT_EQ(joinedarray.Type(), "int");
+    EXPECT_EQ(joinedarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
@@ -380,7 +382,7 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
     EXPECT_EQ(joinedarray.Count()[1], 10);
     EXPECT_EQ(joinedarray.Count()[2], 30);
     EXPECT_EQ(joinedarray.Name(), "joinedarray");
-    EXPECT_EQ(joinedarray.Type(), "int");
+    EXPECT_EQ(joinedarray.Type(), "int32_t");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayTooManyJoinedDims)
@@ -422,7 +424,6 @@ TEST_F(ADIOSDefineVariableTest, DefineString)
 TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
 {
     auto lf_CheckRemove = [&](const std::string variableName) {
-
         const bool isRemoved = io.RemoveVariable(variableName);
         EXPECT_EQ(isRemoved, true);
     };
@@ -444,6 +445,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     io.DefineVariable<double>("r64", shape, start, count);
     io.DefineVariable<std::complex<float>>("c32", shape, start, count);
     io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+    io.DefineVariable<char>("char", shape, start, count);
+    io.DefineVariable<long>("l", shape, start, count);
+    io.DefineVariable<unsigned long>("ul", shape, start, count);
 
     lf_CheckRemove("iString");
     lf_CheckRemove("i8");
@@ -462,6 +466,10 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     lf_CheckRemove("c32");
     lf_CheckRemove("c64");
 
+    lf_CheckRemove("char");
+    lf_CheckRemove("l");
+    lf_CheckRemove("ul");
+
     auto var_iString = io.InquireVariable<std::string>("iString");
     auto var_i8 = io.InquireVariable<int8_t>("i8");
     auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -475,6 +483,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
     auto var_r64 = io.InquireVariable<double>("r64");
     auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
     auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+    auto var_char = io.InquireVariable<char>("char");
+    auto var_l = io.InquireVariable<char>("l");
+    auto var_ul = io.InquireVariable<char>("ul");
 
     EXPECT_FALSE(var_iString);
     EXPECT_FALSE(var_i8);
@@ -492,6 +503,51 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemove)
 
     EXPECT_FALSE(var_c32);
     EXPECT_FALSE(var_c64);
+
+    EXPECT_FALSE(var_char);
+    EXPECT_FALSE(var_l);
+    EXPECT_FALSE(var_ul);
+}
+
+TEST_F(ADIOSDefineVariableTest, DefineRemoveDefine)
+{
+    auto lf_CheckRemove = [&](const std::string variableName) {
+        const bool isRemoved = io.RemoveVariable(variableName);
+        EXPECT_EQ(isRemoved, true);
+    };
+
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    io.DefineVariable<int8_t>("i8_0", shape, start, count);
+    io.DefineVariable<int8_t>("i8_1", shape, start, count);
+
+    lf_CheckRemove("i8_0");
+
+    std::array<adios2::Variable<int8_t>, 2> i8_vars;
+
+    i8_vars[0] = io.InquireVariable<int8_t>("i8_0");
+    EXPECT_FALSE(i8_vars[0]);
+
+    i8_vars[1] = io.InquireVariable<int8_t>("i8_1");
+    EXPECT_TRUE(i8_vars[1]);
+    EXPECT_EQ(i8_vars[1].Name(), "i8_1");
+
+    io.DefineVariable<int8_t>("i8_0", shape, start, count);
+
+    // check again after defining variable
+    i8_vars[1] = io.InquireVariable<int8_t>("i8_1");
+    EXPECT_TRUE(i8_vars[1]);
+    EXPECT_EQ(i8_vars[1].Name(), "i8_1");
+
+    i8_vars[0] = io.InquireVariable<int8_t>("i8_0");
+    EXPECT_TRUE(i8_vars[0]);
+    EXPECT_EQ(i8_vars[0].Name(), "i8_0");
+
+    auto i8_var2 = io.DefineVariable<int8_t>("i8_2", shape, start, count);
+    EXPECT_TRUE(i8_var2);
+    EXPECT_EQ(i8_var2.Name(), "i8_2");
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
@@ -513,6 +569,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
     io.DefineVariable<double>("r64", shape, start, count);
     io.DefineVariable<std::complex<float>>("c32", shape, start, count);
     io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+    io.DefineVariable<char>("char", shape, start, count);
+    io.DefineVariable<long>("l", shape, start, count);
+    io.DefineVariable<unsigned long>("ul", shape, start, count);
 
     io.RemoveAllVariables();
 
@@ -529,6 +588,9 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
     auto var_r64 = io.InquireVariable<double>("r64");
     auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
     auto var_c64 = io.InquireVariable<std::complex<double>>("c64");
+    auto var_char = io.InquireVariable<char>("char");
+    auto var_l = io.InquireVariable<char>("l");
+    auto var_ul = io.InquireVariable<char>("ul");
 
     EXPECT_FALSE(var_iString);
     EXPECT_FALSE(var_i8);
@@ -546,6 +608,10 @@ TEST_F(ADIOSDefineVariableTest, DefineAndRemoveAll)
 
     EXPECT_FALSE(var_c32);
     EXPECT_FALSE(var_c64);
+
+    EXPECT_FALSE(var_char);
+    EXPECT_FALSE(var_l);
+    EXPECT_FALSE(var_ul);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineCheckType)
@@ -567,6 +633,9 @@ TEST_F(ADIOSDefineVariableTest, DefineCheckType)
     io.DefineVariable<double>("r64", shape, start, count);
     io.DefineVariable<std::complex<float>>("c32", shape, start, count);
     io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+    io.DefineVariable<char>("char", shape, start, count);
+    io.DefineVariable<long>("l", shape, start, count);
+    io.DefineVariable<unsigned long>("ul", shape, start, count);
 
     EXPECT_EQ(io.VariableType("iString"), adios2::GetType<std::string>());
     EXPECT_EQ(io.VariableType("i8"), adios2::GetType<int8_t>());
@@ -581,6 +650,9 @@ TEST_F(ADIOSDefineVariableTest, DefineCheckType)
     EXPECT_EQ(io.VariableType("r64"), adios2::GetType<double>());
     EXPECT_EQ(io.VariableType("c32"), adios2::GetType<std::complex<float>>());
     EXPECT_EQ(io.VariableType("c64"), adios2::GetType<std::complex<double>>());
+    EXPECT_EQ(io.VariableType("char"), adios2::GetType<char>());
+    EXPECT_EQ(io.VariableType("l"), adios2::GetType<long>());
+    EXPECT_EQ(io.VariableType("ul"), adios2::GetType<unsigned long>());
 }
 
 int main(int argc, char **argv)

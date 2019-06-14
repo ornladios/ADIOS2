@@ -14,6 +14,7 @@
 #include "SstParamParser.h"
 #include "SstWriter.h"
 #include "SstWriter.tcc"
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -39,6 +40,7 @@ SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
+    TAU_SCOPED_TIMER_FUNC();
     m_WriterStep++;
     m_BetweenStepPairs = true;
     if (m_MarshalMethod == SstMarshalFFS)
@@ -52,7 +54,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         // SstWriter::EndStep()::lf_FreeBlocks()
         m_BP3Serializer = new format::BP3Serializer(m_MPIComm, m_DebugMode);
         m_BP3Serializer->InitParameters(m_IO.m_Parameters);
-        m_BP3Serializer->m_MetadataSet.TimeStep = m_WriterStep + 1;
+        m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
     else
@@ -62,11 +64,76 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
+void SstWriter::FFSMarshalAttributes()
+{
+    TAU_SCOPED_TIMER_FUNC();
+    const auto &attributesDataMap = m_IO.GetAttributesDataMap();
+
+    const uint32_t attributesCount =
+        static_cast<uint32_t>(attributesDataMap.size());
+
+    // if there are no new attributes, nothing to do
+    if (attributesCount == m_FFSMarshaledAttributesCount)
+        return;
+
+    for (const auto &attributePair : attributesDataMap)
+    {
+        const std::string name(attributePair.first);
+        const std::string type(attributePair.second.first);
+
+        if (type == "unknown")
+        {
+        }
+        else if (type == helper::GetType<std::string>())
+        {
+            core::Attribute<std::string> &attribute =
+                *m_IO.InquireAttribute<std::string>(name);
+            int element_count = -1;
+            const char *data_addr = attribute.m_DataSingleValue.c_str();
+            if (!attribute.m_IsSingleValue)
+            {
+                //
+            }
+
+            SstFFSMarshalAttribute(m_Output, name.c_str(), type.c_str(),
+                                   sizeof(char *), element_count, data_addr);
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
+        int element_count = -1;                                                \
+        void *data_addr = &attribute.m_DataSingleValue;                        \
+        if (!attribute.m_IsSingleValue)                                        \
+        {                                                                      \
+            element_count = attribute.m_Elements;                              \
+            data_addr = attribute.m_DataArray.data();                          \
+        }                                                                      \
+        SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),             \
+                               type.c_str(), sizeof(T), element_count,         \
+                               data_addr);                                     \
+    }
+
+        ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+}
+
 void SstWriter::EndStep()
 {
+    TAU_SCOPED_TIMER_FUNC();
     m_BetweenStepPairs = false;
+    if (m_IO.m_DefinitionsLocked && !m_DefinitionsNotified)
+    {
+        SstWriterDefinitionLock(m_Output, m_WriterStep);
+        m_DefinitionsNotified = true;
+    }
     if (m_MarshalMethod == SstMarshalFFS)
     {
+        TAU_SCOPED_TIMER("Marshaling Overhead");
+        TAU_START("SstMarshalFFS");
+        FFSMarshalAttributes();
+        TAU_STOP("SstMarshalFFS");
         SstFFSWriterEndStep(m_Output, m_WriterStep);
     }
     else if (m_MarshalMethod == SstMarshalBP)
@@ -82,6 +149,7 @@ void SstWriter::EndStep()
         // here should not be deallocated when SstProvideTimestep returns!
         // They should not be deallocated until SST is done with them
         // (explicit deallocation callback).
+        TAU_START("Marshaling overhead");
         auto lf_FreeBlocks = [](void *vBlock) {
             BP3DataBlock *BlockToFree =
                 reinterpret_cast<BP3DataBlock *>(vBlock);
@@ -95,14 +163,15 @@ void SstWriter::EndStep()
         m_BP3Serializer->AggregateCollectiveMetadata(
             m_MPIComm, m_BP3Serializer->m_Metadata, true);
         BP3DataBlock *newblock = new BP3DataBlock;
-        newblock->metadata.DataSize =
-            m_BP3Serializer->m_Metadata.m_Buffer.size();
+        newblock->metadata.DataSize = m_BP3Serializer->m_Metadata.m_Position;
         newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
-        newblock->data.DataSize = m_BP3Serializer->m_Data.m_Buffer.size();
+        newblock->data.DataSize = m_BP3Serializer->m_Data.m_Position;
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
         newblock->serializer = m_BP3Serializer;
+        TAU_STOP("Marshaling overhead");
         SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
-                           m_WriterStep, lf_FreeBlocks, newblock);
+                           m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
+                           NULL);
     }
     else
     {
@@ -136,7 +205,7 @@ void SstWriter::Init()
         PutSyncCommon(variable, values);                                       \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void SstWriter::DoClose(const int transportIndex) { SstWriterClose(m_Output); }

@@ -30,6 +30,7 @@
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosString.h"
 
 // C headers
 #include <cerrno>
@@ -56,9 +57,9 @@ Reorganize::Reorganize(int argc, char *argv[])
     infilename = std::string(argv[1]);
     outfilename = std::string(argv[2]);
     rmethodname = std::string(argv[3]);
-    rmethodparams = std::string(argv[4]);
+    rmethodparam_str = std::string(argv[4]);
     wmethodname = std::string(argv[5]);
-    wmethodparams = std::string(argv[6]);
+    wmethodparam_str = std::string(argv[6]);
 
     int nd = 0;
     int j = 7;
@@ -113,9 +114,9 @@ void Reorganize::Run()
     print0("Input stream            = ", infilename);
     print0("Output stream           = ", outfilename);
     print0("Read method             = ", rmethodname);
-    print0("Read method parameters  = ", rmethodparams);
+    print0("Read method parameters  = ", rmethodparam_str);
     print0("Write method            = ", wmethodname);
-    print0("Write method parameters = ", wmethodparams);
+    print0("Write method parameters = ", wmethodparam_str);
 
 #ifdef ADIOS2_HAVE_MPI
     core::ADIOS adios(comm, true, "C++");
@@ -127,19 +128,19 @@ void Reorganize::Run()
     print0("Waiting to open stream ", infilename, "...");
 
     io.SetEngine(rmethodname);
-    io.SetParameter("verbose", "5");
+    io.SetParameters(rmethodparams);
     core::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
     // rStream.FixedSchedule();
 
     io.SetEngine(wmethodname);
+    io.SetParameters(wmethodparams);
     core::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);
 
     int steps = 0;
     int curr_step = -1;
     while (true)
     {
-        adios2::StepStatus status =
-            rStream.BeginStep(adios2::StepMode::NextAvailable);
+        adios2::StepStatus status = rStream.BeginStep(adios2::StepMode::Read);
         if (status != adios2::StepStatus::OK)
         {
             break;
@@ -205,7 +206,25 @@ void Reorganize::print0(Arg &&arg, Args &&... args)
     }
 }
 
-void Reorganize::ParseArguments() {}
+Params Reorganize::parseParams(const std::string &param_str)
+{
+    std::istringstream ss(param_str);
+    std::vector<std::string> kvs;
+    std::string kv;
+
+    while (std::getline(ss, kv, ','))
+    {
+        kvs.push_back(kv);
+    }
+
+    return helper::BuildParametersMap(kvs, '=', true);
+}
+
+void Reorganize::ParseArguments()
+{
+    rmethodparams = parseParams(rmethodparam_str);
+    wmethodparams = parseParams(wmethodparam_str);
+}
 
 void Reorganize::ProcessParameters() const {}
 
@@ -283,7 +302,7 @@ std::string Reorganize::VectorToString(const T &v)
 size_t
 Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
                       const int *np // number of processes in each dimension
-                      )
+)
 {
     size_t writesize = 0;
     if (vi.v == nullptr)
@@ -411,7 +430,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
     {                                                                          \
         variable = io.InquireVariable<T>(variablePair.first);                  \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         varinfo[varidx].v = variable;
@@ -487,8 +506,9 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
     if (nvars != varinfo.size())
     {
         std::cerr
-            << "ERROR rank " << rank << ": Invalid program state, number "
-                                        "of variables ("
+            << "ERROR rank " << rank
+            << ": Invalid program state, number "
+               "of variables ("
             << nvars
             << ") to read does not match the number of processed variables ("
             << varinfo.size() << ")" << std::endl;
@@ -529,7 +549,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         }
     }
@@ -569,7 +589,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                            reinterpret_cast<T *>(varinfo[varidx].readbuf));    \
         }                                                                      \
     }
-            ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         }
     }

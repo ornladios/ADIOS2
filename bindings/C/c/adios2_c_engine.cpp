@@ -12,6 +12,7 @@
 
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2_c_internal.h"
 
 namespace
 {
@@ -37,17 +38,14 @@ adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string &hint)
 adios2::StepMode ToStepMode(const adios2_step_mode mode,
                             const std::string &hint)
 {
-    adios2::StepMode stepModeCpp = adios2::StepMode::NextAvailable;
+    adios2::StepMode stepModeCpp = adios2::StepMode::Read;
     switch (mode)
     {
-    case (adios2_step_mode_next_available):
-        stepModeCpp = adios2::StepMode::NextAvailable;
-        break;
     case (adios2_step_mode_append):
         stepModeCpp = adios2::StepMode::Append;
         break;
-    case (adios2_step_mode_latest_available):
-        stepModeCpp = adios2::StepMode::LatestAvailable;
+    case (adios2_step_mode_read):
+        stepModeCpp = adios2::StepMode::Read;
         break;
     case (adios2_step_mode_update):
         stepModeCpp = adios2::StepMode::Update;
@@ -86,21 +84,74 @@ adios2_step_status ToStepStatus(const adios2::StepStatus statusCpp,
     }
     return status;
 }
+
 } // end anonymous namespace
+
+adios2_error adios2_engine_name(char *name, size_t *size,
+                                const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for const adios2_engine, in call to adios2_engine_name");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        adios2::helper::CheckForNullptr(
+            size, "for size_t* size, in call to adios2_engine_name");
+
+        return String2CAPI(engineCpp->m_Name, name, size);
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_name"));
+    }
+}
+
+adios2_error adios2_engine_get_type(char *type, size_t *size,
+                                    const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine,
+            "for const adios2_engine, in call to adios2_engine_get_type");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        adios2::helper::CheckForNullptr(
+            size, "for size_t* size, in call to adios2_engine_get_type");
+
+        return String2CAPI(engineCpp->m_EngineType, type, size);
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_get_type"));
+    }
+}
 
 adios2_error adios2_begin_step(adios2_engine *engine,
                                const adios2_step_mode mode,
                                const float timeout_seconds,
                                adios2_step_status *status)
 {
-    *status = adios2_step_status_other_error;
-
     try
     {
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_begin_step");
+
         adios2::core::Engine *engineCpp =
             reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            *status = adios2_step_status_end_of_stream;
+            return adios2_error_none;
+        }
 
         const adios2::StepStatus statusCpp = engineCpp->BeginStep(
             ToStepMode(mode, "in call to adios2_begin_step"), timeout_seconds);
@@ -110,6 +161,7 @@ adios2_error adios2_begin_step(adios2_engine *engine,
     }
     catch (...)
     {
+        *status = adios2_step_status_other_error;
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_begin_step"));
     }
@@ -123,15 +175,48 @@ adios2_error adios2_current_step(size_t *current_step,
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_current_step");
 
-        const adios2::core::Engine &engineCpp =
-            *reinterpret_cast<const adios2::core::Engine *>(engine);
-        *current_step = engineCpp.CurrentStep();
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            *current_step = adios2::MaxSizeT;
+            return adios2_error_none;
+        }
+
+        *current_step = engineCpp->CurrentStep();
         return adios2_error_none;
     }
     catch (...)
     {
         return static_cast<adios2_error>(
             adios2::helper::ExceptionToError("adios2_current_step"));
+    }
+}
+
+adios2_error adios2_steps(size_t *steps, const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for adios2_engine, in call to adios2_steps");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            *steps = 0;
+            return adios2_error_none;
+        }
+
+        *steps = engineCpp->Steps();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_steps"));
     }
 }
 
@@ -143,6 +228,14 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_put");
 
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
         adios2::helper::CheckForNullptr(
             variable, "for adios2_variable, in call to adios2_put");
 
@@ -150,25 +243,29 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
             reinterpret_cast<adios2::core::VariableBase *>(variable);
         const std::string type(variableBase->m_Type);
 
+        const adios2::Mode modeCpp = adios2_ToMode(
+            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
+                  "in call to adios2_put");
+
         if (type == "compound")
         {
             // not supported
         }
+        else if (type == adios2::helper::GetType<std::string>())
+        {
+            const std::string dataStr(reinterpret_cast<const char *>(data));
+            engineCpp->Put(*dynamic_cast<adios2::core::Variable<std::string> *>(
+                               variableBase),
+                           dataStr, modeCpp);
+        }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
-        adios2::core::Engine &engineCpp =                                      \
-            *reinterpret_cast<adios2::core::Engine *>(engine);                 \
-                                                                               \
-        const adios2::Mode modeCpp = adios2_ToMode(                            \
-            mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "  \
-                  "in call to adios2_put");                                    \
-                                                                               \
-        engineCpp.Put(                                                         \
+        engineCpp->Put(                                                        \
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<const T *>(data), modeCpp);                       \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
         return adios2_error_none;
@@ -189,29 +286,41 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_put_by_name");
 
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
         adios2::helper::CheckForNullptr(
             variable_name,
             "for const char* variable_name, in call to adios2_put_by_name");
 
-        auto &engineCpp = *reinterpret_cast<adios2::core::Engine *>(engine);
         const adios2::Mode modeCpp = adios2_ToMode(
             mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
                   "in call to adios2_put_by_name");
 
         const std::string type(
-            engineCpp.GetIO().InquireVariableType(variable_name));
+            engineCpp->m_IO.InquireVariableType(variable_name));
 
         if (type == "compound")
         {
             // not supported
         }
+        else if (type == adios2::helper::GetType<std::string>())
+        {
+            const std::string dataStr(reinterpret_cast<const char *>(data));
+            engineCpp->Put(variable_name, dataStr, modeCpp);
+        }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
-        engineCpp.Put(variable_name, reinterpret_cast<const T *>(data),        \
-                      modeCpp);                                                \
+        engineCpp->Put(variable_name, reinterpret_cast<const T *>(data),       \
+                       modeCpp);                                               \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -228,8 +337,16 @@ adios2_error adios2_perform_puts(adios2_engine *engine)
     {
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_perform_puts");
-        auto &engineCpp = *reinterpret_cast<adios2::core::Engine *>(engine);
-        engineCpp.PerformPuts();
+
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
+        engineCpp->PerformPuts();
         return adios2_error_none;
     }
     catch (...)
@@ -246,31 +363,47 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
     {
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_get");
+
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
         adios2::helper::CheckForNullptr(variable,
                                         "for adios2_variable, in call "
                                         "to adios2_get");
 
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
+
         const std::string type(variableBase->m_Type);
 
         if (type == "compound")
         {
             // not supported
         }
+        else if (type == adios2::helper::GetType<std::string>())
+        {
+            std::string dataStr;
+            engineCpp->Get(*dynamic_cast<adios2::core::Variable<std::string> *>(
+                               variableBase),
+                           dataStr);
+            dataStr.copy(reinterpret_cast<char *>(values), dataStr.size());
+        }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
-        adios2::core::Engine &engineCpp =                                      \
-            *reinterpret_cast<adios2::core::Engine *>(engine);                 \
         const adios2::Mode modeCpp = adios2_ToMode(                            \
             mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "  \
                   "in call to adios2_get");                                    \
-        engineCpp.Get(                                                         \
+        engineCpp->Get(                                                        \
             *dynamic_cast<adios2::core::Variable<T> *>(variableBase),          \
             reinterpret_cast<T *>(values), modeCpp);                           \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -289,27 +422,41 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
     {
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_get_by_name");
+
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
         adios2::helper::CheckForNullptr(
             variable_name, "for const char* variable_name, in call to "
                            "adios2_get_by_name");
 
-        auto &engineCpp = *reinterpret_cast<adios2::core::Engine *>(engine);
         const adios2::Mode modeCpp = adios2_ToMode(
             mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
                   "in call to adios2_get_by_name");
         const std::string type(
-            engineCpp.GetIO().InquireVariableType(variable_name));
+            engineCpp->m_IO.InquireVariableType(variable_name));
 
         if (type == "compound")
         {
             // not supported
         }
+        else if (type == adios2::helper::GetType<std::string>())
+        {
+            std::string dataStr;
+            engineCpp->Get(variable_name, dataStr);
+            dataStr.copy(reinterpret_cast<char *>(data), dataStr.size());
+        }
 #define declare_template_instantiation(T)                                      \
     else if (type == adios2::helper::GetType<T>())                             \
     {                                                                          \
-        engineCpp.Get(variable_name, reinterpret_cast<T *>(data), modeCpp);    \
+        engineCpp->Get(variable_name, reinterpret_cast<T *>(data), modeCpp);   \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
         return adios2_error_none;
     }
@@ -326,8 +473,16 @@ adios2_error adios2_perform_gets(adios2_engine *engine)
     {
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_perform_gets");
-        auto &engineCpp = *reinterpret_cast<adios2::core::Engine *>(engine);
-        engineCpp.PerformGets();
+
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
+        engineCpp->PerformGets();
         return adios2_error_none;
     }
     catch (...)
@@ -343,8 +498,16 @@ adios2_error adios2_end_step(adios2_engine *engine)
     {
         adios2::helper::CheckForNullptr(
             engine, "for adios2_engine, in call to adios2_end_step");
-        auto &engineCpp = *reinterpret_cast<adios2::core::Engine *>(engine);
-        engineCpp.EndStep();
+
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
+        engineCpp->EndStep();
         return adios2_error_none;
     }
     catch (...)
@@ -367,8 +530,16 @@ adios2_error adios2_flush_by_index(adios2_engine *engine,
         adios2::helper::CheckForNullptr(engine, "for adios2_engine, in call to "
                                                 "adios2_flush or "
                                                 "adios2_flush_by_index");
-        reinterpret_cast<adios2::core::Engine *>(engine)->Flush(
-            transport_index);
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
+        engineCpp->Flush(transport_index);
+
         return adios2_error_none;
     }
     catch (...)
@@ -391,8 +562,15 @@ adios2_error adios2_close_by_index(adios2_engine *engine,
         adios2::helper::CheckForNullptr(engine, "for adios2_engine, in call to "
                                                 "adios2_close or "
                                                 "adios2_close_by_index");
-        auto &engineCpp = *reinterpret_cast<adios2::core::Engine *>(engine);
-        engineCpp.Close(transport_index);
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
+        engineCpp->Close(transport_index);
         return adios2_error_none;
     }
     catch (...)

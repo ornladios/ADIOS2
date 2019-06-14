@@ -42,7 +42,8 @@ class ADIOS
 public:
 #ifdef ADIOS2_HAVE_MPI
     /**
-     * Starting point for MPI apps. Creates an ADIOS object
+     * Starting point for MPI apps. Creates an ADIOS object.
+     * MPI Collective Operation as it call MPI_Comm_dup
      * @param comm defines domain scope from application
      * @param debugMode true: extra user-input debugging information, false: run
      * without checking user-input (stable workflows)
@@ -54,6 +55,8 @@ public:
     /**
      * Starting point for MPI apps. Creates an ADIOS object allowing a
      * runtime config file.
+     * MPI collective and it calls MPI_Comm_dup and MPI_Bcast to pass the
+     * configFile contents
      * @param configFile runtime config file
      * @param comm defines domain scope from application
      * @param debugMode true: extra user-input debugging information, false:
@@ -61,9 +64,9 @@ public:
      * @exception std::invalid_argument in debugMode = true if user input is
      * incorrect
      */
-    ADIOS(const std::string &configFile = "", MPI_Comm comm = MPI_COMM_SELF,
+    ADIOS(const std::string &configFile, MPI_Comm comm,
           const bool debugMode = true);
-#else
+#endif
 
     /**
      * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
@@ -84,7 +87,6 @@ public:
      * incorrect
      */
     ADIOS(const bool debugMode = true);
-#endif
 
     /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;
@@ -94,8 +96,27 @@ public:
      * memory. Create a separate object for independent tasks */
     ADIOS(const ADIOS &) = delete;
 
-    /** Using RAII STL containers only */
+    /**
+     * default move constructor exists to allow for
+     * auto ad = ADIOS(...) initialization
+     */
+    ADIOS(ADIOS &&) = default;
+
+    /**
+     * MPI Collective calls MPI_Comm_free
+     * Uses RAII for all other members */
     ~ADIOS() = default;
+
+    /**
+     * copy assignment is forbidden for the same reason as copy constructor
+     */
+    ADIOS &operator=(const ADIOS &) = delete;
+
+    /**
+     * move assignment is allowed, though, to be consistent with move
+     * constructor
+     */
+    ADIOS &operator=(ADIOS &&) = default;
 
     /**
      * Declares a new IO class object
@@ -159,6 +180,21 @@ public:
      * @exception std::runtime_error if any engine Flush fails
      */
     void FlushAll();
+
+    /**
+     * DANGER ZONE: removes a particular IO. This will effectively eliminate
+     * any parameter from the config.xml file
+     * @param name io input name
+     * @return true: IO was found and removed, false: IO not found and not
+     * removed
+     */
+    bool RemoveIO(const std::string name);
+
+    /**
+     * DANGER ZONE: removes all IOs created with DeclareIO. This will
+     * effectively eliminate any parameter from the config.xml file also.
+     */
+    void RemoveAllIOs() noexcept;
 
 private:
     std::shared_ptr<core::ADIOS> m_ADIOS;

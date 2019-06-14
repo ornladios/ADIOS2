@@ -57,16 +57,18 @@ public:
 
     virtual void Init(const size_t subStreams, MPI_Comm parentComm);
 
-    virtual std::vector<MPI_Request> IExchange(BufferSTL &bufferSTL,
-                                               const int step);
+    virtual std::vector<std::vector<MPI_Request>>
+    IExchange(BufferSTL &bufferSTL, const int step) = 0;
 
-    std::vector<MPI_Request> IExchangeAbsolutePosition(BufferSTL &bufferSTL,
-                                                       const int step);
+    virtual std::vector<std::vector<MPI_Request>>
+    IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step) = 0;
 
-    void WaitAbsolutePosition(std::vector<MPI_Request> &requests,
-                              const int step);
+    virtual void
+    WaitAbsolutePosition(std::vector<std::vector<MPI_Request>> &requests,
+                         const int step) = 0;
 
-    virtual void Wait(std::vector<MPI_Request> &requests, const int step);
+    virtual void Wait(std::vector<std::vector<MPI_Request>> &requests,
+                      const int step) = 0;
 
     virtual void SwapBuffers(const int step) noexcept;
 

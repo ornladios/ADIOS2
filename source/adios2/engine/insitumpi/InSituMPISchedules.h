@@ -45,7 +45,7 @@ void FixSeeksToZeroOffset(helper::SubFileInfo &record,
 //     for each rank separately have one buffer[rank]
 //         there is one step, lrs is the vector of SubFileInfos
 //         SerializeLocalReadSchedule (variable, lrs)
-std::vector<std::vector<char>>
+std::map<int, std::vector<char>>
 SerializeLocalReadSchedule(const int nWriters,
                            const std::map<std::string, helper::SubFileInfoMap>
                                &variablesSubFileInfo) noexcept;
@@ -87,8 +87,8 @@ using LocalReadScheduleMap =
 int GetNumberOfRequestsInWriteScheduleMap(WriteScheduleMap &map) noexcept;
 
 // Deserialize buffers from all readers
-WriteScheduleMap
-DeserializeReadSchedule(const std::vector<std::vector<char>> &buffers) noexcept;
+WriteScheduleMap DeserializeReadSchedule(
+    const std::map<int, std::vector<char>> &buffers) noexcept;
 
 // Deserialize buffer from one reader
 LocalReadScheduleMap

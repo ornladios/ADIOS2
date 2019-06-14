@@ -17,19 +17,27 @@ module adios2_parameters_mod
 
     ! Types
     integer, parameter :: adios2_type_unknown = -1
+
     integer, parameter :: adios2_type_character = 0
-    integer, parameter :: adios2_type_real = 2
-    integer, parameter :: adios2_type_dp = 3
-    integer, parameter :: adios2_type_complex = 4
-    integer, parameter :: adios2_type_complex_dp = 5
+    integer, parameter :: adios2_type_string = 0
 
-    integer, parameter :: adios2_type_integer1 = 6
-    integer, parameter :: adios2_type_integer2 = 7
-    integer, parameter :: adios2_type_integer4 = 8
-    integer, parameter :: adios2_type_integer8 = 9
+    integer, parameter :: adios2_type_real4 = 1
+    integer, parameter :: adios2_type_real  = 1
 
-    integer, parameter :: adios2_type_string = 10
+    integer, parameter :: adios2_type_real8 = 2
+    integer, parameter :: adios2_type_dp    = 2
+    integer, parameter :: adios2_type_double_precision = 2
 
+    integer, parameter :: adios2_type_complex4 = 3
+    integer, parameter :: adios2_type_complex = 3
+
+    integer, parameter :: adios2_type_complex8 = 4
+    integer, parameter :: adios2_type_complex_dp = 4
+
+    integer, parameter :: adios2_type_integer1 = 5
+    integer, parameter :: adios2_type_integer2 = 6
+    integer, parameter :: adios2_type_integer4 = 7
+    integer, parameter :: adios2_type_integer8 = 8
 
     ! is_constant_dims
     logical, parameter :: adios2_constant_dims = .true.
@@ -57,8 +65,7 @@ module adios2_parameters_mod
     ! Step Mode
     integer, parameter :: adios2_step_mode_append = 0
     integer, parameter :: adios2_step_mode_update = 1
-    integer, parameter :: adios2_step_mode_next_available = 2
-    integer, parameter :: adios2_step_mode_latest_available = 3
+    integer, parameter :: adios2_step_mode_read = 2
 
     ! Step Status
     integer, parameter :: adios2_step_status_other_error = -1
@@ -71,6 +78,7 @@ module adios2_parameters_mod
     integer, parameter :: adios2_string_array_element_max_size = 4096
 
     integer(kind=8), parameter, dimension(1) :: adios2_null_dims = (/-1/)
+    integer(kind=8), parameter :: adios2_local_value_dim = -2
 
     logical, parameter :: adios2_advance_yes = .true.
     logical, parameter :: adios2_advance_no  = .false.
@@ -117,13 +125,6 @@ module adios2_parameters_mod
         logical :: valid = .false.
         character(len=64):: name = ''
         character(len=64):: type = ''
-    end type
-
-
-    ! High-level API
-    type adios2_file
-        integer(kind=8):: f2c = 0_8
-        logical :: valid = .false.
     end type
 
 end module

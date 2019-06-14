@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 
-
 export SOURCE_DIR=${TRAVIS_BUILD_DIR}
 export BUILD_DIR=$(readlink -f ${SOURCE_DIR}/..)
 export COMMIT_RANGE="${TRAVIS_COMMIT_RANGE/.../ }"
+if [ -n "${TRAVIS_PULL_REQUEST_BRANCH}" ]
+then
+  export BUILD_LABEL="${TRAVIS_PULL_REQUEST_BRANCH}_${TRAVIS_BUILD_NUMBER}"
+else
+  export BUILD_LABEL="${TRAVIS_BRANCH}_${TRAVIS_BUILD_NUMBER}"
+fi
+
+
 
 case ${BUILD_MATRIX_ENTRY} in
   format)

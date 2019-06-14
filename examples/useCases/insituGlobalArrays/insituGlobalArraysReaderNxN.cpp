@@ -105,7 +105,7 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
     {                                                                          \
         ProcessVariableMetadata<T>(rank, name, type, reader, io, varinfos);    \
     }
-        ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 #ifdef ADIOS2_HAVE_MPI
@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
         while (true)
         {
             adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable, 60.0f);
+                reader.BeginStep(adios2::StepMode::Read, 60.0f);
             if (status == adios2::StepStatus::NotReady)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));

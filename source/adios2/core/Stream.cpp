@@ -59,7 +59,10 @@ bool Stream::GetStep()
 {
     if (!m_FirstStep)
     {
-        m_Engine->EndStep();
+        if (m_StepStatus)
+        {
+            m_Engine->EndStep();
+        }
     }
     else
     {
@@ -68,10 +71,28 @@ bool Stream::GetStep()
 
     if (m_Engine->BeginStep() != StepStatus::OK)
     {
+        m_StepStatus = false;
         return false;
     }
 
+    m_StepStatus = true;
     return true;
+}
+
+void Stream::EndStep()
+{
+    if (m_StepStatus)
+    {
+        m_Engine->EndStep();
+        m_StepStatus = false;
+    }
+    else
+    {
+        throw std::invalid_argument("ERROR: stream " + m_Name +
+                                    " calling end step function twice (check "
+                                    "if a write function calls it) or "
+                                    "invalid stream\n");
+    }
 }
 
 void Stream::Close()
@@ -79,6 +100,7 @@ void Stream::Close()
     if (m_Engine != nullptr)
     {
         m_Engine->Close();
+        m_StepStatus = false;
         m_Engine = nullptr;
     }
 }
@@ -100,6 +122,12 @@ size_t Stream::CurrentStep() const
     return m_Engine->CurrentStep();
 }
 
+size_t Stream::Steps() const
+{
+    const size_t steps = (m_Engine != nullptr) ? m_Engine->Steps() : 0;
+    return steps;
+}
+
 // PRIVATE
 void Stream::CheckOpen()
 {
@@ -119,33 +147,53 @@ void Stream::CheckOpen()
 }
 
 #define declare_template_instantiation(T)                                      \
+    template void Stream::WriteAttribute(const std::string &, const T &,       \
+                                         const std::string &,                  \
+                                         const std::string, const bool);       \
+                                                                               \
+    template void Stream::WriteAttribute(const std::string &, const T *,       \
+                                         const size_t, const std::string &,    \
+                                         const std::string, const bool);       \
+                                                                               \
+    template void Stream::ReadAttribute(                                       \
+        const std::string &, T *, const std::string &, const std::string);
+
+ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
     template void Stream::Write<T>(const std::string &, const T *,             \
                                    const Dims &, const Dims &, const Dims &,   \
+                                   const vParams &, const bool);               \
+                                                                               \
+    template void Stream::Write<T>(const std::string &, const T &, const bool, \
                                    const bool);                                \
                                                                                \
-    template void Stream::Write<T>(const std::string &, const T &,             \
-                                   const bool);                                \
-                                                                               \
-    template void Stream::Read<T>(const std::string &, T *);                   \
+    template void Stream::Read<T>(const std::string &, T *, const size_t);     \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *,                    \
-                                  const Box<size_t> &);                        \
-                                                                               \
-    template void Stream::Read<T>(const std::string &, T *,                    \
-                                  const Box<Dims> &);                          \
+                                  const Box<size_t> &, const size_t);          \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
-                                  const Box<size_t> &);                        \
+                                  const size_t);                               \
                                                                                \
-    template std::vector<T> Stream::Read<T>(const std::string &);              \
-                                                                               \
-    template std::vector<T> Stream::Read<T>(                                   \
-        const std::string &, const Box<Dims> &, const Box<size_t> &);          \
+    template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
+                                  const Box<size_t> &, const size_t);          \
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &,               \
-                                            const Box<Dims> &);
+                                            const size_t);                     \
+                                                                               \
+    template std::vector<T> Stream::Read<T>(                                   \
+        const std::string &, const Box<size_t> &, const size_t);               \
+                                                                               \
+    template std::vector<T> Stream::Read<T>(                                   \
+        const std::string &, const Box<Dims> &, const Box<size_t> &,           \
+        const size_t);                                                         \
+                                                                               \
+    template std::vector<T> Stream::Read<T>(const std::string &,               \
+                                            const Box<Dims> &, const size_t);
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core

@@ -36,6 +36,7 @@ namespace adios2
  *  DefineVariable */
 enum class ShapeID
 {
+    Unknown,     ///< undefined shapeID
     GlobalValue, ///< single global value, common case
     GlobalArray, ///< global (across MPI_Comm) array, common case
     JoinedArray, ///< global array with a common (joinable) dimension
@@ -87,8 +88,7 @@ enum class StepMode
 {
     Append,
     Update, // writer advance mode
-    NextAvailable,
-    LatestAvailable // reader advance mode
+    Read    // reader advance mode
 };
 
 enum class StepStatus
@@ -136,8 +136,11 @@ using std::uint64_t;
 using cfloat = std::complex<float>;
 using cdouble = std::complex<double>;
 
-// Limit
+// Limit, using uint64_t to make it portable
+constexpr uint64_t MaxU64 = std::numeric_limits<uint64_t>::max();
 constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
+constexpr size_t DefaultSizeT = std::numeric_limits<size_t>::max();
+constexpr size_t EngineCurrentStep = std::numeric_limits<size_t>::max();
 
 // adios defaults
 #ifdef _WIN32
@@ -153,7 +156,7 @@ constexpr size_t DefaultInitialBufferSize = 16 * 1024;
 
 /** default maximum bp buffer size, unlimited, in bytes.
  *  Needs to be studied for optimizing applications */
-constexpr size_t DefaultMaxBufferSize = MaxSizeT - 1;
+constexpr uint64_t DefaultMaxBufferSize = MaxSizeT - 1;
 
 /** default buffer growth factor. Needs to be studied
  * for optimizing applications*/
@@ -174,11 +177,13 @@ constexpr char PathSeparator =
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;
 constexpr size_t UnknownDim = 0;
-constexpr size_t JoinedDim = MaxSizeT - 1;
-constexpr size_t LocalValueDim = MaxSizeT - 2;
-constexpr size_t IrregularDim = MaxSizeT - 3;
+constexpr uint64_t JoinedDim = MaxU64 - 1;
+constexpr uint64_t LocalValueDim = MaxU64 - 2;
+constexpr uint64_t IrregularDim = MaxU64 - 3;
 constexpr bool ConstantDims = true;
-constexpr bool endl = true;
+constexpr bool end_step = true;
+constexpr bool LocalValue = true;
+constexpr bool GlobalValue = false;
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;
@@ -188,191 +193,40 @@ using Steps = size_t;
 template <class T>
 using Box = std::pair<T, T>;
 
-// Get a fixed width integer type from a size specification
-template <size_t Bytes, bool Signed>
-struct FixedWidthInt;
-
-template <>
-struct FixedWidthInt<1, true>
-{
-    using Type = std::int8_t;
-};
-template <>
-struct FixedWidthInt<2, true>
-{
-    using Type = std::int16_t;
-};
-template <>
-struct FixedWidthInt<4, true>
-{
-    using Type = std::int32_t;
-};
-template <>
-struct FixedWidthInt<8, true>
-{
-    using Type = std::int64_t;
-};
-template <>
-struct FixedWidthInt<1, false>
-{
-    using Type = std::uint8_t;
-};
-template <>
-struct FixedWidthInt<2, false>
-{
-    using Type = std::uint16_t;
-};
-template <>
-struct FixedWidthInt<4, false>
-{
-    using Type = std::uint32_t;
-};
-template <>
-struct FixedWidthInt<8, false>
-{
-    using Type = std::uint64_t;
-};
-
-// Some core type information that may be useful at compile time
+/**
+ * TypeInfo
+ * used to map from primitive types to stdint-based types
+ */
 template <typename T, typename Enable = void>
-struct TypeInfo
-{
-    using IOType = T;
-    using ValueType = T;
-};
+struct TypeInfo;
 
-template <typename T>
-struct TypeInfo<T, typename std::enable_if<std::is_integral<T>::value>::type>
-{
-    using IOType =
-        typename FixedWidthInt<sizeof(T), std::is_signed<T>::value>::Type;
-    using ValueType = T;
-};
+/**
+ * ToString
+ * makes a string from an enum class like ShapeID etc, for debugging etc
+ * It is also overloaded elsewhere to allow for a readable representation of
+ * Variable, Attribute, etc.
+ */
 
-template <typename T>
-struct TypeInfo<T,
-                typename std::enable_if<std::is_floating_point<T>::value>::type>
-{
-    using IOType = T;
-    using ValueType = T;
-};
+std::string ToString(ShapeID value);
+std::string ToString(IOMode value);
+std::string ToString(Mode value);
+std::string ToString(ReadMultiplexPattern value);
+std::string ToString(StreamOpenMode value);
+std::string ToString(ReadMode value);
+std::string ToString(StepMode value);
+std::string ToString(StepStatus value);
+std::string ToString(TimeUnit value);
+std::string ToString(SelectionType value);
 
-template <typename T>
-struct TypeInfo<T, typename std::enable_if<std::is_same<
-                       T, std::complex<typename T::value_type>>::value>::type>
-{
-    using IOType = T;
-    using ValueType = typename T::value_type;
-};
-
-template <typename T>
-struct TypeInfo<
-    T, typename std::enable_if<std::is_same<T, std::string>::value>::type>
-{
-    using IOType = T;
-    using ValueType = T;
-};
-
-// Making GetType a user facing function
-template <class T>
-inline std::string GetType() noexcept
-{
-    return "compound";
-}
-
-template <>
-inline std::string GetType<void>() noexcept
-{
-    return "unknown";
-}
-
-template <>
-inline std::string GetType<std::string>() noexcept
-{
-    return "string";
-}
-
-template <>
-inline std::string GetType<char>() noexcept
-{
-    return "char";
-}
-template <>
-inline std::string GetType<signed char>() noexcept
-{
-    return "signed char";
-}
-template <>
-inline std::string GetType<unsigned char>() noexcept
-{
-    return "unsigned char";
-}
-template <>
-inline std::string GetType<short>() noexcept
-{
-    return "short";
-}
-template <>
-inline std::string GetType<unsigned short>() noexcept
-{
-    return "unsigned short";
-}
-template <>
-inline std::string GetType<int>() noexcept
-{
-    return "int";
-}
-template <>
-inline std::string GetType<unsigned int>() noexcept
-{
-    return "unsigned int";
-}
-template <>
-inline std::string GetType<long int>() noexcept
-{
-    return "long int";
-}
-template <>
-inline std::string GetType<unsigned long int>() noexcept
-{
-    return "unsigned long int";
-}
-template <>
-inline std::string GetType<long long int>() noexcept
-{
-    return "long long int";
-}
-template <>
-inline std::string GetType<unsigned long long int>() noexcept
-{
-    return "unsigned long long int";
-}
-template <>
-inline std::string GetType<float>() noexcept
-{
-    return "float";
-}
-template <>
-inline std::string GetType<double>() noexcept
-{
-    return "double";
-}
-template <>
-inline std::string GetType<long double>() noexcept
-{
-    return "long double";
-}
-template <>
-inline std::string GetType<std::complex<float>>() noexcept
-{
-    return "float complex";
-}
-template <>
-inline std::string GetType<std::complex<double>>() noexcept
-{
-    return "double complex";
-}
+/**
+ * os << [adios2_type] enables output of adios2 enums/classes directly
+ * to output streams (e.g. std::cout), if ToString() can handle [adios2_type].
+ */
+template <typename T, typename Enable = decltype(ToString(std::declval<T>()))>
+std::ostream &operator<<(std::ostream &os, const T &value);
 
 } // end namespace adios2
+
+#include "ADIOSTypes.inl"
 
 #endif /* ADIOS2_ADIOSTYPES_H_ */

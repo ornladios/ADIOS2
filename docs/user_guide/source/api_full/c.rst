@@ -18,9 +18,13 @@ C API handlers:
    adios2_operator* 
 
 
-Every ADIOS2 function that generates a new adios2_* unique handler returns the latter explicitly. Therefore, checks can be applied to know if the resulting handler is NULL. Other functions used to manipulate these valid handlers will return a value of type `enum adios2_error` explicitly. These possible errors are based on the `C++ standardized exceptions <https://en.cppreference.com/w/cpp/error/exception>`_ . Each error will issue a more detailed description in the standard error output: `stderr`. 
+Every ADIOS2 function that generates a new ``adios2_*`` unique handler returns the latter explicitly.
+Therefore, checks can be applied to know if the resulting handler is NULL.
+Other functions used to manipulate these valid handlers will return a value of type ``enum adios2_error`` explicitly.
+These possible errors are based on the `C++ standardized exceptions <https://en.cppreference.com/w/cpp/error/exception>`_ .
+Each error will issue a more detailed description in the standard error output: ``stderr``. 
 
-adios2_error possible values:
+``adios2_error`` possible values:
 
 .. code-block:: C
 
@@ -72,46 +76,46 @@ Usage:
 
 .. note::
     
-    use `#include "adios2_c.h"` for the C bindings, `adios2.h` is the C++11 header
+    Use ``#include "adios2_c.h"`` for the C bindings, ``adios2.h`` is the C++11 header.
 
 
-adios2_adios handler functions
-------------------------------
+``adios2_adios`` handler functions
+----------------------------------
 
 .. doxygenfile:: adios2_c_adios.h
    :project: C
    :path: ../../bindings/C/c/
-   
-adios2_io handler functions
----------------------------
+
+``adios2_io`` handler functions
+-------------------------------
 
 .. doxygenfile:: adios2_c_io.h
    :project: C
    :path: ../../bindings/C/c/
-   
-adios2_variable handler functions
----------------------------------
+
+``adios2_variable`` handler functions
+-------------------------------------
 
 .. doxygenfile:: adios2_c_variable.h
    :project: C
    :path: ../../bindings/C/c/
-   
-adios2_attribute handler functions
-----------------------------------
+
+``adios2_attribute`` handler functions
+--------------------------------------
 
 .. doxygenfile:: adios2_c_attribute.h
    :project: C
    :path: ../../bindings/C/c/
-   
-adios2_engine handler functions
--------------------------------
+
+``adios2_engine`` handler functions
+-----------------------------------
 
 .. doxygenfile:: adios2_c_engine.h
    :project: C
    :path: ../../bindings/C/c/
-   
-adios2_operator handler functions
----------------------------------
+
+``adios2_operator`` handler functions
+-------------------------------------
 
 .. doxygenfile:: adios2_c_operator.h
    :project: C

@@ -3,10 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-# We'll need to install the private find modules to ensure our import libs
-# are properly resovled
-set(adios2_find_modules)
-
 # This file contains the option and dependency logic.  The configuration
 # options are designed to be tertiary: ON, OFF, or AUTO.  If AUTO, we try to
 # determine if dependencies are available and enable the option if we find
@@ -43,6 +39,16 @@ if(SZ_FOUND)
   set(ADIOS2_HAVE_SZ TRUE)
 endif()
 
+# MGARD
+if(ADIOS2_USE_MGARD STREQUAL AUTO)
+  find_package(MGARD)
+elseif(ADIOS2_USE_MGARD)
+  find_package(MGARD REQUIRED)
+endif()
+if(MGARD_FOUND)
+  set(ADIOS2_HAVE_MGARD TRUE)
+endif()
+
 set(mpi_find_components C)
 
 # Fortran
@@ -61,6 +67,7 @@ if(CMAKE_Fortran_COMPILER_LOADED)
 endif()
 
 # MPI
+list(APPEND mpi_find_components OPTIONAL_COMPONENTS CXX)
 if(ADIOS2_USE_MPI STREQUAL AUTO)
   find_package(MPI COMPONENTS ${mpi_find_components})
 elseif(ADIOS2_USE_MPI)
@@ -70,24 +77,38 @@ if(MPI_FOUND)
   set(ADIOS2_HAVE_MPI TRUE)
 endif()
 
+# ZeroMQ
+if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
+    find_package(ZeroMQ 4.1)
+elseif(ADIOS2_USE_ZeroMQ)
+    find_package(ZeroMQ 4.1 REQUIRED)
+endif()
+if(ZeroMQ_FOUND)
+    set(ADIOS2_HAVE_ZeroMQ TRUE)
+endif()
+
 # DataMan
 # DataMan currently breaks the PGI compiler
 if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
-    if(ADIOS2_USE_DataMan STREQUAL AUTO)
-        set(ADIOS2_HAVE_DataMan TRUE)
-    elseif(ADIOS2_USE_DataMan)
-        set(ADIOS2_HAVE_DataMan TRUE)
+    if(ZeroMQ_FOUND)
+        if(ADIOS2_USE_DataMan STREQUAL AUTO)
+            set(ADIOS2_HAVE_DataMan TRUE)
+        elseif(ADIOS2_USE_DataMan)
+            set(ADIOS2_HAVE_DataMan TRUE)
+        endif()
     endif()
 endif()
 
-# ZeroMQ
-if(ADIOS2_USE_ZeroMQ STREQUAL AUTO)
-  find_package(ZeroMQ 4.1)
-elseif(ADIOS2_USE_ZeroMQ)
-  find_package(ZeroMQ 4.1 REQUIRED)
-endif()
-if(ZeroMQ_FOUND)
-  set(ADIOS2_HAVE_ZeroMQ TRUE)
+# SSC
+# SSC currently breaks the PGI compiler
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
+    if(ZeroMQ_FOUND)
+        if(ADIOS2_USE_SSC STREQUAL AUTO)
+            set(ADIOS2_HAVE_SSC TRUE)
+        elseif(ADIOS2_USE_SSC)
+            set(ADIOS2_HAVE_SSC TRUE)
+        endif()
+    endif()
 endif()
 
 # DataSpaces
@@ -135,7 +156,7 @@ if(ADIOS2_USE_Python)
   if(NOT (ADIOS2_USE_Python STREQUAL AUTO))
     set(python_find_args REQUIRED)
   endif()
-  if(SHARED_LIBS_SUPPORTED AND ADIOS2_ENABLE_PIC)
+  if(BUILD_SHARED_LIBS)
     set(Python_ADDITIONAL_VERSIONS "3;2.7"
       CACHE STRING "Python versions to search for"
     )
@@ -159,7 +180,7 @@ if(ADIOS2_USE_SST AND NOT MSVC)
     set(ADIOS2_SST_HAVE_LIBFABRIC TRUE)
     find_package(CrayDRC)
     if(CRAY_DRC_FOUND)
-        set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
+      set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
   endif()
 endif()
@@ -175,6 +196,21 @@ if(UNIX)
   endif()
 else()
   set(ADIOS2_HAVE_SysVShMem OFF)
+endif()
+
+#Profiling
+if(ADIOS2_USE_Profiling STREQUAL AUTO)
+  if(BUILD_SHARED_LIBS)
+    set(ADIOS2_HAVE_Profiling ON)
+  else()
+    set(ADIOS2_HAVE_Profiling OFF)
+  endif()
+elseif(ADIOS2_USE_Profiling)
+  set(ADIOS2_HAVE_Profiling ON)
+endif()
+
+if(ADIOS2_USE_Endian_Reverse STREQUAL ON)
+  set(ADIOS2_HAVE_Endian_Reverse TRUE)
 endif()
 
 # Multithreading

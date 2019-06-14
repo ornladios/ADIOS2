@@ -6,6 +6,10 @@ TOKEN=${STATUS_ROBOT_KEY}
 COMMIT=${CIRCLE_SHA1}
 CDASH_STATUS_CONTEXT="cdash"
 
+# Workaround to quiet some warnings from OpenMPI and CircleCI
+export OMPI_MCA_btl_base_warn_component_unused=0
+export OMPI_MCA_btl_vader_single_copy_mechanism=none
+
 if [ -x /usr/bin/python2 ]
 then
   PYTHON_EXECUTABLE=/usr/bin/python2

@@ -24,17 +24,6 @@ namespace adios2
 namespace helper
 {
 
-template <class T>
-inline std::string GetType() noexcept
-{
-    return "compound";
-}
-template <>
-inline std::string GetType<void>() noexcept
-{
-    return "unknown";
-}
-
 template <>
 inline std::string GetType<std::string>() noexcept
 {
@@ -42,59 +31,44 @@ inline std::string GetType<std::string>() noexcept
 }
 
 template <>
-inline std::string GetType<char>() noexcept
+inline std::string GetType<int8_t>() noexcept
 {
-    return "char";
+    return "int8_t";
 }
 template <>
-inline std::string GetType<signed char>() noexcept
+inline std::string GetType<uint8_t>() noexcept
 {
-    return "signed char";
+    return "uint8_t";
 }
 template <>
-inline std::string GetType<unsigned char>() noexcept
+inline std::string GetType<int16_t>() noexcept
 {
-    return "unsigned char";
+    return "int16_t";
 }
 template <>
-inline std::string GetType<short>() noexcept
+inline std::string GetType<uint16_t>() noexcept
 {
-    return "short";
+    return "uint16_t";
 }
 template <>
-inline std::string GetType<unsigned short>() noexcept
+inline std::string GetType<int32_t>() noexcept
 {
-    return "unsigned short";
+    return "int32_t";
 }
 template <>
-inline std::string GetType<int>() noexcept
+inline std::string GetType<uint32_t>() noexcept
 {
-    return "int";
+    return "uint32_t";
 }
 template <>
-inline std::string GetType<unsigned int>() noexcept
+inline std::string GetType<int64_t>() noexcept
 {
-    return "unsigned int";
+    return "int64_t";
 }
 template <>
-inline std::string GetType<long int>() noexcept
+inline std::string GetType<uint64_t>() noexcept
 {
-    return "long int";
-}
-template <>
-inline std::string GetType<unsigned long int>() noexcept
-{
-    return "unsigned long int";
-}
-template <>
-inline std::string GetType<long long int>() noexcept
-{
-    return "long long int";
-}
-template <>
-inline std::string GetType<unsigned long long int>() noexcept
-{
-    return "unsigned long long int";
+    return "uint64_t";
 }
 template <>
 inline std::string GetType<float>() noexcept

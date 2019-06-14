@@ -27,8 +27,8 @@ std::vector<T> GatherValues(const T source, MPI_Comm mpiComm,
                             const int rankDestination)
 {
     int rank, size;
-    MPI_Comm_rank(mpiComm, &rank);
-    MPI_Comm_size(mpiComm, &size);
+    SMPI_Comm_rank(mpiComm, &rank);
+    SMPI_Comm_size(mpiComm, &size);
 
     std::vector<T> output;
 
@@ -47,7 +47,7 @@ template <class T>
 std::vector<T> AllGatherValues(const T source, MPI_Comm mpiComm)
 {
     int size;
-    MPI_Comm_size(mpiComm, &size);
+    SMPI_Comm_size(mpiComm, &size);
     std::vector<T> output(size);
 
     T sourceCopy = source; // so we can have an address for rvalues
@@ -67,7 +67,7 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     size_t gatheredSize = 0;
 
     int rank;
-    MPI_Comm_rank(mpiComm, &rank);
+    SMPI_Comm_rank(mpiComm, &rank);
 
     if (rank == rankDestination) // pre-allocate vector
     {

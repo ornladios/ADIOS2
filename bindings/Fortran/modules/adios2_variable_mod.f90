@@ -20,11 +20,15 @@ contains
         integer, intent(out) :: ierr
 
         !local
-        character(len=4096) :: c_name
         integer :: length
 
-        call adios2_variable_name_f2c(c_name, length, variable%f2c, ierr)
-        call adios2_StringC2F(c_name, length, name)
+        if (allocated(name)) deallocate (name)
+
+        call adios2_variable_name_length_f2c(length, variable%f2c, ierr)
+        if (ierr == 0) then
+            allocate (character(length) :: name)
+            call adios2_variable_name_f2c(name, variable%f2c, ierr)
+        end if
 
     end subroutine
 
@@ -69,6 +73,23 @@ contains
 
     end subroutine
 
+    subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(in) :: ndims
+        integer(kind=8), dimension(:), intent(in) :: shape_dims
+        integer, intent(out) :: ierr
+
+        call adios2_set_shape_f2c(variable%f2c, ndims, shape_dims, ierr)
+    end subroutine
+
+    subroutine adios2_set_block_selection(variable, block_id, ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer(kind=8), intent(in) :: block_id
+        integer, intent(out) :: ierr
+
+        call adios2_set_block_selection_f2c(variable%f2c, block_id, ierr)
+    end subroutine
+
     subroutine adios2_set_selection(variable, ndims, start_dims, count_dims, &
                                     ierr)
         type(adios2_variable), intent(in) :: variable
@@ -79,6 +100,21 @@ contains
 
         call adios2_set_selection_f2c(variable%f2c, ndims, start_dims, &
                                       count_dims, ierr)
+    end subroutine
+
+    subroutine adios2_set_memory_selection(variable, ndims, &
+                                           memory_start_dims, &
+                                           memory_count_dims, &
+                                           ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(in) :: ndims
+        integer(kind=8), dimension(:), intent(in) :: memory_start_dims
+        integer(kind=8), dimension(:), intent(in) :: memory_count_dims
+        integer, intent(out) :: ierr
+
+        call adios2_set_memory_selection_f2c(variable%f2c, ndims, &
+                                             memory_start_dims, &
+                                             memory_count_dims, ierr)
     end subroutine
 
     subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
@@ -100,9 +136,11 @@ contains
 
         if( variable%type /= adios2_type ) then
             write(0,*) 'ERROR: adios2 variable ', TRIM(variable%name)//char(0), &
-                       ' type mismatch, in call to adios2_', TRIM(hint)//char(0)
+                       ' type mismatch, in call to adios2_', TRIM(hint)//char(0), &
+                       'variable type: ', variable%type, ' expected type: ', &
+                       adios2_type
 
-            ierr = -1
+            ierr = adios2_error_invalid_argument
         end if
 
     end subroutine

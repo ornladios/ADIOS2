@@ -11,6 +11,7 @@
 #include "adiosString.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <algorithm> //std::transform
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <sstream>
@@ -39,11 +40,17 @@ std::string FileToString(const std::string &fileName, const std::string hint)
 }
 
 Params BuildParametersMap(const std::vector<std::string> &parameters,
-                          const bool debugMode)
+                          const char delimKeyValue, const bool debugMode)
 {
+    auto lf_Trim = [](std::string &input) {
+        input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
+        input.erase(input.find_last_not_of(" \n\r\t") + 1); // suffixing spaces
+    };
+
     auto lf_GetFieldValue = [](const std::string parameter, std::string &field,
-                               std::string &value, const bool debugMode) {
-        auto equalPosition = parameter.find("=");
+                               std::string &value, const char delimKeyValue,
+                               const bool debugMode) {
+        auto equalPosition = parameter.find(delimKeyValue);
 
         if (debugMode)
         {
@@ -51,19 +58,23 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
             {
                 throw std::invalid_argument(
                     "ERROR: wrong format for IO parameter " + parameter +
-                    ", format must be key=value for each entry \n");
+                    ", format must be key" + delimKeyValue +
+                    "value for each entry \n");
             }
-
-            if (equalPosition == parameter.size() - 1)
-            {
-                throw std::invalid_argument(
-                    "ERROR: empty value in IO parameter " + parameter +
-                    ", format must be key=value \n");
-            }
+            /*
+                        if (equalPosition == parameter.size() - 1)
+                        {
+                            throw std::invalid_argument(
+                                "ERROR: empty value in IO parameter " +
+               parameter +
+                                ", format must be key" + delimKeyValue + "value
+               \n");
+                        }
+                        */
         }
 
         field = parameter.substr(0, equalPosition);
-        value = parameter.substr(equalPosition + 1); // need to test
+        value = parameter.substr(equalPosition + 1);
     };
 
     // BODY OF FUNCTION STARTS HERE
@@ -72,10 +83,18 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
     for (const auto parameter : parameters)
     {
         std::string field, value;
-        lf_GetFieldValue(parameter, field, value, debugMode);
+        lf_GetFieldValue(parameter, field, value, delimKeyValue, debugMode);
+        lf_Trim(field);
+        lf_Trim(value);
 
         if (debugMode)
         {
+            if (value.length() == 0)
+            {
+                throw std::invalid_argument(
+                    "ERROR: empty value in IO parameter " + parameter +
+                    ", format must be key" + delimKeyValue + "value \n");
+            }
             if (parametersOutput.count(field) == 1)
             {
                 throw std::invalid_argument(
@@ -85,6 +104,55 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
         }
 
         parametersOutput[field] = value;
+    }
+
+    return parametersOutput;
+}
+
+Params BuildParametersMap(const std::string &input, const char delimKeyValue,
+                          const char delimItem, const bool debugMode)
+{
+    auto lf_Trim = [](std::string &input) {
+        input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
+        input.erase(input.find_last_not_of(" \n\r\t") + 1); // suffixing spaces
+    };
+
+    Params parametersOutput;
+
+    std::istringstream inputSS(input);
+    std::string parameter;
+    while (std::getline(inputSS, parameter, delimItem))
+    {
+        const size_t position = parameter.find(delimKeyValue);
+        if (debugMode && position == parameter.npos)
+        {
+            throw std::invalid_argument(
+                "ERROR: wrong format for IO parameter " + parameter +
+                ", format must be key" + delimKeyValue +
+                "value for each entry \n");
+        }
+
+        std::string key = parameter.substr(0, position);
+        lf_Trim(key);
+        std::string value = parameter.substr(position + 1);
+        lf_Trim(value);
+        if (debugMode)
+        {
+            if (value.length() == 0)
+            {
+                throw std::invalid_argument(
+                    "ERROR: empty value in IO parameter " + parameter +
+                    ", format must be key" + delimKeyValue + "value \n");
+            }
+            if (parametersOutput.count(key) == 1)
+            {
+                throw std::invalid_argument(
+                    "ERROR: key " + key +
+                    " appears multiple times in the parameters string\n");
+            }
+        }
+
+        parametersOutput[key] = value;
     }
 
     return parametersOutput;
@@ -100,6 +168,34 @@ std::string AddExtension(const std::string &name,
     }
     return result;
 }
+
+bool EndsWith(const std::string &str, const std::string &ending,
+              const bool caseSensitive)
+{
+    if (str.length() >= ending.length())
+    {
+        if (caseSensitive)
+        {
+            return (!str.compare(str.length() - ending.length(),
+                                 ending.length(), ending));
+        }
+        else
+        {
+            std::string strLC = std::string(str);
+            std::string endLC = std::string(ending);
+            std::transform(strLC.begin(), strLC.end(), strLC.begin(),
+                           ::tolower);
+            std::transform(endLC.begin(), endLC.end(), endLC.begin(),
+                           ::tolower);
+            return (!strLC.compare(strLC.length() - endLC.length(),
+                                   endLC.length(), endLC));
+        }
+    }
+    else
+    {
+        return false;
+    }
+};
 
 std::vector<std::string>
 GetParametersValues(const std::string &key,

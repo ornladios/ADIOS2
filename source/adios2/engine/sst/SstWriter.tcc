@@ -15,6 +15,7 @@
 
 #include "adios2/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
+#include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
 {
@@ -26,6 +27,7 @@ namespace engine
 template <class T>
 void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 {
+    TAU_SCOPED_TIMER_FUNC();
     variable.SetData(values);
 
     if (m_BetweenStepPairs == false)
@@ -34,21 +36,29 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                "Put() calls must appear between "
                                "BeginStep/EndStep pairs");
     }
-    if (variable.m_Count.empty())
-    {
-        variable.m_Count = variable.m_Shape;
-    }
-    if (variable.m_Start.empty())
-    {
-        variable.m_Start.assign(variable.m_Count.size(), 0);
-    }
 
     if (m_MarshalMethod == SstMarshalFFS)
     {
+        size_t *Shape = NULL;
+        size_t *Start = NULL;
+        size_t *Count = NULL;
+        size_t DimCount = 0;
+
+        if (variable.m_ShapeID == ShapeID::GlobalArray)
+        {
+            DimCount = variable.m_Shape.size();
+            Shape = variable.m_Shape.data();
+            Start = variable.m_Start.data();
+            Count = variable.m_Count.data();
+        }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            DimCount = variable.m_Count.size();
+            Count = variable.m_Count.data();
+        }
         SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
-                      variable.m_Type.c_str(), variable.m_ElementSize,
-                      variable.m_Shape.size(), variable.m_Shape.data(),
-                      variable.m_Count.data(), variable.m_Start.data(), values);
+                      variable.m_Type.c_str(), variable.m_ElementSize, DimCount,
+                      Shape, Count, Start, values);
     }
     else if (m_MarshalMethod == SstMarshalBP)
     {
@@ -68,8 +78,11 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             m_BP3Serializer->ResizeBuffer(
                 dataSize, "in call to variable " + variable.m_Name +
                               " Put adios2::Mode::Sync");
-        m_BP3Serializer->PutVariableMetadata(variable, blockInfo);
-        m_BP3Serializer->PutVariablePayload(variable, blockInfo);
+        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+        m_BP3Serializer->PutVariableMetadata(variable, blockInfo,
+                                             sourceRowMajor);
+        m_BP3Serializer->PutVariablePayload(variable, blockInfo,
+                                            sourceRowMajor);
         variable.m_BlocksInfo.clear();
     }
     else

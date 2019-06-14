@@ -13,6 +13,8 @@
 
 #include <stdexcept>
 
+#include "adios2/core/IO.h"
+
 namespace adios2
 {
 namespace core
@@ -37,12 +39,11 @@ StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(StepMode::NextAvailable,
-                         std::numeric_limits<float>::max());
+        return BeginStep(StepMode::Read, -1.0);
     }
     else
     {
-        return BeginStep(StepMode::Append, std::numeric_limits<float>::max());
+        return BeginStep(StepMode::Append, -1.0);
     }
 }
 
@@ -68,7 +69,7 @@ void Engine::Close(const int transportIndex)
 
     if (transportIndex == -1)
     {
-        helper::CheckMPIReturn(MPI_Comm_free(&m_MPIComm),
+        helper::CheckMPIReturn(SMPI_Comm_free(&m_MPIComm),
                                "freeing comm in Engine " + m_Name +
                                    ", in call to Close");
         m_IsClosed = true;
@@ -77,6 +78,8 @@ void Engine::Close(const int transportIndex)
 
 void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 
+size_t Engine::Steps() const { return DoSteps(); }
+
 // PROTECTED
 void Engine::Init() {}
 void Engine::InitParameters() {}
@@ -84,20 +87,37 @@ void Engine::InitTransports() {}
 
 // DoPut*
 #define declare_type(T)                                                        \
+    void Engine::DoPut(Variable<T> &, typename Variable<T>::Span &,            \
+                       const size_t, const T &)                                \
+    {                                                                          \
+        ThrowUp("DoPut");                                                      \
+    }
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
     void Engine::DoPutSync(Variable<T> &, const T *) { ThrowUp("DoPutSync"); } \
     void Engine::DoPutDeferred(Variable<T> &, const T *)                       \
     {                                                                          \
         ThrowUp("DoPutDeferred");                                              \
     }
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 // DoGet*
 #define declare_type(T)                                                        \
     void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }       \
-    void Engine::DoGetDeferred(Variable<T> &, T *) { ThrowUp("DoGetDeferred"); }
+    void Engine::DoGetDeferred(Variable<T> &, T *)                             \
+    {                                                                          \
+        ThrowUp("DoGetDeferred");                                              \
+    }                                                                          \
+    typename Variable<T>::Info *Engine::DoGetBlockSync(Variable<T> &v)         \
+    {                                                                          \
+        return nullptr;                                                        \
+    }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 #define declare_type(T)                                                        \
@@ -108,6 +128,13 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
         return std::map<size_t, std::vector<typename Variable<T>::Info>>();    \
     }                                                                          \
                                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    Engine::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const    \
+    {                                                                          \
+        ThrowUp("DoAllRelativeStepsBlocksInfo");                               \
+        return std::vector<std::vector<typename Variable<T>::Info>>();         \
+    }                                                                          \
+                                                                               \
     std::vector<typename Variable<T>::Info> Engine::DoBlocksInfo(              \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
@@ -115,8 +142,25 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_type)
         return std::vector<typename Variable<T>::Info>();                      \
     }
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+#define declare_type(T, L)                                                     \
+    T *Engine::DoBufferData_##L(const size_t payloadPosition,                  \
+                                const size_t bufferID) noexcept                \
+    {                                                                          \
+        T *data = nullptr;                                                     \
+        return data;                                                           \
+    }
+
+ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
+#undef declare_type
+
+size_t Engine::DoSteps() const
+{
+    ThrowUp("DoPut");
+    return MaxSizeT;
+}
 
 // PRIVATE
 void Engine::ThrowUp(const std::string function) const
@@ -142,8 +186,8 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     template void Engine::Put<T>(Variable<T> &, const T *, const Mode);        \
     template void Engine::Put<T>(const std::string &, const T *, const Mode);  \
                                                                                \
-    template void Engine::Put<T>(Variable<T> &, const T &);                    \
-    template void Engine::Put<T>(const std::string &, const T &);              \
+    template void Engine::Put<T>(Variable<T> &, const T &, const Mode);        \
+    template void Engine::Put<T>(const std::string &, const T &, const Mode);  \
                                                                                \
     template void Engine::Get<T>(Variable<T> &, T *, const Mode);              \
     template void Engine::Get<T>(const std::string &, T *, const Mode);        \
@@ -155,16 +199,31 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
     template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
                                  const Mode);                                  \
                                                                                \
+    template typename Variable<T>::Info *Engine::Get<T>(Variable<T> &,         \
+                                                        const Mode);           \
+    template typename Variable<T>::Info *Engine::Get<T>(const std::string &,   \
+                                                        const Mode);           \
+                                                                               \
     template Variable<T> &Engine::FindVariable(                                \
         const std::string &variableName, const std::string hint);              \
                                                                                \
     template std::map<size_t, std::vector<typename Variable<T>::Info>>         \
-    Engine::AllStepsBlocksInfo(const Variable<T> &variable) const;             \
+    Engine::AllStepsBlocksInfo(const Variable<T> &) const;                     \
+                                                                               \
+    template std::vector<std::vector<typename Variable<T>::Info>>              \
+    Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;             \
                                                                                \
     template std::vector<typename Variable<T>::Info> Engine::BlocksInfo(       \
-        const Variable<T> &variable, const size_t step) const;
+        const Variable<T> &, const size_t) const;
 
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+#define declare_template_instantiation(T)                                      \
+    template typename Variable<T>::Span &Engine::Put(Variable<T> &,            \
+                                                     const size_t, const T &);
+
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 } // end namespace core
