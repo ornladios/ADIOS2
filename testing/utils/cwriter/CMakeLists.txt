@@ -176,6 +176,8 @@ set_property(TEST Utils.C.Writer.Bpls.ldvarI16.Dump
   PROPERTY DEPENDS Utils.C.Writer
 )
 
+if(ADIOS2_HAVE_MPI)
+
 add_test(NAME Utils.C.Writer.Bpls.ldvarI16.Validate
   COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/TestUtilsCWriter.bplsldvarI16.expected.txt
@@ -186,5 +188,6 @@ set_property(TEST Utils.C.Writer.Bpls.ldvarI16.Validate
 )
 
 
+endif(ADIOS2_HAVE_MPI)
 
 
