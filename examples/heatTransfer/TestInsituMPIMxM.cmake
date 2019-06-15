@@ -17,7 +17,7 @@ add_test(NAME HeatTransfer.InsituMPI.MxM
 
 add_test(NAME HeatTransfer.InsituMPI.Dump.MxM
   COMMAND ${CMAKE_COMMAND}
-    -DARGS=-d 
+    -DARG1=-d 
     -DINPUT_FILE=HeatTransfer.InsituMPI.Read.MxM.bp
     -DOUTPUT_FILE=HeatTransfer.InsituMPI.Dump.MxM.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
