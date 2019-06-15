@@ -383,10 +383,11 @@ CMake VAR Option               Values                     Description
 ``ADIOS2_USE_Python``          **`AUTO`**/``ON``/OFF      Python >= 2.7 bindings. mpi4py and numpy. Python 3 will be used if Python 2 and 3 are found. If you want a python version not in the path then choose the right pyhton executable by -DPYTHON_EXECUTABLE=... 
 ``ADIOS2_USE_Fortran``         **`AUTO`**/``ON``/OFF      Fortran 90 or above bindings. Must have a Fortran compiler. Default is OFF, must be explicitly set to ON.
 ``ADIOS2_USE_SST``             **`AUTO`**/``ON``/OFF      Simplified Staging Engine (SST) and its dependencies, requires MPI. Can optionally use LibFabric for RDMA transport. Specify the LibFabric install manually with the -DLIBFABRIC_ROOT=... option. 
-``ADIOS2_USE_BZip2``           **`AUTO`**/``ON``/OFF      `BZip2 <http://www.bzip.org>`_ compression (experimental, not yet implemented).              
+``ADIOS2_USE_BZIP2``           **`AUTO`**/``ON``/OFF      `BZIP2 <http://www.bzip.org>`_ compression.              
 ``ADIOS2_USE_ZFP``             **`AUTO`**/``ON``/OFF      `ZFP <https://github.com/LLNL/zfp>`_ compression (experimental).
 ``ADIOS2_USE_SZ``              **`AUTO`**/``ON``/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental).
 ``ADIOS2_USE_MGARD``           **`AUTO`**/``ON``/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
+``ADIOS2_USE_ZFP``             **`AUTO`**/``ON``/OFF      `PNG <https://libpng.org>`_ compression (experimental).
 ``ADIOS2_USE_Endian_Reverse``  **`AUTO`**/ON/``OFF``      Big/Little Endian Interoperability for different endianness platforms at write and read.
 ============================= ========================= ==========================================================================================================================================================================================================================
 

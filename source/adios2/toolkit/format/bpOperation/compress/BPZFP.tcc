@@ -2,16 +2,16 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4Zfp.tcc :
+ * BPZFP.tcc :
  *
- *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Created on: Jul 18, 2018
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP4_OPERATION_BP4ZFP_TCC_
-#define ADIOS2_TOOLKIT_FORMAT_BP4_OPERATION_BP4ZFP_TCC_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BPOPERATION_COMPRESS_BPZFP_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BPOPERATION_COMPRESS_BPZFP_TCC_
 
-#include "BP4Zfp.h"
+#include "BPZFP.h"
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -21,30 +21,7 @@ namespace format
 {
 
 template <class T>
-void BP4Zfp::SetDataCommon(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
-    const typename core::Variable<T>::Operation &operation,
-    BufferSTL &bufferSTL) const noexcept
-{
-    const core::Operator &op = *operation.Op;
-    const Params &parameters = operation.Parameters;
-
-    const size_t outputSize = op.Compress(
-        blockInfo.Data, blockInfo.Count, variable.m_ElementSize,
-        variable.m_Type, bufferSTL.m_Buffer.data() + bufferSTL.m_Position,
-        parameters);
-
-    // being naughty here
-    Params &info = const_cast<Params &>(operation.Info);
-    info["OutputSize"] = std::to_string(outputSize);
-
-    bufferSTL.m_Position += outputSize;
-    bufferSTL.m_AbsolutePosition += outputSize;
-}
-
-template <class T>
-void BP4Zfp::SetMetadataCommon(
+void BPZFP::SetMetadataCommon(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo,
     const typename core::Variable<T>::Operation &operation,
@@ -72,10 +49,13 @@ void BP4Zfp::SetMetadataCommon(
         {
             mode = static_cast<int32_t>(zfp_mode_precision);
         }
-        itMode = operation.Parameters.find("rate");
-        if (itMode != operation.Parameters.end())
+        else
         {
-            mode = static_cast<int32_t>(zfp_mode_rate);
+            itMode = operation.Parameters.find("rate");
+            if (itMode != operation.Parameters.end())
+            {
+                mode = static_cast<int32_t>(zfp_mode_rate);
+            }
         }
     }
     const std::string modeStr = itMode->second;
@@ -98,27 +78,7 @@ void BP4Zfp::SetMetadataCommon(
                          variable.m_Name.size());
 }
 
-template <class T>
-void BP4Zfp::UpdateMetadataCommon(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::Info &blockInfo,
-    const typename core::Variable<T>::Operation &operation,
-    std::vector<char> &buffer) const noexcept
-{
-    const uint64_t outputSize =
-        static_cast<uint64_t>(std::stoll(operation.Info.at("OutputSize")));
-
-    size_t backPosition = static_cast<size_t>(
-        std::stoll(operation.Info.at("OutputSizeMetadataPosition")));
-
-    helper::CopyToBuffer(buffer, backPosition, &outputSize);
-
-    // being naughty here
-    Params &info = const_cast<Params &>(operation.Info);
-    info.erase("OutputSizeMetadataPosition");
-}
-
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP4_OPERATION_BP4ZFP_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BPOPERATION_COMPRESS_BPZFP_TCC_  */

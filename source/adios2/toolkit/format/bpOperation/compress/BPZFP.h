@@ -2,45 +2,48 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4Zfp.h :
+ * BPZFP.h :
  *
- *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Created on: Jul 17, 2018
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP4_OPERATION_BP4ZFP_H_
-#define ADIOS2_TOOLKIT_FORMAT_BP4_OPERATION_BP4ZFP_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BPOPERATION_COMPRESS_BPZFP_H_
+#define ADIOS2_TOOLKIT_FORMAT_BPOPERATION_COMPRESS_BPZFP_H_
 
-#include "adios2/toolkit/format/bp4/operation/BP4Operation.h"
+#include "adios2/toolkit/format/bpOperation/BPOperation.h"
 
 namespace adios2
 {
 namespace format
 {
 
-class BP4Zfp : public BP4Operation
+class BPZFP : public BPOperation
 {
 public:
-    BP4Zfp() = default;
+    BPZFP() = default;
 
-    ~BP4Zfp() = default;
+    ~BPZFP() = default;
 
+    using BPOperation::SetData;
+    using BPOperation::SetMetadata;
+    using BPOperation::UpdateMetadata;
 #define declare_type(T)                                                        \
     void SetData(const core::Variable<T> &variable,                            \
                  const typename core::Variable<T>::Info &blockInfo,            \
                  const typename core::Variable<T>::Operation &operation,       \
-                 BufferSTL &bufferSTL) const noexcept final;                   \
+                 BufferSTL &bufferSTL) const noexcept override;                \
                                                                                \
     void SetMetadata(const core::Variable<T> &variable,                        \
                      const typename core::Variable<T>::Info &blockInfo,        \
                      const typename core::Variable<T>::Operation &operation,   \
-                     std::vector<char> &buffer) const noexcept final;          \
+                     std::vector<char> &buffer) const noexcept override;       \
                                                                                \
     void UpdateMetadata(                                                       \
         const core::Variable<T> &variable,                                     \
         const typename core::Variable<T>::Info &blockInfo,                     \
         const typename core::Variable<T>::Operation &operation,                \
-        std::vector<char> &buffer) const noexcept final;
+        std::vector<char> &buffer) const noexcept override;
 
     ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -61,27 +64,14 @@ private:
     };
 
     template <class T>
-    void SetDataCommon(const core::Variable<T> &variable,
-                       const typename core::Variable<T>::Info &blockInfo,
-                       const typename core::Variable<T>::Operation &operation,
-                       BufferSTL &bufferSTL) const noexcept;
-
-    template <class T>
     void
     SetMetadataCommon(const core::Variable<T> &variable,
                       const typename core::Variable<T>::Info &blockInfo,
                       const typename core::Variable<T>::Operation &operation,
                       std::vector<char> &buffer) const noexcept;
-
-    template <class T>
-    void
-    UpdateMetadataCommon(const core::Variable<T> &variable,
-                         const typename core::Variable<T>::Info &blockInfo,
-                         const typename core::Variable<T>::Operation &operation,
-                         std::vector<char> &buffer) const noexcept;
 };
 
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BP4_OPERATION_BP4ZFP_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BPOPERATION_COMPRESS_BPZFP_H_ */

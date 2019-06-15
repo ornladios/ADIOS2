@@ -2,19 +2,19 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP4MGARD.cpp
+ * BPZFP.cpp :
  *
- *  Created on: Jan 19, 2019
- *      Author: Lipeng Wan wanl@ornl.gov
+ *  Created on: Jul 17, 2018
+ *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#include "BP4MGARD.h"
-#include "BP4MGARD.tcc"
+#include "BPZFP.h"
+#include "BPZFP.tcc"
 
 #include "adios2/helper/adiosFunctions.h"
 
-#ifdef ADIOS2_HAVE_MGARD
-#include "adios2/operator/compress/CompressMGARD.h"
+#ifdef ADIOS2_HAVE_ZFP
+#include "adios2/operator/compress/CompressZFP.h"
 #endif
 
 namespace adios2
@@ -23,16 +23,16 @@ namespace format
 {
 
 #define declare_type(T)                                                        \
-    void BP4MGARD::SetData(                                                    \
+    void BPZFP::SetData(                                                       \
         const core::Variable<T> &variable,                                     \
         const typename core::Variable<T>::Info &blockInfo,                     \
         const typename core::Variable<T>::Operation &operation,                \
         BufferSTL &bufferSTL) const noexcept                                   \
     {                                                                          \
-        SetDataCommon(variable, blockInfo, operation, bufferSTL);              \
+        SetDataDefault(variable, blockInfo, operation, bufferSTL);             \
     }                                                                          \
                                                                                \
-    void BP4MGARD::SetMetadata(                                                \
+    void BPZFP::SetMetadata(                                                   \
         const core::Variable<T> &variable,                                     \
         const typename core::Variable<T>::Info &blockInfo,                     \
         const typename core::Variable<T>::Operation &operation,                \
@@ -41,19 +41,19 @@ namespace format
         SetMetadataCommon(variable, blockInfo, operation, buffer);             \
     }                                                                          \
                                                                                \
-    void BP4MGARD::UpdateMetadata(                                             \
+    void BPZFP::UpdateMetadata(                                                \
         const core::Variable<T> &variable,                                     \
         const typename core::Variable<T>::Info &blockInfo,                     \
         const typename core::Variable<T>::Operation &operation,                \
         std::vector<char> &buffer) const noexcept                              \
     {                                                                          \
-        UpdateMetadataCommon(variable, blockInfo, operation, buffer);          \
+        UpdateMetadataDefault(variable, blockInfo, operation, buffer);         \
     }
 
-ADIOS2_FOREACH_MGARD_TYPE_1ARG(declare_type)
+ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
 #undef declare_type
 
-void BP4MGARD::GetMetadata(const std::vector<char> &buffer, Params &info) const
+void BPZFP::GetMetadata(const std::vector<char> &buffer, Params &info) const
     noexcept
 {
     size_t position = 0;
@@ -61,23 +61,41 @@ void BP4MGARD::GetMetadata(const std::vector<char> &buffer, Params &info) const
         std::to_string(helper::ReadValue<uint64_t>(buffer, position));
     info["OutputSize"] =
         std::to_string(helper::ReadValue<uint64_t>(buffer, position));
+    const int mode =
+        static_cast<int>(helper::ReadValue<uint32_t>(buffer, position));
+
+    const std::string modeStr(buffer.data() + position);
+
+    switch (mode)
+    {
+    case zfp_mode_precision:
+        info["precision"] = modeStr;
+        break;
+
+    case zfp_mode_accuracy:
+        info["accuracy"] = modeStr;
+        break;
+
+    case zfp_mode_rate:
+        info["rate"] = modeStr;
+        break;
+    }
 }
 
-void BP4MGARD::GetData(const char *input,
-                       const helper::BlockOperationInfo &blockOperationInfo,
-                       char *dataOutput) const
+void BPZFP::GetData(const char *input,
+                    const helper::BlockOperationInfo &blockOperationInfo,
+                    char *dataOutput) const
 {
-#ifdef ADIOS2_HAVE_MGARD
-    core::compress::CompressMGARD op(Params(), true);
+#ifdef ADIOS2_HAVE_ZFP
+    core::compress::CompressZFP op(Params(), true);
     op.Decompress(input, blockOperationInfo.PayloadSize, dataOutput,
                   blockOperationInfo.PreCount,
                   blockOperationInfo.Info.at("PreDataType"),
                   blockOperationInfo.Info);
-
 #else
     throw std::runtime_error(
         "ERROR: current ADIOS2 library didn't compile "
-        "with MGARD, can't read MGARD compressed data, in call "
+        "with ZFP, can't read ZFP compressed data, in call "
         "to Get\n");
 #endif
 }

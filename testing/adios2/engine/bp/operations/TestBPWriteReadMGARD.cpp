@@ -15,12 +15,11 @@
 
 std::string engineName; // comes from command line
 
-void MGARDAccuracy1D(const double tolerance)
+void MGARDAccuracy1D(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMGARD1D_" +
-                            std::to_string(tolerance) + ".bp");
+    const std::string fname("BPWRMGARD1D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -65,12 +64,12 @@ void MGARDAccuracy1D(const double tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", "mgard");
+            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -144,7 +143,7 @@ void MGARDAccuracy1D(const double tolerance)
             auto itMax = std::max_element(r64s.begin(), r64s.end());
 
             const double relativeMaxDiff = maxDiff / *itMax;
-            ASSERT_LT(relativeMaxDiff, tolerance);
+            ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
             std::cout << "Relative Max Diff " << relativeMaxDiff
                       << " tolerance " << tolerance << "\n";
         }
@@ -155,12 +154,11 @@ void MGARDAccuracy1D(const double tolerance)
     }
 }
 
-void MGARDAccuracy2D(const double tolerance)
+void MGARDAccuracy2D(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMGARD2D_" +
-                            std::to_string(tolerance) + ".bp");
+    const std::string fname("BPWRMGARD2D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -206,12 +204,12 @@ void MGARDAccuracy2D(const double tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", "mgard");
+            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -286,7 +284,7 @@ void MGARDAccuracy2D(const double tolerance)
             auto itMax = std::max_element(r64s.begin(), r64s.end());
 
             const double relativeMaxDiff = maxDiff / *itMax;
-            ASSERT_LT(relativeMaxDiff, tolerance);
+            ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
             std::cout << "Relative Max Diff " << relativeMaxDiff
                       << " tolerance " << tolerance << "\n";
         }
@@ -297,12 +295,11 @@ void MGARDAccuracy2D(const double tolerance)
     }
 }
 
-void MGARDAccuracy3D(const double tolerance)
+void MGARDAccuracy3D(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMGARD3D_" +
-                            std::to_string(tolerance) + ".bp");
+    const std::string fname("BPWRMGARD3D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -349,12 +346,12 @@ void MGARDAccuracy3D(const double tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", "mgard");
+            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -431,7 +428,7 @@ void MGARDAccuracy3D(const double tolerance)
             auto itMax = std::max_element(r64s.begin(), r64s.end());
 
             const double relativeMaxDiff = maxDiff / *itMax;
-            ASSERT_LT(relativeMaxDiff, tolerance);
+            ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
             std::cout << "Relative Max Diff " << relativeMaxDiff
                       << " tolerance " << tolerance << "\n";
         }
@@ -442,12 +439,11 @@ void MGARDAccuracy3D(const double tolerance)
     }
 }
 
-void MGARDAccuracy1DSel(const double tolerance)
+void MGARDAccuracy1DSel(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMGARD1DSel_" +
-                            std::to_string(tolerance) + ".bp");
+    const std::string fname("BPWRMGARD1DSel_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -492,12 +488,12 @@ void MGARDAccuracy1DSel(const double tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", "mgard");
+            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -561,7 +557,7 @@ void MGARDAccuracy1DSel(const double tolerance)
                 //                          tolerance)
                 //                    << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]),
-                          tolerance)
+                          std::stod(tolerance))
                     << msg;
             }
             ++t;
@@ -573,12 +569,11 @@ void MGARDAccuracy1DSel(const double tolerance)
     }
 }
 
-void MGARDAccuracy2DSel(const double tolerance)
+void MGARDAccuracy2DSel(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMGARD2DSel_" +
-                            std::to_string(tolerance) + ".bp");
+    const std::string fname("BPWRMGARD2DSel_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -624,12 +619,12 @@ void MGARDAccuracy2DSel(const double tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", "mgard");
+            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -695,7 +690,7 @@ void MGARDAccuracy2DSel(const double tolerance)
                 //                          tolerance)
                 //                    << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny + i]),
-                          tolerance)
+                          std::stod(tolerance))
                     << msg;
             }
             ++t;
@@ -707,12 +702,11 @@ void MGARDAccuracy2DSel(const double tolerance)
     }
 }
 
-void MGARDAccuracy3DSel(const double tolerance)
+void MGARDAccuracy3DSel(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMGARD3DSel_" +
-                            std::to_string(tolerance) + ".bp");
+    const std::string fname("BPWRMGARD3DSel_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -759,12 +753,12 @@ void MGARDAccuracy3DSel(const double tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", "mgard");
+            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -844,7 +838,7 @@ void MGARDAccuracy3DSel(const double tolerance)
             }
 
             auto itMax = std::max_element(r64s.begin(), r64s.end());
-            ASSERT_LT(maxDiff / *itMax, tolerance);
+            ASSERT_LT(maxDiff / *itMax, std::stod(tolerance));
 
             ++t;
         }
@@ -855,12 +849,11 @@ void MGARDAccuracy3DSel(const double tolerance)
     }
 }
 
-void MGARDAccuracy2DSmallSel(const double tolerance)
+void MGARDAccuracy2DSmallSel(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMGARD2DSmallSel_" +
-                            std::to_string(tolerance) + ".bp");
+    const std::string fname("BPWRMGARD2DSmallSel_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -907,12 +900,12 @@ void MGARDAccuracy2DSmallSel(const double tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", "mgard");
+            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{"tolerance", std::to_string(tolerance)}});
+                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -968,16 +961,20 @@ void MGARDAccuracy2DSmallSel(const double tolerance)
             bpReader.EndStep();
 
             // ASSERT_LT(std::abs(decompressedR32s[0] - 0.06), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06), tolerance);
+            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06),
+                      std::stod(tolerance));
 
             // ASSERT_LT(std::abs(decompressedR32s[1] - 0.07), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07), tolerance);
+            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07),
+                      std::stod(tolerance));
 
             // ASSERT_LT(std::abs(decompressedR32s[2] - 0.11), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11), tolerance);
+            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11),
+                      std::stod(tolerance));
 
             // ASSERT_LT(std::abs(decompressedR32s[3] - 0.12), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12), tolerance);
+            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12),
+                      std::stod(tolerance));
 
             ++t;
         }
@@ -988,7 +985,7 @@ void MGARDAccuracy2DSmallSel(const double tolerance)
     }
 }
 
-class BPWriteReadMGARD : public ::testing::TestWithParam<double>
+class BPWriteReadMGARD : public ::testing::TestWithParam<std::string>
 {
 public:
     BPWriteReadMGARD() = default;
@@ -996,18 +993,13 @@ public:
     virtual void TearDown(){};
 };
 
-TEST_P(BPWriteReadMGARD, ADIOS2BPWriteReadMGARD2D)
-{
-    MGARDAccuracy2D(GetParam());
-}
+TEST_P(BPWriteReadMGARD, BPWRMGARD2D) { MGARDAccuracy2D(GetParam()); }
 
-TEST_P(BPWriteReadMGARD, ADIOS2BPWriteReadMGARD3D)
-{
-    MGARDAccuracy3D(GetParam());
-}
+TEST_P(BPWriteReadMGARD, BPWRMGARD3D) { MGARDAccuracy3D(GetParam()); }
 
 INSTANTIATE_TEST_CASE_P(MGARDAccuracy, BPWriteReadMGARD,
-                        ::testing::Values(0.01, 0.001, 0.0001, 0.00001));
+                        ::testing::Values("0.01", "0.001", "0.0001",
+                                          "0.00001"));
 
 int main(int argc, char **argv)
 {

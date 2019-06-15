@@ -39,7 +39,8 @@ size_t CompressSZ::BufferMaxSize(const size_t sizeIn) const
 
 size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             const size_t elementSize, const std::string varType,
-                            void *bufferOut, const Params &parameters) const
+                            void *bufferOut, const Params &parameters,
+                            Params &info) const
 {
     const size_t ndims = dimensions.size();
     if (ndims > 5)

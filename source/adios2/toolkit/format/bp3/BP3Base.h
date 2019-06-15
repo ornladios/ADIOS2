@@ -29,7 +29,7 @@
 #include "adios2/core/VariableBase.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/BufferSTL.h"
-#include "adios2/toolkit/format/bp3/operation/BP3Operation.h"
+#include "adios2/toolkit/format/bpOperation/BPOperation.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2
@@ -410,7 +410,8 @@ protected:
         transform_sz = 9,
         transform_lz4 = 10,
         transform_blosc = 11,
-        transform_mgard = 12
+        transform_mgard = 12,
+        transform_png = 13,
     };
 
     static const std::set<std::string> m_TransformTypes;
@@ -420,11 +421,11 @@ protected:
      * @param type input, must be a supported type under bp3/operation
      * @return derived class if supported, false pointer if type not supported
      */
-    std::shared_ptr<BP3Operation> SetBP3Operation(const std::string type) const
+    std::shared_ptr<BPOperation> SetBPOperation(const std::string type) const
         noexcept;
 
     template <class T>
-    std::map<size_t, std::shared_ptr<BP3Operation>> SetBP3Operations(
+    std::map<size_t, std::shared_ptr<BPOperation>> SetBPOperations(
         const std::vector<core::VariableBase::Operation> &operations) const;
 
     struct ProcessGroupIndex
@@ -622,8 +623,8 @@ private:
         const std::vector<char> &, size_t &, const BP3Base::DataTypes,         \
         const bool, const bool) const;                                         \
                                                                                \
-    extern template std::map<size_t, std::shared_ptr<BP3Operation>>            \
-    BP3Base::SetBP3Operations<T>(                                              \
+    extern template std::map<size_t, std::shared_ptr<BPOperation>>             \
+    BP3Base::SetBPOperations<T>(                                               \
         const std::vector<core::VariableBase::Operation> &) const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)

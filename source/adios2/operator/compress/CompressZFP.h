@@ -2,7 +2,8 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * CompressZfp.h : wrapper to Zfp compression library
+ * CompressZFP.h : wrapper to ZFP compression library
+ * https://computation.llnl.gov/projects/floating-point-compression
  *
  *  Created on: Jul 25, 2017
  *      Author: William F Godoy godoywf@ornl.gov
@@ -11,7 +12,9 @@
 #ifndef ADIOS2_TRANSFORM_COMPRESS_COMPRESSZFP_H_
 #define ADIOS2_TRANSFORM_COMPRESS_COMPRESSZFP_H_
 
+extern "C" {
 #include <zfp.h>
+}
 
 #include "adios2/core/Operator.h"
 
@@ -22,7 +25,7 @@ namespace core
 namespace compress
 {
 
-class CompressZfp : public Operator
+class CompressZFP : public Operator
 {
 
 public:
@@ -30,9 +33,9 @@ public:
      * Unique constructor
      * @param debugMode
      */
-    CompressZfp(const Params &parameters, const bool debugMode);
+    CompressZFP(const Params &parameters, const bool debugMode);
 
-    ~CompressZfp() = default;
+    ~CompressZFP() = default;
 
     /**
      * Wrapper around zfp compression
@@ -45,7 +48,8 @@ public:
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
                     const size_t elementSize, const std::string type,
-                    void *bufferOut, const Params &parameters) const final;
+                    void *bufferOut, const Params &parameters,
+                    Params &info) const final;
 
     /**
      * Wrapper around zfp decompression

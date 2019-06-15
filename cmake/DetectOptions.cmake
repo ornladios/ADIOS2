@@ -9,14 +9,14 @@
 # them, otherwise we disable it.  If explicitly ON then a failure to find
 # dependencies is an error,
 
-# BZip2
-if(ADIOS2_USE_BZip2 STREQUAL AUTO)
+# BZIP2
+if(ADIOS2_USE_BZIP2 STREQUAL AUTO)
   find_package(BZip2)
-elseif(ADIOS2_USE_BZip2)
+elseif(ADIOS2_USE_BZIP2)
   find_package(BZip2 REQUIRED)
 endif()
 if(BZIP2_FOUND)
-  set(ADIOS2_HAVE_BZip2 TRUE)
+  set(ADIOS2_HAVE_BZIP2 TRUE)
 endif()
 
 # ZFP
@@ -47,6 +47,16 @@ elseif(ADIOS2_USE_MGARD)
 endif()
 if(MGARD_FOUND)
   set(ADIOS2_HAVE_MGARD TRUE)
+endif()
+
+# PNG
+if(ADIOS2_USE_PNG STREQUAL AUTO)
+  find_package(PNG 1.6.0)
+elseif(ADIOS2_USE_PNG)
+  find_package(PNG 1.6.0 REQUIRED)
+endif()
+if(PNG_FOUND)
+  set(ADIOS2_HAVE_PNG TRUE)
 endif()
 
 set(mpi_find_components C)

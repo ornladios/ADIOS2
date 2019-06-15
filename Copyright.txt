@@ -18,7 +18,8 @@ The following individuals and institutions are among the Contributors:
 
 * Chuck Atkins <chuck.atkins@kitware.com>
 * Greg S. Eisenhauer <eisen@cc.gatech.edu> 
-* William F. Goody <godoywf@ornl.gov>
+* William F. Godoy <godoywf@ornl.gov>
+* Junmin Gu <jgu@lbl.gov>
 * Norbert Podhorszki <pnorbert@ornl.gov>
 * Ruonan (Jason) Wang <wangr1@ornl.gov>
 
