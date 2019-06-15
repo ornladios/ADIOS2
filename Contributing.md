@@ -23,7 +23,7 @@ Table of Contents
                * [Foo.inl](#fooinl-containing-template-implementations-that-always-need-to-be-included)
                * [Foo.tcc](#footcc-containing-template-implementations-that-should-be-restricted-to-only-known-types)
                * [Foo.cpp](#foocpp-containing-non-template-implementations-and-explicit-instantiations-definitions-for-known-types)
-      * [Code formatting and style](#code-formatting-and-style)
+      * [Code formatting and style using clang-format](#code-formatting-and-style-using-clang-format)
 
 ## Workflow
 ADIOS uses the GitHub fork-and-branch model. In this, the project "lives" in it's main repository located at https://github.com/ornladios/adios2.git, while each individual developer has their own copy of the repo to work in.  Changes are then submitted to the main repository via pull-requests made with branches from your fork.
@@ -345,8 +345,8 @@ ADIOS_FOREACH_STDTYPE_1ARG(define_explicit_instantiation)
 } // end namespace adios
 ```
 
-## Code formatting and style
-ADIOS uses the clang-format tool to automatically enforce source code style and formatting rules.  There are various ways to integrate the clang-format tool into your IDE / Code Editor depending on if you use Emacs, Vim, Eclipse, KDevelop, Microsoft Visual Studio, etc. that are a bit outside the scope of this document but a quick google search for "integrate <insert-editor-here> clang-format" should point you in the right direction.  However, you can always reformat the code manually by running:
+## Code formatting and style using clang-format
+ADIOS uses the clang-format, [version 7](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html), tool to automatically enforce source code style and formatting rules.  There are various ways to integrate the clang-format tool into your IDE / Code Editor depending on if you use Emacs, Vim, Eclipse, KDevelop, Microsoft Visual Studio, etc. that are a bit outside the scope of this document but a quick google search for "integrate <insert-editor-here> clang-format" should point you in the right direction.  However, you can always reformat the code manually by running:
 ```
 clang-format -i SourceFile.cpp SourceFile.h
 ```
@@ -358,4 +358,4 @@ While some of the formatting rules are fairly detailed, the main points are:
 1. Always use braces { and }, even for 1 line if blocks.
 1. Use 4 spaces for indentation.
 
-There are more formatting rules but these three should at least get you close and prevent any drastic re-writes from the re-formatting tools.  More details can be found by looking at the .clang-format config file in the root of the repository and by looking at the clang-format documentation http://releases.llvm.org/3.8.0/tools/clang/docs/ClangFormatStyleOptions.html.
+There are more formatting rules but these three should at least get you close and prevent any drastic re-writes from the re-formatting tools.  More details can be found by looking at the .clang-format config file in the root of the repository and by looking at the [clang-format 7 documentation](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html).
