@@ -124,7 +124,11 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
         const uint64_t currentStepEndPos = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(currentStepEndPos);
+        const uint64_t currentTimeStamp = helper::ReadValue<uint64_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
+        ptrs.push_back(currentTimeStamp);
         m_MetadataIndexTable[mpiRank][currentStep] = ptrs;
+        position += 8;
     }
 }
 

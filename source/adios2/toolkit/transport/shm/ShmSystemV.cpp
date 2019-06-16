@@ -135,6 +135,16 @@ void ShmSystemV::Close()
     m_IsOpen = false;
 }
 
+void ShmSystemV::SeekToEnd()
+{
+    // empty function. seek operation is meaningless for shared memory
+}
+
+void ShmSystemV::SeekToBegin()
+{
+    // empty function. seek operation is meaningless for shared memory
+}
+
 // PRIVATE
 void ShmSystemV::CheckShmID(const std::string hint) const
 {

@@ -85,6 +85,9 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
             std::shared_ptr<Transport> file =
                 OpenFileTransport(fileNames[i], openMode, parameters, profile);
             m_Transports.insert({i, file});
+            int rank;
+            SMPI_Comm_rank(m_MPIComm, &rank);
+            //std::cout << "rank " << rank << ": " << i << ", " << fileNames[i] << std::endl;
         }
     }
 }
@@ -191,6 +194,37 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
                                    std::to_string(transportIndex));
         itTransport->second->Write(buffer, size);
     }
+}
+
+void TransportMan::WriteFileAt(const char *buffer, const size_t size, const size_t start,
+                              const int transportIndex)
+{
+
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to WriteFileAt with index " +
+                                std::to_string(transportIndex));
+    itTransport->second->Write(buffer, size, start);
+    
+}
+
+void TransportMan::SeekToFileEnd(const int transportIndex)
+{
+
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to SeekToFileEnd with index " +
+                                std::to_string(transportIndex));
+    itTransport->second->SeekToEnd();
+    
+}
+
+void TransportMan::SeekToFileBegin(const int transportIndex)
+{
+
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to SeekToFileBegin with index " +
+                                std::to_string(transportIndex));
+    itTransport->second->SeekToBegin();
+    
 }
 
 size_t TransportMan::GetFileSize(const size_t transportIndex) const

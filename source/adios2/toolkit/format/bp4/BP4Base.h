@@ -213,6 +213,9 @@ public:
     /** true: NVMex each rank creates its own directory */
     bool m_NodeLocal = false;
 
+    size_t m_PreMetadataFileLength = 0;
+    size_t m_PreDataFileLength = 0;
+
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator

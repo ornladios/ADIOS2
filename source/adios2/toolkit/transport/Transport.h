@@ -114,6 +114,10 @@ public:
     /** closes current file, after this file becomes unreachable */
     virtual void Close() = 0;
 
+    virtual void SeekToEnd() = 0;
+
+    virtual void SeekToBegin() = 0;
+
 protected:
     /** true: turn on exceptions */
     const bool m_DebugMode = false;

@@ -43,6 +43,7 @@ void FileFStream::Open(const std::string &name, const Mode openMode)
         // m_FileStream.open(name, std::fstream::in | std::fstream::out |
         //                            std::fstream::binary);
         m_FileStream.open(name, std::fstream::in | std::fstream::out | std::fstream::binary);
+        m_FileStream.seekp(0, std::ios_base::end);
         ProfilerStop("open");
         break;
 
@@ -180,6 +181,18 @@ void FileFStream::CheckFile(const std::string hint) const
     {
         throw std::ios_base::failure("ERROR: " + hint + "\n");
     }
+}
+
+void FileFStream::SeekToEnd()
+{
+    m_FileStream.seekp(0, std::ios_base::end);
+    CheckFile("couldn't move to the end of file " + m_Name + ", in call to fstream seekp");
+}
+
+void FileFStream::SeekToBegin()
+{
+    m_FileStream.seekp(0, std::ios_base::beg);
+    CheckFile("couldn't move to the beginning of file " + m_Name + ", in call to fstream seekp");
 }
 
 } // end namespace transport

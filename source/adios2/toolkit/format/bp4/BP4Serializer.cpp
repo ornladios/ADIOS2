@@ -79,7 +79,7 @@ void BP4Serializer::PutProcessGroupIndex(
     helper::CopyToBuffer(dataBuffer, dataPosition, &m_MetadataSet.TimeStep);
 
     // offset to pg in data in metadata which is the current absolute position
-    helper::InsertU64(metadataBuffer, m_Data.m_AbsolutePosition);
+    helper::InsertU64(metadataBuffer, m_Data.m_AbsolutePosition+m_PreDataFileLength);
 
     // Back to writing metadata pg index length (length of group)
     const uint16_t metadataPGIndexLength = static_cast<uint16_t>(
@@ -481,7 +481,7 @@ void BP4Serializer::PutAttributes(core::IO &io)
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
         Stats<T> stats;                                                        \
-        stats.Offset = absolutePosition;                                       \
+        stats.Offset = absolutePosition+m_PreDataFileLength;                                       \
         stats.MemberID = memberID;                                             \
         stats.Step = m_MetadataSet.TimeStep;                                   \
         stats.FileIndex = GetFileIndex();                                      \

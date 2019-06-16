@@ -116,6 +116,15 @@ public:
     void WriteFiles(const char *buffer, const size_t size,
                     const int transportIndex = -1);
 
+    /**
+     * Write data to a specific location in files
+     * @param transportIndex
+     * @param buffer
+     * @param size
+     */
+    void WriteFileAt(const char *buffer, const size_t size, const size_t start,
+                    const int transportIndex = -1);
+
     size_t GetFileSize(const size_t transportIndex = 0) const;
 
     /**
@@ -144,6 +153,10 @@ public:
 
     /** Checks if all transports are closed */
     bool AllTransportsClosed() const noexcept;
+
+    void SeekToFileEnd(const int transportIndex = 0);
+
+    void SeekToFileBegin(const int transportIndex = 0);
 
 protected:
     MPI_Comm m_MPIComm;
