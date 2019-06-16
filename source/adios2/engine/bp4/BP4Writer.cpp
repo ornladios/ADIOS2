@@ -253,18 +253,18 @@ void BP4Writer::InitBPBuffer()
             position = pos_last_step;
             const uint64_t lastStep = helper::ReadValue<uint64_t>(
                 preMetadataIndex.m_Buffer, position, IsLittleEndian);
-            std::cout << "last step of previous run is: " << lastStep << std::endl;
+            //std::cout << "last step of previous run is: " << lastStep << std::endl;
             m_BP4Serializer.m_MetadataSet.TimeStep += lastStep;
             m_BP4Serializer.m_MetadataSet.CurrentStep += lastStep;
-            std::cout << "TimeStep is: " << m_BP4Serializer.m_MetadataSet.TimeStep << std::endl;
-            std::cout << "CurrentStep is: " << m_BP4Serializer.m_MetadataSet.CurrentStep << std::endl;
+            //std::cout << "TimeStep is: " << m_BP4Serializer.m_MetadataSet.TimeStep << std::endl;
+            //std::cout << "CurrentStep is: " << m_BP4Serializer.m_MetadataSet.CurrentStep << std::endl;
 
             if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
             {
                 m_BP4Serializer.m_PreDataFileLength =
                     m_FileDataManager.GetFileSize(0);
 
-                std::cout << "size of existing data file: " << m_BP4Serializer.m_PreDataFileLength << std::endl;
+                //std::cout << "size of existing data file: " << m_BP4Serializer.m_PreDataFileLength << std::endl;
 
             }
 
@@ -290,11 +290,11 @@ void BP4Writer::InitBPBuffer()
                 // Get the size of existing metadata file
                 m_BP4Serializer.m_PreMetadataFileLength =
                     m_FileMetadataManager.GetFileSize(0);    
-                std::cout << "size of existing metadata file: " << m_BP4Serializer.m_PreMetadataFileLength << std::endl;   
+                //std::cout << "size of existing metadata file: " << m_BP4Serializer.m_PreMetadataFileLength << std::endl;   
             }
         }
     }
-    
+
     m_BP4Serializer.PutProcessGroupIndex(
         m_IO.m_Name, m_IO.m_HostLanguage,
         m_FileDataManager.GetTransportsTypes());
