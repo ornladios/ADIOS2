@@ -1,4 +1,4 @@
-# Documentation for the ADaptable Input Output System, ADIOS2 v2.2.0
+# Documentation for the ADaptable Input Output System, ADIOS2 v2.4.0.rc1
 
 # Generate User Guide in html with Sphinx
 

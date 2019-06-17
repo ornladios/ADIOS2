@@ -10,11 +10,11 @@ To use this engine, you can either specify it in your xml config file, with tag 
 
 .. code-block:: c++
 
- adios2::IO inlineIO = adios.DeclareIO("ioName");
- inlineIO.SetEngine("Inline");
- adios2::Engine inlineWriter = inlineIO.Open("inline_write", adios2::Mode::Write);
- io.SetParameters({{"writerID", "inline_write"}});
- adios2::Engine inlineReader = inlineIO.Open("inline_read", adios2::Mode::Read);
+    adios2::IO inlineIO = adios.DeclareIO("ioName");
+    inlineIO.SetEngine("Inline");
+    adios2::Engine inlineWriter = inlineIO.Open("inline_write", adios2::Mode::Write);
+   io.SetParameters({{"writerID", "inline_write"}});
+   adios2::Engine inlineReader = inlineIO.Open("inline_read", adios2::Mode::Read);
 
 Notice that unlike other engines, the reader and writer share an IO instance. Also, the ``writerID`` parameter allows the reader to connect to the writer.
 
@@ -33,8 +33,8 @@ Parameters:
 
 1. **writerID**: Match the string passed to the ``IO::Open()`` call when creating the writer. The reader uses this parameter to fetch the correct writer.
 
-=======================  ===================== =========================================================
- **Key**                  **Value Format**      **Default** and Examples
-=======================  ===================== =========================================================
- writerID                 string                none, match the writer name
-=======================  ===================== =========================================================
+===========  ===================== ===============================
+ **Key**        **Value Type**       **Default** and Examples
+===========  ===================== ===============================
+ writerID         string             none, match the writer name
+===========  ===================== ===============================

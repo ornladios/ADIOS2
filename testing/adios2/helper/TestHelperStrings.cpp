@@ -2,10 +2,12 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  */
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 
 #include <adios2.h>
@@ -131,11 +133,14 @@ TEST(ADIOS2HelperString, ADIOS2HelperStringConversion)
     const std::string notnum("notnum");
     const std::string hint("");
 
-    ASSERT_EQ(adios2::helper::StringToDouble(dbl, debugMode, hint), 123.123);
-    ASSERT_THROW(adios2::helper::StringToDouble(notnum, debugMode, hint),
+    const double diff = std::abs(
+        adios2::helper::StringTo<double>(dbl, debugMode, hint) - 123.123);
+    ASSERT_LT(diff, 1E-4);
+
+    ASSERT_THROW(adios2::helper::StringTo<double>(notnum, debugMode, hint),
                  std::invalid_argument);
-    ASSERT_EQ(adios2::helper::StringToUInt(uint, debugMode, hint), 123);
-    ASSERT_THROW(adios2::helper::StringToUInt(notnum, debugMode, hint),
+    ASSERT_EQ(adios2::helper::StringTo<uint32_t>(uint, debugMode, hint), 123);
+    ASSERT_THROW(adios2::helper::StringTo<uint32_t>(notnum, debugMode, hint),
                  std::invalid_argument);
 }
 

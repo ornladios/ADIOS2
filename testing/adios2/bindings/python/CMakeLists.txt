@@ -36,5 +36,10 @@ if(ADIOS2_HAVE_MPI)
                         SCRIPT TestBPZfpHighLevelAPI.py)
     endif(ADIOS2_HAVE_ZFP)
     
+    if (ADIOS2_HAVE_PNG)
+        python_add_test(NAME PythonBPPNGHighLevelAPI ${test_parameters}
+                        SCRIPT TestBPPNGHighLevelAPI.py)
+    endif(ADIOS2_HAVE_PNG)
+    
 endif()
 

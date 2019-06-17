@@ -89,11 +89,12 @@ public:
      */
     virtual size_t Compress(const void *dataIn, const Dims &dimensions,
                             const size_t elementSize, const std::string type,
-                            void *bufferOut,
-                            const Params &parameters = Params()) const;
+                            void *bufferOut, const Params &parameters,
+                            Params &info) const;
 
     virtual size_t Decompress(const void *bufferIn, const size_t sizeIn,
-                              void *dataOut, const size_t sizeOut) const;
+                              void *dataOut, const size_t sizeOut,
+                              Params &info) const;
 
     /**
      * Zfp signature

@@ -502,23 +502,22 @@ inline void BP3Base::ParseCharacteristics(const std::vector<char> &buffer,
 }
 
 template <class T>
-std::map<size_t, std::shared_ptr<BP3Operation>> BP3Base::SetBP3Operations(
+std::map<size_t, std::shared_ptr<BPOperation>> BP3Base::SetBPOperations(
     const std::vector<core::VariableBase::Operation> &operations) const
 {
-    std::map<size_t, std::shared_ptr<BP3Operation>> bp3Operations;
-    std::shared_ptr<BP3Operation> bp3Operation;
+    std::map<size_t, std::shared_ptr<BPOperation>> bpOperations;
 
     for (auto i = 0; i < operations.size(); ++i)
     {
         const std::string type = operations[i].Op->m_Type;
-        std::shared_ptr<BP3Operation> bp3Operation = SetBP3Operation(type);
+        std::shared_ptr<BPOperation> bp3Operation = SetBPOperation(type);
 
         if (bp3Operation) // if the result is a supported type
         {
-            bp3Operations.emplace(i, bp3Operation);
+            bpOperations.emplace(i, bp3Operation);
         }
     }
-    return bp3Operations;
+    return bpOperations;
 }
 
 } // end namespace format

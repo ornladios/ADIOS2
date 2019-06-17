@@ -17,7 +17,7 @@ add_test(NAME HeatTransfer.SST.FFS.RDMA.MxN
 
 add_test(NAME HeatTransfer.SST.FFS.RDMA.Dump.MxN
   COMMAND ${CMAKE_COMMAND}
-    -DARGS=-d 
+    -DARG1=-d 
     -DINPUT_FILE=HeatTransfer.SST.FFS.RDMA.Read.MxN.bp
     -DOUTPUT_FILE=HeatTransfer.SST.FFS.RDMA.Dump.MxN.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"

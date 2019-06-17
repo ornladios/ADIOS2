@@ -15,12 +15,11 @@
 
 std::string engineName; // comes from command line
 
-void SZAccuracy1D(const double accuracy)
+void SZAccuracy1D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ1D_" +
-                            std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRSZ1D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -69,10 +68,13 @@ void SZAccuracy1D(const double accuracy)
             "r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
+        adios2::Operator szOp =
+            adios.DefineOperator("szCompressor", adios2::ops::SZ);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
+        var_r32.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+        var_r64.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -136,9 +138,11 @@ void SZAccuracy1D(const double accuracy)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy)
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]),
+                          std::stod(accuracy))
                     << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy)
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]),
+                          std::stod(accuracy))
                     << msg;
             }
             ++t;
@@ -150,12 +154,11 @@ void SZAccuracy1D(const double accuracy)
     }
 }
 
-void SZAccuracy2D(const double accuracy)
+void SZAccuracy2D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2D_" +
-                            std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRSZ2D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -205,10 +208,13 @@ void SZAccuracy2D(const double accuracy)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
+        adios2::Operator szOp =
+            adios.DefineOperator("szCompressor", adios2::ops::SZ);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
+        var_r32.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+        var_r64.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -274,9 +280,11 @@ void SZAccuracy2D(const double accuracy)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy)
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]),
+                          std::stod(accuracy))
                     << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy)
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]),
+                          std::stod(accuracy))
                     << msg;
             }
             ++t;
@@ -288,12 +296,11 @@ void SZAccuracy2D(const double accuracy)
     }
 }
 
-void SZAccuracy3D(const double accuracy)
+void SZAccuracy3D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ3D_" +
-                            std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRSZ3D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -344,10 +351,13 @@ void SZAccuracy3D(const double accuracy)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
+        adios2::Operator szOp =
+            adios.DefineOperator("szCompressor", adios2::ops::SZ);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
+        var_r32.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+        var_r64.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -415,9 +425,11 @@ void SZAccuracy3D(const double accuracy)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]), accuracy)
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[i]),
+                          std::stod(accuracy))
                     << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]), accuracy)
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[i]),
+                          std::stod(accuracy))
                     << msg;
             }
             ++t;
@@ -429,12 +441,11 @@ void SZAccuracy3D(const double accuracy)
     }
 }
 
-void SZAccuracy1DSel(const double accuracy)
+void SZAccuracy1DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ1DSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRSZ1DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -483,10 +494,13 @@ void SZAccuracy1DSel(const double accuracy)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
+        adios2::Operator szOp =
+            adios.DefineOperator("szCompressor", adios2::ops::SZ);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
+        var_r32.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+        var_r64.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -551,10 +565,10 @@ void SZAccuracy1DSel(const double accuracy)
                 std::string msg = ss.str();
 
                 ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 + i]),
-                          accuracy)
+                          std::stod(accuracy))
                     << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]),
-                          accuracy)
+                          std::stod(accuracy))
                     << msg;
             }
             ++t;
@@ -566,12 +580,11 @@ void SZAccuracy1DSel(const double accuracy)
     }
 }
 
-void SZAccuracy2DSel(const double accuracy)
+void SZAccuracy2DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2DSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRSZ2DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -621,10 +634,13 @@ void SZAccuracy2DSel(const double accuracy)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
+        adios2::Operator szOp =
+            adios.DefineOperator("szCompressor", adios2::ops::SZ);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
+        var_r32.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+        var_r64.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -691,10 +707,10 @@ void SZAccuracy2DSel(const double accuracy)
                 std::string msg = ss.str();
 
                 ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]),
-                          accuracy)
+                          std::stod(accuracy))
                     << msg;
                 ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny + i]),
-                          accuracy)
+                          std::stod(accuracy))
                     << msg;
             }
             ++t;
@@ -706,12 +722,11 @@ void SZAccuracy2DSel(const double accuracy)
     }
 }
 
-void SZAccuracy3DSel(const double accuracy)
+void SZAccuracy3DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ3DSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRSZ3DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -762,10 +777,13 @@ void SZAccuracy3DSel(const double accuracy)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
+        adios2::Operator szOp =
+            adios.DefineOperator("szCompressor", adios2::ops::SZ);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
+        var_r32.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+        var_r64.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -835,11 +853,11 @@ void SZAccuracy3DSel(const double accuracy)
 
                 ASSERT_LT(
                     std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny * Nz + i]),
-                    accuracy)
+                    std::stod(accuracy))
                     << msg;
                 ASSERT_LT(
                     std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny * Nz + i]),
-                    accuracy)
+                    std::stod(accuracy))
                     << msg;
             }
             ++t;
@@ -851,12 +869,11 @@ void SZAccuracy3DSel(const double accuracy)
     }
 }
 
-void SZAccuracy2DSmallSel(const double accuracy)
+void SZAccuracy2DSmallSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadSZ2DSmallSel_" +
-                            std::to_string(accuracy) + ".bp");
+    const std::string fname("BPWRSZ2DSmallSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -907,10 +924,13 @@ void SZAccuracy2DSmallSel(const double accuracy)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("szCompressor", "sz");
+        adios2::Operator szOp =
+            adios.DefineOperator("szCompressor", adios2::ops::SZ);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(accuracy)}});
+        var_r32.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+        var_r64.AddOperation(szOp,
+                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -970,17 +990,25 @@ void SZAccuracy2DSmallSel(const double accuracy)
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
 
-            ASSERT_LT(std::abs(decompressedR32s[0] - 0.06), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[0] - 0.06),
+                      std::stod(accuracy));
+            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06),
+                      std::stod(accuracy));
 
-            ASSERT_LT(std::abs(decompressedR32s[1] - 0.07), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[1] - 0.07),
+                      std::stod(accuracy));
+            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07),
+                      std::stod(accuracy));
 
-            ASSERT_LT(std::abs(decompressedR32s[2] - 0.11), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[2] - 0.11),
+                      std::stod(accuracy));
+            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11),
+                      std::stod(accuracy));
 
-            ASSERT_LT(std::abs(decompressedR32s[3] - 0.12), accuracy);
-            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12), accuracy);
+            ASSERT_LT(std::abs(decompressedR32s[3] - 0.12),
+                      std::stod(accuracy));
+            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12),
+                      std::stod(accuracy));
 
             ++t;
         }
@@ -991,7 +1019,7 @@ void SZAccuracy2DSmallSel(const double accuracy)
     }
 }
 
-class BPWriteReadSZ : public ::testing::TestWithParam<double>
+class BPWriteReadSZ : public ::testing::TestWithParam<std::string>
 {
 public:
     BPWriteReadSZ() = default;
@@ -999,19 +1027,17 @@ public:
     virtual void TearDown(){};
 };
 
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ1D) { SZAccuracy1D(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ2D) { SZAccuracy2D(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ3D) { SZAccuracy3D(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ1DSel) { SZAccuracy1DSel(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ2DSel) { SZAccuracy2DSel(GetParam()); }
-TEST_P(BPWriteReadSZ, ADIOS2BPWriteReadSZ3DSel) { SZAccuracy3DSel(GetParam()); }
-TEST_F(BPWriteReadSZ, ADIOS2BPWriteReadSZ2DSmallSel)
-{
-    SZAccuracy2DSmallSel(0.01);
-}
+TEST_P(BPWriteReadSZ, BPWRSZ1D) { SZAccuracy1D(GetParam()); }
+TEST_P(BPWriteReadSZ, BPWRSZ2D) { SZAccuracy2D(GetParam()); }
+TEST_P(BPWriteReadSZ, BPWRSZ3D) { SZAccuracy3D(GetParam()); }
+TEST_P(BPWriteReadSZ, BPWRSZ1DSel) { SZAccuracy1DSel(GetParam()); }
+TEST_P(BPWriteReadSZ, BPWRSZ2DSel) { SZAccuracy2DSel(GetParam()); }
+TEST_P(BPWriteReadSZ, BPWRSZ3DSel) { SZAccuracy3DSel(GetParam()); }
+TEST_F(BPWriteReadSZ, BPWRSZ2DSmallSel) { SZAccuracy2DSmallSel("0.01"); }
 
 INSTANTIATE_TEST_CASE_P(SZAccuracy, BPWriteReadSZ,
-                        ::testing::Values(0.01, 0.001, 0.0001, 0.00001));
+                        ::testing::Values("0.01", "0.001", "0.0001",
+                                          "0.00001"));
 
 int main(int argc, char **argv)
 {

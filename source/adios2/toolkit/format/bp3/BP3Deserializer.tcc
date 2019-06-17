@@ -145,7 +145,7 @@ void BP3Deserializer::SetVariableBlockInfo(
         blockOperation.PreSizeOf = sizeof(T);
 
         // read metadata from supported type and populate Info
-        std::shared_ptr<BP3Operation> bpOp = SetBP3Operation(bp3OpInfo.Type);
+        std::shared_ptr<BPOperation> bpOp = SetBPOperation(bp3OpInfo.Type);
         bpOp->GetMetadata(bp3OpInfo.Metadata, blockOperation.Info);
         blockOperation.PayloadSize = static_cast<size_t>(
             std::stoull(blockOperation.Info.at("OutputSize")));
@@ -527,8 +527,8 @@ void BP3Deserializer::PostDataRead(
         m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
         // get the right bp3Op
-        std::shared_ptr<BP3Operation> bp3Op =
-            SetBP3Operation(blockOperationInfo.Info.at("Type"));
+        std::shared_ptr<BPOperation> bp3Op =
+            SetBPOperation(blockOperationInfo.Info.at("Type"));
 
         // get original block back
         char *preOpData = m_ThreadBuffers[threadID][0].data();

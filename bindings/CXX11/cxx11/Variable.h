@@ -278,7 +278,7 @@ public:
         /** Parameters settings for this operation */
         const adios2::Params Parameters;
         /** Information associated with this operation */
-        const adios2::Params Info;
+        adios2::Params Info;
     };
 
     /**

@@ -225,6 +225,133 @@ std::string ToString(SelectionType value);
 template <typename T, typename Enable = decltype(ToString(std::declval<T>()))>
 std::ostream &operator<<(std::ostream &os, const T &value);
 
+namespace ops
+{
+
+// SZ PARAMETERS
+#ifdef ADIOS2_HAVE_SZ
+
+constexpr char SZ[] = "sz";
+
+namespace sz
+{
+namespace key
+{
+constexpr char ACCURACY[] = "accuracy";
+}
+}
+
+#endif
+
+// ZFP PARAMETERS
+#ifdef ADIOS2_HAVE_ZFP
+
+constexpr char ZFP[] = "zfp";
+
+namespace zfp
+{
+namespace key
+{
+constexpr char ACCURACY[] = "accuracy";
+constexpr char RATE[] = "rate";
+constexpr char PRECISION[] = "precision";
+}
+}
+#endif
+
+// MGARD PARAMETERS
+#ifdef ADIOS2_HAVE_MGARD
+constexpr char MGARD[] = "mgard";
+
+namespace mgard
+{
+namespace key
+{
+constexpr char TOLERANCE[] = "tolerance";
+constexpr char ACCURACY[] = "accuracy";
+}
+}
+#endif
+
+// PNG PARAMETERS
+#ifdef ADIOS2_HAVE_PNG
+constexpr char PNG[] = "png";
+
+namespace png
+{
+
+namespace key
+{
+constexpr char COLOR_TYPE[] = "color_type";
+constexpr char BIT_DEPTH[] = "bit_depth";
+constexpr char COMPRESSION_LEVEL[] = "compression_level";
+}
+
+namespace value
+{
+constexpr char COLOR_TYPE_GRAY[] = "PNG_COLOR_TYPE_GRAY";
+constexpr char COLOR_TYPE_GRAY_ALPHA[] = "PNG_COLOR_TYPE_GRAY_ALPHA";
+constexpr char COLOR_TYPE_PALETTE[] = "PNG_COLOR_TYPE_PALETTE";
+constexpr char COLOR_TYPE_RGB[] = "PNG_COLOR_TYPE_RGB";
+constexpr char COLOR_TYPE_RGB_ALPHA[] = "PNG_COLOR_TYPE_RGB_ALPHA";
+constexpr char COLOR_TYPE_RGBA[] = "PNG_COLOR_TYPE_RGBA";
+constexpr char COLOR_TYPE_GA[] = "PNG_COLOR_TYPE_GA";
+
+constexpr char BIT_DEPTH_1[] = "1";
+constexpr char BIT_DEPTH_2[] = "2";
+constexpr char BIT_DEPTH_3[] = "3";
+constexpr char BIT_DEPTH_4[] = "4";
+constexpr char BIT_DEPTH_5[] = "5";
+constexpr char BIT_DEPTH_6[] = "6";
+constexpr char BIT_DEPTH_7[] = "7";
+constexpr char BIT_DEPTH_8[] = "8";
+constexpr char BIT_DEPTH_9[] = "9";
+
+constexpr char COMPRESSION_LEVEL_1[] = "1";
+constexpr char COMPRESSION_LEVEL_2[] = "2";
+constexpr char COMPRESSION_LEVEL_3[] = "3";
+constexpr char COMPRESSION_LEVEL_4[] = "4";
+constexpr char COMPRESSION_LEVEL_5[] = "5";
+constexpr char COMPRESSION_LEVEL_6[] = "6";
+constexpr char COMPRESSION_LEVEL_7[] = "7";
+constexpr char COMPRESSION_LEVEL_8[] = "8";
+constexpr char COMPRESSION_LEVEL_9[] = "9";
+
+} // end namespace value
+
+} // end namespace png
+#endif
+
+// BZIP2 PARAMETERS
+#ifdef ADIOS2_HAVE_BZIP2
+
+constexpr char BZIP2[] = "bzip2";
+namespace bzip2
+{
+
+namespace key
+{
+constexpr char BLOCKSIZE100K[] = "blockSize100k";
+}
+
+namespace value
+{
+constexpr char BLOCKSIZE100K_1[] = "1";
+constexpr char BLOCKSIZE100K_2[] = "2";
+constexpr char BLOCKSIZE100K_3[] = "3";
+constexpr char BLOCKSIZE100K_4[] = "4";
+constexpr char BLOCKSIZE100K_5[] = "5";
+constexpr char BLOCKSIZE100K_6[] = "6";
+constexpr char BLOCKSIZE100K_7[] = "7";
+constexpr char BLOCKSIZE100K_8[] = "8";
+constexpr char BLOCKSIZE100K_9[] = "9";
+} // end namespace value
+
+} // end namespace bzip2
+#endif
+
+} // end namespace ops
+
 } // end namespace adios2
 
 #include "ADIOSTypes.inl"

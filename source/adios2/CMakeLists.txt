@@ -37,7 +37,7 @@ add_library(adios2
   helper/adiosMemory.cpp
   helper/adiosMPIFunctions.cpp
   helper/adiosNetwork.cpp
-  helper/adiosString.cpp
+  helper/adiosString.cpp helper/adiosString.tcc
   helper/adiosSystem.cpp
   helper/adiosType.cpp
   helper/adiosXML.cpp
@@ -63,25 +63,18 @@ add_library(adios2
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
   toolkit/format/bp3/BP3Deserializer.cpp toolkit/format/bp3/BP3Deserializer.tcc
-  toolkit/format/bp3/operation/BP3Operation.cpp
-  toolkit/format/bp3/operation/BP3Zfp.cpp
-  toolkit/format/bp3/operation/BP3Zfp.tcc
-  toolkit/format/bp3/operation/BP3SZ.cpp
-  toolkit/format/bp3/operation/BP3SZ.tcc
-  toolkit/format/bp3/operation/BP3MGARD.cpp
-  toolkit/format/bp3/operation/BP3MGARD.tcc
 
   toolkit/format/bp4/BP4Base.cpp toolkit/format/bp4/BP4Base.tcc
   toolkit/format/bp4/BP4Serializer.cpp toolkit/format/bp4/BP4Serializer.tcc
   toolkit/format/bp4/BP4Deserializer.cpp toolkit/format/bp4/BP4Deserializer.tcc
-  toolkit/format/bp4/operation/BP4Operation.cpp
-  toolkit/format/bp4/operation/BP4Zfp.cpp
-  toolkit/format/bp4/operation/BP4Zfp.tcc
-  toolkit/format/bp4/operation/BP4SZ.cpp
-  toolkit/format/bp4/operation/BP4SZ.tcc
-  toolkit/format/bp4/operation/BP4MGARD.cpp
-  toolkit/format/bp4/operation/BP4MGARD.tcc
-
+  
+  toolkit/format/bpOperation/BPOperation.cpp toolkit/format/bpOperation/BPOperation.tcc
+  toolkit/format/bpOperation/compress/BPZFP.cpp toolkit/format/bpOperation/compress/BPZFP.tcc
+  toolkit/format/bpOperation/compress/BPSZ.cpp
+  toolkit/format/bpOperation/compress/BPMGARD.cpp
+  toolkit/format/bpOperation/compress/BPPNG.cpp
+  toolkit/format/bpOperation/compress/BPBZIP2.cpp toolkit/format/bpOperation/compress/BPBZIP2.tcc
+  
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
@@ -168,13 +161,13 @@ if(ADIOS2_HAVE_DATASPACES)
 endif()
 
 
-if(ADIOS2_HAVE_BZip2)
-  target_sources(adios2 PRIVATE operator/compress/CompressBZip2.cpp)
+if(ADIOS2_HAVE_BZIP2)
+  target_sources(adios2 PRIVATE operator/compress/CompressBZIP2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
 
 if(ADIOS2_HAVE_ZFP)
-  target_sources(adios2 PRIVATE operator/compress/CompressZfp.cpp)
+  target_sources(adios2 PRIVATE operator/compress/CompressZFP.cpp)
   target_link_libraries(adios2 PRIVATE zfp::zfp)
 endif()
 
@@ -186,6 +179,11 @@ endif()
 if(ADIOS2_HAVE_MGARD)
   target_sources(adios2 PRIVATE operator/compress/CompressMGARD.cpp)
   target_link_libraries(adios2 PRIVATE MGARD::MGARD)
+endif()
+
+if(ADIOS2_HAVE_PNG)
+  target_sources(adios2 PRIVATE operator/compress/CompressPNG.cpp)
+  target_link_libraries(adios2 PRIVATE PNG::PNG)
 endif()
 
 if(ADIOS2_HAVE_MPI)

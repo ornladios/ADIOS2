@@ -22,7 +22,7 @@ set_property(TEST HeatTransfer.BPFile.Read.MxM
 
 add_test(NAME HeatTransfer.BPFile.Dump.MxM
   COMMAND ${CMAKE_COMMAND}
-    -DARGS=-d 
+    -DARG1=-d 
     -DINPUT_FILE=HeatTransfer.BPFile.Read.MxM.bp
     -DOUTPUT_FILE=HeatTransfer.BPFile.Dump.MxM.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
@@ -63,7 +63,7 @@ set_property(TEST HeatTransfer.BP4File.Read.MxM
 
 add_test(NAME HeatTransfer.BP4File.Dump.MxM
   COMMAND ${CMAKE_COMMAND}
-    -DARGS=-d 
+    -DARG1=-d 
     -DINPUT_FILE=${BP4_DIR}/HeatTransfer.BP4File.Read.MxM.bp
     -DOUTPUT_FILE=HeatTransfer.BP4File.Dump.MxM.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
