@@ -387,9 +387,22 @@ CMake VAR Option               Values                     Description
 ``ADIOS2_USE_ZFP``             **`AUTO`**/``ON``/OFF      `ZFP <https://github.com/LLNL/zfp>`_ compression (experimental).
 ``ADIOS2_USE_SZ``              **`AUTO`**/``ON``/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental).
 ``ADIOS2_USE_MGARD``           **`AUTO`**/``ON``/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
-``ADIOS2_USE_ZFP``             **`AUTO`**/``ON``/OFF      `PNG <https://libpng.org>`_ compression (experimental).
+``ADIOS2_USE_PNG``             **`AUTO`**/``ON``/OFF      `PNG <https://libpng.org>`_ compression (experimental).
 ``ADIOS2_USE_Endian_Reverse``  **`AUTO`**/ON/``OFF``      Big/Little Endian Interoperability for different endianness platforms at write and read.
 ============================= ========================= ==========================================================================================================================================================================================================================
+
+In addition to the ``ADIOS2_USE_Feature`` options, the following options are also available to control how the library gets built:
+
+==================================== =============================================== ===============================
+ CMake VAR Options                       Values                                       Description                                                                          |
+==================================== =============================================== ===============================
+``BUILD_SHARED_LIBS``                  ``ON``/OFF                                     Build shared libraries.                                                               
+``ADIOS2_BUILD_EXAMPLES``              ``ON``/OFF                                     Build examples.                                                                       
+``ADIOS2_BUILD_TESTING``               ``ON``/OFF                                     Build test code.                                                                      
+``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.                                                                     
+``CMAKE_BUILD_TYPE``                   ``Debug``/Release/RelWithDebInfo/MinSizeRel    Compiler optimization levels.                                            
+==================================== =============================================== ===============================
+
 
 Examples: Enable Fortran, disable Python bindings and ZeroMQ functionality 
 
@@ -406,18 +419,6 @@ Notes:
 .. code-block:: bash
 
     $ cmake -DHDF5_ROOT=/opt/hdf5/1.12.0 ../ADIOS2
-
-In addition to the ``ADIOS2_USE_Feature`` options, the following options are also available to control how the library gets built:
-
-==================================== =============================================== ===============================
- CMake VAR Options                       Values                                       Description                                                                          |
-==================================== =============================================== ===============================
-``BUILD_SHARED_LIBS``                  ``ON``/OFF                                     Build shared libraries.                                                               
-``ADIOS2_BUILD_EXAMPLES``              ``ON``/OFF                                     Build examples.                                                                       
-``ADIOS2_BUILD_TESTING``               ``ON``/OFF                                     Build test code.                                                                      
-``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.                                                                     
-``CMAKE_BUILD_TYPE``                   ``Debug``/Release/RelWithDebInfo/MinSizeRel    Compiler optimization levels.                                            
-==================================== =============================================== ===============================
 
 Example: the following configuration will build, test and install under /opt/adios2/2.3.1 an optimized (Release) version of ADIOS2.
 

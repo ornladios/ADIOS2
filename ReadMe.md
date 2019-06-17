@@ -10,56 +10,46 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/6eeb5a8ac3e34d2599cfdea5bdc3390f)](https://www.codacy.com/app/chuckatkins/ADIOS2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ornladios/ADIOS2&amp;utm_campaign=Badge_Grade)
 
 
-# The Adaptable Input Output System (ADIOS) v2.4.0-rc1
-This is v2.4.0-rc1 of the ADIOS Input/Output (I/O) system, developed as part of the
-United States Department of Energy's Exascale Computing Program.
+# ADIOS 2 : The Adaptable Input Output System version 2
+This is v2.4.0-rc1 of the ADIOS 2: The Adaptable Input/Output (I/O) System, ADIOS 2 is developed as part of the United States Department of Energy's Exascale Computing Program.
 
-ADIOS2 is a framework designed for scientific data I/O to publish and subscribe (put/get) data when and where required. ADIOS2 focuses on:
+ADIOS 2 is a framework designed for scientific data I/O to publish and subscribe (put/get) data when and where required. 
+
+ADIOS 2 would Transport and Transform your data as groups of self-describing variables and attributes across different media (file, wide-area-network, memory-to-memory, etc.) using a common application programming interface (API) for all transport modes. ADIOS 2 uses range from HPC supercomputers to personal computers and cloud based applications. 
+
+ADIOS 2 focuses on:
 
 1. **Performance** I/O scalability in high performance computing (HPC) applications.
 2. **Adaptability** unified interfaces to allow for several modes of transport (files, memory-to-memory)  
 3. **Ease of Use** two-level application programming interface (APIs)
-    * Full APIs for HPC applications: C++11, Fortran90, C99, Python 2 and 3 
-    * Simplified APIs for data analysis: Python 2 and 3, C++11, Matlab  
+    * Full APIs for HPC applications: C++11, Fortran 90, C 99, Python 2 and 3 
+    * Simplified High-Level APIs for data analysis: Python 2 and 3, C++11, Matlab  
     
-ADIOS2 would Transport and Transform your data as groups of self-describing variables and attributes across different media (file, wide-area-network, memory-to-memory, etc.) using a common API for all transport modes. ADIOS2 uses range from HPC supercomputers to personal computers and cloud based applications.
+In addition, ADIOS 2 APIs are based on:
 
-In addition, ADIOS2 is:
+* **MPI** ADIOS 2 is MPI-based, it can be used in non-MPI serial code.
 
-* **MPI-based** out-of-box MPI-based, can be used in non-MPI serial code.
+* **Data Groups** ADIOS 2 favors a deferred/prefetch/grouped variables transport mode by default to maximize data-per-request ratios. Sync mode, one variable at a time, is treated as the special case.
 
-* **Data Group-based** ADIOS2 favors a deferred/prefetch/grouped variables transport mode by default. Sync mode, one variable at a time, is treated as the special case.
+* **Data Steps** ADIOS 2 follow the actual production/consumption of data using an “steps” abstraction removing the need to manage extra indexing information.
 
-* **Data Step-based** ADIOS2 APIs resembles the actual production/consumption of data in “steps” of variable groups, for either streaming (memory-to-memory) or random-access (file systems) media.
-
-* **Community-oriented** ADIOS2 will always be free and open-source. We invite the community to contribute , see [Contributor's Guidelines to ADIOS 2](Contributing.md). 
-
-* **Easy to use**
+* **Data Engines** ADIOS 2 Engine abstraction allows for reusing the APIs for different transport modes removing the need for drastic code changes.
 
 ## Documentation
-Please find [ADIOS2 User Guide at readthedocs](https://adios2.readthedocs.io)
+Please find [The ADIOS 2 User Guide at readthedocs](https://adios2.readthedocs.io)
 
-## Directory layout
-* cmake - Project specific CMake modules
-* examples - ADIOS2 Examples
-* scripts - Project maintenance and development scripts
-* source - ADIOS2 source  
-    * adios2 - source directory for the ADIOS2 library to be installed under install-dir/lib/libadios2.  
-    * utils  - source directory for the binary utilities, to be installed under install-dir/bin  
-* bindings - public interface language bindings (C++11, C, Fortran, Python and Matlab)
-* testing - Tests using [gtest](https://github.com/google/googletest)
 
 ## Getting ADIOS2
 
-* From source: [Build and Install ADIOS2 with CMake v3.6 or above](http://adios2.readthedocs.io/en/latest/installation/installation.html)
+* From source: [Build and Install ADIOS 2 with CMake v3.6 or above](http://adios2.readthedocs.io/en/latest/installation/installation.html)
 
 
 * As conda packages: [https://anaconda.org/williamfgc](https://anaconda.org/williamfgc)
 
 
-  Once ADIOS2 is installed refer to: 
+  Once ADIOS 2 is installed refer to: 
 
-* [Linking ADIOS2 in your own projects](https://adios2.readthedocs.io/en/latest/using/using.html)
+* [Linking ADIOS 2 in your own projects](https://adios2.readthedocs.io/en/latest/using/using.html)
 
 
 ## Releases
@@ -74,8 +64,25 @@ If you found a bug, please open an [issue on ADIOS2 github repository](https://g
 
 ## Contributing
 
-We invite the community to contribute, see [Contributor's Guide to ADIOS 2](Contributing.md) for instructions on how to contribute. 
+We invite the community to contribute, see [Contributor's Guide to ADIOS 2](Contributing.md) for instructions on how to contribute. ADIOS 2 will always be free and open-source.
+
 
 ## License
 ADIOS >= 2.0 is licensed under the Apache License v2.0.  See the accompanying
 [Copyright.txt](Copyright.txt) for more details.
+
+
+## Directory layout
+* bindings - public application programming interface, API, language bindings (C++11, C, Fortran, Python and Matlab)
+
+* cmake - Project specific CMake modules
+
+* examples - Simple set of examples in different languages
+
+* scripts - Project maintenance and development scripts
+
+* source - Internal source code for private components 
+    * adios2 - source directory for the ADIOS2 library to be installed under install-dir/lib/libadios2.  
+    * utils  - source directory for the binary utilities, to be installed under install-dir/bin 
+
+* testing - Tests using [gtest](https://github.com/google/googletest)
