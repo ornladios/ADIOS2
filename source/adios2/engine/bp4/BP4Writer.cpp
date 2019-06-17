@@ -259,7 +259,7 @@ void BP4Writer::InitBPBuffer()
                 preMetadataIndex.m_Buffer, position, IsLittleEndian);
             // std::cout << "last step of previous run is: " << lastStep <<
             // std::endl;
-            m_BP4Serializer.m_MetadataSet.TimeStep += lastStep;
+            m_BP4Serializer.m_MetadataSet.TimeStep += static_cast<uint32_t>(lastStep);
             m_BP4Serializer.m_MetadataSet.CurrentStep += lastStep;
             // std::cout << "TimeStep is: " <<
             // m_BP4Serializer.m_MetadataSet.TimeStep << std::endl; std::cout <<
