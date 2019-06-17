@@ -128,11 +128,13 @@ exclude_patterns = [
     'utilities/adios_reorganize.rst',
     # 'utilities/utilities.rst',
     'utilities/bpls.rst',
+    'utilities/sst_conn_tool.rst',
     'engines/dataman.rst',
     'engines/insitu_mpi.rst',
     'engines/hdf5.rst',
     'engines/bp3.rst',
     'engines/sst.rst',
+    'engines/inline.rst'
     # 'engines/engines.rst',
     # 'faq/faq.rst',
 ]

@@ -210,17 +210,17 @@ the reader will see only the newest available upon BeginStep.
 This value is interpreted by only by the SST Reader engine.
 
 
-=======================  ===================== =========================================================
- **Key**                  **Value Format**      **Default** and Examples
-=======================  ===================== =========================================================
- RendezvousReaderCount      integer             **1**
- RegistrationMethod         string              **File**, Screen
- QueueLimit                 integer             **0** (no queue limits)
- QueueFullPolicy            string              **Block**, Discard
- ReserveQueueLimit          integer             **0** (no queue limits)
- DataTransport              string              **default varies by platform**, RDMA, WAN
- ControlTransport           string              **TCP**, Scalable
- NetworkInterface           string              **NULL**
- FirstTimestepPrecious      boolean             **FALSE**, true, no, yes
-AlwaysProvideLatestTimestep boolean             **FALSE**, true, no, yes
-=======================  ===================== =========================================================
+============================= ===================== ================================================
+ **Key**                        **Value Format**      **Default** and Examples
+============================= ===================== ================================================
+ RendezvousReaderCount           integer             **1**
+ RegistrationMethod              string              **File**, Screen
+ QueueLimit                      integer             **0** (no queue limits)
+ QueueFullPolicy                 string              **Block**, Discard
+ ReserveQueueLimit               integer             **0** (no queue limits)
+ DataTransport                   string              **default varies by platform**, RDMA, WAN
+ ControlTransport                string              **TCP**, Scalable
+ NetworkInterface                string              **NULL**
+ FirstTimestepPrecious           boolean             **FALSE**, true, no, yes
+ AlwaysProvideLatestTimestep     boolean             **FALSE**, true, no, yes
+============================= ===================== ================================================
