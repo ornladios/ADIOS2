@@ -17,6 +17,23 @@ module adios2_io_mod
 
 contains
 
+    subroutine adios2_in_config_file(result, io, ierr)
+        logical, intent(out):: result
+        type(adios2_io), intent(in):: io
+        integer, intent(out):: ierr
+
+        ! local
+        integer resultInt
+
+        call adios2_in_config_file_f2c(resultInt, io, ierr)
+        if(resultInt == 0) then
+            result = .false.
+        else
+            result = .true.
+        end if
+
+    end subroutine
+
     subroutine adios2_io_engine_type(type, io, ierr)
         character(len=:), allocatable, intent(out) :: type
         type(adios2_io), intent(in) :: io

@@ -15,6 +15,7 @@
      character(len=15) :: inString
      character(len=:), allocatable :: varName, param_value
      character(len=:), allocatable :: engineType
+     logical :: result
 
      ! read local value as global array
      integer(kind=4), dimension(:), allocatable :: inRanks
@@ -22,6 +23,7 @@
      ! read handlers
      integer(kind=4) :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
+
 
      ! Launch MPI
      call MPI_Init(ierr)
@@ -57,6 +59,9 @@
 
      call adios2_at_io(ioWrite, adios, "ioWrite", ierr)
      if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_at_io'
+
+     call adios2_in_config_file(result, ioWrite, ierr)
+     if( result .eqv. .true. ) stop 'Invalid ioWrite adios2_in_config_file'
 
      call adios2_set_engine(ioWrite, 'bpfile', ierr)
 
