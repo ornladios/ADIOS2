@@ -24,15 +24,15 @@ int main(int argc, char *argv[])
     int rank;
     int size;
 
-//#ifdef ADIOS2_HAVE_MPI
+    //#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-//#else
-//   rank = 0;
-//    size = 1;
-//#define MPI_COMM_WORLD 0
-//#endif
+    //#else
+    //   rank = 0;
+    //    size = 1;
+    //#define MPI_COMM_WORLD 0
+    //#endif
 
     std::vector<float> myFloats = {
         (float)10.0 * rank + 0, (float)10.0 * rank + 1, (float)10.0 * rank + 2,
@@ -48,12 +48,13 @@ int main(int argc, char *argv[])
         dataSpacesIO.SetEngine("DATASPACES");
 
         // Define variable and local size
-        auto bpFloats = dataSpacesIO.DefineVariable<float>("bpFloats", {size * Nx},
-                                                    {rank * Nx}, {Nx});
+        auto bpFloats = dataSpacesIO.DefineVariable<float>(
+            "bpFloats", {size * Nx}, {rank * Nx}, {Nx});
 
         // Create engine smart pointer to Sst Engine due to polymorphism,
         // Open returns a smart pointer to Engine containing the Derived class
-        adios2::Engine dataSpacesWriter = dataSpacesIO.Open("helloDataSpaces", adios2::Mode::Write);
+        adios2::Engine dataSpacesWriter =
+            dataSpacesIO.Open("helloDataSpaces", adios2::Mode::Write);
 
         dataSpacesWriter.BeginStep();
         dataSpacesWriter.Put<float>(bpFloats, myFloats.data());

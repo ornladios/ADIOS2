@@ -13,10 +13,10 @@
 #define ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_H_
 
 #include "adios2/ADIOSConfig.h"
-#include "mpi.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/dataspaces/ds.h"
+#include "mpi.h"
 
 namespace adios2
 {
@@ -30,7 +30,7 @@ class DataSpacesReader : public Engine
 
 public:
     DataSpacesReader(IO &adios, const std::string &name, const Mode openMode,
-    		MPI_Comm mpiComm);
+                     MPI_Comm mpiComm);
 
     ~DataSpacesReader();
     StepStatus BeginStep();
@@ -68,25 +68,16 @@ private:
                 {14, "long double"},
                 {15, "complex float"},
                 {16, "complex double"},
-				{17, "string"},
+                                {17, "string"},
         };
         */
-    const std::map<int, std::string>ds_to_varType = {
-                    {1, "int8_t"},
-                    {2, "uint8_t"},
-                    {3, "int16_t"},
-                    {4, "uint16_t"},
-                    {5, "int32_t"},
-                    {6, "uint32_t"},
-                    {7, "int64_t"},
-                    {8, "uint64_t"},
-                    {9, "float"},
-                    {10, "double"},
-                    {11, "long double"},
-                    {12, "complex float"},
-                    {13, "complex double"},
-    				{14, "string"},
-            };
+    const std::map<int, std::string> ds_to_varType = {
+        {1, "int8_t"},          {2, "uint8_t"},      {3, "int16_t"},
+        {4, "uint16_t"},        {5, "int32_t"},      {6, "uint32_t"},
+        {7, "int64_t"},         {8, "uint64_t"},     {9, "float"},
+        {10, "double"},         {11, "long double"}, {12, "complex float"},
+        {13, "complex double"}, {14, "string"},
+    };
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -100,25 +91,22 @@ private:
     void GetSyncCommon(Variable<T> &variable, T *data);
 
     template <class T>
-        void GetDeferredCommon(Variable<T> &variable, T *data);
+    void GetDeferredCommon(Variable<T> &variable, T *data);
 
     template <class T>
     void AddVar(core::IO &io, std::string const &name, Dims shape);
 
-    //template <class T>
-      //  void DspacesRead(Variable<T> &variable, T *data);
+    // template <class T>
+    //  void DspacesRead(Variable<T> &variable, T *data);
 
     template <class T>
     void ReadDsData(Variable<T> &variable, T *data, int version);
 
     std::vector<std::string> m_DeferredStack;
-
 };
 
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
-
-
 
 #endif /* ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_H_ */

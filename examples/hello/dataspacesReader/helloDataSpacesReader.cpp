@@ -27,33 +27,34 @@ int main(int argc, char *argv[])
     int rank;
     int size;
 
-//#ifdef ADIOS2_HAVE_MPI
+    //#ifdef ADIOS2_HAVE_MPI
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-//#else
+    //#else
 
-    //rank = 0;
-    //size = 1;
-//#endif
+    // rank = 0;
+    // size = 1;
+    //#endif
 
     std::vector<float> myFloats(10);
 
     try
     {
-//#ifdef ADIOS2_HAVE_MPI
+        //#ifdef ADIOS2_HAVE_MPI
         adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-//#else
-//        adios2::ADIOS adios(adios2::DebugON);
-//#endif
+        //#else
+        //        adios2::ADIOS adios(adios2::DebugON);
+        //#endif
 
         adios2::IO dataSpacesIO = adios.DeclareIO("myIO");
         dataSpacesIO.SetEngine("DATASPACES");
 
-        adios2::Engine dataSpacesReader = dataSpacesIO.Open("helloDataSpaces", adios2::Mode::Read);
+        adios2::Engine dataSpacesReader =
+            dataSpacesIO.Open("helloDataSpaces", adios2::Mode::Read);
         dataSpacesReader.BeginStep();
         adios2::Variable<float> bpFloats =
-        		dataSpacesIO.InquireVariable<float>("bpFloats");
+            dataSpacesIO.InquireVariable<float>("bpFloats");
         std::cout << "Incoming variable is of size " << bpFloats.Shape()[0]
                   << "\n";
         const std::size_t total_size = bpFloats.Shape()[0];
