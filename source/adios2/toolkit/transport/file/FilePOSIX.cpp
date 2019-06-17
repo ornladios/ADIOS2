@@ -55,8 +55,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode)
     case (Mode::Append):
         ProfilerStart("open");
         // m_FileDescriptor = open(m_Name.c_str(), O_RDWR);
-        m_FileDescriptor =
-            open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+        m_FileDescriptor = open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
         lseek(m_FileDescriptor, 0, SEEK_END);
         ProfilerStop("open");
         break;
@@ -236,8 +235,9 @@ void FilePOSIX::SeekToEnd()
     const int status = lseek(m_FileDescriptor, 0, SEEK_END);
     if (status == -1)
     {
-        throw std::ios_base::failure("ERROR: couldn't seek to the end of file " + m_Name +
-                                     ", in call to POSIX IO lseek\n");
+        throw std::ios_base::failure(
+            "ERROR: couldn't seek to the end of file " + m_Name +
+            ", in call to POSIX IO lseek\n");
     }
 }
 
@@ -246,8 +246,9 @@ void FilePOSIX::SeekToBegin()
     const int status = lseek(m_FileDescriptor, 0, SEEK_SET);
     if (status == -1)
     {
-        throw std::ios_base::failure("ERROR: couldn't seek to the begin of file " + m_Name +
-                                     ", in call to POSIX IO lseek\n");
+        throw std::ios_base::failure(
+            "ERROR: couldn't seek to the begin of file " + m_Name +
+            ", in call to POSIX IO lseek\n");
     }
 }
 

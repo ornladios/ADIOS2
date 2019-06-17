@@ -35,7 +35,8 @@ inline void BP4Serializer::PutVariableMetadata(
         }
         else
         {
-            offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition+m_PreDataFileLength);
+            offset = static_cast<uint64_t>(m_Data.m_AbsolutePosition +
+                                           m_PreDataFileLength);
         }
     };
 
@@ -144,7 +145,8 @@ BP4Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
     helper::CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
-    stats.PayloadOffset = absolutePosition + position - attributeLengthPosition+m_PreDataFileLength;
+    stats.PayloadOffset = absolutePosition + position -
+                          attributeLengthPosition + m_PreDataFileLength;
 
     if (dataType == type_string)
     {
@@ -191,7 +193,8 @@ void BP4Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
     helper::CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
-    stats.PayloadOffset = absolutePosition + position - attributeLengthPosition+m_PreDataFileLength;
+    stats.PayloadOffset = absolutePosition + position -
+                          attributeLengthPosition + m_PreDataFileLength;
 
     const uint32_t dataSize =
         static_cast<uint32_t>(attribute.m_Elements * sizeof(T));

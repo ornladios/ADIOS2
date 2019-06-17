@@ -123,7 +123,7 @@ public:
      * @param size
      */
     void WriteFileAt(const char *buffer, const size_t size, const size_t start,
-                    const int transportIndex = -1);
+                     const int transportIndex = -1);
 
     size_t GetFileSize(const size_t transportIndex = 0) const;
 

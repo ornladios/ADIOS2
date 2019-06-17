@@ -49,8 +49,8 @@ void FileStdio::Open(const std::string &name, const Mode openMode)
         m_File = std::fopen(name.c_str(), "wb");
         break;
     case (Mode::Append):
-         m_File = std::fopen(name.c_str(), "rwb");
-        //m_File = std::fopen(name.c_str(), "a+b");
+        m_File = std::fopen(name.c_str(), "rwb");
+        // m_File = std::fopen(name.c_str(), "a+b");
         std::fseek(m_File, 0, SEEK_END);
         break;
     case (Mode::Read):
@@ -240,23 +240,23 @@ void FileStdio::CheckFile(const std::string hint) const
 
 void FileStdio::SeekToEnd()
 {
-    const auto status =
-            std::fseek(m_File, 0, SEEK_END);
+    const auto status = std::fseek(m_File, 0, SEEK_END);
     if (status == -1)
     {
-        throw std::ios_base::failure("ERROR: couldn't seek to the end of file " + m_Name +
-                                     ", in call to stdio fseek\n");
+        throw std::ios_base::failure(
+            "ERROR: couldn't seek to the end of file " + m_Name +
+            ", in call to stdio fseek\n");
     }
 }
 
 void FileStdio::SeekToBegin()
 {
-    const auto status =
-            std::fseek(m_File, 0, SEEK_SET);
+    const auto status = std::fseek(m_File, 0, SEEK_SET);
     if (status == -1)
     {
-        throw std::ios_base::failure("ERROR: couldn't seek to the begin of file " + m_Name +
-                                     ", in call to stdio fseek\n");
+        throw std::ios_base::failure(
+            "ERROR: couldn't seek to the begin of file " + m_Name +
+            ", in call to stdio fseek\n");
     }
 }
 
