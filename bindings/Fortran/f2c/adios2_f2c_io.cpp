@@ -21,6 +21,18 @@
 extern "C" {
 #endif
 
+void FC_GLOBAL(adios2_in_config_file_f2c,
+               ADIOS2_IN_CONFIG_FILE_F2C)(int *result, const adios2_io **io,
+                                          int *ierr)
+{
+    adios2_bool resultC;
+    *ierr = static_cast<int>(adios2_in_config_file(&resultC, *io));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *result = (resultC == adios2_true) ? 1 : 0;
+    }
+}
+
 void FC_GLOBAL(adios2_set_engine_f2c,
                ADIOS2_SET_ENGINE_F2C)(adios2_io **io, const char *engine_type,
                                       int *ierr)
