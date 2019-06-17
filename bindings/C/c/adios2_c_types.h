@@ -15,7 +15,7 @@
 #include <stddef.h> // size_t
 #include <stdint.h> // uint64_t
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 #ifdef __cplusplus
 extern "C" {

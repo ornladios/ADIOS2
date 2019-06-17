@@ -13,7 +13,7 @@
 #include "stdint.h"
 #include "stdio.h"
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 // If MPI is available, use the types and constants from that implementation,
 // rather than our fake ones

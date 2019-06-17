@@ -17,8 +17,8 @@
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosMPIFunctions.h"
 #include "adios2/helper/adiosString.h"

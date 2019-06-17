@@ -14,8 +14,8 @@
 #include "Types.h"
 #include "Variable.h"
 
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {

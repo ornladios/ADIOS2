@@ -3,7 +3,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
 #include <pthread.h>

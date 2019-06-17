@@ -13,7 +13,7 @@
 
 #include "Operator.h"
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {

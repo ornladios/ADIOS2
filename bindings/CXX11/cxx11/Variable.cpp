@@ -10,7 +10,7 @@
 #include "Variable.h"
 #include "Variable.tcc"
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //CheckNullptr
 

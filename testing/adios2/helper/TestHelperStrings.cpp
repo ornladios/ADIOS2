@@ -11,7 +11,7 @@
 #include <stdexcept>
 
 #include <adios2.h>
-#include <adios2/ADIOSTypes.h>
+#include <adios2/common/ADIOSTypes.h>
 #include <adios2/helper/adiosString.h>
 
 #include <gtest/gtest.h>

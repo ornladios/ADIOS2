@@ -11,8 +11,8 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_OPERATOR_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_OPERATOR_H_
 
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {

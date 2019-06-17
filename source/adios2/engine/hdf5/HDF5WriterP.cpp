@@ -10,7 +10,7 @@
 
 #include "HDF5WriterP.h"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2

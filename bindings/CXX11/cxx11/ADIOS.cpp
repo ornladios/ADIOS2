@@ -8,7 +8,7 @@
 
 #include "ADIOS.h"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckForNullptr

@@ -19,7 +19,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosType.h"
 

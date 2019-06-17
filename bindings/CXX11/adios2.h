@@ -11,9 +11,9 @@
 #ifndef ADIOS2_BINDINGS_CXX11_H_
 #define ADIOS2_BINDINGS_CXX11_H_
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 
 #include "cxx11/ADIOS.h"
 #include "cxx11/Attribute.h"

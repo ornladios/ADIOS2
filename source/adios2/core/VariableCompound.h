@@ -13,7 +13,7 @@
 
 #include "VariableBase.h"
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 
 namespace adios2
 {

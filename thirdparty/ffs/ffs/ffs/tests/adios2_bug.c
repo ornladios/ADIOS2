@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <ffs.h>
 

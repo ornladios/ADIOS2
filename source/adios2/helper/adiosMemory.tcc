@@ -13,7 +13,7 @@
 
 #include "adiosMemory.h"
 
-#include "ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 
 namespace adios2
 {

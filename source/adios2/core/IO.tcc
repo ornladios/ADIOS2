@@ -18,8 +18,8 @@
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetType<T>
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 

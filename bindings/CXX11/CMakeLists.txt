@@ -29,7 +29,7 @@ install(
 
 install(
   FILES cxx11/fstream/ADIOS2fstream.h 
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cxx11/fstream
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11/fstream
 )
 
 install(
@@ -41,5 +41,5 @@ install(
         cxx11/Engine.h
         cxx11/Operator.h
         cxx11/Types.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/cxx11
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11
 )

@@ -13,7 +13,7 @@
 #include <algorithm> // std::transform
 #include <iostream>  //std::cout Warnings
 
-#include "adios2/ADIOSTypes.h"            //PathSeparator
+#include "adios2/common/ADIOSTypes.h"     //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
 
 #include "adios2/toolkit/format/bpOperation/compress/BPBZIP2.h"

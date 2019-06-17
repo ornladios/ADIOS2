@@ -13,8 +13,8 @@
 
 #include <sstream>
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 
 #include "adios2/engine/bp3/BP3Reader.h"
 #include "adios2/engine/bp3/BP3Writer.h"

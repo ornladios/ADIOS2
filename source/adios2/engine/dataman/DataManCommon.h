@@ -11,8 +11,8 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANCOMMON_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANCOMMON_H_
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"

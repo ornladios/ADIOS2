@@ -11,7 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2

@@ -14,7 +14,7 @@
 
 #include <string.h> //strcpy
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef __cplusplus
