@@ -40,7 +40,7 @@ public:
     const bool m_DebugMode = true;
 
     /** Get the communicator passed to constructor for parallel case.  */
-    MPI_Comm GetComm() const { return m_Comm; }
+    helper::Comm const &GetComm() const { return m_Comm; }
 
     /** Changed by language bindings in constructor */
     const std::string m_HostLanguage = "C++";
