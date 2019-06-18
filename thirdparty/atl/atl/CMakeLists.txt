@@ -3,15 +3,9 @@ cmake_minimum_required(VERSION 3.0)
 project(ATL VERSION 2.2.1 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/atl
   CACHE STRING "Installation CMake subdirectory")
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -78,31 +72,42 @@ mark_as_advanced(ATL_LIBRARY_PREFIX)
 
 add_library(atl atom.c attr.c lookup3.c tclHash.c)
 add_library(atl::atl ALIAS atl)
+option(ATL_INSTALL_HEADERS "Install ATL header files" ON)
+mark_as_advanced(ATL_INSTALL_HEADERS)
 set_target_properties(atl PROPERTIES
   OUTPUT_NAME ${ATL_LIBRARY_PREFIX}atl
   VERSION ${ATL_VERSION}
-  SOVERSION ${ATL_VERSION_MAJOR}
-  PUBLIC_HEADER atl.h)
+  SOVERSION ${ATL_VERSION_MAJOR})
+if(ATL_INSTALL_HEADERS)
+  set_target_properties(atl PROPERTIES
+    PUBLIC_HEADER atl.h)
+endif()
 target_include_directories(atl PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 # Setup pkgconfig
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/atl.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/atl.pc
-  @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/atl.pc
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/atl-config.in
-  ${CMAKE_CURRENT_BINARY_DIR}/atl-config
-  @ONLY)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/atl-config
-  DESTINATION "${CMAKE_INSTALL_BINDIR}")
+option(ATL_INSTALL_PKGCONFIG "Install ATL pkgconfig files" ON)
+mark_as_advanced(ATL_INSTALL_PKGCONFIG)
+if(ATL_INSTALL_PKGCONFIG)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/atl.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/atl.pc
+    @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/atl.pc
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/atl-config.in
+    ${CMAKE_CURRENT_BINARY_DIR}/atl-config
+    @ONLY)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/atl-config
+    DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
 
-install(FILES atl.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+if(ATL_INSTALL_HEADERS)
+  install(FILES atl.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+endif()
 install(TARGETS atl
   # IMPORTANT: Add the foo library to the "export-set"
   EXPORT atl-targets
