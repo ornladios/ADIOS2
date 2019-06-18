@@ -27,15 +27,15 @@ namespace engine
 {
 
 SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("SstReader", io, name, mode, mpiComm)
+                     helper::Comm comm)
+: Engine("SstReader", io, name, mode, std::move(comm))
 {
     char *cstr = new char[name.length() + 1];
     std::strcpy(cstr, name.c_str());
 
     Init();
 
-    m_Input = SstReaderOpen(cstr, &Params, mpiComm);
+    m_Input = SstReaderOpen(cstr, &Params, m_Comm);
     if (!m_Input)
     {
         throw std::runtime_error(

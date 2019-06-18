@@ -16,6 +16,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
@@ -33,7 +34,7 @@ class SscReader : public Engine
 {
 public:
     SscReader(IO &adios, const std::string &name, const Mode mode,
-              MPI_Comm mpiComm);
+              helper::Comm comm);
 
     ~SscReader();
     StepStatus BeginStep(

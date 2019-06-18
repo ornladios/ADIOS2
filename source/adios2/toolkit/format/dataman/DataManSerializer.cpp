@@ -21,13 +21,14 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(MPI_Comm mpiComm, const bool isRowMajor)
-: m_MpiComm(mpiComm), m_IsRowMajor(isRowMajor),
+DataManSerializer::DataManSerializer(helper::Comm const &comm,
+                                     const bool isRowMajor)
+: m_Comm(comm), m_IsRowMajor(isRowMajor),
   m_IsLittleEndian(helper::IsLittleEndian()),
   m_DeferredRequestsToSend(std::make_shared<DeferredRequestMap>())
 {
-    MPI_Comm_size(m_MpiComm, &m_MpiSize);
-    MPI_Comm_rank(m_MpiComm, &m_MpiRank);
+    MPI_Comm_size(m_Comm, &m_MpiSize);
+    MPI_Comm_rank(m_Comm, &m_MpiRank);
 }
 
 void DataManSerializer::NewWriterBuffer(size_t bufferSize)
@@ -73,7 +74,7 @@ void DataManSerializer::AggregateMetadata()
     auto localJsonPack = SerializeJson(m_MetadataJson);
     unsigned int size = localJsonPack->size();
     unsigned int maxSize;
-    MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, m_MpiComm);
+    MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, m_Comm);
     maxSize += sizeof(uint64_t);
     localJsonPack->resize(maxSize, '\0');
     *(reinterpret_cast<uint64_t *>(localJsonPack->data() +
@@ -82,7 +83,7 @@ void DataManSerializer::AggregateMetadata()
 
     std::vector<char> globalJsonStr(m_MpiSize * maxSize);
     MPI_Allgather(localJsonPack->data(), maxSize, MPI_CHAR,
-                  globalJsonStr.data(), maxSize, MPI_CHAR, m_MpiComm);
+                  globalJsonStr.data(), maxSize, MPI_CHAR, m_Comm);
 
     nlohmann::json aggMetadata;
 
@@ -260,7 +261,8 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t stepRequested,
     return ret;
 }
 
-void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
+void DataManSerializer::PutAggregatedMetadata(VecPtr input,
+                                              helper::Comm const &comm)
 {
     TAU_SCOPED_TIMER_FUNC();
     if (input == nullptr)
@@ -271,7 +273,7 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
         return;
     }
 
-    helper::BroadcastVector(*input, mpiComm);
+    helper::BroadcastVector(*input, comm);
 
     if (input->size() > 0)
     {

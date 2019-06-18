@@ -29,19 +29,19 @@ namespace engine
 {
 
 InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
-                                 const Mode mode, MPI_Comm mpiComm)
-: Engine("InSituMPIReader", io, name, mode, mpiComm),
-  m_BP3Deserializer(mpiComm, m_DebugMode)
+                                 const Mode mode, helper::Comm comm)
+: Engine("InSituMPIReader", io, name, mode, std::move(comm)),
+  m_BP3Deserializer(m_Comm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("InSituMPIReader::Open");
     m_EndMessage = " in call to IO Open InSituMPIReader " + m_Name + "\n";
     Init();
 
-    m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, false, m_CommWorld);
+    m_RankAllPeers = insitumpi::FindPeers(m_Comm, m_Name, false, m_CommWorld);
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
-    MPI_Comm_rank(mpiComm, &m_ReaderRank);
-    MPI_Comm_size(mpiComm, &m_ReaderNproc);
+    MPI_Comm_rank(m_Comm, &m_ReaderRank);
+    MPI_Comm_size(m_Comm, &m_ReaderNproc);
     m_RankDirectPeers =
         insitumpi::AssignPeers(m_ReaderRank, m_ReaderNproc, m_RankAllPeers);
     if (m_Verbosity == 5)

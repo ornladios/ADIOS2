@@ -26,14 +26,14 @@ namespace engine
 {
 
 SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("SscReader", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, helper::IsRowMajor(io.m_HostLanguage)),
+                     helper::Comm comm)
+: Engine("SscReader", io, name, mode, std::move(comm)),
+  m_DataManSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)),
   m_RepliedMetadata(std::make_shared<std::vector<char>>())
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    MPI_Comm_rank(mpiComm, &m_MpiRank);
+    MPI_Comm_rank(m_Comm, &m_MpiRank);
     srand(time(NULL));
 
     // initialize parameters from IO

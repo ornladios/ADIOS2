@@ -24,8 +24,8 @@ namespace engine
 {
 
 SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("SstWriter", io, name, mode, mpiComm)
+                     helper::Comm comm)
+: Engine("SstWriter", io, name, mode, std::move(comm))
 {
     auto AssembleMetadata = [](void *writer, int CohortSize,
                                struct _SstData * /*PerRankMetadata*/,
@@ -109,7 +109,7 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Output = SstWriterOpen(name.c_str(), &Params, mpiComm);
+    m_Output = SstWriterOpen(name.c_str(), &Params, m_Comm);
 
     if (m_MarshalMethod == SstMarshalBP)
     {

@@ -24,8 +24,8 @@ namespace engine
 {
 
 DataSpacesReader::DataSpacesReader(IO &io, const std::string &name,
-                                   const Mode mode, MPI_Comm mpiComm)
-: Engine("DataSpacesReader", io, name, mode, mpiComm)
+                                   const Mode mode, helper::Comm comm)
+: Engine("DataSpacesReader", io, name, mode, std::move(comm))
 {
 
     f_Name = name;
@@ -52,6 +52,7 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name,
     {
         m_ProvideLatest = false;
     }
+    MPI_Comm mpiComm = m_Comm;
     ret = adios_read_dataspaces_init(&mpiComm, &m_data);
     if (ret < 0)
     {

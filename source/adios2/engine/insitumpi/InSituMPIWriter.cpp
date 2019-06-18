@@ -29,24 +29,24 @@ namespace engine
 {
 
 InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
-                                 const Mode mode, MPI_Comm mpiComm)
-: Engine("InSituMPIWriter", io, name, mode, mpiComm),
-  m_BP3Serializer(mpiComm, m_DebugMode)
+                                 const Mode mode, helper::Comm comm)
+: Engine("InSituMPIWriter", io, name, mode, std::move(comm)),
+  m_BP3Serializer(m_Comm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("InSituMPIWriter::Open");
     m_EndMessage = " in call to InSituMPIWriter " + m_Name + " Open\n";
     Init();
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 
-    m_RankAllPeers = insitumpi::FindPeers(mpiComm, m_Name, true, m_CommWorld);
+    m_RankAllPeers = insitumpi::FindPeers(m_Comm, m_Name, true, m_CommWorld);
     for (int i = 0; i < m_RankAllPeers.size(); i++)
     {
         m_RankToPeerID[m_RankAllPeers[i]] = i;
     }
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
-    MPI_Comm_rank(mpiComm, &m_WriterRank);
-    MPI_Comm_size(mpiComm, &m_WriterNproc);
+    MPI_Comm_rank(m_Comm, &m_WriterRank);
+    MPI_Comm_size(m_Comm, &m_WriterNproc);
     m_RankDirectPeers =
         insitumpi::AssignPeers(m_WriterRank, m_WriterNproc, m_RankAllPeers);
     int primaryContact = insitumpi::ConnectDirectPeers(

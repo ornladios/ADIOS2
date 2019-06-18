@@ -25,12 +25,11 @@ namespace engine
 {
 
 BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("BP4Reader", io, name, mode, mpiComm),
-  m_BP4Deserializer(mpiComm, m_DebugMode),
-  m_MDFileManager(mpiComm, m_DebugMode),
-  m_DataFileManager(mpiComm, m_DebugMode),
-  m_MDIndexFileManager(mpiComm, m_DebugMode)
+                     helper::Comm comm)
+: Engine("BP4Reader", io, name, mode, std::move(comm)),
+  m_BP4Deserializer(m_Comm, m_DebugMode), m_MDFileManager(m_Comm, m_DebugMode),
+  m_DataFileManager(m_Comm, m_DebugMode),
+  m_MDIndexFileManager(m_Comm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("BP4Reader::Open");
     Init();

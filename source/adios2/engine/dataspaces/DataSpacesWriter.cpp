@@ -25,8 +25,8 @@ namespace engine
 {
 
 DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name,
-                                   const Mode mode, MPI_Comm mpiComm)
-: Engine("DataSpacesWriter", io, name, mode, mpiComm)
+                                   const Mode mode, helper::Comm comm)
+: Engine("DataSpacesWriter", io, name, mode, std::move(comm))
 {
 
     f_Name = name;
@@ -40,6 +40,7 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name,
     {
         m_data.appid = 0;
     }
+    MPI_Comm mpiComm = m_Comm;
     ret = adios_dataspaces_init(&mpiComm, &m_data);
     if (ret < 0)
         fprintf(stderr, "Unable to connect to DataSpaces. Err: %d\n", ret);

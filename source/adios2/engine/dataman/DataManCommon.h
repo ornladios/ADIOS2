@@ -14,6 +14,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
@@ -32,7 +33,7 @@ class DataManCommon : public Engine
 
 public:
     DataManCommon(const std::string engineType, IO &io, const std::string &name,
-                  const Mode mode, MPI_Comm mpiComm);
+                  const Mode mode, helper::Comm comm);
     virtual ~DataManCommon();
 
 protected:

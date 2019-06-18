@@ -14,6 +14,8 @@
 
 #include "DataManCommon.h"
 
+#include "adios2/helper/adiosComm.h"
+
 namespace adios2
 {
 namespace core
@@ -26,7 +28,7 @@ class DataManReader : public DataManCommon
 
 public:
     DataManReader(IO &io, const std::string &name, const Mode mode,
-                  MPI_Comm mpiComm);
+                  helper::Comm comm);
     virtual ~DataManReader();
     StepStatus BeginStep(StepMode stepMode, const float timeoutSeconds) final;
     size_t CurrentStep() const final;

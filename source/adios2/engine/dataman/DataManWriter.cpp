@@ -24,8 +24,8 @@ namespace engine
 {
 
 DataManWriter::DataManWriter(IO &io, const std::string &name,
-                             const Mode openMode, MPI_Comm mpiComm)
-: DataManCommon("DataManWriter", io, name, openMode, mpiComm)
+                             const Mode openMode, helper::Comm comm)
+: DataManCommon("DataManWriter", io, name, openMode, std::move(comm))
 {
     if (m_StagingMode == "wide")
     {

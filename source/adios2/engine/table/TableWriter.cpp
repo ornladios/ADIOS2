@@ -24,15 +24,15 @@ namespace engine
 {
 
 TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
-                         MPI_Comm mpiComm)
-: Engine("TableWriter", io, name, mode, mpiComm),
+                         helper::Comm comm)
+: Engine("TableWriter", io, name, mode, std::move(comm)),
   m_IsRowMajor(helper::IsRowMajor(m_IO.m_HostLanguage)),
   m_Deserializer(m_Comm, m_IsRowMajor),
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
-    MPI_Comm_rank(mpiComm, &m_MpiRank);
-    MPI_Comm_size(mpiComm, &m_MpiSize);
+    MPI_Comm_rank(m_Comm, &m_MpiRank);
+    MPI_Comm_size(m_Comm, &m_MpiSize);
     Init();
 }
 

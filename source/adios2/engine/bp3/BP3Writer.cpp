@@ -26,10 +26,10 @@ namespace engine
 {
 
 BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("BP3", io, name, mode, mpiComm), m_BP3Serializer(mpiComm, m_DebugMode),
-  m_FileDataManager(mpiComm, m_DebugMode),
-  m_FileMetadataManager(mpiComm, m_DebugMode)
+                     helper::Comm comm)
+: Engine("BP3", io, name, mode, std::move(comm)),
+  m_BP3Serializer(m_Comm, m_DebugMode), m_FileDataManager(m_Comm, m_DebugMode),
+  m_FileMetadataManager(m_Comm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("BP3Writer::Open");
     m_IO.m_ReadStreaming = false;

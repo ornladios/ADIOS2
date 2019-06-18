@@ -16,8 +16,8 @@ struct NullCoreWriter::NullCoreWriterImpl
 };
 
 NullCoreWriter::NullCoreWriter(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm mpiComm)
-: Engine("NullCoreWriter", io, name, mode, mpiComm),
+                               helper::Comm comm)
+: Engine("NullCoreWriter", io, name, mode, std::move(comm)),
   Impl(new NullCoreWriter::NullCoreWriterImpl)
 {
 }

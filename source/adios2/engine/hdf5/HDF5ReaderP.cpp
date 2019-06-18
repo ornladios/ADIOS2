@@ -24,8 +24,9 @@ namespace engine
 {
 
 HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
-                         MPI_Comm mpiComm)
-: Engine("HDF5Reader", io, name, openMode, mpiComm), m_H5File(io.m_DebugMode)
+                         helper::Comm comm)
+: Engine("HDF5Reader", io, name, openMode, std::move(comm)),
+  m_H5File(io.m_DebugMode)
 {
     m_EndMessage = ", in call to IO HDF5Reader Open " + m_Name + "\n";
     Init();

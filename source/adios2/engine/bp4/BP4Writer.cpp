@@ -29,12 +29,11 @@ namespace engine
 {
 
 BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("BP4Writer", io, name, mode, mpiComm),
-  m_BP4Serializer(mpiComm, m_DebugMode),
-  m_FileDataManager(mpiComm, m_DebugMode),
-  m_FileMetadataManager(mpiComm, m_DebugMode),
-  m_FileMetadataIndexManager(mpiComm, m_DebugMode)
+                     helper::Comm comm)
+: Engine("BP4Writer", io, name, mode, std::move(comm)),
+  m_BP4Serializer(m_Comm, m_DebugMode), m_FileDataManager(m_Comm, m_DebugMode),
+  m_FileMetadataManager(m_Comm, m_DebugMode),
+  m_FileMetadataIndexManager(m_Comm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("BP4Writer::Open");
     m_IO.m_ReadStreaming = false;

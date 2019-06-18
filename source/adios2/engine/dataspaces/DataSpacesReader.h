@@ -15,6 +15,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/dataspaces/ds.h"
 #include "mpi.h"
 
@@ -30,7 +31,7 @@ class DataSpacesReader : public Engine
 
 public:
     DataSpacesReader(IO &adios, const std::string &name, const Mode openMode,
-                     MPI_Comm mpiComm);
+                     helper::Comm comm);
 
     ~DataSpacesReader();
     StepStatus BeginStep();

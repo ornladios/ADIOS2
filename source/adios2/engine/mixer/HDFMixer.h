@@ -26,6 +26,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 //#include "adios2/toolkit/capsule/heap/STLVector.h"
 #include "adios2/toolkit/transportman/TransportMan.h" //transport::TransportsMan
@@ -47,10 +48,10 @@ public:
      * Constructor for file Writer in H5 format
      * @param name unique name given to the engine
      * @param openMode w (supported), r, a from OpenMode in ADIOSTypes.h
-     * @param mpiComm MPI communicator
+     * @param comm multi-process communicator
      */
     HDFMixer(IO &io, const std::string &name, const Mode openMode,
-             MPI_Comm mpiComm);
+             helper::Comm comm);
 
     ~HDFMixer();
 

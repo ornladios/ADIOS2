@@ -23,8 +23,8 @@ namespace engine
 {
 
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
-                             MPI_Comm mpiComm)
-: DataManCommon("DataManReader", io, name, mode, mpiComm)
+                             helper::Comm comm)
+: DataManCommon("DataManReader", io, name, mode, std::move(comm))
 {
     GetParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
                  m_ProvideLatest);

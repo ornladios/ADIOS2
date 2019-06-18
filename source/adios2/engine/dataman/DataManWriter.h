@@ -13,6 +13,7 @@
 #define ADIOS2_ENGINE_DATAMAN_DATAMAN_WRITER_H_
 
 #include "DataManCommon.h"
+#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {
@@ -26,7 +27,7 @@ class DataManWriter : public DataManCommon
 
 public:
     DataManWriter(IO &io, const std::string &name, const Mode mode,
-                  MPI_Comm mpiComm);
+                  helper::Comm comm);
     virtual ~DataManWriter();
 
     StepStatus BeginStep(StepMode mode,
