@@ -125,7 +125,7 @@ public:
         bool HasSubFiles = false;
     };
 
-    MPI_Comm m_MPIComm;  ///< MPI communicator from Engine
+    MPI_Comm m_Comm;     ///< MPI communicator from Engine
     int m_RankMPI = 0;   ///< current MPI rank process
     int m_SizeMPI = 1;   ///< current MPI processes size
     int m_Processes = 1; ///< number of aggregated MPI processes

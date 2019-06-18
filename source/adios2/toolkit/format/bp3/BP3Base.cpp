@@ -49,10 +49,10 @@ const std::map<int, std::string> BP3Base::m_TransformTypesToNames = {
 };
 
 BP3Base::BP3Base(MPI_Comm mpiComm, const bool debugMode)
-: m_MPIComm(mpiComm), m_DebugMode(debugMode)
+: m_Comm(mpiComm), m_DebugMode(debugMode)
 {
-    SMPI_Comm_rank(m_MPIComm, &m_RankMPI);
-    SMPI_Comm_size(m_MPIComm, &m_SizeMPI);
+    SMPI_Comm_rank(m_Comm, &m_RankMPI);
+    SMPI_Comm_size(m_Comm, &m_SizeMPI);
     m_Profiler.IsActive = true; // default
 }
 
@@ -857,7 +857,7 @@ void BP3Base::InitParameterSubStreams(const std::string value)
 
     if (subStreams < m_SizeMPI)
     {
-        m_Aggregator.Init(subStreams, m_MPIComm);
+        m_Aggregator.Init(subStreams, m_Comm);
     }
 }
 

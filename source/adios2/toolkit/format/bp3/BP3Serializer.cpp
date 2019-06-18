@@ -1417,7 +1417,7 @@ BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
     // Gather sizes
     const size_t rankLogSize = rankLog.size();
     std::vector<size_t> rankLogsSizes =
-        helper::GatherValues(rankLogSize, m_MPIComm);
+        helper::GatherValues(rankLogSize, m_Comm);
 
     // Gatherv JSON per rank
     std::vector<char> profilingJSON(3);
@@ -1438,7 +1438,7 @@ BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
 
     helper::GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
                           rankLogsSizes.size(), &profilingJSON[position],
-                          m_MPIComm);
+                          m_Comm);
 
     if (m_RankMPI == 0) // add footer to close JSON
     {
