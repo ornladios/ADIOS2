@@ -141,6 +141,8 @@ contains
                        adios2_type
 
             ierr = adios2_error_invalid_argument
+        else
+            ierr = adios2_error_none
         end if
 
     end subroutine
