@@ -359,7 +359,7 @@ INT_CMget_contact_list(CManager cm)
 extern attr_list
 INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
 {
-    char *chosen_transport = NULL, *chosen_net = NULL, *chosen_interface;
+    char *chosen_transport = NULL, *chosen_net = NULL, *chosen_interface = NULL;
     char *freeable_transport = NULL;
     int i = 0;
 
@@ -381,16 +381,19 @@ INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
 	CMadd_ref_attr_list(cm, cm->contact_lists[0]);
 	return cm->contact_lists[0];
     }
-    /* specific transport chosen */
+    /* specific transport or interface chosen */
     i = 0;
     while (cm->contact_lists && (cm->contact_lists[i] != NULL)) {
-	char *this_transport = NULL, *this_postfix = NULL, *this_interface;
+	char *this_transport = NULL, *this_postfix = NULL, *this_interface = NULL;
 
 	get_string_attr(cm->contact_lists[i], CM_TRANSPORT, &this_transport);
 	get_string_attr(cm->contact_lists[i], CM_NETWORK_POSTFIX, &this_postfix);
 	get_string_attr(cm->contact_lists[i], CM_IP_INTERFACE, &this_interface);
 	if (this_transport == NULL) {
 	    this_transport = "sockets";
+	}
+	if (chosen_transport == NULL) {
+	    chosen_transport = "sockets";
 	}
 	if (strcmp(this_transport, chosen_transport) == 0) {
 	    if ((chosen_net != NULL) || (this_postfix != NULL)) {
@@ -436,6 +439,9 @@ INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
 	get_string_attr(cm->contact_lists[i], CM_IP_INTERFACE, &this_interface);
 	if (this_transport == NULL) {
 	    this_transport = "sockets";
+	}
+	if (chosen_transport == NULL) {
+	    chosen_transport = "sockets";
 	}
 	if (strcmp(this_transport, chosen_transport) == 0) {
 	    if ((chosen_net != NULL) || (this_postfix != NULL)) {
