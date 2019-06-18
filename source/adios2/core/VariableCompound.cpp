@@ -11,7 +11,7 @@
 #include "VariableCompound.h"
 #include "VariableCompound.tcc"
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 namespace adios2
 {

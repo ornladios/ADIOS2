@@ -10,7 +10,7 @@
 
 #include "Attribute.h"
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/helper/adiosFunctions.h"
 

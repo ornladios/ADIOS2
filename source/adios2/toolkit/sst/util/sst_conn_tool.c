@@ -43,7 +43,7 @@ to any interfaces.
 #include <sys/sockio.h>
 #endif
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
 #include <pthread.h>

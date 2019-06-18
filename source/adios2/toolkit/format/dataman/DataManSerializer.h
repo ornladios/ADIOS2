@@ -11,7 +11,7 @@
 #ifndef ADIOS2_TOOLKIT_FORMAT_DATAMAN_DATAMANSERIALIZER_H_
 #define ADIOS2_TOOLKIT_FORMAT_DATAMAN_DATAMANSERIALIZER_H_
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 

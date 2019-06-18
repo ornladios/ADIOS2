@@ -20,7 +20,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 
 namespace adios2
 {

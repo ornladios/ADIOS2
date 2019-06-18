@@ -11,7 +11,7 @@
 #ifndef ADIOS2_BINDINGS_C_ADIOS2_C_H_
 #define ADIOS2_BINDINGS_C_ADIOS2_C_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 #include "c/adios2_c_adios.h"
 #include "c/adios2_c_attribute.h"

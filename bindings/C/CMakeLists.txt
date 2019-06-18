@@ -33,5 +33,5 @@ install(
         c/adios2_c_attribute.h
         c/adios2_c_engine.h
         c/adios2_c_operator.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/c
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/c
 )

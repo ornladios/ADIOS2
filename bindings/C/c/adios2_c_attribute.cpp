@@ -9,7 +9,7 @@
  */
 #include "adios2_c_attribute.h"
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/AttributeBase.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2_c_internal.h"

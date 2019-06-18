@@ -16,7 +16,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/profiling/iochrono/Timer.h"
 
 namespace adios2

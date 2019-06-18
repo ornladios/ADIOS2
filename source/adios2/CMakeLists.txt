@@ -14,7 +14,7 @@ target_include_directories(taustubs PRIVATE
 )
 
 add_library(adios2
-  ADIOSTypes.cpp
+  common/ADIOSTypes.cpp
   
   core/Attribute.cpp 
   core/AttributeBase.cpp
@@ -221,8 +221,8 @@ set_target_properties(adios2 PROPERTIES
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSTypes.inl
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
 )
 
 # Library installation

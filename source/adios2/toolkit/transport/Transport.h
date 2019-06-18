@@ -16,9 +16,9 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2

@@ -51,7 +51,7 @@
 //   wrappers call the corresponding adios2::helper::mpidummy MPI functions,
 //   which are serial only but don't require the real MPI to be initialized.
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 // Get either the real MPI or mpidummy into the global namespace
 #ifdef ADIOS2_HAVE_MPI

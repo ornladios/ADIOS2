@@ -20,9 +20,9 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Variable.h"

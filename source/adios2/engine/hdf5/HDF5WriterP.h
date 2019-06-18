@@ -13,7 +13,7 @@
 
 #include <hdf5.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/interop/hdf5/HDF5Common.h"

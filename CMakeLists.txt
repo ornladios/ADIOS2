@@ -143,8 +143,8 @@ configure_file(
   @ONLY
 )
 
-install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+install(FILES ${PROJECT_BINARY_DIR}/source/adios2/common/ADIOSConfig.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
 )
 
 #------------------------------------------------------------------------------#

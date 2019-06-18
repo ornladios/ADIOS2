@@ -9,7 +9,7 @@
  */
 #include "MPIChain.h"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //helper::CheckMPIReturn
 
 namespace adios2

@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
 #include <pthread.h>

@@ -17,7 +17,7 @@
 #include <algorithm> //std::transform
 #include <sstream>   //std::ostringstream
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 
 namespace adios2
 {

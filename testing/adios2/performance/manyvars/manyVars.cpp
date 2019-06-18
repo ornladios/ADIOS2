@@ -18,8 +18,8 @@
 
 #include <gtest/gtest.h>
 
-#include <adios2/ADIOSConfig.h>
-#include <adios2/ADIOSMPI.h>
+#include <adios2/common/ADIOSConfig.h>
+#include <adios2/common/ADIOSMPI.h>
 
 #include "adios2_c.h"
 #include <errno.h>

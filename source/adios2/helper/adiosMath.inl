@@ -19,7 +19,7 @@
 #include <limits>    //std::numeri_limits
 #include <thread>
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 
 namespace adios2
 {

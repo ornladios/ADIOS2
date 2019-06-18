@@ -11,7 +11,7 @@
 #include "IO.h"
 #include "IO.tcc"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 
 namespace adios2

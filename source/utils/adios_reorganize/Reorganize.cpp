@@ -24,8 +24,8 @@
 #include <iostream>
 #include <string>
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"

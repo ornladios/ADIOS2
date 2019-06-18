@@ -15,7 +15,7 @@
 #include <thread>
 #include <vector>
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include <adios2.h>
 
 // matches Signature2 in ADIOS2

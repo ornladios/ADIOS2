@@ -11,7 +11,7 @@
 #include "ADIOS2fstream.h"
 #include "ADIOS2fstream.tcc"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 
 namespace adios2
 {

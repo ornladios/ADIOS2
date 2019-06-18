@@ -10,7 +10,7 @@
 
 #include "Transport.h"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
 namespace adios2

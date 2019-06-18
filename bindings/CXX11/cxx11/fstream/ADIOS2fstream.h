@@ -13,14 +13,14 @@
 
 #include <memory> //std::shared_ptr
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 #ifdef ADIOS2_HAVE_MPI
 #include <mpi.h>
 #endif
 
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {

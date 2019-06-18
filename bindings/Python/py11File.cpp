@@ -14,8 +14,8 @@
 #include <algorithm>
 #include <iostream>
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 
 #include "py11types.h"

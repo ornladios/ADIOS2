@@ -11,8 +11,8 @@
 #ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 #define ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/toolkit/format/BufferSTL.h"
 
 namespace adios2
