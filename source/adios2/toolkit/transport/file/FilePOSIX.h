@@ -41,6 +41,10 @@ public:
 
     void Close() final;
 
+    void SeekToEnd() final;
+
+    void SeekToBegin() final;
+
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;

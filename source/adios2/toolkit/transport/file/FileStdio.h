@@ -43,6 +43,10 @@ public:
 
     void Close() final;
 
+    void SeekToEnd() final;
+
+    void SeekToBegin() final;
+
 private:
     /** C File pointer */
     FILE *m_File = nullptr;

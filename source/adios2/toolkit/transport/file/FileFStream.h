@@ -44,6 +44,10 @@ public:
 
     void Close() final;
 
+    void SeekToEnd() final;
+
+    void SeekToBegin() final;
+
 private:
     /** file stream using fstream library */
     std::fstream m_FileStream;

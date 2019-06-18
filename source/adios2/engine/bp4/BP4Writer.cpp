@@ -18,6 +18,9 @@
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
+#include <ctime>
+#include <iostream>
+
 namespace adios2
 {
 namespace core
@@ -182,6 +185,8 @@ void BP4Writer::InitTransports()
 
     if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
     {
+        // std::cout << "rank " << m_BP4Serializer.m_RankMPI << ": " <<
+        // bpSubStreamNames[0] << std::endl;
         m_FileDataManager.OpenFiles(bpSubStreamNames, m_OpenMode,
                                     m_IO.m_TransportsParameters,
                                     m_BP4Serializer.m_Profiler.IsActive);
@@ -213,16 +218,98 @@ void BP4Writer::InitBPBuffer()
 {
     if (m_OpenMode == Mode::Append)
     {
-        throw std::invalid_argument(
-            "ADIOS2: OpenMode Append hasn't been implemented, yet");
+        // throw std::invalid_argument(
+        //    "ADIOS2: OpenMode Append hasn't been implemented, yet");
         // TODO: Get last pg timestep and update timestep counter in
+        BufferSTL preMetadataIndex;
+        size_t preMetadataIndexFileSize;
+
+        if (m_BP4Serializer.m_RankMPI == 0)
+        {
+            preMetadataIndexFileSize =
+                m_FileMetadataIndexManager.GetFileSize(0);
+            preMetadataIndex.m_Buffer.resize(preMetadataIndexFileSize);
+            preMetadataIndex.m_Buffer.assign(preMetadataIndex.m_Buffer.size(),
+                                             '\0');
+            preMetadataIndex.m_Position = 0;
+            m_FileMetadataIndexManager.ReadFile(
+                preMetadataIndex.m_Buffer.data(), preMetadataIndexFileSize);
+        }
+        helper::BroadcastVector(preMetadataIndex.m_Buffer, m_MPIComm);
+        preMetadataIndexFileSize = preMetadataIndex.m_Buffer.size();
+        if (preMetadataIndexFileSize > 0)
+        {
+            size_t position = 0;
+            position += 28;
+            const uint8_t endianness =
+                helper::ReadValue<uint8_t>(preMetadataIndex.m_Buffer, position);
+            bool IsLittleEndian = true;
+            IsLittleEndian = (endianness == 0) ? true : false;
+            if (helper::IsLittleEndian() != IsLittleEndian)
+            {
+                throw std::runtime_error(
+                    "ERROR: previous run generated BigEndian bp file, "
+                    "this version of ADIOS2 wasn't compiled "
+                    "with the cmake flag -DADIOS2_USE_ENDIAN_REVERSE=ON "
+                    "explicitly, in call to Open\n");
+            }
+            const size_t pos_last_step = preMetadataIndexFileSize - 64;
+            position = pos_last_step;
+            const uint64_t lastStep = helper::ReadValue<uint64_t>(
+                preMetadataIndex.m_Buffer, position, IsLittleEndian);
+            // std::cout << "last step of previous run is: " << lastStep <<
+            // std::endl;
+            m_BP4Serializer.m_MetadataSet.TimeStep +=
+                static_cast<uint32_t>(lastStep);
+            m_BP4Serializer.m_MetadataSet.CurrentStep += lastStep;
+            // std::cout << "TimeStep is: " <<
+            // m_BP4Serializer.m_MetadataSet.TimeStep << std::endl; std::cout <<
+            // "CurrentStep is: " << m_BP4Serializer.m_MetadataSet.CurrentStep
+            // << std::endl;
+
+            if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
+            {
+                m_BP4Serializer.m_PreDataFileLength =
+                    m_FileDataManager.GetFileSize(0);
+
+                // std::cout << "size of existing data file: " <<
+                // m_BP4Serializer.m_PreDataFileLength << std::endl;
+            }
+
+            if (m_BP4Serializer.m_RankMPI == 0)
+            {
+                // Set the flag in the header of metadata index table to 0 again
+                // to indicate a new run begins
+                BufferSTL metadataIndex;
+                metadataIndex.m_Buffer.resize(8);
+                metadataIndex.m_Buffer.assign(metadataIndex.m_Buffer.size(),
+                                              '\0');
+                metadataIndex.m_Position = 0;
+
+                const uint64_t currentRunIsOver = 0;
+                helper::CopyToBuffer(metadataIndex.m_Buffer,
+                                     metadataIndex.m_Position,
+                                     &currentRunIsOver);
+
+                m_FileMetadataIndexManager.WriteFileAt(
+                    metadataIndex.m_Buffer.data(), metadataIndex.m_Position, 56,
+                    0);
+                m_FileMetadataIndexManager.FlushFiles();
+
+                m_FileMetadataIndexManager.SeekToFileEnd();
+
+                // Get the size of existing metadata file
+                m_BP4Serializer.m_PreMetadataFileLength =
+                    m_FileMetadataManager.GetFileSize(0);
+                // std::cout << "size of existing metadata file: " <<
+                // m_BP4Serializer.m_PreMetadataFileLength << std::endl;
+            }
+        }
     }
-    else
-    {
-        m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name, m_IO.m_HostLanguage,
-            m_FileDataManager.GetTransportsTypes());
-    }
+
+    m_BP4Serializer.PutProcessGroupIndex(
+        m_IO.m_Name, m_IO.m_HostLanguage,
+        m_FileDataManager.GetTransportsTypes());
 }
 
 void BP4Writer::DoFlush(const bool isFinal, const int transportIndex)
@@ -372,7 +459,7 @@ void BP4Writer::PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
         helper::CopyToBuffer(buffer, position, &zeros2);
     }
     helper::CopyToBuffer(buffer, position, &version);
-    position += 16;
+    position += 32;
 }
 
 /*write the content of metadata index file*/
@@ -380,7 +467,8 @@ void BP4Writer::PopulateMetadataIndexFileContent(
     const uint64_t currentStep, const uint64_t mpirank,
     const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
     const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
-    std::vector<char> &buffer, size_t &position)
+    const uint64_t currentTimeStamp, std::vector<char> &buffer,
+    size_t &position)
 {
     TAU_SCOPED_TIMER("BP4Writer::PopulateMetadataIndexFileContent");
     helper::CopyToBuffer(buffer, position, &currentStep);
@@ -389,40 +477,42 @@ void BP4Writer::PopulateMetadataIndexFileContent(
     helper::CopyToBuffer(buffer, position, &variablesIndexStart);
     helper::CopyToBuffer(buffer, position, &attributesIndexStart);
     helper::CopyToBuffer(buffer, position, &currentStepEndPos);
+    helper::CopyToBuffer(buffer, position, &currentTimeStamp);
+    position += 8;
 }
 
 void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
+
     TAU_SCOPED_TIMER("BP4Writer::WriteCollectiveMetadataFile");
+    if (m_BP4Serializer.m_RankMPI == 0)
+    {
+        if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength > 0)
+        {
+            // If run with BeginStep() and EndStep(), when close, metadata of
+            // last step has already been written, don't need to write it again.
+            // But the flag in the header of metadata index table needs to be
+            // modified to indicate current run is over.
+            BufferSTL metadataIndex;
+            metadataIndex.m_Buffer.resize(8);
+            metadataIndex.m_Buffer.assign(metadataIndex.m_Buffer.size(), '\0');
+            metadataIndex.m_Position = 0;
+
+            const uint64_t currentRunIsOver = 1;
+            helper::CopyToBuffer(metadataIndex.m_Buffer,
+                                 metadataIndex.m_Position, &currentRunIsOver);
+
+            m_FileMetadataIndexManager.WriteFileAt(
+                metadataIndex.m_Buffer.data(), metadataIndex.m_Position, 56, 0);
+            m_FileMetadataIndexManager.FlushFiles();
+            return;
+        }
+    }
     m_BP4Serializer.AggregateCollectiveMetadata(
         m_MPIComm, m_BP4Serializer.m_Metadata, true);
 
     if (m_BP4Serializer.m_RankMPI == 0)
     {
-        if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength > 0)
-        {
-            // if some metadata has already been written, don't need to write
-            // it at close.
-            return;
-        }
-        // first init metadata files
-        // const std::vector<std::string> transportsNames =
-        //     m_FileMetadataManager.GetFilesBaseNames(
-        //         m_Name, m_IO.m_TransportsParameters);
-
-        // const std::vector<std::string> bpMetadataFileNames =
-        //     m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
-
-        /*
-        m_FileMetadataManager.OpenFiles(bpMetadataFileNames, m_OpenMode,
-                                        m_IO.m_TransportsParameters,
-                                        m_BP4Serializer.m_Profiler.IsActive);
-        */
-
-        // m_FileMetadataManager.OpenFiles(
-        //     bpMetadataFileNames, adios2::Mode::Append,
-        //     m_IO.m_TransportsParameters,
-        //     m_BP4Serializer.m_Profiler.IsActive);
 
         m_FileMetadataManager.WriteFiles(
             m_BP4Serializer.m_Metadata.m_Buffer.data(),
@@ -432,38 +522,31 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
         /*record the starting position of indices in metadata file*/
         const uint64_t pgIndexStartMetadataFile =
             m_BP4Serializer.m_MetadataSet.pgIndexStart +
-            m_BP4Serializer.m_MetadataSet.metadataFileLength;
+            m_BP4Serializer.m_MetadataSet.metadataFileLength +
+            m_BP4Serializer.m_PreMetadataFileLength;
         const uint64_t varIndexStartMetadataFile =
             m_BP4Serializer.m_MetadataSet.varIndexStart +
-            m_BP4Serializer.m_MetadataSet.metadataFileLength;
+            m_BP4Serializer.m_MetadataSet.metadataFileLength +
+            m_BP4Serializer.m_PreMetadataFileLength;
         const uint64_t attrIndexStartMetadataFile =
             m_BP4Serializer.m_MetadataSet.attrIndexStart +
-            m_BP4Serializer.m_MetadataSet.metadataFileLength;
+            m_BP4Serializer.m_MetadataSet.metadataFileLength +
+            m_BP4Serializer.m_PreMetadataFileLength;
         size_t currentStepEndPos =
             m_BP4Serializer.m_MetadataSet.metadataFileLength +
-            m_BP4Serializer.m_Metadata.m_Position;
+            m_BP4Serializer.m_Metadata.m_Position +
+            m_BP4Serializer.m_PreMetadataFileLength;
 
         BufferSTL metadataIndex;
-        metadataIndex.m_Buffer.resize(48);
+        metadataIndex.m_Buffer.resize(64);
         metadataIndex.m_Buffer.assign(metadataIndex.m_Buffer.size(), '\0');
         metadataIndex.m_Position = 0;
-
-        // std::vector<std::string> metadataIndexFileNames;
-        // metadataIndexFileNames.push_back(bpMetadataFileNames[0]+".mdx."+std::to_string(m_BP4Serializer.m_RankMPI));
-        /*
-        // std::vector<std::string> metadataIndexFileNames =
-        //     m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
-
-        // m_FileMetadataIndexManager.OpenFiles(
-        //     metadataIndexFileNames, adios2::Mode::Append,
-        //     m_IO.m_TransportsParameters,
-        m_BP4Serializer.m_Profiler.IsActive);
-        */
-        // metadataIndexFileNames.pop_back();
 
         uint64_t currentStep;
         if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength == 0)
         {
+            // Not run with BeginStep() and EndStep().
+            // Only one step of metadata is generated at close.
             currentStep = m_BP4Serializer.m_MetadataSet.TimeStep;
         }
         else
@@ -482,15 +565,17 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
             m_FileMetadataIndexManager.WriteFiles(metadataIndex.m_Buffer.data(),
                                                   metadataIndex.m_Position);
 
-            metadataIndex.m_Buffer.resize(48);
+            metadataIndex.m_Buffer.resize(64);
             metadataIndex.m_Buffer.assign(metadataIndex.m_Buffer.size(), '\0');
             metadataIndex.m_Position = 0;
         }
 
+        std::time_t currentTimeStamp = std::time(nullptr);
+
         PopulateMetadataIndexFileContent(
             currentStep, m_BP4Serializer.m_RankMPI, pgIndexStartMetadataFile,
             varIndexStartMetadataFile, attrIndexStartMetadataFile,
-            currentStepEndPos, metadataIndex.m_Buffer,
+            currentStepEndPos, currentTimeStamp, metadataIndex.m_Buffer,
             metadataIndex.m_Position);
 
         m_FileMetadataIndexManager.WriteFiles(metadataIndex.m_Buffer.data(),
@@ -500,12 +585,23 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
         m_BP4Serializer.m_MetadataSet.metadataFileLength +=
             m_BP4Serializer.m_Metadata.m_Position;
 
-        if (!isFinal)
+        if (isFinal)
         {
-            m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_Metadata, true);
-            // m_FileMetadataManager.m_Transports.clear();
-            /*close the transports for metadata index file*/
-            // m_FileMetadataIndexManager.m_Transports.clear();
+            // Only one step of metadata is generated at close.
+            // The flag in the header of metadata index table
+            // needs to be modified to indicate current run is over.
+            BufferSTL metadataIndex;
+            metadataIndex.m_Buffer.resize(8);
+            metadataIndex.m_Buffer.assign(metadataIndex.m_Buffer.size(), '\0');
+            metadataIndex.m_Position = 0;
+
+            const uint64_t currentRunIsOver = 1;
+            helper::CopyToBuffer(metadataIndex.m_Buffer,
+                                 metadataIndex.m_Position, &currentRunIsOver);
+
+            m_FileMetadataIndexManager.WriteFileAt(
+                metadataIndex.m_Buffer.data(), metadataIndex.m_Position, 56, 0);
+            m_FileMetadataIndexManager.FlushFiles();
         }
     }
     /*Clear the local indices buffer at the end of each step*/

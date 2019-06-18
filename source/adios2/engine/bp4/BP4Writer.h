@@ -102,7 +102,8 @@ private:
         const uint64_t currentStep, const uint64_t mpirank,
         const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
         const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
-        std::vector<char> &buffer, size_t &position);
+        const uint64_t currentTimeStamp, std::vector<char> &buffer,
+        size_t &position);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
 

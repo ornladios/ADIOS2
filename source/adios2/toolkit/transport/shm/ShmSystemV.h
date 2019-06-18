@@ -44,6 +44,10 @@ public:
 
     void Close() final;
 
+    void SeekToEnd() final;
+
+    void SeekToBegin() final;
+
 private:
     /** 1st argument of ftok to create shared memory segment key, from Open */
     std::string m_PathName;
