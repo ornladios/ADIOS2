@@ -10,13 +10,13 @@
 # dependencies is an error,
 
 # BZIP2
-if(ADIOS2_USE_BZIP2 STREQUAL AUTO)
+if(ADIOS2_USE_BZip2 STREQUAL AUTO)
   find_package(BZip2)
-elseif(ADIOS2_USE_BZIP2)
+elseif(ADIOS2_USE_BZip2)
   find_package(BZip2 REQUIRED)
 endif()
 if(BZIP2_FOUND)
-  set(ADIOS2_HAVE_BZIP2 TRUE)
+  set(ADIOS2_HAVE_BZip2 TRUE)
 endif()
 
 # ZFP
