@@ -440,7 +440,7 @@ bool BP4Reader::CheckWriterActive()
         bool active = m_BP4Deserializer.ReadActiveFlag(header);
         flag = (active ? 1 : 0);
     }
-    flag = helper::BroadcastValue(flag, m_BP4Deserializer.m_MPIComm, 0);
+    flag = helper::BroadcastValue(flag, m_BP4Deserializer.m_Comm, 0);
     m_BP4Deserializer.m_WriterIsActive = (flag > 0);
     return m_BP4Deserializer.m_WriterIsActive;
 }
