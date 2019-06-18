@@ -48,8 +48,8 @@ const std::map<int, std::string> BP4Base::m_TransformTypesToNames = {
     //    {transform_lz4, "lz4"},
 };
 
-BP4Base::BP4Base(MPI_Comm mpiComm, const bool debugMode)
-: m_Comm(mpiComm), m_DebugMode(debugMode)
+BP4Base::BP4Base(helper::Comm const &comm, const bool debugMode)
+: m_Comm(comm), m_DebugMode(debugMode)
 {
     SMPI_Comm_rank(m_Comm, &m_RankMPI);
     SMPI_Comm_size(m_Comm, &m_SizeMPI);

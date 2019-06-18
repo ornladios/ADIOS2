@@ -28,10 +28,10 @@ class BP4Serializer : public BP4Base
 public:
     /**
      * Unique constructor
-     * @param mpiComm MPI communicator for BP1 Aggregator
+     * @param comm multi-process communicator for BP1 Aggregator
      * @param debug true: extra checks
      */
-    BP4Serializer(MPI_Comm mpiComm, const bool debugMode = false);
+    BP4Serializer(helper::Comm const &comm, const bool debugMode = false);
 
     ~BP4Serializer() = default;
 

@@ -31,8 +31,8 @@ namespace format
 
 std::mutex BP4Serializer::m_Mutex;
 
-BP4Serializer::BP4Serializer(MPI_Comm mpiComm, const bool debugMode)
-: BP4Base(mpiComm, debugMode)
+BP4Serializer::BP4Serializer(helper::Comm const &comm, const bool debugMode)
+: BP4Base(comm, debugMode)
 {
 }
 
