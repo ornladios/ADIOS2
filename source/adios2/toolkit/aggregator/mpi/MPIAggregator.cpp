@@ -17,19 +17,21 @@ namespace adios2
 namespace aggregator
 {
 
-MPIAggregator::MPIAggregator() : m_Comm(MPI_COMM_NULL) {}
+MPIAggregator::MPIAggregator() {}
 
 MPIAggregator::~MPIAggregator()
 {
     if (m_IsActive)
     {
-        helper::CheckMPIReturn(MPI_Comm_free(&m_Comm),
-                               "freeing aggregators comm in MPIAggregator "
-                               "destructor, not recommended");
+        m_Comm.Free("freeing aggregators comm in MPIAggregator "
+                    "destructor, not recommended");
     }
 }
 
-void MPIAggregator::Init(const size_t subStreams, MPI_Comm parentComm) {}
+void MPIAggregator::Init(const size_t subStreams,
+                         helper::Comm const &parentComm)
+{
+}
 
 void MPIAggregator::SwapBuffers(const int step) noexcept {}
 
@@ -44,14 +46,14 @@ void MPIAggregator::Close()
 {
     if (m_IsActive)
     {
-        helper::CheckMPIReturn(MPI_Comm_free(&m_Comm),
-                               "freeing aggregators comm at Close\n");
+        m_Comm.Free("freeing aggregators comm at Close\n");
         m_IsActive = false;
     }
 }
 
 // PROTECTED
-void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
+void MPIAggregator::InitComm(const size_t subStreams,
+                             helper::Comm const &parentComm)
 {
     int parentRank;
     int parentSize;
@@ -81,9 +83,8 @@ void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
         m_ConsumerRank = static_cast<int>(m_SubStreamIndex * (q + 1));
     }
 
-    helper::CheckMPIReturn(
-        MPI_Comm_split(parentComm, m_ConsumerRank, parentRank, &m_Comm),
-        "creating aggregators comm with split at Open");
+    m_Comm = parentComm.Split(m_ConsumerRank, parentRank,
+                              "creating aggregators comm with split at Open");
 
     MPI_Comm_rank(m_Comm, &m_Rank);
     MPI_Comm_size(m_Comm, &m_Size);
