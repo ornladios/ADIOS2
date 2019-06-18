@@ -147,6 +147,14 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
             Params->ControlTransport);
     fprintf(stderr, "Param -   NetworkInterface:%s\n",
             Params->NetworkInterface ? Params->NetworkInterface : "(default)");
+    fprintf(stderr, "Param -   ControlInterface:%s\n",
+            Params->ControlInterface
+                ? Params->ControlInterface
+                : "(default to NetworkInterface if applicable)");
+    fprintf(stderr, "Param -   DataInterface:%s\n",
+            Params->DataInterface
+                ? Params->DataInterface
+                : "(default to NetworkInterface if applicable)");
     if (!ReaderSide)
     {
         fprintf(stderr, "Param -   CompressionMethod:%s\n",
@@ -1037,7 +1045,12 @@ extern char *CP_GetContactString(SstStream Stream)
     attr_list ListenList = create_attr_list(), ContactList;
     set_string_attr(ListenList, CM_TRANSPORT_ATOM,
                     strdup(Stream->ConfigParams->ControlTransport));
-    if (Stream->ConfigParams->NetworkInterface)
+    if (Stream->ConfigParams->ControlInterface)
+    {
+        set_string_attr(ListenList, attr_atom_from_string("IP_INTERFACE"),
+                        strdup(Stream->ConfigParams->ControlInterface));
+    }
+    else if (Stream->ConfigParams->NetworkInterface)
     {
         set_string_attr(ListenList, IP_INTERFACE_ATOM,
                         strdup(Stream->ConfigParams->NetworkInterface));

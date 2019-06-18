@@ -103,7 +103,14 @@ static void init_fabric(struct fabric_state *fabric)
     hints->domain_attr->mr_mode = FI_MR_BASIC;
     hints->ep_attr->type = FI_EP_RDM;
 
-    ifname = getenv("FABRIC_IFACE");
+    if (Stream->ConfigParams->DataInterface)
+    {
+        ifname = Stream->ConfigParams->DataInterface;
+    }
+    else
+    {
+        ifname = getenv("FABRIC_IFACE");
+    }
 
     fabric->info = NULL;
 
