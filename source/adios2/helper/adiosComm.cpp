@@ -9,8 +9,11 @@
 #include "adiosComm.tcc"
 
 #include <ios> //std::ios_base::failure
+#include <utility>
 
 #include "adios2/common/ADIOSMPI.h"
+
+#include "adiosMPIFunctions.h"
 
 namespace adios2
 {
@@ -55,6 +58,15 @@ Comm Comm::Duplicate(MPI_Comm mpiComm)
     MPI_Comm newComm;
     SMPI_Comm_dup(mpiComm, &newComm);
     return Comm(newComm);
+}
+
+void Comm::Free(const std::string &hint)
+{
+    if (m_MPIComm != MPI_COMM_NULL && m_MPIComm != MPI_COMM_WORLD &&
+        m_MPIComm != MPI_COMM_SELF)
+    {
+        CheckMPIReturn(SMPI_Comm_free(&m_MPIComm), hint);
+    }
 }
 
 } // end namespace helper

@@ -10,6 +10,8 @@
 
 #include "adios2/common/ADIOSMPI.h"
 
+#include <string>
+
 namespace adios2
 {
 namespace helper
@@ -67,6 +69,14 @@ public:
      * @brief Create a communicator by duplicating a MPI communicator.
      */
     static Comm Duplicate(MPI_Comm mpiComm);
+
+    /**
+     * @brief Free the communicator.
+     * @param hint Description of std::runtime_error exception on error.
+     *
+     * The communicator is left empty and may not be used for communication.
+     */
+    void Free(const std::string &hint = std::string());
 
 private:
     /**
