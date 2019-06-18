@@ -1,2 +1,0 @@
-set (CTEST_CUSTOM_MEMCHECK_IGNORE)
-LIST(APPEND CTEST_CUSTOM_MEMCHECK_IGNORE t4 compare_t4 marshal_test2 marshal_test)
