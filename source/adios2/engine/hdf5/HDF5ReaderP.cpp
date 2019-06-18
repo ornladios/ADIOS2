@@ -61,7 +61,7 @@ void HDF5ReaderP::Init()
             ", in call to Open\n");
     }
 
-    m_H5File.Init(m_Name, m_MPIComm, false);
+    m_H5File.Init(m_Name, m_Comm, false);
     m_H5File.ParseParameters(m_IO);
 
     /*

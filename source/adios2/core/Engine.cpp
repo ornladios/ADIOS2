@@ -23,7 +23,7 @@ namespace core
 Engine::Engine(const std::string engineType, IO &io, const std::string &name,
                const Mode openMode, MPI_Comm mpiComm)
 : m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode),
-  m_MPIComm(mpiComm), m_DebugMode(io.m_DebugMode)
+  m_Comm(mpiComm), m_DebugMode(io.m_DebugMode)
 {
 }
 
@@ -69,7 +69,7 @@ void Engine::Close(const int transportIndex)
 
     if (transportIndex == -1)
     {
-        helper::CheckMPIReturn(SMPI_Comm_free(&m_MPIComm),
+        helper::CheckMPIReturn(SMPI_Comm_free(&m_Comm),
                                "freeing comm in Engine " + m_Name +
                                    ", in call to Close");
         m_IsClosed = true;

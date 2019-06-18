@@ -447,7 +447,7 @@ public:
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no new communicator is passed */
-    MPI_Comm m_MPIComm;
+    MPI_Comm m_Comm;
 
     /** true: additional exceptions */
     const bool m_DebugMode = false;

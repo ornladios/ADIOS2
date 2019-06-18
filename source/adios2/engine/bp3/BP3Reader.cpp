@@ -202,7 +202,7 @@ void BP3Reader::InitBuffer()
     }
 
     // broadcast metadata buffer to all ranks from zero
-    helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+    helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_Comm);
 
     // fills IO with available Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);

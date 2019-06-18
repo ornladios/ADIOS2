@@ -282,7 +282,7 @@ void BP3Writer::WriteProfilingJSONFile()
 
     if (m_BP3Serializer.m_RankMPI == 0)
     {
-        transport::FileFStream profilingJSONStream(m_MPIComm, m_DebugMode);
+        transport::FileFStream profilingJSONStream(m_Comm, m_DebugMode);
         auto bpBaseNames = m_BP3Serializer.GetBPBaseNames({m_Name});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
                                  Mode::Write);
@@ -295,7 +295,7 @@ void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
     TAU_SCOPED_TIMER("BP3Writer::WriteCollectiveMetadataFile");
     m_BP3Serializer.AggregateCollectiveMetadata(
-        m_MPIComm, m_BP3Serializer.m_Metadata, true);
+        m_Comm, m_BP3Serializer.m_Metadata, true);
 
     if (m_BP3Serializer.m_RankMPI == 0)
     {

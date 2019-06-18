@@ -140,7 +140,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     {
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
-        m_BP3Serializer = new format::BP3Serializer(m_MPIComm, m_DebugMode);
+        m_BP3Serializer = new format::BP3Serializer(m_Comm, m_DebugMode);
         m_BP3Serializer->InitParameters(m_IO.m_Parameters);
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
@@ -249,7 +249,7 @@ void SstWriter::EndStep()
 
         m_BP3Serializer->CloseStream(m_IO, true);
         m_BP3Serializer->AggregateCollectiveMetadata(
-            m_MPIComm, m_BP3Serializer->m_Metadata, true);
+            m_Comm, m_BP3Serializer->m_Metadata, true);
         BP3DataBlock *newblock = new BP3DataBlock;
         newblock->metadata.DataSize = m_BP3Serializer->m_Metadata.m_Position;
         newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();

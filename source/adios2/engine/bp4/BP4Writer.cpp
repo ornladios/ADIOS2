@@ -256,7 +256,7 @@ void BP4Writer::InitBPBuffer()
             m_FileMetadataIndexManager.ReadFile(
                 preMetadataIndex.m_Buffer.data(), preMetadataIndexFileSize);
         }
-        helper::BroadcastVector(preMetadataIndex.m_Buffer, m_MPIComm);
+        helper::BroadcastVector(preMetadataIndex.m_Buffer, m_Comm);
         preMetadataIndexFileSize = preMetadataIndex.m_Buffer.size();
         if (preMetadataIndexFileSize > 0)
         {
@@ -421,7 +421,7 @@ void BP4Writer::WriteProfilingJSONFile()
     if (m_BP4Serializer.m_RankMPI == 0)
     {
         // std::cout << "write profiling file!" << std::endl;
-        transport::FileFStream profilingJSONStream(m_MPIComm, m_DebugMode);
+        transport::FileFStream profilingJSONStream(m_Comm, m_DebugMode);
         auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_Name});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
                                  Mode::Write);
@@ -478,7 +478,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
         return;
     }
     m_BP4Serializer.AggregateCollectiveMetadata(
-        m_MPIComm, m_BP4Serializer.m_Metadata, true);
+        m_Comm, m_BP4Serializer.m_Metadata, true);
 
     if (m_BP4Serializer.m_RankMPI == 0)
     {

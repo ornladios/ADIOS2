@@ -311,7 +311,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         //   whatever transport it is using.  But it is opaque to the Engine
         //   (and to the control plane).)
 
-        m_BP3Deserializer = new format::BP3Deserializer(m_MPIComm, m_DebugMode);
+        m_BP3Deserializer = new format::BP3Deserializer(m_Comm, m_DebugMode);
         m_BP3Deserializer->InitParameters(m_IO.m_Parameters);
 
         m_BP3Deserializer->m_Metadata.Resize(

@@ -217,7 +217,7 @@ void BP4Reader::OpenFiles()
         }
     }
 
-    flag = helper::BroadcastValue(flag, m_MPIComm, 0);
+    flag = helper::BroadcastValue(flag, m_Comm, 0);
     if (flag == 2)
     {
         if (m_BP4Deserializer.m_RankMPI == 0 && !lasterrmsg.empty())
@@ -269,7 +269,7 @@ void BP4Reader::OpenFiles()
         }
     }
 
-    flag = helper::BroadcastValue(flag, m_MPIComm, 0);
+    flag = helper::BroadcastValue(flag, m_Comm, 0);
     if (flag == 1)
     {
         throw std::runtime_error("ERROR: File " + m_Name +
@@ -317,11 +317,10 @@ void BP4Reader::InitBuffer()
                                  fileSize);
     }
     // broadcast buffer to all ranks from zero
-    helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+    helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_Comm);
 
     // broadcast metadata index buffer to all ranks from zero
-    helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer,
-                            m_MPIComm);
+    helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer, m_Comm);
 
     /* Parse metadata index table */
     m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex);
@@ -386,18 +385,17 @@ size_t BP4Reader::UpdateBuffer()
         }
     }
 
-    helper::BroadcastVector(sizes, m_MPIComm, 0);
+    helper::BroadcastVector(sizes, m_Comm, 0);
     size_t newIdxSize = sizes[0];
 
     if (newIdxSize > 0)
     {
         // broadcast buffer to all ranks from zero
-        helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer,
-                                m_MPIComm);
+        helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_Comm);
 
         // broadcast metadata index buffer to all ranks from zero
         helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer,
-                                m_MPIComm);
+                                m_Comm);
 
         if (m_BP4Deserializer.m_RankMPI != 0)
         {

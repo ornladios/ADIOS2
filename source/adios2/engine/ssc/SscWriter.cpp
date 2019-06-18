@@ -109,11 +109,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscWriter::Init()
 {
     TAU_SCOPED_TIMER_FUNC();
-    MPI_Comm_rank(m_MPIComm, &m_MpiRank);
-    MPI_Comm_size(m_MPIComm, &m_MpiSize);
+    MPI_Comm_rank(m_Comm, &m_MpiRank);
+    MPI_Comm_size(m_Comm, &m_MpiSize);
     srand(time(NULL));
     InitParameters();
-    helper::HandshakeWriter(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc",
+    helper::HandshakeWriter(m_Comm, m_AppID, m_FullAddresses, m_Name, "ssc",
                             m_Port, m_Channels, m_MaxRanksPerNode,
                             m_MaxAppsPerNode);
     InitTransports();
@@ -231,7 +231,7 @@ void SscWriter::ReplyThread(const std::string &address)
 
 void SscWriter::DoClose(const int transportIndex)
 {
-    MPI_Barrier(m_MPIComm);
+    MPI_Barrier(m_Comm);
     m_Listening = false;
     for (auto &i : m_ReplyThreads)
     {

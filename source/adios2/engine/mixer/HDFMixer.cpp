@@ -103,7 +103,7 @@ void HDFMixer::InitTransports()
 #else
 
     int rank;
-    MPI_Comm_rank(m_MPIComm, &rank);
+    MPI_Comm_rank(m_Comm, &rank);
     m_HDFSerialWriter.Init(m_Name, rank);
     m_HDFVDSWriter.Init(m_Name);
 /*
