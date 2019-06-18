@@ -985,8 +985,8 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     // use bufferSTL (will resize) to GatherV
     const size_t extraSize = 16 + 12 + 12 + m_MetadataSet.MiniFooterSize;
 
-    helper::GathervVectors(m_SerializedIndices, bufferSTL.m_Buffer,
-                           bufferSTL.m_Position, comm, 0, extraSize);
+    comm.GathervVectors(m_SerializedIndices, bufferSTL.m_Buffer,
+                        bufferSTL.m_Position, 0, extraSize);
 
     // deserialize, it's all local inside rank 0
     if (rank == 0)
@@ -1417,8 +1417,7 @@ BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
     const size_t rankLogSize = rankLog.size();
-    std::vector<size_t> rankLogsSizes =
-        helper::GatherValues(rankLogSize, m_Comm);
+    std::vector<size_t> rankLogsSizes = m_Comm.GatherValues(rankLogSize);
 
     // Gatherv JSON per rank
     std::vector<char> profilingJSON(3);
@@ -1437,9 +1436,8 @@ BP3Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
                              header.size());
     }
 
-    helper::GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
-                          rankLogsSizes.size(), &profilingJSON[position],
-                          m_Comm);
+    m_Comm.GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
+                         rankLogsSizes.size(), &profilingJSON[position]);
 
     if (m_RankMPI == 0) // add footer to close JSON
     {

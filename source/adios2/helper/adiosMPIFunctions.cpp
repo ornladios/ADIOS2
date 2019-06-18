@@ -20,20 +20,6 @@ namespace adios2
 namespace helper
 {
 
-std::vector<int> GetGathervDisplacements(const size_t *counts,
-                                         const size_t countsSize)
-{
-    std::vector<int> displacements(countsSize);
-    displacements[0] = 0;
-
-    for (size_t i = 1; i < countsSize; ++i)
-    {
-        displacements[i] =
-            displacements[i - 1] + static_cast<int>(counts[i - 1]);
-    }
-    return displacements;
-}
-
 void CheckMPIReturn(const int value, const std::string &hint)
 {
     if (value == MPI_SUCCESS)

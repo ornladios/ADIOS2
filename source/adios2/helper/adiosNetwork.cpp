@@ -158,8 +158,8 @@ void HandshakeWriter(Comm const &comm, size_t &appID,
     std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(),
                 localAddressesStr.size());
     std::vector<char> globalAddressesChar(64 * channelsPerRank * mpiSize, '\0');
-    helper::GatherArrays(localAddressesChar.data(), 64 * channelsPerRank,
-                         globalAddressesChar.data(), comm);
+    comm.GatherArrays(localAddressesChar.data(), 64 * channelsPerRank,
+                      globalAddressesChar.data());
 
     // Writing handshake file
     if (mpiRank == 0)

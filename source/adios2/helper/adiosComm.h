@@ -11,6 +11,7 @@
 #include "adios2/common/ADIOSMPI.h"
 
 #include <string>
+#include <vector>
 
 namespace adios2
 {
@@ -89,6 +90,48 @@ public:
      */
     Comm Split(int color, int key,
                const std::string &hint = std::string()) const;
+
+    /**
+     * Gather a single source value from each ranks and forms a vector in
+     * rankDestination.
+     * @param rankDestination root, where all sizes are gathered in the returned
+     * vector
+     * @return in rankDestination: aggregated vector<T>, others: empty
+     */
+    template <class T>
+    std::vector<T> GatherValues(T source, int rankDestination = 0) const;
+
+    /**
+     * Gather equal size arrays
+     * @param source
+     * @param sourceCount
+     * @param destination
+     * @param rankDestination
+     */
+    template <class T>
+    void GatherArrays(const T *source, size_t sourceCount, T *destination,
+                      int rankDestination = 0) const;
+
+    /**
+     * Gather arrays of the same type into a destination (must be pre-allocated)
+     * if countsSize == 1, calls MPI_Gather, otherwise calls MPI_Gatherv.
+     * This function must be specialized for each MPI_Type.
+     * @param source  input from each rank
+     * @param counts  counts for each source
+     * @param countsSize number of counts
+     * @param destination resulting gathered buffer in rankDestination, unchaged
+     * in others
+     * @param rankDestination rank in which arrays are gathered (root)
+     */
+    template <class T>
+    void GathervArrays(const T *source, size_t sourceCount,
+                       const size_t *counts, size_t countsSize, T *destination,
+                       int rankDestination = 0) const;
+
+    template <class T>
+    void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
+                        size_t &position, int rankDestination = 0,
+                        size_t extraSize = 0) const;
 
 private:
     /**

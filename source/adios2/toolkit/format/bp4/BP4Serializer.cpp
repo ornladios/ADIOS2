@@ -987,7 +987,7 @@ void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
     }
 
     // write contents
-    helper::GathervVectors(index.Buffer, buffer, position, comm);
+    comm.GathervVectors(index.Buffer, buffer, position);
 
     // get total length and write it after count and before index
     if (rank == 0)
@@ -1008,8 +1008,8 @@ void BP4Serializer::AggregateMergeIndex(
     std::vector<char> gatheredSerialIndices;
     size_t gatheredSerialIndicesPosition = 0;
 
-    helper::GathervVectors(serializedIndices, gatheredSerialIndices,
-                           gatheredSerialIndicesPosition, comm);
+    comm.GathervVectors(serializedIndices, gatheredSerialIndices,
+                        gatheredSerialIndicesPosition);
 
     // deallocate local serialized Indices
     std::vector<char>().swap(serializedIndices);
@@ -2144,8 +2144,8 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     // use bufferSTL (will resize) to GatherV
     // const size_t extraSize = 16 + 12 + 12 + m_MetadataSet.MiniFooterSize;
 
-    helper::GathervVectors(m_SerializedIndices, inBufferSTL.m_Buffer,
-                           inBufferSTL.m_Position, comm, 0, 0);
+    comm.GathervVectors(m_SerializedIndices, inBufferSTL.m_Buffer,
+                        inBufferSTL.m_Position, 0, 0);
 
     // deserialize, it's all local inside rank 0
     if (rank == 0)
@@ -2898,8 +2898,7 @@ BP4Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
     const size_t rankLogSize = rankLog.size();
-    std::vector<size_t> rankLogsSizes =
-        helper::GatherValues(rankLogSize, m_Comm);
+    std::vector<size_t> rankLogsSizes = m_Comm.GatherValues(rankLogSize);
 
     // Gatherv JSON per rank
     std::vector<char> profilingJSON(3);
@@ -2918,9 +2917,8 @@ BP4Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
                              header.size());
     }
 
-    helper::GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
-                          rankLogsSizes.size(), &profilingJSON[position],
-                          m_Comm);
+    m_Comm.GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
+                         rankLogsSizes.size(), &profilingJSON[position]);
 
     if (m_RankMPI == 0) // add footer to close JSON
     {
