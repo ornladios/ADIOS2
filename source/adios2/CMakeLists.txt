@@ -152,7 +152,7 @@ if(ADIOS2_HAVE_SST)
 endif()
 
 
-if(ADIOS2_HAVE_BZIP2)
+if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZIP2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
