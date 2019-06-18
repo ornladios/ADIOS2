@@ -43,7 +43,7 @@ target_include_directories(adios2_f
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/fortran>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/adios2/fortran>
 )
 
 target_link_libraries(adios2_f PRIVATE adios2)
@@ -70,7 +70,7 @@ install(
 )
 install(
   DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fortran
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/fortran
   FILES_MATCHING 
     PATTERN "adios2*.mod" 
     PATTERN "CMakeFiles" EXCLUDE
