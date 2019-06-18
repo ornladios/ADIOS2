@@ -284,7 +284,15 @@ public:
      * constant for the entire lifetime of the output and may optimize metadata
      * handling.
      */
-    void LockDefinitions();
+    void LockWriterDefinitions();
+
+    /**
+     * @brief Promise that the reader data selections of are fixed and
+     * will not change in future timesteps. This information, provided
+     * before the EndStep() representing a fixed read pattern, may be
+     * utilized by the input Engine to optimize data flow.
+     */
+    void LockReaderSelections();
 
     /**
      * Returns a map with variable information

@@ -126,12 +126,6 @@ void IO::FlushAll()
     m_IO->FlushAll();
 }
 
-void IO::LockDefinitions()
-{
-    helper::CheckForNullptr(m_IO, "in call to IO::LockDefinitions");
-    m_IO->LockDefinitions();
-}
-
 std::map<std::string, Params> IO::AvailableVariables()
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AvailableVariables");

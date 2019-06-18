@@ -714,8 +714,6 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
     }
 }
 
-void IO::LockDefinitions() noexcept { m_DefinitionsLocked = true; };
-
 // PRIVATE
 int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const
     noexcept

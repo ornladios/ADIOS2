@@ -777,22 +777,6 @@ adios2_error adios2_engine_type(char *engine_type, size_t *size,
     }
 }
 
-adios2_error adios2_lock_definitions(adios2_io *io)
-{
-    try
-    {
-        adios2::helper::CheckForNullptr(
-            io, "for adios2_io, in call to adios2_lock_definitions");
-        reinterpret_cast<adios2::core::IO *>(io)->LockDefinitions();
-        return adios2_error_none;
-    }
-    catch (...)
-    {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_engine_type"));
-    }
-}
-
 #ifdef __cplusplus
 } // end extern C
 #endif

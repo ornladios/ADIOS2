@@ -554,6 +554,42 @@ adios2_error adios2_close(adios2_engine *engine)
     return adios2_close_by_index(engine, -1);
 }
 
+adios2_error adios2_lock_writer_definitions(adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine,
+            "for adios2_engine, in call to adios2_lock_writer_definitions");
+        reinterpret_cast<adios2::core::Engine *>(engine)
+            ->LockWriterDefinitions();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_type"));
+    }
+}
+
+adios2_error adios2_lock_reader_selections(adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine,
+            "for adios2_engine, in call to adios2_lock_reader_selections");
+        reinterpret_cast<adios2::core::Engine *>(engine)
+            ->LockReaderSelections();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_engine_type"));
+    }
+}
+
 adios2_error adios2_close_by_index(adios2_engine *engine,
                                    const int transport_index)
 {

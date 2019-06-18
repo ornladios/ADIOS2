@@ -259,5 +259,19 @@ size_t Engine::Steps() const
     return m_Engine->Steps();
 }
 
+void Engine::LockWriterDefinitions() const
+{
+    helper::CheckForNullptr(m_Engine,
+                            "in call to Engine::LockWriterDefinitions");
+    m_Engine->LockWriterDefinitions();
+}
+
+void Engine::LockReaderSelections() const
+{
+    helper::CheckForNullptr(m_Engine,
+                            "in call to Engine::LockReaderSelections");
+    m_Engine->LockReaderSelections();
+}
+
 } // end namespace py11
 } // end namespace adios2

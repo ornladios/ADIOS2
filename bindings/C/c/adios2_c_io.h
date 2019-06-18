@@ -327,16 +327,6 @@ adios2_error adios2_flush_all_engines(adios2_io *io);
 adios2_error adios2_engine_type(char *engine_type, size_t *size,
                                 const adios2_io *io);
 
-/**
- * Promise that no more definitions or changes to defined variables will
- * occur. Useful information if called before the first adios2_end_step() of
- * an output Engine, as it will know that the definitions are complete and
- * constant for the entire lifetime of the output and may optimize metadata
- * handling.
- * @param io handler
- */
-adios2_error adios2_lock_definitions(adios2_io *io);
-
 #ifdef __cplusplus
 } // end extern C
 #endif

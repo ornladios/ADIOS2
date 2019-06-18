@@ -123,7 +123,7 @@ void SstWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
     m_BetweenStepPairs = false;
-    if (m_IO.m_DefinitionsLocked && !m_DefinitionsNotified)
+    if (m_WriterDefinitionsLocked && !m_DefinitionsNotified)
     {
         SstWriterDefinitionLock(m_Output, m_WriterStep);
         m_DefinitionsNotified = true;

@@ -388,12 +388,6 @@ void FC_GLOBAL(adios2_flush_all_engines_f2c,
     *ierr = static_cast<int>(adios2_flush_all_engines(*io));
 }
 
-void FC_GLOBAL(adios2_lock_definitions_f2c,
-               ADIOS2_LOCK_DEFINITIONS_F2C)(adios2_io **io, int *ierr)
-{
-    *ierr = static_cast<int>(adios2_lock_definitions(*io));
-}
-
 void FC_GLOBAL(adios2_io_engine_type_f2c,
                ADIOS2_IO_ENGINE_TYPE_F2C)(char *type, const adios2_io **io,
                                           int *ierr)
