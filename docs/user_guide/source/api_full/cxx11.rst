@@ -41,7 +41,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::ADIOS
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
    
    
@@ -50,7 +50,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::IO
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
    
 :ref:`Variable` ``<T>`` class
@@ -58,7 +58,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Variable
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
 
@@ -67,7 +67,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Attribute
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
 
@@ -76,7 +76,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Engine
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
 :ref:`Operator` class
@@ -84,7 +84,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Operator
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
 Debugging
