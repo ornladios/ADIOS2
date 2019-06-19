@@ -224,6 +224,13 @@ timesteps available to the reader, older timesteps will be skipped and
 the reader will see only the newest available upon BeginStep.
 This value is interpreted by only by the SST Reader engine.
 
+13. ``OpenTimeoutSecs``: Default **60**.  OpenTimeoutSecs is an integer
+parameter that specifies the number of seconds SST is to wait for a peer
+connection on Open().  Currently this is only implemented on the Reader side
+of SST, and is a timeout for locating the contact information file created
+by Writer-side Open, not for completing the entire Open() handshake.
+Currentlyvalue is interpreted by only by the SST Reader engine.
+
 
 ============================= ===================== ================================================
  **Key**                        **Value Format**      **Default** and Examples
@@ -240,4 +247,5 @@ This value is interpreted by only by the SST Reader engine.
  DataInterface                   string              **NULL**
  FirstTimestepPrecious           boolean             **FALSE**, true, no, yes
  AlwaysProvideLatestTimestep     boolean             **FALSE**, true, no, yes
+ OpenTimeoutSecs                 integer             **60**
 ============================= ===================== ================================================

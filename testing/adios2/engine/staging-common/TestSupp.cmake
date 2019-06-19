@@ -76,6 +76,9 @@ set (FtoF.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRe
 # NoReaderNoWait runs a writer with the RendezvousReaderCount = 0 and then never spawns a reader.  The test should run to termination and execute cleanly
 set (NoReaderNoWait_CMD "run_test.py -nw 1 -nr 0 --warg=RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS")
 
+# TimeoutOnOpen runs a reader but never spawns a writ.  The Open should run to timeout and throw an exception
+set (TimeoutOnOpen_CMD "run_test.py -nw 0 -nr 1 --rarg=--expect_timeout --rarg=OpenTimeoutSecs:10,ENGINE_PARAMS")
+
 # The Modes test checks to see that we can mix and match Put Sync and Deferred modes and still get good data
 set (Modes_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteModes -r TestCommonRead --warg=ENGINE_PARAMS")
 

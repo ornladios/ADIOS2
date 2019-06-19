@@ -173,6 +173,8 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
         fprintf(stderr, "Param -   AlwaysProvideLatestTimestep:%s\n",
                 Params->AlwaysProvideLatestTimestep ? "True" : "False");
     }
+    fprintf(stderr, "Param -   OpenTimeoutSecs:%d (seconds)\n",
+            Params->OpenTimeoutSecs);
 }
 
 static FMField CP_SstParamsList_RAW[] = {

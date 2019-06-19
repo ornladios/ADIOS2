@@ -33,7 +33,8 @@ def clean_server_kill(writer):
     
 def do_simple_test(writer_cmd, reader_cmd, reader_delay) :
     return_code = 0;
-    writer = subprocess.Popen(writer_cmd);
+    if writer_cmd is not None :
+        writer = subprocess.Popen(writer_cmd);
 
     if reader_cmd is not None :
         time.sleep(reader_delay)
@@ -44,11 +45,13 @@ def do_simple_test(writer_cmd, reader_cmd, reader_delay) :
             print "TestDriver: Reader failed, causing test failure"
             return_code = 1
 
-    writer.wait();
-    print("TestDriver: Writer exit status was " + str(writer.returncode));
-    if writer.returncode != 0 :
-        print "TestDriver: Writer failed, causing test failure"
-        return_code = 1
+    if writer_cmd is not None :
+        writer.wait();
+        print("TestDriver: Writer exit status was " + str(writer.returncode));
+        if writer.returncode != 0 :
+            print "TestDriver: Writer failed, causing test failure"
+            return_code = 1
+
     return return_code    
     
 def do_one_client_test(writer_cmd, reader_cmd) :
@@ -199,10 +202,14 @@ if args.rarg is not None:
 
 if args.num_readers == 0:
     reader_command_line = None;
-
-print("TestDriver: Writer command line : " + " ".join(writer_command_line));
-if reader_command_line is not None:
+else :
     print("TestDriver: Reader command line : " + " ".join(reader_command_line));
+
+if args.num_writers == 0:
+    writer_command_line = None;
+else :
+    print("TestDriver: Writer command line : " + " ".join(writer_command_line));
+
 
 test_setup(args.filename)
 atexit.register(test_teardown, args.filename)
