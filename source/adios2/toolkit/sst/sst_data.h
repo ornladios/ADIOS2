@@ -29,6 +29,7 @@ struct _SstBlock
     MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP)                  \
     MACRO(RegistrationMethod, RegMethod, size_t, 0)                            \
     MACRO(DataTransport, String, char *, NULL)                                 \
+    MACRO(OpenTimeoutSecs, Int, int, 60)                                       \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \
     MACRO(ReserveQueueLimit, Int, int, 0)                                      \

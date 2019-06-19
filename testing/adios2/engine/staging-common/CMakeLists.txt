@@ -109,7 +109,7 @@ if (ADIOS2_HAVE_MPI AND NOT ("${MPIEXEC_EXECUTABLE}" STREQUAL "MPIEXEC_EXECUTABL
    endforeach()
 endif()
 
-set (TEST_SET "1x1;NoReaderNoWait;Modes;1x1.Attrs;1x1.Local")
+set (TEST_SET "1x1;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local")
 set (FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")

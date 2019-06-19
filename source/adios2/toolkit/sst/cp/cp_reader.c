@@ -20,27 +20,37 @@
 #include "adios2/toolkit/profiling/taustubs/taustubs.h"
 #include "cp_internal.h"
 
-static char *readContactInfoFile(const char *Name, SstStream Stream)
+static char *readContactInfoFile(const char *Name, SstStream Stream,
+                                 int Timeout)
 {
     size_t len = strlen(Name) + strlen(SST_POSTFIX) + 1;
     char *FileName = malloc(len);
     FILE *WriterInfo;
-    long TotalSleepTime = 0;
+    int64_t TimeoutRemaining = Timeout * 1000 * 1000;
+    int64_t WaitWarningRemaining = 5 * 1000 * 1000;
     snprintf(FileName, len, "%s" SST_POSTFIX, Name);
-//    printf("Looking for writer contact in file %s\n", FileName);
+    CP_verbose(Stream,
+               "Looking for writer contact in file %s, with timeout %d secs\n",
+               FileName, Timeout);
 redo:
     WriterInfo = fopen(FileName, "r");
     while (!WriterInfo)
     {
-        CMusleep(Stream->CPInfo->cm, 500);
-        TotalSleepTime += 500;
-        if (TotalSleepTime > 30 * 1000 * 1000)
+        int SleepInterval = 100000;
+        // CMusleep(Stream->CPInfo->cm, SleepInterval);
+        usleep(SleepInterval);
+        TimeoutRemaining -= SleepInterval;
+        WaitWarningRemaining -= SleepInterval;
+        if (WaitWarningRemaining == 0)
         {
             fprintf(stderr,
                     "ADIOS2 SST Engine waiting for contact information "
                     "file %s to be created\n",
                     Name);
-            TotalSleepTime = 0;
+        }
+        if (TimeoutRemaining <= 0)
+        {
+            return NULL;
         }
         WriterInfo = fopen(FileName, "r");
     }
@@ -83,12 +93,12 @@ static char *readContactInfoScreen(const char *Name, SstStream Stream)
     return strdup(Skip);
 }
 
-static char *readContactInfo(const char *Name, SstStream Stream)
+static char *readContactInfo(const char *Name, SstStream Stream, int Timeout)
 {
     switch (Stream->RegistrationMethod)
     {
     case SstRegisterFile:
-        return readContactInfoFile(Name, Stream);
+        return readContactInfoFile(Name, Stream, Timeout);
         break;
     case SstRegisterScreen:
         return readContactInfoScreen(Name, Stream);
@@ -256,28 +266,42 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
 
     if (Stream->Rank == 0)
     {
-        char *Writer0Contact = readContactInfo(Filename, Stream);
+        char *Writer0Contact =
+            readContactInfo(Filename, Stream, Params->OpenTimeoutSecs);
         void *WriterFileID;
-        char *CMContactString =
-            malloc(strlen(Writer0Contact)); /* at least long enough */
+        char *CMContactString;
         struct _CombinedWriterInfo WriterData;
+        CMConnection conn = NULL;
+        attr_list WriterRank0Contact;
 
         memset(&WriterData, 0, sizeof(WriterData));
-        sscanf(Writer0Contact, "%p:%s", &WriterFileID, CMContactString);
-        //        printf("Writer contact info is fileID %p, contact info %s\n",
-        //               WriterFileID, CMContactString);
-        free(Writer0Contact);
-
-        if (globalNetinfoCallback)
+        if (!Writer0Contact)
         {
-            (globalNetinfoCallback)(1, CP_GetContactString(Stream),
-                                    IPDiagString);
-            (globalNetinfoCallback)(2, CMContactString, NULL);
+            /* The file didn't appear prior to the timeout, notify the other
+             * ranks of failure */
+            WriterData.WriterCohortSize = -1;
         }
-        attr_list WriterRank0Contact = attr_list_from_string(CMContactString);
-        CMConnection conn = CMget_conn(Stream->CPInfo->cm, WriterRank0Contact);
-        free_attr_list(WriterRank0Contact);
+        else
+        {
 
+            CMContactString =
+                malloc(strlen(Writer0Contact)); /* at least long enough */
+            sscanf(Writer0Contact, "%p:%s", &WriterFileID, CMContactString);
+            //        printf("Writer contact info is fileID %p, contact info
+            //        %s\n",
+            //               WriterFileID, CMContactString);
+            free(Writer0Contact);
+
+            if (globalNetinfoCallback)
+            {
+                (globalNetinfoCallback)(1, CP_GetContactString(Stream),
+                                        IPDiagString);
+                (globalNetinfoCallback)(2, CMContactString, NULL);
+            }
+            WriterRank0Contact = attr_list_from_string(CMContactString);
+            conn = CMget_conn(Stream->CPInfo->cm, WriterRank0Contact);
+            free_attr_list(WriterRank0Contact);
+        }
         if (conn)
         {
             /* success!   We have a connection to the writer! */
