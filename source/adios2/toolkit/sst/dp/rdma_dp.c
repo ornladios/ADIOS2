@@ -133,9 +133,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
             useinfo = info;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
-            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0 ||
-            !useinfo)
+        if ((strstr(prov_name, "verbs") && info->src_addr) ||
+            strstr(prov_name, "gni") || strstr(prov_name, "psm2") || !useinfo)
         {
             useinfo = info;
         }
@@ -1059,8 +1058,8 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             Ret = 100;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
-            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0)
+        if ((strstr(prov_name, "verbs") && info->src_addr) ||
+            strstr(prov_name, "gni") || strstr(prov_name, "psm2"))
         {
 
             Svcs->verbose(CP_Stream,
