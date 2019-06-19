@@ -58,32 +58,32 @@ void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
     MPI_Comm_rank(parentComm, &parentRank);
     MPI_Comm_size(parentComm, &parentSize);
 
+    const size_t process = static_cast<size_t>(parentRank);
     const size_t processes = static_cast<size_t>(parentSize);
-    size_t stride = processes / subStreams + 1;
-    const size_t remainder = processes % subStreams;
 
-    size_t consumer = 0;
+    // Divide the processes into S=subStreams groups.
+    const size_t q = processes / subStreams;
+    const size_t r = processes % subStreams;
 
-    for (auto s = 0; s < subStreams; ++s)
+    // Groups [0,r) have size q+1.  Groups [r,S) have size q.
+    const size_t first_in_small_groups = r * (q + 1);
+
+    // Within each group the first process becomes its consumer.
+    if (process >= first_in_small_groups)
     {
-        if (s >= remainder)
-        {
-            stride = processes / subStreams;
-        }
-
-        if (static_cast<size_t>(parentRank) >= consumer &&
-            static_cast<size_t>(parentRank) < consumer + stride)
-        {
-            helper::CheckMPIReturn(
-                MPI_Comm_split(parentComm, static_cast<int>(consumer),
-                               parentRank, &m_Comm),
-                "creating aggregators comm with split at Open");
-            m_ConsumerRank = static_cast<int>(consumer);
-            m_SubStreamIndex = static_cast<size_t>(s);
-        }
-
-        consumer += stride;
+        m_SubStreamIndex = r + (process - first_in_small_groups) / q;
+        m_ConsumerRank = static_cast<int>(first_in_small_groups +
+                                          (m_SubStreamIndex - r) * q);
     }
+    else
+    {
+        m_SubStreamIndex = process / (q + 1);
+        m_ConsumerRank = static_cast<int>(m_SubStreamIndex * (q + 1));
+    }
+
+    helper::CheckMPIReturn(
+        MPI_Comm_split(parentComm, m_ConsumerRank, parentRank, &m_Comm),
+        "creating aggregators comm with split at Open");
 
     MPI_Comm_rank(m_Comm, &m_Rank);
     MPI_Comm_size(m_Comm, &m_Size);
