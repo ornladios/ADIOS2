@@ -151,6 +151,10 @@ if(ADIOS2_HAVE_SST)
   target_link_libraries(adios2 PRIVATE sst)
 endif()
 
+if(ADIOS2_HAVE_Blosc)
+  target_sources(adios2 PRIVATE operator/compress/CompressBLOSC.cpp)
+  target_link_libraries(adios2 PRIVATE Blosc::Blosc)
+endif()
 
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZIP2.cpp)
