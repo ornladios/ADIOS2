@@ -1024,7 +1024,14 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     hints->domain_attr->mr_mode = FI_MR_BASIC;
     hints->ep_attr->type = FI_EP_RDM;
 
-    ifname = getenv("FABRIC_IFACE");
+    if (Params->DataInterface)
+    {
+        ifname = Params->DataInterface;
+    }
+    else
+    {
+        ifname = getenv("FABRIC_IFACE");
+    }
 
     fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
     fi_freeinfo(hints);
