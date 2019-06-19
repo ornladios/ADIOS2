@@ -43,10 +43,10 @@ function flag_diff() {
 }
 
 function prefixify() {
-  echo "$@" | sed 's|@CMAKE_INSTALL_PREFIX@|${ADIOS2_PREFIX}|g'
+  echo "$@" | sed "s|${adios2_DIR}|\${ADIOS2_PREFIX}|g"
 }
 
-export adios2_DIR="@CMAKE_INSTALL_PREFIX@"
+export adios2_DIR="${DESTDIR}$1"
 CMAKE="@CMAKE_COMMAND@"
 SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/post/adios2-config-dummy"
 BUILD_DIR=$(mktemp -d)
@@ -128,11 +128,11 @@ else
   echo ADIOS2_Fortran_LDFLAGS="" >> adios2.flags
 fi
 
-echo "Writing @CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
+echo "Writing ${adios2_DIR}/@CMAKE_INSTALL_BINDIR@/adios2-config"
 cat \
   "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.pre.sh" \
   adios2.flags \
-  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
-chmod +x "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/adios2-config"
+  "@ADIOS2_BINARY_DIR@/cmake/install/post/adios2-config.post.sh" > "${adios2_DIR}/@CMAKE_INSTALL_BINDIR@/adios2-config"
+chmod +x "${adios2_DIR}/@CMAKE_INSTALL_BINDIR@/adios2-config"
 popd 
 rm -rf ${BUILD_DIR}
