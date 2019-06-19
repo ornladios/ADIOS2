@@ -185,7 +185,22 @@ will result in SST generating contact information that uses the
 network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
-9. ``FirstTimestepPrecious``: Default **FALSE**.
+9. ``ControlInterface``: Default **NULL**.  This value is similar to the
+NetworkInterface parameter, but only applies to the SST layer which does
+messaging for control (open, close, flow and timestep management, but not
+actual data transfer).  Generally the NetworkInterface parameter can be used
+to control this, but that also aplies to the Data Plane.  Use
+ControlInterface in the event of conflicting specifications.
+
+10. ``DataInterface``: Default **NULL**.  This value is similar to the
+NetworkInterface parameter, but only applies to the SST layer which does
+messaging for data transfer, not control (open, close, flow and timestep
+management).  Generally the NetworkInterface parameter can be used to
+control this, but that also aplies to the Control Plane.  Use DataInterface
+in the event of conflicting specifications.  In the case of the RDMA data
+plane, this parameter controls the libfabric interface choice.
+
+11. ``FirstTimestepPrecious``: Default **FALSE**.
 FirstTimestepPrecious is a boolean parameter that affects the queueing
 of the first timestep presented to the SST Writer engine. If
 FirstTimestepPrecious is **TRUE***, then the first timestep is
@@ -201,7 +216,7 @@ other reader-side operations (like requesting the LatestAvailable
 timestep in Engine parameters) might still cause the timestep to be skipped.
 This value is interpreted by only by the SST Writer engine.
 
-10. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
+12. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
 AlwaysProvideLatestTimestep is a boolean parameter that affects what
 of the available timesteps will be provided to the reader engine.  If
 AlwaysProvideLatestTimestep is **TRUE***, then if there are multiple
@@ -221,6 +236,8 @@ This value is interpreted by only by the SST Reader engine.
  DataTransport                   string              **default varies by platform**, RDMA, WAN
  ControlTransport                string              **TCP**, Scalable
  NetworkInterface                string              **NULL**
+ ControlInterface                string              **NULL**
+ DataInterface                   string              **NULL**
  FirstTimestepPrecious           boolean             **FALSE**, true, no, yes
  AlwaysProvideLatestTimestep     boolean             **FALSE**, true, no, yes
 ============================= ===================== ================================================

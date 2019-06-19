@@ -37,6 +37,8 @@ struct _SstBlock
     MACRO(FirstTimestepPrecious, Bool, int, 0)                                 \
     MACRO(ControlTransport, String, char *, NULL)                              \
     MACRO(NetworkInterface, String, char *, NULL)                              \
+    MACRO(ControlInterface, String, char *, NULL)                              \
+    MACRO(DataInterface, String, char *, NULL)                                 \
     MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommMin)                  \
     MACRO(CompressionMethod, CompressionMethod, size_t, 0)                     \
     MACRO(AlwaysProvideLatestTimestep, Bool, int, 0)
