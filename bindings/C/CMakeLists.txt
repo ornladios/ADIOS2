@@ -5,12 +5,12 @@
 
 
 target_sources(adios2 PRIVATE 
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_adios.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_io.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_engine.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_variable.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_attribute.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/c/adios2_c_operator.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_adios.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_io.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_engine.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_variable.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_attribute.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/adios2/c/adios2_c_operator.cpp
 )
 target_include_directories(adios2
   PUBLIC
@@ -26,12 +26,12 @@ install(
 )
 
 install(
-  FILES c/adios2_c_types.h 
-        c/adios2_c_adios.h
-        c/adios2_c_io.h
-        c/adios2_c_variable.h
-        c/adios2_c_attribute.h
-        c/adios2_c_engine.h
-        c/adios2_c_operator.h
+  FILES adios2/c/adios2_c_types.h 
+        adios2/c/adios2_c_adios.h
+        adios2/c/adios2_c_io.h
+        adios2/c/adios2_c_variable.h
+        adios2/c/adios2_c_attribute.h
+        adios2/c/adios2_c_engine.h
+        adios2/c/adios2_c_operator.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/c
 )

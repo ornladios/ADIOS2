@@ -15,13 +15,13 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 
-#include "cxx11/ADIOS.h"
-#include "cxx11/Attribute.h"
-#include "cxx11/Engine.h"
-#include "cxx11/IO.h"
-#include "cxx11/Operator.h"
-#include "cxx11/Types.h"
-#include "cxx11/Variable.h"
-#include "cxx11/fstream/ADIOS2fstream.h"
+#include "adios2/cxx11/ADIOS.h"
+#include "adios2/cxx11/Attribute.h"
+#include "adios2/cxx11/Engine.h"
+#include "adios2/cxx11/IO.h"
+#include "adios2/cxx11/Operator.h"
+#include "adios2/cxx11/Types.h"
+#include "adios2/cxx11/Variable.h"
+#include "adios2/cxx11/fstream/ADIOS2fstream.h"
 
 #endif /* ADIOS2_BINDINGS_CXX11_H_ */
