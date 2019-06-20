@@ -14,6 +14,7 @@
 
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
+#include <fstream>  //std::ifstream
 #include <mpi.h>
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
@@ -22,15 +23,24 @@
 
 int main(int argc, char *argv[])
 {
+    // Test if the file has been written by hello_bpWriter:
+    std::string filename = "myVector_cpp.bp";
+    std::ifstream f(filename.c_str());
+    if (!f.good())
+    {
+       std::cerr << "The file " << filename << " does not exist."
+                 << " Presumably this is because hello_bpWriter has not been run. Run ./hello_bpWriter before running this program.\n";
+       return 1;
+    }
+    else
+    {
+       f.close();
+    }
+
     MPI_Init(&argc, &argv);
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    /** Application variable */
-    const std::size_t Nx = 10;
-    std::vector<float> myFloats(Nx);
-    std::vector<int> myInts(Nx);
 
     try
     {
@@ -64,12 +74,15 @@ int main(int argc, char *argv[])
             bpIO.InquireVariable<float>("bpFloats");
         adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("bpInts");
 
+        unsigned long  Nx = 10;
         if (bpFloats) // means found
         {
+            std::vector<float> myFloats;
+
             // read only the chunk corresponding to our rank
             bpFloats.SetSelection({{Nx * rank}, {Nx}});
             // myFloats.data is pre-allocated
-            bpReader.Get<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
+            bpReader.Get<float>(bpFloats, myFloats, adios2::Mode::Sync);
 
             std::cout << "MyFloats: \n";
             for (const auto number : myFloats)
@@ -81,12 +94,13 @@ int main(int argc, char *argv[])
 
         if (bpInts) // means not found
         {
+            std::vector<int> myInts;
             // read only the chunk corresponding to our rank
             bpInts.SetSelection({{Nx * rank}, {Nx}});
             // myInts.data is pre-allocated
-            bpReader.Get<int>(bpInts, myInts.data(), adios2::Mode::Sync);
+            bpReader.Get<int>(bpInts, myInts, adios2::Mode::Sync);
 
-            std::cout << "MyInts: \n";
+            std::cout << "myInts: \n";
             for (const auto number : myInts)
             {
                 std::cout << number << " ";

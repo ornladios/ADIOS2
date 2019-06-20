@@ -35,15 +35,17 @@ int main(int argc, char *argv[])
         adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
+        std::string filename = "myVector_cpp.bp";
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpWriter =
-            bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
+            bpIO.Open(filename, adios2::Mode::Write);
 
         /** Write variable for buffering */
         bpWriter.Put<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
         bpWriter.Close();
+        std::cout << "Wrote file " << filename << " to disk. It can now be read by running ./bin/hello_bpReader.\n";
     }
     catch (std::invalid_argument &e)
     {
