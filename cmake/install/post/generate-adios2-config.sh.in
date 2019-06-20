@@ -17,11 +17,23 @@ function a_without_b() {
   local A="$1"
   local B="$2"
   local skip=0
+  local firstA=1
   for a in $A
   do
+    if [ $firstA -eq 1 ]
+    then
+      firstA=0
+      continue
+    fi
     skip=0
+    local firstB=1
     for b in ${B}
     do
+      if [ $firstB -eq 1 ]
+      then
+        firstB=0
+        continue
+      fi
       if [ "${a}" == "${b}" ]
       then
         skip=1
