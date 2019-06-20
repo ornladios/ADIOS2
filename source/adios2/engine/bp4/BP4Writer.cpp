@@ -612,16 +612,16 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
 {
     TAU_SCOPED_TIMER("BP4Writer::WriteData");
-    size_t dataSize = m_BP4Serializer.m_Data.m_Position;
+    size_t dataSize; // = m_BP4Serializer.m_Data.m_Position;
 
+    // write data without footer
     if (isFinal)
     {
-        m_BP4Serializer.CloseData(m_IO);
-        dataSize = m_BP4Serializer.m_Data.m_Position;
+        dataSize = m_BP4Serializer.CloseData(m_IO);
     }
     else
     {
-        m_BP4Serializer.CloseStream(m_IO);
+        dataSize = m_BP4Serializer.CloseStream(m_IO, false);
     }
 
     m_FileDataManager.WriteFiles(m_BP4Serializer.m_Data.m_Buffer.data(),
@@ -650,11 +650,14 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
             const BufferSTL &bufferSTL =
                 m_BP4Serializer.m_Aggregator.GetConsumerBuffer(
                     m_BP4Serializer.m_Data);
+            if (bufferSTL.m_Position > 0)
+            {
+                m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
+                                             bufferSTL.m_Position,
+                                             transportIndex);
 
-            m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
-                                         bufferSTL.m_Position, transportIndex);
-
-            m_FileDataManager.FlushFiles(transportIndex);
+                m_FileDataManager.FlushFiles(transportIndex);
+            }
         }
 
         m_BP4Serializer.m_Aggregator.WaitAbsolutePosition(
@@ -668,19 +671,6 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     if (isFinal) // Write metadata footer
     {
-        BufferSTL &bufferSTL = m_BP4Serializer.m_Data;
-        m_BP4Serializer.ResetBuffer(bufferSTL, false, false);
-
-        m_BP4Serializer.AggregateCollectiveMetadata(
-            m_BP4Serializer.m_Aggregator.m_Comm, bufferSTL, false);
-
-        if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
-        {
-            m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
-                                         bufferSTL.m_Position, transportIndex);
-
-            m_FileDataManager.FlushFiles(transportIndex);
-        }
         m_BP4Serializer.m_Aggregator.Close();
     }
 

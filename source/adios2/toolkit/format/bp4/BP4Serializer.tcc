@@ -17,6 +17,9 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
+#include <iostream>
+#include <stddef.h>
+
 namespace adios2
 {
 namespace format
@@ -53,9 +56,20 @@ inline void BP4Serializer::PutVariableMetadata(
         true; // flag to indicate this variable is put at current step
     stats.MemberID = variableIndex.MemberID;
 
+    /*const size_t startingPos = m_Data.m_Position;*/
     lf_SetOffset(stats.Offset);
     PutVariableMetadataInData(variable, blockInfo, stats);
     lf_SetOffset(stats.PayloadOffset);
+
+    /*
+    std::cout << " -- Var name=" << variable.m_Name
+              << " buffer startPos = " << std::to_string(startingPos)
+              << " offset = " << std::to_string(stats.Offset)
+              << " payload offset = " << std::to_string(stats.PayloadOffset)
+              << " position = " << std::to_string(m_Data.m_Position)
+              << " abs.position = " << std::to_string(m_Data.m_AbsolutePosition)
+              << std::endl;
+    */
 
     // write to metadata  index
     PutVariableMetadataInIndex(variable, blockInfo, stats, isNew,
@@ -72,6 +86,7 @@ inline void BP4Serializer::PutVariablePayload(
     const bool sourceRowMajor) noexcept
 {
     ProfilerStart("buffering");
+    /*const size_t startingPos = m_Data.m_Position;*/
     if (blockInfo.Operations.empty())
     {
         PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
@@ -81,6 +96,22 @@ inline void BP4Serializer::PutVariablePayload(
         PutOperationPayloadInBuffer(variable, blockInfo);
     }
 
+    /*
+    std::cout << " -- Var payload name=" << variable.m_Name
+              << " startPos = " << std::to_string(startingPos)
+              << " end position = " << std::to_string(m_Data.m_Position)
+              << " end abs.position = "
+              << std::to_string(m_Data.m_AbsolutePosition) << " value[0] = "
+              << std::to_string(
+                     *reinterpret_cast<double *>(&m_Data.m_Buffer[startingPos]))
+              << " value[last] = "
+              << std::to_string(*reinterpret_cast<double *>(
+                     m_Data.m_Buffer.data() + m_Data.m_Position - 8))
+              << " 4 bytes ahead = '"
+              << std::string(m_Data.m_Buffer.data() + startingPos - 4, 4) << "'"
+              << std::endl;
+    */
+
     ProfilerStop("buffering");
 }
 
@@ -88,10 +119,13 @@ inline void BP4Serializer::PutVariablePayload(
 template <class T>
 size_t
 BP4Serializer::PutAttributeHeaderInData(const core::Attribute<T> &attribute,
-                                        Stats<T> &stats) noexcept
+                                        Stats<T> &stats, const char *headerID,
+                                        const size_t headerIDLength) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
+
+    helper::CopyToBuffer(buffer, position, headerID, headerIDLength);
 
     // will go back to write length
     const size_t attributeLengthPosition = position;
@@ -115,14 +149,10 @@ void BP4Serializer::PutAttributeLengthInData(
     const size_t attributeLengthPosition) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
-    auto &position = m_Data.m_Position;
-    auto &absolutePosition = m_Data.m_AbsolutePosition;
 
     // back to attribute length
     size_t backPosition = attributeLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &attributeLengthPosition);
-
-    absolutePosition += position - attributeLengthPosition;
 }
 
 template <>
@@ -130,12 +160,16 @@ inline void
 BP4Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
                                   Stats<std::string> &stats) noexcept
 {
-    const size_t attributeLengthPosition =
-        PutAttributeHeaderInData(attribute, stats);
-
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
+
+    const size_t mdBeginPosition = position;
+
+    // write a block identifier [AMD
+    const char amd[] = "[AMD"; // no \0
+    const size_t attributeLengthPosition =
+        PutAttributeHeaderInData(attribute, stats, amd, sizeof(amd) - 1);
 
     uint8_t dataType = TypeTraits<std::string>::type_enum;
     if (!attribute.m_IsSingleValue)
@@ -145,8 +179,8 @@ BP4Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
     helper::CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
-    stats.PayloadOffset = absolutePosition + position -
-                          attributeLengthPosition + m_PreDataFileLength;
+    stats.PayloadOffset =
+        absolutePosition + position - mdBeginPosition + m_PreDataFileLength;
 
     if (dataType == type_string)
     {
@@ -175,26 +209,35 @@ BP4Serializer::PutAttributeInData(const core::Attribute<std::string> &attribute,
         }
     }
 
+    // write a block identifier AMD]
+    const char amdend[] = "AMD]"; // no \0
+    helper::CopyToBuffer(buffer, position, amdend, sizeof(amdend) - 1);
+
     PutAttributeLengthInData(attribute, stats, attributeLengthPosition);
+    absolutePosition += position - mdBeginPosition;
 }
 
 template <class T>
 void BP4Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
                                        Stats<T> &stats) noexcept
 {
-    const size_t attributeLengthPosition =
-        PutAttributeHeaderInData(attribute, stats);
-
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
+
+    const size_t mdBeginPosition = position;
+
+    // write a block identifier [AMD
+    const char amd[] = "[AMD"; // no \0
+    const size_t attributeLengthPosition =
+        PutAttributeHeaderInData(attribute, stats, amd, sizeof(amd) - 1);
 
     uint8_t dataType = TypeTraits<T>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
 
     // here record payload offset
-    stats.PayloadOffset = absolutePosition + position -
-                          attributeLengthPosition + m_PreDataFileLength;
+    stats.PayloadOffset =
+        absolutePosition + position - mdBeginPosition + m_PreDataFileLength;
 
     const uint32_t dataSize =
         static_cast<uint32_t>(attribute.m_Elements * sizeof(T));
@@ -210,7 +253,12 @@ void BP4Serializer::PutAttributeInData(const core::Attribute<T> &attribute,
                              attribute.m_Elements);
     }
 
+    // write a block identifier AMD]
+    const char amdend[] = "AMD]"; // no \0
+    helper::CopyToBuffer(buffer, position, amdend, sizeof(amdend) - 1);
+
     PutAttributeLengthInData(attribute, stats, attributeLengthPosition);
+    absolutePosition += position - mdBeginPosition;
 }
 
 template <>
@@ -410,6 +458,12 @@ void BP4Serializer::PutVariableMetadataInData(
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
 
+    const size_t mdBeginPosition = position;
+
+    // write a block identifier [VMD
+    const char vmd[] = "[VMD"; //  don't write \0!
+    helper::CopyToBuffer(buffer, position, vmd, sizeof(vmd) - 1);
+
     // for writing length at the end
     const size_t varLengthPosition = position;
     position += 8; // skip var length (8)
@@ -417,7 +471,9 @@ void BP4Serializer::PutVariableMetadataInData(
     helper::CopyToBuffer(buffer, position, &stats.MemberID);
 
     PutNameRecord(variable.m_Name, buffer, position);
-    position += 2; // skip path
+    // path is empty now, write a 0 length to skip it
+    const uint16_t zero16 = 0;
+    helper::CopyToBuffer(buffer, position, &zero16);
 
     const uint8_t dataType = TypeTraits<T>::type_enum;
     helper::CopyToBuffer(buffer, position, &dataType);
@@ -437,10 +493,33 @@ void BP4Serializer::PutVariableMetadataInData(
                         buffer, position);
 
     // CHARACTERISTICS
-    PutVariableCharacteristics(variable, blockInfo, stats, buffer, position);
+    PutVariableCharacteristics(variable, blockInfo, stats, buffer, position,
+                               false);
+
+    // pad metadata so that data will fall on aligned position in memory
+    // write a padding plus block identifier VMD]
+    // format: length in 1 byte + padding characters + VMD]
+    // we would write at minimum 5 bytes, byte for length + "VMD]"
+    // hence the +5 in the calculation below
+    size_t padSize =
+        helper::PaddingToAlignPointer(buffer.data() + position + 5);
+
+    const char vmdEnd[] = "                                VMD]";
+    unsigned char vmdEndLen = static_cast<unsigned char>(padSize + 4);
+    // starting position in vmdEnd from where we copy to buffer
+    // we don't copy the \0 from vmdEnd !
+    const char *ptr = vmdEnd + (sizeof(vmdEnd) - 1 - vmdEndLen);
+    /*std::cout << " -- Pad metadata with " << std::to_string(padSize)
+              << " bytes. position = " << std::to_string(position)
+              << " pad string = '" << ptr << "'"
+              << " buffer memory address = "
+              << std::to_string(reinterpret_cast<std::uintptr_t>(buffer.data()))
+              << std::endl;*/
+    helper::CopyToBuffer(buffer, position, &vmdEndLen, 1);
+    helper::CopyToBuffer(buffer, position, ptr, vmdEndLen);
 
     // Back to varLength including payload size
-    // not need to remove its own size (8) from length from bpdump
+    // including the closing padding but NOT the opening [VMD
     const uint64_t varLength = static_cast<uint64_t>(
         position - varLengthPosition +
         helper::PayloadSize(blockInfo.Data, blockInfo.Count));
@@ -448,7 +527,7 @@ void BP4Serializer::PutVariableMetadataInData(
     size_t backPosition = varLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &varLength);
 
-    absolutePosition += position - varLengthPosition;
+    absolutePosition += position - mdBeginPosition;
 }
 
 template <>
@@ -460,6 +539,12 @@ inline void BP4Serializer::PutVariableMetadataInData(
     auto &buffer = m_Data.m_Buffer;
     auto &position = m_Data.m_Position;
     auto &absolutePosition = m_Data.m_AbsolutePosition;
+
+    const size_t mdBeginPosition = position;
+
+    // write a block identifier [VMD
+    const char vmd[] = "[VMD"; // no \0
+    helper::CopyToBuffer(buffer, position, vmd, sizeof(vmd) - 1);
 
     // for writing length at the end
     const size_t varLengthPosition = position;
@@ -487,8 +572,12 @@ inline void BP4Serializer::PutVariableMetadataInData(
 
     position += 5; // skipping characteristics
 
+    // write a block identifier VMD]
+    const char vmdend[] = "VMD]"; // no \0
+    helper::CopyToBuffer(buffer, position, vmdend, sizeof(vmdend) - 1);
+
     // Back to varLength including payload size
-    // not need to remove its own size (8) from length from bpdump
+    // including the closing padding but NOT the opening [VMD
     const uint64_t varLength = static_cast<uint64_t>(
         position - varLengthPosition +
         helper::PayloadSize(blockInfo.Data, blockInfo.Count));
@@ -496,7 +585,7 @@ inline void BP4Serializer::PutVariableMetadataInData(
     size_t backPosition = varLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &varLength);
 
-    absolutePosition += position - varLengthPosition;
+    absolutePosition += position - mdBeginPosition;
 }
 
 template <class T>
@@ -749,7 +838,8 @@ template <class T>
 void BP4Serializer::PutVariableCharacteristics(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
-    std::vector<char> &buffer, size_t &position) noexcept
+    std::vector<char> &buffer, size_t &position,
+    const bool putDimensions) noexcept
 {
     // going back at the end
     const size_t characteristicsCountPosition = position;
@@ -757,17 +847,21 @@ void BP4Serializer::PutVariableCharacteristics(
     position += 5;
     uint8_t characteristicsCounter = 0;
 
-    // DIMENSIONS
-    uint8_t characteristicID = characteristic_dimensions;
-    helper::CopyToBuffer(buffer, position, &characteristicID);
+    if (putDimensions)
+    {
+        // DIMENSIONS
+        uint8_t characteristicID = characteristic_dimensions;
+        helper::CopyToBuffer(buffer, position, &characteristicID);
 
-    const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
-    helper::CopyToBuffer(buffer, position, &dimensions); // count
-    const uint16_t dimensionsLength = static_cast<uint16_t>(24 * dimensions);
-    helper::CopyToBuffer(buffer, position, &dimensionsLength); // length
-    PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
-                        buffer, position, true);
-    ++characteristicsCounter;
+        const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
+        helper::CopyToBuffer(buffer, position, &dimensions); // count
+        const uint16_t dimensionsLength =
+            static_cast<uint16_t>(24 * dimensions);
+        helper::CopyToBuffer(buffer, position, &dimensionsLength); // length
+        PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
+                            buffer, position, true);
+        ++characteristicsCounter;
+    }
 
     // VALUE for SCALAR or STAT min, max for ARRAY
     if (blockInfo.Data != nullptr)

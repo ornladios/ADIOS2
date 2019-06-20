@@ -229,6 +229,13 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;
 
+/** Calculate how many bytes away is a memory location to be aligned to the
+ * size of max_align_t.
+ * @param a pointer
+ * @return padding value in [0..sizeof(max_align_t)-1]
+ */
+size_t PaddingToAlignPointer(const void *ptr);
+
 } // end namespace helper
 } // end namespace adios2
 

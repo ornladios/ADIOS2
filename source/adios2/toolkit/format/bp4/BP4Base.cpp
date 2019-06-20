@@ -278,6 +278,7 @@ size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
                                      const Dims &count) const noexcept
 {
     size_t indexSize = 23; // header
+    indexSize += 4 + 32;   // "[VMD" and padded " *VMD]" up to 31 char length
     indexSize += variableName.size();
 
     // characteristics 3 and 4, check variable number of dimensions
@@ -305,7 +306,9 @@ size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
         indexSize += 28 * dimensions + 1;
     }
 
-    return indexSize + 12; // extra 12 bytes in case of attributes
+    // extra 12 bytes for attributes in case of last variable
+    // extra 4 bytes for PGI] in case of last variable
+    return indexSize + 12 + 4;
 }
 
 void BP4Base::ResetBuffer(BufferSTL &bufferSTL,
