@@ -61,23 +61,49 @@ Close
 Put: modes and memory contracts
 -------------------------------
 
-``Put`` is the generalized abstract function for publishing data in adios2 when an Engine is created using Write, or Append, mode at ``IO::Open``. Optionally, adios2 Engines can provide direct access to its buffer memory using an overload that returns a span to a variable block (based on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, non-owning contiguous memory piece). Spans act as a 1D memory container meant to be filled out by the application. See :ref:`Supported Engines` for engines that support the span feature (e.g. BP3).
+``Put`` is the generalized abstract function for publishing data in adios2 when an Engine is created using Write, or Append, mode at ``IO::Open``. 
 
-The following are the current Put signatures:
+The most common signature is the one that passes a ``Variable<T>`` object for the metadata, a ``const`` piece of contiguous memory for the data, and a mode for either Deferred (data is collected until EndStep/PerformPuts/Close) or Sync (data is reusable immediately). This is the most common use case in applications.
 
 1. Deferred (default) or Sync mode, data is contiguous memory 
 
    .. code-block:: c++
 
-      Put(Variable<T> variable, const T* data, const adios2::Mode = adios2::Mode::Deferred);
-   
+      void Put(Variable<T> variable, const T* data, const adios2::Mode = adios2::Mode::Deferred);
+
+Optionally, adios2 Engines can provide direct access to its buffer memory using an overload that returns a piece of memory to a variable block, basically a zero-copy. Variable<T>::Span is based on a subset of the upcoming `C++20 std::span <https://en.cppreference.com/w/cpp/container/span>`_, which is non-owning and typed contiguous memory piece (it helps to review what std::span is, formely known as array_view). Spans act as a 1D memory container meant to be filled out by the application. It is safely used as any other STL sequence container, with iterators ``begin()`` and ``end()``, ``operator[]`` and ``at()``, while also providing ``data()`` and ``size()`` functions to manipulate the internal pointer.
+
+Variable<T>::Span is helpful in situations in which temporaries are needed to create contiguous pieces of memory from non-contiguous pieces (``e.g.`` tables, arrays without ghost-cells), or just to save memory as the returned Variable<T>::Span can be used for computation, thus avoiding an extra copy from user memory into the adios buffer. 
+Variable<T>::Span combines a hybrid Sync and Deferred mode, in which the initial value and memory allocations are Sync, while data population and metadata collection are done at EndStep/PerformPuts/Close. Memory contracts are explained later in this chapter followed by examples.
+
+The following Variable<T>::Span signatures are available:
+
 2. Return a span setting a default T() value into a default buffer
  
    .. code-block:: c++
    
       Variable<T>::Span Put(Variable<T> variable);
+
+.. warning:: 
+
+   As of version 2.4.0 only the default BP3 engine using the C++11 bindings supports ``Variable<T>::Span`` Put signatures. We plan to support this feature and add this to streaming Engines. 
+
+
+In summary, the following are the current Put signatures for publishing data in ADIOS 2:
+
+1. Deferred (default) or Sync mode, data is contiguous memory put in an adios2 buffer
+
+   .. code-block:: c++
+
+      void Put(Variable<T> variable, const T* data, const adios2::Mode = adios2::Mode::Deferred);
    
-3. Return a span setting a constant fill value into a certain buffer
+2. Return a span setting a default T() value into a default adios2 buffer. If span is not returned then the default T() is fixed for that block (e.g. zeros).
+ 
+   .. code-block:: c++
+   
+      Variable<T>::Span Put(Variable<T> variable);
+   
+3. Return a span setting an initial fill value into a certain buffer. If span is not returned then the fillValue is fixed for that block.
 
    .. code-block:: c++
 
