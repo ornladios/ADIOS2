@@ -5,7 +5,6 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <ffs.h>
 
@@ -778,6 +777,7 @@ main(int argc, char **argv)
     void *RetDataBlock;
     ReturnMetadataInfo ReturnData;
     struct _ReturnMetadataInfo TimestepMetaData;
+    int i;
     fm_c = create_local_FMcontext();
     ffs_c = create_FFSContext_FM(fm_c);
 
@@ -794,7 +794,7 @@ main(int argc, char **argv)
 #endif
     TimestepMetaData.ReaderCount = 0;
     TimestepMetaData.ReaderStatus = malloc(sizeof(int));
-    for (int i = 0; i < TimestepMetaData.ReaderCount; i++)
+    for (i = 0; i < TimestepMetaData.ReaderCount; i++)
     {
         TimestepMetaData.ReaderStatus[i] = 1;
         }
@@ -826,4 +826,5 @@ main(int argc, char **argv)
         printf("After, ReturnData.Metadata[0].block[0] = 0x%0x \n", *(int*)ReturnData->Msg.Metadata[0].block);
     }
     if(*(int*)ReturnData->Msg.Metadata[0].block != 0xdeadbeef) {fprintf(stderr, "BAD VALUE\n"); exit(1);}
+    return 0;
 }

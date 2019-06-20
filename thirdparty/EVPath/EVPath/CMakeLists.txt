@@ -15,15 +15,9 @@ if(POLICY CMP0077)
 endif()
 
 # Some boilerplate to setup nice output directories
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/EVPath
   CACHE STRING "Installation CMake subdirectory")
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -538,28 +532,36 @@ _pkg_expand_libs("${_pkg_config_libs}" _pkg_config_libs)
 _pkg_expand_libs("${_pkg_config_private_libs}" _pkg_config_private_libs)
 
 # Setup pkgconfig
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/evpath.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/evpath.pc
-  @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/evpath.pc
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/evpath_config.in
-  ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
-  @ONLY)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
-  DESTINATION "${CMAKE_INSTALL_BINDIR}")
+option(EVPATH_INSTALL_PKGCONFIG "Install EVPath pkgconfig files" ON)
+mark_as_advanced(EVPATH_INSTALL_PKGCONFIG)
+if(EVPATH_INSTALL_PKGCONFIG)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/evpath.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/evpath.pc
+    @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/evpath.pc
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/evpath_config.in
+    ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
+    @ONLY)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/evpath_config
+    DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
 
-install(
-  FILES
-    evpath.h
-    cm_schedule.h
-    ev_dfg.h 
-    cm_transport.h
-    ${CMAKE_CURRENT_BINARY_DIR}/revpath.h 
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+option(EVPATH_INSTALL_HEADERS "Install EVPath header files" ON)
+mark_as_advanced(EVPATH_INSTALL_HEADERS)
+if(EVPATH_INSTALL_HEADERS)
+  install(
+    FILES
+      evpath.h
+      cm_schedule.h
+      ev_dfg.h
+      cm_transport.h
+      ${CMAKE_CURRENT_BINARY_DIR}/revpath.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  )
+endif()
 
 install(TARGETS EVPath ${EVPATH_TRANSPORT_TARGETS} EXPORT EVPathTargets
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
