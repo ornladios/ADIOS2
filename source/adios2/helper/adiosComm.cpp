@@ -69,5 +69,12 @@ void Comm::Free(const std::string &hint)
     }
 }
 
+Comm Comm::Split(int color, int key, const std::string &hint) const
+{
+    MPI_Comm newComm;
+    CheckMPIReturn(MPI_Comm_split(m_MPIComm, color, key, &newComm), hint);
+    return Comm(newComm);
+}
+
 } // end namespace helper
 } // end namespace adios2

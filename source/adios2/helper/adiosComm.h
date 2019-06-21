@@ -78,6 +78,18 @@ public:
      */
     void Free(const std::string &hint = std::string());
 
+    /**
+     * @brief Split the communicator.
+     * @param color Control of subset assignment (nonnegative integer).
+     * @param key Control of rank assignment (integer).
+     * @param hint Description of std::runtime_error exception on error.
+     *
+     * Creates a new communicator covering the subset of the original
+     * processes that pass the same 'color'.  Ranks assigned by 'key' order.
+     */
+    Comm Split(int color, int key,
+               const std::string &hint = std::string()) const;
+
 private:
     /**
      * @brief Construct by taking ownership of a MPI communicator.
