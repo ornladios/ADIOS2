@@ -22,6 +22,7 @@
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Operator.h"
+#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {
@@ -39,7 +40,7 @@ public:
     const bool m_DebugMode = true;
 
     /** Get the communicator passed to constructor for parallel case.  */
-    MPI_Comm GetComm() const { return m_MPIComm; }
+    MPI_Comm GetComm() const { return m_Comm; }
 
     /** Changed by language bindings in constructor */
     const std::string m_HostLanguage = "C++";
@@ -184,8 +185,8 @@ public:
     void RemoveAllIOs() noexcept;
 
 private:
-    /** Passed from parallel constructor, MPI_Comm is a pointer itself. */
-    MPI_Comm m_MPIComm;
+    /** Communicator given to parallel constructor. */
+    helper::Comm m_Comm;
 
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;

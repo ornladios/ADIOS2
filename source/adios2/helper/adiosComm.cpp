@@ -8,12 +8,54 @@
 #include "adiosComm.h"
 #include "adiosComm.tcc"
 
+#include <ios> //std::ios_base::failure
+
+#include "adios2/common/ADIOSMPI.h"
+
 namespace adios2
 {
 namespace helper
 {
 
-Comm::~Comm() = default;
+Comm::Comm() = default;
+
+Comm::Comm(MPI_Comm mpiComm) : m_MPIComm(mpiComm) {}
+
+Comm::~Comm()
+{
+    // Handle the case where MPI is finalized before the ADIOS destructor is
+    // called, which happens, e.g., with global / static ADIOS objects
+    int flag;
+    MPI_Finalized(&flag);
+    if (!flag)
+    {
+        if (m_MPIComm != MPI_COMM_NULL && m_MPIComm != MPI_COMM_WORLD &&
+            m_MPIComm != MPI_COMM_SELF)
+        {
+            SMPI_Comm_free(&m_MPIComm);
+        }
+    }
+}
+
+Comm::Comm(Comm &&comm) : m_MPIComm(comm.m_MPIComm)
+{
+    comm.m_MPIComm = MPI_COMM_NULL;
+}
+
+Comm &Comm::operator=(Comm &&comm)
+{
+    Comm(std::move(comm)).swap(*this);
+    return *this;
+}
+
+void Comm::swap(Comm &comm) { std::swap(this->m_MPIComm, comm.m_MPIComm); }
+
+Comm Comm::Duplicate(MPI_Comm mpiComm)
+{
+    MPI_Comm newComm;
+    SMPI_Comm_dup(mpiComm, &newComm);
+    return Comm(newComm);
+}
 
 } // end namespace helper
 } // end namespace adios2
