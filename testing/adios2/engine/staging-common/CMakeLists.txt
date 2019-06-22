@@ -187,11 +187,12 @@ endif()
 #
 #   Setup tests for BP engine
 #
-set (BP_TESTS ${ALL_SIMPLE_TESTS})
-foreach(test ${BP_TESTS})
-    add_common_test(${test} BP)
-endforeach()
-
+if (NOT MSVC)    # not on windows
+    set (BP_TESTS ${ALL_SIMPLE_TESTS})
+    foreach(test ${BP_TESTS})
+        add_common_test(${test} BP)
+    endforeach()
+endif(NOT MSVC)
 
 
 #
