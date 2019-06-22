@@ -388,6 +388,7 @@ CMake VAR Option               Values                     Description
 ``ADIOS2_USE_SZ``              **`AUTO`**/``ON``/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental).
 ``ADIOS2_USE_MGARD``           **`AUTO`**/``ON``/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
 ``ADIOS2_USE_PNG``             **`AUTO`**/``ON``/OFF      `PNG <https://libpng.org>`_ compression (experimental).
+``ADIOS2_USE_Blosc``           **`AUTO`**/``ON``/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
 ``ADIOS2_USE_Endian_Reverse``  **`AUTO`**/ON/``OFF``      Big/Little Endian Interoperability for different endianness platforms at write and read.
 ============================= ========================= ==========================================================================================================================================================================================================================
 
