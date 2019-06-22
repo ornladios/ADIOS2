@@ -83,6 +83,13 @@ The following Variable<T>::Span signatures are available:
    .. code-block:: c++
    
       Variable<T>::Span Put(Variable<T> variable);
+      
+3. Return a span setting an initial fill value into a certain buffer. If span is not returned then the fillValue is fixed for that block.
+
+   .. code-block:: c++
+
+      Variable<T>::Span Put(Variable<T> variable, const size_t bufferID, const T fillValue);
+
 
 .. warning:: 
 
