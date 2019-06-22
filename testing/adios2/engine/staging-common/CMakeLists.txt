@@ -109,10 +109,10 @@ if (ADIOS2_HAVE_MPI AND NOT ("${MPIEXEC_EXECUTABLE}" STREQUAL "MPIEXEC_EXECUTABL
    endforeach()
 endif()
 
-set (TEST_SET "1x1;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local")
-set (FORTRAN_TESTS "")
+set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local")
+set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
-  set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
+  set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
 
 set (SPECIAL_TESTS "TimeoutReader;LatestReader;LatestReaderHold;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
@@ -121,26 +121,29 @@ if (MPIEXEC_IS_BINARY)
     list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriter_2x2;KillWriterTimeout_2x2")
 endif()
 
-set (MPI_TESTS "")
-set (MPI_FORTRAN_TESTS "")
+set (SIMPLE_MPI_TESTS "")
+set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
+  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
   if (ADIOS_HAVE_Fortran)
-    set (MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
+    set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()
 endif()
  
-set (ZFP_TESTS "")
+set (SIMPLE_ZFP_TESTS "")
 if (ADIOS2_HAVE_ZFP)
-   set (ZFP_TESTS "ZFPCompression.1x1;ZFPCompression.3x5")
+   set (SIMPLE_ZFP_TESTS "ZFPCompression.1x1;ZFPCompression.3x5")
 endif()
+
+set (ALL_SIMPLE_TESTS "")
+list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
 
 #
 #   Setup tests for SST engine
 #
 SET (BASIC_SST_TESTS "")
 if(ADIOS2_HAVE_SST)
-    list (APPEND BASIC_SST_TESTS ${TEST_SET} ${FORTRAN_TESTS} ${SPECIAL_TESTS} ${MPI_TESTS} ${MPI_FORTRAN_TESTS} ${ZFP_TESTS})
+    list (APPEND BASIC_SST_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
 endif()
 
 
@@ -161,6 +164,30 @@ list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*CommMin.*")
 
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
+endforeach()
+
+#
+#   Setup tests for InSituMPI engine
+#
+set (INSITU_TESTS ${ALL_SIMPLE_TESTS})
+# Tests that don't work for InSitu
+list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "Modes" "1x1.Attrs")
+# Local Vars don't work for InSitu
+list (FILTER INSITU_TESTS EXCLUDE REGEX ".*Local$")
+# DelayedReader doesn't make sense for InSitu
+list (FILTER INSITU_TESTS EXCLUDE REGEX "DelayedReader.*")
+# Fortran scalar reads don't work for InSitu
+list (FILTER INSITU_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
+foreach(test ${INSITU_TESTS})
+    add_common_test(${test} InSituMPI)
+endforeach()
+
+#
+#   Setup tests for BP engine
+#
+set (BP_TESTS ${ALL_SIMPLE_TESTS})
+foreach(test ${BP_TESTS})
+    add_common_test(${test} BP)
 endforeach()
 
 

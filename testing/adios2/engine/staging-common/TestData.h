@@ -60,6 +60,17 @@ std::complex<double> in_scalar_C64;
 
 double data_scalar_R64;
 
+void generateSimpleTestData(int step, int rank, int size)
+{
+    int64_t j = rank * Nx * 10 + step;
+
+
+    for (int i = 0; i < sizeof(data_I8); i++)
+    {
+        data_R64[i] = (double)j + 10 * i;
+    }
+}
+
 void generateCommonTestData(int step, int rank, int size)
 {
     int64_t j = rank * Nx * 10 + step;

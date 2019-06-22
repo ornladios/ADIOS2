@@ -189,7 +189,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Write each one
         // fill in the variable with values from starting index to
         // starting index + count
-        const adios2::Mode sync = adios2::Mode::Sync;
+        const adios2::Mode sync = adios2::Mode::Deferred;
 
         if (mpiRank == 0)
             engine.Put(scalar_r64, data_scalar_R64);
