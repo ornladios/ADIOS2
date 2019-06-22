@@ -231,13 +231,13 @@ namespace ops
 // SZ PARAMETERS
 #ifdef ADIOS2_HAVE_SZ
 
-constexpr char SZ[] = "sz";
+constexpr char LossySZ[] = "sz";
 
 namespace sz
 {
 namespace key
 {
-constexpr char ACCURACY[] = "accuracy";
+constexpr char accuracy[] = "accuracy";
 }
 }
 
@@ -246,76 +246,78 @@ constexpr char ACCURACY[] = "accuracy";
 // ZFP PARAMETERS
 #ifdef ADIOS2_HAVE_ZFP
 
-constexpr char ZFP[] = "zfp";
+constexpr char LossyZFP[] = "zfp";
 
 namespace zfp
 {
 namespace key
 {
-constexpr char ACCURACY[] = "accuracy";
-constexpr char RATE[] = "rate";
-constexpr char PRECISION[] = "precision";
+constexpr char accuracy[] = "accuracy";
+constexpr char rate[] = "rate";
+constexpr char precision[] = "precision";
 }
 }
 #endif
 
 // MGARD PARAMETERS
 #ifdef ADIOS2_HAVE_MGARD
-constexpr char MGARD[] = "mgard";
+
+constexpr char LossyGARD[] = "mgard";
 
 namespace mgard
 {
 namespace key
 {
-constexpr char TOLERANCE[] = "tolerance";
-constexpr char ACCURACY[] = "accuracy";
+constexpr char tolerance[] = "tolerance";
+constexpr char accuracy[] = "accuracy";
 }
 }
 #endif
 
 // PNG PARAMETERS
 #ifdef ADIOS2_HAVE_PNG
-constexpr char PNG[] = "png";
+
+constexpr char LosslessPNG[] = "png";
 
 namespace png
 {
 
 namespace key
 {
-constexpr char COLOR_TYPE[] = "color_type";
-constexpr char BIT_DEPTH[] = "bit_depth";
-constexpr char COMPRESSION_LEVEL[] = "compression_level";
+constexpr char color_type[] = "color_type";
+constexpr char bit_depth[] = "bit_depth";
+constexpr char compression_level[] = "compression_level";
 }
 
 namespace value
 {
-constexpr char COLOR_TYPE_GRAY[] = "PNG_COLOR_TYPE_GRAY";
-constexpr char COLOR_TYPE_GRAY_ALPHA[] = "PNG_COLOR_TYPE_GRAY_ALPHA";
-constexpr char COLOR_TYPE_PALETTE[] = "PNG_COLOR_TYPE_PALETTE";
-constexpr char COLOR_TYPE_RGB[] = "PNG_COLOR_TYPE_RGB";
-constexpr char COLOR_TYPE_RGB_ALPHA[] = "PNG_COLOR_TYPE_RGB_ALPHA";
-constexpr char COLOR_TYPE_RGBA[] = "PNG_COLOR_TYPE_RGBA";
-constexpr char COLOR_TYPE_GA[] = "PNG_COLOR_TYPE_GA";
+constexpr char color_type_GRAY[] = "PNG_COLOR_TYPE_GRAY";
+constexpr char color_type_GRAY_ALPHA[] = "PNG_COLOR_TYPE_GRAY_ALPHA";
+constexpr char color_type_PALETTE[] = "PNG_COLOR_TYPE_PALETTE";
+constexpr char color_type_RGB[] = "PNG_COLOR_TYPE_RGB";
+constexpr char color_type_RGB_ALPHA[] = "PNG_COLOR_TYPE_RGB_ALPHA";
+constexpr char color_type_RGBA[] = "PNG_COLOR_TYPE_RGBA";
+constexpr char color_type_GA[] = "PNG_COLOR_TYPE_GA";
 
-constexpr char BIT_DEPTH_1[] = "1";
-constexpr char BIT_DEPTH_2[] = "2";
-constexpr char BIT_DEPTH_3[] = "3";
-constexpr char BIT_DEPTH_4[] = "4";
-constexpr char BIT_DEPTH_5[] = "5";
-constexpr char BIT_DEPTH_6[] = "6";
-constexpr char BIT_DEPTH_7[] = "7";
-constexpr char BIT_DEPTH_8[] = "8";
-constexpr char BIT_DEPTH_9[] = "9";
+constexpr char bit_depth_1[] = "1";
+constexpr char bit_depth_2[] = "2";
+constexpr char bit_depth_3[] = "3";
+constexpr char bit_depth_4[] = "4";
+constexpr char bit_depth_5[] = "5";
+constexpr char bit_depth_6[] = "6";
+constexpr char bit_depth_7[] = "7";
+constexpr char bit_depth_8[] = "8";
+constexpr char bit_depth_9[] = "9";
 
-constexpr char COMPRESSION_LEVEL_1[] = "1";
-constexpr char COMPRESSION_LEVEL_2[] = "2";
-constexpr char COMPRESSION_LEVEL_3[] = "3";
-constexpr char COMPRESSION_LEVEL_4[] = "4";
-constexpr char COMPRESSION_LEVEL_5[] = "5";
-constexpr char COMPRESSION_LEVEL_6[] = "6";
-constexpr char COMPRESSION_LEVEL_7[] = "7";
-constexpr char COMPRESSION_LEVEL_8[] = "8";
-constexpr char COMPRESSION_LEVEL_9[] = "9";
+constexpr char compression_level_1[] = "1";
+constexpr char compression_level_2[] = "2";
+constexpr char compression_level_3[] = "3";
+constexpr char compression_level_4[] = "4";
+constexpr char compression_level_5[] = "5";
+constexpr char compression_level_6[] = "6";
+constexpr char compression_level_7[] = "7";
+constexpr char compression_level_8[] = "8";
+constexpr char compression_level_9[] = "9";
 
 } // end namespace value
 
@@ -325,26 +327,26 @@ constexpr char COMPRESSION_LEVEL_9[] = "9";
 // BZIP2 PARAMETERS
 #ifdef ADIOS2_HAVE_BZIP2
 
-constexpr char BZIP2[] = "bzip2";
+constexpr char LosslessBZIP2[] = "bzip2";
 namespace bzip2
 {
 
 namespace key
 {
-constexpr char BLOCKSIZE100K[] = "blockSize100k";
+constexpr char blockSize100k[] = "blockSize100k";
 }
 
 namespace value
 {
-constexpr char BLOCKSIZE100K_1[] = "1";
-constexpr char BLOCKSIZE100K_2[] = "2";
-constexpr char BLOCKSIZE100K_3[] = "3";
-constexpr char BLOCKSIZE100K_4[] = "4";
-constexpr char BLOCKSIZE100K_5[] = "5";
-constexpr char BLOCKSIZE100K_6[] = "6";
-constexpr char BLOCKSIZE100K_7[] = "7";
-constexpr char BLOCKSIZE100K_8[] = "8";
-constexpr char BLOCKSIZE100K_9[] = "9";
+constexpr char blockSize100k_1[] = "1";
+constexpr char blockSize100k_2[] = "2";
+constexpr char blockSize100k_3[] = "3";
+constexpr char blockSize100k_4[] = "4";
+constexpr char blockSize100k_5[] = "5";
+constexpr char blockSize100k_6[] = "6";
+constexpr char blockSize100k_7[] = "7";
+constexpr char blockSize100k_8[] = "8";
+constexpr char blockSize100k_9[] = "9";
 } // end namespace value
 
 } // end namespace bzip2

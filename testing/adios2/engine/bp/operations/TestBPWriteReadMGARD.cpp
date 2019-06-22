@@ -64,12 +64,12 @@ void MGARDAccuracy1D(const std::string tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -204,12 +204,12 @@ void MGARDAccuracy2D(const std::string tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -346,12 +346,12 @@ void MGARDAccuracy3D(const std::string tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -488,12 +488,12 @@ void MGARDAccuracy1DSel(const std::string tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -619,12 +619,12 @@ void MGARDAccuracy2DSel(const std::string tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -753,12 +753,12 @@ void MGARDAccuracy3DSel(const std::string tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -900,12 +900,12 @@ void MGARDAccuracy2DSmallSel(const std::string tolerance)
 
         // add operations
         adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::MGARD);
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
         var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
         var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::TOLERANCE, tolerance}});
+                             {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
