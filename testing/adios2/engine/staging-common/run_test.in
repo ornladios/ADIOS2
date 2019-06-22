@@ -10,6 +10,8 @@ import random
 import atexit
 
 
+is_file_engine = {"bpfile":True, "bp":True, "bp3":True, "bp4":True, "hdfmixer":True, "dataman":False, "ssc":False, "sst":False, "effis":False, "hdf5":True, "insitumpi":False, "skeleton":True, "null":True, "inline":False}
+
 def test_setup(testname) :
     testdir = testname + "_testdir"
     if os.path.exists(testdir):
@@ -31,10 +33,18 @@ def clean_server_kill(writer):
     writer.wait()
     os.remove('DieTest')
     
-def do_simple_test(writer_cmd, reader_cmd, reader_delay) :
+def do_simple_test(writer_cmd, reader_cmd, reader_delay, file_test) :
     return_code = 0;
+
+    print "TestDriver:  Doing simple with file_test = " + str(file_test);
     if writer_cmd is not None :
         writer = subprocess.Popen(writer_cmd);
+
+    if file_test :
+        if writer_cmd is not None :
+           print "TestDriver:  Waiting for writer";
+           writer.wait();
+           print("TestDriver: Writer exit status was " + str(writer.returncode));
 
     if reader_cmd is not None :
         time.sleep(reader_delay)
@@ -45,15 +55,34 @@ def do_simple_test(writer_cmd, reader_cmd, reader_delay) :
             print "TestDriver: Reader failed, causing test failure"
             return_code = 1
 
-    if writer_cmd is not None :
-        writer.wait();
-        print("TestDriver: Writer exit status was " + str(writer.returncode));
-        if writer.returncode != 0 :
-            print "TestDriver: Writer failed, causing test failure"
-            return_code = 1
+    if not file_test :
+        if writer_cmd is not None :
+            writer.wait();
+            print("TestDriver: Writer exit status was " + str(writer.returncode));
+            if writer.returncode != 0 :
+                print "TestDriver: Writer failed, causing test failure"
+                return_code = 1
 
     return return_code    
-    
+
+def do_simple_mpmd_test(writer_cmd, reader_cmd) :
+    return_code = 0;
+
+    print "TestDriver:  Doing MPMD simple \n";
+    reader_cmd.pop(0);
+    mpmd_cmd = writer_cmd + [":"] + reader_cmd;
+    print("TestDriver: MPMD command line : " + " ".join(mpmd_cmd));
+
+    mpmd = subprocess.Popen(mpmd_cmd);
+
+    mpmd.wait();
+    print("TestDriver: MPMD exit status was " + str(mpmd.returncode));
+    if mpmd.returncode != 0 :
+        print "TestDriver: MPMD test failed, causing test failure"
+        return_code = 1
+
+    return return_code    
+
 def do_one_client_test(writer_cmd, reader_cmd) :
     return_code = 0;
     writer = subprocess.Popen(writer_cmd);
@@ -178,10 +207,13 @@ else :
 writer_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_writers);
 reader_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_readers);
 
+mpmd_possible = True;
+
 if ("@MPIEXEC_EXECUTABLE@" == "") or ("@MPIEXEC_EXECUTABLE@" == "MPIEXEC_EXECUTABLE-NOTFOUND"):
     # NO MPI
     writer_exec_cmd = '';
     reader_exec_cmd = '';
+    mpmd_possible = False;
 
 print ("Script directory is " + script_directory);
 print ("current working directory is " + os.getcwd());
@@ -202,19 +234,35 @@ if args.rarg is not None:
 
 if args.num_readers == 0:
     reader_command_line = None;
+    mpmd_possible = False;
+    print("TestDriver: No readers, setting MPMD false\n");
+
 else :
     print("TestDriver: Reader command line : " + " ".join(reader_command_line));
 
 if args.num_writers == 0:
     writer_command_line = None;
+    mpmd_possible = False;
+    print("TestDriver: No writers, setting MPMD false\n");
 else :
     print("TestDriver: Writer command line : " + " ".join(writer_command_line));
 
+if  is_file_engine[args.engine.lower()] :
+    print("TestDriver: Is file engine, setting MPMD false\n");
+    mpmd_possible = False;
 
+if args.reader_delay != 0:
+    print("TestDriver: Reader delay setting MPMD false\n");
+    mpmd_possible = False;
+    
 test_setup(args.filename)
 atexit.register(test_teardown, args.filename)
-if args.test_protocol == 'simple':
-    return_code = do_simple_test(writer_command_line, reader_command_line, args.reader_delay);
+if args.test_protocol == 'simple' :
+    print("TestDriver:MPMD value is " + str(mpmd_possible) + "\n");
+    if mpmd_possible :
+        return_code = do_simple_mpmd_test(writer_command_line, reader_command_line);
+    else :
+        return_code = do_simple_test(writer_command_line, reader_command_line, args.reader_delay, is_file_engine[args.engine.lower()]);
 
 elif args.test_protocol == 'kill_readers':
     return_code = do_kill_readers_test(writer_command_line, reader_command_line, args.duration, args.interval);

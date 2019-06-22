@@ -135,6 +135,7 @@ function(remove_engine_params_placeholder dst_str src_str )
        # empty engine params remains
        string(REGEX REPLACE "--warg=--engine_params --warg=ENGINE_PARAMS" "" src_str "${src_str}")       
        string(REGEX REPLACE "--rarg=--engine_params --rarg=ENGINE_PARAMS" "" src_str "${src_str}")       
+       string(REGEX REPLACE "--warg=ENGINE_PARAMS" "" src_str "${src_str}")       
        string(REGEX REPLACE "-arg *ENGINE_PARAMS" "" src_str "${src_str}")
     endif()
   set(${dst_str} ${src_str} PARENT_SCOPE)
