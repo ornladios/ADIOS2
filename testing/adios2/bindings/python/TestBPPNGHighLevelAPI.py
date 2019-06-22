@@ -43,15 +43,23 @@ def CompressPNG(compression_level):
     rank = comm.Get_rank()
     size = comm.Get_size()
 
+    shape3D = [Nx * size, Ny, 3]
+    start3D = [Nx * rank, 0, 0]
+    count3D = [Nx, Ny, 3]
+
+    shape2D = [Nx * size, Ny]
+    start2D = [Nx * rank, 0]
+    count2D = [Nx, Ny]
+
     # writer
     with adios2.open(fname, "w", comm) as fw:
 
         for s in range(0, NSteps):
-            fw.write("u8", u8s, [Nx * size, Ny, 3], [Nx * rank, 0, 0], [Nx, Ny, 3],
+            fw.write("u8", u8s, shape3D, start3D, count3D,
                      [('PNG', {'bit_depth': '8',
                                'color_type': 'PNG_COLOR_TYPE_RGB',
                                'compression_level': str(compression_level)})])
-            fw.write("u32", u32s, [Nx * size, Ny], [Nx * rank, 0], [Nx, Ny],
+            fw.write("u32", u32s, shape2D, start2D, count2D,
                      [('PNG', {'bit_depth': '8',
                                'color_type': 'PNG_COLOR_TYPE_RGBA',
                                'compression_level': str(compression_level)})],
@@ -62,8 +70,8 @@ def CompressPNG(compression_level):
 
         for fstep in fr:
 
-            in_u8s = fstep.read("u8", [Nx * rank, 0, 0], [Nx, Ny, 3])
-            in_u32s = fstep.read("u32", [Nx * rank, 0], [Nx, Ny])   
+            in_u8s = fstep.read("u8", start3D, count3D)
+            in_u32s = fstep.read("u32", start2D, count2D)
 
             for i in range(0, Nx):
                 for j in range(0, Ny):
@@ -78,6 +86,7 @@ def main():
     CompressPNG(compression_level=1)
     CompressPNG(compression_level=4)
     CompressPNG(compression_level=9)
+
 
 if __name__ == "__main__":
     main()
