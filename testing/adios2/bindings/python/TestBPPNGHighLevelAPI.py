@@ -18,7 +18,7 @@ import adios2
 def CompressPNG(compression_level):
 
     fname = "BPWRPNG_" + str(compression_level) + "_py.bp"
-    Nx = 100
+    Nx = 10
     Ny = 50
     channels = 3
     NSteps = 1
@@ -43,19 +43,15 @@ def CompressPNG(compression_level):
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    shape = [Nx * size, Ny]
-    start = [Nx * rank, 0]
-    count = [Nx, Ny]
-
     # writer
     with adios2.open(fname, "w", comm) as fw:
 
         for s in range(0, NSteps):
-            fw.write("u8", u8s, shape, start, count,
+            fw.write("u8", u8s, [Nx * size, Ny, 3], [Nx * rank, 0, 0], [Nx, Ny, 3],
                      [('PNG', {'bit_depth': '8',
                                'color_type': 'PNG_COLOR_TYPE_RGB',
                                'compression_level': str(compression_level)})])
-            fw.write("u32", u32s, shape, start, count,
+            fw.write("u32", u32s, [Nx * size, Ny], [Nx * rank, 0], [Nx, Ny],
                      [('PNG', {'bit_depth': '8',
                                'color_type': 'PNG_COLOR_TYPE_RGBA',
                                'compression_level': str(compression_level)})],
@@ -66,8 +62,8 @@ def CompressPNG(compression_level):
 
         for fstep in fr:
 
-            in_u32s = fstep.read("u32", start, count)
-            in_u8s = fstep.read("u8", start, count)
+            in_u8s = fstep.read("u8", [Nx * rank, 0, 0], [Nx, Ny, 3])
+            in_u32s = fstep.read("u32", [Nx * rank, 0], [Nx, Ny])   
 
             for i in range(0, Nx):
                 for j in range(0, Ny):
@@ -82,9 +78,6 @@ def main():
     CompressPNG(compression_level=1)
     CompressPNG(compression_level=4)
     CompressPNG(compression_level=9)
-#     CompressPNG2D(rate=9)
-#     CompressPNG2D(rate=10)
-
 
 if __name__ == "__main__":
     main()
