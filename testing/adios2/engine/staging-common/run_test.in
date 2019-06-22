@@ -207,10 +207,13 @@ else :
 writer_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_writers);
 reader_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + str(args.num_readers);
 
+mpmd_possible = True;
+
 if ("@MPIEXEC_EXECUTABLE@" == "") or ("@MPIEXEC_EXECUTABLE@" == "MPIEXEC_EXECUTABLE-NOTFOUND"):
     # NO MPI
     writer_exec_cmd = '';
     reader_exec_cmd = '';
+    mpmd_possible = False;
 
 print ("Script directory is " + script_directory);
 print ("current working directory is " + os.getcwd());
@@ -228,8 +231,6 @@ reader_command_line.extend([reader_executable, args.engine, args.filename])
 
 if args.rarg is not None:
    reader_command_line.extend(args.rarg)
-
-mpmd_possible = True;
 
 if args.num_readers == 0:
     reader_command_line = None;
