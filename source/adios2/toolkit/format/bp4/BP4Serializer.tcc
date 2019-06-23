@@ -86,7 +86,7 @@ inline void BP4Serializer::PutVariablePayload(
     const bool sourceRowMajor) noexcept
 {
     ProfilerStart("buffering");
-    /*const size_t startingPos = m_Data.m_Position;*/
+    const size_t startingPos = m_Data.m_Position;
     if (blockInfo.Operations.empty())
     {
         PutPayloadInBuffer(variable, blockInfo, sourceRowMajor);
@@ -96,7 +96,6 @@ inline void BP4Serializer::PutVariablePayload(
         PutOperationPayloadInBuffer(variable, blockInfo);
     }
 
-    /*
     std::cout << " -- Var payload name=" << variable.m_Name
               << " startPos = " << std::to_string(startingPos)
               << " end position = " << std::to_string(m_Data.m_Position)
@@ -110,7 +109,6 @@ inline void BP4Serializer::PutVariablePayload(
               << " 4 bytes ahead = '"
               << std::string(m_Data.m_Buffer.data() + startingPos - 4, 4) << "'"
               << std::endl;
-    */
 
     ProfilerStop("buffering");
 }
@@ -501,20 +499,22 @@ void BP4Serializer::PutVariableMetadataInData(
     // format: length in 1 byte + padding characters + VMD]
     // we would write at minimum 5 bytes, byte for length + "VMD]"
     // hence the +5 in the calculation below
-    size_t padSize =
-        helper::PaddingToAlignPointer(buffer.data() + position + 5);
+    size_t padSize = rand() % 32;
+    // helper::PaddingToAlignPointer(buffer.data() + position + 5);
 
     const char vmdEnd[] = "                                VMD]";
     unsigned char vmdEndLen = static_cast<unsigned char>(padSize + 4);
     // starting position in vmdEnd from where we copy to buffer
     // we don't copy the \0 from vmdEnd !
     const char *ptr = vmdEnd + (sizeof(vmdEnd) - 1 - vmdEndLen);
-    /*std::cout << " -- Pad metadata with " << std::to_string(padSize)
-              << " bytes. position = " << std::to_string(position)
-              << " pad string = '" << ptr << "'"
-              << " buffer memory address = "
-              << std::to_string(reinterpret_cast<std::uintptr_t>(buffer.data()))
-              << std::endl;*/
+    std::cout << " -- Pad metadata with " << std::to_string(padSize)
+              << " bytes. var = " << variable.m_Name << " rank = " << m_RankMPI
+              << " position = " << std::to_string(position) << " pad string = '"
+              << ptr << "'" << std::endl;
+    /*              << " buffer memory address = "
+                  <<
+       std::to_string(reinterpret_cast<std::uintptr_t>(buffer.data()))
+                  << std::endl;*/
     helper::CopyToBuffer(buffer, position, &vmdEndLen, 1);
     helper::CopyToBuffer(buffer, position, ptr, vmdEndLen);
 
