@@ -9,7 +9,17 @@
 # them, otherwise we disable it.  If explicitly ON then a failure to find
 # dependencies is an error,
 
-# BZIP2
+# Blosc
+if(ADIOS2_USE_Blosc STREQUAL AUTO)
+  find_package(Blosc)
+elseif(ADIOS2_USE_Blosc)
+  find_package(Blosc REQUIRED)
+endif()
+if(BLOSC_FOUND)
+  set(ADIOS2_HAVE_Blosc TRUE)
+endif()
+
+# BZip2
 if(ADIOS2_USE_BZip2 STREQUAL AUTO)
   find_package(BZip2)
 elseif(ADIOS2_USE_BZip2)
