@@ -80,6 +80,7 @@ int main(int argc, char *argv[])
                 << rank << "\n";
             std::cerr << e.what() << "\n";
         }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::ios_base::failure &e)
     {
@@ -90,6 +91,7 @@ int main(int argc, char *argv[])
                       << rank << "\n";
             std::cerr << e.what() << "\n";
         }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::exception &e)
     {
@@ -99,6 +101,7 @@ int main(int argc, char *argv[])
                       << "\n";
             std::cerr << e.what() << "\n";
         }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     MPI_Finalize();

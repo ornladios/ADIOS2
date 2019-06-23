@@ -67,13 +67,14 @@ int main(int argc, char *argv[])
             // myFloats.data is pre-allocated
             bpReader.Get<float>(bpFloats, myFloats, adios2::Mode::Sync);
 
-            if (rank == 0) {
-            std::cout << "MyFloats: \n";
-            for (const auto number : myFloats)
+            if (rank == 0)
             {
-                std::cout << number << " ";
-            }
-            std::cout << "\n";
+                std::cout << "MyFloats: \n";
+                for (const auto number : myFloats)
+                {
+                    std::cout << number << " ";
+                }
+                std::cout << "\n";
             }
         }
 
@@ -85,13 +86,14 @@ int main(int argc, char *argv[])
 
             bpReader.Get<int>(bpInts, myInts, adios2::Mode::Sync);
 
-            if (rank == 0) {
-            std::cout << "myInts: \n";
-            for (const auto number : myInts)
+            if (rank == 0)
             {
-                std::cout << number << " ";
-            }
-            std::cout << "\n";
+                std::cout << "myInts: \n";
+                for (const auto number : myInts)
+                {
+                    std::cout << number << " ";
+                }
+                std::cout << "\n";
             }
         }
 
@@ -107,6 +109,7 @@ int main(int argc, char *argv[])
                 << rank << "\n";
             std::cerr << e.what() << "\n";
         }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::ios_base::failure &e)
     {
@@ -121,6 +124,7 @@ int main(int argc, char *argv[])
                          "been run."
                       << " Run ./hello_bpWriter before running this program.\n";
         }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::exception &e)
     {
@@ -130,6 +134,7 @@ int main(int argc, char *argv[])
                       << "\n";
             std::cerr << e.what() << "\n";
         }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     MPI_Finalize();
