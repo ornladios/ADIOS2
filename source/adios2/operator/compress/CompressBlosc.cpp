@@ -48,7 +48,7 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
 
     size_t threads = 1; // defaults
     int compressionLevel = 1;
-    int doShuffle = BLOSC_NOSHUFFLE;
+    int doShuffle = BLOSC_SHUFFLE;
     std::string compressor = "blosclz";
     size_t blockSize = 0;
 
@@ -124,19 +124,21 @@ size_t CompressBlosc::Compress(const void *dataIn, const Dims &dimensions,
     blosc_set_nthreads(threads);
     blosc_set_blocksize(blockSize);
 
-    const size_t compressedSize =
+    const int compressedSize =
         blosc_compress(compressionLevel, doShuffle, elementSize, sizeIn, dataIn,
                        bufferOut, sizeIn);
 
-    if (m_DebugMode && compressedSize < 0)
+    if (m_DebugMode && compressedSize <= 0)
     {
         throw std::invalid_argument(
-            "ERROR: Blosc error code " + std::to_string(compressedSize) +
-            " compression failed in ADIOS2 Blosc compresion\n");
+            "ERROR: from blosc_compress return size: " +
+            std::to_string(compressedSize) +
+            ", check operator parameters, "
+            " compression failed in ADIOS2 Blosc Compression\n");
     }
 
     blosc_destroy();
-    return compressedSize;
+    return static_cast<size_t>(compressedSize);
 }
 
 size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
@@ -144,10 +146,9 @@ size_t CompressBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
                                  Params &info) const
 {
     blosc_init();
-    const size_t decompressedSize =
-        blosc_decompress(bufferIn, dataOut, sizeOut);
+    const int decompressedSize = blosc_decompress(bufferIn, dataOut, sizeOut);
     blosc_destroy();
-    return decompressedSize;
+    return static_cast<size_t>(decompressedSize);
 }
 
 } // end namespace compress

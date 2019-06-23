@@ -58,7 +58,7 @@ public:
      * @return size of decompressed buffer in bytes
      */
     size_t Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
-                      const size_t sizeOut, Params &info) const override;
+                      const size_t sizeOut, Params &info) const final;
 
 private:
     /**
