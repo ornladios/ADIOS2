@@ -67,12 +67,14 @@ int main(int argc, char *argv[])
             // myFloats.data is pre-allocated
             bpReader.Get<float>(bpFloats, myFloats, adios2::Mode::Sync);
 
+            if (rank == 0) {
             std::cout << "MyFloats: \n";
             for (const auto number : myFloats)
             {
                 std::cout << number << " ";
             }
             std::cout << "\n";
+            }
         }
 
         if (bpInts) // means not found
@@ -83,12 +85,14 @@ int main(int argc, char *argv[])
 
             bpReader.Get<int>(bpInts, myInts, adios2::Mode::Sync);
 
+            if (rank == 0) {
             std::cout << "myInts: \n";
             for (const auto number : myInts)
             {
                 std::cout << number << " ";
             }
             std::cout << "\n";
+            }
         }
 
         /** Close bp file, engine becomes unreachable after this*/
@@ -96,25 +100,36 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cerr << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
-        std::cerr << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr
+                << "Invalid argument exception, STOPPING PROGRAM from rank "
+                << rank << "\n";
+            std::cerr << e.what() << "\n";
+        }
     }
     catch (std::ios_base::failure &e)
     {
-        std::cerr << "IO System base failure exception, STOPPING PROGRAM "
-                     "from rank "
-                  << rank << "\n";
-        std::cerr << e.what() << "\n";
-        std::cerr
-            << "The file " << filename << " does not exist."
-            << " Presumably this is because hello_bpWriter has not been run."
-            << " Run ./hello_bpWriter before running this program.\n";
+        if (rank == 0)
+        {
+            std::cerr << "IO System base failure exception, STOPPING PROGRAM "
+                         "from rank "
+                      << rank << "\n";
+            std::cerr << e.what() << "\n";
+            std::cerr << "The file " << filename << " does not exist."
+                      << " Presumably this is because hello_bpWriter has not "
+                         "been run."
+                      << " Run ./hello_bpWriter before running this program.\n";
+        }
     }
     catch (std::exception &e)
     {
-        std::cerr << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
-        std::cerr << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr << "Exception, STOPPING PROGRAM from rank " << rank
+                      << "\n";
+            std::cerr << e.what() << "\n";
+        }
     }
 
     MPI_Finalize();

@@ -64,27 +64,41 @@ int main(int argc, char *argv[])
 
         /** Create bp file, engine becomes unreachable after this*/
         bpFileWriter.Close();
-        std::cout << "Wrote file " << filename
-                  << " to disk. It can now be read by running "
-                     "./bin/hello_bpReader.\n";
+        if (rank == 0)
+        {
+            std::cout << "Wrote file " << filename
+                      << " to disk. It can now be read by running "
+                         "./bin/hello_bpReader.\n";
+        }
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr
+                << "Invalid argument exception, STOPPING PROGRAM from rank "
+                << rank << "\n";
+            std::cerr << e.what() << "\n";
+        }
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM "
-                     "from rank "
-                  << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr << "IO System base failure exception, STOPPING PROGRAM "
+                         "from rank "
+                      << rank << "\n";
+            std::cerr << e.what() << "\n";
+        }
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr << "Exception, STOPPING PROGRAM from rank " << rank
+                      << "\n";
+            std::cerr << e.what() << "\n";
+        }
     }
 
     MPI_Finalize();
