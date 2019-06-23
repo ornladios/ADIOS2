@@ -37,30 +37,31 @@ int main(int argc, char *argv[])
 
         std::string filename = "myVector_cpp.bp";
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpWriter =
-            bpIO.Open(filename, adios2::Mode::Write);
+        adios2::Engine bpWriter = bpIO.Open(filename, adios2::Mode::Write);
 
         /** Write variable for buffering */
         bpWriter.Put<float>(bpFloats, myFloats.data());
 
         /** Create bp file, engine becomes unreachable after this*/
         bpWriter.Close();
-        std::cout << "Wrote file " << filename << " to disk. It can now be read by running ./bin/hello_bpReader.\n";
+        std::cout << "Wrote file " << filename
+                  << " to disk. It can now be read by running "
+                     "./bin/hello_bpReader.\n";
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
+        std::cerr << "Invalid argument exception, STOPPING PROGRAM\n";
+        std::cerr << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
+        std::cerr << "IO System base failure exception, STOPPING PROGRAM\n";
+        std::cerr << e.what() << "\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
+        std::cerr << "Exception, STOPPING PROGRAM\n";
+        std::cerr << e.what() << "\n";
     }
 
     return 0;

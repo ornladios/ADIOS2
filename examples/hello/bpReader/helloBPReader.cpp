@@ -11,10 +11,8 @@
  *  Created on: Feb 16, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
-
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
-#include <fstream>  //std::ifstream
 #include <mpi.h>
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
@@ -23,25 +21,11 @@
 
 int main(int argc, char *argv[])
 {
-    // Test if the file has been written by hello_bpWriter:
-    std::string filename = "myVector_cpp.bp";
-    std::ifstream f(filename.c_str());
-    if (!f.good())
-    {
-       std::cerr << "The file " << filename << " does not exist."
-                 << " Presumably this is because hello_bpWriter has not been run. Run ./hello_bpWriter before running this program.\n";
-       return 1;
-    }
-    else
-    {
-       f.close();
-    }
-
     MPI_Init(&argc, &argv);
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-
+    std::string filename = "myVector_cpp.bp";
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
@@ -52,8 +36,7 @@ int main(int argc, char *argv[])
         adios2::IO bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpReader =
-            bpIO.Open("myVector_cpp.bp", adios2::Mode::Read);
+        adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
         const std::map<std::string, adios2::Params> variables =
             bpIO.AvailableVariables();
@@ -74,7 +57,7 @@ int main(int argc, char *argv[])
             bpIO.InquireVariable<float>("bpFloats");
         adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("bpInts");
 
-        unsigned long  Nx = 10;
+        const std::size_t Nx = 10;
         if (bpFloats) // means found
         {
             std::vector<float> myFloats;
@@ -97,7 +80,7 @@ int main(int argc, char *argv[])
             std::vector<int> myInts;
             // read only the chunk corresponding to our rank
             bpInts.SetSelection({{Nx * rank}, {Nx}});
-            // myInts.data is pre-allocated
+
             bpReader.Get<int>(bpInts, myInts, adios2::Mode::Sync);
 
             std::cout << "myInts: \n";
@@ -113,21 +96,25 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
+        std::cerr << "Invalid argument exception, STOPPING PROGRAM from rank "
                   << rank << "\n";
-        std::cout << e.what() << "\n";
+        std::cerr << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM "
+        std::cerr << "IO System base failure exception, STOPPING PROGRAM "
                      "from rank "
                   << rank << "\n";
-        std::cout << e.what() << "\n";
+        std::cerr << e.what() << "\n";
+        std::cerr
+            << "The file " << filename << " does not exist."
+            << " Presumably this is because hello_bpWriter has not been run."
+            << " Run ./hello_bpWriter before running this program.\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
-        std::cout << e.what() << "\n";
+        std::cerr << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
+        std::cerr << e.what() << "\n";
     }
 
     MPI_Finalize();
