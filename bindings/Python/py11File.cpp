@@ -43,13 +43,13 @@ File::File(const std::string &name, const std::string mode, MPI_Comm comm,
 
 File::File(const std::string &name, const std::string mode,
            const std::string engineType)
-: File(name, mode, MPI_COMM_SELF, engineType)
+: File(name, mode, MPI_COMM_NULL, engineType)
 {
 }
 
 File::File(const std::string &name, const std::string mode,
            const std::string &configFile, const std::string ioInConfigFile)
-: File(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile)
+: File(name, mode, MPI_COMM_NULL, configFile, ioInConfigFile)
 {
 }
 

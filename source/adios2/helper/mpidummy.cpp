@@ -140,10 +140,6 @@ int MPI_Gather(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     {
         RETURN_CHECK(MPI_ERR_ROOT);
     }
-    if (comm == MPI_COMM_NULL)
-    {
-        RETURN_CHECK(MPI_ERR_COMM);
-    }
 
     ier = MPIDUMMY::MPI_Type_size(sendtype, &n);
     if (ier != MPI_SUCCESS)
@@ -222,10 +218,6 @@ int MPI_Scatter(const void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     if (root != 0)
     {
         RETURN_CHECK(MPI_ERR_ROOT);
-    }
-    if (comm == MPI_COMM_NULL)
-    {
-        RETURN_CHECK(MPI_ERR_COMM);
     }
 
     ier = MPIDUMMY::MPI_Type_size(sendtype, &n);
@@ -306,77 +298,6 @@ int MPI_Wait(MPI_Request * /*request*/, MPI_Status * /*status*/)
 {
     RETURN_CHECK(MPI_SUCCESS);
 }
-
-#ifndef ADIOS2_HAVE_MPI
-
-int MPI_File_open(MPI_Comm /*comm*/, const char *filename, int amode,
-                  MPI_Info /*info*/, MPI_File *fh)
-{
-    std::string mode;
-    if (amode | MPI_MODE_RDONLY)
-    {
-        mode += "r";
-    }
-    if (amode | MPI_MODE_WRONLY)
-    {
-        mode += "w";
-    }
-    if (amode | MPI_MODE_APPEND)
-    {
-        mode += "a";
-    }
-    mode += "b";
-
-    *fh = std::fopen(filename, mode.c_str());
-    if (!*fh)
-    {
-        return -1;
-    }
-    RETURN_CHECK(MPI_SUCCESS);
-}
-
-int MPI_File_close(MPI_File *fh) { return fclose(*fh); }
-
-int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
-{
-    long curpos = std::ftell(fh);
-    fseek(fh, 0, SEEK_END); // go to end, returned is the size in bytes
-    long endpos = std::ftell(fh);
-    std::fseek(fh, curpos, SEEK_SET); // go back where we were
-    *size = static_cast<MPI_Offset>(endpos);
-    // printf("MPI_File_get_size: fh=%d, size=%lld\n", fh, *size);
-    RETURN_CHECK(MPI_SUCCESS);
-}
-
-int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                  MPI_Status *status)
-{
-    // FIXME: int count can read only 2GB (*datatype size) array at max
-    size_t bytes_to_read = static_cast<size_t>(count) * datatype;
-    size_t bytes_read;
-    bytes_read = std::fread(buf, 1, bytes_to_read, fh);
-    if (bytes_read != bytes_to_read)
-    {
-        return -2;
-    }
-    *status = bytes_read;
-    // printf("MPI_File_read: fh=%d, count=%d, typesize=%d, bytes read=%lld\n",
-    // fh, count, datatype, *status);
-    RETURN_CHECK(MPI_SUCCESS);
-}
-
-int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence)
-{
-    return std::fseek(fh, offset, whence) == MPI_SUCCESS;
-}
-
-int MPI_Get_count(const MPI_Status *status, MPI_Datatype, int *count)
-{
-    *count = static_cast<int>(*status);
-    RETURN_CHECK(MPI_SUCCESS);
-}
-
-#endif
 
 double MPI_Wtime()
 {
