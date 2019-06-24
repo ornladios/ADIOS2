@@ -74,6 +74,7 @@ add_library(adios2
   toolkit/format/bpOperation/compress/BPMGARD.cpp
   toolkit/format/bpOperation/compress/BPPNG.cpp
   toolkit/format/bpOperation/compress/BPBZIP2.cpp toolkit/format/bpOperation/compress/BPBZIP2.tcc
+  toolkit/format/bpOperation/compress/BPBlosc.cpp
   
   toolkit/profiling/iochrono/Timer.cpp
 
@@ -151,6 +152,10 @@ if(ADIOS2_HAVE_SST)
   target_link_libraries(adios2 PRIVATE sst)
 endif()
 
+if(ADIOS2_HAVE_Blosc)
+  target_sources(adios2 PRIVATE operator/compress/CompressBlosc.cpp)
+  target_link_libraries(adios2 PRIVATE Blosc::Blosc)
+endif()
 
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZIP2.cpp)

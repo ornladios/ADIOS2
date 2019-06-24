@@ -69,12 +69,12 @@ void SZAccuracy1D(const std::string accuracy)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("szCompressor", adios2::ops::SZ);
+            adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
 
         var_r32.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
         var_r64.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -209,12 +209,12 @@ void SZAccuracy2D(const std::string accuracy)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("szCompressor", adios2::ops::SZ);
+            adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
 
         var_r32.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
         var_r64.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -352,12 +352,12 @@ void SZAccuracy3D(const std::string accuracy)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("szCompressor", adios2::ops::SZ);
+            adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
 
         var_r32.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
         var_r64.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -495,12 +495,12 @@ void SZAccuracy1DSel(const std::string accuracy)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("szCompressor", adios2::ops::SZ);
+            adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
 
         var_r32.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
         var_r64.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -635,12 +635,12 @@ void SZAccuracy2DSel(const std::string accuracy)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("szCompressor", adios2::ops::SZ);
+            adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
 
         var_r32.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
         var_r64.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -778,12 +778,12 @@ void SZAccuracy3DSel(const std::string accuracy)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("szCompressor", adios2::ops::SZ);
+            adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
 
         var_r32.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
         var_r64.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -925,12 +925,12 @@ void SZAccuracy2DSmallSel(const std::string accuracy)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("szCompressor", adios2::ops::SZ);
+            adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
 
         var_r32.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
         var_r64.AddOperation(szOp,
-                             {{adios2::ops::sz::key::ACCURACY, accuracy}});
+                             {{adios2::ops::sz::key::accuracy, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 

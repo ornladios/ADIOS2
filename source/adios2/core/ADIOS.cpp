@@ -44,6 +44,10 @@
 #include "adios2/operator/compress/CompressPNG.h"
 #endif
 
+#ifdef ADIOS2_HAVE_BLOSC
+#include "adios2/operator/compress/CompressBlosc.h"
+#endif
+
 // callbacks
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
@@ -250,6 +254,19 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
         throw std::invalid_argument(
             "ERROR: this version of ADIOS2 didn't compile with the "
             "PNG library (minimum v1.6), in call to DefineOperator\n");
+#endif
+    }
+    else if (typeLowerCase == "blosc")
+    {
+#ifdef ADIOS2_HAVE_BLOSC
+        auto itPair = m_Operators.emplace(
+            name,
+            std::make_shared<compress::CompressBlosc>(parameters, m_DebugMode));
+        operatorPtr = itPair.first->second;
+#else
+        throw std::invalid_argument(
+            "ERROR: this version of ADIOS2 didn't compile with the "
+            "Blosc library, in call to DefineOperator\n");
 #endif
     }
     else

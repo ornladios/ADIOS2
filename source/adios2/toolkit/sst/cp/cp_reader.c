@@ -25,9 +25,12 @@ static char *readContactInfoFile(const char *Name, SstStream Stream,
 {
     size_t len = strlen(Name) + strlen(SST_POSTFIX) + 1;
     char *FileName = malloc(len);
+    int Badfile = 0;
+    int ZeroCount = 0;
     FILE *WriterInfo;
     int64_t TimeoutRemaining = Timeout * 1000 * 1000;
     int64_t WaitWarningRemaining = 5 * 1000 * 1000;
+    long SleepInterval = 100000;
     snprintf(FileName, len, "%s" SST_POSTFIX, Name);
     CP_verbose(Stream,
                "Looking for writer contact in file %s, with timeout %d secs\n",
@@ -36,8 +39,8 @@ redo:
     WriterInfo = fopen(FileName, "r");
     while (!WriterInfo)
     {
-        int SleepInterval = 100000;
         // CMusleep(Stream->CPInfo->cm, SleepInterval);
+        printf("Sleeping %ld\n", SleepInterval);
         usleep(SleepInterval);
         TimeoutRemaining -= SleepInterval;
         WaitWarningRemaining -= SleepInterval;
@@ -61,9 +64,38 @@ redo:
     {
         //  Try again, it might look zero momentarily, but shouldn't stay that
         //  way.
-        goto redo;
+        ZeroCount++;
+        if (ZeroCount < 5)
+        {
+            // We'll give it several attempts (and some time) to go non-zero
+            usleep(SleepInterval);
+            goto redo;
+        }
     }
 
+    if (Size < strlen(SSTMAGICV0))
+    {
+        Badfile++;
+    }
+    else
+    {
+        char Tmp[strlen(SSTMAGICV0)];
+        fread(Tmp, strlen(SSTMAGICV0), 1, WriterInfo);
+        Size -= strlen(SSTMAGICV0);
+        if (strncmp(Tmp, SSTMAGICV0, strlen(SSTMAGICV0)) != 0)
+        {
+            Badfile++;
+        }
+    }
+    if (Badfile)
+    {
+        fprintf(stderr,
+                "!!! File %s is not an ADIOS2 SST Engine Contact file\n",
+                FileName);
+        free(FileName);
+        fclose(WriterInfo);
+        return NULL;
+    }
     free(FileName);
     char *Buffer = calloc(1, Size + 1);
     if (fread(Buffer, Size, 1, WriterInfo) != 1)

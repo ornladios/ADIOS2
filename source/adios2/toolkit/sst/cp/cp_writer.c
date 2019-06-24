@@ -140,6 +140,7 @@ static void writeContactInfoFile(const char *Name, SstStream Stream)
     sprintf(TmpName, "%s.tmp", Name);
     sprintf(FileName, "%s" SST_POSTFIX, Name);
     WriterInfo = fopen(TmpName, "w");
+    fprintf(WriterInfo, "%s", SSTMAGICV0);
     fprintf(WriterInfo, "%s", Contact);
     fclose(WriterInfo);
     rename(TmpName, FileName);

@@ -17,6 +17,7 @@
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
 
 #include "adios2/toolkit/format/bpOperation/compress/BPBZIP2.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPBlosc.h"
 #include "adios2/toolkit/format/bpOperation/compress/BPMGARD.h"
 #include "adios2/toolkit/format/bpOperation/compress/BPPNG.h"
 #include "adios2/toolkit/format/bpOperation/compress/BPSZ.h"
@@ -28,17 +29,15 @@ namespace format
 {
 
 const std::set<std::string> BP4Base::m_TransformTypes = {
-    {"unknown", "none", "identity", "bzip2", "sz", "zfp", "mgard", "png"}};
+    {"unknown", "none", "identity", "bzip2", "sz", "zfp", "mgard", "png",
+     "blosc"}};
 
 const std::map<int, std::string> BP4Base::m_TransformTypesToNames = {
-    {transform_unknown, "unknown"},
-    {transform_none, "none"},
-    {transform_identity, "identity"},
-    {transform_sz, "sz"},
-    {transform_zfp, "zfp"},
-    {transform_mgard, "mgard"},
-    {transform_png, "png"},
-    {transform_bzip2, "bzip2"}
+    {transform_unknown, "unknown"},   {transform_none, "none"},
+    {transform_identity, "identity"}, {transform_sz, "sz"},
+    {transform_zfp, "zfp"},           {transform_mgard, "mgard"},
+    {transform_png, "png"},           {transform_bzip2, "bzip2"},
+    {transform_blosc, "blosc"}
     // {transform_zlib, "zlib"},
     //    {transform_szip, "szip"},
     //    {transform_isobar, "isobar"},
@@ -47,7 +46,6 @@ const std::map<int, std::string> BP4Base::m_TransformTypesToNames = {
 
     //    {transform_sz, "sz"},
     //    {transform_lz4, "lz4"},
-    //    {transform_blosc, "blosc"},
 };
 
 BP4Base::BP4Base(MPI_Comm mpiComm, const bool debugMode)
@@ -912,6 +910,10 @@ BP4Base::SetBPOperation(const std::string type) const noexcept
     else if (type == "png")
     {
         bpOp = std::make_shared<BPPNG>();
+    }
+    else if (type == "blosc")
+    {
+        bpOp = std::make_shared<BPBlosc>();
     }
 
     return bpOp;
