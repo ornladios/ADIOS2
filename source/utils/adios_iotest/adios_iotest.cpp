@@ -66,8 +66,7 @@ int main(int argc, char *argv[])
                               << std::endl;
                 }
             }
-            MPI_Finalize();
-            return 0;
+            MPI_Abort(settings.appComm, -1);
         }
 
         try
@@ -298,10 +297,11 @@ int main(int argc, char *argv[])
             {
                 std::cout << "ADIOS " << e.what() << std::endl;
             }
-            MPI_Finalize();
-            return 0;
+            MPI_Abort(settings.appComm, -1);
         }
     }
+    else
+        MPI_Abort (settings.appComm, -1);
 
     MPI_Finalize();
     return 0;
