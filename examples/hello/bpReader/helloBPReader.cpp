@@ -11,7 +11,6 @@
  *  Created on: Feb 16, 2017
  *      Author: William F Godoy godoywf@ornl.gov
  */
-
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
 #include <mpi.h>
@@ -26,12 +25,7 @@ int main(int argc, char *argv[])
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    /** Application variable */
-    const std::size_t Nx = 10;
-    std::vector<float> myFloats(Nx);
-    std::vector<int> myInts(Nx);
-
+    std::string filename = "myVector_cpp.bp";
     try
     {
         /** ADIOS class factory of IO class objects, DebugON is recommended */
@@ -42,8 +36,7 @@ int main(int argc, char *argv[])
         adios2::IO bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpReader =
-            bpIO.Open("myVector_cpp.bp", adios2::Mode::Read);
+        adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
         const std::map<std::string, adios2::Params> variables =
             bpIO.AvailableVariables();
@@ -64,34 +57,44 @@ int main(int argc, char *argv[])
             bpIO.InquireVariable<float>("bpFloats");
         adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("bpInts");
 
+        const std::size_t Nx = 10;
         if (bpFloats) // means found
         {
+            std::vector<float> myFloats;
+
             // read only the chunk corresponding to our rank
             bpFloats.SetSelection({{Nx * rank}, {Nx}});
             // myFloats.data is pre-allocated
-            bpReader.Get<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
+            bpReader.Get<float>(bpFloats, myFloats, adios2::Mode::Sync);
 
-            std::cout << "MyFloats: \n";
-            for (const auto number : myFloats)
+            if (rank == 0)
             {
-                std::cout << number << " ";
+                std::cout << "MyFloats: \n";
+                for (const auto number : myFloats)
+                {
+                    std::cout << number << " ";
+                }
+                std::cout << "\n";
             }
-            std::cout << "\n";
         }
 
         if (bpInts) // means not found
         {
+            std::vector<int> myInts;
             // read only the chunk corresponding to our rank
             bpInts.SetSelection({{Nx * rank}, {Nx}});
-            // myInts.data is pre-allocated
-            bpReader.Get<int>(bpInts, myInts.data(), adios2::Mode::Sync);
 
-            std::cout << "MyInts: \n";
-            for (const auto number : myInts)
+            bpReader.Get<int>(bpInts, myInts, adios2::Mode::Sync);
+
+            if (rank == 0)
             {
-                std::cout << number << " ";
+                std::cout << "myInts: \n";
+                for (const auto number : myInts)
+                {
+                    std::cout << number << " ";
+                }
+                std::cout << "\n";
             }
-            std::cout << "\n";
         }
 
         /** Close bp file, engine becomes unreachable after this*/
@@ -99,21 +102,39 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr
+                << "Invalid argument exception, STOPPING PROGRAM from rank "
+                << rank << "\n";
+            std::cerr << e.what() << "\n";
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM "
-                     "from rank "
-                  << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr << "IO System base failure exception, STOPPING PROGRAM "
+                         "from rank "
+                      << rank << "\n";
+            std::cerr << e.what() << "\n";
+            std::cerr << "The file " << filename << " does not exist."
+                      << " Presumably this is because hello_bpWriter has not "
+                         "been run."
+                      << " Run ./hello_bpWriter before running this program.\n";
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr << "Exception, STOPPING PROGRAM from rank " << rank
+                      << "\n";
+            std::cerr << e.what() << "\n";
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     MPI_Finalize();
