@@ -120,7 +120,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
-    adios2::IO dataManIO = adios.DeclareIO("staging");
+    adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
@@ -152,6 +152,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "bpComplexes", shape, start, count);
     auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
         "bpDComplexes", shape, start, count);
+    dataManIO.DefineAttribute<int>("AttInt", 110);
     adios2::Engine dataManWriter = dataManIO.Open(name, adios2::Mode::Write);
     for (int i = 0; i < steps; ++i)
     {
@@ -187,7 +188,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const std::string &name)
 {
     adios2::ADIOS adios(mpiComm, adios2::DebugON);
-    adios2::IO dataManIO = adios.DeclareIO("staging");
+    adios2::IO dataManIO = adios.DeclareIO("Test");
     dataManIO.SetEngine("ssc");
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
@@ -209,6 +210,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     size_t i;
     for (i = 0; i < steps; ++i)
     {
+
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
 
         if (status == adios2::StepStatus::OK)
@@ -292,12 +294,24 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             break;
         }
     }
+    if (received_steps)
+    {
+        auto attInt = dataManIO.InquireAttribute<int>("AttInt");
+        std::cout << "[Rank " + std::to_string(mpiRank) +
+                         "] Attribute received "
+                  << attInt.Data()[0] << ", expected 110" << std::endl;
+        ASSERT_EQ(110, attInt.Data()[0]);
+        ASSERT_NE(111, attInt.Data()[0]);
+    }
     dataManReader.Close();
     print_lines = 0;
 }
 
-TEST_F(SscEngineTest, NoAttributes)
+TEST_F(SscEngineTest, SscBase)
 {
+    std::string filename = "SscBase";
+    adios2::Params engineParams = {{"Port", "12316"}, {"Verbose", "0"}};
+
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
     MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
@@ -311,15 +325,12 @@ TEST_F(SscEngineTest, NoAttributes)
     Dims start = {2, (size_t)mpiRank * 2};
     Dims count = {5, 2};
 
-    adios2::Params engineParams = {{"Port", "12406"}, {"Verbose", "0"}};
-    std::string filename = "NoAttributes";
-
     if (mpiGroup == 0)
     {
         Writer(shape, start, count, 1000, engineParams, filename);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     if (mpiGroup == 1)
     {
