@@ -1,4 +1,5 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 dataTypes = {
     -1: 'unknown',
@@ -47,14 +48,14 @@ dataTypeSize = {
 
 def GetTypeName(typeID):
     name = dataTypes.get(typeID)
-    if (name == None):
+    if name is None:
         name = "unknown type"
     return name
 
 
 def GetTypeSize(typeID):
     size = dataTypeSize.get(typeID)
-    if (size == None):
+    if size is None:
         size = 0
     return size
 
@@ -77,7 +78,7 @@ CharacteristicNames = {
 
 def GetCharacteristicName(cID):
     name = CharacteristicNames.get(cID)
-    if (name == None):
+    if name is None:
         name = "unknown characteristic"
     return name
 

@@ -1,7 +1,6 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-import time
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import numpy as np
-from os.path import basename, exists, isdir
 from os import fstat
 import bp4dbg_utils
 
@@ -10,8 +9,9 @@ def ReadEncodedString(f, ID, limit):
     # 2 bytes length + string without \0
     namelen = np.fromfile(f, dtype=np.uint16, count=1)[0]
     if (namelen > limit):
-        print("ERROR: " + ID + " string length ({0}) is longer than the limit to stay inside the block ({1})".format(
-            namelen, limit))
+        print("ERROR: " + ID + " string length ({0}) is longer than the "
+              "limit to stay inside the block ({1})".format(
+                  namelen, limit))
         return ""
     name = f.read(namelen)
     return name
@@ -44,10 +44,12 @@ def ReadCharacteristicsFromData(f, limit, typeID):
 
 
 # Read Variable data
-def ReadVarData(f, nElements, typeID, ldims, expectedSize, varsStartPosition, varsTotalLength):
+def ReadVarData(f, nElements, typeID, ldims, expectedSize,
+                varsStartPosition, varsTotalLength):
     typeSize = bp4dbg_utils.GetTypeSize(typeID)
     if (typeSize == 0):
-        print("ERROR: Cannot process variable data block with unknown type size")
+        print("ERROR: Cannot process variable data block with "
+              "unknown type size")
         return False
 
     currentPosition = f.tell()
@@ -55,18 +57,20 @@ def ReadVarData(f, nElements, typeID, ldims, expectedSize, varsStartPosition, va
     nBytes = np.ones(1, dtype=np.uint64)
     nBytes[0] = nElements[0] * typeSize
     if (currentPosition + nBytes[0] > varsStartPosition + varsTotalLength):
-        print("ERROR: Variable data block of size would reach beyond all variable blocks")
+        print("ERROR: Variable data block of size would reach beyond all "
+              "variable blocks")
         print("VarsStartPosition = {0} varsTotalLength = {1}".format(
             varsStartPosition, varsTotalLength))
         print("current Position = {0} var block length = {1}".format(
             currentPosition, nBytes[0]))
         # return False
     if (nBytes[0] != expectedSize):
-        print("ERROR: Variable data block size does not equal the size calculated from var block length")
-        print("Expected size = {0}  calculated size from dimensions = {1}".format(
-            expectedSize, nBytes[0]))
+        print("ERROR: Variable data block size does not equal the size "
+              "calculated from var block length")
+        print("Expected size = {0}  calculated size from dimensions = {1}".
+              format(expectedSize, nBytes[0]))
     print("      Variable Data   : {0} bytes".format(nBytes[0]))
-    data = f.read(nBytes[0])
+    f.read(nBytes[0])
     return True
 
 # Read a variable's metadata
@@ -89,12 +93,14 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     print("      Var block size  : {0} bytes (+4 for Tag)".format(vmdlen))
     expectedVarBlockLength = vmdlen + 4  # [VMD is not included in vmdlen
 
-    if (startPosition + expectedVarBlockLength > varsStartPosition + varsTotalLength):
-        print("ERROR: There is not enough bytes inside this PG to read this Var block")
+    if (startPosition + expectedVarBlockLength >
+            varsStartPosition + varsTotalLength):
+        print("ERROR: There is not enough bytes inside this PG to read "
+              "this Var block")
         print("VarsStartPosition = {0} varsTotalLength = {1}".format(
             varsStartPosition, varsTotalLength))
-        print("current var's start position = {0} var block length = {1}".format(
-            startPosition, expectedVarBlockLength))
+        print("current var's start position = {0} var block length = {1}".
+              format(startPosition, expectedVarBlockLength))
         return False
 
     # 4 bytes VAR MEMBER ID
@@ -124,7 +130,8 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     isDimensionVar = f.read(1)
     if (isDimensionVar != b'y' and isDimensionVar != b'n'):
         print(
-            "ERROR: Next byte for isDimensionVar must be 'y' or 'n' but it isn't = {0}".format(isDimension))
+            "ERROR: Next byte for isDimensionVar must be 'y' or 'n' "
+            "but it isn't = {0}".format(isDimensionVar))
         return False
     print("      isDimensionVar  : " + isDimensionVar.decode('ascii'))
 
@@ -145,9 +152,11 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         # Read Local Dimensions (1 byte flag + 8 byte value)
         # Is Dimension a variable ID 1 byte, 'y' or 'n' or '\0'
         isDimensionVarID = f.read(1)
-        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and isDimensionsVarID != b'\0'):
+        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and
+                isDimensionVarID != b'\0'):
             print(
-                "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' but it isn't = {0}".format(isDimension))
+                "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' "
+                "but it isn't = {0}".format(isDimensionVarID))
             return False
         if (isDimensionVarID == b'\0'):
             isDimensionVarID = b'n'
@@ -157,9 +166,11 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         # Read Global Dimensions (1 byte flag + 8 byte value)
         # Is Dimension a variable ID 1 byte, 'y' or 'n' or '\0'
         isDimensionVarID = f.read(1)
-        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and isDimensionsVarID != b'\0'):
+        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and
+                isDimensionVarID != b'\0'):
             print(
-                "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' but it isn't = {0}".format(isDimension))
+                "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' "
+                "but it isn't = {0}".format(isDimensionVarID))
             return False
         if (isDimensionVarID == b'\0'):
             isDimensionVarID = b'n'
@@ -169,9 +180,11 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         # Read Offset Dimensions (1 byte flag + 8 byte value)
         # Is Dimension a variable ID 1 byte, 'y' or 'n' or '\0'
         isDimensionVarID = f.read(1)
-        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and isDimensionsVarID != b'\0'):
+        if (isDimensionVarID != b'y' and isDimensionVarID != b'n' and
+                isDimensionVarID != b'\0'):
             print(
-                "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' but it isn't = {0}".format(isDimension))
+                "ERROR: Next byte for isDimensionVarID must be 'y' or 'n' "
+                "but it isn't = {0}".format(isDimensionVarID))
             return False
         if (isDimensionVarID == b'\0'):
             isDimensionVarID = b'n'
@@ -225,8 +238,10 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
         attrsStartPosition, attrsTotalLength))
     print("current attr's start position = {0} attr block length = {1}".format(
         startPosition, expectedAttrBlockLength))
-    if (startPosition + expectedAttrBlockLength > attrsStartPosition + attrsTotalLength):
-        print("ERROR: There is not enough bytes inside this PG to read this Attr block")
+    if (startPosition + expectedAttrBlockLength >
+            attrsStartPosition + attrsTotalLength):
+        print("ERROR: There is not enough bytes inside this PG "
+              "to read this Attr block")
         return False
 
     # 4 bytes ATTR MEMBER ID
@@ -287,7 +302,8 @@ def ReadPG(f, fileSize, pgidx):
     isRowMajor = f.read(1)
     if (isRowMajor != b'y' and isRowMajor != b'n'):
         print(
-            "ERROR: Next byte for isRowMajor must be 'y' or 'n' but it isn't = {0}".format(isRowMajor))
+            "ERROR: Next byte for isRowMajor must be 'y' or 'n' "
+            "but it isn't = {0}".format(isRowMajor))
         return False
     print("  isRowMajor      : " + isRowMajor.decode('ascii'))
 
@@ -326,7 +342,7 @@ def ReadPG(f, fileSize, pgidx):
     for i in range(nMethods):
         # Method ID
         methodID = np.fromfile(f, dtype=np.uint8, count=1)[0]
-        print("      Method ID   : {0}".format(nMethods))
+        print("      Method ID   : {0}".format(methodID))
         sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
         methodParams = ReadEncodedString(
             f, "Method Parameters", sizeLimit)

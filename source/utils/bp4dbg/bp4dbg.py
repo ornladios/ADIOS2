@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import argparse
-import time
 from os.path import basename, exists, isdir
 import glob
 from bp4dbg_data import DumpData
+from bp4dbg_idxtable import DumpIndexTable
 
 
 def SetupArgs():
@@ -16,7 +17,8 @@ def SetupArgs():
     parser.add_argument("--verbose", "-v",
                         help="More verbosity", action="store_true")
     parser.add_argument("--no-indextable", "-x",
-                        help="Do not print index table md.idx", action="store_true")
+                        help="Do not print index table md.idx",
+                        action="store_true")
     parser.add_argument("--no-metadata", "-m",
                         help="Do not print metadata md.0", action="store_true")
     parser.add_argument(
@@ -65,7 +67,7 @@ def CheckFileName(args):
 
 
 def DumpIndexTableFile(args):
-    print("=== Index Table: " + args.idxFileName + " ====")
+    DumpIndexTable(args.idxFileName)
 
 
 def DumpMetadataFiles(args):
