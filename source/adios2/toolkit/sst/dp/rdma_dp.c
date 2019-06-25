@@ -101,6 +101,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
     hints->ep_attr->type = FI_EP_RDM;
 
     if (Params->DataInterface)
@@ -133,9 +135,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
             useinfo = info;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
-            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0 ||
-            !useinfo)
+        if ((strstr(prov_name, "verbs") && info->src_addr) ||
+            strstr(prov_name, "gni") || strstr(prov_name, "psm2") || !useinfo)
         {
             useinfo = info;
         }
@@ -1022,6 +1023,8 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
     hints->ep_attr->type = FI_EP_RDM;
 
     if (Params->DataInterface)
@@ -1059,8 +1062,8 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             Ret = 100;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
-            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0)
+        if ((strstr(prov_name, "verbs") && info->src_addr) ||
+            strstr(prov_name, "gni") || strstr(prov_name, "psm2"))
         {
 
             Svcs->verbose(CP_Stream,
