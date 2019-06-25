@@ -335,8 +335,11 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     print_lines = 0;
 }
 
-TEST_F(SscEngineTest, BaseTest7d)
+TEST_F(SscEngineTest, Ssc7d)
 {
+    std::string filename = "Ssc7d";
+    adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
+
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
     MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
@@ -350,15 +353,12 @@ TEST_F(SscEngineTest, BaseTest7d)
     Dims start = {0, 0, 0, (size_t)mpiRank, 0, 0, 0};
     Dims count = {10, 2, 2, 1, 2, 8, 10};
 
-    adios2::Params engineParams = {{"Port", "12306"}, {"Verbose", "0"}};
-    std::string filename = "BaseTest";
-
     if (mpiGroup == 0)
     {
         Writer(shape, start, count, 200, engineParams, filename);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     if (mpiGroup == 1)
     {
