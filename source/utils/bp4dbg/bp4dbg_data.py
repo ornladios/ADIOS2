@@ -42,10 +42,32 @@ def ReadCharacteristicsFromData(f, limit, typeID):
             cLen, cData))
     return True
 
+# Read String Variable data
+
+
+def ReadStringVarData(f, expectedSize,
+                      varsStartPosition):
+    # 2 bytes String Length
+    len = np.fromfile(f, dtype=np.uint16, count=1)[0]
+    if len != expectedSize - 2:
+        print("ERROR: Variable data block size does not equal the size "
+              "calculated from var block length")
+        print("Expected size = {0}  calculated size "
+              "from encoded length info {1}".
+              format(expectedSize, len + 2))
+        return False
+
+    str = f.read(len).decode('ascii')
+    print("      Variable Data   : '" + str + "'")
+    return True
 
 # Read Variable data
+
+
 def ReadVarData(f, nElements, typeID, ldims, expectedSize,
                 varsStartPosition, varsTotalLength):
+    if typeID == 9:  # string type
+        return ReadStringVarData(f, expectedSize, varsStartPosition)
     typeSize = bp4dbg_utils.GetTypeSize(typeID)
     if (typeSize == 0):
         print("ERROR: Cannot process variable data block with "

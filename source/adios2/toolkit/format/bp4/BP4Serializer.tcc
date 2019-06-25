@@ -573,7 +573,8 @@ inline void BP4Serializer::PutVariableMetadataInData(
     position += 5; // skipping characteristics
 
     // write a block identifier VMD]
-    const char vmdend[] = "VMD]"; // no \0
+    // byte 4 and then four characters (as len+str without terminating 0)
+    const char vmdend[] = "\4VMD]"; // no \0
     helper::CopyToBuffer(buffer, position, vmdend, sizeof(vmdend) - 1);
 
     // Back to varLength including payload size
