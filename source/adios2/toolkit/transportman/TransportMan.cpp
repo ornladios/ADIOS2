@@ -23,6 +23,7 @@
 
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transport/file/FileStdio.h"
+#include "adios2/toolkit/transport/null/NullTransport.h"
 
 namespace adios2
 {
@@ -329,6 +330,11 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                 std::make_shared<transport::FilePOSIX>(m_MPIComm, m_DebugMode);
         }
 #endif
+        else if (library == "NULL" || library == "null")
+        {
+            transport = std::make_shared<transport::NullTransport>(m_MPIComm,
+                                                                   m_DebugMode);
+        }
         else
         {
             if (m_DebugMode)

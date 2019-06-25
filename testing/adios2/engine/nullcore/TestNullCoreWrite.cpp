@@ -80,7 +80,7 @@ TEST_F(NullCoreWriteTest, ADIOS2NullCoreWrite1D8)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        io.SetEngine("null2");
+        io.SetEngine("NullCore");
 
         adios2::Engine engine = io.Open("foo", adios2::Mode::Write);
 
@@ -316,7 +316,7 @@ TEST_F(NullCoreWriteTest, ADIOS2NullCoreWrite2D4x2)
                 io.DefineVariable<double>("r64", shape, start, count);
         }
 
-        io.SetEngine("null2");
+        io.SetEngine("NullCore");
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)

@@ -120,13 +120,13 @@ protected:
     /** true: turn on exceptions */
     const bool m_DebugMode = false;
 
-    void MkDir(const std::string &fileName);
+    virtual void MkDir(const std::string &fileName);
 
     void ProfilerStart(const std::string process) noexcept;
 
     void ProfilerStop(const std::string process) noexcept;
 
-    void CheckName() const;
+    virtual void CheckName() const;
 };
 
 } // end namespace adios2

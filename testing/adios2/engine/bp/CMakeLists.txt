@@ -79,6 +79,9 @@ target_link_libraries(TestBPWriteReadVariableSpan adios2 gtest)
 add_executable(TestBPWriteAppendReadADIOS2 TestBPWriteAppendReadADIOS2.cpp)
 target_link_libraries(TestBPWriteAppendReadADIOS2 adios2 gtest)
 
+add_executable(TestBPWriteNull TestBPWriteNull.cpp)
+target_link_libraries(TestBPWriteNull adios2 gtest)
+
 if(ADIOS2_HAVE_MPI)
 
   target_link_libraries(TestBPWriteReadADIOS2 MPI::MPI_C)
@@ -101,8 +104,8 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPChangingShape MPI::MPI_C)
   target_link_libraries(TestBPWriteReadBlockInfo MPI::MPI_C)
   target_link_libraries(TestBPWriteReadVariableSpan MPI::MPI_C)
-
   target_link_libraries(TestBPWriteAppendReadADIOS2 MPI::MPI_C)
+  target_link_libraries(TestBPWriteNull MPI::MPI_C)
   
   add_executable(TestBPWriteAggregateRead TestBPWriteAggregateRead.cpp)
   target_link_libraries(TestBPWriteAggregateRead
@@ -156,7 +159,7 @@ gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args} WORKING_DIRECTORY 
 # BP3 only for now
 gtest_add_tests(TARGET TestBPWriteReadBlockInfo ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadVariableSpan ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
-
+gtest_add_tests(TARGET TestBPWriteNull ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 
 # BP4 only for now
 gtest_add_tests(TARGET TestBPWriteAppendReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR})
