@@ -195,6 +195,8 @@ public:
      */
     void CheckRandomAccessConflict(const std::string hint) const;
 
+    Dims GetShape(const size_t step = adios2::EngineCurrentStep);
+
 protected:
     const bool m_DebugMode = false;
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count
