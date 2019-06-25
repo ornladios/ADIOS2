@@ -310,7 +310,7 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         return writesize;
     }
 
-    size_t ndim = vi.v->m_Shape.size();
+    size_t ndim = vi.v->GetShape().size();
     if (ndim == 0)
     {
         // scalars -> rank 0 writes them
@@ -381,12 +381,12 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         }
         else
         {
-            count = vi.v->m_Shape[i] / np[i];
+            count = vi.v->GetShape()[i] / np[i];
             start = count * pos[i];
             if (pos[i] == np[i] - 1)
             {
                 // last one in the dimension may need to read more than the rest
-                count = vi.v->m_Shape[i] - count * (np[i] - 1);
+                count = vi.v->GetShape()[i] - count * (np[i] - 1);
             }
         }
         vi.start.push_back(start);
@@ -446,11 +446,11 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
         if (!rank)
         {
             std::cout << "    " << type << " " << name;
-            if (variable->m_Shape.size() > 0)
+            if (variable->GetShape().size() > 0)
             {
-                std::cout << "[" << variable->m_Shape[0];
-                for (int j = 1; j < variable->m_Shape.size(); j++)
-                    std::cout << ", " << variable->m_Shape[j];
+                std::cout << "[" << variable->GetShape()[0];
+                for (int j = 1; j < variable->GetShape().size(); j++)
+                    std::cout << ", " << variable->GetShape()[j];
                 std::cout << "]" << std::endl;
             }
             else

@@ -17,6 +17,7 @@
 /// \endcond
 
 #include "adios2/core/Engine.h"
+#include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 
 namespace adios2
@@ -476,6 +477,24 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
                                     "Shape and cannot appear in start/count, " +
                                     hint + "\n");
     }
+}
+
+Dims VariableBase::GetShape(const size_t step)
+{
+    if (m_Type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (m_Type == helper::GetType<T>())                                   \
+    {                                                                          \
+        Variable<T> *variable = dynamic_cast<Variable<T> *>(this);             \
+        m_Shape = variable->Shape(step);                                       \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    return m_Shape;
 }
 
 } // end namespace core
