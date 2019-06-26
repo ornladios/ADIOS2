@@ -117,6 +117,11 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
             // TODO check if we need to reverse dimensions
             variable.SetSelection({start, count});
         }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            // TODO keep Count for block updated
+            variable.m_Count = blocksInfo[variable.m_BlockID].Count;
+        }
     }
 
     // create block info
