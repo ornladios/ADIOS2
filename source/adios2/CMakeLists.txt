@@ -57,6 +57,7 @@ add_library(adios2
   
   engine/null/NullEngine.cpp
 
+  engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 #toolkit
   toolkit/format/BufferSTL.cpp
 
@@ -81,6 +82,7 @@ add_library(adios2
   toolkit/transport/Transport.cpp
   toolkit/transport/file/FileStdio.cpp
   toolkit/transport/file/FileFStream.cpp
+  toolkit/transport/null/NullTransport.cpp
 
   toolkit/transportman/TransportMan.cpp
 
