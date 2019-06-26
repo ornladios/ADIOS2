@@ -40,7 +40,6 @@ redo:
     while (!WriterInfo)
     {
         // CMusleep(Stream->CPInfo->cm, SleepInterval);
-        printf("Sleeping %ld\n", SleepInterval);
         usleep(SleepInterval);
         TimeoutRemaining -= SleepInterval;
         WaitWarningRemaining -= SleepInterval;
