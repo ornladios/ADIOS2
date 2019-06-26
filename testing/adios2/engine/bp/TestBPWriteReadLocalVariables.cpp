@@ -1757,7 +1757,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
 {
 
-    const std::string fname("BPWriteReadLocal2DChangeCount.bp");
+    const std::string fname("BPWRLocal2DChangeCount_" + engineName + ".bp");
 
     int mpiRank = 0;
     int mpiSize = 1;
