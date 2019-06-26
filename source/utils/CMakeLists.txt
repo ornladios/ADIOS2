@@ -38,3 +38,6 @@ if(ADIOS2_HAVE_MPI)
   add_subdirectory(adios_iotest)
 endif()
 
+# bp4dbg Python tool
+install(PROGRAMS bp4dbg/bp4dbg.py bp4dbg/bp4dbg_data.py bp4dbg/bp4dbg_utils.py
+        DESTINATION ${CMAKE_INSTALL_BINDIR}/bp4dbg)
