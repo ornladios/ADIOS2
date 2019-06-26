@@ -1754,6 +1754,74 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
     }
 }
 
+TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
+{
+
+    const std::string fname("BPWriteReadLocal2DChangeCount.bp");
+
+    int mpiRank = 0;
+    int mpiSize = 1;
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    const size_t Nx0 =
+        static_cast<size_t>(std::pow(2 - static_cast<size_t>(mpiRank), 2)) + 1;
+    const size_t Nx1 = 5;
+    // data for block 0 and block 1 per rank
+    std::vector<float> data(Nx0 * Nx1);
+    const int32_t startBlock = 3 * mpiRank + 1;
+
+    std::iota(data.begin(), data.end(), startBlock);
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+        const adios2::Dims shape{};
+        const adios2::Dims start{};
+        const adios2::Dims count{Nx0, Nx1};
+
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+        bpWriter.Put(var_r32, data.data());
+        bpWriter.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReaderIO");
+#ifdef ADIOS2_HAVE_MPI
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::Read, MPI_COMM_SELF);
+#else
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+#endif
+
+        auto var_r32 = io.InquireVariable<float>("r32");
+        std::map<size_t, std::vector<float>> dataIn;
+
+        for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
+        {
+            var_r32.SetBlockSelection(b);
+            bpReader.Get(var_r32, dataIn[b]);
+        }
+        bpReader.Close();
+
+        for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
+        {
+            for (size_t i = 0; i < dataIn[b].size(); ++i)
+            {
+                EXPECT_EQ(dataIn[b][i], static_cast<float>(3 * b + 1 + i));
+            }
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

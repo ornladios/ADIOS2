@@ -119,7 +119,7 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         }
         else if (variable.m_ShapeID == ShapeID::LocalArray)
         {
-            // keep Count for block updated
+            // TODO keep Count for block updated
             variable.m_Count = blocksInfo[variable.m_BlockID].Count;
         }
     }
