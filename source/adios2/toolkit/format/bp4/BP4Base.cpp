@@ -278,6 +278,7 @@ size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
                                      const Dims &count) const noexcept
 {
     size_t indexSize = 23; // header
+    indexSize += 4 + 32;   // "[VMD" and padded " *VMD]" up to 31 char length
     indexSize += variableName.size();
 
     // characteristics 3 and 4, check variable number of dimensions
@@ -305,7 +306,9 @@ size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
         indexSize += 28 * dimensions + 1;
     }
 
-    return indexSize + 12; // extra 12 bytes in case of attributes
+    // extra 12 bytes for attributes in case of last variable
+    // extra 4 bytes for PGI] in case of last variable
+    return indexSize + 12 + 4;
 }
 
 void BP4Base::ResetBuffer(BufferSTL &bufferSTL,
@@ -329,8 +332,8 @@ BP4Base::ResizeResult BP4Base::ResizeBuffer(const size_t dataIn,
                                             const std::string hint)
 {
     ProfilerStart("buffering");
-    const size_t currentCapacity = m_Data.m_Buffer.capacity();
-    const size_t requiredCapacity = dataIn + m_Data.m_Position;
+    const size_t currentSize = m_Data.m_Buffer.size();
+    const size_t requiredSize = dataIn + m_Data.m_Position;
 
     ResizeResult result = ResizeResult::Unchanged;
 
@@ -346,13 +349,13 @@ BP4Base::ResizeResult BP4Base::ResizeBuffer(const size_t dataIn,
             hint + "\n");
     }
 
-    if (requiredCapacity <= currentCapacity)
+    if (requiredSize <= currentSize)
     {
         // do nothing, unchanged is default
     }
-    else if (requiredCapacity > m_MaxBufferSize)
+    else if (requiredSize > m_MaxBufferSize)
     {
-        if (currentCapacity < m_MaxBufferSize)
+        if (currentSize < m_MaxBufferSize)
         {
             m_Data.Resize(m_MaxBufferSize, " when resizing buffer to " +
                                                std::to_string(m_MaxBufferSize) +
@@ -362,12 +365,12 @@ BP4Base::ResizeResult BP4Base::ResizeBuffer(const size_t dataIn,
     }
     else // buffer must grow
     {
-        if (currentCapacity < m_MaxBufferSize)
+        if (currentSize < m_MaxBufferSize)
         {
-            const size_t nextSize = std::min(
-                m_MaxBufferSize,
-                helper::NextExponentialSize(requiredCapacity, currentCapacity,
-                                            m_GrowthFactor));
+            const size_t nextSize =
+                std::min(m_MaxBufferSize,
+                         helper::NextExponentialSize(requiredSize, currentSize,
+                                                     m_GrowthFactor));
             m_Data.Resize(nextSize, " when resizing buffer to " +
                                         std::to_string(nextSize) + "bytes, " +
                                         hint);

@@ -11,6 +11,7 @@
 #include "adiosMemory.h"
 
 #include <algorithm>
+#include <stddef.h> // max_align_t
 
 #include "adios2/helper/adiosType.h"
 
@@ -283,6 +284,22 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                         srcCount, destMemStart, destMemCount, srcMemStart,
                         srcMemCount, endianReverse, destType);
     }
+}
+
+size_t PaddingToAlignPointer(const void *ptr)
+{
+    auto memLocation = reinterpret_cast<std::uintptr_t>(ptr);
+    size_t padSize = sizeof(max_align_t) - (memLocation % sizeof(max_align_t));
+    if (padSize == sizeof(max_align_t))
+    {
+        padSize = 0;
+    }
+    /*std::cout << " -- Pad pointer with " << std::to_string(padSize)
+              << " bytes. original pointer = " << std::to_string(memLocation)
+              << " aligned pointer = " << std::to_string(memLocation + padSize)
+              << " sizeof(max_align_t) = "
+              << std::to_string(sizeof(max_align_t)) << std::endl;*/
+    return padSize;
 }
 
 } // end namespace helper
