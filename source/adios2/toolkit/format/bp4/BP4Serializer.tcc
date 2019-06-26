@@ -147,10 +147,12 @@ void BP4Serializer::PutAttributeLengthInData(
     const size_t attributeLengthPosition) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
 
     // back to attribute length
     size_t backPosition = attributeLengthPosition;
-    helper::CopyToBuffer(buffer, backPosition, &attributeLengthPosition);
+    uint32_t len = static_cast<uint32_t>(position - attributeLengthPosition);
+    helper::CopyToBuffer(buffer, backPosition, &len);
 }
 
 template <>

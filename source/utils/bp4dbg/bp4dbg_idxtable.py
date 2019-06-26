@@ -111,11 +111,16 @@ def ReadIndex(f, fileSize):
 
 def DumpIndexTable(fileName):
     print("=== Index Table File: " + fileName + " ====")
-    with open(fileName, "rb") as f:
-        fileSize = fstat(f.fileno()).st_size
-        status = ReadIndexHeader(f, fileSize)
-        if (status):
-            status = ReadIndex(f, fileSize)
+    status = False
+    try:
+        with open(fileName, "rb") as f:
+            fileSize = fstat(f.fileno()).st_size
+            status = ReadIndexHeader(f, fileSize)
+            if (status):
+                status = ReadIndex(f, fileSize)
+    except FileNotFoundError:
+        print("File " + fileName + " does not exist")
+    return status
 
 
 if __name__ == "__main__":
