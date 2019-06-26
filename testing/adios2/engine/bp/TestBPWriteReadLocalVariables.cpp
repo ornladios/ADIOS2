@@ -1792,7 +1792,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
         bpWriter.Put(var_r32, data.data());
         bpWriter.Close();
     }
-
+#ifdef ADIOS2_HAVE_MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     {
         adios2::IO io = adios.DeclareIO("ReaderIO");
 #ifdef ADIOS2_HAVE_MPI
