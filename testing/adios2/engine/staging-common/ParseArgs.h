@@ -1,4 +1,8 @@
+#ifndef _WIN32
 #include "strings.h"
+#else
+#define strcasecmp _stricmp
+#endif
 std::string fname = "ADIOS2Common";
 std::string engine = "sst";
 adios2::Params engineParams = {}; // parsed from command line
