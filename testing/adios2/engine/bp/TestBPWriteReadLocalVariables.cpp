@@ -1771,7 +1771,7 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
     const size_t Nx1 = 5;
     // data for block 0 and block 1 per rank
     std::vector<float> data(Nx0 * Nx1);
-    const int32_t startBlock = 3 * mpiRank + 1;
+    const float startBlock = static_cast<float>(3 * mpiRank + 1);
 
     std::iota(data.begin(), data.end(), startBlock);
 
