@@ -11,5 +11,7 @@ if(ADIOS2_HAVE_MPI)
         ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}
   )
 endif()
+
+add_subdirectory(install)
 add_subdirectory(adios2)
 add_subdirectory(utils)
