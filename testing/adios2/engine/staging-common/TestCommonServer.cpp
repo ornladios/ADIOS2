@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 
+#include "ParseArgs.h"
 #include "TestData.h"
 
 class CommonServerTest : public ::testing::Test
@@ -26,49 +27,8 @@ public:
     CommonServerTest() = default;
 };
 
-adios2::Params engineParams = {};         // parsed from command line
-int DurationSeconds = 60 * 60 * 24 * 365; // one year default
-int DelayMS = 1000;                       // one step per sec default
 static int MyCloseNow = 0;
 static int GlobalCloseNow = 0;
-std::string fname = "ADIOS2CommonServer";
-std::string engine = "SST";
-
-static std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-/*
- * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
- * by commas.  White space is trimmed off front and back.  No quotes or anything
- * fancy allowed.
- */
-static adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, ':');
-        if (!std::getline(ss2, ParamValue, ':'))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
-}
-
-std::string shutdown_name = "DieTest";
 
 inline bool file_exists(const std::string &name)
 {
@@ -229,75 +189,7 @@ int main(int argc, char **argv)
     int result, bare_args = 0;
     ::testing::InitGoogleTest(&argc, argv);
 
-    while (argc > 1)
-    {
-        if (std::string(argv[1]) == "--duration")
-        {
-            std::istringstream ss(argv[2]);
-            if (!(ss >> DurationSeconds))
-                std::cerr << "Invalid number for duration " << argv[1] << '\n';
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--shutdown_filename")
-        {
-            shutdown_name = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--ms_delay")
-        {
-            std::istringstream ss(argv[2]);
-            if (!(ss >> DelayMS))
-                std::cerr << "Invalid number for ms_delay " << argv[1] << '\n';
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--filename")
-        {
-            fname = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine")
-        {
-            engine = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine_params")
-        {
-            engineParams = ParseEngineParams(argv[2]);
-            argv++;
-            argc--;
-        }
-        else
-        {
-            if (bare_args == 0)
-            {
-                /* first arg without -- is engine */
-                engine = std::string(argv[1]);
-            }
-            if (bare_args == 1)
-            {
-                /* second arg without -- is filename */
-                fname = std::string(argv[1]);
-            }
-            if (bare_args == 2)
-            {
-                /* third arg without -- is engine params */
-                engineParams = ParseEngineParams(argv[1]);
-            }
-            if (bare_args > 2)
-            {
-                throw std::invalid_argument("Unknown argument \"" +
-                                            std::string(argv[1]) + "\"");
-            }
-            bare_args++;
-        }
-        argv++;
-        argc--;
-    }
+    ParseArgs(argc, argv);
 
     result = RUN_ALL_TESTS();
 

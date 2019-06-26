@@ -12,6 +12,7 @@
 
 #include <gtest/gtest.h>
 
+#include "ParseArgs.h"
 #include "TestData.h"
 
 class CommonReadTest : public ::testing::Test
@@ -19,45 +20,6 @@ class CommonReadTest : public ::testing::Test
 public:
     CommonReadTest() = default;
 };
-
-adios2::Params engineParams = {}; // parsed from command line
-int TimeGapExpected = 0;
-std::string fname = "ADIOS2Common";
-std::string engine = "sst";
-
-static std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-/*
- * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
- * by commas.  White space is trimmed off front and back.  No quotes or anything
- * fancy allowed.
- */
-static adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, ':');
-        if (!std::getline(ss2, ParamValue, ':'))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
-}
 
 #ifdef ADIOS2_HAVE_MPI
 MPI_Comm testComm;
@@ -393,59 +355,7 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
 
-    while ((argc > 1) && (argv[1][0] == '-'))
-    {
-        if (std::string(argv[1]) == "--expect_time_gap")
-        {
-            TimeGapExpected++;
-        }
-        else if (std::string(argv[1]) == "--compress_sz")
-        {
-            // CompressSz++;     Nothing on read side
-        }
-        else if (std::string(argv[1]) == "--compress_zfp")
-        {
-            // CompressZfp++;    Nothing on read side
-        }
-        else if (std::string(argv[1]) == "--filename")
-        {
-            fname = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine")
-        {
-            engine = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else
-
-        {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
-        }
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* first arg without -- is engine */
-        engine = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* second arg without -- is filename */
-        fname = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        engineParams = ParseEngineParams(argv[1]);
-    }
+    ParseArgs(argc, argv);
 
     result = RUN_ALL_TESTS();
 
