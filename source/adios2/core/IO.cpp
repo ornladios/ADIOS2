@@ -463,7 +463,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 
     /* BPFile for read needs to use BP4 or BP3 depending on the file's version
      */
-    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp"))
+    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp" || isDefaultEngine))
     {
         if (mode == Mode::Read)
         {
@@ -482,7 +482,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
         }
     }
 
-    if (isDefaultEngine || engineTypeLC == "bp3")
+    if (engineTypeLC == "bp3")
     {
         if (mode == Mode::Read)
         {
