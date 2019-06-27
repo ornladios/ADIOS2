@@ -94,7 +94,8 @@ def bDataToNumpyArray(cData, typeName, nElements):
         return np.zeros(1, dtype=np.uint32)
 
 
-def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID, fileOffset):
+def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
+                                    fileOffset, isVarCharacteristics):
     cStartPosition = pos
     dataTypeName = bp4dbg_utils.GetTypeName(typeID)
     print("        Block {0}: ".format(idx))
@@ -107,6 +108,11 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID, fileOffset):
     charLen = np.frombuffer(buf, dtype=np.uint8, count=32, offset=pos)[0]
     pos = pos + 4
     print("            Characteristics Length  : {0}".format(charLen))
+
+    # For attributes, we need to remember the dimensions and size
+    # when reading the value
+    ndim = 0
+    nElems = 1
 
     for i in range(nChars):
         print("            Characteristics[{0}]".format(i))
@@ -126,6 +132,7 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID, fileOffset):
                 print("                Dims (lgo)  : (", end="")
                 for d in range(ndim):
                     p = 3 * d
+                    nElems = int(nElems * lgo[p])  # need for value later
                     print("{0}:{1}:{2}".format(lgo[p], lgo[p + 1], lgo[p + 2]),
                           end="")
                     if d < ndim - 1:
@@ -156,11 +163,25 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID, fileOffset):
                 print("]")
 
             else:
-                cData = buf[pos:pos + cLen]
-                pos = pos + cLen
-                data = bDataToNumpyArray(cData, dataTypeName, 1)
-                print("                Value       : {0}  ({1} bytes)".format(
-                      data[0], cLen))
+                if (isVarCharacteristics):
+                    cData = buf[pos:pos + cLen]
+                    pos = pos + cLen
+                    data = bDataToNumpyArray(cData, dataTypeName, 1)
+                    print("                Value       : {0}  ({1} bytes)".format(
+                        data[0], cLen))
+                else:  # attribute value characteristics are different
+                    dataTypeSize = bp4dbg_utils.GetTypeSize(typeID)
+                    nBytes = int(nElems * dataTypeSize)
+                    cData = buf[pos:pos + nBytes]
+                    pos = pos + nBytes
+                    data = bDataToNumpyArray(cData, dataTypeName, nElems)
+                    print("                Value       : [", end="")
+                    for j in range(nElems):
+                        print("{0}".format(data[j]), end="")
+                        if j < nElems - 1:
+                            print(", ", end="")
+                    print("]")
+
         elif cName == 'offset' or cName == 'payload_offset':
             cData = buf[pos:pos + cLen]
             pos = pos + cLen
@@ -307,7 +328,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
         newlimit = limit - (pos - varStartPosition)
         fileOffset = varStartOffset + (pos - varStartPosition)
         status, pos = ReadCharacteristicsFromMetaData(
-            buf, i, pos, newlimit, typeID, fileOffset)
+            buf, i, pos, newlimit, typeID, fileOffset, True)
         if (not status):
             return False
 
@@ -374,7 +395,7 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
         newlimit = limit - (pos - attrStartPosition)
         fileOffset = attrStartOffset + (pos - attrStartPosition)
         status, pos = ReadCharacteristicsFromMetaData(
-            buf, i, pos, newlimit, typeID, fileOffset)
+            buf, i, pos, newlimit, typeID, fileOffset, False)
         if (not status):
             return False
 
@@ -469,7 +490,8 @@ def ReadMetadataStep(f, fileSize, step):
 
 
 def DumpMetaData(fileName):
-    print("=== Metadata File: " + fileName + " ====")
+    print("========================================================")
+    print("    Metadata File: " + fileName)
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
         status = True
