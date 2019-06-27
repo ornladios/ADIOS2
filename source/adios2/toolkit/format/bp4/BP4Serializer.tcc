@@ -96,7 +96,7 @@ inline void BP4Serializer::PutVariablePayload(
         PutOperationPayloadInBuffer(variable, blockInfo);
     }
 
-    std::cout << " -- Var payload name=" << variable.m_Name
+    /*std::cout << " -- Var payload name=" << variable.m_Name
               << " startPos = " << std::to_string(startingPos)
               << " end position = " << std::to_string(m_Data.m_Position)
               << " end abs.position = "
@@ -108,7 +108,7 @@ inline void BP4Serializer::PutVariablePayload(
                      m_Data.m_Buffer.data() + m_Data.m_Position - 8))
               << " 4 bytes ahead = '"
               << std::string(m_Data.m_Buffer.data() + startingPos - 4, 4) << "'"
-              << std::endl;
+              << std::endl;*/
 
     ProfilerStop("buffering");
 }
@@ -147,10 +147,12 @@ void BP4Serializer::PutAttributeLengthInData(
     const size_t attributeLengthPosition) noexcept
 {
     auto &buffer = m_Data.m_Buffer;
+    auto &position = m_Data.m_Position;
 
     // back to attribute length
     size_t backPosition = attributeLengthPosition;
-    helper::CopyToBuffer(buffer, backPosition, &attributeLengthPosition);
+    uint32_t len = static_cast<uint32_t>(position - attributeLengthPosition);
+    helper::CopyToBuffer(buffer, backPosition, &len);
 }
 
 template <>
@@ -507,14 +509,12 @@ void BP4Serializer::PutVariableMetadataInData(
     // starting position in vmdEnd from where we copy to buffer
     // we don't copy the \0 from vmdEnd !
     const char *ptr = vmdEnd + (sizeof(vmdEnd) - 1 - vmdEndLen);
-    std::cout << " -- Pad metadata with " << std::to_string(padSize)
+    /*std::cout << " -- Pad metadata with " << std::to_string(padSize)
               << " bytes. var = " << variable.m_Name << " rank = " << m_RankMPI
               << " position = " << std::to_string(position) << " pad string = '"
-              << ptr << "'" << std::endl;
-    /*              << " buffer memory address = "
-                  <<
-       std::to_string(reinterpret_cast<std::uintptr_t>(buffer.data()))
-                  << std::endl;*/
+              << ptr << "'"
+              << std::to_string(reinterpret_cast<std::uintptr_t>(buffer.data()))
+              << std::endl;*/
     helper::CopyToBuffer(buffer, position, &vmdEndLen, 1);
     helper::CopyToBuffer(buffer, position, ptr, vmdEndLen);
 

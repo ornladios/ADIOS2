@@ -6,6 +6,7 @@ from os.path import basename, exists, isdir
 import glob
 from bp4dbg_data import DumpData
 from bp4dbg_idxtable import DumpIndexTable
+from bp4dbg_metadata import DumpMetaData
 
 
 def SetupArgs():
@@ -67,28 +68,36 @@ def CheckFileName(args):
 
 
 def DumpIndexTableFile(args):
-    DumpIndexTable(args.idxFileName)
+    indexFileList = glob.glob(args.idxFileName)
+    if len(indexFileList) > 0:
+        DumpIndexTable(indexFileList[0])
+    else:
+        print("There is  no BP4 Index Table file as " + args.idxFileName)
 
 
 def DumpMetadataFiles(args):
     mdFileList = glob.glob(args.metadataFileName)
-    for fname in mdFileList:
-        print("=== Metadata File: " + fname + " ====")
+    if len(mdFileList) > 0:
+        for fname in mdFileList:
+            DumpMetaData(fname)
+    else:
+        print("There are no BP4 Metadata files in   " + args.metadataFileName)
 
 
 def DumpDataFiles(args):
     dataFileList = glob.glob(args.dataFileName)
-    for fname in dataFileList:
-        DumpData(fname)
+    if len(dataFileList) > 0:
+        for fname in dataFileList:
+            DumpData(fname)
+    else:
+        print("There are no BP4 Data files in       " + args.dataFileName)
 
 
 if __name__ == "__main__":
 
     args = SetupArgs()
-#    print(args)
-
-#    print("Debug file {0}".format(args.infile), flush=True)
     CheckFileName(args)
+    # print(args)
 
     if (args.dumpIdx):
         DumpIndexTableFile(args)

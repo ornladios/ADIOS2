@@ -162,7 +162,8 @@ void BP3Serializer::PutAttributeLengthInData(
 
     // back to attribute length
     size_t backPosition = attributeLengthPosition;
-    helper::CopyToBuffer(buffer, backPosition, &attributeLengthPosition);
+    uint32_t len = static_cast<uint32_t>(position - attributeLengthPosition);
+    helper::CopyToBuffer(buffer, backPosition, &len);
 
     absolutePosition += position - attributeLengthPosition;
 }

@@ -5,16 +5,41 @@ from os import fstat
 import bp4dbg_utils
 
 
-def ReadEncodedString(f, ID, limit):
-    # 2 bytes length + string without \0
-    namelen = np.fromfile(f, dtype=np.uint16, count=1)[0]
+def ReadEncodedString(f, ID, limit, lensize=2):
+    if lensize == 2:
+        # 2 bytes length + string without \0
+        namelen = np.fromfile(f, dtype=np.uint16, count=1)[0]
+    elif lensize == 4:
+        # 2 bytes length + string without \0
+        namelen = np.fromfile(f, dtype=np.uint32, count=1)[0]
+    else:
+        print("CODING ERROR: bp4dbp_data.ReadEncodedString: "
+              "lensize must be 2 or 4")
+        return False, ""
     if (namelen > limit):
         print("ERROR: " + ID + " string length ({0}) is longer than the "
               "limit to stay inside the block ({1})".format(
                   namelen, limit))
-        return ""
-    name = f.read(namelen)
-    return name
+        return False, ""
+    name = f.read(namelen).decode('ascii')
+    return True, name
+
+
+def ReadEncodedStringArray(f, ID, limit, nStrings):
+    s = []
+    for i in range(nStrings):
+        # 2 bytes length + string
+        # !!! String here INCLUDES Terminating \0 !!!
+        namelen = np.fromfile(f, dtype=np.uint32, count=1)[0]
+        if (namelen > limit - 4):
+            print("ERROR: " + ID + " string length ({0}) is longer than the "
+                  "limit to stay inside the block ({1})".format(
+                      namelen, limit - 4))
+            return False, s
+        name = f.read(namelen).decode('ascii')
+        limit = limit - namelen - 4
+        s.append(name[0:-1])  # omit the terminating \0
+    return True, s
 
 
 def ReadHeader(f):
@@ -22,7 +47,44 @@ def ReadHeader(f):
     print("Header info: There is no header in data.*")
 
 
+def readDataToNumpyArray(f, typeName, nElements):
+    if typeName == 'byte':
+        return np.fromfile(f, dtype=np.int8, count=nElements)
+    elif typeName == 'short':
+        return np.fromfile(f, dtype=np.int16, count=nElements)
+    elif typeName == 'integer':
+        return np.fromfile(f, dtype=np.int32, count=nElements)
+    elif typeName == 'long':
+        return np.fromfile(f, dtype=np.int64, count=nElements)
+
+    elif typeName == 'unsigned_byte':
+        return np.fromfile(f, dtype=np.uint8, count=nElements)
+    elif typeName == 'unsigned_short':
+        return np.fromfile(f, dtype=np.uint16, count=nElements)
+    elif typeName == 'unsigned_integer':
+        return np.fromfile(f, dtype=np.uint32, count=nElements)
+    elif typeName == 'unsigned_long':
+        return np.fromfile(f, dtype=np.uint64, count=nElements)
+
+    elif typeName == 'real':
+        return np.fromfile(f, dtype=np.float32, count=nElements)
+    elif typeName == 'double':
+        return np.fromfile(f, dtype=np.float64, count=nElements)
+    elif typeName == 'long_double':
+        return np.fromfile(f, dtype=np.float128, count=nElements)
+
+    elif typeName == 'complex':
+        return np.fromfile(f, dtype=np.complex64, count=nElements)
+    elif typeName == 'double_complex':
+        return np.fromfile(f, dtype=np.complex128, count=nElements)
+
+    else:
+        return np.zeros(1, dtype=np.uint32)
+
+
 def ReadCharacteristicsFromData(f, limit, typeID):
+    cStartPosition = f.tell()
+    dataTypeName = bp4dbg_utils.GetTypeName(typeID)
     # 1 byte NCharacteristics
     nCharacteristics = np.fromfile(f, dtype=np.uint8, count=1)[0]
     print("      # of Characteristics    : {0}".format(nCharacteristics))
@@ -34,12 +96,27 @@ def ReadCharacteristicsFromData(f, limit, typeID):
         print("      Characteristics[{0}]".format(i))
         # 1 byte TYPE
         cID = np.fromfile(f, dtype=np.uint8, count=1)[0]
-        print("          Type        : {0} ({1}) ".format(
-            bp4dbg_utils.GetCharacteristicName(cID), cID))
-        cLen = bp4dbg_utils.GetCharacteristicDataLength(cID, typeID)
-        cData = f.read(cLen)
-        print("          Content     : {0} bytes = {1}".format(
-            cLen, cData))
+        cName = bp4dbg_utils.GetCharacteristicName(cID)
+        print("          Type        : {0} ({1}) ".format(cName, cID))
+        if cName == 'value' or cName == 'min' or cName == 'max':
+            if dataTypeName == 'string':
+                namelimit = limit - (f.tell() - cStartPosition)
+                status, s = ReadEncodedString(f, "String Value", namelimit)
+                if not status:
+                    return False
+                print("          Value       : '" + s + "'")
+            else:
+                data = readDataToNumpyArray(f, dataTypeName, 1)
+                print("          Value       : {0}".format(data[0]))
+        elif cName == 'offset' or cName == 'payload_offset':
+            data = readDataToNumpyArray(f, 'unsigned_long', 1)
+            print("          Value       : {0}".format(data[0]))
+        elif cName == 'time_index' or cName == 'file_index':
+            data = readDataToNumpyArray(f, 'unsigned_integer', 1)
+            print("          Value       : {0}".format(data[0]))
+        else:
+            print("                ERROR: could not understand this "
+                  "characteristics type '{0}' id {1}".format(cName, cID))
     return True
 
 # Read String Variable data
@@ -93,6 +170,8 @@ def ReadVarData(f, nElements, typeID, ldims, expectedSize,
               format(expectedSize, nBytes[0]))
     print("      Variable Data   : {0} bytes".format(nBytes[0]))
     f.read(nBytes[0])
+    # data = readDataToNumpyArray(f, bp4dbg_utils.GetTypeName(typeID),
+    #                            nElements)
     return True
 
 # Read a variable's metadata
@@ -131,17 +210,17 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
 
     # VAR NAME, 2 bytes length + string without \0
     sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
-    varname = ReadEncodedString(f, "Var Name", sizeLimit)
-    if (varname == ""):
+    status, varname = ReadEncodedString(f, "Var Name", sizeLimit)
+    if (not status):
         return False
-    print("      Var Name        : " + varname.decode('ascii'))
+    print("      Var Name        : " + varname)
 
     # VAR PATH, 2 bytes length + string without \0
     sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
-    varpath = ReadEncodedString(f, "Var Path", sizeLimit)
-    if (varname == ""):
+    status, varpath = ReadEncodedString(f, "Var Path", sizeLimit)
+    if (not status):
         return False
-    print("      Var Path        : " + varpath.decode('ascii'))
+    print("      Var Path        : " + varpath)
 
     # 1 byte TYPE
     typeID = np.fromfile(f, dtype=np.uint8, count=1)[0]
@@ -252,18 +331,19 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
         return False
     print("      Tag             : " + tag.decode('ascii'))
 
-    # 8 bytes VMD Length
-    vmdlen = np.fromfile(f, dtype=np.uint64, count=1)[0]
-    print("      Attr block size : {0} bytes (+4 for Tag)".format(vmdlen))
-    expectedAttrBlockLength = vmdlen + 4  # [VMD is not included in vmdlen
-    print("AttrsStartPosition = {0} attrsTotalLength = {1}".format(
-        attrsStartPosition, attrsTotalLength))
-    print("current attr's start position = {0} attr block length = {1}".format(
-        startPosition, expectedAttrBlockLength))
+    # 8 bytes AMD Length
+    amdlen = np.fromfile(f, dtype=np.uint32, count=1)[0]
+    print("      Attr block size : {0} bytes (+4 for Tag)".format(amdlen))
+    expectedAttrBlockLength = amdlen + 4  # [AMD is not included in amdlen
     if (startPosition + expectedAttrBlockLength >
             attrsStartPosition + attrsTotalLength):
         print("ERROR: There is not enough bytes inside this PG "
               "to read this Attr block")
+        print("AttrsStartPosition = {0} attrsTotalLength = {1}".format(
+            attrsStartPosition, attrsTotalLength))
+        print("current attr's start position = {0} "
+              "attr block length = {1}".format(
+                  startPosition, expectedAttrBlockLength))
         return False
 
     # 4 bytes ATTR MEMBER ID
@@ -272,22 +352,61 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
 
     # ATTR NAME, 2 bytes length + string without \0
     sizeLimit = expectedAttrBlockLength - (f.tell() - startPosition)
-    attrname = ReadEncodedString(f, "Attr Name", sizeLimit)
-    if (attrname == ""):
+    status, attrname = ReadEncodedString(f, "Attr Name", sizeLimit)
+    if (not status):
         return False
-    print("      Attr Name       : " + attrname.decode('ascii'))
+    print("      Attr Name       : " + attrname)
 
     # ATTR PATH, 2 bytes length + string without \0
     sizeLimit = expectedAttrBlockLength - (f.tell() - startPosition)
-    attrpath = ReadEncodedString(f, "Attr Path", sizeLimit)
-    if (attrname == ""):
+    status, attrpath = ReadEncodedString(f, "Attr Path", sizeLimit)
+    if (not status):
         return False
-    print("      Attr Path       : " + attrpath.decode('ascii'))
+    print("      Attr Path       : " + attrpath)
+
+    # isAttrAVar 1 byte, 'y' or 'n'
+    isAttrAVar = f.read(1)
+    if (isAttrAVar != b'y' and isAttrAVar != b'n'):
+        print(
+            "ERROR: Next byte for isAttrAVar must be 'y' or 'n' "
+            "but it isn't = {0}".format(isAttrAVar))
+        return False
+    print("      Refers to Var?  : " + isAttrAVar.decode('ascii'))
 
     # 1 byte TYPE
     typeID = np.fromfile(f, dtype=np.uint8, count=1)[0]
-    print("      Type            : {0} ({1}) ".format(
-        bp4dbg_utils.GetTypeName(typeID), typeID))
+    typeName = bp4dbg_utils.GetTypeName(typeID)
+    print("      Type            : {0} ({1}) ".format(typeName, typeID))
+
+    # Read Attribute data
+    if typeName == 'string':
+        sizeLimit = expectedAttrBlockLength - (f.tell() - startPosition)
+        status, s = ReadEncodedString(
+            f, "Attribute String Value", sizeLimit, 4)
+        if not status:
+            return False
+        print("      Value           : '" + s + "'")
+
+    elif typeName == 'string_array':
+        nElems = np.fromfile(f, dtype=np.uint32, count=1)[0]
+        sizeLimit = expectedAttrBlockLength - (f.tell() - startPosition)
+        status, strList = ReadEncodedStringArray(
+            f, "Attribute String Array", sizeLimit, nElems)
+        if not status:
+            return False
+        print("      Value           : [", end="")
+        for j in range(len(strList)):
+            print("'" + strList[j] + "'", end="")
+            if j < len(strList) - 1:
+                print(", ", end="")
+            print("]")
+    else:
+        nBytes = np.fromfile(f, dtype=np.uint32, count=1)[0]
+        typeSize = bp4dbg_utils.GetTypeSize(typeID)
+        nElems = int(nBytes / typeSize)
+        data = readDataToNumpyArray(f, typeName, nElems)
+        print("      Value           : {0}  ({1} elements)".format(
+            data[0], nElems))
 
     # End TAG AMD]
     tag = f.read(4)
@@ -297,12 +416,16 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
         return False
     print("      Tag             : {0}".format(tag.decode('ascii')))
 
+    return True
 
 # Read one PG process group (variables and attributes from one process in
 # one step)
+
+
 def ReadPG(f, fileSize, pgidx):
     pgStartPosition = f.tell()
-    print("PG {0}: ".format(pgidx))
+    print("========================================================")
+    print("Process Group {0}: ".format(pgidx))
     print("  Starting offset : {0}".format(pgStartPosition))
     tag = f.read(4)
     if (tag != b"[PGI"):
@@ -315,27 +438,27 @@ def ReadPG(f, fileSize, pgidx):
     # 8 bytes PG Length
     pglen = np.fromfile(f, dtype=np.uint64, count=1)[0]
     print("  PG length       : {0} bytes (+4 for Tag)".format(pglen))
-    expectedPGLength = pglen + 4  # total length does not include opening tag
+    # pglen does not include the opening tag 4 bytes:
+    expectedPGLength = pglen + 4
     if (pgStartPosition + expectedPGLength > fileSize):
         print("ERROR: There is not enough bytes in file to read this PG")
         return False
 
-    # RowMajor 1 byte, 'y' or 'n'
-    isRowMajor = f.read(1)
-    if (isRowMajor != b'y' and isRowMajor != b'n'):
+    # ColumnMajor (host language Fortran) 1 byte, 'y' or 'n'
+    isColumnMajor = f.read(1)
+    if (isColumnMajor != b'y' and isColumnMajor != b'n'):
         print(
-            "ERROR: Next byte for isRowMajor must be 'y' or 'n' "
-            "but it isn't = {0}".format(isRowMajor))
+            "ERROR: Next byte for isColumnMajor must be 'y' or 'n' "
+            "but it isn't = {0}".format(isColumnMajor))
         return False
-    print("  isRowMajor      : " + isRowMajor.decode('ascii'))
+    print("  isColumnMajor   : " + isColumnMajor.decode('ascii'))
 
     # PG Name, 2 bytes length + string without \0
     sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
-    pgname = ReadEncodedString(
-        f, "PG Name", sizeLimit)
-    if (pgname == ""):
+    status, pgname = ReadEncodedString(f, "PG Name", sizeLimit)
+    if (not status):
         return False
-    print("  PG Name         : " + pgname.decode('ascii'))
+    print("  PG Name         : " + pgname)
 
     # 4 bytes unused (for Coordination variable)
     tag = f.read(4)
@@ -343,10 +466,10 @@ def ReadPG(f, fileSize, pgidx):
 
     # Timestep name
     sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
-    tsname = ReadEncodedString(f, "Timestep Name", sizeLimit)
-    if (tsname == ""):
+    status, tsname = ReadEncodedString(f, "Timestep Name", sizeLimit)
+    if (not status):
         return False
-    print("  Step Name       : " + tsname.decode('ascii'))
+    print("  Step Name       : " + tsname)
 
     # STEP 4 bytes
     step = np.fromfile(f, dtype=np.uint32, count=1)[0]
@@ -366,12 +489,11 @@ def ReadPG(f, fileSize, pgidx):
         methodID = np.fromfile(f, dtype=np.uint8, count=1)[0]
         print("      Method ID   : {0}".format(methodID))
         sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
-        methodParams = ReadEncodedString(
+        status, methodParams = ReadEncodedString(
             f, "Method Parameters", sizeLimit)
-        if (methodParams == ""):
+        if (not status):
             return False
-        print('      M. params   : "' +
-              methodParams.decode('ascii') + '"')
+        print('      M. params   : "' + methodParams + '"')
 
     # VARIABLES
 
@@ -401,11 +523,14 @@ def ReadPG(f, fileSize, pgidx):
     nAttrs = np.fromfile(f, dtype=np.uint32, count=1)[0]
     print("  # of Attributes : {0}".format(nAttrs))
 
+    attrsStartPosition = f.tell()
     # ATTS SIZE 8 bytes
+    # attlen includes the 8 bytes of itself, so remember position before this
     attlen = np.fromfile(f, dtype=np.uint64, count=1)[0]
     print("  Attrs length    : {0} bytes".format(attlen))
-    sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
-    expectedAttrsLength = attlen  # need to read this more
+    sizeLimit = expectedPGLength - (attrsStartPosition - pgStartPosition) - 4
+    expectedAttrsLength = attlen  # need to read this more before reaching PGI]
+
     if (expectedAttrsLength > sizeLimit):
         print("ERROR: There is not enough bytes in PG to read the attributes")
         return False
