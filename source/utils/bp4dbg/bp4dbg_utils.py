@@ -87,7 +87,7 @@ def GetCharacteristicDataLength(cID, typeID):
     name = CharacteristicNames.get(cID)
     if (name == 'value' or name == 'min' or name == 'max'):
         return dataTypeSize[typeID]
-    elif (name == 'offset' or name == 'payload offset'):
+    elif (name == 'offset' or name == 'payload_offset'):
         return 8
     elif (name == 'file_index' or name == 'time_index'):
         return 4
