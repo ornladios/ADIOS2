@@ -85,7 +85,7 @@ void generateSimpleReverseData(std::vector<double> &data_reverse, int step,
 }
 
 int validateSimpleForwardData(std::vector<double> &data_forward, int step,
-                              int start, int count, int total_size)
+                              int64_t start, int64_t count, int64_t total_size)
 {
     int ret = 0;
     int64_t j = 100 * step + start;
@@ -106,7 +106,7 @@ int validateSimpleForwardData(std::vector<double> &data_forward, int step,
 }
 
 int validateSimpleReverseData(std::vector<double> &data_reverse, int step,
-                              int start, int count, int total_size)
+                              int64_t start, int64_t count, int64_t total_size)
 {
     int ret = 0;
     int64_t j = 100 * step + total_size - start;
