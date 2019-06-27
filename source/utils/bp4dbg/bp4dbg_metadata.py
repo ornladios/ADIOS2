@@ -167,8 +167,8 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
                     cData = buf[pos:pos + cLen]
                     pos = pos + cLen
                     data = bDataToNumpyArray(cData, dataTypeName, 1)
-                    print("                Value       : {0}  ({1} bytes)".format(
-                        data[0], cLen))
+                    print("                Value       : {0}"
+                          "  ({1} bytes)".format(data[0], cLen))
                 else:  # attribute value characteristics are different
                     dataTypeSize = bp4dbg_utils.GetTypeSize(typeID)
                     nBytes = int(nElems * dataTypeSize)

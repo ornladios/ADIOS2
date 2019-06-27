@@ -82,11 +82,11 @@ def ReadIndex(f, fileSize):
     table = f.read(nBytes)
     print(" ")
     print("-----------------------------------------------------------------"
-          "-------------------------------------")
+          "------------------------------------------")
     print("|   Step   |   Rank   |    PGPtr    |   VarPtr    |   AttPtr    |"
-          "   EndPtr    |  Timestamp  | unused |")
+          "   EndPtr    |  Timestamp  |    unused   |")
     print("+----------------------------------------------------------------"
-          "------------------------------------+")
+          "-----------------------------------------+")
     for r in range(0, nRows):
         pos = r * 64
         data = np.frombuffer(table, dtype=np.uint64, count=8, offset=pos)
@@ -97,12 +97,12 @@ def ReadIndex(f, fileSize):
         attptr = str(data[4]).rjust(12)
         endptr = str(data[5]).rjust(12)
         time = str(data[6]).rjust(12)
-        unused = str(data[6]).rjust(12)
+        unused = str(data[7]).rjust(12)
         print("|" + step + " |" + rank + " |" + pgptr + " |" + varptr + " |" +
-              attptr + " |" + endptr + " |" + time + " |        |")
+              attptr + " |" + endptr + " |" + time + " |" + unused + " |")
 
     print("-----------------------------------------------------------------"
-          "-------------------------------------")
+          "------------------------------------------")
 
     if fileSize - f.tell() > 1:
         print("ERROR: There are {0} bytes at the end of file"
