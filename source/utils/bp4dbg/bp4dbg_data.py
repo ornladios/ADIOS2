@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function,
 import numpy as np
 from os import fstat
 import bp4dbg_utils
-from numpy import nbytes
 
 
 def ReadEncodedString(f, ID, limit, lensize=2):
@@ -104,9 +103,8 @@ def ReadCharacteristicsFromData(f, limit, typeID):
                 namelimit = limit - (f.tell() - cStartPosition)
                 status, s = ReadEncodedString(f, "String Value", namelimit)
                 if not status:
-                    return False, pos
-                print("          Value       : '" + s +
-                      "' ({0} bytes)".format(strLen))
+                    return False
+                print("          Value       : '" + s + "'")
             else:
                 data = readDataToNumpyArray(f, dataTypeName, 1)
                 print("          Value       : {0}".format(data[0]))
@@ -343,8 +341,9 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
               "to read this Attr block")
         print("AttrsStartPosition = {0} attrsTotalLength = {1}".format(
             attrsStartPosition, attrsTotalLength))
-        print("current attr's start position = {0} attr block length = {1}".format(
-            startPosition, expectedAttrBlockLength))
+        print("current attr's start position = {0} "
+              "attr block length = {1}".format(
+                  startPosition, expectedAttrBlockLength))
         return False
 
     # 4 bytes ATTR MEMBER ID
