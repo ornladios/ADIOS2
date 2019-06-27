@@ -214,16 +214,7 @@ endif(NOT MSVC)
 #   Setup tests for SSC engine
 #
 if(ADIOS2_HAVE_SSC AND ADIOS2_HAVE_MPI)
-    SET (SSC_TESTS ${ALL_SIMPLE_TESTS})
-    # Tests that don't work for SSC
-    list (REMOVE_ITEM SSC_TESTS "TimeoutOnOpen")
-    # Local Vars don't work for SSC
-    list (FILTER SSC_TESTS EXCLUDE REGEX ".*Local$")
-    # Multiple writer ranks don't work for SSC
-    list (FILTER SSC_TESTS EXCLUDE REGEX "^[2345]x.*")
-    list (FILTER SSC_TESTS EXCLUDE REGEX "^DelayedReader_3x5")
-    # Multiple reader ranks don't work for SSC
-    list (FILTER SSC_TESTS EXCLUDE REGEX "x[2345].*")
+    SET (SSC_TESTS "NoReaderNoWait")
     foreach(test ${SSC_TESTS})
         add_common_test(${test} SSC)
     endforeach()
