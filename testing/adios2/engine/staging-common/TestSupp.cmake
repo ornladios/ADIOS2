@@ -203,6 +203,7 @@ function(add_common_test basename engine)
     add_test(
     	NAME ${testname}
 	COMMAND ${command})
+    set_tests_properties(${testname} PROPERTIES RUN_SERIAL 1)
     if (STAGING_COMMON_TEST_SUPP_VERBOSE)
 	message ( STATUS "Adding test \"${testname}\" COMMAND \"${command}\"")
     endif()
