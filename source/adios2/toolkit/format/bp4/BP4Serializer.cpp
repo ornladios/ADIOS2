@@ -15,6 +15,7 @@
 #include <future>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>,
                                           // ReduceValue<T>
@@ -428,29 +429,32 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     ProfilerStart("buffering");
     ProfilerStart("meta_sort_merge");
 
-    auto &position = bufferSTL.m_Position;
 
-    // const uint64_t pgIndexStart =
-    //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    /* save the starting position of the pgindex in the metadata file*/
-    m_MetadataSet.pgIndexStart =
-        inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
-                   bufferSTL);
+    AggregateCollectiveMetadataIndices(comm, bufferSTL);
 
-    // const uint64_t variablesIndexStart =
-    //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    /* save the starting position of the varindex in the metadata file*/
-    m_MetadataSet.varIndexStart =
-        inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    AggregateMergeIndex(m_MetadataSet.VarsIndices, comm, bufferSTL);
+    // auto &position = bufferSTL.m_Position;
 
-    // const uint64_t attributesIndexStart =
-    //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    /* save the starting position of the attrindex in the metadata file*/
-    m_MetadataSet.attrIndexStart =
-        inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL, true);
+    // // const uint64_t pgIndexStart =
+    // //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // /* save the starting position of the pgindex in the metadata file*/
+    // m_MetadataSet.pgIndexStart =
+    //     inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
+    //                bufferSTL);
+
+    // // const uint64_t variablesIndexStart =
+    // //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // /* save the starting position of the varindex in the metadata file*/
+    // m_MetadataSet.varIndexStart =
+    //     inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // AggregateMergeIndex(m_MetadataSet.VarsIndices, comm, bufferSTL);
+
+    // // const uint64_t attributesIndexStart =
+    // //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // /* save the starting position of the attrindex in the metadata file*/
+    // m_MetadataSet.attrIndexStart =
+    //     inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL, true);
 
     int rank;
     SMPI_Comm_rank(comm, &rank);
@@ -471,6 +475,8 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
             bufferSTL.m_AbsolutePosition += bufferSTL.m_Position;
         }
     }
+
+    bufferSTL.Resize(bufferSTL.m_Position, "after collective metadata is done");
 
     ProfilerStop("meta_sort_merge");
     ProfilerStop("buffering");
@@ -1384,6 +1390,371 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     }
 
     return deserialized;
+}
+
+void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
+                                                  BufferSTL &bufferSTL)
+{
+    int rank, size;
+    SMPI_Comm_rank(comm, &rank);
+    SMPI_Comm_size(comm, &size);
+
+    // pre-allocate with rank 0 data
+    size_t pgCount = 0; //< tracks global PG count
+    if (rank == 0)
+    {
+        // assumes that things are more or less balanced
+        m_PGIndicesInfo.clear();
+        //m_PGRankIndices.reserve(m_MetadataSet.PGIndex.Buffer.size());
+
+        m_VariableIndicesInfo.clear();
+        //m_VariableRankIndices.reserve(m_MetadataSet.VarsIndices.size());
+
+        m_AttributesIndicesInfo.clear();
+        //m_AttributesRankIndices.reserve(m_MetadataSet.AttributesIndices.size());
+    }
+
+    auto lf_IndicesSize =
+        [&](const std::unordered_map<std::string, SerialElementIndex> &indices)
+        -> size_t
+
+    {
+        size_t indicesSize = 0;
+        for (const auto &indexPair : indices)
+        {
+            indicesSize += indexPair.second.Buffer.size();
+        }
+        return indicesSize;
+    };
+
+    auto lf_SerializeIndices =
+        [&](const std::unordered_map<std::string, SerialElementIndex> &indices,
+            size_t &position)
+
+    {
+        for (const auto &indexPair : indices)
+        {
+            const auto &buffer = indexPair.second.Buffer;
+            helper::CopyToBuffer(m_SerializedIndices, position, buffer.data(),
+                                 buffer.size());
+        }
+    };
+
+    auto lf_SerializeAllIndices = [&](MPI_Comm comm, const int rank) {
+        const size_t pgIndicesSize = m_MetadataSet.PGIndex.Buffer.size();
+        const size_t variablesIndicesSize =
+            lf_IndicesSize(m_MetadataSet.VarsIndices);
+        const size_t attributesIndicesSize =
+            lf_IndicesSize(m_MetadataSet.AttributesIndices);
+
+        // first pre-allocate
+        const size_t serializedIndicesSize = 8 * 4 + pgIndicesSize +
+                                             variablesIndicesSize +
+                                             attributesIndicesSize;
+
+        m_SerializedIndices.reserve(serializedIndicesSize + 4);
+        m_SerializedIndices.resize(serializedIndicesSize + 4);
+
+        const uint32_t rank32 = static_cast<uint32_t>(rank);
+        const uint64_t size64 = static_cast<uint64_t>(serializedIndicesSize);
+        const uint64_t variablesIndexOffset =
+            static_cast<uint64_t>(pgIndicesSize + 36);
+        const uint64_t attributesIndexOffset =
+            static_cast<uint64_t>(pgIndicesSize + 36 + variablesIndicesSize);
+
+        size_t position = 0;
+        helper::CopyToBuffer(m_SerializedIndices, position, &rank32);
+        helper::CopyToBuffer(m_SerializedIndices, position, &size64);
+        helper::CopyToBuffer(m_SerializedIndices, position,
+                             &variablesIndexOffset);
+        helper::CopyToBuffer(m_SerializedIndices, position,
+                             &attributesIndexOffset);
+        helper::CopyToBuffer(m_SerializedIndices, position,
+                             &m_MetadataSet.DataPGCount);
+
+        helper::CopyToBuffer(m_SerializedIndices, position,
+                             m_MetadataSet.PGIndex.Buffer.data(),
+                             m_MetadataSet.PGIndex.Buffer.size());
+        lf_SerializeIndices(m_MetadataSet.VarsIndices, position);
+        lf_SerializeIndices(m_MetadataSet.AttributesIndices, position);
+    };
+
+    auto lf_LocatePGIndices =
+        [&](std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
+                &pgIndicesInfo,
+            const int rankSource, const std::vector<char> &serialized,
+            const size_t position, const size_t endPosition)
+    {
+        
+        size_t stepStartPosition = position;
+        size_t stepBuffersize = 0;
+        size_t pgCountPerStep = 0;
+        size_t localPosition = position;
+        uint32_t currentStep = 1;
+
+        while (localPosition < endPosition)
+        {
+            size_t indexPosition = localPosition;
+            const ProcessGroupIndex header = ReadProcessGroupIndexHeader(
+                serialized, indexPosition, helper::IsLittleEndian());
+            if (header.Step == currentStep)
+            {
+                stepBuffersize += header.Length + 2;
+                pgCountPerStep++;
+            }
+            else
+            {
+                // found a new step, record the pg info of previous step
+                std::tuple<size_t, size_t, size_t> stepPGIndexTuple = std::make_tuple(pgCountPerStep, stepStartPosition, stepBuffersize);
+                auto search = pgIndicesInfo.find(currentStep);
+                if (search == pgIndicesInfo.end())
+                {
+                    // the time step hasn't been added to the unordered_map, add it
+                    pgIndicesInfo.emplace(currentStep, std::vector<std::tuple<size_t, size_t, size_t>>());
+                    pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);
+                }
+                else
+                {
+                    pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);  
+                }
+                stepStartPosition = localPosition;
+                stepBuffersize = header.Length + 2;
+                pgCountPerStep = 1;
+                currentStep = header.Step;
+            }
+            localPosition += header.Length + 2;
+            if (localPosition >= endPosition)
+            {
+                // record the pg info of the last step
+                std::tuple<size_t, size_t, size_t> stepPGIndexTuple = std::make_tuple(pgCountPerStep, stepStartPosition, stepBuffersize);
+                auto search = pgIndicesInfo.find(currentStep);
+                if (search == pgIndicesInfo.end())
+                {
+                    // the time step hasn't been added to the unordered_map, add it
+                    pgIndicesInfo.emplace(currentStep, std::vector<std::tuple<size_t, size_t, size_t>>());
+                    pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);
+                }
+                else
+                {
+                    pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);  
+                }
+            }
+        }
+    };
+
+    auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
+                                     size_t &position, const uint8_t dataType,
+                                     uint8_t &count, uint32_t &length,
+                                     uint32_t &timeStep)
+
+    {
+        const DataTypes dataTypeEnum = static_cast<DataTypes>(dataType);
+        const bool isLittleEndian = helper::IsLittleEndian();
+
+        switch (dataTypeEnum)
+        {
+
+#define make_case(T)                                                           \
+    case (TypeTraits<T>::type_enum):                                           \
+    {                                                                          \
+        const auto characteristics = ReadElementIndexCharacteristics<T>(       \
+            buffer, position, TypeTraits<T>::type_enum, true, isLittleEndian); \
+        count = characteristics.EntryCount;                                    \
+        length = characteristics.EntryLength;                                  \
+        timeStep = characteristics.Statistics.Step;                            \
+        break;                                                                 \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(make_case)
+#undef make_case
+
+        case (type_string_array):
+        {
+            const auto characteristics =
+                ReadElementIndexCharacteristics<std::string>(
+                    buffer, position, type_string_array, true, isLittleEndian);
+            count = characteristics.EntryCount;
+            length = characteristics.EntryLength;
+            timeStep = characteristics.Statistics.Step;
+            break;
+        }
+
+        default:
+            throw std::invalid_argument(
+                "ERROR: type " + std::to_string(dataType) +
+                " not supported in BP3 Metadata Merge\n");
+
+        } // end switch
+    };
+
+    auto lf_LocateVarIndices =
+        [&](std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
+                &indicesInfo,
+            const int rankSource, const std::vector<char> &serialized,
+            const size_t position, const size_t endPosition)
+
+    {
+        size_t stepStartPosition = position;
+        size_t stepBuffersize = 0;
+        uint32_t currentStep = 1;
+
+        size_t localPosition = position;
+        while (localPosition < endPosition)
+        {
+            size_t indexPosition = localPosition;
+            const ElementIndexHeader header = ReadElementIndexHeader(
+                serialized, indexPosition, helper::IsLittleEndian());
+
+            uint8_t count = 0;
+            uint32_t length = 0;
+            uint32_t timeStep = 0;
+
+            lf_GetCharacteristics(serialized, indexPosition,
+                                              header.DataType, count, length,
+                                              timeStep);
+
+            const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
+
+            localPosition += bufferSize;
+        }
+    };
+
+    auto lf_LocateAttrIndices =
+        [&](std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
+                &indicesInfo,
+            const int rankSource, const std::vector<char> &serialized,
+            const size_t position, const size_t endPosition)
+
+    {
+        size_t localPosition = position;
+        while (localPosition < endPosition)
+        {
+            size_t indexPosition = localPosition;
+            const ElementIndexHeader header = ReadElementIndexHeader(
+                serialized, indexPosition, helper::IsLittleEndian());
+
+            const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
+
+            localPosition += bufferSize;
+        }
+    };
+
+    auto lf_LocateAllIndices =
+        [&](const int rankSource, const std::vector<size_t> headerInfo,
+            const std::vector<char> &serialized, const size_t position)
+
+    {
+        const size_t rankIndicesSize = headerInfo[0];
+        const size_t variablesIndexOffset = headerInfo[1] + position;
+        const size_t attributesIndexOffset = headerInfo[2] + position;
+        pgCount += headerInfo[3];
+        size_t localPosition = position + 36;
+
+        const size_t pgIndexLength = variablesIndexOffset - localPosition;
+        size_t endPosition = variablesIndexOffset;
+        // first deserialize pg indices
+        lf_LocatePGIndices(m_PGIndicesInfo, rankSource, serialized,
+                              localPosition, endPosition);
+        for (int i = 1; i <= m_PGIndicesInfo.size(); i++)
+        {
+            std::cout << "rank " << rankSource << ", step " << i << ": " << std::get<0>(m_PGIndicesInfo[i][rankSource]) << ", " << std::get<1>(m_PGIndicesInfo[i][rankSource]) << ", " << std::get<2>(m_PGIndicesInfo[i][rankSource]) << std::endl;
+        }
+        // {
+        //     std::lock_guard<std::mutex> lock(m_Mutex);
+        //     helper::InsertToBuffer(m_PGRankIndices, &serialized[localPosition],
+        //                            pgIndexLength);
+        // }
+
+        // deserialize variable indices
+        localPosition = variablesIndexOffset;
+        endPosition = attributesIndexOffset;
+
+        lf_LocateVarIndices(m_VariableIndicesInfo, rankSource, serialized,
+                              localPosition, endPosition);
+
+        // deserialize attributes indices
+        localPosition = attributesIndexOffset;
+        endPosition = rankIndicesSize + 4 + position;
+        // attributes are constant and unique across ranks
+        lf_LocateAttrIndices(m_AttributesIndicesInfo, rankSource, serialized,
+                              localPosition, endPosition);
+    };
+
+    auto lf_SortMergeIndices =
+        [&](const std::unordered_map<std::string,
+                                     std::vector<SerialElementIndex>>
+                &deserializedIndices) {
+            auto &position = bufferSTL.m_Position;
+            auto &buffer = bufferSTL.m_Buffer;
+
+            size_t countPosition = position;
+
+            const uint32_t totalCountU32 =
+                static_cast<uint32_t>(deserializedIndices.size());
+            helper::CopyToBuffer(buffer, countPosition, &totalCountU32);
+            position += 12; // skip for length
+
+            MergeSerializeIndices(deserializedIndices, comm, bufferSTL);
+
+            // Write length
+            const uint64_t totalLengthU64 =
+                static_cast<uint64_t>(position - countPosition - 8);
+            helper::CopyToBuffer(buffer, countPosition, &totalLengthU64);
+        };
+
+    // BODY of function starts here
+
+    lf_SerializeAllIndices(comm, rank); // Set m_SerializedIndices
+
+    size_t countPosition = bufferSTL.m_Position;
+    // use bufferSTL (will resize) to GatherV
+    const size_t extraSize = 16 + 12 + 12 + m_MetadataSet.MiniFooterSize;
+
+    helper::GathervVectors(m_SerializedIndices, bufferSTL.m_Buffer,
+                           bufferSTL.m_Position, comm, 0, extraSize);
+
+    // deserialize, it's all local inside rank 0
+    if (rank == 0)
+    {
+        const size_t serializedSize = bufferSTL.m_Position;
+        const std::vector<char> &serialized = bufferSTL.m_Buffer;
+        size_t serializedPosition = 0;
+        std::vector<size_t> headerInfo(4);
+        const bool isLittleEndian = helper::IsLittleEndian();
+
+        // if (m_Threads == 1)
+        {
+            while (serializedPosition < serializedSize)
+            {
+                size_t localPosition = serializedPosition;
+
+                const int rankSource =
+                    static_cast<int>(helper::ReadValue<uint32_t>(
+                        serialized, localPosition, isLittleEndian));
+
+                for (auto i = 0; i < 4; ++i)
+                {
+                    headerInfo[i] =
+                        static_cast<size_t>(helper::ReadValue<uint64_t>(
+                            serialized, localPosition, isLittleEndian));
+                }
+
+                lf_LocateAllIndices(rankSource, headerInfo, serialized,
+                                         serializedPosition);
+                serializedPosition += headerInfo[0] + 4;
+            }
+        }
+        // TODO: threaded version
+    }
+
+    // now merge (and sort variables and attributes) indices
+    if (rank == 0)
+    {
+        auto &position = bufferSTL.m_Position;
+        auto &buffer = bufferSTL.m_Buffer;
+        position = countPosition; // back to pg count position
+
+    }
+
 }
 
 /* Merge and serialize all the indices at each step */
