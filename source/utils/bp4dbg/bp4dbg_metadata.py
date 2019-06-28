@@ -329,7 +329,7 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
         fileOffset = varStartOffset + (pos - varStartPosition)
         status, pos = ReadCharacteristicsFromMetaData(
             buf, i, pos, newlimit, typeID, fileOffset, True)
-        if (not status):
+        if not status:
             return False
 
     return True, pos
@@ -396,7 +396,7 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
         fileOffset = attrStartOffset + (pos - attrStartPosition)
         status, pos = ReadCharacteristicsFromMetaData(
             buf, i, pos, newlimit, typeID, fileOffset, False)
-        if (not status):
+        if not status:
             return False
 
     return True, pos
@@ -405,7 +405,8 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
 def ReadMetadataStep(f, fileSize, step):
     # Read metadata of one step
     mdStartPosition = f.tell()
-    print("========================================================")
+    if step > 0:
+        print("========================================================")
     print("Step {0}: ".format(step))
     print("    PG Index offset   : {0}".format(mdStartPosition))
 
@@ -430,7 +431,7 @@ def ReadMetadataStep(f, fileSize, step):
         # VMD block
         status, pgmdPos = ReadPGMD(
             pgmd, i, pgmdPos, pgLength, pgStartPosition + pgmdPos)
-        if (not status):
+        if not status:
             return False
 
     # Read the VAR Index
@@ -456,7 +457,7 @@ def ReadMetadataStep(f, fileSize, step):
         # VMD block
         status, varmdPos = ReadVarMD(
             varmd, i, varmdPos, varLength, varsStartPosition + varmdPos)
-        if (not status):
+        if not status:
             return False
 
     # Read the ATTR Index
@@ -483,7 +484,7 @@ def ReadMetadataStep(f, fileSize, step):
         # VMD block
         status, attrmdPos = ReadAttrMD(
             attrmd, i, attrmdPos, attrLength, attrsStartPosition + attrmdPos)
-        if (not status):
+        if not status:
             return False
 
     return True
@@ -492,13 +493,15 @@ def ReadMetadataStep(f, fileSize, step):
 def DumpMetaData(fileName):
     print("========================================================")
     print("    Metadata File: " + fileName)
+    print("========================================================")
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
-        status = True
+        status = bp4dbg_utils.ReadHeader(f, fileSize, "Metadata")
         step = 0
         while (f.tell() < fileSize - 12 and status):
             status = ReadMetadataStep(f, fileSize, step)
             step = step + 1
+    return status
 
 
 if __name__ == "__main__":

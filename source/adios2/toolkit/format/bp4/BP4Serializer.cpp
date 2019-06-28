@@ -35,6 +35,115 @@ BP4Serializer::BP4Serializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
+/*generate the header for the metadata index file*/
+void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType,
+                               const bool isActive)
+{
+    auto lf_CopyVersionChar = [](const std::string version,
+                                 std::vector<char> &buffer, size_t &position) {
+        helper::CopyToBuffer(buffer, position, version.c_str());
+    };
+
+    auto &buffer = b.m_Buffer;
+    auto &position = b.m_Position;
+    auto &absolutePosition = b.m_AbsolutePosition;
+    if (position > 0)
+    {
+        throw std::invalid_argument(
+            "ERROR: BP4Serializer::MakeHeader can only be called for an empty "
+            "buffer. This one for " +
+            fileType + " already has content of " + std::to_string(position) +
+            " bytes.");
+    }
+
+    if (b.GetAvailableSize() < 64)
+    {
+        b.Resize(position + 64, "BP4Serializer::MakeHeader " + fileType);
+    }
+
+    const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
+    const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
+    const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
+
+    // byte 0-31: Readable tag
+    if (position != m_VersionTagPosition)
+    {
+        throw std::runtime_error(
+            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Version Tag "
+            "position mismatch");
+    }
+    std::string versionLongTag("ADIOS-BP v" + majorVersion + "." +
+                               minorVersion + "." + patchVersion + " ");
+    size_t maxTypeLen = m_VersionTagLength - versionLongTag.size();
+    const std::string fileTypeStr = fileType.substr(0, maxTypeLen);
+    versionLongTag += fileTypeStr;
+    const size_t versionLongTagSize = versionLongTag.size();
+    if (versionLongTagSize < m_VersionTagLength)
+    {
+        helper::CopyToBuffer(buffer, position, versionLongTag.c_str(),
+                             versionLongTagSize);
+        position += m_VersionTagLength - versionLongTagSize;
+    }
+    else if (versionLongTagSize > m_VersionTagLength)
+    {
+        helper::CopyToBuffer(buffer, position, versionLongTag.c_str(),
+                             m_VersionTagLength);
+    }
+    else
+    {
+        helper::CopyToBuffer(buffer, position, versionLongTag.c_str(),
+                             m_VersionTagLength);
+    }
+
+    // byte 32-35: MAJOR MINOR PATCH Unused
+
+    lf_CopyVersionChar(majorVersion, buffer, position);
+    lf_CopyVersionChar(minorVersion, buffer, position);
+    lf_CopyVersionChar(patchVersion, buffer, position);
+    ++position;
+
+    // Note: Reader does process and use bytes 36-38 in
+    // BP4Deserialize.cpp::ParseMetadataIndex().
+    // Order and position must match there.
+
+    // byte 36: endianness
+    if (position != m_EndianFlagPosition)
+    {
+        throw std::runtime_error(
+            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Endian Flag "
+            "position mismatch");
+    }
+    const uint8_t endianness = helper::IsLittleEndian() ? 0 : 1;
+    helper::CopyToBuffer(buffer, position, &endianness);
+
+    // byte 37: BP Version 4
+    if (position != m_BPVersionPosition)
+    {
+        throw std::runtime_error(
+            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Active Flag "
+            "position mismatch");
+    }
+    const uint8_t version = 4;
+    helper::CopyToBuffer(buffer, position, &version);
+
+    // byte 38: Active flag (used in Index Table only)
+    if (position != m_ActiveFlagPosition)
+    {
+        throw std::runtime_error(
+            "ADIOS Coding ERROR in BP4Serializer::MakeHeader. Active Flag "
+            "position mismatch");
+    }
+    const uint8_t activeFlag = (isActive ? 1 : 0);
+    helper::CopyToBuffer(buffer, position, &activeFlag);
+
+    // byte 39: unused
+    position += 1;
+
+    // byte 40-63: unused
+    position += 24;
+    absolutePosition = position;
+}
+
 void BP4Serializer::PutProcessGroupIndex(
     const std::string &ioName, const std::string hostLanguage,
     const std::vector<std::string> &transportsTypes) noexcept

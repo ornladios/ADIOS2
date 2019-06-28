@@ -94,16 +94,13 @@ private:
      * profilers*/
     void WriteProfilingJSONFile();
 
-    void PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
-                                         size_t &position, const uint8_t,
-                                         const bool addSubfiles);
+    void UpdateActiveFlag(const bool active);
 
     void PopulateMetadataIndexFileContent(
-        const uint64_t currentStep, const uint64_t mpirank,
+        BufferSTL &buffer, const uint64_t currentStep, const uint64_t mpirank,
         const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
         const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
-        const uint64_t currentTimeStamp, std::vector<char> &buffer,
-        size_t &position);
+        const uint64_t currentTimeStamp);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
 
