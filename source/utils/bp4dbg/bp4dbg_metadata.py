@@ -209,8 +209,10 @@ def ReadPGMD(buf, idx, pos, limit, pgStartOffset):
     # 2 bytes PG Length + Name length
     pgLength = np.frombuffer(buf, dtype=np.uint16, count=1, offset=pos)[0]
     pos = pos + 2
-    print("        PG length       : {0} bytes".format(pgLength))
-    if (pgStartPosition + pgLength > limit):
+    print(
+        "        PG length       : {0} bytes (+2 for length)".format(
+            pgLength))
+    if (pgStartPosition + pgLength + 2 > limit):
         print("ERROR: There is not enough bytes {0} left in PG index block "
               "to read this single PG index ({1} bytes)").format(
                   limit - pgStartPosition, pgLength)
@@ -277,8 +279,9 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
     # 4 bytes VAR Index Length
     varLength = np.frombuffer(buf, dtype=np.uint32, count=1, offset=pos)[0]
     pos = pos + 4
-    print("        Var idx length  : {0} bytes".format(varLength))
-    if (varStartPosition + varLength > limit):
+    print("        Var idx length  : {0} bytes (+4 for idx length)".format(
+        varLength))
+    if (varStartPosition + varLength + 4 > limit):
         print("ERROR: There is not enough bytes in Var index block "
               "to read this single Var index")
         return False, pos
@@ -344,8 +347,9 @@ def ReadAttrMD(buf, idx, pos, limit, attrStartOffset):
     # 4 bytes ATTR Index Length
     attrLength = np.frombuffer(buf, dtype=np.uint32, count=1, offset=pos)[0]
     pos = pos + 4
-    print("        Attr idx length : {0} bytes".format(attrLength))
-    if (attrStartPosition + attrLength > limit):
+    print("        Attr idx length : {0} bytes (+4 for idx length)".format(
+        attrLength))
+    if (attrStartPosition + attrLength + 4 > limit):
         print("ERROR: There is not enough bytes in Attr index block "
               "to read this single Attr index")
         return False, pos

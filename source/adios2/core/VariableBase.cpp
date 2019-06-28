@@ -349,8 +349,10 @@ void VariableBase::InitShapeType()
             if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
             {
                 m_ShapeID = ShapeID::LocalValue;
-                m_Start.resize(1);
-                m_Count.resize(1); // real count = 1
+                m_Start.resize(1, 0); // start[0] == 0
+                m_Count.resize(1, 1); // count[0] == 1
+                // Count[0] == 1 makes sure the value will be written
+                // into the data file (PutVariablePayload())
                 m_SingleValue = true;
             }
             else
