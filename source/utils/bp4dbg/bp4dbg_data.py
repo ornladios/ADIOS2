@@ -399,14 +399,18 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
             print("'" + strList[j] + "'", end="")
             if j < len(strList) - 1:
                 print(", ", end="")
-            print("]")
+        print("]")
     else:
         nBytes = np.fromfile(f, dtype=np.uint32, count=1)[0]
         typeSize = bp4dbg_utils.GetTypeSize(typeID)
         nElems = int(nBytes / typeSize)
         data = readDataToNumpyArray(f, typeName, nElems)
-        print("      Value           : {0}  ({1} elements)".format(
-            data[0], nElems))
+        print("      Value           : [", end="")
+        for j in range(nElems):
+            print("{0}".format(data[j]), end="")
+            if j < nElems - 1:
+                print(", ", end="")
+        print("]")
 
     # End TAG AMD]
     tag = f.read(4)
@@ -554,7 +558,8 @@ def ReadPG(f, fileSize, pgidx):
 
 
 def DumpData(fileName):
-    print("=== Data File: " + fileName + " ====")
+    print("========================================================")
+    print("    Data File: " + fileName)
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
         status = True
