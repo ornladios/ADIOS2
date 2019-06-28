@@ -14,7 +14,10 @@ function(add_install_cmake_test name)
     "-DCMAKE_INSTALL_CMAKEDIR=${CMAKE_INSTALL_CMAKEDIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_cmake.cmake"
     )
-  set_property(TEST Install.CMake.${name} PROPERTY DEPENDS Install.Setup)
+  set_tests_properties(Install.CMake.${name} PROPERTIES
+    DEPENDS Install.Setup
+    FIXTURES_REQUIRED Install
+    )
 endfunction()
 
 function(add_install_make_test name)
@@ -42,13 +45,19 @@ function(add_install_make_test name)
     "-DMPIEXEC_EXECUTABLE=${mpiexec}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_make.cmake"
     )
-  set_property(TEST Install.Make.${name} PROPERTY DEPENDS Install.Setup)
+  set_tests_properties(Install.Make.${name} PROPERTIES
+    DEPENDS Install.Setup
+    FIXTURES_REQUIRED Install
+    )
 endfunction()
 
 add_test(NAME Install.Setup COMMAND "${CMAKE_COMMAND}"
   "-DADIOS2_SOURCE_DIR=${CMAKE_SOURCE_DIR}"
   "-DADIOS2_BINARY_DIR=${CMAKE_BINARY_DIR}"
   -P "${CMAKE_CURRENT_SOURCE_DIR}/run_install.cmake"
+  )
+set_tests_properties(Install.Setup PROPERTIES
+  FIXTURES_SETUP Install
   )
 
 add_install_cmake_test(C)

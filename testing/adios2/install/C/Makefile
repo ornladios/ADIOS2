@@ -9,15 +9,17 @@ ADIOS_C_ALL_FLAGS=$(shell adios2-config -c)
 
 ifeq ($(ADIOS2_HAVE_MPI),1)
 	main_c=main_mpi.c
+	mpiexec=$(MPIEXEC)
 else
 	main_c=main_nompi.c
+	mpiexec=
 endif
 
 all: test
 
 test: adios_c_test adios_c_test_2
-	./adios_c_test
-	./adios_c_test_2
+	$(mpiexec) ./adios_c_test
+	$(mpiexec) ./adios_c_test_2
 
 adios_c_test: main.o
 	$(CXX) -o adios_c_test main.o $(ADIOS_C_LD_FLAGS)
