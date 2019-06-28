@@ -113,28 +113,36 @@ data).  The default value of 0 is interpreted as no limit.  This value is
 interpreted by SST Writer engines only.
 
 4. ``QueueFullPolicy``: Default **"Block"**.  This value controls what
-policy is invoked if a non-zero **QueueLimit** has been specified and new
-data would cause the queue limit to be reached.  Essentially, the
-**"Block"** option ensures data will not be discarded and if the queue fills
-up the writer will block on **EndStep** until the data has been read.  If
-there are no active readers, **EndStep** will block until at least one
-arrives.  If there is one active reader, **EndStep** will block until data
-has been consumed off the front of the queue to make room for newly arriving
-data.  If there is more than one active reader, it is only removed from the
-queue when it has been read by all readers, so the slowest reader will
-dictate progress.  Besides **"Block"**, the other acceptable value for
-**QueueFullPolicy** is **"Discard"**.  When **"Discard"** is specified, and
-an **EndStep** operation would add more than the allowed number of steps to
-the queue, some step is discarded.  If there are no current readers
-connected to the stream, the *oldest* data in the queue is discarded.  If
-there are current readers, then the *newest* data (I.E. the just-created
-step) is discarded.  (The differential treatment is because SST sends
-metadata for each step to the readers as soon as the step is accepted and
-cannot reliably prevent that use of that data without a costly all-to-all
-synchronization operation.  Discarding the *newest* data instead is less
-satisfying, but has a similar long-term effect upon the set of steps
-delivered to the readers.)  This value is interpreted by SST Writer engines
-only.
+policy is invoked if a non-zero **QueueLimit** has been specified and
+new data would cause the queue limit to be reached.  Essentially, the
+**"Block"** option ensures data will not be discarded and if the queue
+fills up the writer will block on **EndStep** until the data has been
+read. If there is one active reader, **EndStep** will block until data
+has been consumed off the front of the queue to make room for newly
+arriving data.  If there is more than one active reader, it is only
+removed from the queue when it has been read by all readers, so the
+slowest reader will dictate progress.  **NOTE THAT THE NO READERS
+SITUATION IS A SPECIAL CASE**: If there are no active readers, new
+timesteps are considered to have completed their active queueing
+immediately upon submission.  They may be retained in the "reserve
+queue" if the ReserveQueueLimit is non-zero.  However, if that
+ReserveQueueLimit parameter is zero, timesteps submitted when there
+are no active readers will be immediately discarded.
+
+Besides **"Block"**, the other
+acceptable value for **QueueFullPolicy** is **"Discard"**.  When
+**"Discard"** is specified, and an **EndStep** operation would add
+more than the allowed number of steps to the queue, some step is
+discarded.  If there are no current readers connected to the stream,
+the *oldest* data in the queue is discarded.  If there are current
+readers, then the *newest* data (I.E. the just-created step) is
+discarded.  (The differential treatment is because SST sends metadata
+for each step to the readers as soon as the step is accepted and
+cannot reliably prevent that use of that data without a costly
+all-to-all synchronization operation.  Discarding the *newest* data
+instead is less satisfying, but has a similar long-term effect upon
+the set of steps delivered to the readers.)  This value is interpreted
+by SST Writer engines only.
 
 5. ``ReserveQueueLimit``:  Default **0**.  This integer value specifies the
 number of steps which the writer will keep in the queue for the benefit
