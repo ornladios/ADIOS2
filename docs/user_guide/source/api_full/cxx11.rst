@@ -87,13 +87,11 @@ The following section provides a summary of the available functionality for each
    :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
+
 Debugging
 ---------
 
-To help debugging, functionality is provided that creates
-human-readable representations of adios2 C++11 class instances and
-enums. To get a string representation, use ``ToString(object)``. You
-can also directly pass objects to ``ostream``s.
+To help debugging, functionality is provided that creates human-readable representations of adios2 C++11 class instances and enums. To get a string representation, use ``ToString(object)``. You can also directly pass objects to ``ostream``s.
 
 Example:
 

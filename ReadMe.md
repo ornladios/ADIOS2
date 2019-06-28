@@ -11,11 +11,11 @@
 
 
 # ADIOS 2 : The Adaptable Input Output System version 2
-This is v2.4.0-rc1 of the ADIOS 2: The Adaptable Input/Output (I/O) System, ADIOS 2 is developed as part of the United States Department of Energy's Exascale Computing Program.
+This is ADIOS 2: The Adaptable Input/Output (I/O) System, ADIOS 2 is developed as part of the United States Department of Energy's Exascale Computing Program.
 
 ADIOS 2 is a framework designed for scientific data I/O to publish and subscribe (put/get) data when and where required. 
 
-ADIOS 2 would Transport and Transform your data as groups of self-describing variables and attributes across different media (file, wide-area-network, memory-to-memory, etc.) using a common application programming interface (API) for all transport modes. ADIOS 2 uses range from HPC supercomputers to personal computers and cloud based applications. 
+ADIOS 2 would Transport and Transform your data as groups of self-describing variables and attributes across different media (file, wide-area-network, memory-to-memory, etc.) using a common application programming interface (API) for all transport modes. ADIOS 2 uses range from high-performance supercomputers to personal computers and cloud based applications.
 
 ADIOS 2 focuses on:
 
@@ -54,7 +54,7 @@ Please find [The ADIOS 2 User Guide at readthedocs](https://adios2.readthedocs.i
 
 ## Releases
 
-* Latest release: [v2.4.0-rc1](https://github.com/ornladios/ADIOS2/releases/tag/v2.4.0-rc1)
+* Latest release: [v2.4.0](https://github.com/ornladios/ADIOS2/releases/tag/v2.4.0)
 
 * Previous releases: [https://github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 

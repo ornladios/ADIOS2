@@ -1,6 +1,6 @@
-###########################
-ADIOS2 Interface Components
-###########################
+####################
+Interface Components
+####################
 
 .. include:: overview.rst
 .. include:: adios.rst

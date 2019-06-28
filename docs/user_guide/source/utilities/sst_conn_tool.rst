@@ -1,6 +1,6 @@
-**********************************************
+*********************************************
 sst_conn_tool : SST network connectivity tool
-**********************************************
+*********************************************
 
 The ``sst_conn_tool`` utility exposes some aspects of SST network
 connectivity parameters and activity in order to allow debugging of

@@ -125,12 +125,12 @@ Notes:
 
     $ cmake -DHDF5_ROOT=/opt/hdf5/1.12.0 ../ADIOS2
 
-Example: the following configuration will build, test and install under /opt/adios2/2.3.1 an optimized (Release) version of ADIOS2.
+Example: the following configuration will build, test and install under /opt/adios2/2.4.0 an optimized (Release) version of ADIOS2.
 
 .. code-block:: bash
 
     $ cd build
-    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.3.1 -DCMAKE_BUILD_Type=Release ../ADIOS2
+    $ cmake -DADIOS2_USE_Fortran=ON -DCMAKE_INSTALL_PREFIX=/opt/adios2/2.4.0 -DCMAKE_BUILD_Type=Release ../ADIOS2
     $ make -j16
     $ ctest
     $ make install

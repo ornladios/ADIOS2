@@ -1,8 +1,8 @@
 *********************
-Python high-level API
+Python High-Level API
 *********************
 
-Python simple bindings follow closely the :ref:`C++ simple bindings`. Just like the full APIs, they rely on numpy and (optionally) on ``mpi4py`` if ADIOS2 is compiled with MPI.
+Python simple bindings follow closely the :ref:`C++ High-Level API`. Just like the full APIs, they rely on numpy and (optionally) on ``mpi4py`` if ADIOS2 is compiled with MPI.
 
 For online examples on MyBinder :
 
@@ -79,7 +79,7 @@ Python Read "step-by-step" example
                 print("\n")
             
             # track current step
-            step = fh_step.currentstep()
+            step = fh_step.current_step()
             if( step == 0 ):
                size_in = fh_step.read("size") 
             
