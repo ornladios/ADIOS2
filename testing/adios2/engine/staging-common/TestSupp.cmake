@@ -72,6 +72,20 @@ set (5x3.Local_CMD "run_test.py -nw 5 -nr 3  -w TestCommonWriteLocal -r TestComm
 set (DelayedReader_3x5_CMD "run_test.py -rd 5 -nw 3 -nr 5 --warg=ENGINE_PARAMS")
 set (FtoC.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead --warg=ENGINE_PARAMS")
 set (FtoF.3x5_CMD "run_test.py -nw 3 -nr 5  -w TestCommonWrite_f -r TestCommonRead_f --warg=ENGINE_PARAMS")
+set (1x1.SharedNothing_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--write_mode --warg=deferred")
+set (1x1.SharedIO_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=deferred")
+set (1x1.SharedVar_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=deferred")
+set (1x1.SharedNothingSync_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--write_mode --warg=sync")
+set (1x1.SharedIOSync_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=sync")
+set (1x1.SharedVarSync_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=sync")
+
+set (2x1.SharedNothing_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--write_mode --warg=deferred")
+set (2x1.SharedIO_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=deferred")
+set (2x1.SharedVar_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=deferred")
+set (2x1.SharedNothingSync_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--write_mode --warg=sync")
+set (2x1.SharedIOSync_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_io --rarg=--shared_io --warg=--write_mode --warg=sync")
+set (2x1.SharedVarSync_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r TestCommonReadShared --warg=ENGINE_PARAMS --warg=--shared_var --rarg=--shared_var --warg=--write_mode --warg=sync")
+
 
 # NoReaderNoWait runs a writer with the RendezvousReaderCount = 0 and then never spawns a reader.  The test should run to termination and execute cleanly
 set (NoReaderNoWait_CMD "run_test.py -nw 1 -nr 0 --warg=RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,ENGINE_PARAMS")
@@ -189,6 +203,7 @@ function(add_common_test basename engine)
     add_test(
     	NAME ${testname}
 	COMMAND ${command})
+    set_tests_properties(${testname} PROPERTIES RUN_SERIAL 1)
     if (STAGING_COMMON_TEST_SUPP_VERBOSE)
 	message ( STATUS "Adding test \"${testname}\" COMMAND \"${command}\"")
     endif()
