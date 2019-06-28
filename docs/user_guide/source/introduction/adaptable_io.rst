@@ -2,22 +2,23 @@
 Adaptable IO beyond files in Scientific Data Lifecycles
 *******************************************************
 
-Exascale computing, Big Data, Internet of Things (IoT), Burst Buffers, High Bandwidth Memory (HBM), Remote Direct Memory Access (RDMA)...all these novel terms and technologies have one thing in common: Data Management at large scales has become more relevant when making informed decisions. The goal of ADIOS2 is to provide an **adaptable**, **scalable**, and **unified** framework to aid scientific applications in their data transfer needs going beyond file input/output (IO) storage. As shown in the figure, there are many data management challenges in the scientific data life cycle beyond file I/O that ADIOS2 aspires to address 
+Performant and usable tools for data management at scale are essential in an era where scientific breakthroughs are collaborative, multidisciplinary, and computational.
+ADIOS2 is an *adaptable*, *scalable*, and *unified* framework to aid scientific applications when data transfer volumes exceed the capabilities of traditional file I/O.
 
-.. image:: http://i65.tinypic.com/2h5k38w.png : alt: my-picture1 
-
-
-In that regard, we are attempting to create a framework to provide:
+.. image:: http://i65.tinypic.com/2h5k38w.png : alt: my-picture1
 
 
-* Custom application management of massive data sets from generation, analysis, movement, to short-term and long-term storage.
-  
-* Self-describing data in binary-packed (BP) format for quick information extraction
+ADIOS2 provides
 
-* Ability to separate and extract relevant information from large data sets for better decision making
-  
-* Ability to make near real-time decisions based on in-transit or in-situ analytics
 
-* Expand to other transport mechanisms with minimal overhead to the user: Wide-Area-Network (WAN), Remote Direct Memory Access (ibverbs, NVLink, etc.), Shared-Memory
-  
-* Exploit new memory hierarchy and scalability in novel hardware architectures: HBM, Burst Buffers, many-cores, etc.
+* Custom application management of massive data sets, starting from generation, analysis, and movement, as well as short-term and long-term storage.
+
+* Self-describing data in binary-packed (`.bp`) format for rapid metadata extraction
+
+* An ability to separate and extract relevant information from large data sets
+
+* The capability to make real-time decisions based on in-transit or in-situ analytics
+
+* The ability to expand to other transport mechanisms such wide area networks, remote direct memory access, and shared memory, with minimal overhead
+
+* The ability to utilize the full capabilities of emergent hardware technologies, such as high-bandwidth memory and burst buffers
