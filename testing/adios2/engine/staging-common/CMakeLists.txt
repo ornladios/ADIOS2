@@ -202,10 +202,29 @@ endif()
 if (NOT MSVC)    # not on windows
     # Local Vars don't work for InSitu
     set (BP_TESTS ${ALL_SIMPLE_TESTS})
+    # Delayed reader not worth testing on file engines
+    list (FILTER BP_TESTS EXCLUDE REGEX "DelayedReader")
+    # SharedVars fail with BP*
     list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP3)
         add_common_test(${test} BP4)
+    endforeach()
+endif(NOT MSVC)
+
+#
+#   Setup tests for HDF5 engine
+#
+if (NOT MSVC)    # not on windows
+    set (HDF5_TESTS ${ALL_SIMPLE_TESTS})
+    # Delayed reader not worth testing on file engines
+    list (FILTER HDF5_TESTS EXCLUDE REGEX "DelayedReader")
+    # Local variables don't work on hdf5 
+    list (FILTER HDF5_TESTS EXCLUDE REGEX ".*Local")
+    # Oddly, some multi-writer tests fail
+    list (FILTER HDF5_TESTS EXCLUDE REGEX "[2345]x")
+    foreach(test ${HDF5_TESTS})
+        add_common_test(${test} HDF5)
     endforeach()
 endif(NOT MSVC)
 
