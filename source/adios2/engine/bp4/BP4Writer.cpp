@@ -331,13 +331,13 @@ void BP4Writer::DoClose(const int transportIndex)
     {
         PerformPuts();
 
-        DoFlush(false, transportIndex);
+        // DoFlush(false, transportIndex);
 
-        if (m_BP4Serializer.m_CollectiveMetadata &&
-            m_FileDataManager.AllTransportsClosed())
-        {
-            WriteCollectiveMetadataFile(false);
-        }
+        // if (m_BP4Serializer.m_CollectiveMetadata &&
+        //     m_FileDataManager.AllTransportsClosed())
+        // {
+        //     WriteCollectiveMetadataFile(false);
+        // }
     }
 
     DoFlush(true, transportIndex);
@@ -485,12 +485,14 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
 {
 
     TAU_SCOPED_TIMER("BP4Writer::WriteCollectiveMetadataFile");
-    if (m_BP4Serializer.m_RankMPI == 0)
+
+    if (isFinal && m_BP4Serializer.m_MetadataSet.DataPGCount == 0)
     {
-        if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength > 0)
+        // If data pg count is zero, it means all metadata
+        // has already been written, don't need to write it again.
+
+        if (m_BP4Serializer.m_RankMPI == 0)
         {
-            // If run with BeginStep() and EndStep(), when close, metadata of
-            // last step has already been written, don't need to write it again.
             // But the flag in the header of metadata index table needs to be
             // modified to indicate current run is over.
             BufferSTL metadataIndex;
@@ -505,8 +507,8 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
             m_FileMetadataIndexManager.WriteFileAt(
                 metadataIndex.m_Buffer.data(), metadataIndex.m_Position, 56, 0);
             m_FileMetadataIndexManager.FlushFiles();
-            return;
         }
+        return;
     }
     m_BP4Serializer.AggregateCollectiveMetadata(
         m_MPIComm, m_BP4Serializer.m_Metadata, true);
@@ -543,7 +545,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
         metadataIndex.m_Position = 0;
 
         uint64_t currentStep;
-        if (isFinal && m_BP4Serializer.m_MetadataSet.metadataFileLength == 0)
+        if (isFinal && m_BP4Serializer.m_MetadataSet.DataPGCount > 0)
         {
             // Not run with BeginStep() and EndStep().
             // Only one step of metadata is generated at close.
