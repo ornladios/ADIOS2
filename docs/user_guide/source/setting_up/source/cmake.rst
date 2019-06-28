@@ -1,8 +1,13 @@
-****************************************
-Building, Testing, and Installing ADIOS2
-****************************************
+*****************************************
+Building, Testing, and Installing ADIOS 2
+*****************************************
 
-To build ADIOS2, clone the repository and invoke the canonical CMake build sequence:
+.. caution::
+
+   Always do a fresh build from scratch if your source is updated with considerable changes *e.g.* `git pull` 
+
+
+To build ADIOS 2, clone the repository and invoke the canonical CMake build sequence:
 
 .. code-block:: bash
 

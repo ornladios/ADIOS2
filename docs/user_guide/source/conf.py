@@ -126,11 +126,13 @@ exclude_patterns = [
     'api_high/python.rst',
     'api_high/cxx11.rst',
     # 'api_high/api_high.rst',
-    'utilities/adios2-config.rst',
-    'utilities/adios_reorganize.rst',
-    # 'utilities/utilities.rst',
-    'utilities/bpls.rst',
-    'utilities/sst_conn_tool.rst',
+    # 'ecosystem/utilities.rst',
+    'ecosystem/utilities/adios2-config.rst',
+    'ecosystem/utilities/adios_reorganize.rst',
+    'ecosystem/utilities/bpls.rst',
+    'ecosystem/utilities/sst_conn_tool.rst',
+    'ecosystem/visualization.rst'
+    'ecosystem/visualization/vtk.rst'
     'engines/dataman.rst',
     'engines/insitu_mpi.rst',
     'engines/hdf5.rst',

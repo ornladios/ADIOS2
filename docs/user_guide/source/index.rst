@@ -10,24 +10,18 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 
 .. toctree:: 
    :caption: Introduction
-   :titlesonly:
-   :maxdepth: 1
 
    introduction/introduction
 
 
 .. toctree::
    :caption: Setting Up
-   :titlesonly:
-   :maxdepth: 1
    
    setting_up/setting_up
 
 
 .. toctree::
    :caption: Basics
-   :titlesonly:
-   :maxdepth: 1
 
    components/components
    engines/engines
@@ -37,16 +31,13 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    
 .. toctree::
    :caption: Ecosystem Tools
-   :titlesonly:
-   :maxdepth: 1
    
-   utilities/utilities
+   ecosystem/utilities
+   ecosystem/visualization
 
    
 .. toctree::
    :caption: Additional Information
-   :titlesonly:
-   :maxdepth: 1 
 
    faq/faq
    advice/advice
