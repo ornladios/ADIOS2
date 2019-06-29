@@ -1,6 +1,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
+LocalValueDim = 18446744073709551613
+
 dataTypes = {
     -1: 'unknown',
     0: 'byte',

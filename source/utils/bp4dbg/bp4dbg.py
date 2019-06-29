@@ -22,8 +22,8 @@ def SetupArgs():
                         action="store_true")
     parser.add_argument("--no-metadata", "-m",
                         help="Do not print metadata md.0", action="store_true")
-    parser.add_argument(
-        "--no-data", "-d", help="Do not print data data.*", action="store_true")
+    parser.add_argument("--no-data", "-d",
+                        help="Do not print data data.*", action="store_true")
     args = parser.parse_args()
 
     # default values

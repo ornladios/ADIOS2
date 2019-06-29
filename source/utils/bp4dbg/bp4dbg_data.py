@@ -154,7 +154,7 @@ def ReadVarData(f, nElements, typeID, ldims, expectedSize,
     currentPosition = f.tell()
     print("      Payload offset  : {0}".format(currentPosition))
     nBytes = np.ones(1, dtype=np.uint64)
-    nBytes[0] = nElements[0] * typeSize
+    nBytes[0] = nElements * typeSize
     if (currentPosition + nBytes[0] > varsStartPosition + varsTotalLength):
         print("ERROR: Variable data block of size would reach beyond all "
               "variable blocks")
@@ -168,12 +168,21 @@ def ReadVarData(f, nElements, typeID, ldims, expectedSize,
               "calculated from var block length")
         print("Expected size = {0}  calculated size from dimensions = {1}".
               format(expectedSize, nBytes[0]))
-    print("      Variable Data   : {0} bytes".format(nBytes[0]))
-    # seek instead of reading for now
-    f.read(nBytes[0])
-    # f.seek(nBytes[0], 1)
-    # data = readDataToNumpyArray(f, bp4dbg_utils.GetTypeName(typeID),
-    #                            nElements)
+
+    if nElements == 1:
+        # single value. read and print
+        value = readDataToNumpyArray(f, bp4dbg_utils.GetTypeName(typeID),
+                                     nElements)
+        print("      Payload (value) : {0} ({1} bytes)".format(
+            value[0], nBytes[0]))
+    else:
+        # seek instead of reading for now
+        f.read(nBytes[0])
+        # f.seek(nBytes[0], 1)
+        # data = readDataToNumpyArray(f, bp4dbg_utils.GetTypeName(typeID),
+        #                            nElements)
+        print("      Payload (array) : {0} bytes".format(nBytes[0]))
+
     return True
 
 # Read a variable's metadata
@@ -248,8 +257,9 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     print("      Dims Length     : {0}".format(
         dimsLen))
 
-    nElements = np.ones(1, dtype=np.uint64)
+    nElements = np.uint64(1)
     ldims = np.zeros(ndims, dtype=np.uint64)
+    isLocalValueArray = False
     for i in range(ndims):
         print("      Dim[{0}]".format(i))
         # Read Local Dimensions (1 byte flag + 8 byte value)
@@ -278,7 +288,11 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         if (isDimensionVarID == b'\0'):
             isDimensionVarID = b'n'
         gdim = np.fromfile(f, dtype=np.uint64, count=1)[0]
-        print("           global dim : {0}".format(gdim))
+        if i == 0 and ldims[i] == 0 and gdim == bp4dbg_utils.LocalValueDim:
+            print("           global dim : LocalValueDim ({0})".format(gdim))
+            isLocalValueArray = True
+        else:
+            print("           global dim : {0}".format(gdim))
 
         # Read Offset Dimensions (1 byte flag + 8 byte value)
         # Is Dimension a variable ID 1 byte, 'y' or 'n' or '\0'
@@ -310,9 +324,16 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     print("      Tag (pad {0:2d})    : {1}".format(
         endTagLen - 4, tag.decode('ascii')))
 
-    expectedVarDataSize = expectedVarBlockLength - (f.tell() - startPosition)
-    status = ReadVarData(f, nElements, typeID, ldims, expectedVarDataSize,
-                         varsStartPosition, varsTotalLength)
+    # special case: LocalValueDim: local values turned into 1D global array
+    # but it seems there is no data block at all for these variables
+    if isLocalValueArray:
+        ldims[0] = 1
+        nElements = np.uint64(1)
+    else:
+        expectedVarDataSize = expectedVarBlockLength - \
+            (f.tell() - startPosition)
+        status = ReadVarData(f, nElements, typeID, ldims, expectedVarDataSize,
+                             varsStartPosition, varsTotalLength)
     if not status:
         return False
 

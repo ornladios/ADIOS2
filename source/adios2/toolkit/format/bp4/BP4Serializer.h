@@ -254,11 +254,11 @@ private:
         const Stats<T> &stats, std::vector<char> &buffer) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(
+    void PutVariableCharacteristicsInData(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::Info &blockInfo,
-        const Stats<T> &stats, std::vector<char> &buffer, size_t &position,
-        const bool putDimensions = true) noexcept;
+        const Stats<T> &stats, std::vector<char> &buffer,
+        size_t &position) noexcept;
 
     /**
      * Writes from &buffer[position]:  [2
