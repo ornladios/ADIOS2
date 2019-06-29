@@ -35,6 +35,15 @@ public:
 
     ~BP4Serializer() = default;
 
+    /** Writes a 64 byte header into the data/metadata buffer.
+     *  Must be called only when the buffer is empty.
+     *  @param buffer the data or metadata buffer
+     *  @param fileType a small string up to 8 characters that is
+     *  concatenated to the version string
+     */
+    void MakeHeader(BufferSTL &b, const std::string fileType,
+                    const bool isActive);
+
     /**
      * Writes a process group index PGIndex and list of methods (from
      * transports). Done at Open or Advance.

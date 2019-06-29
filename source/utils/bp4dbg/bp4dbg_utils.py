@@ -95,5 +95,60 @@ def GetCharacteristicDataLength(cID, typeID):
         return 0
 
 
+# Read Header info 64 bytes
+# fileType: Data, Metadata, Index Table
+def ReadHeader(f, fileSize, fileType):
+    status = True
+    if (fileSize < 64):
+        print("ERROR: Invalid " + fileType + ". File is smaller "
+              "than the header (64 bytes)")
+        return False
+    header = f.read(64)
+    hStr = header.decode('ascii')
+
+    versionStr = hStr[0:32].replace('\0', ' ')
+    major = hStr[32]
+    minor = hStr[33]
+    micro = hStr[34]
+#    unused = hStr[35]
+
+    endianValue = header[36]
+    if endianValue == 0:
+        endian = 'yes'
+    elif endianValue == 1:
+        endian = ' no'
+    else:
+        print("ERROR: byte 28 must be 0 or 1 to indicate endianness of "
+              "the data. It is however {0} in this file".format(
+                  endianValue))
+        status = False
+
+    bpversion = int(header[37])
+    active = int(header[38])
+    if active == 0:
+        activeStr = ' no'
+    else:
+        activeStr = 'yes'
+
+    #    unused = hStr[39]
+
+    # 40..63 unused
+
+    print("-----------------------------------------------------------"
+          "-----------------------------------------------------------")
+    print("|        Version string            | Major | Minor | Patch "
+          "| unused | Endian | BP version | Active |     unused      |")
+    print("|          32 bytes                |   1B  |   1B  |   1B  "
+          "|   1B   |   1B   |     1B     |   1B   |       33B       |")
+    print("+----------------------------------------------------------"
+          "----------------------------------------------------------+")
+    print("| {0} |   {1}   |   {2}   |   {3}   |        |  {4}   "
+          "|      {5}     |  {6}   |                 |".format(
+              versionStr, major, minor, micro, endian, bpversion, activeStr))
+    print("-----------------------------------------------------------"
+          "-----------------------------------------------------------")
+    return status
+
+
 if __name__ == "__main__":
     print("ERROR: Utility main program is bp4dbg.py")

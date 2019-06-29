@@ -169,7 +169,9 @@ def ReadVarData(f, nElements, typeID, ldims, expectedSize,
         print("Expected size = {0}  calculated size from dimensions = {1}".
               format(expectedSize, nBytes[0]))
     print("      Variable Data   : {0} bytes".format(nBytes[0]))
+    # seek instead of reading for now
     f.read(nBytes[0])
+    # f.seek(nBytes[0], 1)
     # data = readDataToNumpyArray(f, bp4dbg_utils.GetTypeName(typeID),
     #                            nElements)
     return True
@@ -211,14 +213,14 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     # VAR NAME, 2 bytes length + string without \0
     sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
     status, varname = ReadEncodedString(f, "Var Name", sizeLimit)
-    if (not status):
+    if not status:
         return False
     print("      Var Name        : " + varname)
 
     # VAR PATH, 2 bytes length + string without \0
     sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
     status, varpath = ReadEncodedString(f, "Var Path", sizeLimit)
-    if (not status):
+    if not status:
         return False
     print("      Var Path        : " + varpath)
 
@@ -294,7 +296,7 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
 
     sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
     status = ReadCharacteristicsFromData(f, sizeLimit, typeID)
-    if (not status):
+    if not status:
         return False
 
     # Padded end TAG
@@ -311,7 +313,7 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     expectedVarDataSize = expectedVarBlockLength - (f.tell() - startPosition)
     status = ReadVarData(f, nElements, typeID, ldims, expectedVarDataSize,
                          varsStartPosition, varsTotalLength)
-    if (not status):
+    if not status:
         return False
 
     return True
@@ -353,14 +355,14 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
     # ATTR NAME, 2 bytes length + string without \0
     sizeLimit = expectedAttrBlockLength - (f.tell() - startPosition)
     status, attrname = ReadEncodedString(f, "Attr Name", sizeLimit)
-    if (not status):
+    if not status:
         return False
     print("      Attr Name       : " + attrname)
 
     # ATTR PATH, 2 bytes length + string without \0
     sizeLimit = expectedAttrBlockLength - (f.tell() - startPosition)
     status, attrpath = ReadEncodedString(f, "Attr Path", sizeLimit)
-    if (not status):
+    if not status:
         return False
     print("      Attr Path       : " + attrpath)
 
@@ -428,7 +430,8 @@ def ReadAMD(f, attridx, attrsStartPosition, attrsTotalLength):
 
 def ReadPG(f, fileSize, pgidx):
     pgStartPosition = f.tell()
-    print("========================================================")
+    if pgidx > 0:
+        print("========================================================")
     print("Process Group {0}: ".format(pgidx))
     print("  Starting offset : {0}".format(pgStartPosition))
     tag = f.read(4)
@@ -460,7 +463,7 @@ def ReadPG(f, fileSize, pgidx):
     # PG Name, 2 bytes length + string without \0
     sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
     status, pgname = ReadEncodedString(f, "PG Name", sizeLimit)
-    if (not status):
+    if not status:
         return False
     print("  PG Name         : " + pgname)
 
@@ -471,7 +474,7 @@ def ReadPG(f, fileSize, pgidx):
     # Timestep name
     sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
     status, tsname = ReadEncodedString(f, "Timestep Name", sizeLimit)
-    if (not status):
+    if not status:
         return False
     print("  Step Name       : " + tsname)
 
@@ -495,7 +498,7 @@ def ReadPG(f, fileSize, pgidx):
         sizeLimit = expectedPGLength - (f.tell() - pgStartPosition)
         status, methodParams = ReadEncodedString(
             f, "Method Parameters", sizeLimit)
-        if (not status):
+        if not status:
             return False
         print('      M. params   : "' + methodParams + '"')
 
@@ -518,7 +521,7 @@ def ReadPG(f, fileSize, pgidx):
     for i in range(nVars):
         # VMD block
         status = ReadVMD(f, i, varsStartPosition, expectedVarsLength)
-        if (not status):
+        if not status:
             return False
 
     # ATTRIBUTES
@@ -543,7 +546,7 @@ def ReadPG(f, fileSize, pgidx):
     for i in range(nAttrs):
         # AMD block
         status = ReadAMD(f, i, attrsStartPosition, expectedAttrsLength)
-        if (not status):
+        if not status:
             return False
 
     # End TAG PGI]
@@ -560,13 +563,17 @@ def ReadPG(f, fileSize, pgidx):
 def DumpData(fileName):
     print("========================================================")
     print("    Data File: " + fileName)
+    print("========================================================")
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
-        status = True
+        status = bp4dbg_utils.ReadHeader(f, fileSize, "Data")
+        if not status:
+            return status
         pgidx = 0
         while (f.tell() < fileSize - 12 and status):
             status = ReadPG(f, fileSize, pgidx)
             pgidx = pgidx + 1
+    return status
 
 
 if __name__ == "__main__":
