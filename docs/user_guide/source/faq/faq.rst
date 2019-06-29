@@ -91,7 +91,7 @@ Follow directions at :ref:`Building on HPC Systems` to setup support for PGI on 
 How do I enable the Python bindings on Titan?
 ---------------------------------------------
 
-ADIOS 2 default configuration on Titan is to build the static library. Python bindings require enabling the dynamic libraries and the Cray dynamic environment variable. See :ref:`Building on HPC Systems` and  :ref:`Enabling the Python bindings`. For example:
+The default ADIOS2 configuration on Titan builds a static library. Python bindings require enabling the dynamic libraries and the Cray dynamic environment variable. See :ref:`Building on HPC Systems` and  :ref:`Enabling the Python bindings`. For example:
 
    .. code-block:: bash
 

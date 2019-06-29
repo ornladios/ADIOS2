@@ -4,7 +4,7 @@ Full APIs
 
 .. note::
 
-   Product Application Developers targeting finer-level control for their IO tasks for optimization should use the current full APIs. If you want to use ADIOS2 in simple use cases (*e.g.* reading a file for analysis, interactive Python, or saving some data for a small project) please refer to the :ref:`High-Level APIs` for a flat learning curve.  
+   Application developers who desire fine-grained control of IO tasks should use the Full APIs. In simple cases (e.g. reading a file for analysis, interactive Python, or saving some data for a small project or tests) please refer to the :ref:High-Level APIs. 
 
 
 Currently ADIOS2 support bindings for the following languages and their minimum standards:

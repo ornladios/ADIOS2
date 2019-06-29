@@ -6,8 +6,8 @@ C++11 High-Level APIs are based on a single object `adios2::fstream`
 
 .. caution::
 
-   DO NOT call ``use namespace adios2`` in your C++ code.
-   Use ``adios2::fstream`` directly to prevent conflicts with ``std::stream``. 
+   DO NOT place ``use namespace adios2`` in your C++ code.
+   Use ``adios2::fstream`` directly to prevent conflicts with ``std::fstream``. 
 
 
 C++11 Write example

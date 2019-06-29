@@ -2,7 +2,7 @@
 adios2-config
 *************
 
-`adios2-config` is the preferred to use in non-CMake (*e.g.* Makefile builds).
+`adios2-config` is provided to aid with non-CMake builds (*e.g.* manually generated Makefile).
 Running the `adios2-config` command under `adios2-install-dir/bin/adios2-config` will generate the following usage information:
 
 .. code-block:: bash

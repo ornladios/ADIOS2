@@ -71,7 +71,7 @@ The goal is to provide specific advice and good practices about the use of ADIOS
 
 20. C, Fortran: always call ``adios2_finalize`` for every call to ``adios2_init`` to avoid memory leaks.
 
-21. Reminder: C++, C, Python: Row-Major, while Fortran: Column-Major. ADIOS 2 will handle interoperability between ordering. Remember that :ref:`bpls : Inspecting Data` is always a Row-Major reader.
+21. Reminder: C++, C, Python: Row-Major, while Fortran: Column-Major. ADIOS 2 will handle interoperability between ordering. Remember that :ref:`bpls : Inspecting Data` is always a Row-Major reader so Fortran reader need to swap dimensions seen in bpls.  bpls: (slow, ...., fast) -> Fortran(fast,...,slow).
 
 22. Fortran API: use the type members (``var%valid``, ``var%name``, etc.) to get extra type information.
 

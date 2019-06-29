@@ -15,7 +15,7 @@ This is ADIOS 2: The Adaptable Input/Output (I/O) System, ADIOS 2 is developed a
 
 ADIOS 2 is a framework designed for scientific data I/O to publish and subscribe (put/get) data when and where required. 
 
-ADIOS 2 would Transport and Transform your data as groups of self-describing variables and attributes across different media (file, wide-area-network, memory-to-memory, etc.) using a common application programming interface (API) for all transport modes. ADIOS 2 uses range from high-performance supercomputers to personal computers and cloud based applications.
+ADIOS2 transports data as groups of self-describing variables and attributes across different media types (such as files, wide-area-networks, and remote direct memory access) using a common application programming interface for all transport modes. ADIOS2 can be used on supercomputers, commercial clouds, and personal computers.
 
 ADIOS 2 focuses on:
 

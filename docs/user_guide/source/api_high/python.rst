@@ -2,7 +2,7 @@
 Python High-Level API
 *********************
 
-Python simple bindings follow closely the :ref:`C++ High-Level API`. Just like the full APIs, they rely on numpy and (optionally) on ``mpi4py`` if ADIOS2 is compiled with MPI.
+Python simple bindings follow closely Python style directives. Just like the full APIs, they rely on numpy and, optionally, on ``mpi4py``, if the underlying ADIOS2 library is compiled with MPI.
 
 For online examples on MyBinder :
 
