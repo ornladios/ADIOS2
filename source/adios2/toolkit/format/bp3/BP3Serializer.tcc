@@ -862,7 +862,7 @@ void BP3Serializer::PutPayloadInBuffer(
     ProfilerStart("memcpy");
     if (!blockInfo.MemoryStart.empty())
     {
-        helper::CopyMemory(
+        helper::CopyMemoryBlock(
             reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
             blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
             blockInfo.Start, blockInfo.Count, sourceRowMajor, false, Dims(),
