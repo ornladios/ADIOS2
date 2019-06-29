@@ -15,6 +15,7 @@
 #include <ios>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" // IsRowMajor
@@ -419,8 +420,8 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId,
     {
         hid_t dspace = H5Dget_space(datasetId);
         const int ndims = H5Sget_simple_extent_ndims(dspace);
-        hsize_t dims[ndims];
-        H5Sget_simple_extent_dims(dspace, dims, NULL);
+        std::vector<hsize_t> dims(ndims);
+        H5Sget_simple_extent_dims(dspace, dims.data(), NULL);
         H5Sclose(dspace);
 
         Dims shape;
