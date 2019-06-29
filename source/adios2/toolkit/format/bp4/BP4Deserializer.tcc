@@ -1147,6 +1147,7 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
         blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
+        blockInfo.IsReverseDims = m_ReverseDimensions;
 
         if (m_ReverseDimensions)
         {

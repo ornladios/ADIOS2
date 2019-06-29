@@ -41,6 +41,7 @@ ToBlocksInfo(const std::vector<typename core::Variable<
         blockInfo.Start = coreBlockInfo.Start;
         blockInfo.Count = coreBlockInfo.Count;
         blockInfo.IsValue = coreBlockInfo.IsValue;
+        blockInfo.IsReverseDims = coreBlockInfo.IsReverseDims;
         if (blockInfo.IsValue)
         {
             blockInfo.Value = coreBlockInfo.Value;

@@ -62,6 +62,7 @@ TEST_F(BPReadFBlocks, FHeatMap2D)
 
                     EXPECT_EQ(r32Blocks[i].Start[1], 0);
                     EXPECT_EQ(r32Blocks[i].Count[1], var_r32.Shape()[1]);
+                    EXPECT_TRUE(r32Blocks[i].IsReverseDims);
                 }
             }
         }
@@ -113,6 +114,7 @@ TEST_F(BPReadFBlocks, FHeatMap3D)
 
                     EXPECT_EQ(r32Blocks[i].Start[2], 0);
                     EXPECT_EQ(r32Blocks[i].Count[2], var_r32.Shape()[2]);
+                    EXPECT_EQ(r32Blocks[i].IsReverseDims, true);
                 }
             }
         }
