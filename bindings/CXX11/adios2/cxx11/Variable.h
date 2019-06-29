@@ -348,6 +348,8 @@ public:
         size_t Step = 0;
         /** reference to internal block data (used by inline Engine) */
         const T *Data() const;
+        /** true: Dims were swapped from column-major, false: not swapped */
+        bool IsReverseDims = false;
 
         // allow Engine to set m_Info
         friend class Engine;

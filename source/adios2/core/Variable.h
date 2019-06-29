@@ -101,6 +101,7 @@ public:
         std::vector<T> BufferV;
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
+        bool IsReverseDims = false;
     };
 
     /** use for multiblock info */
