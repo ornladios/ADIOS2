@@ -903,7 +903,7 @@ void BP4Serializer::PutPayloadInBuffer(
     if (!blockInfo.MemoryStart.empty())
     {
         // TODO make it a BP4Serializer function
-        helper::CopyMemory(
+        helper::CopyMemoryBlock(
             reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
             blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
             blockInfo.Start, blockInfo.Count, sourceRowMajor, false, Dims(),

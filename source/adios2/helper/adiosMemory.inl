@@ -252,12 +252,12 @@ void ClipVector(std::vector<T> &vec, const size_t start,
 }
 
 template <class T, class U>
-void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                const bool destRowMajor, const U *src, const Dims &srcStart,
-                const Dims &srcCount, const bool srcRowMajor,
-                const bool endianReverse, const Dims &destMemStart,
-                const Dims &destMemCount, const Dims &srcMemStart,
-                const Dims &srcMemCount) noexcept
+void CopyMemoryBlock(T *dest, const Dims &destStart, const Dims &destCount,
+                     const bool destRowMajor, const U *src,
+                     const Dims &srcStart, const Dims &srcCount,
+                     const bool srcRowMajor, const bool endianReverse,
+                     const Dims &destMemStart, const Dims &destMemCount,
+                     const Dims &srcMemStart, const Dims &srcMemCount) noexcept
 {
     // transform everything to payload dims
     const Dims destStartPayload = PayloadDims<T>(destStart, destRowMajor);
