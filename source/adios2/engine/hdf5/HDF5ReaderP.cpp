@@ -146,7 +146,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
     }
     else
     {
-        hsize_t start[ndims], count[ndims], stride[ndims];
+        std::vector<hsize_t> start(ndims), count(ndims), stride(ndims);
         bool isOrderC = helper::IsRowMajor(m_IO.m_HostLanguage);
 
         for (int i = 0; i < ndims; i++)
@@ -164,12 +164,12 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
             slabsize *= count[i];
             stride[i] = 1;
         }
-        hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start,
-                                        stride, count, NULL);
+        hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start.data(),
+                                        stride.data(), count.data(), NULL);
         if (ret < 0)
             return 0;
 
-        hid_t memDataSpace = H5Screate_simple(ndims, count, NULL);
+        hid_t memDataSpace = H5Screate_simple(ndims, count.data(), NULL);
         interop::HDF5TypeGuard g_mds(memDataSpace, interop::E_H5_SPACE);
 
         int elementsRead = 1;
