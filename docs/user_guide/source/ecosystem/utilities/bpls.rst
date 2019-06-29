@@ -1,6 +1,6 @@
-****
-bpls
-****
+**********************
+bpls : Inspecting Data
+**********************
 
 The ``bpls`` utility is for examining and pretty-printing the content of ADIOS output files (BP and HDF5 files).
 By default, it lists the variables in the file including the type, name, and dimensionality. 

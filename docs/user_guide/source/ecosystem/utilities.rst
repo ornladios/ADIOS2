@@ -17,7 +17,7 @@ Currently supported tools are:
 * ``adios2-config``
 * ``sst_conn_tool`` : SST staging engine connectivity diagnostic tool
 
-.. include:: bpls.rst
-.. include:: adios_reorganize.rst
-.. include:: adios2-config.rst
-.. include:: sst_conn_tool.rst
+.. include:: utilities/bpls.rst
+.. include:: utilities/adios_reorganize.rst
+.. include:: utilities/adios2-config.rst
+.. include:: utilities/sst_conn_tool.rst
