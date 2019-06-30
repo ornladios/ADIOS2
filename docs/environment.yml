@@ -1,0 +1,9 @@
+name: adios2-python-docs
+
+channels:
+  - conda-forge
+  - williamfgc
+
+dependencies:
+  - python
+  - adios2-openmpi
