@@ -7,3 +7,9 @@ channels:
 dependencies:
   - python
   - adios2-openmpi
+  - pip:
+    - sphinx==2.0.1
+    - blockdiag>=1.5.4
+    - sphinxcontrib-blockdiag>=1.5.5
+    - sphinx_rtd_theme>=0.4.1
+    - breathe==4.13
