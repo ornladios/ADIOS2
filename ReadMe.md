@@ -11,11 +11,11 @@
 
 
 # ADIOS 2 : The Adaptable Input Output System version 2
-This is ADIOS 2: The Adaptable Input/Output (I/O) System, ADIOS 2 is developed as part of the United States Department of Energy's Exascale Computing Program.
+This is ADIOS 2 : The Adaptable Input/Output (I/O) System, ADIOS 2 is developed as part of the United States Department of Energy's Exascale Computing Program.
 
 ADIOS 2 is a framework designed for scientific data I/O to publish and subscribe (put/get) data when and where required. 
 
-ADIOS2 transports data as groups of self-describing variables and attributes across different media types (such as files, wide-area-networks, and remote direct memory access) using a common application programming interface for all transport modes. ADIOS2 can be used on supercomputers, commercial clouds, and personal computers.
+ADIOS 2 transports data as groups of self-describing variables and attributes across different media types (such as files, wide-area-networks, and remote direct memory access) using a common application programming interface for all transport modes. ADIOS 2 can be used on supercomputers, commercial clouds, and personal computers.
 
 ADIOS 2 focuses on:
 
@@ -41,15 +41,15 @@ Please find [The ADIOS 2 User Guide at readthedocs](https://adios2.readthedocs.i
 
 ## Getting ADIOS2
 
-* From source: [Build and Install ADIOS 2 with CMake v3.6 or above](http://adios2.readthedocs.io/en/latest/installation/installation.html)
+* From source: [Install ADIOS 2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#) requires CMake v3.6 or above
 
 
-* As conda packages: [https://anaconda.org/williamfgc](https://anaconda.org/williamfgc)
+* Conda packages: [https://anaconda.org/williamfgc](https://anaconda.org/williamfgc)
 
 
   Once ADIOS 2 is installed refer to: 
 
-* [Linking ADIOS 2 in your own projects](https://adios2.readthedocs.io/en/latest/using/using.html)
+* [Linking ADIOS 2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
 
 ## Releases
