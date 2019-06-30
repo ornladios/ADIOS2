@@ -199,7 +199,7 @@ endif()
 #
 #   Setup tests for BP engine
 #
-if (NOT MSVC)    # not on windows
+if(NOT MSVC)    # not on windows
     # Local Vars don't work for InSitu
     set (BP_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
@@ -210,12 +210,12 @@ if (NOT MSVC)    # not on windows
         add_common_test(${test} BP3)
         add_common_test(${test} BP4)
     endforeach()
-endif(NOT MSVC)
+endif()
 
 #
 #   Setup tests for HDF5 engine
 #
-if (NOT MSVC AND ADIOS2_HAVE_HDF5)    # not on windows and only if we have HDF5
+if(NOT MSVC AND ADIOS2_HAVE_HDF5)    # not on windows and only if we have HDF5
     set (HDF5_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER HDF5_TESTS EXCLUDE REGEX "DelayedReader")
@@ -226,14 +226,14 @@ if (NOT MSVC AND ADIOS2_HAVE_HDF5)    # not on windows and only if we have HDF5
     foreach(test ${HDF5_TESTS})
         add_common_test(${test} HDF5)
     endforeach()
-endif(NOT MSVC)
+endif()
 
 
 #
 #   Setup tests for SSC engine
 #
 if(ADIOS2_HAVE_SSC AND ADIOS2_HAVE_MPI)
-    SET (SSC_TESTS "NoReaderNoWait")
+    set(SSC_TESTS "NoReaderNoWait")
     foreach(test ${SSC_TESTS})
         add_common_test(${test} SSC)
     endforeach()
