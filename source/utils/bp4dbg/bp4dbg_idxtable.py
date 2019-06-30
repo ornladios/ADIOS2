@@ -3,10 +3,9 @@ from __future__ import (absolute_import, division, print_function,
 
 import numpy as np
 from os import fstat
+import bp4dbg_utils
 
 
-# Read one PG process group (variables and attributes from one process in
-# one step)
 def ReadIndexHeader(f, fileSize):
     status = True
     if (fileSize < 64):
@@ -119,7 +118,7 @@ def DumpIndexTable(fileName):
     status = False
     with open(fileName, "rb") as f:
         fileSize = fstat(f.fileno()).st_size
-        status = ReadIndexHeader(f, fileSize)
+        status = bp4dbg_utils.ReadHeader(f, fileSize, "Index Table")
         if (status):
             status = ReadIndex(f, fileSize)
     return status

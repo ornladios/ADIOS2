@@ -216,6 +216,13 @@ public:
     size_t m_PreMetadataFileLength = 0;
     size_t m_PreDataFileLength = 0;
 
+    /** Positions of flags in Index Table Header that Reader uses */
+    const size_t m_EndianFlagPosition = 36;
+    const size_t m_BPVersionPosition = 37;
+    const size_t m_ActiveFlagPosition = 38;
+    const size_t m_VersionTagPosition = 0;
+    const size_t m_VersionTagLength = 32;
+
     /**
      * Unique constructor
      * @param mpiComm for m_BP1Aggregator
@@ -294,7 +301,7 @@ public:
     };
 
     /**
-     * Resizes the data buffer to hold new dataIn size
+     * Resizes the data buffer to hold  additional new dataIn size
      * @param dataIn input size for new data
      * @param hint for exception handling
      * @return
