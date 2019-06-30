@@ -12,7 +12,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.3.1)
+project(ADIOS2 VERSION 2.4.0)
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
