@@ -173,7 +173,7 @@ the underlying network communication mechanism to use for performing
 control operations in SST.  SST can be configured to standard TCP
 sockets, which are very reliable and efficient, but which are limited
 in their scalability.  Alternatively, SST can use a reliable UDP
-protocol, that is more scalable, but as of ADIOS2 Release 2.3.1 still
+protocol, that is more scalable, but as of ADIOS2 Release 2.4.0 still
 suffers from some reliability problems.  (**sockets** is accepted as
 equivalent to **tcp** and **udp**, **rudp**, and **enet** are
 equivalent to **scalable**.  Generally both the reader and writer
