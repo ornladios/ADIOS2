@@ -190,7 +190,7 @@ void HDF5Common::WriteAdiosSteps()
     hid_t attr =
         H5Acreate(m_FileId, ATTRNAME_NUM_STEPS.c_str(),
                   /*"NumSteps",*/ H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
-    uint totalAdiosSteps = m_CurrentAdiosStep + 1;
+    unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
     {
@@ -296,18 +296,16 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
                         hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
                         HDF5TypeGuard d(datasetId, E_H5_DATASET);
 
-                        char longName[std::strlen(heritage) +
-                                      std::strlen(gname) + std::strlen(name) +
-                                      10];
+                        std::string longName;
 
                         if (strcmp(gname, "/") == 0)
                         {
-                            sprintf(longName, "/%s", name);
+                            longName = std::string("/") + name;
                         }
                         else
                         {
-                            sprintf(longName, "%s/%s/%s", heritage, gname,
-                                    name);
+                            longName = std::string(heritage) + "/" + gname +
+                                       "/" + name;
                         }
                         // CreateVar(io, datasetId, name);
                         ReadNativeAttrToIO(io, datasetId, longName);
@@ -1246,7 +1244,7 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
     {
         numAttrs = oinfo.num_attrs;
         int k = 0;
-        int MAX_ATTR_NAME_SIZE = 100;
+        const int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {
             char attrName[MAX_ATTR_NAME_SIZE];
@@ -1304,7 +1302,7 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                     // consuimg
         }
         int k = 0;
-        int MAX_ATTR_NAME_SIZE = 100;
+        const int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {
             char attrName[MAX_ATTR_NAME_SIZE];
