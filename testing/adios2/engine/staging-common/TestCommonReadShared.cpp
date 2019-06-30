@@ -74,11 +74,11 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         varname2 = "r64";
     }
-    while (engine1.BeginStep() == adios2::StepStatus::OK)
+    while (engine1.BeginStep() == adios2::StepStatus::OK &&
+           engine2.BeginStep() == adios2::StepStatus::OK)
     {
         size_t writerSize;
 
-        assert(engine2.BeginStep() == adios2::StepStatus::OK);
 
         auto var1 = io1.InquireVariable<double>(varname1);
         auto var2 = io2.InquireVariable<double>(varname2);
