@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
     /* Check input arguments. Quit if something is wrong. */
     if (settings.processArguments(argc, argv, MPI_COMM_WORLD) ||
-            settings.extraArgumentChecks())
+        settings.extraArgumentChecks())
     {
         MPI_Finalize();
         return 1;
@@ -35,8 +35,7 @@ int main(int argc, char *argv[])
     {
         if (!settings.myRank && settings.verbose)
         {
-            std::cout << "Use ADIOS without XML configuration "
-                << std::endl;
+            std::cout << "Use ADIOS without XML configuration " << std::endl;
         }
         adios = adios2::ADIOS(settings.appComm, adios2::DebugON);
     }
@@ -44,11 +43,11 @@ int main(int argc, char *argv[])
     {
         if (!settings.myRank && settings.verbose)
         {
-            std::cout << "Use ADIOS xml file "
-                << settings.adiosConfigFileName << std::endl;
+            std::cout << "Use ADIOS xml file " << settings.adiosConfigFileName
+                      << std::endl;
         }
-        adios = adios2::ADIOS(settings.adiosConfigFileName,
-                settings.appComm, adios2::DebugON);
+        adios = adios2::ADIOS(settings.adiosConfigFileName, settings.appComm,
+                              adios2::DebugON);
     }
     Config cfg;
     size_t currentConfigLineNumber = 0;
@@ -68,8 +67,8 @@ int main(int argc, char *argv[])
             else
             {
                 std::cout << "Config file error in line "
-                    << currentConfigLineNumber << ": " << e.what()
-                    << std::endl;
+                          << currentConfigLineNumber << ": " << e.what()
+                          << std::endl;
             }
         }
 
@@ -96,14 +95,14 @@ int main(int argc, char *argv[])
                 auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
                 groupMap[cmdW->streamName] = cmdW->groupName;
                 streamsInOrder.push_back(
-                        std::make_pair(cmdW->streamName, Operation::Write));
+                    std::make_pair(cmdW->streamName, Operation::Write));
             }
             else if (cmd->op == Operation::Read)
             {
                 auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
                 groupMap[cmdR->streamName] = cmdR->groupName;
                 streamsInOrder.push_back(
-                        std::make_pair(cmdR->streamName, Operation::Read));
+                    std::make_pair(cmdR->streamName, Operation::Read));
             }
         }
 
@@ -137,7 +136,7 @@ int main(int argc, char *argv[])
                 {
                     std::shared_ptr<Stream> writer =
                         openStream(streamName, io, adios2::Mode::Write,
-                                settings.iolib, settings.appComm);
+                                   settings.iolib, settings.appComm);
                     writeStreamMap[streamName] = writer;
                 }
             }
@@ -148,7 +147,7 @@ int main(int argc, char *argv[])
                 {
                     std::shared_ptr<Stream> reader =
                         openStream(streamName, io, adios2::Mode::Read,
-                                settings.iolib, settings.appComm);
+                                   settings.iolib, settings.appComm);
                     readStreamMap[streamName] = reader;
                 }
             }
@@ -166,100 +165,97 @@ int main(int argc, char *argv[])
             for (const auto cmd : cfg.commands)
             {
                 if (!cmd->conditionalStream.empty() &&
-                        cfg.condMap.at(cmd->conditionalStream) !=
+                    cfg.condMap.at(cmd->conditionalStream) !=
                         adios2::StepStatus::OK)
                 {
                     if (!settings.myRank && settings.verbose)
                     {
                         std::cout << "    Skip command because of status "
-                            "of stream "
-                            << cmd->conditionalStream << std::endl;
+                                     "of stream "
+                                  << cmd->conditionalStream << std::endl;
                     }
                     continue;
                 }
 
                 switch (cmd->op)
                 {
-                    case Operation::Sleep:
+                case Operation::Sleep:
+                {
+                    auto cmdS = dynamic_cast<const CommandSleep *>(cmd.get());
+                    if (!settings.myRank && settings.verbose)
+                    {
+                        double t =
+                            static_cast<double>(cmdS->sleepTime_us) / 1000000.0;
+                        std::cout << "    Sleep for " << t << "  seconds "
+                                  << std::endl;
+                    }
+                    std::this_thread::sleep_for(
+                        std::chrono::microseconds(cmdS->sleepTime_us));
+                    break;
+                }
+                case Operation::Busy:
+                {
+                    auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
+                    std::chrono::high_resolution_clock::time_point start =
+                        std::chrono::high_resolution_clock::now();
+                    if (!settings.myRank && settings.verbose)
+                    {
+                        double t =
+                            static_cast<double>(cmdS->busyTime_us) / 1000000.0;
+                        std::cout << "    Be busy for " << t << "  seconds "
+                                  << std::endl;
+                    }
+                    while (std::chrono::high_resolution_clock::now() <
+                           start + std::chrono::microseconds(cmdS->busyTime_us))
+                        ;
+                    break;
+                }
+                case Operation::Write:
+                {
+                    auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
+                    auto stream = writeStreamMap[cmdW->streamName];
+                    // auto io = ioMap[cmdW->groupName];
+                    stream->Write(cmdW, cfg, settings, step);
+                    break;
+                }
+                case Operation::Read:
+                {
+                    auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
+                    auto statusIt = cfg.condMap.find(cmdR->streamName);
+                    if (statusIt->second == adios2::StepStatus::OK ||
+                        statusIt->second == adios2::StepStatus::NotReady)
+                    {
+                        auto stream = readStreamMap[cmdR->streamName];
+                        // auto io = ioMap[cmdR->groupName];
+                        adios2::StepStatus status =
+                            stream->Read(cmdR, cfg, settings, step);
+                        statusIt->second = status;
+                        switch (status)
                         {
-                            auto cmdS =
-                                dynamic_cast<const CommandSleep *>(cmd.get());
+                        case adios2::StepStatus::OK:
+                            break;
+                        case adios2::StepStatus::NotReady:
                             if (!settings.myRank && settings.verbose)
                             {
-                                double t = static_cast<double>(cmdS->sleepTime_us) /
-                                    1000000.0;
-                                std::cout << "    Sleep for " << t << "  seconds "
-                                    << std::endl;
+                                std::cout << "    Nonblocking read status: "
+                                             "Not Ready "
+                                          << std::endl;
                             }
-                            std::this_thread::sleep_for(
-                                    std::chrono::microseconds(cmdS->sleepTime_us));
                             break;
-                        }
-                    case Operation::Busy:
-                        {
-                            auto cmdS =
-                                dynamic_cast<const CommandBusy *>(cmd.get());
-                            std::chrono::high_resolution_clock::time_point start =
-                                std::chrono::high_resolution_clock::now();
+                        case adios2::StepStatus::EndOfStream:
+                        case adios2::StepStatus::OtherError:
+                            cfg.stepOverStreams.erase(cmdR->streamName);
                             if (!settings.myRank && settings.verbose)
                             {
-                                double t = static_cast<double>(cmdS->busyTime_us) /
-                                    1000000.0;
-                                std::cout << "    Be busy for " << t << "  seconds "
-                                    << std::endl;
-                            }
-                            while (std::chrono::high_resolution_clock::now() <
-                                    start +
-                                    std::chrono::microseconds(cmdS->busyTime_us))
-                                ;
-                            break;
-                        }
-                    case Operation::Write:
-                        {
-                            auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
-                            auto stream = writeStreamMap[cmdW->streamName];
-                            // auto io = ioMap[cmdW->groupName];
-                            stream->Write(cmdW, cfg, settings, step);
-                            break;
-                        }
-                    case Operation::Read:
-                        {
-                            auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
-                            auto statusIt = cfg.condMap.find(cmdR->streamName);
-                            if (statusIt->second == adios2::StepStatus::OK ||
-                                    statusIt->second == adios2::StepStatus::NotReady)
-                            {
-                                auto stream = readStreamMap[cmdR->streamName];
-                                // auto io = ioMap[cmdR->groupName];
-                                adios2::StepStatus status =
-                                    stream->Read(cmdR, cfg, settings, step);
-                                statusIt->second = status;
-                                switch (status)
-                                {
-                                    case adios2::StepStatus::OK:
-                                        break;
-                                    case adios2::StepStatus::NotReady:
-                                        if (!settings.myRank && settings.verbose)
-                                        {
-                                            std::cout << "    Nonblocking read status: "
-                                                "Not Ready "
-                                                << std::endl;
-                                        }
-                                        break;
-                                    case adios2::StepStatus::EndOfStream:
-                                    case adios2::StepStatus::OtherError:
-                                        cfg.stepOverStreams.erase(cmdR->streamName);
-                                        if (!settings.myRank && settings.verbose)
-                                        {
-                                            std::cout << "    Nonblocking read status: "
-                                                "Terminated "
-                                                << std::endl;
-                                        }
-                                        break;
-                                }
+                                std::cout << "    Nonblocking read status: "
+                                             "Terminated "
+                                          << std::endl;
                             }
                             break;
                         }
+                    }
+                    break;
+                }
                 }
                 if (!settings.myRank && settings.verbose)
                 {
@@ -314,4 +310,3 @@ int main(int argc, char *argv[])
     MPI_Finalize();
     return 0;
 }
-
