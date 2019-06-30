@@ -493,8 +493,8 @@ void BP4Serializer::PutVariableMetadataInData(
                         buffer, position);
 
     // CHARACTERISTICS
-    PutVariableCharacteristics(variable, blockInfo, stats, buffer, position,
-                               false);
+    PutVariableCharacteristicsInData(variable, blockInfo, stats, buffer,
+                                     position);
 
     // pad metadata so that data will fall on aligned position in memory
     // write a padding plus block identifier VMD]
@@ -662,13 +662,8 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
 {
     if (singleValue)
     {
-        const uint8_t id = characteristic_value;
-        helper::CopyToBuffer(buffer, position, &id);
-        // special case required by bpdump
-        const uint16_t length = sizeof(T);
-        helper::CopyToBuffer(buffer, position, &length);
-        helper::CopyToBuffer(buffer, position, &stats.Min);
-        ++characteristicsCounter;
+        PutCharacteristicRecord(characteristic_value, characteristicsCounter,
+                                stats.Min, buffer, position);
     }
     else
     {
@@ -836,11 +831,10 @@ void BP4Serializer::PutVariableCharacteristics(
 }
 
 template <class T>
-void BP4Serializer::PutVariableCharacteristics(
+void BP4Serializer::PutVariableCharacteristicsInData(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo, const Stats<T> &stats,
-    std::vector<char> &buffer, size_t &position,
-    const bool putDimensions) noexcept
+    std::vector<char> &buffer, size_t &position) noexcept
 {
     // going back at the end
     const size_t characteristicsCountPosition = position;
@@ -848,24 +842,10 @@ void BP4Serializer::PutVariableCharacteristics(
     position += 5;
     uint8_t characteristicsCounter = 0;
 
-    if (putDimensions)
-    {
-        // DIMENSIONS
-        uint8_t characteristicID = characteristic_dimensions;
-        helper::CopyToBuffer(buffer, position, &characteristicID);
-
-        const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
-        helper::CopyToBuffer(buffer, position, &dimensions); // count
-        const uint16_t dimensionsLength =
-            static_cast<uint16_t>(24 * dimensions);
-        helper::CopyToBuffer(buffer, position, &dimensionsLength); // length
-        PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
-                            buffer, position, true);
-        ++characteristicsCounter;
-    }
-
-    // VALUE for SCALAR or STAT min, max for ARRAY
-    if (blockInfo.Data != nullptr)
+    // Write STAT min, max characteristics for an ARRAY
+    // VALUE variable data is not written into characteristics
+    // in the data file (only in metadata file in other function)
+    if (blockInfo.Data != nullptr && !variable.m_SingleValue)
     {
         PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
                         buffer, position);

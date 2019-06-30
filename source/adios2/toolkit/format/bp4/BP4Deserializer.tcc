@@ -1134,6 +1134,7 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
     std::vector<typename core::Variable<T>::Info> blocksInfo;
     blocksInfo.reserve(blocksIndexOffsets.size());
 
+    size_t n = 0;
     for (const size_t blockIndexOffset : blocksIndexOffsets)
     {
         size_t position = blockIndexOffset;
@@ -1167,7 +1168,23 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
             blockInfo.Min = blockCharacteristics.Statistics.Min;
             blockInfo.Max = blockCharacteristics.Statistics.Max;
         }
+        if (blockInfo.Shape.size() == 1 &&
+            blockInfo.Shape.front() == LocalValueDim)
+        {
+            blockInfo.Shape = Dims{blocksIndexOffsets.size()};
+            blockInfo.Count = Dims{1};
+            blockInfo.Start = Dims{n};
+            blockInfo.Min = blockCharacteristics.Statistics.Value;
+            blockInfo.Max = blockCharacteristics.Statistics.Value;
+        }
+        // bp index starts at 1
+        blockInfo.Step =
+            static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
+        blockInfo.BlockID = n;
+
         blocksInfo.push_back(blockInfo);
+
+        ++n;
     }
     return blocksInfo;
 }
