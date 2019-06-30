@@ -13,6 +13,7 @@
 #include <math.h>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
                        MPI_Comm comm)
@@ -80,9 +81,9 @@ hid_t hdf5Stream::hdf5Type(std::string &type)
 void hdf5Stream::defineHDF5Array(const std::shared_ptr<VariableInfo> ov)
 {
     const int ndim = ov->ndim + 1;
-    hsize_t maxdims[ndim];
-    hsize_t dims[ndim];
-    hsize_t count[ndim];
+    std::vector<hsize_t> maxdims(ndim);
+    std::vector<hsize_t> dims(ndim);
+    std::vector<hsize_t> count(ndim);
 
     maxdims[0] = H5S_UNLIMITED;
     dims[0] = 1;
@@ -94,14 +95,14 @@ void hdf5Stream::defineHDF5Array(const std::shared_ptr<VariableInfo> ov)
         count[d] = ov->count[d - 1];
     }
 
-    hid_t dataspace = H5Screate_simple(ndim, dims, maxdims);
+    hid_t dataspace = H5Screate_simple(ndim, dims.data(), maxdims.data());
 
     hid_t cparms;
     /*
      * Set chunking, the only way to have extendible arrays
      */
     cparms = H5Pcreate(H5P_DATASET_CREATE);
-    H5Pset_chunk(cparms, ndim, count);
+    H5Pset_chunk(cparms, ndim, count.data());
 
     hid_t dataset;
     dataset = H5Dcreate2(h5file, ov->name.c_str(), hdf5Type(ov->type),
@@ -117,9 +118,9 @@ void hdf5Stream::putHDF5Array(const std::shared_ptr<VariableInfo> ov,
     const auto it = varmap.find(ov->name);
     hdf5VarInfo &vi = it->second;
     int ndim = ov->ndim + 1;
-    hsize_t start[ndim];
-    hsize_t count[ndim];
-    hsize_t dims[ndim];
+    std::vector<hsize_t> start(ndim);
+    std::vector<hsize_t> count(ndim);
+    std::vector<hsize_t> dims(ndim);
     start[0] = step - 1;
     count[0] = 1;
     dims[0] = step;
@@ -130,12 +131,13 @@ void hdf5Stream::putHDF5Array(const std::shared_ptr<VariableInfo> ov,
         dims[d] = ov->shape[d - 1];
     }
 
-    H5Dset_extent(vi.dataset, dims);
+    H5Dset_extent(vi.dataset, dims.data());
     hid_t filespace = H5Dget_space(vi.dataset);
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start.data(), NULL,
+                        count.data(), NULL);
     hid_t dxpl_id = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl_id, H5FD_MPIO_COLLECTIVE);
-    hid_t memspace = H5Screate_simple(ndim, count, NULL);
+    hid_t memspace = H5Screate_simple(ndim, count.data(), NULL);
     H5Dwrite(vi.dataset, hdf5Type(ov->type), memspace, filespace, dxpl_id,
              ov->data.data());
     H5Pclose(dxpl_id);
@@ -256,8 +258,8 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
     }
     int ndim = ov->ndim + 1;
 
-    hsize_t start[ndim];
-    hsize_t count[ndim];
+    std::vector<hsize_t> start(ndim);
+    std::vector<hsize_t> count(ndim);
     start[0] = step - 1;
     count[0] = 1;
     for (int d = 1; d < ndim; ++d)
@@ -272,10 +274,11 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
         ov->data.resize(ov->datasize);
     }
 
-    hid_t memspace = H5Screate_simple(ndim, count, NULL);
+    hid_t memspace = H5Screate_simple(ndim, count.data(), NULL);
     hid_t dxpl_id = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl_id, H5FD_MPIO_COLLECTIVE);
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start.data(), NULL,
+                        count.data(), NULL);
     void *buf = reinterpret_cast<void *>(ov->data.data());
     H5Dread(dataset, hdf5Type(ov->type), memspace, filespace, dxpl_id, buf);
 
@@ -317,9 +320,9 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
         std::shared_ptr<VariableInfo> var = cmdR->variables.front();
         hid_t dataset = H5Dopen2(h5file, var->name.c_str(), H5P_DEFAULT);
         hid_t filespace = H5Dget_space(dataset);
-        hsize_t dims[var->ndim + 1];
+        std::vector<hsize_t> dims(var->ndim + 1);
         int ndim = H5Sget_simple_extent_ndims(filespace);
-        H5Sget_simple_extent_dims(filespace, dims, NULL);
+        H5Sget_simple_extent_dims(filespace, dims.data(), NULL);
         /* ndim == var->ndim+1 */
         nSteps = dims[0];
         if (!settings.myRank && settings.verbose)

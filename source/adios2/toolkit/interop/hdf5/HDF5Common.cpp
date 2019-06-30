@@ -933,9 +933,9 @@ void HDF5Common::AddNonStringAttribute(core::IO &io,
     }
     else
     {
-        T val[arraySize];
-        H5Aread(attrId, h5Type, val);
-        io.DefineAttribute(attrName, val, arraySize);
+        std::vector<T> val(arraySize);
+        H5Aread(attrId, h5Type, val.data());
+        io.DefineAttribute(attrName, val.data(), arraySize);
     }
 }
 
