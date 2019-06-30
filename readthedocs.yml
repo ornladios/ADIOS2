@@ -3,9 +3,7 @@ version: 2
 
 conda: 
   environment: docs/environment.yml
-
+    
 python:
-  version: 3.7
-  install:
-    - requirements: docs/requirements.txt
-    - method: pip
+   version: 3.7
+   system_packages: true
