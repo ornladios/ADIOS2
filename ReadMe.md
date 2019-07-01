@@ -1,4 +1,5 @@
 [![GitHub (pre-)release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
+[![Spack Version](https://img.shields.io/spack/v/adios2.svg)](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
 [![GitHub license](http://dmlc.github.io/img/apache2.svg)](./LICENSE)
 
 
