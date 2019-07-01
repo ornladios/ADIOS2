@@ -1,14 +1,12 @@
 [![GitHub (pre-)release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
 [![Spack Version](https://img.shields.io/spack/v/adios2.svg)](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
-[![GitHub license](http://dmlc.github.io/img/apache2.svg)](./LICENSE)
-
+[![GitHub License](https://img.shields.io/github/license/ornladios/adios2.svg)](./LICENSE)
 
 [![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
-[![Travis CI](https://travis-ci.org/ornladios/ADIOS2.svg)](https://travis-ci.org/ornladios/ADIOS2)
+[![Travis CI](https://api.travis-ci.com/ornladios/ADIOS2.svg)](https://travis-ci.com/ornladios/ADIOS2)
 [![AppVeyor CI](https://ci.appveyor.com/api/projects/status/0s2a3qp57hgbvlhj?svg=true)](https://ci.appveyor.com/project/ornladios/adios2)
 
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/11116/badge.svg)](https://scan.coverity.com/projects/ornladios-adios2)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/6eeb5a8ac3e34d2599cfdea5bdc3390f)](https://www.codacy.com/app/chuckatkins/ADIOS2?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ornladios/ADIOS2&amp;utm_campaign=Badge_Grade)
 
 
 # ADIOS 2 : The Adaptable Input Output System version 2
