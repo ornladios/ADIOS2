@@ -12,7 +12,6 @@
 #include "BP3Reader.tcc"
 
 #include "adios2/helper/adiosComm.h"
-#include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
@@ -203,7 +202,7 @@ void BP3Reader::InitBuffer()
     }
 
     // broadcast metadata buffer to all ranks from zero
-    helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_Comm);
+    m_Comm.BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer);
 
     // fills IO with available Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);

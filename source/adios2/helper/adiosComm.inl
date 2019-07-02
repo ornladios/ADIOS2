@@ -125,6 +125,21 @@ unsigned long long int Comm::ReduceValues(const unsigned long long int source,
                                           MPI_Op operation,
                                           const int rankDestination) const;
 
+// BroadcastValue full specializations implemented in 'adiosComm.tcc'.
+template <>
+size_t Comm::BroadcastValue(const size_t &input, const int rankSource) const;
+template <>
+std::string Comm::BroadcastValue(const std::string &input,
+                                 const int rankSource) const;
+
+// BroadcastVector full specializations implemented in 'adiosComm.tcc'.
+template <>
+void Comm::BroadcastVector(std::vector<char> &vector,
+                           const int rankSource) const;
+template <>
+void Comm::BroadcastVector(std::vector<size_t> &vector,
+                           const int rankSource) const;
+
 } // end namespace helper
 } // end namespace adios2
 

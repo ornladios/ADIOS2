@@ -11,7 +11,6 @@
 #include "BP4Reader.h"
 #include "BP4Reader.tcc"
 
-#include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <errno.h>
@@ -216,7 +215,7 @@ void BP4Reader::OpenFiles()
         }
     }
 
-    flag = helper::BroadcastValue(flag, m_Comm, 0);
+    flag = m_Comm.BroadcastValue(flag, 0);
     if (flag == 2)
     {
         if (m_BP4Deserializer.m_RankMPI == 0 && !lasterrmsg.empty())
@@ -268,7 +267,7 @@ void BP4Reader::OpenFiles()
         }
     }
 
-    flag = helper::BroadcastValue(flag, m_Comm, 0);
+    flag = m_Comm.BroadcastValue(flag, 0);
     if (flag == 1)
     {
         throw std::runtime_error("ERROR: File " + m_Name +
@@ -316,10 +315,10 @@ void BP4Reader::InitBuffer()
                                  fileSize);
     }
     // broadcast buffer to all ranks from zero
-    helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_Comm);
+    m_Comm.BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer);
 
     // broadcast metadata index buffer to all ranks from zero
-    helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer, m_Comm);
+    m_Comm.BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer);
 
     /* Parse metadata index table */
     m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex);
@@ -384,17 +383,16 @@ size_t BP4Reader::UpdateBuffer()
         }
     }
 
-    helper::BroadcastVector(sizes, m_Comm, 0);
+    m_Comm.BroadcastVector(sizes, 0);
     size_t newIdxSize = sizes[0];
 
     if (newIdxSize > 0)
     {
         // broadcast buffer to all ranks from zero
-        helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_Comm);
+        m_Comm.BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer);
 
         // broadcast metadata index buffer to all ranks from zero
-        helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer,
-                                m_Comm);
+        m_Comm.BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer);
 
         if (m_BP4Deserializer.m_RankMPI != 0)
         {
@@ -440,7 +438,7 @@ bool BP4Reader::CheckWriterActive()
         bool active = m_BP4Deserializer.ReadActiveFlag(header);
         flag = (active ? 1 : 0);
     }
-    flag = helper::BroadcastValue(flag, m_BP4Deserializer.m_Comm, 0);
+    flag = m_BP4Deserializer.m_Comm.BroadcastValue(flag, 0);
     m_BP4Deserializer.m_WriterIsActive = (flag > 0);
     return m_BP4Deserializer.m_WriterIsActive;
 }

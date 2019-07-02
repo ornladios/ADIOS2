@@ -10,7 +10,6 @@
 
 #include "adiosNetwork.h"
 #include "adios2/helper/adiosComm.h"
-#include "adios2/helper/adiosMPIFunctions.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #ifndef _WIN32
@@ -140,7 +139,7 @@ void HandshakeWriter(Comm const &comm, size_t &appID,
         remove(globalLockFilename.c_str());
     }
 
-    appID = helper::BroadcastValue(appID, comm);
+    appID = comm.BroadcastValue(appID);
 
     // Make full addresses
     for (int i = 0; i < channelsPerRank; ++i)
@@ -203,7 +202,7 @@ void HandshakeReader(Comm const &comm, size_t &appID,
         std::hash<std::string> hash_fn;
         appID = hash_fn(ips[0]);
     }
-    helper::BroadcastValue(appID, comm);
+    comm.BroadcastValue(appID);
 
     transport::FileFStream ipstream(comm, false);
     while (true)

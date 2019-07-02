@@ -23,18 +23,7 @@ namespace adios2
 namespace helper
 {
 
-template <class T>
-T BroadcastValue(const T &input, MPI_Comm mpiComm, const int rankSource = 0);
-
-template <class T>
-void BroadcastVector(std::vector<T> &vector, MPI_Comm mpiComm,
-                     const int rankSource = 0);
-
 void CheckMPIReturn(const int value, const std::string &hint);
-
-std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,
-                          const std::string hint = "",
-                          const int rankSource = 0);
 
 template <class T>
 std::vector<MPI_Request> Isend64(const T *buffer, const size_t count,

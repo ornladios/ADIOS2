@@ -20,7 +20,6 @@
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
-#include "adios2/helper/adiosMPIFunctions.h"
 #include "adios2/helper/adiosString.h"
 
 #include <pugixml.hpp>
@@ -150,8 +149,8 @@ void ParseConfigXML(
                            " in call to ADIOS constructor");
 
     auto lf_FileContents = [&](const std::string &configXML) -> std::string {
-        const std::string fileContents(helper::BroadcastFile(
-            configXML, adios.GetComm(),
+        const std::string fileContents(adios.GetComm().BroadcastFile(
+            configXML,
             "when parsing configXML file, in call to the ADIOS constructor"));
 
         if (adios.m_DebugMode)

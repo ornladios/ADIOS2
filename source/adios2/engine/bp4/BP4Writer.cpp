@@ -255,7 +255,7 @@ void BP4Writer::InitBPBuffer()
             m_FileMetadataIndexManager.ReadFile(
                 preMetadataIndex.m_Buffer.data(), preMetadataIndexFileSize);
         }
-        helper::BroadcastVector(preMetadataIndex.m_Buffer, m_Comm);
+        m_Comm.BroadcastVector(preMetadataIndex.m_Buffer);
         preMetadataIndexFileSize = preMetadataIndex.m_Buffer.size();
         if (preMetadataIndexFileSize > 0)
         {

@@ -187,6 +187,120 @@ unsigned long long int Comm::ReduceValues(const unsigned long long int source,
     return reduceValue;
 }
 
+// BroadcastValue full specializations forward-declared in 'adiosComm.inl'.
+template <>
+size_t Comm::BroadcastValue(const size_t &input, const int rankSource) const
+{
+    int rank;
+    SMPI_Comm_rank(m_MPIComm, &rank);
+    size_t output = 0;
+
+    if (rank == rankSource)
+    {
+        output = input;
+    }
+
+    SMPI_Bcast(&output, 1, ADIOS2_MPI_SIZE_T, rankSource, m_MPIComm);
+
+    return output;
+}
+
+template <>
+std::string Comm::BroadcastValue(const std::string &input,
+                                 const int rankSource) const
+{
+    int rank;
+    SMPI_Comm_rank(m_MPIComm, &rank);
+    const size_t inputSize = input.size();
+    const size_t length = this->BroadcastValue(inputSize, rankSource);
+    std::string output;
+
+    if (rank == rankSource)
+    {
+        output = input;
+    }
+    else
+    {
+        output.resize(length);
+    }
+
+    SMPI_Bcast(const_cast<char *>(output.data()), static_cast<int>(length),
+               MPI_CHAR, rankSource, m_MPIComm);
+
+    return output;
+}
+
+// BroadcastVector full specializations forward-declared in 'adiosComm.inl'.
+template <>
+void Comm::BroadcastVector(std::vector<char> &vector,
+                           const int rankSource) const
+{
+    int size;
+    SMPI_Comm_size(m_MPIComm, &size);
+
+    if (size == 1)
+    {
+        return;
+    }
+
+    // First Broadcast the size, then the contents
+    size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
+    int rank;
+    SMPI_Comm_rank(m_MPIComm, &rank);
+
+    if (rank != rankSource)
+    {
+        vector.resize(inputSize);
+    }
+
+    const int MAXBCASTSIZE = 1073741824;
+    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    char *buffer = vector.data();
+    while (inputSize > 0)
+    {
+        SMPI_Bcast(buffer, static_cast<int>(blockSize), MPI_CHAR, rankSource,
+                   m_MPIComm);
+        buffer += blockSize;
+        inputSize -= blockSize;
+        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    }
+}
+
+template <>
+void Comm::BroadcastVector(std::vector<size_t> &vector,
+                           const int rankSource) const
+{
+    int size;
+    SMPI_Comm_size(m_MPIComm, &size);
+
+    if (size == 1)
+    {
+        return;
+    }
+
+    // First Broadcast the size, then the contents
+    size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
+    int rank;
+    SMPI_Comm_rank(m_MPIComm, &rank);
+
+    if (rank != rankSource)
+    {
+        vector.resize(inputSize);
+    }
+
+    const int MAXBCASTSIZE = 1073741824 / sizeof(size_t);
+    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    size_t *buffer = vector.data();
+    while (inputSize > 0)
+    {
+        SMPI_Bcast(buffer, static_cast<int>(blockSize), ADIOS2_MPI_SIZE_T,
+                   rankSource, m_MPIComm);
+        buffer += blockSize;
+        inputSize -= blockSize;
+        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    }
+}
+
 } // end namespace helper
 } // end namespace adios2
 

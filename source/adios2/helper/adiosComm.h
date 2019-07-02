@@ -155,6 +155,17 @@ public:
     T ReduceValues(const T source, MPI_Op operation = MPI_SUM,
                    const int rankDestination = 0) const;
 
+    template <class T>
+    T BroadcastValue(const T &input, const int rankSource = 0) const;
+
+    template <class T>
+    void BroadcastVector(std::vector<T> &vector,
+                         const int rankSource = 0) const;
+
+    std::string BroadcastFile(const std::string &fileName,
+                              const std::string hint = "",
+                              const int rankSource = 0) const;
+
 private:
     /**
      * @brief Construct by taking ownership of a MPI communicator.

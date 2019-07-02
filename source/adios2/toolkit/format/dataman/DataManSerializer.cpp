@@ -11,8 +11,6 @@
 #include "DataManSerializer.h"
 #include "DataManSerializer.tcc"
 
-#include "adios2/helper/adiosMPIFunctions.h"
-
 #include <cstring>
 #include <iostream>
 
@@ -273,7 +271,7 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input,
         return;
     }
 
-    helper::BroadcastVector(*input, comm);
+    comm.BroadcastVector(*input);
 
     if (input->size() > 0)
     {

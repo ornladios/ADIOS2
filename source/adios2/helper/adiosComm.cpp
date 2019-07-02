@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "adios2/common/ADIOSMPI.h"
+#include "adios2/helper/adiosString.h"
 
 #include "adiosMPIFunctions.h"
 
@@ -74,6 +75,25 @@ Comm Comm::Split(int color, int key, const std::string &hint) const
     MPI_Comm newComm;
     CheckMPIReturn(MPI_Comm_split(m_MPIComm, color, key, &newComm), hint);
     return Comm(newComm);
+}
+
+std::string Comm::BroadcastFile(const std::string &fileName,
+                                const std::string hint,
+                                const int rankSource) const
+{
+    int rank;
+    MPI_Comm_rank(m_MPIComm, &rank);
+    std::string fileContents;
+
+    // Read the file on rank 0 and broadcast it to everybody else
+    if (rank == rankSource)
+    {
+        // load file contents
+        fileContents = FileToString(fileName, hint);
+    }
+    fileContents = this->BroadcastValue(fileContents, rankSource);
+
+    return fileContents;
 }
 
 } // end namespace helper
