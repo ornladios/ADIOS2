@@ -112,15 +112,15 @@ def do_one_client_test(writer_cmd, reader_cmd):
     reader = subprocess.Popen(reader_cmd)
     print("TestDriver: Waiting for Reader")
     reader.wait()
-    print("TestDriver: Reader exit status was " + 
+    print("TestDriver: Reader exit status was " +
           str(reader.returncode))
     if reader.returncode != 0:
-        print "TestDriver: Reader failed, causing test failure"
+        print("TestDriver: Reader failed, causing test failure")
         return_code = 1
     clean_server_kill(writer)
     print("TestDriver: Writer exit status was " + str(writer.returncode))
     if writer.returncode != 0:
-        print "TestDriver: Writer failed, causing test failure"
+        print("TestDriver: Writer failed, causing test failure")
         return_code = 1
     return return_code
 
@@ -129,9 +129,9 @@ def do_kill_writer_test(writer_cmd, reader_cmd, interval):
     return_code = 0
     writer = subprocess.Popen(writer_cmd)
     reader = subprocess.Popen(reader_cmd)
-    print "TestDriver: Waiting " + str(interval) + " seconds"
+    print("TestDriver: Waiting " + str(interval) + " seconds")
     time.sleep(interval)
-    print "TestDriver: Killing Writer"
+    print("TestDriver: Killing Writer")
     writer.terminate()
     writer.wait()
     reader.wait()
@@ -151,25 +151,31 @@ def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
     timeout = time.time() + duration
     readers = []
     while (time.time() < timeout):
-        print("TestDriver: Beginning interval at time " + str(time.time() - start))
-        if (((len(readers) == 0) or (random.randint(0, 1) == 0)) and (len(readers) < args.max_readers)):
-            print "TestDriver: Forking a reader"
+        print("TestDriver: Beginning interval at time " +
+              str(time.time() - start))
+        if (((len(readers) == 0) or (random.randint(0, 1) == 0)) and
+                (len(readers) < args.max_readers)):
+            print("TestDriver: Forking a reader")
             reader = subprocess.Popen(reader_cmd)
             readers.append(reader)
-            print "TestDriver: There are now " + str(len(readers)) + " readers"
+            print("TestDriver: There are now " + str(len(readers)) + " readers")
         else:
             reader_index = random.randrange(0, len(readers))
-            print "TestDriver: Killing a reader " + str(reader_index) + " out of " + str(len(readers))
+            print("TestDriver: Killing a reader " + str(reader_index) +
+                  " out of " + str(len(readers)))
             readers[reader_index].poll()
             if readers[reader_index].returncode is not None:
-                # if reader has already exited, we want to know if it thinks it succeeded and fail otherwise
+                # if reader has already exited, we want to know if it
+                # thinks it succeeded and fail otherwise
                 if readers[reader_index].returncode != 0:
-                    print("TestDriver: Unterminated Reader failed, causing test failure (return code) " +
+                    print("TestDriver: Unterminated Reader failed, " +
+                          "causing test failure (return code) " +
                           str(readers[reader_index].returncode))
                     return_code = 1
 
             else:
-                # if reader hasn't already exited, kill it and ignore the exit status
+                # if reader hasn't already exited,
+                # kill it and ignore the exit status
                 readers[reader_index].terminate()
                 readers[reader_index].wait()
             readers.pop(reader_index)
@@ -180,15 +186,18 @@ def do_kill_readers_test(writer_cmd, reader_cmd, duration, interval):
     for reader in readers:
         reader.poll()
         if reader.returncode is not None:
-            # if reader has already exited, we want to know if it thinks it succeeded and fail otherwise
+            # if reader has already exited, we want to know if it
+            # thinks it succeeded and fail otherwise
             if reader.returncode != 0:
-                print(
-                    "TestDriver: Unterminated Reader failed, causing test failure (return code) " + str(reader.returncode))
+                print("TestDriver: Unterminated Reader failed, " +
+                      "causing test failure (return code) " +
+                      str(reader.returncode))
                 return_code = 1
             else:
                 print("TestDriver: Surviving Reader succeeded")
         else:
-            # if reader hasn't already exited, kill it and ignore the exit status
+            # if reader hasn't already exited,
+            # kill it and ignore the exit status
             print("TestDriver: Killing surviving Reader")
             reader.terminate()
             reader.wait()
@@ -218,7 +227,8 @@ parser.add_argument('--duration', type=int, default=60)
 parser.add_argument('--interval', type=int, default=5)
 parser.add_argument('--reader_delay', '-rd', type=int, default=0)
 parser.add_argument('--test_protocol', '-tp', choices=[
-                    'simple', 'kill_readers', 'one_client', 'kill_writer'], default='simple')
+                    'simple', 'kill_readers', 'one_client',
+                    'kill_writer'], default='simple')
 parser.add_argument('engine', default='sst')
 parser.add_argument('filename', default='tmp')
 
@@ -242,7 +252,8 @@ reader_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + \
 
 mpmd_possible = True
 
-if ("@MPIEXEC_EXECUTABLE@" == "") or ("@MPIEXEC_EXECUTABLE@" == "MPIEXEC_EXECUTABLE-NOTFOUND"):
+if (("@MPIEXEC_EXECUTABLE@" == "") or
+        ("@MPIEXEC_EXECUTABLE@" == "MPIEXEC_EXECUTABLE-NOTFOUND")):
     # NO MPI
     writer_exec_cmd = ''
     reader_exec_cmd = ''
@@ -298,8 +309,10 @@ if args.test_protocol == 'simple':
         return_code = do_simple_mpmd_test(
             writer_command_line, reader_command_line)
     else:
-        return_code = do_simple_test(
-            writer_command_line, reader_command_line, args.reader_delay, is_file_engine[args.engine.lower()])
+        return_code = do_simple_test(writer_command_line,
+                                     reader_command_line,
+                                     args.reader_delay,
+                                     is_file_engine[args.engine.lower()])
 
 elif args.test_protocol == 'kill_readers':
     return_code = do_kill_readers_test(
