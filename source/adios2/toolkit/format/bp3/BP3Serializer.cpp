@@ -16,8 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>,
-                                          // ReduceValue<T>
+#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #ifdef _WIN32

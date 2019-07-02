@@ -151,6 +151,42 @@ void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
     }
 }
 
+// ReduceValues full specializations forward-declared in 'adiosComm.inl'.
+template <>
+unsigned int Comm::ReduceValues(const unsigned int source, MPI_Op operation,
+                                const int rankDestination) const
+{
+    unsigned int sourceLocal = source;
+    unsigned int reduceValue = 0;
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
+                rankDestination, m_MPIComm);
+    return reduceValue;
+}
+
+template <>
+unsigned long int Comm::ReduceValues(const unsigned long int source,
+                                     MPI_Op operation,
+                                     const int rankDestination) const
+{
+    unsigned long int sourceLocal = source;
+    unsigned long int reduceValue = 0;
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
+                rankDestination, m_MPIComm);
+    return reduceValue;
+}
+
+template <>
+unsigned long long int Comm::ReduceValues(const unsigned long long int source,
+                                          MPI_Op operation,
+                                          const int rankDestination) const
+{
+    unsigned long long int sourceLocal = source;
+    unsigned long long int reduceValue = 0;
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG,
+                operation, rankDestination, m_MPIComm);
+    return reduceValue;
+}
+
 } // end namespace helper
 } // end namespace adios2
 

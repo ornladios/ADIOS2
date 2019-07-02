@@ -151,6 +151,10 @@ public:
     void AllGatherArrays(const T *source, const size_t sourceCount,
                          T *destination) const;
 
+    template <class T>
+    T ReduceValues(const T source, MPI_Op operation = MPI_SUM,
+                   const int rankDestination = 0) const;
+
 private:
     /**
      * @brief Construct by taking ownership of a MPI communicator.

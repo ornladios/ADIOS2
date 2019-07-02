@@ -112,6 +112,19 @@ template <>
 void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
                            size_t *destination) const;
 
+// ReduceValues full specializations implemented in 'adiosComm.tcc'.
+template <>
+unsigned int Comm::ReduceValues(const unsigned int source, MPI_Op operation,
+                                const int rankDestination) const;
+template <>
+unsigned long int Comm::ReduceValues(const unsigned long int source,
+                                     MPI_Op operation,
+                                     const int rankDestination) const;
+template <>
+unsigned long long int Comm::ReduceValues(const unsigned long long int source,
+                                          MPI_Op operation,
+                                          const int rankDestination) const;
+
 } // end namespace helper
 } // end namespace adios2
 

@@ -30,10 +30,6 @@ template <class T>
 void BroadcastVector(std::vector<T> &vector, MPI_Comm mpiComm,
                      const int rankSource = 0);
 
-template <class T>
-T ReduceValues(const T source, MPI_Comm mpiComm, MPI_Op operation = MPI_SUM,
-               const int rankDestination = 0);
-
 void CheckMPIReturn(const int value, const std::string &hint);
 
 std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,

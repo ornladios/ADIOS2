@@ -68,41 +68,6 @@ std::string BroadcastValue(const std::string &input, MPI_Comm mpiComm,
     return output;
 }
 
-// ReduceValue specializations
-template <>
-unsigned int ReduceValues(const unsigned int source, MPI_Comm mpiComm,
-                          MPI_Op operation, const int rankDestination)
-{
-    unsigned int sourceLocal = source;
-    unsigned int reduceValue = 0;
-    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
-                rankDestination, mpiComm);
-    return reduceValue;
-}
-
-template <>
-unsigned long int ReduceValues(const unsigned long int source, MPI_Comm mpiComm,
-                               MPI_Op operation, const int rankDestination)
-{
-    unsigned long int sourceLocal = source;
-    unsigned long int reduceValue = 0;
-    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
-                rankDestination, mpiComm);
-    return reduceValue;
-}
-
-template <>
-unsigned long long int ReduceValues(const unsigned long long int source,
-                                    MPI_Comm mpiComm, MPI_Op operation,
-                                    const int rankDestination)
-{
-    unsigned long long int sourceLocal = source;
-    unsigned long long int reduceValue = 0;
-    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG,
-                operation, rankDestination, mpiComm);
-    return reduceValue;
-}
-
 // BroadcastVector specializations
 template <>
 void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,

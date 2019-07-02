@@ -17,8 +17,7 @@
 #include <tuple>
 #include <vector>
 
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>,
-                                          // ReduceValue<T>
+#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // Windows complains about SubFileInfoMap levels
@@ -975,7 +974,7 @@ void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
     SMPI_Comm_rank(comm, &rank);
 
     size_t countPosition = position;
-    const size_t totalCount = helper::ReduceValues<size_t>(count, comm);
+    const size_t totalCount = comm.ReduceValues<size_t>(count);
 
     if (rank == 0)
     {
