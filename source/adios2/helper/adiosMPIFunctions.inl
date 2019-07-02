@@ -18,19 +18,7 @@ namespace adios2
 {
 namespace helper
 {
-
-template <class T>
-std::vector<T> AllGatherValues(const T source, MPI_Comm mpiComm)
-{
-    int size;
-    SMPI_Comm_size(mpiComm, &size);
-    std::vector<T> output(size);
-
-    T sourceCopy = source; // so we can have an address for rvalues
-    AllGatherArrays(&sourceCopy, 1, output.data(), mpiComm);
-    return output;
-}
-
+// placeholder
 } // end namespace helper
 } // end namespace adios2
 

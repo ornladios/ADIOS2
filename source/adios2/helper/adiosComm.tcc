@@ -134,6 +134,23 @@ void Comm::GathervArrays(const size_t *source, size_t sourceCount,
     }
 }
 
+// AllGatherArrays full specializations forward-declared in 'adiosComm.inl'.
+template <>
+void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
+                           size_t *destination) const
+{
+    int countsInt = static_cast<int>(sourceCount);
+    int result = MPI_Allgather(const_cast<size_t *>(source), countsInt,
+                               ADIOS2_MPI_SIZE_T, destination, countsInt,
+                               ADIOS2_MPI_SIZE_T, m_MPIComm);
+
+    if (result != MPI_SUCCESS)
+    {
+        throw std::runtime_error("ERROR: in ADIOS2 detected failure in MPI "
+                                 "Allgather type size_t function\n");
+    }
+}
+
 } // end namespace helper
 } // end namespace adios2
 

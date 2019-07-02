@@ -132,6 +132,24 @@ public:
     void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
                         size_t &position, int rankDestination = 0,
                         size_t extraSize = 0) const;
+    /**
+     * Perform AllGather for source value
+     * @param source input
+     * @return in all ranks: a vector with gathered source values ordered per
+     * rank
+     */
+    template <class T>
+    std::vector<T> AllGatherValues(const T source) const;
+
+    /**
+     * Perform AllGather for equal size arrays
+     * @param source
+     * @param sourceCount
+     * @param destination
+     */
+    template <class T>
+    void AllGatherArrays(const T *source, const size_t sourceCount,
+                         T *destination) const;
 
 private:
     /**

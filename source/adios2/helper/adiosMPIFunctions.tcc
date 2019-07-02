@@ -175,23 +175,6 @@ void BroadcastVector(std::vector<size_t> &vector, MPI_Comm mpiComm,
     }
 }
 
-// AllGatherArray specializations
-template <>
-void AllGatherArrays(const size_t *source, const size_t sourceCount,
-                     size_t *destination, MPI_Comm mpiComm)
-{
-    int countsInt = static_cast<int>(sourceCount);
-    int result = MPI_Allgather(const_cast<size_t *>(source), countsInt,
-                               ADIOS2_MPI_SIZE_T, destination, countsInt,
-                               ADIOS2_MPI_SIZE_T, mpiComm);
-
-    if (result != MPI_SUCCESS)
-    {
-        throw std::runtime_error("ERROR: in ADIOS2 detected failure in MPI "
-                                 "Allgather type size_t function\n");
-    }
-}
-
 template <>
 std::vector<MPI_Request> Isend64<char>(const char *buffer, const size_t count,
                                        int dest, int tag, MPI_Comm mpiComm,

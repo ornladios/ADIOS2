@@ -95,6 +95,23 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
     position += gatheredSize;
 }
 
+template <class T>
+std::vector<T> Comm::AllGatherValues(const T source) const
+{
+    int size;
+    SMPI_Comm_size(m_MPIComm, &size);
+    std::vector<T> output(size);
+
+    T sourceCopy = source; // so we can have an address for rvalues
+    this->AllGatherArrays(&sourceCopy, 1, output.data());
+    return output;
+}
+
+// AllGatherArrays full specializations implemented in 'adiosComm.tcc'.
+template <>
+void Comm::AllGatherArrays(const size_t *source, const size_t sourceCount,
+                           size_t *destination) const;
+
 } // end namespace helper
 } // end namespace adios2
 

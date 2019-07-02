@@ -34,26 +34,6 @@ template <class T>
 T ReduceValues(const T source, MPI_Comm mpiComm, MPI_Op operation = MPI_SUM,
                const int rankDestination = 0);
 
-/**
- * Perform AllGather for source value
- * @param source input
- * @param mpiComm MPI communicator defining all ranks and size domain
- * @return in all ranks: a vector with gathered source values ordered per rank
- */
-template <class T>
-std::vector<T> AllGatherValues(const T source, MPI_Comm mpiComm);
-
-/**
- * Perform AllGather for equal size arrays
- * @param source
- * @param sourceCount
- * @param destination
- * @param mpiComm
- */
-template <class T>
-void AllGatherArrays(const T *source, const size_t sourceCount, T *destination,
-                     MPI_Comm mpiComm);
-
 void CheckMPIReturn(const int value, const std::string &hint);
 
 std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,
