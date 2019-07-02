@@ -285,6 +285,9 @@ if(DEFINED EVPATH_USE_UDT4)
 else()
   find_package(udt4 4.11)
   option(EVPATH_USE_UDT4 "Build the udt4 transport" ${UDT4_FOUND})
+  if (NOT UDT4_FOUND)
+    message(STATUS " - Udt4 library was not found.  This is not a fatal error, just that the Udt4 transport will not be built.")
+  endif()
 endif()
 if(UDT4_FOUND)
   set(RUN_UDT4_TESTS FALSE)   # DON'T TEST.  UDT4 NOT USEFUL
@@ -302,8 +305,6 @@ if(UDT4_FOUND)
     list(APPEND _pkg_config_pfxs "${udt4_PREFIX}")
     list(APPEND _pkg_config_private_reqs "udt4 >= ${udt4_VERSION}")
   endif()
-else()
-  message(STATUS " - Udt4 library was not found.  This is not a fatal error, just that the Udt4 transport will not be built.")
 endif()
 
 # libfabric transport
