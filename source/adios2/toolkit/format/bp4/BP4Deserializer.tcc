@@ -439,7 +439,7 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 
         // global values only read one block per step
         const size_t blocksStart = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? variable.m_Start.front()
+                                       ? blockInfo.Start.front()
                                        : 0;
 
         const size_t blocksCount = (variable.m_ShapeID == ShapeID::GlobalArray)
@@ -461,7 +461,7 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
             }
         }
 
-        for (size_t b = blocksStart; b < blocksCount; ++b)
+        for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
         {
             size_t localPosition = positions[b];
             const Characteristics<T> characteristics =
@@ -583,6 +583,26 @@ BP4Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
             BlocksInfoCommon(variable, blockPositions);
     }
     return allStepsBlocksInfo;
+}
+
+template <class T>
+std::vector<std::vector<typename core::Variable<T>::Info>>
+BP4Deserializer::AllRelativeStepsBlocksInfo(
+    const core::Variable<T> &variable) const
+{
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+        allRelativeStepsBlocksInfo(
+            variable.m_AvailableStepBlockIndexOffsets.size());
+
+    size_t relativeStep = 0;
+    for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
+    {
+        const std::vector<size_t> &blockPositions = pair.second;
+        allRelativeStepsBlocksInfo[relativeStep] =
+            BlocksInfoCommon(variable, blockPositions);
+        ++relativeStep;
+    }
+    return allRelativeStepsBlocksInfo;
 }
 
 template <class T>

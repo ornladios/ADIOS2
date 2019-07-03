@@ -136,6 +136,7 @@ gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args} WORKING_
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSelHighLevel ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadBlockInfo ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 
 gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteReadADIOS2fstream ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
@@ -155,9 +156,9 @@ gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args} WORKING_
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSelHighLevel ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadBlockInfo ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 
 # BP3 only for now
-gtest_add_tests(TARGET TestBPWriteReadBlockInfo ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadVariableSpan ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteNull ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 
