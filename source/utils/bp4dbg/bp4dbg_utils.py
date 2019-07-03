@@ -141,7 +141,7 @@ def ReadHeader(f, fileSize, fileType):
     print("|        Version string            | Major | Minor | Patch "
           "| unused | Endian | BP version | Active |     unused      |")
     print("|          32 bytes                |   1B  |   1B  |   1B  "
-          "|   1B   |   1B   |     1B     |   1B   |       33B       |")
+          "|   1B   |   1B   |     1B     |   1B   |       25B       |")
     print("+----------------------------------------------------------"
           "----------------------------------------------------------+")
     print("| {0} |   {1}   |   {2}   |   {3}   |        |  {4}   "
