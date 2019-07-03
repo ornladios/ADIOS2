@@ -254,6 +254,13 @@ void BP4Reader::DoClose(const int transportIndex)
         return m_BP4Deserializer.AllStepsBlocksInfo(variable);                 \
     }                                                                          \
                                                                                \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    BP4Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
+    {                                                                          \
+        TAU_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");             \
+        return m_BP4Deserializer.AllRelativeStepsBlocksInfo(variable);         \
+    }                                                                          \
+                                                                               \
     std::vector<typename Variable<T>::Info> BP4Reader::DoBlocksInfo(           \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
