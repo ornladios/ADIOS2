@@ -416,6 +416,14 @@ private:
                                      MPI_Comm comm,
                                      const bool isRankConstant) const noexcept;
 
+    /** private function called by DeserializeIndicesPerRankThreads
+     * in case of a single thread
+     */
+    std::unordered_map<std::string, std::vector<SerialElementIndex>>
+    DeserializeIndicesPerRankSingleThread(const std::vector<char> &serialized,
+                                          MPI_Comm comm,
+                                          const bool isRankConstant) const
+        noexcept;
     /**
      * Merge indices by time step (default) and write to m_HeapBuffer.m_Metadata
      * @param nameRankIndices
