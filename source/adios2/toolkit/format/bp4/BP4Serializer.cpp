@@ -1081,13 +1081,14 @@ std::vector<char> BP4Serializer::SerializeIndices(
 }
 
 std::unordered_map<std::string, std::vector<BP4Base::SerialElementIndex>>
-BP4Serializer::DeserializeIndicesPerRankThreads(
+BP4Serializer::DeserializeIndicesPerRankSingleThread(
     const std::vector<char> &serialized, MPI_Comm comm,
     const bool isRankConstant) const noexcept
 {
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
         deserialized;
 
+    /*
     auto lf_Deserialize_no_mutex = [&](const int rankSource,
                                        const size_t serializedPosition,
                                        const bool isRankConstant) {
@@ -1139,7 +1140,152 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
         SerialElementIndex &index = deserializedIndexes->at(rankSource);
         helper::InsertToBuffer(index.Buffer, &serialized[serializedPosition],
                                bufferSize);
-    };
+    };*/
+
+    // BODY OF FUNCTION starts here
+    const size_t serializedSize = serialized.size();
+    int rank;
+    SMPI_Comm_rank(comm, &rank);
+
+    if (rank != 0 || serializedSize < 8)
+    {
+        return deserialized;
+    }
+
+    size_t serializedPosition = 0;
+
+    while (serializedPosition < serializedSize - 4)
+    {
+        const int rankSource = static_cast<int>(
+            helper::ReadValue<uint32_t>(serialized, serializedPosition));
+
+        if (serializedPosition <= serializedSize)
+        {
+            // lf_Deserialize_no_mutex(rankSource, serializedPosition,
+            //                        isRankConstant);
+            size_t localPosition = serializedPosition;
+
+            ElementIndexHeader header =
+                ReadElementIndexHeader(serialized, localPosition);
+
+            if (!isRankConstant || deserialized.count(header.Name) != 1)
+            {
+
+                std::vector<BP4Base::SerialElementIndex> *deserializedIndexes;
+
+                // deserializedIndexes =
+                // &(deserialized.emplace(std::piecewise_construct,
+                //                        std::forward_as_tuple(header.Name),
+                //                        std::forward_as_tuple(
+                //                        m_SizeMPI,
+                //                        SerialElementIndex(header.MemberID,
+                //                        0))).first->second);
+
+                auto search = deserialized.find(header.Name);
+                if (search == deserialized.end())
+                {
+                    // variable does not exist, we need to add it
+                    deserializedIndexes =
+                        &(deserialized
+                              .emplace(std::piecewise_construct,
+                                       std::forward_as_tuple(header.Name),
+                                       std::forward_as_tuple(
+                                           m_SizeMPI, SerialElementIndex(
+                                                          header.MemberID, 0)))
+                              .first->second);
+                    // std::cout << "rank " << rankSource << ": did not find "
+                    // << header.Name << ", added it" << std::endl;
+                }
+                else
+                {
+                    deserializedIndexes = &(search->second);
+                    // std::cout << "rank " << rankSource << ": found " <<
+                    // header.Name
+                    // << std::endl;
+                }
+
+                const size_t bufferSize =
+                    static_cast<size_t>(header.Length) + 4;
+                SerialElementIndex &index = deserializedIndexes->at(rankSource);
+                helper::InsertToBuffer(
+                    index.Buffer, &serialized[serializedPosition], bufferSize);
+            }
+        }
+
+        const size_t bufferSize = static_cast<size_t>(
+            helper::ReadValue<uint32_t>(serialized, serializedPosition));
+        serializedPosition += bufferSize;
+    }
+
+    return deserialized;
+}
+
+std::unordered_map<std::string, std::vector<BP4Base::SerialElementIndex>>
+BP4Serializer::DeserializeIndicesPerRankThreads(
+    const std::vector<char> &serialized, MPI_Comm comm,
+    const bool isRankConstant) const noexcept
+{
+    if (m_Threads == 1)
+    {
+        return BP4Serializer::DeserializeIndicesPerRankSingleThread(
+            serialized, comm, isRankConstant);
+    }
+
+    std::unordered_map<std::string, std::vector<SerialElementIndex>>
+        deserialized;
+    /*
+    auto lf_Deserialize_no_mutex = [&](const int rankSource,
+                                       const size_t serializedPosition,
+                                       const bool isRankConstant) {
+        size_t localPosition = serializedPosition;
+
+        ElementIndexHeader header =
+            ReadElementIndexHeader(serialized, localPosition);
+
+        if (isRankConstant)
+        {
+            if (deserialized.count(header.Name) == 1)
+            {
+                return;
+            }
+        }
+
+        std::vector<BP4Base::SerialElementIndex> *deserializedIndexes;
+
+        // deserializedIndexes =
+        // &(deserialized.emplace(std::piecewise_construct,
+        //                        std::forward_as_tuple(header.Name),
+        //                        std::forward_as_tuple(
+        //                        m_SizeMPI, SerialElementIndex(header.MemberID,
+        //                        0))).first->second);
+
+        auto search = deserialized.find(header.Name);
+        if (search == deserialized.end())
+        {
+            // variable does not exist, we need to add it
+            deserializedIndexes =
+                &(deserialized
+                      .emplace(std::piecewise_construct,
+                               std::forward_as_tuple(header.Name),
+                               std::forward_as_tuple(
+                                   m_SizeMPI,
+                                   SerialElementIndex(header.MemberID, 0)))
+                      .first->second);
+            // std::cout << "rank " << rankSource << ": did not find " <<
+            // header.Name << ", added it" << std::endl;
+        }
+        else
+        {
+            deserializedIndexes = &(search->second);
+            // std::cout << "rank " << rankSource << ": found " << header.Name
+            // << std::endl;
+        }
+
+        const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
+        SerialElementIndex &index = deserializedIndexes->at(rankSource);
+        helper::InsertToBuffer(index.Buffer, &serialized[serializedPosition],
+                               bufferSize);
+    };*/
 
     auto lf_Deserialize = [&](const int rankSource,
                               const size_t serializedPosition,
@@ -1187,27 +1333,6 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     }
 
     size_t serializedPosition = 0;
-
-    if (m_Threads == 1)
-    {
-        while (serializedPosition < serializedSize)
-        {
-            const int rankSource = static_cast<int>(
-                helper::ReadValue<uint32_t>(serialized, serializedPosition));
-
-            if (serializedPosition <= serializedSize)
-            {
-                lf_Deserialize_no_mutex(rankSource, serializedPosition,
-                                        isRankConstant);
-            }
-
-            const size_t bufferSize = static_cast<size_t>(
-                helper::ReadValue<uint32_t>(serialized, serializedPosition));
-            serializedPosition += bufferSize;
-        }
-
-        return deserialized;
-    }
 
     std::vector<std::future<void>> asyncs(m_Threads);
     std::vector<size_t> asyncPositions(m_Threads);
