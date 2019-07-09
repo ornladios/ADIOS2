@@ -14,6 +14,7 @@
 #include "BP4Serializer.h"
 
 #include <algorithm> // std::all_of
+#include <iostream>
 
 #include "adios2/helper/adiosFunctions.h"
 
@@ -597,53 +598,82 @@ void BP4Serializer::PutVariableMetadataInIndex(
 {
     auto &buffer = index.Buffer;
 
-    // if (isNew) // write variable header
-    // {
-    //     buffer.insert(buffer.end(), 4, '\0'); // skip var length (4)
-    //     helper::InsertToBuffer(buffer, &stats.MemberID);
-    //     buffer.insert(buffer.end(), 2, '\0'); // skip group name
-    //     PutNameRecord(variable.m_Name, buffer);
-    //     buffer.insert(buffer.end(), 2, '\0'); // skip path
+    if (index.CurrentStep != stats.Step) // create a new variable header for a new step
+    {
+        size_t indexLengthPosition = buffer.size();
+        index.currentHeaderPosition = buffer.size();
 
-    //     const uint8_t dataType = TypeTraits<T>::type_enum;
-    //     helper::InsertToBuffer(buffer, &dataType);
+        buffer.insert(buffer.end(), 4, '\0'); // skip var length (4)
+        helper::InsertToBuffer(buffer, &stats.MemberID);
+        buffer.insert(buffer.end(), 2, '\0'); // skip group name
+        PutNameRecord(variable.m_Name, buffer);
+        buffer.insert(buffer.end(), 2, '\0'); // skip path
 
-    //     // Characteristics Sets Count in Metadata
-    //     index.Count = 1;
-    //     helper::InsertToBuffer(buffer, &index.Count);
+        const uint8_t dataType = TypeTraits<T>::type_enum;
+        helper::InsertToBuffer(buffer, &dataType);
 
-    //     // For updating absolute offsets in agreggation
-    //     index.LastUpdatedPosition = buffer.size();
-    // }
-    // else // update characteristics sets count
-    // {
-    //     if (m_StatsLevel == 0)
-    //     {
-    //         ++index.Count;
-    //         // fixed since group and path are not printed
-    //         size_t setsCountPosition = 15 + variable.m_Name.size();
-    //         helper::CopyToBuffer(buffer, setsCountPosition, &index.Count);
-    //     }
-    // }
+        // Characteristics Sets Count in Metadata
+        index.Count = 1;
+        helper::InsertToBuffer(buffer, &index.Count);
+
+        // For updating absolute offsets in agreggation
+        index.LastUpdatedPosition = buffer.size();
+
+        PutVariableCharacteristics(variable, blockInfo, stats, buffer);
+        const uint32_t indexLength = static_cast<uint32_t>(
+            buffer.size() - indexLengthPosition - 4);
+
+        helper::CopyToBuffer(buffer, indexLengthPosition,
+                             &indexLength); 
+        
+        index.CurrentStep = stats.Step;
+    }
+    else // update characteristics sets length and count
+    {
+        if (m_StatsLevel == 0)
+        {
+            size_t currentIndexStartPosition = buffer.size();
+            PutVariableCharacteristics(variable, blockInfo, stats, buffer);
+            uint32_t currentIndexLength = static_cast<uint32_t>(
+                buffer.size() - currentIndexStartPosition);
+
+            uint32_t preIndexLength = helper::ReadValue<uint32_t>(buffer, index.currentHeaderPosition, helper::IsLittleEndian());
+
+            uint32_t newIndexLength = preIndexLength+currentIndexLength;
+
+            helper::CopyToBuffer(buffer, index.currentHeaderPosition, &newIndexLength);
+
+            ++index.Count;
+            // fixed since group and path are not printed
+            size_t setsCountPosition = index.currentHeaderPosition + 15 + variable.m_Name.size();
+            helper::CopyToBuffer(buffer, setsCountPosition, &index.Count);
+        }
+    }
 
     // always write variable header
-    buffer.insert(buffer.end(), 4, '\0'); // skip var length (4)
-    helper::InsertToBuffer(buffer, &stats.MemberID);
-    buffer.insert(buffer.end(), 2, '\0'); // skip group name
-    PutNameRecord(variable.m_Name, buffer);
-    buffer.insert(buffer.end(), 2, '\0'); // skip path
+    // size_t indexLengthPosition = buffer.size();
+    // buffer.insert(buffer.end(), 4, '\0'); // skip var length (4)
+    // helper::InsertToBuffer(buffer, &stats.MemberID);
+    // buffer.insert(buffer.end(), 2, '\0'); // skip group name
+    // PutNameRecord(variable.m_Name, buffer);
+    // buffer.insert(buffer.end(), 2, '\0'); // skip path
 
-    const uint8_t dataType = TypeTraits<T>::type_enum;
-    helper::InsertToBuffer(buffer, &dataType);
+    // const uint8_t dataType = TypeTraits<T>::type_enum;
+    // helper::InsertToBuffer(buffer, &dataType);
 
-    // Characteristics Sets Count in Metadata
-    index.Count = 1;
-    helper::InsertToBuffer(buffer, &index.Count);
+    // // Characteristics Sets Count in Metadata
+    // index.Count = 1;
+    // helper::InsertToBuffer(buffer, &index.Count);
 
-    // For updating absolute offsets in agreggation
-    index.LastUpdatedPosition = buffer.size();
+    // // For updating absolute offsets in agreggation
+    // index.LastUpdatedPosition = buffer.size();
 
-    PutVariableCharacteristics(variable, blockInfo, stats, buffer);
+    // PutVariableCharacteristics(variable, blockInfo, stats, buffer);
+    // const uint32_t indexLength = static_cast<uint32_t>(
+    //     buffer.size() - indexLengthPosition - 4);
+
+    // helper::CopyToBuffer(buffer, indexLengthPosition,
+    //                      &indexLength); 
 }
 
 template <class T>
