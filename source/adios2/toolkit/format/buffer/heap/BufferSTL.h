@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BUFFER_BUFFERSTL_H_
-#define ADIOS2_TOOLKIT_FORMAT_BUFFER_BUFFERSTL_H_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BUFFER_HEAP_BUFFERSTL_H_
+#define ADIOS2_TOOLKIT_FORMAT_BUFFER_HEAP_BUFFERSTL_H_
 
 #include "adios2/toolkit/format/buffer/Buffer.h"
 
@@ -23,8 +23,11 @@ class BufferSTL : public Buffer
 public:
     std::vector<char> m_Buffer;
 
-    BufferSTL(const bool debugMode = true);
+    BufferSTL();
     ~BufferSTL() = default;
+
+    char *Data() noexcept final;
+    const char *Data() const noexcept final;
 
     void Resize(const size_t size, const std::string hint) final;
 
@@ -34,4 +37,4 @@ public:
 } // end namespace format
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_FORMAT_BUFFERSTL_H_ */
+#endif /* ADIOS2_TOOLKIT_FORMAT_BUFFER_HEAP_BUFFERSTL_H_ */

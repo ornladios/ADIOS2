@@ -353,12 +353,12 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
         if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
         {
-            const format::BufferSTL &bufferSTL =
+            const format::Buffer &bufferSTL =
                 m_BP3Serializer.m_Aggregator.GetConsumerBuffer(
                     m_BP3Serializer.m_Data);
 
-            m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
-                                         bufferSTL.m_Position, transportIndex);
+            m_FileDataManager.WriteFiles(bufferSTL.Data(), bufferSTL.m_Position,
+                                         transportIndex);
 
             m_FileDataManager.FlushFiles(transportIndex);
         }

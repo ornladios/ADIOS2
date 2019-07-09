@@ -23,21 +23,23 @@ class Buffer
 {
 public:
     const std::string m_Type;
+
+    /** if 0: buffer can be extended, if >0: buffer has a fixed size */
+    const size_t m_FixedSize = 0;
+
     size_t m_Position = 0;
     size_t m_AbsolutePosition = 0;
 
-    /** if 0: buffer can be extended, if >0: buffer has a fixed size */
-    size_t m_FixedSize = 0;
+    Buffer(const std::string type, const size_t fixedSize = 0);
 
-    Buffer(const std::string type, const bool debugMode);
     virtual ~Buffer() = default;
+
+    virtual char *Data() noexcept;
+    virtual const char *Data() const noexcept;
 
     virtual void Resize(const size_t size, const std::string hint);
 
-    virtual size_t GetAvailableSize() const = 0;
-
-private:
-    const bool m_DebugMode;
+    virtual size_t GetAvailableSize() const;
 };
 
 } // end namespace format

@@ -28,12 +28,11 @@ public:
 
     void Init(const size_t subStreams, MPI_Comm parentComm) final;
 
-    std::vector<std::vector<MPI_Request>>
-    IExchange(format::BufferSTL &bufferSTL, const int step) final;
+    std::vector<std::vector<MPI_Request>> IExchange(format::Buffer &buffer,
+                                                    const int step) final;
 
     std::vector<std::vector<MPI_Request>>
-    IExchangeAbsolutePosition(format::BufferSTL &bufferSTL,
-                              const int step) final;
+    IExchangeAbsolutePosition(format::Buffer &buffer, const int step) final;
 
     void Wait(std::vector<std::vector<MPI_Request>> &request,
               const int step) final;
@@ -45,7 +44,7 @@ public:
 
     void ResetBuffers() noexcept final;
 
-    format::BufferSTL &GetConsumerBuffer(format::BufferSTL &bufferSTL) final;
+    format::Buffer &GetConsumerBuffer(format::Buffer &buffer) final;
 
 private:
     bool m_IsInExchangeAbsolutePosition = false;
@@ -63,29 +62,28 @@ private:
      * Returns a reference to the sender buffer depending on
      * m_CurrentBufferOrder
      * flag
-     * @param bufferSTL original buffer from serializer
+     * @param buffer original buffer from serializer
      * @return reference to sender buffer
      */
-    format::BufferSTL &GetSender(format::BufferSTL &bufferSTL);
+    format::Buffer &GetSender(format::Buffer &buffer);
 
     /**
      * Returns a reference to the receiver buffer depending on
      * m_CurrentBufferOrder
      * flag
-     * @param bufferSTL original buffer from serializer
+     * @param buffer original buffer from serializer
      * @return reference to receiver buffer
      */
-    format::BufferSTL &GetReceiver(format::BufferSTL &bufferSTL);
+    format::Buffer &GetReceiver(format::Buffer &buffer);
 
     /**
-     * Resizes and updates m_Position in a bufferSTL, used for receiving buffers
+     * Resizes and updates m_Position in a buffer, used for receiving buffers
      * @param newSize new size for receiving buffer
-     * @param bufferSTL to be resized
+     * @param buffer to be resized
      * @param hint used in exception error message
      */
-    void ResizeUpdateBufferSTL(const size_t newSize,
-                               format::BufferSTL &bufferSTL,
-                               const std::string hint);
+    void ResizeUpdateBuffer(const size_t newSize, format::Buffer &buffer,
+                            const std::string hint);
 };
 
 } // end namespace aggregator

@@ -575,14 +575,13 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
         if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
         {
-            const format::BufferSTL &bufferSTL =
+            const format::Buffer &bufferSTL =
                 m_BP4Serializer.m_Aggregator.GetConsumerBuffer(
                     m_BP4Serializer.m_Data);
             if (bufferSTL.m_Position > 0)
             {
-                m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
-                                             bufferSTL.m_Position,
-                                             transportIndex);
+                m_FileDataManager.WriteFiles(
+                    bufferSTL.Data(), bufferSTL.m_Position, transportIndex);
 
                 m_FileDataManager.FlushFiles(transportIndex);
             }

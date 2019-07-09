@@ -15,7 +15,11 @@ namespace adios2
 namespace format
 {
 
-BufferSTL::BufferSTL(const bool debugMode) : Buffer("BufferSTL", debugMode) {}
+BufferSTL::BufferSTL() : Buffer("BufferSTL") {}
+
+char *BufferSTL::Data() noexcept { return m_Buffer.data(); }
+
+const char *BufferSTL::Data() const noexcept { return m_Buffer.data(); }
 
 void BufferSTL::Resize(const size_t size, const std::string hint)
 {
