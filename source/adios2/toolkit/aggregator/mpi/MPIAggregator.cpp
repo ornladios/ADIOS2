@@ -35,7 +35,8 @@ void MPIAggregator::SwapBuffers(const int step) noexcept {}
 
 void MPIAggregator::ResetBuffers() noexcept {}
 
-BufferSTL &MPIAggregator::GetConsumerBuffer(BufferSTL &bufferSTL)
+format::BufferSTL &
+MPIAggregator::GetConsumerBuffer(format::BufferSTL &bufferSTL)
 {
     return bufferSTL;
 }

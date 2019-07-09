@@ -59,7 +59,8 @@ add_library(adios2
 
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 #toolkit
-  toolkit/format/BufferSTL.cpp
+  toolkit/format/buffer/Buffer.cpp
+  toolkit/format/buffer/BufferSTL.cpp
 
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc

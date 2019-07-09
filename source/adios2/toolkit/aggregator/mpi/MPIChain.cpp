@@ -32,15 +32,15 @@ void MPIChain::Init(const size_t subStreams, MPI_Comm parentComm)
     }
 }
 
-std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
-                                                          const int step)
+std::vector<std::vector<MPI_Request>>
+MPIChain::IExchange(format::BufferSTL &bufferSTL, const int step)
 {
     if (m_Size == 1)
     {
         return std::vector<std::vector<MPI_Request>>();
     }
 
-    BufferSTL &sendBuffer = GetSender(bufferSTL);
+    format::BufferSTL &sendBuffer = GetSender(bufferSTL);
     const int endRank = m_Size - 1 - step;
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
     const bool receiver = (m_Rank < endRank) ? true : false;
@@ -88,7 +88,7 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
             ", aggregation waiting for receiver size at iteration " +
                 std::to_string(step) + "\n");
 
-        BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
+        format::BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
         ResizeUpdateBufferSTL(
             bufferSize, receiveBuffer,
             "in aggregation, when resizing receiving buffer to size " +
@@ -109,7 +109,8 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
 }
 
 std::vector<std::vector<MPI_Request>>
-MPIChain::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
+MPIChain::IExchangeAbsolutePosition(format::BufferSTL &bufferSTL,
+                                    const int step)
 {
     if (m_Size == 1)
     {
@@ -235,7 +236,7 @@ void MPIChain::SwapBuffers(const int /*step*/) noexcept
 
 void MPIChain::ResetBuffers() noexcept { m_CurrentBufferOrder = 0; }
 
-BufferSTL &MPIChain::GetConsumerBuffer(BufferSTL &bufferSTL)
+format::BufferSTL &MPIChain::GetConsumerBuffer(format::BufferSTL &bufferSTL)
 {
     return GetSender(bufferSTL);
 }
@@ -276,7 +277,7 @@ void MPIChain::HandshakeLinks()
     }
 }
 
-BufferSTL &MPIChain::GetSender(BufferSTL &bufferSTL)
+format::BufferSTL &MPIChain::GetSender(format::BufferSTL &bufferSTL)
 {
     if (m_CurrentBufferOrder == 0)
     {
@@ -288,7 +289,7 @@ BufferSTL &MPIChain::GetSender(BufferSTL &bufferSTL)
     }
 }
 
-BufferSTL &MPIChain::GetReceiver(BufferSTL &bufferSTL)
+format::BufferSTL &MPIChain::GetReceiver(format::BufferSTL &bufferSTL)
 {
     if (m_CurrentBufferOrder == 0)
     {
@@ -300,7 +301,8 @@ BufferSTL &MPIChain::GetReceiver(BufferSTL &bufferSTL)
     }
 }
 
-void MPIChain::ResizeUpdateBufferSTL(const size_t newSize, BufferSTL &bufferSTL,
+void MPIChain::ResizeUpdateBufferSTL(const size_t newSize,
+                                     format::BufferSTL &bufferSTL,
                                      const std::string hint)
 {
     bufferSTL.Resize(newSize, hint);

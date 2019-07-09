@@ -353,7 +353,7 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
         if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
         {
-            const BufferSTL &bufferSTL =
+            const format::BufferSTL &bufferSTL =
                 m_BP3Serializer.m_Aggregator.GetConsumerBuffer(
                     m_BP3Serializer.m_Data);
 
@@ -374,7 +374,7 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     if (isFinal) // Write metadata footer
     {
-        BufferSTL &bufferSTL = m_BP3Serializer.m_Data;
+        format::BufferSTL &bufferSTL = m_BP3Serializer.m_Data;
         m_BP3Serializer.ResetBuffer(bufferSTL, false, false);
 
         m_BP3Serializer.AggregateCollectiveMetadata(

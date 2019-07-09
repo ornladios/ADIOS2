@@ -28,11 +28,12 @@ public:
 
     void Init(const size_t subStreams, MPI_Comm parentComm) final;
 
-    std::vector<std::vector<MPI_Request>> IExchange(BufferSTL &bufferSTL,
-                                                    const int step) final;
+    std::vector<std::vector<MPI_Request>>
+    IExchange(format::BufferSTL &bufferSTL, const int step) final;
 
     std::vector<std::vector<MPI_Request>>
-    IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step) final;
+    IExchangeAbsolutePosition(format::BufferSTL &bufferSTL,
+                              const int step) final;
 
     void Wait(std::vector<std::vector<MPI_Request>> &request,
               const int step) final;
@@ -44,7 +45,7 @@ public:
 
     void ResetBuffers() noexcept final;
 
-    BufferSTL &GetConsumerBuffer(BufferSTL &bufferSTL) final;
+    format::BufferSTL &GetConsumerBuffer(format::BufferSTL &bufferSTL) final;
 
 private:
     bool m_IsInExchangeAbsolutePosition = false;
@@ -65,7 +66,7 @@ private:
      * @param bufferSTL original buffer from serializer
      * @return reference to sender buffer
      */
-    BufferSTL &GetSender(BufferSTL &bufferSTL);
+    format::BufferSTL &GetSender(format::BufferSTL &bufferSTL);
 
     /**
      * Returns a reference to the receiver buffer depending on
@@ -74,7 +75,7 @@ private:
      * @param bufferSTL original buffer from serializer
      * @return reference to receiver buffer
      */
-    BufferSTL &GetReceiver(BufferSTL &bufferSTL);
+    format::BufferSTL &GetReceiver(format::BufferSTL &bufferSTL);
 
     /**
      * Resizes and updates m_Position in a bufferSTL, used for receiving buffers
@@ -82,7 +83,8 @@ private:
      * @param bufferSTL to be resized
      * @param hint used in exception error message
      */
-    void ResizeUpdateBufferSTL(const size_t newSize, BufferSTL &bufferSTL,
+    void ResizeUpdateBufferSTL(const size_t newSize,
+                               format::BufferSTL &bufferSTL,
                                const std::string hint);
 };
 
