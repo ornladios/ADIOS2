@@ -12,6 +12,14 @@
 
 namespace adios2
 {
+namespace format
+{
+
+BufferSTL::BufferSTL() : Buffer("BufferSTL") {}
+
+char *BufferSTL::Data() noexcept { return m_Buffer.data(); }
+
+const char *BufferSTL::Data() const noexcept { return m_Buffer.data(); }
 
 void BufferSTL::Resize(const size_t size, const std::string hint)
 {
@@ -25,6 +33,7 @@ void BufferSTL::Resize(const size_t size, const std::string hint)
     }
     catch (...)
     {
+        // catch a bad_alloc
         std::throw_with_nested(std::runtime_error(
             "ERROR: buffer overflow when resizing to " + std::to_string(size) +
             " bytes, " + hint + "\n"));
@@ -36,4 +45,5 @@ size_t BufferSTL::GetAvailableSize() const
     return m_Buffer.size() - m_Position;
 }
 
+} // end namespace format
 } // end namespace adios2

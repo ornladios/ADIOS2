@@ -12,6 +12,8 @@
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //helper::CheckMPIReturn
 
+#include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
+
 namespace adios2
 {
 namespace aggregator
@@ -28,19 +30,19 @@ void MPIChain::Init(const size_t subStreams, MPI_Comm parentComm)
     // add a receiving buffer except for the last rank (only sends)
     if (m_Rank < m_Size)
     {
-        m_Buffers.emplace_back(); // just one for now
+        m_Buffers.emplace_back(new format::BufferSTL()); // just one for now
     }
 }
 
-std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
-                                                          const int step)
+std::vector<std::vector<MPI_Request>>
+MPIChain::IExchange(format::Buffer &buffer, const int step)
 {
     if (m_Size == 1)
     {
         return std::vector<std::vector<MPI_Request>>();
     }
 
-    BufferSTL &sendBuffer = GetSender(bufferSTL);
+    format::Buffer &sendBuffer = GetSender(buffer);
     const int endRank = m_Size - 1 - step;
     const bool sender = (m_Rank >= 1 && m_Rank <= endRank) ? true : false;
     const bool receiver = (m_Rank < endRank) ? true : false;
@@ -61,11 +63,10 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
         if (sendBuffer.m_Position > 0)
         {
 
-            const std::vector<MPI_Request> requestsISend64 =
-                helper::Isend64(sendBuffer.m_Buffer.data(),
-                                sendBuffer.m_Position, m_Rank - 1, 1, m_Comm,
-                                ", aggregation Isend64 data at iteration " +
-                                    std::to_string(step));
+            const std::vector<MPI_Request> requestsISend64 = helper::Isend64(
+                sendBuffer.Data(), sendBuffer.m_Position, m_Rank - 1, 1, m_Comm,
+                ", aggregation Isend64 data at iteration " +
+                    std::to_string(step));
 
             requests[0].insert(requests[0].end(), requestsISend64.begin(),
                                requestsISend64.end());
@@ -88,8 +89,8 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
             ", aggregation waiting for receiver size at iteration " +
                 std::to_string(step) + "\n");
 
-        BufferSTL &receiveBuffer = GetReceiver(bufferSTL);
-        ResizeUpdateBufferSTL(
+        format::Buffer &receiveBuffer = GetReceiver(buffer);
+        ResizeUpdateBuffer(
             bufferSize, receiveBuffer,
             "in aggregation, when resizing receiving buffer to size " +
                 std::to_string(bufferSize));
@@ -98,8 +99,8 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
         if (bufferSize > 0)
         {
             requests[1] =
-                helper::Irecv64(receiveBuffer.m_Buffer.data(),
-                                receiveBuffer.m_Position, m_Rank + 1, 1, m_Comm,
+                helper::Irecv64(receiveBuffer.Data(), receiveBuffer.m_Position,
+                                m_Rank + 1, 1, m_Comm,
                                 ", aggregation Irecv64 data at iteration " +
                                     std::to_string(step));
         }
@@ -109,7 +110,7 @@ std::vector<std::vector<MPI_Request>> MPIChain::IExchange(BufferSTL &bufferSTL,
 }
 
 std::vector<std::vector<MPI_Request>>
-MPIChain::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
+MPIChain::IExchangeAbsolutePosition(format::Buffer &buffer, const int step)
 {
     if (m_Size == 1)
     {
@@ -129,14 +130,13 @@ MPIChain::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
     if (step == 0)
     {
         m_SizeSend =
-            (m_Rank == 0) ? bufferSTL.m_AbsolutePosition : bufferSTL.m_Position;
+            (m_Rank == 0) ? buffer.m_AbsolutePosition : buffer.m_Position;
     }
 
     if (m_Rank == step)
     {
         m_ExchangeAbsolutePosition =
-            (m_Rank == 0) ? m_SizeSend
-                          : m_SizeSend + bufferSTL.m_AbsolutePosition;
+            (m_Rank == 0) ? m_SizeSend : m_SizeSend + buffer.m_AbsolutePosition;
 
         helper::CheckMPIReturn(
             MPI_Isend(&m_ExchangeAbsolutePosition, 1, ADIOS2_MPI_SIZE_T,
@@ -147,8 +147,8 @@ MPIChain::IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step)
     else if (m_Rank == destination)
     {
         helper::CheckMPIReturn(
-            MPI_Irecv(&bufferSTL.m_AbsolutePosition, 1, ADIOS2_MPI_SIZE_T, step,
-                      0, m_Comm, &requests[1][0]),
+            MPI_Irecv(&buffer.m_AbsolutePosition, 1, ADIOS2_MPI_SIZE_T, step, 0,
+                      m_Comm, &requests[1][0]),
             ", aggregation Irecv absolute position at iteration " +
                 std::to_string(step) + "\n");
     }
@@ -235,9 +235,9 @@ void MPIChain::SwapBuffers(const int /*step*/) noexcept
 
 void MPIChain::ResetBuffers() noexcept { m_CurrentBufferOrder = 0; }
 
-BufferSTL &MPIChain::GetConsumerBuffer(BufferSTL &bufferSTL)
+format::Buffer &MPIChain::GetConsumerBuffer(format::Buffer &buffer)
 {
-    return GetSender(bufferSTL);
+    return GetSender(buffer);
 }
 
 // PRIVATE
@@ -276,35 +276,48 @@ void MPIChain::HandshakeLinks()
     }
 }
 
-BufferSTL &MPIChain::GetSender(BufferSTL &bufferSTL)
+format::Buffer &MPIChain::GetSender(format::Buffer &buffer)
 {
     if (m_CurrentBufferOrder == 0)
     {
-        return bufferSTL;
+        return buffer;
     }
     else
     {
-        return m_Buffers.front();
+        return *m_Buffers.front();
     }
 }
 
-BufferSTL &MPIChain::GetReceiver(BufferSTL &bufferSTL)
+format::Buffer &MPIChain::GetReceiver(format::Buffer &buffer)
 {
     if (m_CurrentBufferOrder == 0)
     {
-        return m_Buffers.front();
+        return *m_Buffers.front();
     }
     else
     {
-        return bufferSTL;
+        return buffer;
     }
 }
 
-void MPIChain::ResizeUpdateBufferSTL(const size_t newSize, BufferSTL &bufferSTL,
-                                     const std::string hint)
+void MPIChain::ResizeUpdateBuffer(const size_t newSize, format::Buffer &buffer,
+                                  const std::string hint)
 {
-    bufferSTL.Resize(newSize, hint);
-    bufferSTL.m_Position = bufferSTL.m_Buffer.size();
+    if (buffer.m_FixedSize > 0)
+    {
+        if (newSize > buffer.m_FixedSize)
+        {
+            throw std::invalid_argument(
+                "ERROR: requesting new size: " + std::to_string(newSize) +
+                " bytes, for fixed size buffer " +
+                std::to_string(buffer.m_FixedSize) + " of type " +
+                buffer.m_Type + ", allocate more memory\n");
+        }
+        return; // do nothing if fixed size is enough
+    }
+
+    buffer.Resize(newSize, hint);
+    buffer.m_Position = newSize;
 }
 
 } // end namespace aggregator

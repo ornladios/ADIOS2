@@ -11,9 +11,11 @@
 #ifndef ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 #define ADIOS2_TOOLKIT_AGGREGATOR_MPI_MPIAGGREGATOR_H_
 
+#include <memory> //std::unique_ptr
+
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
-#include "adios2/toolkit/format/BufferSTL.h"
+#include "adios2/toolkit/format/buffer/Buffer.h"
 
 namespace adios2
 {
@@ -58,10 +60,10 @@ public:
     virtual void Init(const size_t subStreams, MPI_Comm parentComm);
 
     virtual std::vector<std::vector<MPI_Request>>
-    IExchange(BufferSTL &bufferSTL, const int step) = 0;
+    IExchange(format::Buffer &buffer, const int step) = 0;
 
     virtual std::vector<std::vector<MPI_Request>>
-    IExchangeAbsolutePosition(BufferSTL &bufferSTL, const int step) = 0;
+    IExchangeAbsolutePosition(format::Buffer &buffer, const int step) = 0;
 
     virtual void
     WaitAbsolutePosition(std::vector<std::vector<MPI_Request>> &requests,
@@ -74,7 +76,7 @@ public:
 
     virtual void ResetBuffers() noexcept;
 
-    virtual BufferSTL &GetConsumerBuffer(BufferSTL &bufferSTL);
+    virtual format::Buffer &GetConsumerBuffer(format::Buffer &buffer);
 
     /** closes current aggregator, frees m_Comm */
     void Close();
@@ -88,7 +90,7 @@ protected:
     void HandshakeRank(const int rank = 0);
 
     /** assigning extra buffers for aggregation */
-    std::vector<BufferSTL> m_Buffers;
+    std::vector<std::unique_ptr<format::Buffer>> m_Buffers;
 };
 
 } // end namespace aggregator

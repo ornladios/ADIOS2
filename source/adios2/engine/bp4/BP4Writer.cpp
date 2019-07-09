@@ -221,7 +221,7 @@ void BP4Writer::InitBPBuffer()
         // throw std::invalid_argument(
         //    "ADIOS2: OpenMode Append hasn't been implemented, yet");
         // TODO: Get last pg timestep and update timestep counter in
-        BufferSTL preMetadataIndex;
+        format::BufferSTL preMetadataIndex;
         size_t preMetadataIndexFileSize;
 
         if (m_BP4Serializer.m_RankMPI == 0)
@@ -411,7 +411,7 @@ void BP4Writer::WriteProfilingJSONFile()
 
 /*write the content of metadata index file*/
 void BP4Writer::PopulateMetadataIndexFileContent(
-    BufferSTL &b, const uint64_t currentStep, const uint64_t mpirank,
+    format::BufferSTL &b, const uint64_t currentStep, const uint64_t mpirank,
     const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
     const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
     const uint64_t currentTimeStamp)
@@ -486,7 +486,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
             m_BP4Serializer.m_Metadata.m_Position +
             m_BP4Serializer.m_PreMetadataFileLength;
 
-        BufferSTL metadataIndex;
+        format::BufferSTL metadataIndex;
         metadataIndex.Resize(128, "BP4 Index Table Entry");
 
         uint64_t currentStep;
@@ -575,14 +575,13 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
         if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
         {
-            const BufferSTL &bufferSTL =
+            const format::Buffer &bufferSTL =
                 m_BP4Serializer.m_Aggregator.GetConsumerBuffer(
                     m_BP4Serializer.m_Data);
             if (bufferSTL.m_Position > 0)
             {
-                m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
-                                             bufferSTL.m_Position,
-                                             transportIndex);
+                m_FileDataManager.WriteFiles(
+                    bufferSTL.Data(), bufferSTL.m_Position, transportIndex);
 
                 m_FileDataManager.FlushFiles(transportIndex);
             }

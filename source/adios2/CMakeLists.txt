@@ -59,7 +59,8 @@ add_library(adios2
 
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 #toolkit
-  toolkit/format/BufferSTL.cpp
+  toolkit/format/buffer/Buffer.cpp
+  toolkit/format/buffer/heap/BufferSTL.cpp
 
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
@@ -104,6 +105,8 @@ if(UNIX)
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
+  target_sources(adios2 PRIVATE toolkit/format/buffer/ipc/BufferSystemV.cpp)
+  
   target_sources(adios2 PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
 endif()
 
@@ -142,7 +145,6 @@ if(ADIOS2_HAVE_SSC)
         )
     target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
-
 
 if(ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/sst)
