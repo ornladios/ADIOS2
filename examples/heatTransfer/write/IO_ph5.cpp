@@ -112,7 +112,7 @@ void HDF5NativeWriter::Close()
     hid_t s = H5Screate(H5S_SCALAR);
     hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s,
                            H5P_DEFAULT, H5P_DEFAULT);
-    uint totalTimeSteps = m_CurrentTimeStep + 1;
+    unsigned int totalTimeSteps = m_CurrentTimeStep + 1;
 
     if (m_GroupId < 0)
     {

@@ -133,7 +133,7 @@ HDF5NativeWriter::~HDF5NativeWriter()
 
     hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s,
                            H5P_DEFAULT, H5P_DEFAULT);
-    uint totalAdiosSteps = m_CurrentTimeStep + 1;
+    unsigned int totalAdiosSteps = m_CurrentTimeStep + 1;
 
     if (m_GroupId < 0)
     {
