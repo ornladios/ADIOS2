@@ -14,6 +14,8 @@
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
+#include <limits>
+
 namespace adios2
 {
 namespace core
@@ -24,9 +26,10 @@ namespace engine
 BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("BP4Reader", io, name, mode, mpiComm),
-  m_BP4Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
-  m_SubFileManager(mpiComm, m_DebugMode),
-  m_FileMetadataIndexManager(mpiComm, m_DebugMode)
+  m_BP4Deserializer(mpiComm, m_DebugMode),
+  m_MDFileManager(mpiComm, m_DebugMode),
+  m_DataFileManager(mpiComm, m_DebugMode),
+  m_MDIndexFileManager(mpiComm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("BP4Reader::Open");
     Init();
@@ -65,41 +68,23 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
     // used to inquire for variables in streaming mode
     m_IO.m_ReadStreaming = true;
-    m_IO.m_EngineStep = m_CurrentStep;
+    StepStatus status = StepStatus::OK;
 
     if (m_CurrentStep >= m_BP4Deserializer.m_MetadataSet.StepsCount)
     {
-        m_IO.m_ReadStreaming = false;
-        return StepStatus::EndOfStream;
+        status = CheckForNewSteps(timeoutSeconds);
     }
 
-    /*
-    const auto &variablesData = m_IO.GetVariablesDataMap();
+    // This should be after getting new steps
+    m_IO.m_EngineStep = m_CurrentStep;
 
-    for (const auto &variableData : variablesData)
+    if (status == StepStatus::OK)
     {
-        const std::string name = variableData.first;
-        const std::string type = m_IO.InquireVariableType(name);
-
-        if (type == "compound")
-        {
-        }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        Variable<T> *variable = m_IO.InquireVariable<T>(name);                 \
-        if (mode == StepMode::NextAvailable)                                   \
-        {                                                                      \
-            variable->SetStepSelection({m_CurrentStep, 1});                    \
-        }                                                                      \
+        m_IO.ResetVariablesStepSelection(false,
+                                         "in call to BP4 Reader BeginStep");
     }
-        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    }
-    */
-    m_IO.ResetVariablesStepSelection(false, "in call to BP4 Reader BeginStep");
 
-    return StepStatus::OK;
+    return status;
 }
 
 size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
@@ -151,9 +136,9 @@ void BP4Reader::Init()
     {
         if (m_OpenMode != Mode::Read)
         {
-            throw std::invalid_argument(
-                "ERROR: BPFileReader only supports OpenMode::Read from" +
-                m_Name + " " + m_EndMessage);
+            throw std::invalid_argument("ERROR: BPFileReader only "
+                                        "supports OpenMode::Read from" +
+                                        m_Name + " " + m_EndMessage);
         }
     }
 
@@ -177,15 +162,14 @@ void BP4Reader::InitTransports()
             m_BP4Deserializer.GetBPMetadataFileName(m_Name));
 
         const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
-        m_FileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
-                                m_IO.m_TransportsParameters, profile);
+        m_MDFileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
+                                  m_IO.m_TransportsParameters, profile);
 
         /* Open file to save the metadata index table */
         const std::string metadataIndexFile(
             m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
-        m_FileMetadataIndexManager.OpenFiles(
-            {metadataIndexFile}, adios2::Mode::Read,
-            m_IO.m_TransportsParameters, profile);
+        m_MDIndexFileManager.OpenFiles({metadataIndexFile}, adios2::Mode::Read,
+                                       m_IO.m_TransportsParameters, profile);
     }
 }
 
@@ -194,21 +178,27 @@ void BP4Reader::InitBuffer()
     // Put all metadata in buffer
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
-        const size_t fileSize = m_FileManager.GetFileSize(0);
+        /* Read metadata index table into memory */
+        const size_t metadataIndexFileSize =
+            m_MDIndexFileManager.GetFileSize(0);
+        m_BP4Deserializer.m_MetadataIndex.Resize(
+            metadataIndexFileSize, "allocating metadata index buffer, "
+                                   "in call to BPFileReader Open");
+        m_MDIndexFileManager.ReadFile(
+            m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(),
+            metadataIndexFileSize);
+
+        m_MDIndexFileProcessedSize = metadataIndexFileSize;
+
+        /* Read metadata file into memory */
+        const size_t fileSize = m_MDFileManager.GetFileSize(0);
         m_BP4Deserializer.m_Metadata.Resize(
             fileSize, "allocating metadata buffer, in call to BP4Reader Open");
 
-        m_FileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(),
-                               fileSize);
+        m_MDFileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(),
+                                 fileSize);
 
-        const size_t metadataIndexFileSize =
-            m_FileMetadataIndexManager.GetFileSize(0);
-        m_BP4Deserializer.m_MetadataIndex.Resize(
-            metadataIndexFileSize,
-            "allocating metadata index buffer, in call to BPFileReader Open");
-        m_FileMetadataIndexManager.ReadFile(
-            m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(),
-            metadataIndexFileSize);
+        m_MDFileProcessedSize = fileSize;
     }
     // broadcast buffer to all ranks from zero
     helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer, m_MPIComm);
@@ -222,6 +212,148 @@ void BP4Reader::InitBuffer()
 
     // fills IO with Variables and Attributes
     m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this);
+}
+
+bool BP4Reader::UpdateBuffer()
+{
+    std::vector<size_t> sizes(2, 0);
+    if (m_BP4Deserializer.m_RankMPI == 0)
+    {
+        const size_t idxFileSize = m_MDIndexFileManager.GetFileSize(0);
+        if (idxFileSize > m_MDIndexFileProcessedSize)
+        {
+            const size_t newIdxSize = idxFileSize - m_MDIndexFileProcessedSize;
+            if (m_BP4Deserializer.m_MetadataIndex.m_Buffer.size() < newIdxSize)
+            {
+                m_BP4Deserializer.m_MetadataIndex.Resize(
+                    newIdxSize, "re-allocating metadata index buffer, in "
+                                "call to BP4Reader::BeginStep/UpdateBuffer");
+            }
+            m_BP4Deserializer.m_MetadataIndex.m_Position = 0;
+            m_MDIndexFileManager.ReadFile(
+                m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(), newIdxSize,
+                m_MDIndexFileProcessedSize);
+
+            sizes[0] = newIdxSize;
+
+            /* Read corresponding new metadata (throwing away the old)
+             */
+            const size_t fileSize = m_MDFileManager.GetFileSize(0);
+            const size_t newMDSize = fileSize - m_MDFileProcessedSize;
+            if (m_BP4Deserializer.m_Metadata.m_Buffer.size() < newMDSize)
+            {
+                m_BP4Deserializer.m_Metadata.Resize(
+                    newMDSize, "allocating metadata buffer, in call to "
+                               "BP4Reader Open");
+            }
+            m_BP4Deserializer.m_Metadata.m_Position = 0;
+            m_MDFileManager.ReadFile(
+                m_BP4Deserializer.m_Metadata.m_Buffer.data(), newMDSize,
+                m_MDFileProcessedSize);
+
+            sizes[1] = newMDSize;
+        }
+    }
+
+    helper::BroadcastVector(sizes, m_MPIComm, 0);
+    size_t newIdxSize = sizes[0];
+    size_t newMDSize = sizes[1];
+
+    if (newIdxSize > 0)
+    {
+        // broadcast buffer to all ranks from zero
+        helper::BroadcastVector(m_BP4Deserializer.m_Metadata.m_Buffer,
+                                m_MPIComm);
+
+        // broadcast metadata index buffer to all ranks from zero
+        helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer,
+                                m_MPIComm);
+
+        /* Parse metadata index table (without header) */
+        /* We need to skew the index table pointers with the
+           size of the already-processed metadata because the memory buffer of
+           new metadata starts from 0 */
+        m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex,
+                                             m_MDFileProcessedSize);
+
+        // fills IO with Variables and Attributes (not first step)
+        m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this,
+                                        false);
+
+        m_MDIndexFileProcessedSize += newIdxSize;
+        m_MDFileProcessedSize += newMDSize;
+    }
+    return (newIdxSize > 0);
+}
+
+bool BP4Reader::CheckWriterActive()
+{
+    std::vector<char> header(64, '\0');
+    m_MDIndexFileManager.ReadFile(header.data(), 64, 0, 0);
+    return m_BP4Deserializer.ReadActiveFlag(header);
+}
+
+StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
+{
+    /* Do a collective wait for a step within timeout.
+       Make sure every writer comes to the same conclusion */
+    StepStatus retval = StepStatus::OK;
+    bool haveNewStep = 0;
+    float TO = timeoutSeconds;
+    if (TO < 0.0)
+    {
+        TO = std::numeric_limits<float>::max() / 10000;
+    }
+    uint64_t milliTO = TO * 1000.0;
+    if (milliTO < 1)
+    {
+        milliTO = 1; // avoid 0
+    }
+    uint64_t pollTime = milliTO / 100; // TO/100 seconds polling time
+    if (pollTime < 1000)
+    {
+        pollTime = 1000; // min 1 second polling time
+    }
+    if (pollTime > 10000)
+    {
+        pollTime = 10000; // max 10 seconds polling time
+    }
+
+    /* Poll */
+    double waited = 0.0;
+    double startTime, endTime;
+    while (waited < TO && m_BP4Deserializer.m_WriterIsActive)
+    {
+        startTime = MPI_Wtime();
+        haveNewStep = UpdateBuffer();
+        if (haveNewStep)
+            break;
+        if (!CheckWriterActive())
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(pollTime));
+        endTime = MPI_Wtime();
+        waited += endTime - startTime;
+    }
+
+    if (!haveNewStep)
+    {
+        m_IO.m_ReadStreaming = false;
+        if (m_BP4Deserializer.m_WriterIsActive)
+        {
+            retval = StepStatus::NotReady;
+        }
+        else
+        {
+            retval = StepStatus::EndOfStream;
+        }
+    }
+    else
+    {
+        retval = StepStatus::OK;
+    }
+    return retval;
 }
 
 #define declare_type(T)                                                        \
@@ -242,8 +374,8 @@ void BP4Reader::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER("BP4Reader::Close");
     PerformGets();
-    m_SubFileManager.CloseFiles();
-    m_FileManager.CloseFiles();
+    m_DataFileManager.CloseFiles();
+    m_MDFileManager.CloseFiles();
 }
 
 #define declare_type(T)                                                        \
