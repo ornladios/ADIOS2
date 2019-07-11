@@ -36,19 +36,15 @@ BP4Deserializer::BP4Deserializer(MPI_Comm mpiComm, const bool debugMode)
 }
 
 void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
-                                    core::Engine &engine)
+                                    core::Engine &engine, const bool firstStep)
 {
-    // ParseMinifooter(bufferSTL);
-    // ParsePGIndex(bufferSTL, io);
-    // ParseVariablesIndex(bufferSTL, io);
-    // ParseAttributesIndex(bufferSTL, io);
-    size_t steps;
-    steps = m_MetadataIndexTable[0].size();
-    m_MetadataSet.StepsCount = steps;
-    m_MetadataSet.CurrentStep = steps - 1;
+    const size_t oldSteps = (firstStep ? 0 : m_MetadataSet.StepsCount);
+    size_t allSteps = m_MetadataIndexTable[0].size();
+    m_MetadataSet.StepsCount = allSteps;
+    m_MetadataSet.CurrentStep = allSteps - 1;
     /* parse the metadata step by step using the pointers saved in the metadata
     index table */
-    for (int i = 0; i < steps; i++)
+    for (int i = oldSteps; i < allSteps; i++)
     {
         ParsePGIndexPerStep(bufferSTL, engine.m_IO.m_HostLanguage, 0, i + 1);
         ParseVariablesIndexPerStep(bufferSTL, engine, 0, i + 1);
@@ -56,56 +52,63 @@ void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
     }
 }
 
-void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
+void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL,
+                                         const size_t absoluteStartPos)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
+    size_t position = 0;
 
-    // Read header (64 bytes)
-
-    // long version string
-    size_t position = m_VersionTagPosition;
-    m_Minifooter.VersionTag.assign(&buffer[position], m_VersionTagLength);
-
-    position = m_EndianFlagPosition;
-    const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
-    m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
-#ifndef ADIOS2_HAVE_ENDIAN_REVERSE
-    if (m_DebugMode)
+    if (absoluteStartPos == 0)
     {
-        if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
+        // Read header (64 bytes)
+        // long version string
+        position = m_VersionTagPosition;
+        m_Minifooter.VersionTag.assign(&buffer[position], m_VersionTagLength);
+
+        position = m_EndianFlagPosition;
+        const uint8_t endianness = helper::ReadValue<uint8_t>(buffer, position);
+        m_Minifooter.IsLittleEndian = (endianness == 0) ? true : false;
+#ifndef ADIOS2_HAVE_ENDIAN_REVERSE
+        if (m_DebugMode)
         {
-            throw std::runtime_error(
-                "ERROR: reader found BigEndian bp file, "
-                "this version of ADIOS2 wasn't compiled "
-                "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
-                "explicitly, in call to Open\n");
+            if (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian)
+            {
+                throw std::runtime_error(
+                    "ERROR: reader found BigEndian bp file, "
+                    "this version of ADIOS2 wasn't compiled "
+                    "with the cmake flag -DADIOS2_USE_Endian_Reverse=ON "
+                    "explicitly, in call to Open\n");
+            }
         }
-    }
 #endif
 
-    // This has no flag in BP4 header. Always true
-    m_Minifooter.HasSubFiles = true;
+        // This has no flag in BP4 header. Always true
+        m_Minifooter.HasSubFiles = true;
 
-    // BP version
-    position = m_BPVersionPosition;
-    m_Minifooter.Version = helper::ReadValue<uint8_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
-    if (m_Minifooter.Version != 4)
-    {
-        throw std::runtime_error(
-            "ERROR: ADIOS2 BP4 Engine only supports bp format "
-            "version 4, found " +
-            std::to_string(m_Minifooter.Version) + " version \n");
+        // BP version
+        position = m_BPVersionPosition;
+        m_Minifooter.Version = helper::ReadValue<uint8_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
+        if (m_Minifooter.Version != 4)
+        {
+            throw std::runtime_error(
+                "ERROR: ADIOS2 BP4 Engine only supports bp format "
+                "version 4, found " +
+                std::to_string(m_Minifooter.Version) + " version \n");
+        }
+
+        // Writer active flag
+        position = m_ActiveFlagPosition;
+        const char activeChar = helper::ReadValue<uint8_t>(
+            buffer, position, m_Minifooter.IsLittleEndian);
+        m_WriterIsActive = (activeChar == '\1' ? true : false);
+
+        // move position to first row
+        position = 64;
     }
 
-    // active flag, not used yet in the reader
-    position = m_ActiveFlagPosition;
-    const uint8_t activeFlag = helper::ReadValue<uint8_t>(
-        buffer, position, m_Minifooter.IsLittleEndian);
-
     // Read each record now
-    position = 64;
     while (position < bufferSize)
     {
         std::vector<uint64_t> ptrs;
@@ -115,16 +118,16 @@ void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL)
             buffer, position, m_Minifooter.IsLittleEndian);
         const uint64_t pgIndexStart = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
-        ptrs.push_back(pgIndexStart);
+        ptrs.push_back(pgIndexStart - absoluteStartPos);
         const uint64_t variablesIndexStart = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
-        ptrs.push_back(variablesIndexStart);
+        ptrs.push_back(variablesIndexStart - absoluteStartPos);
         const uint64_t attributesIndexStart = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
-        ptrs.push_back(attributesIndexStart);
+        ptrs.push_back(attributesIndexStart - absoluteStartPos);
         const uint64_t currentStepEndPos = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
-        ptrs.push_back(currentStepEndPos);
+        ptrs.push_back(currentStepEndPos - absoluteStartPos);
         const uint64_t currentTimeStamp = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
         ptrs.push_back(currentTimeStamp);
@@ -619,6 +622,21 @@ void BP4Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+}
+
+bool BP4Deserializer::ReadActiveFlag(std::vector<char> &buffer)
+{
+    if (buffer.size() < m_ActiveFlagPosition)
+    {
+        throw std::runtime_error("BP4Deserializer::CheckActiveFlag() is called "
+                                 "with a buffer smaller than required");
+    }
+    // Writer active flag
+    size_t position = m_ActiveFlagPosition;
+    const char activeChar = helper::ReadValue<uint8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    m_WriterIsActive = (activeChar == '\1' ? true : false);
+    return m_WriterIsActive;
 }
 
 #define declare_template_instantiation(T)                                      \

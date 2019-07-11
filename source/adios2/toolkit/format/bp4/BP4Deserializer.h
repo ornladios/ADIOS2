@@ -40,6 +40,8 @@ public:
 
     BufferSTL m_MetadataIndex;
 
+    bool m_WriterIsActive = false;
+
     /**
      * Unique constructor
      * @param mpiComm
@@ -49,9 +51,11 @@ public:
 
     ~BP4Deserializer() = default;
 
-    void ParseMetadataIndex(const BufferSTL &bufferSTL);
+    void ParseMetadataIndex(const BufferSTL &bufferSTL,
+                            const size_t absoluteStartPos = 0);
 
-    void ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine);
+    void ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine,
+                       const bool firstStep = true);
 
     /**
      * Used to get the variable payload data for the current selection (dims and
@@ -147,6 +151,12 @@ public:
     template <class T>
     std::vector<typename core::Variable<T>::Info>
     BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
+
+    /** Parse active flag in index table header (64 bytes).
+     *  Header must be read by caller into a vector of 64 characters.
+     *  It sets m_WriterIsActive and returns the same value
+     */
+    bool ReadActiveFlag(std::vector<char> &buffer);
 
     // TODO : Will deprecate all function below
     std::map<std::string, helper::SubFileInfoMap>
