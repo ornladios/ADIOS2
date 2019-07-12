@@ -214,7 +214,7 @@ void BP4Reader::InitBuffer()
     m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this);
 }
 
-bool BP4Reader::UpdateBuffer()
+std::pair<size_t, size_t> BP4Reader::UpdateBuffer()
 {
     std::vector<size_t> sizes(2, 0);
     if (m_BP4Deserializer.m_RankMPI == 0)
@@ -268,22 +268,28 @@ bool BP4Reader::UpdateBuffer()
         // broadcast metadata index buffer to all ranks from zero
         helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer,
                                 m_MPIComm);
-
-        /* Parse metadata index table (without header) */
-        /* We need to skew the index table pointers with the
-           size of the already-processed metadata because the memory buffer of
-           new metadata starts from 0 */
-        m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex,
-                                             m_MDFileProcessedSize);
-
-        // fills IO with Variables and Attributes (not first step)
-        m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this,
-                                        false);
-
-        m_MDIndexFileProcessedSize += newIdxSize;
-        m_MDFileProcessedSize += newMDSize;
     }
-    return (newIdxSize > 0);
+    return std::make_pair(newIdxSize, newMDSize);
+}
+void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize,
+                                           const size_t newMDSize)
+{
+    /* Remove all existing variables from previous steps
+       It seems easier than trying to update them */
+    m_IO.RemoveAllVariables();
+
+    /* Parse metadata index table (without header) */
+    /* We need to skew the index table pointers with the
+       size of the already-processed metadata because the memory buffer of
+       new metadata starts from 0 */
+    m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex,
+                                         m_MDFileProcessedSize);
+
+    // fills IO with Variables and Attributes (not first step)
+    m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this, false);
+
+    m_MDIndexFileProcessedSize += newIdxSize;
+    m_MDFileProcessedSize += newMDSize;
 }
 
 bool BP4Reader::CheckWriterActive()
@@ -298,7 +304,7 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
     /* Do a collective wait for a step within timeout.
        Make sure every writer comes to the same conclusion */
     StepStatus retval = StepStatus::OK;
-    bool haveNewStep = 0;
+    bool haveNewStep = false;
     float TO = timeoutSeconds;
     if (TO < 0.0)
     {
@@ -325,9 +331,14 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
     while (waited < TO && m_BP4Deserializer.m_WriterIsActive)
     {
         startTime = MPI_Wtime();
-        haveNewStep = UpdateBuffer();
-        if (haveNewStep)
+        std::pair<size_t, size_t> sizes = UpdateBuffer();
+        if (sizes.first > 0)
+        {
+            haveNewStep = true;
+            /* we have new metadata in memory. Need to parse it now */
+            ProcessMetadataForNewSteps(sizes.first, sizes.second);
             break;
+        }
         if (!CheckWriterActive())
         {
             break;
