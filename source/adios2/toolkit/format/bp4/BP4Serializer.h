@@ -157,7 +157,6 @@ public:
     void UpdateOffsetsInMetadata();
 
 private:
-
     std::vector<char> m_SerializedIndices;
     std::vector<char> m_GatheredSerializedIndices;
 
@@ -167,14 +166,18 @@ private:
     static std::mutex m_Mutex;
 
     /** aggregate pg rank indices */
-    std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>> m_PGIndicesInfo;
+    std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
+        m_PGIndicesInfo;
     /** deserialized variable indices per rank (vector index) */
-    std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
+    std::unordered_map<
+        size_t, std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
         m_VariableIndicesInfo;
     /** deserialized attribute indices per rank (vector index) */
-    std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
+    std::unordered_map<
+        size_t, std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
         m_AttributesIndicesInfo;
-
 
     /**
      * Put in BP buffer all attributes defined in an IO object.
@@ -410,8 +413,8 @@ private:
         const std::unordered_map<std::string, SerialElementIndex> &indices,
         MPI_Comm comm, BufferSTL &bufferSTL, const bool isRankConstant = false);
 
-    
-    void AggregateCollectiveMetadataIndices(MPI_Comm comm, BufferSTL &bufferSTL);
+    void AggregateCollectiveMetadataIndices(MPI_Comm comm,
+                                            BufferSTL &bufferSTL);
 
     /**
      * Returns a serialized buffer with all indices with format:

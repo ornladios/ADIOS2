@@ -70,8 +70,10 @@ public:
         bool Valid = false;
 
         /* record the time step of previous block of each variable*/
-        /* used to decide whether we should create a new header of the variable index */
-        /* or not. if it's a new step, we create a new header. otherwise, we don't */
+        /* used to decide whether we should create a new header of the variable
+         * index */
+        /* or not. if it's a new step, we create a new header. otherwise, we
+         * don't */
         uint32_t CurrentStep = 0;
         size_t currentHeaderPosition = 0;
 
@@ -165,12 +167,11 @@ public:
     /** contains collective metadata buffer, only used by rank 0 */
     BufferSTL m_Metadata;
 
-
     /* metadata index table*/
     std::unordered_map<uint64_t,
                        std::unordered_map<uint64_t, std::vector<uint64_t>>>
         m_MetadataIndexTable;
-        
+
     /* memory buffer for serialized metadata index table*/
     BufferSTL m_MetadataIndex;
 

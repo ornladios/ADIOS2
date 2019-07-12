@@ -14,8 +14,8 @@
 #include <chrono>
 #include <future>
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>,
                                           // ReduceValue<T>
@@ -340,7 +340,8 @@ void BP4Serializer::ResetAllIndices()
     //     index.Buffer.resize(headersize);
     //     index.Count = 0;
     //     index.LastUpdatedPosition = headersize;
-    //     index.Valid = false; // reset the flag to indicate the variable is not
+    //     index.Valid = false; // reset the flag to indicate the variable is
+    //     not
     //                          // valid after the "endstep" call
     // }
 
@@ -351,7 +352,8 @@ void BP4Serializer::ResetAllIndices()
     //     const size_t headersize = 15 + 8 + attributesName.size();
     //     index.Buffer.resize(headersize);
     //     index.Count = 0;
-    //     index.Valid = false; // reset the flag to indicate the variable is not
+    //     index.Valid = false; // reset the flag to indicate the variable is
+    //     not
     //                          // valid after the "endstep" call
     // }
     m_MetadataSet.AttributesIndices.clear();
@@ -359,10 +361,7 @@ void BP4Serializer::ResetAllIndices()
 }
 
 /* Reset the metadata index table*/
-void BP4Serializer::ResetMetadataIndexTable()
-{
-    m_MetadataIndexTable.clear();
-}
+void BP4Serializer::ResetMetadataIndexTable() { m_MetadataIndexTable.clear(); }
 
 std::string BP4Serializer::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
@@ -437,32 +436,38 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     ProfilerStart("buffering");
     ProfilerStart("meta_sort_merge");
 
-
     AggregateCollectiveMetadataIndices(comm, bufferSTL);
 
     // auto &position = bufferSTL.m_Position;
 
     // // const uint64_t pgIndexStart =
-    // //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // //    inMetadataBuffer ? position : position +
+    // bufferSTL.m_AbsolutePosition;
     // /* save the starting position of the pgindex in the metadata file*/
     // m_MetadataSet.pgIndexStart =
-    //     inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    //     inMetadataBuffer ? position : position +
+    //     bufferSTL.m_AbsolutePosition;
     // AggregateIndex(m_MetadataSet.PGIndex, m_MetadataSet.DataPGCount, comm,
     //                bufferSTL);
 
     // // const uint64_t variablesIndexStart =
-    // //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // //    inMetadataBuffer ? position : position +
+    // bufferSTL.m_AbsolutePosition;
     // /* save the starting position of the varindex in the metadata file*/
     // m_MetadataSet.varIndexStart =
-    //     inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    //     inMetadataBuffer ? position : position +
+    //     bufferSTL.m_AbsolutePosition;
     // AggregateMergeIndex(m_MetadataSet.VarsIndices, comm, bufferSTL);
 
     // // const uint64_t attributesIndexStart =
-    // //    inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
+    // //    inMetadataBuffer ? position : position +
+    // bufferSTL.m_AbsolutePosition;
     // /* save the starting position of the attrindex in the metadata file*/
     // m_MetadataSet.attrIndexStart =
-    //     inMetadataBuffer ? position : position + bufferSTL.m_AbsolutePosition;
-    // AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL, true);
+    //     inMetadataBuffer ? position : position +
+    //     bufferSTL.m_AbsolutePosition;
+    // AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL,
+    // true);
 
     int rank;
     SMPI_Comm_rank(comm, &rank);
@@ -1401,7 +1406,7 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 }
 
 void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
-                                                  BufferSTL &outBufferSTL)
+                                                       BufferSTL &outBufferSTL)
 {
     int rank, size;
     SMPI_Comm_rank(comm, &rank);
@@ -1410,18 +1415,18 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     BufferSTL inBufferSTL;
 
     // pre-allocate with rank 0 data
-    //size_t pgCount = 0; //< tracks global PG count
+    // size_t pgCount = 0; //< tracks global PG count
     if (rank == 0)
     {
         // assumes that things are more or less balanced
         m_PGIndicesInfo.clear();
-        //m_PGRankIndices.reserve(m_MetadataSet.PGIndex.Buffer.size());
+        // m_PGRankIndices.reserve(m_MetadataSet.PGIndex.Buffer.size());
 
         m_VariableIndicesInfo.clear();
-        //m_VariableRankIndices.reserve(m_MetadataSet.VarsIndices.size());
+        // m_VariableRankIndices.reserve(m_MetadataSet.VarsIndices.size());
 
         m_AttributesIndicesInfo.clear();
-        //m_AttributesRankIndices.reserve(m_MetadataSet.AttributesIndices.size());
+        // m_AttributesRankIndices.reserve(m_MetadataSet.AttributesIndices.size());
     }
 
     auto lf_IndicesSize =
@@ -1490,80 +1495,91 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     };
 
     auto lf_LocatePGIndices =
-        [&](std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
+        [&](std::unordered_map<size_t,
+                               std::vector<std::tuple<size_t, size_t, size_t>>>
                 &pgIndicesInfo,
             const int rankSource, const std::vector<char> &serialized,
-            const size_t position, const size_t endPosition)
-    {
-        
-        size_t stepStartPosition = position;
-        size_t stepBuffersize = 0;
-        size_t pgCountPerStep = 0;
-        size_t localPosition = position;
-        uint32_t currentStep = 0;
+            const size_t position, const size_t endPosition) {
+            size_t stepStartPosition = position;
+            size_t stepBuffersize = 0;
+            size_t pgCountPerStep = 0;
+            size_t localPosition = position;
+            uint32_t currentStep = 0;
 
-        while (localPosition < endPosition)
-        {
-            size_t indexPosition = localPosition;
-            const ProcessGroupIndex header = ReadProcessGroupIndexHeader(
-                serialized, indexPosition, helper::IsLittleEndian());
-            if (header.Step == currentStep)
+            while (localPosition < endPosition)
             {
-                stepBuffersize += header.Length + 2;
-                pgCountPerStep++;
-            }
-            else
-            {
-                // found a new step
-                if (currentStep == 0)
+                size_t indexPosition = localPosition;
+                const ProcessGroupIndex header = ReadProcessGroupIndexHeader(
+                    serialized, indexPosition, helper::IsLittleEndian());
+                if (header.Step == currentStep)
                 {
-                    // start of going through a new pg buffer
-                    stepStartPosition = localPosition;
-                    stepBuffersize = header.Length + 2;
-                    pgCountPerStep = 1;
-                    currentStep = header.Step;
+                    stepBuffersize += header.Length + 2;
+                    pgCountPerStep++;
                 }
-                else 
+                else
                 {
-                    // record the pg info of previous step
-                    std::tuple<size_t, size_t, size_t> stepPGIndexTuple = std::make_tuple(pgCountPerStep, stepStartPosition, stepBuffersize);
+                    // found a new step
+                    if (currentStep == 0)
+                    {
+                        // start of going through a new pg buffer
+                        stepStartPosition = localPosition;
+                        stepBuffersize = header.Length + 2;
+                        pgCountPerStep = 1;
+                        currentStep = header.Step;
+                    }
+                    else
+                    {
+                        // record the pg info of previous step
+                        std::tuple<size_t, size_t, size_t> stepPGIndexTuple =
+                            std::make_tuple(pgCountPerStep, stepStartPosition,
+                                            stepBuffersize);
+                        auto search = pgIndicesInfo.find(currentStep);
+                        if (search == pgIndicesInfo.end())
+                        {
+                            // the time step hasn't been added to the
+                            // unordered_map, add it
+                            pgIndicesInfo.emplace(
+                                currentStep,
+                                std::vector<
+                                    std::tuple<size_t, size_t, size_t>>());
+                            pgIndicesInfo[currentStep].push_back(
+                                stepPGIndexTuple);
+                        }
+                        else
+                        {
+                            pgIndicesInfo[currentStep].push_back(
+                                stepPGIndexTuple);
+                        }
+                        stepStartPosition = localPosition;
+                        stepBuffersize = header.Length + 2;
+                        pgCountPerStep = 1;
+                        currentStep = header.Step;
+                    }
+                }
+                localPosition += header.Length + 2;
+                if (localPosition >= endPosition)
+                {
+                    // record the pg info of the last step
+                    std::tuple<size_t, size_t, size_t> stepPGIndexTuple =
+                        std::make_tuple(pgCountPerStep, stepStartPosition,
+                                        stepBuffersize);
                     auto search = pgIndicesInfo.find(currentStep);
                     if (search == pgIndicesInfo.end())
                     {
-                        // the time step hasn't been added to the unordered_map, add it
-                        pgIndicesInfo.emplace(currentStep, std::vector<std::tuple<size_t, size_t, size_t>>());
+                        // the time step hasn't been added to the unordered_map,
+                        // add it
+                        pgIndicesInfo.emplace(
+                            currentStep,
+                            std::vector<std::tuple<size_t, size_t, size_t>>());
                         pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);
                     }
                     else
                     {
-                        pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);  
+                        pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);
                     }
-                    stepStartPosition = localPosition;
-                    stepBuffersize = header.Length + 2;
-                    pgCountPerStep = 1;
-                    currentStep = header.Step;
-                }
-
-            }
-            localPosition += header.Length + 2;
-            if (localPosition >= endPosition)
-            {
-                // record the pg info of the last step
-                std::tuple<size_t, size_t, size_t> stepPGIndexTuple = std::make_tuple(pgCountPerStep, stepStartPosition, stepBuffersize);
-                auto search = pgIndicesInfo.find(currentStep);
-                if (search == pgIndicesInfo.end())
-                {
-                    // the time step hasn't been added to the unordered_map, add it
-                    pgIndicesInfo.emplace(currentStep, std::vector<std::tuple<size_t, size_t, size_t>>());
-                    pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);
-                }
-                else
-                {
-                    pgIndicesInfo[currentStep].push_back(stepPGIndexTuple);  
                 }
             }
-        }
-    };
+        };
 
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
@@ -1610,91 +1626,113 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     };
 
     auto lf_LocateVarIndices =
-        [&](std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
+        [&](std::unordered_map<
+                size_t,
+                std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
                 &indicesInfo,
             const int rankSource, const std::vector<char> &serialized,
             const size_t position, const size_t endPosition)
 
     {
-        //uint32_t currentStep = 0;
+        // uint32_t currentStep = 0;
 
         size_t localPosition = position;
         while (localPosition < endPosition)
         {
-            //std::cout << "var localPosition: " << localPosition << std::endl;
+            // std::cout << "var localPosition: " << localPosition << std::endl;
             size_t indexPosition = localPosition;
             const ElementIndexHeader header = ReadElementIndexHeader(
                 serialized, indexPosition, helper::IsLittleEndian());
-            
-            //std::cout << "var indexPosition after ReadElementIndexHeader: " << indexPosition << std::endl;
+
+            // std::cout << "var indexPosition after ReadElementIndexHeader: "
+            // << indexPosition << std::endl;
 
             uint8_t count = 0;
             uint32_t length = 0;
             uint32_t timeStep = 0;
 
-            lf_GetCharacteristics(serialized, indexPosition,
-                                              header.DataType, count, length,
-                                              timeStep);    
+            lf_GetCharacteristics(serialized, indexPosition, header.DataType,
+                                  count, length, timeStep);
 
-            //std::cout << "timeStep: " << timeStep << ", " << "header.Name: " << header.Name << ", " << "header.Length: " << header.Length << ", " << "header.CharacteristicsSetsCount: " << header.CharacteristicsSetsCount << std::endl;
+            // std::cout << "timeStep: " << timeStep << ", " << "header.Name: "
+            // << header.Name << ", " << "header.Length: " << header.Length << ",
+            // " << "header.CharacteristicsSetsCount: " <<
+            // header.CharacteristicsSetsCount << std::endl;
             size_t varIndexBufferSize = static_cast<size_t>(header.Length) + 4;
-            //std::cout << "varIndexBufferSize: " << varIndexBufferSize << std::endl;
+            // std::cout << "varIndexBufferSize: " << varIndexBufferSize <<
+            // std::endl;
 
             auto stepSearch = indicesInfo.find(timeStep);
             if (stepSearch == indicesInfo.end())
             {
-                //std::cout << "didn't find step " << timeStep << std::endl;
+                // std::cout << "didn't find step " << timeStep << std::endl;
                 // the time step hasn't been added to the unordered_map, add it
-                std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>> varIndexInfo;
-                varIndexInfo.emplace(header.Name, std::vector<std::tuple<size_t, size_t>>());
-                std::tuple<size_t, size_t> varIndexTuple = std::make_tuple(localPosition, varIndexBufferSize);
+                std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>
+                    varIndexInfo;
+                varIndexInfo.emplace(header.Name,
+                                     std::vector<std::tuple<size_t, size_t>>());
+                std::tuple<size_t, size_t> varIndexTuple =
+                    std::make_tuple(localPosition, varIndexBufferSize);
                 varIndexInfo[header.Name].push_back(varIndexTuple);
                 indicesInfo.emplace(timeStep, varIndexInfo);
-                //std::cout << std::get<0>(indicesInfo[timeStep][header.Name][rankSource]) << ", " << std::get<1>(indicesInfo[timeStep][header.Name][rankSource]) << std::endl;
+                // std::cout <<
+                // std::get<0>(indicesInfo[timeStep][header.Name][rankSource]) <<
+                // ", " <<
+                // std::get<1>(indicesInfo[timeStep][header.Name][rankSource]) <<
+                // std::endl;
                 // currentStep = timeStep;
             }
             else
             {
-                //std::cout << "found step " << timeStep << std::endl;
+                // std::cout << "found step " << timeStep << std::endl;
                 // if (timeStep == currentStep)
                 // {
                 //     auto varSearch = indicesInfo[timeStep].find(header.Name);
                 //     if (varSearch == indicesInfo[timeStep].end())
                 //     {
                 //         // found a new variable at this step
-                //         indicesInfo[timeStep].emplace(header.Name, std::vector<std::tuple<size_t, size_t>>());
-                //         std::tuple<size_t, size_t> varIndexTuple = std::make_tuple(localPosition, varIndexBufferSize);
+                //         indicesInfo[timeStep].emplace(header.Name,
+                //         std::vector<std::tuple<size_t, size_t>>());
+                //         std::tuple<size_t, size_t> varIndexTuple =
+                //         std::make_tuple(localPosition, varIndexBufferSize);
                 //         indicesInfo[timeStep][header.Name].push_back(varIndexTuple);
 
                 //     }
                 //     else
                 //     {
-                //         // found new block of the same variable at the same step
-                //         std::get<1>(indicesInfo[timeStep][header.Name].back()) += varIndexBufferSize;
+                //         // found new block of the same variable at the same
+                //         step
+                //         std::get<1>(indicesInfo[timeStep][header.Name].back())
+                //         += varIndexBufferSize;
                 //     }
                 // }
-                // else 
+                // else
                 // {
-                    // found a new step of a new rank
+                // found a new step of a new rank
                 auto varSearch = indicesInfo[timeStep].find(header.Name);
                 if (varSearch == indicesInfo[timeStep].end())
                 {
-                    //std::cout << "didn't find var " << header.Name << std::endl;
+                    // std::cout << "didn't find var " << header.Name <<
+                    // std::endl;
                     // found a new variable at this step
-                    indicesInfo[timeStep].emplace(header.Name, std::vector<std::tuple<size_t, size_t>>());
-                    std::tuple<size_t, size_t> varIndexTuple = std::make_tuple(localPosition, varIndexBufferSize);
+                    indicesInfo[timeStep].emplace(
+                        header.Name, std::vector<std::tuple<size_t, size_t>>());
+                    std::tuple<size_t, size_t> varIndexTuple =
+                        std::make_tuple(localPosition, varIndexBufferSize);
                     indicesInfo[timeStep][header.Name].push_back(varIndexTuple);
-
                 }
                 else
                 {
-                    //std::cout << "found var " << header.Name << std::endl;
-                    // variable already exists, insert the location info of this variable for this rank
-                    std::tuple<size_t, size_t> varIndexTuple = std::make_tuple(localPosition, varIndexBufferSize);
-                    indicesInfo[timeStep][header.Name].push_back(varIndexTuple);                    
-                    // currentStep = timeStep;                   
+                    // std::cout << "found var " << header.Name << std::endl;
+                    // variable already exists, insert the location info of this
+                    // variable for this rank
+                    std::tuple<size_t, size_t> varIndexTuple =
+                        std::make_tuple(localPosition, varIndexBufferSize);
+                    indicesInfo[timeStep][header.Name].push_back(varIndexTuple);
+                    // currentStep = timeStep;
                 }
-                      
             }
 
             localPosition += varIndexBufferSize;
@@ -1702,92 +1740,115 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     };
 
     auto lf_LocateAttrIndices =
-        [&](std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
+        [&](std::unordered_map<
+                size_t,
+                std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
                 &indicesInfo,
             const int rankSource, const std::vector<char> &serialized,
             const size_t position, const size_t endPosition)
 
     {
-        //uint32_t currentStep = 0;
+        // uint32_t currentStep = 0;
 
         size_t localPosition = position;
         while (localPosition < endPosition)
         {
-            //std::cout << "attr localPosition: " << localPosition << std::endl;
+            // std::cout << "attr localPosition: " << localPosition <<
+            // std::endl;
             size_t indexPosition = localPosition;
             const ElementIndexHeader header = ReadElementIndexHeader(
                 serialized, indexPosition, helper::IsLittleEndian());
 
-            //std::cout << "attr indexPosition after ReadElementIndexHeader: " << indexPosition << std::endl;
+            // std::cout << "attr indexPosition after ReadElementIndexHeader: "
+            // << indexPosition << std::endl;
 
             uint8_t count = 0;
             uint32_t length = 0;
             uint32_t timeStep = 0;
 
-            lf_GetCharacteristics(serialized, indexPosition,
-                                              header.DataType, count, length,
-                                              timeStep);    
+            lf_GetCharacteristics(serialized, indexPosition, header.DataType,
+                                  count, length, timeStep);
             if (indicesInfo[timeStep][header.Name].size() == 1)
             {
                 return;
             }
 
-            //std::cout << "timeStep: " << timeStep << ", " << "header.Name: " << header.Name << ", " << "header.Length: " << header.Length << std::endl;
+            // std::cout << "timeStep: " << timeStep << ", " << "header.Name: "
+            // << header.Name << ", " << "header.Length: " << header.Length <<
+            // std::endl;
             size_t attrIndexBufferSize = static_cast<size_t>(header.Length) + 4;
-            //std::cout << "attrIndexBufferSize: " << attrIndexBufferSize << std::endl;
+            // std::cout << "attrIndexBufferSize: " << attrIndexBufferSize <<
+            // std::endl;
 
             auto stepSearch = indicesInfo.find(timeStep);
             if (stepSearch == indicesInfo.end())
             {
                 // the time step hasn't been added to the unordered_map, add it
-                std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>> attrIndexInfo;
-                attrIndexInfo.emplace(header.Name, std::vector<std::tuple<size_t, size_t>>());
-                std::tuple<size_t, size_t> attrIndexTuple = std::make_tuple(localPosition, attrIndexBufferSize);
+                std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>
+                    attrIndexInfo;
+                attrIndexInfo.emplace(
+                    header.Name, std::vector<std::tuple<size_t, size_t>>());
+                std::tuple<size_t, size_t> attrIndexTuple =
+                    std::make_tuple(localPosition, attrIndexBufferSize);
                 attrIndexInfo[header.Name].push_back(attrIndexTuple);
                 indicesInfo.emplace(timeStep, attrIndexInfo);
-                //std::cout << std::get<0>(indicesInfo[timeStep][header.Name][rankSource]) << ", " << std::get<1>(indicesInfo[timeStep][header.Name][rankSource]) << std::endl;
-                //currentStep = timeStep;
+                // std::cout <<
+                // std::get<0>(indicesInfo[timeStep][header.Name][rankSource]) <<
+                // ", " <<
+                // std::get<1>(indicesInfo[timeStep][header.Name][rankSource]) <<
+                // std::endl; currentStep = timeStep;
             }
             else
             {
                 // if (timeStep == currentStep)
                 // {
-                //     auto attrSearch = indicesInfo[timeStep].find(header.Name);
-                //     if (attrSearch == indicesInfo[timeStep].end())
+                //     auto attrSearch =
+                //     indicesInfo[timeStep].find(header.Name); if (attrSearch
+                //     == indicesInfo[timeStep].end())
                 //     {
                 //         // found a new attribute at this step
-                //         indicesInfo[timeStep].emplace(header.Name, std::vector<std::tuple<size_t, size_t>>());
-                //         std::tuple<size_t, size_t> attrIndexTuple = std::make_tuple(localPosition, attrIndexBufferSize);
+                //         indicesInfo[timeStep].emplace(header.Name,
+                //         std::vector<std::tuple<size_t, size_t>>());
+                //         std::tuple<size_t, size_t> attrIndexTuple =
+                //         std::make_tuple(localPosition, attrIndexBufferSize);
                 //         indicesInfo[timeStep][header.Name].push_back(attrIndexTuple);
 
                 //     }
                 //     else
                 //     {
-                //         // found new block of the same attribute at the same step
-                //         std::get<1>(indicesInfo[timeStep][header.Name].back()) += attrIndexBufferSize;
+                //         // found new block of the same attribute at the same
+                //         step
+                //         std::get<1>(indicesInfo[timeStep][header.Name].back())
+                //         += attrIndexBufferSize;
                 //     }
                 // }
-                // else 
+                // else
                 // {
-                    // found a new step of a new rank
+                // found a new step of a new rank
                 auto attrSearch = indicesInfo[timeStep].find(header.Name);
                 if (attrSearch == indicesInfo[timeStep].end())
                 {
                     // found a new attribute at this step
-                    indicesInfo[timeStep].emplace(header.Name, std::vector<std::tuple<size_t, size_t>>());
-                    std::tuple<size_t, size_t> attrIndexTuple = std::make_tuple(localPosition, attrIndexBufferSize);
-                    indicesInfo[timeStep][header.Name].push_back(attrIndexTuple);
-
+                    indicesInfo[timeStep].emplace(
+                        header.Name, std::vector<std::tuple<size_t, size_t>>());
+                    std::tuple<size_t, size_t> attrIndexTuple =
+                        std::make_tuple(localPosition, attrIndexBufferSize);
+                    indicesInfo[timeStep][header.Name].push_back(
+                        attrIndexTuple);
                 }
                 else
                 {
-                    // attribute already exists, insert the location info of this attribute for this rank
-                    std::tuple<size_t, size_t> attrIndexTuple = std::make_tuple(localPosition, attrIndexBufferSize);
-                    indicesInfo[timeStep][header.Name].push_back(attrIndexTuple);
-                } 
-                    //currentStep = timeStep;                   
+                    // attribute already exists, insert the location info of
+                    // this attribute for this rank
+                    std::tuple<size_t, size_t> attrIndexTuple =
+                        std::make_tuple(localPosition, attrIndexBufferSize);
+                    indicesInfo[timeStep][header.Name].push_back(
+                        attrIndexTuple);
+                }
+                // currentStep = timeStep;
                 //}
-                      
             }
 
             localPosition += attrIndexBufferSize;
@@ -1802,22 +1863,28 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         const size_t rankIndicesSize = headerInfo[0];
         const size_t variablesIndexOffset = headerInfo[1] + position;
         const size_t attributesIndexOffset = headerInfo[2] + position;
-        //pgCount += headerInfo[3];
-        //std::cout << "rankIndicesSize: " << rankIndicesSize << ", " << "variablesIndexOffset: " << variablesIndexOffset << ", " << "attributesIndexOffset: " << attributesIndexOffset << std::endl;
+        // pgCount += headerInfo[3];
+        // std::cout << "rankIndicesSize: " << rankIndicesSize << ", " <<
+        // "variablesIndexOffset: " << variablesIndexOffset << ", " <<
+        // "attributesIndexOffset: " << attributesIndexOffset << std::endl;
         size_t localPosition = position + 36;
 
         const size_t pgIndexLength = variablesIndexOffset - localPosition;
         size_t endPosition = variablesIndexOffset;
         // first deserialize pg indices
         lf_LocatePGIndices(m_PGIndicesInfo, rankSource, serialized,
-                              localPosition, endPosition);
+                           localPosition, endPosition);
         // for (auto const& pair: m_PGIndicesInfo)
         // {
-        //     std::cout << "rank " << rankSource << ", step " << pair.first << ": " << std::get<0>(pair.second[rankSource]) << ", " << std::get<1>(pair.second[rankSource]) << ", " << std::get<2>(pair.second[rankSource]) << std::endl;
+        //     std::cout << "rank " << rankSource << ", step " << pair.first <<
+        //     ": " << std::get<0>(pair.second[rankSource]) << ", " <<
+        //     std::get<1>(pair.second[rankSource]) << ", " <<
+        //     std::get<2>(pair.second[rankSource]) << std::endl;
         // }
         // {
         //     std::lock_guard<std::mutex> lock(m_Mutex);
-        //     helper::InsertToBuffer(m_PGRankIndices, &serialized[localPosition],
+        //     helper::InsertToBuffer(m_PGRankIndices,
+        //     &serialized[localPosition],
         //                            pgIndexLength);
         // }
 
@@ -1826,14 +1893,16 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         endPosition = attributesIndexOffset;
 
         lf_LocateVarIndices(m_VariableIndicesInfo, rankSource, serialized,
-                              localPosition, endPosition);
+                            localPosition, endPosition);
 
         // for (auto const& pair: m_VariableIndicesInfo)
         // {
-        //     std::cout << "rank " << rankSource << ", step " << pair.first << ": " << std::endl;
-        //     for (auto const& subpair: pair.second)
+        //     std::cout << "rank " << rankSource << ", step " << pair.first <<
+        //     ": " << std::endl; for (auto const& subpair: pair.second)
         //     {
-        //         std::cout << "    " << subpair.first << ": " << std::get<0>(subpair.second[rankSource]) << ", " << std::get<1>(subpair.second[rankSource]) << std::endl;
+        //         std::cout << "    " << subpair.first << ": " <<
+        //         std::get<0>(subpair.second[rankSource]) << ", " <<
+        //         std::get<1>(subpair.second[rankSource]) << std::endl;
         //     }
 
         // }
@@ -1843,7 +1912,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         endPosition = rankIndicesSize + 4 + position;
         // attributes are constant and unique across ranks
         lf_LocateAttrIndices(m_AttributesIndicesInfo, rankSource, serialized,
-                              localPosition, endPosition);
+                             localPosition, endPosition);
 
         // for (auto const& pair: m_AttributesIndicesInfo)
         // {
@@ -1851,23 +1920,35 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         //     for (auto const& subpair: pair.second)
         //     {
         //         std::cout << "    " << subpair.second.size() << std::endl;
-        //         std::cout << "    " << subpair.first << ": " << std::get<0>(subpair.second[0]) << ", " << std::get<1>(subpair.second[0]) << std::endl;
+        //         std::cout << "    " << subpair.first << ": " <<
+        //         std::get<0>(subpair.second[0]) << ", " <<
+        //         std::get<1>(subpair.second[0]) << std::endl;
         //     }
         // }
     };
 
     auto lf_SortMergeIndices =
-        [&](const std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
-                &pgIndicesInfo, const std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
-                &varIndicesInfo, const std::unordered_map<size_t, std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>>>
-                &attrIndicesInfo, const std::vector<char> &serialized) {
+        [&](const std::unordered_map<
+                size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
+                &pgIndicesInfo,
+            const std::unordered_map<
+                size_t,
+                std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
+                &varIndicesInfo,
+            const std::unordered_map<
+                size_t,
+                std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
+                &attrIndicesInfo,
+            const std::vector<char> &serialized) {
             auto &position = outBufferSTL.m_Position;
             auto &buffer = outBufferSTL.m_Buffer;
 
             size_t totalStep = pgIndicesInfo.size();
             std::vector<size_t> timeSteps;
             timeSteps.reserve(pgIndicesInfo.size());
-            for (auto const& pair: pgIndicesInfo)
+            for (auto const &pair : pgIndicesInfo)
             {
                 timeSteps.push_back(pair.first);
             }
@@ -1875,128 +1956,171 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
             m_MetadataIndexTable[rank] = {};
             for (auto t : timeSteps)
             {
-                //std::cout << t << std::endl;
-                //std::cout << "step " << t << ": " << std::endl;
+                // std::cout << t << std::endl;
+                // std::cout << "step " << t << ": " << std::endl;
                 std::vector<uint64_t> ptrs;
-                //std::cout << "position: " << position << std::endl;
+                // std::cout << "position: " << position << std::endl;
 
                 const uint64_t pgIndexStart = position;
                 ptrs.push_back(pgIndexStart);
-                std::vector<std::tuple<size_t, size_t, size_t>> perStepPGIndicesInfo = pgIndicesInfo.at(t);   
+                std::vector<std::tuple<size_t, size_t, size_t>>
+                    perStepPGIndicesInfo = pgIndicesInfo.at(t);
                 size_t perStepPGCountPosition = position;
-                position += 16; // skip the pgcount and pglength             
+                position += 16; // skip the pgcount and pglength
                 uint64_t perStepPGCountU64 = 0;
-                //std::cout << "  pg index counts & locations: " << std::endl;
-                for (auto & item : perStepPGIndicesInfo)
+                // std::cout << "  pg index counts & locations: " << std::endl;
+                for (auto &item : perStepPGIndicesInfo)
                 {
-                    //std::cout << "    " << std::get<0>(item) << ", " << std::get<1>(item) << ", " << std::get<2>(item) << std::endl;
+                    // std::cout << "    " << std::get<0>(item) << ", " <<
+                    // std::get<1>(item) << ", " << std::get<2>(item) <<
+                    // std::endl;
                     size_t start = std::get<1>(item);
                     size_t length = std::get<2>(item);
-                    std::copy(serialized.begin()+start, serialized.begin()+start+length, buffer.begin()+position);
+                    std::copy(serialized.begin() + start,
+                              serialized.begin() + start + length,
+                              buffer.begin() + position);
                     position += length;
                     perStepPGCountU64 += std::get<0>(item);
                 }
-                uint64_t perStepPGLengthU64 = position-perStepPGCountPosition-16;
-                helper::CopyToBuffer(buffer, perStepPGCountPosition, &perStepPGCountU64);
-                helper::CopyToBuffer(buffer, perStepPGCountPosition, &perStepPGLengthU64);                
-                // std::cout << "  pg count at this step: " << perStepPGCountU64 << std::endl;
-                // std::cout << "position: " << position << std::endl;
+                uint64_t perStepPGLengthU64 =
+                    position - perStepPGCountPosition - 16;
+                helper::CopyToBuffer(buffer, perStepPGCountPosition,
+                                     &perStepPGCountU64);
+                helper::CopyToBuffer(buffer, perStepPGCountPosition,
+                                     &perStepPGLengthU64);
+                // std::cout << "  pg count at this step: " << perStepPGCountU64
+                // << std::endl; std::cout << "position: " << position <<
+                // std::endl;
 
                 const uint64_t variablesIndexStart = position;
                 ptrs.push_back(variablesIndexStart);
                 if (!varIndicesInfo.empty())
                 {
 
-                    std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>> perStepVarIndicesInfo = varIndicesInfo.at(t);
+                    std::unordered_map<std::string,
+                                       std::vector<std::tuple<size_t, size_t>>>
+                        perStepVarIndicesInfo = varIndicesInfo.at(t);
                     size_t perStepVarCountPosition = position;
-                    const uint32_t perStepVarCountU32 = static_cast<uint32_t>(perStepVarIndicesInfo.size());
-                    helper::CopyToBuffer(buffer, perStepVarCountPosition, &perStepVarCountU32);
+                    const uint32_t perStepVarCountU32 =
+                        static_cast<uint32_t>(perStepVarIndicesInfo.size());
+                    helper::CopyToBuffer(buffer, perStepVarCountPosition,
+                                         &perStepVarCountU32);
                     position += 12; // skip for count and length
-                    //std::cout << "  var index locations: " << std::endl;
-                    for (auto const& pair: perStepVarIndicesInfo)
+                    // std::cout << "  var index locations: " << std::endl;
+                    for (auto const &pair : perStepVarIndicesInfo)
                     {
-                        //std::cout << "    " << pair.first << ": " << std::endl;
+                        // std::cout << "    " << pair.first << ": " <<
+                        // std::endl;
                         const size_t entryLengthPosition = position;
-                        size_t headerStartPosition = std::get<0>(pair.second[0]);
+                        size_t headerStartPosition =
+                            std::get<0>(pair.second[0]);
                         size_t localPosition = headerStartPosition;
-                        //std::cout << "    " << entryLengthPosition << ", " << headerStartPosition << std::endl;
-                        ElementIndexHeader header = ReadElementIndexHeader(serialized, localPosition);
-                        size_t headerSize = localPosition-headerStartPosition;
-                        //std::cout << "    " << headerSize << std::endl;
+                        // std::cout << "    " << entryLengthPosition << ", " <<
+                        // headerStartPosition << std::endl;
+                        ElementIndexHeader header =
+                            ReadElementIndexHeader(serialized, localPosition);
+                        size_t headerSize = localPosition - headerStartPosition;
+                        // std::cout << "    " << headerSize << std::endl;
                         position += headerSize; // skip the header
                         uint64_t setsCount = 0;
-                        for (auto & item :pair.second)
+                        for (auto &item : pair.second)
                         {
-                            //std::cout << "      " << std::get<0>(item) << ", " << std::get<1>(item) << std::endl;
+                            // std::cout << "      " << std::get<0>(item) << ",
+                            // " << std::get<1>(item) << std::endl;
                             size_t start = std::get<0>(item);
-                            size_t length = std::get<1>(item); 
-                            std::copy(serialized.begin()+start+headerSize, serialized.begin()+start+length, buffer.begin()+position);
-                            position += length-headerSize;     
-                            setsCount++;                                                  
+                            size_t length = std::get<1>(item);
+                            std::copy(serialized.begin() + start + headerSize,
+                                      serialized.begin() + start + length,
+                                      buffer.begin() + position);
+                            position += length - headerSize;
+                            setsCount++;
                         }
-                        const uint32_t entryLength =
-                            static_cast<uint32_t>(position - entryLengthPosition - 4);
+                        const uint32_t entryLength = static_cast<uint32_t>(
+                            position - entryLengthPosition - 4);
                         size_t backPosition = entryLengthPosition;
-                        helper::CopyToBuffer(buffer, backPosition, &entryLength);
-                        helper::CopyToBuffer(buffer, backPosition, &serialized[headerStartPosition+4], headerSize - 8 - 4);
+                        helper::CopyToBuffer(buffer, backPosition,
+                                             &entryLength);
+                        helper::CopyToBuffer(
+                            buffer, backPosition,
+                            &serialized[headerStartPosition + 4],
+                            headerSize - 8 - 4);
                         helper::CopyToBuffer(buffer, backPosition, &setsCount);
-
                     }
-                    const uint64_t perStepVarLengthU64 = static_cast<uint64_t>(position - perStepVarCountPosition - 8); 
-                    helper::CopyToBuffer(buffer, perStepVarCountPosition, &perStepVarLengthU64);
+                    const uint64_t perStepVarLengthU64 = static_cast<uint64_t>(
+                        position - perStepVarCountPosition - 8);
+                    helper::CopyToBuffer(buffer, perStepVarCountPosition,
+                                         &perStepVarLengthU64);
                 }
                 else
                 {
                     size_t perStepVarCountPosition = position;
-                    const uint32_t perStepVarCountU32 = static_cast<uint32_t>(0);
-                    helper::CopyToBuffer(buffer, perStepVarCountPosition, &perStepVarCountU32);
-                    const uint64_t perStepVarLengthU64 = static_cast<uint64_t>(0); 
-                    helper::CopyToBuffer(buffer, perStepVarCountPosition, &perStepVarLengthU64);
+                    const uint32_t perStepVarCountU32 =
+                        static_cast<uint32_t>(0);
+                    helper::CopyToBuffer(buffer, perStepVarCountPosition,
+                                         &perStepVarCountU32);
+                    const uint64_t perStepVarLengthU64 =
+                        static_cast<uint64_t>(0);
+                    helper::CopyToBuffer(buffer, perStepVarCountPosition,
+                                         &perStepVarLengthU64);
                     position += 12; // skip for count and length
                 }
 
-                //std::cout << "position: " << position << std::endl;
+                // std::cout << "position: " << position << std::endl;
                 const uint64_t attributesIndexStart = position;
                 ptrs.push_back(attributesIndexStart);
 
                 if (!attrIndicesInfo.empty())
                 {
-                    std::unordered_map<std::string, std::vector<std::tuple<size_t, size_t>>> perStepAttrIndicesInfo = attrIndicesInfo.at(t);
+                    std::unordered_map<std::string,
+                                       std::vector<std::tuple<size_t, size_t>>>
+                        perStepAttrIndicesInfo = attrIndicesInfo.at(t);
                     size_t perStepAttrCountPosition = position;
-                    const uint32_t perStepAttrCountU32 = static_cast<uint32_t>(perStepAttrIndicesInfo.size());
-                    helper::CopyToBuffer(buffer, perStepAttrCountPosition, &perStepAttrCountU32);
+                    const uint32_t perStepAttrCountU32 =
+                        static_cast<uint32_t>(perStepAttrIndicesInfo.size());
+                    helper::CopyToBuffer(buffer, perStepAttrCountPosition,
+                                         &perStepAttrCountU32);
                     position += 12; // skip for length
-                    //std::cout << "  attr index locations: " << std::endl;
-                    for (auto const& pair: perStepAttrIndicesInfo)
+                    // std::cout << "  attr index locations: " << std::endl;
+                    for (auto const &pair : perStepAttrIndicesInfo)
                     {
-                        //std::cout << "    " << pair.first << ": " << std::endl;
-                        for (auto & item :pair.second)
+                        // std::cout << "    " << pair.first << ": " <<
+                        // std::endl;
+                        for (auto &item : pair.second)
                         {
-                            //std::cout << "      " << std::get<0>(item) << ", " << std::get<1>(item) << std::endl;
+                            // std::cout << "      " << std::get<0>(item) << ",
+                            // " << std::get<1>(item) << std::endl;
                             size_t start = std::get<0>(item);
-                            size_t length = std::get<1>(item); 
-                            std::copy(serialized.begin()+start, serialized.begin()+start+length, buffer.begin()+position);
-                            position += length; 
+                            size_t length = std::get<1>(item);
+                            std::copy(serialized.begin() + start,
+                                      serialized.begin() + start + length,
+                                      buffer.begin() + position);
+                            position += length;
                         }
                     }
-                    const uint64_t perStepAttrLengthU64 = static_cast<uint64_t>(position - perStepAttrCountPosition - 8); 
-                    helper::CopyToBuffer(buffer, perStepAttrCountPosition, &perStepAttrLengthU64);
+                    const uint64_t perStepAttrLengthU64 = static_cast<uint64_t>(
+                        position - perStepAttrCountPosition - 8);
+                    helper::CopyToBuffer(buffer, perStepAttrCountPosition,
+                                         &perStepAttrLengthU64);
                 }
                 else
                 {
                     size_t perStepAttrCountPosition = position;
-                    const uint32_t perStepAttrCountU32 = static_cast<uint32_t>(0);
-                    helper::CopyToBuffer(buffer, perStepAttrCountPosition, &perStepAttrCountU32);
-                    const uint64_t perStepAttrLengthU64 = static_cast<uint64_t>(0); 
-                    helper::CopyToBuffer(buffer, perStepAttrCountPosition, &perStepAttrLengthU64);
+                    const uint32_t perStepAttrCountU32 =
+                        static_cast<uint32_t>(0);
+                    helper::CopyToBuffer(buffer, perStepAttrCountPosition,
+                                         &perStepAttrCountU32);
+                    const uint64_t perStepAttrLengthU64 =
+                        static_cast<uint64_t>(0);
+                    helper::CopyToBuffer(buffer, perStepAttrCountPosition,
+                                         &perStepAttrLengthU64);
                     position += 12; // skip for count and length
                 }
 
-                //std::cout << "position: " << position << std::endl;
+                // std::cout << "position: " << position << std::endl;
                 const uint64_t currentStepEndPos = position;
                 ptrs.push_back(currentStepEndPos);
                 m_MetadataIndexTable[rank][t] = ptrs;
-                //std::cout << "flag!" << std::endl;
+                // std::cout << "flag!" << std::endl;
             }
 
             // size_t countPosition = position;
@@ -2019,7 +2143,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     lf_SerializeAllIndices(comm, rank); // Set m_SerializedIndices
 
     // use bufferSTL (will resize) to GatherV
-    //const size_t extraSize = 16 + 12 + 12 + m_MetadataSet.MiniFooterSize;
+    // const size_t extraSize = 16 + 12 + 12 + m_MetadataSet.MiniFooterSize;
 
     helper::GathervVectors(m_SerializedIndices, inBufferSTL.m_Buffer,
                            inBufferSTL.m_Position, comm, 0, 0);
@@ -2051,7 +2175,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
                 }
 
                 lf_LocateAllIndices(rankSource, headerInfo, serialized,
-                                         serializedPosition);
+                                    serializedPosition);
                 serializedPosition += headerInfo[0] + 4;
             }
         }
@@ -2065,22 +2189,25 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         auto &buffer = outBufferSTL.m_Buffer;
         const std::vector<char> &serialized = inBufferSTL.m_Buffer;
 
-        // std::cout << "serialized buffer size: " << serialized.size() << std::endl;
-        // std::cout << "position in serialized buffer: " << inBufferSTL.m_Position << std::endl;
-        //buffer.reserve(serialized.size());
-        //buffer.resize(serialized.size());
+        // std::cout << "serialized buffer size: " << serialized.size() <<
+        // std::endl; std::cout << "position in serialized buffer: " <<
+        // inBufferSTL.m_Position << std::endl;
+        // buffer.reserve(serialized.size());
+        // buffer.resize(serialized.size());
 
         size_t totalStep = m_PGIndicesInfo.size();
         size_t perStepExtraSize = 16 + 12 + 12;
-        const size_t totalExtraSize = totalStep*perStepExtraSize;
-        // std::cout << outBufferSTL.m_Position+inBufferSTL.m_Position+totalExtraSize << std::endl;
-        buffer.reserve(outBufferSTL.m_Position+inBufferSTL.m_Position+totalExtraSize);
-        buffer.resize(outBufferSTL.m_Position+inBufferSTL.m_Position+totalExtraSize);
-        lf_SortMergeIndices(m_PGIndicesInfo, m_VariableIndicesInfo, m_AttributesIndicesInfo, serialized);
-
-
+        const size_t totalExtraSize = totalStep * perStepExtraSize;
+        // std::cout <<
+        // outBufferSTL.m_Position+inBufferSTL.m_Position+totalExtraSize <<
+        // std::endl;
+        buffer.reserve(outBufferSTL.m_Position + inBufferSTL.m_Position +
+                       totalExtraSize);
+        buffer.resize(outBufferSTL.m_Position + inBufferSTL.m_Position +
+                      totalExtraSize);
+        lf_SortMergeIndices(m_PGIndicesInfo, m_VariableIndicesInfo,
+                            m_AttributesIndicesInfo, serialized);
     }
-
 }
 
 /* Merge and serialize all the indices at each step */

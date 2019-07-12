@@ -394,11 +394,10 @@ void BP4Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
                          &characteristicsLength); // length
 
     // Remember this attribute and its serialized piece
-    const uint32_t indexLength = static_cast<uint32_t>(
-        buffer.size() - indexLengthPosition - 4);
+    const uint32_t indexLength =
+        static_cast<uint32_t>(buffer.size() - indexLengthPosition - 4);
 
-    helper::CopyToBuffer(buffer, indexLengthPosition,
-                        &indexLength); 
+    helper::CopyToBuffer(buffer, indexLengthPosition, &indexLength);
     m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
     m_SerializedAttributes.emplace(attribute.m_Name);
 }
@@ -604,7 +603,8 @@ void BP4Serializer::PutVariableMetadataInIndex(
 {
     auto &buffer = index.Buffer;
 
-    if (index.CurrentStep != stats.Step) // create a new variable header for a new step
+    if (index.CurrentStep !=
+        stats.Step) // create a new variable header for a new step
     {
         size_t indexLengthPosition = buffer.size();
         index.currentHeaderPosition = buffer.size();
@@ -626,12 +626,11 @@ void BP4Serializer::PutVariableMetadataInIndex(
         index.LastUpdatedPosition = buffer.size();
 
         PutVariableCharacteristics(variable, blockInfo, stats, buffer);
-        const uint32_t indexLength = static_cast<uint32_t>(
-            buffer.size() - indexLengthPosition - 4);
+        const uint32_t indexLength =
+            static_cast<uint32_t>(buffer.size() - indexLengthPosition - 4);
 
-        helper::CopyToBuffer(buffer, indexLengthPosition,
-                             &indexLength); 
-        
+        helper::CopyToBuffer(buffer, indexLengthPosition, &indexLength);
+
         index.CurrentStep = stats.Step;
     }
     else // update characteristics sets length and count
@@ -644,16 +643,19 @@ void BP4Serializer::PutVariableMetadataInIndex(
                 buffer.size() - currentIndexStartPosition);
 
             size_t localPosition = index.currentHeaderPosition;
-            uint32_t preIndexLength = helper::ReadValue<uint32_t>(buffer, localPosition, helper::IsLittleEndian());
+            uint32_t preIndexLength = helper::ReadValue<uint32_t>(
+                buffer, localPosition, helper::IsLittleEndian());
 
-            uint32_t newIndexLength = preIndexLength+currentIndexLength;
+            uint32_t newIndexLength = preIndexLength + currentIndexLength;
 
-            localPosition = index.currentHeaderPosition; // back to beginning of the header
+            localPosition =
+                index.currentHeaderPosition; // back to beginning of the header
             helper::CopyToBuffer(buffer, localPosition, &newIndexLength);
 
             ++index.Count;
             // fixed since group and path are not printed
-            size_t setsCountPosition = index.currentHeaderPosition + 15 + variable.m_Name.size();
+            size_t setsCountPosition =
+                index.currentHeaderPosition + 15 + variable.m_Name.size();
             helper::CopyToBuffer(buffer, setsCountPosition, &index.Count);
         }
     }
@@ -681,7 +683,7 @@ void BP4Serializer::PutVariableMetadataInIndex(
     //     buffer.size() - indexLengthPosition - 4);
 
     // helper::CopyToBuffer(buffer, indexLengthPosition,
-    //                      &indexLength); 
+    //                      &indexLength);
 }
 
 template <class T>
