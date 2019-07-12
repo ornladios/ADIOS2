@@ -171,8 +171,8 @@ void BroadcastVector(std::vector<size_t> &vector, MPI_Comm mpiComm,
     {
         SMPI_Bcast(buffer, static_cast<int>(blockSize), ADIOS2_MPI_SIZE_T,
                    rankSource, mpiComm);
-        buffer += blockSize * sizeof(size_t);
-        inputSize -= blockSize * sizeof(size_t);
+        buffer += blockSize;
+        inputSize -= blockSize;
         blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
     }
 }
