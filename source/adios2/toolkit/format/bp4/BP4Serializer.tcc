@@ -325,7 +325,8 @@ void BP4Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     SerialElementIndex index(stats.MemberID);
     auto &buffer = index.Buffer;
 
-    index.Valid = true; // when the attribute is put, set this flag to true
+    // index.Valid = true; // when the attribute is put, set this flag to true
+    size_t indexLengthPosition = buffer.size();
 
     buffer.insert(buffer.end(), 4, '\0'); // skip attribute length (4)
     helper::InsertToBuffer(buffer, &stats.MemberID);
@@ -393,6 +394,11 @@ void BP4Serializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
                          &characteristicsLength); // length
 
     // Remember this attribute and its serialized piece
+    const uint32_t indexLength = static_cast<uint32_t>(
+        buffer.size() - indexLengthPosition - 4);
+
+    helper::CopyToBuffer(buffer, indexLengthPosition,
+                        &indexLength); 
     m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
     m_SerializedAttributes.emplace(attribute.m_Name);
 }
@@ -637,11 +643,13 @@ void BP4Serializer::PutVariableMetadataInIndex(
             uint32_t currentIndexLength = static_cast<uint32_t>(
                 buffer.size() - currentIndexStartPosition);
 
-            uint32_t preIndexLength = helper::ReadValue<uint32_t>(buffer, index.currentHeaderPosition, helper::IsLittleEndian());
+            size_t localPosition = index.currentHeaderPosition;
+            uint32_t preIndexLength = helper::ReadValue<uint32_t>(buffer, localPosition, helper::IsLittleEndian());
 
             uint32_t newIndexLength = preIndexLength+currentIndexLength;
 
-            helper::CopyToBuffer(buffer, index.currentHeaderPosition, &newIndexLength);
+            localPosition = index.currentHeaderPosition; // back to beginning of the header
+            helper::CopyToBuffer(buffer, localPosition, &newIndexLength);
 
             ++index.Count;
             // fixed since group and path are not printed

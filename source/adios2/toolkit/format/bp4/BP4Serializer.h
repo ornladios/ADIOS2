@@ -115,8 +115,11 @@ public:
 
     void ResetIndices();
 
-    /* Reset metadata buffer at the end of each step */
-    void ResetIndicesBuffer();
+    /* Reset all metadata indices at the end of each step */
+    void ResetAllIndices();
+
+    /* Reset metadata index table*/
+    void ResetMetadataIndexTable();
 
     /**
      * Get a string with profiling information for this rank
