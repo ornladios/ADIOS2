@@ -1033,6 +1033,7 @@ extern void SstStreamDestroy(SstStream Stream)
         {
             free(CPInfo->LastCallFreeList[i]);
         }
+        free(CPInfo->LastCallFreeList);
         free(CPInfo);
         CPInfo = NULL;
         if (CP_SstParamsList)

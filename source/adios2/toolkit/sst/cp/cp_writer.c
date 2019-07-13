@@ -1244,6 +1244,14 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
         CP_WSR_Stream->OldestUnreleasedTimestep =
             CP_WSR_Stream->LastSentTimestep + 1;
+        for (int i = 0; i < CP_WSR_Stream->ReaderCohortSize; i++)
+        {
+            if (CP_WSR_Stream->Connections[i].CMconn)
+            {
+                CMConnection_close(CP_WSR_Stream->Connections[i].CMconn);
+                CP_WSR_Stream->Connections[i].CMconn = NULL;
+            }
+        }
     }
     if (NewState == PeerFailed)
     {
