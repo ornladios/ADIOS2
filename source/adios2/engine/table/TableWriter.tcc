@@ -32,12 +32,6 @@ template <class T>
 void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
 
-    if(m_FirstPut)
-    {
-        m_FirstPut=false;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-
     if (variable.m_SingleValue)
     {
         variable.m_Shape = Dims(1, 1);
@@ -46,18 +40,20 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     }
     variable.SetData(data);
 
-    size_t total_size = std::accumulate(variable.m_Count.begin(), variable.m_Count.end(), sizeof(T), std::multiplies<size_t>());
+    size_t total_size =
+        std::accumulate(variable.m_Count.begin(), variable.m_Count.end(),
+                        sizeof(T), std::multiplies<size_t>());
     m_DataManSerializer.New(total_size + 1024);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_AllAddresses[m_MpiRank], Params());
+    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
+                               m_AllAddresses[m_MpiRank], Params());
     auto localPack = m_DataManSerializer.GetLocalPack();
 
-    auto ranks = WhichRanks(variable.m_Start, variable.m_Count);
+    auto ranks = WhatRanks(variable.m_Start, variable.m_Count);
 
-    for(const auto r : ranks)
+    for (const auto r : ranks)
     {
         m_SendStagingMan.Request(*localPack, m_AllAddresses[r]);
     }
-
 }
 
 } // end namespace engine

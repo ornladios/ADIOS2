@@ -13,6 +13,7 @@
 
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/engine/bp4/BP4Writer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/transportman/stagingman/StagingMan.h"
@@ -28,18 +29,10 @@ class TableWriter : public Engine
 {
 
 public:
-    /**
-     * Constructor for Writer
-     * @param name unique name given to the engine
-     * @param accessMode
-     * @param mpiComm
-     * @param method
-     * @param debugMode
-     */
     TableWriter(IO &adios, const std::string &name, const Mode mode,
-                   MPI_Comm mpiComm);
+                MPI_Comm mpiComm);
 
-    ~TableWriter() = default;
+    virtual ~TableWriter();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;
@@ -49,30 +42,42 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
-    int m_Verbosity = 0;
+    int m_Verbosity = 5;
     int m_CurrentStep = -1;
     int m_MpiRank;
     int m_MpiSize;
     int m_Timeout = 5;
     size_t m_RowsPerRank = 128;
     size_t m_AppID;
-    std::unordered_map<std::string, std::unordered_map<size_t, std::vector<char>>> m_AggregatorBuffers;
-    std::unordered_map<std::string, std::pair<size_t, size_t>> m_AggregatorRecord;
+    std::unordered_map<std::string, Dims> m_CountMap;
+    std::unordered_map<size_t,
+                       std::unordered_map<std::string, std::vector<char>>>
+        m_AggregatorBuffers;
+    std::unordered_map<size_t,
+                       std::unordered_map<std::string, std::vector<bool>>>
+        m_AggregatorBufferFlags;
     std::unordered_map<int, std::string> m_AllAddresses;
     int m_Port = 6789;
     int m_MaxRanksPerNode = 200;
     bool m_Listening;
     std::thread m_ReplyThread;
-    bool m_FirstPut = true;
+    int m_PutSubEngineFrequency = 100;
+    BP4Writer m_SubEngine;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     void ReplyThread();
-    void CheckFlush();
+    void PutSubEngine();
 
-    std::vector<int> WhichRanks(const Dims &start, const Dims &count);
-    int WhichRank(size_t row);
+    // Get aggregator ranks from row numbers contained in start and count
+    std::vector<int> WhatRanks(const Dims &start, const Dims &count);
+
+    // Get aggregator rank from row number
+    int WhatRank(const size_t row);
+
+    std::vector<size_t> WhatBufferIndices(const Dims &start, const Dims &count);
+    size_t WhatBufferIndex(const size_t row);
 
     format::DataManSerializer m_DataManSerializer;
     transportman::StagingMan m_SendStagingMan;

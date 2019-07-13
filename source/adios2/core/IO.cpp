@@ -569,11 +569,16 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
 #ifdef ADIOS2_HAVE_TABLE
         if (mode == Mode::Write)
-            engine = std::make_shared<engine::TableWriter>(*this, name, mode, mpiComm);
+            engine = std::make_shared<engine::TableWriter>(*this, name, mode,
+                                                           mpiComm);
         else
-            throw std::invalid_argument("ERROR: Table engine only supports Write. It uses other engines as backend. Please use corresponding engines for Read\n");
+            throw std::invalid_argument(
+                "ERROR: Table engine only supports Write. It uses other "
+                "engines as backend. Please use corresponding engines for "
+                "Read\n");
 #else
-        throw std::invalid_argument("ERROR: this version didn't compile with Table library, can't use Table engine\n");
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Table library, can't use Table engine\n");
 #endif
     }
     else if (engineTypeLC == "sst" || engineTypeLC == "effis")

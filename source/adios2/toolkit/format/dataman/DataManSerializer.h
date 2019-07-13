@@ -83,8 +83,7 @@ using DeferredRequestMapPtr = std::shared_ptr<DeferredRequestMap>;
 class DataManSerializer
 {
 public:
-    DataManSerializer(bool isRowMajor, const bool contiguousMajor,
-                      bool isLittleEndian, MPI_Comm mpiComm);
+    DataManSerializer(bool isRowMajor, const bool contiguousMajor, bool isLittleEndian, MPI_Comm mpiComm);
 
     // clear and allocate new buffer for writer
     void New(size_t size);
@@ -182,7 +181,6 @@ private:
                                 const std::string &type, const Dims &count);
 
     void JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack);
-
 
     VecPtr SerializeJson(const nlohmann::json &message);
     nlohmann::json DeserializeJson(const char *start, size_t size);
