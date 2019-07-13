@@ -1656,8 +1656,8 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
                                   count, length, timeStep);
 
             // std::cout << "timeStep: " << timeStep << ", " << "header.Name: "
-            // << header.Name << ", " << "header.Length: " << header.Length << ",
-            // " << "header.CharacteristicsSetsCount: " <<
+            // << header.Name << ", " << "header.Length: " << header.Length <<
+            // ", " << "header.CharacteristicsSetsCount: " <<
             // header.CharacteristicsSetsCount << std::endl;
             size_t varIndexBufferSize = static_cast<size_t>(header.Length) + 4;
             // std::cout << "varIndexBufferSize: " << varIndexBufferSize <<
@@ -1678,11 +1678,11 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
                 varIndexInfo[header.Name].push_back(varIndexTuple);
                 indicesInfo.emplace(timeStep, varIndexInfo);
                 // std::cout <<
-                // std::get<0>(indicesInfo[timeStep][header.Name][rankSource]) <<
+                // std::get<0>(indicesInfo[timeStep][header.Name][rankSource])
+                // <<
                 // ", " <<
-                // std::get<1>(indicesInfo[timeStep][header.Name][rankSource]) <<
-                // std::endl;
-                // currentStep = timeStep;
+                // std::get<1>(indicesInfo[timeStep][header.Name][rankSource])
+                // << std::endl; currentStep = timeStep;
             }
             else
             {
@@ -1795,10 +1795,11 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
                 attrIndexInfo[header.Name].push_back(attrIndexTuple);
                 indicesInfo.emplace(timeStep, attrIndexInfo);
                 // std::cout <<
-                // std::get<0>(indicesInfo[timeStep][header.Name][rankSource]) <<
+                // std::get<0>(indicesInfo[timeStep][header.Name][rankSource])
+                // <<
                 // ", " <<
-                // std::get<1>(indicesInfo[timeStep][header.Name][rankSource]) <<
-                // std::endl; currentStep = timeStep;
+                // std::get<1>(indicesInfo[timeStep][header.Name][rankSource])
+                // << std::endl; currentStep = timeStep;
             }
             else
             {
