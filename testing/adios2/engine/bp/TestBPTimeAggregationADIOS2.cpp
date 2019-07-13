@@ -31,11 +31,18 @@ void TimeAggregation1D8(const std::string flushstepscount)
     // Number of steps
     const size_t NSteps = 10;
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-    // Write test data using BP
+#endif
 
+    // Write test data using ADIOS2
+
+#ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -337,12 +344,18 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
     // Number of steps
     const std::size_t NSteps = 10;
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
 
     // Write test data using ADIOS2
 
+#ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -658,7 +671,9 @@ INSTANTIATE_TEST_CASE_P(FlushStepsCount, BPTestTimeAggregationADIOS2,
 
 int main(int argc, char **argv)
 {
+#ifdef ADIOS2_HAVE_MPI
     MPI_Init(nullptr, nullptr);
+#endif
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
@@ -669,7 +684,9 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
+#ifdef ADIOS2_HAVE_MPI
     MPI_Finalize();
+#endif
 
     return result;
 }
