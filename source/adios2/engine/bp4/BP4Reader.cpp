@@ -216,7 +216,7 @@ void BP4Reader::InitBuffer()
 
 std::pair<size_t, size_t> BP4Reader::UpdateBuffer()
 {
-    std::vector<size_t> sizes(2, 0);
+    std::vector<size_t> sizes(3, 0);
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
         const size_t idxFileSize = m_MDIndexFileManager.GetFileSize(0);
@@ -252,6 +252,7 @@ std::pair<size_t, size_t> BP4Reader::UpdateBuffer()
                 m_MDFileProcessedSize);
 
             sizes[1] = newMDSize;
+            sizes[2] = m_MDFileProcessedSize;
         }
     }
 
@@ -268,6 +269,13 @@ std::pair<size_t, size_t> BP4Reader::UpdateBuffer()
         // broadcast metadata index buffer to all ranks from zero
         helper::BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer,
                                 m_MPIComm);
+
+        if (m_BP4Deserializer.m_RankMPI != 0)
+        {
+            m_MDFileProcessedSize = sizes[2];
+            // we need this pointer in Metadata buffer on all processes
+            // for parsing it correctly in ProcessMetadataForNewSteps()
+        }
     }
     return std::make_pair(newIdxSize, newMDSize);
 }
@@ -288,15 +296,27 @@ void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize,
     // fills IO with Variables and Attributes (not first step)
     m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this, false);
 
-    m_MDIndexFileProcessedSize += newIdxSize;
-    m_MDFileProcessedSize += newMDSize;
+    // remember current end position in metadata and index table for next round
+    if (m_BP4Deserializer.m_RankMPI == 0)
+    {
+        m_MDIndexFileProcessedSize += newIdxSize;
+        m_MDFileProcessedSize += newMDSize;
+    }
 }
 
 bool BP4Reader::CheckWriterActive()
 {
-    std::vector<char> header(64, '\0');
-    m_MDIndexFileManager.ReadFile(header.data(), 64, 0, 0);
-    return m_BP4Deserializer.ReadActiveFlag(header);
+    size_t flag = 0;
+    if (m_BP4Deserializer.m_RankMPI == 0)
+    {
+        std::vector<char> header(64, '\0');
+        m_MDIndexFileManager.ReadFile(header.data(), 64, 0, 0);
+        bool active = m_BP4Deserializer.ReadActiveFlag(header);
+        flag = (active ? 1 : 0);
+    }
+    flag = helper::BroadcastValue(flag, m_BP4Deserializer.m_MPIComm, 0);
+    m_BP4Deserializer.m_WriterIsActive = (flag > 0);
+    return m_BP4Deserializer.m_WriterIsActive;
 }
 
 StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
@@ -328,6 +348,12 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
     /* Poll */
     double waited = 0.0;
     double startTime, endTime;
+
+    // Hack: processing metadata for multiple new steps only works
+    // when pretending not to be in streaming mode
+    const bool saveReadStreaming = m_IO.m_ReadStreaming;
+
+    m_IO.m_ReadStreaming = false;
     while (waited < TO && m_BP4Deserializer.m_WriterIsActive)
     {
         startTime = MPI_Wtime();
@@ -364,6 +390,8 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
     {
         retval = StepStatus::OK;
     }
+    m_IO.m_ReadStreaming = saveReadStreaming;
+
     return retval;
 }
 
