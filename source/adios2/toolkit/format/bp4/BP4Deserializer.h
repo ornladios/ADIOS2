@@ -42,8 +42,6 @@ public:
 
     bool m_WriterIsActive = false;
 
-    bool m_WriterIsActive = false;
-
     /**
      * Unique constructor
      * @param mpiComm
