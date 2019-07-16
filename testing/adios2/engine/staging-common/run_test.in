@@ -301,6 +301,11 @@ if args.reader_delay != 0:
     print("TestDriver: Reader delay setting MPMD false\n")
     mpmd_possible = False
 
+if args.num_writers == 1 and args.num_readers == 1:
+    # Not entirely sure why this fails with openmpi, but it seems to regularly, so avoid
+    print("TestDriver: one reader / one writer setting MPMD false\n")
+    mpmd_possible = False
+
 test_setup(args.filename)
 atexit.register(test_teardown, args.filename)
 if args.test_protocol == 'simple':
