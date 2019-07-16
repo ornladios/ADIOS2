@@ -429,7 +429,7 @@ BP4Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
     return SetCollectiveProfilingJSON(rankProfilingLog);
 }
 
-void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
+void BP4Serializer::AggregateCollectiveMetadata(helper::Comm const &comm,
                                                 BufferSTL &bufferSTL,
                                                 const bool inMetadataBuffer)
 {
@@ -966,7 +966,7 @@ void BP4Serializer::PutMinifooter(const uint64_t pgIndexStart,
 }
 
 void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
-                                   const size_t count, MPI_Comm comm,
+                                   const size_t count, helper::Comm const &comm,
                                    BufferSTL &bufferSTL)
 {
     auto &buffer = bufferSTL.m_Buffer;
@@ -1000,7 +1000,7 @@ void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
 
 void BP4Serializer::AggregateMergeIndex(
     const std::unordered_map<std::string, SerialElementIndex> &indices,
-    MPI_Comm comm, BufferSTL &bufferSTL, const bool isRankConstant)
+    helper::Comm const &comm, BufferSTL &bufferSTL, const bool isRankConstant)
 {
     // first serialize index
     std::vector<char> serializedIndices = SerializeIndices(indices, comm);
@@ -1054,7 +1054,7 @@ void BP4Serializer::AggregateMergeIndex(
 
 std::vector<char> BP4Serializer::SerializeIndices(
     const std::unordered_map<std::string, SerialElementIndex> &indices,
-    MPI_Comm comm) const noexcept
+    helper::Comm const &comm) const noexcept
 {
     // pre-allocate
     size_t serializedIndicesSize = 0;
@@ -1099,7 +1099,7 @@ std::vector<char> BP4Serializer::SerializeIndices(
 
 std::unordered_map<std::string, std::vector<BP4Base::SerialElementIndex>>
 BP4Serializer::DeserializeIndicesPerRankSingleThread(
-    const std::vector<char> &serialized, MPI_Comm comm,
+    const std::vector<char> &serialized, helper::Comm const &comm,
     const bool isRankConstant) const noexcept
 {
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
@@ -1239,7 +1239,7 @@ BP4Serializer::DeserializeIndicesPerRankSingleThread(
 
 std::unordered_map<std::string, std::vector<BP4Base::SerialElementIndex>>
 BP4Serializer::DeserializeIndicesPerRankThreads(
-    const std::vector<char> &serialized, MPI_Comm comm,
+    const std::vector<char> &serialized, helper::Comm const &comm,
     const bool isRankConstant) const noexcept
 {
     if (m_Threads == 1)
@@ -1403,7 +1403,7 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     return deserialized;
 }
 
-void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
+void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                                        BufferSTL &outBufferSTL)
 {
     int rank, size;
@@ -1453,7 +1453,8 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         }
     };
 
-    auto lf_SerializeAllIndices = [&](MPI_Comm comm, const int rank) {
+    auto lf_SerializeAllIndices = [&](helper::Comm const &comm,
+                                      const int rank) {
         const size_t pgIndicesSize = m_MetadataSet.PGIndex.Buffer.size();
         const size_t variablesIndicesSize =
             lf_IndicesSize(m_MetadataSet.VarsIndices);
@@ -2211,7 +2212,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 void BP4Serializer::MergeSerializeIndicesPerStep(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         &nameRankIndices,
-    MPI_Comm comm, BufferSTL &bufferSTL)
+    helper::Comm const &comm, BufferSTL &bufferSTL)
 {
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
@@ -2536,7 +2537,7 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 void BP4Serializer::MergeSerializeIndices(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         &nameRankIndices,
-    MPI_Comm comm, BufferSTL &bufferSTL)
+    helper::Comm const &comm, BufferSTL &bufferSTL)
 {
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
