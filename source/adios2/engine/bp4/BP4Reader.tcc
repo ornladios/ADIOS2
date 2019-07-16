@@ -101,7 +101,7 @@ void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
                                               payloadSize, payloadStart, 0);
 
                 m_DataFileManager.ReadFile(buffer, payloadSize, payloadStart,
-                                          subStreamBoxInfo.SubStreamID);
+                                           subStreamBoxInfo.SubStreamID);
 
                 m_BP4Deserializer.PostDataRead(
                     variable, blockInfo, subStreamBoxInfo,

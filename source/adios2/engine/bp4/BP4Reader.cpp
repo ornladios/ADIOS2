@@ -330,7 +330,7 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
     {
         TO = std::numeric_limits<float>::max() / 10000;
     }
-    uint64_t milliTO = TO * 1000.0;
+    uint64_t milliTO = static_cast<uint64_t>(TO * 1000.0);
     if (milliTO < 1)
     {
         milliTO = 1; // avoid 0
