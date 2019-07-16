@@ -181,6 +181,9 @@ public:
     /** max buffer size, set by the user */
     size_t m_MaxBufferSize = DefaultMaxBufferSize;
 
+    /** Timeout for Open in read. Set by the user as parameter */
+    float m_TimeoutOpenSecs = 0.0;
+
     /** contains bp1 format metadata indices*/
     MetadataSet m_MetadataSet;
 
@@ -596,6 +599,12 @@ protected:
     /** Sets if IO is node-local so each rank creates its own IO directory and
      * stream */
     void InitParameterNodeLocal(const std::string value);
+
+    /** set timeout for Open (for Read), Reader will blocking wait for the file
+     * to appear within the timeout.
+     * Parameter should be a floating point number indicating time in seconds.
+     * Default is 0.0 (no wait) */
+    void InitParameterOpenTimeoutSecs(const std::string value);
 
     std::vector<uint8_t>
     GetTransportIDs(const std::vector<std::string> &transportsTypes) const

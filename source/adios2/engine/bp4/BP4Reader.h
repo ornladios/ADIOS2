@@ -68,6 +68,7 @@ private:
     void Init();
     void InitTransports();
     void InitBuffer();
+    void OpenFiles();
 
     /** Read in more metadata if exist (throwing away old).
      *  For streaming only.
