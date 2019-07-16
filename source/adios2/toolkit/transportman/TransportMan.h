@@ -11,12 +11,11 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
+#include <future> //std::async, std::future
 #include <memory> //std::shared_ptr
 #include <string>
 #include <unordered_map>
 #include <vector>
-/// \endcond
 
 #include "adios2/toolkit/transport/Transport.h"
 
@@ -57,9 +56,8 @@ public:
                        const bool nodeLocal);
 
     /**
-     *
-     * @param baseNames passed from Open( name )
-     * @param names actual filenames (from BP)
+     * OpenFiles passed from fileNames
+     * @param fileNames
      * @param openMode
      * @param parametersVector from IO
      * @param profile
@@ -68,6 +66,18 @@ public:
                    const Mode openMode,
                    const std::vector<Params> &parametersVector,
                    const bool profile);
+
+    /**
+     * Async version of OpenFiles
+     * @param fileNames
+     * @param openMode
+     * @param parametersVector
+     * @param profile
+     * @return
+     */
+    std::future<void> OpenFilesAsync(
+        const std::vector<std::string> &fileNames, const Mode openMode,
+        const std::vector<Params> &parametersVector, const bool profile);
 
     /**
      * Used for sub-files defined by index

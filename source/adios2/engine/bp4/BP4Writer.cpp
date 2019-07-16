@@ -610,6 +610,11 @@ void BP4Writer::WriteData(const bool isFinal, const int transportIndex)
         dataSize = m_BP4Serializer.CloseStream(m_IO, false);
     }
 
+    if (m_FutureOpenFiles.valid())
+    {
+        m_FutureOpenFiles.get();
+    }
+
     m_FileDataManager.WriteFiles(m_BP4Serializer.m_Data.m_Buffer.data(),
                                  dataSize, transportIndex);
 
@@ -638,6 +643,11 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
                     m_BP4Serializer.m_Data);
             if (bufferSTL.m_Position > 0)
             {
+                if (m_FutureOpenFiles.valid())
+                {
+                    m_FutureOpenFiles.get();
+                }
+
                 m_FileDataManager.WriteFiles(
                     bufferSTL.Data(), bufferSTL.m_Position, transportIndex);
 

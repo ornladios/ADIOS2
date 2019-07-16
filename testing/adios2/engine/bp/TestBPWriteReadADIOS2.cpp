@@ -122,6 +122,7 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             io.SetEngine("BPFile");
         }
 
+        io.SetParameter("AsyncThreads", "0");
         io.AddTransport("file");
 
         // QUESTION: It seems that BPFilterWriter cannot overwrite existing

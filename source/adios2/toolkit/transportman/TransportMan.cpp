@@ -75,23 +75,44 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
                              const std::vector<Params> &parametersVector,
                              const bool profile)
 {
-
     for (size_t i = 0; i < fileNames.size(); ++i)
     {
         const Params &parameters = parametersVector[i];
-        const std::string type(parameters.at("transport"));
+        const std::string type = parameters.at("transport");
 
-        if (type == "File" || type == "file") // need to create directory
+        if (type == "File" || type == "file")
         {
             std::shared_ptr<Transport> file =
                 OpenFileTransport(fileNames[i], openMode, parameters, profile);
             m_Transports.insert({i, file});
-            int rank;
-            SMPI_Comm_rank(m_MPIComm, &rank);
-            // std::cout << "rank " << rank << ": " << i << ", " << fileNames[i]
-            // << std::endl;
         }
     }
+}
+
+std::future<void> TransportMan::OpenFilesAsync(
+    const std::vector<std::string> &fileNames, const Mode openMode,
+    const std::vector<Params> &parametersVector, const bool profile)
+{
+    auto lf_OpenFiles =
+        [&](const std::vector<std::string> &fileNames, const Mode openMode,
+            const std::vector<Params> &parametersVector, const bool profile) {
+            for (size_t i = 0; i < fileNames.size(); ++i)
+            {
+                const Params &parameters = parametersVector[i];
+                const std::string type = parameters.at("transport");
+
+                if (type == "File" || type == "file")
+                {
+                    std::shared_ptr<Transport> file = OpenFileTransport(
+                        fileNames[i], openMode, parameters, profile);
+                    // TODO might need mutex for multiple files
+                    m_Transports.insert({i, file});
+                }
+            }
+        };
+
+    return std::async(std::launch::async, lf_OpenFiles, std::move(fileNames),
+                      openMode, std::cref(parametersVector), profile);
 }
 
 void TransportMan::OpenFileID(const std::string &name, const size_t id,

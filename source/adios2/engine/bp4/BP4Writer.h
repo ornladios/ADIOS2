@@ -52,6 +52,9 @@ private:
     /** Manage BP data files Transports from IO AddTransport */
     transportman::TransportMan m_FileDataManager;
 
+    /** future returned by m_FileDataManager at OpenFiles */
+    std::future<void> m_FutureOpenFiles;
+
     /** Manages the optional collective metadata files */
     transportman::TransportMan m_FileMetadataManager;
 
