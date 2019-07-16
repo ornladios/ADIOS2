@@ -2,7 +2,7 @@
 DataSpaces
 *********************************
 
-Dataspaces is an asynchronous I/O transfer method within ADIOS that enables 
+The DataSpaces engine for ADIOS2 is experimental. DataSpaces is an asynchronous I/O transfer method within ADIOS that enables 
 low-overhead, high-throughput data extraction from a running simulation. 
 DataSpaces is designed for use in HPC environments and can take advantage of RDMA
 network interconnects to speed the transfer of data between communicating
