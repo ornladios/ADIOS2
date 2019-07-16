@@ -44,7 +44,7 @@ void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
     m_MetadataSet.CurrentStep = allSteps - 1;
     /* parse the metadata step by step using the pointers saved in the metadata
     index table */
-    for (int i = oldSteps; i < allSteps; i++)
+    for (size_t i = oldSteps; i < allSteps; i++)
     {
         ParsePGIndexPerStep(bufferSTL, engine.m_IO.m_HostLanguage, 0, i + 1);
         ParseVariablesIndexPerStep(bufferSTL, engine, 0, i + 1);
