@@ -271,7 +271,7 @@ BP3Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
     return SetCollectiveProfilingJSON(rankProfilingLog);
 }
 
-void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
+void BP3Serializer::AggregateCollectiveMetadata(helper::Comm const &comm,
                                                 BufferSTL &bufferSTL,
                                                 const bool inMetadataBuffer)
 {
@@ -766,7 +766,7 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
 }
 
 std::vector<size_t>
-BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
+BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                                   BufferSTL &bufferSTL)
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -819,7 +819,8 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         }
     };
 
-    auto lf_SerializeAllIndices = [&](MPI_Comm comm, const int rank) {
+    auto lf_SerializeAllIndices = [&](helper::Comm const &comm,
+                                      const int rank) {
         TAU_SCOPED_TIMER_FUNC();
         const size_t pgIndicesSize = m_MetadataSet.PGIndex.Buffer.size();
         const size_t variablesIndicesSize =
@@ -1051,7 +1052,7 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 void BP3Serializer::MergeSerializeIndices(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         &nameRankIndices,
-    MPI_Comm comm, BufferSTL &bufferSTL)
+    helper::Comm const &comm, BufferSTL &bufferSTL)
 {
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
