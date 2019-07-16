@@ -10,15 +10,17 @@
 
 #include "TransportMan.h"
 
-/// \cond EXCLUDE_FROM_DOXYGEN
 #include <set>
-/// \endcond
 
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
 /// transports
 #ifndef _WIN32
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
+#endif
+
+#ifdef _WIN32
+#pragma warning(disable : 4503) // length of std::function inside std::async
 #endif
 
 #include "adios2/toolkit/transport/file/FileFStream.h"
