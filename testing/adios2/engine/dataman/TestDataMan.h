@@ -12,7 +12,7 @@
 #include <thread>
 
 #include <adios2.h>
-#include <adios2/ADIOSMacros.h>
+#include <adios2/common/ADIOSMacros.h>
 #include <adios2/helper/adiosFunctions.h>
 #include <gtest/gtest.h>
 

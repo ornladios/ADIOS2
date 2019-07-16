@@ -362,7 +362,6 @@ PYBIND11_MODULE(adios2, m)
         .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll)
         .def("EngineType", &adios2::py11::IO::EngineType)
-        .def("LockDefinitions", &adios2::py11::IO::LockDefinitions)
         .def("RemoveVariable", &adios2::py11::IO::RemoveVariable)
         .def("RemoveAllVariables", &adios2::py11::IO::RemoveAllVariables)
         .def("RemoveAttribute", &adios2::py11::IO::RemoveAttribute)
@@ -488,7 +487,13 @@ PYBIND11_MODULE(adios2, m)
 
         .def("Type", &adios2::py11::Engine::Type)
 
-        .def("Steps", &adios2::py11::Engine::Steps);
+        .def("Steps", &adios2::py11::Engine::Steps)
+
+        .def("LockWriterDefinitions",
+             &adios2::py11::Engine::LockWriterDefinitions)
+
+        .def("LockReaderSelections",
+             &adios2::py11::Engine::LockReaderSelections);
 
     pybind11::class_<adios2::py11::Operator>(m, "Operator")
         // Python 2

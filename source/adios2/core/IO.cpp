@@ -13,8 +13,8 @@
 
 #include <sstream>
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 
 #include "adios2/engine/bp3/BP3Reader.h"
 #include "adios2/engine/bp3/BP3Writer.h"
@@ -23,6 +23,7 @@
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
 #include "adios2/engine/null/NullEngine.h"
+#include "adios2/engine/nullcore/NullCoreWriter.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 
@@ -467,7 +468,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 
     /* BPFile for read needs to use BP4 or BP3 depending on the file's version
      */
-    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp"))
+    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp" || isDefaultEngine))
     {
         if (mode == Mode::Read)
         {
@@ -486,7 +487,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
         }
     }
 
-    if (isDefaultEngine || engineTypeLC == "bp3")
+    if (engineTypeLC == "bp3")
     {
         if (mode == Mode::Read)
         {
@@ -640,6 +641,15 @@ Engine &IO::Open(const std::string &name, const Mode mode,
         engine =
             std::make_shared<engine::NullEngine>(*this, name, mode, mpiComm);
     }
+    else if (engineTypeLC == "nullcore")
+    {
+        if (mode == Mode::Read)
+            throw std::invalid_argument(
+                "ERROR: nullcore engine does not support read mode");
+        else
+            engine = std::make_shared<engine::NullCoreWriter>(*this, name, mode,
+                                                              mpiComm);
+    }
     else
     {
         if (m_DebugMode)
@@ -733,8 +743,6 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
 #undef declare_type
     }
 }
-
-void IO::LockDefinitions() noexcept { m_DefinitionsLocked = true; };
 
 // PRIVATE
 int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const

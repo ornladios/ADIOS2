@@ -23,6 +23,7 @@
 
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transport/file/FileStdio.h"
+#include "adios2/toolkit/transport/null/NullTransport.h"
 
 namespace adios2
 {
@@ -85,6 +86,10 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
             std::shared_ptr<Transport> file =
                 OpenFileTransport(fileNames[i], openMode, parameters, profile);
             m_Transports.insert({i, file});
+            int rank;
+            SMPI_Comm_rank(m_MPIComm, &rank);
+            // std::cout << "rank " << rank << ": " << i << ", " << fileNames[i]
+            // << std::endl;
         }
     }
 }
@@ -193,6 +198,34 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
     }
 }
 
+void TransportMan::WriteFileAt(const char *buffer, const size_t size,
+                               const size_t start, const int transportIndex)
+{
+
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to WriteFileAt with index " +
+                               std::to_string(transportIndex));
+    itTransport->second->Write(buffer, size, start);
+}
+
+void TransportMan::SeekToFileEnd(const int transportIndex)
+{
+
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to SeekToFileEnd with index " +
+                               std::to_string(transportIndex));
+    itTransport->second->SeekToEnd();
+}
+
+void TransportMan::SeekToFileBegin(const int transportIndex)
+{
+
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to SeekToFileBegin with index " +
+                               std::to_string(transportIndex));
+    itTransport->second->SeekToBegin();
+}
+
 size_t TransportMan::GetFileSize(const size_t transportIndex) const
 {
     auto itTransport = m_Transports.find(transportIndex);
@@ -297,6 +330,11 @@ TransportMan::OpenFileTransport(const std::string &fileName,
                 std::make_shared<transport::FilePOSIX>(m_MPIComm, m_DebugMode);
         }
 #endif
+        else if (library == "NULL" || library == "null")
+        {
+            transport = std::make_shared<transport::NullTransport>(m_MPIComm,
+                                                                   m_DebugMode);
+        }
         else
         {
             if (m_DebugMode)

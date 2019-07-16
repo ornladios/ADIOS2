@@ -15,6 +15,8 @@
 
 #include "../SmallTestData.h"
 
+std::string engineName; // comes from command line
+
 class BPWriteReadBlockInfo : public ::testing::Test
 {
 public:
@@ -42,6 +44,7 @@ void CheckAllStepsBlockInfo1D(
             EXPECT_EQ(allStepsBlocksInfo[s][b].Start[0], b * Nx);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Count[0], Nx);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Step, s);
+            EXPECT_FALSE(allStepsBlocksInfo[s][b].IsReverseDims);
         }
     }
 }
@@ -64,6 +67,7 @@ void CheckAllStepsBlockInfo2D(
             EXPECT_EQ(allStepsBlocksInfo[s][b].Count[0], Ny);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Count[1], Nx);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Step, s);
+            EXPECT_FALSE(allStepsBlocksInfo[s][b].IsReverseDims);
         }
     }
 }
@@ -122,6 +126,16 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
                                                                 start, count);
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -157,7 +171,14 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            io.SetEngine("BPFile");
+        }
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_local = io.InquireVariable<int32_t>("local");
@@ -237,8 +258,6 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         // TODO: other types
 
         SmallTestData testData;
-        std::vector<int32_t> ILocal;
-        std::vector<std::string> ILocalStr;
 
         std::string IString;
         std::array<int8_t, Nx> I8;
@@ -339,6 +358,9 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
             const size_t domainSize = static_cast<size_t>(mpiSize);
             for (size_t i = 0; i < domainSize; ++i)
             {
+                std::vector<int32_t> ILocal;
+                std::vector<std::string> ILocalStr;
+
                 var_local.SetSelection({{i}, {domainSize - i}});
                 var_localStr.SetSelection({{i}, {domainSize - i}});
 
@@ -346,11 +368,27 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
                 bpReader.Get(var_localStr, ILocalStr);
                 bpReader.PerformGets();
 
+                /*std::cout << "rank=" << mpiRank << " local["
+                          << std::to_string(i) << ":"
+                          << std::to_string(domainSize) << "] = {";
+                for (size_t j = i; j < domainSize; ++j)
+                {
+                    std::cout << std::to_string(ILocal[j - i]) << " ";
+                }
+                std::cout << "]" << std::endl;*/
+
                 for (size_t j = i; j < domainSize; ++j)
                 {
                     std::stringstream ss;
                     ss << "t=" << t << " i=" << i << " j=" << j;
                     std::string msg = ss.str();
+
+                    /*std::cout << "rank=" << mpiRank << " t=" << t << " i=" <<
+                       i
+                              << " j=" << j
+                              << " data=" << std::to_string(ILocal[j - i])
+                              << " expect = " << std::to_string(j + t)
+                              << std::endl;*/
 
                     EXPECT_EQ(ILocal[j - i], j + t) << msg;
                     EXPECT_EQ(ILocalStr[j - i], std::to_string(j + t)) << msg;
@@ -410,6 +448,16 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
         auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
                                                                 start, count);
 
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
+
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -441,7 +489,15 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
-
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        else
+        {
+            // Create the BP Engine
+            io.SetEngine("BPFile");
+        }
         adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
@@ -623,6 +679,11 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

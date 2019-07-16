@@ -88,4 +88,20 @@ contains
 
     end subroutine
 
+    subroutine adios2_lock_writer_definitions(engine, ierr)
+        type(adios2_engine), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_lock_writer_definitions_f2c(engine%f2c, ierr)
+
+    end subroutine
+
+    subroutine adios2_lock_reader_selections(engine, ierr)
+        type(adios2_engine), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        call adios2_lock_reader_selections_f2c(engine%f2c, ierr)
+
+    end subroutine
+
 end module

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
 
@@ -88,7 +88,7 @@ struct fabric_state
  *   plane would replace one or both of these with RDMA functionality.
  */
 
-static void init_fabric(struct fabric_state *fabric)
+static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
 {
     struct fi_info *hints, *info, *originfo, *useinfo;
     struct fi_av_attr av_attr = {0};
@@ -101,9 +101,18 @@ static void init_fabric(struct fabric_state *fabric)
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
     hints->ep_attr->type = FI_EP_RDM;
 
-    ifname = getenv("FABRIC_IFACE");
+    if (Params->DataInterface)
+    {
+        ifname = Params->DataInterface;
+    }
+    else
+    {
+        ifname = getenv("FABRIC_IFACE");
+    }
 
     fabric->info = NULL;
 
@@ -126,9 +135,8 @@ static void init_fabric(struct fabric_state *fabric)
             useinfo = info;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
-            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0 ||
-            !useinfo)
+        if ((strstr(prov_name, "verbs") && info->src_addr) ||
+            strstr(prov_name, "gni") || strstr(prov_name, "psm2") || !useinfo)
         {
             useinfo = info;
         }
@@ -368,7 +376,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
     memset(Contact, 0, sizeof(*Contact));
 
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
-    init_fabric(Stream->Fabric);
+    init_fabric(Stream->Fabric, Params);
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
@@ -547,7 +555,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
-    init_fabric(Stream->Fabric);
+    init_fabric(Stream->Fabric, Params);
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
@@ -1015,9 +1023,18 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
     hints->mode = FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX |
                   FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
     hints->ep_attr->type = FI_EP_RDM;
 
-    ifname = getenv("FABRIC_IFACE");
+    if (Params->DataInterface)
+    {
+        ifname = Params->DataInterface;
+    }
+    else
+    {
+        ifname = getenv("FABRIC_IFACE");
+    }
 
     fi_getinfo(FI_VERSION(1, 5), NULL, NULL, 0, hints, &info);
     fi_freeinfo(hints);
@@ -1045,8 +1062,8 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream,
             Ret = 100;
             break;
         }
-        if ((strcmp(prov_name, "verbs") == 0 && info->src_addr) ||
-            strcmp(prov_name, "gni") == 0 || strcmp(prov_name, "psm2") == 0)
+        if ((strstr(prov_name, "verbs") && info->src_addr) ||
+            strstr(prov_name, "gni") || strstr(prov_name, "psm2"))
         {
 
             Svcs->verbose(CP_Stream,

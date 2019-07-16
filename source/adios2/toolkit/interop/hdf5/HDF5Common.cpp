@@ -15,8 +15,9 @@
 #include <ios>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" // IsRowMajor
 #include <cstring>                        // strlen
 
@@ -189,7 +190,7 @@ void HDF5Common::WriteAdiosSteps()
     hid_t attr =
         H5Acreate(m_FileId, ATTRNAME_NUM_STEPS.c_str(),
                   /*"NumSteps",*/ H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
-    uint totalAdiosSteps = m_CurrentAdiosStep + 1;
+    unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
     {
@@ -295,18 +296,16 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname,
                         hid_t datasetId = H5Dopen(gid, name, H5P_DEFAULT);
                         HDF5TypeGuard d(datasetId, E_H5_DATASET);
 
-                        char longName[std::strlen(heritage) +
-                                      std::strlen(gname) + std::strlen(name) +
-                                      10];
+                        std::string longName;
 
                         if (strcmp(gname, "/") == 0)
                         {
-                            sprintf(longName, "/%s", name);
+                            longName = std::string("/") + name;
                         }
                         else
                         {
-                            sprintf(longName, "%s/%s/%s", heritage, gname,
-                                    name);
+                            longName = std::string(heritage) + "/" + gname +
+                                       "/" + name;
                         }
                         // CreateVar(io, datasetId, name);
                         ReadNativeAttrToIO(io, datasetId, longName);
@@ -419,8 +418,8 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId,
     {
         hid_t dspace = H5Dget_space(datasetId);
         const int ndims = H5Sget_simple_extent_ndims(dspace);
-        hsize_t dims[ndims];
-        H5Sget_simple_extent_dims(dspace, dims, NULL);
+        std::vector<hsize_t> dims(ndims);
+        H5Sget_simple_extent_dims(dspace, dims.data(), NULL);
         H5Sclose(dspace);
 
         Dims shape;
@@ -934,9 +933,9 @@ void HDF5Common::AddNonStringAttribute(core::IO &io,
     }
     else
     {
-        T val[arraySize];
-        H5Aread(attrId, h5Type, val);
-        io.DefineAttribute(attrName, val, arraySize);
+        std::vector<T> val(arraySize);
+        H5Aread(attrId, h5Type, val.data());
+        io.DefineAttribute(attrName, val.data(), arraySize);
     }
 }
 
@@ -1245,7 +1244,7 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
     {
         numAttrs = oinfo.num_attrs;
         int k = 0;
-        int MAX_ATTR_NAME_SIZE = 100;
+        const int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {
             char attrName[MAX_ATTR_NAME_SIZE];
@@ -1303,7 +1302,7 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
                     // consuimg
         }
         int k = 0;
-        int MAX_ATTR_NAME_SIZE = 100;
+        const int MAX_ATTR_NAME_SIZE = 100;
         for (k = 0; k < numAttrs; k++)
         {
             char attrName[MAX_ATTR_NAME_SIZE];

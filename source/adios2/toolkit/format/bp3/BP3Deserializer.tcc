@@ -117,6 +117,11 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
             // TODO check if we need to reverse dimensions
             variable.SetSelection({start, count});
         }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            // TODO keep Count for block updated
+            variable.m_Count = blocksInfo[variable.m_BlockID].Count;
+        }
     }
 
     // create block info
@@ -1081,6 +1086,7 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
+        blockInfo.IsReverseDims = m_ReverseDimensions;
 
         if (m_ReverseDimensions)
         {

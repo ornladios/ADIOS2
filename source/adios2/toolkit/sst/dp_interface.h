@@ -3,7 +3,7 @@
 
 #include <sst_data.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/mpiwrap.h"
 #include <evpath.h>
 

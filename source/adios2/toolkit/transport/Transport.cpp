@@ -10,7 +10,7 @@
 
 #include "Transport.h"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
 namespace adios2
@@ -20,8 +20,6 @@ Transport::Transport(const std::string type, const std::string library,
                      MPI_Comm mpiComm, const bool debugMode)
 : m_Type(type), m_Library(library), m_MPIComm(mpiComm), m_DebugMode(debugMode)
 {
-    SMPI_Comm_rank(m_MPIComm, &m_RankMPI);
-    SMPI_Comm_size(m_MPIComm, &m_SizeMPI);
 }
 
 void Transport::IWrite(const char *buffer, size_t size, Status &status,
@@ -60,6 +58,11 @@ void Transport::InitProfiler(const Mode openMode, const TimeUnit timeUnit)
             "write", profiling::Timer("write", timeUnit, m_DebugMode));
 
         m_Profiler.Bytes.emplace("write", 0);
+
+        m_Profiler.Timers.emplace(
+            "read", profiling::Timer("read", timeUnit, m_DebugMode));
+
+        m_Profiler.Bytes.emplace("read", 0);
     }
     else if (openMode == Mode::Read)
     {

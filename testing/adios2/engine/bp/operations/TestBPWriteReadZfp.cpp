@@ -64,10 +64,10 @@ void ZFPRate1D(const std::string rate)
 
         // add operations
         adios2::Operator ZFPOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::ZFP);
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::RATE, rate}});
-        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::RATE,
+        var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate,
                                       std::to_string(2 * std::stod(rate))}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -198,7 +198,7 @@ void ZFPRate2D(const std::string rate)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::ZFP);
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(szOp, {{"accuracy", rate}});
         var_r64.AddOperation(szOp, {{"accuracy", rate}});
@@ -331,10 +331,10 @@ void ZFPRate3D(const std::string rate)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::ZFP);
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::RATE, rate}});
-        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::RATE, rate}});
+        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -464,10 +464,10 @@ void ZFPRate1DSel(const std::string rate)
 
         // add operations
         adios2::Operator ZFPOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::ZFP);
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::RATE, rate}});
-        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::RATE,
+        var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate,
                                       std::to_string(2 * std::stod(rate))}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -597,7 +597,7 @@ void ZFPRate2DSel(const std::string rate)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::ZFP);
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(szOp, {{"accuracy", rate}});
         var_r64.AddOperation(szOp, {{"accuracy", rate}});
@@ -728,10 +728,10 @@ void ZFPRate3DSel(const std::string rate)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::ZFP);
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::RATE, rate}});
-        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::RATE, rate}});
+        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -864,10 +864,10 @@ void ZFPRate2DSmallSel(const std::string rate)
 
         // add operations
         adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::ZFP);
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::RATE, rate}});
-        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::RATE, rate}});
+        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 

@@ -1,7 +1,7 @@
 #ifndef ADIOS2_ENGINE_SST_SSTPARAMPARSER_H_
 #define ADIOS2_ENGINE_SST_SSTPARAMPARSER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/IO.h"
 #include <iostream>
 #include <unistd.h>

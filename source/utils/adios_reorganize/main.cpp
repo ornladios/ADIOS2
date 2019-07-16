@@ -11,7 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "utils/adios_reorganize/Reorganize.h"
 
 int main(int argc, char *argv[])

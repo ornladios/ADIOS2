@@ -13,7 +13,7 @@
 #include <algorithm> // std::transform
 #include <ios>       //std::ios_base::failure
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
 
@@ -44,6 +44,10 @@
 #include "adios2/operator/compress/CompressPNG.h"
 #endif
 
+#ifdef ADIOS2_HAVE_BLOSC
+#include "adios2/operator/compress/CompressBlosc.h"
+#endif
+
 // callbacks
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
@@ -57,25 +61,7 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode, const std::string hostLanguage)
 : m_ConfigFile(configFile), m_DebugMode(debugMode), m_HostLanguage(hostLanguage)
 {
-    if (m_DebugMode && mpiComm == MPI_COMM_NULL)
-    {
-        throw std::ios_base::failure(
-            "ERROR: MPI communicator is MPI_COMM_NULL, "
-            " in call to ADIOS constructor\n");
-    }
-
-    int flag;
-    MPI_Initialized(&flag);
-    if (flag)
-    {
-        MPI_Comm_dup(mpiComm, &m_MPIComm);
-        m_NeedMPICommFree = true;
-    }
-    else
-    {
-        m_MPIComm = mpiComm;
-        m_NeedMPICommFree = false;
-    }
+    SMPI_Comm_dup(mpiComm, &m_MPIComm);
 
     if (!configFile.empty())
     {
@@ -89,7 +75,7 @@ ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
 
 ADIOS::ADIOS(const std::string configFile, const bool debugMode,
              const std::string hostLanguage)
-: ADIOS(configFile, MPI_COMM_SELF, debugMode, hostLanguage)
+: ADIOS(configFile, MPI_COMM_NULL, debugMode, hostLanguage)
 {
 }
 
@@ -100,17 +86,19 @@ ADIOS::ADIOS(MPI_Comm mpiComm, const bool debugMode,
 }
 
 ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
-: ADIOS("", MPI_COMM_SELF, debugMode, hostLanguage)
+: ADIOS("", MPI_COMM_NULL, debugMode, hostLanguage)
 {
 }
 
 ADIOS::~ADIOS()
 {
+    // Handle the case where MPI is finalized before the ADIOS destructor is
+    // called, which happens, e.g., with global / static ADIOS objects
     int flag;
     MPI_Finalized(&flag);
-    if (!flag && m_NeedMPICommFree)
+    if (!flag)
     {
-        MPI_Comm_free(&m_MPIComm);
+        SMPI_Comm_free(&m_MPIComm);
     }
 }
 
@@ -250,6 +238,19 @@ Operator &ADIOS::DefineOperator(const std::string name, const std::string type,
         throw std::invalid_argument(
             "ERROR: this version of ADIOS2 didn't compile with the "
             "PNG library (minimum v1.6), in call to DefineOperator\n");
+#endif
+    }
+    else if (typeLowerCase == "blosc")
+    {
+#ifdef ADIOS2_HAVE_BLOSC
+        auto itPair = m_Operators.emplace(
+            name,
+            std::make_shared<compress::CompressBlosc>(parameters, m_DebugMode));
+        operatorPtr = itPair.first->second;
+#else
+        throw std::invalid_argument(
+            "ERROR: this version of ADIOS2 didn't compile with the "
+            "Blosc library, in call to DefineOperator\n");
 #endif
     }
     else

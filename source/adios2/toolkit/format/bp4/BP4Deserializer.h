@@ -33,12 +33,12 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
-    /* metadata index table*/
-    std::unordered_map<uint64_t,
-                       std::unordered_map<uint64_t, std::vector<uint64_t>>>
-        m_MetadataIndexTable;
+    // /* metadata index table*/
+    // std::unordered_map<uint64_t,
+    //                    std::unordered_map<uint64_t, std::vector<uint64_t>>>
+    //     m_MetadataIndexTable;
 
-    BufferSTL m_MetadataIndex;
+    // BufferSTL m_MetadataIndex;
 
     /**
      * Unique constructor
@@ -139,6 +139,10 @@ public:
     template <class T>
     std::map<size_t, std::vector<typename core::Variable<T>::Info>>
     AllStepsBlocksInfo(const core::Variable<T> &variable) const;
+
+    template <class T>
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+    AllRelativeStepsBlocksInfo(const core::Variable<T> &variable) const;
 
     template <class T>
     std::vector<typename core::Variable<T>::Info>

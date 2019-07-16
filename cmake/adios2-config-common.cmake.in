@@ -37,9 +37,9 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(MGARD)
   endif()
 
-  set(ADIOS2_HAVE_DATASPACES @ADIOS2_HAVE_DATASPACES@)
-  if(ADIOS2_HAVE_DATASPACES)
-    find_dependency(DATASPACES)
+  set(ADIOS2_HAVE_DataSpaces @ADIOS2_HAVE_DataSpaces@)
+  if(ADIOS2_HAVE_DataSpaces)
+    find_dependency(DataSpaces)
   endif()
 
   set(ADIOS2_HAVE_ZeroMQ @ADIOS2_HAVE_ZeroMQ@)

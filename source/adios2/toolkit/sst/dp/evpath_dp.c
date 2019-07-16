@@ -254,6 +254,16 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
                     "sockets");
 
+    if (Params->DataInterface)
+    {
+        set_string_attr(ListenAttrs, attr_atom_from_string("IP_INTERFACE"),
+                        strdup(Params->DataInterface));
+    }
+    else if (Params->NetworkInterface)
+    {
+        set_string_attr(ListenAttrs, attr_atom_from_string("IP_INTERFACE"),
+                        strdup(Params->NetworkInterface));
+    }
     CMlisten_specific(CM, ListenAttrs);
     attr_list ContactList = CMget_specific_contact_list(CM, ListenAttrs);
 

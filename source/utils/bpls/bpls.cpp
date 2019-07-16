@@ -1530,12 +1530,12 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     auto shape = variable->Shape(absstep);
     if (verbose > 2)
     {
-        printf("    starting step=%" PRIu64 " absolute step=%" PRIu64
+        printf("    starting step=%" PRIu64 " absolute step=%zu"
                ", dims={",
                stepStart, absstep);
         for (auto dim : shape)
         {
-            printf("%" PRIu64 " ", dim);
+            printf("%zu", dim);
         }
         printf("}\n");
     }

@@ -22,14 +22,14 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
-#include "adios2/toolkit/format/BufferSTL.h"
 #include "adios2/toolkit/format/bpOperation/BPOperation.h"
+#include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2

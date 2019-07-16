@@ -1,10 +1,10 @@
-#################################
-High-Level Language Bindings APIs
-#################################
+###############
+High-Level APIs
+###############
 
-The current simple APIs are designed for simple and direct tasks in which performance is not a critical aspect. Unlike the :ref:`Full Language Bindings APIs` the simple APIs only require a single object/handler offering native resemblance to C++ (fstream) and Python (file I/O) native implementations. Thus, offering a nearly-flat learning curve for first-time users.
+The high-level APIs are designed for simple tasks for which performance is not critical. Unlike the :ref:`Full APIs`, the high-level APIs only require a single object handler resembling a C++ fstream or a Python file I/O idiom. The high-level APIs are recommended to both first-time and advanced users; the low-level APIs being recommended only when performance testing identifies a bottleneck or when more control is needed.
 
-Typical scenarios for using the simple APIs are:
+Typical scenarios for using the simple high-level APIs are:
 
 * Reading a file to perform data analysis with libraries (matplotlib, scipy, etc.)
 * Interactive: few calls make interactive usage easier. 
@@ -16,10 +16,6 @@ The main function calls are: ``open`` (or constructor in C++), ``write``, ``read
 In addition, ADIOS2 borrows the corresponding language native syntax for advancing lines to advance the step in write mode, and for a "step-by-step" streaming basis in read mode.
 See each language section in this chapter for a write/read example.
 
-.. warning::
-
-   The simplified APIs are not meant to be used inside applications in which the end user has no access to the IO layer and/or when performance and full functionality are critical, *e.g.* running on a HPC cluster at scale. Use the :ref:`Full Language Bindings APIs` instead
-
 .. note::
 
    The simpified APIs are based on language native file IO interface. Hence ``write`` and ``read`` calls are always synchronized and variables data memory is ready to use immediatley after these calls.
@@ -27,15 +23,15 @@ See each language section in this chapter for a write/read example.
 
 Currently ADIOS2 support bindings for the following languages and their minimum standards:
 
-+----------+----------+-------------------------+-----------------+
-| Language | Standard | Interface               | Based on        |
-+----------+----------+-------------------------+-----------------+
-| C++      | 11/newer | ``#include adios2.h``   | ``fstream``     |
-+----------+----------+-------------------------+-----------------+
-| Python   | 2.7/3    | ``import adios2``       | Python IO       |
-+----------+----------+-------------------------+-----------------+
-| Matlab   |          |                         |                 |
-+----------+----------+-------------------------+-----------------+
++----------+----------+-----------------------+-------------+
+| Language | Standard | Interface             | Based on    |
++----------+----------+-----------------------+-------------+
+| C++      | 11/newer | ``#include adios2.h`` | ``fstream`` |
++----------+----------+-----------------------+-------------+
+| Python   | 2.7/3    | ``import adios2``     | Python IO   |
++----------+----------+-----------------------+-------------+
+| Matlab   |          |                       |             |
++----------+----------+-----------------------+-------------+
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
 

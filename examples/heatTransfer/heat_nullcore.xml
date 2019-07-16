@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- Config XML file fo the  
+     - heatTransfer_write_adios2 
+     - heatTransfer_read
+     executables in build/bin -->
+
+<adios-config>
+
+    <!--====================================
+           Configuration for the Writer 
+        ====================================-->
+
+    <io name="writer">
+        <engine type="NullCore"/>
+    </io>
+</adios-config>

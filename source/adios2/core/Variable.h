@@ -19,7 +19,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosType.h"
 
@@ -101,6 +101,7 @@ public:
         std::vector<T> BufferV;
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
+        bool IsReverseDims = false;
     };
 
     /** use for multiblock info */

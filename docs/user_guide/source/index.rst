@@ -3,24 +3,44 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-ADIOS2: The ADaptable Input/Output System version 2
-===================================================
+ADIOS 2: The Adaptable Input/Output System version 2
+====================================================
 
 Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org/>`_, U.S. Department of Energy
 
-.. toctree::
-   :maxdepth: 2
+.. toctree:: 
+   :caption: Introduction
 
    introduction/introduction
-   installation/installation
-   using/using
+
+
+.. toctree::
+   :caption: Setting Up
+   
+   setting_up/setting_up
+
+
+.. toctree::
+   :caption: Basics
+
    components/components
    engines/engines
    api_full/api_full
    api_high/api_high
-   utilities/utilities
+
+   
+.. toctree::
+   :caption: Ecosystem Tools
+   
+   ecosystem/utilities
+   ecosystem/visualization
+
+   
+.. toctree::
+   :caption: Additional Information
+
    faq/faq
    advice/advice
+
  
 * :ref:`search`
-   

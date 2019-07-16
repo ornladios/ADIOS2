@@ -38,11 +38,11 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     m_Input = SstReaderOpen(cstr, &Params, mpiComm);
     if (!m_Input)
     {
-        throw std::invalid_argument("ERROR: SstReader did not find active "
-                                    "Writer contact info in file \"" +
-                                    m_Name + SST_POSTFIX +
-                                    "\".  Non-current SST contact file?" +
-                                    m_EndMessage);
+        throw std::runtime_error(
+            "ERROR: SstReader did not find active "
+            "Writer contact info in file \"" +
+            m_Name + SST_POSTFIX +
+            "\".  Timeout or non-current SST contact file?" + m_EndMessage);
     }
 
     // Maybe need other writer-side params in the future, but for now only
@@ -282,7 +282,7 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 void SstReader::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if (m_IO.m_DefinitionsLocked && !m_DefinitionsNotified)
+    if (m_ReaderSelectionsLocked && !m_DefinitionsNotified)
     {
         SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));
         m_DefinitionsNotified = true;

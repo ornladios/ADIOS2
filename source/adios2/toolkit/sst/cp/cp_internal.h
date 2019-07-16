@@ -1,6 +1,8 @@
 #include "dp_interface.h"
 #include <pthread.h>
 
+#define SSTMAGICV0 "#ADIOS2-SST v0\n"
+
 typedef struct _CP_GlobalInfo
 {
     /* exchange info */

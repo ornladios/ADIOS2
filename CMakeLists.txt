@@ -12,7 +12,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
     "separate from the source directory")
 endif()
 
-project(ADIOS2 VERSION 2.3.1)
+project(ADIOS2 VERSION 2.4.0)
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
@@ -105,14 +105,15 @@ cmake_dependent_option(BUILD_SHARED_LIBS
 )
 mark_as_advanced(BUILD_SHARED_LIBS)
 
-adios_option(BZIP2     "Enable support for BZIP2 transforms" AUTO)
+adios_option(Blosc     "Enable support for Blosc transforms" AUTO)
+adios_option(BZip2     "Enable support for BZip2 transforms" AUTO)
 adios_option(ZFP       "Enable support for ZFP transforms" AUTO)
 adios_option(SZ        "Enable support for SZ transforms" AUTO)
 adios_option(MGARD     "Enable support for MGARD transforms" AUTO)
 adios_option(PNG       "Enable support for PNG transforms" AUTO)
 adios_option(MPI       "Enable support for MPI" AUTO)
 adios_option(DataMan   "Enable support for DataMan" AUTO)
-adios_option(DATASPACES       "Enable support for DATASPACES" AUTO)
+adios_option(DataSpaces "Enable support for DATASPACES" AUTO)
 adios_option(SSC       "Enable support for SSC" AUTO)
 adios_option(SST       "Enable support for SST" AUTO)
 adios_option(ZeroMQ    "Enable support for ZeroMQ" AUTO)
@@ -121,7 +122,7 @@ adios_option(Python    "Enable support for Python bindings" AUTO)
 adios_option(Fortran   "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 adios_option(Profiling "Enable support for profiling" AUTO)
-adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoprability" AUTO)
+adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoperability" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_MPI)
@@ -135,7 +136,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 set(ADIOS2_CONFIG_OPTS
-    BZIP2 ZFP SZ MGARD PNG MPI DataMan SSC SST DATASPACES ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
+    Blosc BZip2 ZFP SZ MGARD PNG MPI DataMan SSC SST DataSpaces ZeroMQ HDF5 Python Fortran SysVShMem Profiling Endian_Reverse
 )
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
 configure_file(
@@ -144,8 +145,8 @@ configure_file(
   @ONLY
 )
 
-install(FILES ${PROJECT_BINARY_DIR}/source/adios2/ADIOSConfig.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+install(FILES ${PROJECT_BINARY_DIR}/source/adios2/common/ADIOSConfig.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
 )
 
 #------------------------------------------------------------------------------#
@@ -281,4 +282,9 @@ foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
     message("${label}: OFF")
   endif()
 endforeach()
+if (ADIOS2_HAVE_SST AND ADIOS2_SST_HAVE_LIBFABRIC) 
+message("    RDMA Transport for Staging: Available")
+else()
+message("    RDMA Transport for Staging: Unconfigured")
+endif()
 message("")

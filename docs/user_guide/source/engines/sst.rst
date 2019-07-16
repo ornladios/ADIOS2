@@ -113,28 +113,36 @@ data).  The default value of 0 is interpreted as no limit.  This value is
 interpreted by SST Writer engines only.
 
 4. ``QueueFullPolicy``: Default **"Block"**.  This value controls what
-policy is invoked if a non-zero **QueueLimit** has been specified and new
-data would cause the queue limit to be reached.  Essentially, the
-**"Block"** option ensures data will not be discarded and if the queue fills
-up the writer will block on **EndStep** until the data has been read.  If
-there are no active readers, **EndStep** will block until at least one
-arrives.  If there is one active reader, **EndStep** will block until data
-has been consumed off the front of the queue to make room for newly arriving
-data.  If there is more than one active reader, it is only removed from the
-queue when it has been read by all readers, so the slowest reader will
-dictate progress.  Besides **"Block"**, the other acceptable value for
-**QueueFullPolicy** is **"Discard"**.  When **"Discard"** is specified, and
-an **EndStep** operation would add more than the allowed number of steps to
-the queue, some step is discarded.  If there are no current readers
-connected to the stream, the *oldest* data in the queue is discarded.  If
-there are current readers, then the *newest* data (I.E. the just-created
-step) is discarded.  (The differential treatment is because SST sends
-metadata for each step to the readers as soon as the step is accepted and
-cannot reliably prevent that use of that data without a costly all-to-all
-synchronization operation.  Discarding the *newest* data instead is less
-satisfying, but has a similar long-term effect upon the set of steps
-delivered to the readers.)  This value is interpreted by SST Writer engines
-only.
+policy is invoked if a non-zero **QueueLimit** has been specified and
+new data would cause the queue limit to be reached.  Essentially, the
+**"Block"** option ensures data will not be discarded and if the queue
+fills up the writer will block on **EndStep** until the data has been
+read. If there is one active reader, **EndStep** will block until data
+has been consumed off the front of the queue to make room for newly
+arriving data.  If there is more than one active reader, it is only
+removed from the queue when it has been read by all readers, so the
+slowest reader will dictate progress.  **NOTE THAT THE NO READERS
+SITUATION IS A SPECIAL CASE**: If there are no active readers, new
+timesteps are considered to have completed their active queueing
+immediately upon submission.  They may be retained in the "reserve
+queue" if the ReserveQueueLimit is non-zero.  However, if that
+ReserveQueueLimit parameter is zero, timesteps submitted when there
+are no active readers will be immediately discarded.
+
+Besides **"Block"**, the other
+acceptable value for **QueueFullPolicy** is **"Discard"**.  When
+**"Discard"** is specified, and an **EndStep** operation would add
+more than the allowed number of steps to the queue, some step is
+discarded.  If there are no current readers connected to the stream,
+the *oldest* data in the queue is discarded.  If there are current
+readers, then the *newest* data (I.E. the just-created step) is
+discarded.  (The differential treatment is because SST sends metadata
+for each step to the readers as soon as the step is accepted and
+cannot reliably prevent that use of that data without a costly
+all-to-all synchronization operation.  Discarding the *newest* data
+instead is less satisfying, but has a similar long-term effect upon
+the set of steps delivered to the readers.)  This value is interpreted
+by SST Writer engines only.
 
 5. ``ReserveQueueLimit``:  Default **0**.  This integer value specifies the
 number of steps which the writer will keep in the queue for the benefit
@@ -165,7 +173,7 @@ the underlying network communication mechanism to use for performing
 control operations in SST.  SST can be configured to standard TCP
 sockets, which are very reliable and efficient, but which are limited
 in their scalability.  Alternatively, SST can use a reliable UDP
-protocol, that is more scalable, but as of ADIOS2 Release 2.3.1 still
+protocol, that is more scalable, but as of ADIOS2 Release 2.4.0 still
 suffers from some reliability problems.  (**sockets** is accepted as
 equivalent to **tcp** and **udp**, **rudp**, and **enet** are
 equivalent to **scalable**.  Generally both the reader and writer
@@ -185,7 +193,22 @@ will result in SST generating contact information that uses the
 network address associated with the loopback interface (127.0.0.1).
 This value is interpreted by only by the SST Writer engine.
 
-9. ``FirstTimestepPrecious``: Default **FALSE**.
+9. ``ControlInterface``: Default **NULL**.  This value is similar to the
+NetworkInterface parameter, but only applies to the SST layer which does
+messaging for control (open, close, flow and timestep management, but not
+actual data transfer).  Generally the NetworkInterface parameter can be used
+to control this, but that also aplies to the Data Plane.  Use
+ControlInterface in the event of conflicting specifications.
+
+10. ``DataInterface``: Default **NULL**.  This value is similar to the
+NetworkInterface parameter, but only applies to the SST layer which does
+messaging for data transfer, not control (open, close, flow and timestep
+management).  Generally the NetworkInterface parameter can be used to
+control this, but that also aplies to the Control Plane.  Use DataInterface
+in the event of conflicting specifications.  In the case of the RDMA data
+plane, this parameter controls the libfabric interface choice.
+
+11. ``FirstTimestepPrecious``: Default **FALSE**.
 FirstTimestepPrecious is a boolean parameter that affects the queueing
 of the first timestep presented to the SST Writer engine. If
 FirstTimestepPrecious is **TRUE***, then the first timestep is
@@ -201,13 +224,20 @@ other reader-side operations (like requesting the LatestAvailable
 timestep in Engine parameters) might still cause the timestep to be skipped.
 This value is interpreted by only by the SST Writer engine.
 
-10. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
+12. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
 AlwaysProvideLatestTimestep is a boolean parameter that affects what
 of the available timesteps will be provided to the reader engine.  If
 AlwaysProvideLatestTimestep is **TRUE***, then if there are multiple
 timesteps available to the reader, older timesteps will be skipped and
 the reader will see only the newest available upon BeginStep.
 This value is interpreted by only by the SST Reader engine.
+
+13. ``OpenTimeoutSecs``: Default **60**.  OpenTimeoutSecs is an integer
+parameter that specifies the number of seconds SST is to wait for a peer
+connection on Open().  Currently this is only implemented on the Reader side
+of SST, and is a timeout for locating the contact information file created
+by Writer-side Open, not for completing the entire Open() handshake.
+Currentlyvalue is interpreted by only by the SST Reader engine.
 
 
 ============================= ===================== ================================================
@@ -221,6 +251,9 @@ This value is interpreted by only by the SST Reader engine.
  DataTransport                   string              **default varies by platform**, RDMA, WAN
  ControlTransport                string              **TCP**, Scalable
  NetworkInterface                string              **NULL**
+ ControlInterface                string              **NULL**
+ DataInterface                   string              **NULL**
  FirstTimestepPrecious           boolean             **FALSE**, true, no, yes
  AlwaysProvideLatestTimestep     boolean             **FALSE**, true, no, yes
+ OpenTimeoutSecs                 integer             **60**
 ============================= ===================== ================================================

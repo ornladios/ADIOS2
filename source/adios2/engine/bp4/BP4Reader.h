@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_BP4_BP4READER_H_
 #define ADIOS2_ENGINE_BP4_BP4READER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp4/BP4.h" //format::BP4Deserializer
 #include "adios2/toolkit/transportman/TransportMan.h"
@@ -83,6 +83,9 @@ private:
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
+                                                                               \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    DoAllRelativeStepsBlocksInfo(const Variable<T> &) const final;             \
                                                                                \
     std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
         const Variable<T> &variable, const size_t step) const final;

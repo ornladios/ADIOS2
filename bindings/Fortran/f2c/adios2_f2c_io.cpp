@@ -14,12 +14,24 @@
 
 #include <string.h> //strcpy
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void FC_GLOBAL(adios2_in_config_file_f2c,
+               ADIOS2_IN_CONFIG_FILE_F2C)(int *result, const adios2_io **io,
+                                          int *ierr)
+{
+    adios2_bool resultC;
+    *ierr = static_cast<int>(adios2_in_config_file(&resultC, *io));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *result = (resultC == adios2_true) ? 1 : 0;
+    }
+}
 
 void FC_GLOBAL(adios2_set_engine_f2c,
                ADIOS2_SET_ENGINE_F2C)(adios2_io **io, const char *engine_type,
@@ -374,12 +386,6 @@ void FC_GLOBAL(adios2_flush_all_engines_f2c,
                ADIOS2_FLUSH_ALL_ENGINES_F2C)(adios2_io **io, int *ierr)
 {
     *ierr = static_cast<int>(adios2_flush_all_engines(*io));
-}
-
-void FC_GLOBAL(adios2_lock_definitions_f2c,
-               ADIOS2_LOCK_DEFINITIONS_F2C)(adios2_io **io, int *ierr)
-{
-    *ierr = static_cast<int>(adios2_lock_definitions(*io));
 }
 
 void FC_GLOBAL(adios2_io_engine_type_f2c,

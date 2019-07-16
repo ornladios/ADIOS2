@@ -93,8 +93,6 @@ public:
 
     void FlushAll();
 
-    void LockDefinitions();
-
     std::map<std::string, Params> AvailableVariables();
 
     std::map<std::string, Params> AvailableAttributes();

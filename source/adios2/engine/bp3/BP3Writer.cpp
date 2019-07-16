@@ -11,8 +11,8 @@
 #include "BP3Writer.h"
 #include "BP3Writer.tcc"
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
@@ -353,12 +353,12 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
         if (m_BP3Serializer.m_Aggregator.m_IsConsumer)
         {
-            const BufferSTL &bufferSTL =
+            const format::Buffer &bufferSTL =
                 m_BP3Serializer.m_Aggregator.GetConsumerBuffer(
                     m_BP3Serializer.m_Data);
 
-            m_FileDataManager.WriteFiles(bufferSTL.m_Buffer.data(),
-                                         bufferSTL.m_Position, transportIndex);
+            m_FileDataManager.WriteFiles(bufferSTL.Data(), bufferSTL.m_Position,
+                                         transportIndex);
 
             m_FileDataManager.FlushFiles(transportIndex);
         }
@@ -374,7 +374,7 @@ void BP3Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
 
     if (isFinal) // Write metadata footer
     {
-        BufferSTL &bufferSTL = m_BP3Serializer.m_Data;
+        format::BufferSTL &bufferSTL = m_BP3Serializer.m_Data;
         m_BP3Serializer.ResetBuffer(bufferSTL, false, false);
 
         m_BP3Serializer.AggregateCollectiveMetadata(

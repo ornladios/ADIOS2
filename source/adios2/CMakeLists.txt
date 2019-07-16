@@ -14,7 +14,7 @@ target_include_directories(taustubs PRIVATE
 )
 
 add_library(adios2
-  ADIOSTypes.cpp
+  common/ADIOSTypes.cpp
   
   core/Attribute.cpp 
   core/AttributeBase.cpp
@@ -57,8 +57,10 @@ add_library(adios2
   
   engine/null/NullEngine.cpp
 
+  engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 #toolkit
-  toolkit/format/BufferSTL.cpp
+  toolkit/format/buffer/Buffer.cpp
+  toolkit/format/buffer/heap/BufferSTL.cpp
 
   toolkit/format/bp3/BP3Base.cpp toolkit/format/bp3/BP3Base.tcc
   toolkit/format/bp3/BP3Serializer.cpp toolkit/format/bp3/BP3Serializer.tcc
@@ -74,12 +76,14 @@ add_library(adios2
   toolkit/format/bpOperation/compress/BPMGARD.cpp
   toolkit/format/bpOperation/compress/BPPNG.cpp
   toolkit/format/bpOperation/compress/BPBZIP2.cpp toolkit/format/bpOperation/compress/BPBZIP2.tcc
+  toolkit/format/bpOperation/compress/BPBlosc.cpp
   
   toolkit/profiling/iochrono/Timer.cpp
 
   toolkit/transport/Transport.cpp
   toolkit/transport/file/FileStdio.cpp
   toolkit/transport/file/FileFStream.cpp
+  toolkit/transport/null/NullTransport.cpp
 
   toolkit/transportman/TransportMan.cpp
 
@@ -101,6 +105,8 @@ if(UNIX)
 endif()
 
 if(ADIOS2_HAVE_SysVShMem)
+  target_sources(adios2 PRIVATE toolkit/format/buffer/ipc/BufferSystemV.cpp)
+  
   target_sources(adios2 PRIVATE toolkit/transport/shm/ShmSystemV.cpp)
 endif()
 
@@ -140,7 +146,6 @@ if(ADIOS2_HAVE_SSC)
     target_link_libraries(adios2 PRIVATE nlohmann_json)
 endif()
 
-
 if(ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/sst)
   target_sources(adios2 PRIVATE
@@ -151,7 +156,7 @@ if(ADIOS2_HAVE_SST)
   target_link_libraries(adios2 PRIVATE sst)
 endif()
 
-if(ADIOS2_HAVE_DATASPACES)
+if(ADIOS2_HAVE_DataSpaces)
   target_sources(adios2 PRIVATE
      toolkit/dataspaces/ds_writer.c
      engine/dataspaces/DataSpacesWriter.cpp engine/dataspaces/DataSpacesWriter.tcc 
@@ -160,8 +165,12 @@ if(ADIOS2_HAVE_DATASPACES)
   target_link_libraries(adios2 PRIVATE DataSpaces::DataSpaces)
 endif()
 
+if(ADIOS2_HAVE_Blosc)
+  target_sources(adios2 PRIVATE operator/compress/CompressBlosc.cpp)
+  target_link_libraries(adios2 PRIVATE Blosc::Blosc)
+endif()
 
-if(ADIOS2_HAVE_BZIP2)
+if(ADIOS2_HAVE_BZip2)
   target_sources(adios2 PRIVATE operator/compress/CompressBZIP2.cpp)
   target_link_libraries(adios2 PRIVATE BZip2::BZip2)
 endif()
@@ -230,8 +239,8 @@ set_target_properties(adios2 PROPERTIES
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
-install(FILES ADIOSMacros.h ADIOSTypes.h ADIOSTypes.inl
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2
+install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/common
 )
 
 # Library installation

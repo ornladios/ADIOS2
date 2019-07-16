@@ -42,7 +42,7 @@ set_property(TEST HeatTransfer.BPFile.Dump.Mx1_zfp
 #)
 
 #############################################################################
-set(BP4_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bp4)
+set(BP4_DIR ./bp4)
 file(MAKE_DIRECTORY ${BP4_DIR})
 
 add_test(NAME HeatTransfer.BP4File.Write.Mx1_zfp
@@ -66,7 +66,7 @@ add_test(NAME HeatTransfer.BP4File.Dump.Mx1_zfp
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
     -DINPUT_FILE=${BP4_DIR}/HeatTransfer.BP4File.Read.Mx1_zfp.bp
-    -DOUTPUT_FILE=HeatTransfer.BP4File.Dump.Mx1_zfp.txt
+    -DOUTPUT_FILE=${BP4_DIR}/HeatTransfer.BP4File.Dump.Mx1_zfp.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST HeatTransfer.BP4File.Dump.Mx1_zfp

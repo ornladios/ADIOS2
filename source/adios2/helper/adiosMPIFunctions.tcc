@@ -17,8 +17,8 @@
 #include <algorithm> //std::foreach
 #include <numeric>   //std::accumulate
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosType.h"
 
 namespace adios2

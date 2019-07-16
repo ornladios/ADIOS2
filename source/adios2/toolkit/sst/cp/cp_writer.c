@@ -9,7 +9,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
 #include <pthread.h>
@@ -140,6 +140,7 @@ static void writeContactInfoFile(const char *Name, SstStream Stream)
     sprintf(TmpName, "%s.tmp", Name);
     sprintf(FileName, "%s" SST_POSTFIX, Name);
     WriterInfo = fopen(TmpName, "w");
+    fprintf(WriterInfo, "%s", SSTMAGICV0);
     fprintf(WriterInfo, "%s", Contact);
     fclose(WriterInfo);
     rename(TmpName, FileName);
@@ -1243,6 +1244,14 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
         DerefAllSentTimesteps(CP_WSR_Stream->ParentStream, CP_WSR_Stream);
         CP_WSR_Stream->OldestUnreleasedTimestep =
             CP_WSR_Stream->LastSentTimestep + 1;
+        for (int i = 0; i < CP_WSR_Stream->ReaderCohortSize; i++)
+        {
+            if (CP_WSR_Stream->Connections[i].CMconn)
+            {
+                CMConnection_close(CP_WSR_Stream->Connections[i].CMconn);
+                CP_WSR_Stream->Connections[i].CMconn = NULL;
+            }
+        }
     }
     if (NewState == PeerFailed)
     {

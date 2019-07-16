@@ -58,12 +58,12 @@ function(GenerateADIOSHeaderConfig)
   endforeach()
 
   configure_file(
-    ${ADIOS2_SOURCE_DIR}/source/adios2/ADIOSConfig.h.in
-    ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h.in
+    ${ADIOS2_SOURCE_DIR}/source/adios2/common/ADIOSConfig.h.in
+    ${ADIOS2_BINARY_DIR}/source/adios2/common/ADIOSConfig.h.in
   )
   configure_file(
-    ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h.in
-    ${ADIOS2_BINARY_DIR}/source/adios2/ADIOSConfig.h
+    ${ADIOS2_BINARY_DIR}/source/adios2/common/ADIOSConfig.h.in
+    ${ADIOS2_BINARY_DIR}/source/adios2/common/ADIOSConfig.h
   )
 endfunction()
 

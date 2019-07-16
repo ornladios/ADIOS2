@@ -10,7 +10,7 @@
 
 #include "py11Engine.h"
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
@@ -257,6 +257,20 @@ size_t Engine::Steps() const
 {
     helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Steps");
     return m_Engine->Steps();
+}
+
+void Engine::LockWriterDefinitions() const
+{
+    helper::CheckForNullptr(m_Engine,
+                            "in call to Engine::LockWriterDefinitions");
+    m_Engine->LockWriterDefinitions();
+}
+
+void Engine::LockReaderSelections() const
+{
+    helper::CheckForNullptr(m_Engine,
+                            "in call to Engine::LockReaderSelections");
+    m_Engine->LockReaderSelections();
 }
 
 } // end namespace py11

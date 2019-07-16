@@ -9,14 +9,24 @@
 # them, otherwise we disable it.  If explicitly ON then a failure to find
 # dependencies is an error,
 
-# BZIP2
-if(ADIOS2_USE_BZIP2 STREQUAL AUTO)
+# Blosc
+if(ADIOS2_USE_Blosc STREQUAL AUTO)
+  find_package(Blosc)
+elseif(ADIOS2_USE_Blosc)
+  find_package(Blosc REQUIRED)
+endif()
+if(BLOSC_FOUND)
+  set(ADIOS2_HAVE_Blosc TRUE)
+endif()
+
+# BZip2
+if(ADIOS2_USE_BZip2 STREQUAL AUTO)
   find_package(BZip2)
-elseif(ADIOS2_USE_BZIP2)
+elseif(ADIOS2_USE_BZip2)
   find_package(BZip2 REQUIRED)
 endif()
 if(BZIP2_FOUND)
-  set(ADIOS2_HAVE_BZIP2 TRUE)
+  set(ADIOS2_HAVE_BZip2 TRUE)
 endif()
 
 # ZFP
@@ -122,13 +132,13 @@ if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
 endif()
 
 # DataSpaces
-if(ADIOS2_USE_DATASPACES STREQUAL AUTO)
-  find_package(DATASPACES 1.8)
-elseif(ADIOS2_USE_DATASPACES)
-  find_package(DATASPACES 1.8 REQUIRED)
+if(ADIOS2_USE_DataSpaces STREQUAL AUTO)
+  find_package(DataSpaces 1.8)
+elseif(ADIOS2_USE_DataSpaces)
+  find_package(DataSpaces 1.8 REQUIRED)
 endif()
 if(DATASPACES_FOUND)
-  set(ADIOS2_HAVE_DATASPACES TRUE)
+  set(ADIOS2_HAVE_DataSpaces TRUE)
 endif()
 
 # HDF5

@@ -60,6 +60,70 @@ std::complex<double> in_scalar_C64;
 
 double data_scalar_R64;
 
+void generateSimpleForwardData(std::vector<double> &data_forward, int step,
+                               int start, int count, int total_size)
+{
+    int64_t j = 100 * step + start;
+
+    data_forward.clear();
+    for (int i = 0; i < count; i++)
+    {
+        data_forward.push_back((double)j + i);
+    }
+}
+
+void generateSimpleReverseData(std::vector<double> &data_reverse, int step,
+                               int start, int count, int total_size)
+{
+    int64_t j = 100 * step + total_size - start;
+
+    data_reverse.clear();
+    for (int i = 0; i < count; i++)
+    {
+        data_reverse.push_back((double)j - i);
+    }
+}
+
+int validateSimpleForwardData(std::vector<double> &data_forward, int step,
+                              int64_t start, int64_t count, int64_t total_size)
+{
+    int ret = 0;
+    int64_t j = 100 * step + start;
+
+    std::cout << "Calling validate Simple data forward with step " << step
+              << ", start = " << start << ", count = " << count << std::endl;
+    for (int i = 0; i < count; i++)
+    {
+        if (data_forward[i] != (double)j + i)
+        {
+            std::cout << "Expected data_forward[" << i << "] to be "
+                      << (double)j + i << " got " << data_forward[i]
+                      << std::endl;
+            ret = 1;
+        }
+    }
+    return ret;
+}
+
+int validateSimpleReverseData(std::vector<double> &data_reverse, int step,
+                              int64_t start, int64_t count, int64_t total_size)
+{
+    int ret = 0;
+    int64_t j = 100 * step + total_size - start;
+
+    for (int i = 0; i < count; i++)
+    {
+        if (data_reverse[i] != (double)j - i)
+        {
+            std::cout << "Expected data_reverse[" << i << "] to be "
+                      << (double)j - i << " got " << data_reverse[i]
+                      << std::endl;
+            ret = 1;
+        }
+    }
+    return ret;
+}
+
 void generateCommonTestData(int step, int rank, int size)
 {
     int64_t j = rank * Nx * 10 + step;

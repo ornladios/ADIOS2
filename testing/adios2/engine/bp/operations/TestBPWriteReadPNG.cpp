@@ -102,46 +102,46 @@ void PNGAccuracy2D(const std::string compressionLevel)
 
         // add operations
         adios2::Operator PNGOp =
-            adios.DefineOperator("PNGCompressor", adios2::ops::PNG);
+            adios.DefineOperator("PNGCompressor", adios2::ops::LosslessPNG);
 
-        var_i8.AddOperation(PNGOp, {{adios2::ops::png::key::COLOR_TYPE,
-                                     adios2::ops::png::value::COLOR_TYPE_GRAY},
-                                    {adios2::ops::png::key::COMPRESSION_LEVEL,
+        var_i8.AddOperation(PNGOp, {{adios2::ops::png::key::color_type,
+                                     adios2::ops::png::value::color_type_GRAY},
+                                    {adios2::ops::png::key::compression_level,
                                      compressionLevel}});
 
         var_i16.AddOperation(
             PNGOp,
-            {{adios2::ops::png::key::COLOR_TYPE,
-              adios2::ops::png::value::COLOR_TYPE_GRAY_ALPHA},
-             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
+            {{adios2::ops::png::key::color_type,
+              adios2::ops::png::value::color_type_GRAY_ALPHA},
+             {adios2::ops::png::key::compression_level, compressionLevel}});
 
         var_i32.AddOperation(
             PNGOp,
-            {{adios2::ops::png::key::COLOR_TYPE,
-              adios2::ops::png::value::COLOR_TYPE_RGB_ALPHA},
-             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
+            {{adios2::ops::png::key::color_type,
+              adios2::ops::png::value::color_type_RGB_ALPHA},
+             {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_u8.AddOperation(PNGOp, {{adios2::ops::png::key::COLOR_TYPE,
-                                     adios2::ops::png::value::COLOR_TYPE_GRAY},
-                                    {adios2::ops::png::key::COMPRESSION_LEVEL,
+        var_u8.AddOperation(PNGOp, {{adios2::ops::png::key::color_type,
+                                     adios2::ops::png::value::color_type_GRAY},
+                                    {adios2::ops::png::key::compression_level,
                                      compressionLevel}});
 
         var_u16.AddOperation(
             PNGOp,
-            {{adios2::ops::png::key::COLOR_TYPE,
-              adios2::ops::png::value::COLOR_TYPE_GRAY_ALPHA},
-             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
+            {{adios2::ops::png::key::color_type,
+              adios2::ops::png::value::color_type_GRAY_ALPHA},
+             {adios2::ops::png::key::compression_level, compressionLevel}});
 
         var_u32.AddOperation(
             PNGOp,
-            {{adios2::ops::png::key::COLOR_TYPE,
-              adios2::ops::png::value::COLOR_TYPE_RGB_ALPHA},
-             {adios2::ops::png::key::COMPRESSION_LEVEL, compressionLevel}});
+            {{adios2::ops::png::key::color_type,
+              adios2::ops::png::value::color_type_RGB_ALPHA},
+             {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_u32.AddOperation(PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL,
+        var_u32.AddOperation(PNGOp, {{adios2::ops::png::key::compression_level,
                                       compressionLevel}});
 
-        var_r32.AddOperation(PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL,
+        var_r32.AddOperation(PNGOp, {{adios2::ops::png::key::compression_level,
                                       compressionLevel}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -345,12 +345,12 @@ void PNGAccuracy2DSel(const std::string accuracy)
 
         // add operations
         adios2::Operator PNGOp =
-            adios.DefineOperator("PNGCompressor", adios2::ops::PNG);
+            adios.DefineOperator("PNGCompressor", adios2::ops::LosslessPNG);
 
         var_r32.AddOperation(
-            PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL, accuracy}});
+            PNGOp, {{adios2::ops::png::key::compression_level, accuracy}});
         var_r64.AddOperation(
-            PNGOp, {{adios2::ops::png::key::COMPRESSION_LEVEL, accuracy}});
+            PNGOp, {{adios2::ops::png::key::compression_level, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -440,15 +440,15 @@ TEST_P(BPWRPNG, BPWRPNG2D) { PNGAccuracy2D(GetParam()); }
 
 INSTANTIATE_TEST_CASE_P(
     PNGAccuracy, BPWRPNG,
-    ::testing::Values(adios2::ops::png::value::COMPRESSION_LEVEL_1,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_2,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_3,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_4,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_5,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_6,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_7,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_8,
-                      adios2::ops::png::value::COMPRESSION_LEVEL_9));
+    ::testing::Values(adios2::ops::png::value::compression_level_1,
+                      adios2::ops::png::value::compression_level_2,
+                      adios2::ops::png::value::compression_level_3,
+                      adios2::ops::png::value::compression_level_4,
+                      adios2::ops::png::value::compression_level_5,
+                      adios2::ops::png::value::compression_level_6,
+                      adios2::ops::png::value::compression_level_7,
+                      adios2::ops::png::value::compression_level_8,
+                      adios2::ops::png::value::compression_level_9));
 
 int main(int argc, char **argv)
 {

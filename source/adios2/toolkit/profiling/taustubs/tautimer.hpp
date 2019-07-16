@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 /* This code won't compile on windows.  Disable it */
 #if !defined(_WIN32) && !defined(_WIN64)

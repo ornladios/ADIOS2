@@ -29,9 +29,11 @@ add_executable(TestCommonWrite TestCommonWrite.cpp)
 add_executable(TestCommonWriteAttrs TestCommonWriteAttrs.cpp)
 add_executable(TestCommonWriteModes TestCommonWriteModes.cpp)
 add_executable(TestCommonWriteLocal TestCommonWriteLocal.cpp)
+add_executable(TestCommonWriteShared TestCommonWriteShared.cpp)
 add_executable(TestCommonRead TestCommonRead.cpp)
 add_executable(TestCommonReadAttrs TestCommonReadAttrs.cpp)
 add_executable(TestCommonReadLocal TestCommonReadLocal.cpp)
+add_executable(TestCommonReadShared TestCommonReadShared.cpp)
 add_executable(TestCommonServer TestCommonServer.cpp)
 add_executable(TestCommonClient TestCommonClient.cpp)
 if(ADIOS2_HAVE_Fortran)
@@ -49,8 +51,10 @@ if(SST_INCLUDE_DIRS)
   target_include_directories(TestCommonWriteModes PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestCommonWriteAttrs PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestCommonWriteLocal PRIVATE ${SST_INCLUDE_DIRS})
+  target_include_directories(TestCommonWriteShared PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestCommonRead PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestCommonReadLocal PRIVATE ${SST_INCLUDE_DIRS})
+  target_include_directories(TestCommonReadShared PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestCommonServer PRIVATE ${SST_INCLUDE_DIRS})
   target_include_directories(TestCommonClient PRIVATE ${SST_INCLUDE_DIRS})
 endif()
@@ -58,8 +62,10 @@ target_link_libraries(TestCommonWrite adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonWriteModes adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonWriteAttrs adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonWriteLocal adios2 gtest_interface ${Sst_LIBRARY})
+target_link_libraries(TestCommonWriteShared adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonRead adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonReadLocal adios2 gtest_interface ${Sst_LIBRARY})
+target_link_libraries(TestCommonReadShared adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonReadAttrs adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonServer adios2 gtest_interface ${Sst_LIBRARY})
 target_link_libraries(TestCommonClient adios2 gtest_interface ${Sst_LIBRARY})
@@ -69,8 +75,10 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestCommonWriteModes MPI::MPI_C)
   target_link_libraries(TestCommonWriteAttrs MPI::MPI_C)
   target_link_libraries(TestCommonWriteLocal MPI::MPI_C)
+  target_link_libraries(TestCommonWriteShared MPI::MPI_C)
   target_link_libraries(TestCommonRead MPI::MPI_C)
   target_link_libraries(TestCommonReadLocal MPI::MPI_C)
+  target_link_libraries(TestCommonReadShared MPI::MPI_C)
   target_link_libraries(TestCommonReadAttrs MPI::MPI_C)
   target_link_libraries(TestCommonServer MPI::MPI_C)
   target_link_libraries(TestCommonClient MPI::MPI_C)
@@ -109,10 +117,10 @@ if (ADIOS2_HAVE_MPI AND NOT ("${MPIEXEC_EXECUTABLE}" STREQUAL "MPIEXEC_EXECUTABL
    endforeach()
 endif()
 
-set (TEST_SET "1x1;NoReaderNoWait;Modes;1x1.Attrs;1x1.Local")
-set (FORTRAN_TESTS "")
+set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
+set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
-  set (FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
+  set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
 endif()
 
 set (SPECIAL_TESTS "TimeoutReader;LatestReader;LatestReaderHold;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
@@ -121,26 +129,29 @@ if (MPIEXEC_IS_BINARY)
     list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriter_2x2;KillWriterTimeout_2x2")
 endif()
 
-set (MPI_TESTS "")
-set (MPI_FORTRAN_TESTS "")
+set (SIMPLE_MPI_TESTS "")
+set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
+  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
   if (ADIOS_HAVE_Fortran)
-    set (MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
+    set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()
 endif()
  
-set (ZFP_TESTS "")
+set (SIMPLE_ZFP_TESTS "")
 if (ADIOS2_HAVE_ZFP)
-   set (ZFP_TESTS "ZFPCompression.1x1;ZFPCompression.3x5")
+   set (SIMPLE_ZFP_TESTS "ZFPCompression.1x1;ZFPCompression.3x5")
 endif()
+
+set (ALL_SIMPLE_TESTS "")
+list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
 
 #
 #   Setup tests for SST engine
 #
 SET (BASIC_SST_TESTS "")
 if(ADIOS2_HAVE_SST)
-    list (APPEND BASIC_SST_TESTS ${TEST_SET} ${FORTRAN_TESTS} ${SPECIAL_TESTS} ${MPI_TESTS} ${MPI_FORTRAN_TESTS} ${ZFP_TESTS})
+    list (APPEND BASIC_SST_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
 endif()
 
 
@@ -163,13 +174,66 @@ foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
 
+#
+#   Setup tests for InSituMPI engine
+#
+if(ADIOS2_HAVE_MPI)
+    set (INSITU_TESTS ${ALL_SIMPLE_TESTS})
+    # Tests that don't work for InSitu
+    list (REMOVE_ITEM INSITU_TESTS "TimeoutOnOpen" "Modes" "1x1.Attrs")
+    # Local Vars don't work for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX ".*Local$")
+    # Multiple streams don't work for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "x1.Shared")
+    # Fortran Destination doesn't work for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "toF")
+    # DelayedReader doesn't make sense for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "DelayedReader.*")
+    # Fortran scalar reads don't work for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
+    foreach(test ${INSITU_TESTS})
+        add_common_test(${test} InSituMPI)
+    endforeach()
+endif()
+
+#
+#   Setup tests for BP engine
+#
+if(NOT MSVC)    # not on windows
+    # Local Vars don't work for InSitu
+    set (BP_TESTS ${ALL_SIMPLE_TESTS})
+    # Delayed reader not worth testing on file engines
+    list (FILTER BP_TESTS EXCLUDE REGEX "DelayedReader")
+    # SharedVars fail with BP*
+    list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
+    foreach(test ${BP_TESTS})
+        add_common_test(${test} BP3)
+        add_common_test(${test} BP4)
+    endforeach()
+endif()
+
+#
+#   Setup tests for HDF5 engine
+#
+if(NOT MSVC AND ADIOS2_HAVE_HDF5)    # not on windows and only if we have HDF5
+    set (HDF5_TESTS ${ALL_SIMPLE_TESTS})
+    # Delayed reader not worth testing on file engines
+    list (FILTER HDF5_TESTS EXCLUDE REGEX "DelayedReader")
+    # Local variables don't work on hdf5 
+    list (FILTER HDF5_TESTS EXCLUDE REGEX ".*Local")
+    # Oddly, some multi-writer tests fail
+    list (FILTER HDF5_TESTS EXCLUDE REGEX "[2345]x")
+    foreach(test ${HDF5_TESTS})
+        add_common_test(${test} HDF5)
+    endforeach()
+endif()
 
 
 #
 #   Setup tests for SSC engine
 #
 if(ADIOS2_HAVE_SSC AND ADIOS2_HAVE_MPI)
-    SET (SSC_TESTS "NoReaderNoWait")
+    set(SSC_TESTS "NoReaderNoWait")
     foreach(test ${SSC_TESTS})
         add_common_test(${test} SSC)
     endforeach()

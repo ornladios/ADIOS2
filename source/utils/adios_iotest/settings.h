@@ -11,7 +11,7 @@
 #ifndef SETTINGS_H_
 #define SETTINGS_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 #include <fstream>
 #include <string>

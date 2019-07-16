@@ -16,9 +16,9 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2
@@ -34,8 +34,6 @@ public:
     Mode m_OpenMode = Mode::Undefined; ///< at Open from ADIOSTypes.h
     bool m_IsOpen = false; ///< true: open for communication, false: unreachable
     MPI_Comm m_MPIComm;    ///< current MPI communicator
-    int m_RankMPI = 0;     ///< from MPI_Comm_Rank
-    int m_SizeMPI = 1;     ///< from MPI_Comm_Size
     profiling::IOChrono m_Profiler; ///< profiles Open, Write/Read, Close
 
     struct Status
@@ -114,17 +112,21 @@ public:
     /** closes current file, after this file becomes unreachable */
     virtual void Close() = 0;
 
+    virtual void SeekToEnd() = 0;
+
+    virtual void SeekToBegin() = 0;
+
 protected:
     /** true: turn on exceptions */
     const bool m_DebugMode = false;
 
-    void MkDir(const std::string &fileName);
+    virtual void MkDir(const std::string &fileName);
 
     void ProfilerStart(const std::string process) noexcept;
 
     void ProfilerStop(const std::string process) noexcept;
 
-    void CheckName() const;
+    virtual void CheckName() const;
 };
 
 } // end namespace adios2

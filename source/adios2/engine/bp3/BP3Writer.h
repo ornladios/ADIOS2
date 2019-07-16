@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_BP3_BP3WRITER_H_
 #define ADIOS2_ENGINE_BP3_BP3WRITER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/TransportMan.h" //transport::TransportsMan

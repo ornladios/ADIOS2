@@ -3,12 +3,12 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
 #include <pthread.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 #include "sst.h"
 
@@ -894,6 +894,7 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
     FMFieldList FieldList;
     FMStructDescList FormatList;
     void *BaseData;
+    int DumpData = -1;
 
     FFSformat = FFSTypeHandle_from_encode(Stream->ReaderFFSContext,
                                           WriterInfo->RawBuffer);
@@ -925,8 +926,16 @@ static void DecodeAndPrepareData(SstStream Stream, int Writer)
         FFSdecode_to_buffer(Stream->ReaderFFSContext, WriterInfo->RawBuffer,
                             decode_buf);
     }
-    //    printf("\nIncomingDatablock is %p :\n", BaseData);
-    //    FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+    if (DumpData == -1)
+    {
+        DumpData = (getenv("SstDumpData") != NULL);
+    }
+    if (DumpData)
+    {
+        printf("\nOn Rank %d, IncomingDatablock from writer %d is %p :\n",
+               Stream->Rank, Writer, BaseData);
+        FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
+    }
     Info->DataBaseAddrs[Writer] = BaseData;
     FormatList = format_list_of_FMFormat(FMFormat_of_original(FFSformat));
     FieldList = FormatList[0].field_list;
@@ -1220,10 +1229,110 @@ void ExtractSelectionFromPartialCM(int ElementSize, size_t Dims,
     free(FirstIndex);
 }
 
+typedef struct _range_list
+{
+    size_t start;
+    size_t end;
+    struct _range_list *next;
+} * range_list;
+
+range_list static OneDCoverage(size_t start, size_t end,
+                               range_list uncovered_list)
+{
+    if (uncovered_list == NULL)
+        return NULL;
+
+    if ((start <= uncovered_list->start) && (end >= uncovered_list->end))
+    {
+        /* this uncovered element is covered now, recurse on next */
+        range_list next = uncovered_list->next;
+        free(uncovered_list);
+        return OneDCoverage(start, end, next);
+    }
+    else if ((end < uncovered_list->end) && (start > uncovered_list->start))
+    {
+        /* covering a bit in the middle */
+        range_list new = malloc(sizeof(*new));
+        new->next = uncovered_list->next;
+        new->end = uncovered_list->end;
+        new->start = end + 1;
+        uncovered_list->end = start - 1;
+        uncovered_list->next = new;
+        return (uncovered_list);
+    }
+    else if ((end < uncovered_list->start) || (start > uncovered_list->end))
+    {
+        uncovered_list->next = OneDCoverage(start, end, uncovered_list->next);
+        return uncovered_list;
+    }
+    else if (start <= uncovered_list->start)
+    {
+        /* we don't cover completely nor a middle portion, so this means we span
+         * the beginning */
+        uncovered_list->start = end + 1;
+        uncovered_list->next = OneDCoverage(start, end, uncovered_list->next);
+        return uncovered_list;
+    }
+    else if (end >= uncovered_list->end)
+    {
+        /* we don't cover completely nor a middle portion, so this means we span
+         * the end */
+        uncovered_list->end = start - 1;
+        uncovered_list->next = OneDCoverage(start, end, uncovered_list->next);
+        return uncovered_list;
+    }
+    return NULL;
+}
+
+static void DumpCoverageList(range_list list)
+{
+    if (!list)
+        return;
+    printf("%ld - %ld", list->start, list->end);
+    if (list->next != NULL)
+    {
+        printf(", ");
+        DumpCoverageList(list->next);
+    }
+}
+
+static void ImplementGapWarning(SstStream Stream, FFSArrayRequest Req)
+{
+    if (Req->RequestType == Local)
+    {
+        /* no analysis here */
+        return;
+    }
+    if (Req->VarRec->DimCount != 1)
+    {
+        /* at this point, multidimensional fill analysis is too much */
+        return;
+    }
+    struct _range_list *Required = malloc(sizeof(*Required));
+    Required->next = NULL;
+    Required->start = Req->Start[0];
+    Required->end = Req->Start[0] + Req->Count[0] - 1;
+    for (int i = 0; i < Stream->WriterCohortSize; i++)
+    {
+        size_t start = Req->VarRec->PerWriterStart[i][0];
+        size_t end = start + Req->VarRec->PerWriterCounts[i][0] - 1;
+        Required = OneDCoverage(start, end, Required);
+    }
+    if (Required != NULL)
+    {
+        printf("WARNING:   Reader Rank %d requested elements %lu - %lu,\n\tbut "
+               "these elements were not written by any writer rank: \n",
+               Stream->Rank, (unsigned long)Req->Start[0],
+               (unsigned long)Req->Start[0] + Req->Count[0] - 1);
+        DumpCoverageList(Required);
+    }
+}
+
 static void FillReadRequests(SstStream Stream, FFSArrayRequest Reqs)
 {
     while (Reqs)
     {
+        ImplementGapWarning(Stream, Reqs);
         for (int i = 0; i < Stream->WriterCohortSize; i++)
         {
             if (NeedWriter(Reqs, i))

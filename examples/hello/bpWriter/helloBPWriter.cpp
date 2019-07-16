@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
         adios2::Variable<std::string> bpString =
             bpIO.DefineVariable<std::string>("bpString");
 
+        std::string filename = "myVector_cpp.bp";
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpFileWriter =
-            bpIO.Open("myVector_cpp.bp", adios2::Mode::Write);
+        adios2::Engine bpFileWriter = bpIO.Open(filename, adios2::Mode::Write);
 
         /** Put variables for buffering, template type is optional */
         bpFileWriter.Put<float>(bpFloats, myFloats.data());
@@ -64,24 +64,44 @@ int main(int argc, char *argv[])
 
         /** Create bp file, engine becomes unreachable after this*/
         bpFileWriter.Close();
+        if (rank == 0)
+        {
+            std::cout << "Wrote file " << filename
+                      << " to disk. It can now be read by running "
+                         "./bin/hello_bpReader.\n";
+        }
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr
+                << "Invalid argument exception, STOPPING PROGRAM from rank "
+                << rank << "\n";
+            std::cerr << e.what() << "\n";
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM "
-                     "from rank "
-                  << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr << "IO System base failure exception, STOPPING PROGRAM "
+                         "from rank "
+                      << rank << "\n";
+            std::cerr << e.what() << "\n";
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
-        std::cout << e.what() << "\n";
+        if (rank == 0)
+        {
+            std::cerr << "Exception, STOPPING PROGRAM from rank " << rank
+                      << "\n";
+            std::cerr << e.what() << "\n";
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     MPI_Finalize();
