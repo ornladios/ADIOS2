@@ -141,6 +141,42 @@ void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,
     }
 }
 
+// BroadcastVector specializations
+template <>
+void BroadcastVector(std::vector<size_t> &vector, MPI_Comm mpiComm,
+                     const int rankSource)
+{
+    int size;
+    SMPI_Comm_size(mpiComm, &size);
+
+    if (size == 1)
+    {
+        return;
+    }
+
+    // First Broadcast the size, then the contents
+    size_t inputSize = BroadcastValue(vector.size(), mpiComm, rankSource);
+    int rank;
+    SMPI_Comm_rank(mpiComm, &rank);
+
+    if (rank != rankSource)
+    {
+        vector.resize(inputSize);
+    }
+
+    const int MAXBCASTSIZE = 1073741824 / sizeof(size_t);
+    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    size_t *buffer = vector.data();
+    while (inputSize > 0)
+    {
+        SMPI_Bcast(buffer, static_cast<int>(blockSize), ADIOS2_MPI_SIZE_T,
+                   rankSource, mpiComm);
+        buffer += blockSize;
+        inputSize -= blockSize;
+        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    }
+}
+
 // GatherArrays specializations
 template <>
 void GatherArrays(const char *source, const size_t sourceCount,

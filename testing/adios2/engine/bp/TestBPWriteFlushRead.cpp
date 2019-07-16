@@ -276,7 +276,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 
             unsigned int t = 0;
 
-            while (bpReader.BeginStep() == adios2::StepStatus::OK)
+            while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) ==
+                   adios2::StepStatus::OK)
             {
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
@@ -438,7 +439,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
 
             unsigned int t = 0;
 
-            while (bpReader.BeginStep() == adios2::StepStatus::OK)
+            while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) ==
+                   adios2::StepStatus::OK)
             {
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
@@ -743,7 +745,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
             unsigned int t = 0;
 
-            while (bpReader.BeginStep() == adios2::StepStatus::OK)
+            while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) ==
+                   adios2::StepStatus::OK)
             {
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
@@ -906,7 +909,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
 
             unsigned int t = 0;
 
-            while (bpReader.BeginStep() == adios2::StepStatus::OK)
+            while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) ==
+                   adios2::StepStatus::OK)
             {
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
@@ -1211,7 +1215,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
             unsigned int t = 0;
 
-            while (bpReader.BeginStep() == adios2::StepStatus::OK)
+            while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) ==
+                   adios2::StepStatus::OK)
             {
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));
@@ -1374,7 +1379,8 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
 
             unsigned int t = 0;
 
-            while (bpReader.BeginStep() == adios2::StepStatus::OK)
+            while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) ==
+                   adios2::StepStatus::OK)
             {
                 const size_t currentStep = bpReader.CurrentStep();
                 EXPECT_EQ(currentStep, static_cast<size_t>(t));

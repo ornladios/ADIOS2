@@ -50,10 +50,16 @@ public:
 
 private:
     format::BP4Deserializer m_BP4Deserializer;
-    transportman::TransportMan m_FileManager;
-    transportman::TransportMan m_SubFileManager;
+    /* transport manager for metadata file */
+    transportman::TransportMan m_MDFileManager;
+    size_t m_MDFileProcessedSize = 0;
+
+    /* transport manager for managing data file(s) */
+    transportman::TransportMan m_DataFileManager;
+
     /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_FileMetadataIndexManager;
+    transportman::TransportMan m_MDIndexFileManager;
+    size_t m_MDIndexFileProcessedSize = 0;
 
     /** used for per-step reads, TODO: to be moved to BP4Deserializer */
     size_t m_CurrentStep = 0;
@@ -62,6 +68,34 @@ private:
     void Init();
     void InitTransports();
     void InitBuffer();
+
+    /** Read in more metadata if exist (throwing away old).
+     *  For streaming only.
+     *  @return pair of sizes if new metadata was read in
+     *  sizes.first = size of new content from Index Table
+     *  sizes.second = size of new content from Metadata File
+     */
+    std::pair<size_t, size_t> UpdateBuffer();
+
+    /** Process the new metadata coming in (in UpdateBuffer)
+     *  @param newIdxSize: the size of the new content from Index Table
+     *  @param neMDSize: the size of new content from Metadata File
+     */
+    void ProcessMetadataForNewSteps(const size_t newIdxSize,
+                                    const size_t newMDSize);
+
+    /** Check the active status flag in index file.
+     *  @return true if writer is still active
+     *  it sets BP4Deserialized.m_WriterIsActive
+     */
+    bool CheckWriterActive();
+
+    /** Check for new steps withing timeout and only if writer is active.
+     *  @return the status flag
+     *  Used by BeginStep() to get new steps from file when it reaches the
+     *  end of steps in memory.
+     */
+    StepStatus CheckForNewSteps(float timeoutSeconds);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
