@@ -140,6 +140,20 @@ extern void SstReaderInitFFSCallback(SstStream stream, void *Reader,
                                      ArraySetupUpcallFunc ArrayCallback,
                                      AttrSetupUpcallFunc AttrCallback);
 
+/*
+ *  Calls that support SST-external writer-side aggregation of metadata
+ */
+typedef void *(*AssembleMetadataUpcallFunc)(void *Writer, int CohortSize,
+                                            struct _SstData *Metadata,
+                                            struct _SstData *AttributeData);
+typedef void (*FreeMetadataUpcallFunc)(void *Writer, struct _SstData *Metadata,
+                                       struct _SstData *AttributeData,
+                                       void *ClientData);
+extern void
+SstWriterInitMetadataCallback(SstStream stream, void *Writer,
+                              AssembleMetadataUpcallFunc AssembleCallback,
+                              FreeMetadataUpcallFunc FreeCallback);
+
 extern void SstFFSMarshal(SstStream Stream, void *Variable, const char *Name,
                           const char *Type, size_t ElemSize, size_t DimCount,
                           const size_t *Shape, const size_t *Count,
