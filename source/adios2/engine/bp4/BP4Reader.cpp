@@ -202,16 +202,10 @@ void BP4Reader::OpenFiles()
                 lasterr = &e;
                 if (errno == ENOENT)
                 {
-                    std::cout << "Exception File does not exist yet: errno = "
-                              << errno << " e.code = " << e.code().value()
-                              << " : " << e.what() << std::endl;
                     flag = 1; // timeout
                 }
                 else
                 {
-                    std::cout << "Exception: errno = " << errno
-                              << " e.code = " << e.code().value() << " : "
-                              << e.what() << std::endl;
                     flag = 2; // fatal error
                     break;
                 }
