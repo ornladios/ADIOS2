@@ -208,7 +208,15 @@ void BP4Reader::OpenFiles()
     haveFiles = helper::BroadcastValue(haveFiles, m_MPIComm, 0);
     if (!haveFiles)
     {
-        throw(*lasterr);
+        if (m_BP4Deserializer.m_RankMPI == 0)
+        {
+            throw *lasterr;
+        }
+        else
+        {
+            throw std::ios_base::failure("File " + m_Name +
+                                         " cannot be opened");
+        }
     }
 }
 
