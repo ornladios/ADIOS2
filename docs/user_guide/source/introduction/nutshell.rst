@@ -1,7 +1,7 @@
 **ADIOS2** is the latest implementation of the `Adaptable Input Output System <https://csmd.ornl.gov/software/adios2>`_.
 This brand new architecture continues the performance legacy of ADIOS1, and extends its capabilities to address the extreme challenges of scientific data IO.
 
-The ``ADIOS2 repo is hosted at github <https://github.com/ornladios/ADIOS2>`_.
+The `ADIOS2 repo is hosted at github <https://github.com/ornladios/ADIOS2>`_.
 
 The ADIOS2 infrastructure is developed as a multi-institutional collaboration
 between

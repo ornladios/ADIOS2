@@ -177,6 +177,9 @@ struct _SstStream
     int LockDefnsCount;
     struct _ReleaseRec *LockDefnsList;
     enum StreamStatus Status;
+    AssembleMetadataUpcallFunc AssembleMetadataUpcall;
+    FreeMetadataUpcallFunc FreeMetadataUpcall;
+    void *UpcallWriter;
 
     /* READER-SIDE FIELDS */
     struct _TimestepMetadataList *Timesteps;
