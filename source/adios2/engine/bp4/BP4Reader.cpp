@@ -14,6 +14,7 @@
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
+#include <errno.h>
 #include <limits>
 
 namespace adios2
@@ -167,7 +168,7 @@ void BP4Reader::OpenFiles()
     /* Poll */
     double waited = 0.0;
     double startTime, endTime;
-    size_t haveFiles = 0;
+    size_t flag = 1; // 0 = OK, opened file, 1 = timeout, 2 = error
     std::ios_base::failure *lasterr;
 
     if (m_BP4Deserializer.m_RankMPI == 0)
@@ -177,6 +178,7 @@ void BP4Reader::OpenFiles()
             startTime = MPI_Wtime();
             try
             {
+                errno = 0;
                 const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
                 /* Open the metadata index table */
                 const std::string metadataIndexFile(
@@ -191,12 +193,27 @@ void BP4Reader::OpenFiles()
 
                 m_MDFileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
                                           m_IO.m_TransportsParameters, profile);
-                haveFiles = 1;
+                flag = 0; // found file
                 break;
             }
             catch (std::ios_base::failure &e)
             {
                 lasterr = &e;
+                if (errno == ENOENT)
+                {
+                    std::cout << "Exception File does not exist yet: errno = "
+                              << errno << " e.code = " << e.code().value()
+                              << " : " << e.what() << std::endl;
+                    flag = 1; // timeout
+                }
+                else
+                {
+                    std::cout << "Exception: errno = " << errno
+                              << " e.code = " << e.code().value() << " : "
+                              << e.what() << std::endl;
+                    flag = 2; // fatal error
+                    break;
+                }
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(pollTime_ms));
@@ -205,8 +222,8 @@ void BP4Reader::OpenFiles()
         }
     }
 
-    haveFiles = helper::BroadcastValue(haveFiles, m_MPIComm, 0);
-    if (!haveFiles)
+    flag = helper::BroadcastValue(flag, m_MPIComm, 0);
+    if (flag == 2)
     {
         if (m_BP4Deserializer.m_RankMPI == 0)
         {
@@ -216,6 +233,20 @@ void BP4Reader::OpenFiles()
         {
             throw std::ios_base::failure("File " + m_Name +
                                          " cannot be opened");
+        }
+    }
+    else if (flag == 1)
+    {
+        if (m_BP4Deserializer.m_RankMPI == 0)
+        {
+            throw std::ios_base::failure(
+                "ERROR: File " + m_Name +
+                " could not be found within timeout: " + lasterr->what());
+        }
+        else
+        {
+            throw std::ios_base::failure("ERROR: File " + m_Name +
+                                         " could not be found within timeout");
         }
     }
 }
