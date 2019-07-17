@@ -607,6 +607,43 @@ void BP4Base::InitParameterThreads(const std::string value)
     m_Threads = static_cast<unsigned int>(threads);
 }
 
+void BP4Base::InitParameterAsyncThreads(const std::string value)
+{
+    int asyncThreads = -1;
+
+    if (m_DebugMode)
+    {
+        bool success = true;
+        std::string description;
+
+        try
+        {
+            asyncThreads = std::stoi(value);
+        }
+        catch (std::exception &e)
+        {
+            success = false;
+            description = std::string(e.what());
+        }
+
+        if (!success || asyncThreads < 0)
+        {
+            throw std::invalid_argument(
+                "ERROR: value in AsyncThreads=value in IO SetParameters must "
+                "be "
+                "an integer >= 0 (default = 1, no async = 0) \nadditional "
+                "description: " +
+                description + "\n, in call to Open\n");
+        }
+    }
+    else
+    {
+        asyncThreads = std::stoi(value);
+    }
+
+    m_AsyncThreads = static_cast<unsigned int>(asyncThreads);
+}
+
 void BP4Base::InitParameterStatLevel(const std::string value)
 {
     int level = -1;
