@@ -80,26 +80,28 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
     meta_lk = new char[lk_name.length() + 1];
     strcpy(meta_lk, lk_name.c_str());
 
+    MPI_Comm lock_comm = MPI_COMM_SELF;
+
     int nVars = 0;
     if (!m_ProvideLatest)
     {
-        dspaces_lock_on_read(meta_lk, &(m_data.mpi_comm));
         if (rank == 0)
         {
-            buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0],
+        	dspaces_lock_on_read(meta_lk, &lock_comm);
+        	buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0],
                                            &bcast_array[1]);
+        	dspaces_unlock_on_read(meta_lk, &lock_comm);
         }
-        dspaces_unlock_on_read(meta_lk, &(m_data.mpi_comm));
     }
     else
     {
-        dspaces_lock_on_read(meta_lk, &(m_data.mpi_comm));
         if (rank == 0)
         {
+        	dspaces_lock_on_read(meta_lk, &lock_comm);
             buffer = dspaces_get_latest_meta(m_CurrentStep, fstr,
                                              &bcast_array[0], &bcast_array[1]);
+            dspaces_unlock_on_read(meta_lk, &lock_comm);
         }
-        dspaces_unlock_on_read(meta_lk, &(m_data.mpi_comm));
     }
     MPI_Bcast(bcast_array, 2, MPI_INT, 0, m_data.mpi_comm);
     int buf_len = bcast_array[0];

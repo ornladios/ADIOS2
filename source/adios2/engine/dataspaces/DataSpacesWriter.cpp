@@ -122,8 +122,8 @@ void DataSpacesWriter::WriteVarInfo()
     char *meta_lk = new char[local_file_var.length() + 1];
     strcpy(meta_lk, local_file_var.c_str());
     MPI_Comm_rank(m_data.mpi_comm, &rank);
+    MPI_Comm lock_comm = MPI_COMM_SELF;
 
-    dspaces_lock_on_write(meta_lk, &(m_data.mpi_comm));
     if (rank == 0)
     {
 
@@ -179,11 +179,13 @@ void DataSpacesWriter::WriteVarInfo()
         lb[0] = 0;
         ub[0] = buf_len - 1;
         gdims[0] = (ub[0] - lb[0] + 1) * dspaces_get_num_space_server();
+        dspaces_lock_on_write(meta_lk, &lock_comm);
         dspaces_define_gdim(local_str, ndim, gdims);
 
         dspaces_put(local_str, m_CurrentStep, elemsize, ndim, lb, ub, buffer);
 
         dspaces_put_sync(); // wait on previous put to finish
+        dspaces_unlock_on_write(meta_lk, &lock_comm);
         delete[] local_str;
         free(dim_meta);
         free(elemSize_meta);
@@ -191,7 +193,6 @@ void DataSpacesWriter::WriteVarInfo()
         free(buffer);
         free(name_string);
     }
-    dspaces_unlock_on_write(meta_lk, &(m_data.mpi_comm));
     ndim_vector.clear();
     gdims_vector.clear();
     v_name_vector.clear();

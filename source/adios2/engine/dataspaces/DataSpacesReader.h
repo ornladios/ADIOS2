@@ -12,7 +12,7 @@
 #ifndef ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_H_
 #define ADIOS2_ENGINE_DATASPACES_DATASPACESREADER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/toolkit/dataspaces/ds.h"

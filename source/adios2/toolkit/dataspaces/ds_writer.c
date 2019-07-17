@@ -19,7 +19,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "dataspaces.h"
 #include "ds.h"
 #include <mpi.h>
