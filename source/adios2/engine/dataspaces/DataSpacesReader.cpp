@@ -87,17 +87,17 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
     {
         if (rank == 0)
         {
-        	dspaces_lock_on_read(meta_lk, &lock_comm);
-        	buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0],
+            dspaces_lock_on_read(meta_lk, &lock_comm);
+            buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0],
                                            &bcast_array[1]);
-        	dspaces_unlock_on_read(meta_lk, &lock_comm);
+            dspaces_unlock_on_read(meta_lk, &lock_comm);
         }
     }
     else
     {
         if (rank == 0)
         {
-        	dspaces_lock_on_read(meta_lk, &lock_comm);
+            dspaces_lock_on_read(meta_lk, &lock_comm);
             buffer = dspaces_get_latest_meta(m_CurrentStep, fstr,
                                              &bcast_array[0], &bcast_array[1]);
             dspaces_unlock_on_read(meta_lk, &lock_comm);
