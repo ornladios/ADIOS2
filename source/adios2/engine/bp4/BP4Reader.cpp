@@ -155,7 +155,8 @@ void BP4Reader::OpenFiles()
     float timeoutSeconds = m_BP4Deserializer.m_TimeoutOpenSecs;
 
     // set poll to 1/100 of timeout
-    uint64_t pollTime_ms = roundf(timeoutSeconds * 1000.0) / 100;
+    uint64_t pollTime_ms =
+        static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
     if (pollTime_ms < 1000)
     {
         pollTime_ms = 1000; // min 1 second polling time
@@ -420,7 +421,8 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
         timeoutSeconds = std::numeric_limits<float>::max() / 10000;
     }
     // set poll to 1/100 of timeout
-    uint64_t pollTime_ms = roundf(timeoutSeconds * 1000.0) / 100;
+    uint64_t pollTime_ms =
+        static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
     if (pollTime_ms < 1000)
     {
         pollTime_ms = 1000; // min 1 second polling time
