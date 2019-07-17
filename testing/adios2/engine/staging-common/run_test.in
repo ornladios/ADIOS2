@@ -245,9 +245,9 @@ else:
     if args.reader is None:
         args.reader = 'TestCommonClient'
 
-writer_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + \
+writer_exec_cmd = '@MPIEXEC_EXECUTABLE@ --oversubscribe --bind-to core @MPIEXEC_NUMPROC_FLAG@ ' + \
     str(args.num_writers)
-reader_exec_cmd = '@MPIEXEC_EXECUTABLE@ @MPIEXEC_NUMPROC_FLAG@ ' + \
+reader_exec_cmd = '@MPIEXEC_EXECUTABLE@ --oversubscribe --bind-to core @MPIEXEC_NUMPROC_FLAG@ ' + \
     str(args.num_readers)
 
 mpmd_possible = True
@@ -299,11 +299,6 @@ if is_file_engine[args.engine.lower()]:
 
 if args.reader_delay != 0:
     print("TestDriver: Reader delay setting MPMD false\n")
-    mpmd_possible = False
-
-if args.num_writers == 1 and args.num_readers == 1:
-    # Not entirely sure why this fails with openmpi, but it seems to regularly, so avoid
-    print("TestDriver: one reader / one writer setting MPMD false\n")
     mpmd_possible = False
 
 test_setup(args.filename)
