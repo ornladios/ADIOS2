@@ -132,6 +132,7 @@ void Reorganize::Run()
     core::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
     // rStream.FixedSchedule();
 
+    io.ClearParameters();
     io.SetEngine(wmethodname);
     io.SetParameters(wmethodparams);
     core::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);

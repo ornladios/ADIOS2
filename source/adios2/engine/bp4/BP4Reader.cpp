@@ -14,6 +14,7 @@
 #include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
+#include <errno.h>
 #include <limits>
 
 namespace adios2
@@ -142,8 +143,107 @@ void BP4Reader::Init()
         }
     }
 
+    m_BP4Deserializer.InitParameters(m_IO.m_Parameters);
     InitTransports();
     InitBuffer();
+}
+
+void BP4Reader::OpenFiles()
+{
+    /* Do a collective wait for the file(s) to appear within timeout.
+       Make sure every process comes to the same conclusion */
+    float timeoutSeconds = m_BP4Deserializer.m_TimeoutOpenSecs;
+
+    // set poll to 1/100 of timeout
+    uint64_t pollTime_ms =
+        static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
+    if (pollTime_ms < 1000)
+    {
+        pollTime_ms = 1000; // min 1 second polling time
+    }
+    if (pollTime_ms > 10000)
+    {
+        pollTime_ms = 10000; // max 10 seconds polling time
+    }
+
+    /* Poll */
+    double waited = 0.0;
+    double startTime, endTime;
+    size_t flag = 1; // 0 = OK, opened file, 1 = timeout, 2 = error
+    std::ios_base::failure *lasterr;
+
+    if (m_BP4Deserializer.m_RankMPI == 0)
+    {
+        while (waited <= timeoutSeconds)
+        {
+            startTime = MPI_Wtime();
+            try
+            {
+                errno = 0;
+                const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
+                /* Open the metadata index table */
+                const std::string metadataIndexFile(
+                    m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
+                m_MDIndexFileManager.OpenFiles(
+                    {metadataIndexFile}, adios2::Mode::Read,
+                    m_IO.m_TransportsParameters, profile);
+
+                /* Open the metadata file */
+                const std::string metadataFile(
+                    m_BP4Deserializer.GetBPMetadataFileName(m_Name));
+
+                m_MDFileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
+                                          m_IO.m_TransportsParameters, profile);
+                flag = 0; // found file
+                break;
+            }
+            catch (std::ios_base::failure &e)
+            {
+                lasterr = &e;
+                if (errno == ENOENT)
+                {
+                    flag = 1; // timeout
+                }
+                else
+                {
+                    flag = 2; // fatal error
+                    break;
+                }
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(pollTime_ms));
+            endTime = MPI_Wtime();
+            waited += endTime - startTime;
+        }
+    }
+
+    flag = helper::BroadcastValue(flag, m_MPIComm, 0);
+    if (flag == 2)
+    {
+        if (m_BP4Deserializer.m_RankMPI == 0)
+        {
+            throw *lasterr;
+        }
+        else
+        {
+            throw std::ios_base::failure("File " + m_Name +
+                                         " cannot be opened");
+        }
+    }
+    else if (flag == 1)
+    {
+        if (m_BP4Deserializer.m_RankMPI == 0)
+        {
+            throw std::ios_base::failure(
+                "ERROR: File " + m_Name +
+                " could not be found within timeout: " + lasterr->what());
+        }
+        else
+        {
+            throw std::ios_base::failure("ERROR: File " + m_Name +
+                                         " could not be found within timeout");
+        }
+    }
 }
 
 void BP4Reader::InitTransports()
@@ -154,23 +254,8 @@ void BP4Reader::InitTransports()
         defaultTransportParameters["transport"] = "File";
         m_IO.m_TransportsParameters.push_back(defaultTransportParameters);
     }
-    // TODO Set Parameters
 
-    if (m_BP4Deserializer.m_RankMPI == 0)
-    {
-        const std::string metadataFile(
-            m_BP4Deserializer.GetBPMetadataFileName(m_Name));
-
-        const bool profile = m_BP4Deserializer.m_Profiler.IsActive;
-        m_MDFileManager.OpenFiles({metadataFile}, adios2::Mode::Read,
-                                  m_IO.m_TransportsParameters, profile);
-
-        /* Open file to save the metadata index table */
-        const std::string metadataIndexFile(
-            m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
-        m_MDIndexFileManager.OpenFiles({metadataIndexFile}, adios2::Mode::Read,
-                                       m_IO.m_TransportsParameters, profile);
-    }
+    OpenFiles();
 }
 
 void BP4Reader::InitBuffer()
@@ -322,27 +407,23 @@ bool BP4Reader::CheckWriterActive()
 StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
 {
     /* Do a collective wait for a step within timeout.
-       Make sure every writer comes to the same conclusion */
+       Make sure every reader comes to the same conclusion */
     StepStatus retval = StepStatus::OK;
     bool haveNewStep = false;
-    float TO = timeoutSeconds;
-    if (TO < 0.0)
+    if (timeoutSeconds < 0.0)
     {
-        TO = std::numeric_limits<float>::max() / 10000;
+        timeoutSeconds = std::numeric_limits<float>::max() / 10000;
     }
-    uint64_t milliTO = static_cast<uint64_t>(TO * 1000.0);
-    if (milliTO < 1)
+    // set poll to 1/100 of timeout
+    uint64_t pollTime_ms =
+        static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
+    if (pollTime_ms < 1000)
     {
-        milliTO = 1; // avoid 0
+        pollTime_ms = 1000; // min 1 second polling time
     }
-    uint64_t pollTime = milliTO / 100; // TO/100 seconds polling time
-    if (pollTime < 1000)
+    if (pollTime_ms > 10000)
     {
-        pollTime = 1000; // min 1 second polling time
-    }
-    if (pollTime > 10000)
-    {
-        pollTime = 10000; // max 10 seconds polling time
+        pollTime_ms = 10000; // max 10 seconds polling time
     }
 
     /* Poll */
@@ -354,7 +435,7 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
     const bool saveReadStreaming = m_IO.m_ReadStreaming;
 
     m_IO.m_ReadStreaming = false;
-    while (waited < TO && m_BP4Deserializer.m_WriterIsActive)
+    while (waited < timeoutSeconds && m_BP4Deserializer.m_WriterIsActive)
     {
         startTime = MPI_Wtime();
         std::pair<size_t, size_t> sizes = UpdateBuffer();
@@ -369,7 +450,7 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
         {
             break;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(pollTime));
+        std::this_thread::sleep_for(std::chrono::milliseconds(pollTime_ms));
         endTime = MPI_Wtime();
         waited += endTime - startTime;
     }

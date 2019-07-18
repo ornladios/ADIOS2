@@ -76,6 +76,10 @@ void BP4Base::InitParameters(const Params &parameters)
         {
             InitParameterProfile(value);
         }
+        else if (key == "opentimeoutsecs")
+        {
+            InitParameterOpenTimeoutSecs(value);
+        }
         else if (key == "profileunits")
         {
             InitParameterProfileUnits(value);
@@ -927,6 +931,34 @@ void BP4Base::InitParameterSubStreams(const std::string value)
     }
 }
 
+void BP4Base::InitParameterOpenTimeoutSecs(const std::string value)
+{
+    bool success = true;
+    std::string description;
+
+    try
+    {
+        m_TimeoutOpenSecs = std::stof(value);
+    }
+    catch (std::exception &e)
+    {
+        success = false;
+        description = std::string(e.what());
+    }
+
+    if (!success)
+    {
+        throw std::invalid_argument("ERROR: m_TimeoutOpenSecs value: "
+                                    "could not convert number: " +
+                                    description + "\n, in call to Open\n");
+    }
+
+    if (m_TimeoutOpenSecs < 0.0)
+    {
+        m_TimeoutOpenSecs = std::numeric_limits<float>::max() / 10000;
+    }
+}
+
 std::shared_ptr<BPOperation>
 BP4Base::SetBPOperation(const std::string type) const noexcept
 {
@@ -983,7 +1015,8 @@ std::string BP4Base::GetBPSubStreamName(const std::string &name,
     const size_t index =
         m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : rank;
 
-    // const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
+    // const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot
+    // +
     //                             "." + std::to_string(index));
     /* the name of a data file starts with "data." */
     const std::string bpRankName(bpName + PathSeparator + "data." +
