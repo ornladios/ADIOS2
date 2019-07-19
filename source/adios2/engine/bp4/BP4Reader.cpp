@@ -244,6 +244,38 @@ void BP4Reader::OpenFiles()
                                          " could not be found within timeout");
         }
     }
+
+    /* At this point we may have an empty index table.
+     * The writer has created the file but has not produced any data yet.
+     * We need to wait within the timeout for the data to arrive
+     * Header size = 64 bytes, each record is 64 bytes
+     */
+    flag = 1; // timeout
+    if (m_BP4Deserializer.m_RankMPI == 0)
+    {
+        while (waited <= timeoutSeconds)
+        {
+            startTime = MPI_Wtime();
+            const size_t idxFileSize = m_MDIndexFileManager.GetFileSize(0);
+            if (idxFileSize > 127)
+            {
+                flag = 0; // we have data
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(pollTime_ms));
+            endTime = MPI_Wtime();
+            waited += endTime - startTime;
+        }
+    }
+
+    flag = helper::BroadcastValue(flag, m_MPIComm, 0);
+    if (flag == 1)
+    {
+        throw std::runtime_error("ERROR: File " + m_Name +
+                                 " was found but has not contained data within "
+                                 "the specified timeout of " +
+                                 std::to_string(timeoutSeconds) + " seconds.");
+    }
 }
 
 void BP4Reader::InitTransports()
