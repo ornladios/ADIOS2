@@ -205,12 +205,24 @@ void BP4Writer::InitTransports()
                                         m_IO.m_TransportsParameters,
                                         m_BP4Serializer.m_Profiler.IsActive);
 
+        /* Prepare header and write now to Index Table indicating
+         * the start of streaming
+         */
+        m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
+                                   "Index Table", true);
+
         std::vector<std::string> metadataIndexFileNames =
             m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
 
         m_FileMetadataIndexManager.OpenFiles(
             metadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
             m_BP4Serializer.m_Profiler.IsActive);
+        m_FileMetadataIndexManager.WriteFiles(
+            m_BP4Serializer.m_MetadataIndex.m_Buffer.data(),
+            m_BP4Serializer.m_MetadataIndex.m_Position);
+        m_FileMetadataIndexManager.FlushFiles();
+        /* clear the metadata index buffer*/
+        m_BP4Serializer.ResetBuffer(m_BP4Serializer.m_MetadataIndex, true);
     }
 }
 
@@ -486,11 +498,11 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
                                                "BP4 Index Table");
         for (auto const &t : timeSteps)
         {
-            if (t == 1)
+            /*if (t == 1)
             {
                 m_BP4Serializer.MakeHeader(m_BP4Serializer.m_MetadataIndex,
                                            "Index Table", true);
-            }
+            }*/
             const uint64_t pgIndexStartMetadataFile =
                 m_BP4Serializer
                     .m_MetadataIndexTable[m_BP4Serializer.m_RankMPI][t][0] +

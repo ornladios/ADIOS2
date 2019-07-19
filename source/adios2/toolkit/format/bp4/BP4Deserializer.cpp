@@ -35,13 +35,15 @@ BP4Deserializer::BP4Deserializer(MPI_Comm mpiComm, const bool debugMode)
 {
 }
 
-void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
-                                    core::Engine &engine, const bool firstStep)
+size_t BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
+                                      core::Engine &engine,
+                                      const bool firstStep)
 {
     const size_t oldSteps = (firstStep ? 0 : m_MetadataSet.StepsCount);
     size_t allSteps = m_MetadataIndexTable[0].size();
     m_MetadataSet.StepsCount = allSteps;
     m_MetadataSet.CurrentStep = allSteps - 1;
+    size_t lastposition = 0;
     /* parse the metadata step by step using the pointers saved in the metadata
     index table */
     for (size_t i = oldSteps; i < allSteps; i++)
@@ -49,17 +51,20 @@ void BP4Deserializer::ParseMetadata(const BufferSTL &bufferSTL,
         ParsePGIndexPerStep(bufferSTL, engine.m_IO.m_HostLanguage, 0, i + 1);
         ParseVariablesIndexPerStep(bufferSTL, engine, 0, i + 1);
         ParseAttributesIndexPerStep(bufferSTL, engine, 0, i + 1);
+        lastposition = m_MetadataIndexTable[0][i + 1][3];
     }
+    return lastposition;
 }
 
 void BP4Deserializer::ParseMetadataIndex(const BufferSTL &bufferSTL,
-                                         const size_t absoluteStartPos)
+                                         const size_t absoluteStartPos,
+                                         const bool hasHeader)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     const size_t bufferSize = buffer.size();
     size_t position = 0;
 
-    if (absoluteStartPos == 0)
+    if (hasHeader)
     {
         // Read header (64 bytes)
         // long version string
