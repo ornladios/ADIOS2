@@ -72,18 +72,14 @@ private:
 
     /** Read in more metadata if exist (throwing away old).
      *  For streaming only.
-     *  @return pair of sizes if new metadata was read in
-     *  sizes.first = size of new content from Index Table
-     *  sizes.second = size of new content from Metadata File
+     *  @return size of new content from Index Table
      */
-    std::pair<size_t, size_t> UpdateBuffer();
+    size_t UpdateBuffer();
 
     /** Process the new metadata coming in (in UpdateBuffer)
      *  @param newIdxSize: the size of the new content from Index Table
-     *  @param neMDSize: the size of new content from Metadata File
      */
-    void ProcessMetadataForNewSteps(const size_t newIdxSize,
-                                    const size_t newMDSize);
+    void ProcessMetadataForNewSteps(const size_t newIdxSize);
 
     /** Check the active status flag in index file.
      *  @return true if writer is still active

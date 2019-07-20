@@ -52,10 +52,17 @@ public:
     ~BP4Deserializer() = default;
 
     void ParseMetadataIndex(const BufferSTL &bufferSTL,
-                            const size_t absoluteStartPos = 0);
+                            const size_t absoluteStartPos = 0,
+                            const bool hasHeader = true);
 
-    void ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine,
-                       const bool firstStep = true);
+    /* Return the position in the buffer where processing ends. The processing
+     * is controlled by the number of records in the Index, which may be less
+     * than the actual entries in the metadata in a streaming situation (where
+     * writer has just written metadata for step K+1,...,K+L while the index
+     * contains K steps when the reader looks at it).
+     */
+    size_t ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine,
+                         const bool firstStep = true);
 
     /**
      * Used to get the variable payload data for the current selection (dims and
