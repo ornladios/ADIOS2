@@ -79,7 +79,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         size_t writerSize;
 
-
         auto var1 = io1.InquireVariable<double>(varname1);
         auto var2 = io2.InquireVariable<double>(varname2);
 

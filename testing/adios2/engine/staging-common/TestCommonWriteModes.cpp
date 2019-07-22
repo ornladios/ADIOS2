@@ -110,7 +110,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     {
         adios2::Mode WriteMode;
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx, (int)Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -166,7 +166,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         if (WriteMode == adios2::Mode::Sync)
         {
             // trash the data since it's a Sync, this should be OK.
-            data_I8.fill(0);
+            std::fill(data_I8.begin(), data_I8.end(), 0);
         }
         engine.Put(var_i16, data_I16.data(), adios2::Mode::Sync);
         engine.Put(var_i32, data_I32.data(), WriteMode);
