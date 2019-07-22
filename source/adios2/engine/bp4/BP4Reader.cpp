@@ -152,7 +152,7 @@ void BP4Reader::OpenFiles()
 {
     /* Do a collective wait for the file(s) to appear within timeout.
        Make sure every process comes to the same conclusion */
-    float timeoutSeconds = m_BP4Deserializer.m_TimeoutOpenSecs;
+    float timeoutSeconds = m_BP4Deserializer.m_OpenTimeoutSecs;
 
     // set poll to 1/100 of timeout
     uint64_t pollTime_ms =
@@ -453,21 +453,18 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
        Make sure every reader comes to the same conclusion */
     StepStatus retval = StepStatus::OK;
     bool haveNewStep = false;
+
     if (timeoutSeconds < 0.0)
     {
-        timeoutSeconds = std::numeric_limits<float>::max() / 10000;
+        timeoutSeconds = std::numeric_limits<float>::max();
     }
-    // set poll to 1/100 of timeout
-    uint64_t pollTime_ms =
-        static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
-    if (pollTime_ms < 1000)
+
+    float pollSecs = m_BP4Deserializer.m_BeginStepPollingFrequencySecs;
+    if (pollSecs > timeoutSeconds)
     {
-        pollTime_ms = 1000; // min 1 second polling time
+        pollSecs = timeoutSeconds;
     }
-    if (pollTime_ms > 10000)
-    {
-        pollTime_ms = 10000; // max 10 seconds polling time
-    }
+    uint64_t pollTime_ms = static_cast<uint64_t>(pollSecs * 1000.f);
 
     /* Poll */
     double waited = 0.0;

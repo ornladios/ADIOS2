@@ -79,6 +79,22 @@ void BP4Base::InitParameters(const Params &parameters)
         else if (key == "opentimeoutsecs")
         {
             InitParameterOpenTimeoutSecs(value);
+            m_OpenTimeoutSecs = InitParameterFloat(value, "OpenTimeoutSecs");
+
+            if (m_OpenTimeoutSecs < 0.0)
+            {
+                m_OpenTimeoutSecs = 2144448000.0f; // int-friendly 68 years
+            }
+        }
+        else if (key == "beginsteppollingfrequencysecs")
+        {
+            m_BeginStepPollingFrequencySecs =
+                InitParameterFloat(value, "BeginStepPollingFrequencySecs");
+            if (m_BeginStepPollingFrequencySecs < 0.0)
+            {
+                m_BeginStepPollingFrequencySecs = 1.0; // a second
+            }
+            m_BeginStepPollingFrequencyIsSet = true;
         }
         else if (key == "profileunits")
         {
@@ -938,7 +954,7 @@ void BP4Base::InitParameterOpenTimeoutSecs(const std::string value)
 
     try
     {
-        m_TimeoutOpenSecs = std::stof(value);
+        m_OpenTimeoutSecs = std::stof(value);
     }
     catch (std::exception &e)
     {
@@ -953,10 +969,37 @@ void BP4Base::InitParameterOpenTimeoutSecs(const std::string value)
                                     description + "\n, in call to Open\n");
     }
 
-    if (m_TimeoutOpenSecs < 0.0)
+    if (m_OpenTimeoutSecs < 0.0)
     {
-        m_TimeoutOpenSecs = std::numeric_limits<float>::max() / 10000;
+        m_OpenTimeoutSecs = std::numeric_limits<float>::max() / 10000;
     }
+}
+
+float BP4Base::InitParameterFloat(const std::string value,
+                                  const std::string parameterName)
+{
+    bool success = true;
+    float retval = 0.0f;
+    std::string description;
+
+    try
+    {
+        retval = std::stof(value);
+    }
+    catch (std::exception &e)
+    {
+        success = false;
+        description = std::string(e.what());
+    }
+
+    if (!success)
+    {
+        throw std::invalid_argument(
+            "ERROR: Parameter " + parameterName + " value (" + value +
+            ") could not be converted to a float: " + description +
+            "\n, in call to Open\n");
+    }
+    return retval;
 }
 
 std::shared_ptr<BPOperation>

@@ -186,7 +186,12 @@ public:
     size_t m_MaxBufferSize = DefaultMaxBufferSize;
 
     /** Timeout for Open in read. Set by the user as parameter */
-    float m_TimeoutOpenSecs = 0.0;
+    float m_OpenTimeoutSecs = 0.0;
+
+    /** Timeout for BeginStep in read. Set by the user as parameter
+     * default value is calculated from the timeout value  */
+    float m_BeginStepPollingFrequencySecs = 1.0;
+    bool m_BeginStepPollingFrequencyIsSet = false;
 
     /** contains bp1 format metadata indices*/
     MetadataSet m_MetadataSet;
@@ -612,6 +617,13 @@ protected:
      * Parameter should be a floating point number indicating time in seconds.
      * Default is 0.0 (no wait) */
     void InitParameterOpenTimeoutSecs(const std::string value);
+
+    /* parse a value for float parameters, including
+     * OpenTimeoutSecs,
+     * BeginStepPollingFrequencySecs
+     */
+    float InitParameterFloat(const std::string value,
+                             const std::string parameterName);
 
     std::vector<uint8_t>
     GetTransportIDs(const std::vector<std::string> &transportsTypes) const
