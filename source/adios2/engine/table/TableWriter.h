@@ -11,8 +11,11 @@
 #ifndef ADIOS2_ENGINE_TABLEWRITER_H_
 #define ADIOS2_ENGINE_TABLEWRITER_H_
 
+#include "../../bindings/CXX11/adios2.h"
+
 #include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/bp4/BP4Writer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
@@ -42,27 +45,35 @@ public:
     void Flush(const int transportIndex = -1) final;
 
 private:
+    struct VarInfo
+    {
+        Dims shape;
+        std::string type;
+    };
     int m_Verbosity = 5;
-    int m_CurrentStep = -1;
-    int m_MpiRank;
-    int m_MpiSize;
     int m_Timeout = 5;
-    size_t m_RowsPerRank = 128;
-    size_t m_AppID;
-    std::unordered_map<std::string, Dims> m_CountMap;
+    int m_Port = 6789;
+    int m_MaxRanksPerNode = 200;
+    int m_PutSubEngineFrequency = 1000;
+    int m_Aggregators = 10;
+    size_t m_RowsPerAggregatorBuffer = 1000;
     std::unordered_map<size_t,
                        std::unordered_map<std::string, std::vector<char>>>
         m_AggregatorBuffers;
     std::unordered_map<size_t,
                        std::unordered_map<std::string, std::vector<bool>>>
         m_AggregatorBufferFlags;
+    std::unordered_map<std::string, VarInfo> m_VarInfoMap;
     std::unordered_map<int, std::string> m_AllAddresses;
-    int m_Port = 6789;
-    int m_MaxRanksPerNode = 200;
     bool m_Listening;
+    int m_MpiRank;
+    int m_MpiSize;
+    int m_CurrentStep = -1;
+    size_t m_AppID;
     std::thread m_ReplyThread;
-    int m_PutSubEngineFrequency = 100;
-    BP4Writer m_SubEngine;
+    adios2::ADIOS m_SubAdios;
+    adios2::IO m_SubIO;
+    adios2::Engine m_SubEngine;
 
     void Init() final;
     void InitParameters() final;
@@ -70,14 +81,14 @@ private:
     void ReplyThread();
     void PutSubEngine();
 
-    // Get aggregator ranks from row numbers contained in start and count
     std::vector<int> WhatRanks(const Dims &start, const Dims &count);
-
-    // Get aggregator rank from row number
     int WhatRank(const size_t row);
 
     std::vector<size_t> WhatBufferIndices(const Dims &start, const Dims &count);
     size_t WhatBufferIndex(const size_t row);
+
+    Dims WhatStart(const Dims &shape, const size_t index);
+    Dims WhatCount(const Dims &shape, const size_t index);
 
     format::DataManSerializer m_DataManSerializer;
     transportman::StagingMan m_SendStagingMan;
@@ -88,19 +99,8 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    /**
-     * Closes a single transport or all transports
-     * @param transportIndex, if -1 (default) closes all transports,
-     * otherwise it closes a transport in m_Transport[transportIndex].
-     * In debug mode the latter is bounds-checked.
-     */
     void DoClose(const int transportIndex = -1) final;
 
-    /**
-     * Common function for primitive PutSync, puts variables in buffer
-     * @param variable
-     * @param values
-     */
     template <class T>
     void PutSyncCommon(Variable<T> &variable, const T *values);
 
@@ -112,4 +112,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_TABLEWRITER_H_ */
+#endif // ADIOS2_ENGINE_TABLEWRITER_H_

@@ -26,10 +26,12 @@ namespace engine
 TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
 : Engine("TableWriter", io, name, mode, mpiComm),
-  m_SubEngine(io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
                       helper::IsLittleEndian()),
-  m_SendStagingMan(mpiComm, Mode::Read, m_Timeout, 128)
+  m_SendStagingMan(mpiComm, Mode::Read, m_Timeout, 128),
+  m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
+  m_SubIO(m_SubAdios.DeclareIO("SubIO")),
+  m_SubEngine(m_SubIO.Open(name, adios2::Mode::Write))
 {
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     MPI_Comm_size(mpiComm, &m_MpiSize);
@@ -100,13 +102,13 @@ void TableWriter::InitParameters()
         if (key == "verbose")
         {
             m_Verbosity = std::stoi(value);
-            if (m_DebugMode)
+        }
+        if (key == "aggregators")
+        {
+            m_Aggregators = std::stoi(value);
+            if (m_Aggregators > m_MpiSize)
             {
-                if (m_Verbosity < 0 || m_Verbosity > 5)
-                    throw std::invalid_argument(
-                        "ERROR: Method verbose argument must be an "
-                        "integer in the range [0,5], in call to "
-                        "Open or Engine constructor\n");
+                m_Aggregators = m_MpiSize;
             }
         }
     }
@@ -141,9 +143,7 @@ void TableWriter::InitParameters()
 
 void TableWriter::ReplyThread()
 {
-
     int times = 0;
-
     transportman::StagingMan receiveStagingMan(m_MPIComm, Mode::Write,
                                                m_Timeout, 1e9);
     receiveStagingMan.OpenTransport(m_AllAddresses[m_MpiRank]);
@@ -163,7 +163,6 @@ void TableWriter::ReplyThread()
         format::VecPtr reply = std::make_shared<std::vector<char>>();
         reply->resize(1);
         receiveStagingMan.SendReply(reply);
-
         ++times;
         if (times == m_PutSubEngineFrequency)
         {
@@ -176,10 +175,10 @@ void TableWriter::ReplyThread()
 void TableWriter::PutSubEngine()
 {
     TAU_SCOPED_TIMER_FUNC();
+
+    // Get metadata map from dataman serializer
     auto metadataMap = m_DataManSerializer.GetMetaData();
-
     format::DmvVecPtr vars;
-
     auto currentStepIt = metadataMap.find(m_CurrentStep);
     if (currentStepIt == metadataMap.end())
     {
@@ -190,63 +189,69 @@ void TableWriter::PutSubEngine()
         vars = currentStepIt->second;
     }
 
+    // Copy data to aggregator buffers
     for (const auto &v : *vars)
     {
-
-        auto cmi = m_CountMap.find(v.name);
-        if (cmi == m_CountMap.end())
-        {
-            m_CountMap[v.name] = v.count;
-            m_CountMap[v.name][0] = 1;
-        }
-
+        m_VarInfoMap[v.name].type = v.type;
+        m_VarInfoMap[v.name].shape = v.shape;
         size_t elementSize;
-        if (v.type == "compound")
+        if (v.type == "")
         {
-            throw("Compound type is not supported yet.");
         }
 #define declare_type(T)                                                        \
     else if (v.type == helper::GetType<T>()) { elementSize = sizeof(T); }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-        auto indices = WhatBufferIndices(v.start, v.count);
-        size_t bufferSize = std::accumulate(v.shape.begin() + 1, v.shape.end(),
-                                            elementSize * m_RowsPerRank,
-                                            std::multiplies<size_t>());
+        size_t bufferSize = std::accumulate(
+            v.shape.begin() + 1, v.shape.end(),
+            elementSize * m_RowsPerAggregatorBuffer, std::multiplies<size_t>());
 
+        auto indices = WhatBufferIndices(v.start, v.count);
         for (const auto index : indices)
         {
-            auto aggBuffIt = m_AggregatorBuffers[index].find(v.name);
-            if (aggBuffIt == m_AggregatorBuffers[index].end())
+            auto &aggBuff = m_AggregatorBuffers[index];
+            auto &aggBuffFlag = m_AggregatorBufferFlags[index];
+            auto aggBuffVarIt = aggBuff.find(v.name);
+            if (aggBuffVarIt == aggBuff.end())
             {
-                m_AggregatorBuffers[index][v.name].reserve(bufferSize);
-                m_AggregatorBufferFlags[index][v.name].resize(m_RowsPerRank,
-                                                              false);
+                aggBuff[v.name].reserve(bufferSize);
+                aggBuffFlag[v.name].resize(m_RowsPerAggregatorBuffer, false);
             }
-        }
 
-        if (v.start.size() > 0 and v.count.size() > 0)
-        {
-            for (size_t i = v.start[0]; i < v.start[0] + v.count[0]; ++i)
+            if (v.start.size() > 0 and v.count.size() > 0)
             {
-                m_AggregatorBufferFlags[WhatBufferIndex(i)][v.name]
-                                       [i % m_RowsPerRank] = true;
+                for (size_t i = v.start[0]; i < v.start[0] + v.count[0]; ++i)
+                {
+                    // TODO: This does not work correctly with putSlice yet.
+                    aggBuffFlag[v.name][i % m_RowsPerAggregatorBuffer] = true;
+                }
             }
-        }
 
-        // put into aggregator buffer
+            if (v.type == "")
+            {
+            }
+#define declare_type(T)                                                        \
+    else if (v.type == helper::GetType<T>())                                   \
+    {                                                                          \
+        helper::NdCopy<T>(v.buffer->data(), v.start, v.count, true, true,      \
+                          reinterpret_cast<char *>(aggBuff[v.name].data()),    \
+                          WhatStart(v.shape, index),                           \
+                          WhatCount(v.shape, index), true, true);              \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        }
     }
 
+    // Put data to sub-engine
     std::unordered_map<size_t, std::vector<std::string>> toErase;
-    for (auto indexPair = m_AggregatorBufferFlags.begin();
-         indexPair != m_AggregatorBufferFlags.end(); ++indexPair)
+    for (const auto &indexPair : m_AggregatorBufferFlags)
     {
-        for (auto varPair = indexPair->second.begin();
-             varPair != indexPair->second.end(); ++varPair)
+        for (const auto &varPair : indexPair.second)
         {
             bool ready = true;
-            for (const auto flag : varPair->second)
+            for (const auto flag : varPair.second)
             {
                 if (flag == false)
                 {
@@ -255,14 +260,41 @@ void TableWriter::PutSubEngine()
             }
             if (ready)
             {
-                // put sub engine
-                std::cout << " =========== ready to put into sub engine, "
-                          << indexPair->first << ", " << varPair->first
-                          << std::endl;
-                toErase[indexPair->first].push_back(varPair->first);
+                const Dims &shape = m_VarInfoMap[varPair.first].shape;
+                const Dims start = WhatStart(shape, indexPair.first);
+                const Dims count = WhatCount(shape, indexPair.first);
+                const std::string &type = m_VarInfoMap[varPair.first].type;
+                if (type == "")
+                {
+                }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        auto variable = m_SubIO.InquireVariable<T>(varPair.first);             \
+        if (not variable)                                                      \
+        {                                                                      \
+            std::cout << "variable " << varPair.first << " defined"            \
+                      << std::endl;                                            \
+            variable =                                                         \
+                m_SubIO.DefineVariable<T>(varPair.first, shape, start, count); \
+        }                                                                      \
+        variable.SetSelection({start, count});                                 \
+        std::cout << "selection set" << std::endl;                             \
+        m_SubEngine.Put(                                                       \
+            variable,                                                          \
+            reinterpret_cast<T *>(                                             \
+                m_AggregatorBuffers[indexPair.first][varPair.first].data()),   \
+            Mode::Sync);                                                       \
+        std::cout << "data put" << std::endl;                                  \
+    }
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+                toErase[indexPair.first].push_back(varPair.first);
             }
         }
     }
+
+    // Erase aggregator buffers
     for (const auto &i : toErase)
     {
         for (const auto &j : i.second)
@@ -273,7 +305,6 @@ void TableWriter::PutSubEngine()
     }
 
     m_DataManSerializer.Erase(m_CurrentStep);
-    std::cout << "end PutSubEngine" << std::endl;
 }
 
 void TableWriter::InitTransports()
@@ -283,7 +314,11 @@ void TableWriter::InitTransports()
     m_ReplyThread = std::thread(&TableWriter::ReplyThread, this);
 }
 
-void TableWriter::DoClose(const int transportIndex) {}
+void TableWriter::DoClose(const int transportIndex)
+{
+    std::cout << "engine closed \n";
+    m_SubEngine.Close();
+}
 
 std::vector<size_t> TableWriter::WhatBufferIndices(const Dims &start,
                                                    const Dims &count)
@@ -314,7 +349,7 @@ std::vector<size_t> TableWriter::WhatBufferIndices(const Dims &start,
 
 size_t TableWriter::WhatBufferIndex(const size_t row)
 {
-    return row / (m_RowsPerRank * m_MpiSize);
+    return row / (m_RowsPerAggregatorBuffer * m_Aggregators);
 }
 
 std::vector<int> TableWriter::WhatRanks(const Dims &start, const Dims &count)
@@ -345,7 +380,21 @@ std::vector<int> TableWriter::WhatRanks(const Dims &start, const Dims &count)
 
 int TableWriter::WhatRank(const size_t row)
 {
-    return (row / m_RowsPerRank) % m_MpiSize;
+    return (row / m_RowsPerAggregatorBuffer) % m_Aggregators;
+}
+
+Dims TableWriter::WhatStart(const Dims &shape, const size_t index)
+{
+    Dims start(shape.size(), 0);
+    start[0] = (m_Aggregators * index + m_MpiRank) * m_RowsPerAggregatorBuffer;
+    return start;
+}
+
+Dims TableWriter::WhatCount(const Dims &shape, const size_t index)
+{
+    Dims count = shape;
+    count[0] = m_RowsPerAggregatorBuffer;
+    return count;
 }
 
 } // end namespace engine

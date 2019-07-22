@@ -7,11 +7,11 @@
  *  Created on: Apr 6, 2019
  *      Author: Jason Wang w4g@ornl.gov
  */
+
 #ifndef ADIOS2_ENGINE_TABLEWRITER_TCC_
 #define ADIOS2_ENGINE_TABLEWRITER_TCC_
 
 #include "TableWriter.h"
-
 #include <iostream>
 
 namespace adios2
