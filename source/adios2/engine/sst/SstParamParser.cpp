@@ -158,7 +158,7 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             else
             {
                 throw std::invalid_argument(
-                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
+                    "ERROR: Unknown Sst CPCommPattern parameter \"" + method +
                     "\"");
             }
             return true;
@@ -185,7 +185,7 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             else
             {
                 throw std::invalid_argument(
-                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
+                    "ERROR: Unknown Sst QueueFullPolicy parameter \"" + method +
                     "\"");
             }
             return true;
