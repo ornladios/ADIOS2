@@ -34,12 +34,12 @@ void MPIChain::Init(const size_t subStreams, helper::Comm const &parentComm)
     }
 }
 
-std::vector<std::vector<MPI_Request>>
-MPIChain::IExchange(format::Buffer &buffer, const int step)
+MPIChain::ExchangeRequests MPIChain::IExchange(format::Buffer &buffer,
+                                               const int step)
 {
     if (m_Size == 1)
     {
-        return std::vector<std::vector<MPI_Request>>();
+        return {};
     }
 
     format::Buffer &sendBuffer = GetSender(buffer);
@@ -109,12 +109,12 @@ MPIChain::IExchange(format::Buffer &buffer, const int step)
     return requests;
 }
 
-std::vector<std::vector<MPI_Request>>
+MPIChain::ExchangeAbsolutePositionRequests
 MPIChain::IExchangeAbsolutePosition(format::Buffer &buffer, const int step)
 {
     if (m_Size == 1)
     {
-        return std::vector<std::vector<MPI_Request>>();
+        return {};
     }
 
     if (m_IsInExchangeAbsolutePosition)
@@ -157,8 +157,7 @@ MPIChain::IExchangeAbsolutePosition(format::Buffer &buffer, const int step)
     return requests;
 }
 
-void MPIChain::Wait(std::vector<std::vector<MPI_Request>> &requests,
-                    const int step)
+void MPIChain::Wait(ExchangeRequests &requests, const int step)
 {
     if (m_Size == 1)
     {
@@ -193,8 +192,8 @@ void MPIChain::Wait(std::vector<std::vector<MPI_Request>> &requests,
     }
 }
 
-void MPIChain::WaitAbsolutePosition(
-    std::vector<std::vector<MPI_Request>> &requests, const int step)
+void MPIChain::WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
+                                    const int step)
 {
     if (m_Size == 1)
     {
