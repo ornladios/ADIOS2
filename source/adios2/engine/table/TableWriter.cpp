@@ -27,7 +27,7 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
 : Engine("TableWriter", io, name, mode, mpiComm),
   m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian()),
+                      helper::IsLittleEndian(), m_MPIComm),
   m_SendStagingMan(mpiComm, Mode::Read, m_Timeout, 128),
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
   m_SubIO(m_SubAdios.DeclareIO("SubIO")),
