@@ -141,10 +141,10 @@ def ReadStringVarData(f, expectedSize,
 # Read Variable data
 
 
-def ReadVarData(f, nElements, typeID, ldims, expectedSize,
+def ReadVarData(f, nElements, typeID, ldims, varLen,
                 varsStartPosition, varsTotalLength):
     if typeID == 9:  # string type
-        return ReadStringVarData(f, expectedSize, varsStartPosition)
+        return ReadStringVarData(f, varLen, varsStartPosition)
     typeSize = bp4dbg_utils.GetTypeSize(typeID)
     if (typeSize == 0):
         print("ERROR: Cannot process variable data block with "
@@ -153,35 +153,31 @@ def ReadVarData(f, nElements, typeID, ldims, expectedSize,
 
     currentPosition = f.tell()
     print("      Payload offset  : {0}".format(currentPosition))
-    nBytes = np.ones(1, dtype=np.uint64)
-    nBytes[0] = nElements * typeSize
-    if (currentPosition + nBytes[0] > varsStartPosition + varsTotalLength):
+
+    if (currentPosition + varLen > varsStartPosition + varsTotalLength):
         print("ERROR: Variable data block of size would reach beyond all "
               "variable blocks")
         print("VarsStartPosition = {0} varsTotalLength = {1}".format(
             varsStartPosition, varsTotalLength))
         print("current Position = {0} var block length = {1}".format(
-            currentPosition, nBytes[0]))
-        # return False
-    if (nBytes[0] != expectedSize):
-        print("ERROR: Variable data block size does not equal the size "
-              "calculated from var block length")
-        print("Expected size = {0}  calculated size from dimensions = {1}".
-              format(expectedSize, nBytes[0]))
+            currentPosition, varLen))
+        return False
+
+    nBytes = int(varLen.item())
 
     if nElements == 1:
         # single value. read and print
         value = readDataToNumpyArray(f, bp4dbg_utils.GetTypeName(typeID),
                                      nElements)
         print("      Payload (value) : {0} ({1} bytes)".format(
-            value[0], nBytes[0]))
+            value[0], nBytes))
     else:
         # seek instead of reading for now
-        f.read(nBytes[0])
-        # f.seek(nBytes[0], 1)
+        # f.read(nBytes)
+        f.seek(nBytes, 1)
         # data = readDataToNumpyArray(f, bp4dbg_utils.GetTypeName(typeID),
         #                            nElements)
-        print("      Payload (array) : {0} bytes".format(nBytes[0]))
+        print("      Payload (array) : {0} bytes".format(nBytes))
 
     return True
 

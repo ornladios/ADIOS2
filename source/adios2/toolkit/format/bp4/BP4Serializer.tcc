@@ -59,7 +59,8 @@ inline void BP4Serializer::PutVariableMetadata(
 
     /*const size_t startingPos = m_Data.m_Position;*/
     lf_SetOffset(stats.Offset);
-    PutVariableMetadataInData(variable, blockInfo, stats);
+    m_LastVarLengthPosInBuffer =
+        PutVariableMetadataInData(variable, blockInfo, stats);
     lf_SetOffset(stats.PayloadOffset);
 
     /*
@@ -96,6 +97,14 @@ inline void BP4Serializer::PutVariablePayload(
     {
         PutOperationPayloadInBuffer(variable, blockInfo);
     }
+
+    /* Now we can update the varLength including payload size including the
+     * closing padding but NOT the opening [VMD
+     */
+    const uint64_t varLength =
+        static_cast<uint64_t>(m_Data.m_Position - m_LastVarLengthPosInBuffer);
+    size_t backPosition = m_LastVarLengthPosInBuffer;
+    helper::CopyToBuffer(m_Data.m_Buffer, backPosition, &varLength);
 
     /*std::cout << " -- Var payload name=" << variable.m_Name
               << " startPos = " << std::to_string(startingPos)
@@ -455,7 +464,7 @@ BP4Serializer::GetBPStats(const bool singleValue,
 }
 
 template <class T>
-void BP4Serializer::PutVariableMetadataInData(
+size_t BP4Serializer::PutVariableMetadataInData(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::Info &blockInfo,
     const Stats<T> &stats) noexcept
@@ -524,6 +533,7 @@ void BP4Serializer::PutVariableMetadataInData(
     helper::CopyToBuffer(buffer, position, &vmdEndLen, 1);
     helper::CopyToBuffer(buffer, position, ptr, vmdEndLen);
 
+    /*
     // Back to varLength including payload size
     // including the closing padding but NOT the opening [VMD
     const uint64_t varLength = static_cast<uint64_t>(
@@ -532,12 +542,14 @@ void BP4Serializer::PutVariableMetadataInData(
 
     size_t backPosition = varLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &varLength);
+    */
 
     absolutePosition += position - mdBeginPosition;
+    return varLengthPosition;
 }
 
 template <>
-inline void BP4Serializer::PutVariableMetadataInData(
+inline size_t BP4Serializer::PutVariableMetadataInData(
     const core::Variable<std::string> &variable,
     const typename core::Variable<std::string>::Info &blockInfo,
     const Stats<std::string> &stats) noexcept
@@ -583,6 +595,7 @@ inline void BP4Serializer::PutVariableMetadataInData(
     const char vmdend[] = "\4VMD]"; // no \0
     helper::CopyToBuffer(buffer, position, vmdend, sizeof(vmdend) - 1);
 
+    /*
     // Back to varLength including payload size
     // including the closing padding but NOT the opening [VMD
     const uint64_t varLength = static_cast<uint64_t>(
@@ -591,8 +604,10 @@ inline void BP4Serializer::PutVariableMetadataInData(
 
     size_t backPosition = varLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &varLength);
+    */
 
     absolutePosition += position - mdBeginPosition;
+    return varLengthPosition;
 }
 
 template <class T>

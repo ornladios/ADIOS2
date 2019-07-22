@@ -349,6 +349,16 @@ protected:
     unsigned int m_Threads = 1;
     const bool m_DebugMode = false;
 
+    /* The position of the length of the serialized variable (metadata + data
+     * length) in the output data buffer (m_Data). This position must be passed
+     * between PutVariableMetadata() and PutVariablePayload() of the serializer
+     * to correctly record the length of the serialized length. The length
+     * depends on whether an operation is applied at buffering in
+     * PutVariablePayload(). This is a temporary, short lived value between the
+     * calls of those functions, call from an engine.
+     */
+    size_t m_LastVarLengthPosInBuffer = 0;
+
     /** method type for file I/O */
     enum IO_METHOD
     {

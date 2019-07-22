@@ -254,8 +254,12 @@ private:
                         const typename core::Variable<T>::Info &blockInfo,
                         const bool isRowMajor) noexcept;
 
+    /** @return The position that holds the length of the variable entry
+     * (metadat+data length). The actual lengths is know after
+     * PutVariablePayload()
+     */
     template <class T>
-    void
+    size_t
     PutVariableMetadataInData(const core::Variable<T> &variable,
                               const typename core::Variable<T>::Info &blockInfo,
                               const Stats<T> &stats) noexcept;

@@ -13,8 +13,8 @@ def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--infile", "-i", help="Name of the input file", required=True)
-    parser.add_argument("--printdata", "-p",
-                        help="Dump data of this variable as well", default="")
+    # parser.add_argument("--printdata", "-p",
+    #                    help="Dump data of this variable as well", default="")
     parser.add_argument("--verbose", "-v",
                         help="More verbosity", action="store_true")
     parser.add_argument("--no-indextable", "-x",
