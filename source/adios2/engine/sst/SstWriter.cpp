@@ -137,7 +137,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     if (m_BetweenStepPairs)
     {
         throw std::logic_error("ERROR: BeginStep() is called a second time "
-                               "without an intevening EndStep()");
+                               "without an intervening EndStep()");
     }
 
     m_BetweenStepPairs = true;

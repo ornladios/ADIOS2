@@ -180,6 +180,12 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     TAU_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
     switch (Mode)
     {
     case adios2::StepMode::Append:
@@ -206,6 +212,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     {
         return StepStatus::OtherError;
     }
+
+    m_BetweenStepPairs = true;
 
     if (m_WriterMarshalMethod == SstMarshalBP)
     {
@@ -281,6 +289,7 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
+    m_BetweenStepPairs = false;
     TAU_SCOPED_TIMER_FUNC();
     if (m_ReaderSelectionsLocked && !m_DefinitionsNotified)
     {
@@ -343,6 +352,14 @@ void SstReader::Init()
 #define declare_gets(T)                                                        \
     void SstReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
+        if (m_BetweenStepPairs == false)                                       \
+        {                                                                      \
+            throw std::logic_error(                                            \
+                "ERROR: When using the SST engine in ADIOS2, "                 \
+                "Get() calls must appear between "                             \
+                "BeginStep/EndStep pairs");                                    \
+        }                                                                      \
+                                                                               \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
             size_t *Start = NULL;                                              \
@@ -382,6 +399,14 @@ void SstReader::Init()
                                                                                \
     void SstReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
+        if (m_BetweenStepPairs == false)                                       \
+        {                                                                      \
+            throw std::logic_error(                                            \
+                "ERROR: When using the SST engine in ADIOS2, "                 \
+                "Get() calls must appear between "                             \
+                "BeginStep/EndStep pairs");                                    \
+        }                                                                      \
+                                                                               \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
             size_t *Start = NULL;                                              \
