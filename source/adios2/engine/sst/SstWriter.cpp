@@ -134,6 +134,12 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     TAU_SCOPED_TIMER_FUNC();
     m_WriterStep++;
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
     m_BetweenStepPairs = true;
     if (m_MarshalMethod == SstMarshalFFS)
     {

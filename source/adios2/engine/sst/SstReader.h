@@ -61,6 +61,7 @@ private:
     SstStream m_Input;
     SstMarshalMethod m_WriterMarshalMethod;
     bool m_DefinitionsNotified = false;
+    bool m_BetweenStepPairs = false;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;
