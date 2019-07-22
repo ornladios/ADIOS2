@@ -83,7 +83,7 @@ void BP4Base::InitParameters(const Params &parameters)
 
             if (m_OpenTimeoutSecs < 0.0)
             {
-                m_OpenTimeoutSecs = 31536000.0; // a year
+                m_OpenTimeoutSecs = 2144448000.0f; // int-friendly 68 years
             }
         }
         else if (key == "beginsteppollingfrequencysecs")

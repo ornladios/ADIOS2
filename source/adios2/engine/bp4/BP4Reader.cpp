@@ -456,7 +456,7 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
 
     if (timeoutSeconds < 0.0)
     {
-        timeoutSeconds = 31536000.0; // a year
+        timeoutSeconds = 2144448000.0f; // int-friendly 68 years
     }
 
     uint64_t pollTime_ms;
@@ -471,10 +471,6 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
     {
         // set poll to 1/100 of timeout
         pollTime_ms = static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
-        std::cout << "-- pollTime_ms = " << pollTime_ms
-                  << " x = " << timeoutSeconds * 1000.0f
-                  << " y = " << (timeoutSeconds * 1000.0f) / 100
-                  << " msec. TimeoutSecs was " << timeoutSeconds << std::endl;
         if (pollTime_ms < 1000)
         {
             pollTime_ms = 1000; // min 1 second polling time
@@ -483,8 +479,6 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
         {
             pollTime_ms = 10000; // max 10 seconds polling time
         }
-        std::cout << "-- Polling with calculated frequency " << pollTime_ms
-                  << " msec. " << std::endl;
     }
 
     /* Poll */
