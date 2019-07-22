@@ -152,7 +152,7 @@ void BP4Reader::OpenFiles()
 {
     /* Do a collective wait for the file(s) to appear within timeout.
        Make sure every process comes to the same conclusion */
-    float timeoutSeconds = m_BP4Deserializer.m_TimeoutOpenSecs;
+    float timeoutSeconds = m_BP4Deserializer.m_OpenTimeoutSecs;
 
     // set poll to 1/100 of timeout
     uint64_t pollTime_ms =
@@ -453,20 +453,38 @@ StepStatus BP4Reader::CheckForNewSteps(float timeoutSeconds)
        Make sure every reader comes to the same conclusion */
     StepStatus retval = StepStatus::OK;
     bool haveNewStep = false;
+
     if (timeoutSeconds < 0.0)
     {
-        timeoutSeconds = std::numeric_limits<float>::max() / 10000;
+        timeoutSeconds = 31536000.0; // a year
     }
-    // set poll to 1/100 of timeout
-    uint64_t pollTime_ms =
-        static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
-    if (pollTime_ms < 1000)
+
+    uint64_t pollTime_ms;
+    if (m_BP4Deserializer.m_BeginStepPollingFrequencyIsSet)
     {
-        pollTime_ms = 1000; // min 1 second polling time
+        pollTime_ms = static_cast<uint64_t>(
+            m_BP4Deserializer.m_BeginStepPollingFrequencySecs * 1000.f);
+        std::cout << "-- Polling with user set frequency " << pollTime_ms
+                  << " msec" << std::endl;
     }
-    if (pollTime_ms > 10000)
+    else
     {
-        pollTime_ms = 10000; // max 10 seconds polling time
+        // set poll to 1/100 of timeout
+        pollTime_ms = static_cast<uint64_t>((timeoutSeconds * 1000.0f) / 100);
+        std::cout << "-- pollTime_ms = " << pollTime_ms
+                  << " x = " << timeoutSeconds * 1000.0f
+                  << " y = " << (timeoutSeconds * 1000.0f) / 100
+                  << " msec. TimeoutSecs was " << timeoutSeconds << std::endl;
+        if (pollTime_ms < 1000)
+        {
+            pollTime_ms = 1000; // min 1 second polling time
+        }
+        if (pollTime_ms > 10000)
+        {
+            pollTime_ms = 10000; // max 10 seconds polling time
+        }
+        std::cout << "-- Polling with calculated frequency " << pollTime_ms
+                  << " msec. " << std::endl;
     }
 
     /* Poll */
