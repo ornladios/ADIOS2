@@ -13,6 +13,7 @@
 
 #include <numeric>   //std::accumulate
 #include <stdexcept> //std::runtime_error
+#include <utility>   //std::pair
 
 namespace adios2
 {
@@ -139,6 +140,44 @@ void Comm::BroadcastVector(std::vector<char> &vector,
 template <>
 void Comm::BroadcastVector(std::vector<size_t> &vector,
                            const int rankSource) const;
+
+// Datatype full specializations implemented in 'adiosComm.tcc'.
+template <>
+MPI_Datatype Comm::Datatype<signed char>();
+template <>
+MPI_Datatype Comm::Datatype<char>();
+template <>
+MPI_Datatype Comm::Datatype<short>();
+template <>
+MPI_Datatype Comm::Datatype<int>();
+template <>
+MPI_Datatype Comm::Datatype<long>();
+template <>
+MPI_Datatype Comm::Datatype<unsigned char>();
+template <>
+MPI_Datatype Comm::Datatype<unsigned short>();
+template <>
+MPI_Datatype Comm::Datatype<unsigned int>();
+template <>
+MPI_Datatype Comm::Datatype<unsigned long>();
+template <>
+MPI_Datatype Comm::Datatype<unsigned long long>();
+template <>
+MPI_Datatype Comm::Datatype<long long>();
+template <>
+MPI_Datatype Comm::Datatype<double>();
+template <>
+MPI_Datatype Comm::Datatype<long double>();
+template <>
+MPI_Datatype Comm::Datatype<std::pair<int, int>>();
+template <>
+MPI_Datatype Comm::Datatype<std::pair<float, int>>();
+template <>
+MPI_Datatype Comm::Datatype<std::pair<double, int>>();
+template <>
+MPI_Datatype Comm::Datatype<std::pair<long double, int>>();
+template <>
+MPI_Datatype Comm::Datatype<std::pair<short, int>>();
 
 } // end namespace helper
 } // end namespace adios2

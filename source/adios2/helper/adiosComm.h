@@ -180,6 +180,10 @@ private:
 
     /** Encapsulated MPI communicator instance.  */
     MPI_Comm m_MPIComm = MPI_COMM_NULL;
+
+    /** Return MPI datatype id for type T.  */
+    template <typename T>
+    static MPI_Datatype Datatype();
 };
 
 class Comm::Req
