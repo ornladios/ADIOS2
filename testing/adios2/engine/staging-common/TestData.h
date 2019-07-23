@@ -129,14 +129,14 @@ void generateCommonTestData(int step, int rank, int size, int Nx, int r64_Nx)
     int64_t j = rank * Nx * 10 + step;
     int64_t r64_j = j;
 
-    data_I8.reserve(Nx);
-    data_I16.reserve(Nx);
-    data_I32.reserve(Nx);
-    data_I64.reserve(Nx);
-    data_R32.reserve(Nx);
-    data_R64.reserve(r64_Nx);
-    data_C32.reserve(Nx);
-    data_C64.reserve(Nx);
+    data_I8.resize(Nx);
+    data_I16.resize(Nx);
+    data_I32.resize(Nx);
+    data_I64.resize(Nx);
+    data_R32.resize(Nx);
+    data_R64.resize(r64_Nx);
+    data_C32.resize(Nx);
+    data_C64.resize(Nx);
 
     if (r64_Nx != Nx)
     {
