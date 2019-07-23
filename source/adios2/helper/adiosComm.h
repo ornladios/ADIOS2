@@ -94,6 +94,8 @@ public:
     Comm Split(int color, int key,
                const std::string &hint = std::string()) const;
 
+    void Barrier(const std::string &hint = std::string()) const;
+
     /**
      * Gather a single source value from each ranks and forms a vector in
      * rankDestination.

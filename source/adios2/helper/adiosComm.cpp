@@ -77,6 +77,11 @@ Comm Comm::Split(int color, int key, const std::string &hint) const
     return Comm(newComm);
 }
 
+void Comm::Barrier(const std::string &hint) const
+{
+    CheckMPIReturn(SMPI_Barrier(m_MPIComm), hint);
+}
+
 std::string Comm::BroadcastFile(const std::string &fileName,
                                 const std::string hint,
                                 const int rankSource) const

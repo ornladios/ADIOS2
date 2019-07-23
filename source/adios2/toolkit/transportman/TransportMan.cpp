@@ -67,8 +67,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
             lf_CreateDirectories(fileNames);
         }
 
-        helper::CheckMPIReturn(SMPI_Barrier(m_Comm),
-                               "Barrier in TransportMan.MkDirsBarrier");
+        m_Comm.Barrier("Barrier in TransportMan.MkDirsBarrier");
     }
 }
 

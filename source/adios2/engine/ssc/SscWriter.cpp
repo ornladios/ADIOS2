@@ -231,7 +231,7 @@ void SscWriter::ReplyThread(const std::string &address)
 
 void SscWriter::DoClose(const int transportIndex)
 {
-    MPI_Barrier(m_Comm);
+    m_Comm.Barrier();
     m_Listening = false;
     for (auto &i : m_ReplyThreads)
     {

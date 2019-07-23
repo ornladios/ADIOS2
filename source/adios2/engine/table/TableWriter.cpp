@@ -83,7 +83,7 @@ void TableWriter::EndStep()
         }
     }
 
-    MPI_Barrier(m_Comm);
+    m_Comm.Barrier();
 
     m_Listening = false;
     if (m_Verbosity >= 5)
