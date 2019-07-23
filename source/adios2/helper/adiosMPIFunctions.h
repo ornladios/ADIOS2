@@ -111,7 +111,7 @@ void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 std::vector<int> GetGathervDisplacements(const size_t *counts,
                                          const size_t countsSize);
 
-void CheckMPIReturn(const int value, const std::string hint);
+void CheckMPIReturn(const int value, const std::string &hint);
 
 std::string BroadcastFile(const std::string &fileName, MPI_Comm mpiComm,
                           const std::string hint = "",

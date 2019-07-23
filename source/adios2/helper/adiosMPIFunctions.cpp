@@ -34,7 +34,7 @@ std::vector<int> GetGathervDisplacements(const size_t *counts,
     return displacements;
 }
 
-void CheckMPIReturn(const int value, const std::string hint)
+void CheckMPIReturn(const int value, const std::string &hint)
 {
     if (value == MPI_SUCCESS)
     {
