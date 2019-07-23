@@ -79,7 +79,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         size_t writerSize;
 
-
         auto var1 = io1.InquireVariable<double>(varname1);
         auto var2 = io2.InquireVariable<double>(varname2);
 
@@ -101,7 +100,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         if (myStart + myLength > writerSize * Nx)
         {
-            myLength = (long unsigned int)(writerSize + 1) * Nx - myStart;
+            myLength = (long unsigned int)(writerSize + 1) * (int)Nx - myStart;
         }
         const adios2::Dims start{myStart};
         const adios2::Dims count{myLength};

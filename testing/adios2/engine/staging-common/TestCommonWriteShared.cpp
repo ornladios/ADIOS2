@@ -70,22 +70,22 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
     // before Write().
-    unsigned int myStart1 = Nx * mpiRank, myStart2 = Nx * mpiRank;
-    unsigned int myCount1 = Nx, myCount2 = Nx;
+    unsigned int myStart1 = (int)Nx * mpiRank, myStart2 = (int)Nx * mpiRank;
+    unsigned int myCount1 = (int)Nx, myCount2 = (int)Nx;
     if (mpiRank == 0)
     {
         /* first guy gets twice allotment var 1 */
-        myCount1 = 2 * Nx;
+        myCount1 = 2 * (int)Nx;
     }
     else
     {
         /* everyone else shifts up */
-        myStart1 += Nx;
+        myStart1 += (int)Nx;
     }
     if (mpiRank == (mpiSize - 1))
     {
         /* last guy  gets twice allotment var 2 */
-        myCount2 = 2 * Nx;
+        myCount2 = 2 * (int)Nx;
     }
     {
         adios2::Dims shape1{static_cast<unsigned int>(Nx * (mpiSize + 1))};
@@ -122,9 +122,9 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         std::vector<double> data_reverse;
 
         generateSimpleForwardData(data_forward, (int)step, myStart1, myCount1,
-                                  Nx * (mpiSize + 1));
+                                  (int)Nx * (mpiSize + 1));
         generateSimpleReverseData(data_reverse, (int)step, myStart2, myCount2,
-                                  Nx * (mpiSize + 1));
+                                  (int)Nx * (mpiSize + 1));
 
         engine1.BeginStep();
         engine2.BeginStep();

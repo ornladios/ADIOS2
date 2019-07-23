@@ -49,12 +49,30 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 #endif
     adios2::IO io = adios.DeclareIO("TestIO");
 
+    std::size_t r64_Nx = Nx;
+    if (ZeroDataVar)
+    {
+        assert(mpiSize >= 2);
+        if (mpiRank == 0)
+        {
+            r64_Nx = 0;
+        }
+        else if (mpiRank == 1)
+        {
+            r64_Nx = 2 * Nx;
+        }
+    }
+    std::cout << "Nx is set to " << r64_Nx << " on Rank " << mpiRank
+              << std::endl;
+
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
     // before Write().
     {
         adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
         adios2::Dims start{static_cast<unsigned int>(Nx * mpiRank)};
+        adios2::Dims count_r64{static_cast<unsigned int>(r64_Nx)};
+        adios2::Dims start_r64{static_cast<unsigned int>(Nx * mpiRank)};
         adios2::Dims count{static_cast<unsigned int>(Nx)};
         adios2::Dims shape2{static_cast<unsigned int>(Nx * mpiSize), 2};
         adios2::Dims start2{static_cast<unsigned int>(Nx * mpiRank), 0};
@@ -66,13 +84,21 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
         adios2::Dims time_count{1};
 
+        if (ZeroDataVar)
+        {
+            if (mpiRank == 1)
+            {
+                start_r64[0] = 0;
+            }
+        }
         auto scalar_r64 = io.DefineVariable<double>("scalar_r64");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
         auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
+        auto var_r64 =
+            io.DefineVariable<double>("r64", shape, start_r64, count_r64);
         auto var_c32 =
             io.DefineVariable<std::complex<float>>("c32", shape, start, count);
         auto var_c64 =
@@ -109,7 +135,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     for (size_t step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx,
+                               (int)r64_Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -130,16 +157,25 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Make a 1D selection to describe the local dimensions of the
         // variable we write and its offsets in the global spaces
         adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
+        adios2::Box<adios2::Dims> sel_r64({mpiRank * Nx}, {r64_Nx});
         adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
         adios2::Box<adios2::Dims> sel_time(
             {static_cast<unsigned long>(mpiRank)}, {1});
+        if (ZeroDataVar)
+        {
+            if (mpiRank == 1)
+            {
+                sel_r64.first[0] = 0;
+            }
+        }
+
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
         var_i32.SetSelection(sel);
         var_i64.SetSelection(sel);
         var_r32.SetSelection(sel);
-        var_r64.SetSelection(sel);
+        var_r64.SetSelection(sel_r64);
         var_c32.SetSelection(sel);
         var_c64.SetSelection(sel);
         var_r64_2d.SetSelection(sel2);

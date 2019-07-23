@@ -16,6 +16,8 @@ int CompressZfp = 0;
 int TimeGapExpected = 0;
 int IgnoreTimeGap = 1;
 int ExpectOpenTimeout = 0;
+int ZeroDataVar = 0;
+int ZeroDataRank = 0;
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
 
@@ -147,6 +149,14 @@ static void ParseArgs(int argc, char **argv)
                 std::cerr << "Invalid number for ms_delay " << argv[1] << '\n';
             argv++;
             argc--;
+        }
+        else if (std::string(argv[1]) == "--zero_data_var")
+        {
+            ZeroDataVar++;
+        }
+        else if (std::string(argv[1]) == "--zero_data_rank")
+        {
+            ZeroDataRank++;
         }
         else
         {

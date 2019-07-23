@@ -132,7 +132,7 @@ endif()
 set (SIMPLE_MPI_TESTS "")
 set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local")
+  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar")
   if (ADIOS_HAVE_Fortran)
     set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()
@@ -170,6 +170,9 @@ list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*FFS.*")
 # remove Fto anything tests that use CommMin because we can't spec it
 list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*CommMin.*")
 
+# Zero Data tests are unreliable with SST and BP marshaling
+list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroDataVar.*BP")
+
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
 endforeach()
@@ -187,6 +190,8 @@ if(ADIOS2_HAVE_MPI)
     list (FILTER INSITU_TESTS EXCLUDE REGEX "x1.Shared")
     # Fortran Destination doesn't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX "toF")
+    # Zero size Data doesn't work for InSitu
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "ZeroData")
     # DelayedReader doesn't make sense for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX "DelayedReader.*")
     # Fortran scalar reads don't work for InSitu

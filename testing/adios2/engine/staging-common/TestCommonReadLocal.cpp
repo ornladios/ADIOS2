@@ -138,7 +138,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             EXPECT_FALSE(var_r64_2d_rev);
         }
 
-        long unsigned int hisStart = rankToRead * Nx;
+        long unsigned int hisStart = rankToRead * (int)Nx;
         long unsigned int hisLength = (long unsigned int)Nx;
 
         var_i8.SetBlockSelection(rankToRead);
