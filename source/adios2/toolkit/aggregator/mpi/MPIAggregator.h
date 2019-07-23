@@ -60,13 +60,21 @@ public:
 
     virtual void Init(const size_t subStreams, helper::Comm const &parentComm);
 
-    using ExchangeRequests = std::vector<std::vector<MPI_Request>>;
+    struct ExchangeRequests
+    {
+        helper::Comm::Req m_SendSize;
+        helper::Comm::Req m_SendData;
+        helper::Comm::Req m_RecvData;
+    };
 
     virtual ExchangeRequests IExchange(format::Buffer &buffer,
                                        const int step) = 0;
 
-    using ExchangeAbsolutePositionRequests =
-        std::vector<std::vector<MPI_Request>>;
+    struct ExchangeAbsolutePositionRequests
+    {
+        helper::Comm::Req m_Send;
+        helper::Comm::Req m_Recv;
+    };
 
     virtual ExchangeAbsolutePositionRequests
     IExchangeAbsolutePosition(format::Buffer &buffer, const int step) = 0;

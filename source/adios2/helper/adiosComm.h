@@ -169,6 +169,14 @@ public:
                               const std::string hint = "",
                               const int rankSource = 0) const;
 
+    template <typename T>
+    Req Isend(const T *buffer, const size_t count, int destination, int tag,
+              const std::string &hint = std::string()) const;
+
+    template <typename T>
+    Req Irecv(T *buffer, const size_t count, int source, int tag,
+              const std::string &hint = std::string()) const;
+
 private:
     /**
      * @brief Construct by taking ownership of a MPI communicator.
@@ -180,6 +188,12 @@ private:
 
     /** Encapsulated MPI communicator instance.  */
     MPI_Comm m_MPIComm = MPI_COMM_NULL;
+
+    Req IsendImpl(const void *buffer, size_t count, MPI_Datatype datatype,
+                  int dest, int tag, const std::string &hint) const;
+
+    Req IrecvImpl(void *buffer, size_t count, MPI_Datatype datatype, int source,
+                  int tag, const std::string &hint) const;
 
     /** Return MPI datatype id for type T.  */
     template <typename T>

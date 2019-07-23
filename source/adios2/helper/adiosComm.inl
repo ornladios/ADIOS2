@@ -141,6 +141,20 @@ template <>
 void Comm::BroadcastVector(std::vector<size_t> &vector,
                            const int rankSource) const;
 
+template <typename T>
+Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
+                      const std::string &hint) const
+{
+    return IsendImpl(buffer, count, Datatype<T>(), dest, tag, hint);
+}
+
+template <typename T>
+Comm::Req Comm::Irecv(T *buffer, const size_t count, int source, int tag,
+                      const std::string &hint) const
+{
+    return IrecvImpl(buffer, count, Datatype<T>(), source, tag, hint);
+}
+
 // Datatype full specializations implemented in 'adiosComm.tcc'.
 template <>
 MPI_Datatype Comm::Datatype<signed char>();

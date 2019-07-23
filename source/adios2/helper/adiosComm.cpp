@@ -96,6 +96,105 @@ std::string Comm::BroadcastFile(const std::string &fileName,
     return fileContents;
 }
 
+Comm::Req Comm::IsendImpl(const void *buffer, size_t count,
+                          MPI_Datatype datatype, int dest, int tag,
+                          const std::string &hint) const
+{
+    Comm::Req req(datatype);
+
+    if (count > DefaultMaxFileBatchSize)
+    {
+        const size_t batches = count / DefaultMaxFileBatchSize;
+
+        size_t position = 0;
+        for (size_t b = 0; b < batches; ++b)
+        {
+            int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
+            MPI_Request mpiReq;
+            CheckMPIReturn(
+                MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)) +
+                              position,
+                          batchSize, datatype, dest, tag, m_MPIComm, &mpiReq),
+                "in call to Isend batch " + std::to_string(b) + " " + hint +
+                    "\n");
+            req.m_MPIReqs.emplace_back(mpiReq);
+
+            position += DefaultMaxFileBatchSize;
+        }
+        const size_t remainder = count % DefaultMaxFileBatchSize;
+        if (remainder > 0)
+        {
+            int batchSize = static_cast<int>(remainder);
+            MPI_Request mpiReq;
+            CheckMPIReturn(
+                MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)) +
+                              position,
+                          batchSize, datatype, dest, tag, m_MPIComm, &mpiReq),
+                "in call to Isend remainder batch " + hint + "\n");
+            req.m_MPIReqs.emplace_back(mpiReq);
+        }
+    }
+    else
+    {
+        int batchSize = static_cast<int>(count);
+        MPI_Request mpiReq;
+        CheckMPIReturn(
+            MPI_Isend(static_cast<char *>(const_cast<void *>(buffer)),
+                      batchSize, datatype, dest, tag, m_MPIComm, &mpiReq),
+            " in call to Isend with single batch " + hint + "\n");
+        req.m_MPIReqs.emplace_back(mpiReq);
+    }
+    return req;
+}
+
+Comm::Req Comm::IrecvImpl(void *buffer, size_t count, MPI_Datatype datatype,
+                          int source, int tag, const std::string &hint) const
+{
+    Comm::Req req(datatype);
+
+    if (count > DefaultMaxFileBatchSize)
+    {
+        const size_t batches = count / DefaultMaxFileBatchSize;
+        size_t position = 0;
+        for (size_t b = 0; b < batches; ++b)
+        {
+            int batchSize = static_cast<int>(DefaultMaxFileBatchSize);
+            MPI_Request mpiReq;
+            CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position,
+                                     batchSize, datatype, source, tag,
+                                     m_MPIComm, &mpiReq),
+                           "in call to Irecv batch " + std::to_string(b) + " " +
+                               hint + "\n");
+            req.m_MPIReqs.emplace_back(mpiReq);
+
+            position += DefaultMaxFileBatchSize;
+        }
+
+        const size_t remainder = count % DefaultMaxFileBatchSize;
+        if (remainder > 0)
+        {
+            int batchSize = static_cast<int>(remainder);
+            MPI_Request mpiReq;
+            CheckMPIReturn(MPI_Irecv(static_cast<char *>(buffer) + position,
+                                     batchSize, datatype, source, tag,
+                                     m_MPIComm, &mpiReq),
+                           "in call to Irecv remainder batch " + hint + "\n");
+            req.m_MPIReqs.emplace_back(mpiReq);
+        }
+    }
+    else
+    {
+        int batchSize = static_cast<int>(count);
+        MPI_Request mpiReq;
+        CheckMPIReturn(MPI_Irecv(buffer, batchSize, datatype, source, tag,
+                                 m_MPIComm, &mpiReq),
+                       " in call to Isend with single batch " + hint + "\n");
+        req.m_MPIReqs.emplace_back(mpiReq);
+    }
+
+    return req;
+}
+
 Comm::Req::Req() = default;
 
 Comm::Req::Req(MPI_Datatype datatype) : m_MPIDatatype(datatype) {}
