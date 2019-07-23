@@ -14,8 +14,6 @@
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/helper/adiosString.h"
 
-#include "adiosMPIFunctions.h"
-
 namespace adios2
 {
 namespace helper
@@ -59,6 +57,29 @@ Comm Comm::Duplicate(MPI_Comm mpiComm)
     MPI_Comm newComm;
     SMPI_Comm_dup(mpiComm, &newComm);
     return Comm(newComm);
+}
+
+void Comm::CheckMPIReturn(const int value, const std::string &hint)
+{
+    if (value == MPI_SUCCESS)
+    {
+        return;
+    }
+
+    std::string error;
+    switch (value)
+    {
+    case MPI_ERR_COMM:
+        error = "MPI_ERR_COMM";
+        break;
+    case MPI_ERR_INTERN:
+        error = "MPI_ERR_INTERN";
+        break;
+    default:
+        error = "MPI_ERR number: " + std::to_string(value);
+    }
+
+    throw std::runtime_error("ERROR: ADIOS2 detected " + error + ", " + hint);
 }
 
 void Comm::Free(const std::string &hint)

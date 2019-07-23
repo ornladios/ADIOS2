@@ -22,9 +22,7 @@ namespace adios2
 {
 namespace helper
 {
-
-void CheckMPIReturn(const int value, const std::string &hint);
-
+// placeholder
 } // end namespace helper
 } // end namespace adios2
 

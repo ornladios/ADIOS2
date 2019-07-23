@@ -195,6 +195,8 @@ private:
     /** Encapsulated MPI communicator instance.  */
     MPI_Comm m_MPIComm = MPI_COMM_NULL;
 
+    static void CheckMPIReturn(const int value, const std::string &hint);
+
     void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype, int root,
                    const std::string &hint) const;
 
