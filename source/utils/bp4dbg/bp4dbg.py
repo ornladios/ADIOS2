@@ -35,7 +35,7 @@ def SetupArgs():
     args.dataFileName = ""
     args.dumpData = False
 
-    #print("Verbosity = {0}".format(args.verbose))
+    # print("Verbosity = {0}".format(args.verbose))
     return args
 
 
