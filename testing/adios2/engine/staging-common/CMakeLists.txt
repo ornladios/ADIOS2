@@ -175,7 +175,8 @@ list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*FFS.*")
 list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*CommMin.*")
 
 # Zero Data tests are unreliable with SST and BP marshaling
-list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP.SST")
+list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
+message (STATUS "SSt tests are ${SST_TESTS}")
 
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
