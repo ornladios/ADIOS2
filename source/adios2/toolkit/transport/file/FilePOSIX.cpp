@@ -24,8 +24,8 @@ namespace adios2
 namespace transport
 {
 
-FilePOSIX::FilePOSIX(MPI_Comm mpiComm, const bool debugMode)
-: Transport("File", "POSIX", mpiComm, debugMode)
+FilePOSIX::FilePOSIX(helper::Comm const &comm, const bool debugMode)
+: Transport("File", "POSIX", comm, debugMode)
 {
 }
 

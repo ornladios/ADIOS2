@@ -18,8 +18,8 @@ namespace adios2
 namespace transport
 {
 
-FileFStream::FileFStream(MPI_Comm mpiComm, const bool debugMode)
-: Transport("File", "fstream", mpiComm, debugMode)
+FileFStream::FileFStream(helper::Comm const &comm, const bool debugMode)
+: Transport("File", "fstream", comm, debugMode)
 {
 }
 

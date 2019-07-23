@@ -15,6 +15,10 @@
 
 namespace adios2
 {
+namespace helper
+{
+class Comm;
+}
 namespace transport
 {
 
@@ -31,7 +35,7 @@ public:
      * @param debugMode true: extra checks
      */
     ShmSystemV(const unsigned int projectID, const size_t size,
-               MPI_Comm mpiComm, const bool debugMode = false,
+               helper::Comm const &comm, const bool debugMode = false,
                const bool removeAtClose = false);
 
     ~ShmSystemV();
