@@ -74,7 +74,8 @@ CharacteristicNames = {
     8: 'time_index',
     9: 'bitmap',
     10: 'stat',
-    11: 'transform_type'
+    11: 'transform_type',
+    12: 'minmax'
 }
 
 
@@ -87,7 +88,8 @@ def GetCharacteristicName(cID):
 
 def GetCharacteristicDataLength(cID, typeID):
     name = CharacteristicNames.get(cID)
-    if (name == 'value' or name == 'min' or name == 'max'):
+    if (name == 'value' or name == 'min' or
+            name == 'max' or name == 'minmax'):
         return dataTypeSize[typeID]
     elif (name == 'offset' or name == 'payload_offset'):
         return 8

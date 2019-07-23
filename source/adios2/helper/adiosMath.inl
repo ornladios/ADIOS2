@@ -347,6 +347,30 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size,
     GetMinMaxComplex(maxs.data(), maxs.size(), minTemp, max);
 }
 
+template <class T>
+void GetMinMaxSubblocks(const T *values, const Dims &count,
+                        const size_t subblockSize, std::vector<T> &MinMaxs,
+                        std::vector<uint16_t> &SubblockDivs) noexcept
+{
+    const size_t nElems = helper::GetTotalSize(count);
+    const size_t nBytes = nElems * sizeof(T);
+    const size_t nblocks = nBytes / subblockSize;
+    if (nblocks <= 1)
+    {
+        SubblockDivs.resize(count.size(), 1);
+        T vmin, vmax;
+        GetMinMax(values, nElems, vmin, vmax);
+        MinMaxs.resize(2);
+        MinMaxs[0] = vmin;
+        MinMaxs[1] = vmax;
+    }
+    else
+    {
+        throw std::runtime_error(
+            "GetMinMaxSubblocks: Subblock min/max is not implemented yet");
+    }
+}
+
 #define declare_template_instantiation(T)                                      \
     template <>                                                                \
     inline bool LessThan<std::complex<T>>(                                     \

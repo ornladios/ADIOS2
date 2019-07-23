@@ -94,6 +94,22 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
                       T &max, const unsigned int threads = 1) noexcept;
 
 /**
+ * Gets mins and maxs from a values array of primitive types (not including
+ * complex)
+ * @param values input array
+ * @param count N-dims of array
+ * @param subblockSize Requested maximum size of each sub-block of data for
+ * which a separate min/max is calculated
+ * @param MinMaxs empty vector which will be filled out (min-max pairs)
+ * @param SubblockDivs empty vector of N-dims dividers to compute subblocks from
+ * 'count' MinMaxs and SubblockDivs will be filled out in this call.
+ */
+template <class T>
+void GetMinMaxSubblocks(const T *values, const Dims &count,
+                        const size_t subblockSize, std::vector<T> &MinMaxs,
+                        std::vector<uint16_t> &SubblockDivs) noexcept;
+
+/**
  * Check if index is within (inclusive) limits
  * lowerLimit <= index <= upperLimit
  * @param index input to be checked

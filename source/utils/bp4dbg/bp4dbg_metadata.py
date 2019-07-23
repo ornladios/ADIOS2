@@ -198,6 +198,24 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
             data = bDataToNumpyArray(cData, 'unsigned_integer', 1)
             print("                Value          : {0}  ({1} bytes)".format(
                 data[0], cLen))
+        elif cName == 'minmax':
+            nBlocks = np.frombuffer(
+                buf, dtype=np.uint16, count=1, offset=pos)[0]
+            print("                nBlocks        : {0}".format(nBlocks))
+            pos = pos + 2
+            if nBlocks == 1:
+                minmax = bDataToNumpyArray(buf, dataTypeName, 2)
+                pos = pos + 2 * cLen
+                print("                Min/max        : {0} / {1}".format(
+                    minmax[0], minmax[1]))
+            else:
+                div = np.frombuffer(buf, dtype=np.uint16,
+                                    count=ndim, offset=pos)
+                pos = pos + 2 * ndim
+                minmax = bDataToNumpyArray(buf, dataTypeName, 2 * nBlocks)
+                for i in range(nBlocks):
+                    print("                Min/max        : {0} / {1}".format(
+                        minmax[2 * i], minmax[2 * i + 1]))
         elif cName == "transform_type":
             # Operator name (8 bit length)
             namelimit = limit - (pos - cStartPosition)
