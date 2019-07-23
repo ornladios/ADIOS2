@@ -245,7 +245,7 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
         return;
     }
 
-    if (threads == 1 || threads > size)
+    if (threads == 1 || size < 1000000)
     {
         GetMinMax(values, size, min, max);
         return;
@@ -301,7 +301,7 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size,
         return;
     }
 
-    if (threads == 1)
+    if (threads == 1 || size < 1000000)
     {
         GetMinMaxComplex(values, size, min, max);
         return;
@@ -346,6 +346,169 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size,
     GetMinMaxComplex(mins.data(), mins.size(), min, maxTemp);
     GetMinMaxComplex(maxs.data(), maxs.size(), minTemp, max);
 }
+
+template <class T>
+void GetMinMaxSubblocks(const T *values, const Dims &count,
+                        const BlockDivisionInfo info, std::vector<T> &MinMaxs,
+                        T &bmin, T &bmax, const unsigned int threads) noexcept
+{
+    const int ndim = static_cast<int>(count.size());
+    const size_t nElems = helper::GetTotalSize(count);
+    if (info.nBlocks <= 1)
+    {
+        GetMinMaxThreads(values, nElems, bmin, bmax, threads);
+        MinMaxs.resize(2);
+        MinMaxs[0] = bmin;
+        MinMaxs[1] = bmax;
+    }
+    else
+    {
+        // Calculate min/max for each block separately
+        MinMaxs.resize(2 * info.nBlocks);
+        for (int b = 0; b < info.nBlocks; ++b)
+        {
+            Box<Dims> box = GetSubBlock(count, info, b);
+            // calculate start position of this subblock in values array
+            size_t pos = 0;
+            size_t prod = 1;
+            for (int d = ndim - 1; d >= 0; --d)
+            {
+                pos += box.first[d] * prod;
+                prod *= count[d];
+            }
+            T vmin, vmax;
+            const size_t nElemsSub = helper::GetTotalSize(box.second);
+            GetMinMax(values + pos, nElemsSub, vmin, vmax);
+            MinMaxs[2 * b] = vmin;
+            MinMaxs[2 * b + 1] = vmax;
+            if (b == 0)
+            {
+                bmin = vmin;
+                bmax = vmax;
+            }
+            else
+            {
+                if (LessThan(vmin, bmin))
+                {
+                    bmin = vmin;
+                }
+                if (GreaterThan(vmax, bmax))
+                {
+                    bmax = vmax;
+                }
+            }
+        }
+    }
+}
+
+#if 0
+template <class T>
+void GetMinMaxSubblocks(const T *values, const Dims &count,
+                        const size_t subblockSize, std::vector<T> &MinMaxs,
+                        std::vector<uint16_t> &SubblockDivs,
+                        const unsigned int threads) noexcept
+{
+    const size_t ndim = count.size();
+    const size_t nElems = helper::GetTotalSize(count);
+    size_t nBlocks64 = nElems / subblockSize;
+    if (nBlocks64 > 4096)
+    {
+        std::cerr
+            << "ADIOS WARNING: The StatsBlockSize parameter is causing a "
+               "data block to be divided up to more than 4096 sub-blocks. "
+               " This is an artificial limit to avoid metadata explosion."
+            << std::endl;
+        nBlocks64 = 4096;
+    }
+
+    uint16_t nBlocks = static_cast<uint16_t>(nBlocks64);
+    if (nBlocks <= 1)
+    {
+        SubblockDivs.resize(ndim, 1);
+        T vmin, vmax;
+        GetMinMaxThreads(values, nElems, vmin, vmax, threads);
+        MinMaxs.resize(2);
+        MinMaxs[0] = vmin;
+        MinMaxs[1] = vmax;
+    }
+    else
+    {
+        /* Split the block into 'nBlocks' subblocks */
+        /* FIXME: What about column-major dimension order here? */
+        SubblockDivs.resize(ndim, 1);
+        int i = 0;
+        uint16_t n = nBlocks;
+        size_t dim = count[0];
+        uint16_t div = 1;
+        // size_t rem = 0;
+        while (n > 1 && i < ndim)
+        {
+            if (n < dim)
+            {
+                div = n;
+                n = 1;
+            }
+            else
+            {
+                div = static_cast<uint16_t>(dim);
+                // rem = dim % n;
+                n = n / dim;
+            }
+            SubblockDivs[i] = div;
+            ++i;
+        }
+
+        /* Min/Max per subblock */
+
+        // remainders calculation
+        std::vector<uint16_t> rem(ndim, 0);
+        for (int j = 0; j < ndim; ++j)
+        {
+            rem[j] = count[j] % SubblockDivs[j];
+        }
+
+        // division vector for calculating N-dim blockIDs from blockID
+        std::vector<uint16_t> blockIdDivs(ndim, 0); // blockID in N-dim
+        uint16_t d = 1; // div[n-2] * div[n-3] * ... div[0]
+        for (int j = ndim - 1; j >= 0; --j)
+        {
+            blockIdDivs[j] = d;
+            d = d * SubblockDivs[j];
+        }
+
+        std::vector<uint16_t> blockIds(ndim, 0); // blockID in N-dim
+        for (uint16_t b = 0; b < nBlocks; b++)
+        {
+            // calculate N-dim blockIDs from b
+            for (int j = 0; j < ndim; ++j)
+            {
+                blockIds[j] = b / blockIdDivs[j];
+                if (j > 0)
+                {
+                    blockIds[j] = blockIds[j] % SubblockDivs[j];
+                }
+            }
+            // calcute b-th subblock start/count
+            Dims sbCount(ndim, 1);
+            Dims sbStart(ndim, 0);
+            for (int j = 0; j < ndim; ++j)
+            {
+                sbCount[j] = count[j] / SubblockDivs[j];
+                sbStart[j] = sbCount[j] * blockIds[j];
+                if (blockIds[j] < rem[j])
+                {
+                    sbCount[j] += blockIds[j] + 1;
+                    sbStart[j] += blockIds[j];
+                }
+                else
+                {
+                    sbStart[j] += rem[j];
+                }
+            }
+        }
+    }
+}
+#endif
 
 #define declare_template_instantiation(T)                                      \
     template <>                                                                \

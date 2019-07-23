@@ -441,21 +441,24 @@ BP4Serializer::GetBPStats(const bool singleValue,
         return stats;
     }
 
-    if (m_StatsLevel == 0)
+    if (m_StatsLevel > 0)
     {
         ProfilerStart("minmax");
-        if (blockInfo.MemoryStart.empty())
+        if (!blockInfo.MemoryStart.empty())
         {
-            const std::size_t valuesSize =
-                helper::GetTotalSize(blockInfo.Count);
-            helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
-                                     stats.Max, m_Threads);
-        }
-        else // non-contiguous memory min/max
-        {
+            // non-contiguous memory min/max
             helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
                                        blockInfo.MemoryStart, blockInfo.Count,
                                        isRowMajor, stats.Min, stats.Max);
+        }
+        else
+        {
+            stats.SubblockInfo =
+                helper::DivideBlock(blockInfo.Count, m_StatsBlockSize,
+                                    helper::BlockDivisionMethod::Contiguous);
+            helper::GetMinMaxSubblocks(blockInfo.Data, blockInfo.Count,
+                                       stats.SubblockInfo, stats.MinMaxs,
+                                       stats.Min, stats.Max, m_Threads);
         }
         ProfilerStop("minmax");
     }
@@ -650,29 +653,26 @@ void BP4Serializer::PutVariableMetadataInIndex(
     }
     else // update characteristics sets length and count
     {
-        if (m_StatsLevel == 0)
-        {
-            size_t currentIndexStartPosition = buffer.size();
-            PutVariableCharacteristics(variable, blockInfo, stats, buffer);
-            uint32_t currentIndexLength = static_cast<uint32_t>(
-                buffer.size() - currentIndexStartPosition);
+        size_t currentIndexStartPosition = buffer.size();
+        PutVariableCharacteristics(variable, blockInfo, stats, buffer);
+        uint32_t currentIndexLength =
+            static_cast<uint32_t>(buffer.size() - currentIndexStartPosition);
 
-            size_t localPosition = index.currentHeaderPosition;
-            uint32_t preIndexLength = helper::ReadValue<uint32_t>(
-                buffer, localPosition, helper::IsLittleEndian());
+        size_t localPosition = index.currentHeaderPosition;
+        uint32_t preIndexLength = helper::ReadValue<uint32_t>(
+            buffer, localPosition, helper::IsLittleEndian());
 
-            uint32_t newIndexLength = preIndexLength + currentIndexLength;
+        uint32_t newIndexLength = preIndexLength + currentIndexLength;
 
-            localPosition =
-                index.currentHeaderPosition; // back to beginning of the header
-            helper::CopyToBuffer(buffer, localPosition, &newIndexLength);
+        localPosition =
+            index.currentHeaderPosition; // back to beginning of the header
+        helper::CopyToBuffer(buffer, localPosition, &newIndexLength);
 
-            ++index.Count;
-            // fixed since group and path are not printed
-            size_t setsCountPosition =
-                index.currentHeaderPosition + 15 + variable.m_Name.size();
-            helper::CopyToBuffer(buffer, setsCountPosition, &index.Count);
-        }
+        ++index.Count;
+        // fixed since group and path are not printed
+        size_t setsCountPosition =
+            index.currentHeaderPosition + 15 + variable.m_Name.size();
+        helper::CopyToBuffer(buffer, setsCountPosition, &index.Count);
     }
 
     // always write variable header
@@ -714,13 +714,41 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
     }
     else
     {
-        if (m_StatsLevel == 0) // default verbose
+        if (m_StatsLevel > 0) // default verbose
         {
-            PutCharacteristicRecord(characteristic_min, characteristicsCounter,
-                                    stats.Min, buffer);
+            // Record entire Min-Max subblock arrays
+            const uint8_t id = characteristic_minmax;
+            uint16_t M = static_cast<uint16_t>(stats.MinMaxs.size() / 2);
+            if (M == 0)
+            {
+                M = 1;
+            }
+            helper::InsertToBuffer(buffer, &id);
+            helper::InsertToBuffer(buffer, &M);
+            helper::InsertToBuffer(buffer, &stats.Min);
+            helper::InsertToBuffer(buffer, &stats.Max);
 
-            PutCharacteristicRecord(characteristic_max, characteristicsCounter,
-                                    stats.Max, buffer);
+            if (M > 1)
+            {
+                uint8_t method =
+                    static_cast<uint8_t>(stats.SubblockInfo.divisionMethod);
+                helper::InsertToBuffer(buffer, &method);
+                helper::InsertToBuffer(buffer,
+                                       &stats.SubblockInfo.subblockSize);
+
+                const uint16_t N =
+                    static_cast<uint16_t>(stats.SubblockInfo.div.size());
+                for (auto const d : stats.SubblockInfo.div)
+                {
+                    helper::InsertToBuffer(buffer, &d);
+                }
+                // insert min+max (alternating) elements (2*M values)
+                for (auto const m : stats.MinMaxs)
+                {
+                    helper::InsertToBuffer(buffer, &m);
+                }
+            }
+            ++characteristicsCounter;
         }
     }
 }
@@ -739,13 +767,41 @@ void BP4Serializer::PutBoundsRecord(const bool singleValue,
     }
     else
     {
-        if (m_StatsLevel == 0) // default min and max only
+        if (m_StatsLevel > 0) // default min and max only
         {
-            PutCharacteristicRecord(characteristic_min, characteristicsCounter,
-                                    stats.Min, buffer, position);
+            // Record entire Min-Max subblock arrays
+            const uint8_t id = characteristic_minmax;
+            uint16_t M = static_cast<uint16_t>(stats.MinMaxs.size() / 2);
+            if (M == 0)
+            {
+                M = 1;
+            }
+            helper::CopyToBuffer(buffer, position, &id);
+            helper::CopyToBuffer(buffer, position, &M);
+            helper::CopyToBuffer(buffer, position, &stats.Min);
+            helper::CopyToBuffer(buffer, position, &stats.Max);
 
-            PutCharacteristicRecord(characteristic_max, characteristicsCounter,
-                                    stats.Max, buffer, position);
+            if (M > 1)
+            {
+                uint8_t method =
+                    static_cast<uint8_t>(stats.SubblockInfo.divisionMethod);
+                helper::CopyToBuffer(buffer, position, &method);
+                helper::CopyToBuffer(buffer, position,
+                                     &stats.SubblockInfo.subblockSize);
+
+                const uint16_t N =
+                    static_cast<uint16_t>(stats.SubblockInfo.div.size());
+                for (auto const d : stats.SubblockInfo.div)
+                {
+                    helper::CopyToBuffer(buffer, position, &d);
+                }
+                // insert min+max (alternating) elements (2*M values)
+                for (auto const m : stats.MinMaxs)
+                {
+                    helper::CopyToBuffer(buffer, position, &m);
+                }
+            }
+            ++characteristicsCounter;
         }
     }
 }
@@ -848,12 +904,6 @@ void BP4Serializer::PutVariableCharacteristics(
     PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
                             stats.FileIndex, buffer);
 
-    if (blockInfo.Data != nullptr)
-    {
-        PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
-                        buffer);
-    }
-
     uint8_t characteristicID = characteristic_dimensions;
     helper::InsertToBuffer(buffer, &characteristicID);
     const uint8_t dimensions = static_cast<uint8_t>(blockInfo.Count.size());
@@ -863,6 +913,14 @@ void BP4Serializer::PutVariableCharacteristics(
     PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
                         buffer);
     ++characteristicsCounter;
+
+    if (blockInfo.Data != nullptr)
+    {
+        // minmax array depends on number of dimensions so this must
+        // come after dimensions characteristics
+        PutBoundsRecord(variable.m_SingleValue, stats, characteristicsCounter,
+                        buffer);
+    }
 
     PutCharacteristicRecord(characteristic_offset, characteristicsCounter,
                             stats.Offset, buffer);
@@ -985,6 +1043,8 @@ void BP4Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
     const size_t endPosition =
         currentPosition + static_cast<size_t>(characteristicsLength);
 
+    size_t dimensionsSize = 0; // get it from dimensions characteristics
+
     while (currentPosition < endPosition)
     {
         const uint8_t id = helper::ReadValue<uint8_t>(buffer, currentPosition);
@@ -1032,6 +1092,21 @@ void BP4Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
             currentPosition += sizeof(T);
             break;
         }
+        case (characteristic_minmax):
+        {
+            // first get the number of subblocks
+            const uint16_t M =
+                helper::ReadValue<uint16_t>(buffer, currentPosition);
+            currentPosition += 2 * sizeof(T); // block min/max
+            if (M > 1)
+            {
+                currentPosition += 1 + 4; // method, blockSize
+                currentPosition +=
+                    dimensionsSize * sizeof(uint16_t); // N-dim division
+                currentPosition += 2 * M * sizeof(T);  // M * min/max
+            }
+            break;
+        }
         case (characteristic_offset):
         {
             const uint64_t currentOffset =
@@ -1061,7 +1136,7 @@ void BP4Serializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
         }
         case (characteristic_dimensions):
         {
-            const size_t dimensionsSize = static_cast<size_t>(
+            dimensionsSize = static_cast<size_t>(
                 helper::ReadValue<uint8_t>(buffer, currentPosition));
 
             currentPosition +=

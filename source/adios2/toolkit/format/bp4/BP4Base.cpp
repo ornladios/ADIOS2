@@ -78,7 +78,6 @@ void BP4Base::InitParameters(const Params &parameters)
         }
         else if (key == "opentimeoutsecs")
         {
-            InitParameterOpenTimeoutSecs(value);
             m_OpenTimeoutSecs = InitParameterFloat(value, "OpenTimeoutSecs");
 
             if (m_OpenTimeoutSecs < 0.0)
@@ -120,7 +119,11 @@ void BP4Base::InitParameters(const Params &parameters)
         }
         else if (key == "statslevel")
         {
-            InitParameterStatLevel(value);
+            InitParameterStatsLevel(value);
+        }
+        else if (key == "statsblocksize")
+        {
+            m_StatsBlockSize = InitParameterSizeT(value, "StatsBlockSize");
         }
         else if (key == "collectivemetadata")
         {
@@ -318,13 +321,16 @@ size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
 
     // characteristic statistics
     indexSize += 5;        // count + length
-    if (m_StatsLevel == 0) // default, only min and max and dimensions
+    if (m_StatsLevel == 1) // default, only min and max and dimensions
     {
-        indexSize += 2 * (2 * sizeof(uint64_t) + 1);
-        indexSize += 1 + 1; // id
-
-        indexSize += 28 * dimensions + 1;
+        const size_t nElems = helper::GetTotalSize(count);
+        const size_t nSubblocks = nElems / m_StatsBlockSize;
+        indexSize += 2 * (nSubblocks + 1) * (2 * sizeof(uint64_t) + 1);
+        indexSize += dimensions * 2;
+        indexSize += 1 + 2; // id + # of subblocks field
     }
+    // dimensions
+    indexSize += 28 * dimensions + 1;
 
     // extra 12 bytes for attributes in case of last variable
     // extra 4 bytes for PGI] in case of last variable
@@ -664,7 +670,7 @@ void BP4Base::InitParameterAsyncThreads(const std::string value)
     m_AsyncThreads = static_cast<unsigned int>(asyncThreads);
 }
 
-void BP4Base::InitParameterStatLevel(const std::string value)
+void BP4Base::InitParameterStatsLevel(const std::string value)
 {
     int level = -1;
 
@@ -683,11 +689,11 @@ void BP4Base::InitParameterStatLevel(const std::string value)
             description = std::string(e.what());
         }
 
-        if (!success || level < 0 || level > 5)
+        if (!success || level < 0 || level > 1)
         {
             throw std::invalid_argument(
-                "ERROR: value in Verbose=value in IO SetParameters must be "
-                "an integer in the range [0,5], \nadditional "
+                "ERROR: value in StatsLevel=value in IO SetParameters must be "
+                "an integer 0 or 1, \nadditional "
                 "description: " +
                 description + "\n, in call to Open\n");
         }
@@ -997,6 +1003,33 @@ float BP4Base::InitParameterFloat(const std::string value,
         throw std::invalid_argument(
             "ERROR: Parameter " + parameterName + " value (" + value +
             ") could not be converted to a float: " + description +
+            "\n, in call to Open\n");
+    }
+    return retval;
+}
+
+size_t BP4Base::InitParameterSizeT(const std::string value,
+                                   const std::string parameterName)
+{
+    bool success = true;
+    size_t retval = 0;
+    std::string description;
+
+    try
+    {
+        retval = std::stoull(value);
+    }
+    catch (std::exception &e)
+    {
+        success = false;
+        description = std::string(e.what());
+    }
+
+    if (!success)
+    {
+        throw std::invalid_argument(
+            "ERROR: Parameter " + parameterName + " value (" + value +
+            ") could not be converted to a unsigned long long: " + description +
             "\n, in call to Open\n");
     }
     return retval;
