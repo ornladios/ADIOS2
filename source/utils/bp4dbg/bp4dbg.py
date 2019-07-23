@@ -12,11 +12,12 @@ from bp4dbg_metadata import DumpMetaData
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--infile", "-i", help="Name of the input file", required=True)
-    parser.add_argument("--printdata", "-p",
-                        help="Dump data of this variable as well", default="")
+        "FILE", help="Name of the input file (.bp, .bp/md.idx, " +
+        ".bp/md.0 or .bp/data.XXX)")
+    # parser.add_argument("--printdata", "-p",
+    #                    help="Dump data of this variable as well", default="")
     parser.add_argument("--verbose", "-v",
-                        help="More verbosity", action="store_true")
+                        help="More verbosity", action="count")
     parser.add_argument("--no-indextable", "-x",
                         help="Do not print index table md.idx",
                         action="store_true")
@@ -34,36 +35,37 @@ def SetupArgs():
     args.dataFileName = ""
     args.dumpData = False
 
+    # print("Verbosity = {0}".format(args.verbose))
     return args
 
 
 def CheckFileName(args):
-    if (not exists(args.infile)):
-        print("ERROR: File " + args.infile + " does not exist", flush=True)
+    if (not exists(args.FILE)):
+        print("ERROR: File " + args.FILE + " does not exist", flush=True)
         exit(1)
-    if (isdir(args.infile)):
+    if (isdir(args.FILE)):
         if (not args.no_indextable):
-            args.idxFileName = args.infile + "/" + "md.idx"
+            args.idxFileName = args.FILE + "/" + "md.idx"
             args.dumpIdx = True
         if (not args.no_metadata):
-            args.metadataFileName = args.infile + "/" + "md.[0-9]*"
+            args.metadataFileName = args.FILE + "/" + "md.[0-9]*"
             args.dumpMetadata = True
         if (not args.no_data):
-            args.dataFileName = args.infile + "/" + "data.[0-9]*"
+            args.dataFileName = args.FILE + "/" + "data.[0-9]*"
             args.dumpData = True
         return
 
-    name = basename(args.infile)
+    name = basename(args.FILE)
     if (name.startswith("data.")):
-        args.dataFileName = args.infile
+        args.dataFileName = args.FILE
         args.dumpData = True
 
     elif (name == "md.idx"):
-        args.idxFileName = args.infile
+        args.idxFileName = args.FILE
         args.dumpIdx = True
 
     elif (name.startswith("md.")):
-        args.metadataFileName = args.infile
+        args.metadataFileName = args.FILE
         args.dumpMetadata = True
 
 
