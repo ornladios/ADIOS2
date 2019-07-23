@@ -96,5 +96,91 @@ std::string Comm::BroadcastFile(const std::string &fileName,
     return fileContents;
 }
 
+Comm::Req::Req() = default;
+
+Comm::Req::Req(MPI_Datatype datatype) : m_MPIDatatype(datatype) {}
+
+Comm::Req::~Req() {}
+
+Comm::Req::Req(Req &&req)
+: m_MPIDatatype(req.m_MPIDatatype), m_MPIReqs(std::move(req.m_MPIReqs))
+{
+}
+
+Comm::Req &Comm::Req::operator=(Req &&req)
+{
+    Req(std::move(req)).swap(*this);
+    return *this;
+}
+
+void Comm::Req::swap(Req &req)
+{
+    std::swap(this->m_MPIDatatype, req.m_MPIDatatype);
+    std::swap(this->m_MPIReqs, req.m_MPIReqs);
+}
+
+Comm::Status Comm::Req::Wait(const std::string &hint)
+{
+    Comm::Status status;
+    if (m_MPIReqs.empty())
+    {
+        return status;
+    }
+
+#ifdef ADIOS2_HAVE_MPI
+    std::vector<MPI_Request> mpiRequests = std::move(m_MPIReqs);
+    std::vector<MPI_Status> mpiStatuses(mpiRequests.size());
+
+    if (mpiRequests.size() > 1)
+    {
+        int mpiReturn = MPI_Waitall(static_cast<int>(mpiRequests.size()),
+                                    mpiRequests.data(), mpiStatuses.data());
+        if (mpiReturn == MPI_ERR_IN_STATUS)
+        {
+            for (auto &mpiStatus : mpiStatuses)
+            {
+                if (mpiStatus.MPI_ERROR != MPI_SUCCESS)
+                {
+                    mpiReturn = mpiStatus.MPI_ERROR;
+                    break;
+                }
+            }
+        }
+        CheckMPIReturn(mpiReturn, hint);
+    }
+    else
+    {
+        CheckMPIReturn(MPI_Wait(mpiRequests.data(), mpiStatuses.data()), hint);
+    }
+
+    // Our batched operation should be from only one source and have one tag.
+    status.Source = mpiStatuses.front().MPI_SOURCE;
+    status.Tag = mpiStatuses.front().MPI_TAG;
+
+    // Accumulate the total count of our batched operation.
+    for (auto &mpiStatus : mpiStatuses)
+    {
+        int mpiCount = 0;
+        CheckMPIReturn(MPI_Get_count(&mpiStatus, m_MPIDatatype, &mpiCount),
+                       hint);
+        status.Count += mpiCount;
+    }
+
+    // Our batched operation was cancelled if any member was cancelled.
+    for (auto &mpiStatus : mpiStatuses)
+    {
+        int mpiCancelled = 0;
+        MPI_Test_cancelled(&mpiStatus, &mpiCancelled);
+        if (mpiCancelled)
+        {
+            status.Cancelled = true;
+            break;
+        }
+    }
+#endif
+
+    return status;
+}
+
 } // end namespace helper
 } // end namespace adios2

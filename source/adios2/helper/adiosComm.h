@@ -22,6 +22,9 @@ namespace helper
 class Comm
 {
 public:
+    class Req;
+    class Status;
+
     /**
      * @brief Default constructor.  Produces an empty communicator.
      *
@@ -177,6 +180,91 @@ private:
 
     /** Encapsulated MPI communicator instance.  */
     MPI_Comm m_MPIComm = MPI_COMM_NULL;
+};
+
+class Comm::Req
+{
+public:
+    /**
+     * @brief Default constructor.  Produces an empty request.
+     *
+     * An empty request may not be used.
+     */
+    Req();
+
+    /**
+     * @brief Move constructor.  Moves request state from that given.
+     *
+     * The moved-from request is left empty and may not be used.
+     */
+    Req(Req &&);
+
+    /**
+     * @brief Deleted copy constructor.  A request may not be copied.
+     */
+    Req(Req const &) = delete;
+
+    ~Req();
+
+    /**
+     * @brief Move assignment.  Moves request state from that given.
+     *
+     * The moved-from request is left empty and may not be used.
+     */
+    Req &operator=(Req &&);
+
+    /**
+     * @brief Deleted copy assignment.  A request may not be copied.
+     */
+    Req &operator=(Req const &) = delete;
+
+    /**
+     * @brief Swap request state with another.
+     */
+    void swap(Req &req);
+
+    /**
+     * @brief Wait for the request to finish.
+     *
+     * On return, the request is empty.
+     */
+    Comm::Status Wait(const std::string &hint = std::string());
+
+private:
+    friend class Comm;
+
+    Req(MPI_Datatype datatype);
+
+    /** Encapsulated MPI datatype of the requested operation.  */
+    MPI_Datatype m_MPIDatatype = MPI_DATATYPE_NULL;
+
+    /** Encapsulated MPI request instances.  There may be more than
+     *  one when we batch requests too large for MPI interfaces.  */
+    std::vector<MPI_Request> m_MPIReqs;
+};
+
+class Comm::Status
+{
+public:
+    /**
+     * @brief The index of the process from which a message was received.
+     */
+    int Source = -1;
+
+    /**
+     * @brief The tag distinguishing the message for the application.
+     */
+    int Tag = -1;
+
+    /**
+     * @brief The number of elements received in a message.
+     */
+    size_t Count = 0;
+
+    /**
+     * @brief True if this is the status of a cancelled operation.
+     */
+    bool Cancelled = false;
 };
 
 } // end namespace helper
