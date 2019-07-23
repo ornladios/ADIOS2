@@ -112,8 +112,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         var1.SetSelection(sel);
         var2.SetSelection(sel);
 
-        in_R64_1.reserve(myLength);
-        in_R64_2.reserve(myLength);
+        in_R64_1.resize(myLength);
+        in_R64_2.resize(myLength);
         engine1.Get(var1, in_R64_1.data());
         engine2.Get(var2, in_R64_2.data());
         engine1.EndStep();

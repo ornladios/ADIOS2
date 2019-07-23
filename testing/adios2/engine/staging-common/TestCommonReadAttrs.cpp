@@ -253,16 +253,16 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         var_time.SetSelection(sel_time);
 
-        in_I8.reserve(myLength);
-        in_I16.reserve(myLength);
-        in_I32.reserve(myLength);
-        in_I64.reserve(myLength);
-        in_R32.reserve(myLength);
-        in_R64.reserve(myLength);
-        in_C32.reserve(myLength);
-        in_C64.reserve(myLength);
-        in_R64_2d.reserve(myLength * 2);
-        in_R64_2d_rev.reserve(myLength * 2);
+        in_I8.resize(myLength);
+        in_I16.resize(myLength);
+        in_I32.resize(myLength);
+        in_I64.resize(myLength);
+        in_R32.resize(myLength);
+        in_R64.resize(myLength);
+        in_C32.resize(myLength);
+        in_C64.resize(myLength);
+        in_R64_2d.resize(myLength * 2);
+        in_R64_2d_rev.resize(myLength * 2);
         engine.Get(var_i8, in_I8.data());
         engine.Get(var_i16, in_I16.data());
         engine.Get(var_i32, in_I32.data());
