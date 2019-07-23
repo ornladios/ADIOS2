@@ -10,8 +10,6 @@
 
 #include "Attribute.h"
 
-#include <algorithm> // std::transform
-
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/helper/adiosFunctions.h"
@@ -61,15 +59,7 @@ namespace adios2
         }                                                                      \
         else                                                                   \
         {                                                                      \
-                                                                               \
-            std::vector<T> dataArray(m_Attribute->m_DataArray.size());         \
-                                                                               \
-            std::transform(                                                    \
-                dataArray.begin(), dataArray.end(),                            \
-                m_Attribute->m_DataArray.begin(),                              \
-                [](const IOType input) { return static_cast<T>(input); });     \
-                                                                               \
-            return dataArray;                                                  \
+            return helper::NewVectorType<IOType, T>(m_Attribute->m_DataArray); \
         }                                                                      \
     }                                                                          \
                                                                                \
