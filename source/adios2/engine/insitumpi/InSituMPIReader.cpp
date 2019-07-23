@@ -245,10 +245,10 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         }
 
         // broadcast metadata to every reader
-        MPI_Bcast(&mdLen, 1, MPI_UNSIGNED_LONG, m_ReaderRootRank, m_Comm);
+        m_Comm.Bcast(&mdLen, 1, m_ReaderRootRank);
         m_BP3Deserializer.m_Metadata.m_Buffer.resize(mdLen);
-        MPI_Bcast(m_BP3Deserializer.m_Metadata.m_Buffer.data(), mdLen, MPI_CHAR,
-                  m_ReaderRootRank, m_Comm);
+        m_Comm.Bcast(m_BP3Deserializer.m_Metadata.m_Buffer.data(), mdLen,
+                     m_ReaderRootRank);
 
         // Parse metadata into Variables and Attributes maps
         m_IO.RemoveAllVariables();
@@ -277,7 +277,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         }
 
         // broadcast fixed schedule flag to every reader
-        MPI_Bcast(&fixed, 1, MPI_INT, m_ReaderRootRank, m_Comm);
+        m_Comm.Bcast(&fixed, 1, m_ReaderRootRank);
         m_RemoteDefinitionsLocked = (fixed ? true : false);
         if (m_ReaderRootRank == m_ReaderRank)
         {
@@ -510,7 +510,7 @@ void InSituMPIReader::ProcessReceives()
 
     // Send final acknowledgment to the Writer
     int dummy = 1;
-    MPI_Bcast(&dummy, 1, MPI_INT, m_ReaderRootRank, m_Comm);
+    m_Comm.Bcast(&dummy, 1, m_ReaderRootRank);
     if (m_ReaderRootRank == m_ReaderRank)
     {
         MPI_Send(&dummy, 1, MPI_INT, m_WriteRootGlobalRank,

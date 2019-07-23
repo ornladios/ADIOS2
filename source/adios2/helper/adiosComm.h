@@ -170,6 +170,10 @@ public:
                               const int rankSource = 0) const;
 
     template <typename T>
+    void Bcast(T *buffer, size_t count, int root,
+               const std::string &hint = std::string()) const;
+
+    template <typename T>
     Req Isend(const T *buffer, const size_t count, int destination, int tag,
               const std::string &hint = std::string()) const;
 
@@ -188,6 +192,9 @@ private:
 
     /** Encapsulated MPI communicator instance.  */
     MPI_Comm m_MPIComm = MPI_COMM_NULL;
+
+    void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype, int root,
+                   const std::string &hint) const;
 
     Req IsendImpl(const void *buffer, size_t count, MPI_Datatype datatype,
                   int dest, int tag, const std::string &hint) const;

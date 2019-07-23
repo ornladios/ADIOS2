@@ -219,7 +219,7 @@ void InSituMPIWriter::PerformPuts()
                          &status);
             }
             // broadcast fixed schedule flag to every reader
-            MPI_Bcast(&fixed, 1, MPI_INT, 0, m_Comm);
+            m_Comm.Bcast(&fixed, 1, 0);
             m_RemoteDefinitionsLocked = (fixed ? true : false);
             if (m_BP3Serializer.m_RankMPI == 0)
             {
@@ -327,7 +327,7 @@ void InSituMPIWriter::EndStep()
         MPI_Recv(&dummy, 1, MPI_INT, m_RankDirectPeers[0],
                  insitumpi::MpiTags::ReadCompleted, m_CommWorld, &status);
     }
-    MPI_Bcast(&dummy, 1, MPI_INT, 0, m_Comm);
+    m_Comm.Bcast(&dummy, 1, 0);
     TAU_STOP("WaitForReaderAck");
 
     if (m_Verbosity == 5)

@@ -142,6 +142,13 @@ void Comm::BroadcastVector(std::vector<size_t> &vector,
                            const int rankSource) const;
 
 template <typename T>
+void Comm::Bcast(T *buffer, const size_t count, int root,
+                 const std::string &hint) const
+{
+    return BcastImpl(buffer, count, Datatype<T>(), root, hint);
+}
+
+template <typename T>
 Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
                       const std::string &hint) const
 {

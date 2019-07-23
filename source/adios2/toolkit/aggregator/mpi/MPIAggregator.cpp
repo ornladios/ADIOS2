@@ -106,8 +106,7 @@ void MPIAggregator::HandshakeRank(const int rank)
         message = m_Rank;
     }
 
-    helper::CheckMPIReturn(MPI_Bcast(&message, 1, MPI_INT, rank, m_Comm),
-                           "handshake with aggregator rank 0 at Open");
+    m_Comm.Bcast(&message, 1, rank, "handshake with aggregator rank 0 at Open");
 }
 
 } // end namespace aggregator

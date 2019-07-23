@@ -96,6 +96,14 @@ std::string Comm::BroadcastFile(const std::string &fileName,
     return fileContents;
 }
 
+void Comm::BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
+                     int root, const std::string &hint) const
+{
+    CheckMPIReturn(
+        SMPI_Bcast(buffer, static_cast<int>(count), datatype, root, m_MPIComm),
+        hint);
+}
+
 Comm::Req Comm::IsendImpl(const void *buffer, size_t count,
                           MPI_Datatype datatype, int dest, int tag,
                           const std::string &hint) const
