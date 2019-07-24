@@ -26,12 +26,11 @@ namespace engine
 TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
 : Engine("TableWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true,
-                      helper::IsLittleEndian(), m_MPIComm),
+  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true, helper::IsLittleEndian(), m_MPIComm),
+  m_DataManDeserializer(helper::IsRowMajor(io.m_HostLanguage), true, helper::IsLittleEndian(), m_MPIComm),
   m_SendStagingMan(mpiComm, Mode::Read, m_Timeout, 128),
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
-  m_SubIO(m_SubAdios.DeclareIO("SubIO")),
-  m_SubEngine(m_SubIO.Open(name, adios2::Mode::Write))
+  m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     MPI_Comm_size(mpiComm, &m_MpiSize);
@@ -40,17 +39,12 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
 
 TableWriter::~TableWriter()
 {
-    m_Listening = false;
-    if (m_ReplyThread.joinable())
-    {
-        m_ReplyThread.join();
-    }
 }
 
 StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
-    m_SubEngine.BeginStep(mode, timeoutSeconds);
+    m_SubEngine->BeginStep(mode, timeoutSeconds);
     ++m_CurrentStep;
     return StepStatus::OK;
 }
@@ -62,11 +56,17 @@ void TableWriter::PerformPuts() {}
 void TableWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    PerformPuts();
-    m_SubEngine.EndStep();
+    m_Listening = false;
+    if (m_ReplyThread.joinable())
+    {
+        m_ReplyThread.join();
+    }
+    m_SubEngine->EndStep();
 }
 
-void TableWriter::Flush(const int transportIndex) {}
+void TableWriter::Flush(const int transportIndex) {
+    m_SubEngine->Flush(transportIndex);
+}
 
 // PRIVATE
 
@@ -87,6 +87,9 @@ void TableWriter::Init()
     TAU_SCOPED_TIMER_FUNC();
     InitParameters();
     InitTransports();
+
+    m_SubIO.SetEngine("bp4");
+    m_SubEngine = std::make_shared<adios2::Engine>(m_SubIO.Open(m_Name, adios2::Mode::Write));
 }
 
 void TableWriter::InitParameters()
@@ -150,34 +153,29 @@ void TableWriter::ReplyThread()
     while (m_Listening)
     {
         auto request = receiveStagingMan.ReceiveRequest();
-        if (request == nullptr)
+        if (request == nullptr or request->empty())
         {
             continue;
         }
-        if (request->empty())
-        {
-            std::cout << "request->empty\n";
-            continue;
-        }
-        m_DataManSerializer.PutPack(request);
-        format::VecPtr reply = std::make_shared<std::vector<char>>();
-        reply->resize(1);
+        m_DataManDeserializer.PutPack(request);
+        format::VecPtr reply = std::make_shared<std::vector<char>>(1);
         receiveStagingMan.SendReply(reply);
         ++times;
         if (times == m_PutSubEngineFrequency)
         {
+            PutAggregatorBuffer();
             PutSubEngine();
             times = 0;
         }
     }
 }
 
-void TableWriter::PutSubEngine()
+void TableWriter::PutAggregatorBuffer()
 {
     TAU_SCOPED_TIMER_FUNC();
 
     // Get metadata map from dataman serializer
-    auto metadataMap = m_DataManSerializer.GetMetaData();
+    auto metadataMap = m_DataManDeserializer.GetMetaData();
     format::DmvVecPtr vars;
     auto currentStepIt = metadataMap.find(m_CurrentStep);
     if (currentStepIt == metadataMap.end())
@@ -234,7 +232,7 @@ void TableWriter::PutSubEngine()
 #define declare_type(T)                                                        \
     else if (v.type == helper::GetType<T>())                                   \
     {                                                                          \
-        helper::NdCopy<T>(v.buffer->data(), v.start, v.count, true, true,      \
+        helper::NdCopy<T>(v.buffer->data() + v.position, v.start, v.count, true, true,      \
                           reinterpret_cast<char *>(aggBuff[v.name].data()),    \
                           WhatStart(v.shape, index),                           \
                           WhatCount(v.shape, index), true, true);              \
@@ -244,7 +242,11 @@ void TableWriter::PutSubEngine()
         }
     }
 
-    // Put data to sub-engine
+    m_DataManDeserializer.Erase(m_CurrentStep);
+}
+
+void TableWriter::PutSubEngine()
+{
     std::unordered_map<size_t, std::vector<std::string>> toErase;
     for (const auto &indexPair : m_AggregatorBufferFlags)
     {
@@ -268,28 +270,19 @@ void TableWriter::PutSubEngine()
                 {
                 }
 #define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        auto variable = m_SubIO.InquireVariable<T>(varPair.first);             \
-        if (not variable)                                                      \
-        {                                                                      \
-            std::cout << "variable " << varPair.first << " defined"            \
-                      << std::endl;                                            \
-            variable =                                                         \
-                m_SubIO.DefineVariable<T>(varPair.first, shape, start, count); \
-        }                                                                      \
-        variable.SetSelection({start, count});                                 \
-        std::cout << "selection set" << std::endl;                             \
-        m_SubEngine.Put(                                                       \
-            variable,                                                          \
-            reinterpret_cast<T *>(                                             \
-                m_AggregatorBuffers[indexPair.first][varPair.first].data()),   \
-            Mode::Sync);                                                       \
-        std::cout << "data put" << std::endl;                                  \
-    }
+                else if (type == helper::GetType<T>())                                     \
+                {                                                                          \
+                    auto variable = m_SubIO.InquireVariable<T>(varPair.first);             \
+                    if (not variable)                                                      \
+                    {                                                                      \
+                        variable = m_SubIO.DefineVariable<T>(varPair.first, shape, start, count); \
+                    }                                                                      \
+                    variable.SetSelection({start, count});\
+                    m_SubEngine->Put(variable, reinterpret_cast<T *>( m_AggregatorBuffers[indexPair.first][varPair.first].data()),Mode::Sync); \
+                }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                toErase[indexPair.first].push_back(varPair.first);
+                    toErase[indexPair.first].push_back(varPair.first);
             }
         }
     }
@@ -303,8 +296,6 @@ void TableWriter::PutSubEngine()
             m_AggregatorBuffers[i.first].erase(j);
         }
     }
-
-    m_DataManSerializer.Erase(m_CurrentStep);
 }
 
 void TableWriter::InitTransports()
@@ -316,8 +307,7 @@ void TableWriter::InitTransports()
 
 void TableWriter::DoClose(const int transportIndex)
 {
-    std::cout << "engine closed \n";
-    m_SubEngine.Close();
+    m_SubEngine->Close();
 }
 
 std::vector<size_t> TableWriter::WhatBufferIndices(const Dims &start,

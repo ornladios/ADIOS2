@@ -54,7 +54,7 @@ private:
     int m_Timeout = 5;
     int m_Port = 6789;
     int m_MaxRanksPerNode = 200;
-    int m_PutSubEngineFrequency = 1000;
+    int m_PutSubEngineFrequency = 100;
     int m_Aggregators = 10;
     size_t m_RowsPerAggregatorBuffer = 1000;
     std::unordered_map<size_t,
@@ -73,13 +73,14 @@ private:
     std::thread m_ReplyThread;
     adios2::ADIOS m_SubAdios;
     adios2::IO m_SubIO;
-    adios2::Engine m_SubEngine;
+    std::shared_ptr<adios2::Engine> m_SubEngine;
 
     void Init() final;
     void InitParameters() final;
     void InitTransports() final;
     void ReplyThread();
     void PutSubEngine();
+    void PutAggregatorBuffer();
 
     std::vector<int> WhatRanks(const Dims &start, const Dims &count);
     int WhatRank(const size_t row);
@@ -91,6 +92,7 @@ private:
     Dims WhatCount(const Dims &shape, const size_t index);
 
     format::DataManSerializer m_DataManSerializer;
+    format::DataManSerializer m_DataManDeserializer;
     transportman::StagingMan m_SendStagingMan;
 
 #define declare_type(T)                                                        \
