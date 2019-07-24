@@ -14,6 +14,7 @@ is_file_engine = {"bpfile": True,
                   "bp": True,
                   "bp3": True,
                   "bp4": True,
+                  "bp4_stream": False,
                   "hdfmixer": True,
                   "dataman": False,
                   "ssc": False,
@@ -265,7 +266,12 @@ print("current working directory is " + os.getcwd())
 writer_executable = os.path.abspath(
     os.path.join(script_directory, args.writer))
 writer_command_line = writer_exec_cmd.split()
-writer_command_line.extend([writer_executable, args.engine, args.filename])
+canonical_engine = args.engine
+if (args.engine.lower() == 'bp4_stream') :
+    # the bp4_stream engine name is used to indicate this test should run in 
+    # streaming mode, but we drop the 'streaming' name for the invocations.
+    canonical_engine = 'bp4'
+writer_command_line.extend([writer_executable, canonical_engine, args.filename])
 
 if args.warg is not None:
     writer_command_line.extend(args.warg)
@@ -273,7 +279,7 @@ if args.warg is not None:
 reader_executable = os.path.abspath(
     os.path.join(script_directory, args.reader))
 reader_command_line = reader_exec_cmd.split()
-reader_command_line.extend([reader_executable, args.engine, args.filename])
+reader_command_line.extend([reader_executable, canonical_engine, args.filename])
 
 if args.rarg is not None:
     reader_command_line.extend(args.rarg)
