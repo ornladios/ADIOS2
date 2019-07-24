@@ -24,13 +24,27 @@ namespace engine
 template <class T>
 void TableWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " begin" << std::endl;
+    }
     PutDeferredCommon(variable, data);
     PerformPuts();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " end" << std::endl;
+    }
 }
 
 template <class T>
 void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " begin" << std::endl;
+    }
 
     if (variable.m_SingleValue)
     {
@@ -40,19 +54,19 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     }
     variable.SetData(data);
 
-    size_t total_size =
-        std::accumulate(variable.m_Count.begin(), variable.m_Count.end(),
-                        sizeof(T), std::multiplies<size_t>());
+    size_t total_size = std::accumulate(variable.m_Count.begin(), variable.m_Count.end(), sizeof(T), std::multiplies<size_t>());
     m_DataManSerializer.New(total_size + 1024);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
-                               m_AllAddresses[m_MpiRank], Params());
+    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_AllAddresses[m_MpiRank], Params());
     auto localPack = m_DataManSerializer.GetLocalPack();
-
-    auto ranks = WhatRanks(variable.m_Start, variable.m_Count);
-
-    for (const auto r : ranks)
+    auto aggregators = WhatAggregators(variable.m_Start, variable.m_Count);
+    for (const auto a : aggregators)
     {
-        m_SendStagingMan.Request(*localPack, m_AllAddresses[r]);
+        m_SendStagingMan.Request(*localPack, a);
+    }
+
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " end" << std::endl;
     }
 }
 

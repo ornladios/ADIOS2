@@ -44,6 +44,10 @@ TableWriter::~TableWriter()
 StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::BeginStep " << m_MpiRank << std::endl;
+    }
     m_SubEngine->BeginStep(mode, timeoutSeconds);
     ++m_CurrentStep;
     return StepStatus::OK;
@@ -56,6 +60,10 @@ void TableWriter::PerformPuts() {}
 void TableWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::EndStep " << m_MpiRank << std::endl;
+    }
     m_Listening = false;
     if (m_ReplyThread.joinable())
     {
@@ -65,6 +73,10 @@ void TableWriter::EndStep()
 }
 
 void TableWriter::Flush(const int transportIndex) {
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::Flush " << m_MpiRank << std::endl;
+    }
     m_SubEngine->Flush(transportIndex);
 }
 
@@ -109,11 +121,12 @@ void TableWriter::InitParameters()
         if (key == "aggregators")
         {
             m_Aggregators = std::stoi(value);
-            if (m_Aggregators > m_MpiSize)
-            {
-                m_Aggregators = m_MpiSize;
-            }
         }
+    }
+
+    if (m_Aggregators > m_MpiSize)
+    {
+        m_Aggregators = m_MpiSize;
     }
 
     auto ips = helper::AvailableIpAddresses();
@@ -155,7 +168,15 @@ void TableWriter::ReplyThread()
         auto request = receiveStagingMan.ReceiveRequest();
         if (request == nullptr or request->empty())
         {
+            if(m_Verbosity >= 20)
+            {
+                std::cout << "TableWriter::ReplyThread " << m_MpiRank << " did not receive anything" << std::endl;
+            }
             continue;
+        }
+        if(m_Verbosity >= 10)
+        {
+            std::cout << "TableWriter::ReplyThread " << m_MpiRank << " received a package" << std::endl;
         }
         m_DataManDeserializer.PutPack(request);
         format::VecPtr reply = std::make_shared<std::vector<char>>(1);
@@ -173,6 +194,10 @@ void TableWriter::ReplyThread()
 void TableWriter::PutAggregatorBuffer()
 {
     TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutAggregatorBuffer " << m_MpiRank << " begin" << std::endl;
+    }
 
     // Get metadata map from dataman serializer
     auto metadataMap = m_DataManDeserializer.GetMetaData();
@@ -243,10 +268,21 @@ void TableWriter::PutAggregatorBuffer()
     }
 
     m_DataManDeserializer.Erase(m_CurrentStep);
+
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutAggregatorBuffer " << m_MpiRank << " end" << std::endl;
+    }
 }
 
 void TableWriter::PutSubEngine()
 {
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutSubEngine " << m_MpiRank << " begin" << std::endl;
+    }
+
     std::unordered_map<size_t, std::vector<std::string>> toErase;
     for (const auto &indexPair : m_AggregatorBufferFlags)
     {
@@ -296,6 +332,11 @@ void TableWriter::PutSubEngine()
             m_AggregatorBuffers[i.first].erase(j);
         }
     }
+
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::PutSubEngine " << m_MpiRank << " end" << std::endl;
+    }
 }
 
 void TableWriter::InitTransports()
@@ -307,6 +348,11 @@ void TableWriter::InitTransports()
 
 void TableWriter::DoClose(const int transportIndex)
 {
+    TAU_SCOPED_TIMER_FUNC();
+    if(m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::DoClose " << m_MpiRank << std::endl;
+    }
     m_SubEngine->Close();
 }
 
@@ -342,15 +388,16 @@ size_t TableWriter::WhatBufferIndex(const size_t row)
     return row / (m_RowsPerAggregatorBuffer * m_Aggregators);
 }
 
-std::vector<int> TableWriter::WhatRanks(const Dims &start, const Dims &count)
+std::vector<std::string> TableWriter::WhatAggregators(const Dims &start, const Dims &count)
 {
     TAU_SCOPED_TIMER_FUNC();
     std::vector<int> ranks;
+    std::vector<std::string> aggregators;
     if (start.size() > 0 and count.size() > 0)
     {
         for (size_t i = start[0]; i < start[0] + count[0]; ++i)
         {
-            int rank = WhatRank(i);
+            int rank = (i / m_RowsPerAggregatorBuffer) % m_Aggregators;
             bool exist = false;
             for (const auto &r : ranks)
             {
@@ -365,12 +412,27 @@ std::vector<int> TableWriter::WhatRanks(const Dims &start, const Dims &count)
             }
         }
     }
-    return ranks;
+    for(const auto i : ranks)
+    {
+        aggregators.push_back(m_AllAddresses[i]);
+    }
+
+    if(m_Verbosity >= 10)
+    {
+        std::cout << "TableWriter::WhatAggregators returns ";
+        for(const auto i : aggregators)
+        {
+            std::cout << i << ", ";
+        }
+        std::cout <<std::endl;
+    }
+
+    return aggregators;
 }
 
-int TableWriter::WhatRank(const size_t row)
+std::string TableWriter::WhatAggregator(const size_t row)
 {
-    return (row / m_RowsPerAggregatorBuffer) % m_Aggregators;
+    return "";
 }
 
 Dims TableWriter::WhatStart(const Dims &shape, const size_t index)

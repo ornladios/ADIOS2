@@ -50,13 +50,13 @@ private:
         Dims shape;
         std::string type;
     };
-    int m_Verbosity = 5;
+    int m_Verbosity = 0;
     int m_Timeout = 5;
     int m_Port = 6789;
     int m_MaxRanksPerNode = 200;
     int m_PutSubEngineFrequency = 100;
     int m_Aggregators = 10;
-    size_t m_RowsPerAggregatorBuffer = 1000;
+    size_t m_RowsPerAggregatorBuffer = 400;
     std::unordered_map<size_t,
                        std::unordered_map<std::string, std::vector<char>>>
         m_AggregatorBuffers;
@@ -82,8 +82,8 @@ private:
     void PutSubEngine();
     void PutAggregatorBuffer();
 
-    std::vector<int> WhatRanks(const Dims &start, const Dims &count);
-    int WhatRank(const size_t row);
+    std::vector<std::string> WhatAggregators(const Dims &start, const Dims &count);
+    std::string WhatAggregator(const size_t row);
 
     std::vector<size_t> WhatBufferIndices(const Dims &start, const Dims &count);
     size_t WhatBufferIndex(const size_t row);
