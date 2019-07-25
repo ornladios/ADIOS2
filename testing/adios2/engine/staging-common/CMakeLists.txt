@@ -160,11 +160,11 @@ endif()
 
 
 #  For the moment, only test the default comm pattern (Peer)
-MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
-MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
 
-MutateTestSet( FFS_SST_TESTS "FFS" "MarshalMethod:FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
-MutateTestSet( BP_SST_TESTS "BP" "MarshalMethod:BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod:FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod:BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 
 set (SST_TESTS "")
 LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
@@ -176,7 +176,6 @@ list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*CommMin.*")
 
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
-message (STATUS "SSt tests are ${SST_TESTS}")
 
 foreach(test ${SST_TESTS})
     add_common_test(${test} SST)
@@ -207,7 +206,7 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 #
-#   Setup tests for BP engine
+#   Setup tests for BP engines
 #
 if(NOT MSVC)    # not on windows
     # Local Vars don't work for InSitu
@@ -219,6 +218,21 @@ if(NOT MSVC)    # not on windows
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP3)
         add_common_test(${test} BP4)
+    endforeach()
+endif()
+
+#
+#   Setup streaming tests for BP4 engine
+#
+if(NOT MSVC)    # not on windows
+    # BP4 streaming tests start with all the simple tests, but with a timeout added on open
+    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs:10" "${ALL_SIMPLE_TESTS}" )
+    # SharedVars fail with BP4_streaming*
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
+    # Fortran scalar reads don't work for BP4 streaming
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
+    foreach(test ${BP4_STREAM_TESTS})
+        add_common_test(${test} BP4_stream)
     endforeach()
 endif()
 
