@@ -32,9 +32,6 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
 
-    // Number of steps
-    const std::size_t NSteps = 10;
-
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
@@ -95,12 +92,12 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         adios2::Dims start2{static_cast<unsigned int>(myStart2)};
         adios2::Dims count2{static_cast<unsigned int>(myCount2)};
 
-        auto var1 =
-            io1.DefineVariable<double>(varname1, shape1, start1, count1);
+        //        auto var1 =
+        (void)io1.DefineVariable<double>(varname1, shape1, start1, count1);
         if (!SharedVar)
         {
-            auto var2 =
-                io2->DefineVariable<double>(varname2, shape2, start2, count2);
+            //
+            (void)io2->DefineVariable<double>(varname2, shape2, start2, count2);
         }
     }
 

@@ -50,7 +50,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead)
 
     // Number of steps
     const std::size_t NSteps = 10;
-    int TimeGapDetected = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
@@ -118,7 +117,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead)
         const adios2::Box<adios2::Dims> sel(start, count);
         var_r64.SetSelection(sel);
 
-        in_R64.reserve(myLength);
+        in_R64.resize(myLength);
         engine.Get(var_r64, in_R64.data());
         engine.EndStep();
         EXPECT_EQ(validateCommonTestR64(myStart, myLength, t), 0);

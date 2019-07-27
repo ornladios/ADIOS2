@@ -27,8 +27,6 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SstWriter", io, name, mode, mpiComm)
 {
-    char *cstr = new char[name.length() + 1];
-
     auto AssembleMetadata = [](void *writer, int CohortSize,
                                struct _SstData *PerRankMetadata,
                                struct _SstData *PerRankAttributeData) {
@@ -114,18 +112,15 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
             return;
         };
 
-    strcpy(cstr, name.c_str());
-
     Init();
 
-    m_Output = SstWriterOpen(cstr, &Params, mpiComm);
+    m_Output = SstWriterOpen(name.c_str(), &Params, mpiComm);
 
     if (m_MarshalMethod == SstMarshalBP)
     {
         SstWriterInitMetadataCallback(m_Output, this, AssembleMetadata,
                                       FreeAssembledMetadata);
     }
-    delete[] cstr;
 }
 
 SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
