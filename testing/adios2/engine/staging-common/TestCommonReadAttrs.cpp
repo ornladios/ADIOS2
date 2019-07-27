@@ -82,7 +82,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         generateCommonTestData((int)0, mpiRank, mpiSize, (int)Nx, (int)Nx);
         auto attr_s1 = io.InquireAttribute<std::string>(s1_Single);
-        auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
+        //        auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
         auto attr_i8 = io.InquireAttribute<int8_t>(i8_Single);
         auto attr_i16 = io.InquireAttribute<int16_t>(i16_Single);
         auto attr_i32 = io.InquireAttribute<int32_t>(i32_Single);
