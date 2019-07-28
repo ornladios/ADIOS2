@@ -39,7 +39,7 @@ if(NOT SZ_FOUND)
 
   find_path(SZ_INCLUDE_DIR sz.h ${SZ_INCLUDE_OPTS})
   find_library(SZ_LIBRARY NAMES SZ ${SZ_LIBRARY_OPTS})
-  find_library(ZLIB_LIBRARY NAMES zlib ${SZ_LIBRARY_OPTS})
+  find_library(ZLIB_LIBRARY NAMES z zlib ${SZ_LIBRARY_OPTS})
   find_library(ZSTD_LIBRARY NAMES zstd ${SZ_LIBRARY_OPTS})
 
   include(FindPackageHandleStandardArgs)
