@@ -54,8 +54,8 @@ private:
     int m_Timeout = 5;
     int m_Port = 6789;
     int m_MaxRanksPerNode = 200;
-    int m_PutSubEngineFrequency = 100;
     int m_Aggregators = 10;
+    size_t m_BufferSize = 128 * 1024 * 1024;
     size_t m_RowsPerAggregatorBuffer = 400;
     std::unordered_map<size_t,
                        std::unordered_map<std::string, std::vector<char>>>
@@ -73,6 +73,7 @@ private:
     std::thread m_ReplyThread;
     adios2::ADIOS m_SubAdios;
     adios2::IO m_SubIO;
+    bool m_IsRowMajor;
     std::shared_ptr<adios2::Engine> m_SubEngine;
 
     void Init() final;
@@ -82,8 +83,12 @@ private:
     void PutSubEngine();
     void PutAggregatorBuffer();
 
-    std::vector<std::string> WhatAggregators(const Dims &start, const Dims &count);
-    std::string WhatAggregator(const size_t row);
+    std::vector<int> WhatAggregatorIndices(const Dims &start,
+                                           const Dims &count);
+    std::vector<std::string> WhatAggregatorAddresses(const Dims &start,
+                                                     const Dims &count);
+    std::vector<std::string>
+    WhatAggregatorAddresses(const std::vector<int> &indices);
 
     std::vector<size_t> WhatBufferIndices(const Dims &start, const Dims &count);
     size_t WhatBufferIndex(const size_t row);
@@ -91,8 +96,8 @@ private:
     Dims WhatStart(const Dims &shape, const size_t index);
     Dims WhatCount(const Dims &shape, const size_t index);
 
-    format::DataManSerializer m_DataManSerializer;
-    format::DataManSerializer m_DataManDeserializer;
+    std::vector<std::shared_ptr<format::DataManSerializer>> m_Serializers;
+    format::DataManSerializer m_Deserializer;
     transportman::StagingMan m_SendStagingMan;
 
 #define declare_type(T)                                                        \

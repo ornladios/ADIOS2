@@ -25,15 +25,17 @@ template <class T>
 void TableWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " begin" << std::endl;
+        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " begin"
+                  << std::endl;
     }
     PutDeferredCommon(variable, data);
     PerformPuts();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " end" << std::endl;
+        std::cout << "TableWriter::PutSyncCommon " << m_MpiRank << " end"
+                  << std::endl;
     }
 }
 
@@ -41,9 +43,10 @@ template <class T>
 void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " begin" << std::endl;
+        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " begin"
+                  << std::endl;
     }
 
     if (variable.m_SingleValue)
@@ -54,19 +57,26 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     }
     variable.SetData(data);
 
-    size_t total_size = std::accumulate(variable.m_Count.begin(), variable.m_Count.end(), sizeof(T), std::multiplies<size_t>());
-    m_DataManSerializer.New(total_size + 1024);
-    m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank, m_AllAddresses[m_MpiRank], Params());
-    auto localPack = m_DataManSerializer.GetLocalPack();
-    auto aggregators = WhatAggregators(variable.m_Start, variable.m_Count);
-    for (const auto a : aggregators)
+    auto aggregatorIndices =
+        WhatAggregatorIndices(variable.m_Start, variable.m_Count);
+
+    for (auto i : aggregatorIndices)
     {
-        m_SendStagingMan.Request(*localPack, a);
+        auto serializer = m_Serializers[i];
+        serializer->PutVar(variable, m_Name, CurrentStep(), m_MpiRank, "",
+                           Params());
+        if (serializer->LocalBufferSize() > m_BufferSize / 2)
+        {
+            auto localPack = serializer->GetLocalPack();
+            m_SendStagingMan.Request(*localPack, serializer->GetDestination());
+            serializer->NewWriterBuffer(m_BufferSize);
+        }
     }
 
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " end" << std::endl;
+        std::cout << "TableWriter::PutDeferredCommon " << m_MpiRank << " end"
+                  << std::endl;
     }
 }
 

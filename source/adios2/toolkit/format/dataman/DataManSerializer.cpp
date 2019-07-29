@@ -21,19 +21,18 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(bool isRowMajor,
-                                     const bool contiguousMajor,
-                                     bool isLittleEndian, MPI_Comm mpiComm)
-: m_IsRowMajor(isRowMajor), m_IsLittleEndian(isLittleEndian),
-  m_ContiguousMajor(contiguousMajor), m_MpiComm(mpiComm),
+DataManSerializer::DataManSerializer(MPI_Comm mpiComm,
+                                     const size_t writerBufferSize,
+                                     const bool isRowMajor)
+: m_MpiComm(mpiComm), m_IsRowMajor(isRowMajor),
   m_DeferredRequestsToSend(std::make_shared<DeferredRequestMap>())
 {
     MPI_Comm_size(m_MpiComm, &m_MpiSize);
     MPI_Comm_rank(m_MpiComm, &m_MpiRank);
-    New(1024);
+    NewWriterBuffer(writerBufferSize);
 }
 
-void DataManSerializer::New(size_t size)
+void DataManSerializer::NewWriterBuffer(size_t bufferSize)
 {
     TAU_SCOPED_TIMER_FUNC();
     // make a new shared object each time because the old shared object could
@@ -42,9 +41,11 @@ void DataManSerializer::New(size_t size)
     // entire workflow finishes using it.
     m_MetadataJson = nullptr;
     m_LocalBuffer = std::make_shared<std::vector<char>>();
-    m_LocalBuffer->reserve(size);
+    m_LocalBuffer->reserve(bufferSize);
     m_LocalBuffer->resize(sizeof(uint64_t) * 2);
 }
+
+void DataManSerializer::SetReverseMajor() { m_ContiguousMajor = false; }
 
 VecPtr DataManSerializer::GetLocalPack()
 {
@@ -460,7 +461,6 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
                     var.size = varBlock["I"].get<size_t>();
                     var.type = varBlock["Y"].get<std::string>();
                     var.rank = stoi(rankMapIt.key());
-                    var.address = varBlock["A"].get<std::string>();
                 }
                 catch (std::exception &e)
                 {
@@ -471,7 +471,13 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
 
                 // optional properties
 
-                auto itJson = varBlock.find("D");
+                auto itJson = varBlock.find("A");
+                if (itJson != varBlock.end())
+                {
+                    var.address = itJson->get<std::string>();
+                }
+
+                itJson = varBlock.find("D");
                 if (itJson != varBlock.end())
                 {
                     var.doid = itJson->get<std::string>();
@@ -983,6 +989,8 @@ size_t DataManSerializer::MinStep()
     return minStep;
 }
 
+size_t DataManSerializer::LocalBufferSize() { return m_LocalBuffer->size(); }
+
 size_t DataManSerializer::Steps()
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -1113,6 +1121,13 @@ bool DataManSerializer::IsStepProtected(const int64_t step)
     }
     return ret;
 }
+
+void DataManSerializer::SetDestination(const std::string &dest)
+{
+    m_Destination = dest;
+}
+
+std::string DataManSerializer::GetDestination() { return m_Destination; }
 
 void DataManSerializer::Log(const int level, const std::string &message,
                             const bool mpi, const bool endline)

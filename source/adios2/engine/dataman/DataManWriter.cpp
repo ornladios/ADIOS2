@@ -42,7 +42,7 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 
     for (size_t i = 0; i < m_Channels; ++i)
     {
-        m_DataManSerializer[i]->New(m_BufferSize);
+        m_DataManSerializer[i]->NewWriterBuffer(m_BufferSize);
     }
 
     if (m_Verbosity >= 5)
@@ -115,8 +115,8 @@ void DataManWriter::Init()
     for (size_t i = 0; i < m_Channels; ++i)
     {
         m_DataManSerializer.push_back(
-            std::make_shared<format::DataManSerializer>(
-                m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian, m_MPIComm));
+            std::make_shared<format::DataManSerializer>(m_MPIComm, m_BufferSize,
+                                                        m_IsRowMajor));
     }
 }
 

@@ -26,8 +26,8 @@ namespace engine
 TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
 : Engine("TableWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(helper::IsRowMajor(io.m_HostLanguage), true, helper::IsLittleEndian(), m_MPIComm),
-  m_DataManDeserializer(helper::IsRowMajor(io.m_HostLanguage), true, helper::IsLittleEndian(), m_MPIComm),
+  m_IsRowMajor(helper::IsRowMajor(m_IO.m_HostLanguage)),
+  m_Deserializer(m_MPIComm, 0, m_IsRowMajor),
   m_SendStagingMan(mpiComm, Mode::Read, m_Timeout, 128),
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
@@ -37,14 +37,12 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
-TableWriter::~TableWriter()
-{
-}
+TableWriter::~TableWriter() {}
 
 StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::BeginStep " << m_MpiRank << std::endl;
     }
@@ -60,10 +58,17 @@ void TableWriter::PerformPuts() {}
 void TableWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::EndStep " << m_MpiRank << std::endl;
     }
+
+    for (auto s : m_Serializers)
+    {
+        auto localPack = s->GetLocalPack();
+        m_SendStagingMan.Request(*localPack, s->GetDestination());
+    }
+
     m_Listening = false;
     if (m_ReplyThread.joinable())
     {
@@ -72,8 +77,9 @@ void TableWriter::EndStep()
     m_SubEngine->EndStep();
 }
 
-void TableWriter::Flush(const int transportIndex) {
-    if(m_Verbosity >= 5)
+void TableWriter::Flush(const int transportIndex)
+{
+    if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::Flush " << m_MpiRank << std::endl;
     }
@@ -101,7 +107,8 @@ void TableWriter::Init()
     InitTransports();
 
     m_SubIO.SetEngine("bp4");
-    m_SubEngine = std::make_shared<adios2::Engine>(m_SubIO.Open(m_Name, adios2::Mode::Write));
+    m_SubEngine = std::make_shared<adios2::Engine>(
+        m_SubIO.Open(m_Name, adios2::Mode::Write));
 }
 
 void TableWriter::InitParameters()
@@ -157,9 +164,24 @@ void TableWriter::InitParameters()
     }
 }
 
+void TableWriter::InitTransports()
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+    for (int i = 0; i < m_Aggregators; ++i)
+    {
+        auto s = std::make_shared<format::DataManSerializer>(
+            m_MPIComm, m_BufferSize, m_IsRowMajor);
+        s->SetDestination(m_AllAddresses[i]);
+        m_Serializers.push_back(s);
+    }
+
+    m_Listening = true;
+    m_ReplyThread = std::thread(&TableWriter::ReplyThread, this);
+}
+
 void TableWriter::ReplyThread()
 {
-    int times = 0;
     transportman::StagingMan receiveStagingMan(m_MPIComm, Mode::Write,
                                                m_Timeout, 1e9);
     receiveStagingMan.OpenTransport(m_AllAddresses[m_MpiRank]);
@@ -168,44 +190,42 @@ void TableWriter::ReplyThread()
         auto request = receiveStagingMan.ReceiveRequest();
         if (request == nullptr or request->empty())
         {
-            if(m_Verbosity >= 20)
+            if (m_Verbosity >= 20)
             {
-                std::cout << "TableWriter::ReplyThread " << m_MpiRank << " did not receive anything" << std::endl;
+                std::cout << "TableWriter::ReplyThread " << m_MpiRank
+                          << " did not receive anything" << std::endl;
             }
             continue;
         }
-        if(m_Verbosity >= 10)
+        if (m_Verbosity >= 10)
         {
-            std::cout << "TableWriter::ReplyThread " << m_MpiRank << " received a package" << std::endl;
+            std::cout << "TableWriter::ReplyThread " << m_MpiRank
+                      << " received a package" << std::endl;
         }
-        m_DataManDeserializer.PutPack(request);
+        m_Deserializer.PutPack(request);
         format::VecPtr reply = std::make_shared<std::vector<char>>(1);
         receiveStagingMan.SendReply(reply);
-        ++times;
-        if (times == m_PutSubEngineFrequency)
-        {
-            PutAggregatorBuffer();
-            PutSubEngine();
-            times = 0;
-        }
+        PutAggregatorBuffer();
+        PutSubEngine();
     }
 }
 
 void TableWriter::PutAggregatorBuffer()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutAggregatorBuffer " << m_MpiRank << " begin" << std::endl;
+        std::cout << "TableWriter::PutAggregatorBuffer " << m_MpiRank
+                  << " begin" << std::endl;
     }
 
     // Get metadata map from dataman serializer
-    auto metadataMap = m_DataManDeserializer.GetMetaData();
+    auto metadataMap = m_Deserializer.GetMetaData();
     format::DmvVecPtr vars;
     auto currentStepIt = metadataMap.find(m_CurrentStep);
     if (currentStepIt == metadataMap.end())
     {
-        throw("empty metadata map");
+        return;
     }
     else
     {
@@ -257,30 +277,32 @@ void TableWriter::PutAggregatorBuffer()
 #define declare_type(T)                                                        \
     else if (v.type == helper::GetType<T>())                                   \
     {                                                                          \
-        helper::NdCopy<T>(v.buffer->data() + v.position, v.start, v.count, true, true,      \
-                          reinterpret_cast<char *>(aggBuff[v.name].data()),    \
-                          WhatStart(v.shape, index),                           \
-                          WhatCount(v.shape, index), true, true);              \
+        helper::NdCopy<T>(                                                     \
+            v.buffer->data() + v.position, v.start, v.count, true, true,       \
+            reinterpret_cast<char *>(aggBuff[v.name].data()),                  \
+            WhatStart(v.shape, index), WhatCount(v.shape, index), true, true); \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
     }
 
-    m_DataManDeserializer.Erase(m_CurrentStep);
+    m_Deserializer.Erase(m_CurrentStep);
 
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutAggregatorBuffer " << m_MpiRank << " end" << std::endl;
+        std::cout << "TableWriter::PutAggregatorBuffer " << m_MpiRank << " end"
+                  << std::endl;
     }
 }
 
 void TableWriter::PutSubEngine()
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutSubEngine " << m_MpiRank << " begin" << std::endl;
+        std::cout << "TableWriter::PutSubEngine " << m_MpiRank << " begin"
+                  << std::endl;
     }
 
     std::unordered_map<size_t, std::vector<std::string>> toErase;
@@ -306,19 +328,24 @@ void TableWriter::PutSubEngine()
                 {
                 }
 #define declare_type(T)                                                        \
-                else if (type == helper::GetType<T>())                                     \
-                {                                                                          \
-                    auto variable = m_SubIO.InquireVariable<T>(varPair.first);             \
-                    if (not variable)                                                      \
-                    {                                                                      \
-                        variable = m_SubIO.DefineVariable<T>(varPair.first, shape, start, count); \
-                    }                                                                      \
-                    variable.SetSelection({start, count});\
-                    m_SubEngine->Put(variable, reinterpret_cast<T *>( m_AggregatorBuffers[indexPair.first][varPair.first].data()),Mode::Sync); \
-                }
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        auto variable = m_SubIO.InquireVariable<T>(varPair.first);             \
+        if (not variable)                                                      \
+        {                                                                      \
+            variable =                                                         \
+                m_SubIO.DefineVariable<T>(varPair.first, shape, start, count); \
+        }                                                                      \
+        variable.SetSelection({start, count});                                 \
+        m_SubEngine->Put(                                                      \
+            variable,                                                          \
+            reinterpret_cast<T *>(                                             \
+                m_AggregatorBuffers[indexPair.first][varPair.first].data()),   \
+            Mode::Sync);                                                       \
+    }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                    toErase[indexPair.first].push_back(varPair.first);
+                toErase[indexPair.first].push_back(varPair.first);
             }
         }
     }
@@ -333,23 +360,17 @@ void TableWriter::PutSubEngine()
         }
     }
 
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
-        std::cout << "TableWriter::PutSubEngine " << m_MpiRank << " end" << std::endl;
+        std::cout << "TableWriter::PutSubEngine " << m_MpiRank << " end"
+                  << std::endl;
     }
-}
-
-void TableWriter::InitTransports()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    m_Listening = true;
-    m_ReplyThread = std::thread(&TableWriter::ReplyThread, this);
 }
 
 void TableWriter::DoClose(const int transportIndex)
 {
     TAU_SCOPED_TIMER_FUNC();
-    if(m_Verbosity >= 5)
+    if (m_Verbosity >= 5)
     {
         std::cout << "TableWriter::DoClose " << m_MpiRank << std::endl;
     }
@@ -388,11 +409,11 @@ size_t TableWriter::WhatBufferIndex(const size_t row)
     return row / (m_RowsPerAggregatorBuffer * m_Aggregators);
 }
 
-std::vector<std::string> TableWriter::WhatAggregators(const Dims &start, const Dims &count)
+std::vector<int> TableWriter::WhatAggregatorIndices(const Dims &start,
+                                                    const Dims &count)
 {
     TAU_SCOPED_TIMER_FUNC();
     std::vector<int> ranks;
-    std::vector<std::string> aggregators;
     if (start.size() > 0 and count.size() > 0)
     {
         for (size_t i = start[0]; i < start[0] + count[0]; ++i)
@@ -412,27 +433,42 @@ std::vector<std::string> TableWriter::WhatAggregators(const Dims &start, const D
             }
         }
     }
-    for(const auto i : ranks)
+    return ranks;
+}
+
+std::vector<std::string>
+TableWriter::WhatAggregatorAddresses(const std::vector<int> &indices)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    std::vector<std::string> aggregators;
+    for (const auto i : indices)
+    {
+        aggregators.push_back(m_AllAddresses[i]);
+    }
+    return aggregators;
+}
+
+std::vector<std::string> TableWriter::WhatAggregatorAddresses(const Dims &start,
+                                                              const Dims &count)
+{
+    TAU_SCOPED_TIMER_FUNC();
+    std::vector<std::string> aggregators;
+    auto ranks = WhatAggregatorIndices(start, count);
+    for (const auto i : ranks)
     {
         aggregators.push_back(m_AllAddresses[i]);
     }
 
-    if(m_Verbosity >= 10)
+    if (m_Verbosity >= 10)
     {
         std::cout << "TableWriter::WhatAggregators returns ";
-        for(const auto i : aggregators)
+        for (const auto i : aggregators)
         {
             std::cout << i << ", ";
         }
-        std::cout <<std::endl;
+        std::cout << std::endl;
     }
-
     return aggregators;
-}
-
-std::string TableWriter::WhatAggregator(const size_t row)
-{
-    return "";
 }
 
 Dims TableWriter::WhatStart(const Dims &shape, const size_t index)
