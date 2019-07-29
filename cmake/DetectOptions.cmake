@@ -131,6 +131,16 @@ if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
     endif()
 endif()
 
+# DataSpaces
+if(ADIOS2_USE_DataSpaces STREQUAL AUTO)
+  find_package(DataSpaces 1.8)
+elseif(ADIOS2_USE_DataSpaces)
+  find_package(DataSpaces 1.8 REQUIRED)
+endif()
+if(DATASPACES_FOUND)
+  set(ADIOS2_HAVE_DataSpaces TRUE)
+endif()
+
 # HDF5
 if(ADIOS2_USE_HDF5 STREQUAL AUTO)
   find_package(HDF5 COMPONENTS C)

@@ -46,6 +46,11 @@
 #include "adios2/engine/sst/SstWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_DATASPACES // external dependencies
+#include "adios2/engine/dataspaces/DataSpacesReader.h"
+#include "adios2/engine/dataspaces/DataSpacesWriter.h"
+#endif
+
 #ifdef ADIOS2_HAVE_HDF5 // external dependencies
 #include "adios2/engine/hdf5/HDF5ReaderP.h"
 #include "adios2/engine/hdf5/HDF5WriterP.h"
@@ -568,6 +573,21 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "Sst library, can't use Sst engine\n");
+#endif
+    }
+    else if (engineTypeLC == "dataspaces")
+    {
+#ifdef ADIOS2_HAVE_DATASPACES
+        if (mode == Mode::Read)
+            engine = std::make_shared<engine::DataSpacesReader>(*this, name,
+                                                                mode, mpiComm);
+        else
+            engine = std::make_shared<engine::DataSpacesWriter>(*this, name,
+                                                                mode, mpiComm);
+#else
+        throw std::invalid_argument(
+            "ERROR: this version didn't compile with "
+            "DataSpaces library, can't use DataSpaces engine\n");
 #endif
     }
     else if (engineTypeLC == "hdf5")
