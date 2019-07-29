@@ -226,7 +226,20 @@ endif()
 #
 if(NOT MSVC)    # not on windows
     # BP4 streaming tests start with all the simple tests, but with a timeout added on open
-    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs:10" "${ALL_SIMPLE_TESTS}" )
+    LIST (APPEND BP4_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
+    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs:10" "${BP4_STREAM_TESTS}")
+    # SharedVars fail with BP4_streaming*
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
+    # Discard not a feature of BP4
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*DiscardWriter.BPS$")
+    # PreciousTimestep not a feature of BP4
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Precious.*BPS$")
+    # Timeout on Reader BeginStep failing in BP4
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*TimeoutReader.BPS$")
+    # LatestTimestep not a feature of BP4
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LatestReader.*BPS$")
+    # KillWriter fails with BP4
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*KillWriter.*BPS$")
     # SharedVars fail with BP4_streaming*
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
     # Local fail with BP4_streaming*
