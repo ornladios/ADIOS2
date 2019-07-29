@@ -325,7 +325,10 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
     const size_t startPosition = position;
     size_t localPosition = 0;
 
-    if (m_Threads == 1)
+    /* FIXME: multi-threaded processing does not work here
+     * because DefineVariable may be called from several threads
+     */
+    /*if (m_Threads == 1)*/
     {
         while (localPosition < length)
         {
@@ -339,48 +342,49 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
         }
         return;
     }
+    /*
+        // threads for reading Variables
+        std::vector<std::future<void>> asyncs(m_Threads);
+        std::vector<size_t> asyncPositions(m_Threads);
 
-    // threads for reading Variables
-    std::vector<std::future<void>> asyncs(m_Threads);
-    std::vector<size_t> asyncPositions(m_Threads);
+        bool launched = false;
 
-    bool launched = false;
-
-    while (localPosition < length)
-    {
-        // extract async positions
-        for (unsigned int t = 0; t < m_Threads; ++t)
+        while (localPosition < length)
         {
-            asyncPositions[t] = position;
-            const size_t elementIndexSize =
-                static_cast<size_t>(helper::ReadValue<uint32_t>(
-                    buffer, position, m_Minifooter.IsLittleEndian));
-            position += elementIndexSize;
-            localPosition = position - startPosition;
-
-            if (launched)
+            // extract async positions
+            for (unsigned int t = 0; t < m_Threads; ++t)
             {
-                asyncs[t].get();
+                asyncPositions[t] = position;
+                const size_t elementIndexSize =
+                    static_cast<size_t>(helper::ReadValue<uint32_t>(
+                        buffer, position, m_Minifooter.IsLittleEndian));
+                position += elementIndexSize;
+                localPosition = position - startPosition;
+
+                if (launched)
+                {
+                    asyncs[t].get();
+                }
+
+                if (localPosition <= length)
+                {
+                    asyncs[t] =
+                        std::async(std::launch::async,
+       lf_ReadElementIndexPerStep, std::ref(engine), std::ref(buffer),
+                                   asyncPositions[t], step);
+                }
             }
+            launched = true;
+        }
 
-            if (localPosition <= length)
+        for (auto &async : asyncs)
+        {
+            if (async.valid())
             {
-                asyncs[t] =
-                    std::async(std::launch::async, lf_ReadElementIndexPerStep,
-                               std::ref(engine), std::ref(buffer),
-                               asyncPositions[t], step);
+                async.wait();
             }
         }
-        launched = true;
-    }
-
-    for (auto &async : asyncs)
-    {
-        if (async.valid())
-        {
-            async.wait();
-        }
-    }
+    */
 }
 
 /* void BP4Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
