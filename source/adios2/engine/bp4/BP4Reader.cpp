@@ -170,7 +170,7 @@ void BP4Reader::OpenFiles()
     double waited = 0.0;
     double startTime, endTime;
     size_t flag = 1; // 0 = OK, opened file, 1 = timeout, 2 = error
-    std::ios_base::failure *lasterr;
+    std::string lasterrmsg;
 
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
@@ -199,7 +199,7 @@ void BP4Reader::OpenFiles()
             }
             catch (std::ios_base::failure &e)
             {
-                lasterr = &e;
+                lasterrmsg = std::string(e.what());
                 if (errno == ENOENT)
                 {
                     flag = 1; // timeout
@@ -220,9 +220,10 @@ void BP4Reader::OpenFiles()
     flag = helper::BroadcastValue(flag, m_MPIComm, 0);
     if (flag == 2)
     {
-        if (m_BP4Deserializer.m_RankMPI == 0)
+        if (m_BP4Deserializer.m_RankMPI == 0 && !lasterrmsg.empty())
         {
-            throw *lasterr;
+            throw std::ios_base::failure("ERROR: File " + m_Name +
+                                         " cannot be opened: " + lasterrmsg);
         }
         else
         {
@@ -236,7 +237,7 @@ void BP4Reader::OpenFiles()
         {
             throw std::ios_base::failure(
                 "ERROR: File " + m_Name +
-                " could not be found within timeout: " + lasterr->what());
+                " could not be found within timeout: " + lasterrmsg);
         }
         else
         {
