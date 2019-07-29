@@ -69,6 +69,8 @@ void TableWriter::EndStep()
         m_SendStagingMan.Request(*localPack, s->GetDestination());
     }
 
+    MPI_Barrier(m_MPIComm);
+
     m_Listening = false;
     if (m_ReplyThread.joinable())
     {
