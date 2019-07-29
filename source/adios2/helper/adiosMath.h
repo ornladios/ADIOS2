@@ -17,6 +17,8 @@
 
 #include "adios2/common/ADIOSTypes.h"
 
+#include <iostream>
+
 namespace adios2
 {
 namespace helper
@@ -245,6 +247,73 @@ std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
  */
 size_t GetDistance(const size_t end, const size_t start,
                    const bool debugMode = false, const std::string &hint = "");
+
+/** A flag to indicate how a block is divided up.
+ * At this time, only the contiguous method is supported
+ */
+enum class BlockDivisionMethod
+{
+    Contiguous = 0, //!< divide the block by keeping subblocks contiguous
+    /* Not supported yet */
+    Mesh = 1 //!< divide each dimension in turn to get N-dim subblocks
+};
+
+/** Temporary info on each dimension of a block
+ *  for splitting a block into smaller sub-blocks
+ *  and for constructing a sub-block from an index.
+ */
+struct BlockDivisionInfo
+{
+    uint16_t nBlocks;
+    size_t subblockSize;
+    BlockDivisionMethod divisionMethod;
+    std::vector<uint16_t> div;
+    std::vector<uint16_t> rem;
+    std::vector<uint16_t> reverseDivProduct;
+};
+
+/** Chop a block into smaller pieces by a size limit.
+ * This function calculates the number of sub-blocks and returns
+ * a temporary info struct that can be used to enumerate the
+ * sub-blocks (with GetSubBlock)
+ * @param count is the block's dimensions
+ * @param subblockSize Requested maximum size of each sub-block
+ * (this is a guideline number, exact matching is not guaranteed)
+ * @return an info struct that can be used in GetSubBlock()
+ */
+BlockDivisionInfo DivideBlock(const Dims &count, const size_t subblockSize,
+                              const BlockDivisionMethod divisionMethod);
+
+/** Part of the DivideBlock() process to calculate 'rem' and 'blockIdDiv'
+ *  temporary arrays from the block dimensions plus the 'div' array.
+ *  Can be used at reading to reconstruct SubblockDimInfo from
+ *  available information (count and div)
+ */
+void CalculateSubblockInfo(const Dims &count, BlockDivisionInfo &info) noexcept;
+
+/** Get the start-count arrays of the n-th subblock in a block.
+ * @param count is the block's dimensions
+ * @param info is the result of the subblocking procedure in DivideBlock()
+ * @param blockID picks which subblock. Must be in [0..info.nBlocks)
+ * @return box is start and count dimension arrays as subselection inside the
+ * block
+ */
+Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
+                      const int blockID) noexcept;
+
+/**
+ * Gets mins and maxs from a values array of primitive types (not including
+ * complex)
+ * @param values input array
+ * @param count N-dims of array
+ * @param info The result of DivideBlock() to help enumerate the sub-blocks
+ * @param MinMaxs empty vector which will be allocated and filled out (min-max
+ * pairs)
+ */
+template <class T>
+void GetMinMaxSubblocks(const T *values, const Dims &count,
+                        const BlockDivisionInfo info, std::vector<T> &MinMaxs,
+                        T &bmin, T &bmax, const unsigned int threads) noexcept;
 
 } // end namespace helper
 } // end namespace adios2

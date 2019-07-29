@@ -62,36 +62,49 @@ def ReadDimensionCharacteristics(buf, pos):
     return True, pos, ndim, lgo
 
 
-def bDataToNumpyArray(cData, typeName, nElements):
+def bDataToNumpyArray(cData, typeName, nElements, startPos=0):
     if typeName == 'byte':
-        return np.frombuffer(cData, dtype=np.int8, count=nElements)
+        return np.frombuffer(cData, dtype=np.int8, count=nElements,
+                             offset=startPos)
     elif typeName == 'short':
-        return np.frombuffer(cData, dtype=np.int16, count=nElements)
+        return np.frombuffer(cData, dtype=np.int16, count=nElements,
+                             offset=startPos)
     elif typeName == 'integer':
-        return np.frombuffer(cData, dtype=np.int32, count=nElements)
+        return np.frombuffer(cData, dtype=np.int32, count=nElements,
+                             offset=startPos)
     elif typeName == 'long':
-        return np.frombuffer(cData, dtype=np.int64, count=nElements)
+        return np.frombuffer(cData, dtype=np.int64, count=nElements,
+                             offset=startPos)
 
     elif typeName == 'unsigned_byte':
-        return np.frombuffer(cData, dtype=np.uint8, count=nElements)
+        return np.frombuffer(cData, dtype=np.uint8, count=nElements,
+                             offset=startPos)
     elif typeName == 'unsigned_short':
-        return np.frombuffer(cData, dtype=np.uint16, count=nElements)
+        return np.frombuffer(cData, dtype=np.uint16, count=nElements,
+                             offset=startPos)
     elif typeName == 'unsigned_integer':
-        return np.frombuffer(cData, dtype=np.uint32, count=nElements)
+        return np.frombuffer(cData, dtype=np.uint32, count=nElements,
+                             offset=startPos)
     elif typeName == 'unsigned_long':
-        return np.frombuffer(cData, dtype=np.uint64, count=nElements)
+        return np.frombuffer(cData, dtype=np.uint64, count=nElements,
+                             offset=startPos)
 
     elif typeName == 'real':
-        return np.frombuffer(cData, dtype=np.float32, count=nElements)
+        return np.frombuffer(cData, dtype=np.float32, count=nElements,
+                             offset=startPos)
     elif typeName == 'double':
-        return np.frombuffer(cData, dtype=np.float64, count=nElements)
+        return np.frombuffer(cData, dtype=np.float64, count=nElements,
+                             offset=startPos)
     elif typeName == 'long_double':
-        return np.frombuffer(cData, dtype=np.float128, count=nElements)
+        return np.frombuffer(cData, dtype=np.float128, count=nElements,
+                             offset=startPos)
 
     elif typeName == 'complex':
-        return np.frombuffer(cData, dtype=np.complex64, count=nElements)
+        return np.frombuffer(cData, dtype=np.complex64, count=nElements,
+                             offset=startPos)
     elif typeName == 'double_complex':
-        return np.frombuffer(cData, dtype=np.complex128, count=nElements)
+        return np.frombuffer(cData, dtype=np.complex128, count=nElements,
+                             offset=startPos)
 
     else:
         return np.zeros(1, dtype=np.uint32)
@@ -198,6 +211,39 @@ def ReadCharacteristicsFromMetaData(buf, idx, pos, limit, typeID,
             data = bDataToNumpyArray(cData, 'unsigned_integer', 1)
             print("                Value          : {0}  ({1} bytes)".format(
                 data[0], cLen))
+        elif cName == 'minmax':
+            nBlocks = np.frombuffer(
+                buf, dtype=np.uint16, count=1, offset=pos)[0]
+            print("                nBlocks        : {0}".format(nBlocks))
+            pos = pos + 2
+            bminmax = bDataToNumpyArray(buf, dataTypeName, 2, pos)
+            pos = pos + 2 * cLen
+            print("                Min/max        : {0} / {1}".format(
+                bminmax[0], bminmax[1]))
+            if nBlocks > 1:
+                method = np.frombuffer(buf, dtype=np.uint8,
+                                       count=1, offset=pos)[0]
+                pos = pos + 1
+                print("                Division method: {0}".format(method))
+                blockSize = np.frombuffer(buf, dtype=np.uint64,
+                                          count=1, offset=pos)[0]
+                pos = pos + 8
+                print("                Block size     : {0}".format(blockSize))
+                div = np.frombuffer(buf, dtype=np.uint16,
+                                    count=ndim, offset=pos)
+                pos = pos + 2 * ndim
+                print("                Division vector: (", end="")
+                for d in range(ndim):
+                    print("{0}".format(div[d]), end="")
+                    if d < ndim - 1:
+                        print(", ", end="")
+                    else:
+                        print(")")
+                minmax = bDataToNumpyArray(buf, dataTypeName, 2 * nBlocks, pos)
+                pos = pos + 2 * nBlocks * cLen
+                for i in range(nBlocks):
+                    print("                Min/max        : {0} / {1}".format(
+                        minmax[2 * i], minmax[2 * i + 1]))
         elif cName == "transform_type":
             # Operator name (8 bit length)
             namelimit = limit - (pos - cStartPosition)

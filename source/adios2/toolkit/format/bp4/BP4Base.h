@@ -158,8 +158,14 @@ public:
     int m_SizeMPI = 1;   ///< current MPI processes size
     int m_Processes = 1; ///< number of aggregated MPI processes
 
-    /** statistics verbosity, only 0 is supported */
-    unsigned int m_StatsLevel = 0;
+    /** statistics verbosity, only 0/1 is supported now */
+    unsigned int m_StatsLevel = 1;
+    /** sub-block size for min/max calculation of large arrays
+     * in number of elements (not bytes)
+     * The default big number per Put() default will result in the original
+     * single min/max value-pair per block
+     */
+    size_t m_StatsBlockSize = 1125899906842624;
 
     /** async threads for background tasks, default = 1, 0 means all serial
      * operations */
@@ -450,12 +456,13 @@ protected:
         characteristic_offset = 3,     //!< characteristic_offset
         characteristic_dimensions = 4, //!< characteristic_dimensions
         characteristic_var_id = 5,     //!< characteristic_var_id
-        characteristic_payload_offset = 6, //!< characteristic_payload_offset
-        characteristic_file_index = 7,     //!< characteristic_file_index
-        characteristic_time_index = 8,     //!< characteristic_time_index
-        characteristic_bitmap = 9,         //!< characteristic_bitmap
-        characteristic_stat = 10,          //!< characteristic_stat
-        characteristic_transform_type = 11 //!< characteristic_transform_type
+        characteristic_payload_offset = 6,  //!< characteristic_payload_offset
+        characteristic_file_index = 7,      //!< characteristic_file_index
+        characteristic_time_index = 8,      //!< characteristic_time_index
+        characteristic_bitmap = 9,          //!< characteristic_bitmap
+        characteristic_stat = 10,           //!< characteristic_stat
+        characteristic_transform_type = 11, //!< characteristic_transform_type
+        characteristic_minmax = 12          //!< min-max array for subblocks
     };
 
     /** Define statistics type for characteristic ID = 10 in bp1 format */
@@ -536,6 +543,8 @@ protected:
         uint64_t PayloadOffset = 0;
         T Min;
         T Max;
+        std::vector<T> MinMaxs; // sub-block level min-max
+        struct helper::BlockDivisionInfo SubblockInfo;
         T Value;
         std::vector<T> Values;
         uint32_t Step = 0;
@@ -607,7 +616,7 @@ protected:
     void InitParameterAsyncThreads(const std::string value);
 
     /** verbose file level=0 (default), not active yet */
-    void InitParameterStatLevel(const std::string value);
+    void InitParameterStatsLevel(const std::string value);
 
     /** verbose file level=0 (default) */
     void InitParameterCollectiveMetadata(const std::string value);
@@ -634,6 +643,12 @@ protected:
      */
     float InitParameterFloat(const std::string value,
                              const std::string parameterName);
+
+    /* parse a value for non-negative integer parameters, including
+     * StatsBlockSizeBytes
+     */
+    size_t InitParameterSizeT(const std::string value,
+                              const std::string parameterName);
 
     std::vector<uint8_t>
     GetTransportIDs(const std::vector<std::string> &transportsTypes) const

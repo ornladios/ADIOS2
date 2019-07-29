@@ -201,6 +201,7 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
     size_t localPosition = 0;
 
     bool foundTimeStep = false;
+    size_t dimensionsSize = 0; // get it from dimensions characteristics
 
     while (localPosition < characteristics.EntryLength)
     {
@@ -232,7 +233,10 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
                 characteristics.Statistics.Value =
                     helper::ReadValue<T>(buffer, position, isLittleEndian);
                 characteristics.Statistics.IsValue = true;
-                characteristics.EntryShapeID = ShapeID::GlobalValue;
+                if (characteristics.EntryShapeID == ShapeID::Unknown)
+                {
+                    characteristics.EntryShapeID = ShapeID::GlobalValue;
+                }
                 // adding Min Max for global and local values
                 characteristics.Statistics.Min =
                     characteristics.Statistics.Value;
@@ -280,6 +284,42 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
+        case (characteristic_minmax):
+        {
+            // first get the number of subblocks
+            const uint16_t M = helper::ReadValue<uint16_t>(buffer, position);
+            // block-level min/max
+            characteristics.Statistics.Min =
+                helper::ReadValue<T>(buffer, position, isLittleEndian);
+            characteristics.Statistics.Max =
+                helper::ReadValue<T>(buffer, position, isLittleEndian);
+            if (M > 1)
+            {
+                characteristics.Statistics.SubblockInfo.divisionMethod =
+                    static_cast<helper::BlockDivisionMethod>(
+                        helper::ReadValue<uint8_t>(buffer, position,
+                                                   isLittleEndian));
+                characteristics.Statistics.SubblockInfo.subblockSize =
+                    helper::ReadValue<size_t>(buffer, position, isLittleEndian);
+
+                characteristics.Statistics.SubblockInfo.div.resize(
+                    dimensionsSize);
+                for (int d = 0; d < dimensionsSize; ++d)
+                {
+                    characteristics.Statistics.SubblockInfo.div[d] =
+                        helper::ReadValue<uint16_t>(buffer, position,
+                                                    isLittleEndian);
+                }
+                characteristics.Statistics.MinMaxs.resize(dimensionsSize);
+                for (int m = 0; m < M; ++m)
+                {
+                    characteristics.Statistics.MinMaxs[m] =
+                        helper::ReadValue<T>(buffer, position, isLittleEndian);
+                }
+            }
+            break;
+        }
+
         case (characteristic_offset):
         {
             characteristics.Statistics.Offset =
@@ -302,7 +342,7 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
                     [](const size_t dimension) { return dimension == 0; });
             };
 
-            const size_t dimensionsSize = static_cast<size_t>(
+            dimensionsSize = static_cast<size_t>(
                 helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
             characteristics.Shape.reserve(dimensionsSize);

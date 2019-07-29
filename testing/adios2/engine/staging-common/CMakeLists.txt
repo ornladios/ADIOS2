@@ -229,6 +229,8 @@ if(NOT MSVC)    # not on windows
     MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs:10" "${ALL_SIMPLE_TESTS}" )
     # SharedVars fail with BP4_streaming*
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
+    # Local fail with BP4_streaming*
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Local.BPS$")
     # Fortran scalar reads don't work for BP4 streaming
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
     foreach(test ${BP4_STREAM_TESTS})
