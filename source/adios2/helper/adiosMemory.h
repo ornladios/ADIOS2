@@ -94,6 +94,13 @@ template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position,
             const bool isLittleEndian = true) noexcept;
 
+/** Read in 'nElems' elements from buffer into output array
+ * output must be pre-allocated.
+ */
+template <class T>
+void ReadArray(const std::vector<char> &buffer, size_t &position, T *output,
+               const size_t nElems, const bool isLittleEndian = true) noexcept;
+
 /**
  * General function to copy memory between blocks of different type and start
  * and count

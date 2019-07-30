@@ -311,9 +311,9 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
                                                     isLittleEndian);
                 }
                 characteristics.Statistics.MinMaxs.resize(2 * M);
-                helper::CopyFromBuffer<T>(
-                    buffer, position, characteristics.Statistics.MinMaxs.data(),
-                    2 * M);
+                helper::ReadArray<T>(buffer, position,
+                                     characteristics.Statistics.MinMaxs.data(),
+                                     2 * M, isLittleEndian);
             }
             break;
         }
