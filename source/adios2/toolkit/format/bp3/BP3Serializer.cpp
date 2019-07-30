@@ -721,12 +721,7 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
         helper::CopyToBuffer(buffer, position, version.c_str());
     };
 
-    const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
-    const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
-    const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
-
-    const std::string versionLongTag("ADIOS-BP v" + majorVersion + "." +
-                                     minorVersion + "." + patchVersion);
+    const std::string versionLongTag("ADIOS-BP v" ADIOS2_VERSION_STR);
     const size_t versionLongTagSize = versionLongTag.size();
     if (versionLongTagSize < 24)
     {
@@ -739,9 +734,12 @@ void BP3Serializer::PutMinifooter(const uint64_t pgIndexStart,
         helper::CopyToBuffer(buffer, position, versionLongTag.c_str(), 24);
     }
 
-    lf_CopyVersionChar(majorVersion, buffer, position);
-    lf_CopyVersionChar(minorVersion, buffer, position);
-    lf_CopyVersionChar(patchVersion, buffer, position);
+    lf_CopyVersionChar(std::to_string(ADIOS2_VERSION_MAJOR), buffer, position);
+    lf_CopyVersionChar(std::to_string(ADIOS2_VERSION_MINOR), buffer, position);
+    lf_CopyVersionChar(std::to_string(ADIOS2_VERSION_PATCH), buffer, position);
+#ifdef ADIOS2_VERSION_TWEAK
+    lf_CopyVersionChar(std::to_string(ADIOS2_VERSION_TWEAK), buffer, position);
+#endif
     ++position;
 
     helper::CopyToBuffer(buffer, position, &pgIndexStart);

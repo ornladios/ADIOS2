@@ -33,7 +33,7 @@ endif()
 # Set library version information
 set_target_properties(sst PROPERTIES
   OUTPUT_NAME adios2_sst
-  VERSION ${ADIOS2_VERSION}
+  VERSION ${ADIOS2_LIBRARY_VERSION}
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
