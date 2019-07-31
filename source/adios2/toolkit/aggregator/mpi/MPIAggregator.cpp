@@ -55,10 +55,8 @@ void MPIAggregator::Close()
 void MPIAggregator::InitComm(const size_t subStreams,
                              helper::Comm const &parentComm)
 {
-    int parentRank;
-    int parentSize;
-    MPI_Comm_rank(parentComm, &parentRank);
-    MPI_Comm_size(parentComm, &parentSize);
+    int parentRank = parentComm.Rank();
+    int parentSize = parentComm.Size();
 
     const size_t process = static_cast<size_t>(parentRank);
     const size_t processes = static_cast<size_t>(parentSize);
@@ -86,8 +84,8 @@ void MPIAggregator::InitComm(const size_t subStreams,
     m_Comm = parentComm.Split(m_ConsumerRank, parentRank,
                               "creating aggregators comm with split at Open");
 
-    MPI_Comm_rank(m_Comm, &m_Rank);
-    MPI_Comm_size(m_Comm, &m_Size);
+    m_Rank = m_Comm.Rank();
+    m_Size = m_Comm.Size();
 
     if (m_Rank != 0)
     {

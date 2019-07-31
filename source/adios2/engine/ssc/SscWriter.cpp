@@ -109,8 +109,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscWriter::Init()
 {
     TAU_SCOPED_TIMER_FUNC();
-    MPI_Comm_rank(m_Comm, &m_MpiRank);
-    MPI_Comm_size(m_Comm, &m_MpiSize);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
     srand(time(NULL));
     InitParameters();
     helper::HandshakeWriter(m_Comm, m_AppID, m_FullAddresses, m_Name, "ssc",

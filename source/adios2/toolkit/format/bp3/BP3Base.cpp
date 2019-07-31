@@ -51,8 +51,8 @@ const std::map<int, std::string> BP3Base::m_TransformTypesToNames = {
 BP3Base::BP3Base(helper::Comm const &comm, const bool debugMode)
 : m_Comm(comm), m_DebugMode(debugMode)
 {
-    SMPI_Comm_rank(m_Comm, &m_RankMPI);
-    SMPI_Comm_size(m_Comm, &m_SizeMPI);
+    m_RankMPI = m_Comm.Rank();
+    m_SizeMPI = m_Comm.Size();
     m_Profiler.IsActive = true; // default
 }
 

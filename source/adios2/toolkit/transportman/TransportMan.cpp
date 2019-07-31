@@ -60,8 +60,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
     }
     else
     {
-        int rank;
-        SMPI_Comm_rank(m_Comm, &rank);
+        int rank = m_Comm.Rank();
         if (rank == 0)
         {
             lf_CreateDirectories(fileNames);

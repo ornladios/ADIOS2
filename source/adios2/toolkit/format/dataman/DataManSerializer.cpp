@@ -25,8 +25,8 @@ DataManSerializer::DataManSerializer(helper::Comm const &comm,
   m_IsLittleEndian(helper::IsLittleEndian()),
   m_DeferredRequestsToSend(std::make_shared<DeferredRequestMap>())
 {
-    MPI_Comm_size(m_Comm, &m_MpiSize);
-    MPI_Comm_rank(m_Comm, &m_MpiRank);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
 }
 
 void DataManSerializer::NewWriterBuffer(size_t bufferSize)

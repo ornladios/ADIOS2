@@ -98,6 +98,20 @@ Comm Comm::Split(int color, int key, const std::string &hint) const
     return Comm(newComm);
 }
 
+int Comm::Rank() const
+{
+    int rank;
+    CheckMPIReturn(SMPI_Comm_rank(m_MPIComm, &rank), {});
+    return rank;
+}
+
+int Comm::Size() const
+{
+    int size;
+    CheckMPIReturn(SMPI_Comm_size(m_MPIComm, &size), {});
+    return size;
+}
+
 void Comm::Barrier(const std::string &hint) const
 {
     CheckMPIReturn(SMPI_Barrier(m_MPIComm), hint);

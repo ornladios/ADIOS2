@@ -280,8 +280,7 @@ void BP3Serializer::AggregateCollectiveMetadata(helper::Comm const &comm,
     const std::vector<size_t> indicesPosition =
         AggregateCollectiveMetadataIndices(comm, bufferSTL);
 
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
     if (rank == 0)
     {
         PutMinifooter(static_cast<uint64_t>(indicesPosition[0]),
@@ -769,9 +768,8 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                                   BufferSTL &bufferSTL)
 {
     TAU_SCOPED_TIMER_FUNC();
-    int rank, size;
-    SMPI_Comm_rank(comm, &rank);
-    SMPI_Comm_size(comm, &size);
+    int rank = comm.Rank();
+    int size = comm.Size();
 
     // pre-allocate with rank 0 data
     size_t pgCount = 0; //< tracks global PG count

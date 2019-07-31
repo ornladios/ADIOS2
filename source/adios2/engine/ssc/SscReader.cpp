@@ -33,7 +33,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    MPI_Comm_rank(m_Comm, &m_MpiRank);
+    m_MpiRank = m_Comm.Rank();
     srand(time(NULL));
 
     // initialize parameters from IO

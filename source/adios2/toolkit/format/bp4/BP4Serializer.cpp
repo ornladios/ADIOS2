@@ -468,8 +468,7 @@ void BP4Serializer::AggregateCollectiveMetadata(helper::Comm const &comm,
     // AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL,
     // true);
 
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
     if (rank == 0)
     {
         /* no more minifooter in the global metadata*/
@@ -970,8 +969,7 @@ void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
 {
     auto &buffer = bufferSTL.m_Buffer;
     auto &position = bufferSTL.m_Position;
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     size_t countPosition = position;
     const size_t totalCount = comm.ReduceValues<size_t>(count);
@@ -1021,8 +1019,7 @@ void BP4Serializer::AggregateMergeIndex(
     // deallocate gathered serial indices (full in rank 0 only)
     std::vector<char>().swap(gatheredSerialIndices);
 
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     if (rank == 0)
     {
@@ -1071,8 +1068,7 @@ std::vector<char> BP4Serializer::SerializeIndices(
     std::vector<char> serializedIndices;
     serializedIndices.reserve(serializedIndicesSize);
 
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     for (const auto &indexPair : indices)
     {
@@ -1160,8 +1156,7 @@ BP4Serializer::DeserializeIndicesPerRankSingleThread(
 
     // BODY OF FUNCTION starts here
     const size_t serializedSize = serialized.size();
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     if (rank != 0 || serializedSize < 8)
     {
@@ -1340,8 +1335,7 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 
     // BODY OF FUNCTION starts here
     const size_t serializedSize = serialized.size();
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     if (rank != 0 || serializedSize < 8)
     {
@@ -1405,9 +1399,8 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                                        BufferSTL &outBufferSTL)
 {
-    int rank, size;
-    SMPI_Comm_rank(comm, &rank);
-    SMPI_Comm_size(comm, &size);
+    int rank = comm.Rank();
+    int size = comm.Size();
 
     BufferSTL inBufferSTL;
 

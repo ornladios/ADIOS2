@@ -40,8 +40,8 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     m_RankAllPeers = insitumpi::FindPeers(m_Comm, m_Name, false, m_CommWorld);
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
-    MPI_Comm_rank(m_Comm, &m_ReaderRank);
-    MPI_Comm_size(m_Comm, &m_ReaderNproc);
+    m_ReaderRank = m_Comm.Rank();
+    m_ReaderNproc = m_Comm.Size();
     m_RankDirectPeers =
         insitumpi::AssignPeers(m_ReaderRank, m_ReaderNproc, m_RankAllPeers);
     if (m_Verbosity == 5)

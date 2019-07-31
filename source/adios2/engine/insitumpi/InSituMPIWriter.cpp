@@ -45,8 +45,8 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     }
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
-    MPI_Comm_rank(m_Comm, &m_WriterRank);
-    MPI_Comm_size(m_Comm, &m_WriterNproc);
+    m_WriterRank = m_Comm.Rank();
+    m_WriterNproc = m_Comm.Size();
     m_RankDirectPeers =
         insitumpi::AssignPeers(m_WriterRank, m_WriterNproc, m_RankAllPeers);
     int primaryContact = insitumpi::ConnectDirectPeers(

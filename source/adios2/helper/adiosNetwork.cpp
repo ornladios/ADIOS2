@@ -77,10 +77,8 @@ void HandshakeWriter(Comm const &comm, size_t &appID,
                      const int maxRanksPerNode, const int maxAppsPerNode)
 {
 
-    int mpiRank;
-    int mpiSize;
-    MPI_Comm_rank(comm, &mpiRank);
-    MPI_Comm_size(comm, &mpiSize);
+    int mpiRank = comm.Rank();
+    int mpiSize = comm.Size();
 
     const std::string globalFilename = ".socket";
     const std::string globalLockFilename = ".socket.lock";

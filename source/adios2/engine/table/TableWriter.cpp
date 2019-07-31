@@ -31,8 +31,8 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
-    MPI_Comm_rank(m_Comm, &m_MpiRank);
-    MPI_Comm_size(m_Comm, &m_MpiSize);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
     Init();
 }
 

@@ -94,6 +94,9 @@ public:
     Comm Split(int color, int key,
                const std::string &hint = std::string()) const;
 
+    int Rank() const;
+    int Size() const;
+
     void Barrier(const std::string &hint = std::string()) const;
 
     /**
