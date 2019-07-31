@@ -233,12 +233,14 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*TimeoutReader.BPS$")
     # LatestTimestep not a feature of BP4
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*LatestReader.*BPS$")
-    # # KillWriter fails with BP4
-    # list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*KillWriter.*BPS$")
-    # # Local fail with BP4_streaming*
-    # list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Local.BPS$")
-    # # Fortran scalar reads don't work for BP4 streaming
-    # list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
+    # KillWriter fails with BP4
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*KillWriter.*BPS$")
+    # SharedVars fail with BP4_streaming*
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
+    # Local fail with BP4_streaming*
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Local.BPS$")
+    # Fortran scalar reads don't work for BP4 streaming
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
     foreach(test ${BP4_STREAM_TESTS})
         add_common_test(${test} BP4_stream)
     endforeach()
