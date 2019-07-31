@@ -235,7 +235,7 @@ endif()
 
 # Set library version information
 set_target_properties(adios2 PROPERTIES
-  VERSION ${ADIOS2_VERSION}
+  VERSION ${ADIOS2_LIBRARY_VERSION}
   SOVERSION ${ADIOS2_VERSION_MAJOR}
 )
 
