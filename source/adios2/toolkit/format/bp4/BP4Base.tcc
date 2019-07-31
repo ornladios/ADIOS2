@@ -310,12 +310,10 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
                         helper::ReadValue<uint16_t>(buffer, position,
                                                     isLittleEndian);
                 }
-                characteristics.Statistics.MinMaxs.resize(dimensionsSize);
-                for (int m = 0; m < M; ++m)
-                {
-                    characteristics.Statistics.MinMaxs[m] =
-                        helper::ReadValue<T>(buffer, position, isLittleEndian);
-                }
+                characteristics.Statistics.MinMaxs.resize(2 * M);
+                helper::ReadArray<T>(buffer, position,
+                                     characteristics.Statistics.MinMaxs.data(),
+                                     2 * M, isLittleEndian);
             }
             break;
         }
