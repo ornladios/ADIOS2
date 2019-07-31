@@ -14,67 +14,18 @@
 
 #include <gtest/gtest.h>
 
+#include "ParseArgs.h"
 #include "TestData.h"
+
+int WriterFailed = 0;
+int BeginStepFailedPolls = 0;
+int SkippedSteps = 0;
 
 class SstReadTest : public ::testing::Test
 {
 public:
     SstReadTest() = default;
 };
-
-adios2::Params engineParams = {}; // parsed from command line
-int TimeGapExpected = 0;
-int ExpectWriterFailure = 0;
-int WriterFailed = 0;
-int IgnoreTimeGap = 1;
-int IncreasingDelay = 0;
-int DelayWhileHoldingStep = 0;
-int FirstTimestepMustBeZero = 0;
-int NonBlockingBeginStep = 0;
-int Latest = 0;
-int Discard = 0;
-int BeginStepFailedPolls = 0;
-int SkippedSteps = 0;
-int DelayMS = 500;
-int LongFirstDelay = 0;
-// Number of steps
-size_t NSteps = 10;
-std::string fname = "ADIOS2SstServer";
-std::string engine = "SST";
-
-static std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-/*
- * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
- * by commas.  White space is trimmed off front and back.  No quotes or anything
- * fancy allowed.
- */
-static adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, ':');
-        if (!std::getline(ss2, ParamValue, ':'))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
-}
 
 // ADIOS2 Sst read
 TEST_F(SstReadTest, ADIOS2SstRead)
@@ -406,103 +357,8 @@ int main(int argc, char **argv)
 
     int result, bare_args = 0;
     ::testing::InitGoogleTest(&argc, argv);
-
-    while (argc > 1)
-    {
-        if (std::string(argv[1]) == "--num_steps")
-        {
-            std::istringstream ss(argv[2]);
-            if (!(ss >> NSteps))
-                std::cerr << "Invalid number for num_steps " << argv[1] << '\n';
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--expect_time_gap")
-        {
-            TimeGapExpected++;
-            IgnoreTimeGap = 0;
-        }
-        else if (std::string(argv[1]) == "--expect_writer_failure")
-        {
-            IncreasingDelay = 1;
-            ExpectWriterFailure++;
-        }
-        else if (std::string(argv[1]) == "--expect_contiguous_time")
-        {
-            TimeGapExpected = 0;
-            IgnoreTimeGap = 0;
-        }
-        else if (std::string(argv[1]) == "--non_blocking")
-        {
-            IncreasingDelay = 1;
-            NonBlockingBeginStep = 1;
-        }
-        else if (std::string(argv[1]) == "--latest")
-        {
-            IncreasingDelay = 1;
-            Latest = 1;
-        }
-        else if (std::string(argv[1]) == "--long_first_delay")
-        {
-            LongFirstDelay = 1;
-        }
-        else if (std::string(argv[1]) == "--discard")
-        {
-            IncreasingDelay = 1;
-            Discard = 1;
-        }
-        else if (std::string(argv[1]) == "--delay_while_holding")
-        {
-            DelayWhileHoldingStep = 1;
-        }
-        else if (std::string(argv[1]) == "--precious_first")
-        {
-            FirstTimestepMustBeZero = 1;
-        }
-        else if (std::string(argv[1]) == "--ignore_time_gap")
-        {
-            IgnoreTimeGap++;
-        }
-        else if (std::string(argv[1]) == "--filename")
-        {
-            fname = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine")
-        {
-            engine = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else
-        {
-            if (bare_args == 0)
-            {
-                /* first arg without -- is engine */
-                engine = std::string(argv[1]);
-            }
-            if (bare_args == 1)
-            {
-                /* second arg without -- is filename */
-                fname = std::string(argv[1]);
-            }
-            if (bare_args == 2)
-            {
-                /* third arg without -- is engine params */
-                engineParams = ParseEngineParams(argv[1]);
-            }
-            if (bare_args > 2)
-            {
-                throw std::invalid_argument("Unknown argument \"" +
-                                            std::string(argv[1]) + "\"");
-            }
-            bare_args++;
-        }
-        argv++;
-        argc--;
-    }
-
+    DelayMS = 500; // smaller default for common client
+    ParseArgs(argc, argv);
     result = RUN_ALL_TESTS();
 
 #ifdef ADIOS2_HAVE_MPI

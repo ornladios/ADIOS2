@@ -41,8 +41,6 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
 {
     int mpiRank = 0, mpiSize = 1;
 
-    // Number of steps
-
     std::remove(shutdown_name.c_str());
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);

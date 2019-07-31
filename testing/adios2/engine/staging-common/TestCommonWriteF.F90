@@ -28,10 +28,10 @@ program TestSstWrite
   integer(kind = 8), dimension(1)::shape_time, start_time, count_time
   integer::inx, irank, isize, ierr, i, insteps, status
 
-  character(len=256) :: filename, engine
+  character(len=256) :: filename, engine, params
 
   type(adios2_adios)::adios
-  type(adios2_io)::ioWrite, ioRead
+  type(adios2_io)::ioWrite
   type(adios2_variable), dimension(20)::variables
   type(adios2_engine)::sstWriter;
 
@@ -51,6 +51,9 @@ program TestSstWrite
 
   call getarg(1, engine)
   call getarg(2, filename)
+  if ( numargs > 2 ) then
+     call getarg(3, params)
+  endif
 
 #ifdef ADIOS2_HAVE_MPI_F
   !Launch MPI
@@ -99,6 +102,10 @@ program TestSstWrite
 !!!!!!!!!!!!!!!!!!!!!!!!!WRITER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!Declare an IO process configuration inside adios 
   call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
+
+  if (numargs > 2) then
+     call adios2_set_parameters(ioWrite, params, ierr)
+  endif 
 
   call adios2_set_engine(ioWrite, engine, ierr)
 

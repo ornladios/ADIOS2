@@ -42,11 +42,11 @@
 # set of tests where a specified engine parameter gets added to the in
 # the location of the WENGINE_PARAMS string.  MutateTestSet takes 4 parameters:
 # output_test_list, param_name, param_spec, and input test list.  For example
-# MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+# MutateTestSet( COMM_MIN_SST_TESTS "CommMin" "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
 # If BASIC_SST_TESTS contains "1x1" as defined above, MutateTestSet
 # will add the test "1x1.CommMin", by defining the variable
 # 1x1.CommMin_CMD, using the original value of 1x1_CMD buth with
-# "CPCommPattern:Min: added to the WENGINE_PARAMS location (if
+# "CPCommPattern=Min: added to the WENGINE_PARAMS location (if
 # present).  Any 1x1_TIMEOUT and 1x1_PROPERTIES values will also be
 # propogated to 1x1.CommMin_TIMEOUT and 1x1.CommMin_PROPERTIES.
 # "1x1.CommMin" will also be added to the output test list.
@@ -90,10 +90,10 @@ set (2x1.SharedVarSync_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteShared -r
 
 
 # NoReaderNoWait runs a writer with the RendezvousReaderCount = 0 and then never spawns a reader.  The test should run to termination and execute cleanly
-set (NoReaderNoWait_CMD "run_test.py -nw 1 -nr 0 --warg=RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,WENGINE_PARAMS")
+set (NoReaderNoWait_CMD "run_test.py -nw 1 -nr 0 --warg=RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS")
 
 # TimeoutOnOpen runs a reader but never spawns a writer.  The Open should run to timeout and throw an exception
-set (TimeoutOnOpen_CMD "run_test.py -nw 0 -nr 1 --rarg=--expect_timeout --rarg=OpenTimeoutSecs:10,RENGINE_PARAMS")
+set (TimeoutOnOpen_CMD "run_test.py -nw 0 -nr 1 --rarg=--expect_timeout --rarg=OpenTimeoutSecs=10,RENGINE_PARAMS")
 
 # The Modes test checks to see that we can mix and match Put Sync and Deferred modes and still get good data
 set (Modes_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteModes -r TestCommonRead")
@@ -107,43 +107,43 @@ set (CtoF.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite -r TestCommonRead
 set (FtoF.1x1_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWrite_f -r TestCommonRead_f")
 
 # Tests for ZFP compression (where supported by an engine param)
-set (ZFPCompression.1x1_CMD "run_test.py -nw 1 -nr 1 --warg=CompressionMethod:zfp,WENGINE_PARAMS" )
-set (ZFPCompression.3x5_CMD "run_test.py -nw 3 -nr 5 --warg=CompressionMethod:zfp,WENGINE_PARAMS" )
+set (ZFPCompression.1x1_CMD "run_test.py -nw 1 -nr 1 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
+set (ZFPCompression.3x5_CMD "run_test.py -nw 3 -nr 5 --warg=CompressionMethod=zfp,WENGINE_PARAMS" )
 
 # Test if writer will survive readers departing unexpectedly
-set (KillReadersSerialized_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount:0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReadersSerialized_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 1 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
 set (KillReadersSerialized_TIMEOUT "300")
 set (KillReadersSerialized_PROPERTIES "RUN_SERIAL;1")
-set (KillReaders3Max_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount:0,WENGINE_PARAMS --rarg=--ignore_time_gap")
+set (KillReaders3Max_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 3 --warg=RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap")
 set (KillReaders3Max_TIMEOUT "300")
 set (KillReaders3Max_PROPERTIES "RUN_SERIAL;1")
 
-set (KillWriter_2x2_CMD "run_test.py --test_protocol kill_writer   -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount:1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
-set (KillWriterTimeout_2x2_CMD "run_test.py --test_protocol kill_writer -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount:1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
+set (KillWriter_2x2_CMD "run_test.py --test_protocol kill_writer   -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
+set (KillWriterTimeout_2x2_CMD "run_test.py --test_protocol kill_writer -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
 
-set (PreciousTimestep_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious:true,RendezvousReaderCount:0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
+set (PreciousTimestep_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=true,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
 
 set (PreciousTimestep_TIMEOUT "300")
 set (PreciousTimestep_PROPERTIES "RUN_SERIAL;1")
 
-set (PreciousTimestepDiscard_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious:true,RendezvousReaderCount:0,QueueLimit:3,QueueFullPolicy:discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500")
+set (PreciousTimestepDiscard_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=true,RendezvousReaderCount=0,QueueLimit=3,QueueFullPolicy=discard,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first --rarg=--discard --warg=--ms_delay --warg=500")
 set (PreciousTimestepDiscard_TIMEOUT "300")
 set (PreciousTimestepDiscard_PROPERTIES "RUN_SERIAL;1")
 
 # Readers using BeginStep with timeout.  Here we run the writer with a longer delay to make the reader timeout
-set (TimeoutReader_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --rarg=--non_blocking --warg=--ms_delay --warg=2000 --warg=--engine_params")
+set (TimeoutReader_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --rarg=--non_blocking --warg=--ms_delay --warg=2000")
 set (TimeoutReader_TIMEOUT "60")
 set (TimeoutReader_PROPERTIES "RUN_SERIAL;1")
 
 # Readers using LatestAvailable   Writer runs faster than reader, so we expect misses
-set (LatestReader_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --warg=--engine_params --rarg=--latest --rarg=--long_first_delay")
+set (LatestReader_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --rarg=--latest --rarg=--long_first_delay")
 set (LatestReader_PROPERTIES "RUN_SERIAL;1")
 
-set (LatestReaderHold_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --warg=--engine_params --rarg=--latest --rarg=--long_first_delay --rarg=--delay_while_holding")
+set (LatestReaderHold_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--ms_delay --warg=250 --rarg=--latest --rarg=--long_first_delay --rarg=--delay_while_holding")
 set (LatestReaderHold_PROPERTIES "RUN_SERIAL;1")
 
 # A faster writer and a queue policy that will cause timesteps to be discarded
-set (DiscardWriter_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit:1,QueueFullPolicy:discard,WENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
+set (DiscardWriter_CMD "run_test.py --test_protocol one_client -nw 1 -nr 1 --warg=--engine_params --warg=QueueLimit=1,QueueFullPolicy=discard,WENGINE_PARAMS --warg=--ms_delay --warg=250 --rarg=--discard")
 
 function(remove_engine_params_placeholder dst_str src_str )
     string(REGEX REPLACE "([^ 		  ]*),WENGINE_PARAMS" "\\1" src_str "${src_str}")
