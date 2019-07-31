@@ -12,6 +12,7 @@ export OMPI_MCA_btl_vader_single_copy_mechanism=none
 
 # Enable overscription in OpenMPI
 export OMPI_MCA_rmaps_base_oversubscribe=1
+export OMPI_MCA_hwloc_base_binding_policy=none
 
 if [ -x /usr/bin/python2 ]
 then
