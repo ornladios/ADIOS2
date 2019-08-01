@@ -453,7 +453,6 @@ TEST_F(BPWriteNullTest, BPWrite2D4x2_MultiSteps)
 
     // Number of steps
     const std::size_t NSteps = 5;
-    const std::size_t tInitial = 2;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
