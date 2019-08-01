@@ -268,6 +268,12 @@ public:
 
     void InitParameters(const Params &parameters);
 
+    /** A BP4 dataset is a directory. Remove first the trailing \ from
+     * the name if present. Makes it easier to append all file names
+     * to it later.
+     */
+    std::string RemoveTrailingSlash(const std::string &name) const noexcept;
+
     /**
      * Vector version of BPBaseNames
      * @param names
