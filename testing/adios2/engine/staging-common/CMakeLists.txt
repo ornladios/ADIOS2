@@ -13,10 +13,10 @@ if(ADIOS2_HAVE_MPI)
     target_link_libraries(TestStagingMPMD adios2 gtest_interface MPI::MPI_C)
     if(ADIOS2_HAVE_SST)
         gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-        		EXTRA_ARGS "SST" "MarshalMethod:FFS"
+        		EXTRA_ARGS "SST" "MarshalMethod=FFS"
 			TEST_SUFFIX _SST_FFS)
 	gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-        	        EXTRA_ARGS "SST" "MarshalMethod:BP"
+        	        EXTRA_ARGS "SST" "MarshalMethod=BP"
                 	TEST_SUFFIX _SST_BP)
     endif()
 
