@@ -19,8 +19,9 @@
 
 #include <gtest/gtest.h>
 
-#include "ParseArgs.h"
 #include <adios2.h>
+
+#include "ParseArgs.h"
 
 static int numprocs, wrank;
 std::string engineName; // comes from command line
