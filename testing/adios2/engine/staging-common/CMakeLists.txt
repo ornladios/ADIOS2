@@ -13,10 +13,10 @@ if(ADIOS2_HAVE_MPI)
     target_link_libraries(TestStagingMPMD adios2 gtest_interface MPI::MPI_C)
     if(ADIOS2_HAVE_SST)
         gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-        		EXTRA_ARGS "SST" "MarshalMethod:FFS"
+        		EXTRA_ARGS "SST" "MarshalMethod=FFS"
 			TEST_SUFFIX _SST_FFS)
 	gtest_add_tests(TARGET TestStagingMPMD ${extra_test_args} 
-        	        EXTRA_ARGS "SST" "MarshalMethod:BP"
+        	        EXTRA_ARGS "SST" "MarshalMethod=BP"
                 	TEST_SUFFIX _SST_BP)
     endif()
 
@@ -160,19 +160,14 @@ endif()
 
 
 #  For the moment, only test the default comm pattern (Peer)
-MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
-MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern:Min" "${BASIC_SST_TESTS}" )
+MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
+MutateTestSet( COMM_PEER_SST_TESTS "CommPeer" writer "CPCommPattern=Min" "${BASIC_SST_TESTS}" )
 
-MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod:FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
-MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod:BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod=FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 
 set (SST_TESTS "")
 LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
-
-# remove Fto anything tests that use FFS because we can't spec it
-list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*FFS.*")
-# remove Fto anything tests that use CommMin because we can't spec it
-list(FILTER SST_TESTS EXCLUDE REGEX "Fto.*CommMin.*")
 
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
@@ -227,7 +222,7 @@ endif()
 if(NOT MSVC)    # not on windows
     # BP4 streaming tests start with all the simple tests, but with a timeout added on open
     LIST (APPEND BP4_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs:10" "${BP4_STREAM_TESTS}")
+    MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10" "${BP4_STREAM_TESTS}")
     # SharedVars fail with BP4_streaming*
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
     # Discard not a feature of BP4

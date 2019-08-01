@@ -21,9 +21,10 @@
 
 #include <adios2.h>
 
+#include "ParseArgs.h"
+
 static int numprocs, wrank;
-std::string engineName;           // comes from command line
-adios2::Params engineParams = {}; // parsed from command line
+std::string engineName; // comes from command line
 
 struct RunParams
 {
@@ -64,40 +65,6 @@ std::vector<RunParams> CreateRunParams()
     params.push_back(RunParams(1, 1, 5, 3));
     params.push_back(RunParams(4, 2, 2, 4));
     return params;
-}
-
-std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-/*
- * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
- * by commas.  White space is trimmed off front and back.  No quotes or anything
- * fancy allowed.
- */
-adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, ':');
-        if (!std::getline(ss2, ParamValue, ':'))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
 }
 
 class TestStagingMPMD : public ::testing::TestWithParam<RunParams>

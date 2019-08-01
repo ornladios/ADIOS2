@@ -28,12 +28,12 @@ program TestSstRead
   integer(kind = 8), dimension(2)::shape_dims3, start_dims3, count_dims3
   integer:: irank, isize, ierr, i, insteps, status
 
-  character(len=256) :: filename, engine
+  character(len=256) :: filename, engine, params
 
   integer :: writerSize, myStart, myLength
 
   type(adios2_adios)::adios
-  type(adios2_io)::ioWrite, ioRead
+  type(adios2_io)::ioRead
   type(adios2_variable), dimension(20)::variables
   type(adios2_engine)::sstReader;
 
@@ -53,6 +53,9 @@ program TestSstRead
 
   call getarg(1, engine)
   call getarg(2, filename)
+  if ( numargs > 2 ) then
+     call getarg(3, params)
+  endif
 
   insteps = 1;
 
@@ -81,6 +84,9 @@ program TestSstRead
   ! Declare io reader
   call adios2_declare_io(ioRead, adios, "ioRead", ierr)
 
+  if (numargs > 2) then
+     call adios2_set_parameters(ioRead, params, ierr)
+  endif 
   call adios2_set_engine(ioRead, engine, ierr)
 
   ! Open sstReader engine
