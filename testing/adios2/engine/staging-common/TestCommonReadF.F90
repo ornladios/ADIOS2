@@ -53,10 +53,8 @@ program TestSstRead
 
   call getarg(1, engine)
   call getarg(2, filename)
-    print *, "NUMARGS ", numargs
   if ( numargs > 2 ) then
      call getarg(3, params)
-    print *, "params ", params
   endif
 
   insteps = 1;
@@ -87,7 +85,6 @@ program TestSstRead
   call adios2_declare_io(ioRead, adios, "ioRead", ierr)
 
   if (numargs > 2) then
-    print *, "settting parameters ", params
      call adios2_set_parameters(ioRead, params, ierr)
   endif 
   call adios2_set_engine(ioRead, engine, ierr)
