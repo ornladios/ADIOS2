@@ -149,6 +149,20 @@ void Comm::Bcast(T *buffer, const size_t count, int root,
 }
 
 template <typename T>
+void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
+                  int root, const std::string &hint) const
+{
+    return ReduceImpl(sendbuf, recvbuf, count, Datatype<T>(), op, root, hint);
+}
+
+template <typename T>
+void Comm::ReduceInPlace(T *buf, size_t count, MPI_Op op, int root,
+                         const std::string &hint) const
+{
+    return ReduceInPlaceImpl(buf, count, Datatype<T>(), op, root, hint);
+}
+
+template <typename T>
 Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
                       const std::string &hint) const
 {

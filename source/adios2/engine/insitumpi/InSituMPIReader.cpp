@@ -418,13 +418,16 @@ void InSituMPIReader::SendReadSchedule(
     }
 
     // Accumulate nReaderPerWriter for all readers
-    void *sendBuf = nReaderPerWriter.data();
     if (m_ReaderRootRank == m_ReaderRank)
     {
-        sendBuf = MPI_IN_PLACE;
+        m_Comm.ReduceInPlace(nReaderPerWriter.data(), nReaderPerWriter.size(),
+                             MPI_SUM, m_ReaderRootRank);
     }
-    MPI_Reduce(sendBuf, nReaderPerWriter.data(), nReaderPerWriter.size(),
-               MPI_INT, MPI_SUM, m_ReaderRootRank, m_Comm);
+    else
+    {
+        m_Comm.Reduce(nReaderPerWriter.data(), nReaderPerWriter.data(),
+                      nReaderPerWriter.size(), MPI_SUM, m_ReaderRootRank);
+    }
 
     // Reader root sends nReaderPerWriter to writer root
     if (m_ReaderRootRank == m_ReaderRank)
@@ -588,10 +591,8 @@ void InSituMPIReader::DoClose(const int transportIndex)
     if (m_Verbosity > 2)
     {
         uint64_t inPlaceBytes, inTempBytes;
-        MPI_Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_LONG_LONG_INT,
-                   MPI_SUM, 0, m_Comm);
-        MPI_Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1,
-                   MPI_LONG_LONG_INT, MPI_SUM, 0, m_Comm);
+        m_Comm.Reduce(&m_BytesReceivedInPlace, &inPlaceBytes, 1, MPI_SUM, 0);
+        m_Comm.Reduce(&m_BytesReceivedInTemporary, &inTempBytes, 1, MPI_SUM, 0);
         if (m_ReaderRank == 0)
         {
             std::cout << "ADIOS InSituMPI Reader for " << m_Name << " received "

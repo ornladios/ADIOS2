@@ -144,6 +144,23 @@ void Comm::BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
         hint);
 }
 
+void Comm::ReduceImpl(const void *sendbuf, void *recvbuf, size_t count,
+                      MPI_Datatype datatype, MPI_Op op, int root,
+                      const std::string &hint) const
+{
+    CheckMPIReturn(SMPI_Reduce(sendbuf, recvbuf, static_cast<int>(count),
+                               datatype, op, root, m_MPIComm),
+                   hint);
+}
+
+void Comm::ReduceInPlaceImpl(void *buf, size_t count, MPI_Datatype datatype,
+                             MPI_Op op, int root, const std::string &hint) const
+{
+    CheckMPIReturn(SMPI_Reduce(MPI_IN_PLACE, buf, static_cast<int>(count),
+                               datatype, op, root, m_MPIComm),
+                   hint);
+}
+
 Comm::Req Comm::IsendImpl(const void *buffer, size_t count,
                           MPI_Datatype datatype, int dest, int tag,
                           const std::string &hint) const

@@ -179,6 +179,14 @@ public:
                const std::string &hint = std::string()) const;
 
     template <typename T>
+    void Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op, int root,
+                const std::string &hint = std::string()) const;
+
+    template <typename T>
+    void ReduceInPlace(T *buf, size_t count, MPI_Op op, int root,
+                       const std::string &hint = std::string()) const;
+
+    template <typename T>
     Req Isend(const T *buffer, const size_t count, int destination, int tag,
               const std::string &hint = std::string()) const;
 
@@ -202,6 +210,13 @@ private:
 
     void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype, int root,
                    const std::string &hint) const;
+
+    void ReduceImpl(const void *sendbuf, void *recvbuf, size_t count,
+                    MPI_Datatype datatype, MPI_Op op, int root,
+                    const std::string &hint) const;
+
+    void ReduceInPlaceImpl(void *buf, size_t count, MPI_Datatype datatype,
+                           MPI_Op op, int root, const std::string &hint) const;
 
     Req IsendImpl(const void *buffer, size_t count, MPI_Datatype datatype,
                   int dest, int tag, const std::string &hint) const;
