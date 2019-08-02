@@ -551,7 +551,6 @@ static DP_WS_Stream NvstreamInitWriter(CP_Services Svcs, void *CP_Stream,
 static void NvstreamDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 {
     Nvstream_WS_Stream WS_Stream = (Nvstream_WS_Stream)WS_Stream_v;
-    printf("Calling finalize %p\n", WS_Stream->nvs);
     nvs_finalize_(WS_Stream->nvs);
     for (int i = 0; i < WS_Stream->ReaderCount; i++)
     {
@@ -675,8 +674,6 @@ static void NvstreamProvideWriterDataToReader(CP_Services Svcs,
     {
         RS_Stream->writer_nvs[i] =
             nvs_open_store(RS_Stream->WriterContactInfo[i].ContactString);
-        printf("reader got pointer to writer NVS[%d] = %p\n", i,
-               RS_Stream->writer_nvs[i]);
     }
 }
 

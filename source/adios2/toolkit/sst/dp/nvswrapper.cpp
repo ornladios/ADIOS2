@@ -9,11 +9,8 @@
 extern "C" {
 void *nvs_create_store()
 {
-    std::cout << "calling  GetInstance with a null entry" << std::endl;
     nvs::Store *st = nvs::StoreManager::GetInstance("");
     std::string store_name = st->get_store_id();
-    printf("Created Store_name %s, returning pointer %p\n", store_name.c_str(),
-           (void *)st);
     return (void *)st;
 }
 
@@ -21,8 +18,6 @@ void *nvs_open_store(char *STORE_ID)
 {
     std::string store_name = STORE_ID;
     nvs::Store *st = nvs::StoreManager::GetInstance(store_name);
-    printf("Opened Store_name %s, returning pointer %p\n", store_name.c_str(),
-           (void *)st);
     return (void *)st;
 }
 
@@ -46,7 +41,6 @@ void *nvs_get_with_malloc(void *vst, char *key, long version)
     void *ptr;
     nvs::Store *st = (nvs::Store *)vst;
     nvs::ErrorCode tmp = st->get_with_malloc(std::string(key), version, &ptr);
-    printf("Get from Store pointer %p\n", (void *)st);
     if (tmp != nvs::ErrorCode::NO_ERROR)
     {
         std::cout << "get with malloc error" << std::endl;
@@ -59,14 +53,12 @@ void nvs_free_(void *vst, void *ptr) {}
 void nvs_snapshot_(void *vst, int *proc_id)
 {
     nvs::Store *st = (nvs::Store *)vst;
-    printf("Doing put_all on vst %p\n", vst);
     st->put_all();
 }
 
 int nvs_finalize_(void *vst)
 {
     nvs::Store *st = (nvs::Store *)vst;
-    printf("Doing delete on vst %p\n", vst);
     delete st;
 }
 }
