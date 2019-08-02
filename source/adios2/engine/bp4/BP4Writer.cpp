@@ -440,7 +440,6 @@ void BP4Writer::PopulateMetadataIndexFileContent(
     TAU_SCOPED_TIMER("BP4Writer::PopulateMetadataIndexFileContent");
     auto &buffer = b.m_Buffer;
     auto &position = b.m_Position;
-    auto &absolutePosition = b.m_AbsolutePosition;
     helper::CopyToBuffer(buffer, position, &currentStep);
     helper::CopyToBuffer(buffer, position, &mpirank);
     helper::CopyToBuffer(buffer, position, &pgIndexStart);

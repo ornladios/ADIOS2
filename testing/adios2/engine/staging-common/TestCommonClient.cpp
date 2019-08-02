@@ -355,7 +355,7 @@ int main(int argc, char **argv)
     MPI_Init(nullptr, nullptr);
 #endif
 
-    int result, bare_args = 0;
+    int result;
     ::testing::InitGoogleTest(&argc, argv);
     DelayMS = 500; // smaller default for common client
     ParseArgs(argc, argv);

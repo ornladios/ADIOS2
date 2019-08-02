@@ -8,18 +8,6 @@
 #include "mpiwrap.h"
 #include "mpidummy.h"
 
-static inline bool SMPI_Available()
-{
-    int flag;
-    ::MPI_Initialized(&flag);
-    if (!flag)
-    {
-        return false;
-    }
-    ::MPI_Finalized(&flag);
-    return !flag;
-}
-
 #ifdef ADIOS2_HAVE_MPI
 
 // if MPI is available use it when possible, otherwise fall back to mpidummy

@@ -834,8 +834,6 @@ void BP4Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
             }
         };
 
-    size_t dataEndsAt = m_Data.m_Position;
-
     // Finish writing metadata counts and lengths
     // PG Index
     const uint64_t pgCount = m_MetadataSet.DataPGCount;
@@ -1870,7 +1868,6 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         // "attributesIndexOffset: " << attributesIndexOffset << std::endl;
         size_t localPosition = position + 36;
 
-        const size_t pgIndexLength = variablesIndexOffset - localPosition;
         size_t endPosition = variablesIndexOffset;
         // first deserialize pg indices
         lf_LocatePGIndices(m_PGIndicesInfo, rankSource, serialized,
@@ -2186,7 +2183,6 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     // now merge (and sort variables and attributes) indices
     if (rank == 0)
     {
-        auto &position = outBufferSTL.m_Position;
         auto &buffer = outBufferSTL.m_Buffer;
         const std::vector<char> &serialized = inBufferSTL.m_Buffer;
 

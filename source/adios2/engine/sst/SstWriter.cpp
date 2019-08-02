@@ -28,10 +28,8 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("SstWriter", io, name, mode, mpiComm)
 {
     auto AssembleMetadata = [](void *writer, int CohortSize,
-                               struct _SstData *PerRankMetadata,
-                               struct _SstData *PerRankAttributeData) {
-        class SstWriter::SstWriter *Writer =
-            reinterpret_cast<class SstWriter::SstWriter *>(writer);
+                               struct _SstData * /*PerRankMetadata*/,
+                               struct _SstData * /*PerRankAttributeData*/) {
         for (int i = 0; i < CohortSize; i++)
         {
             //            std::cout << "Rank " << i << " Metadata size is "
@@ -101,11 +99,8 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
     };
 
     auto FreeAssembledMetadata =
-        [](void *writer, struct _SstData *PerRankMetadata,
-           struct _SstData *PerRankAttributeData, void *ClientData) {
-            class SstWriter::SstWriter *Writer =
-                reinterpret_cast<class SstWriter::SstWriter *>(writer);
-
+        [](void * /*writer*/, struct _SstData * /*PerRankMetadata*/,
+           struct _SstData * /*PerRankAttributeData*/, void *ClientData) {
             //        std::cout << "Free called with client data " << ClientData
             //        << std::endl;
             free(ClientData);
