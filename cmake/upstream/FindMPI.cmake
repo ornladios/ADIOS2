@@ -1144,7 +1144,7 @@ macro(_MPI_create_imported_target LANG)
     add_library(MPI::MPI_${LANG} INTERFACE IMPORTED)
   endif()
 
-  if(NOT CMAKE_VERSION VERSION_LESS 3.11)
+  if(NOT CMAKE_VERSION VERSION_LESS 3.12)
     # When this is consumed for compiling CUDA, use '-Xcompiler' to wrap '-pthread'.
     string(REPLACE "-pthread" "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler >-pthread"
       _MPI_${LANG}_COMPILE_OPTIONS "${MPI_${LANG}_COMPILE_OPTIONS}")
