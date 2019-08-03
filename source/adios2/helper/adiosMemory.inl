@@ -251,11 +251,11 @@ inline void ReadArray(const std::vector<char> &buffer, size_t &position,
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (IsLittleEndian() != isLittleEndian)
     {
-        ReverseCopyFromBuffer(buffer, position, &value, nElems);
+        ReverseCopyFromBuffer(buffer, position, output, nElems);
     }
     else
     {
-        CopyFromBuffer(buffer, position, &value, nElems);
+        CopyFromBuffer(buffer, position, output, nElems);
     }
 #else
     CopyFromBuffer(buffer, position, output, nElems);
