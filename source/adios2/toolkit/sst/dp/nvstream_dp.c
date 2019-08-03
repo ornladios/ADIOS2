@@ -73,7 +73,6 @@ typedef struct _Nvstream_WSR_Stream
     struct _Nvstream_WS_Stream *WS_Stream;
     CP_PeerCohort PeerCohort;
     int ReaderCohortSize;
-    int ReadPatternLockTimestep;
     char *ReaderRequests;
     struct _NvstreamReaderContactInfo *ReaderContactInfo;
     struct _NvstreamWriterContactInfo
@@ -85,7 +84,6 @@ typedef struct _TimestepEntry
     long Timestep;
     struct _SstData Data;
     struct _NvstreamPerTimestepInfo *DP_TimestepInfo;
-    struct _ReaderRequestTrackRec *ReaderRequests;
     struct _TimestepEntry *Next;
 } * TimestepList;
 
@@ -99,13 +97,6 @@ typedef struct _RSTimestepEntry
     struct _RSTimestepEntry *Next;
 } * RSTimestepList;
 
-typedef struct _ReaderRequestTrackRec
-{
-    Nvstream_WSR_Stream Reader;
-    char *RequestList;
-    struct _ReaderRequestTrackRec *Next;
-} * ReaderRequestTrackPtr;
-
 typedef struct _Nvstream_WS_Stream
 {
     CManager cm;
@@ -115,7 +106,6 @@ typedef struct _Nvstream_WS_Stream
 
     TimestepList Timesteps;
     CMFormat ReadReplyFormat;
-    CMFormat PreloadFormat;
 
     int ReaderCount;
     Nvstream_WSR_Stream *Readers;
@@ -198,38 +188,6 @@ static void NvstreamReadReplyHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_Data,
                                      attr_list attrs);
 
-typedef struct _NvstreamPreloadMsg
-{
-    long Timestep;
-    size_t DataLength;
-    int WriterRank;
-    void *RS_Stream;
-    char *Data;
-} * NvstreamPreloadMsg;
-
-static FMField NvstreamPreloadList[] = {
-    {"Timestep", "integer", sizeof(long),
-     FMOffset(NvstreamPreloadMsg, Timestep)},
-    {"DataLength", "integer", sizeof(size_t),
-     FMOffset(NvstreamPreloadMsg, DataLength)},
-    {"WriterRank", "integer", sizeof(size_t),
-     FMOffset(NvstreamPreloadMsg, WriterRank)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(NvstreamPreloadMsg, RS_Stream)},
-    {"Data", "char[DataLength]", sizeof(char),
-     FMOffset(NvstreamPreloadMsg, Data)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec NvstreamPreloadStructs[] = {
-    {"NvstreamPreload", NvstreamPreloadList, sizeof(struct _NvstreamPreloadMsg),
-     NULL},
-    {NULL, NULL, 0, NULL}};
-
-static void NvstreamPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
-                                   void *client_Data, attr_list attrs);
-static void DiscardPriorPreloaded(CP_Services Svcs,
-                                  Nvstream_RS_Stream RS_Stream, long Timestep);
-
 static DP_RS_Stream NvstreamInitReader(CP_Services Svcs, void *CP_Stream,
                                        void **ReaderContactInfoPtr,
                                        struct _SstParams *Params)
@@ -286,22 +244,7 @@ static DP_RS_Stream NvstreamInitReader(CP_Services Svcs, void *CP_Stream,
 static void NvstreamDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
     Nvstream_RS_Stream RS_Stream = (Nvstream_RS_Stream)RS_Stream_v;
-    DiscardPriorPreloaded(Svcs, RS_Stream, -1);
     free(RS_Stream);
-}
-
-static void MarkReadRequest(TimestepList TS, DP_WSR_Stream Reader,
-                            int RequestingRank)
-{
-    ReaderRequestTrackPtr ReqList = TS->ReaderRequests;
-    while (ReqList != NULL)
-    {
-        if (ReqList->Reader == Reader)
-        {
-            ReqList->RequestList[RequestingRank] = 1;
-        }
-        ReqList = ReqList->Next;
-    }
 }
 
 static void NvstreamReadRequestHandler(CManager cm, CMConnection conn,
@@ -329,7 +272,6 @@ static void NvstreamReadRequestHandler(CManager cm, CMConnection conn,
         {
             struct _NvstreamReadReplyMsg ReadReplyMsg;
             /* memset avoids uninit byte warnings from valgrind */
-            MarkReadRequest(tmp, WSR_Stream, RequestingRank);
             memset(&ReadReplyMsg, 0, sizeof(ReadReplyMsg));
             ReadReplyMsg.Timestep = ReadRequestMsg->Timestep;
             ReadReplyMsg.DataLength = ReadRequestMsg->Length;
@@ -430,98 +372,6 @@ static void NvstreamReadReplyHandler(CManager cm, CMConnection conn,
     TAU_STOP_FUNC();
 }
 
-static int HandleRequestWithPreloaded(CP_Services Svcs,
-                                      Nvstream_RS_Stream RS_Stream, int Rank,
-                                      long Timestep, size_t Offset,
-                                      size_t Length, void *Buffer)
-{
-    RSTimestepList Entry = NULL;
-    pthread_mutex_lock(&RS_Stream->DataLock);
-    Entry = RS_Stream->QueuedTimesteps;
-    while (Entry &&
-           ((Entry->WriterRank != Rank) || (Entry->Timestep != Timestep)))
-    {
-        Entry = Entry->Next;
-    }
-    pthread_mutex_unlock(&RS_Stream->DataLock);
-    if (!Entry)
-    {
-        return 0;
-    }
-    Svcs->verbose(RS_Stream->CP_Stream,
-                  "Satisfying remote memory read with preload from writer rank "
-                  "%d for timestep %ld\n",
-                  Rank, Timestep);
-    memcpy(Buffer, Entry->Data + Offset, Length);
-    return 1;
-}
-
-static void DiscardPriorPreloaded(CP_Services Svcs,
-                                  Nvstream_RS_Stream RS_Stream, long Timestep)
-{
-    RSTimestepList Entry, Last = NULL;
-    pthread_mutex_lock(&RS_Stream->DataLock);
-    Entry = RS_Stream->QueuedTimesteps;
-
-    while (Entry)
-    {
-        RSTimestepList Next = Entry->Next;
-        if ((Entry->Timestep < Timestep) || (Timestep == -1))
-        {
-            RSTimestepList ItemToFree = Entry;
-            CManager cm = Svcs->getCManager(RS_Stream->CP_Stream);
-            if (Last)
-            {
-                Last->Next = Entry->Next;
-            }
-            else
-            {
-                RS_Stream->QueuedTimesteps = Entry->Next;
-            }
-            /* free item */
-            CMreturn_buffer(cm, ItemToFree->Data);
-
-            free(ItemToFree);
-        }
-        else
-        {
-            Last = Entry;
-        }
-        Entry = Next;
-    }
-    pthread_mutex_unlock(&RS_Stream->DataLock);
-}
-
-static void NvstreamPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
-                                   void *client_Data, attr_list attrs)
-{
-    NvstreamPreloadMsg PreloadMsg = (NvstreamPreloadMsg)msg_v;
-    Nvstream_RS_Stream RS_Stream = PreloadMsg->RS_Stream;
-    CP_Services Svcs = (CP_Services)client_Data;
-    NvstreamCompletionHandle Handle = NULL;
-    RSTimestepList Entry = calloc(1, sizeof(*Entry));
-
-    Svcs->verbose(
-        RS_Stream->CP_Stream,
-        "Got a preload message from writer rank %d for timestep %ld\n",
-        PreloadMsg->WriterRank, PreloadMsg->Timestep);
-
-    /* arrange for this message data to stay around */
-    CMtake_buffer(cm, msg_v);
-
-    Entry->Timestep = PreloadMsg->Timestep;
-    Entry->WriterRank = PreloadMsg->WriterRank;
-    Entry->Data = PreloadMsg->Data;
-    Entry->DataSize = PreloadMsg->DataLength;
-    Entry->DataStart = 0;
-
-    pthread_mutex_lock(&RS_Stream->DataLock);
-    Entry->Next = RS_Stream->QueuedTimesteps;
-    RS_Stream->QueuedTimesteps = Entry;
-    pthread_mutex_unlock(&RS_Stream->DataLock);
-    return;
-}
-
 static DP_WS_Stream NvstreamInitWriter(CP_Services Svcs, void *CP_Stream,
                                        struct _SstParams *Params)
 {
@@ -589,8 +439,6 @@ static DP_WSR_Stream NvstreamInitWriterPerReader(CP_Services Svcs,
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;
-    WSR_Stream->ReadPatternLockTimestep = -1;
-    WSR_Stream->ReaderRequests = NULL;
 
     /*
      * make a copy of writer contact information (original will not be
@@ -753,16 +601,10 @@ static void *NvstreamReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
         (NvstreamPerTimestepInfo)DP_TimestepInfo;
     struct _NvstreamReadRequestMsg ReadRequestMsg;
 
-    int HadPreload;
     static long LastRequestedTimestep = -1;
 
-    if ((LastRequestedTimestep != -1) && (LastRequestedTimestep != Timestep))
-    {
-        DiscardPriorPreloaded(Svcs, Stream, Timestep);
-    }
     LastRequestedTimestep = Timestep;
-    HadPreload = HandleRequestWithPreloaded(Svcs, Stream, Rank, Timestep,
-                                            Offset, Length, Buffer);
+
     ret->CPStream = Stream->CP_Stream;
     ret->DPStream = Stream;
     ret->Failed = 0;
@@ -770,12 +612,6 @@ static void *NvstreamReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     ret->Buffer = Buffer;
     ret->Rank = Rank;
     ret->CMcondition = -1;
-
-    if (HadPreload)
-    {
-        /* cool, we already had the data.  Setup a dummy return handle */
-        return ret;
-    }
 
     Svcs->verbose(Stream->CP_Stream,
                   "Adios requesting to read remote memory for Timestep %d "
@@ -850,114 +686,6 @@ static void NvstreamNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
-static void NvstreamReaderRegisterTimestep(CP_Services Svcs,
-                                           DP_WSR_Stream WSRStream_v,
-                                           long Timestep,
-                                           int WriterDefinitionsLocked)
-{
-    Nvstream_WSR_Stream WSR_Stream = (Nvstream_WSR_Stream)WSRStream_v;
-    Nvstream_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
-
-    if (WriterDefinitionsLocked)
-    {
-        /* go ahead and record read patterns */
-        TimestepList tmp = WS_Stream->Timesteps;
-
-        while (tmp != NULL)
-        {
-            if (tmp->Timestep == Timestep)
-            {
-                ReaderRequestTrackPtr ReqTrk = calloc(1, sizeof(*ReqTrk));
-                ReqTrk->Reader = WSR_Stream;
-                ReqTrk->RequestList = calloc(1, WSR_Stream->ReaderCohortSize);
-                ReqTrk->Next = tmp->ReaderRequests;
-                tmp->ReaderRequests = ReqTrk;
-                return;
-            }
-        }
-        tmp = tmp->Next;
-        printf("TIMESTEP NOT FOUND in READER REGISTER!\n");
-    }
-}
-
-static void SendPreloadMsgs(CP_Services Svcs, Nvstream_WSR_Stream WSR_Stream,
-                            TimestepList TS)
-{
-    Nvstream_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
-    struct _NvstreamPreloadMsg PreloadMsg;
-    memset(&PreloadMsg, 0, sizeof(PreloadMsg));
-    PreloadMsg.Timestep = TS->Timestep;
-    PreloadMsg.DataLength = TS->Data.DataSize;
-    PreloadMsg.Data = TS->Data.block;
-    PreloadMsg.WriterRank = WS_Stream->Rank;
-
-    for (int i = 0; i < WSR_Stream->ReaderCohortSize; i++)
-    {
-        if (WSR_Stream->ReaderRequests[i])
-        {
-            PreloadMsg.RS_Stream = WSR_Stream->ReaderContactInfo[i].RS_Stream;
-            CMwrite(WSR_Stream->ReaderContactInfo[i].Conn,
-                    WS_Stream->PreloadFormat, &PreloadMsg);
-        }
-    }
-}
-
-static void NvstreamReaderReleaseTimestep(CP_Services Svcs,
-                                          DP_WSR_Stream Stream_v, long Timestep)
-{
-    Nvstream_WSR_Stream WSR_Stream = (Nvstream_WSR_Stream)Stream_v;
-    Nvstream_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
-    TimestepList tmp = WS_Stream->Timesteps;
-
-    if (Timestep == WSR_Stream->ReadPatternLockTimestep)
-    {
-        /* save the pattern */
-        while (tmp != NULL)
-        {
-            if (tmp->Timestep == Timestep)
-            {
-                ReaderRequestTrackPtr ReqList = tmp->ReaderRequests;
-                while (ReqList != NULL)
-                {
-                    if (ReqList->Reader == WSR_Stream)
-                    {
-                        WSR_Stream->ReaderRequests = ReqList->RequestList;
-                        /* so it doesn't get free'd */
-                        ReqList->RequestList = NULL;
-                    }
-                    ReqList = ReqList->Next;
-                }
-            }
-            tmp = tmp->Next;
-        }
-        if (WSR_Stream->ReaderRequests)
-        {
-            /* send out any already queued timesteps */
-            tmp = WS_Stream->Timesteps;
-            while (tmp != NULL)
-            {
-
-                SendPreloadMsgs(Svcs, WSR_Stream, tmp);
-                tmp = tmp->Next;
-            }
-        }
-    }
-}
-
-static void NvstreamReadPatternLocked(CP_Services Svcs,
-                                      DP_WSR_Stream WSRStream_v,
-                                      long EffectiveTimestep)
-{
-    Nvstream_WSR_Stream WSR_Stream = (Nvstream_WSR_Stream)WSRStream_v;
-    Nvstream_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
-
-    WSR_Stream->ReadPatternLockTimestep = EffectiveTimestep;
-}
-
 static void NvstreamProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                                     struct _SstData *Data,
                                     struct _SstData *LocalMetadata,
@@ -1009,19 +737,6 @@ static void NvstreamReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
             free(List->DP_TimestepInfo->CheckString);
         if (List->DP_TimestepInfo)
             free(List->DP_TimestepInfo);
-        if (List->ReaderRequests)
-        {
-            ReaderRequestTrackPtr tmp = List->ReaderRequests;
-            while (tmp)
-            {
-                ReaderRequestTrackPtr Next = tmp->Next;
-                if (tmp->RequestList)
-                    free(tmp->RequestList);
-                free(tmp);
-                tmp = Next;
-            }
-        }
-
         free(List);
     }
     else
@@ -1037,19 +752,6 @@ static void NvstreamReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
                     free(List->DP_TimestepInfo->CheckString);
                 if (List->DP_TimestepInfo)
                     free(List->DP_TimestepInfo);
-                if (List->ReaderRequests)
-                {
-                    ReaderRequestTrackPtr tmp = List->ReaderRequests;
-                    while (tmp)
-                    {
-                        ReaderRequestTrackPtr Next = tmp->Next;
-                        if (tmp->RequestList)
-                            free(tmp->RequestList);
-                        free(tmp);
-                        tmp = Next;
-                    }
-                }
-
                 free(List);
                 return;
             }
@@ -1128,9 +830,9 @@ extern CP_DP_Interface LoadNvstreamDP()
     nvstreamDPInterface.notifyConnFailure = NvstreamNotifyConnFailure;
     nvstreamDPInterface.provideTimestep = NvstreamProvideTimestep;
     nvstreamDPInterface.releaseTimestep = NvstreamReleaseTimestep;
-    nvstreamDPInterface.readerRegisterTimestep = NvstreamReaderRegisterTimestep;
-    nvstreamDPInterface.readerReleaseTimestep = NvstreamReaderReleaseTimestep;
-    nvstreamDPInterface.readPatternLocked = NvstreamReadPatternLocked;
+    nvstreamDPInterface.readerRegisterTimestep = NULL;
+    nvstreamDPInterface.readerReleaseTimestep = NULL;
+    nvstreamDPInterface.readPatternLocked = NULL;
     nvstreamDPInterface.destroyReader = NvstreamDestroyReader;
     nvstreamDPInterface.destroyWriter = NvstreamDestroyWriter;
     nvstreamDPInterface.destroyWriterPerReader = NvstreamDestroyWriterPerReader;
