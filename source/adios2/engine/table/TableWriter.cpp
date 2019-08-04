@@ -37,7 +37,13 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
     Init();
 }
 
-TableWriter::~TableWriter() {}
+TableWriter::~TableWriter()
+{
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "TableWriter::~TableWriter " << m_MpiRank << std::endl;
+    }
+}
 
 StepStatus TableWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -67,7 +73,13 @@ void TableWriter::EndStep()
     {
         auto localPack = s->GetLocalPack();
         m_SendStagingMan.Request(*localPack, s->GetDestination());
+        if (m_Verbosity >= 5)
+        {
+            std::cout << "TableWriter::EndStep Rank " << m_MpiRank << " Sent a package" << std::endl;
+        }
     }
+
+    m_AfterFinalSend = true;
 
     MPI_Barrier(m_MPIComm);
 
@@ -78,6 +90,37 @@ void TableWriter::EndStep()
     }
     m_SubEngine->EndStep();
 }
+
+void TableWriter::ReplyThread()
+{
+    transportman::StagingMan receiveStagingMan(m_MPIComm, Mode::Write,
+                                               m_Timeout, 1e9);
+    receiveStagingMan.OpenTransport(m_AllAddresses[m_MpiRank]);
+    while (m_Listening)
+    {
+        auto request = receiveStagingMan.ReceiveRequest();
+        if (request == nullptr or request->empty())
+        {
+            if (m_Verbosity >= 20)
+            {
+                std::cout << "TableWriter::ReplyThread " << m_MpiRank
+                          << " did not receive anything" << std::endl;
+            }
+            continue;
+        }
+        if (m_Verbosity >= 10)
+        {
+            std::cout << "TableWriter::ReplyThread " << m_MpiRank
+                      << " received a package" << std::endl;
+        }
+        m_Deserializer.PutPack(request);
+        format::VecPtr reply = std::make_shared<std::vector<char>>(1);
+        receiveStagingMan.SendReply(reply);
+        PutAggregatorBuffer();
+        PutSubEngine();
+    }
+}
+
 
 void TableWriter::Flush(const int transportIndex)
 {
@@ -180,36 +223,6 @@ void TableWriter::InitTransports()
 
     m_Listening = true;
     m_ReplyThread = std::thread(&TableWriter::ReplyThread, this);
-}
-
-void TableWriter::ReplyThread()
-{
-    transportman::StagingMan receiveStagingMan(m_MPIComm, Mode::Write,
-                                               m_Timeout, 1e9);
-    receiveStagingMan.OpenTransport(m_AllAddresses[m_MpiRank]);
-    while (m_Listening)
-    {
-        auto request = receiveStagingMan.ReceiveRequest();
-        if (request == nullptr or request->empty())
-        {
-            if (m_Verbosity >= 20)
-            {
-                std::cout << "TableWriter::ReplyThread " << m_MpiRank
-                          << " did not receive anything" << std::endl;
-            }
-            continue;
-        }
-        if (m_Verbosity >= 10)
-        {
-            std::cout << "TableWriter::ReplyThread " << m_MpiRank
-                      << " received a package" << std::endl;
-        }
-        m_Deserializer.PutPack(request);
-        format::VecPtr reply = std::make_shared<std::vector<char>>(1);
-        receiveStagingMan.SendReply(reply);
-        PutAggregatorBuffer();
-        PutSubEngine();
-    }
 }
 
 void TableWriter::PutAggregatorBuffer()

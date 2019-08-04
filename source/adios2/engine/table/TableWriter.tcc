@@ -70,6 +70,10 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             auto localPack = serializer->GetLocalPack();
             m_SendStagingMan.Request(*localPack, serializer->GetDestination());
             serializer->NewWriterBuffer(m_BufferSize);
+            if (m_Verbosity >= 5)
+            {
+                std::cout << "TableWriter::PutDeferredCommon Rank " << m_MpiRank << " Sent a package" << std::endl;
+            }
         }
     }
 
