@@ -354,6 +354,16 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection conn,
                         .ContactString);
                 CMConnection Conn = CMget_conn(cm, List);
                 free_attr_list(List);
+                if (!Conn)
+                {
+                    Svcs->verbose(
+                        WS_Stream->CP_Stream,
+                        "Failed to connect to reader rank %d for response to "
+                        "remote read, assume failure, no response sent\n",
+                        RequestingRank);
+                    TAU_STOP_FUNC();
+                    return;
+                }
                 WSR_Stream->ReaderContactInfo[RequestingRank].Conn = Conn;
             }
             CMwrite(WSR_Stream->ReaderContactInfo[RequestingRank].Conn,
