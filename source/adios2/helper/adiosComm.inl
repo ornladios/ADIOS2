@@ -191,6 +191,14 @@ Comm::Status Comm::Recv(T *buf, size_t count, int source, int tag,
     return RecvImpl(buf, count, Datatype<T>(), source, tag, hint);
 }
 
+template <typename TSend, typename TRecv>
+void Comm::Scatter(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                   size_t recvcount, int root, const std::string &hint) const
+{
+    return ScatterImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
+                       recvcount, Datatype<TRecv>(), root, hint);
+}
+
 template <typename T>
 Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
                       const std::string &hint) const

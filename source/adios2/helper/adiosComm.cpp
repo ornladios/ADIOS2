@@ -209,6 +209,17 @@ Comm::Status Comm::RecvImpl(void *buf, size_t count, MPI_Datatype datatype,
     return status;
 }
 
+void Comm::ScatterImpl(const void *sendbuf, size_t sendcount,
+                       MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                       MPI_Datatype recvtype, int root,
+                       const std::string &hint) const
+{
+    CheckMPIReturn(MPI_Scatter(sendbuf, static_cast<int>(sendcount), sendtype,
+                               recvbuf, static_cast<int>(recvcount), recvtype,
+                               root, m_MPIComm),
+                   hint);
+}
+
 Comm::Req Comm::IsendImpl(const void *buffer, size_t count,
                           MPI_Datatype datatype, int dest, int tag,
                           const std::string &hint) const

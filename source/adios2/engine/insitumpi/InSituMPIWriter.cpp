@@ -441,8 +441,7 @@ void InSituMPIWriter::ReceiveReadSchedule(
     }
 
     // Each writer receives the number of its peer readers
-    MPI_Scatter(nReaderPerWriter.data(), 1, MPI_INT, &nPeerReaders, 1, MPI_INT,
-                0, m_Comm);
+    m_Comm.Scatter(nReaderPerWriter.data(), 1, &nPeerReaders, 1, 0);
 
     std::vector<MPI_Request> requests(nPeerReaders);
     // Reader global rank -> length of serialized read schedule

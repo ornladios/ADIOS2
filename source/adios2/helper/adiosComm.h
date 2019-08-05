@@ -203,6 +203,11 @@ public:
     Status Recv(T *buf, size_t count, int source, int tag,
                 const std::string &hint = std::string()) const;
 
+    template <typename TSend, typename TRecv>
+    void Scatter(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                 size_t recvcount, int root,
+                 const std::string &hint = std::string()) const;
+
     template <typename T>
     Req Isend(const T *buffer, const size_t count, int destination, int tag,
               const std::string &hint = std::string()) const;
@@ -248,6 +253,11 @@ private:
 
     Status RecvImpl(void *buf, size_t count, MPI_Datatype datatype, int source,
                     int tag, const std::string &hint) const;
+
+    void ScatterImpl(const void *sendbuf, size_t sendcount,
+                     MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                     MPI_Datatype recvtype, int root,
+                     const std::string &hint) const;
 
     Req IsendImpl(const void *buffer, size_t count, MPI_Datatype datatype,
                   int dest, int tag, const std::string &hint) const;
