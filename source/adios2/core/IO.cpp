@@ -695,7 +695,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, MPI_Comm mpiComm)
 
 Engine &IO::Open(const std::string &name, const Mode mode)
 {
-    return Open(name, mode, m_ADIOS.GetComm());
+    return Open(name, mode, m_ADIOS.GetComm().AsMPI());
 }
 
 Engine &IO::GetEngine(const std::string &name)

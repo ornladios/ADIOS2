@@ -109,7 +109,7 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Output = SstWriterOpen(name.c_str(), &Params, m_Comm);
+    m_Output = SstWriterOpen(name.c_str(), &Params, m_Comm.AsMPI());
 
     if (m_MarshalMethod == SstMarshalBP)
     {

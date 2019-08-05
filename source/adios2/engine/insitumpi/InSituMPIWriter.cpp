@@ -38,7 +38,8 @@ InSituMPIWriter::InSituMPIWriter(IO &io, const std::string &name,
     Init();
     m_BP3Serializer.InitParameters(m_IO.m_Parameters);
 
-    m_RankAllPeers = insitumpi::FindPeers(m_Comm, m_Name, true, m_CommWorld);
+    m_RankAllPeers =
+        insitumpi::FindPeers(m_Comm.AsMPI(), m_Name, true, m_CommWorld);
     for (int i = 0; i < m_RankAllPeers.size(); i++)
     {
         m_RankToPeerID[m_RankAllPeers[i]] = i;

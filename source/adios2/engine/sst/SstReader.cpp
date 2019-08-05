@@ -35,7 +35,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
 
     Init();
 
-    m_Input = SstReaderOpen(cstr, &Params, m_Comm);
+    m_Input = SstReaderOpen(cstr, &Params, m_Comm.AsMPI());
     if (!m_Input)
     {
         throw std::runtime_error(

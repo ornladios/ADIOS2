@@ -40,7 +40,7 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name,
     {
         m_data.appid = 0;
     }
-    MPI_Comm mpiComm = m_Comm;
+    MPI_Comm mpiComm = m_Comm.AsMPI();
     ret = adios_dataspaces_init(&mpiComm, &m_data);
     if (ret < 0)
         fprintf(stderr, "Unable to connect to DataSpaces. Err: %d\n", ret);

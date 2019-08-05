@@ -52,7 +52,7 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name,
     {
         m_ProvideLatest = false;
     }
-    MPI_Comm mpiComm = m_Comm;
+    MPI_Comm mpiComm = m_Comm.AsMPI();
     ret = adios_read_dataspaces_init(&mpiComm, &m_data);
     if (ret < 0)
     {

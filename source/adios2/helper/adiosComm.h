@@ -65,9 +65,10 @@ public:
      */
     void swap(Comm &comm);
 
-    // FIXME: Remove conversion after clients transition to encapsulation.
-    /** Convert to a concrete MPI communicator.  */
-    operator MPI_Comm() const { return m_MPIComm; }
+    /**
+     * @brief Get the underlying raw MPI communicator.
+     */
+    MPI_Comm AsMPI() const { return m_MPIComm; }
 
     /**
      * @brief Create a communicator by duplicating a MPI communicator.

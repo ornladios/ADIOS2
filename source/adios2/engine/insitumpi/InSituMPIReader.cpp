@@ -37,7 +37,8 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
     m_EndMessage = " in call to IO Open InSituMPIReader " + m_Name + "\n";
     Init();
 
-    m_RankAllPeers = insitumpi::FindPeers(m_Comm, m_Name, false, m_CommWorld);
+    m_RankAllPeers =
+        insitumpi::FindPeers(m_Comm.AsMPI(), m_Name, false, m_CommWorld);
     MPI_Comm_rank(m_CommWorld, &m_GlobalRank);
     MPI_Comm_size(m_CommWorld, &m_GlobalNproc);
     m_ReaderRank = m_Comm.Rank();
