@@ -132,11 +132,13 @@ if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
 endif()
 
 # Table
-if(ZeroMQ_FOUND)
-    if(ADIOS2_USE_Table STREQUAL AUTO)
-        set(ADIOS2_HAVE_Table TRUE)
-    elseif(ADIOS2_USE_Table)
-        set(ADIOS2_HAVE_Table TRUE)
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
+    if(ZeroMQ_FOUND)
+        if(ADIOS2_USE_Table STREQUAL AUTO)
+            set(ADIOS2_HAVE_Table TRUE)
+        elseif(ADIOS2_USE_Table)
+            set(ADIOS2_HAVE_Table TRUE)
+        endif()
     endif()
 endif()
 
