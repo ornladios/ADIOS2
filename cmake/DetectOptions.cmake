@@ -148,6 +148,7 @@ elseif(ADIOS2_USE_DataSpaces)
 endif()
 if(DATASPACES_FOUND)
   set(ADIOS2_HAVE_DataSpaces TRUE)
+endif()
 
 # HDF5
 if(ADIOS2_USE_HDF5 STREQUAL AUTO)
