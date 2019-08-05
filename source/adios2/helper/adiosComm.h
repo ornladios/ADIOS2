@@ -174,6 +174,11 @@ public:
                               const std::string hint = "",
                               const int rankSource = 0) const;
 
+    template <typename TSend, typename TRecv>
+    void Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                   size_t recvcount,
+                   const std::string &hint = std::string()) const;
+
     template <typename T>
     void Bcast(T *buffer, size_t count, int root,
                const std::string &hint = std::string()) const;
@@ -215,6 +220,10 @@ private:
     MPI_Comm m_MPIComm = MPI_COMM_NULL;
 
     static void CheckMPIReturn(const int value, const std::string &hint);
+
+    void AllgatherImpl(const void *sendbuf, size_t sendcount,
+                       MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                       MPI_Datatype recvtype, const std::string &hint) const;
 
     void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype, int root,
                    const std::string &hint) const;

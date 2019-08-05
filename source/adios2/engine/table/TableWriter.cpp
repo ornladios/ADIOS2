@@ -205,8 +205,7 @@ void TableWriter::InitParameters()
     std::vector<char> cv(128);
     std::vector<char> cvAll(128 * m_MpiSize);
     std::memcpy(cv.data(), a.c_str(), a.size());
-    MPI_Allgather(cv.data(), cv.size(), MPI_CHAR, cvAll.data(), cv.size(),
-                  MPI_CHAR, m_Comm);
+    m_Comm.Allgather(cv.data(), cv.size(), cvAll.data(), cv.size());
     for (int i = 0; i < m_MpiSize; ++i)
     {
         auto j = nlohmann::json::parse(cvAll.data() + i * 128);

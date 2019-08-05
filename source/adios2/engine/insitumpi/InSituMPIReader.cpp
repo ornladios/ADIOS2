@@ -76,7 +76,7 @@ InSituMPIReader::InSituMPIReader(IO &io, const std::string &name,
 
     // figure out who is the Reader Root
     std::vector<int> v(m_ReaderNproc);
-    MPI_Allgather(&m_ReaderRootRank, 1, MPI_INT, v.data(), 1, MPI_INT, m_Comm);
+    m_Comm.Allgather(&m_ReaderRootRank, 1, v.data(), 1);
     for (int i = 0; i < m_ReaderNproc; i++)
     {
         if (v[i] != -1)

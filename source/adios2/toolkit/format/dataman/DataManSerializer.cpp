@@ -80,8 +80,8 @@ void DataManSerializer::AggregateMetadata()
       1) = size;
 
     std::vector<char> globalJsonStr(m_MpiSize * maxSize);
-    MPI_Allgather(localJsonPack->data(), maxSize, MPI_CHAR,
-                  globalJsonStr.data(), maxSize, MPI_CHAR, m_Comm);
+    m_Comm.Allgather(localJsonPack->data(), maxSize, globalJsonStr.data(),
+                     maxSize);
 
     nlohmann::json aggMetadata;
 

@@ -136,6 +136,16 @@ std::string Comm::BroadcastFile(const std::string &fileName,
     return fileContents;
 }
 
+void Comm::AllgatherImpl(const void *sendbuf, size_t sendcount,
+                         MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                         MPI_Datatype recvtype, const std::string &hint) const
+{
+    CheckMPIReturn(
+        SMPI_Allgather(sendbuf, static_cast<int>(sendcount), sendtype, recvbuf,
+                       static_cast<int>(recvcount), recvtype, m_MPIComm),
+        hint);
+}
+
 void Comm::BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
                      int root, const std::string &hint) const
 {

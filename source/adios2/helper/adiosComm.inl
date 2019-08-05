@@ -141,6 +141,14 @@ template <>
 void Comm::BroadcastVector(std::vector<size_t> &vector,
                            const int rankSource) const;
 
+template <typename TSend, typename TRecv>
+void Comm::Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                     size_t recvcount, const std::string &hint) const
+{
+    return AllgatherImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf,
+                         recvcount, Datatype<TRecv>(), hint);
+}
+
 template <typename T>
 void Comm::Bcast(T *buffer, const size_t count, int root,
                  const std::string &hint) const

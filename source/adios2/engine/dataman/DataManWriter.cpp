@@ -43,10 +43,10 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         std::vector<char> allDaVec(32 * m_MpiSize, '\0');
         std::vector<char> allCaVec(32 * m_MpiSize, '\0');
 
-        MPI_Allgather(m_DataAddress.data(), m_DataAddress.size(), MPI_CHAR,
-                      allDaVec.data(), 32, MPI_CHAR, m_Comm);
-        MPI_Allgather(m_ControlAddress.data(), m_ControlAddress.size(),
-                      MPI_CHAR, allCaVec.data(), 32, MPI_CHAR, m_Comm);
+        m_Comm.Allgather(m_DataAddress.data(), m_DataAddress.size(),
+                         allDaVec.data(), 32);
+        m_Comm.Allgather(m_ControlAddress.data(), m_ControlAddress.size(),
+                         allCaVec.data(), 32);
 
         std::vector<std::string> daVec;
         std::vector<std::string> caVec;
