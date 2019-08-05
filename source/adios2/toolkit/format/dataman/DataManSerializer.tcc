@@ -112,13 +112,17 @@ void DataManSerializer::PutVar(const T *inputData, const std::string &varName,
 
     nlohmann::json metaj;
 
-    metaj["A"] = address;
     metaj["N"] = varName;
     metaj["O"] = varStart;
     metaj["C"] = varCount;
     metaj["S"] = varShape;
     metaj["Y"] = helper::GetType<T>();
     metaj["P"] = localBuffer->size();
+
+    if (not address.empty())
+    {
+        metaj["A"] = address;
+    }
 
     if (m_EnableStat)
     {

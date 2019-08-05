@@ -83,11 +83,11 @@ using DeferredRequestMapPtr = std::shared_ptr<DeferredRequestMap>;
 class DataManSerializer
 {
 public:
-    DataManSerializer(bool isRowMajor, const bool contiguousMajor,
-                      bool isLittleEndian, MPI_Comm mpiComm);
+    DataManSerializer(MPI_Comm mpiComm, const size_t writerBufferSize,
+                      const bool isRowMajor);
 
     // clear and allocate new buffer for writer
-    void New(size_t size);
+    void NewWriterBuffer(size_t size);
 
     // put a variable for writer
     template <class T>
@@ -113,6 +113,8 @@ public:
 
     // attach m_StaticDataJson to m_MetadataJson
     void AttachAttributes();
+
+    void SetReverseMajor();
 
     // get the metadata incorporated local buffer for writer, usually called in
     // EndStep
@@ -153,8 +155,16 @@ public:
                            const Dims &start, const Dims &count, void *data);
     DeferredRequestMapPtr GetDeferredRequest();
 
+    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
+                          const Dims &outStart, const Dims &outCount,
+                          Dims &ovlpStart, Dims &ovlpCount);
+
+    void SetDestination(const std::string &dest);
+    std::string GetDestination();
+
     size_t MinStep();
     size_t Steps();
+    size_t LocalBufferSize();
 
 private:
     template <class T>
@@ -178,10 +188,6 @@ private:
                                 const std::string &type, const Dims &count);
 
     void JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack);
-
-    bool CalculateOverlap(const Dims &inStart, const Dims &inCount,
-                          const Dims &outStart, const Dims &outCount,
-                          Dims &ovlpStart, Dims &ovlpCount);
 
     VecPtr SerializeJson(const nlohmann::json &message);
     nlohmann::json DeserializeJson(const char *start, size_t size);
@@ -224,14 +230,14 @@ private:
     std::mutex m_StaticDataJsonMutex;
     bool m_StaticDataFinished = false;
 
-    // for generating deferred requests, only accessed from reader app thread,
+    // for generating deferred requests, only accessed from reader main thread,
     // does not need mutex
-
     DeferredRequestMapPtr m_DeferredRequestsToSend;
 
     // string, msgpack, cbor, ubjson
     std::string m_UseJsonSerialization = "string";
 
+    std::string m_Destination;
     bool m_IsRowMajor;
     bool m_IsLittleEndian;
     bool m_ContiguousMajor;

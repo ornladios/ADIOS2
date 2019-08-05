@@ -131,6 +131,17 @@ if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
     endif()
 endif()
 
+# Table
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "PGI") AND NOT MSVC)
+    if(ZeroMQ_FOUND AND ADIOS2_HAVE_MPI)
+        if(ADIOS2_USE_Table STREQUAL AUTO)
+            set(ADIOS2_HAVE_Table TRUE)
+        elseif(ADIOS2_USE_Table)
+            set(ADIOS2_HAVE_Table TRUE)
+        endif()
+    endif()
+endif()
+
 # DataSpaces
 if(ADIOS2_USE_DataSpaces STREQUAL AUTO)
   find_package(DataSpaces 1.8)
