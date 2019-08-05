@@ -180,6 +180,10 @@ public:
                    const std::string &hint = std::string()) const;
 
     template <typename T>
+    void Allreduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
+                   const std::string &hint = std::string()) const;
+
+    template <typename T>
     void Bcast(T *buffer, size_t count, int root,
                const std::string &hint = std::string()) const;
 
@@ -224,6 +228,10 @@ private:
     void AllgatherImpl(const void *sendbuf, size_t sendcount,
                        MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
                        MPI_Datatype recvtype, const std::string &hint) const;
+
+    void AllreduceImpl(const void *sendbuf, void *recvbuf, size_t count,
+                       MPI_Datatype datatype, MPI_Op op,
+                       const std::string &hint) const;
 
     void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype, int root,
                    const std::string &hint) const;

@@ -190,7 +190,7 @@ StepStatus InSituMPIReader::BeginStep(const StepMode mode,
         }
         /* Exchange steps */
         int maxstep;
-        MPI_Allreduce(&step, &maxstep, 1, MPI_INT, MPI_MAX, m_Comm);
+        m_Comm.Allreduce(&step, &maxstep, 1, MPI_MAX);
 
         if (m_Verbosity == 5 && !m_ReaderRank)
         {

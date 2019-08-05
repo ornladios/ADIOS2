@@ -150,6 +150,13 @@ void Comm::Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
 }
 
 template <typename T>
+void Comm::Allreduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
+                     const std::string &hint) const
+{
+    return AllreduceImpl(sendbuf, recvbuf, count, Datatype<T>(), op, hint);
+}
+
+template <typename T>
 void Comm::Bcast(T *buffer, const size_t count, int root,
                  const std::string &hint) const
 {

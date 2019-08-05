@@ -146,6 +146,15 @@ void Comm::AllgatherImpl(const void *sendbuf, size_t sendcount,
         hint);
 }
 
+void Comm::AllreduceImpl(const void *sendbuf, void *recvbuf, size_t count,
+                         MPI_Datatype datatype, MPI_Op op,
+                         const std::string &hint) const
+{
+    CheckMPIReturn(SMPI_Allreduce(sendbuf, recvbuf, static_cast<int>(count),
+                                  datatype, op, m_MPIComm),
+                   hint);
+}
+
 void Comm::BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
                      int root, const std::string &hint) const
 {
