@@ -11,15 +11,14 @@
 #ifndef ADIOS2_ENGINE_TABLEWRITER_H_
 #define ADIOS2_ENGINE_TABLEWRITER_H_
 
-#include "../../bindings/CXX11/adios2.h"
-
-#include "adios2/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/bp4/BP4Writer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/transportman/stagingman/StagingMan.h"
+
+#include "../../bindings/CXX11/adios2.h"
 
 namespace adios2
 {
