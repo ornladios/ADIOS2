@@ -161,6 +161,35 @@ void Comm::ReduceInPlaceImpl(void *buf, size_t count, MPI_Datatype datatype,
                    hint);
 }
 
+void Comm::SendImpl(const void *buf, size_t count, MPI_Datatype datatype,
+                    int dest, int tag, const std::string &hint) const
+{
+    CheckMPIReturn(
+        MPI_Send(buf, static_cast<int>(count), datatype, dest, tag, m_MPIComm),
+        hint);
+}
+
+Comm::Status Comm::RecvImpl(void *buf, size_t count, MPI_Datatype datatype,
+                            int source, int tag, const std::string &hint) const
+{
+    MPI_Status mpiStatus;
+    CheckMPIReturn(MPI_Recv(buf, static_cast<int>(count), datatype, source, tag,
+                            m_MPIComm, &mpiStatus),
+                   hint);
+
+    Status status;
+#ifdef ADIOS2_HAVE_MPI
+    status.Source = mpiStatus.MPI_SOURCE;
+    status.Tag = mpiStatus.MPI_TAG;
+    {
+        int mpiCount = 0;
+        CheckMPIReturn(MPI_Get_count(&mpiStatus, datatype, &mpiCount), hint);
+        status.Count = mpiCount;
+    }
+#endif
+    return status;
+}
+
 Comm::Req Comm::IsendImpl(const void *buffer, size_t count,
                           MPI_Datatype datatype, int dest, int tag,
                           const std::string &hint) const

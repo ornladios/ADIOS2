@@ -187,6 +187,14 @@ public:
                        const std::string &hint = std::string()) const;
 
     template <typename T>
+    void Send(const T *buf, size_t count, int dest, int tag,
+              const std::string &hint = std::string()) const;
+
+    template <typename T>
+    Status Recv(T *buf, size_t count, int source, int tag,
+                const std::string &hint = std::string()) const;
+
+    template <typename T>
     Req Isend(const T *buffer, const size_t count, int destination, int tag,
               const std::string &hint = std::string()) const;
 
@@ -217,6 +225,12 @@ private:
 
     void ReduceInPlaceImpl(void *buf, size_t count, MPI_Datatype datatype,
                            MPI_Op op, int root, const std::string &hint) const;
+
+    void SendImpl(const void *buf, size_t count, MPI_Datatype datatype,
+                  int dest, int tag, const std::string &hint) const;
+
+    Status RecvImpl(void *buf, size_t count, MPI_Datatype datatype, int source,
+                    int tag, const std::string &hint) const;
 
     Req IsendImpl(const void *buffer, size_t count, MPI_Datatype datatype,
                   int dest, int tag, const std::string &hint) const;

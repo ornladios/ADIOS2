@@ -163,6 +163,20 @@ void Comm::ReduceInPlace(T *buf, size_t count, MPI_Op op, int root,
 }
 
 template <typename T>
+void Comm::Send(const T *buf, size_t count, int dest, int tag,
+                const std::string &hint) const
+{
+    return SendImpl(buf, count, Datatype<T>(), dest, tag, hint);
+}
+
+template <typename T>
+Comm::Status Comm::Recv(T *buf, size_t count, int source, int tag,
+                        const std::string &hint) const
+{
+    return RecvImpl(buf, count, Datatype<T>(), source, tag, hint);
+}
+
+template <typename T>
 Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
                       const std::string &hint) const
 {
