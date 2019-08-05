@@ -187,6 +187,11 @@ public:
     void Bcast(T *buffer, size_t count, int root,
                const std::string &hint = std::string()) const;
 
+    template <typename TSend, typename TRecv>
+    void Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                size_t recvcount, int root,
+                const std::string &hint = std::string()) const;
+
     template <typename T>
     void Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op, int root,
                 const std::string &hint = std::string()) const;
@@ -240,6 +245,11 @@ private:
 
     void BcastImpl(void *buffer, size_t count, MPI_Datatype datatype, int root,
                    const std::string &hint) const;
+
+    void GatherImpl(const void *sendbuf, size_t sendcount,
+                    MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                    MPI_Datatype recvtype, int root,
+                    const std::string &hint) const;
 
     void ReduceImpl(const void *sendbuf, void *recvbuf, size_t count,
                     MPI_Datatype datatype, MPI_Op op, int root,

@@ -163,6 +163,14 @@ void Comm::Bcast(T *buffer, const size_t count, int root,
     return BcastImpl(buffer, count, Datatype<T>(), root, hint);
 }
 
+template <typename TSend, typename TRecv>
+void Comm::Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
+                  size_t recvcount, int root, const std::string &hint) const
+{
+    return GatherImpl(sendbuf, sendcount, Datatype<TSend>(), recvbuf, recvcount,
+                      Datatype<TRecv>(), root, hint);
+}
+
 template <typename T>
 void Comm::Reduce(const T *sendbuf, T *recvbuf, size_t count, MPI_Op op,
                   int root, const std::string &hint) const

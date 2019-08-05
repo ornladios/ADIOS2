@@ -163,6 +163,17 @@ void Comm::BcastImpl(void *buffer, size_t count, MPI_Datatype datatype,
         hint);
 }
 
+void Comm::GatherImpl(const void *sendbuf, size_t sendcount,
+                      MPI_Datatype sendtype, void *recvbuf, size_t recvcount,
+                      MPI_Datatype recvtype, int root,
+                      const std::string &hint) const
+{
+    CheckMPIReturn(SMPI_Gather(sendbuf, static_cast<int>(sendcount), sendtype,
+                               recvbuf, static_cast<int>(recvcount), recvtype,
+                               root, m_MPIComm),
+                   hint);
+}
+
 void Comm::ReduceImpl(const void *sendbuf, void *recvbuf, size_t count,
                       MPI_Datatype datatype, MPI_Op op, int root,
                       const std::string &hint) const
