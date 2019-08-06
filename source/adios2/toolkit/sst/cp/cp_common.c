@@ -1356,6 +1356,8 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
         }
         if (s->Role == ReaderRole)
         {
+            CP_verbose(s, "Registering reader close handler for peer %d\n",
+                       Rank);
             CMconn_register_close_handler(Peers[Rank].CMconn,
                                           ReaderConnCloseHandler, (void *)s);
         }
@@ -1365,6 +1367,9 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
             {
                 if (Peers == s->Readers[i]->Connections)
                 {
+                    CP_verbose(s,
+                               "Registering writer close handler for peer %d\n",
+                               Rank);
                     CMconn_register_close_handler(Peers[Rank].CMconn,
                                                   WriterConnCloseHandler,
                                                   (void *)s->Readers[i]);
@@ -1377,6 +1382,8 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
     {
         CP_verbose(s, "Message failed to send to peer %d in CP_sendToPeer()\n",
                    Rank);
+        CMConnection_close(Peers[Rank].CMconn);
+        Peers[Rank].CMconn = NULL;
     }
 }
 
