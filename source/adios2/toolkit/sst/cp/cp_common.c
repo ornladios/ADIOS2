@@ -1386,7 +1386,7 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
         CP_verbose(s,
                    "Message failed to send to peer %d CONNECTION %p in "
                    "CP_sendToPeer()\n",
-                   Rank, Peers[Rank].CMconn, );
+                   Rank, Peers[Rank].CMconn);
     }
 }
 
