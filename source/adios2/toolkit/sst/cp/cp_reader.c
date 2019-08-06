@@ -141,7 +141,7 @@ static char *readContactInfo(const char *Name, SstStream Stream, int Timeout)
     }
 }
 
-static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
+extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                                    void *client_data)
 {
     TAU_START_FUNC();

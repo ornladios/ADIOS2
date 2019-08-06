@@ -1336,6 +1336,10 @@ static CManager CP_getCManager(SstStream Stream) { return Stream->CPInfo->cm; }
 
 static MPI_Comm CP_getMPIComm(SstStream Stream) { return Stream->mpiComm; }
 
+extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
+                                   void *client_data);
+extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
+                                   void *client_data);
 static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
                           CMFormat Format, void *Data)
 {
@@ -1349,6 +1353,24 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
                      "Connection failed in CP_sendToPeer! Contact list was:\n");
             CP_error(s, attr_list_to_string(Peers[Rank].ContactList));
             return;
+        }
+        if (s->Role == ReaderRole)
+        {
+            CMconn_register_close_handler(Peers[Rank].CMconn,
+                                          ReaderConnCloseHandler, (void *)s);
+        }
+        else
+        {
+            for (int i = 0; i < s->ReaderCount; i++)
+            {
+                if (Peers == s->Readers[i]->Connections)
+                {
+                    CMconn_register_close_handler(Peers[Rank].CMconn,
+                                                  WriterConnCloseHandler,
+                                                  (void *)s->Readers[i]);
+                    break;
+                }
+            }
         }
     }
     if (CMwrite(Peers[Rank].CMconn, Format, Data) != 1)
