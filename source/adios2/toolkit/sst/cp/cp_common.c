@@ -1178,8 +1178,8 @@ SstStream CP_newStream()
 
 static void DP_verbose(SstStream Stream, char *Format, ...);
 static CManager CP_getCManager(SstStream Stream);
-static void CP_sendToPeer(SstStream Stream, CP_PeerCohort cohort, int rank,
-                          CMFormat Format, void *data);
+static int CP_sendToPeer(SstStream Stream, CP_PeerCohort cohort, int rank,
+                         CMFormat Format, void *data);
 static MPI_Comm CP_getMPIComm(SstStream Stream);
 
 struct _CP_Services Svcs = {
@@ -1340,8 +1340,8 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                                    void *client_data);
 extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                                    void *client_data);
-static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
-                          CMFormat Format, void *Data)
+static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
+                         CMFormat Format, void *Data)
 {
     CP_PeerConnection *Peers = (CP_PeerConnection *)Cohort;
     if (Peers[Rank].CMconn == NULL)
@@ -1352,7 +1352,7 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
             CP_error(s,
                      "Connection failed in CP_sendToPeer! Contact list was:\n");
             CP_error(s, attr_list_to_string(Peers[Rank].ContactList));
-            return;
+            return 0;
         }
         if (s->Role == ReaderRole)
         {
@@ -1387,7 +1387,9 @@ static void CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
                    "Message failed to send to peer %d CONNECTION %p in "
                    "CP_sendToPeer()\n",
                    Rank, Peers[Rank].CMconn);
+        return 0;
     }
+    return 1;
 }
 
 CPNetworkInfoFunc globalNetinfoCallback = NULL;

@@ -811,8 +811,12 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     ReadRequestMsg.RS_Stream = Stream;
     ReadRequestMsg.RequestingRank = Stream->Rank;
     ReadRequestMsg.NotifyCondition = ret->CMcondition;
-    Svcs->sendToPeer(Stream->CP_Stream, Stream->PeerCohort, Rank,
-                     Stream->ReadRequestFormat, &ReadRequestMsg);
+    if (!Svcs->sendToPeer(Stream->CP_Stream, Stream->PeerCohort, Rank,
+                          Stream->ReadRequestFormat, &ReadRequestMsg))
+    {
+        ret->Failed = 1;
+        CMCondition_signal(cm, ret->CMcondition);
+    }
 
     return ret;
 }
