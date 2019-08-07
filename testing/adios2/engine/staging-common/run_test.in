@@ -128,7 +128,6 @@ def do_one_client_test(writer_cmd, reader_cmd):
 
 def do_kill_writer_test(writer_cmd, reader_cmd, interval):
     return_code = 0
-    os.environ['SstCPVerbose'] = "1" # visible in this process + all children
     print("TestDriver: Starting kill_writer test protocol")
     sys.stdout.flush()
     writer = subprocess.Popen(writer_cmd)
