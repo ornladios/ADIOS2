@@ -214,6 +214,11 @@ if(ADIOS2_USE_SST AND NOT MSVC)
       set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
   endif()
+  find_package(NVSTREAM)
+  if(NVSTREAM_FOUND)
+    find_package(Boost OPTIONAL_COMPONENTS thread log filesystem system)
+    set(ADIOS2_SST_HAVE_NVSTREAM TRUE)
+  endif()
 endif()
 
 #SysV IPC

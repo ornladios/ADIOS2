@@ -79,7 +79,13 @@ redo:
     else
     {
         char Tmp[strlen(SSTMAGICV0)];
-        fread(Tmp, strlen(SSTMAGICV0), 1, WriterInfo);
+        if (fread(Tmp, strlen(SSTMAGICV0), 1, WriterInfo) != 1)
+        {
+            fprintf(stderr,
+                    "Filesystem read failed in SST Open, failing operation\n");
+            fclose(WriterInfo);
+            Badfile++;
+        }
         Size -= strlen(SSTMAGICV0);
         if (strncmp(Tmp, SSTMAGICV0, strlen(SSTMAGICV0)) != 0)
         {
@@ -99,8 +105,11 @@ redo:
     char *Buffer = calloc(1, Size + 1);
     if (fread(Buffer, Size, 1, WriterInfo) != 1)
     {
-        fprintf(stderr, "Filesystem read failed, exiting\n");
-        exit(1);
+        fprintf(stderr,
+                "Filesystem read failed in SST Open, failing operation\n");
+        free(Buffer);
+        fclose(WriterInfo);
+        return NULL;
     }
     fclose(WriterInfo);
     return Buffer;
