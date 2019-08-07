@@ -383,7 +383,7 @@ static void QueueMaintenance(SstStream Stream)
         QueueMaintenance
         UNLOCK
 */
-static void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
+extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
                                    void *client_data)
 {
     TAU_START_FUNC();

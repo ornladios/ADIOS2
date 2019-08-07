@@ -285,6 +285,9 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         catch (...)
         {
             std::cout << "Exception in EndStep, client failed";
+            WriterFailed = 1;
+            std::cout << "Noticed Writer failure" << std::endl;
+            Continue = false;
         }
 
         ++ExpectedStep;

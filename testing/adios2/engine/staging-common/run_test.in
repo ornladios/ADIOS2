@@ -128,20 +128,27 @@ def do_one_client_test(writer_cmd, reader_cmd):
 
 def do_kill_writer_test(writer_cmd, reader_cmd, interval):
     return_code = 0
+    print("TestDriver: Starting kill_writer test protocol")
+    sys.stdout.flush()
     writer = subprocess.Popen(writer_cmd)
     reader = subprocess.Popen(reader_cmd)
     print("TestDriver: Waiting " + str(interval) + " seconds")
+    sys.stdout.flush()
     time.sleep(interval)
     print("TestDriver: Killing Writer")
+    sys.stdout.flush()
     writer.terminate()
     writer.wait()
     reader.wait()
     print("TestDriver: Reader exit status was " + str(reader.returncode))
+    sys.stdout.flush()
     if reader.returncode != 0:
         print("TestDriver: Reader failed, causing test failure")
+        sys.stdout.flush()
         return_code = 1
     print("TestDriver: Writer exit status was " +
-          str(writer.returncode)) + " (ignored)"
+          str(writer.returncode) + " (ignored)")
+    sys.stdout.flush()
     return return_code
 
 

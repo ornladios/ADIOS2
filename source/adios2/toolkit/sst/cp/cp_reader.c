@@ -141,12 +141,13 @@ static char *readContactInfo(const char *Name, SstStream Stream, int Timeout)
     }
 }
 
-static void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
+extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
                                    void *client_data)
 {
     TAU_START_FUNC();
     SstStream Stream = (SstStream)client_data;
     int FailedPeerRank = -1;
+    CP_verbose(Stream, "Reader-side close handler invoked\n");
     for (int i = 0; i < Stream->WriterCohortSize; i++)
     {
         if (Stream->ConnectionsToWriter[i].CMconn == ClosedConn)
