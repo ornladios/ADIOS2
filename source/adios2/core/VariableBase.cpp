@@ -255,8 +255,8 @@ void VariableBase::CheckDimensions(const std::string hint) const
     CheckDimensionsCommon(hint);
 }
 
-bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; };
-void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; };
+bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; }
+void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; }
 
 bool VariableBase::IsValidStep(const size_t step) const noexcept
 {

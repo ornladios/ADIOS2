@@ -52,7 +52,7 @@ adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
     // }
 }
 
-adiosStream::~adiosStream(){};
+adiosStream::~adiosStream() {}
 
 void adiosStream::defineADIOSArray(const std::shared_ptr<VariableInfo> ov)
 {

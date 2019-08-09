@@ -273,7 +273,7 @@ TEST_F(EngineCommon, NewAttributeEveryStep)
 
     // Separate each individual test with a big gap in time
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-};
+}
 
 void threadTimeoutRun(size_t t)
 {

@@ -58,7 +58,7 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
     ret = H5Pclose(acc_tpl);
 }
 
-hdf5Stream::~hdf5Stream(){};
+hdf5Stream::~hdf5Stream() {}
 
 hid_t hdf5Stream::hdf5Type(std::string &type)
 {

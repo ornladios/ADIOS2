@@ -86,7 +86,7 @@ void IO::SetEngine(const std::string engineType) noexcept
 {
     m_EngineType = engineType;
 }
-void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
+void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; }
 
 void IO::SetParameters(const Params &parameters) noexcept
 {
@@ -167,9 +167,9 @@ const DataMap &IO::GetAttributesDataMap() const noexcept
     return m_Attributes;
 }
 
-bool IO::InConfigFile() const noexcept { return m_InConfigFile; };
+bool IO::InConfigFile() const noexcept { return m_InConfigFile; }
 
-void IO::SetDeclared() noexcept { m_IsDeclared = true; };
+void IO::SetDeclared() noexcept { m_IsDeclared = true; }
 
 bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
