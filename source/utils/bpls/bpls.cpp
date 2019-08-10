@@ -775,6 +775,10 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
             print_shape(get_global_array_signature(fp, io, variable));
+            if (variable->GetOriginalLayout() == Layout::ColumnMajor)
+            {
+                fprintf(outf, " (transposed)");
+            }
         }
         else if (variable->m_ShapeID == ShapeID::LocalArray)
         {
@@ -785,6 +789,10 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
                     signo.first > 0 ? std::to_string(signo.first).c_str()
                                     : "__");
             print_shape(d);
+            if (variable->GetOriginalLayout() == Layout::ColumnMajor)
+            {
+                fprintf(outf, " (transposed)");
+            }
         }
         else
         {

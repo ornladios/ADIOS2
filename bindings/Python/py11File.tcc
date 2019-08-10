@@ -21,10 +21,27 @@ namespace py11
 template <class T>
 pybind11::array File::DoRead(const std::string &name, const Dims &_start,
                              const Dims &_count, const size_t stepStart,
-                             const size_t stepCount, const size_t blockID)
+                             const size_t stepCount, const size_t blockID,
+                             const std::string &order)
 {
+    Layout layout = ToLayout(order);
     core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
-    Dims &shape = variable.m_Shape;
+
+    if (layout == Layout::Original)
+    {
+        layout = variable.GetOriginalLayout();
+    }
+    bool reverse_dims = layout == Layout::ColumnMajor;
+
+    // Do everything in original dims first, ie, we need to
+    // un-reverse shape and count we get from the core
+
+    Dims shape = variable.m_Shape;
+    if (reverse_dims)
+    {
+        std::reverse(shape.begin(), shape.end());
+    }
+
     Dims start = _start;
     Dims count = _count;
 
@@ -65,22 +82,51 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
     {
         // does the right thing for global and local arrays
         count = variable.Count();
+        if (reverse_dims)
+        {
+            std::reverse(count.begin(), count.end());
+        }
     }
 
     // make numpy array, shape is count, possibly with extra dim for step added
     Dims shapePy;
-    shapePy.reserve((stepCount > 0 ? 1 : 0) + count.size());
-    if (stepCount > 0)
+    if (stepCount == 0)
     {
-        shapePy.emplace_back(stepCount);
+        shapePy.reserve(count.size());
+        std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
     }
-    std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
+    else
+    { // add step dimension
+        if (!reverse_dims)
+        {
+            shapePy.emplace_back(stepCount);
+            std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
+        }
+        else
+        {
+            std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
+            shapePy.emplace_back(stepCount);
+        }
+    }
 
-    pybind11::array_t<T> pyArray(shapePy);
+    pybind11::array_t<T> pyArray;
+    if (layout == Layout::ColumnMajor)
+    {
+        pyArray = pybind11::array_t<T, pybind11::array::f_style>(shapePy);
+    }
+    else
+    {
+        pyArray = pybind11::array_t<T, pybind11::array::c_style>(shapePy);
+    }
 
     // set selection if requested
     if (!start.empty() && !count.empty())
     {
+        if (reverse_dims)
+        {
+            std::reverse(start.begin(), start.end());
+            std::reverse(count.begin(), count.end());
+        }
         variable.SetSelection(Box<Dims>(std::move(start), std::move(count)));
     }
 
