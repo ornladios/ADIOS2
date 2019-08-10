@@ -930,6 +930,9 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
         }
     } // end mutex lock
 
+    variable->m_OriginalLayout =
+        m_IsRowMajor ? Layout::RowMajor : Layout::ColumnMajor;
+
     // going back to get variable index position
     variable->m_IndexStart =
         initialPosition - (header.Name.size() + header.GroupName.size() +

@@ -70,6 +70,9 @@ public:
      * already encountered in previous step */
     bool m_FirstStreamingStep = true;
 
+    /** The data layout that is/was used when serializing this variable */
+    Layout m_OriginalLayout = Layout::Unknown;
+
     /** Operators metadata info */
     struct Operation
     {
@@ -196,6 +199,8 @@ public:
     void CheckRandomAccessConflict(const std::string hint) const;
 
     Dims GetShape(const size_t step = adios2::EngineCurrentStep);
+
+    Layout GetOriginalLayout() const;
 
 protected:
     const bool m_DebugMode = false;

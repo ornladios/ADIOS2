@@ -300,6 +300,8 @@ void VariableBase::ResetStepsSelection(const bool zeroStart) noexcept
     }
 }
 
+Layout VariableBase::GetOriginalLayout() const { return m_OriginalLayout; }
+
 // PRIVATE
 void VariableBase::InitShapeType()
 {

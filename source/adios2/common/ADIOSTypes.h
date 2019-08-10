@@ -119,6 +119,15 @@ enum class SelectionType
     Auto         ///< Let the engine decide what to return
 };
 
+/** Data layouts */
+enum class Layout
+{
+    Unknown,
+    RowMajor,
+    ColumnMajor,
+    Original,
+};
+
 // Types
 using std::size_t;
 
