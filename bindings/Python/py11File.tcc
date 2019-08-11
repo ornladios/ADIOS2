@@ -28,14 +28,14 @@ pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
     {
         count = variable.Shape();
         start = Dims(count.size(), 0);
-        return Read(variable.m_Name, start, count, blockID);
+        return DoRead<T>(variable.m_Name, start, count, blockID);
     }
     else if (variable.m_ShapeID == ShapeID::LocalArray)
     {
         variable.SetBlockSelection(blockID);
         count = variable.Count();
         start = Dims(count.size(), 0);
-        return Read(variable.m_Name, start, count, blockID);
+        return DoRead<T>(variable.m_Name, start, count, blockID);
     }
     else
     {
