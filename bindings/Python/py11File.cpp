@@ -230,17 +230,8 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
         std::copy(value.begin(), value.end(), pyArray.mutable_data());
         return pyArray;
     }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        return DoRead<T>(name, start, count, blockID);                         \
-    }
-    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
-#undef declare_type
 
-    throw std::invalid_argument(
-        "ERROR: adios2 file read variable " + name +
-        ", type can't be mapped to a numpy type, in call to read\n");
+    return Read(name, start, count, 0, 0, blockID);
 }
 
 pybind11::array File::Read(const std::string &name, const Dims &start,

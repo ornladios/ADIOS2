@@ -126,7 +126,6 @@ class TestReadSelection(unittest.TestCase):
 
 
 class TestReadStepSelection(unittest.TestCase):
-    @unittest.expectedFailure
     def test_GlobalValue(self):
         with adios2.open(filename, 'r') as fh:
             val = fh.read("global_value", (), (), 1, 2)
@@ -142,7 +141,6 @@ class TestReadStepSelection(unittest.TestCase):
             val = fh.read("local_value", (1,), (3,), 1, 2)
             self.assertTrue(np.array_equal(val, local_values[1:3, 1:4]))
 
-    @unittest.expectedFailure
     def test_LocalValueDefault(self):
         with adios2.open(filename, 'r') as fh:
             val = fh.read("local_value", (), (), 1, 2)

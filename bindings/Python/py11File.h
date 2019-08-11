@@ -124,10 +124,6 @@ private:
 
     template <class T>
     pybind11::array DoRead(const std::string &name, const Dims &start,
-                           const Dims &count, const size_t blockID);
-
-    template <class T>
-    pybind11::array DoRead(const std::string &name, const Dims &start,
                            const Dims &count, const size_t stepStart,
                            const size_t stepCount, const size_t blockID);
 };

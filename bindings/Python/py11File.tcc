@@ -20,7 +20,8 @@ namespace py11
 
 template <class T>
 pybind11::array File::DoRead(const std::string &name, const Dims &_start,
-                             const Dims &_count, const size_t blockID)
+                             const Dims &_count, const size_t stepStart,
+                             const size_t stepCount, const size_t blockID)
 {
     core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
     Dims &shape = variable.m_Shape;
@@ -34,7 +35,11 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
             throw std::invalid_argument("when reading a scalar, start and "
                                         "count cannot be specified.\n");
         }
-        count = Dims{1};
+        if (stepCount == 0)
+        {
+            // for compatiblity, return 1-d arrays rather than 0-d
+            count = Dims{1};
+        }
     }
 
     if (variable.m_ShapeID == ShapeID::LocalArray)
@@ -62,33 +67,31 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
         count = variable.Count();
     }
 
-    pybind11::array_t<T> pyArray(count);
-    // set selection
+    // make numpy array, shape is count, possibly with extra dim for step added
+    Dims shapePy;
+    shapePy.reserve((stepCount > 0 ? 1 : 0) + count.size());
+    if (stepCount > 0)
+    {
+        shapePy.emplace_back(stepCount);
+    }
+    std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
+
+    pybind11::array_t<T> pyArray(shapePy);
+
+    // set selection if requested
     if (!start.empty() && !count.empty())
     {
         variable.SetSelection(Box<Dims>(std::move(start), std::move(count)));
     }
-    m_Stream->Read(name, pyArray.mutable_data(), blockID);
 
-    return pyArray;
-}
-
-template <class T>
-pybind11::array File::DoRead(const std::string &name, const Dims &start,
-                             const Dims &count, const size_t stepStart,
-                             const size_t stepCount, const size_t blockID)
-{
-    // shape of the returned numpy array
-    Dims shapePy(count.size() + 1);
-    shapePy[0] = stepCount;
-    for (auto i = 1; i < shapePy.size(); ++i)
+    // set step selection if requested
+    if (stepCount > 0)
     {
-        shapePy[i] = count[i - 1];
+        variable.SetStepSelection({stepStart, stepCount});
     }
 
-    pybind11::array_t<T> pyArray(shapePy);
-    m_Stream->Read<T>(name, pyArray.mutable_data(), Box<Dims>(start, count),
-                      Box<size_t>(stepStart, stepCount), blockID);
+    m_Stream->Read(name, pyArray.mutable_data(), blockID);
+
     return pyArray;
 }
 
