@@ -77,7 +77,6 @@ class TestReadBasic(unittest.TestCase):
 
 
 class TestReadSelection(unittest.TestCase):
-    @unittest.expectedFailure
     def test_GlobalValue(self):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:
