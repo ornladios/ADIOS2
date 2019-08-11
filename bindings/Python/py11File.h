@@ -123,9 +123,6 @@ private:
     adios2::Mode ToMode(const std::string mode) const;
 
     template <class T>
-    pybind11::array DoRead(core::Variable<T> &variable, const size_t blockID);
-
-    template <class T>
     pybind11::array DoRead(const std::string &name, const Dims &start,
                            const Dims &count, const size_t blockID);
 };

@@ -19,12 +19,6 @@ namespace py11
 {
 
 template <class T>
-pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
-{
-    return DoRead<T>(variable.m_Name, {}, {}, blockID);
-}
-
-template <class T>
 pybind11::array File::DoRead(const std::string &name, const Dims &_start,
                              const Dims &_count, const size_t blockID)
 {

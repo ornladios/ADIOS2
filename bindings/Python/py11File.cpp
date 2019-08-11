@@ -214,6 +214,12 @@ std::vector<std::string> File::ReadString(const std::string &name,
 
 pybind11::array File::Read(const std::string &name, const size_t blockID)
 {
+    return Read(name, {}, {}, blockID);
+}
+
+pybind11::array File::Read(const std::string &name, const Dims &start,
+                           const Dims &count, const size_t blockID)
+{
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
     if (type == helper::GetType<std::string>())
@@ -223,32 +229,6 @@ pybind11::array File::Read(const std::string &name, const size_t blockID)
         pybind11::array_t<char> pyArray(Dims{value.size()});
         std::copy(value.begin(), value.end(), pyArray.mutable_data());
         return pyArray;
-    }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        core::Variable<T> &variable =                                          \
-            *m_Stream->m_IO->InquireVariable<T>(name);                         \
-        return DoRead(variable, blockID);                                      \
-    }
-    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
-#undef declare_type
-    else
-    {
-        throw std::invalid_argument(
-            "ERROR: adios2 file read variable " + name +
-            ", type can't be mapped to a numpy type, in call to read\n");
-    }
-    return pybind11::array();
-}
-
-pybind11::array File::Read(const std::string &name, const Dims &start,
-                           const Dims &count, const size_t blockID)
-{
-    const std::string type = m_Stream->m_IO->InquireVariableType(name);
-
-    if (type.empty())
-    {
     }
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
