@@ -27,9 +27,7 @@ pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
     }
     else if (variable.m_ShapeID == ShapeID::LocalArray)
     {
-        variable.SetBlockSelection(blockID);
-        Dims count = variable.Count();
-        return DoRead<T>(variable.m_Name, {}, count, blockID);
+        return DoRead<T>(variable.m_Name, {}, {}, blockID);
     }
     else
     {
@@ -62,8 +60,16 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
     Dims count = _count;
     if (count.empty())
     {
-        // default count to be everything (shape of whole array)
-        count = shape;
+        if (variable.m_ShapeID == ShapeID::GlobalArray)
+        {
+            // default count is everything (shape of whole array)
+            count = shape;
+        }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            variable.SetBlockSelection(blockID);
+            count = variable.Count();
+        }
     }
 
     pybind11::array_t<T> pyArray(count);

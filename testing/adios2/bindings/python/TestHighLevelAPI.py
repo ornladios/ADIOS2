@@ -117,7 +117,6 @@ class TestReadSelection(unittest.TestCase):
                     val = fh_step.read("local_array", (1, 1), (4, 2), b)
                     self.assertTrue(np.array_equal(val, local_arrays[t][b]))
 
-    @unittest.expectedFailure
     def test_LocalArrayDefault(self):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:
