@@ -42,11 +42,8 @@ pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
         if (variable.m_SingleValue)
         {
             count = Dims{1};
-            pybind11::array pyArray(pybind11::dtype::of<T>(), count);
-            m_Stream->Read<T>(
-                variable.m_Name,
-                reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),
-                blockID);
+            pybind11::array_t<T> pyArray(count);
+            m_Stream->Read<T>(variable.m_Name, pyArray.mutable_data(), blockID);
             return pyArray;
         }
     }

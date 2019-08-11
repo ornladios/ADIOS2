@@ -220,11 +220,8 @@ pybind11::array File::Read(const std::string &name, const size_t blockID)
     {
         const std::string value =
             m_Stream->Read<std::string>(name, blockID).front();
-        pybind11::array pyArray(pybind11::dtype::of<char>(),
-                                Dims{value.size()});
-        char *pyPtr =
-            reinterpret_cast<char *>(const_cast<void *>(pyArray.data()));
-        std::copy(value.begin(), value.end(), pyPtr);
+        pybind11::array_t<char> pyArray(Dims{value.size()});
+        std::copy(value.begin(), value.end(), pyArray.mutable_data());
         return pyArray;
     }
 #define declare_type(T)                                                        \
@@ -256,10 +253,9 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        pybind11::array pyArray(pybind11::dtype::of<T>(), count);              \
-        m_Stream->Read<T>(                                                     \
-            name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            Box<Dims>(start, count), blockID);                                 \
+        pybind11::array_t<T> pyArray(count);                                   \
+        m_Stream->Read<T>(name, pyArray.mutable_data(),                        \
+                          Box<Dims>(start, count), blockID);                   \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -290,11 +286,10 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        pybind11::array pyArray(pybind11::dtype::of<T>(), shapePy);            \
-        m_Stream->Read<T>(                                                     \
-            name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            Box<Dims>(start, count), Box<size_t>(stepStart, stepCount),        \
-            blockID);                                                          \
+        pybind11::array_t<T> pyArray(shapePy);                                 \
+        m_Stream->Read<T>(name, pyArray.mutable_data(),                        \
+                          Box<Dims>(start, count),                             \
+                          Box<size_t>(stepStart, stepCount), blockID);         \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
@@ -323,11 +318,9 @@ pybind11::array File::ReadAttribute(const std::string &name,
     {                                                                          \
         core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(   \
             name, variableName, separator);                                    \
-        pybind11::array pyArray(pybind11::dtype::of<T>(),                      \
-                                attribute->m_Elements);                        \
-        m_Stream->ReadAttribute<T>(                                            \
-            name, reinterpret_cast<T *>(const_cast<void *>(pyArray.data())),   \
-            variableName, separator);                                          \
+        pybind11::array_t<T> pyArray(attribute->m_Elements);                   \
+        m_Stream->ReadAttribute<T>(name, pyArray.mutable_data(), variableName, \
+                                   separator);                                 \
         return pyArray;                                                        \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
