@@ -58,15 +58,8 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
 
     if (count.empty())
     {
-        if (variable.m_ShapeID == ShapeID::GlobalArray)
-        {
-            // default count is everything (shape of whole array)
-            count = shape;
-        }
-        else if (variable.m_ShapeID == ShapeID::LocalArray)
-        {
-            count = variable.Count();
-        }
+        // does the right thing for global and local arrays
+        count = variable.Count();
     }
 
     pybind11::array_t<T> pyArray(count);
