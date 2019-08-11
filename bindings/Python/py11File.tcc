@@ -51,6 +51,16 @@ pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
     return pybind11::array();
 }
 
+template <class T>
+pybind11::array File::DoRead(const std::string &name, const Dims &start,
+                             const Dims &count, const size_t blockID)
+{
+    pybind11::array_t<T> pyArray(count);
+    m_Stream->Read<T>(name, pyArray.mutable_data(), Box<Dims>(start, count),
+                      blockID);
+    return pyArray;
+}
+
 } // end namespace py11
 } // end namespace adios2
 

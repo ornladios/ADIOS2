@@ -253,10 +253,7 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        pybind11::array_t<T> pyArray(count);                                   \
-        m_Stream->Read<T>(name, pyArray.mutable_data(),                        \
-                          Box<Dims>(start, count), blockID);                   \
-        return pyArray;                                                        \
+        return DoRead<T>(name, start, count, blockID);                         \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
