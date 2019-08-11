@@ -77,7 +77,6 @@ class TestReadBasic(unittest.TestCase):
 
 
 class TestReadSelection(unittest.TestCase):
-    @unittest.expectedFailure
     def test_GlobalValue(self):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:
@@ -101,7 +100,6 @@ class TestReadSelection(unittest.TestCase):
                 val = fh.read("local_value", (1,), (2,))
                 self.assertTrue(np.array_equal(val, local_values[t][1:3]))
 
-    @unittest.expectedFailure
     def test_LocalValueDefault(self):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:
@@ -118,7 +116,6 @@ class TestReadSelection(unittest.TestCase):
                     val = fh_step.read("local_array", (1, 1), (4, 2), b)
                     self.assertTrue(np.array_equal(val, local_arrays[t][b]))
 
-    @unittest.expectedFailure
     def test_LocalArrayDefault(self):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:

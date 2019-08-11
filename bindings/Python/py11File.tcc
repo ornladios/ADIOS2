@@ -19,36 +19,55 @@ namespace py11
 {
 
 template <class T>
-pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
+pybind11::array File::DoRead(const std::string &name, const Dims &_start,
+                             const Dims &_count, const size_t blockID)
 {
-    Dims start;
-    Dims count;
+    core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
+    Dims &shape = variable.m_Shape;
 
-    if (variable.m_ShapeID == ShapeID::GlobalArray)
+    Dims start = _start;
+    if (start.empty())
     {
-        count = variable.Shape();
-        start = Dims(count.size(), 0);
-        return Read(variable.m_Name, start, count, blockID);
+        // default start to be (0, 0, ...)
+        start = Dims(shape.size());
     }
-    else if (variable.m_ShapeID == ShapeID::LocalArray)
+
+    Dims count = _count;
+    if (count.empty())
     {
-        variable.SetBlockSelection(blockID);
-        count = variable.Count();
-        start = Dims(count.size(), 0);
-        return Read(variable.m_Name, start, count, blockID);
-    }
-    else
-    {
-        if (variable.m_SingleValue)
+        if (variable.m_ShapeID == ShapeID::GlobalArray)
         {
-            count = Dims{1};
-            pybind11::array_t<T> pyArray(count);
-            m_Stream->Read<T>(variable.m_Name, pyArray.mutable_data(), blockID);
-            return pyArray;
+            // default count is everything (shape of whole array)
+            count = shape;
+        }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            variable.SetBlockSelection(blockID);
+            count = variable.Count();
         }
     }
 
-    return pybind11::array();
+    if (variable.m_ShapeID == ShapeID::GlobalValue)
+    {
+        count = Dims{1};
+    }
+    pybind11::array_t<T> pyArray(count);
+    if (variable.m_ShapeID == ShapeID::GlobalValue)
+    {
+        if (!(_start.empty() && _count.empty()))
+        {
+            throw std::invalid_argument("when reading a scalar, start and "
+                                        "count cannot be specified.\n");
+        }
+        m_Stream->Read<T>(name, pyArray.mutable_data(), blockID);
+    }
+    else
+    {
+        m_Stream->Read<T>(name, pyArray.mutable_data(),
+                          Box<Dims>(std::move(start), std::move(count)),
+                          blockID);
+    }
+    return pyArray;
 }
 
 } // end namespace py11
