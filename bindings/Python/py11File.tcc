@@ -20,38 +20,14 @@ namespace py11
 
 template <class T>
 pybind11::array File::DoRead(const std::string &name, const Dims &_start,
-                             const Dims &_count, const size_t blockID)
+                             const Dims &_count, const size_t stepStart,
+                             const size_t stepCount, const size_t blockID)
 {
     core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
     Dims &shape = variable.m_Shape;
-
     Dims start = _start;
-    if (start.empty())
-    {
-        // default start to be (0, 0, ...)
-        start = Dims(shape.size());
-    }
-
     Dims count = _count;
-    if (count.empty())
-    {
-        if (variable.m_ShapeID == ShapeID::GlobalArray)
-        {
-            // default count is everything (shape of whole array)
-            count = shape;
-        }
-        else if (variable.m_ShapeID == ShapeID::LocalArray)
-        {
-            variable.SetBlockSelection(blockID);
-            count = variable.Count();
-        }
-    }
 
-    if (variable.m_ShapeID == ShapeID::GlobalValue)
-    {
-        count = Dims{1};
-    }
-    pybind11::array_t<T> pyArray(count);
     if (variable.m_ShapeID == ShapeID::GlobalValue)
     {
         if (!(_start.empty() && _count.empty()))
@@ -59,14 +35,63 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
             throw std::invalid_argument("when reading a scalar, start and "
                                         "count cannot be specified.\n");
         }
-        m_Stream->Read<T>(name, pyArray.mutable_data(), blockID);
+        if (stepCount == 0)
+        {
+            // for compatiblity, return 1-d arrays rather than 0-d
+            count = Dims{1};
+        }
+    }
+
+    if (variable.m_ShapeID == ShapeID::LocalArray)
+    {
+        variable.SetBlockSelection(blockID);
     }
     else
     {
-        m_Stream->Read<T>(name, pyArray.mutable_data(),
-                          Box<Dims>(std::move(start), std::move(count)),
-                          blockID);
+        if (blockID != 0)
+        {
+            throw std::invalid_argument(
+                "blockId can only be specified when reading LocalArrays.");
+        }
     }
+
+    if (start.empty())
+    {
+        // default start to be (0, 0, ...)
+        start = Dims(shape.size());
+    }
+
+    if (count.empty())
+    {
+        // does the right thing for global and local arrays
+        count = variable.Count();
+    }
+
+    // make numpy array, shape is count, possibly with extra dim for step added
+    Dims shapePy;
+    shapePy.reserve((stepCount > 0 ? 1 : 0) + count.size());
+    if (stepCount > 0)
+    {
+        shapePy.emplace_back(stepCount);
+    }
+    std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
+
+    pybind11::array_t<T> pyArray(shapePy);
+
+    // set selection if requested
+    if (!start.empty() && !count.empty())
+    {
+        variable.SetSelection(Box<Dims>(std::move(start), std::move(count)));
+    }
+
+    // set step selection if requested
+    if (stepCount > 0)
+    {
+        variable.SetStepSelection({stepStart, stepCount});
+    }
+
+    m_Stream->Read(name, pyArray.mutable_data(), blockID);
+
     return pyArray;
 }
 

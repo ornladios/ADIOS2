@@ -17,7 +17,8 @@ n_times = 3
 n_blocks = 4
 filename = 'TestHighLevelAPI.bp'
 
-# The following are the test data, with an additional dimension for timestep prepended
+# The following are the test data, with an additional dimension for timestep
+# prepended
 
 global_values = np.arange(n_times)
 global_arrays = np.arange(n_times * 2 * 16).reshape(n_times, 2, 16)
@@ -30,15 +31,17 @@ def setUpModule():
     with adios2.open(filename, 'w') as fh:
         for t in range(n_times):
             fh.write('global_value', np.array(global_values[t]))
-            fh.write('global_array', global_arrays[t], global_arrays[t].shape, (
-                0, 0), global_arrays[t].shape)
-            # We're kinda faking a local array, since the blocks all written from one proc
+            fh.write('global_array', global_arrays[t], global_arrays[t].shape,
+                     (0, 0), global_arrays[t].shape)
+            # We're kinda faking a local array, since the blocks all written
+            # from one proc
             for b in range(n_blocks):
                 fh.write('local_value', np.array(
                     local_values[t][b]), True)
             for b in range(n_blocks):
                 fh.write(
-                    'local_array', local_arrays[t][b], (), (), local_arrays[t][b].shape)
+                    'local_array', local_arrays[t][b], (), (),
+                    local_arrays[t][b].shape)
             fh.end_step()
 
 
@@ -49,8 +52,7 @@ class TestReadBasic(unittest.TestCase):
             for fh_step in fh:
                 t = fh_step.current_step()
                 val = fh_step.read('global_value')
-                self.assertTrue(np.array_equal(
-                    val, np.array([global_values[t]])))
+                self.assertTrue(val == global_values[t])
 
     def test_GlobalArray(self):
         with adios2.open(filename, 'r') as fh:
@@ -126,7 +128,6 @@ class TestReadSelection(unittest.TestCase):
 
 
 class TestReadStepSelection(unittest.TestCase):
-    @unittest.expectedFailure
     def test_GlobalValue(self):
         with adios2.open(filename, 'r') as fh:
             val = fh.read("global_value", (), (), 1, 2)
@@ -142,7 +143,6 @@ class TestReadStepSelection(unittest.TestCase):
             val = fh.read("local_value", (1,), (3,), 1, 2)
             self.assertTrue(np.array_equal(val, local_values[1:3, 1:4]))
 
-    @unittest.expectedFailure
     def test_LocalValueDefault(self):
         with adios2.open(filename, 'r') as fh:
             val = fh.read("local_value", (), (), 1, 2)

@@ -230,31 +230,14 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
         std::copy(value.begin(), value.end(), pyArray.mutable_data());
         return pyArray;
     }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetType<T>())                                     \
-    {                                                                          \
-        return DoRead<T>(name, start, count, blockID);                         \
-    }
-    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
-#undef declare_type
 
-    throw std::invalid_argument(
-        "ERROR: adios2 file read variable " + name +
-        ", type can't be mapped to a numpy type, in call to read\n");
+    return Read(name, start, count, 0, 0, blockID);
 }
 
 pybind11::array File::Read(const std::string &name, const Dims &start,
                            const Dims &count, const size_t stepStart,
                            const size_t stepCount, const size_t blockID)
 {
-    // shape of the returned numpy array
-    Dims shapePy(count.size() + 1);
-    shapePy[0] = stepCount;
-    for (auto i = 1; i < shapePy.size(); ++i)
-    {
-        shapePy[i] = count[i - 1];
-    }
-
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
     if (type.empty())
@@ -263,11 +246,7 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        pybind11::array_t<T> pyArray(shapePy);                                 \
-        m_Stream->Read<T>(name, pyArray.mutable_data(),                        \
-                          Box<Dims>(start, count),                             \
-                          Box<size_t>(stepStart, stepCount), blockID);         \
-        return pyArray;                                                        \
+        return DoRead<T>(name, start, count, stepStart, stepCount, blockID);   \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
