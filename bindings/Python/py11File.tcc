@@ -25,6 +25,19 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
     core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
     Dims &shape = variable.m_Shape;
 
+    if (variable.m_ShapeID == ShapeID::LocalArray)
+    {
+        variable.SetBlockSelection(blockID);
+    }
+    else
+    {
+        if (blockID != 0)
+        {
+            throw std::invalid_argument(
+                "blockId can only be specified when reading LocalArrays.");
+        }
+    }
+
     Dims start = _start;
     if (start.empty())
     {
@@ -42,7 +55,6 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
         }
         else if (variable.m_ShapeID == ShapeID::LocalArray)
         {
-            variable.SetBlockSelection(blockID);
             count = variable.Count();
         }
     }
