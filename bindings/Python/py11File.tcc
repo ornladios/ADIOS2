@@ -70,6 +70,25 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
     return pyArray;
 }
 
+template <class T>
+pybind11::array File::DoRead(const std::string &name, const Dims &start,
+                             const Dims &count, const size_t stepStart,
+                             const size_t stepCount, const size_t blockID)
+{
+    // shape of the returned numpy array
+    Dims shapePy(count.size() + 1);
+    shapePy[0] = stepCount;
+    for (auto i = 1; i < shapePy.size(); ++i)
+    {
+        shapePy[i] = count[i - 1];
+    }
+
+    pybind11::array_t<T> pyArray(shapePy);
+    m_Stream->Read<T>(name, pyArray.mutable_data(), Box<Dims>(start, count),
+                      Box<size_t>(stepStart, stepCount), blockID);
+    return pyArray;
+}
+
 } // end namespace py11
 } // end namespace adios2
 
