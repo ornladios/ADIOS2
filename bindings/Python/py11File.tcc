@@ -21,27 +21,21 @@ namespace py11
 template <class T>
 pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
 {
-    Dims start;
-    Dims count;
-
     if (variable.m_ShapeID == ShapeID::GlobalArray)
     {
-        count = variable.Shape();
-        start = Dims(count.size(), 0);
-        return DoRead<T>(variable.m_Name, start, count, blockID);
+        return DoRead<T>(variable.m_Name, {}, {}, blockID);
     }
     else if (variable.m_ShapeID == ShapeID::LocalArray)
     {
         variable.SetBlockSelection(blockID);
-        count = variable.Count();
-        start = Dims(count.size(), 0);
-        return DoRead<T>(variable.m_Name, start, count, blockID);
+        Dims count = variable.Count();
+        return DoRead<T>(variable.m_Name, {}, count, blockID);
     }
     else
     {
         if (variable.m_SingleValue)
         {
-            count = Dims{1};
+            Dims count = Dims{1};
             pybind11::array_t<T> pyArray(count);
             m_Stream->Read<T>(variable.m_Name, pyArray.mutable_data(), blockID);
             return pyArray;
@@ -52,12 +46,29 @@ pybind11::array File::DoRead(core::Variable<T> &variable, const size_t blockID)
 }
 
 template <class T>
-pybind11::array File::DoRead(const std::string &name, const Dims &start,
-                             const Dims &count, const size_t blockID)
+pybind11::array File::DoRead(const std::string &name, const Dims &_start,
+                             const Dims &_count, const size_t blockID)
 {
+    core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
+    Dims &shape = variable.m_Shape;
+
+    Dims start = _start;
+    if (start.empty())
+    {
+        // default start to be (0, 0, ...)
+        start = Dims(shape.size());
+    }
+
+    Dims count = _count;
+    if (count.empty())
+    {
+        // default count to be everything (shape of whole array)
+        count = shape;
+    }
+
     pybind11::array_t<T> pyArray(count);
-    m_Stream->Read<T>(name, pyArray.mutable_data(), Box<Dims>(start, count),
-                      blockID);
+    m_Stream->Read<T>(name, pyArray.mutable_data(),
+                      Box<Dims>(std::move(start), std::move(count)), blockID);
     return pyArray;
 }
 
