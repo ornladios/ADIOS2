@@ -24,6 +24,18 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
 {
     core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
     Dims &shape = variable.m_Shape;
+    Dims start = _start;
+    Dims count = _count;
+
+    if (variable.m_ShapeID == ShapeID::GlobalValue)
+    {
+        if (!(_start.empty() && _count.empty()))
+        {
+            throw std::invalid_argument("when reading a scalar, start and "
+                                        "count cannot be specified.\n");
+        }
+        count = Dims{1};
+    }
 
     if (variable.m_ShapeID == ShapeID::LocalArray)
     {
@@ -38,14 +50,12 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
         }
     }
 
-    Dims start = _start;
     if (start.empty())
     {
         // default start to be (0, 0, ...)
         start = Dims(shape.size());
     }
 
-    Dims count = _count;
     if (count.empty())
     {
         if (variable.m_ShapeID == ShapeID::GlobalArray)
@@ -59,26 +69,14 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
         }
     }
 
-    if (variable.m_ShapeID == ShapeID::GlobalValue)
-    {
-        count = Dims{1};
-    }
     pybind11::array_t<T> pyArray(count);
-    if (variable.m_ShapeID == ShapeID::GlobalValue)
+    // set selection
+    if (!start.empty() && !count.empty())
     {
-        if (!(_start.empty() && _count.empty()))
-        {
-            throw std::invalid_argument("when reading a scalar, start and "
-                                        "count cannot be specified.\n");
-        }
-        m_Stream->Read<T>(name, pyArray.mutable_data(), blockID);
+        variable.SetSelection(Box<Dims>(std::move(start), std::move(count)));
     }
-    else
-    {
-        m_Stream->Read<T>(name, pyArray.mutable_data(),
-                          Box<Dims>(std::move(start), std::move(count)),
-                          blockID);
-    }
+    m_Stream->Read(name, pyArray.mutable_data(), blockID);
+
     return pyArray;
 }
 
