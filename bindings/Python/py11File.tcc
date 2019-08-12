@@ -18,6 +18,30 @@ namespace adios2
 namespace py11
 {
 
+static Dims py_strides(const Dims &shape, ssize_t itemsize, bool has_step_dim)
+{
+    auto ndim = shape.size();
+    Dims strides(ndim, itemsize);
+    if (!has_step_dim)
+    {
+        // regular column-major
+        for (size_t i = 1; i < ndim; ++i)
+        {
+            strides[i] = strides[i - 1] * shape[i - 1];
+        }
+    }
+    else
+    {
+        // rotate so that slowest dim will be in front
+        for (size_t i = 2; i < ndim; ++i)
+        {
+            strides[i] = strides[i - 1] * shape[i - 1];
+        }
+        strides[0] = strides[ndim - 1] * shape[ndim - 1];
+    }
+    return strides;
+}
+
 template <class T>
 pybind11::array File::DoRead(const std::string &name, const Dims &_start,
                              const Dims &_count, const size_t stepStart,
@@ -88,7 +112,8 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
         }
     }
 
-    // make numpy array, shape is count, possibly with extra dim for step added
+    // make numpy array, shape is count, possibly with extra dim for step
+    // added
     Dims shapePy;
     if (stepCount == 0)
     {
@@ -96,23 +121,17 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
         std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
     }
     else
-    { // add step dimension
-        if (!reverse_dims)
-        {
-            shapePy.emplace_back(stepCount);
-            std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
-        }
-        else
-        {
-            std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
-            shapePy.emplace_back(stepCount);
-        }
+    { // prepend step dimension
+        shapePy.reserve(count.size() + 1);
+        shapePy.emplace_back(stepCount);
+        std::copy(count.begin(), count.end(), std::back_inserter(shapePy));
     }
 
     pybind11::array_t<T> pyArray;
     if (layout == Layout::ColumnMajor)
     {
-        pyArray = pybind11::array_t<T, pybind11::array::f_style>(shapePy);
+        pyArray = pybind11::array_t<T>(
+            shapePy, py_strides(shapePy, pyArray.itemsize(), stepCount > 0));
     }
     else
     {

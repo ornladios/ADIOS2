@@ -178,12 +178,9 @@ class TestReadOrder(unittest.TestCase):
         with adios2.open(filename, 'r') as fh:
             val = fh.read("global_array", (0, 1), (3, 1), 1, 2, order='F')
             # don't transpose step axis
-            global_arrays_T = np.transpose(global_arrays)  # , (0, 2, 1))
-            print("val", val)
-            #print("ref", global_arrays_T[1:3, 0:3, 1:2])
-            print("ref", global_arrays_T[0:3, 1:2, 1:3])
+            global_arrays_T = np.transpose(global_arrays, (0, 2, 1))
             self.assertTrue(np.array_equal(
-                val, global_arrays_T[0:3, 1:2, 1:3]))
+                val, global_arrays_T[1:3, 0:3, 1:2]))
 
 
 if __name__ == '__main__':
