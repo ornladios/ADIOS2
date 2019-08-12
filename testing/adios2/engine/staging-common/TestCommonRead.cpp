@@ -146,6 +146,45 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_time.Shape()[0], writerSize);
 
+        const std::vector<adios2::Variable<int8_t>::Info> i8Info =
+            engine.BlocksInfo(var_i8, engine.CurrentStep());
+        const std::vector<adios2::Variable<int16_t>::Info> i16Info =
+            engine.BlocksInfo(var_i16, engine.CurrentStep());
+        const std::vector<adios2::Variable<int32_t>::Info> i32Info =
+            engine.BlocksInfo(var_i32, engine.CurrentStep());
+        const std::vector<adios2::Variable<int64_t>::Info> i64Info =
+            engine.BlocksInfo(var_i64, engine.CurrentStep());
+        const std::vector<adios2::Variable<float>::Info> r32Info =
+            engine.BlocksInfo(var_r32, engine.CurrentStep());
+        const std::vector<adios2::Variable<double>::Info> r64Info =
+            engine.BlocksInfo(var_r64, engine.CurrentStep());
+
+        const std::vector<adios2::Variable<std::complex<float>>::Info> c32Info =
+            engine.BlocksInfo(var_c32, engine.CurrentStep());
+        const std::vector<adios2::Variable<std::complex<double>>::Info>
+            c64Info = engine.BlocksInfo(var_c64, engine.CurrentStep());
+
+        EXPECT_EQ(i8Info.size(), writerSize);
+        EXPECT_EQ(i16Info.size(), writerSize);
+        EXPECT_EQ(i32Info.size(), writerSize);
+        EXPECT_EQ(i64Info.size(), writerSize);
+        EXPECT_EQ(r32Info.size(), writerSize);
+        EXPECT_EQ(r64Info.size(), writerSize);
+        EXPECT_EQ(c32Info.size(), writerSize);
+        EXPECT_EQ(c64Info.size(), writerSize);
+
+        for (size_t i = 0; i < writerSize; ++i)
+        {
+            EXPECT_FALSE(i8Info[0].IsValue);
+            EXPECT_FALSE(i16Info[0].IsValue);
+            EXPECT_FALSE(i32Info[0].IsValue);
+            EXPECT_FALSE(i64Info[0].IsValue);
+            EXPECT_FALSE(r32Info[0].IsValue);
+            EXPECT_FALSE(r64Info[0].IsValue);
+            EXPECT_FALSE(c32Info[0].IsValue);
+            EXPECT_FALSE(c64Info[0].IsValue);
+        }
+
         long unsigned int myStart =
             (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
