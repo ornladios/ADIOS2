@@ -715,11 +715,13 @@ extern int SstFFSWriterBeginStep(SstStream Stream, int mode,
 void SstReaderInitFFSCallback(SstStream Stream, void *Reader,
                               VarSetupUpcallFunc VarCallback,
                               ArraySetupUpcallFunc ArrayCallback,
-                              AttrSetupUpcallFunc AttrCallback)
+                              AttrSetupUpcallFunc AttrCallback,
+                              ArrayBlocksInfoUpcallFunc BlocksInfoCallback)
 {
     Stream->VarSetupUpcall = VarCallback;
     Stream->ArraySetupUpcall = ArrayCallback;
     Stream->AttrSetupUpcall = AttrCallback;
+    Stream->ArrayBlocksInfoUpcall = BlocksInfoCallback;
     Stream->SetupUpcallReader = Reader;
 }
 
@@ -1884,6 +1886,10 @@ static void BuildVarList(SstStream Stream, TSMetadataMsg MetaData,
             VarRec->PerWriterCounts[WriterRank] = meta_base->Count;
             VarRec->PerWriterMetaFieldDesc[WriterRank] = &FieldList[i];
             VarRec->PerWriterDataFieldDesc[WriterRank] = NULL;
+            Stream->ArrayBlocksInfoUpcall(Stream->SetupUpcallReader,
+                                          VarRec->Variable, Type, WriterRank,
+                                          meta_base->Dims, meta_base->Shape,
+                                          meta_base->Offsets, meta_base->Count);
             i += 4;
             free(ArrayName);
         }

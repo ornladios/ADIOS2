@@ -200,6 +200,7 @@ struct _SstStream
     VarSetupUpcallFunc VarSetupUpcall;
     ArraySetupUpcallFunc ArraySetupUpcall;
     AttrSetupUpcallFunc AttrSetupUpcall;
+    ArrayBlocksInfoUpcallFunc ArrayBlocksInfoUpcall;
     void *SetupUpcallReader;
     void *ReaderMarshalData;
 
