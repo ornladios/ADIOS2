@@ -84,8 +84,7 @@ class TestReadSelection(unittest.TestCase):
             for fh_step in fh:
                 t = fh_step.current_step()
                 val = fh_step.read("global_value", (), ())
-                self.assertTrue(np.array_equal(
-                    val, np.array([global_values[t]])))
+                self.assertTrue(val == global_values[t])
 
     def test_GlobalArray(self):
         with adios2.open(filename, 'r') as fh:
