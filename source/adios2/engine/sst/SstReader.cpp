@@ -167,8 +167,65 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         return (void *)NULL;
     };
 
+    auto arrayBlocksInfoCallback =
+        [](void *reader, void *variable, const char *type, int WriterRank,
+           int DimCount, size_t *Shape, size_t *Start, size_t *Count) {
+            std::vector<size_t> VecShape;
+            std::vector<size_t> VecStart;
+            std::vector<size_t> VecCount;
+            std::string Type(type);
+            class SstReader::SstReader *Reader =
+                reinterpret_cast<class SstReader::SstReader *>(reader);
+            size_t currentStep = SstCurrentStep(Reader->m_Input);
+            /*
+             * setup shape of array variable as global (I.E. Count == Shape,
+             * Start == 0)
+             */
+            if (Shape)
+            {
+                for (int i = 0; i < DimCount; i++)
+                {
+                    VecShape.push_back(Shape[i]);
+                    VecStart.push_back(Start[i]);
+                    VecCount.push_back(Count[i]);
+                }
+            }
+            else
+            {
+                VecShape = {};
+                VecStart = {};
+                for (int i = 0; i < DimCount; i++)
+                {
+                    VecCount.push_back(Count[i]);
+                }
+            }
+
+            if (Type == "compound")
+            {
+                return;
+            }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *Var = reinterpret_cast<class Variable<T> *>(variable);    \
+        auto savedShape = Var->m_Shape;                                        \
+        auto savedCount = Var->m_Count;                                        \
+        auto savedStart = Var->m_Start;                                        \
+        Var->m_Shape = VecShape;                                               \
+        Var->m_Count = VecCount;                                               \
+        Var->m_Start = VecStart;                                               \
+        Var->SetBlockInfo((T *)NULL, currentStep);                             \
+        Var->m_Shape = savedShape;                                             \
+        Var->m_Count = savedCount;                                             \
+        Var->m_Start = savedStart;                                             \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            return;
+        };
+
     SstReaderInitFFSCallback(m_Input, this, varFFSCallback, arrayFFSCallback,
-                             attrFFSCallback);
+                             attrFFSCallback, arrayBlocksInfoCallback);
 
     delete[] cstr;
 }
@@ -525,8 +582,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            throw std::invalid_argument("ERROR: SST Engine doesn't implement " \
-                                        "function DoAllStepsBlocksInfo\n");    \
+            return variable.m_BlocksInfo;                                      \
         }                                                                      \
         else if (m_WriterMarshalMethod == SstMarshalBP)                        \
         {                                                                      \
