@@ -39,9 +39,8 @@ def setUpModule():
                 fh.write('local_value', np.array(
                     local_values[t][b]), True)
             for b in range(n_blocks):
-                fh.write(
-                    'local_array', local_arrays[t][b], (), (),
-                    local_arrays[t][b].shape)
+                fh.write('local_array',
+                         local_arrays[t][b], (), (), local_arrays[t][b].shape)
             fh.end_step()
 
 
@@ -156,9 +155,9 @@ class TestReadStepSelection(unittest.TestCase):
 
 
 class TestReadOrder(unittest.TestCase):
-    # we can't generate any col-major data test file (unless we're running Fortran),
-    # but we can force data to be read in column major order, in which case it should
-    # match the transpose of the original data
+    # we can't generate any col-major data test file (unless we're running
+    # Fortran), but we can force data to be read in column major order, in
+    # which case it should match the transpose of the original data
 
     def test_GlobalArrayBasic(self):
         with adios2.open(filename, 'r') as fh:
@@ -179,12 +178,9 @@ class TestReadOrder(unittest.TestCase):
         with adios2.open(filename, 'r') as fh:
             val = fh.read("global_array", (0, 1), (3, 1), 1, 2, order='F')
             # don't transpose step axis
-            global_arrays_T = np.transpose(global_arrays)  # , (0, 2, 1))
-            print("val", val)
-            #print("ref", global_arrays_T[1:3, 0:3, 1:2])
-            print("ref", global_arrays_T[0:3, 1:2, 1:3])
+            global_arrays_T = np.transpose(global_arrays, (0, 2, 1))
             self.assertTrue(np.array_equal(
-                val, global_arrays_T[0:3, 1:2, 1:3]))
+                val, global_arrays_T[1:3, 0:3, 1:2]))
 
 
 if __name__ == '__main__':
