@@ -27,7 +27,7 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 {
 }
 
-Engine::~Engine(){};
+Engine::~Engine() {}
 
 Engine::operator bool() const noexcept { return !m_IsClosed; }
 
@@ -83,11 +83,12 @@ size_t Engine::Steps() const { return DoSteps(); }
 void Engine::LockWriterDefinitions() noexcept
 {
     m_WriterDefinitionsLocked = true;
-};
+}
+
 void Engine::LockReaderSelections() noexcept
 {
     m_ReaderSelectionsLocked = true;
-};
+}
 
 // PROTECTED
 void Engine::Init() {}

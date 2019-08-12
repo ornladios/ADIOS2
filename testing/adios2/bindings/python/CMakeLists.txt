@@ -3,6 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+python_add_test(NAME PythonTestHighLevelAPI SCRIPT TestHighLevelAPI.py)
+
 if(NOT ADIOS2_HAVE_MPI)
     python_add_test(NAME PythonBPWriteReadTypes SCRIPT TestBPWriteReadTypes_nompi.py)
 endif()

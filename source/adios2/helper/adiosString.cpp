@@ -196,7 +196,7 @@ bool EndsWith(const std::string &str, const std::string &ending,
     {
         return false;
     }
-};
+}
 
 std::vector<std::string>
 GetParametersValues(const std::string &key,

@@ -905,8 +905,9 @@ PYBIND11_MODULE(adios2, m)
                  const adios2::Dims &, const size_t)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("start"),
-             pybind11::arg("count"), pybind11::arg("block_id") = 0,
+             pybind11::arg("name"), pybind11::arg("start") = adios2::Dims(),
+             pybind11::arg("count") = adios2::Dims(),
+             pybind11::arg("block_id") = 0,
              R"md(
              Reads a selection piece in dimension for current step 
              (streaming mode step by step)
@@ -916,10 +917,12 @@ PYBIND11_MODULE(adios2, m)
                      variable name
 
                  start
-                     variable local offset selection
+                     variable local offset selection (defaults to (0, 0, ...)
 
                  count
                      variable local dimension selection from start
+                     defaults to whole array for GlobalArrays, or selected Block size
+                     for LocalArrays
                  
                  block_id
                      required for local array variables

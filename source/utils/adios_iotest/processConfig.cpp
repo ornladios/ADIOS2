@@ -17,26 +17,34 @@
 #include "decomp.h"
 #include "processConfig.h"
 
-Command::Command(Operation operation) : op(operation){};
-Command::~Command(){};
+Command::Command(Operation operation) : op(operation) {}
+Command::~Command() {}
 
 CommandSleep::CommandSleep(size_t time)
-: Command(Operation::Sleep), sleepTime_us(time){};
-CommandSleep::~CommandSleep(){};
+: Command(Operation::Sleep), sleepTime_us(time)
+{
+}
+CommandSleep::~CommandSleep() {}
 
 CommandBusy::CommandBusy(size_t time)
-: Command(Operation::Busy), busyTime_us(time){};
-CommandBusy::~CommandBusy(){};
+: Command(Operation::Busy), busyTime_us(time)
+{
+}
+CommandBusy::~CommandBusy() {}
 
 CommandWrite::CommandWrite(std::string stream, std::string group)
-: Command(Operation::Write), streamName(stream), groupName(group){};
-CommandWrite::~CommandWrite(){};
+: Command(Operation::Write), streamName(stream), groupName(group)
+{
+}
+CommandWrite::~CommandWrite() {}
 
 CommandRead::CommandRead(std::string stream, std::string group,
                          const float timeoutSec)
 : Command(Operation::Read), stepMode(adios2::StepMode::Read),
-  streamName(stream), groupName(group), timeout_sec(timeoutSec){};
-CommandRead::~CommandRead(){};
+  streamName(stream), groupName(group), timeout_sec(timeoutSec)
+{
+}
+CommandRead::~CommandRead() {}
 
 std::vector<std::string> FileToLines(std::ifstream &configfile)
 {
