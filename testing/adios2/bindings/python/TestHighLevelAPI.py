@@ -109,14 +109,14 @@ class TestReadSelection(unittest.TestCase):
                 val = fh.read("local_value", (), ())
                 self.assertTrue(np.array_equal(val, local_values[t]))
 
-    @unittest.expectedFailure
     def test_LocalArray(self):
         with adios2.open(filename, 'r') as fh:
             for fh_step in fh:
                 t = fh_step.current_step()
                 for b in range(n_blocks):
                     val = fh_step.read("local_array", (1, 1), (4, 2), b)
-                    self.assertTrue(np.array_equal(val, local_arrays[t][b]))
+                    self.assertTrue(np.array_equal(
+                        val, local_arrays[t][b][1:6, 1:3]))
 
     def test_LocalArrayDefault(self):
         with adios2.open(filename, 'r') as fh:
@@ -148,12 +148,12 @@ class TestReadStepSelection(unittest.TestCase):
             val = fh.read("local_value", (), (), 1, 2)
             self.assertTrue(np.array_equal(val, local_values[1:3]))
 
-    @unittest.expectedFailure
     def test_LocalArray(self):
         with adios2.open(filename, 'r') as fh:
             for b in range(n_blocks):
                 val = fh.read("local_array", (1, 1), (4, 2), 1, 2, b)
-                self.assertTrue(np.array_equal(val, local_arrays[1:3][b]))
+                self.assertTrue(np.array_equal(
+                    val, local_arrays[1:3, b, 1:5, 1:3]))
 
 
 if __name__ == '__main__':
