@@ -90,7 +90,11 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
         variable.SetStepSelection({stepStart, stepCount});
     }
 
-    m_Stream->Read(name, pyArray.mutable_data(), blockID);
+    if (!m_Stream->m_Engine)
+    {
+        throw std::logic_error("no engine available in DoRead()");
+    }
+    m_Stream->m_Engine->Get(variable, pyArray.mutable_data(), Mode::Sync);
 
     return pyArray;
 }

@@ -234,7 +234,7 @@ void BP3Deserializer::SetVariableBlockInfo(
                         helper::DimsToString(blockInfo.Count) +
                         " (requested) is out of bounds of (available) local"
                         " Count " +
-                        helper::DimsToString(blockCharacteristics.Shape) +
+                        helper::DimsToString(readInCount) +
                         " , when reading local array variable " + variableName +
                         ", in call to Get");
                 }
@@ -340,7 +340,7 @@ void BP3Deserializer::SetVariableBlockInfo(
                         helper::DimsToString(blockInfo.Count) +
                         " (requested) is out of bounds of (available) "
                         "Shape " +
-                        helper::DimsToString(blockCharacteristics.Shape) +
+                        helper::DimsToString(readInShape) +
                         " , when reading global array variable " +
                         variableName + ", in call to Get");
                 }
