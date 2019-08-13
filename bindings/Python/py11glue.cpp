@@ -533,6 +533,8 @@ PYBIND11_MODULE(adios2, m)
                  return stream;
              })
 
+        .def_readwrite_static("read_order", &adios2::py11::File::ReadOrder)
+
         .def("set_parameter", &adios2::py11::File::SetParameter,
              pybind11::arg("key"), pybind11::arg("value"), R"md(
              Sets a single parameter. Overwrites value if key exists.
@@ -877,11 +879,12 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("read",
-             (pybind11::array(adios2::py11::File::*)(const std::string &,
-                                                     const size_t)) &
+             (pybind11::array(adios2::py11::File::*)(
+                 const std::string &, const size_t, const std::string &)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("block_id") = 0,
+             pybind11::arg("order") = "",
              R"md(
              Reads entire variable for current step 
              (streaming mode step by step)
@@ -899,16 +902,17 @@ PYBIND11_MODULE(adios2, m)
                      Single values will have a shape={1} numpy array
         )md")
 
-        .def("read",
-             (pybind11::array(adios2::py11::File::*)(
-                 const std::string &, const adios2::Dims &,
-                 const adios2::Dims &, const size_t)) &
-                 adios2::py11::File::Read,
-             pybind11::return_value_policy::take_ownership,
-             pybind11::arg("name"), pybind11::arg("start") = adios2::Dims(),
-             pybind11::arg("count") = adios2::Dims(),
-             pybind11::arg("block_id") = 0,
-             R"md(
+        .def(
+            "read",
+            (pybind11::array(adios2::py11::File::*)(
+                const std::string &, const adios2::Dims &, const adios2::Dims &,
+                const size_t, const std::string &order)) &
+                adios2::py11::File::Read,
+            pybind11::return_value_policy::take_ownership,
+            pybind11::arg("name"), pybind11::arg("start") = adios2::Dims(),
+            pybind11::arg("count") = adios2::Dims(),
+            pybind11::arg("block_id") = 0, pybind11::arg("order") = "",
+            R"md(
              Reads a selection piece in dimension for current step 
              (streaming mode step by step)
 
@@ -933,16 +937,17 @@ PYBIND11_MODULE(adios2, m)
                      empty if exception is thrown
         )md")
 
-        .def(
-            "read",
-            (pybind11::array(adios2::py11::File::*)(
-                const std::string &, const adios2::Dims &, const adios2::Dims &,
-                const size_t, const size_t, const size_t)) &
-                adios2::py11::File::Read,
-            pybind11::return_value_policy::take_ownership,
-            pybind11::arg("name"), pybind11::arg("start"),
-            pybind11::arg("count"), pybind11::arg("step_start"),
-            pybind11::arg("step_count"), pybind11::arg("block_id") = 0, R"md(
+        .def("read",
+             (pybind11::array(adios2::py11::File::*)(
+                 const std::string &, const adios2::Dims &,
+                 const adios2::Dims &, const size_t, const size_t, const size_t,
+                 const std::string &order)) &
+                 adios2::py11::File::Read,
+             pybind11::return_value_policy::take_ownership,
+             pybind11::arg("name"), pybind11::arg("start"),
+             pybind11::arg("count"), pybind11::arg("step_start"),
+             pybind11::arg("step_count"), pybind11::arg("block_id") = 0,
+             pybind11::arg("order") = "", R"md(
             Random access read allowed to select steps, 
             only valid with File Engines
 

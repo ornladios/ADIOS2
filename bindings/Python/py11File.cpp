@@ -25,6 +25,8 @@ namespace adios2
 namespace py11
 {
 
+std::string File::ReadOrder = "K";
+
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
            const std::string engineType)
 : m_Name(name), m_Mode(mode),
@@ -212,13 +214,15 @@ std::vector<std::string> File::ReadString(const std::string &name,
                                        blockID);
 }
 
-pybind11::array File::Read(const std::string &name, const size_t blockID)
+pybind11::array File::Read(const std::string &name, const size_t blockID,
+                           const std::string &order)
 {
-    return Read(name, {}, {}, blockID);
+    return Read(name, {}, {}, blockID, order);
 }
 
 pybind11::array File::Read(const std::string &name, const Dims &start,
-                           const Dims &count, const size_t blockID)
+                           const Dims &count, const size_t blockID,
+                           const std::string &order)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
@@ -231,12 +235,13 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
         return pyArray;
     }
 
-    return Read(name, start, count, 0, 0, blockID);
+    return Read(name, start, count, 0, 0, blockID, order);
 }
 
 pybind11::array File::Read(const std::string &name, const Dims &start,
                            const Dims &count, const size_t stepStart,
-                           const size_t stepCount, const size_t blockID)
+                           const size_t stepCount, const size_t blockID,
+                           const std::string &order)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
@@ -246,7 +251,8 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
 #define declare_type(T)                                                        \
     else if (type == helper::GetType<T>())                                     \
     {                                                                          \
-        return DoRead<T>(name, start, count, stepStart, stepCount, blockID);   \
+        return DoRead<T>(name, start, count, stepStart, stepCount, blockID,    \
+                         order);                                               \
     }
     ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
 #undef declare_type
@@ -352,6 +358,32 @@ adios2::Mode File::ToMode(const std::string mode) const
     }
 
     return modeCpp;
+}
+
+Layout File::ToLayout(std::string order)
+{
+    if (order.empty()) // if not specified, use default
+    {
+        order = ReadOrder;
+    }
+
+    if (order == "C")
+    {
+        return Layout::RowMajor;
+    }
+    else if (order == "F")
+    {
+        return Layout::ColumnMajor;
+    }
+    else if (order == "K")
+    {
+        return Layout::Original;
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "'order' argument to read() must be one of 'C', 'F', 'K'");
+    }
 }
 
 } // end namespace py11

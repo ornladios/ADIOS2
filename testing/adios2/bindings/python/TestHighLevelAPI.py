@@ -155,5 +155,37 @@ class TestReadStepSelection(unittest.TestCase):
                     val, local_arrays[1:3, b, 1:5, 1:3]))
 
 
+class TestReadOrder(unittest.TestCase):
+    # we can't generate any col-major data test file (unless we're running Fortran),
+    # but we can force data to be read in column major order, in which case it should
+    # match the transpose of the original data
+
+    def test_GlobalArrayBasic(self):
+        with adios2.open(filename, 'r') as fh:
+            for fh_step in fh:
+                t = fh_step.current_step()
+                val = fh_step.read('global_array', order='F')
+                self.assertTrue(np.array_equal(val, global_arrays[t].T))
+
+    def test_GlobalArraySelection(self):
+        with adios2.open(filename, 'r') as fh:
+            for fh_step in fh:
+                t = fh_step.current_step()
+                val = fh_step.read("global_array", (1, 0), (3, 2), order='F')
+                self.assertTrue(np.array_equal(
+                    val, global_arrays[t].T[1:4, 0:2]))
+
+    def test_GlobalArrayStepSelection(self):
+        with adios2.open(filename, 'r') as fh:
+            val = fh.read("global_array", (0, 1), (3, 1), 1, 2, order='F')
+            # don't transpose step axis
+            global_arrays_T = np.transpose(global_arrays)  # , (0, 2, 1))
+            print("val", val)
+            #print("ref", global_arrays_T[1:3, 0:3, 1:2])
+            print("ref", global_arrays_T[0:3, 1:2, 1:3])
+            self.assertTrue(np.array_equal(
+                val, global_arrays_T[0:3, 1:2, 1:3]))
+
+
 if __name__ == '__main__':
     unittest.main()
