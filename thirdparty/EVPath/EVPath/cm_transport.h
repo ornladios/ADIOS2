@@ -186,6 +186,9 @@ extern void
 get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int *port_range_high_p, 
 	      int *use_hostname_p, attr_list attrs, CMTransport_trace trace_func, void *trace_data);
 
+extern char *
+IP_get_diagnostics(CManager cm, CMTransport_trace trace_out);
+
 #if defined(__cplusplus) || defined(c_plusplus)
 }
 #endif

@@ -1413,20 +1413,10 @@ INT_CMget_self_ip_addr(CManager cm)
     return IP;
 }
 
-extern char *IP_config_diagnostics;
-extern int IP_config_output_len;
-
 extern char *
 INT_CMget_ip_config_diagnostics(CManager cm)
 {
-    char *output;
-    IP_config_output_len = 0;   /* setup output */
-    get_IP_config(NULL, 0, NULL, NULL, NULL, NULL, NULL,
-		  CMstatic_trans_svcs.trace_out, cm);
-    IP_config_output_len = -1;   /* disable output */
-    output = IP_config_diagnostics;
-    IP_config_diagnostics = NULL;  /* not ours anymore */
-    return output;
+    return IP_get_diagnostics(cm, CMstatic_trans_svcs.trace_out);
 }
 
  #define CURRENT_HANDSHAKE_VERSION 1
