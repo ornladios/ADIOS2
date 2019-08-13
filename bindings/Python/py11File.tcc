@@ -35,11 +35,6 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
             throw std::invalid_argument("when reading a scalar, start and "
                                         "count cannot be specified.\n");
         }
-        if (stepCount == 0)
-        {
-            // for compatiblity, return 1-d arrays rather than 0-d
-            count = Dims{1};
-        }
     }
 
     if (variable.m_ShapeID == ShapeID::LocalArray)

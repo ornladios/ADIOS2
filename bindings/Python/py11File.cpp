@@ -274,6 +274,11 @@ pybind11::array File::ReadAttribute(const std::string &name,
     {                                                                          \
         core::Attribute<T> *attribute = m_Stream->m_IO->InquireAttribute<T>(   \
             name, variableName, separator);                                    \
+        if (attribute->m_IsSingleValue)                                        \
+        {                                                                      \
+            pybind11::array_t<T> pyArray({});                                  \
+            pyArray.mutable_data()[0] = attribute->m_DataSingleValue;          \
+        }                                                                      \
         pybind11::array_t<T> pyArray(attribute->m_Elements);                   \
         m_Stream->ReadAttribute<T>(name, pyArray.mutable_data(), variableName, \
                                    separator);                                 \
