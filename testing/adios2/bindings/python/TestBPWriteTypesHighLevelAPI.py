@@ -142,34 +142,34 @@ with adios2.open("types_np.bp", "r", comm) as fr:
                 print("InTag: " + str(inTag))
                 raise ValueError('tag variable read failed')
 
-            if(inI8[0] != data.I8[0]):
+            if(inI8 != data.I8[0]):
                 raise ValueError('gvarI8 read failed')
 
-            if(inI16[0] != data.I16[0]):
+            if(inI16 != data.I16[0]):
                 raise ValueError('gvarI16 read failed')
 
-            if(inI32[0] != data.I32[0]):
+            if(inI32 != data.I32[0]):
                 raise ValueError('gvarI32 read failed')
 
-            if(inI64[0] != data.I64[0]):
+            if(inI64 != data.I64[0]):
                 raise ValueError('gvarI64 read failed')
 
-            if(inU8[0] != data.U8[0]):
+            if(inU8 != data.U8[0]):
                 raise ValueError('gvarU8 read failed')
 
-            if(inU16[0] != data.U16[0]):
+            if(inU16 != data.U16[0]):
                 raise ValueError('gvarU16 read failed')
 
-            if(inU32[0] != data.U32[0]):
+            if(inU32 != data.U32[0]):
                 raise ValueError('gvarU32 read failed')
 
-            if(inU64[0] != data.U64[0]):
+            if(inU64 != data.U64[0]):
                 raise ValueError('gvarU64 read failed')
 
-            if(inR32[0] != data.R32[0]):
+            if(inR32 != data.R32[0]):
                 raise ValueError('gvarR32 read failed')
 
-            if(inR64[0] != data.R64[0]):
+            if(inR64 != data.R64[0]):
                 raise ValueError('gvarR64 read failed')
 
             # attributes
