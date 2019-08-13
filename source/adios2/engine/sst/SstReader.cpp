@@ -9,7 +9,7 @@
  */
 
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/toolkit/format/bp3/BP3.h"
+#include "adios2/toolkit/format/bp4/BP4.h"
 #include <cstring>
 #include <string>
 
@@ -311,19 +311,19 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         //   whatever transport it is using.  But it is opaque to the Engine
         //   (and to the control plane).)
 
-        m_BP3Deserializer = new format::BP3Deserializer(m_MPIComm, m_DebugMode);
-        m_BP3Deserializer->InitParameters(m_IO.m_Parameters);
+        m_BP4Deserializer = new format::BP4Deserializer(m_MPIComm, m_DebugMode);
+        m_BP4Deserializer->InitParameters(m_IO.m_Parameters);
 
-        m_BP3Deserializer->m_Metadata.Resize(
+        m_BP4Deserializer->m_Metadata.Resize(
             (*m_CurrentStepMetaData->WriterMetadata)->DataSize,
             "in SST Streaming Listener");
 
-        std::memcpy(m_BP3Deserializer->m_Metadata.m_Buffer.data(),
+        std::memcpy(m_BP4Deserializer->m_Metadata.m_Buffer.data(),
                     (*m_CurrentStepMetaData->WriterMetadata)->block,
                     (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
 
         m_IO.RemoveAllVariables();
-        m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, *this);
+        m_BP4Deserializer->ParseMetadata(m_BP4Deserializer->m_Metadata, *this);
         m_IO.ResetVariablesStepSelection(true,
                                          "in call to SST Reader BeginStep");
     }
@@ -383,7 +383,7 @@ void SstReader::EndStep()
         //         place it appropriately into the waiting vars.
         //	   ClearReadRequests()  Clean up as necessary
         //
-        delete m_BP3Deserializer;
+        delete m_BP4Deserializer;
     }
     else
     {
@@ -498,15 +498,15 @@ void SstReader::Init()
             /*  that has *something* you need).  You'll use this in EndStep,*/ \
             /*  when you have to get all the array data and put it where  */   \
             /*  it's supposed to go. */                                        \
-            /* m_BP3Deserializer->GetDeferredVariable(variable, data);  */     \
+            /* m_BP4Deserializer->GetDeferredVariable(variable, data);  */     \
             if (variable.m_SingleValue)                                        \
             {                                                                  \
                 *data = variable.m_Value;                                      \
             }                                                                  \
             else                                                               \
             {                                                                  \
-                m_BP3Deserializer->InitVariableBlockInfo(variable, data);      \
-                m_BP3Deserializer->m_DeferredVariables.insert(                 \
+                m_BP4Deserializer->InitVariableBlockInfo(variable, data);      \
+                m_BP4Deserializer->m_DeferredVariables.insert(                 \
                     variable.m_Name);                                          \
             }                                                                  \
         }                                                                      \
@@ -522,12 +522,12 @@ void SstReader::PerformGets()
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
-        if (m_BP3Deserializer->m_DeferredVariables.empty())
+        if (m_BP4Deserializer->m_DeferredVariables.empty())
         {
             return;
         }
 
-        for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
+        for (const std::string &name : m_BP4Deserializer->m_DeferredVariables)
         {
             const std::string type = m_IO.InquireVariableType(name);
 
@@ -541,7 +541,7 @@ void SstReader::PerformGets()
             FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
         for (auto &blockInfo : variable.m_BlocksInfo)                          \
         {                                                                      \
-            m_BP3Deserializer->SetVariableBlockInfo(variable, blockInfo);      \
+            m_BP4Deserializer->SetVariableBlockInfo(variable, blockInfo);      \
         }                                                                      \
         ReadVariableBlocks(variable);                                          \
         variable.m_BlocksInfo.clear();                                         \
@@ -550,7 +550,7 @@ void SstReader::PerformGets()
 #undef declare_type
         }
 
-        m_BP3Deserializer->m_DeferredVariables.clear();
+        m_BP4Deserializer->m_DeferredVariables.clear();
     }
     else
     {
@@ -571,7 +571,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
         }                                                                      \
         else if (m_WriterMarshalMethod == SstMarshalBP)                        \
         {                                                                      \
-            return m_BP3Deserializer->AllStepsBlocksInfo(variable);            \
+            return m_BP4Deserializer->AllStepsBlocksInfo(variable);            \
         }                                                                      \
         throw std::invalid_argument(                                           \
             "ERROR: Unknown marshal mechanism in DoAllStepsBlocksInfo\n");     \
@@ -586,7 +586,7 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
         }                                                                      \
         else if (m_WriterMarshalMethod == SstMarshalBP)                        \
         {                                                                      \
-            return m_BP3Deserializer->BlocksInfo(variable, 0);                 \
+            return m_BP4Deserializer->BlocksInfo(variable, 0);                 \
         }                                                                      \
         throw std::invalid_argument(                                           \
             "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \
