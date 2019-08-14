@@ -44,6 +44,7 @@ void CheckAllStepsBlockInfo1D(
             EXPECT_EQ(allStepsBlocksInfo[s][b].Start[0], b * Nx);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Count[0], Nx);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Step, s);
+            EXPECT_EQ(allStepsBlocksInfo[s][b].WriterID, b);
             EXPECT_FALSE(allStepsBlocksInfo[s][b].IsReverseDims);
         }
     }
@@ -67,6 +68,7 @@ void CheckAllStepsBlockInfo2D(
             EXPECT_EQ(allStepsBlocksInfo[s][b].Count[0], Ny);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Count[1], Nx);
             EXPECT_EQ(allStepsBlocksInfo[s][b].Step, s);
+            EXPECT_EQ(allStepsBlocksInfo[s][b].WriterID, b);
             EXPECT_FALSE(allStepsBlocksInfo[s][b].IsReverseDims);
         }
     }

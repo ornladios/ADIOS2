@@ -340,8 +340,8 @@ public:
         IOType Max = IOType();
         /** block Value, if IsValue is true */
         IOType Value = IOType();
-        /** true: value, false: array */
-        bool IsValue = false;
+        /** WriterID, source for stream ID that produced this block */
+        int WriterID = 0;
         /** blockID for Block Selection */
         size_t BlockID = 0;
         /** block corresponding step */
@@ -350,6 +350,8 @@ public:
         const T *Data() const;
         /** true: Dims were swapped from column-major, false: not swapped */
         bool IsReverseDims = false;
+        /** true: value, false: array */
+        bool IsValue = false;
 
         // allow Engine to set m_Info
         friend class Engine;

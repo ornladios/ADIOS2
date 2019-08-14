@@ -37,8 +37,13 @@ ToBlocksInfo(const std::vector<typename core::Variable<
         typename Variable<T>::Info blockInfo;
         blockInfo.Start = coreBlockInfo.Start;
         blockInfo.Count = coreBlockInfo.Count;
+        blockInfo.BlockID = coreBlockInfo.BlockID;
+        blockInfo.Step = coreBlockInfo.Step;
+        blockInfo.WriterID = coreBlockInfo.WriterID;
+
         blockInfo.IsReverseDims = coreBlockInfo.IsReverseDims;
         blockInfo.IsValue = coreBlockInfo.IsValue;
+
         if (blockInfo.IsValue)
         {
             blockInfo.Value = coreBlockInfo.Value;
@@ -48,8 +53,7 @@ ToBlocksInfo(const std::vector<typename core::Variable<
             blockInfo.Min = coreBlockInfo.Min;
             blockInfo.Max = coreBlockInfo.Max;
         }
-        blockInfo.BlockID = coreBlockInfo.BlockID;
-        blockInfo.Step = coreBlockInfo.Step;
+
         blocksInfo.push_back(blockInfo);
     }
 

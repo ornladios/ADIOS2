@@ -1246,12 +1246,12 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(mpiSize * Nx)};
-            adios2::Dims start{static_cast<unsigned int>(0),
-                               static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims shape{static_cast<size_t>(Ny),
+                               static_cast<size_t>(mpiSize * Nx)};
+            adios2::Dims start{static_cast<size_t>(0),
+                               static_cast<size_t>(mpiRank * Nx)};
+            adios2::Dims count{static_cast<size_t>(Ny),
+                               static_cast<size_t>(Nx)};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             auto var_i16 =
                 io.DefineVariable<int16_t>("i16", shape, start, count);
@@ -1568,10 +1568,13 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 
                 if (i % 2 == 0)
                 {
+                    const int writerID = static_cast<int>(i) - 1;
+
                     ASSERT_EQ(i8Info[i].Start[0], 0);
                     ASSERT_EQ(i8Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i8Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(i8Info[i].Count[1], Nx);
+                    EXPECT_EQ(i8Info[i].WriterID, writerID);
 
                     ASSERT_EQ(i16Info[i].Start[0], 0);
                     ASSERT_EQ(i16Info[i].Start[1], inRank * Nx);
