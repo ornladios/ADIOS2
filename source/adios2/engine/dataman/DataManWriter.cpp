@@ -40,10 +40,7 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
     }
     ++m_CurrentStep;
 
-    for (size_t i = 0; i < m_Channels; ++i)
-    {
-        m_DataManSerializer[i]->NewWriterBuffer(m_BufferSize);
-    }
+    m_DataManSerializer.NewWriterBuffer(m_BufferSize);
 
     if (m_Verbosity >= 5)
     {
@@ -60,37 +57,22 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
-    for (auto &serializer : m_DataManSerializer)
-    {
-        serializer->PutAttributes(m_IO);
-    }
+    m_DataManSerializer.PutAttributes(m_IO);
 
     if (m_CurrentStep == 0)
     {
-        m_DataManSerializer[0]->AggregateMetadata();
+        m_DataManSerializer.AggregateMetadata();
         m_AggregatedMetadataMutex.lock();
         int64_t stepProvided;
         m_AggregatedMetadata =
-            m_DataManSerializer[0]->GetAggregatedMetadataPack(0, stepProvided,
-                                                              -1);
+            m_DataManSerializer.GetAggregatedMetadataPack(0, stepProvided, -1);
         m_AggregatedMetadataMutex.unlock();
     }
 
-    if (m_WorkflowMode == "file")
-    {
-        const auto buf = m_DataManSerializer[0]->GetLocalPack();
-        m_FileTransport.Write(buf->data(), buf->size());
-    }
-    else if (m_WorkflowMode == "stream")
-    {
-        for (size_t i = 0; i < m_Channels; ++i)
-        {
-            m_DataManSerializer[i]->AttachAttributes();
-            const auto buf = m_DataManSerializer[i]->GetLocalPack();
-            m_BufferSize = buf->size();
-            m_WANMan->Write(buf, i);
-        }
-    }
+    m_DataManSerializer.AttachAttributes();
+    const auto buf = m_DataManSerializer.GetLocalPack();
+    m_BufferSize = buf->size();
+    m_WANMan.Write(buf);
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
@@ -99,25 +81,7 @@ void DataManWriter::Flush(const int transportIndex) {}
 
 void DataManWriter::Init()
 {
-
-    if (m_WorkflowMode == "file")
-    {
-        m_FileTransport.Open(m_Name, Mode::Write);
-        return;
-    }
-
-    // initialize transports
-    m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
-    m_WANMan->OpenTransports(m_IO.m_TransportsParameters, Mode::Write,
-                             m_WorkflowMode, true);
-
-    // initialize serializer
-    for (size_t i = 0; i < m_Channels; ++i)
-    {
-        m_DataManSerializer.push_back(
-            std::make_shared<format::DataManSerializer>(m_MPIComm, m_BufferSize,
-                                                        m_IsRowMajor));
-    }
+    m_WANMan.OpenTransports(m_IO.m_TransportsParameters, Mode::Write, true);
 }
 
 #define declare_type(T)                                                        \
@@ -134,13 +98,7 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
-    if (m_WorkflowMode == "file")
-    {
-        m_FileTransport.Close();
-        return;
-    }
-
-    m_WANMan->Write(format::DataManSerializer::EndSignal(CurrentStep()), 0);
+    m_WANMan.Write(format::DataManSerializer::EndSignal(CurrentStep()), 0);
 }
 
 void DataManWriter::MetadataThread(const std::string &address)

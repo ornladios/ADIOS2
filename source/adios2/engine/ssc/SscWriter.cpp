@@ -28,8 +28,7 @@ namespace engine
 SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SscWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, m_DefaultBufferSize,
-                      helper::IsRowMajor(io.m_HostLanguage))
+  m_DataManSerializer(mpiComm, helper::IsRowMajor(io.m_HostLanguage))
 {
     TAU_SCOPED_TIMER_FUNC();
     Init();

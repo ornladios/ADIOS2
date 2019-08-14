@@ -39,11 +39,10 @@ private:
     bool m_Listening = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
 
-    format::DataManSerializer m_DataManSerializer;
     format::DmvVecPtrMap m_MetaDataMap;
 
     void Init();
-    void IOThread(std::shared_ptr<transportman::WANMan> man);
+    void IOThread();
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \

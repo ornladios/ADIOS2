@@ -28,7 +28,7 @@ namespace engine
 SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SscReader", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, 0, helper::IsRowMajor(io.m_HostLanguage)),
+  m_DataManSerializer(mpiComm, helper::IsRowMajor(io.m_HostLanguage)),
   m_RepliedMetadata(std::make_shared<std::vector<char>>())
 {
     TAU_SCOPED_TIMER_FUNC();

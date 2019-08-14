@@ -24,8 +24,7 @@ namespace engine
 
 DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: DataManCommon("DataManReader", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, 0, m_IsRowMajor)
+: DataManCommon("DataManReader", io, name, mode, mpiComm)
 {
     m_EndMessage = " in call to IO Open DataManReader " + m_Name + "\n";
     Init();
@@ -167,28 +166,20 @@ void DataManReader::Flush(const int transportIndex) {}
 
 void DataManReader::Init()
 {
-    if (m_WorkflowMode == "file")
-    {
-        m_FileTransport.Open(m_Name, Mode::Read);
-        return;
-    }
 
     // initialize transports
-    m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
-    m_WANMan->OpenTransports(m_IO.m_TransportsParameters, Mode::Read,
-                             m_WorkflowMode, true);
+    m_WANMan.OpenTransports(m_IO.m_TransportsParameters, Mode::Read, true);
 
     // start threads
     m_Listening = true;
-    m_DataThread =
-        std::make_shared<std::thread>(&DataManReader::IOThread, this, m_WANMan);
+    m_DataThread = std::thread(&DataManReader::IOThread, this);
 }
 
-void DataManReader::IOThread(std::shared_ptr<transportman::WANMan> man)
+void DataManReader::IOThread()
 {
     while (m_Listening)
     {
-        std::shared_ptr<std::vector<char>> buffer = man->Read(0);
+        std::shared_ptr<std::vector<char>> buffer = m_WANMan.Read(0);
         if (buffer != nullptr)
         {
             int ret = m_DataManSerializer.PutPack(buffer);
@@ -224,18 +215,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void DataManReader::DoClose(const int transportIndex)
 {
-    if (transportIndex == -1)
+    m_Listening = false;
+    if (m_DataThread.joinable())
     {
-        m_Listening = false;
-        if (m_DataThread != nullptr)
-        {
-            if (m_DataThread->joinable())
-            {
-                m_DataThread->join();
-            }
-        }
+        m_DataThread.join();
     }
-    m_WANMan = nullptr;
 }
 
 } // end namespace engine

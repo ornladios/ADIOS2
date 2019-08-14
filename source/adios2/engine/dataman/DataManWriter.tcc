@@ -53,44 +53,24 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 
     if (m_IsRowMajor)
     {
-        for (size_t i = 0; i < m_Channels; ++i)
-        {
-            m_DataManSerializer[i]->PutVar(variable, m_Name, CurrentStep(),
-                                           m_MpiRank, "",
-                                           m_IO.m_TransportsParameters[i]);
-        }
+        m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,
+                                   "", Params());
     }
     else
     {
-        if (m_ContiguousMajor)
-        {
-            Dims start = variable.m_Start;
-            Dims count = variable.m_Count;
-            Dims shape = variable.m_Shape;
-            Dims memstart = variable.m_MemoryStart;
-            Dims memcount = variable.m_MemoryCount;
-            std::reverse(start.begin(), start.end());
-            std::reverse(count.begin(), count.end());
-            std::reverse(shape.begin(), shape.end());
-            std::reverse(memstart.begin(), memstart.end());
-            std::reverse(memcount.begin(), memcount.end());
-            for (size_t i = 0; i < m_Channels; ++i)
-            {
-                m_DataManSerializer[i]->PutVar(
-                    variable.m_Data, variable.m_Name, shape, start, count,
-                    memstart, memcount, m_Name, CurrentStep(), m_MpiRank, "",
-                    m_IO.m_TransportsParameters[i]);
-            }
-        }
-        else
-        {
-            for (size_t i = 0; i < m_Channels; ++i)
-            {
-                m_DataManSerializer[i]->PutVar(variable, m_Name, CurrentStep(),
-                                               m_MpiRank, "",
-                                               m_IO.m_TransportsParameters[i]);
-            }
-        }
+        Dims start = variable.m_Start;
+        Dims count = variable.m_Count;
+        Dims shape = variable.m_Shape;
+        Dims memstart = variable.m_MemoryStart;
+        Dims memcount = variable.m_MemoryCount;
+        std::reverse(start.begin(), start.end());
+        std::reverse(count.begin(), count.end());
+        std::reverse(shape.begin(), shape.end());
+        std::reverse(memstart.begin(), memstart.end());
+        std::reverse(memcount.begin(), memcount.end());
+        m_DataManSerializer.PutVar(variable.m_Data, variable.m_Name, shape,
+                                   start, count, memstart, memcount, m_Name,
+                                   CurrentStep(), m_MpiRank, "", Params());
     }
 }
 

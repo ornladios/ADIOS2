@@ -83,8 +83,7 @@ using DeferredRequestMapPtr = std::shared_ptr<DeferredRequestMap>;
 class DataManSerializer
 {
 public:
-    DataManSerializer(MPI_Comm mpiComm, const size_t writerBufferSize,
-                      const bool isRowMajor);
+    DataManSerializer(MPI_Comm mpiComm, const bool isRowMajor);
 
     // clear and allocate new buffer for writer
     void NewWriterBuffer(size_t size);

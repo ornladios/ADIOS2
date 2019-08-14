@@ -33,11 +33,11 @@ public:
     ~WANMan();
 
     void OpenTransports(const std::vector<Params> &parametersVector,
-                        const Mode openMode, const std::string &workflowMode,
-                        const bool profile);
+                        const Mode openMode, const bool profile);
 
-    void Write(const std::vector<char> &buffer, size_t transportId);
-    void Write(std::shared_ptr<std::vector<char>> buffer, size_t transportId);
+    void Write(const std::vector<char> &buffer, size_t transportId = 0);
+    void Write(std::shared_ptr<std::vector<char>> buffer,
+               size_t transportId = 0);
 
     std::shared_ptr<std::vector<char>> Read(size_t id);
 

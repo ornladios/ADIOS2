@@ -21,16 +21,13 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(MPI_Comm mpiComm,
-                                     const size_t writerBufferSize,
-                                     const bool isRowMajor)
+DataManSerializer::DataManSerializer(MPI_Comm mpiComm, const bool isRowMajor)
 : m_MpiComm(mpiComm), m_IsRowMajor(isRowMajor),
   m_IsLittleEndian(helper::IsLittleEndian()),
   m_DeferredRequestsToSend(std::make_shared<DeferredRequestMap>())
 {
     MPI_Comm_size(m_MpiComm, &m_MpiSize);
     MPI_Comm_rank(m_MpiComm, &m_MpiRank);
-    NewWriterBuffer(writerBufferSize);
 }
 
 void DataManSerializer::NewWriterBuffer(size_t bufferSize)

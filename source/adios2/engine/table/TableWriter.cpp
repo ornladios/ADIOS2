@@ -27,7 +27,7 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
                          MPI_Comm mpiComm)
 : Engine("TableWriter", io, name, mode, mpiComm),
   m_IsRowMajor(helper::IsRowMajor(m_IO.m_HostLanguage)),
-  m_Deserializer(m_MPIComm, 0, m_IsRowMajor),
+  m_Deserializer(m_MPIComm, m_IsRowMajor),
   m_SendStagingMan(mpiComm, Mode::Read, m_Timeout, 128),
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
@@ -228,8 +228,9 @@ void TableWriter::InitTransports()
 
     for (int i = 0; i < m_Aggregators; ++i)
     {
-        auto s = std::make_shared<format::DataManSerializer>(
-            m_MPIComm, m_BufferSize, m_IsRowMajor);
+        auto s = std::make_shared<format::DataManSerializer>(m_MPIComm,
+                                                             m_IsRowMajor);
+        s->NewWriterBuffer(m_BufferSize);
         s->SetDestination(m_AllAddresses[i]);
         m_Serializers.push_back(s);
     }

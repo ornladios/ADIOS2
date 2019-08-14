@@ -76,8 +76,7 @@ WANMan::~WANMan()
 void WANMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
 
 void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
-                            const Mode mode, const std::string &workflowMode,
-                            const bool profile)
+                            const Mode mode, const bool profile)
 {
     m_TransportsParameters = paramsVector;
     m_BufferQueue.resize(paramsVector.size());
@@ -85,15 +84,11 @@ void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
     for (size_t i = 0; i < paramsVector.size(); ++i)
     {
         // Get parameters
-        std::string library;
-        GetStringParameter(paramsVector[i], "Library", library);
         std::string ip;
         GetStringParameter(paramsVector[i], "IPAddress", ip);
         std::string port;
         GetStringParameter(paramsVector[i], "Port", port);
         GetIntParameter(paramsVector[i], "Timeout", m_Timeout);
-        std::string name;
-        GetStringParameter(paramsVector[i], "Name", name);
 
         // Calculate port number
         int mpiRank, mpiSize;
@@ -105,45 +100,25 @@ void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
         }
         port = std::to_string(stoi(port) + mpiRank);
 
-        if (library == "zmq" || library == "ZMQ")
+        std::shared_ptr<transport::SocketZmq> wanTransport;
+        wanTransport = std::make_shared<transport::SocketZmqPubSub>(m_Timeout);
+
+        std::string fullIP = "tcp://" + ip + ":" + port;
+        wanTransport->Open(fullIP, mode);
+        m_Transports.emplace(i, wanTransport);
+
+        // launch thread
+        if (mode == Mode::Read)
         {
-#ifdef ADIOS2_HAVE_ZEROMQ
-            std::shared_ptr<transport::SocketZmq> wanTransport;
-            wanTransport =
-                std::make_shared<transport::SocketZmqPubSub>(m_Timeout);
-
-            std::string fullIP = "tcp://" + ip + ":" + port;
-            wanTransport->Open(fullIP, mode);
-            m_Transports.emplace(i, wanTransport);
-
-            // launch thread
-            if (mode == Mode::Read)
-            {
-                m_Reading = true;
-                m_ReadThreads.emplace_back(
-                    std::thread(&WANMan::ReadThread, this, wanTransport));
-            }
-            else if (mode == Mode::Write)
-            {
-                m_Writing = true;
-                m_WriteThreads.emplace_back(
-                    std::thread(&WANMan::WriteThread, this, wanTransport, i));
-            }
-#else
-            throw std::invalid_argument(
-                "ERROR: this version of ADIOS2 didn't compile with "
-                "ZMQ library, in call to Open\n");
-#endif
+            m_Reading = true;
+            m_ReadThreads.emplace_back(
+                std::thread(&WANMan::ReadThread, this, wanTransport));
         }
-        else
+        else if (mode == Mode::Write)
         {
-            if (m_DebugMode)
-            {
-                throw std::invalid_argument("ERROR: wan transport " + library +
-                                            " not supported or not "
-                                            "provided in IO AddTransport, "
-                                            "in call to Open\n");
-            }
+            m_Writing = true;
+            m_WriteThreads.emplace_back(
+                std::thread(&WANMan::WriteThread, this, wanTransport, i));
         }
     }
 }

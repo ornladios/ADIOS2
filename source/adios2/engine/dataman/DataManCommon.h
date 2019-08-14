@@ -37,27 +37,20 @@ public:
     virtual ~DataManCommon() = default;
 
 protected:
+    int m_Verbosity = 0;
+
     int m_MpiRank;
     int m_MpiSize;
-    int m_Channels;
-    std::string m_WorkflowMode = "stream";
     bool m_ProvideLatest = false;
-    size_t m_BufferSize = 1024 * 1024 * 1024;
-    bool m_DoMonitor = false;
+    size_t m_BufferSize = 128 * 1024 * 1024;
     int64_t m_CurrentStep = -1;
 
-    bool m_IsLittleEndian;
     bool m_IsRowMajor;
     bool m_ContiguousMajor = true;
 
-    int m_Verbosity = 0;
-
-    transport::FileFStream m_FileTransport;
-
-    std::vector<std::string> m_StreamNames;
-
-    std::shared_ptr<transportman::WANMan> m_WANMan;
-    std::shared_ptr<std::thread> m_DataThread;
+    format::DataManSerializer m_DataManSerializer;
+    transportman::WANMan m_WANMan;
+    std::thread m_DataThread;
 
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);

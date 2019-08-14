@@ -46,8 +46,6 @@ private:
     int m_Port = 12307;
     std::vector<std::string> m_FullAddresses;
 
-    std::vector<std::shared_ptr<format::DataManSerializer>> m_DataManSerializer;
-
     void Init();
     void MetadataThread(const std::string &address);
     std::thread m_MetadataThread;
