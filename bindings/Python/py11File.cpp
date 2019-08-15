@@ -215,14 +215,14 @@ std::vector<std::string> File::ReadString(const std::string &name,
 }
 
 pybind11::array File::Read(const std::string &name, const size_t blockID,
-                           const std::string &order)
+                           const std::string order)
 {
     return Read(name, {}, {}, blockID, order);
 }
 
 pybind11::array File::Read(const std::string &name, const Dims &start,
                            const Dims &count, const size_t blockID,
-                           const std::string &order)
+                           const std::string order)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 
@@ -241,7 +241,7 @@ pybind11::array File::Read(const std::string &name, const Dims &start,
 pybind11::array File::Read(const std::string &name, const Dims &start,
                            const Dims &count, const size_t stepStart,
                            const size_t stepCount, const size_t blockID,
-                           const std::string &order)
+                           const std::string order)
 {
     const std::string type = m_Stream->m_IO->InquireVariableType(name);
 

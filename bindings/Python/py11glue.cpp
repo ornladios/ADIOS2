@@ -888,7 +888,7 @@ PYBIND11_MODULE(adios2, m)
 
         .def("read",
              (pybind11::array(adios2::py11::File::*)(
-                 const std::string &, const size_t, const std::string &)) &
+                 const std::string &, const size_t, const std::string)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("block_id") = 0,
@@ -915,17 +915,16 @@ PYBIND11_MODULE(adios2, m)
                      Single values will have a shape={1} numpy array
         )md")
 
-        .def(
-            "read",
-            (pybind11::array(adios2::py11::File::*)(
-                const std::string &, const adios2::Dims &, const adios2::Dims &,
-                const size_t, const std::string &order)) &
-                adios2::py11::File::Read,
-            pybind11::return_value_policy::take_ownership,
-            pybind11::arg("name"), pybind11::arg("start") = adios2::Dims(),
-            pybind11::arg("count") = adios2::Dims(),
-            pybind11::arg("block_id") = 0, pybind11::arg("order") = "",
-            R"md(
+        .def("read",
+             (pybind11::array(adios2::py11::File::*)(
+                 const std::string &, const adios2::Dims &,
+                 const adios2::Dims &, const size_t, const std::string order)) &
+                 adios2::py11::File::Read,
+             pybind11::return_value_policy::take_ownership,
+             pybind11::arg("name"), pybind11::arg("start") = adios2::Dims(),
+             pybind11::arg("count") = adios2::Dims(),
+             pybind11::arg("block_id") = 0, pybind11::arg("order") = "",
+             R"md(
              Reads a selection piece in dimension for current step 
              (streaming mode step by step)
 
@@ -959,7 +958,7 @@ PYBIND11_MODULE(adios2, m)
              (pybind11::array(adios2::py11::File::*)(
                  const std::string &, const adios2::Dims &,
                  const adios2::Dims &, const size_t, const size_t, const size_t,
-                 const std::string &order)) &
+                 const std::string order)) &
                  adios2::py11::File::Read,
              pybind11::return_value_policy::take_ownership,
              pybind11::arg("name"), pybind11::arg("start"),

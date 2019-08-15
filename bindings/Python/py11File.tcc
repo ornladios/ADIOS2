@@ -18,11 +18,13 @@ namespace adios2
 namespace py11
 {
 
-static Dims py_strides(const Dims &shape, ssize_t itemsize, bool has_step_dim)
+namespace
+{
+Dims py_strides(const Dims &shape, ssize_t itemsize, bool hasStepDim)
 {
     auto ndim = shape.size();
     Dims strides(ndim, itemsize);
-    if (!has_step_dim)
+    if (!hasStepDim)
     {
         // regular column-major
         for (size_t i = 1; i < ndim; ++i)
@@ -41,12 +43,13 @@ static Dims py_strides(const Dims &shape, ssize_t itemsize, bool has_step_dim)
     }
     return strides;
 }
+} // end anonymous namespace
 
 template <class T>
 pybind11::array File::DoRead(const std::string &name, const Dims &_start,
                              const Dims &_count, const size_t stepStart,
                              const size_t stepCount, const size_t blockID,
-                             const std::string &order)
+                             const std::string order)
 {
     Layout layout = ToLayout(order);
     core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);

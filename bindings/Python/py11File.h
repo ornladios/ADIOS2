@@ -95,16 +95,16 @@ public:
                                         const size_t blockID = 0);
 
     pybind11::array Read(const std::string &name, const size_t blockID,
-                         const std::string &order);
+                         const std::string order);
 
     pybind11::array Read(const std::string &name, const Dims &start,
                          const Dims &count, const size_t blockID,
-                         const std::string &order);
+                         const std::string order);
 
     pybind11::array Read(const std::string &name, const Dims &start,
                          const Dims &count, const size_t stepStart,
                          const size_t stepCount, const size_t blockID,
-                         const std::string &order);
+                         const std::string order);
 
     pybind11::array ReadAttribute(const std::string &name,
                                   const std::string &variableName = "",
@@ -132,7 +132,7 @@ private:
     pybind11::array DoRead(const std::string &name, const Dims &start,
                            const Dims &count, const size_t stepStart,
                            const size_t stepCount, const size_t blockID,
-                           const std::string &order);
+                           const std::string order);
 };
 
 } // end namespace py11
