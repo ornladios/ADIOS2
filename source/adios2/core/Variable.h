@@ -99,6 +99,7 @@ public:
         T Value = T();
         T *BufferP = nullptr;
         std::vector<T> BufferV;
+        int WriterID = 0;
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
         bool IsReverseDims = false;
