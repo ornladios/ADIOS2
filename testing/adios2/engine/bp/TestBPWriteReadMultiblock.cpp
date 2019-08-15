@@ -218,80 +218,80 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
-        ASSERT_EQ(var_iString.Shape().size(), 0);
-        ASSERT_EQ(var_iString.Steps(), NSteps);
+        EXPECT_EQ(var_iString.Shape().size(), 0);
+        EXPECT_EQ(var_iString.Steps(), NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i8.Steps(), NSteps);
-        ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i8.Steps(), NSteps);
+        EXPECT_EQ(var_i8.Shape()[0], mpiSize * Nx);
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Steps(), NSteps);
-        ASSERT_EQ(var_i16.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i16.Steps(), NSteps);
+        EXPECT_EQ(var_i16.Shape()[0], mpiSize * Nx);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Steps(), NSteps);
-        ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i32.Steps(), NSteps);
+        EXPECT_EQ(var_i32.Shape()[0], mpiSize * Nx);
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Steps(), NSteps);
-        ASSERT_EQ(var_i64.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i64.Steps(), NSteps);
+        EXPECT_EQ(var_i64.Shape()[0], mpiSize * Nx);
 
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
         EXPECT_TRUE(var_u8);
-        ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u8.Steps(), NSteps);
-        ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u8.Steps(), NSteps);
+        EXPECT_EQ(var_u8.Shape()[0], mpiSize * Nx);
 
         auto var_u16 = io.InquireVariable<uint16_t>("u16");
         EXPECT_TRUE(var_u16);
-        ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u16.Steps(), NSteps);
-        ASSERT_EQ(var_u16.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u16.Steps(), NSteps);
+        EXPECT_EQ(var_u16.Shape()[0], mpiSize * Nx);
 
         auto var_u32 = io.InquireVariable<uint32_t>("u32");
         EXPECT_TRUE(var_u32);
-        ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u32.Steps(), NSteps);
-        ASSERT_EQ(var_u32.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u32.Steps(), NSteps);
+        EXPECT_EQ(var_u32.Shape()[0], mpiSize * Nx);
 
         auto var_u64 = io.InquireVariable<uint64_t>("u64");
         EXPECT_TRUE(var_u64);
-        ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u64.Steps(), NSteps);
-        ASSERT_EQ(var_u64.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u64.Steps(), NSteps);
+        EXPECT_EQ(var_u64.Shape()[0], mpiSize * Nx);
 
         auto var_r32 = io.InquireVariable<float>("r32");
         EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r32.Steps(), NSteps);
+        EXPECT_EQ(var_r32.Shape()[0], mpiSize * Nx);
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r64.Steps(), NSteps);
+        EXPECT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr32.Steps(), NSteps);
+        EXPECT_EQ(var_cr32.Shape()[0], mpiSize * Nx);
 
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
         EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
+        EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr64.Steps(), NSteps);
+        EXPECT_EQ(var_cr64.Shape()[0], mpiSize * Nx);
 
         // TODO: other types
 
@@ -396,7 +396,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             for (size_t i = 0; i < mpiSize; ++i)
             {
                 EXPECT_TRUE(iStringInfo[i].IsValue);
-                ASSERT_EQ(iStringInfo[i].Value, "Testing ADIOS2 String type");
+                EXPECT_EQ(iStringInfo[i].Value, "Testing ADIOS2 String type");
             }
 
             for (size_t i = 0; i < 2 * mpiSize; ++i)
@@ -457,18 +457,18 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 
                 if (i % 2 == 0)
                 {
-                    ASSERT_EQ(i8Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(i16Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(i32Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(i64Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(u8Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(u16Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(u32Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(u64Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(r32Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(r64Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(cr32Info[i].Start[0], inRank * Nx);
-                    ASSERT_EQ(cr64Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(i8Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(i16Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(i32Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(i64Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(u8Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(u16Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(u32Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(u64Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(r32Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(r64Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(cr32Info[i].Start[0], inRank * Nx);
+                    EXPECT_EQ(cr64Info[i].Start[0], inRank * Nx);
 
                     i8Min =
                         *std::min_element(currentTestData.I8.begin(),
@@ -565,18 +565,18 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 }
                 else
                 {
-                    ASSERT_EQ(i8Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(i16Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(i32Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(i64Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(u8Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(u16Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(u32Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(u64Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(r32Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(r64Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(cr32Info[i].Start[0], inRank * Nx + Nx / 2);
-                    ASSERT_EQ(cr64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(i8Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(i16Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(i32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(i64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(u8Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(u16Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(u32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(u64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(r32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(r64Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(cr32Info[i].Start[0], inRank * Nx + Nx / 2);
+                    EXPECT_EQ(cr64Info[i].Start[0], inRank * Nx + Nx / 2);
 
                     i8Min =
                         *std::min_element(currentTestData.I8.begin() + Nx / 2,
@@ -681,33 +681,33 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                     }
                 }
 
-                ASSERT_EQ(i8Info[i].Min, i8Min);
-                ASSERT_EQ(i8Info[i].Max, i8Max);
-                ASSERT_EQ(i16Info[i].Min, i16Min);
-                ASSERT_EQ(i16Info[i].Max, i16Max);
-                ASSERT_EQ(i32Info[i].Min, i32Min);
-                ASSERT_EQ(i32Info[i].Max, i32Max);
-                ASSERT_EQ(i64Info[i].Min, i64Min);
-                ASSERT_EQ(i64Info[i].Max, i64Max);
+                EXPECT_EQ(i8Info[i].Min, i8Min);
+                EXPECT_EQ(i8Info[i].Max, i8Max);
+                EXPECT_EQ(i16Info[i].Min, i16Min);
+                EXPECT_EQ(i16Info[i].Max, i16Max);
+                EXPECT_EQ(i32Info[i].Min, i32Min);
+                EXPECT_EQ(i32Info[i].Max, i32Max);
+                EXPECT_EQ(i64Info[i].Min, i64Min);
+                EXPECT_EQ(i64Info[i].Max, i64Max);
 
-                ASSERT_EQ(u8Info[i].Min, u8Min);
-                ASSERT_EQ(u8Info[i].Max, u8Max);
-                ASSERT_EQ(u16Info[i].Min, u16Min);
-                ASSERT_EQ(u16Info[i].Max, u16Max);
-                ASSERT_EQ(u32Info[i].Min, u32Min);
-                ASSERT_EQ(u32Info[i].Max, u32Max);
-                ASSERT_EQ(u64Info[i].Min, u64Min);
-                ASSERT_EQ(u64Info[i].Max, u64Max);
+                EXPECT_EQ(u8Info[i].Min, u8Min);
+                EXPECT_EQ(u8Info[i].Max, u8Max);
+                EXPECT_EQ(u16Info[i].Min, u16Min);
+                EXPECT_EQ(u16Info[i].Max, u16Max);
+                EXPECT_EQ(u32Info[i].Min, u32Min);
+                EXPECT_EQ(u32Info[i].Max, u32Max);
+                EXPECT_EQ(u64Info[i].Min, u64Min);
+                EXPECT_EQ(u64Info[i].Max, u64Max);
 
-                ASSERT_EQ(r32Info[i].Min, r32Min);
-                ASSERT_EQ(r32Info[i].Max, r32Max);
-                ASSERT_EQ(r64Info[i].Min, r64Min);
-                ASSERT_EQ(r64Info[i].Max, r64Max);
+                EXPECT_EQ(r32Info[i].Min, r32Min);
+                EXPECT_EQ(r32Info[i].Max, r32Max);
+                EXPECT_EQ(r64Info[i].Min, r64Min);
+                EXPECT_EQ(r64Info[i].Max, r64Max);
 
-                ASSERT_EQ(cr32Info[i].Min, cr32Min);
-                ASSERT_EQ(cr32Info[i].Max, cr32Max);
-                ASSERT_EQ(cr64Info[i].Min, cr64Min);
-                ASSERT_EQ(cr64Info[i].Max, cr64Max);
+                EXPECT_EQ(cr32Info[i].Min, cr32Min);
+                EXPECT_EQ(cr32Info[i].Max, cr32Max);
+                EXPECT_EQ(cr64Info[i].Min, cr64Min);
+                EXPECT_EQ(cr64Info[i].Max, cr64Max);
             }
 
             // Generate test data for each rank uniquely
@@ -998,92 +998,92 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
-        ASSERT_EQ(var_iString.Shape().size(), 0);
-        ASSERT_EQ(var_iString.Steps(), NSteps);
+        EXPECT_EQ(var_iString.Shape().size(), 0);
+        EXPECT_EQ(var_iString.Steps(), NSteps);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i8.Steps(), NSteps);
-        ASSERT_EQ(var_i8.Shape()[0], Ny);
-        ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i8.Steps(), NSteps);
+        EXPECT_EQ(var_i8.Shape()[0], Ny);
+        EXPECT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Steps(), NSteps);
-        ASSERT_EQ(var_i16.Shape()[0], Ny);
-        ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i16.Steps(), NSteps);
+        EXPECT_EQ(var_i16.Shape()[0], Ny);
+        EXPECT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Steps(), NSteps);
-        ASSERT_EQ(var_i32.Shape()[0], Ny);
-        ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i32.Steps(), NSteps);
+        EXPECT_EQ(var_i32.Shape()[0], Ny);
+        EXPECT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Steps(), NSteps);
-        ASSERT_EQ(var_i64.Shape()[0], Ny);
-        ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i64.Steps(), NSteps);
+        EXPECT_EQ(var_i64.Shape()[0], Ny);
+        EXPECT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
         EXPECT_TRUE(var_u8);
-        ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u8.Steps(), NSteps);
-        ASSERT_EQ(var_u8.Shape()[0], Ny);
-        ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u8.Steps(), NSteps);
+        EXPECT_EQ(var_u8.Shape()[0], Ny);
+        EXPECT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u16 = io.InquireVariable<uint16_t>("u16");
         EXPECT_TRUE(var_u16);
-        ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u16.Steps(), NSteps);
-        ASSERT_EQ(var_u16.Shape()[0], Ny);
-        ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u16.Steps(), NSteps);
+        EXPECT_EQ(var_u16.Shape()[0], Ny);
+        EXPECT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u32 = io.InquireVariable<uint32_t>("u32");
         EXPECT_TRUE(var_u32);
-        ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u32.Steps(), NSteps);
-        ASSERT_EQ(var_u32.Shape()[0], Ny);
-        ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u32.Steps(), NSteps);
+        EXPECT_EQ(var_u32.Shape()[0], Ny);
+        EXPECT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u64 = io.InquireVariable<uint64_t>("u64");
         EXPECT_TRUE(var_u64);
-        ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u64.Steps(), NSteps);
-        ASSERT_EQ(var_u64.Shape()[0], Ny);
-        ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u64.Steps(), NSteps);
+        EXPECT_EQ(var_u64.Shape()[0], Ny);
+        EXPECT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_r32 = io.InquireVariable<float>("r32");
         EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], Ny);
-        ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r32.Steps(), NSteps);
+        EXPECT_EQ(var_r32.Shape()[0], Ny);
+        EXPECT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], Ny);
-        ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r64.Steps(), NSteps);
+        EXPECT_EQ(var_r64.Shape()[0], Ny);
+        EXPECT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], Ny);
-        ASSERT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr32.Steps(), NSteps);
+        EXPECT_EQ(var_cr32.Shape()[0], Ny);
+        EXPECT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
         EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], Ny);
-        ASSERT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr64.Steps(), NSteps);
+        EXPECT_EQ(var_cr64.Shape()[0], Ny);
+        EXPECT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         std::string IString;
         std::array<int8_t, Nx * Ny> I8;
@@ -1390,87 +1390,87 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
-        ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i8.Steps(), NSteps);
-        ASSERT_EQ(var_i8.Shape()[0], Ny);
-        ASSERT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i8.Steps(), NSteps);
+        EXPECT_EQ(var_i8.Shape()[0], Ny);
+        EXPECT_EQ(var_i8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         EXPECT_TRUE(var_i16);
-        ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i16.Steps(), NSteps);
-        ASSERT_EQ(var_i16.Shape()[0], Ny);
-        ASSERT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i16.Steps(), NSteps);
+        EXPECT_EQ(var_i16.Shape()[0], Ny);
+        EXPECT_EQ(var_i16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
-        ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i32.Steps(), NSteps);
-        ASSERT_EQ(var_i32.Shape()[0], Ny);
-        ASSERT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i32.Steps(), NSteps);
+        EXPECT_EQ(var_i32.Shape()[0], Ny);
+        EXPECT_EQ(var_i32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         EXPECT_TRUE(var_i64);
-        ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_i64.Steps(), NSteps);
-        ASSERT_EQ(var_i64.Shape()[0], Ny);
-        ASSERT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i64.Steps(), NSteps);
+        EXPECT_EQ(var_i64.Shape()[0], Ny);
+        EXPECT_EQ(var_i64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u8 = io.InquireVariable<uint8_t>("u8");
         EXPECT_TRUE(var_u8);
-        ASSERT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u8.Steps(), NSteps);
-        ASSERT_EQ(var_u8.Shape()[0], Ny);
-        ASSERT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u8.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u8.Steps(), NSteps);
+        EXPECT_EQ(var_u8.Shape()[0], Ny);
+        EXPECT_EQ(var_u8.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u16 = io.InquireVariable<uint16_t>("u16");
         EXPECT_TRUE(var_u16);
-        ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u16.Steps(), NSteps);
-        ASSERT_EQ(var_u16.Shape()[0], Ny);
-        ASSERT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u16.Steps(), NSteps);
+        EXPECT_EQ(var_u16.Shape()[0], Ny);
+        EXPECT_EQ(var_u16.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u32 = io.InquireVariable<uint32_t>("u32");
         EXPECT_TRUE(var_u32);
-        ASSERT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u32.Steps(), NSteps);
-        ASSERT_EQ(var_u32.Shape()[0], Ny);
-        ASSERT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u32.Steps(), NSteps);
+        EXPECT_EQ(var_u32.Shape()[0], Ny);
+        EXPECT_EQ(var_u32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_u64 = io.InquireVariable<uint64_t>("u64");
         EXPECT_TRUE(var_u64);
-        ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_u64.Steps(), NSteps);
-        ASSERT_EQ(var_u64.Shape()[0], Ny);
-        ASSERT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_u64.Steps(), NSteps);
+        EXPECT_EQ(var_u64.Shape()[0], Ny);
+        EXPECT_EQ(var_u64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_r32 = io.InquireVariable<float>("r32");
         EXPECT_TRUE(var_r32);
-        ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r32.Steps(), NSteps);
-        ASSERT_EQ(var_r32.Shape()[0], Ny);
-        ASSERT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r32.Steps(), NSteps);
+        EXPECT_EQ(var_r32.Shape()[0], Ny);
+        EXPECT_EQ(var_r32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_r64 = io.InquireVariable<double>("r64");
         EXPECT_TRUE(var_r64);
-        ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_r64.Steps(), NSteps);
-        ASSERT_EQ(var_r64.Shape()[0], Ny);
-        ASSERT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_r64.Steps(), NSteps);
+        EXPECT_EQ(var_r64.Shape()[0], Ny);
+        EXPECT_EQ(var_r64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         EXPECT_TRUE(var_cr32);
-        ASSERT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr32.Steps(), NSteps);
-        ASSERT_EQ(var_cr32.Shape()[0], Ny);
-        ASSERT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_cr32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr32.Steps(), NSteps);
+        EXPECT_EQ(var_cr32.Shape()[0], Ny);
+        EXPECT_EQ(var_cr32.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
         EXPECT_TRUE(var_cr64);
-        ASSERT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_cr64.Steps(), NSteps);
-        ASSERT_EQ(var_cr64.Shape()[0], Ny);
-        ASSERT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
+        EXPECT_EQ(var_cr64.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_cr64.Steps(), NSteps);
+        EXPECT_EQ(var_cr64.Shape()[0], Ny);
+        EXPECT_EQ(var_cr64.Shape()[1], static_cast<size_t>(mpiSize * Nx));
 
         // If the size of the array is smaller than the data
         // the result is weird... double and uint64_t would get
@@ -1568,68 +1568,77 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 
                 if (i % 2 == 0)
                 {
-                    const int writerID = static_cast<int>(i) - 1;
-
-                    ASSERT_EQ(i8Info[i].Start[0], 0);
-                    ASSERT_EQ(i8Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i8Info[i].Start[0], 0);
+                    EXPECT_EQ(i8Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i8Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(i8Info[i].Count[1], Nx);
-                    EXPECT_EQ(i8Info[i].WriterID, writerID);
+                    EXPECT_EQ(i8Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(i16Info[i].Start[0], 0);
-                    ASSERT_EQ(i16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i16Info[i].Start[0], 0);
+                    EXPECT_EQ(i16Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i16Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(i16Info[i].Count[1], Nx);
+                    EXPECT_EQ(i16Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(i32Info[i].Start[0], 0);
-                    ASSERT_EQ(i32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i32Info[i].Start[0], 0);
+                    EXPECT_EQ(i32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i32Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(i32Info[i].Count[1], Nx);
+                    EXPECT_EQ(i32Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(i64Info[i].Start[0], 0);
-                    ASSERT_EQ(i64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i64Info[i].Start[0], 0);
+                    EXPECT_EQ(i64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i64Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(i64Info[i].Count[1], Nx);
+                    EXPECT_EQ(i64Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(u8Info[i].Start[0], 0);
-                    ASSERT_EQ(u8Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u8Info[i].Start[0], 0);
+                    EXPECT_EQ(u8Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u8Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(u8Info[i].Count[1], Nx);
+                    EXPECT_EQ(u8Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(u16Info[i].Start[0], 0);
-                    ASSERT_EQ(u16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u16Info[i].Start[0], 0);
+                    EXPECT_EQ(u16Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u16Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(u16Info[i].Count[1], Nx);
+                    EXPECT_EQ(u16Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(u32Info[i].Start[0], 0);
-                    ASSERT_EQ(u32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u32Info[i].Start[0], 0);
+                    EXPECT_EQ(u32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u32Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(u32Info[i].Count[1], Nx);
+                    EXPECT_EQ(u32Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(u64Info[i].Start[0], 0);
-                    ASSERT_EQ(u64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u64Info[i].Start[0], 0);
+                    EXPECT_EQ(u64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u64Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(u64Info[i].Count[1], Nx);
+                    EXPECT_EQ(u64Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(r32Info[i].Start[0], 0);
-                    ASSERT_EQ(r32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r32Info[i].Start[0], 0);
+                    EXPECT_EQ(r32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(r32Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(r32Info[i].Count[1], Nx);
+                    EXPECT_EQ(r32Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(r64Info[i].Start[0], 0);
-                    ASSERT_EQ(r64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r64Info[i].Start[0], 0);
+                    EXPECT_EQ(r64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(r64Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(r64Info[i].Count[1], Nx);
+                    EXPECT_EQ(r64Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(cr32Info[i].Start[0], 0);
-                    ASSERT_EQ(cr32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr32Info[i].Start[0], 0);
+                    EXPECT_EQ(cr32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(cr32Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(cr32Info[i].Count[1], Nx);
+                    EXPECT_EQ(cr32Info[i].WriterID, inRank);
 
-                    ASSERT_EQ(cr64Info[i].Start[0], 0);
-                    ASSERT_EQ(cr64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr64Info[i].Start[0], 0);
+                    EXPECT_EQ(cr64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(cr64Info[i].Count[0], Ny / 2);
                     EXPECT_EQ(cr64Info[i].Count[1], Nx);
+                    EXPECT_EQ(cr64Info[i].WriterID, inRank);
 
                     i8Min = *std::min_element(currentTestData.I8.begin(),
                                               currentTestData.I8.begin() +
@@ -1726,63 +1735,63 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 }
                 else
                 {
-                    ASSERT_EQ(i8Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(i8Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i8Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(i8Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i8Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(i8Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(i16Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(i16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i16Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(i16Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i16Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(i16Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(i32Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(i32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i32Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(i32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i32Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(i32Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(i64Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(i64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(i64Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(i64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(i64Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(i64Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(u8Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(u8Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u8Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(u8Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u8Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(u8Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(u16Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(u16Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u16Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(u16Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u16Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(u16Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(u32Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(u32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u32Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(u32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u32Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(u32Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(u64Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(u64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(u64Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(u64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(u64Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(u64Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(r32Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(r32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r32Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(r32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(r32Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(r32Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(r64Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(r64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(r64Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(r64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(r64Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(r64Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(cr32Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(cr32Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr32Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(cr32Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(cr32Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(cr32Info[i].Count[1], Nx);
 
-                    ASSERT_EQ(cr64Info[i].Start[0], Ny / 2);
-                    ASSERT_EQ(cr64Info[i].Start[1], inRank * Nx);
+                    EXPECT_EQ(cr64Info[i].Start[0], Ny / 2);
+                    EXPECT_EQ(cr64Info[i].Start[1], inRank * Nx);
                     EXPECT_EQ(cr64Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(cr64Info[i].Count[1], Nx);
 
@@ -1888,33 +1897,33 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                         }
                     }
                 }
-                ASSERT_EQ(i8Info[i].Min, i8Min);
-                ASSERT_EQ(i8Info[i].Max, i8Max);
-                ASSERT_EQ(i16Info[i].Min, i16Min);
-                ASSERT_EQ(i16Info[i].Max, i16Max);
-                ASSERT_EQ(i32Info[i].Min, i32Min);
-                ASSERT_EQ(i32Info[i].Max, i32Max);
-                ASSERT_EQ(i64Info[i].Min, i64Min);
-                ASSERT_EQ(i64Info[i].Max, i64Max);
+                EXPECT_EQ(i8Info[i].Min, i8Min);
+                EXPECT_EQ(i8Info[i].Max, i8Max);
+                EXPECT_EQ(i16Info[i].Min, i16Min);
+                EXPECT_EQ(i16Info[i].Max, i16Max);
+                EXPECT_EQ(i32Info[i].Min, i32Min);
+                EXPECT_EQ(i32Info[i].Max, i32Max);
+                EXPECT_EQ(i64Info[i].Min, i64Min);
+                EXPECT_EQ(i64Info[i].Max, i64Max);
 
-                ASSERT_EQ(u8Info[i].Min, u8Min);
-                ASSERT_EQ(u8Info[i].Max, u8Max);
-                ASSERT_EQ(u16Info[i].Min, u16Min);
-                ASSERT_EQ(u16Info[i].Max, u16Max);
-                ASSERT_EQ(u32Info[i].Min, u32Min);
-                ASSERT_EQ(u32Info[i].Max, u32Max);
-                ASSERT_EQ(u64Info[i].Min, u64Min);
-                ASSERT_EQ(u64Info[i].Max, u64Max);
+                EXPECT_EQ(u8Info[i].Min, u8Min);
+                EXPECT_EQ(u8Info[i].Max, u8Max);
+                EXPECT_EQ(u16Info[i].Min, u16Min);
+                EXPECT_EQ(u16Info[i].Max, u16Max);
+                EXPECT_EQ(u32Info[i].Min, u32Min);
+                EXPECT_EQ(u32Info[i].Max, u32Max);
+                EXPECT_EQ(u64Info[i].Min, u64Min);
+                EXPECT_EQ(u64Info[i].Max, u64Max);
 
-                ASSERT_EQ(r32Info[i].Min, r32Min);
-                ASSERT_EQ(r32Info[i].Max, r32Max);
-                ASSERT_EQ(r64Info[i].Min, r64Min);
-                ASSERT_EQ(r64Info[i].Max, r64Max);
+                EXPECT_EQ(r32Info[i].Min, r32Min);
+                EXPECT_EQ(r32Info[i].Max, r32Max);
+                EXPECT_EQ(r64Info[i].Min, r64Min);
+                EXPECT_EQ(r64Info[i].Max, r64Max);
 
-                ASSERT_EQ(cr32Info[i].Min, cr32Min);
-                ASSERT_EQ(cr32Info[i].Max, cr32Max);
-                ASSERT_EQ(cr64Info[i].Min, cr64Min);
-                ASSERT_EQ(cr64Info[i].Max, cr64Max);
+                EXPECT_EQ(cr32Info[i].Min, cr32Min);
+                EXPECT_EQ(cr32Info[i].Max, cr32Max);
+                EXPECT_EQ(cr64Info[i].Min, cr64Min);
+                EXPECT_EQ(cr64Info[i].Max, cr64Max);
             }
 
             var_i8.SetSelection(sel1);
