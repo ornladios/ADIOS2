@@ -182,6 +182,27 @@ class TestReadOrder(unittest.TestCase):
             self.assertTrue(np.array_equal(
                 val, global_arrays_T[1:3, 0:3, 1:2]))
 
+    def test_ReadOrderDefault(self):
+        with adios2.open(filename, 'r') as fh:
+            for fh_step in fh:
+                t = fh_step.current_step()
+                val = fh_step.read('global_array')
+                self.assertTrue(np.array_equal(val, global_arrays[t]))
+
+        # change default to 'F' (column-major), which will transpose the data
+        # as it was written as row-major
+
+        adios2.File.read_order = 'F'
+
+        with adios2.open(filename, 'r') as fh:
+            for fh_step in fh:
+                t = fh_step.current_step()
+                val = fh_step.read('global_array')
+                self.assertTrue(np.array_equal(val, global_arrays[t].T))
+
+        # restore default so tests run after this one don't fail
+        adios2.File.read_order = 'K'
+
 
 if __name__ == '__main__':
     unittest.main()

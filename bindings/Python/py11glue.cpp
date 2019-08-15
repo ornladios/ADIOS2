@@ -509,7 +509,10 @@ PYBIND11_MODULE(adios2, m)
         .def("SetParameter", &adios2::py11::Operator::SetParameter)
         .def("Parameters", &adios2::py11::Operator::Parameters);
 
-    pybind11::class_<adios2::py11::File>(m, "File")
+    pybind11::class_<adios2::py11::File>(m, "File", R"md(
+       The ``File`` class provides a high-level interface for reading and writing
+       adios data.
+        )md")
         .def("__repr__",
              [](const adios2::py11::File &stream) {
                  return "<adios2.file named '" + stream.m_Name +
@@ -533,7 +536,12 @@ PYBIND11_MODULE(adios2, m)
                  return stream;
              })
 
-        .def_readwrite_static("read_order", &adios2::py11::File::ReadOrder)
+        .def_readwrite_static("read_order", &adios2::py11::File::ReadOrder,
+                              R"md(
+            ```read_order``` is the default for the ``order`` parameter when
+            reading data from a Variable. Supported choices are 'C', 'F', 'K' meaning
+            row-major, column-major and original layout, respectively.
+        )md")
 
         .def("set_parameter", &adios2::py11::File::SetParameter,
              pybind11::arg("key"), pybind11::arg("value"), R"md(
@@ -896,6 +904,11 @@ PYBIND11_MODULE(adios2, m)
                  block_id
                      required for local array variables
 
+                 order
+                     choice of 'C', 'F', or 'K' for row-major, column major
+                     or original layout, respectively. If not provided,
+                     File.read_order is used (which defaults to 'K')
+
              Returns
                  array
                      values of variable name for current step.
@@ -930,6 +943,11 @@ PYBIND11_MODULE(adios2, m)
                  
                  block_id
                      required for local array variables
+
+                 order
+                     choice of 'C', 'F', or 'K' for row-major, column major
+                     or original layout, respectively. If not provided,
+                     File.read_order is used (which defaults to 'K')
 
              Returns
                  array
@@ -969,6 +987,11 @@ PYBIND11_MODULE(adios2, m)
 
                 block_id
                     required for local array variables
+
+                order
+                    choice of 'C', 'F', or 'K' for row-major, column major
+                    or original layout, respectively. If not provided,
+                    File.read_order is used (which defaults to 'K')
 
             Returns
                 array
