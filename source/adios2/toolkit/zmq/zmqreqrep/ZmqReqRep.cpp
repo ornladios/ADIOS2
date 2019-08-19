@@ -8,8 +8,9 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include <iostream>
+#include <chrono>
 #include <cstring>
+#include <iostream>
 
 #include "ZmqReqRep.h"
 
@@ -40,14 +41,14 @@ ZmqReqRep::~ZmqReqRep()
 }
 
 void ZmqReqRep::OpenRequester(const int timeout,
-                               const size_t receiverBufferSize)
+                              const size_t receiverBufferSize)
 {
     m_Timeout = timeout;
     m_ReceiverBuffer.reserve(receiverBufferSize);
 }
 
 void ZmqReqRep::OpenReplier(const std::string &address, const int timeout,
-                             const size_t receiverBufferSize)
+                            const size_t receiverBufferSize)
 {
     m_Timeout = timeout;
     m_ReceiverBuffer.reserve(receiverBufferSize);
@@ -93,7 +94,7 @@ void ZmqReqRep::SendReply(const void *reply, const size_t size)
 
 std::shared_ptr<std::vector<char>>
 ZmqReqRep::Request(const void *request, const size_t size,
-                    const std::string &address)
+                   const std::string &address)
 {
     auto reply = std::make_shared<std::vector<char>>();
     void *socket = zmq_socket(m_Context, ZMQ_REQ);

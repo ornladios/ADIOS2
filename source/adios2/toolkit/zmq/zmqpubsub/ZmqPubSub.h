@@ -15,9 +15,6 @@
 #include <queue>
 #include <thread>
 
-#include "adios2/core/IO.h"
-#include "adios2/core/Operator.h"
-
 namespace adios2
 {
 namespace zmq

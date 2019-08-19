@@ -8,12 +8,12 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include "ZmqPubSub.h"
-
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h"
+#include <chrono>
+#include <iostream>
 
 #include <zmq.h>
+
+#include "ZmqPubSub.h"
 
 namespace adios2
 {
@@ -57,11 +57,11 @@ void ZmqPubSub::OpenPublisher(const std::string &address, const int timeout)
 }
 
 void ZmqPubSub::OpenSubscriber(const std::string &address, const int timeout,
-                            const size_t bufferSize)
+                               const size_t bufferSize)
 {
     m_Timeout = timeout;
-    m_Thread =
-        std::thread(&ZmqPubSub::ReaderThread, this, address, timeout, bufferSize);
+    m_Thread = std::thread(&ZmqPubSub::ReaderThread, this, address, timeout,
+                           bufferSize);
 }
 
 void ZmqPubSub::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
@@ -121,7 +121,7 @@ void ZmqPubSub::WriterThread(const std::string &address)
 }
 
 void ZmqPubSub::ReaderThread(const std::string &address, const int timeout,
-                          const size_t receiverBufferSize)
+                             const size_t receiverBufferSize)
 {
     void *context = zmq_ctx_new();
     if (not context)

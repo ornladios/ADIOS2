@@ -103,7 +103,7 @@ void TableWriter::ReplyThread()
 {
     adios2::zmq::ZmqReqRep replier;
     replier.OpenReplier(m_AllAddresses[m_MpiRank], m_Timeout,
-                                  m_ReceiverBufferSize);
+                        m_ReceiverBufferSize);
     while (m_Listening)
     {
         auto request = replier.ReceiveRequest();

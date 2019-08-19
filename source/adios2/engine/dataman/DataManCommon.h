@@ -17,8 +17,8 @@
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
-#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 #include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
+#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
 namespace adios2
 {
