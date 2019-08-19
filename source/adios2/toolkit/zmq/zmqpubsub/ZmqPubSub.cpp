@@ -9,6 +9,7 @@
  */
 
 #include <chrono>
+#include <cstring>
 #include <iostream>
 
 #include <zmq.h>
