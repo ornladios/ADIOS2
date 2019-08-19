@@ -24,8 +24,8 @@
 #include <iostream>
 #include <string>
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
@@ -132,6 +132,7 @@ void Reorganize::Run()
     core::Engine &rStream = io.Open(infilename, adios2::Mode::Read);
     // rStream.FixedSchedule();
 
+    io.ClearParameters();
     io.SetEngine(wmethodname);
     io.SetParameters(wmethodparams);
     core::Engine &wStream = io.Open(outfilename, adios2::Mode::Write);
@@ -141,8 +142,16 @@ void Reorganize::Run()
     while (true)
     {
         adios2::StepStatus status =
-            rStream.BeginStep(adios2::StepMode::NextAvailable);
-        if (status != adios2::StepStatus::OK)
+            rStream.BeginStep(adios2::StepMode::Read, 10.0);
+        if (status == adios2::StepStatus::NotReady)
+        {
+            if (!rank)
+            {
+                std::cout << " No new steps arrived in a while " << std::endl;
+            }
+            continue;
+        }
+        else if (status != adios2::StepStatus::OK)
         {
             break;
         }
@@ -218,7 +227,7 @@ Params Reorganize::parseParams(const std::string &param_str)
         kvs.push_back(kv);
     }
 
-    return helper::BuildParametersMap(kvs, true);
+    return helper::BuildParametersMap(kvs, '=', true);
 }
 
 void Reorganize::ParseArguments()
@@ -311,7 +320,7 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         return writesize;
     }
 
-    size_t ndim = vi.v->m_Shape.size();
+    size_t ndim = vi.v->GetShape().size();
     if (ndim == 0)
     {
         // scalars -> rank 0 writes them
@@ -382,12 +391,12 @@ Reorganize::Decompose(int numproc, int rank, VarInfo &vi,
         }
         else
         {
-            count = vi.v->m_Shape[i] / np[i];
+            count = vi.v->GetShape()[i] / np[i];
             start = count * pos[i];
             if (pos[i] == np[i] - 1)
             {
                 // last one in the dimension may need to read more than the rest
-                count = vi.v->m_Shape[i] - count * (np[i] - 1);
+                count = vi.v->GetShape()[i] - count * (np[i] - 1);
             }
         }
         vi.start.push_back(start);
@@ -447,11 +456,11 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
         if (!rank)
         {
             std::cout << "    " << type << " " << name;
-            if (variable->m_Shape.size() > 0)
+            if (variable->GetShape().size() > 0)
             {
-                std::cout << "[" << variable->m_Shape[0];
-                for (int j = 1; j < variable->m_Shape.size(); j++)
-                    std::cout << ", " << variable->m_Shape[j];
+                std::cout << "[" << variable->GetShape()[0];
+                for (int j = 1; j < variable->GetShape().size(); j++)
+                    std::cout << ", " << variable->GetShape()[j];
                 std::cout << "]" << std::endl;
             }
             else

@@ -17,7 +17,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {
@@ -94,6 +94,13 @@ template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position,
             const bool isLittleEndian = true) noexcept;
 
+/** Read in 'nElems' elements from buffer into output array
+ * output must be pre-allocated.
+ */
+template <class T>
+void ReadArray(const std::vector<char> &buffer, size_t &position, T *output,
+               const size_t nElems, const bool isLittleEndian = true) noexcept;
+
 /**
  * General function to copy memory between blocks of different type and start
  * and count
@@ -111,14 +118,14 @@ T ReadValue(const std::vector<char> &buffer, size_t &position,
  * @param srcMemCount
  */
 template <class T, class U>
-void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                const bool destRowMajor, const U *src, const Dims &srcStart,
-                const Dims &srcCount, const bool srcRowMajor,
-                const bool endianReverse = false,
-                const Dims &destMemStart = Dims(),
-                const Dims &destMemCount = Dims(),
-                const Dims &srcMemStart = Dims(),
-                const Dims &srcMemCount = Dims()) noexcept;
+void CopyMemoryBlock(T *dest, const Dims &destStart, const Dims &destCount,
+                     const bool destRowMajor, const U *src,
+                     const Dims &srcStart, const Dims &srcCount,
+                     const bool srcRowMajor, const bool endianReverse = false,
+                     const Dims &destMemStart = Dims(),
+                     const Dims &destMemCount = Dims(),
+                     const Dims &srcMemStart = Dims(),
+                     const Dims &srcMemCount = Dims()) noexcept;
 
 void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
                  const bool destRowMajor, const char *src, const Dims &srcStart,
@@ -228,6 +235,13 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;
+
+/** Calculate how many bytes away is a memory location to be aligned to the
+ * size of max_align_t.
+ * @param a pointer
+ * @return padding value in [0..sizeof(max_align_t)-1]
+ */
+size_t PaddingToAlignPointer(const void *ptr);
 
 } // end namespace helper
 } // end namespace adios2

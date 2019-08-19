@@ -64,6 +64,9 @@ target_link_libraries(TestBPWriteReadLocalVariables adios2 gtest)
 add_executable(TestBPWriteReadLocalVariablesSel TestBPWriteReadLocalVariablesSel.cpp)
 target_link_libraries(TestBPWriteReadLocalVariablesSel adios2 gtest)
 
+add_executable(TestBPWriteReadLocalVariablesSelHighLevel TestBPWriteReadLocalVariablesSelHighLevel.cpp)
+target_link_libraries(TestBPWriteReadLocalVariablesSelHighLevel adios2 gtest)
+
 add_executable(TestBPChangingShape TestBPChangingShape.cpp)
 target_link_libraries(TestBPChangingShape adios2 gtest)
 
@@ -72,6 +75,15 @@ target_link_libraries(TestBPWriteReadBlockInfo adios2 gtest)
 
 add_executable(TestBPWriteReadVariableSpan TestBPWriteReadVariableSpan.cpp)
 target_link_libraries(TestBPWriteReadVariableSpan adios2 gtest)
+
+add_executable(TestBPWriteAppendReadADIOS2 TestBPWriteAppendReadADIOS2.cpp)
+target_link_libraries(TestBPWriteAppendReadADIOS2 adios2 gtest)
+
+add_executable(TestBPWriteNull TestBPWriteNull.cpp)
+target_link_libraries(TestBPWriteNull adios2 gtest)
+
+add_executable(TestBPTimeAggregationADIOS2 TestBPTimeAggregationADIOS2.cpp)
+target_link_libraries(TestBPTimeAggregationADIOS2 adios2 gtest)
 
 if(ADIOS2_HAVE_MPI)
 
@@ -91,9 +103,13 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(TestBPWriteMemorySelectionRead MPI::MPI_C)
   target_link_libraries(TestBPWriteReadLocalVariables MPI::MPI_C)
   target_link_libraries(TestBPWriteReadLocalVariablesSel MPI::MPI_C)
+  target_link_libraries(TestBPWriteReadLocalVariablesSelHighLevel MPI::MPI_C)
   target_link_libraries(TestBPChangingShape MPI::MPI_C)
   target_link_libraries(TestBPWriteReadBlockInfo MPI::MPI_C)
   target_link_libraries(TestBPWriteReadVariableSpan MPI::MPI_C)
+  target_link_libraries(TestBPWriteAppendReadADIOS2 MPI::MPI_C)
+  target_link_libraries(TestBPWriteNull MPI::MPI_C)
+  target_link_libraries(TestBPTimeAggregationADIOS2 MPI::MPI_C)
   
   add_executable(TestBPWriteAggregateRead TestBPWriteAggregateRead.cpp)
   target_link_libraries(TestBPWriteAggregateRead
@@ -122,7 +138,9 @@ gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY 
 gtest_add_tests(TARGET TestBPWriteMemorySelectionRead ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSelHighLevel ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteReadBlockInfo ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 
 gtest_add_tests(TARGET TestBPWriteReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteReadADIOS2fstream ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
@@ -140,8 +158,14 @@ gtest_add_tests(TARGET TestBPLargeMetadata ${extra_test_args} WORKING_DIRECTORY 
 gtest_add_tests(TARGET TestBPWriteMemorySelectionRead ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteReadLocalVariables ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSel ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadLocalVariablesSelHighLevel ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 gtest_add_tests(TARGET TestBPChangingShape ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
+gtest_add_tests(TARGET TestBPWriteReadBlockInfo ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4" TEST_SUFFIX _BP4)
 
 # BP3 only for now
-gtest_add_tests(TARGET TestBPWriteReadBlockInfo ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
 gtest_add_tests(TARGET TestBPWriteReadVariableSpan ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+gtest_add_tests(TARGET TestBPWriteNull ${extra_test_args} WORKING_DIRECTORY ${BP3_DIR})
+
+# BP4 only for now
+gtest_add_tests(TARGET TestBPWriteAppendReadADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR})
+gtest_add_tests(TARGET TestBPTimeAggregationADIOS2 ${extra_test_args} WORKING_DIRECTORY ${BP4_DIR})

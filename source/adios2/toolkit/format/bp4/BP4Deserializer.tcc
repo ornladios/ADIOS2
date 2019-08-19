@@ -118,6 +118,11 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
             // TODO check if we need to reverse dimensions
             variable.SetSelection({start, count});
         }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            // TODO keep Count for block updated
+            variable.m_Count = blocksInfo[variable.m_BlockID].Count;
+        }
     }
 
     // create block info
@@ -146,7 +151,7 @@ void BP4Deserializer::SetVariableBlockInfo(
         blockOperation.PreSizeOf = sizeof(T);
 
         // read metadata from supported type and populate Info
-        std::shared_ptr<BP4Operation> bpOp = SetBP4Operation(bp4OpInfo.Type);
+        std::shared_ptr<BPOperation> bpOp = SetBPOperation(bp4OpInfo.Type);
         bpOp->GetMetadata(bp4OpInfo.Metadata, blockOperation.Info);
         blockOperation.PayloadSize = static_cast<size_t>(
             std::stoull(blockOperation.Info.at("OutputSize")));
@@ -230,7 +235,7 @@ void BP4Deserializer::SetVariableBlockInfo(
                         helper::DimsToString(blockInfo.Count) +
                         " (requested) is out of bounds of (available) local"
                         " Count " +
-                        helper::DimsToString(blockCharacteristics.Shape) +
+                        helper::DimsToString(readInCount) +
                         " , when reading local array variable " + variableName +
                         ", in call to Get");
                 }
@@ -336,7 +341,7 @@ void BP4Deserializer::SetVariableBlockInfo(
                         helper::DimsToString(blockInfo.Count) +
                         " (requested) is out of bounds of (available) "
                         "Shape " +
-                        helper::DimsToString(blockCharacteristics.Shape) +
+                        helper::DimsToString(readInShape) +
                         " , when reading global array variable " +
                         variableName + ", in call to Get");
                 }
@@ -434,7 +439,7 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 
         // global values only read one block per step
         const size_t blocksStart = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? variable.m_Start.front()
+                                       ? blockInfo.Start.front()
                                        : 0;
 
         const size_t blocksCount = (variable.m_ShapeID == ShapeID::GlobalArray)
@@ -456,7 +461,7 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
             }
         }
 
-        for (size_t b = blocksStart; b < blocksCount; ++b)
+        for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
         {
             size_t localPosition = positions[b];
             const Characteristics<T> characteristics =
@@ -528,8 +533,8 @@ void BP4Deserializer::PostDataRead(
         m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
         // get the right bp4Op
-        std::shared_ptr<BP4Operation> bp4Op =
-            SetBP4Operation(blockOperationInfo.Info.at("Type"));
+        std::shared_ptr<BPOperation> bp4Op =
+            SetBPOperation(blockOperationInfo.Info.at("Type"));
 
         // get original block back
         char *preOpData = m_ThreadBuffers[threadID][0].data();
@@ -578,6 +583,26 @@ BP4Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
             BlocksInfoCommon(variable, blockPositions);
     }
     return allStepsBlocksInfo;
+}
+
+template <class T>
+std::vector<std::vector<typename core::Variable<T>::Info>>
+BP4Deserializer::AllRelativeStepsBlocksInfo(
+    const core::Variable<T> &variable) const
+{
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+        allRelativeStepsBlocksInfo(
+            variable.m_AvailableStepBlockIndexOffsets.size());
+
+    size_t relativeStep = 0;
+    for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
+    {
+        const std::vector<size_t> &blockPositions = pair.second;
+        allRelativeStepsBlocksInfo[relativeStep] =
+            BlocksInfoCommon(variable, blockPositions);
+        ++relativeStep;
+    }
+    return allRelativeStepsBlocksInfo;
 }
 
 template <class T>
@@ -1129,6 +1154,7 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
     std::vector<typename core::Variable<T>::Info> blocksInfo;
     blocksInfo.reserve(blocksIndexOffsets.size());
 
+    size_t n = 0;
     for (const size_t blockIndexOffset : blocksIndexOffsets)
     {
         size_t position = blockIndexOffset;
@@ -1142,6 +1168,8 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
         blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
+        blockInfo.WriterID = blockCharacteristics.Statistics.FileIndex;
+        blockInfo.IsReverseDims = m_ReverseDimensions;
 
         if (m_ReverseDimensions)
         {
@@ -1161,7 +1189,23 @@ std::vector<typename core::Variable<T>::Info> BP4Deserializer::BlocksInfoCommon(
             blockInfo.Min = blockCharacteristics.Statistics.Min;
             blockInfo.Max = blockCharacteristics.Statistics.Max;
         }
+        if (blockInfo.Shape.size() == 1 &&
+            blockInfo.Shape.front() == LocalValueDim)
+        {
+            blockInfo.Shape = Dims{blocksIndexOffsets.size()};
+            blockInfo.Count = Dims{1};
+            blockInfo.Start = Dims{n};
+            blockInfo.Min = blockCharacteristics.Statistics.Value;
+            blockInfo.Max = blockCharacteristics.Statistics.Value;
+        }
+        // bp index starts at 1
+        blockInfo.Step =
+            static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
+        blockInfo.BlockID = n;
+
         blocksInfo.push_back(blockInfo);
+
+        ++n;
     }
     return blocksInfo;
 }

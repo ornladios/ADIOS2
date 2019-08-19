@@ -1,6 +1,6 @@
-##########################
-Frequently Asked Questions
-##########################
+###
+FAQ
+###
 
 
 MPI vs Non-MPI
@@ -79,7 +79,7 @@ Deferred mode will save garbage data since the memory location of a temporary is
 My application uses PGI compilers on Titan, can I link ADIOS 2?
 ---------------------------------------------------------------
 
-Follow directions at :ref:`Building on High Performance Computing, HPC, Systems` to setup support for PGI on Titan. PGI compilers depend on GNU headers, but they must point to a version greater than gcc 4.8.1 to support C++11 features. The gcc module doesn't need to be loaded, though. Example:
+Follow directions at :ref:`Building on HPC Systems` to setup support for PGI on Titan. PGI compilers depend on GNU headers, but they must point to a version greater than gcc 4.8.1 to support C++11 features. The gcc module doesn't need to be loaded, though. Example:
 
    .. code-block:: bash
 
@@ -91,7 +91,7 @@ Follow directions at :ref:`Building on High Performance Computing, HPC, Systems`
 How do I enable the Python bindings on Titan?
 ---------------------------------------------
 
-ADIOS 2 default configuration on Titan is to build the static library. Python bindings require enabling the dynamic libraries and the Cray dynamic environment variable. See :ref:`Building on High Performance Computing, HPC, Systems` and  :ref:`Enabling the Python bindings`. For example:
+The default ADIOS2 configuration on Titan builds a static library. Python bindings require enabling the dynamic libraries and the Cray dynamic environment variable. See :ref:`Building on HPC Systems` and  :ref:`Enabling the Python bindings`. For example:
 
    .. code-block:: bash
 
@@ -125,7 +125,7 @@ ADIOS 2 default configuration on Titan is to build the static library. Python bi
       -- Found PythonFull: /sw/titan/.swci/0-login/opt/spack/20180315/linux-suse_linux11-x86_64/gcc-4.3.4/python-2.7.9-v6ctjewwdx6k2qs7ublexz7gnx457jo5/bin/python2.7  found components:  Interp Libs numpy mpi4py 
       ...
       ADIOS2 build configuration:
-        ADIOS Version: 2.3.1
+        ADIOS Version: 2.4.0
         C++ Compiler : GNU 6.3.0 CrayPrgEnv
           /opt/cray/craype/2.5.13/bin/CC
 

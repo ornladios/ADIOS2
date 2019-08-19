@@ -10,7 +10,7 @@
 
 #include "Operator.h"
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -78,7 +78,7 @@ ADIOS2_FOREACH_ZFP_TYPE_1ARG(declare_type)
 size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
                           const size_t /*elementSize*/,
                           const std::string /*type*/, void * /*bufferOut*/,
-                          const Params & /*params*/) const
+                          const Params & /*params*/, Params & /*info*/) const
 {
     if (m_DebugMode)
     {
@@ -92,7 +92,8 @@ size_t Operator::Compress(const void * /*dataIn*/, const Dims & /*dimensions*/,
 }
 
 size_t Operator::Decompress(const void *bufferIn, const size_t sizeIn,
-                            void *dataOut, const size_t sizeOut) const
+                            void *dataOut, const size_t sizeOut,
+                            Params &info) const
 {
     if (m_DebugMode)
     {

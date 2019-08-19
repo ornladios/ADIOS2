@@ -14,12 +14,24 @@
 
 #include <string.h> //strcpy
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosFunctions.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void FC_GLOBAL(adios2_in_config_file_f2c,
+               ADIOS2_IN_CONFIG_FILE_F2C)(int *result, const adios2_io **io,
+                                          int *ierr)
+{
+    adios2_bool resultC;
+    *ierr = static_cast<int>(adios2_in_config_file(&resultC, *io));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *result = (resultC == adios2_true) ? 1 : 0;
+    }
+}
 
 void FC_GLOBAL(adios2_set_engine_f2c,
                ADIOS2_SET_ENGINE_F2C)(adios2_io **io, const char *engine_type,
@@ -28,11 +40,45 @@ void FC_GLOBAL(adios2_set_engine_f2c,
     *ierr = static_cast<int>(adios2_set_engine(*io, engine_type));
 }
 
+void FC_GLOBAL(adios2_set_parameters_f2c,
+               ADIOS2_SET_PARAMETERS_F2C)(adios2_io **io,
+                                          const char *parameters, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_set_parameters(*io, parameters));
+}
+
 void FC_GLOBAL(adios2_set_parameter_f2c,
                ADIOS2_SET_PARAMETER_F2C)(adios2_io **io, const char *key,
                                          const char *value, int *ierr)
 {
     *ierr = static_cast<int>(adios2_set_parameter(*io, key, value));
+}
+
+void FC_GLOBAL(adios2_get_parameter_f2c,
+               ADIOS2_GET_PARAMETER_F2C)(char *value, const adios2_io **io,
+                                         const char *key, int *ierr)
+{
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(value, &sizeC, *io, key));
+}
+
+void FC_GLOBAL(adios2_get_parameter_length_f2c,
+               ADIOS2_GET_PARAMETER_LENGTH_F2C)(int *size, const adios2_io **io,
+                                                const char *key, int *ierr)
+{
+    *size = -1;
+    size_t sizeC;
+    *ierr = static_cast<int>(adios2_get_parameter(nullptr, &sizeC, *io, key));
+    if (*ierr == static_cast<int>(adios2_error_none))
+    {
+        *size = static_cast<int>(sizeC);
+    }
+}
+
+void FC_GLOBAL(adios2_clear_parameters_f2c,
+               ADIOS2_CLEAR_PARAMETERS_F2C)(adios2_io **io, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_clear_parameters(*io));
 }
 
 void FC_GLOBAL(adios2_add_transport_f2c,
@@ -340,12 +386,6 @@ void FC_GLOBAL(adios2_flush_all_engines_f2c,
                ADIOS2_FLUSH_ALL_ENGINES_F2C)(adios2_io **io, int *ierr)
 {
     *ierr = static_cast<int>(adios2_flush_all_engines(*io));
-}
-
-void FC_GLOBAL(adios2_lock_definitions_f2c,
-               ADIOS2_LOCK_DEFINITIONS_F2C)(adios2_io **io, int *ierr)
-{
-    *ierr = static_cast<int>(adios2_lock_definitions(*io));
 }
 
 void FC_GLOBAL(adios2_io_engine_type_f2c,

@@ -10,25 +10,24 @@
 #ifndef ADIOS2_HELPER_MPIDUMMY_H_
 #define ADIOS2_HELPER_MPIDUMMY_H_
 
-#include <cstdint>
-#include <cstdio>
+#include "stdint.h"
+#include "stdio.h"
 
-namespace adios2
-{
-namespace helper
-{
-namespace mpi
-{
+#include "adios2/common/ADIOSConfig.h"
 
-using MPI_Comm = int;
-using MPI_Status = std::uint64_t;
-using MPI_Request = std::uint64_t;
-using MPI_File = std::FILE *;
-using MPI_Info = int;
-using MPI_Datatype = int;
-using MPI_Offset = long int;
-using MPI_Fint = int;
-using MPI_Op = int;
+// If MPI is available, use the types and constants from that implementation,
+// rather than our fake ones
+#ifdef ADIOS2_HAVE_MPI
+#include <mpi.h>
+#else
+
+typedef int MPI_Comm;
+typedef uint64_t MPI_Status;
+typedef uint64_t MPI_Request;
+typedef int MPI_Info;
+typedef int MPI_Datatype;
+typedef int MPI_Fint;
+typedef int MPI_Op;
 
 #define MPI_SUCCESS 0
 #define MPI_ERR_BUFFER 1  /* Invalid buffer pointer */
@@ -36,6 +35,7 @@ using MPI_Op = int;
 #define MPI_ERR_TYPE 3    /* Invalid datatype argument */
 #define MPI_ERR_TAG 4     /* Invalid tag argument */
 #define MPI_ERR_COMM 5    /* Invalid communicator */
+#define MPI_ERR_ROOT 6    /* Invalid root process */
 #define MPI_ERR_INTERN 17 /* Invalid memory */
 #define MPI_MAX_ERROR_STRING 512
 #define MPI_MODE_RDONLY 1
@@ -78,10 +78,43 @@ using MPI_Op = int;
 #define MPI_ANY_SOURCE 0
 #define MPI_ANY_TAG 0
 
-#define MPI_SUM 0
-#define MPI_MAX 1
+#define MPI_MAX 0
+#define MPI_MIN 1
+#define MPI_SUM 2
+#define MPI_PROD 3
+#define MPI_LAND 4
+#define MPI_BAND 5
+#define MPI_LOR 6
+#define MPI_BOR 7
+#define MPI_LXOR 8
+#define MPI_BXOR 9
+#define MPI_MAXLOC 10
+#define MPI_MINLOC 11
+#define MPI_REPLACE 12
+#define MPI_NO_OP 13
 
 #define MPI_MAX_PROCESSOR_NAME 32
+
+#endif
+
+// Use some preprocessor hackery to achieve two objectives:
+// - If we don't build with a real MPI, these functions below will go in the
+//   global namespace (as extern "C").
+// - If we do have a real MPI, we put these functions into the helper::mpidummy
+//   namespace so they can be used from the SMPI_* wrappers
+
+#ifdef ADIOS2_HAVE_MPI
+namespace adios2
+{
+namespace helper
+{
+namespace mpidummy
+{
+#else
+#ifdef __cplusplus
+extern "C" {
+#endif
+#endif
 
 int MPI_Init(int *argc, char ***argv);
 int MPI_Finalize();
@@ -96,7 +129,9 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm);
 int MPI_Comm_rank(MPI_Comm comm, int *rank);
 int MPI_Comm_size(MPI_Comm comm, int *size);
 int MPI_Comm_free(MPI_Comm *comm);
+#ifndef ADIOS2_HAVE_MPI
 MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
+#endif
 
 int MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
@@ -107,6 +142,9 @@ int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 int MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                   void *recvbuf, int recvcount, MPI_Datatype recvtype,
                   MPI_Comm comm);
+int MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                   void *recvbuf, int *recvcounts, int *displs,
+                   MPI_Datatype recvtype, MPI_Comm comm);
 
 int MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                 void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
@@ -126,16 +164,8 @@ int MPI_Isend(const void *buf, int count, MPI_Datatype datatype, int dest,
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status);
 
-int MPI_File_open(MPI_Comm comm, const char *filename, int amode, MPI_Info info,
-                  MPI_File *fh);
-int MPI_File_close(MPI_File *fh);
-int MPI_File_get_size(MPI_File fh, MPI_Offset *size);
-int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype datatype,
-                  MPI_Status *status);
-int MPI_File_seek(MPI_File fh, MPI_Offset offset, int whence);
+int MPI_Type_size(MPI_Datatype datatype, int *size);
 
-int MPI_Get_count(const MPI_Status *status, MPI_Datatype datatype, int *count);
-int MPI_Error_string(int errorcode, char *string, int *resultlen);
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *comm_out);
 
 int MPI_Get_processor_name(char *name, int *resultlen);
@@ -148,8 +178,14 @@ int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
 int MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 
+#ifdef ADIOS2_HAVE_MPI
 } // end namespace mpi
 } // end namespace helper
 } // end namespace adios
+#else
+#ifdef __cplusplus
+} // end extern "C"
+#endif
+#endif
 
 #endif /* ADIOS2_MPIDUMMY_H_ */

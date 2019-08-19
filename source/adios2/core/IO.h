@@ -20,10 +20,9 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPICommOnly.h"
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Variable.h"
@@ -95,10 +94,6 @@ public:
      * DefineVariable in code */
     std::map<std::string, std::vector<Operation>> m_VarOpsPlaceholder;
 
-    /** true: No more definitions or changes to existing variables are allowed
-     */
-    bool m_DefinitionsLocked = false;
-
     /**
      * @brief Constructor called from ADIOS factory class DeclareIO function.
      * Not to be used direclty in applications.
@@ -134,6 +129,14 @@ public:
     void SetParameters(const Params &parameters = Params()) noexcept;
 
     /**
+     * @brief Version that passes a single string to fill out many parameters.
+     * initializer string = "param1=value1 , param2 = value2"
+     * This function will throw std::invalid_argument for entries that
+     * cannot be parsed into key=value pairs.
+     */
+    void SetParameters(const std::string &parameters);
+
+    /**
      * @brief Sets a single parameter overwriting value if key exists;
      * @param key parameter key
      * @param value parameter value
@@ -142,6 +145,9 @@ public:
 
     /** @brief Retrieve current parameters map */
     Params &GetParameters() noexcept;
+
+    /** @brief Delete all parameters */
+    void ClearParameters() noexcept;
 
     /**
      * @brief Adds a transport and its parameters for the IO Engine
@@ -405,15 +411,6 @@ public:
      */
     void ResetVariablesStepSelection(const bool zeroStart = false,
                                      const std::string hint = "");
-
-    /**
-     * @brief Promise that no more definitions or changes to defined variables
-     * will occur. Useful information if called before the first EndStep() of an
-     * output Engine, as it will know that the definitions are complete and
-     * constant for the entire lifetime of the output and may optimize metadata
-     * handling.
-     */
-    void LockDefinitions() noexcept;
 
 private:
     /** true: exist in config file (XML) */

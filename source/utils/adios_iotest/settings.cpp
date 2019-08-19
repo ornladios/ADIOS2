@@ -54,7 +54,7 @@ void Settings::displayHelp()
         << "             Dimensions in config are treated accordingly\n"
         << "  -x file    ADIOS configuration XML file\n"
 #ifdef ADIOS2_HAVE_HDF5
-        << "  --hdf5     Use native Parallel HDF5 instead of ADIOS for I/O"
+        << "  --hdf5     Use native Parallel HDF5 instead of ADIOS for I/O\n"
 #endif
         << "  -v         increase verbosity\n"
         << "  -h         display this help\n"

@@ -11,14 +11,12 @@
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 #define ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
+#include <future> //std::async, std::future
 #include <memory> //std::shared_ptr
 #include <string>
 #include <unordered_map>
 #include <vector>
-/// \endcond
 
-#include "adios2/ADIOSMPICommOnly.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2
@@ -58,9 +56,8 @@ public:
                        const bool nodeLocal);
 
     /**
-     *
-     * @param baseNames passed from Open( name )
-     * @param names actual filenames (from BP)
+     * OpenFiles passed from fileNames
+     * @param fileNames
      * @param openMode
      * @param parametersVector from IO
      * @param profile
@@ -69,6 +66,18 @@ public:
                    const Mode openMode,
                    const std::vector<Params> &parametersVector,
                    const bool profile);
+
+    /**
+     * Async version of OpenFiles
+     * @param fileNames
+     * @param openMode
+     * @param parametersVector
+     * @param profile
+     * @return
+     */
+    std::future<void> OpenFilesAsync(
+        const std::vector<std::string> &fileNames, const Mode openMode,
+        const std::vector<Params> &parametersVector, const bool profile);
 
     /**
      * Used for sub-files defined by index
@@ -117,6 +126,15 @@ public:
     void WriteFiles(const char *buffer, const size_t size,
                     const int transportIndex = -1);
 
+    /**
+     * Write data to a specific location in files
+     * @param transportIndex
+     * @param buffer
+     * @param size
+     */
+    void WriteFileAt(const char *buffer, const size_t size, const size_t start,
+                     const int transportIndex = -1);
+
     size_t GetFileSize(const size_t transportIndex = 0) const;
 
     /**
@@ -145,6 +163,10 @@ public:
 
     /** Checks if all transports are closed */
     bool AllTransportsClosed() const noexcept;
+
+    void SeekToFileEnd(const int transportIndex = 0);
+
+    void SeekToFileBegin(const int transportIndex = 0);
 
 protected:
     MPI_Comm m_MPIComm;

@@ -11,12 +11,12 @@
 #ifndef ADIOS2_ENGINE_SST_SST_WRITER_H_
 #define ADIOS2_ENGINE_SST_SST_WRITER_H_
 
-#include <adios2/ADIOSMPI.h>
+#include <adios2/common/ADIOSMPI.h>
 
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/sst/sst.h"
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 
 namespace adios2
@@ -68,6 +68,7 @@ private:
     SstStream m_Output;
     long m_WriterStep = -1;
     bool m_BetweenStepPairs = false;
+    bool m_DefinitionsNotified = false;
     size_t m_FFSMarshaledAttributesCount = 0;
     struct _SstParams Params;
 #define declare_locals(Param, Type, Typedecl, Default)                         \

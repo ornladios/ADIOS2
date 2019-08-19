@@ -325,5 +325,131 @@ size_t GetDistance(const size_t end, const size_t start, const bool debugMode,
     return end - start;
 }
 
+void CalculateSubblockInfo(const Dims &count, BlockDivisionInfo &info) noexcept
+{
+    const int ndim = static_cast<int>(count.size());
+    info.rem.resize(ndim, 0);
+    info.reverseDivProduct.resize(ndim, 0);
+    uint16_t n = 1;
+    // remainders + nBlocks calculation
+    for (int j = 0; j < ndim; ++j)
+    {
+        info.rem[j] = count[j] % info.div[j];
+        n = n * info.div[j];
+    }
+    info.nBlocks = n;
+
+    // division vector for calculating N-dim blockIDs from blockID
+    uint16_t d = 1; // div[n-2] * div[n-3] * ... div[0]
+    for (int j = ndim - 1; j >= 0; --j)
+    {
+        info.reverseDivProduct[j] = d;
+        d = d * info.div[j];
+    }
+}
+
+BlockDivisionInfo DivideBlock(const Dims &count, const size_t subblockSize,
+                              const BlockDivisionMethod divisionMethod)
+{
+    if (divisionMethod != BlockDivisionMethod::Contiguous)
+    {
+        throw std::invalid_argument("ERROR: adios2::helper::DivideBlock() only "
+                                    "works with Contiguous division method");
+    }
+    const size_t ndim = count.size();
+    const size_t nElems = helper::GetTotalSize(count);
+    size_t nBlocks64 = nElems / subblockSize;
+    if (nElems > nBlocks64 * subblockSize)
+    {
+        ++nBlocks64;
+    }
+    if (nBlocks64 > 4096)
+    {
+        std::cerr
+            << "ADIOS WARNING: The StatsBlockSize parameter is causing a "
+               "data block to be divided up to more than 4096 sub-blocks. "
+               " This is an artificial limit to avoid metadata explosion."
+            << std::endl;
+        nBlocks64 = 4096;
+    }
+
+    BlockDivisionInfo info;
+    info.subblockSize = subblockSize;
+    info.divisionMethod = divisionMethod;
+    info.div.resize(ndim, 1);
+    info.rem.resize(ndim, 0);
+    info.reverseDivProduct.resize(ndim, 1);
+    info.nBlocks = static_cast<uint16_t>(nBlocks64);
+    if (info.nBlocks == 0)
+    {
+        info.nBlocks = 1;
+    }
+
+    if (info.nBlocks > 1)
+    {
+        /* Split the block into 'nBlocks' subblocks */
+        /* FIXME: What about column-major dimension order here? */
+        int i = 0;
+        uint16_t n = info.nBlocks;
+        size_t dim;
+        uint16_t div = 1;
+        while (n > 1 && i < ndim)
+        {
+            dim = count[i];
+            if (n < dim)
+            {
+                div = n;
+                n = 1;
+            }
+            else
+            {
+                div = static_cast<uint16_t>(dim);
+                n = static_cast<uint16_t>(n / dim); // calming VS++
+            }
+            info.div[i] = div;
+            ++i;
+        }
+        CalculateSubblockInfo(count, info);
+    }
+    return info;
+}
+
+Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
+                      const int blockID) noexcept
+{
+    const size_t ndim = count.size();
+
+    // calculate N-dim blockIDs from b
+    std::vector<uint16_t> blockIds(ndim, 0); // blockID in N-dim
+    for (int j = 0; j < ndim; ++j)
+    {
+        blockIds[j] = blockID / info.reverseDivProduct[j];
+        if (j > 0)
+        {
+            blockIds[j] = blockIds[j] % info.div[j];
+        }
+    }
+
+    // calcute b-th subblock start/count
+    Dims sbCount(ndim, 1);
+    Dims sbStart(ndim, 0);
+    for (int j = 0; j < ndim; ++j)
+    {
+        sbCount[j] = count[j] / info.div[j];
+        sbStart[j] = sbCount[j] * blockIds[j];
+        if (blockIds[j] < info.rem[j])
+        {
+            sbCount[j] += 1;
+            sbStart[j] += blockIds[j];
+        }
+        else
+        {
+            sbStart[j] += info.rem[j];
+        }
+    }
+
+    return std::make_pair(sbStart, sbCount);
+}
+
 } // end namespace helper
 } // end namespace adios2

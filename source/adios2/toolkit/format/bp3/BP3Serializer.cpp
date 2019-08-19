@@ -282,7 +282,7 @@ void BP3Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
         AggregateCollectiveMetadataIndices(comm, bufferSTL);
 
     int rank;
-    MPI_Comm_rank(comm, &rank);
+    SMPI_Comm_rank(comm, &rank);
     if (rank == 0)
     {
         PutMinifooter(static_cast<uint64_t>(indicesPosition[0]),
@@ -312,11 +312,12 @@ void BP3Serializer::UpdateOffsetsInMetadata()
     auto lf_UpdatePGIndexOffsets = [&]() {
         auto &buffer = m_MetadataSet.PGIndex.Buffer;
         size_t &currentPosition = m_MetadataSet.PGIndex.LastUpdatedPosition;
+        const bool isLittleEndian = helper::IsLittleEndian();
 
         while (currentPosition < buffer.size())
         {
-            ProcessGroupIndex pgIndex =
-                ReadProcessGroupIndexHeader(buffer, currentPosition);
+            ProcessGroupIndex pgIndex = ReadProcessGroupIndexHeader(
+                buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedOffset =
                 pgIndex.Offset +
@@ -331,8 +332,8 @@ void BP3Serializer::UpdateOffsetsInMetadata()
 
         // First get the type:
         size_t headerPosition = 0;
-        ElementIndexHeader header =
-            ReadElementIndexHeader(buffer, headerPosition);
+        ElementIndexHeader header = ReadElementIndexHeader(
+            buffer, headerPosition, helper::IsLittleEndian());
         const DataTypes dataTypeEnum = static_cast<DataTypes>(header.DataType);
 
         size_t &currentPosition = index.LastUpdatedPosition;
@@ -770,8 +771,8 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 {
     TAU_SCOPED_TIMER_FUNC();
     int rank, size;
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
+    SMPI_Comm_rank(comm, &rank);
+    SMPI_Comm_size(comm, &size);
 
     // pre-allocate with rank 0 data
     size_t pgCount = 0; //< tracks global PG count
@@ -871,8 +872,8 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         while (localPosition < endPosition)
         {
             size_t indexPosition = localPosition;
-            const ElementIndexHeader header =
-                ReadElementIndexHeader(serialized, indexPosition);
+            const ElementIndexHeader header = ReadElementIndexHeader(
+                serialized, indexPosition, helper::IsLittleEndian());
             if (isRankConstant && deserialized.count(header.Name) == 1)
             {
                 return;
@@ -994,6 +995,7 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         const std::vector<char> &serialized = bufferSTL.m_Buffer;
         size_t serializedPosition = 0;
         std::vector<size_t> headerInfo(4);
+        const bool isLittleEndian = helper::IsLittleEndian();
 
         // if (m_Threads == 1)
         {
@@ -1001,13 +1003,15 @@ BP3Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
             {
                 size_t localPosition = serializedPosition;
 
-                const int rankSource = static_cast<int>(
-                    helper::ReadValue<uint32_t>(serialized, localPosition));
+                const int rankSource =
+                    static_cast<int>(helper::ReadValue<uint32_t>(
+                        serialized, localPosition, isLittleEndian));
 
                 for (auto i = 0; i < 4; ++i)
                 {
-                    headerInfo[i] = static_cast<size_t>(
-                        helper::ReadValue<uint64_t>(serialized, localPosition));
+                    headerInfo[i] =
+                        static_cast<size_t>(helper::ReadValue<uint64_t>(
+                            serialized, localPosition, isLittleEndian));
                 }
 
                 lf_DeserializeAllIndices(rankSource, headerInfo, serialized,
@@ -1056,6 +1060,7 @@ void BP3Serializer::MergeSerializeIndices(
 
     {
         const DataTypes dataTypeEnum = static_cast<DataTypes>(dataType);
+        const bool isLittleEndian = helper::IsLittleEndian();
 
         switch (dataTypeEnum)
         {
@@ -1064,7 +1069,7 @@ void BP3Serializer::MergeSerializeIndices(
     case (TypeTraits<T>::type_enum):                                           \
     {                                                                          \
         const auto characteristics = ReadElementIndexCharacteristics<T>(       \
-            buffer, position, TypeTraits<T>::type_enum, true);                 \
+            buffer, position, TypeTraits<T>::type_enum, true, isLittleEndian); \
         count = characteristics.EntryCount;                                    \
         length = characteristics.EntryLength;                                  \
         timeStep = characteristics.Statistics.Step;                            \
@@ -1077,7 +1082,7 @@ void BP3Serializer::MergeSerializeIndices(
         {
             const auto characteristics =
                 ReadElementIndexCharacteristics<std::string>(
-                    buffer, position, type_string_array, true);
+                    buffer, position, type_string_array, true, isLittleEndian);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -1107,6 +1112,8 @@ void BP3Serializer::MergeSerializeIndices(
             // merge index length
             size_t headerSize = 0;
 
+            const bool isLittleEndian = helper::IsLittleEndian();
+
             for (size_t r = 0; r < indices.size(); ++r)
             {
                 const auto &buffer = indices[r].Buffer;
@@ -1116,7 +1123,8 @@ void BP3Serializer::MergeSerializeIndices(
                 }
                 size_t &position = positions[r];
 
-                header = ReadElementIndexHeader(buffer, position);
+                header =
+                    ReadElementIndexHeader(buffer, position, isLittleEndian);
                 firstRank = r;
 
                 headerSize = position;
@@ -1225,6 +1233,8 @@ void BP3Serializer::MergeSerializeIndices(
         // merge index length
         size_t headerSize = 0;
 
+        const bool isLittleEndian = helper::IsLittleEndian();
+
         for (size_t r = 0; r < indices.size(); ++r)
         {
             const auto &buffer = indices[r].Buffer;
@@ -1234,7 +1244,7 @@ void BP3Serializer::MergeSerializeIndices(
             }
             size_t &position = positions[r];
 
-            header = ReadElementIndexHeader(buffer, position);
+            header = ReadElementIndexHeader(buffer, position, isLittleEndian);
             firstRank = r;
 
             headerSize = position;

@@ -36,11 +36,11 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     TAU_SCOPED_TIMER("BP3Reader::BeginStep");
     if (m_DebugMode)
     {
-        if (mode != StepMode::NextAvailable)
+        if (mode != StepMode::Read)
         {
             throw std::invalid_argument(
                 "ERROR: mode is not supported yet, "
-                "only NextAvailable is valid for "
+                "only Read is valid for "
                 "engine BP3 with adios2::Mode::Read, in call to "
                 "BeginStep\n");
         }
@@ -150,8 +150,17 @@ void BP3Reader::InitTransports()
     if (m_BP3Deserializer.m_RankMPI == 0)
     {
         const bool profile = m_BP3Deserializer.m_Profiler.IsActive;
-        m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
-                                m_IO.m_TransportsParameters, profile);
+        try
+        {
+            m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
+                                    m_IO.m_TransportsParameters, profile);
+        }
+        catch (...)
+        {
+            const std::string bpName = helper::AddExtension(m_Name, ".bp");
+            m_FileManager.OpenFiles({bpName}, adios2::Mode::Read,
+                                    m_IO.m_TransportsParameters, profile);
+        }
     }
 }
 

@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         while (true)
         {
             adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable);
+                reader.BeginStep(adios2::StepMode::Read);
             if (status != adios2::StepStatus::OK)
             {
                 break;
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
             {
                 // Promise that we are not going to change the variable sizes
                 // nor add new variables
-                inIO.LockDefinitions();
+                reader.LockReaderSelections();
 
                 unsigned int gndx = vTin.Shape()[0];
                 unsigned int gndy = vTin.Shape()[1];

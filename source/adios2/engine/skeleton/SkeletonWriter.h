@@ -12,7 +12,7 @@
 #ifndef ADIOS2_ENGINE_SKELETONMPIWRITER_H_
 #define ADIOS2_ENGINE_SKELETONMPIWRITER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 
 namespace adios2

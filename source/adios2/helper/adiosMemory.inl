@@ -244,6 +244,67 @@ ReadValue<std::complex<double>>(const std::vector<char> &buffer,
 }
 
 template <class T>
+inline void ReadArray(const std::vector<char> &buffer, size_t &position,
+                      T *output, const size_t nElems,
+                      const bool isLittleEndian) noexcept
+{
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, output, nElems);
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, output, nElems);
+    }
+#else
+    CopyFromBuffer(buffer, position, output, nElems);
+#endif
+}
+
+template <>
+inline void ReadArray<std::complex<float>>(const std::vector<char> &buffer,
+                                           size_t &position,
+                                           std::complex<float> *output,
+                                           const size_t nElems,
+                                           const bool isLittleEndian) noexcept
+{
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, output, nElems);
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, output, nElems);
+    }
+#else
+    CopyFromBuffer(buffer, position, output, nElems);
+#endif
+}
+
+template <>
+inline void ReadArray<std::complex<double>>(const std::vector<char> &buffer,
+                                            size_t &position,
+                                            std::complex<double> *output,
+                                            const size_t nElems,
+                                            const bool isLittleEndian) noexcept
+{
+#ifdef ADIOS2_HAVE_ENDIAN_REVERSE
+    if (IsLittleEndian() != isLittleEndian)
+    {
+        ReverseCopyFromBuffer(buffer, position, output, nElems);
+    }
+    else
+    {
+        CopyFromBuffer(buffer, position, output, nElems);
+    }
+#else
+    CopyFromBuffer(buffer, position, output, nElems);
+#endif
+}
+
+template <class T>
 void ClipVector(std::vector<T> &vec, const size_t start,
                 const size_t end) noexcept
 {
@@ -252,12 +313,12 @@ void ClipVector(std::vector<T> &vec, const size_t start,
 }
 
 template <class T, class U>
-void CopyMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                const bool destRowMajor, const U *src, const Dims &srcStart,
-                const Dims &srcCount, const bool srcRowMajor,
-                const bool endianReverse, const Dims &destMemStart,
-                const Dims &destMemCount, const Dims &srcMemStart,
-                const Dims &srcMemCount) noexcept
+void CopyMemoryBlock(T *dest, const Dims &destStart, const Dims &destCount,
+                     const bool destRowMajor, const U *src,
+                     const Dims &srcStart, const Dims &srcCount,
+                     const bool srcRowMajor, const bool endianReverse,
+                     const Dims &destMemStart, const Dims &destMemCount,
+                     const Dims &srcMemStart, const Dims &srcMemCount) noexcept
 {
     // transform everything to payload dims
     const Dims destStartPayload = PayloadDims<T>(destStart, destRowMajor);

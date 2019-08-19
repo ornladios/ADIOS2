@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_BP4_BP4READER_H_
 #define ADIOS2_ENGINE_BP4_BP4READER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp4/BP4.h" //format::BP4Deserializer
 #include "adios2/toolkit/transportman/TransportMan.h"
@@ -39,7 +39,7 @@ public:
 
     virtual ~BP4Reader() = default;
 
-    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
@@ -50,10 +50,16 @@ public:
 
 private:
     format::BP4Deserializer m_BP4Deserializer;
-    transportman::TransportMan m_FileManager;
-    transportman::TransportMan m_SubFileManager;
+    /* transport manager for metadata file */
+    transportman::TransportMan m_MDFileManager;
+    size_t m_MDFileProcessedSize = 0;
+
+    /* transport manager for managing data file(s) */
+    transportman::TransportMan m_DataFileManager;
+
     /* transport manager for managing the metadata index file */
-    transportman::TransportMan m_FileMetadataIndexManager;
+    transportman::TransportMan m_MDIndexFileManager;
+    size_t m_MDIndexFileProcessedSize = 0;
 
     /** used for per-step reads, TODO: to be moved to BP4Deserializer */
     size_t m_CurrentStep = 0;
@@ -62,6 +68,31 @@ private:
     void Init();
     void InitTransports();
     void InitBuffer();
+    void OpenFiles();
+
+    /** Read in more metadata if exist (throwing away old).
+     *  For streaming only.
+     *  @return size of new content from Index Table
+     */
+    size_t UpdateBuffer();
+
+    /** Process the new metadata coming in (in UpdateBuffer)
+     *  @param newIdxSize: the size of the new content from Index Table
+     */
+    void ProcessMetadataForNewSteps(const size_t newIdxSize);
+
+    /** Check the active status flag in index file.
+     *  @return true if writer is still active
+     *  it sets BP4Deserialized.m_WriterIsActive
+     */
+    bool CheckWriterActive();
+
+    /** Check for new steps withing timeout and only if writer is active.
+     *  @return the status flag
+     *  Used by BeginStep() to get new steps from file when it reaches the
+     *  end of steps in memory.
+     */
+    StepStatus CheckForNewSteps(float timeoutSeconds);
 
 #define declare_type(T)                                                        \
     void DoGetSync(Variable<T> &, T *) final;                                  \
@@ -83,6 +114,9 @@ private:
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::Info>>                  \
     DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
+                                                                               \
+    std::vector<std::vector<typename Variable<T>::Info>>                       \
+    DoAllRelativeStepsBlocksInfo(const Variable<T> &) const final;             \
                                                                                \
     std::vector<typename Variable<T>::Info> DoBlocksInfo(                      \
         const Variable<T> &variable, const size_t step) const final;

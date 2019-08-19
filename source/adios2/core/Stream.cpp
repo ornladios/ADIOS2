@@ -11,7 +11,7 @@
 #include "Stream.h"
 #include "Stream.tcc"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 
 namespace adios2
 {
@@ -31,7 +31,7 @@ Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
 
 Stream::Stream(const std::string &name, const Mode mode,
                const std::string engineType, const std::string hostLanguage)
-: Stream(name, mode, MPI_COMM_SELF, engineType, hostLanguage)
+: Stream(name, mode, MPI_COMM_NULL, engineType, hostLanguage)
 {
 }
 
@@ -51,7 +51,7 @@ Stream::Stream(const std::string &name, const Mode mode, MPI_Comm comm,
 Stream::Stream(const std::string &name, const Mode mode,
                const std::string configFile, const std::string ioInConfigFile,
                const std::string hostLanguage)
-: Stream(name, mode, MPI_COMM_SELF, configFile, ioInConfigFile, hostLanguage)
+: Stream(name, mode, MPI_COMM_NULL, configFile, ioInConfigFile, hostLanguage)
 {
 }
 
@@ -166,30 +166,32 @@ ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
                                    const Dims &, const Dims &, const Dims &,   \
                                    const vParams &, const bool);               \
                                                                                \
-    template void Stream::Write<T>(const std::string &, const T &,             \
+    template void Stream::Write<T>(const std::string &, const T &, const bool, \
                                    const bool);                                \
                                                                                \
-    template void Stream::Read<T>(const std::string &, T *);                   \
+    template void Stream::Read<T>(const std::string &, T *, const size_t);     \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *,                    \
-                                  const Box<size_t> &);                        \
-                                                                               \
-    template void Stream::Read<T>(const std::string &, T *,                    \
-                                  const Box<Dims> &);                          \
+                                  const Box<size_t> &, const size_t);          \
                                                                                \
     template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
-                                  const Box<size_t> &);                        \
+                                  const size_t);                               \
                                                                                \
-    template std::vector<T> Stream::Read<T>(const std::string &);              \
+    template void Stream::Read<T>(const std::string &, T *, const Box<Dims> &, \
+                                  const Box<size_t> &, const size_t);          \
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &,               \
-                                            const Box<size_t> &);              \
+                                            const size_t);                     \
                                                                                \
     template std::vector<T> Stream::Read<T>(                                   \
-        const std::string &, const Box<Dims> &, const Box<size_t> &);          \
+        const std::string &, const Box<size_t> &, const size_t);               \
+                                                                               \
+    template std::vector<T> Stream::Read<T>(                                   \
+        const std::string &, const Box<Dims> &, const Box<size_t> &,           \
+        const size_t);                                                         \
                                                                                \
     template std::vector<T> Stream::Read<T>(const std::string &,               \
-                                            const Box<Dims> &);
+                                            const Box<Dims> &, const size_t);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

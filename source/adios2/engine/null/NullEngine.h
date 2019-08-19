@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_NULL_NULLENGINE_H_
 #define ADIOS2_ENGINE_NULL_NULLENGINE_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 
 namespace adios2

@@ -27,7 +27,7 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 {
 }
 
-Engine::~Engine(){};
+Engine::~Engine() {}
 
 Engine::operator bool() const noexcept { return !m_IsClosed; }
 
@@ -39,7 +39,7 @@ StepStatus Engine::BeginStep()
 {
     if (m_OpenMode == Mode::Read)
     {
-        return BeginStep(StepMode::NextAvailable, -1.0);
+        return BeginStep(StepMode::Read, -1.0);
     }
     else
     {
@@ -69,7 +69,7 @@ void Engine::Close(const int transportIndex)
 
     if (transportIndex == -1)
     {
-        helper::CheckMPIReturn(MPI_Comm_free(&m_MPIComm),
+        helper::CheckMPIReturn(SMPI_Comm_free(&m_MPIComm),
                                "freeing comm in Engine " + m_Name +
                                    ", in call to Close");
         m_IsClosed = true;
@@ -79,6 +79,16 @@ void Engine::Close(const int transportIndex)
 void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 
 size_t Engine::Steps() const { return DoSteps(); }
+
+void Engine::LockWriterDefinitions() noexcept
+{
+    m_WriterDefinitionsLocked = true;
+}
+
+void Engine::LockReaderSelections() noexcept
+{
+    m_ReaderSelectionsLocked = true;
+}
 
 // PROTECTED
 void Engine::Init() {}

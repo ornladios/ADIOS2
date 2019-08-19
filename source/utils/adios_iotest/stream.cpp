@@ -5,7 +5,7 @@
  *      Author: Norbert Podhorszki
  */
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 #include "adiosStream.h"
 #include "stream.h"
@@ -14,12 +14,12 @@
 #include "hdf5Stream.h"
 #endif
 
-ioGroup::~ioGroup(){};
+ioGroup::~ioGroup() {}
 Stream::Stream(const std::string &streamName, const adios2::Mode mode)
 : streamName(streamName), mode(mode)
 {
 }
-Stream::~Stream(){};
+Stream::~Stream() {}
 
 void Stream::fillArray(std::shared_ptr<VariableInfo> ov, double value)
 {

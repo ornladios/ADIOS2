@@ -38,11 +38,11 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
     m_Input = SstReaderOpen(cstr, &Params, mpiComm);
     if (!m_Input)
     {
-        throw std::invalid_argument("ERROR: SstReader did not find active "
-                                    "Writer contact info in file \"" +
-                                    m_Name + SST_POSTFIX +
-                                    "\".  Non-current SST contact file?" +
-                                    m_EndMessage);
+        throw std::runtime_error(
+            "ERROR: SstReader did not find active "
+            "Writer contact info in file \"" +
+            m_Name + SST_POSTFIX +
+            "\".  Timeout or non-current SST contact file?" + m_EndMessage);
     }
 
     // Maybe need other writer-side params in the future, but for now only
@@ -167,8 +167,65 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         return (void *)NULL;
     };
 
+    auto arrayBlocksInfoCallback =
+        [](void *reader, void *variable, const char *type, int WriterRank,
+           int DimCount, size_t *Shape, size_t *Start, size_t *Count) {
+            std::vector<size_t> VecShape;
+            std::vector<size_t> VecStart;
+            std::vector<size_t> VecCount;
+            std::string Type(type);
+            class SstReader::SstReader *Reader =
+                reinterpret_cast<class SstReader::SstReader *>(reader);
+            size_t currentStep = SstCurrentStep(Reader->m_Input);
+            /*
+             * setup shape of array variable as global (I.E. Count == Shape,
+             * Start == 0)
+             */
+            if (Shape)
+            {
+                for (int i = 0; i < DimCount; i++)
+                {
+                    VecShape.push_back(Shape[i]);
+                    VecStart.push_back(Start[i]);
+                    VecCount.push_back(Count[i]);
+                }
+            }
+            else
+            {
+                VecShape = {};
+                VecStart = {};
+                for (int i = 0; i < DimCount; i++)
+                {
+                    VecCount.push_back(Count[i]);
+                }
+            }
+
+            if (Type == "compound")
+            {
+                return;
+            }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetType<T>())                                     \
+    {                                                                          \
+        Variable<T> *Var = reinterpret_cast<class Variable<T> *>(variable);    \
+        auto savedShape = Var->m_Shape;                                        \
+        auto savedCount = Var->m_Count;                                        \
+        auto savedStart = Var->m_Start;                                        \
+        Var->m_Shape = VecShape;                                               \
+        Var->m_Count = VecCount;                                               \
+        Var->m_Start = VecStart;                                               \
+        Var->SetBlockInfo((T *)NULL, currentStep);                             \
+        Var->m_Shape = savedShape;                                             \
+        Var->m_Count = savedCount;                                             \
+        Var->m_Start = savedStart;                                             \
+    }
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            return;
+        };
+
     SstReaderInitFFSCallback(m_Input, this, varFFSCallback, arrayFFSCallback,
-                             attrFFSCallback);
+                             attrFFSCallback, arrayBlocksInfoCallback);
 
     delete[] cstr;
 }
@@ -180,7 +237,12 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     TAU_SCOPED_TIMER_FUNC();
 
     SstStatusValue result;
-    SstStepMode StepMode;
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
     switch (Mode)
     {
     case adios2::StepMode::Append:
@@ -188,16 +250,12 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
         throw std::invalid_argument(
             "ERROR: SstReader::BeginStep inappropriate StepMode specified" +
             m_EndMessage);
-    case adios2::StepMode::NextAvailable:
-        StepMode = SstNextAvailable;
-        break;
-    case adios2::StepMode::LatestAvailable:
-        StepMode = SstLatestAvailable;
+    case adios2::StepMode::Read:
         break;
     }
     m_IO.RemoveAllVariables();
     m_IO.RemoveAllAttributes();
-    result = SstAdvanceStep(m_Input, StepMode, timeout_sec);
+    result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
         return StepStatus::EndOfStream;
@@ -211,6 +269,8 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     {
         return StepStatus::OtherError;
     }
+
+    m_BetweenStepPairs = true;
 
     if (m_WriterMarshalMethod == SstMarshalBP)
     {
@@ -286,7 +346,13 @@ size_t SstReader::CurrentStep() const { return SstCurrentStep(m_Input); }
 
 void SstReader::EndStep()
 {
+    m_BetweenStepPairs = false;
     TAU_SCOPED_TIMER_FUNC();
+    if (m_ReaderSelectionsLocked && !m_DefinitionsNotified)
+    {
+        SstReaderDefinitionLock(m_Input, SstCurrentStep(m_Input));
+        m_DefinitionsNotified = true;
+    }
     if (m_WriterMarshalMethod == SstMarshalFFS)
     {
         SstStatusValue Result;
@@ -343,6 +409,14 @@ void SstReader::Init()
 #define declare_gets(T)                                                        \
     void SstReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
+        if (m_BetweenStepPairs == false)                                       \
+        {                                                                      \
+            throw std::logic_error(                                            \
+                "ERROR: When using the SST engine in ADIOS2, "                 \
+                "Get() calls must appear between "                             \
+                "BeginStep/EndStep pairs");                                    \
+        }                                                                      \
+                                                                               \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
             size_t *Start = NULL;                                              \
@@ -382,6 +456,14 @@ void SstReader::Init()
                                                                                \
     void SstReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
+        if (m_BetweenStepPairs == false)                                       \
+        {                                                                      \
+            throw std::logic_error(                                            \
+                "ERROR: When using the SST engine in ADIOS2, "                 \
+                "Get() calls must appear between "                             \
+                "BeginStep/EndStep pairs");                                    \
+        }                                                                      \
+                                                                               \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
             size_t *Start = NULL;                                              \
@@ -500,12 +582,11 @@ void SstReader::DoClose(const int transportIndex) { SstReaderClose(m_Input); }
     {                                                                          \
         if (m_WriterMarshalMethod == SstMarshalFFS)                            \
         {                                                                      \
-            throw std::invalid_argument("ERROR: SST Engine doesn't implement " \
-                                        "function DoAllStepsBlocksInfo\n");    \
+            return variable.m_BlocksInfo;                                      \
         }                                                                      \
         else if (m_WriterMarshalMethod == SstMarshalBP)                        \
         {                                                                      \
-            return m_BP3Deserializer->BlocksInfo(variable, step);              \
+            return m_BP3Deserializer->BlocksInfo(variable, 0);                 \
         }                                                                      \
         throw std::invalid_argument(                                           \
             "ERROR: Unknown marshal mechanism in DoBlocksInfo\n");             \

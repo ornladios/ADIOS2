@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 
+#include "ParseArgs.h"
 #include "TestData.h"
 
 class CommonWriteTest : public ::testing::Test
@@ -20,47 +21,6 @@ class CommonWriteTest : public ::testing::Test
 public:
     CommonWriteTest() = default;
 };
-
-adios2::Params engineParams = {}; // parsed from command line
-std::string fname = "ADIOS2Common";
-std::string engine = "sst";
-
-int CompressSz = 0;
-int CompressZfp = 0;
-
-static std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-/*
- * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
- * by commas.  White space is trimmed off front and back.  No quotes or anything
- * fancy allowed.
- */
-static adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, ':');
-        if (!std::getline(ss2, ParamValue, ':'))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
-}
 
 #ifdef ADIOS2_HAVE_MPI
 MPI_Comm testComm;
@@ -71,9 +31,6 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 {
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
-
-    // Number of steps
-    const std::size_t NSteps = 10;
 
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
@@ -106,29 +63,23 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
         adios2::Dims time_count{1};
 
-        auto scalar_r64 = io.DefineVariable<double>("scalar_r64");
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
-        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
+        (void)io.DefineVariable<double>("scalar_r64");
+        (void)io.DefineVariable<int8_t>("i8", shape, start, count);
+        (void)io.DefineVariable<int16_t>("i16", shape, start, count);
+        (void)io.DefineVariable<int32_t>("i32", shape, start, count);
+        (void)io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_c32 =
-            io.DefineVariable<std::complex<float>>("c32", shape, start, count);
-        auto var_c64 =
-            io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+        (void)io.DefineVariable<std::complex<float>>("c32", shape, start,
+                                                     count);
+        (void)io.DefineVariable<std::complex<double>>("c64", shape, start,
+                                                      count);
         auto var_r64_2d =
             io.DefineVariable<double>("r64_2d", shape2, start2, count2);
         auto var_r64_2d_rev =
             io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
-        auto var_time = io.DefineVariable<int64_t>("time", time_shape,
-                                                   time_start, time_count);
-        if (CompressSz)
-        {
-            adios2::Operator SzOp = adios.DefineOperator("szCompressor", "sz");
-            // TODO: Add a large dataset for SZ test.
-            // var_r32.AddOperation(SzOp, {{"accuracy", "0.001"}});
-        }
+        (void)io.DefineVariable<int64_t>("time", time_shape, time_start,
+                                         time_count);
         if (CompressZfp)
         {
             adios2::Operator ZfpOp =
@@ -150,7 +101,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     {
         adios2::Mode WriteMode;
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize);
+        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx, (int)Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -159,7 +110,6 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         auto var_i64 = io.InquireVariable<int64_t>("i64");
-        auto var_u8 = io.InquireVariable<uint8_t>("u8");
         auto var_r32 = io.InquireVariable<float>("r32");
         auto var_r64 = io.InquireVariable<double>("r64");
         auto var_c32 = io.InquireVariable<std::complex<float>>("c32");
@@ -206,7 +156,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         if (WriteMode == adios2::Mode::Sync)
         {
             // trash the data since it's a Sync, this should be OK.
-            data_I8.fill(0);
+            std::fill(data_I8.begin(), data_I8.end(), 0);
         }
         engine.Put(var_i16, data_I16.data(), adios2::Mode::Sync);
         engine.Put(var_i32, data_I32.data(), WriteMode);
@@ -246,58 +196,7 @@ int main(int argc, char **argv)
     int result;
     ::testing::InitGoogleTest(&argc, argv);
 
-    while ((argc > 1) && (argv[1][0] == '-'))
-    {
-        if (std::string(argv[1]) == "--expect_time_gap")
-        {
-            //  TimeGapExpected++;   Nothing on write side
-        }
-        else if (std::string(argv[1]) == "--compress_sz")
-        {
-            CompressSz++;
-        }
-        else if (std::string(argv[1]) == "--compress_zfp")
-        {
-            CompressZfp++;
-        }
-        else if (std::string(argv[1]) == "--filename")
-        {
-            fname = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine")
-        {
-            engine = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else
-        {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
-        }
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* first arg without -- is engine */
-        engine = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* second arg without -- is filename */
-        fname = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        engineParams = ParseEngineParams(argv[1]);
-    }
+    ParseArgs(argc, argv);
 
     result = RUN_ALL_TESTS();
 

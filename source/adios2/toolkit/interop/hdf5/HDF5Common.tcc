@@ -208,7 +208,7 @@ void HDF5Common::AddBlockInfo(const core::Variable<T> &variable, hid_t parentId)
         H5Dcreate(parentId, blockInfo_name.c_str(), H5T_NATIVE_HSIZE,
                   metaSpace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    size_t blocks[dimSize * 2];
+    std::vector<size_t> blocks(dimSize * 2);
     for (int i = 0; i < dimSize; i++)
     {
         blocks[i + dimSize] = variable.m_Count[i];
@@ -223,7 +223,7 @@ void HDF5Common::AddBlockInfo(const core::Variable<T> &variable, hid_t parentId)
                         metaCount, NULL);
 
     H5Dwrite(metaId, H5T_NATIVE_HSIZE, metaLocal_id, metaSpace_id,
-             m_PropertyTxfID, blocks);
+             m_PropertyTxfID, blocks.data());
 
     H5Sclose(metaLocal_id);
     H5Sclose(metaSpace_id);

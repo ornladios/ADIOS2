@@ -79,7 +79,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead1D8)
 
             oStream.write("iString", stepData.S1);
             oStream.write("i8", stepData.I8.data(), shape, start, count,
-                          adios2::endl);
+                          adios2::end_step);
             /*
             oStream.write("i16", stepData.I16.data(), shape, start, count);
             oStream.write("i32", stepData.I32.data(), shape, start, count);
@@ -129,9 +129,9 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead1D8)
         {
 
             std::cout << "Step " << t
-                      << ": currentstep() = " << iStep.currentstep()
+                      << ": currentstep() = " << iStep.current_step()
                       << std::endl;
-            if (iStep.currentstep() == 0)
+            if (iStep.current_step() == 0)
             {
                 iStep.read("gi8", gi8);
                 /*

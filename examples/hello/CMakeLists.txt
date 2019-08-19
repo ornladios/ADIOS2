@@ -16,6 +16,11 @@ if(ADIOS2_HAVE_DataMan)
   add_subdirectory(datamanWriter)
 endif()
 
+if(ADIOS2_HAVE_DATASPACES)
+  add_subdirectory(dataspacesReader)
+  add_subdirectory(dataspacesWriter)
+endif()
+
 if(ADIOS2_HAVE_SST)
   add_subdirectory(sstReader)
   add_subdirectory(sstWriter)

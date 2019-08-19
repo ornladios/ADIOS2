@@ -17,6 +17,7 @@
 /// \endcond
 
 #include "adios2/core/Engine.h"
+#include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 
 namespace adios2
@@ -254,8 +255,8 @@ void VariableBase::CheckDimensions(const std::string hint) const
     CheckDimensionsCommon(hint);
 }
 
-bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; };
-void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; };
+bool VariableBase::IsConstantDims() const noexcept { return m_ConstantDims; }
+void VariableBase::SetConstantDims() noexcept { m_ConstantDims = true; }
 
 bool VariableBase::IsValidStep(const size_t step) const noexcept
 {
@@ -348,8 +349,10 @@ void VariableBase::InitShapeType()
             if (m_Shape.size() == 1 && m_Shape.front() == LocalValueDim)
             {
                 m_ShapeID = ShapeID::LocalValue;
-                m_Start.resize(1);
-                m_Count.resize(1); // real count = 1
+                m_Start.resize(1, 0); // start[0] == 0
+                m_Count.resize(1, 1); // count[0] == 1
+                // Count[0] == 1 makes sure the value will be written
+                // into the data file (PutVariablePayload())
                 m_SingleValue = true;
             }
             else
@@ -476,6 +479,24 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
                                     "Shape and cannot appear in start/count, " +
                                     hint + "\n");
     }
+}
+
+Dims VariableBase::GetShape(const size_t step)
+{
+    if (m_Type == "compound")
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                      \
+    else if (m_Type == helper::GetType<T>())                                   \
+    {                                                                          \
+        Variable<T> *variable = dynamic_cast<Variable<T> *>(this);             \
+        m_Shape = variable->Shape(step);                                       \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    return m_Shape;
 }
 
 } // end namespace core

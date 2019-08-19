@@ -13,7 +13,7 @@
 
 #include <iostream>
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 
 namespace adios2
@@ -42,7 +42,7 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 
     for (size_t i = 0; i < m_Channels; ++i)
     {
-        m_DataManSerializer[i]->New(m_BufferSize);
+        m_DataManSerializer[i]->NewWriterBuffer(m_BufferSize);
     }
 
     if (m_Verbosity >= 5)
@@ -115,8 +115,8 @@ void DataManWriter::Init()
     for (size_t i = 0; i < m_Channels; ++i)
     {
         m_DataManSerializer.push_back(
-            std::make_shared<format::DataManSerializer>(
-                m_IsRowMajor, m_ContiguousMajor, m_IsLittleEndian, m_MPIComm));
+            std::make_shared<format::DataManSerializer>(m_MPIComm, m_BufferSize,
+                                                        m_IsRowMajor));
     }
 }
 
@@ -150,15 +150,10 @@ void DataManWriter::MetadataThread(const std::string &address)
     while (m_Listening)
     {
         auto request = tpm.ReceiveRequest();
-        if (request == nullptr)
+        if (request && request->size() > 0)
         {
-            continue;
-        }
-        if (request->size() >= 0)
-        {
-            m_AggregatedMetadataMutex.lock();
+            std::lock_guard<std::mutex> lck(m_AggregatedMetadataMutex);
             tpm.SendReply(m_AggregatedMetadata);
-            m_AggregatedMetadataMutex.unlock();
         }
     }
 }

@@ -18,8 +18,8 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Operator.h"
 
 namespace adios2
@@ -194,6 +194,8 @@ public:
      * @throws std::invalid_argument if random access and streaming are called
      */
     void CheckRandomAccessConflict(const std::string hint) const;
+
+    Dims GetShape(const size_t step = adios2::EngineCurrentStep);
 
 protected:
     const bool m_DebugMode = false;

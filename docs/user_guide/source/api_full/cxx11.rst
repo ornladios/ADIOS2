@@ -41,7 +41,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::ADIOS
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
    
    
@@ -50,7 +50,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::IO
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
    
 :ref:`Variable` ``<T>`` class
@@ -58,7 +58,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Variable
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
 
@@ -67,7 +67,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Attribute
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
 
@@ -76,7 +76,7 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Engine
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
 
 :ref:`Operator` class
@@ -84,16 +84,14 @@ The following section provides a summary of the available functionality for each
 
 .. doxygenclass:: adios2::Operator
    :project: CXX11
-   :path: ../../bindings/CXX11/cxx11/
+   :path: ../../bindings/CXX11/adios2/cxx11/
    :members:
+
 
 Debugging
 ---------
 
-To help debugging, functionality is provided that creates
-human-readable representations of adios2 C++11 class instances and
-enums. To get a string representation, use ``ToString(object)``. You
-can also directly pass objects to ``ostream``s.
+For debugging, ADIOS2 C++11 class instances and enums can be passed directly to ostreams, as well as converted to human-readable strings via the ubiquitous ``ToString(object)`` member variable. You can also directly pass objects to ``ostream``s.
 
 Example:
 

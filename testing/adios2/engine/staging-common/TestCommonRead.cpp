@@ -12,6 +12,7 @@
 
 #include <gtest/gtest.h>
 
+#include "ParseArgs.h"
 #include "TestData.h"
 
 class CommonReadTest : public ::testing::Test
@@ -19,46 +20,6 @@ class CommonReadTest : public ::testing::Test
 public:
     CommonReadTest() = default;
 };
-
-adios2::Params engineParams = {}; // parsed from command line
-int TimeGapExpected = 0;
-int IgnoreTimeGap = 1;
-std::string fname = "ADIOS2Common";
-std::string engine = "SST";
-
-static std::string Trim(std::string &str)
-{
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(' ');
-    return str.substr(first, (last - first + 1));
-}
-
-/*
- * Engine parameters spec is a poor-man's JSON.  name:value pairs are separated
- * by commas.  White space is trimmed off front and back.  No quotes or anything
- * fancy allowed.
- */
-static adios2::Params ParseEngineParams(std::string Input)
-{
-    std::istringstream ss(Input);
-    std::string Param;
-    adios2::Params Ret = {};
-
-    while (std::getline(ss, Param, ','))
-    {
-        std::istringstream ss2(Param);
-        std::string ParamName;
-        std::string ParamValue;
-        std::getline(ss2, ParamName, ':');
-        if (!std::getline(ss2, ParamValue, ':'))
-        {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
-        }
-        Ret[Trim(ParamName)] = Trim(ParamValue);
-    }
-    return Ret;
-}
 
 #ifdef ADIOS2_HAVE_MPI
 MPI_Comm testComm;
@@ -71,8 +32,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
 
-    // Number of steps
-    const std::size_t NSteps = 10;
     int TimeGapDetected = 0;
 #ifdef ADIOS2_HAVE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
@@ -92,8 +51,17 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     io.SetEngine(engine);
     io.SetParameters(engineParams);
 
-    adios2::Engine engine = io.Open(fname, adios2::Mode::Read);
+    adios2::Engine engine;
 
+    if (ExpectOpenTimeout)
+    {
+        ASSERT_ANY_THROW(engine = io.Open(fname, adios2::Mode::Read));
+        return;
+    }
+    else
+    {
+        engine = io.Open(fname, adios2::Mode::Read);
+    }
     unsigned int t = 0;
 
     std::vector<std::time_t> write_times;
@@ -178,6 +146,50 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_time.Shape()[0], writerSize);
 
+        const std::vector<adios2::Variable<int8_t>::Info> i8Info =
+            engine.BlocksInfo(var_i8, engine.CurrentStep());
+        const std::vector<adios2::Variable<int16_t>::Info> i16Info =
+            engine.BlocksInfo(var_i16, engine.CurrentStep());
+        const std::vector<adios2::Variable<int32_t>::Info> i32Info =
+            engine.BlocksInfo(var_i32, engine.CurrentStep());
+        const std::vector<adios2::Variable<int64_t>::Info> i64Info =
+            engine.BlocksInfo(var_i64, engine.CurrentStep());
+        const std::vector<adios2::Variable<float>::Info> r32Info =
+            engine.BlocksInfo(var_r32, engine.CurrentStep());
+        const std::vector<adios2::Variable<double>::Info> r64Info =
+            engine.BlocksInfo(var_r64, engine.CurrentStep());
+        EXPECT_EQ(i8Info.size(), writerSize);
+        EXPECT_EQ(i16Info.size(), writerSize);
+        EXPECT_EQ(i32Info.size(), writerSize);
+        EXPECT_EQ(i64Info.size(), writerSize);
+        EXPECT_EQ(r32Info.size(), writerSize);
+        EXPECT_EQ(r64Info.size(), writerSize);
+
+        for (size_t i = 0; i < writerSize; ++i)
+        {
+            EXPECT_FALSE(i8Info[0].IsValue);
+            EXPECT_FALSE(i16Info[0].IsValue);
+            EXPECT_FALSE(i32Info[0].IsValue);
+            EXPECT_FALSE(i64Info[0].IsValue);
+            EXPECT_FALSE(r32Info[0].IsValue);
+            EXPECT_FALSE(r64Info[0].IsValue);
+        }
+
+        if (var_c32)
+        {
+            const std::vector<adios2::Variable<std::complex<float>>::Info>
+                c32Info = engine.BlocksInfo(var_c32, engine.CurrentStep());
+            const std::vector<adios2::Variable<std::complex<double>>::Info>
+                c64Info = engine.BlocksInfo(var_c64, engine.CurrentStep());
+            EXPECT_EQ(c32Info.size(), writerSize);
+            EXPECT_EQ(c64Info.size(), writerSize);
+            for (size_t i = 0; i < writerSize; ++i)
+            {
+                EXPECT_FALSE(c32Info[0].IsValue);
+                EXPECT_FALSE(c64Info[0].IsValue);
+            }
+        }
+
         long unsigned int myStart =
             (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
@@ -185,7 +197,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         if (myStart + myLength > writerSize * Nx)
         {
-            myLength = (long unsigned int)writerSize * Nx - myStart;
+            myLength = (long unsigned int)writerSize * (int)Nx - myStart;
         }
         const adios2::Dims start{myStart};
         const adios2::Dims count{myLength};
@@ -219,16 +231,16 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         var_time.SetSelection(sel_time);
 
-        in_I8.reserve(myLength);
-        in_I16.reserve(myLength);
-        in_I32.reserve(myLength);
-        in_I64.reserve(myLength);
-        in_R32.reserve(myLength);
-        in_R64.reserve(myLength);
-        in_C32.reserve(myLength);
-        in_C64.reserve(myLength);
-        in_R64_2d.reserve(myLength * 2);
-        in_R64_2d_rev.reserve(myLength * 2);
+        in_I8.resize(myLength);
+        in_I16.resize(myLength);
+        in_I32.resize(myLength);
+        in_I64.resize(myLength);
+        in_R32.resize(myLength);
+        in_R64.resize(myLength);
+        in_C32.resize(myLength);
+        in_C64.resize(myLength);
+        in_R64_2d.resize(myLength * 2);
+        in_R64_2d_rev.resize(myLength * 2);
         engine.Get(var_i8, in_I8.data());
         engine.Get(var_i16, in_I16.data());
         engine.Get(var_i32, in_I32.data());
@@ -296,67 +308,7 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
-
-    while ((argc > 1) && (argv[1][0] == '-'))
-    {
-        if (std::string(argv[1]) == "--expect_time_gap")
-        {
-
-            TimeGapExpected++;
-            IgnoreTimeGap = 0;
-        }
-        else if (std::string(argv[1]) == "--expect_contiguous_time")
-        {
-            TimeGapExpected = 0;
-            IgnoreTimeGap = 0;
-        }
-        else if (std::string(argv[1]) == "--compress_sz")
-        {
-            // CompressSz++;     Nothing on read side
-        }
-        else if (std::string(argv[1]) == "--compress_zfp")
-        {
-            // CompressZfp++;    Nothing on read side
-        }
-        else if (std::string(argv[1]) == "--filename")
-        {
-            fname = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--engine")
-        {
-            engine = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else
-
-        {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
-        }
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* first arg without -- is engine */
-        engine = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        /* second arg without -- is filename */
-        fname = std::string(argv[1]);
-        argv++;
-        argc--;
-    }
-    if (argc > 1)
-    {
-        engineParams = ParseEngineParams(argv[1]);
-    }
+    ParseArgs(argc, argv);
 
     result = RUN_ALL_TESTS();
 

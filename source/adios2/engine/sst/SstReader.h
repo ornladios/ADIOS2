@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_SST_SSTREADER_H_
 #define ADIOS2_ENGINE_SST_SSTREADER_H_
 
-#include <adios2/ADIOSMPI.h>
+#include <adios2/common/ADIOSMPI.h>
 
 #include "adios2/toolkit/sst/sst.h"
 
@@ -60,6 +60,8 @@ private:
     void Init();
     SstStream m_Input;
     SstMarshalMethod m_WriterMarshalMethod;
+    bool m_DefinitionsNotified = false;
+    bool m_BetweenStepPairs = false;
 
     /* --- Used only with BP marshaling --- */
     SstFullMetadata m_CurrentStepMetaData = NULL;

@@ -13,8 +13,8 @@
 
 #include <sstream>
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSMacros.h"
 
 #include "adios2/engine/bp3/BP3Reader.h"
 #include "adios2/engine/bp3/BP3Writer.h"
@@ -23,6 +23,7 @@
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
 #include "adios2/engine/null/NullEngine.h"
+#include "adios2/engine/nullcore/NullCoreWriter.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 
@@ -40,9 +41,18 @@
 #include "adios2/engine/ssc/SscWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_TABLE // external dependencies
+#include "adios2/engine/table/TableWriter.h"
+#endif
+
 #ifdef ADIOS2_HAVE_SST // external dependencies
 #include "adios2/engine/sst/SstReader.h"
 #include "adios2/engine/sst/SstWriter.h"
+#endif
+
+#ifdef ADIOS2_HAVE_DATASPACES // external dependencies
+#include "adios2/engine/dataspaces/DataSpacesReader.h"
+#include "adios2/engine/dataspaces/DataSpacesWriter.h"
 #endif
 
 #ifdef ADIOS2_HAVE_HDF5 // external dependencies
@@ -76,17 +86,23 @@ void IO::SetEngine(const std::string engineType) noexcept
 {
     m_EngineType = engineType;
 }
-void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; };
+void IO::SetIOMode(const IOMode ioMode) { m_IOMode = ioMode; }
 
 void IO::SetParameters(const Params &parameters) noexcept
 {
     TAU_SCOPED_TIMER("IO::other");
-    m_Parameters.clear();
-
     for (const auto &parameter : parameters)
     {
         m_Parameters[parameter.first] = parameter.second;
     }
+}
+
+void IO::SetParameters(const std::string &parameters)
+{
+    TAU_SCOPED_TIMER("IO::other");
+    adios2::Params parameterMap =
+        adios2::helper::BuildParametersMap(parameters, '=', ',', false);
+    SetParameters(parameterMap);
 }
 
 void IO::SetParameter(const std::string key, const std::string value) noexcept
@@ -96,6 +112,12 @@ void IO::SetParameter(const std::string key, const std::string value) noexcept
 }
 
 Params &IO::GetParameters() noexcept { return m_Parameters; }
+
+void IO::ClearParameters() noexcept
+{
+    TAU_SCOPED_TIMER("IO::other");
+    m_Parameters.clear();
+}
 
 size_t IO::AddTransport(const std::string type, const Params &parameters)
 {
@@ -145,9 +167,9 @@ const DataMap &IO::GetAttributesDataMap() const noexcept
     return m_Attributes;
 }
 
-bool IO::InConfigFile() const noexcept { return m_InConfigFile; };
+bool IO::InConfigFile() const noexcept { return m_InConfigFile; }
 
-void IO::SetDeclared() noexcept { m_IsDeclared = true; };
+void IO::SetDeclared() noexcept { m_IsDeclared = true; }
 
 bool IO::IsDeclared() const noexcept { return m_IsDeclared; }
 
@@ -438,7 +460,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     }
 
     MPI_Comm mpiComm;
-    MPI_Comm_dup(mpiComm_orig, &mpiComm);
+    SMPI_Comm_dup(mpiComm_orig, &mpiComm);
     std::shared_ptr<Engine> engine;
     const bool isDefaultEngine = m_EngineType.empty() ? true : false;
     std::string engineTypeLC = m_EngineType;
@@ -450,7 +472,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 
     /* BPFile for read needs to use BP4 or BP3 depending on the file's version
      */
-    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp"))
+    if ((engineTypeLC == "bpfile" || engineTypeLC == "bp" || isDefaultEngine))
     {
         if (mode == Mode::Read)
         {
@@ -469,7 +491,7 @@ Engine &IO::Open(const std::string &name, const Mode mode,
         }
     }
 
-    if (isDefaultEngine || engineTypeLC == "bp3")
+    if (engineTypeLC == "bp3")
     {
         if (mode == Mode::Read)
         {
@@ -543,6 +565,22 @@ Engine &IO::Open(const std::string &name, const Mode mode,
                                     "SSC library, can't use SSC engine\n");
 #endif
     }
+    else if (engineTypeLC == "table")
+    {
+#ifdef ADIOS2_HAVE_TABLE
+        if (mode == Mode::Write)
+            engine = std::make_shared<engine::TableWriter>(*this, name, mode,
+                                                           mpiComm);
+        else
+            throw std::invalid_argument(
+                "ERROR: Table engine only supports Write. It uses other "
+                "engines as backend. Please use corresponding engines for "
+                "Read\n");
+#else
+        throw std::invalid_argument("ERROR: this version didn't compile with "
+                                    "Table library, can't use Table engine\n");
+#endif
+    }
     else if (engineTypeLC == "sst" || engineTypeLC == "effis")
     {
 #ifdef ADIOS2_HAVE_SST
@@ -555,6 +593,21 @@ Engine &IO::Open(const std::string &name, const Mode mode,
 #else
         throw std::invalid_argument("ERROR: this version didn't compile with "
                                     "Sst library, can't use Sst engine\n");
+#endif
+    }
+    else if (engineTypeLC == "dataspaces")
+    {
+#ifdef ADIOS2_HAVE_DATASPACES
+        if (mode == Mode::Read)
+            engine = std::make_shared<engine::DataSpacesReader>(*this, name,
+                                                                mode, mpiComm);
+        else
+            engine = std::make_shared<engine::DataSpacesWriter>(*this, name,
+                                                                mode, mpiComm);
+#else
+        throw std::invalid_argument(
+            "ERROR: this version didn't compile with "
+            "DataSpaces library, can't use DataSpaces engine\n");
 #endif
     }
     else if (engineTypeLC == "hdf5")
@@ -607,6 +660,15 @@ Engine &IO::Open(const std::string &name, const Mode mode,
     {
         engine =
             std::make_shared<engine::NullEngine>(*this, name, mode, mpiComm);
+    }
+    else if (engineTypeLC == "nullcore")
+    {
+        if (mode == Mode::Read)
+            throw std::invalid_argument(
+                "ERROR: nullcore engine does not support read mode");
+        else
+            engine = std::make_shared<engine::NullCoreWriter>(*this, name, mode,
+                                                              mpiComm);
     }
     else
     {
@@ -701,8 +763,6 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
 #undef declare_type
     }
 }
-
-void IO::LockDefinitions() noexcept { m_DefinitionsLocked = true; };
 
 // PRIVATE
 int IO::GetMapIndex(const std::string &name, const DataMap &dataMap) const

@@ -10,8 +10,8 @@
 #include "adiosMPIFunctions.h"
 #include "adiosMPIFunctions.tcc"
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 
 #include "adios2/helper/adiosString.h"
 

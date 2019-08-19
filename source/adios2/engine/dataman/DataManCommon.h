@@ -11,8 +11,8 @@
 #ifndef ADIOS2_ENGINE_DATAMAN_DATAMANCOMMON_H_
 #define ADIOS2_ENGINE_DATAMAN_DATAMANCOMMON_H_
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
@@ -41,6 +41,7 @@ protected:
     int m_MpiSize;
     int m_Channels;
     std::string m_WorkflowMode = "stream";
+    bool m_ProvideLatest = false;
     size_t m_BufferSize = 1024 * 1024 * 1024;
     bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;
@@ -60,6 +61,7 @@ protected:
 
     bool GetStringParameter(Params &params, std::string key,
                             std::string &value);
+    bool GetBoolParameter(Params &params, std::string key, bool &value);
 
 }; // end class DataManCommon
 

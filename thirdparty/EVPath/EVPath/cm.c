@@ -69,6 +69,7 @@ atom_t CM_BW_MEASURE_SIZEINC = -1;
 static atom_t CM_EVENT_SIZE = -1;
 static atom_t CM_INCOMING_CONNECTION = -1;
 static atom_t CM_TRANSPORT_RELIABLE = -1;
+static atom_t CM_IP_INTERFACE = -1;
 
 void wait_for_pending_write(CMConnection conn);
 static void cm_wake_any_pending_write(CMConnection conn);
@@ -358,7 +359,7 @@ INT_CMget_contact_list(CManager cm)
 extern attr_list
 INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
 {
-    char *chosen_transport = NULL, *chosen_net = NULL;
+    char *chosen_transport = NULL, *chosen_net = NULL, *chosen_interface = NULL;
     char *freeable_transport = NULL;
     int i = 0;
 
@@ -373,25 +374,44 @@ INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
     if (attrs != NULL) {
 	get_string_attr(attrs, CM_NETWORK_POSTFIX, &chosen_net);
     }
-    if ((chosen_transport == NULL) && (chosen_net == NULL)) {
+    if (attrs != NULL) {
+	get_string_attr(attrs, CM_IP_INTERFACE, &chosen_interface);
+    }
+    if ((chosen_transport == NULL) && (chosen_net == NULL) && (chosen_interface == NULL)) {
 	CMadd_ref_attr_list(cm, cm->contact_lists[0]);
 	return cm->contact_lists[0];
     }
-    /* specific transport chosen */
+    /* specific transport or interface chosen */
     i = 0;
     while (cm->contact_lists && (cm->contact_lists[i] != NULL)) {
-	char *this_transport = NULL, *this_postfix = NULL;
+	char *this_transport = NULL, *this_postfix = NULL, *this_interface = NULL;
 
 	get_string_attr(cm->contact_lists[i], CM_TRANSPORT, &this_transport);
 	get_string_attr(cm->contact_lists[i], CM_NETWORK_POSTFIX, &this_postfix);
+	get_string_attr(cm->contact_lists[i], CM_IP_INTERFACE, &this_interface);
 	if (this_transport == NULL) {
 	    this_transport = "sockets";
+	}
+	if (chosen_transport == NULL) {
+	    chosen_transport = "sockets";
 	}
 	if (strcmp(this_transport, chosen_transport) == 0) {
 	    if ((chosen_net != NULL) || (this_postfix != NULL)) {
 		/* one is not null */
 		if (chosen_net && this_postfix) {
 		    if (strcmp(chosen_net, this_postfix) != 0) {
+			i++;
+			continue;
+		    }
+		} else {
+		    i++;
+		    continue;
+		}
+	    }
+	    if ((chosen_interface != NULL) || (this_interface != NULL)) {
+		/* one is not null */
+		if (chosen_interface && this_interface) {
+		    if (strcmp(chosen_interface, this_interface) != 0) {
 			i++;
 			continue;
 		    }
@@ -411,19 +431,35 @@ INT_CMget_specific_contact_list(CManager cm, attr_list attrs)
     /* try again */
     i = 0;
     while (cm->contact_lists && (cm->contact_lists[i] != NULL)) {
-	char *this_transport = NULL, *this_postfix = NULL;
+	char *this_transport = NULL, *this_postfix = NULL, *this_interface = NULL;
 
 	get_string_attr(cm->contact_lists[i], CM_TRANSPORT, &this_transport);
 	get_string_attr(cm->contact_lists[i], CM_NETWORK_POSTFIX, 
 			&this_postfix);
+	get_string_attr(cm->contact_lists[i], CM_IP_INTERFACE, &this_interface);
 	if (this_transport == NULL) {
 	    this_transport = "sockets";
+	}
+	if (chosen_transport == NULL) {
+	    chosen_transport = "sockets";
 	}
 	if (strcmp(this_transport, chosen_transport) == 0) {
 	    if ((chosen_net != NULL) || (this_postfix != NULL)) {
 		/* one is not null */
 		if (chosen_net && this_postfix) {
 		    if (strcmp(chosen_net, this_postfix) != 0) {
+			i++;
+			continue;
+		    }
+		} else {
+		    i++;
+		    continue;
+		}
+	    }
+	    if ((chosen_interface != NULL) || (this_interface != NULL)) {
+		/* one is not null */
+		if (chosen_interface && this_interface) {
+		    if (strcmp(chosen_interface, this_interface) != 0) {
 			i++;
 			continue;
 		    }
@@ -517,10 +553,12 @@ CMinternal_listen(CManager cm, attr_list listen_info, int try_others)
     int success = 0;
     transport_entry *trans_list;
     char *chosen_transport = NULL;
+    char *interface = NULL;
 
     if (listen_info) {
         listen_info = split_transport_attributes(attr_copy_list(listen_info));
 	get_string_attr(listen_info, CM_TRANSPORT, &chosen_transport);
+	get_string_attr(listen_info, CM_IP_INTERFACE, &interface);
     }
     if (chosen_transport != NULL) {
         CMtrace_out(cm, CMConnectionVerbose,
@@ -529,7 +567,7 @@ CMinternal_listen(CManager cm, attr_list listen_info, int try_others)
 	if (load_transport(cm, chosen_transport, 1) == 0) {
 	    CMtrace_out(cm, CMConnectionVerbose,
 			"Failed to load transport \"%s\".  Revert to default.\n",
-			chosen_transport);
+					chosen_transport);
 	    CMtrace_out(cm, CMTransportVerbose,
 			"Failed to load transport \"%s\".  Revert to default.\n",
 			chosen_transport);
@@ -548,6 +586,9 @@ CMinternal_listen(CManager cm, attr_list listen_info, int try_others)
 	    attrs = (*trans_list)->listen(cm, &CMstatic_trans_svcs,
 					  *trans_list,
 					  listen_info);
+	    if (interface) {
+		add_string_attr(attrs, CM_IP_INTERFACE, strdup(interface));
+	    }
 	    add_contact_list(cm, attrs);
 	    if (CMtrace_on(cm, CMConnectionVerbose)) {
 		fprintf(cm->CMTrace_file, "Adding contact list -> ");
@@ -718,6 +759,7 @@ INT_CManager_create()
 	CM_EVENT_SIZE = attr_atom_from_string("CM_EVENT_SIZE");
 	CM_INCOMING_CONNECTION = attr_atom_from_string("CM_INCOMING_CONNECTION");
 	CM_TRANSPORT_RELIABLE = attr_atom_from_string("CM_TRANSPORT_RELIABLE");
+	CM_IP_INTERFACE = attr_atom_from_string("IP_INTERFACE");
     }
 
     /* initialize data structs */
@@ -1371,20 +1413,10 @@ INT_CMget_self_ip_addr(CManager cm)
     return IP;
 }
 
-extern char *IP_config_diagnostics;
-extern int IP_config_output_len;
-
 extern char *
 INT_CMget_ip_config_diagnostics(CManager cm)
 {
-    char *output;
-    IP_config_output_len = 0;   /* setup output */
-    get_IP_config(NULL, 0, NULL, NULL, NULL, NULL, NULL,
-		  CMstatic_trans_svcs.trace_out, cm);
-    IP_config_output_len = -1;   /* disable output */
-    output = IP_config_diagnostics;
-    IP_config_diagnostics = NULL;  /* not ours anymore */
-    return output;
+    return IP_get_diagnostics(cm, CMstatic_trans_svcs.trace_out);
 }
 
  #define CURRENT_HANDSHAKE_VERSION 1

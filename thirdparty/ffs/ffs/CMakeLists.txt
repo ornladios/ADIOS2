@@ -7,10 +7,7 @@ endif()
 project(FFS VERSION 1.6.0)
 
 # Some boilerplate to setup nice output directories
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 if(WIN32 AND NOT CYGWIN)
   set(CMAKE_INSTALL_CMAKEDIR CMake
     CACHE STRING "Installation CMake subdirectory")
@@ -18,9 +15,6 @@ else()
   set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/ffs
     CACHE STRING "Installation CMake subdirectory")
 endif()
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
 list(INSERT CMAKE_MODULE_PATH 0 ${PROJECT_SOURCE_DIR}/cmake)
@@ -178,8 +172,8 @@ option(FFS_USE_DILL "Enable Dill code generation" ON)
 if(FFS_USE_DILL)
   find_package(dill 2.3.1 REQUIRED)
   set(HAVE_DILL_H ON)
-  set(FFS_CONVERSION_GENERATION_DEFAULT ${DILL_HAS_NATIVE_DCG})
-  set(FFS_CONVERSION_GENERATION_DEFAULT 0)
+  option(FFS_CONVERSION_GENERATION_DEFAULT "Enable dynamic code generation" ${DILL_HAS_NATIVE_DCG})
+  mark_as_advanced(FFS_CONVERSION_GENERATION_DEFAULT)
   set(DO_DCG TRUE)
   target_link_libraries(ffs PRIVATE dill::dill)
   list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
@@ -250,37 +244,45 @@ if(NOT DEFINED FORMAT_SERVICE_DOMAIN)
 endif()
 
 # Setup pkgconfig
-set(__pkg_config_private_libs ${_pkg_config_private_libs})
-set(_pkg_config_private_libs)
-foreach(L ${__pkg_config_private_libs})
-  if(L MATCHES "(.*)/?lib(.*)\\.")
-    if(CMAKE_MATCH_1)
-      list(APPEND _pkg_config_private_libs "-L${CMAKE_MATCH_1}")
+option(FFS_INSTALL_PKGCONFIG "Install FFS pkgconfig files" ON)
+mark_as_advanced(FFS_INSTALL_PKGCONFIG)
+if(FFS_INSTALL_PKGCONFIG)
+  set(__pkg_config_private_libs ${_pkg_config_private_libs})
+  set(_pkg_config_private_libs)
+  foreach(L ${__pkg_config_private_libs})
+    if(L MATCHES "(.*)/?lib(.*)\\.")
+      if(CMAKE_MATCH_1)
+        list(APPEND _pkg_config_private_libs "-L${CMAKE_MATCH_1}")
+      endif()
+      list(APPEND _pkg_config_private_libs "-l${CMAKE_MATCH_2}")
+    elseif(L MATCHES "^-")
+      list(APPEND _pkg_config_private_libs "${L}")
+    else()
+      list(APPEND _pkg_config_private_libs "-l${L}")
     endif()
-    list(APPEND _pkg_config_private_libs "-l${CMAKE_MATCH_2}")
-  elseif(L MATCHES "^-")
-    list(APPEND _pkg_config_private_libs "${L}")
-  else()
-    list(APPEND _pkg_config_private_libs "-l${L}")
-  endif()
-endforeach()
-string(REPLACE ";" " " _pkg_config_private_libs "${_pkg_config_private_libs}")
-string(REPLACE ";" " " _pkg_config_private_reqs "${_pkg_config_private_reqs}")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/ffs.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/ffs.pc
-  @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ffs.pc
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/ffs-config.in
-  ${CMAKE_CURRENT_BINARY_DIR}/ffs-config
-  @ONLY)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ffs-config
-  DESTINATION "${CMAKE_INSTALL_BINDIR}")
+  endforeach()
+  string(REPLACE ";" " " _pkg_config_private_libs "${_pkg_config_private_libs}")
+  string(REPLACE ";" " " _pkg_config_private_reqs "${_pkg_config_private_reqs}")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/ffs.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/ffs.pc
+    @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ffs.pc
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/ffs-config.in
+    ${CMAKE_CURRENT_BINARY_DIR}/ffs-config
+    @ONLY)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ffs-config
+    DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
 
-install(FILES fm/fm.h cod/cod.h ${CMAKE_CURRENT_BINARY_DIR}/ffs/ffs.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+option(FFS_INSTALL_HEADERS "Install FFS header files" ON)
+mark_as_advanced(FFS_INSTALL_HEADERS)
+if(FFS_INSTALL_HEADERS)
+  install(FILES fm/fm.h cod/cod.h ${CMAKE_CURRENT_BINARY_DIR}/ffs/ffs.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
 
 install(TARGETS ffs EXPORT ffs-targets
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin

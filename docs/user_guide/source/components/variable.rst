@@ -9,37 +9,42 @@ Each IO holds its own set of Variables, each Variable is identified with a uniqu
 Variables Data Types
 --------------------
 
-Currently, only primitive types are supported in ADIOS2 with plans to extend to plain-old-data (POD) struct data types.
-Therefore, acceptable values for T in the ``Variable<T>`` (C++ only); are:
+Currently, only primitive types are supported in ADIOS 2. 
+Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w/cpp/types/integer>`_  should be preferred when writing portable code. ADIOS 2 maps primitive "natural" types to its equivalent fixed-width type (e.g. ``int`` -> ``int32_t``). Acceptable values for the type ``T`` in ``Variable<T>`` (this is C++ only, see below for other bindings) along with their preferred fix-width equivalent in 64-bit platforms:
 
 .. code-block:: c++
 
-   Data types Variables supported by ADIOS2:
+   Data types Variables supported by ADIOS2 Variable<T>
 
-   std::string (As of ADIOS 2.2.0 only used as single values, not arrays)
-   char
-   signed char
-   unsigned char
-   short
-   unsigned short
-   int
-   unsigned int
-   long int
-   long long int
-   unsigned long int
-   unsigned long long int
-   float
-   double
-   long double
-   std::complex<float>
-   std::complex<double>
-
-
-Any fixed width size integer defined in the <cstdint> header should map to one of the primitive types above depending on the system. In 64-bit systems: ``uint32_t -> unsigned int``, ``std::int64_t -> long int or long long int``.
+   std::string (only used for global and local values, not arrays)
+   char                      -> int8_t or uint8_t depending on compiler flags
+   signed char               -> int8_t 
+   unsigned char             -> uint8_t
+   short                     -> int16_t
+   unsigned short            -> uint16_t
+   int                       -> int32_t
+   unsigned int              -> uint32_t 
+   long int                  -> int32_t or int64_t (Linux)
+   long long int             -> int64_t 
+   unsigned long int         -> uint32_t or uint64_t (Linux)
+   unsigned long long int    -> uint64_t  
+   float                     -> always 32-bit = 4 bytes  
+   double                    -> always 64-bit = 8 bytes
+   long double               -> platform dependent
+   std::complex<float>       -> always  64-bit = 8 bytes = 2 * float
+   std::complex<double>      -> always 128-bit = 16 bytes = 2 * double
 
 .. tip::
 
-   It's recommended to be consistent when using types for portability. If data is defined as a fixed-width integer, define variables in ADIOS2 using a fixed-width type, *e.g.*  for ``int32_t`` data types use ``DefineVariable<int32_t>``. Mapping to a primitive variable is already handled automatically by the compiler.
+   It's recommended to be consistent when using types for portability. If data is defined as a fixed-width integer, define variables in ADIOS2 using a fixed-width type, *e.g.*  for ``int32_t`` data types use ``DefineVariable<int32_t>``.
+
+.. note::
+
+   C, Fortran APIs: the enum and parameter adios2_type_XXX only provides fixed-width types
+   
+.. note::
+
+   Python APIs: use the equivalent fixed-width types from numpy. If dtype is not specified, ADIOS 2 would handle numpy defaults just fine as long as primitive types are passed.
 
 
 Variables Shape Types
@@ -114,6 +119,5 @@ ADIOS2 is designed *out-of-the-box* for MPI applications. Thus different applica
 
 .. note::
 
-   Constants are not handled separately from step-varying values in ADIOS2. Simply write them only once.
-
+   Constants are not handled separately from step-varying values in ADIOS2. Simply write them only once from one rank.
 

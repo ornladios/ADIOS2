@@ -8,8 +8,8 @@
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_TCC_
-#define ADIOS2_TOOLKIT_FORMAT_BP1_BP3DESERIALIZER_TCC_
+#ifndef ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_TCC_
+#define ADIOS2_TOOLKIT_FORMAT_BP3_BP3DESERIALIZER_TCC_
 
 #include "BP3Deserializer.h"
 
@@ -117,6 +117,11 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
             // TODO check if we need to reverse dimensions
             variable.SetSelection({start, count});
         }
+        else if (variable.m_ShapeID == ShapeID::LocalArray)
+        {
+            // TODO keep Count for block updated
+            variable.m_Count = blocksInfo[variable.m_BlockID].Count;
+        }
     }
 
     // create block info
@@ -145,7 +150,7 @@ void BP3Deserializer::SetVariableBlockInfo(
         blockOperation.PreSizeOf = sizeof(T);
 
         // read metadata from supported type and populate Info
-        std::shared_ptr<BP3Operation> bpOp = SetBP3Operation(bp3OpInfo.Type);
+        std::shared_ptr<BPOperation> bpOp = SetBPOperation(bp3OpInfo.Type);
         bpOp->GetMetadata(bp3OpInfo.Metadata, blockOperation.Info);
         blockOperation.PayloadSize = static_cast<size_t>(
             std::stoull(blockOperation.Info.at("OutputSize")));
@@ -229,7 +234,7 @@ void BP3Deserializer::SetVariableBlockInfo(
                         helper::DimsToString(blockInfo.Count) +
                         " (requested) is out of bounds of (available) local"
                         " Count " +
-                        helper::DimsToString(blockCharacteristics.Shape) +
+                        helper::DimsToString(readInCount) +
                         " , when reading local array variable " + variableName +
                         ", in call to Get");
                 }
@@ -335,7 +340,7 @@ void BP3Deserializer::SetVariableBlockInfo(
                         helper::DimsToString(blockInfo.Count) +
                         " (requested) is out of bounds of (available) "
                         "Shape " +
-                        helper::DimsToString(blockCharacteristics.Shape) +
+                        helper::DimsToString(readInShape) +
                         " , when reading global array variable " +
                         variableName + ", in call to Get");
                 }
@@ -527,8 +532,8 @@ void BP3Deserializer::PostDataRead(
         m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
         // get the right bp3Op
-        std::shared_ptr<BP3Operation> bp3Op =
-            SetBP3Operation(blockOperationInfo.Info.at("Type"));
+        std::shared_ptr<BPOperation> bp3Op =
+            SetBPOperation(blockOperationInfo.Info.at("Type"));
 
         // get original block back
         char *preOpData = m_ThreadBuffers[threadID][0].data();
@@ -554,11 +559,44 @@ void BP3Deserializer::PostDataRead(
             ? Dims(blockInfo.Count.size(), 0)
             : blockInfo.Start;
 
-    helper::ClipContiguousMemory(
-        blockInfo.Data, blockInfoStart, blockInfo.Count,
-        m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
-        subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
-        endianReverse);
+    if (!blockInfo.MemoryStart.empty())
+    {
+        if (endianReverse)
+            throw std::invalid_argument("BP3Deserializer.tcc: endianReverse "
+                                        "not supported with MemorySelection");
+        if (m_ReverseDimensions)
+            throw std::invalid_argument(
+                "BP3Deserializer.tcc: ReverseDimensions not supported with "
+                "MemorySelection");
+
+        auto intersectStart = subStreamBoxInfo.IntersectionBox.first;
+        auto intersectCount = subStreamBoxInfo.IntersectionBox.second;
+        auto blockStart = subStreamBoxInfo.BlockBox.first;
+        auto blockCount = subStreamBoxInfo.BlockBox.second;
+        auto memoryStart = blockInfoStart;
+        for (int d = 0; d < intersectStart.size(); d++)
+        {
+            // change {intersect,block}Count from [start, end] to {start, count}
+            intersectCount[d] -= (intersectStart[d] - 1);
+            blockCount[d] -= (blockStart[d] - 1);
+            // shift everything by MemoryStart
+            intersectStart[d] += blockInfo.MemoryStart[d];
+            blockStart[d] += blockInfo.MemoryStart[d];
+        }
+        helper::NdCopy<T>(
+            m_ThreadBuffers[threadID][0].data(), intersectStart, intersectCount,
+            true, true, reinterpret_cast<char *>(blockInfo.Data),
+            intersectStart, intersectCount, true, true, intersectStart,
+            blockCount, memoryStart, blockInfo.MemoryCount, false);
+    }
+    else
+    {
+        helper::ClipContiguousMemory(
+            blockInfo.Data, blockInfoStart, blockInfo.Count,
+            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
+            endianReverse);
+    }
 }
 
 template <class T>
@@ -1048,6 +1086,8 @@ std::vector<typename core::Variable<T>::Info> BP3Deserializer::BlocksInfoCommon(
         blockInfo.Shape = blockCharacteristics.Shape;
         blockInfo.Start = blockCharacteristics.Start;
         blockInfo.Count = blockCharacteristics.Count;
+        blockInfo.WriterID = blockCharacteristics.Statistics.FileIndex;
+        blockInfo.IsReverseDims = m_ReverseDimensions;
 
         if (m_ReverseDimensions)
         {

@@ -13,6 +13,9 @@
 #ifdef SST_HAVE_LIBFABRIC
 extern CP_DP_Interface LoadRdmaDP();
 #endif /* SST_HAVE_LIBFABRIC */
+#ifdef SST_HAVE_NVSTREAM
+extern CP_DP_Interface LoadNvstreamDP();
+#endif /* SST_HAVE_LIBFABRIC */
 extern CP_DP_Interface LoadEVpathDP();
 
 typedef struct _DPElement
@@ -58,6 +61,11 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
 #ifdef SST_HAVE_LIBFABRIC
     List =
         AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma", Params);
+#endif /* SST_HAVE_LIBFABRIC */
+
+#ifdef SST_HAVE_NVSTREAM
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadNvstreamDP(), "nvstream",
+                            Params);
 #endif /* SST_HAVE_LIBFABRIC */
 
     int SelectedDP = -1;

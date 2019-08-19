@@ -18,9 +18,9 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMPICommOnly.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Operator.h"
 
 namespace adios2
@@ -184,8 +184,6 @@ public:
     void RemoveAllIOs() noexcept;
 
 private:
-    bool m_NeedMPICommFree;
-
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
 

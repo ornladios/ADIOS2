@@ -43,14 +43,9 @@ to any interfaces.
 #include <sys/sockio.h>
 #endif
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#else
-#include "sstmpidummy.h"
-#endif
 #include <pthread.h>
 
 #include "sst.h"

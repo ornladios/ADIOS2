@@ -5,7 +5,7 @@
  *      Author: Norbert Podhorszki
  */
 #include "ioGroup.h"
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 
 #ifdef ADIOS2_HAVE_HDF5
 #include "hdf5.h"

@@ -33,12 +33,14 @@ public:
     /** BP Minifooter fields */
     Minifooter m_Minifooter;
 
-    /* metadata index table*/
-    std::unordered_map<uint64_t,
-                       std::unordered_map<uint64_t, std::vector<uint64_t>>>
-        m_MetadataIndexTable;
+    // /* metadata index table*/
+    // std::unordered_map<uint64_t,
+    //                    std::unordered_map<uint64_t, std::vector<uint64_t>>>
+    //     m_MetadataIndexTable;
 
-    BufferSTL m_MetadataIndex;
+    // BufferSTL m_MetadataIndex;
+
+    bool m_WriterIsActive = false;
 
     /**
      * Unique constructor
@@ -49,9 +51,18 @@ public:
 
     ~BP4Deserializer() = default;
 
-    void ParseMetadataIndex(const BufferSTL &bufferSTL);
+    void ParseMetadataIndex(const BufferSTL &bufferSTL,
+                            const size_t absoluteStartPos = 0,
+                            const bool hasHeader = true);
 
-    void ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine);
+    /* Return the position in the buffer where processing ends. The processing
+     * is controlled by the number of records in the Index, which may be less
+     * than the actual entries in the metadata in a streaming situation (where
+     * writer has just written metadata for step K+1,...,K+L while the index
+     * contains K steps when the reader looks at it).
+     */
+    size_t ParseMetadata(const BufferSTL &bufferSTL, core::Engine &engine,
+                         const bool firstStep = true);
 
     /**
      * Used to get the variable payload data for the current selection (dims and
@@ -141,8 +152,18 @@ public:
     AllStepsBlocksInfo(const core::Variable<T> &variable) const;
 
     template <class T>
+    std::vector<std::vector<typename core::Variable<T>::Info>>
+    AllRelativeStepsBlocksInfo(const core::Variable<T> &variable) const;
+
+    template <class T>
     std::vector<typename core::Variable<T>::Info>
     BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
+
+    /** Parse active flag in index table header (64 bytes).
+     *  Header must be read by caller into a vector of 64 characters.
+     *  It sets m_WriterIsActive and returns the same value
+     */
+    bool ReadActiveFlag(std::vector<char> &buffer);
 
     // TODO : Will deprecate all function below
     std::map<std::string, helper::SubFileInfoMap>

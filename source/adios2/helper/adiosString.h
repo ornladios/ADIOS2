@@ -17,7 +17,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 
 namespace adios2
 {
@@ -39,7 +39,20 @@ std::string FileToString(const std::string &fileName, const std::string hint);
  * @return a map with unique key=field, value=corresponding value
  */
 Params BuildParametersMap(const std::vector<std::string> &parameters,
-                          const bool debugMode);
+                          const char delimKeyValue = '=',
+                          const bool debugMode = false);
+
+/**
+ * Transforms a string to a map of parameters
+ * @param parameters string of parameters with format "key=value,
+ * key2=value2, ..."
+ * @param debugMode true=check parameters format, false=no checks
+ * @return a map with unique key/value pairs
+ */
+Params BuildParametersMap(const std::string &input,
+                          const char delimKeyValue = '=',
+                          const char delimItem = ',',
+                          const bool debugMode = false);
 
 /**
  * Add name extension if not existing at the end of name
@@ -94,29 +107,11 @@ std::string GetParameter(const std::string key, const adios2::Params &params,
  */
 void SetParameterValueInt(const std::string key, const Params &parameters,
                           int &value, const bool debugMode,
-                          const std::string hint);
+                          const std::string &hint);
 
-/**
- * function that cast a string to a double verifying validity of the cast with
- * exceptions in debugMode
- * @param value string to be casted
- * @param debugMode check for string conversion
- * @param hint passed for extra debugging info if exception is thrown
- * @return value as a double
- */
-double StringToDouble(const std::string value, const bool debugMode,
-                      const std::string hint);
-
-/**
- * function that cast a string to unsigned int verifying validity of the cast
- * with exceptions in debugMode
- * @param value string to be casted
- * @param debugMode check for string conversion
- * @param hint passed for extra debugging info if exception is thrown
- * @return value as unsigned int
- */
-unsigned int StringToUInt(const std::string value, const bool debugMode,
-                          const std::string hint);
+template <class T>
+void SetParameterValue(const std::string key, const Params &parameters,
+                       T &value, const bool debugMode, const std::string &hint);
 
 /**
  * Returns a single string with dimension values
@@ -136,6 +131,19 @@ std::string DimsToString(const Dims &dimensions);
  */
 std::string GlobalName(const std::string &localName, const std::string &prefix,
                        const std::string separator) noexcept;
+
+/**
+ * function that cast a string to a fixed width type verifying validity of the
+ * cast with exceptions in debugMode. ONly int32_t, uint32_t, int64_t, uint64_t,
+ * float, double are supported
+ * @param input to be converted
+ * @param debugMode check for string conversion
+ * @param hint passed for extra debugging info if exception is thrown
+ * @return cast input string to output value of type T
+ */
+template <class T>
+T StringTo(const std::string &input, const bool debugMode,
+           const std::string &hint);
 
 } // end namespace helper
 } // end namespace adios2

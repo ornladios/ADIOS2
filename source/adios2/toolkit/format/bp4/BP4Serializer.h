@@ -35,6 +35,15 @@ public:
 
     ~BP4Serializer() = default;
 
+    /** Writes a 64 byte header into the data/metadata buffer.
+     *  Must be called only when the buffer is empty.
+     *  @param buffer the data or metadata buffer
+     *  @param fileType a small string up to 8 characters that is
+     *  concatenated to the version string
+     */
+    void MakeHeader(BufferSTL &b, const std::string fileType,
+                    const bool isActive);
+
     /**
      * Writes a process group index PGIndex and list of methods (from
      * transports). Done at Open or Advance.
@@ -86,8 +95,10 @@ public:
     /**
      * Finishes bp buffer by serializing data and adding trailing metadata
      * @param io
+     * @return the position of the data buffer before writing the metadata
+     * footer into it (in case someone wants to write only the data portion)
      */
-    void CloseData(core::IO &io);
+    size_t CloseData(core::IO &io);
 
     /**
      * Closes bp buffer for streaming mode...must reset metadata for the next
@@ -95,15 +106,20 @@ public:
      * @param io object containing all attributes
      * @param addMetadata true: process metadata and add to data buffer
      * (minifooter)
+     * @return the position of the data buffer before writing the metadata
+     * footer into it (in case someone wants to write only the data portion)
      */
-    void CloseStream(core::IO &io, const bool addMetadata = true);
-    void CloseStream(core::IO &io, size_t &metadataStart, size_t &metadataCount,
-                     const bool addMetadata = true);
+    size_t CloseStream(core::IO &io, const bool addMetadata = true);
+    size_t CloseStream(core::IO &io, size_t &metadataStart,
+                       size_t &metadataCount, const bool addMetadata = true);
 
     void ResetIndices();
 
-    /* Reset metadata buffer at the end of each step */
-    void ResetIndicesBuffer();
+    /* Reset all metadata indices at the end of each step */
+    void ResetAllIndices();
+
+    /* Reset metadata index table*/
+    void ResetMetadataIndexTable();
 
     /**
      * Get a string with profiling information for this rank
@@ -141,10 +157,27 @@ public:
     void UpdateOffsetsInMetadata();
 
 private:
+    std::vector<char> m_SerializedIndices;
+    std::vector<char> m_GatheredSerializedIndices;
+
     /** BP format version */
     const uint8_t m_Version = 4;
 
     static std::mutex m_Mutex;
+
+    /** aggregate pg rank indices */
+    std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
+        m_PGIndicesInfo;
+    /** deserialized variable indices per rank (vector index) */
+    std::unordered_map<
+        size_t, std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
+        m_VariableIndicesInfo;
+    /** deserialized attribute indices per rank (vector index) */
+    std::unordered_map<
+        size_t, std::unordered_map<std::string,
+                                   std::vector<std::tuple<size_t, size_t>>>>
+        m_AttributesIndicesInfo;
 
     /**
      * Put in BP buffer all attributes defined in an IO object.
@@ -158,11 +191,13 @@ private:
      * specialized functions
      * @param attribute input
      * @param stats BP4 Stats
+     * @param headerID  short string to identify block ("[AMD")
      * @return attribute length position
      */
     template <class T>
     size_t PutAttributeHeaderInData(const core::Attribute<T> &attribute,
-                                    Stats<T> &stats) noexcept;
+                                    Stats<T> &stats, const char *headerID,
+                                    const size_t headerIDLength) noexcept;
 
     /**
      * Called from WriteAttributeInData specialized functions
@@ -219,8 +254,12 @@ private:
                         const typename core::Variable<T>::Info &blockInfo,
                         const bool isRowMajor) noexcept;
 
+    /** @return The position that holds the length of the variable entry
+     * (metadat+data length). The actual lengths is know after
+     * PutVariablePayload()
+     */
     template <class T>
-    void
+    size_t
     PutVariableMetadataInData(const core::Variable<T> &variable,
                               const typename core::Variable<T>::Info &blockInfo,
                               const Stats<T> &stats) noexcept;
@@ -239,7 +278,7 @@ private:
         const Stats<T> &stats, std::vector<char> &buffer) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(
+    void PutVariableCharacteristicsInData(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::Info &blockInfo,
         const Stats<T> &stats, std::vector<char> &buffer,
@@ -378,6 +417,9 @@ private:
         const std::unordered_map<std::string, SerialElementIndex> &indices,
         MPI_Comm comm, BufferSTL &bufferSTL, const bool isRankConstant = false);
 
+    void AggregateCollectiveMetadataIndices(MPI_Comm comm,
+                                            BufferSTL &bufferSTL);
+
     /**
      * Returns a serialized buffer with all indices with format:
      * Rank (4 bytes), Buffer
@@ -401,6 +443,14 @@ private:
                                      MPI_Comm comm,
                                      const bool isRankConstant) const noexcept;
 
+    /** private function called by DeserializeIndicesPerRankThreads
+     * in case of a single thread
+     */
+    std::unordered_map<std::string, std::vector<SerialElementIndex>>
+    DeserializeIndicesPerRankSingleThread(const std::vector<char> &serialized,
+                                          MPI_Comm comm,
+                                          const bool isRankConstant) const
+        noexcept;
     /**
      * Merge indices by time step (default) and write to m_HeapBuffer.m_Metadata
      * @param nameRankIndices

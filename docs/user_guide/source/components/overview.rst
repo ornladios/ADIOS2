@@ -4,7 +4,7 @@ Components Overview
 
 .. note::
 
-   If you are doing simple tasks where performance is a non-critical aspect please go to the :ref:`High-Level Language Bindings APIs` section for a quick start. If you are an HPC application developer or you want to use ADIOS2 functionality in full please read this chapter.
+   If you are doing simple tasks where performance is a non-critical aspect please go to the :ref:`High-Level APIs` section for a quick start. If you are an HPC application developer or you want to use ADIOS2 functionality in full please read this chapter.
 
 
 The simple way to understand the big picture for the ADIOS2 unified user interface components is to map each class to the actual definition of the ADIOS acronym.
@@ -42,7 +42,7 @@ ADIOS2's public APIs are based on the natural choice for each supported language
  Python         objects/member functions    numpy arrays.
 ============== ========================== ==================================
 
-The following section provides a common overview to all languages based on the C++11 APIs. For each specific language go to the :ref:`Full Language Bindings APIs` section, but it's highly recommended to read this section as components map 1-to-1 in other languages.
+The following section provides a common overview to all languages based on the C++11 APIs. For each specific language go to the :ref:`Full APIs` section, but it's highly recommended to read this section as components map 1-to-1 in other languages.
 
 The following figure depicts the components hierarchy from the application's point of view.
 

@@ -3,15 +3,9 @@ cmake_minimum_required(VERSION 3.3)
 project(ENET VERSION 1.3.14 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
-set(CMAKE_INSTALL_BINDIR bin CACHE STRING "Installation runtime subdirectory")
-set(CMAKE_INSTALL_LIBDIR lib CACHE STRING "Installation library subdirectory")
-set(CMAKE_INSTALL_INCLUDEDIR include
-  CACHE STRING "Installation include subdirectory")
+include(GNUInstallDirs)
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/enet
   CACHE STRING "Installation CMake subdirectory")
-mark_as_advanced(CMAKE_INSTALL_BINDIR)
-mark_as_advanced(CMAKE_INSTALL_LIBDIR)
-mark_as_advanced(CMAKE_INSTALL_INCLUDEDIR)
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -109,23 +103,31 @@ target_include_directories(enet PUBLIC
 )
 
 # Setup pkgconfig
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/enet.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/enet.pc
-  @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/enet.pc
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/enet-config.in
-  ${CMAKE_CURRENT_BINARY_DIR}/enet-config
-  @ONLY)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/enet-config
-  DESTINATION "${CMAKE_INSTALL_BINDIR}")
+option(ENET_INSTALL_PKGCONFIG "Install enet pkgconfig files" ON)
+mark_as_advanced(ENET_INSTALL_PKGCONFIG)
+if(ENET_INSTALL_PKGCONFIG)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/enet.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/enet.pc
+    @ONLY)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/enet.pc
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/enet-config.in
+    ${CMAKE_CURRENT_BINARY_DIR}/enet-config
+    @ONLY)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/enet-config
+    DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
 
-install(DIRECTORY include/enet
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-  FILES_MATCHING PATTERN "*.h"
-)
+option(ENET_INSTALL_HEADERS "Install enet header files" ON)
+mark_as_advanced(ENET_INSTALL_HEADERS)
+if(ENET_INSTALL_HEADERS)
+  install(DIRECTORY include/enet
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    FILES_MATCHING PATTERN "*.h"
+  )
+endif()
 install(TARGETS enet
   EXPORT enet-targets
   RUNTIME       DESTINATION "${CMAKE_INSTALL_BINDIR}"

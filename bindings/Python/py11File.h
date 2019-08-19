@@ -13,8 +13,7 @@
 
 #include <pybind11/numpy.h>
 
-#include "adios2/ADIOSMPICommOnly.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Stream.h"
 
 namespace adios2
@@ -78,28 +77,29 @@ public:
                const adios2::vParams &operations, const bool endStep = false);
 
     void Write(const std::string &name, const pybind11::array &array,
-               const bool endStep = false);
+               const bool isLocalValue = false, const bool endStep = false);
 
     void Write(const std::string &name, const std::string &stringValue,
-               const bool endStep = false);
+               const bool isLocalValue = false, const bool endStep = false);
 
     bool GetStep() const;
 
-    std::vector<std::string> ReadString(const std::string &name);
+    std::vector<std::string> ReadString(const std::string &name,
+                                        const size_t blockID = 0);
 
     std::vector<std::string> ReadString(const std::string &name,
                                         const size_t stepStart,
-                                        const size_t stepCount);
+                                        const size_t stepCount,
+                                        const size_t blockID = 0);
 
-    pybind11::array Read(const std::string &name);
+    pybind11::array Read(const std::string &name, const size_t blockID = 0);
 
-    pybind11::array Read(const std::string &name, const Dims &selectionStart,
-                         const Dims &selectionCount);
+    pybind11::array Read(const std::string &name, const Dims &start,
+                         const Dims &count, const size_t blockID = 0);
 
-    pybind11::array Read(const std::string &name, const Dims &selectionStart,
-                         const Dims &selectionCount,
-                         const size_t stepSelectionStart,
-                         const size_t stepSelectionCount);
+    pybind11::array Read(const std::string &name, const Dims &start,
+                         const Dims &count, const size_t stepStart,
+                         const size_t stepCount, const size_t blockID = 0);
 
     pybind11::array ReadAttribute(const std::string &name,
                                   const std::string &variableName = "",
@@ -120,8 +120,12 @@ public:
 
 private:
     std::shared_ptr<core::Stream> m_Stream;
-
     adios2::Mode ToMode(const std::string mode) const;
+
+    template <class T>
+    pybind11::array DoRead(const std::string &name, const Dims &start,
+                           const Dims &count, const size_t stepStart,
+                           const size_t stepCount, const size_t blockID);
 };
 
 } // end namespace py11

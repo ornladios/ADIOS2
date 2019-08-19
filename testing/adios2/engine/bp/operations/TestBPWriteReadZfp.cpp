@@ -15,11 +15,11 @@
 
 std::string engineName; // comes from command line
 
-void ZfpRate1D(const double rate)
+void ZFPRate1D(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadZfp1D_" + std::to_string(rate) + ".bp");
+    const std::string fname("BPWRZFP1D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -63,10 +63,12 @@ void ZfpRate1D(const double rate)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator zfpOp = adios.DefineOperator("zfpCompressor", "zfp");
+        adios2::Operator ZFPOp =
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(zfpOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(zfpOp, {{"rate", std::to_string(2 * rate)}});
+        var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate,
+                                      std::to_string(2 * std::stod(rate))}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -146,11 +148,11 @@ void ZfpRate1D(const double rate)
     }
 }
 
-void ZfpRate2D(const double rate)
+void ZFPRate2D(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadZfp2D_" + std::to_string(rate) + ".bp");
+    const std::string fname("BPWRZFP2D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -195,10 +197,11 @@ void ZfpRate2D(const double rate)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
+        adios2::Operator szOp =
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
+        var_r32.AddOperation(szOp, {{"accuracy", rate}});
+        var_r64.AddOperation(szOp, {{"accuracy", rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -277,11 +280,11 @@ void ZfpRate2D(const double rate)
     }
 }
 
-void ZfpRate3D(const double rate)
+void ZFPRate3D(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadZfp3D_" + std::to_string(rate) + ".bp");
+    const std::string fname("BPWRZFP3D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -327,10 +330,11 @@ void ZfpRate3D(const double rate)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
+        adios2::Operator szOp =
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"rate", std::to_string(rate)}});
+        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -411,12 +415,11 @@ void ZfpRate3D(const double rate)
     }
 }
 
-void ZfpRate1DSel(const double rate)
+void ZFPRate1DSel(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadZfp1DSel_" + std::to_string(rate) +
-                            ".bp");
+    const std::string fname("BPWRZFP1DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -460,10 +463,12 @@ void ZfpRate1DSel(const double rate)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator zfpOp = adios.DefineOperator("zfpCompressor", "zfp");
+        adios2::Operator ZFPOp =
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(zfpOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(zfpOp, {{"rate", std::to_string(2 * rate)}});
+        var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate,
+                                      std::to_string(2 * std::stod(rate))}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -542,12 +547,11 @@ void ZfpRate1DSel(const double rate)
     }
 }
 
-void ZfpRate2DSel(const double rate)
+void ZFPRate2DSel(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadZfp2DSel_" + std::to_string(rate) +
-                            ".bp");
+    const std::string fname("BPWRZFP2DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -592,10 +596,11 @@ void ZfpRate2DSel(const double rate)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
+        adios2::Operator szOp =
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"accuracy", std::to_string(rate)}});
+        var_r32.AddOperation(szOp, {{"accuracy", rate}});
+        var_r64.AddOperation(szOp, {{"accuracy", rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -672,12 +677,11 @@ void ZfpRate2DSel(const double rate)
     }
 }
 
-void ZfpRate3DSel(const double rate)
+void ZFPRate3DSel(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadZfp3DSel_" + std::to_string(rate) +
-                            ".bp");
+    const std::string fname("BPWRZFP3DSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -723,10 +727,11 @@ void ZfpRate3DSel(const double rate)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
+        adios2::Operator szOp =
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"rate", std::to_string(rate)}});
+        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -808,12 +813,11 @@ void ZfpRate3DSel(const double rate)
     }
 }
 
-void ZfpRate2DSmallSel(const double rate)
+void ZFPRate2DSmallSel(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadZfp2DSmallSel_" + std::to_string(rate) +
-                            ".bp");
+    const std::string fname("BPWRZFP2DSmallSel_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -859,10 +863,11 @@ void ZfpRate2DSmallSel(const double rate)
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp = adios.DefineOperator("zfpCompressor", "zfp");
+        adios2::Operator szOp =
+            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
-        var_r32.AddOperation(szOp, {{"rate", std::to_string(rate)}});
-        var_r64.AddOperation(szOp, {{"rate", std::to_string(rate)}});
+        var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
+        var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -938,27 +943,24 @@ void ZfpRate2DSmallSel(const double rate)
     }
 }
 
-class BPWriteReadZfp : public ::testing::TestWithParam<double>
+class BPWRZFP : public ::testing::TestWithParam<std::string>
 {
 public:
-    BPWriteReadZfp() = default;
+    BPWRZFP() = default;
 
     virtual void SetUp() {}
     virtual void TearDown() {}
 };
 
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp1D) { ZfpRate1D(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp2D) { ZfpRate2D(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp3D) { ZfpRate3D(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp1DSel) { ZfpRate1DSel(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp2DSel) { ZfpRate2DSel(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp3DSel) { ZfpRate3DSel(GetParam()); }
-TEST_P(BPWriteReadZfp, ADIOS2BPWriteReadZfp2DSmallSel)
-{
-    ZfpRate2DSmallSel(GetParam());
-}
+TEST_P(BPWRZFP, ADIOS2BPWRZFP1D) { ZFPRate1D(GetParam()); }
+TEST_P(BPWRZFP, ADIOS2BPWRZFP2D) { ZFPRate2D(GetParam()); }
+TEST_P(BPWRZFP, ADIOS2BPWRZFP3D) { ZFPRate3D(GetParam()); }
+TEST_P(BPWRZFP, ADIOS2BPWRZFP1DSel) { ZFPRate1DSel(GetParam()); }
+TEST_P(BPWRZFP, ADIOS2BPWRZFP2DSel) { ZFPRate2DSel(GetParam()); }
+TEST_P(BPWRZFP, ADIOS2BPWRZFP3DSel) { ZFPRate3DSel(GetParam()); }
+TEST_P(BPWRZFP, ADIOS2BPWRZFP2DSmallSel) { ZFPRate2DSmallSel(GetParam()); }
 
-INSTANTIATE_TEST_CASE_P(ZfpRate, BPWriteReadZfp, ::testing::Values(8., 9., 10));
+INSTANTIATE_TEST_CASE_P(ZFPRate, BPWRZFP, ::testing::Values("8", "9", "10"));
 
 int main(int argc, char **argv)
 {

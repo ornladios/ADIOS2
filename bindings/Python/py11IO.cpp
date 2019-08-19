@@ -10,7 +10,7 @@
 
 #include "py11IO.h"
 
-#include "adios2/ADIOSMacros.h"
+#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h" //GetType<T>
 
 #ifdef ADIOS2_HAVE_MPI
@@ -272,12 +272,6 @@ std::map<std::string, Params> IO::AvailableAttributes()
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AvailableAttributes");
     return m_IO->GetAvailableAttributes();
-}
-
-void IO::LockDefinitions()
-{
-    helper::CheckForNullptr(m_IO, "in call to IO::LockDefinitions");
-    m_IO->LockDefinitions();
 }
 
 std::string IO::VariableType(const std::string &name) const

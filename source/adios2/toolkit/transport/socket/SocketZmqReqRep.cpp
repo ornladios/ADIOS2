@@ -43,7 +43,7 @@ SocketZmqReqRep::~SocketZmqReqRep()
 int SocketZmqReqRep::Open(const std::string &fullAddress, const Mode openMode)
 {
     std::string openModeStr;
-    int error = -1;
+    int error = -100;
     if (openMode == Mode::Write)
     {
         openModeStr = "Write/ZMQ_REP";

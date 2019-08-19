@@ -19,7 +19,7 @@
 #include <vector>
 /// \endcond
 
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosType.h"
 
@@ -27,6 +27,32 @@ namespace adios2
 {
 namespace core
 {
+
+template <class T>
+class Span
+{
+public:
+    std::pair<size_t, size_t> m_MinMaxDataPositions;
+    std::pair<size_t, size_t> m_MinMaxMetadataPositions;
+    size_t m_PayloadPosition = 0;
+    T m_Value = T{};
+
+    Span(Engine &engine, const size_t size);
+    ~Span() = default;
+
+    size_t Size() const noexcept;
+    T *Data() const noexcept;
+
+    T &At(const size_t position);
+    const T &At(const size_t position) const;
+
+    T &operator[](const size_t position);
+    const T &operator[](const size_t position) const;
+
+private:
+    Engine &m_Engine;
+    size_t m_Size = 0;
+};
 
 /**
  * @param Base (parent) class for template derived (child) class Variable.
@@ -73,43 +99,16 @@ public:
         T Value = T();
         T *BufferP = nullptr;
         std::vector<T> BufferV;
+        int WriterID = 0;
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
+        bool IsReverseDims = false;
     };
 
     /** use for multiblock info */
     std::vector<Info> m_BlocksInfo;
 
-    class Span
-    {
-    public:
-        std::pair<size_t, size_t> m_MinMaxDataPositions;
-        std::pair<size_t, size_t> m_MinMaxMetadataPositions;
-        size_t m_PayloadPosition = 0;
-        T m_Value = T{};
-
-        Span(Engine &engine, const size_t size);
-        ~Span() = default;
-
-        size_t Size() const noexcept;
-        T *Data() const noexcept;
-
-        T &At(const size_t position);
-        const T &At(const size_t position) const;
-
-        T &Access(const size_t position);
-        const T &Access(const size_t position) const;
-
-    private:
-        Engine &m_Engine;
-        size_t m_Size = 0;
-
-        T &DoAt(const size_t position);
-        const T &DoAt(const size_t position) const;
-
-        T &DoAccess(const size_t position);
-        const T &DoAccess(const size_t position) const;
-    };
+    using Span = core::Span<T>;
 
     /** Needs a map to preserve iterator as it resizes and the key to match the
      * m_BlocksInfo index */

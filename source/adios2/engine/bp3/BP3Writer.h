@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_BP3_BP3WRITER_H_
 #define ADIOS2_ENGINE_BP3_BP3WRITER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
 #include "adios2/toolkit/transportman/TransportMan.h" //transport::TransportsMan
@@ -51,6 +51,9 @@ private:
 
     /** Manage BP data files Transports from IO AddTransport */
     transportman::TransportMan m_FileDataManager;
+
+    /** future returned by m_FileDataManager at OpenFiles */
+    std::future<void> m_FutureOpenFiles;
 
     /** Manages the optional collective metadata files */
     transportman::TransportMan m_FileMetadataManager;

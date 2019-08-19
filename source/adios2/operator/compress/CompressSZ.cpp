@@ -39,7 +39,8 @@ size_t CompressSZ::BufferMaxSize(const size_t sizeIn) const
 
 size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
                             const size_t elementSize, const std::string varType,
-                            void *bufferOut, const Params &parameters) const
+                            void *bufferOut, const Params &parameters,
+                            Params &info) const
 {
     const size_t ndims = dimensions.size();
     if (ndims > 5)
@@ -278,13 +279,12 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
     for (int i = 0; i < ndims; i++)
     {
-        uint dsize = dimensions[i];
-        r[ndims - i - 1] = dsize;
+        r[ndims - i - 1] = dimensions[i];
         /*
         if (fd->group->adios_host_language_fortran == adios_flag_yes)
-            r[i] = dsize;
+            r[i] = dimensions[i];
         else
-            r[ndims-i-1] = dsize;
+            r[ndims-i-1] = dimensions[i];
         d = d->next;
          */
     }

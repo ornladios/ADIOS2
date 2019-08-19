@@ -3,6 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+python_add_test(NAME PythonTestHighLevelAPI SCRIPT TestHighLevelAPI.py)
+
 if(NOT ADIOS2_HAVE_MPI)
     python_add_test(NAME PythonBPWriteReadTypes SCRIPT TestBPWriteReadTypes_nompi.py)
 endif()
@@ -15,6 +17,8 @@ if(ADIOS2_HAVE_MPI)
                     SCRIPT TestBPWriteReadTypes.py)
     python_add_test(NAME PythonBPWriteReadHighLevelAPI ${test_parameters} 
                     SCRIPT TestBPWriteTypesHighLevelAPI.py)
+    python_add_test(NAME PythonBPWriteReadHighLevelAPILocal ${test_parameters} 
+                    SCRIPT TestBPWriteTypesHighLevelAPILocal.py)
     python_add_test(NAME PythonBPReadMultisteps ${test_parameters} 
                     SCRIPT TestBPReadMultisteps.py)
     python_add_test(NAME PythonBPWriteRead2D ${test_parameters} 
@@ -33,6 +37,11 @@ if(ADIOS2_HAVE_MPI)
         python_add_test(NAME PythonBPZfpHighLevelAPI ${test_parameters}
                         SCRIPT TestBPZfpHighLevelAPI.py)
     endif(ADIOS2_HAVE_ZFP)
+    
+    if (ADIOS2_HAVE_PNG)
+        python_add_test(NAME PythonBPPNGHighLevelAPI ${test_parameters}
+                        SCRIPT TestBPPNGHighLevelAPI.py)
+    endif(ADIOS2_HAVE_PNG)
     
 endif()
 

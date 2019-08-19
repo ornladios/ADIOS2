@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_H5_HDFMIXER_H_
 #define ADIOS2_ENGINE_H5_HDFMIXER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 //#include "adios2/toolkit/format/bp1/BP1Writer.h" //format::BP1Writer
 
@@ -22,9 +22,9 @@
 /// \endcond
 
 #include "HDFMixerWriter.h"
-#include "adios2/ADIOSConfig.h"
-#include "adios2/ADIOSMacros.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
 //#include "adios2/toolkit/capsule/heap/STLVector.h"

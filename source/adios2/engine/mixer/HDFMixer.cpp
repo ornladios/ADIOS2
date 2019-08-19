@@ -11,7 +11,7 @@
 #include "HDFMixer.h"
 #include "HDFMixer.tcc"
 
-#include "adios2/ADIOSMPI.h"
+#include "adios2/common/ADIOSMPI.h"
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/toolkit/transport/file/FileFStream.h"

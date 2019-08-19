@@ -45,8 +45,8 @@ public:
      */
     size_t Compress(const void *dataIn, const Dims &dimensions,
                     const size_t elementSize, const std::string type,
-                    void *bufferOut,
-                    const Params &parameters = Params()) const final;
+                    void *bufferOut, const Params &parameters,
+                    Params &info) const final;
 
     /**
      * Wrapper around zfp decompression

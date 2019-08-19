@@ -13,8 +13,9 @@
      type(adios2_variable), dimension(14) :: variables
      type(adios2_engine) :: bpWriter, bpReader
      character(len=15) :: inString
-     character(len=:), allocatable :: varName
+     character(len=:), allocatable :: varName, param_value
      character(len=:), allocatable :: engineType
+     logical :: result
 
      ! read local value as global array
      integer(kind=4), dimension(:), allocatable :: inRanks
@@ -22,6 +23,7 @@
      ! read handlers
      integer(kind=4) :: ndims
      integer(kind=8), dimension(:), allocatable :: shape_in
+
 
      ! Launch MPI
      call MPI_Init(ierr)
@@ -58,7 +60,31 @@
      call adios2_at_io(ioWrite, adios, "ioWrite", ierr)
      if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_at_io'
 
+     call adios2_in_config_file(result, ioWrite, ierr)
+     if( result .eqv. .true. ) stop 'Invalid ioWrite adios2_in_config_file'
+
      call adios2_set_engine(ioWrite, 'bpfile', ierr)
+
+     call adios2_set_parameter(ioWrite, 'ProfileUnits', 'Microseconds', ierr)
+
+     call adios2_get_parameter(param_value, ioWrite, 'ProfileUnits', ierr)
+     if( param_value /= "Microseconds") stop 'Failed adios2_get_parameter ProfileUnits'
+
+     call adios2_set_parameters(ioWrite, 'Threads=2, CollectiveMetadata = OFF', ierr)
+
+     call adios2_get_parameter(param_value, ioWrite, 'Threads', ierr)
+     if( param_value /= "2") stop 'Failed adios2_get_parameter Threads'
+
+     call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
+     if( param_value /= "OFF") stop 'Failed adios2_get_parameter CollectiveMetadata'
+
+     ! set back the default to make sure writing/reading test works
+     call adios2_clear_parameters(ioWrite, ierr)
+     call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
+     if( param_value /= "") stop 'Still Could retrieve parameter CollectiveMetadata after clearing all parameters'
+
+     deallocate(param_value)
+
 
      ! Defines a variable to be written in bp format
      call adios2_define_variable(variables(1), ioWrite, "var_I8", &
@@ -157,7 +183,7 @@
 
      ! Put array contents to bp buffer, based on var1 metadata
      do i = 1, 3
-         call adios2_begin_step(bpWriter, adios2_step_mode_append, 0.0, &
+         call adios2_begin_step(bpWriter, adios2_step_mode_append, -1.0, &
                                 step_status, ierr)
 
          if (irank == 0 .and. i == 1) then

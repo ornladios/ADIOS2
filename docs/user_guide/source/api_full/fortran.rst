@@ -544,7 +544,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
    
       ! Full signature
       subroutine adios2_begin_step(engine, adios2_step_mode, timeout_seconds, status, ierr)
-      ! Default Timeout = 0.
+      ! Default Timeout = -1.    (block until step available)
       subroutine adios2_begin_step(engine, adios2_step_mode, ierr)
       ! Default step_mode for read and write
       subroutine adios2_begin_step(engine, ierr)
@@ -555,8 +555,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       type(adios2_engine), intent(in) :: engine
       
       ! step_mode parameter:
-      !                      adios2_step_mode_next_available (read mode default)
-      !                      adios2_step_mode_last_available
+      !                      adios2_step_mode_read (read mode default)
       !                      adios2_step_mode_append (write mode default)
       integer, intent(in):: adios2_step_mode
       

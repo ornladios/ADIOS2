@@ -22,7 +22,7 @@ set_property(TEST HeatTransfer.BPFile.Read.MxN
 
 add_test(NAME HeatTransfer.BPFile.Dump.MxN
   COMMAND ${CMAKE_COMMAND}
-    -DARGS=-d 
+    -DARG1=-d 
     -DINPUT_FILE=HeatTransfer.BPFile.Read.MxN.bp
     -DOUTPUT_FILE=HeatTransfer.BPFile.Dump.MxN.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
@@ -42,7 +42,7 @@ set_property(TEST HeatTransfer.BPFile.Validate.MxN
 
 
 #####################################################################
-set(BP4_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bp4)
+set(BP4_DIR ./bp4)
 file(MAKE_DIRECTORY ${BP4_DIR})
 
 add_test(NAME HeatTransfer.BP4File.Write.MxN
@@ -64,9 +64,9 @@ set_property(TEST HeatTransfer.BP4File.Read.MxN
 
 add_test(NAME HeatTransfer.BP4File.Dump.MxN
   COMMAND ${CMAKE_COMMAND}
-    -DARGS=-d 
+    -DARG1=-d 
     -DINPUT_FILE=${BP4_DIR}/HeatTransfer.BP4File.Read.MxN.bp
-    -DOUTPUT_FILE=HeatTransfer.BP4File.Dump.MxN.txt
+    -DOUTPUT_FILE=${BP4_DIR}/HeatTransfer.BP4File.Dump.MxN.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 set_property(TEST HeatTransfer.BP4File.Dump.MxN
@@ -76,7 +76,7 @@ set_property(TEST HeatTransfer.BP4File.Dump.MxN
 add_test(NAME HeatTransfer.BP4File.Validate.MxN
   COMMAND ${DIFF_EXECUTABLE} -u
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
-    ${CMAKE_CURRENT_BINARY_DIR}/HeatTransfer.BPFile.Dump.MxN.txt
+    ${CMAKE_CURRENT_BINARY_DIR}/${BP4_DIR}/HeatTransfer.BP4File.Dump.MxN.txt
 )
 set_property(TEST HeatTransfer.BP4File.Validate.MxN
   PROPERTY DEPENDS HeatTransfer.BP4File.Dump.MxN

@@ -90,6 +90,39 @@ TEST_F(SstWriteFails, InvalidPut)
     engine.Close();
 }
 
+// ADIOS2 SST write
+TEST_F(SstWriteFails, InvalidBeginStep)
+{
+    // Write test data using ADIOS2
+
+#ifdef ADIOS2_HAVE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
+#else
+    adios2::ADIOS adios(true);
+#endif
+    adios2::IO io = adios.DeclareIO("TestIO");
+
+    auto scalar_r64 = io.DefineVariable<double>("scalar_r64");
+
+    // Create the Engine
+    io.SetEngine("Sst");
+    io.SetParameters(engineParams);
+
+    adios2::Params NoReaders = {{"RendezvousReaderCount", "0"}};
+    io.SetParameters(NoReaders);
+
+    adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
+
+    double data_scalar_R64 = 0.0;
+
+    engine.BeginStep();
+    engine.Put(scalar_r64, data_scalar_R64);
+    EXPECT_THROW(engine.BeginStep(), std::logic_error);
+
+    // Close the file
+    engine.Close();
+}
+
 int main(int argc, char **argv)
 {
 #ifdef ADIOS2_HAVE_MPI

@@ -13,7 +13,7 @@
 
 #include <fstream>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2
@@ -43,6 +43,10 @@ public:
     void Flush() final;
 
     void Close() final;
+
+    void SeekToEnd() final;
+
+    void SeekToBegin() final;
 
 private:
     /** file stream using fstream library */

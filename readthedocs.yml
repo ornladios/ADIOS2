@@ -1,8 +1,9 @@
 # .readthedocs.yml
-version: 1
+version: 2
 
-requirements_file: docs/requirements.txt
-
+conda: 
+  environment: docs/environment.yml
+    
 python:
    version: 3.7
-   use_system_site_packages: true
+   system_packages: true

@@ -201,6 +201,7 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
     size_t localPosition = 0;
 
     bool foundTimeStep = false;
+    size_t dimensionsSize = 0; // get it from dimensions characteristics
 
     while (localPosition < characteristics.EntryLength)
     {
@@ -232,7 +233,10 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
                 characteristics.Statistics.Value =
                     helper::ReadValue<T>(buffer, position, isLittleEndian);
                 characteristics.Statistics.IsValue = true;
-                characteristics.EntryShapeID = ShapeID::GlobalValue;
+                if (characteristics.EntryShapeID == ShapeID::Unknown)
+                {
+                    characteristics.EntryShapeID = ShapeID::GlobalValue;
+                }
                 // adding Min Max for global and local values
                 characteristics.Statistics.Min =
                     characteristics.Statistics.Value;
@@ -280,6 +284,40 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
+        case (characteristic_minmax):
+        {
+            // first get the number of subblocks
+            const uint16_t M = helper::ReadValue<uint16_t>(buffer, position);
+            // block-level min/max
+            characteristics.Statistics.Min =
+                helper::ReadValue<T>(buffer, position, isLittleEndian);
+            characteristics.Statistics.Max =
+                helper::ReadValue<T>(buffer, position, isLittleEndian);
+            if (M > 1)
+            {
+                characteristics.Statistics.SubblockInfo.divisionMethod =
+                    static_cast<helper::BlockDivisionMethod>(
+                        helper::ReadValue<uint8_t>(buffer, position,
+                                                   isLittleEndian));
+                characteristics.Statistics.SubblockInfo.subblockSize =
+                    helper::ReadValue<size_t>(buffer, position, isLittleEndian);
+
+                characteristics.Statistics.SubblockInfo.div.resize(
+                    dimensionsSize);
+                for (int d = 0; d < dimensionsSize; ++d)
+                {
+                    characteristics.Statistics.SubblockInfo.div[d] =
+                        helper::ReadValue<uint16_t>(buffer, position,
+                                                    isLittleEndian);
+                }
+                characteristics.Statistics.MinMaxs.resize(2 * M);
+                helper::ReadArray<T>(buffer, position,
+                                     characteristics.Statistics.MinMaxs.data(),
+                                     2 * M, isLittleEndian);
+            }
+            break;
+        }
+
         case (characteristic_offset):
         {
             characteristics.Statistics.Offset =
@@ -302,7 +340,7 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
                     [](const size_t dimension) { return dimension == 0; });
             };
 
-            const size_t dimensionsSize = static_cast<size_t>(
+            dimensionsSize = static_cast<size_t>(
                 helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
 
             characteristics.Shape.reserve(dimensionsSize);
@@ -502,23 +540,22 @@ inline void BP4Base::ParseCharacteristics(const std::vector<char> &buffer,
 }
 
 template <class T>
-std::map<size_t, std::shared_ptr<BP4Operation>> BP4Base::SetBP4Operations(
+std::map<size_t, std::shared_ptr<BPOperation>> BP4Base::SetBPOperations(
     const std::vector<core::VariableBase::Operation> &operations) const
 {
-    std::map<size_t, std::shared_ptr<BP4Operation>> bp4Operations;
-    std::shared_ptr<BP4Operation> bp4Operation;
+    std::map<size_t, std::shared_ptr<BPOperation>> bpOperations;
 
     for (auto i = 0; i < operations.size(); ++i)
     {
         const std::string type = operations[i].Op->m_Type;
-        std::shared_ptr<BP4Operation> bp4Operation = SetBP4Operation(type);
+        std::shared_ptr<BPOperation> bpOperation = SetBPOperation(type);
 
-        if (bp4Operation) // if the result is a supported type
+        if (bpOperation) // if the result is a supported type
         {
-            bp4Operations.emplace(i, bp4Operation);
+            bpOperations.emplace(i, bpOperation);
         }
     }
-    return bp4Operations;
+    return bpOperations;
 }
 
 } // end namespace format

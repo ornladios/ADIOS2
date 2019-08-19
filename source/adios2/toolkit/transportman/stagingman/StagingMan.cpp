@@ -56,6 +56,7 @@ StagingMan::Request(const std::vector<char> &request,
     }
 
     ret = m_Transport.Write(request.data(), request.size());
+
     start_time = std::chrono::system_clock::now();
     while (ret < 1)
     {
@@ -71,6 +72,7 @@ StagingMan::Request(const std::vector<char> &request,
     }
 
     ret = m_Transport.Read(m_Buffer.data(), m_MaxBufferSize);
+
     start_time = std::chrono::system_clock::now();
     while (ret < 1)
     {

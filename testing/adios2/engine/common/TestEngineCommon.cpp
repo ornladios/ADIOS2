@@ -201,7 +201,7 @@ TEST_F(EngineCommon, NewAttributeEveryStep)
         for (size_t step = 0; step < steps; ++step)
         {
             adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::NextAvailable);
+                reader.BeginStep(adios2::StepMode::Read);
             if (status != adios2::StepStatus::OK)
             {
                 throw std::runtime_error("Expected step " +
@@ -273,7 +273,7 @@ TEST_F(EngineCommon, NewAttributeEveryStep)
 
     // Separate each individual test with a big gap in time
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-};
+}
 
 void threadTimeoutRun(size_t t)
 {

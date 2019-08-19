@@ -17,7 +17,7 @@ namespace adios2
 namespace aggregator
 {
 
-MPIAggregator::MPIAggregator() : m_Comm(MPI_COMM_SELF) {}
+MPIAggregator::MPIAggregator() : m_Comm(MPI_COMM_NULL) {}
 
 MPIAggregator::~MPIAggregator()
 {
@@ -35,9 +35,9 @@ void MPIAggregator::SwapBuffers(const int step) noexcept {}
 
 void MPIAggregator::ResetBuffers() noexcept {}
 
-BufferSTL &MPIAggregator::GetConsumerBuffer(BufferSTL &bufferSTL)
+format::Buffer &MPIAggregator::GetConsumerBuffer(format::Buffer &buffer)
 {
-    return bufferSTL;
+    return buffer;
 }
 
 void MPIAggregator::Close()

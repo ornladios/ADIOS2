@@ -13,12 +13,15 @@
 #include <algorithm> // std::transform
 #include <iostream>  //std::cout Warnings
 
-#include "adios2/ADIOSTypes.h"            //PathSeparator
+#include "adios2/common/ADIOSTypes.h"     //PathSeparator
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory, StringToTimeUnit,
 
-#include "adios2/toolkit/format/bp3/operation/BP3MGARD.h"
-#include "adios2/toolkit/format/bp3/operation/BP3SZ.h"
-#include "adios2/toolkit/format/bp3/operation/BP3Zfp.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPBZIP2.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPBlosc.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPMGARD.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPPNG.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPSZ.h"
+#include "adios2/toolkit/format/bpOperation/compress/BPZFP.h"
 
 namespace adios2
 {
@@ -26,14 +29,15 @@ namespace format
 {
 
 const std::set<std::string> BP3Base::m_TransformTypes = {
-    {"unknown", "none", "identity", "sz", "zfp", "mgard"}};
+    {"unknown", "none", "identity", "bzip2", "sz", "zfp", "mgard", "png",
+     "blosc"}};
 
 const std::map<int, std::string> BP3Base::m_TransformTypesToNames = {
     {transform_unknown, "unknown"},   {transform_none, "none"},
     {transform_identity, "identity"}, {transform_sz, "sz"},
     {transform_zfp, "zfp"},           {transform_mgard, "mgard"},
-    // {transform_zlib, "zlib"},
-    //    {transform_bzip2, "bzip2"},
+    {transform_png, "png"},           {transform_bzip2, "bzip2"},
+    {transform_blosc, "blosc"}
     //    {transform_szip, "szip"},
     //    {transform_isobar, "isobar"},
     //    {transform_aplod, "aplod"},
@@ -41,14 +45,14 @@ const std::map<int, std::string> BP3Base::m_TransformTypesToNames = {
 
     //    {transform_sz, "sz"},
     //    {transform_lz4, "lz4"},
-    //    {transform_blosc, "blosc"},
+    //
 };
 
 BP3Base::BP3Base(MPI_Comm mpiComm, const bool debugMode)
 : m_MPIComm(mpiComm), m_DebugMode(debugMode)
 {
-    MPI_Comm_rank(m_MPIComm, &m_RankMPI);
-    MPI_Comm_size(m_MPIComm, &m_SizeMPI);
+    SMPI_Comm_rank(m_MPIComm, &m_RankMPI);
+    SMPI_Comm_size(m_MPIComm, &m_SizeMPI);
     m_Profiler.IsActive = true; // default
 }
 
@@ -93,6 +97,10 @@ void BP3Base::InitParameters(const Params &parameters)
         else if (key == "threads")
         {
             InitParameterThreads(value);
+        }
+        else if (key == "asyncthreads")
+        {
+            InitParameterAsyncThreads(value);
         }
         else if (key == "statslevel")
         {
@@ -533,6 +541,43 @@ void BP3Base::InitParameterThreads(const std::string value)
     m_Threads = static_cast<unsigned int>(threads);
 }
 
+void BP3Base::InitParameterAsyncThreads(const std::string value)
+{
+    int asyncThreads = -1;
+
+    if (m_DebugMode)
+    {
+        bool success = true;
+        std::string description;
+
+        try
+        {
+            asyncThreads = std::stoi(value);
+        }
+        catch (std::exception &e)
+        {
+            success = false;
+            description = std::string(e.what());
+        }
+
+        if (!success || asyncThreads < 0)
+        {
+            throw std::invalid_argument(
+                "ERROR: value in AsyncThreads=value in IO SetParameters must "
+                "be "
+                "an integer >= 0 (default = 1, no async = 0) \nadditional "
+                "description: " +
+                description + "\n, in call to Open\n");
+        }
+    }
+    else
+    {
+        asyncThreads = std::stoi(value);
+    }
+
+    m_AsyncThreads = static_cast<unsigned int>(asyncThreads);
+}
+
 void BP3Base::InitParameterStatLevel(const std::string value)
 {
     int level = -1;
@@ -816,27 +861,36 @@ void BP3Base::InitParameterSubStreams(const std::string value)
     }
 }
 
-std::shared_ptr<BP3Operation>
-BP3Base::SetBP3Operation(const std::string type) const noexcept
+std::shared_ptr<BPOperation>
+BP3Base::SetBPOperation(const std::string type) const noexcept
 {
-    std::shared_ptr<BP3Operation> bp3Op;
+    std::shared_ptr<BPOperation> bpOp;
     if (type == "sz")
     {
-        bp3Op = std::make_shared<BP3SZ>();
+        bpOp = std::make_shared<BPSZ>();
     }
     else if (type == "zfp")
     {
-        bp3Op = std::make_shared<BP3Zfp>();
+        bpOp = std::make_shared<BPZFP>();
     }
     else if (type == "mgard")
     {
-        bp3Op = std::make_shared<BP3MGARD>();
+        bpOp = std::make_shared<BPMGARD>();
     }
     else if (type == "bzip2")
     {
-        // TODO
+        bpOp = std::make_shared<BPBZIP2>();
     }
-    return bp3Op;
+    else if (type == "png")
+    {
+        bpOp = std::make_shared<BPPNG>();
+    }
+    else if (type == "blosc")
+    {
+        bpOp = std::make_shared<BPBlosc>();
+    }
+
+    return bpOp;
 }
 
 // PRIVATE
@@ -874,8 +928,8 @@ std::string BP3Base::GetBPSubStreamName(const std::string &name,
         const std::vector<char> &, size_t &, const BP3Base::DataTypes,         \
         const bool, const bool) const;                                         \
                                                                                \
-    template std::map<size_t, std::shared_ptr<BP3Operation>>                   \
-    BP3Base::SetBP3Operations<T>(                                              \
+    template std::map<size_t, std::shared_ptr<BPOperation>>                    \
+    BP3Base::SetBPOperations<T>(                                               \
         const std::vector<core::VariableBase::Operation> &) const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)

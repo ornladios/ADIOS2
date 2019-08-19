@@ -1181,11 +1181,7 @@ int doList(const char *path)
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
-#ifdef ADIOS2_HAVE_MPI
-    core::ADIOS adios(MPI_COMM_SELF, true, "C++");
-#else
     core::ADIOS adios(true, "C++");
-#endif
     core::IO &io = adios.DeclareIO("bpls");
     core::Engine *fp = nullptr;
     std::vector<std::string> engineList = getEnginesList(path);
@@ -1469,14 +1465,13 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     int tidx;                          // 0 or 1 to account for time dimension
     uint64_t nelems;                   // number of elements to read
     // size_t elemsize;                   // size in bytes of one element
-    uint64_t st, ct;
+    uint64_t stepStart, stepCount;
     std::vector<T> dataV;
     uint64_t sum;         // working var to sum up things
     uint64_t maxreadn;    // max number of elements to read once up to a limit
                           // (10MB of data)
     uint64_t actualreadn; // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
-    bool incdim;              // used in incremental reading in
     int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
@@ -1487,40 +1482,110 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
     nelems = 1;
     tidx = 0;
+    stepStart = 0;
+    stepCount = 1;
 
     if (nsteps > 1)
     {
+        // user selection must start with step selection
+        // calculate the starting step and number of steps requested
         if (istart[0] < 0) // negative index means last-|index|
-            st = nsteps + istart[0];
+            stepStart = nsteps + istart[0];
         else
-            st = istart[0];
+            stepStart = istart[0];
         if (icount[0] < 0) // negative index means last-|index|+1-start
-            ct = nsteps + icount[0] + 1 - st;
+            stepCount = nsteps + icount[0] + 1 - stepStart;
         else
-            ct = icount[0];
+            stepCount = icount[0];
 
         if (verbose > 2)
-            printf("    j=0, st=%" PRIu64 " ct=%" PRIu64 "\n", st, ct);
+            printf("    j=0, stepStart=%" PRIu64 " stepCount=%" PRIu64 "\n",
+                   stepStart, stepCount);
 
-        start_t[0] = st;
-        count_t[0] = ct;
-        nelems *= ct;
+        if (stepStart + stepCount > nsteps)
+        {
+            printf("ERROR: The sum of start step (%" PRIu64
+                   ") and step count (%" PRIu64 ") is larger "
+                   "than the number of steps available (%d)\n",
+                   stepStart, stepCount, nsteps);
+            return -1;
+        }
+
+        start_t[0] = stepStart;
+        count_t[0] = stepCount;
+        nelems *= stepCount;
         if (verbose > 1)
             printf("    s[0]=%" PRIu64 ", c[0]=%" PRIu64 ", n=%" PRIu64 "\n",
                    start_t[0], count_t[0], nelems);
-
         tidx = 1;
     }
+
     tdims = ndim + tidx;
+
+    // Absolute step is needed to access Shape of variable in a step
+    // and also for StepSelection
+    size_t absstep = relative_to_absolute_step(variable, stepStart);
+
+    // Get the shape of the variable for the starting step
+    auto shape = variable->Shape(absstep);
+    if (verbose > 2)
+    {
+        printf("    starting step=%" PRIu64 " absolute step=%zu"
+               ", dims={",
+               stepStart, absstep);
+        for (auto dim : shape)
+        {
+            printf("%zu", dim);
+        }
+        printf("}\n");
+    }
+
+    if (tidx)
+    {
+        // If shape is changing we still can support printing a single step
+        auto dimsign = get_global_array_signature(fp, io, variable);
+        bool changingShape = false;
+        for (auto d : dimsign)
+        {
+            if (d == 0)
+            {
+                changingShape = true;
+                break;
+            }
+        }
+        if (changingShape && stepCount > 1)
+        {
+            printf("ERROR: This variable has a changing shape over time, "
+                   "so bpls cannot dump it as a global array. \n");
+            printf("You can dump a single step with\n"
+                   "    bpls -d %s -s \"T",
+                   variable->m_Name.c_str());
+            for (j = 0; j < ndim; j++)
+            {
+                printf(",0");
+            }
+            printf("\" -c \"1");
+            for (j = 0; j < ndim; j++)
+            {
+                printf(",-1");
+            }
+            printf("\"\nwhere T is a number between 0 and %d,\n", nsteps - 1);
+            printf("or dump each block separately with \n"
+                   "    bpls -dD %s\n",
+                   variable->m_Name.c_str());
+            return -1;
+        }
+    }
 
     for (j = 0; j < ndim; j++)
     {
+        uint64_t st, ct;
         if (istart[j + tidx] < 0) // negative index means last-|index|
-            st = variable->m_Shape[j] + istart[j + tidx];
+            st = shape[j] + istart[j + tidx];
         else
             st = istart[j + tidx];
         if (icount[j + tidx] < 0) // negative index means last-|index|+1-start
-            ct = variable->m_Shape[j] + icount[j + tidx] + 1 - st;
+            ct = shape[j] + icount[j + tidx] + 1 - st;
         else
             ct = icount[j + tidx];
 
@@ -1543,8 +1608,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                nelems * elemsize);
     }
 
-    print_slice_info(variable, (tidx == 1), start_t, count_t,
-                     variable->m_Shape);
+    print_slice_info(variable, (tidx == 1), start_t, count_t, shape);
 
     maxreadn = (uint64_t)MAX_BUFFERSIZE / elemsize;
     if (nelems < maxreadn)
@@ -1652,12 +1716,12 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             }
         }
 
-        if (nsteps > 1)
+        if (tidx)
         {
             if (verbose > 2)
             {
-                printf("set Step selection: from %" PRIu64 " read %" PRIu64
-                       " steps\n",
+                printf("set Step selection: from relative step %" PRIu64
+                       " read %" PRIu64 " steps\n",
                        s[0], c[0]);
             }
             variable->SetStepSelection({s[0], c[0]});
@@ -1672,7 +1736,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
         // prepare for next read
         sum += actualreadn;
-        incdim = true; // largest dim should be increased
+        bool incdim = true; // last dim should be increased
         for (j = tdims - 1; j >= 0; j--)
         {
             if (incdim)
@@ -1682,7 +1746,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     // reached the end of this dimension
                     s[j] = start_t[j];
                     c[j] = readn[j];
-                    incdim = true; // next smaller dim can increase too
+                    incdim = true; // previous dim can increase too
                 }
                 else
                 {
@@ -2581,17 +2645,41 @@ void print_endline(void)
 }
 
 template <class T>
+size_t relative_to_absolute_step(core::Variable<T> *variable,
+                                 const size_t relstep)
+{
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = indices.begin();
+    size_t absstep = itStep->first - 1;
+
+    for (int step = 0; step < relstep; step++)
+    {
+        ++itStep;
+        absstep = itStep->first - 1;
+    }
+    return absstep;
+}
+
+template <class T>
 Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                                 core::Variable<T> *variable)
 {
     const size_t ndim = variable->m_Shape.size();
-    const size_t nsteps = variable->m_AvailableStepsCount;
+    const size_t nsteps = variable->GetAvailableStepsCount();
     Dims dims(ndim, 0);
     bool firstStep = true;
 
+    // looping over the absolute step indexes
+    // is not supported by a simple API function
+    const std::map<size_t, std::vector<size_t>> &indices =
+        variable->m_AvailableStepBlockIndexOffsets;
+    auto itStep = indices.begin();
+
     for (int step = 0; step < nsteps; step++)
     {
-        Dims d = variable->Shape(step);
+        const size_t absstep = itStep->first;
+        Dims d = variable->Shape(absstep - 1);
         if (d.empty())
         {
             continue;
@@ -2609,6 +2697,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
             }
         }
         firstStep = false;
+        ++itStep;
     }
     return dims;
 }
@@ -2931,9 +3020,6 @@ char *mystrndup(const char *s, size_t n)
 
 int main(int argc, char *argv[])
 {
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Init(&argc, &argv);
-#endif
     int retval = 1;
     try
     {
@@ -2944,8 +3030,5 @@ int main(int argc, char *argv[])
         std::cout << "\nbpls caught an exception\n";
         std::cout << e.what() << std::endl;
     }
-#ifdef ADIOS2_HAVE_MPI
-    MPI_Finalize();
-#endif
     return retval;
 }

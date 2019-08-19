@@ -17,8 +17,8 @@
 #include <algorithm> //std::foreach
 #include <numeric>   //std::accumulate
 
-#include "adios2/ADIOSMPI.h"
-#include "adios2/ADIOSTypes.h"
+#include "adios2/common/ADIOSMPI.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosType.h"
 
 namespace adios2
@@ -32,7 +32,7 @@ size_t BroadcastValue(const size_t &input, MPI_Comm mpiComm,
                       const int rankSource)
 {
     int rank;
-    MPI_Comm_rank(mpiComm, &rank);
+    SMPI_Comm_rank(mpiComm, &rank);
     size_t output = 0;
 
     if (rank == rankSource)
@@ -40,7 +40,7 @@ size_t BroadcastValue(const size_t &input, MPI_Comm mpiComm,
         output = input;
     }
 
-    MPI_Bcast(&output, 1, ADIOS2_MPI_SIZE_T, rankSource, mpiComm);
+    SMPI_Bcast(&output, 1, ADIOS2_MPI_SIZE_T, rankSource, mpiComm);
 
     return output;
 }
@@ -50,7 +50,7 @@ std::string BroadcastValue(const std::string &input, MPI_Comm mpiComm,
                            const int rankSource)
 {
     int rank;
-    MPI_Comm_rank(mpiComm, &rank);
+    SMPI_Comm_rank(mpiComm, &rank);
     const size_t inputSize = input.size();
     const size_t length = BroadcastValue(inputSize, mpiComm, rankSource);
     std::string output;
@@ -64,8 +64,8 @@ std::string BroadcastValue(const std::string &input, MPI_Comm mpiComm,
         output.resize(length);
     }
 
-    MPI_Bcast(const_cast<char *>(output.data()), static_cast<int>(length),
-              MPI_CHAR, rankSource, mpiComm);
+    SMPI_Bcast(const_cast<char *>(output.data()), static_cast<int>(length),
+               MPI_CHAR, rankSource, mpiComm);
 
     return output;
 }
@@ -77,8 +77,8 @@ unsigned int ReduceValues(const unsigned int source, MPI_Comm mpiComm,
 {
     unsigned int sourceLocal = source;
     unsigned int reduceValue = 0;
-    MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
-               rankDestination, mpiComm);
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED, operation,
+                rankDestination, mpiComm);
     return reduceValue;
 }
 
@@ -88,8 +88,8 @@ unsigned long int ReduceValues(const unsigned long int source, MPI_Comm mpiComm,
 {
     unsigned long int sourceLocal = source;
     unsigned long int reduceValue = 0;
-    MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
-               rankDestination, mpiComm);
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG, operation,
+                rankDestination, mpiComm);
     return reduceValue;
 }
 
@@ -100,8 +100,8 @@ unsigned long long int ReduceValues(const unsigned long long int source,
 {
     unsigned long long int sourceLocal = source;
     unsigned long long int reduceValue = 0;
-    MPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG, operation,
-               rankDestination, mpiComm);
+    SMPI_Reduce(&sourceLocal, &reduceValue, 1, MPI_UNSIGNED_LONG_LONG,
+                operation, rankDestination, mpiComm);
     return reduceValue;
 }
 
@@ -111,7 +111,7 @@ void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,
                      const int rankSource)
 {
     int size;
-    MPI_Comm_size(mpiComm, &size);
+    SMPI_Comm_size(mpiComm, &size);
 
     if (size == 1)
     {
@@ -121,7 +121,7 @@ void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,
     // First Broadcast the size, then the contents
     size_t inputSize = BroadcastValue(vector.size(), mpiComm, rankSource);
     int rank;
-    MPI_Comm_rank(mpiComm, &rank);
+    SMPI_Comm_rank(mpiComm, &rank);
 
     if (rank != rankSource)
     {
@@ -133,8 +133,44 @@ void BroadcastVector(std::vector<char> &vector, MPI_Comm mpiComm,
     char *buffer = vector.data();
     while (inputSize > 0)
     {
-        MPI_Bcast(buffer, static_cast<int>(blockSize), MPI_CHAR, rankSource,
-                  mpiComm);
+        SMPI_Bcast(buffer, static_cast<int>(blockSize), MPI_CHAR, rankSource,
+                   mpiComm);
+        buffer += blockSize;
+        inputSize -= blockSize;
+        blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    }
+}
+
+// BroadcastVector specializations
+template <>
+void BroadcastVector(std::vector<size_t> &vector, MPI_Comm mpiComm,
+                     const int rankSource)
+{
+    int size;
+    SMPI_Comm_size(mpiComm, &size);
+
+    if (size == 1)
+    {
+        return;
+    }
+
+    // First Broadcast the size, then the contents
+    size_t inputSize = BroadcastValue(vector.size(), mpiComm, rankSource);
+    int rank;
+    SMPI_Comm_rank(mpiComm, &rank);
+
+    if (rank != rankSource)
+    {
+        vector.resize(inputSize);
+    }
+
+    const int MAXBCASTSIZE = 1073741824 / sizeof(size_t);
+    size_t blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
+    size_t *buffer = vector.data();
+    while (inputSize > 0)
+    {
+        SMPI_Bcast(buffer, static_cast<int>(blockSize), ADIOS2_MPI_SIZE_T,
+                   rankSource, mpiComm);
         buffer += blockSize;
         inputSize -= blockSize;
         blockSize = (inputSize > MAXBCASTSIZE ? MAXBCASTSIZE : inputSize);
@@ -149,8 +185,8 @@ void GatherArrays(const char *source, const size_t sourceCount,
 {
     int countsInt = static_cast<int>(sourceCount);
     int result =
-        MPI_Gather(const_cast<char *>(source), countsInt, MPI_CHAR, destination,
-                   countsInt, MPI_CHAR, rankDestination, mpiComm);
+        SMPI_Gather(const_cast<char *>(source), countsInt, MPI_CHAR,
+                    destination, countsInt, MPI_CHAR, rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {
@@ -165,9 +201,9 @@ void GatherArrays(const size_t *source, const size_t sourceCount,
                   const int rankDestination)
 {
     int countsInt = static_cast<int>(sourceCount);
-    int result = MPI_Gather(const_cast<size_t *>(source), countsInt,
-                            ADIOS2_MPI_SIZE_T, destination, countsInt,
-                            ADIOS2_MPI_SIZE_T, rankDestination, mpiComm);
+    int result = SMPI_Gather(const_cast<size_t *>(source), countsInt,
+                             ADIOS2_MPI_SIZE_T, destination, countsInt,
+                             ADIOS2_MPI_SIZE_T, rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {
@@ -202,7 +238,7 @@ void GathervArrays(const char *source, const size_t sourceCount,
 {
     int result = 0;
     int rank;
-    MPI_Comm_rank(mpiComm, &rank);
+    SMPI_Comm_rank(mpiComm, &rank);
 
     std::vector<int> countsInt, displacementsInt;
 
@@ -213,9 +249,10 @@ void GathervArrays(const char *source, const size_t sourceCount,
     }
 
     int sourceCountInt = static_cast<int>(sourceCount);
-    result = MPI_Gatherv(const_cast<char *>(source), sourceCountInt, MPI_CHAR,
-                         destination, countsInt.data(), displacementsInt.data(),
-                         MPI_CHAR, rankDestination, mpiComm);
+    result =
+        SMPI_Gatherv(const_cast<char *>(source), sourceCountInt, MPI_CHAR,
+                     destination, countsInt.data(), displacementsInt.data(),
+                     MPI_CHAR, rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {
@@ -232,7 +269,7 @@ void GathervArrays(const size_t *source, const size_t sourceCount,
 {
     int result = 0;
     int rank;
-    MPI_Comm_rank(mpiComm, &rank);
+    SMPI_Comm_rank(mpiComm, &rank);
 
     std::vector<int> countsInt =
         NewVectorTypeFromArray<size_t, int>(counts, countsSize);
@@ -242,10 +279,10 @@ void GathervArrays(const size_t *source, const size_t sourceCount,
 
     int sourceCountInt = static_cast<int>(sourceCount);
 
-    result = MPI_Gatherv(const_cast<size_t *>(source), sourceCountInt,
-                         ADIOS2_MPI_SIZE_T, destination, countsInt.data(),
-                         displacementsInt.data(), ADIOS2_MPI_SIZE_T,
-                         rankDestination, mpiComm);
+    result = SMPI_Gatherv(const_cast<size_t *>(source), sourceCountInt,
+                          ADIOS2_MPI_SIZE_T, destination, countsInt.data(),
+                          displacementsInt.data(), ADIOS2_MPI_SIZE_T,
+                          rankDestination, mpiComm);
 
     if (result != MPI_SUCCESS)
     {

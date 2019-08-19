@@ -18,10 +18,7 @@
 
 int main(int argc, char *argv[])
 {
-    /** Application variable */
-    const std::size_t Nx = 10;
-    std::vector<float> myFloats(Nx);
-    std::vector<int> myInts(Nx);
+    std::string filename = "myVector_cpp.bp";
 
     try
     {
@@ -33,8 +30,7 @@ int main(int argc, char *argv[])
         adios2::IO bpIO = adios.DeclareIO("ReadBP");
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpReader =
-            bpIO.Open("myVector_cpp.bp", adios2::Mode::Read);
+        adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
         /** Write variable for buffering */
         adios2::Variable<float> bpFloats =
@@ -44,12 +40,25 @@ int main(int argc, char *argv[])
 
         if (bpFloats)
         {
-            bpReader.Get<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);
+            std::vector<float> myFloats;
+            bpReader.Get<float>(bpFloats, myFloats, adios2::Mode::Sync);
+            std::cout << "Float vector inside " << filename << ": {";
+            for (auto &x : myFloats)
+            {
+                std::cout << x << ", ";
+            }
+            std::cout << "}\n";
         }
 
         if (bpInts)
         {
-            bpReader.Get<int>(bpInts, myInts.data(), adios2::Mode::Sync);
+            std::vector<int> myInts;
+            bpReader.Get<int>(bpInts, myInts, adios2::Mode::Sync);
+        }
+        else
+        {
+            std::cout << "There are no integer datasets in " << filename
+                      << ".\n";
         }
 
         /** Close bp file, engine becomes unreachable after this*/
@@ -57,18 +66,21 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
+        std::cerr << "Invalid argument exception, STOPPING PROGRAM\n";
+        std::cerr << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout << "IO System base failure exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
+        std::cerr << "IO System base failure exception, STOPPING PROGRAM\n";
+        std::cerr << e.what() << "\n";
+        std::cerr << "The file " << filename << " does not exist."
+                  << " Presumably this is because hello_bpWriter has not been "
+                     "run. Run ./hello_bpWriter before running this program.\n";
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception, STOPPING PROGRAM\n";
-        std::cout << e.what() << "\n";
+        std::cerr << "Exception, STOPPING PROGRAM\n";
+        std::cerr << e.what() << "\n";
     }
 
     return 0;

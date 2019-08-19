@@ -13,7 +13,7 @@
 
 #include <queue>
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
@@ -37,7 +37,7 @@ public:
 
     ~SscReader();
     StepStatus BeginStep(
-        StepMode stepMode = StepMode::NextAvailable,
+        StepMode stepMode = StepMode::Read,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     StepStatus BeginStepIterator(StepMode stepMode, format::DmvVecPtr &vars);
     void PerformGets() final;

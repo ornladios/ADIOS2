@@ -14,7 +14,7 @@
 #ifndef ADIOS2_ENGINE_INSITUMPIREADER_H_
 #define ADIOS2_ENGINE_INSITUMPIREADER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
@@ -45,7 +45,7 @@ public:
                     MPI_Comm mpiComm);
 
     ~InSituMPIReader();
-    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
     size_t CurrentStep() const final;

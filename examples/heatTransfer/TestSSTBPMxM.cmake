@@ -17,7 +17,7 @@ add_test(NAME HeatTransfer.SST.BP.MxM
 
 add_test(NAME HeatTransfer.SST.BP.Dump.MxM
   COMMAND ${CMAKE_COMMAND}
-    -DARGS=-d 
+    -DARG1=-d 
     -DINPUT_FILE=HeatTransfer.SST.BP.Read.MxM.bp
     -DOUTPUT_FILE=HeatTransfer.SST.BP.Dump.MxM.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"

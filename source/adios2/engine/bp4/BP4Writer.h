@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_BP4_BP4WRITER_H_
 #define ADIOS2_ENGINE_BP4_BP4WRITER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp4/BP4.h"
 #include "adios2/toolkit/transportman/TransportMan.h" //transport::TransportsMan
@@ -51,6 +51,9 @@ private:
 
     /** Manage BP data files Transports from IO AddTransport */
     transportman::TransportMan m_FileDataManager;
+
+    /** future returned by m_FileDataManager at OpenFiles */
+    std::future<void> m_FutureOpenFiles;
 
     /** Manages the optional collective metadata files */
     transportman::TransportMan m_FileMetadataManager;
@@ -94,15 +97,13 @@ private:
      * profilers*/
     void WriteProfilingJSONFile();
 
-    void PopulateMetadataIndexFileHeader(std::vector<char> &buffer,
-                                         size_t &position, const uint8_t,
-                                         const bool addSubfiles);
+    void UpdateActiveFlag(const bool active);
 
     void PopulateMetadataIndexFileContent(
-        const uint64_t currentStep, const uint64_t mpirank,
-        const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
-        const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
-        std::vector<char> &buffer, size_t &position);
+        format::BufferSTL &buffer, const uint64_t currentStep,
+        const uint64_t mpirank, const uint64_t pgIndexStart,
+        const uint64_t variablesIndexStart, const uint64_t attributesIndexStart,
+        const uint64_t currentStepEndPos, const uint64_t currentTimeStamp);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
 

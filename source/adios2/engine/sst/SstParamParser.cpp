@@ -1,5 +1,5 @@
 
-#include <adios2/ADIOSMPI.h>
+#include <adios2/common/ADIOSMPI.h>
 #include <memory>
 
 #include "SstParamParser.h"
@@ -158,7 +158,7 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             else
             {
                 throw std::invalid_argument(
-                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
+                    "ERROR: Unknown Sst CPCommPattern parameter \"" + method +
                     "\"");
             }
             return true;
@@ -185,7 +185,7 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             else
             {
                 throw std::invalid_argument(
-                    "ERROR: Unknown Sst MarshalMethod parameter \"" + method +
+                    "ERROR: Unknown Sst QueueFullPolicy parameter \"" + method +
                     "\"");
             }
             return true;

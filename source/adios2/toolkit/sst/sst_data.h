@@ -10,6 +10,7 @@ struct _SstFullMetadata
     int WriterCohortSize;
     struct _SstData **WriterMetadata;
     void **DP_TimestepInfo;
+    void *FreeBlock;
 };
 
 struct _SstData
@@ -28,6 +29,7 @@ struct _SstBlock
     MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP)                  \
     MACRO(RegistrationMethod, RegMethod, size_t, 0)                            \
     MACRO(DataTransport, String, char *, NULL)                                 \
+    MACRO(OpenTimeoutSecs, Int, int, 60)                                       \
     MACRO(RendezvousReaderCount, Int, int, 1)                                  \
     MACRO(QueueLimit, Int, int, 0)                                             \
     MACRO(ReserveQueueLimit, Int, int, 0)                                      \
@@ -36,8 +38,11 @@ struct _SstBlock
     MACRO(FirstTimestepPrecious, Bool, int, 0)                                 \
     MACRO(ControlTransport, String, char *, NULL)                              \
     MACRO(NetworkInterface, String, char *, NULL)                              \
+    MACRO(ControlInterface, String, char *, NULL)                              \
+    MACRO(DataInterface, String, char *, NULL)                                 \
     MACRO(CPCommPattern, CPCommPattern, size_t, SstCPCommMin)                  \
-    MACRO(CompressionMethod, CompressionMethod, size_t, 0)
+    MACRO(CompressionMethod, CompressionMethod, size_t, 0)                     \
+    MACRO(AlwaysProvideLatestTimestep, Bool, int, 0)
 
 typedef enum
 {

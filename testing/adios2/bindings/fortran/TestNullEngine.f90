@@ -64,7 +64,7 @@
      call adios2_open(nullReader, ioRead, "fnull.bp", adios2_mode_read, ierr)
 
      do s = 1, 3
-         call adios2_begin_step(nullReader, adios2_step_mode_next_available, 0.0, &
+         call adios2_begin_step(nullReader, adios2_step_mode_read, -1.0, &
                                 step_status, ierr)
          if (step_status /= adios2_step_status_end_of_stream) then
              stop 'null engine status failed'

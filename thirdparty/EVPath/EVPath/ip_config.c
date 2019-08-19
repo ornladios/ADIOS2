@@ -428,8 +428,21 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
 }
 
 
-char *IP_config_diagnostics = NULL;
-int IP_config_output_len = -1;
+static char *IP_config_diagnostics = NULL;
+static int IP_config_output_len = -1;
+
+extern char*
+IP_get_diagnostics(CManager cm, CMTransport_trace trace_out)
+{
+    char *output;
+    IP_config_output_len = 0;   /* setup output */
+    get_IP_config(NULL, 0, NULL, NULL, NULL, NULL, NULL,
+		  trace_out, cm);
+    IP_config_output_len = -1;   /* disable output */
+    output = IP_config_diagnostics;
+    IP_config_diagnostics = NULL;  /* not ours anymore */
+    return output;
+}
 
 static void
 dump_output(int length_estimate, char *format, ...)

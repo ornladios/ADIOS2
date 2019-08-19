@@ -8,7 +8,7 @@
  *      Author: Greg Eisenhauer
  */
 
-#include <adios2/ADIOSMPI.h>
+#include <adios2/common/ADIOSMPI.h>
 #include <memory>
 
 #include "SstParamParser.h"
@@ -27,13 +27,95 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SstWriter", io, name, mode, mpiComm)
 {
-    char *cstr = new char[name.length() + 1];
-    strcpy(cstr, name.c_str());
+    auto AssembleMetadata = [](void *writer, int CohortSize,
+                               struct _SstData * /*PerRankMetadata*/,
+                               struct _SstData * /*PerRankAttributeData*/) {
+        for (int i = 0; i < CohortSize; i++)
+        {
+            //            std::cout << "Rank " << i << " Metadata size is "
+            //                      << PerRankMetadata[i].DataSize << ", base
+            //                      address is "
+            //                      << static_cast<void
+            //                      *>(PerRankMetadata[i].block)
+            //                      << std::endl;
+        }
+        /*
+         *  This lambda function is provided to SST, and subsequently called
+         *  from inside SstProvideTimestep on rank 0, but the
+         *  PerRankMetadata and PerRankAttributeData entries correspond with
+         *  the individual Metadata and AttributeData blocks that were
+         *  passed to SstProvideTimestep by each writer rank.  That is, SST
+         *  has brought those independent blocks to rank 0, and the purpose
+         *  of this function is to assemble them into a single block of
+         *  aggregate metadata.
+         *
+         *  This function should:
+         *   - Take the PerRankMetadata blocks (which are just the Metadata
+         * values that were passed to SstProvideTimestep) and assemble them into
+         * a single serialized block
+         *   - PerRankMetadata[0] should be modified to hold the address and
+         * size of this single serialized block
+         *   - If this single serialized block creates objects/data that must be
+         * free'd later, return some value (cast to void*) that will enable you
+         * to free it when it is passed to FreeAssembleMetadata.  (You'll also
+         * get back PerRankMetadata[0], so if that's sufficient, you can return
+         * NULL here.)
+         *
+         *  This function should *not* free any of the blocks pointer to by
+         * PerRankMetadata.  It need not zero out or otherwise modify the
+         * PerRankMetadata entries other than entry [0];
+
+         *
+         *  Note that this code works as is with current BP3 marshalling
+         *  because it's already the case that only PerRanksMetadata[0] is
+         *  valid (the rest are Null/0), and only 0 is used on the reading
+         *  side.  This is the case because
+         *  m_BP3Serializer->AggregateCollectiveMetadata() serializes the
+         *  individual contributions of each rank, gathers them to rank 0,
+         *  assembles them into a single block and then passes that to
+         *  SstProvideTimestep().  However, this approach costs us extra MPI
+         *  operations because AggregateCollectiveMetadata is doing them,
+         *  and then we have more to do inside SstProvideTimestep().  To
+         *  avoid these multiple MPI ops, we need to *not* use
+         *  AggregateCollectiveMetadata.  Instead, each rank should
+         *  serialize its individual contribution, and then pass that to
+         *  ProvideTimestep.  Then this function should be changed to do the
+         *  "assemble them into a single block" part.  Assuming that the
+         *  result is the same as what AggregateCollectiveMetadata would
+         *  have done, then the reader side should be able to remain
+         *  unchanged.
+         *
+         *  Note also that this code is capable of handling marshaling
+         *  systems that provide the attributes separately from the timestep
+         *  metadata.  This is necessary in order to maintain attribute
+         *  semantics when timesteps might be dropped on the writer side
+         *  because of queue limits, or to be provided to late arriving
+         *  readers, etc.  BP marshaling does not yet provide the ability to
+         *  marshal attributes separately (AFAIK), so the AttributeData
+         *  params can be ignored.
+         */
+        return (void *)malloc(1); /* return value will be passed as ClientData
+                                     to registered Free routine */
+    };
+
+    auto FreeAssembledMetadata =
+        [](void * /*writer*/, struct _SstData * /*PerRankMetadata*/,
+           struct _SstData * /*PerRankAttributeData*/, void *ClientData) {
+            //        std::cout << "Free called with client data " << ClientData
+            //        << std::endl;
+            free(ClientData);
+            return;
+        };
 
     Init();
 
-    m_Output = SstWriterOpen(cstr, &Params, mpiComm);
-    delete[] cstr;
+    m_Output = SstWriterOpen(name.c_str(), &Params, mpiComm);
+
+    if (m_MarshalMethod == SstMarshalBP)
+    {
+        SstWriterInitMetadataCallback(m_Output, this, AssembleMetadata,
+                                      FreeAssembledMetadata);
+    }
 }
 
 SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
@@ -42,6 +124,12 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
     TAU_SCOPED_TIMER_FUNC();
     m_WriterStep++;
+    if (m_BetweenStepPairs)
+    {
+        throw std::logic_error("ERROR: BeginStep() is called a second time "
+                               "without an intervening EndStep()");
+    }
+
     m_BetweenStepPairs = true;
     if (m_MarshalMethod == SstMarshalFFS)
     {
@@ -123,6 +211,11 @@ void SstWriter::EndStep()
 {
     TAU_SCOPED_TIMER_FUNC();
     m_BetweenStepPairs = false;
+    if (m_WriterDefinitionsLocked && !m_DefinitionsNotified)
+    {
+        SstWriterDefinitionLock(m_Output, m_WriterStep);
+        m_DefinitionsNotified = true;
+    }
     if (m_MarshalMethod == SstMarshalFFS)
     {
         TAU_SCOPED_TIMER("Marshaling Overhead");

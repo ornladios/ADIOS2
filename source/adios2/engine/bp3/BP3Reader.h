@@ -11,7 +11,7 @@
 #ifndef ADIOS2_ENGINE_BP3_BP3READER_H_
 #define ADIOS2_ENGINE_BP3_BP3READER_H_
 
-#include "adios2/ADIOSConfig.h"
+#include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/toolkit/format/bp3/BP3.h" //format::BP3Deserializer
 #include "adios2/toolkit/transportman/TransportMan.h"
@@ -39,7 +39,7 @@ public:
 
     ~BP3Reader() = default;
 
-    StepStatus BeginStep(StepMode mode = StepMode::NextAvailable,
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
