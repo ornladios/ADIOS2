@@ -38,19 +38,6 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 
     variable.SetData(values);
 
-    if (variable.m_Shape.empty())
-    {
-        variable.m_Shape = variable.m_Count;
-    }
-    if (variable.m_Count.empty())
-    {
-        variable.m_Count = variable.m_Shape;
-    }
-    if (variable.m_Start.empty())
-    {
-        variable.m_Start.assign(variable.m_Count.size(), 0);
-    }
-
     if (m_IsRowMajor)
     {
         m_DataManSerializer.PutVar(variable, m_Name, CurrentStep(), m_MpiRank,

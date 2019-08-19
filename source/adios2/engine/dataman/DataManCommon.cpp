@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataManReader.cpp
+ * DataManCommon.cpp
  *
  *  Created on: Feb 12, 2018
  *      Author: Jason Wang
@@ -20,25 +20,22 @@ namespace engine
 DataManCommon::DataManCommon(const std::string engineType, IO &io,
                              const std::string &name, const Mode mode,
                              MPI_Comm mpiComm)
-: Engine(engineType, io, name, mode, mpiComm), m_WANMan(m_MPIComm, m_DebugMode),
+: Engine(engineType, io, name, mode, mpiComm),
   m_IsRowMajor(helper::IsRowMajor(io.m_HostLanguage)),
   m_DataManSerializer(mpiComm, m_IsRowMajor)
 {
-
-    // initialize parameters
     MPI_Comm_rank(mpiComm, &m_MpiRank);
     MPI_Comm_size(mpiComm, &m_MpiSize);
-    GetBoolParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
-                     m_ProvideLatest);
-    if (m_IO.m_TransportsParameters.empty())
-    {
-        m_IO.m_TransportsParameters.push_back(
-            {{"IPAddress", "127.0.0.1"}, {"Port", "12306"}});
-    }
+    GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
+    GetParameter(m_IO.m_Parameters, "Port", m_Port);
+    GetParameter(m_IO.m_Parameters, "StagingMode", m_StagingMode);
+    GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
 }
 
-bool DataManCommon::GetStringParameter(Params &params, std::string key,
-                                       std::string &value)
+DataManCommon::~DataManCommon() {}
+
+bool DataManCommon::GetParameter(const Params &params, const std::string &key,
+                                 std::string &value)
 {
     auto it = params.find(key);
     if (it != params.end())
@@ -50,8 +47,20 @@ bool DataManCommon::GetStringParameter(Params &params, std::string key,
     return false;
 }
 
-bool DataManCommon::GetBoolParameter(Params &params, std::string key,
-                                     bool &value)
+bool DataManCommon::GetParameter(const Params &params, const std::string &key,
+                                 int &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = stoi(it->second);
+        return true;
+    }
+    return false;
+}
+
+bool DataManCommon::GetParameter(const Params &params, const std::string &key,
+                                 bool &value)
 {
     auto it = params.find(key);
     if (it != params.end())

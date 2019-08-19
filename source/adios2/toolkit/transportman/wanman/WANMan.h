@@ -17,7 +17,6 @@
 
 #include "adios2/core/IO.h"
 #include "adios2/core/Operator.h"
-#include "adios2/toolkit/transport/socket/SocketZmq.h"
 
 namespace adios2
 {
@@ -28,55 +27,31 @@ class WANMan
 {
 
 public:
-    WANMan(MPI_Comm mpiComm, const bool debugMode);
-
+    WANMan();
     ~WANMan();
 
-    void OpenTransports(const std::vector<Params> &parametersVector,
-                        const Mode openMode, const bool profile);
+    void OpenPublisher(const std::string &address, const int timeout);
+    void OpenSubscriber(const std::string &address, const int timeout,
+                        const size_t receiveBufferSize);
 
-    void Write(const std::vector<char> &buffer, size_t transportId = 0);
-    void Write(std::shared_ptr<std::vector<char>> buffer,
-               size_t transportId = 0);
-
-    std::shared_ptr<std::vector<char>> Read(size_t id);
-
-    void SetMaxReceiveBuffer(size_t size);
+    void PushBufferQueue(std::shared_ptr<std::vector<char>> buffer);
+    std::shared_ptr<std::vector<char>> PopBufferQueue();
 
 private:
-    std::unordered_map<size_t, std::shared_ptr<transport::SocketZmq>>
-        m_Transports;
-    MPI_Comm m_MpiComm;
-    bool m_DebugMode;
+    // For buffer queue
+    std::queue<std::shared_ptr<std::vector<char>>> m_BufferQueue;
+    std::mutex m_BufferQueueMutex;
 
-    // Objects for buffer queue
-    std::vector<std::queue<std::shared_ptr<std::vector<char>>>> m_BufferQueue;
-    void PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id);
-    std::shared_ptr<std::vector<char>> PopBufferQueue(size_t id);
-    std::mutex m_Mutex;
-
-    // Functions for parsing parameters
-    bool GetBoolParameter(const Params &params, const std::string &key);
-    bool GetStringParameter(const Params &params, const std::string &key,
-                            std::string &value);
-    bool GetIntParameter(const Params &params, const std::string &key,
-                         int &value);
-
-    // For read thread
-    void ReadThread(std::shared_ptr<transport::SocketZmq> transport);
-    std::vector<std::thread> m_ReadThreads;
-    bool m_Reading = false;
-
-    // For write thread
-    void WriteThread(std::shared_ptr<transport::SocketZmq> transport,
-                     size_t id);
-    std::vector<std::thread> m_WriteThreads;
-    bool m_Writing = false;
+    // For threads
+    void WriterThread(const std::string &address);
+    void ReaderThread(const std::string &address, const int timeout,
+                      const size_t receiveBufferSize);
+    std::thread m_Thread;
+    bool m_ThreadActive = true;
 
     // parameters
-    std::vector<Params> m_TransportsParameters;
-    size_t m_MaxReceiveBuffer = 256 * 1024 * 1024;
     int m_Timeout = 10;
+    int m_Verbosity = 0;
 };
 
 } // end namespace transportman

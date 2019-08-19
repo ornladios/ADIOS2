@@ -47,7 +47,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_CurrentStep % m_StepsPerAggregation == 0)
     {
         m_CurrentStepActive = true;
-        m_DataManSerializer.NewWriterBuffer(m_DefaultBufferSize);
+        m_DataManSerializer.NewWriterBuffer(m_SerializationBufferSize);
         if (not m_AttributesSet)
         {
             m_DataManSerializer.PutAttributes(m_IO);
@@ -156,8 +156,8 @@ void SscWriter::InitTransports()
 
 void SscWriter::ReplyThread(const std::string &address)
 {
-    transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
-    tpm.OpenTransport(address);
+    transportman::StagingMan tpm;
+    tpm.OpenReplier(address, m_Timeout, m_ReceiverBufferSize);
     while (m_Listening)
     {
         auto request = tpm.ReceiveRequest();

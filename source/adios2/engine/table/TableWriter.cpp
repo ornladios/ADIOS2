@@ -28,7 +28,6 @@ TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("TableWriter", io, name, mode, mpiComm),
   m_IsRowMajor(helper::IsRowMajor(m_IO.m_HostLanguage)),
   m_Deserializer(m_MPIComm, m_IsRowMajor),
-  m_SendStagingMan(mpiComm, Mode::Read, m_Timeout, 128),
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
@@ -72,8 +71,8 @@ void TableWriter::EndStep()
     for (auto serializer : m_Serializers)
     {
         auto localPack = serializer->GetLocalPack();
-        auto reply =
-            m_SendStagingMan.Request(*localPack, serializer->GetDestination());
+        auto reply = m_SendStagingMan.Request(
+            localPack->data(), localPack->size(), serializer->GetDestination());
         if (m_Verbosity >= 1)
         {
             std::cout << "TableWriter::EndStep Rank " << m_MpiRank
@@ -102,9 +101,9 @@ void TableWriter::EndStep()
 
 void TableWriter::ReplyThread()
 {
-    transportman::StagingMan receiveStagingMan(m_MPIComm, Mode::Write,
-                                               m_Timeout, 1e9);
-    receiveStagingMan.OpenTransport(m_AllAddresses[m_MpiRank]);
+    transportman::StagingMan receiveStagingMan;
+    receiveStagingMan.OpenReplier(m_AllAddresses[m_MpiRank], m_Timeout,
+                                  m_ReceiverBufferSize);
     while (m_Listening)
     {
         auto request = receiveStagingMan.ReceiveRequest();
@@ -159,10 +158,6 @@ void TableWriter::Init()
     TAU_SCOPED_TIMER_FUNC();
     InitParameters();
     InitTransports();
-
-    m_SubIO.SetEngine("bp4");
-    m_SubEngine = std::make_shared<adios2::Engine>(
-        m_SubIO.Open(m_Name, adios2::Mode::Write));
 }
 
 void TableWriter::InitParameters()
@@ -226,17 +221,23 @@ void TableWriter::InitTransports()
 {
     TAU_SCOPED_TIMER_FUNC();
 
+    m_SendStagingMan.OpenRequester(m_Timeout, 32);
+
     for (int i = 0; i < m_Aggregators; ++i)
     {
         auto s = std::make_shared<format::DataManSerializer>(m_MPIComm,
                                                              m_IsRowMajor);
-        s->NewWriterBuffer(m_BufferSize);
+        s->NewWriterBuffer(m_SerializerBufferSize);
         s->SetDestination(m_AllAddresses[i]);
         m_Serializers.push_back(s);
     }
 
     m_Listening = true;
     m_ReplyThread = std::thread(&TableWriter::ReplyThread, this);
+
+    m_SubIO.SetEngine("bp4");
+    m_SubEngine = std::make_shared<adios2::Engine>(
+        m_SubIO.Open(m_Name, adios2::Mode::Write));
 }
 
 void TableWriter::PutAggregatorBuffer()

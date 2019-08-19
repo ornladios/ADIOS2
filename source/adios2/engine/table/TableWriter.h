@@ -54,7 +54,8 @@ private:
     int m_Port = 6789;
     int m_MaxRanksPerNode = 200;
     int m_Aggregators = 10;
-    size_t m_BufferSize = 1 * 1024 * 1024;
+    size_t m_SerializerBufferSize = 1 * 1024 * 1024;
+    size_t m_ReceiverBufferSize = 512 * 1024 * 1024;
     size_t m_RowsPerAggregatorBuffer = 400;
     std::unordered_map<size_t,
                        std::unordered_map<std::string, std::vector<char>>>

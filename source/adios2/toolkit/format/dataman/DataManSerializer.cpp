@@ -287,17 +287,6 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
     }
 }
 
-VecPtr DataManSerializer::EndSignal(size_t step)
-{
-    TAU_SCOPED_TIMER_FUNC();
-    nlohmann::json j;
-    j["FinalStep"] = step;
-    std::string s = j.dump() + '\0';
-    auto c = std::make_shared<std::vector<char>>(s.size());
-    std::memcpy(c->data(), s.c_str(), s.size());
-    return c;
-}
-
 bool DataManSerializer::IsCompressionAvailable(const std::string &method,
                                                const std::string &type,
                                                const Dims &count)

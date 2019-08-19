@@ -126,8 +126,6 @@ public:
                                      int64_t &stepProvided,
                                      const int64_t appID);
 
-    static VecPtr EndSignal(size_t step);
-
     VecPtr GenerateReply(
         const std::vector<char> &request, size_t &step,
         const std::unordered_map<std::string, Params> &compressionParams);

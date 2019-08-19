@@ -8,43 +8,28 @@
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include <fstream>  //TODO go away
-#include <iostream> //TODO go away
-
 #include "WANMan.h"
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
 
-#ifdef ADIOS2_HAVE_ZEROMQ
-#include "adios2/toolkit/transport/socket/SocketZmqPubSub.h"
-#endif
+#include <zmq.h>
 
 namespace adios2
 {
 namespace transportman
 {
 
-WANMan::WANMan(MPI_Comm mpiComm, const bool debugMode)
-: m_MpiComm(mpiComm), m_DebugMode(debugMode)
-{
-}
+WANMan::WANMan() {}
 
 WANMan::~WANMan()
 {
     auto start_time = std::chrono::system_clock::now();
     while (true)
     {
-        int s = 0;
-        m_Mutex.lock();
-        for (const auto &i : m_BufferQueue)
-        {
-            if (i.size() != 0)
-            {
-                ++s;
-            }
-        }
-        m_Mutex.unlock();
+        m_BufferQueueMutex.lock();
+        size_t s = m_BufferQueue.size();
+        m_BufferQueueMutex.unlock();
         if (s == 0)
         {
             break;
@@ -56,198 +41,126 @@ WANMan::~WANMan()
         {
             break;
         }
-        // add a sleep here because this loop is occupying the buffer queue
-        // lock, and this sleep would make time for reader or writer thread and
-        // help it finish sooner.
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
-    for (auto &readThread : m_ReadThreads)
+
+    m_ThreadActive = false;
+    if (m_Thread.joinable())
     {
-        m_Reading = false;
-        readThread.join();
-    }
-    for (auto &writeThread : m_WriteThreads)
-    {
-        m_Writing = false;
-        writeThread.join();
+        m_Thread.join();
     }
 }
 
-void WANMan::SetMaxReceiveBuffer(size_t size) { m_MaxReceiveBuffer = size; }
-
-void WANMan::OpenTransports(const std::vector<Params> &paramsVector,
-                            const Mode mode, const bool profile)
+void WANMan::OpenPublisher(const std::string &address, const int timeout)
 {
-    m_TransportsParameters = paramsVector;
-    m_BufferQueue.resize(paramsVector.size());
+    m_Timeout = timeout;
+    m_Thread = std::thread(&WANMan::WriterThread, this, address);
+}
 
-    for (size_t i = 0; i < paramsVector.size(); ++i)
+void WANMan::OpenSubscriber(const std::string &address, const int timeout,
+                            const size_t bufferSize)
+{
+    m_Timeout = timeout;
+    m_Thread =
+        std::thread(&WANMan::ReaderThread, this, address, timeout, bufferSize);
+}
+
+void WANMan::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
+{
+    std::lock_guard<std::mutex> l(m_BufferQueueMutex);
+    m_BufferQueue.push(buffer);
+}
+
+std::shared_ptr<std::vector<char>> WANMan::PopBufferQueue()
+{
+    std::lock_guard<std::mutex> l(m_BufferQueueMutex);
+    if (m_BufferQueue.empty())
     {
-        // Get parameters
-        std::string ip;
-        GetStringParameter(paramsVector[i], "IPAddress", ip);
-        std::string port;
-        GetStringParameter(paramsVector[i], "Port", port);
-        GetIntParameter(paramsVector[i], "Timeout", m_Timeout);
+        return nullptr;
+    }
+    else
+    {
+        auto ret = m_BufferQueue.front();
+        m_BufferQueue.pop();
+        return ret;
+    }
+}
 
-        // Calculate port number
-        int mpiRank, mpiSize;
-        MPI_Comm_rank(m_MpiComm, &mpiRank);
-        MPI_Comm_size(m_MpiComm, &mpiSize);
-        if (port.empty())
+void WANMan::WriterThread(const std::string &address)
+{
+    void *context = zmq_ctx_new();
+    if (not context)
+    {
+        throw std::runtime_error("creating zmq context failed");
+    }
+
+    void *socket = zmq_socket(context, ZMQ_PUB);
+    if (not socket)
+    {
+        throw std::runtime_error("creating zmq socket failed");
+    }
+
+    int error = zmq_bind(socket, address.c_str());
+    if (error)
+    {
+        throw std::runtime_error("binding zmq socket failed");
+    }
+
+    while (m_ThreadActive)
+    {
+        auto buffer = PopBufferQueue();
+        if (buffer != nullptr and buffer->size() > 0)
         {
-            port = std::to_string(stoi(port) + i * mpiSize);
-        }
-        port = std::to_string(stoi(port) + mpiRank);
-
-        std::shared_ptr<transport::SocketZmq> wanTransport;
-        wanTransport = std::make_shared<transport::SocketZmqPubSub>(m_Timeout);
-
-        std::string fullIP = "tcp://" + ip + ":" + port;
-        wanTransport->Open(fullIP, mode);
-        m_Transports.emplace(i, wanTransport);
-
-        // launch thread
-        if (mode == Mode::Read)
-        {
-            m_Reading = true;
-            m_ReadThreads.emplace_back(
-                std::thread(&WANMan::ReadThread, this, wanTransport));
-        }
-        else if (mode == Mode::Write)
-        {
-            m_Writing = true;
-            m_WriteThreads.emplace_back(
-                std::thread(&WANMan::WriteThread, this, wanTransport, i));
-        }
-    }
-}
-
-void WANMan::Write(std::shared_ptr<std::vector<char>> buffer, size_t id)
-{
-    PushBufferQueue(buffer, id);
-}
-
-void WANMan::Write(const std::vector<char> &buffer, size_t transportId)
-{
-    if (transportId >= m_Transports.size())
-    {
-        throw std::runtime_error(
-            "ERROR: No valid transports found, from WANMan::WriteSocket()");
-    }
-
-    m_Transports[transportId]->Write(buffer.data(), buffer.size());
-}
-
-std::shared_ptr<std::vector<char>> WANMan::Read(size_t id)
-{
-    return PopBufferQueue(id);
-}
-
-void WANMan::PushBufferQueue(std::shared_ptr<std::vector<char>> v, size_t id)
-{
-    std::lock_guard<std::mutex> l(m_Mutex);
-    m_BufferQueue[id].push(v);
-}
-
-std::shared_ptr<std::vector<char>> WANMan::PopBufferQueue(size_t id)
-{
-    std::lock_guard<std::mutex> l(m_Mutex);
-    if (m_BufferQueue[id].size() > 0)
-    {
-        std::shared_ptr<std::vector<char>> vec = m_BufferQueue[id].front();
-        m_BufferQueue[id].pop();
-        return vec;
-    }
-    return nullptr;
-}
-
-void WANMan::WriteThread(std::shared_ptr<transport::SocketZmq> transport,
-                         size_t id)
-{
-    while (m_Writing)
-    {
-        std::shared_ptr<std::vector<char>> buffer = PopBufferQueue(id);
-        if (buffer != nullptr)
-        {
-            if (buffer->size() > 0)
+            zmq_send(socket, buffer->data(), buffer->size(), ZMQ_DONTWAIT);
+            if (m_Verbosity >= 5)
             {
-                transport->Write(buffer->data(), buffer->size());
+                std::cout << "WANMan::WriterThread sent package size "
+                          << buffer->size() << std::endl;
             }
         }
     }
 }
 
-void WANMan::ReadThread(std::shared_ptr<transport::SocketZmq> transport)
+void WANMan::ReaderThread(const std::string &address, const int timeout,
+                          const size_t receiverBufferSize)
 {
-    std::vector<char> buffer(m_MaxReceiveBuffer);
-    while (m_Reading)
+    void *context = zmq_ctx_new();
+    if (not context)
     {
-        int ret = transport->Read(buffer.data(), m_MaxReceiveBuffer);
+        throw std::runtime_error("creating zmq context failed");
+    }
+
+    void *socket = zmq_socket(context, ZMQ_SUB);
+    if (not socket)
+    {
+        throw std::runtime_error("creating zmq socket failed");
+    }
+
+    int error = zmq_connect(socket, address.c_str());
+    if (error)
+    {
+        throw std::runtime_error("connecting zmq socket failed");
+    }
+
+    zmq_setsockopt(socket, ZMQ_SUBSCRIBE, "", 0);
+
+    std::vector<char> receiverBuffer(receiverBufferSize);
+
+    while (m_ThreadActive)
+    {
+        int ret = zmq_recv(socket, receiverBuffer.data(), receiverBufferSize,
+                           ZMQ_DONTWAIT);
         if (ret > 0)
         {
-            std::shared_ptr<std::vector<char>> bufferQ =
-                std::make_shared<std::vector<char>>(ret);
-            std::memcpy(bufferQ->data(), buffer.data(), ret);
-            PushBufferQueue(bufferQ, 0);
+            auto buff = std::make_shared<std::vector<char>>(ret);
+            std::memcpy(buff->data(), receiverBuffer.data(), ret);
+            PushBufferQueue(buff);
+            if (m_Verbosity >= 5)
+            {
+                std::cout << "WANMan::ReaderThread received package size "
+                          << buff->size() << std::endl;
+            }
         }
     }
-}
-
-bool WANMan::GetBoolParameter(const Params &params, const std::string &key)
-{
-    auto itKey = params.find(key);
-    if (itKey != params.end())
-    {
-        std::string value = itKey->second;
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-        if (value == "yes" || value == "true")
-        {
-            return true;
-        }
-        else if (value == "no" || value == "false")
-        {
-            return false;
-        }
-    }
-    return false;
-}
-
-bool WANMan::GetStringParameter(const Params &params, const std::string &key,
-                                std::string &value)
-{
-    auto it = params.find(key);
-    if (it != params.end())
-    {
-        value = it->second;
-        return true;
-    }
-    return false;
-}
-
-bool WANMan::GetIntParameter(const Params &params, const std::string &key,
-                             int &value)
-{
-    auto it = params.find(key);
-    if (it != params.end())
-    {
-        try
-        {
-            value = std::stoi(it->second);
-            return true;
-        }
-        catch (std::exception &e)
-        {
-            std::cout << "Parameter " << key
-                      << " should be an integer in string format. However, "
-                      << e.what()
-                      << " has been caught while trying to convert "
-                         "the value to an integer."
-                      << std::endl;
-            return false;
-        }
-    }
-    return false;
 }
 
 } // end namespace transportman

@@ -45,7 +45,8 @@ public:
 
 private:
     int m_Channels = 1;
-    size_t m_DefaultBufferSize = 1024;
+    size_t m_SerializationBufferSize = 1024;
+    size_t m_ReceiverBufferSize = 1e8;
     int m_Port = 12307;
     int m_MaxRanksPerNode = 200;
     int m_MaxAppsPerNode = 10;

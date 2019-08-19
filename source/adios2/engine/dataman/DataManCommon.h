@@ -17,7 +17,7 @@
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
-#include "adios2/toolkit/transport/file/FileFStream.h"
+#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
 #include "adios2/toolkit/transportman/wanman/WANMan.h"
 
 namespace adios2
@@ -33,28 +33,32 @@ class DataManCommon : public Engine
 public:
     DataManCommon(const std::string engineType, IO &io, const std::string &name,
                   const Mode mode, MPI_Comm mpiComm);
-
-    virtual ~DataManCommon() = default;
+    virtual ~DataManCommon();
 
 protected:
+    // external paremeters
     int m_Verbosity = 0;
+    size_t m_SerializerBufferSize = 128 * 1024 * 1024;
+    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
+    std::string m_StagingMode = "wide";
+    int m_Timeout = 5;
 
+    // internal variables
     int m_MpiRank;
     int m_MpiSize;
-    bool m_ProvideLatest = false;
-    size_t m_BufferSize = 128 * 1024 * 1024;
     int64_t m_CurrentStep = -1;
-
+    bool m_ThreadActive = true;
     bool m_IsRowMajor;
-    bool m_ContiguousMajor = true;
+    std::string m_IPAddress;
+    int m_Port = 50001;
 
     format::DataManSerializer m_DataManSerializer;
-    transportman::WANMan m_WANMan;
-    std::thread m_DataThread;
 
-    bool GetStringParameter(Params &params, std::string key,
-                            std::string &value);
-    bool GetBoolParameter(Params &params, std::string key, bool &value);
+    bool GetParameter(const Params &params, const std::string &key,
+                      bool &value);
+    bool GetParameter(const Params &params, const std::string &key, int &value);
+    bool GetParameter(const Params &params, const std::string &key,
+                      std::string &value);
 
 }; // end class DataManCommon
 

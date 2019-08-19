@@ -13,12 +13,8 @@
 
 #include "adios2/core/IO.h"
 #include "adios2/core/Operator.h"
-#include "adios2/toolkit/format/bp3/BP3.h"
-#include "adios2/toolkit/transportman/TransportMan.h"
 
-#ifdef ADIOS2_HAVE_ZEROMQ
-#include "adios2/toolkit/transport/socket/SocketZmqReqRep.h"
-#endif
+#include <zmq.h>
 
 namespace adios2
 {
@@ -29,33 +25,28 @@ class StagingMan
 {
 
 public:
-    StagingMan(const MPI_Comm mpiComm, const Mode openMode, const int timeout,
-               const size_t maxBufferSize);
-
+    StagingMan();
     ~StagingMan();
 
-    void OpenTransport(const std::string &fullAddress);
+    // requester
+    void OpenRequester(const int timeout, const size_t receiverBufferSize);
+    std::shared_ptr<std::vector<char>>
+    Request(const void *request, const size_t size, const std::string &address);
 
-    void CloseTransport();
-
-    std::shared_ptr<std::vector<char>> Request(const std::vector<char> &request,
-                                               const std::string &address);
-
+    // replier
+    void OpenReplier(const std::string &address, const int timeout,
+                     const size_t receiverBufferSize);
     std::shared_ptr<std::vector<char>> ReceiveRequest();
-
     void SendReply(std::shared_ptr<std::vector<char>> reply);
+    void SendReply(const void *reply, const size_t size);
 
 private:
-    MPI_Comm m_MpiComm;
-    int m_Timeout;
-    Mode m_OpenMode;
     int m_Verbosity = 0;
+    int m_Timeout;
 
-    size_t m_MaxBufferSize;
-
-    std::vector<char> m_Buffer;
-
-    transport::SocketZmqReqRep m_Transport;
+    std::vector<char> m_ReceiverBuffer;
+    void *m_Context = nullptr;
+    void *m_Socket = nullptr;
 };
 
 } // end namespace transportman

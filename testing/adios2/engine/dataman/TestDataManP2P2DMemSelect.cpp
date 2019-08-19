@@ -117,8 +117,7 @@ void VerifyData(const T *data, size_t step, const Dims &start,
 
 void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &count, const size_t steps,
-                               const adios2::Params &engineParams,
-                               const std::vector<adios2::Params> &transParams)
+                               const adios2::Params &engineParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -130,10 +129,6 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -198,8 +193,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
 void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &count, const Dims &memStart,
                                const Dims &memCount, const size_t steps,
-                               const adios2::Params &engineParams,
-                               const std::vector<adios2::Params> &transParams)
+                               const adios2::Params &engineParams)
 {
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
@@ -209,10 +203,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
     size_t datasize = std::accumulate(memCount.begin(), memCount.end(), 1,
@@ -363,20 +353,15 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
     memcount = {7, 9};
 
     size_t steps = 1000;
-    adios2::Params engineParams = {{"WorkflowMode", "stream"}};
-    std::vector<adios2::Params> transportParams = {{
-        {"Library", "ZMQ"},
-        {"IPAddress", "127.0.0.1"},
-        {"Port", "12312"},
-    }};
+    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
+                                   {"Port", "12308"}};
     // run workflow
-    auto r =
-        std::thread(DataManReaderP2PMemSelect, shape, start, count, memstart,
-                    memcount, steps, engineParams, transportParams);
+    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
+                         memstart, memcount, steps, engineParams);
     std::cout << "Reader thread started" << std::endl;
 
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
-                         engineParams, transportParams);
+                         engineParams);
     std::cout << "Writer thread started" << std::endl;
     w.join();
     std::cout << "Writer thread ended" << std::endl;
