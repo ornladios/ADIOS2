@@ -101,12 +101,12 @@ void TableWriter::EndStep()
 
 void TableWriter::ReplyThread()
 {
-    transportman::StagingMan receiveStagingMan;
-    receiveStagingMan.OpenReplier(m_AllAddresses[m_MpiRank], m_Timeout,
+    adios2::zmq::ZmqReqRep replier;
+    replier.OpenReplier(m_AllAddresses[m_MpiRank], m_Timeout,
                                   m_ReceiverBufferSize);
     while (m_Listening)
     {
-        auto request = receiveStagingMan.ReceiveRequest();
+        auto request = replier.ReceiveRequest();
         if (request == nullptr or request->empty())
         {
             if (m_Verbosity >= 20)
@@ -118,7 +118,7 @@ void TableWriter::ReplyThread()
         }
         m_Deserializer.PutPack(request);
         format::VecPtr reply = std::make_shared<std::vector<char>>(1, 'K');
-        receiveStagingMan.SendReply(reply);
+        replier.SendReply(reply);
         if (m_Verbosity >= 1)
         {
             std::cout << "TableWriter::ReplyThread " << m_MpiRank

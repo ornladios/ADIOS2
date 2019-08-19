@@ -37,10 +37,10 @@ public:
 private:
     bool m_ProvideLatest = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
-    transportman::StagingMan m_ZmqRequester;
+    adios2::zmq::ZmqReqRep m_ZmqRequester;
     std::vector<std::string> m_DataAddresses;
     std::vector<std::string> m_ControlAddresses;
-    std::vector<std::shared_ptr<transportman::WANMan>> m_ZmqSubscriberVec;
+    std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
     std::thread m_SubscriberThread;
 
     format::DmvVecPtrMap m_MetaDataMap;

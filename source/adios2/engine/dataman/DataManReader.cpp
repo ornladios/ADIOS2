@@ -47,11 +47,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
             reply =
                 m_ZmqRequester.Request(request.data(), request.size(), address);
         }
-
-        for (auto i : *reply)
-        {
-            std::cout << i;
-        }
         auto addJson = nlohmann::json::parse(*reply);
         m_DataAddresses =
             addJson["DataAddresses"].get<std::vector<std::string>>();
@@ -60,11 +55,12 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
     }
     else if (m_StagingMode == "local")
     {
+        // TODO: Add filesystem based handshake
     }
 
     for (const auto &address : m_DataAddresses)
     {
-        auto dataZmq = std::make_shared<transportman::WANMan>();
+        auto dataZmq = std::make_shared<adios2::zmq::ZmqPubSub>();
         dataZmq->OpenSubscriber(address, m_Timeout, m_ReceiverBufferSize);
         m_ZmqSubscriberVec.push_back(dataZmq);
     }

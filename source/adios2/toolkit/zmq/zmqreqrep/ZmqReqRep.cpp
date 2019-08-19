@@ -2,22 +2,23 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * StagingMan.cpp
+ * ZmqReqRep.cpp
  *
  *  Created on: Oct 1, 2018
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
 #include <iostream>
+#include <cstring>
 
-#include "StagingMan.h"
+#include "ZmqReqRep.h"
 
 namespace adios2
 {
-namespace transportman
+namespace zmq
 {
 
-StagingMan::StagingMan()
+ZmqReqRep::ZmqReqRep()
 {
     m_Context = zmq_ctx_new();
     if (not m_Context)
@@ -26,7 +27,7 @@ StagingMan::StagingMan()
     }
 }
 
-StagingMan::~StagingMan()
+ZmqReqRep::~ZmqReqRep()
 {
     if (m_Socket)
     {
@@ -38,14 +39,14 @@ StagingMan::~StagingMan()
     }
 }
 
-void StagingMan::OpenRequester(const int timeout,
+void ZmqReqRep::OpenRequester(const int timeout,
                                const size_t receiverBufferSize)
 {
     m_Timeout = timeout;
     m_ReceiverBuffer.reserve(receiverBufferSize);
 }
 
-void StagingMan::OpenReplier(const std::string &address, const int timeout,
+void ZmqReqRep::OpenReplier(const std::string &address, const int timeout,
                              const size_t receiverBufferSize)
 {
     m_Timeout = timeout;
@@ -67,7 +68,7 @@ void StagingMan::OpenReplier(const std::string &address, const int timeout,
     zmq_setsockopt(m_Socket, ZMQ_LINGER, &m_Timeout, sizeof(m_Timeout));
 }
 
-std::shared_ptr<std::vector<char>> StagingMan::ReceiveRequest()
+std::shared_ptr<std::vector<char>> ZmqReqRep::ReceiveRequest()
 {
     int bytes = zmq_recv(m_Socket, m_ReceiverBuffer.data(),
                          m_ReceiverBuffer.capacity(), 0);
@@ -80,24 +81,22 @@ std::shared_ptr<std::vector<char>> StagingMan::ReceiveRequest()
     return request;
 }
 
-void StagingMan::SendReply(std::shared_ptr<std::vector<char>> reply)
+void ZmqReqRep::SendReply(std::shared_ptr<std::vector<char>> reply)
 {
     zmq_send(m_Socket, reply->data(), reply->size(), 0);
 }
 
-void StagingMan::SendReply(const void *reply, const size_t size)
+void ZmqReqRep::SendReply(const void *reply, const size_t size)
 {
     zmq_send(m_Socket, reply, size, 0);
 }
 
 std::shared_ptr<std::vector<char>>
-StagingMan::Request(const void *request, const size_t size,
+ZmqReqRep::Request(const void *request, const size_t size,
                     const std::string &address)
 {
     auto reply = std::make_shared<std::vector<char>>();
-
     void *socket = zmq_socket(m_Context, ZMQ_REQ);
-    ;
 
     int ret = 1;
     auto start_time = std::chrono::system_clock::now();
@@ -155,5 +154,5 @@ StagingMan::Request(const void *request, const size_t size,
     return reply;
 }
 
-} // end namespace transportman
+} // end namespace zmq
 } // end namespace adios2

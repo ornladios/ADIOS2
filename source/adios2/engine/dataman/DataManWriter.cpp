@@ -67,6 +67,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
     }
     else if (m_StagingMode == "local")
     {
+        // TODO: Add filesystem based handshake
     }
 
     m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
@@ -147,18 +148,17 @@ void DataManWriter::DoClose(const int transportIndex)
 
 void DataManWriter::ControlThread(const std::string &address)
 {
-    transportman::StagingMan tpm;
-    tpm.OpenReplier(address, m_Timeout, 8192);
+    adios2::zmq::ZmqReqRep replier;
+    replier.OpenReplier(address, m_Timeout, 8192);
     while (m_ThreadActive)
     {
-        auto request = tpm.ReceiveRequest();
+        auto request = replier.ReceiveRequest();
         if (request && request->size() > 0)
         {
-            std::cout << "ControlThread received package ============= \n";
             std::string r(request->begin(), request->end());
             if (r == "Address")
             {
-                tpm.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
+                replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
             }
         }
     }

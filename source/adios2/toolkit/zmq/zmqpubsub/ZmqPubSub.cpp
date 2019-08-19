@@ -2,13 +2,13 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WANMan.cpp
+ * ZmqPubSub.cpp
  *
  *  Created on: Jun 1, 2017
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#include "WANMan.h"
+#include "ZmqPubSub.h"
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
@@ -17,12 +17,12 @@
 
 namespace adios2
 {
-namespace transportman
+namespace zmq
 {
 
-WANMan::WANMan() {}
+ZmqPubSub::ZmqPubSub() {}
 
-WANMan::~WANMan()
+ZmqPubSub::~ZmqPubSub()
 {
     auto start_time = std::chrono::system_clock::now();
     while (true)
@@ -50,27 +50,27 @@ WANMan::~WANMan()
     }
 }
 
-void WANMan::OpenPublisher(const std::string &address, const int timeout)
+void ZmqPubSub::OpenPublisher(const std::string &address, const int timeout)
 {
     m_Timeout = timeout;
-    m_Thread = std::thread(&WANMan::WriterThread, this, address);
+    m_Thread = std::thread(&ZmqPubSub::WriterThread, this, address);
 }
 
-void WANMan::OpenSubscriber(const std::string &address, const int timeout,
+void ZmqPubSub::OpenSubscriber(const std::string &address, const int timeout,
                             const size_t bufferSize)
 {
     m_Timeout = timeout;
     m_Thread =
-        std::thread(&WANMan::ReaderThread, this, address, timeout, bufferSize);
+        std::thread(&ZmqPubSub::ReaderThread, this, address, timeout, bufferSize);
 }
 
-void WANMan::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
+void ZmqPubSub::PushBufferQueue(std::shared_ptr<std::vector<char>> buffer)
 {
     std::lock_guard<std::mutex> l(m_BufferQueueMutex);
     m_BufferQueue.push(buffer);
 }
 
-std::shared_ptr<std::vector<char>> WANMan::PopBufferQueue()
+std::shared_ptr<std::vector<char>> ZmqPubSub::PopBufferQueue()
 {
     std::lock_guard<std::mutex> l(m_BufferQueueMutex);
     if (m_BufferQueue.empty())
@@ -85,7 +85,7 @@ std::shared_ptr<std::vector<char>> WANMan::PopBufferQueue()
     }
 }
 
-void WANMan::WriterThread(const std::string &address)
+void ZmqPubSub::WriterThread(const std::string &address)
 {
     void *context = zmq_ctx_new();
     if (not context)
@@ -113,14 +113,14 @@ void WANMan::WriterThread(const std::string &address)
             zmq_send(socket, buffer->data(), buffer->size(), ZMQ_DONTWAIT);
             if (m_Verbosity >= 5)
             {
-                std::cout << "WANMan::WriterThread sent package size "
+                std::cout << "ZmqPubSub::WriterThread sent package size "
                           << buffer->size() << std::endl;
             }
         }
     }
 }
 
-void WANMan::ReaderThread(const std::string &address, const int timeout,
+void ZmqPubSub::ReaderThread(const std::string &address, const int timeout,
                           const size_t receiverBufferSize)
 {
     void *context = zmq_ctx_new();
@@ -156,12 +156,12 @@ void WANMan::ReaderThread(const std::string &address, const int timeout,
             PushBufferQueue(buff);
             if (m_Verbosity >= 5)
             {
-                std::cout << "WANMan::ReaderThread received package size "
+                std::cout << "ZmqPubSub::ReaderThread received package size "
                           << buff->size() << std::endl;
             }
         }
     }
 }
 
-} // end namespace transportman
+} // end namespace zmq
 } // end namespace adios2

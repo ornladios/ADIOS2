@@ -41,7 +41,7 @@ private:
     std::string m_ControlAddress;
     std::string m_AllAddresses;
 
-    transportman::WANMan m_DataPublisher;
+    adios2::zmq::ZmqPubSub m_DataPublisher;
 
     format::VecPtr m_AggregatedMetadata = nullptr;
     std::mutex m_AggregatedMetadataMutex;

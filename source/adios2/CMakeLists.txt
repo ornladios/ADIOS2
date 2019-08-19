@@ -112,8 +112,8 @@ endif()
 
 if(ADIOS2_HAVE_ZeroMQ)
     target_sources(adios2 PRIVATE
-        toolkit/transportman/wanman/WANMan.cpp
-        toolkit/transportman/stagingman/StagingMan.cpp
+        toolkit/zmq/zmqreqrep/ZmqReqRep.cpp
+        toolkit/zmq/zmqpubsub/ZmqPubSub.cpp
         )
     target_link_libraries(adios2 PRIVATE ZeroMQ::ZMQ)
 endif()

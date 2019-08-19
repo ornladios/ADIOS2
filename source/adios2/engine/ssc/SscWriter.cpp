@@ -156,11 +156,11 @@ void SscWriter::InitTransports()
 
 void SscWriter::ReplyThread(const std::string &address)
 {
-    transportman::StagingMan tpm;
-    tpm.OpenReplier(address, m_Timeout, m_ReceiverBufferSize);
+    adios2::zmq::ZmqReqRep replier;
+    replier.OpenReplier(address, m_Timeout, m_ReceiverBufferSize);
     while (m_Listening)
     {
-        auto request = tpm.ReceiveRequest();
+        auto request = replier.ReceiveRequest();
         if (request == nullptr)
         {
             continue;
@@ -185,7 +185,7 @@ void SscWriter::ReplyThread(const std::string &address)
                         stepRequested, stepProvided, m_AppID);
                 }
             }
-            tpm.SendReply(aggMetadata);
+            replier.SendReply(aggMetadata);
 
             if (m_Verbosity >= 100)
             {
@@ -205,7 +205,7 @@ void SscWriter::ReplyThread(const std::string &address)
             std::unordered_map<std::string, Params> p = m_CompressionParams;
             m_CompressionParamsMutex.unlock();
             auto reply = m_DataManSerializer.GenerateReply(*request, step, p);
-            tpm.SendReply(reply);
+            replier.SendReply(reply);
             if (reply->size() <= 16)
             {
                 if (m_Tolerance)

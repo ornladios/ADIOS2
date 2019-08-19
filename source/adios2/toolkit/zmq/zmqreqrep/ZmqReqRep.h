@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * StagingMan.h
+ * ZmqReqRep.h
  *
  *  Created on: Oct 1, 2018
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_TRANSPORTMAN_STAGINGMAN_H_
-#define ADIOS2_TOOLKIT_TRANSPORTMAN_STAGINGMAN_H_
+#ifndef ADIOS2_TOOLKIT_ZMQ_ZMQREQREP_H_
+#define ADIOS2_TOOLKIT_ZMQ_ZMQREQREP_H_
 
 #include "adios2/core/IO.h"
 #include "adios2/core/Operator.h"
@@ -18,15 +18,15 @@
 
 namespace adios2
 {
-namespace transportman
+namespace zmq
 {
 
-class StagingMan
+class ZmqReqRep
 {
 
 public:
-    StagingMan();
-    ~StagingMan();
+    ZmqReqRep();
+    ~ZmqReqRep();
 
     // requester
     void OpenRequester(const int timeout, const size_t receiverBufferSize);
@@ -49,7 +49,7 @@ private:
     void *m_Socket = nullptr;
 };
 
-} // end namespace transportman
+} // end namespace zmq
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_TRANSPORTMAN_STAGINGMAN_H_ */
+#endif /* ADIOS2_TOOLKIT_ZMQ_ZMQREQREP_H_ */

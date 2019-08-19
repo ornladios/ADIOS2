@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * WANMan.h
+ * ZmqPubSub.h
  *
  *  Created on: Jun 1, 2017
  *      Author: Jason Wang wangr1@ornl.gov
  */
 
-#ifndef ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_
-#define ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_
+#ifndef ADIOS2_TOOLKIT_ZMQ_ZMQPUBSUB_H_
+#define ADIOS2_TOOLKIT_ZMQ_ZMQPUBSUB_H_
 
 #include <mutex>
 #include <queue>
@@ -20,15 +20,15 @@
 
 namespace adios2
 {
-namespace transportman
+namespace zmq
 {
 
-class WANMan
+class ZmqPubSub
 {
 
 public:
-    WANMan();
-    ~WANMan();
+    ZmqPubSub();
+    ~ZmqPubSub();
 
     void OpenPublisher(const std::string &address, const int timeout);
     void OpenSubscriber(const std::string &address, const int timeout,
@@ -54,7 +54,7 @@ private:
     int m_Verbosity = 0;
 };
 
-} // end namespace transportman
+} // end namespace zmq
 } // end namespace adios2
 
-#endif /* ADIOS2_TOOLKIT_TRANSPORTMAN_WANMAN_WANMAN_H_ */
+#endif /* ADIOS2_TOOLKIT_ZMQ_ZMQPUBSUB_H_ */

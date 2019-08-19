@@ -16,7 +16,7 @@
 #include "adios2/engine/bp4/BP4Writer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
-#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
+#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
 #include "../../bindings/CXX11/adios2.h"
 
@@ -98,7 +98,7 @@ private:
 
     std::vector<std::shared_ptr<format::DataManSerializer>> m_Serializers;
     format::DataManSerializer m_Deserializer;
-    transportman::StagingMan m_SendStagingMan;
+    adios2::zmq::ZmqReqRep m_SendStagingMan;
 
 #define declare_type(T)                                                        \
     void DoPutSync(Variable<T> &, const T *) final;                            \
