@@ -24,21 +24,17 @@ TEST_F(DataManEngineTest, DISABLED_WriteRead_2D_P2P_BZip2)
     Dims shape = {10, 10};
     Dims start = {0, 0};
     Dims count = {10, 10};
-    size_t steps = 200;
-    adios2::Params engineParams = {{"WorkflowMode", "stream"}};
-    std::vector<adios2::Params> transportParams = {{
-        {"Library", "ZMQ"},
-        {"IPAddress", "127.0.0.1"},
-        {"Port", "12309"},
-        {"CompressionMethod", "bzip2"},
-    }};
+    size_t steps = 10000;
+    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
+                                   {"Port", "12312"}};
 
     // run workflow
-    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
-                         engineParams, transportParams);
+    auto r =
+        std::thread(DataManReaderP2P, shape, start, count, steps, engineParams);
     std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         engineParams, transportParams);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto w =
+        std::thread(DataManWriter, shape, start, count, steps, engineParams);
     std::cout << "Writer thread started" << std::endl;
     w.join();
     std::cout << "Writer thread ended" << std::endl;

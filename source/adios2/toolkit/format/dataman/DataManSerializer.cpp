@@ -21,16 +21,13 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(MPI_Comm mpiComm,
-                                     const size_t writerBufferSize,
-                                     const bool isRowMajor)
+DataManSerializer::DataManSerializer(MPI_Comm mpiComm, const bool isRowMajor)
 : m_MpiComm(mpiComm), m_IsRowMajor(isRowMajor),
   m_IsLittleEndian(helper::IsLittleEndian()),
   m_DeferredRequestsToSend(std::make_shared<DeferredRequestMap>())
 {
     MPI_Comm_size(m_MpiComm, &m_MpiSize);
     MPI_Comm_rank(m_MpiComm, &m_MpiRank);
-    NewWriterBuffer(writerBufferSize);
 }
 
 void DataManSerializer::NewWriterBuffer(size_t bufferSize)
@@ -288,17 +285,6 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
             std::cout << metaJ.dump(4) << std::endl;
         }
     }
-}
-
-VecPtr DataManSerializer::EndSignal(size_t step)
-{
-    TAU_SCOPED_TIMER_FUNC();
-    nlohmann::json j;
-    j["FinalStep"] = step;
-    std::string s = j.dump() + '\0';
-    auto c = std::make_shared<std::vector<char>>(s.size());
-    std::memcpy(c->data(), s.c_str(), s.size());
-    return c;
 }
 
 bool DataManSerializer::IsCompressionAvailable(const std::string &method,
@@ -569,29 +555,11 @@ int DataManSerializer::PutPack(const VecPtr data)
     {
         return -1;
     }
-
-    // check if is control signal
-    if (data->size() < 128)
-    {
-        try
-        {
-            nlohmann::json metaj = nlohmann::json::parse(data->data());
-            size_t finalStep = metaj["FinalStep"];
-            return finalStep;
-        }
-        catch (std::exception)
-        {
-        }
-    }
-
-    // if not control signal then go through standard deserialization
     uint64_t metaPosition =
         (reinterpret_cast<const uint64_t *>(data->data()))[0];
     uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
     nlohmann::json j = DeserializeJson(data->data() + metaPosition, metaSize);
-
     JsonToDataManVarMap(j, data);
-
     return 0;
 }
 

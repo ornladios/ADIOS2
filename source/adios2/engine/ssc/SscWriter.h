@@ -17,7 +17,7 @@
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
-#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
+#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
 namespace adios2
 {
@@ -45,7 +45,8 @@ public:
 
 private:
     int m_Channels = 1;
-    size_t m_DefaultBufferSize = 1024;
+    size_t m_SerializationBufferSize = 1024;
+    size_t m_ReceiverBufferSize = 1e8;
     int m_Port = 12307;
     int m_MaxRanksPerNode = 200;
     int m_MaxAppsPerNode = 10;

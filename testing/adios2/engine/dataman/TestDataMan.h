@@ -59,8 +59,7 @@ void PrintData(const T *data, const size_t size, const size_t step)
 }
 
 template <class T>
-void VerifyData(const std::complex<T> *data, const size_t size, size_t step,
-                const std::vector<Params> &transParams)
+void VerifyData(const std::complex<T> *data, const size_t size, size_t step)
 {
     std::vector<std::complex<T>> tmpdata(size);
     GenData(tmpdata, step);
@@ -76,26 +75,13 @@ void VerifyData(const std::complex<T> *data, const size_t size, size_t step,
 }
 
 template <class T>
-void VerifyData(const T *data, const size_t size, size_t step,
-                const std::vector<Params> &transParams)
+void VerifyData(const T *data, const size_t size, size_t step)
 {
-    bool compressed = false;
-    for (const auto &i : transParams)
-    {
-        auto j = i.find("CompressionMethod");
-        if (j != i.end())
-        {
-            compressed = true;
-        }
-    }
     std::vector<T> tmpdata(size);
     GenData(tmpdata, step);
     for (size_t i = 0; i < size; ++i)
     {
-        if (!compressed)
-        {
-            ASSERT_EQ(data[i], tmpdata[i]);
-        }
+        ASSERT_EQ(data[i], tmpdata[i]);
     }
     if (print_lines < 100)
     {
@@ -105,15 +91,13 @@ void VerifyData(const T *data, const size_t size, size_t step,
 }
 
 template <class T>
-void VerifyData(const std::vector<T> &data, const size_t step,
-                const std::vector<Params> &transParams)
+void VerifyData(const std::vector<T> &data, const size_t step)
 {
-    VerifyData(data.data(), data.size(), step, transParams);
+    VerifyData(data.data(), data.size(), step);
 }
 
 void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
-                   const size_t steps, const adios2::Params &engineParams,
-                   const std::vector<adios2::Params> &transParams)
+                   const size_t steps, const adios2::Params &engineParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -125,10 +109,6 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -191,8 +171,7 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
 }
 
 void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
-                      const size_t steps, const adios2::Params &engineParams,
-                      const std::vector<adios2::Params> &transParams)
+                      const size_t steps, const adios2::Params &engineParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -204,10 +183,6 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
     std::vector<char> myChars(datasize);
@@ -221,8 +196,8 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     bool received_steps = false;
-    size_t i;
-    for (i = 0; i < steps; ++i)
+    size_t currentStep;
+    while (true)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
@@ -239,8 +214,7 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
                 }
                 std::cout << std::endl;
             }
-            size_t currentStep = dataManReader.CurrentStep();
-            //            ASSERT_EQ(i, currentStep);
+            currentStep = dataManReader.CurrentStep();
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -284,23 +258,27 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
                               adios2::Mode::Sync);
             dataManReader.Get(bpDComplexes, myDComplexes.data(),
                               adios2::Mode::Sync);
-            VerifyData(myChars, currentStep, transParams);
-            VerifyData(myUChars, currentStep, transParams);
-            VerifyData(myShorts, currentStep, transParams);
-            VerifyData(myUShorts, currentStep, transParams);
-            VerifyData(myInts, currentStep, transParams);
-            VerifyData(myUInts, currentStep, transParams);
-            VerifyData(myFloats, currentStep, transParams);
-            VerifyData(myDoubles, currentStep, transParams);
-            VerifyData(myComplexes, currentStep, transParams);
-            VerifyData(myDComplexes, currentStep, transParams);
+            VerifyData(myChars, currentStep);
+            VerifyData(myUChars, currentStep);
+            VerifyData(myShorts, currentStep);
+            VerifyData(myUShorts, currentStep);
+            VerifyData(myInts, currentStep);
+            VerifyData(myUInts, currentStep);
+            VerifyData(myFloats, currentStep);
+            VerifyData(myDoubles, currentStep);
+            VerifyData(myComplexes, currentStep);
+            VerifyData(myDComplexes, currentStep);
             dataManReader.EndStep();
         }
-        else
+        else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "DataManReader end of stream at Step " << i
+            std::cout << "DataManReader end of stream at Step " << currentStep
                       << std::endl;
             break;
+        }
+        else if (status == adios2::StepStatus::NotReady)
+        {
+            continue;
         }
     }
     if (received_steps)
@@ -308,16 +286,14 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
         auto attInt = dataManIO.InquireAttribute<int>("AttInt");
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
+        ASSERT_EQ(currentStep + 1, steps);
     }
-    //    ASSERT_EQ(i, steps);
     dataManReader.Close();
-    print_lines = 0;
 }
 
 void DataManReaderSubscribe(const Dims &shape, const Dims &start,
                             const Dims &count, const size_t steps,
                             const adios2::Params &engineParams,
-                            const std::vector<adios2::Params> &transParams,
                             const size_t timeout)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
@@ -331,42 +307,29 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     adios2::Variable<float> bpFloats;
-    size_t i = 0;
     auto start_time = std::chrono::system_clock::now();
-    while (i < steps - 1)
+    size_t currentStep;
+    while (true)
     {
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
-        if (duration.count() > timeout)
-        {
-            std::cout << "DataMan Timeout. Last step received: " << i
-                      << std::endl;
-            ASSERT_GT(i, 0);
-            break;
-        }
         adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
-            while (not bpFloats)
-            {
-                bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            }
+            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
             bpFloats.SetSelection({start, count});
             dataManReader.Get<float>(bpFloats, myFloats.data(),
                                      adios2::Mode::Sync);
-            i = dataManReader.CurrentStep();
-            VerifyData(myFloats, i, transParams);
+            currentStep = dataManReader.CurrentStep();
+            VerifyData(myFloats, currentStep);
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
             break;
+        }
+        else if (status == adios2::StepStatus::NotReady)
+        {
+            continue;
         }
         dataManReader.EndStep();
     }

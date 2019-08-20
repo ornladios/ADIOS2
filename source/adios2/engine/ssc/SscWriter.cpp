@@ -28,8 +28,7 @@ namespace engine
 SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SscWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, m_DefaultBufferSize,
-                      helper::IsRowMajor(io.m_HostLanguage))
+  m_DataManSerializer(mpiComm, helper::IsRowMajor(io.m_HostLanguage))
 {
     TAU_SCOPED_TIMER_FUNC();
     Init();
@@ -48,7 +47,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_CurrentStep % m_StepsPerAggregation == 0)
     {
         m_CurrentStepActive = true;
-        m_DataManSerializer.NewWriterBuffer(m_DefaultBufferSize);
+        m_DataManSerializer.NewWriterBuffer(m_SerializationBufferSize);
         if (not m_AttributesSet)
         {
             m_DataManSerializer.PutAttributes(m_IO);
@@ -157,11 +156,11 @@ void SscWriter::InitTransports()
 
 void SscWriter::ReplyThread(const std::string &address)
 {
-    transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
-    tpm.OpenTransport(address);
+    adios2::zmq::ZmqReqRep replier;
+    replier.OpenReplier(address, m_Timeout, m_ReceiverBufferSize);
     while (m_Listening)
     {
-        auto request = tpm.ReceiveRequest();
+        auto request = replier.ReceiveRequest();
         if (request == nullptr)
         {
             continue;
@@ -186,7 +185,7 @@ void SscWriter::ReplyThread(const std::string &address)
                         stepRequested, stepProvided, m_AppID);
                 }
             }
-            tpm.SendReply(aggMetadata);
+            replier.SendReply(aggMetadata);
 
             if (m_Verbosity >= 100)
             {
@@ -206,7 +205,7 @@ void SscWriter::ReplyThread(const std::string &address)
             std::unordered_map<std::string, Params> p = m_CompressionParams;
             m_CompressionParamsMutex.unlock();
             auto reply = m_DataManSerializer.GenerateReply(*request, step, p);
-            tpm.SendReply(reply);
+            replier.SendReply(reply);
             if (reply->size() <= 16)
             {
                 if (m_Tolerance)

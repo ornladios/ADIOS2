@@ -28,22 +28,25 @@ public:
     DataManReader(IO &io, const std::string &name, const Mode mode,
                   MPI_Comm mpiComm);
     virtual ~DataManReader();
-    StepStatus BeginStep(StepMode stepMode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode stepMode, const float timeoutSeconds) final;
     size_t CurrentStep() const final;
     void PerformGets() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
 private:
-    bool m_Listening = false;
+    bool m_ProvideLatest = false;
+    bool m_InitFailed = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
+    adios2::zmq::ZmqReqRep m_ZmqRequester;
+    std::vector<std::string> m_DataAddresses;
+    std::vector<std::string> m_ControlAddresses;
+    std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
+    std::thread m_SubscriberThread;
 
-    format::DataManSerializer m_DataManSerializer;
     format::DmvVecPtrMap m_MetaDataMap;
 
-    void Init();
-    void IOThread(std::shared_ptr<transportman::WANMan> man);
+    void SubscriberThread();
     void DoClose(const int transportIndex = -1) final;
 
 #define declare_type(T)                                                        \

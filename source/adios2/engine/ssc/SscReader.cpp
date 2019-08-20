@@ -28,20 +28,54 @@ namespace engine
 SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
                      MPI_Comm mpiComm)
 : Engine("SscReader", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, 0, helper::IsRowMajor(io.m_HostLanguage)),
+  m_DataManSerializer(mpiComm, helper::IsRowMajor(io.m_HostLanguage)),
   m_RepliedMetadata(std::make_shared<std::vector<char>>())
 {
     TAU_SCOPED_TIMER_FUNC();
-    m_DataTransport = std::make_shared<transportman::StagingMan>(
-        mpiComm, Mode::Read, m_Timeout, 1e9);
-    m_MetadataTransport = std::make_shared<transportman::StagingMan>(
-        mpiComm, Mode::Read, m_Timeout, 1e8);
-    m_EndMessage = " in call to IO Open SscReader " + m_Name + "\n";
+
     MPI_Comm_rank(mpiComm, &m_MpiRank);
-    Init();
+    srand(time(NULL));
+
+    // initialize parameters from IO
+    for (const auto &pair : m_IO.m_Parameters)
+    {
+        std::string key(pair.first);
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+        std::string value(pair.second);
+        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+        if (key == "verbose")
+        {
+            m_Verbosity = std::stoi(value);
+        }
+    }
+
+    // retrieve all writer addresses
+    helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc");
+
+    // initialize transports
+    m_DataTransport.OpenRequester(m_Timeout, m_DataReceiverBufferSize);
+    m_MetadataTransport.OpenRequester(m_Timeout, m_MetadataReceiverBufferSize);
+
+    // request attributes from writer
+    auto reply = std::make_shared<std::vector<char>>();
+    if (m_MpiRank == 0)
+    {
+        std::vector<char> request(2 * sizeof(int64_t));
+        reinterpret_cast<int64_t *>(request.data())[0] = m_AppID;
+        reinterpret_cast<int64_t *>(request.data())[1] = -3;
+        std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
+        while (reply->size() < 6)
+        {
+            reply = m_MetadataTransport.Request(request.data(), request.size(),
+                                                address);
+        }
+    }
+    m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
+    m_DataManSerializer.GetAttributes(m_IO);
+
     if (m_Verbosity >= 5)
     {
-        std::cout << "Staging Reader " << m_MpiRank << " Open(" << m_Name
+        std::cout << "SscReader " << m_MpiRank << " Open(" << m_Name
                   << ") in constructor." << std::endl;
     }
 }
@@ -54,10 +88,6 @@ SscReader::~SscReader()
         std::cout << "Staging Reader " << m_MpiRank << " destructor on "
                   << m_Name << "\n";
     }
-    m_MetadataTransport->CloseTransport();
-    m_DataTransport->CloseTransport();
-    m_DataTransport = nullptr;
-    m_MetadataTransport = nullptr;
 }
 
 StepStatus SscReader::BeginStepIterator(StepMode stepMode,
@@ -224,7 +254,8 @@ void SscReader::PerformGets()
 
     for (const auto &i : *requests)
     {
-        auto reply = m_DataTransport->Request(*i.second, i.first);
+        auto reply = m_DataTransport.Request(i.second->data(), i.second->size(),
+                                             i.first);
         if (reply->empty())
         {
             Log(1,
@@ -334,57 +365,6 @@ void SscReader::EndStep()
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscReader::Init()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    srand(time(NULL));
-    InitParameters();
-    helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc");
-
-    format::VecPtr reply = std::make_shared<std::vector<char>>();
-    if (m_MpiRank == 0)
-    {
-        std::vector<char> request(2 * sizeof(int64_t));
-        reinterpret_cast<int64_t *>(request.data())[0] = m_AppID;
-        reinterpret_cast<int64_t *>(request.data())[1] = -3;
-        std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
-        while (reply->size() < 6)
-        {
-            reply = m_MetadataTransport->Request(request, address);
-        }
-    }
-    m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
-    m_DataManSerializer.GetAttributes(m_IO);
-
-    if (m_Verbosity >= 5)
-    {
-        for (const auto &i : m_FullAddresses)
-        {
-            std::cout << i << std::endl;
-        }
-    }
-}
-
-void SscReader::InitParameters()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    for (const auto &pair : m_IO.m_Parameters)
-    {
-        std::string key(pair.first);
-        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-
-        std::string value(pair.second);
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-
-        if (key == "verbose")
-        {
-            m_Verbosity = std::stoi(value);
-        }
-    }
-}
-
-void SscReader::InitTransports() {}
-
 void SscReader::RequestMetadata(const int64_t step)
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -395,7 +375,8 @@ void SscReader::RequestMetadata(const int64_t step)
         reinterpret_cast<int64_t *>(request.data())[0] = m_AppID;
         reinterpret_cast<int64_t *>(request.data())[1] = step;
         std::string address = m_FullAddresses[rand() % m_FullAddresses.size()];
-        reply = m_MetadataTransport->Request(request, address);
+        reply = m_MetadataTransport.Request(request.data(), request.size(),
+                                            address);
     }
     m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
 }

@@ -20,7 +20,7 @@
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
-#include "adios2/toolkit/transportman/stagingman/StagingMan.h"
+#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
 namespace adios2
 {
@@ -47,8 +47,8 @@ public:
 private:
     bool m_Tolerance = false;
     format::DataManSerializer m_DataManSerializer;
-    std::shared_ptr<transportman::StagingMan> m_DataTransport;
-    std::shared_ptr<transportman::StagingMan> m_MetadataTransport;
+    adios2::zmq::ZmqReqRep m_DataTransport;
+    adios2::zmq::ZmqReqRep m_MetadataTransport;
     format::DmvVecPtrMap m_MetaDataMap;
     int64_t m_CurrentStep = -1;
     int m_MpiRank;
@@ -57,6 +57,8 @@ private:
     int m_RetryMax = 128;
     size_t m_AppID;
     bool m_ConnectionLost = false;
+    size_t m_DataReceiverBufferSize = 128 * 1024 * 1024;
+    size_t m_MetadataReceiverBufferSize = 128 * 1024 * 1024;
 
     struct Request
     {
@@ -74,9 +76,6 @@ private:
 
     void RequestMetadata(const int64_t step = -5);
 
-    void Init() final;
-    void InitParameters() final;
-    void InitTransports() final;
     template <typename T>
     void CheckIOVariable(const std::string &name, const Dims &shape);
 

@@ -23,32 +23,76 @@ namespace core
 namespace engine
 {
 
-DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode mode,
-                             MPI_Comm mpiComm)
-: DataManCommon("DataManWriter", io, name, mode, mpiComm)
+DataManWriter::DataManWriter(IO &io, const std::string &name,
+                             const Mode openMode, MPI_Comm mpiComm)
+: DataManCommon("DataManWriter", io, name, openMode, mpiComm)
 {
-    m_EndMessage = ", in call to Open DataManWriter\n";
-    Init();
+    if (m_StagingMode == "wide")
+    {
+        if (m_IPAddress.empty())
+        {
+            throw(std::invalid_argument(
+                "IP address not specified in wide area staging"));
+        }
+        m_Port += m_MpiRank;
+        m_ControlAddress =
+            "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+        m_DataAddress =
+            "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + m_MpiSize);
+
+        std::vector<char> allDaVec(32 * m_MpiSize, '\0');
+        std::vector<char> allCaVec(32 * m_MpiSize, '\0');
+
+        MPI_Allgather(m_DataAddress.data(), m_DataAddress.size(), MPI_CHAR,
+                      allDaVec.data(), 32, MPI_CHAR, m_MPIComm);
+        MPI_Allgather(m_ControlAddress.data(), m_ControlAddress.size(),
+                      MPI_CHAR, allCaVec.data(), 32, MPI_CHAR, m_MPIComm);
+
+        std::vector<std::string> daVec;
+        std::vector<std::string> caVec;
+
+        for (int i = 0; i < m_MpiSize; ++i)
+        {
+            daVec.push_back(std::string(allDaVec.begin() + i * 32,
+                                        allDaVec.begin() + (i + 1) * 32));
+            caVec.push_back(std::string(allCaVec.begin() + i * 32,
+                                        allCaVec.begin() + (i + 1) * 32));
+        }
+
+        nlohmann::json addJson;
+        addJson["DataAddresses"] = daVec;
+        addJson["ControlAddresses"] = caVec;
+
+        m_AllAddresses = addJson.dump() + '\0';
+    }
+    else if (m_StagingMode == "local")
+    {
+        // TODO: Add filesystem based handshake
+    }
+
+    m_DataPublisher.OpenPublisher(m_DataAddress, m_Timeout);
+
+    m_ControlThread =
+        std::thread(&DataManWriter::ControlThread, this, m_ControlAddress);
+}
+
+DataManWriter::~DataManWriter()
+{
+    if (not m_IsClosed)
+    {
+        DoClose();
+    }
 }
 
 StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
-    if (m_Verbosity >= 5)
-    {
-        std::cout << "DataManWriter::BeginStep() begin. Last step "
-                  << m_CurrentStep << std::endl;
-    }
     ++m_CurrentStep;
-
-    for (size_t i = 0; i < m_Channels; ++i)
-    {
-        m_DataManSerializer[i]->NewWriterBuffer(m_BufferSize);
-    }
+    m_DataManSerializer.NewWriterBuffer(m_SerializerBufferSize);
 
     if (m_Verbosity >= 5)
     {
-        std::cout << "DataManWriter::BeginStep() end. Current step "
-                  << m_CurrentStep << std::endl;
+        std::cout << "DataManWriter::BeginStep() Rank " << m_MpiRank
+                  << ", Step " << m_CurrentStep << std::endl;
     }
 
     return StepStatus::OK;
@@ -60,65 +104,19 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
-    for (auto &serializer : m_DataManSerializer)
-    {
-        serializer->PutAttributes(m_IO);
-    }
-
     if (m_CurrentStep == 0)
     {
-        m_DataManSerializer[0]->AggregateMetadata();
-        m_AggregatedMetadataMutex.lock();
-        int64_t stepProvided;
-        m_AggregatedMetadata =
-            m_DataManSerializer[0]->GetAggregatedMetadataPack(0, stepProvided,
-                                                              -1);
-        m_AggregatedMetadataMutex.unlock();
+        m_DataManSerializer.PutAttributes(m_IO);
     }
-
-    if (m_WorkflowMode == "file")
-    {
-        const auto buf = m_DataManSerializer[0]->GetLocalPack();
-        m_FileTransport.Write(buf->data(), buf->size());
-    }
-    else if (m_WorkflowMode == "stream")
-    {
-        for (size_t i = 0; i < m_Channels; ++i)
-        {
-            m_DataManSerializer[i]->AttachAttributes();
-            const auto buf = m_DataManSerializer[i]->GetLocalPack();
-            m_BufferSize = buf->size();
-            m_WANMan->Write(buf, i);
-        }
-    }
+    m_DataManSerializer.AttachAttributes();
+    const auto buf = m_DataManSerializer.GetLocalPack();
+    m_SerializerBufferSize = buf->size();
+    m_DataPublisher.PushBufferQueue(buf);
 }
 
 void DataManWriter::Flush(const int transportIndex) {}
 
 // PRIVATE functions below
-
-void DataManWriter::Init()
-{
-
-    if (m_WorkflowMode == "file")
-    {
-        m_FileTransport.Open(m_Name, Mode::Write);
-        return;
-    }
-
-    // initialize transports
-    m_WANMan = std::make_shared<transportman::WANMan>(m_MPIComm, m_DebugMode);
-    m_WANMan->OpenTransports(m_IO.m_TransportsParameters, Mode::Write,
-                             m_WorkflowMode, true);
-
-    // initialize serializer
-    for (size_t i = 0; i < m_Channels; ++i)
-    {
-        m_DataManSerializer.push_back(
-            std::make_shared<format::DataManSerializer>(m_MPIComm, m_BufferSize,
-                                                        m_IsRowMajor));
-    }
-}
 
 #define declare_type(T)                                                        \
     void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
@@ -134,26 +132,34 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void DataManWriter::DoClose(const int transportIndex)
 {
-    if (m_WorkflowMode == "file")
-    {
-        m_FileTransport.Close();
-        return;
-    }
+    nlohmann::json endSignal;
+    endSignal["FinalStep"] = m_CurrentStep;
+    std::string s = endSignal.dump() + '\0';
+    auto cvp = std::make_shared<std::vector<char>>(s.size());
+    std::memcpy(cvp->data(), s.c_str(), s.size());
+    m_DataPublisher.PushBufferQueue(cvp);
 
-    m_WANMan->Write(format::DataManSerializer::EndSignal(CurrentStep()), 0);
+    m_ThreadActive = false;
+    if (m_ControlThread.joinable())
+    {
+        m_ControlThread.join();
+    }
 }
 
-void DataManWriter::MetadataThread(const std::string &address)
+void DataManWriter::ControlThread(const std::string &address)
 {
-    transportman::StagingMan tpm(m_MPIComm, Mode::Write, 0, 1e7);
-    tpm.OpenTransport(address);
-    while (m_Listening)
+    adios2::zmq::ZmqReqRep replier;
+    replier.OpenReplier(address, m_Timeout, 8192);
+    while (m_ThreadActive)
     {
-        auto request = tpm.ReceiveRequest();
+        auto request = replier.ReceiveRequest();
         if (request && request->size() > 0)
         {
-            std::lock_guard<std::mutex> lck(m_AggregatedMetadataMutex);
-            tpm.SendReply(m_AggregatedMetadata);
+            std::string r(request->begin(), request->end());
+            if (r == "Address")
+            {
+                replier.SendReply(m_AllAddresses.data(), m_AllAddresses.size());
+            }
         }
     }
 }

@@ -65,12 +65,13 @@ void TableWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         auto serializer = m_Serializers[i];
         serializer->PutVar(variable, m_Name, CurrentStep(), m_MpiRank, "",
                            Params());
-        if (serializer->LocalBufferSize() > m_BufferSize / 2)
+        if (serializer->LocalBufferSize() > m_SerializerBufferSize / 2)
         {
             auto localPack = serializer->GetLocalPack();
-            auto reply = m_SendStagingMan.Request(*localPack,
-                                                  serializer->GetDestination());
-            serializer->NewWriterBuffer(m_BufferSize);
+            auto reply =
+                m_SendStagingMan.Request(localPack->data(), localPack->size(),
+                                         serializer->GetDestination());
+            serializer->NewWriterBuffer(m_SerializerBufferSize);
             if (m_Verbosity >= 1)
             {
                 std::cout << "TableWriter::PutDeferredCommon Rank " << m_MpiRank

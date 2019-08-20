@@ -117,8 +117,7 @@ void VerifyData(const T *data, size_t step, const Dims &start,
 
 void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &count, const size_t steps,
-                               const adios2::Params &engineParams,
-                               const std::vector<adios2::Params> &transParams)
+                               const adios2::Params &engineParams)
 {
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
@@ -130,10 +129,6 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -198,8 +193,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
 void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const Dims &count, const Dims &memStart,
                                const Dims &memCount, const size_t steps,
-                               const adios2::Params &engineParams,
-                               const std::vector<adios2::Params> &transParams)
+                               const adios2::Params &engineParams)
 {
 #ifdef ADIOS2_HAVE_MPI
     adios2::ADIOS adios(MPI_COMM_SELF, adios2::DebugON);
@@ -209,10 +203,6 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    for (const auto &params : transParams)
-    {
-        dataManIO.AddTransport("WAN", params);
-    }
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
     size_t datasize = std::accumulate(memCount.begin(), memCount.end(), 1,
@@ -228,20 +218,10 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     bool received_steps = false;
-    size_t i;
-    for (i = 0; i < steps; ++i)
+    size_t currentStep;
+    while (true)
     {
-        GenData(myChars, i, memStart, memCount, shape);
-        GenData(myUChars, i, memStart, memCount, shape);
-        GenData(myShorts, i, memStart, memCount, shape);
-        GenData(myUShorts, i, memStart, memCount, shape);
-        GenData(myInts, i, memStart, memCount, shape);
-        GenData(myUInts, i, memStart, memCount, shape);
-        GenData(myFloats, i, memStart, memCount, shape);
-        GenData(myDoubles, i, memStart, memCount, shape);
-        GenData(myComplexes, i, memStart, memCount, shape);
-        GenData(myDComplexes, i, memStart, memCount, shape);
-        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+        adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
@@ -256,8 +236,17 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                 }
                 std::cout << std::endl;
             }
-            size_t currentStep = dataManReader.CurrentStep();
-            //            ASSERT_EQ(i, currentStep);
+            currentStep = dataManReader.CurrentStep();
+            GenData(myChars, currentStep, memStart, memCount, shape);
+            GenData(myUChars, currentStep, memStart, memCount, shape);
+            GenData(myShorts, currentStep, memStart, memCount, shape);
+            GenData(myUShorts, currentStep, memStart, memCount, shape);
+            GenData(myInts, currentStep, memStart, memCount, shape);
+            GenData(myUInts, currentStep, memStart, memCount, shape);
+            GenData(myFloats, currentStep, memStart, memCount, shape);
+            GenData(myDoubles, currentStep, memStart, memCount, shape);
+            GenData(myComplexes, currentStep, memStart, memCount, shape);
+            GenData(myDComplexes, currentStep, memStart, memCount, shape);
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -330,11 +319,13 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                        shape);
             dataManReader.EndStep();
         }
-        else
+        else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "DataManReader end of stream at Step " << i
-                      << std::endl;
             break;
+        }
+        else if (status == adios2::StepStatus::NotReady)
+        {
+            continue;
         }
     }
     if (received_steps)
@@ -344,8 +335,8 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                   << ", expected 110" << std::endl;
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
+        ASSERT_EQ(currentStep + 1, steps);
     }
-    //    ASSERT_EQ(i, steps);
     dataManReader.Close();
     print_lines = 0;
 }
@@ -363,23 +354,23 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
     memcount = {7, 9};
 
     size_t steps = 1000;
-    adios2::Params engineParams = {{"WorkflowMode", "stream"}};
-    std::vector<adios2::Params> transportParams = {{
-        {"Library", "ZMQ"},
-        {"IPAddress", "127.0.0.1"},
-        {"Port", "12312"},
-    }};
+    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
+                                   {"Port", "12308"}};
     // run workflow
-    auto r =
-        std::thread(DataManReaderP2PMemSelect, shape, start, count, memstart,
-                    memcount, steps, engineParams, transportParams);
+
+    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
+                         memstart, memcount, steps, engineParams);
     std::cout << "Reader thread started" << std::endl;
 
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
-                         engineParams, transportParams);
+                         engineParams);
     std::cout << "Writer thread started" << std::endl;
+
     w.join();
     std::cout << "Writer thread ended" << std::endl;
+
     r.join();
     std::cout << "Reader thread ended" << std::endl;
 }
