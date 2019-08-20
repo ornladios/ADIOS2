@@ -31,8 +31,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
 
-    m_Verbosity = 10;
-
     if (m_StagingMode == "wide")
     {
         if (m_IPAddress.empty())

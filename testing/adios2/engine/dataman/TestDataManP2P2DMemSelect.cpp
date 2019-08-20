@@ -335,8 +335,8 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                   << ", expected 110" << std::endl;
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
+        ASSERT_EQ(currentStep + 1, steps);
     }
-    ASSERT_EQ(currentStep + 1, steps);
     dataManReader.Close();
     print_lines = 0;
 }
