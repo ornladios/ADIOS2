@@ -200,6 +200,7 @@ if(ADIOS2_HAVE_MPI)
     foreach(test ${INSITU_TESTS})
         add_common_test(${test} InSituMPI)
     endforeach()
+    set_tests_properties(Staging.1x1Bulk.InSituMPI PROPERTIES TIMEOUT 300 )
 endif()
 
 #
@@ -221,7 +222,7 @@ if(NOT MSVC)    # not on windows
         add_common_test(${test} BP3)
     endforeach()
 endif()
-set_tests_properties(Staging.1x1Bulk.InSituMPI PROPERTIES TIMEOUT 300 )
+
 
 #
 #   Setup streaming tests for BP4 engine
