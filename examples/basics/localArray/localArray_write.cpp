@@ -7,7 +7,7 @@
  * If one cannot or does not want to organize arrays present on each process
  * as one global array, still one can write them out with the same name.
  * Reading, however, needs to be handled differently: each process' array has
- * to be read separately, using Writeblock selections. The size of each process
+ * to be read separately, using Block selections. The size of each process
  * block should be discovered by the reading application by inquiring per-block
  * size information of the variable, and allocate memory for reading
  * accordingly.
@@ -34,16 +34,13 @@
  * and notice the progression in the changes.
  *
  * Created on: Jun 2, 2017
- *      Author: pnorbert
+ *      Author: Norbert Podhorszki <pnorbert@ornl.gov
  */
 
 #include <iostream>
 #include <vector>
 
 #include <adios2.h>
-#ifdef ADIOS2_HAVE_MPI
-#include <mpi.h>
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -91,6 +88,8 @@ int main(int argc, char *argv[])
         // Get io settings from the config file or
         // create one with default settings here
         adios2::IO io = adios.DeclareIO("Output");
+        io.SetEngine("BP3");
+        io.SetParameters({{"verbose", "4"}});
 
         /*
          * Define local array: type, name, local size
@@ -164,10 +163,10 @@ int main(int argc, char *argv[])
 
             // random chance who writes it
             unsigned int chance = rand() % 100;
-            if (step == 2)
+            /*if (step == 2)
             {
                 chance = 0;
-            }
+            }*/
             bool doWrite = (chance > 60);
             if (doWrite)
             {
