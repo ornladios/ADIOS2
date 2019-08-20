@@ -1616,9 +1616,9 @@ static void ProcessLockDefnsList(SstStream Stream, ReturnMetadataInfo Metadata)
                 WS_ReaderInfo Reader = (WS_ReaderInfo)Stream->Readers[j];
 
                 Reader->ReaderDefinitionsLocked = 1;
-                if (Stream->DP_Interface->readPatternLocked)
+                if (Stream->DP_Interface->WSRreadPatternLocked)
                 {
-                    Stream->DP_Interface->readPatternLocked(
+                    Stream->DP_Interface->WSRreadPatternLocked(
                         &Svcs, Reader->DP_WSR_Stream, List->Timestep);
                 }
                 CP_verbose(Stream, "LockDefns List, FOUND TS %ld\n",
@@ -2199,9 +2199,9 @@ extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
         ParentStream->LockDefnsCount++;
     }
     Reader->ReaderDefinitionsLocked = 1;
-    if (ParentStream->DP_Interface->readPatternLocked)
+    if (ParentStream->DP_Interface->WSRreadPatternLocked)
     {
-        ParentStream->DP_Interface->readPatternLocked(
+        ParentStream->DP_Interface->WSRreadPatternLocked(
             &Svcs, Reader->DP_WSR_Stream, Msg->Timestep);
     }
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);

@@ -60,6 +60,8 @@
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
 set (1x1_CMD "run_test.py -nw 1 -nr 1")
+set (1x1Bulk_CMD "run_test.py -nw 1 -nr 1 --warg=--num_steps --warg=5000 --rarg=--num_steps --rarg=5000")
+set (1x1BulkLockGeometry_CMD "run_test.py -nw 1 -nr 1  --warg=--num_steps --warg=5000 --rarg=--num_steps --rarg=5000 --warg=--lock_geometry --rarg=--lock_geometry")
 set (2x1_CMD "run_test.py -nw 2 -nr 1")
 set (2x1ZeroDataVar_CMD "run_test.py -nw 2 -nr 1 --warg=--zero_data_var")
 set (2x1ZeroDataR64_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWrite -r TestCommonReadR64 --warg=--zero_data_var")

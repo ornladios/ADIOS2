@@ -192,6 +192,11 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Advance to the next time step
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
+        if (LockGeometry)
+        {
+            // we'll never change our data decomposition
+            engine.LockWriterDefinitions();
+        }
         engine.EndStep();
     }
 

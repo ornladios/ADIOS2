@@ -121,7 +121,7 @@ if (ADIOS2_HAVE_MPI AND NOT ("${MPIEXEC_EXECUTABLE}" STREQUAL "MPIEXEC_EXECUTABL
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
+set (SIMPLE_TESTS "1x1;1x1Bulk;1x1BulkLockGeometry;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
@@ -195,6 +195,8 @@ if(ADIOS2_HAVE_MPI)
     list (FILTER INSITU_TESTS EXCLUDE REGEX "DelayedReader.*")
     # Fortran scalar reads don't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
+    # 
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "BulkLockGeometry")
     foreach(test ${INSITU_TESTS})
         add_common_test(${test} InSituMPI)
     endforeach()
@@ -203,18 +205,23 @@ endif()
 #
 #   Setup tests for BP engines
 #
+
 if(NOT MSVC)    # not on windows
-    # Local Vars don't work for InSitu
     set (BP_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER BP_TESTS EXCLUDE REGEX "DelayedReader")
     # SharedVars fail with BP*
     list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
     foreach(test ${BP_TESTS})
-        add_common_test(${test} BP3)
         add_common_test(${test} BP4)
     endforeach()
+    # BP3 fails to handle lots of timesteps
+    list (FILTER BP_TESTS EXCLUDE REGEX "Bulk.*")
+    foreach(test ${BP_TESTS})
+        add_common_test(${test} BP3)
+    endforeach()
 endif()
+set_tests_properties(Staging.1x1Bulk.InSituMPI PROPERTIES TIMEOUT 300 )
 
 #
 #   Setup streaming tests for BP4 engine

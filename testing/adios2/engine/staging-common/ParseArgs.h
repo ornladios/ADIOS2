@@ -27,6 +27,7 @@ int ZeroDataRank = 0;
 int DelayWhileHoldingStep = 0;
 int LongFirstDelay = 0;
 int FirstTimestepMustBeZero = 0;
+int LockGeometry = 0;
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
 
@@ -110,6 +111,10 @@ static void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--precious_first")
         {
             FirstTimestepMustBeZero = 1;
+        }
+        else if (std::string(argv[1]) == "--lock_geometry")
+        {
+            LockGeometry = 1;
         }
         else if (std::string(argv[1]) == "--ignore_time_gap")
         {

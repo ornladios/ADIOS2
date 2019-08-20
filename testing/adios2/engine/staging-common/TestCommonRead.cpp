@@ -260,6 +260,11 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
         engine.Get(var_time, (int64_t *)&write_time);
+        if (LockGeometry)
+        {
+            // we'll never change our data decomposition
+            engine.LockReaderSelections();
+        }
         engine.EndStep();
 
         EXPECT_EQ(validateCommonTestData(myStart, myLength, t, !var_c32), 0);

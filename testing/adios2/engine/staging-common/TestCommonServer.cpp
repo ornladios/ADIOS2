@@ -154,6 +154,11 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         // Advance to the next time step
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
+        if (LockGeometry)
+        {
+            // we'll never change our data decomposition
+            engine.LockWriterDefinitions();
+        }
         engine.EndStep();
         std::this_thread::sleep_for(std::chrono::milliseconds(
             DelayMS)); /* sleep for DelayMS milliseconds */

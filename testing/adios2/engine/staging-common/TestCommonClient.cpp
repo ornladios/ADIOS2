@@ -268,6 +268,11 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         engine.Get(var_r64_2d_rev, in_R64_2d_rev.data());
         std::time_t write_time;
         engine.Get(var_time, (int64_t *)&write_time);
+        if (LockGeometry)
+        {
+            // we'll never change our data decomposition
+            engine.LockReaderSelections();
+        }
         if (IncreasingDelay && DelayWhileHoldingStep)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(
