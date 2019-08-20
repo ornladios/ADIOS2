@@ -119,6 +119,15 @@ void ZmqPubSub::WriterThread(const std::string &address)
             }
         }
     }
+
+    if (socket)
+    {
+        zmq_close(socket);
+    }
+    if (context)
+    {
+        zmq_ctx_destroy(context);
+    }
 }
 
 void ZmqPubSub::ReaderThread(const std::string &address, const int timeout,
@@ -161,6 +170,15 @@ void ZmqPubSub::ReaderThread(const std::string &address, const int timeout,
                           << buff->size() << std::endl;
             }
         }
+    }
+
+    if (socket)
+    {
+        zmq_close(socket);
+    }
+    if (context)
+    {
+        zmq_ctx_destroy(context);
     }
 }
 

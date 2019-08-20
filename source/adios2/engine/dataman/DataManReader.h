@@ -36,6 +36,7 @@ public:
 
 private:
     bool m_ProvideLatest = false;
+    bool m_InitFailed = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
     adios2::zmq::ZmqReqRep m_ZmqRequester;
     std::vector<std::string> m_DataAddresses;

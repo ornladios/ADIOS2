@@ -28,7 +28,10 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 {
     GetParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
                  m_ProvideLatest);
+
     m_ZmqRequester.OpenRequester(m_Timeout, m_ReceiverBufferSize);
+
+    m_Verbosity = 10;
 
     if (m_StagingMode == "wide")
     {
@@ -42,10 +45,20 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
         std::string request = "Address";
         auto reply =
             m_ZmqRequester.Request(request.data(), request.size(), address);
+
+        auto start_time = std::chrono::system_clock::now();
         while (reply == nullptr or reply->empty())
         {
             reply =
                 m_ZmqRequester.Request(request.data(), request.size(), address);
+            auto now_time = std::chrono::system_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                now_time - start_time);
+            if (duration.count() > m_Timeout)
+            {
+                m_InitFailed = true;
+                return;
+            }
         }
         auto addJson = nlohmann::json::parse(*reply);
         m_DataAddresses =
@@ -70,6 +83,11 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
 
 DataManReader::~DataManReader()
 {
+    if (m_Verbosity >= 5)
+    {
+        std::cout << "DataManReader::~DataManReader() Step " << m_CurrentStep
+                  << std::endl;
+    }
     if (not m_IsClosed)
     {
         DoClose();
@@ -85,7 +103,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                   << m_CurrentStep << std::endl;
     }
 
-    if (m_CurrentStep == m_FinalStep && m_CurrentStep > 0)
+    if (m_InitFailed or (m_CurrentStep == m_FinalStep && m_CurrentStep > 0))
     {
         return StepStatus::EndOfStream;
     }
@@ -200,11 +218,21 @@ void DataManReader::SubscriberThread()
             auto buffer = z->PopBufferQueue();
             if (buffer != nullptr && buffer->size() > 0)
             {
-                int ret = m_DataManSerializer.PutPack(buffer);
-                if (ret > 0)
+                // check if is control signal
+                if (buffer->size() < 64)
                 {
-                    m_FinalStep = ret;
+                    try
+                    {
+                        nlohmann::json jmsg =
+                            nlohmann::json::parse(buffer->data());
+                        m_FinalStep = jmsg["FinalStep"].get<size_t>();
+                        continue;
+                    }
+                    catch (std::exception)
+                    {
+                    }
                 }
+                m_DataManSerializer.PutPack(buffer);
             }
         }
     }

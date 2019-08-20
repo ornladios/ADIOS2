@@ -196,8 +196,8 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     bool received_steps = false;
-    size_t i;
-    for (i = 0; i < steps; ++i)
+    size_t currentStep;
+    while (true)
     {
         adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
@@ -214,8 +214,7 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
                 }
                 std::cout << std::endl;
             }
-            size_t currentStep = dataManReader.CurrentStep();
-            //            ASSERT_EQ(i, currentStep);
+            currentStep = dataManReader.CurrentStep();
             adios2::Variable<char> bpChars =
                 dataManIO.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
@@ -271,11 +270,15 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
             VerifyData(myDComplexes, currentStep);
             dataManReader.EndStep();
         }
-        else
+        else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "DataManReader end of stream at Step " << i
+            std::cout << "DataManReader end of stream at Step " << currentStep
                       << std::endl;
             break;
+        }
+        else if (status == adios2::StepStatus::NotReady)
+        {
+            continue;
         }
     }
     if (received_steps)
@@ -284,9 +287,8 @@ void DataManReaderP2P(const Dims &shape, const Dims &start, const Dims &count,
         ASSERT_EQ(110, attInt.Data()[0]);
         ASSERT_NE(111, attInt.Data()[0]);
     }
-    //    ASSERT_EQ(i, steps);
+    ASSERT_EQ(currentStep + 1, steps);
     dataManReader.Close();
-    print_lines = 0;
 }
 
 void DataManReaderSubscribe(const Dims &shape, const Dims &start,
@@ -307,36 +309,27 @@ void DataManReaderSubscribe(const Dims &shape, const Dims &start,
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
     adios2::Variable<float> bpFloats;
-    size_t i = 0;
     auto start_time = std::chrono::system_clock::now();
-    while (i < steps - 1)
+    size_t currentStep;
+    while (true)
     {
-        auto now_time = std::chrono::system_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-            now_time - start_time);
-        if (duration.count() > timeout)
-        {
-            std::cout << "DataMan Timeout. Last step received: " << i
-                      << std::endl;
-            ASSERT_GT(i, 0);
-            break;
-        }
         adios2::StepStatus status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
-            while (not bpFloats)
-            {
-                bpFloats = dataManIO.InquireVariable<float>("bpFloats");
-            }
+            bpFloats = dataManIO.InquireVariable<float>("bpFloats");
             bpFloats.SetSelection({start, count});
             dataManReader.Get<float>(bpFloats, myFloats.data(),
                                      adios2::Mode::Sync);
-            i = dataManReader.CurrentStep();
-            VerifyData(myFloats, i);
+            currentStep = dataManReader.CurrentStep();
+            VerifyData(myFloats, currentStep);
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
             break;
+        }
+        else if (status == adios2::StepStatus::NotReady)
+        {
+            continue;
         }
         dataManReader.EndStep();
     }

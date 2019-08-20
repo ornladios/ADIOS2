@@ -555,29 +555,11 @@ int DataManSerializer::PutPack(const VecPtr data)
     {
         return -1;
     }
-
-    // check if is control signal
-    if (data->size() < 128)
-    {
-        try
-        {
-            nlohmann::json metaj = nlohmann::json::parse(data->data());
-            size_t finalStep = metaj["FinalStep"];
-            return finalStep;
-        }
-        catch (std::exception)
-        {
-        }
-    }
-
-    // if not control signal then go through standard deserialization
     uint64_t metaPosition =
         (reinterpret_cast<const uint64_t *>(data->data()))[0];
     uint64_t metaSize = (reinterpret_cast<const uint64_t *>(data->data()))[1];
     nlohmann::json j = DeserializeJson(data->data() + metaPosition, metaSize);
-
     JsonToDataManVarMap(j, data);
-
     return 0;
 }
 

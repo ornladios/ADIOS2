@@ -30,6 +30,7 @@ DataManCommon::DataManCommon(const std::string engineType, IO &io,
     GetParameter(m_IO.m_Parameters, "Port", m_Port);
     GetParameter(m_IO.m_Parameters, "StagingMode", m_StagingMode);
     GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
+    GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
 }
 
 DataManCommon::~DataManCommon() {}
