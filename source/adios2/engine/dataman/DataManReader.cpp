@@ -43,7 +43,6 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
         std::string request = "Address";
         auto reply =
             m_ZmqRequester.Request(request.data(), request.size(), address);
-
         auto start_time = std::chrono::system_clock::now();
         while (reply == nullptr or reply->empty())
         {
@@ -146,7 +145,7 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                 now_time - start_time);
             if (duration.count() > timeoutSeconds)
             {
-                return StepStatus::NotReady;
+                return StepStatus::EndOfStream;
             }
         }
         else
