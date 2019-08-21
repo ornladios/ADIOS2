@@ -100,8 +100,21 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
                   << m_CurrentStep << std::endl;
     }
 
-    if (m_InitFailed or (m_CurrentStep == m_FinalStep && m_CurrentStep > 0))
+    if (m_InitFailed)
     {
+        if (m_Verbosity >= 5)
+        {
+            std::cout << "DataManReader::BeginStep() returned EndOfStream due to initialization failure" << std::endl;
+        }
+        return StepStatus::EndOfStream;
+    }
+
+    if (m_CurrentStep == m_FinalStep and m_CurrentStep > 0)
+    {
+        if (m_Verbosity >= 5)
+        {
+            std::cout << "DataManReader::BeginStep() returned EndOfStream, final step is " << m_FinalStep << std::endl;
+        }
         return StepStatus::EndOfStream;
     }
 
