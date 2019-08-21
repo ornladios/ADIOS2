@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "TestData.h"
+
 #include "ParseArgs.h"
 
 class CommonServerTest : public ::testing::Test

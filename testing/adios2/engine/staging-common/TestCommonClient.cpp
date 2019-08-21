@@ -14,7 +14,9 @@
 
 #include <gtest/gtest.h>
 
+
 #include "TestData.h"
+
 #include "ParseArgs.h"
 
 int WriterFailed = 0;
