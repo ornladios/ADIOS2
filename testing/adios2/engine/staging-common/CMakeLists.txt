@@ -121,7 +121,7 @@ if (ADIOS2_HAVE_MPI AND NOT ("${MPIEXEC_EXECUTABLE}" STREQUAL "MPIEXEC_EXECUTABL
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1Bulk;1x1BulkLockGeometry;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
+set (SIMPLE_TESTS "1x1;NoReaderNoWait;TimeoutOnOpen;Modes;1x1.Attrs;1x1.Local;1x1.SharedNothing;1x1.SharedIO;1x1.SharedVar;1x1.SharedNothingSync;1x1.SharedIOSync;1x1.SharedVarSync;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync")
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
   set (SIMPLE_FORTRAN_TESTS "FtoC.1x1;CtoF.1x1;FtoF.1x1")
@@ -136,7 +136,7 @@ endif()
 set (SIMPLE_MPI_TESTS "")
 set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar;2x1ZeroDataR64")
+  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;3x5LockGeometry;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar;2x1ZeroDataR64")
   if (ADIOS_HAVE_Fortran)
     set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()
@@ -195,12 +195,11 @@ if(ADIOS2_HAVE_MPI)
     list (FILTER INSITU_TESTS EXCLUDE REGEX "DelayedReader.*")
     # Fortran scalar reads don't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
-    # 
-    list (FILTER INSITU_TESTS EXCLUDE REGEX "BulkLockGeometry")
+    # No locking geometry
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "LockGeometry")
     foreach(test ${INSITU_TESTS})
         add_common_test(${test} InSituMPI)
     endforeach()
-    set_tests_properties(Staging.1x1Bulk.InSituMPI PROPERTIES TIMEOUT 300 )
 endif()
 
 #

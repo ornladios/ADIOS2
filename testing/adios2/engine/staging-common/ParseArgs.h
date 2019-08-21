@@ -7,6 +7,10 @@ std::string fname = "ADIOS2Common";
 std::string engine = "sst";
 adios2::Params engineParams = {}; // parsed from command line
 
+#ifndef TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_
+// Usually we get this from TestData.h, but not needed everywhere.
+std::size_t Nx = 10;
+#endif
 bool SharedIO = false;
 bool SharedVar = false;
 int NSteps = 10;
@@ -75,6 +79,15 @@ static void ParseArgs(int argc, char **argv)
             std::istringstream ss(argv[2]);
             if (!(ss >> NSteps))
                 std::cerr << "Invalid number for num_steps " << argv[1] << '\n';
+            argv++;
+            argc--;
+        }
+        else if (std::string(argv[1]) == "--nx")
+        {
+            std::istringstream ss(argv[2]);
+            if (!(ss >> Nx))
+                std::cerr << "Invalid number for nx (base element count) "
+                          << argv[1] << '\n';
             argv++;
             argc--;
         }

@@ -12,8 +12,8 @@
 
 #include <gtest/gtest.h>
 
-#include "ParseArgs.h"
 #include "TestData.h"
+#include "ParseArgs.h"
 
 class CommonReadTest : public ::testing::Test
 {
@@ -76,14 +76,16 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
         EXPECT_TRUE(scalar_r64);
 
+        auto var_time = io.InquireVariable<int64_t>("time");
+        EXPECT_TRUE(var_time);
+        ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
+        writerSize = var_time.Shape()[0];
+
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
         ASSERT_EQ(var_i8.ShapeID(), adios2::ShapeID::GlobalArray);
-        /* must be a multiple of Nx */
-        ASSERT_EQ(var_i8.Shape()[0] % Nx, 0);
-
         /* take the first size as something that gives us writer size */
-        writerSize = var_i8.Shape()[0] / 10;
+        Nx = var_i8.Shape()[0] / writerSize;
 
         auto var_i16 = io.InquireVariable<int16_t>("i16");
         EXPECT_TRUE(var_i16);
@@ -141,10 +143,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             EXPECT_FALSE(var_r64_2d);
             EXPECT_FALSE(var_r64_2d_rev);
         }
-        auto var_time = io.InquireVariable<int64_t>("time");
-        EXPECT_TRUE(var_time);
-        ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
-        ASSERT_EQ(var_time.Shape()[0], writerSize);
 
         const std::vector<adios2::Variable<int8_t>::Info> i8Info =
             engine.BlocksInfo(var_i8, engine.CurrentStep());

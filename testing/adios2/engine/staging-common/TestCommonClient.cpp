@@ -14,8 +14,8 @@
 
 #include <gtest/gtest.h>
 
-#include "ParseArgs.h"
 #include "TestData.h"
+#include "ParseArgs.h"
 
 int WriterFailed = 0;
 int BeginStepFailedPolls = 0;
