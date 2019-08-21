@@ -905,8 +905,8 @@ static void EvpathReaderRegisterTimestep(CP_Services Svcs,
                 tmp->ReaderRequests = ReqTrk;
                 return;
             }
+            tmp = tmp->Next;
         }
-        tmp = tmp->Next;
         printf("TIMESTEP NOT FOUND in READER REGISTER!\n");
     }
 }
