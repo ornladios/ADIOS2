@@ -57,6 +57,7 @@ typedef int MPI_Op;
 #define MPI_COMM_WORLD 1
 #define MPI_COMM_SELF 2
 
+#define MPI_DATATYPE_NULL 0
 #define MPI_INT 1
 #define MPI_CHAR 2
 #define MPI_DOUBLE 3
@@ -74,6 +75,7 @@ typedef int MPI_Op;
 #define MPI_DOUBLE_INT 15
 #define MPI_LONG_DOUBLE_INT 16
 #define MPI_SHORT_INT 17
+#define MPI_SIGNED_CHAR 18
 
 #define MPI_ANY_SOURCE 0
 #define MPI_ANY_TAG 0
