@@ -18,8 +18,9 @@
 
 #include <gtest/gtest.h>
 
-#include "ParseArgs.h"
 #include "TestData.h"
+
+#include "ParseArgs.h"
 
 class CommonServerTest : public ::testing::Test
 {
@@ -149,11 +150,16 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         engine.Put(var_r64, data_R64.data(), sync);
         engine.Put(var_c32, data_C32.data(), sync);
         engine.Put(var_c64, data_C64.data(), sync);
-        engine.Put(var_r64_2d, &data_R64_2d[0][0], sync);
-        engine.Put(var_r64_2d_rev, &data_R64_2d_rev[0][0], sync);
+        engine.Put(var_r64_2d, &data_R64_2d[0], sync);
+        engine.Put(var_r64_2d_rev, &data_R64_2d_rev[0], sync);
         // Advance to the next time step
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
+        if (LockGeometry)
+        {
+            // we'll never change our data decomposition
+            engine.LockWriterDefinitions();
+        }
         engine.EndStep();
         std::this_thread::sleep_for(std::chrono::milliseconds(
             DelayMS)); /* sleep for DelayMS milliseconds */

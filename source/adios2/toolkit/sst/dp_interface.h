@@ -218,16 +218,33 @@ typedef void (*CP_DP_ProvideTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
                                           long Timestep,
                                           void **TimestepInfoPtr);
 
+typedef enum
+{
+    SstPreloadNone,
+    SstPreloadSpeculative,
+    SstPreloadLearned
+} SstPreloadModeType;
+
 /*!
- * CP_DP_PerReaderTimestepRegFuncc is the type of a dataplane function that
- * notifies DataPlane that a particular timestep (which has been previosly
+ * CP_DP_PerReaderTimestepRegFunc is the type of a dataplane function that
+ * notifies DataPlane that a particular timestep (which has been previously
  * registered via the CP_DP_ProvideTimestepFunc will be provided to a
  * specific reader.
  */
 typedef void (*CP_DP_PerReaderTimestepRegFunc)(CP_Services Svcs,
                                                DP_WSR_Stream Stream,
                                                long Timestep,
-                                               int WriterDefinitionsLocked);
+                                               SstPreloadModeType PreloadMode);
+
+/*!
+ * CP_DP_ReaderTimestepArrivalFunc is the type of a dataplane function that
+ * notifies DataPlane that a particular timesteps metadata has arrived on
+ * the reader side..
+ */
+typedef void (*CP_DP_ReaderTimestepArrivalFunc)(CP_Services Svcs,
+                                                DP_RS_Stream Stream,
+                                                long Timestep,
+                                                SstPreloadModeType PreloadMode);
 
 /*!
  * CP_DP_ReadPatternLockedFunc is the type of a dataplane function
@@ -238,6 +255,24 @@ typedef void (*CP_DP_PerReaderTimestepRegFunc)(CP_Services Svcs,
 typedef void (*CP_DP_ReadPatternLockedFunc)(CP_Services Svcs,
                                             DP_WSR_Stream Stream,
                                             long EffectiveTimestep);
+
+/*!
+ * CP_DP_WSR_ReadPatternLockedFunc is the type of a dataplane function
+ * that notifies writer-side DataPlane that  both parties to the communication
+ * have agreed that the read geometry will not change.
+ */
+typedef void (*CP_DP_WSR_ReadPatternLockedFunc)(CP_Services Svcs,
+                                                DP_WSR_Stream Stream,
+                                                long EffectiveTimestep);
+
+/*!
+ * CP_DP_RS_ReadPatternLockedFunc is the type of a dataplane function
+ * that notifies reader-side DataPlane that both parties to the communication
+ * have agreed that the read geometry will not change.
+ */
+typedef void (*CP_DP_RS_ReadPatternLockedFunc)(CP_Services Svcs,
+                                               DP_RS_Stream Stream,
+                                               long EffectiveTimestep);
 
 /*!
  * CP_DP_ReleaseTimestepFunc is the type of a dataplane function that
@@ -290,26 +325,43 @@ struct _CP_DP_Interface
     FMStructDescList WriterContactFormats;
     FMStructDescList TimestepInfoFormats;
 
-    CP_DP_InitReaderFunc initReader;
-    CP_DP_InitWriterFunc initWriter;
-    CP_DP_InitWriterPerReaderFunc initWriterPerReader;
-    CP_DP_ProvideWriterDataToReaderFunc provideWriterDataToReader;
+    CP_DP_InitReaderFunc initReader;                   // reader-side call
+    CP_DP_InitWriterFunc initWriter;                   // writer-side call
+    CP_DP_InitWriterPerReaderFunc initWriterPerReader; // writer-side call
+    CP_DP_ProvideWriterDataToReaderFunc
+        provideWriterDataToReader; // reader-side call, after writer contact
 
-    CP_DP_ReadRemoteMemoryFunc readRemoteMemory;
-    CP_DP_WaitForCompletionFunc waitForCompletion;
-    CP_DP_NotifyConnFailureFunc notifyConnFailure;
+    CP_DP_ReadRemoteMemoryFunc readRemoteMemory;   // reader-side call
+    CP_DP_WaitForCompletionFunc waitForCompletion; // reader-side call
+    CP_DP_NotifyConnFailureFunc
+        notifyConnFailure; // only called on reader-side, for terminating
+                           // pending reads
 
-    CP_DP_ProvideTimestepFunc provideTimestep;
-    CP_DP_PerReaderTimestepRegFunc readerRegisterTimestep;
-    CP_DP_ReleaseTimestepFunc releaseTimestep;
-    CP_DP_PerReaderReleaseTimestepFunc readerReleaseTimestep;
-    CP_DP_ReadPatternLockedFunc readPatternLocked;
+    CP_DP_ProvideTimestepFunc provideTimestep; // writer-side call, one per
+                                               // timestep upon provision to DP
+    CP_DP_PerReaderTimestepRegFunc
+        readerRegisterTimestep; // writer-side call, one per reader, upon
+                                // metadata send
+    CP_DP_ReaderTimestepArrivalFunc
+        timestepArrived; // reader-side call, one per
+                         // timestep upon metadata arrival
+    CP_DP_ReleaseTimestepFunc
+        releaseTimestep; // writer-side call, one per timestep when all readers
+                         // are done
+    CP_DP_PerReaderReleaseTimestepFunc
+        readerReleaseTimestep; // writer-side call, one per reader when that
+                               // reader is done
+    CP_DP_WSR_ReadPatternLockedFunc WSRreadPatternLocked;
+    CP_DP_RS_ReadPatternLockedFunc RSreadPatternLocked;
 
-    CP_DP_DestroyReaderFunc destroyReader;
-    CP_DP_DestroyWriterFunc destroyWriter;
-    CP_DP_DestroyWriterPerReaderFunc destroyWriterPerReader;
+    CP_DP_DestroyReaderFunc destroyReader; // reader-side call
+    CP_DP_DestroyWriterFunc destroyWriter; // writer-side call
+    CP_DP_DestroyWriterPerReaderFunc
+        destroyWriterPerReader; // writer side call, upon disconnect for each
+                                // reader
 
-    CP_DP_GetPriorityFunc getPriority;
+    CP_DP_GetPriorityFunc
+        getPriority; // both sides, part of DP selection process.
     CP_DP_UnGetPriorityFunc unGetPriority;
 };
 
