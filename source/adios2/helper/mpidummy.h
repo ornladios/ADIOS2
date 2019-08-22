@@ -53,6 +53,8 @@ typedef int MPI_Op;
 #define MPI_BYTE 1 /* I need the size of the type here */
 #define MPI_INFO_NULL 0
 
+#define MPI_IN_PLACE ((void *)1)
+
 #define MPI_COMM_NULL 0
 #define MPI_COMM_WORLD 1
 #define MPI_COMM_SELF 2
