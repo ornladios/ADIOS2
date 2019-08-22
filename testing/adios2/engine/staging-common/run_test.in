@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!@PYTHON_EXECUTABLE@
 # This script has been build to run the tests in the bin directory.
 import argparse
 import subprocess
