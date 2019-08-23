@@ -114,6 +114,34 @@ def ReadCharacteristicsFromData(f, limit, typeID):
         elif cName == 'time_index' or cName == 'file_index':
             data = readDataToNumpyArray(f, 'unsigned_integer', 1)
             print("          Value       : {0}".format(data[0]))
+        elif cName == 'minmax':
+            nBlocks = np.fromfile(f,
+                                  dtype=np.uint16, count=1)[0]
+            print("          nBlocks     : {0}".format(nBlocks))
+            bminmax = readDataToNumpyArray(f, dataTypeName, 2)
+            print("          Min/max     : {0} / {1}".format(
+                bminmax[0], bminmax[1]))
+            if nBlocks > 1:
+                method = np.fromfile(f, dtype=np.uint8,
+                                     count=1)[0]
+                print("          Division method: {0}".format(method))
+                blockSize = np.fromfile(f, dtype=np.uint64,
+                                        count=1)[0]
+                print("          Block size     : {0}".format(blockSize))
+                div = np.fromfile(f, dtype=np.uint16,
+                                  count=ndim)
+                print("          Division vector: (", end="")
+                for d in range(ndim):
+                    print("{0}".format(div[d]), end="")
+                    if d < ndim - 1:
+                        print(", ", end="")
+                    else:
+                        print(")")
+                minmax = readDataToNumpyArray(
+                    f, dataTypeName, 2 * nBlocks)
+                for i in range(nBlocks):
+                    print("          Min/max        : {0} / {1}".format(
+                        minmax[2 * i], minmax[2 * i + 1]))
         else:
             print("                ERROR: could not understand this "
                   "characteristics type '{0}' id {1}".format(cName, cID))
@@ -223,11 +251,24 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     print("      Var Name        : " + varname)
 
     # VAR PATH, 2 bytes length + string without \0
-    sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
-    status, varpath = ReadEncodedString(f, "Var Path", sizeLimit)
-    if not status:
+    # sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
+    # status, varpath = ReadEncodedString(f, "Var Path", sizeLimit)
+    # if not status:
+    #     return False
+    # print("      Var Path        : " + varpath)
+
+    # 1 byte ORDER (K, C, F)
+    order = f.read(1)
+    if (order != b'K' and order != b'C' and order != b'F'):
+        print(
+            "ERROR: Next byte for Order must be 'K', 'C', or 'F' "
+            "but it isn't = {0}".format(order))
         return False
-    print("      Var Path        : " + varpath)
+    print("        Order           : " + order.decode('ascii'))
+
+    # 1 byte UNUSED
+    unused = f.read(1)
+    print("        Unused byte     : {0}".format(ord(unused)))
 
     # 1 byte TYPE
     typeID = np.fromfile(f, dtype=np.uint8, count=1)[0]
