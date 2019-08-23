@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.0)
 
 project(adios2-config-dummy C CXX)
 
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)
+endif()
+
 find_package(adios2 REQUIRED)
 
 add_executable(without_C foo.c main.c)
