@@ -193,7 +193,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     dataManIO.SetParameters(engineParams);
     adios2::Engine dataManReader = dataManIO.Open(name, adios2::Mode::Read);
 
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
+                                      std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -306,7 +307,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 TEST_F(DataManEngineTest, DataManBase)
 {
     std::string filename = "DataManBase";
-    adios2::Params engineParams = {{"Port", "13316"}, {"IPAddress", "127.0.0.1"}, {"Verbose", "11"}};
 
     int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
@@ -325,13 +325,15 @@ TEST_F(DataManEngineTest, DataManBase)
 
     if (mpiGroup == 1)
     {
+        adios2::Params engineParams = {
+            {"Port", "13316"}, {"IPAddress", "127.0.0.1"}, {"Verbose", "11"}};
         Reader(shape, start, count, steps, engineParams, filename);
     }
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
     if (mpiGroup == 0)
     {
+        adios2::Params engineParams = {
+            {"Port", "13316"}, {"IPAddress", "127.0.0.1"}, {"Verbose", "0"}};
         Writer(shape, start, count, steps, engineParams, filename);
     }
 

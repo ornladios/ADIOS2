@@ -32,7 +32,7 @@ gtest_add_tests(TARGET TestDataManSubscribe1D)
 add_executable(TestDataManMpiBase TestDataManMpiBase.cpp)
 target_link_libraries(TestDataManMpiBase adios2 gtest MPI::MPI_C)
 add_test(
-    NAME TestDataManMpiBase
+    NAME DataManEngineTest.MpiBase
     COMMAND ${CMAKE_COMMAND}
     -DCMD1=TestDataManMpiBase.dataman
     -DCMD2=$<TARGET_FILE:TestDataManMpiBase>

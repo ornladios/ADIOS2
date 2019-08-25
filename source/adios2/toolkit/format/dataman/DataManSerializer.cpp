@@ -43,8 +43,6 @@ void DataManSerializer::NewWriterBuffer(size_t bufferSize)
     m_LocalBuffer->resize(sizeof(uint64_t) * 2);
 }
 
-void DataManSerializer::SetReverseMajor() { m_ContiguousMajor = false; }
-
 VecPtr DataManSerializer::GetLocalPack()
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -432,6 +430,19 @@ void DataManSerializer::JsonToDataManVarMap(nlohmann::json &metaJ, VecPtr pack)
             continue;
         }
 
+        size_t step = stoull(stepMapIt.key());
+        m_DeserializedBlocksForStepMutex.lock();
+        auto blocksForStepIt = m_DeserializedBlocksForStep.find(step);
+        if (blocksForStepIt == m_DeserializedBlocksForStep.end())
+        {
+            m_DeserializedBlocksForStep[step] = 1;
+        }
+        else
+        {
+            ++m_DeserializedBlocksForStep[step];
+        }
+        m_DeserializedBlocksForStepMutex.unlock();
+
         for (auto rankMapIt = stepMapIt.value().begin();
              rankMapIt != stepMapIt.value().end(); ++rankMapIt)
         {
@@ -641,26 +652,23 @@ void DataManSerializer::Erase(const size_t step, const bool allPreviousSteps)
     }
 }
 
-const DmvVecPtrMap DataManSerializer::GetMetaData()
+DmvVecPtrMap DataManSerializer::GetFullMetadataMap()
 {
     TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
     return m_DataManVarMap;
 }
 
-DmvVecPtr DataManSerializer::GetMetaData(const size_t step)
+DmvVecPtr DataManSerializer::GetStepMetadata(const size_t step)
 {
     TAU_SCOPED_TIMER_FUNC();
     std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-    const auto &i = m_DataManVarMap.find(step);
-    if (i != m_DataManVarMap.end())
+    auto it = m_DataManVarMap.find(step);
+    if (it != m_DataManVarMap.end())
     {
-        return m_DataManVarMap[step];
+        return it->second;
     }
-    else
-    {
-        return nullptr;
-    }
+    return nullptr;
 }
 
 int DataManSerializer::PutDeferredRequest(const std::string &variable,
@@ -943,6 +951,7 @@ bool DataManSerializer::CalculateOverlap(const Dims &inStart,
     return true;
 }
 
+/*
 size_t DataManSerializer::MinStep()
 {
     TAU_SCOPED_TIMER_FUNC();
@@ -957,15 +966,9 @@ size_t DataManSerializer::MinStep()
     }
     return minStep;
 }
+*/
 
 size_t DataManSerializer::LocalBufferSize() { return m_LocalBuffer->size(); }
-
-size_t DataManSerializer::Steps()
-{
-    TAU_SCOPED_TIMER_FUNC();
-    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
-    return m_DataManVarMap.size();
-}
 
 VecPtr DataManSerializer::SerializeJson(const nlohmann::json &message)
 {
@@ -1097,6 +1100,86 @@ void DataManSerializer::SetDestination(const std::string &dest)
 }
 
 std::string DataManSerializer::GetDestination() { return m_Destination; }
+
+bool DataManSerializer::StepHasMinimumBlocks(const size_t step,
+                                             const int requireMinimumBlocks)
+{
+    std::lock_guard<std::mutex> l(m_DeserializedBlocksForStepMutex);
+    auto it = m_DeserializedBlocksForStep.find(step);
+    if (it != m_DeserializedBlocksForStep.end())
+    {
+        if (it->second >= requireMinimumBlocks)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+DmvVecPtr DataManSerializer::GetEarliestStep(int64_t &currentStep,
+                                             const int requireMinimumBlocks)
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+
+    bool hasStep = false;
+    size_t earliestStep = std::numeric_limits<size_t>::max();
+
+    for (const auto &i : m_DataManVarMap)
+    {
+        if (earliestStep > i.first)
+        {
+            earliestStep = i.first;
+        }
+        hasStep = true;
+    }
+
+    if (not hasStep)
+    {
+        return nullptr;
+    }
+
+    if (StepHasMinimumBlocks(earliestStep, requireMinimumBlocks))
+    {
+        currentStep = earliestStep;
+        return m_DataManVarMap[earliestStep];
+    }
+
+    return nullptr;
+}
+DmvVecPtr DataManSerializer::GetLatestStep(int64_t &currentStep,
+                                           const int requireMinimumBlocks)
+{
+    TAU_SCOPED_TIMER_FUNC();
+
+    std::lock_guard<std::mutex> l(m_DataManVarMapMutex);
+
+    bool hasStep = false;
+    size_t latestStep = 0;
+
+    for (const auto &i : m_DataManVarMap)
+    {
+        if (latestStep < i.first)
+        {
+            latestStep = i.first;
+        }
+        hasStep = true;
+    }
+
+    if (not hasStep)
+    {
+        return nullptr;
+    }
+
+    if (StepHasMinimumBlocks(latestStep, requireMinimumBlocks))
+    {
+        currentStep = latestStep;
+        return m_DataManVarMap[latestStep];
+    }
+
+    return nullptr;
+}
 
 void DataManSerializer::Log(const int level, const std::string &message,
                             const bool mpi, const bool endline)

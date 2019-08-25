@@ -96,7 +96,7 @@ StepStatus SscReader::BeginStepIterator(StepMode stepMode,
     TAU_SCOPED_TIMER_FUNC();
 
     RequestMetadata();
-    m_MetaDataMap = m_DataManSerializer.GetMetaData();
+    m_MetaDataMap = m_DataManSerializer.GetFullMetadataMap();
 
     if (m_MetaDataMap.empty())
     {

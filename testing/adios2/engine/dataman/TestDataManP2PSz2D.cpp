@@ -31,7 +31,6 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_SZ)
     auto r =
         std::thread(DataManReaderP2P, shape, start, count, steps, engineParams);
     std::cout << "Reader thread started" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
     auto w =
         std::thread(DataManWriter, shape, start, count, steps, engineParams);
     std::cout << "Writer thread started" << std::endl;

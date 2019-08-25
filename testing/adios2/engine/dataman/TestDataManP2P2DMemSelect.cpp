@@ -354,15 +354,12 @@ TEST_F(DataManEngineTest, WriteRead_2D_MemSelect)
     memcount = {7, 9};
 
     size_t steps = 1000;
-    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
-                                   {"Port", "12308"}};
-    // run workflow
+    adios2::Params engineParams = {
+        {"IPAddress", "127.0.0.1"}, {"Port", "12308"}, {"Verbose", "0"}};
 
     auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
                          memstart, memcount, steps, engineParams);
     std::cout << "Reader thread started" << std::endl;
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
                          engineParams);

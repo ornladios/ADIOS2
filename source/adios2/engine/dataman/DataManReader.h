@@ -38,13 +38,13 @@ private:
     bool m_ProvideLatest = false;
     bool m_InitFailed = false;
     size_t m_FinalStep = std::numeric_limits<size_t>::max();
+    int m_TotalWriters;
     adios2::zmq::ZmqReqRep m_ZmqRequester;
     std::vector<std::string> m_DataAddresses;
     std::vector<std::string> m_ControlAddresses;
     std::vector<std::shared_ptr<adios2::zmq::ZmqPubSub>> m_ZmqSubscriberVec;
     std::thread m_SubscriberThread;
-
-    format::DmvVecPtrMap m_MetaDataMap;
+    format::DmvVecPtr m_CurrentStepMetadata;
 
     void SubscriberThread();
     void DoClose(const int transportIndex = -1) final;

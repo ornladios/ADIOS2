@@ -62,6 +62,7 @@ DataManReader::DataManReader(IO &io, const std::string &name, const Mode mode,
             addJson["DataAddresses"].get<std::vector<std::string>>();
         m_ControlAddresses =
             addJson["ControlAddresses"].get<std::vector<std::string>>();
+        m_TotalWriters = m_DataAddresses.size();
     }
     else if (m_StagingMode == "local")
     {
@@ -104,7 +105,9 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (m_Verbosity >= 5)
         {
-            std::cout << "DataManReader::BeginStep() returned EndOfStream due to initialization failure" << std::endl;
+            std::cout << "DataManReader::BeginStep() returned EndOfStream due "
+                         "to initialization failure"
+                      << std::endl;
         }
         return StepStatus::EndOfStream;
     }
@@ -113,63 +116,46 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     {
         if (m_Verbosity >= 5)
         {
-            std::cout << "DataManReader::BeginStep() returned EndOfStream, final step is " << m_FinalStep << std::endl;
+            std::cout << "DataManReader::BeginStep() returned EndOfStream, "
+                         "final step is "
+                      << m_FinalStep << std::endl;
         }
         return StepStatus::EndOfStream;
     }
 
-    format::DmvVecPtr vars = nullptr;
     auto start_time = std::chrono::system_clock::now();
 
-    while (vars == nullptr)
+    while (m_CurrentStepMetadata == nullptr)
     {
-        m_MetaDataMap = m_DataManSerializer.GetMetaData();
-
         if (m_ProvideLatest)
         {
-            size_t maxStep = 0;
-            for (const auto &i : m_MetaDataMap)
-            {
-                if (maxStep < i.first)
-                {
-                    maxStep = i.first;
-                }
-            }
-            m_CurrentStep = maxStep;
+            m_CurrentStepMetadata = m_DataManSerializer.GetLatestStep(
+                m_CurrentStep, m_TotalWriters);
         }
         else
         {
-            size_t minStep = std::numeric_limits<size_t>::max();
-            for (const auto &i : m_MetaDataMap)
-            {
-                if (minStep > i.first)
-                {
-                    minStep = i.first;
-                }
-            }
-            m_CurrentStep = minStep;
+            m_CurrentStepMetadata = m_DataManSerializer.GetEarliestStep(
+                m_CurrentStep, m_TotalWriters);
         }
 
-        auto currentStepIt = m_MetaDataMap.find(m_CurrentStep);
-        if (currentStepIt == m_MetaDataMap.end())
+        auto now_time = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+            now_time - start_time);
+        if (duration.count() < timeoutSeconds)
         {
-            auto now_time = std::chrono::system_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-                now_time - start_time);
-            if (duration.count() > timeoutSeconds)
+            if (m_Verbosity >= 5)
             {
-                return StepStatus::EndOfStream;
+                std::cout << "DataManReader::BeginStep() returned EndOfStream, "
+                             "final step is "
+                          << m_FinalStep << std::endl;
             }
-        }
-        else
-        {
-            vars = currentStepIt->second;
+            return StepStatus::EndOfStream;
         }
     }
 
     m_DataManSerializer.GetAttributes(m_IO);
 
-    for (const auto &i : *vars)
+    for (const auto &i : *m_CurrentStepMetadata)
     {
         if (i.step == m_CurrentStep)
         {
@@ -208,10 +194,11 @@ void DataManReader::PerformGets() {}
 void DataManReader::EndStep()
 {
     m_DataManSerializer.Erase(m_CurrentStep);
+    m_CurrentStepMetadata = nullptr;
     if (m_Verbosity >= 5)
     {
-        std::cout << "DataManReader::EndStep() end. Current step "
-                  << m_CurrentStep << std::endl;
+        std::cout << "DataManReader::EndStep() Current step " << m_CurrentStep
+                  << std::endl;
     }
 }
 

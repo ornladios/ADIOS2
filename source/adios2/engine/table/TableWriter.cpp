@@ -250,7 +250,7 @@ void TableWriter::PutAggregatorBuffer()
     }
 
     // Get metadata map from dataman serializer
-    auto metadataMap = m_Deserializer.GetMetaData();
+    auto metadataMap = m_Deserializer.GetFullMetadataMap();
     format::DmvVecPtr vars;
     auto currentStepIt = metadataMap.find(m_CurrentStep);
     if (currentStepIt == metadataMap.end())
