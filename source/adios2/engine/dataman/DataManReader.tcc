@@ -72,12 +72,7 @@ template <typename T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 DataManReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
 {
-    std::map<size_t, std::vector<typename Variable<T>::Info>> m;
-    for (const auto &i : m_MetaDataMap)
-    {
-        m[i.first] = BlocksInfoCommon(variable, i.first);
-    }
-    return m;
+    return std::map<size_t, std::vector<typename Variable<T>::Info>>();
 }
 
 template <typename T>
@@ -86,14 +81,9 @@ DataManReader::BlocksInfoCommon(const Variable<T> &variable,
                                 const size_t step) const
 {
     std::vector<typename Variable<T>::Info> v;
-    auto it = m_MetaDataMap.find(step);
-    if (it == m_MetaDataMap.end())
-    {
-        return v;
-    }
     T max = std::numeric_limits<T>::min();
     T min = std::numeric_limits<T>::max();
-    for (const auto &i : *it->second)
+    for (const auto &i : *m_CurrentStepMetadata)
     {
         if (i.name == variable.m_Name)
         {
