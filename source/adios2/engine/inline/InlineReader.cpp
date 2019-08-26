@@ -23,11 +23,11 @@ namespace engine
 {
 
 InlineReader::InlineReader(IO &io, const std::string &name, const Mode mode,
-                           MPI_Comm mpiComm)
-: Engine("InlineReader", io, name, mode, mpiComm)
+                           helper::Comm comm)
+: Engine("InlineReader", io, name, mode, std::move(comm))
 {
     m_EndMessage = " in call to IO Open InlineReader " + m_Name + "\n";
-    MPI_Comm_rank(mpiComm, &m_ReaderRank);
+    m_ReaderRank = m_Comm.Rank();
     Init();
     Engine &writer = io.GetEngine(m_WriterID);
     if (m_Verbosity == 5)

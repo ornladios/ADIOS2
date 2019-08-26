@@ -24,15 +24,15 @@ namespace engine
 {
 
 TableWriter::TableWriter(IO &io, const std::string &name, const Mode mode,
-                         MPI_Comm mpiComm)
-: Engine("TableWriter", io, name, mode, mpiComm),
+                         helper::Comm comm)
+: Engine("TableWriter", io, name, mode, std::move(comm)),
   m_IsRowMajor(helper::IsRowMajor(m_IO.m_HostLanguage)),
-  m_Deserializer(m_MPIComm, m_IsRowMajor),
+  m_Deserializer(m_Comm, m_IsRowMajor),
   m_SubAdios(MPI_COMM_WORLD, adios2::DebugOFF),
   m_SubIO(m_SubAdios.DeclareIO("SubIO"))
 {
-    MPI_Comm_rank(mpiComm, &m_MpiRank);
-    MPI_Comm_size(mpiComm, &m_MpiSize);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
     Init();
 }
 
@@ -83,7 +83,7 @@ void TableWriter::EndStep()
         }
     }
 
-    MPI_Barrier(m_MPIComm);
+    m_Comm.Barrier();
 
     m_Listening = false;
     if (m_Verbosity >= 5)
@@ -205,8 +205,7 @@ void TableWriter::InitParameters()
     std::vector<char> cv(128);
     std::vector<char> cvAll(128 * m_MpiSize);
     std::memcpy(cv.data(), a.c_str(), a.size());
-    MPI_Allgather(cv.data(), cv.size(), MPI_CHAR, cvAll.data(), cv.size(),
-                  MPI_CHAR, m_MPIComm);
+    m_Comm.Allgather(cv.data(), cv.size(), cvAll.data(), cv.size());
     for (int i = 0; i < m_MpiSize; ++i)
     {
         auto j = nlohmann::json::parse(cvAll.data() + i * 128);
@@ -225,8 +224,8 @@ void TableWriter::InitTransports()
 
     for (int i = 0; i < m_Aggregators; ++i)
     {
-        auto s = std::make_shared<format::DataManSerializer>(m_MPIComm,
-                                                             m_IsRowMajor);
+        auto s =
+            std::make_shared<format::DataManSerializer>(m_Comm, m_IsRowMajor);
         s->NewWriterBuffer(m_SerializerBufferSize);
         s->SetDestination(m_AllAddresses[i]);
         m_Serializers.push_back(s);

@@ -18,6 +18,10 @@
 
 namespace adios2
 {
+namespace helper
+{
+class Comm;
+}
 namespace transport
 {
 
@@ -26,7 +30,7 @@ class NullTransport : public Transport
 {
 
 public:
-    NullTransport(MPI_Comm mpiComm, const bool debugMode);
+    NullTransport(helper::Comm const &comm, const bool debugMode);
 
     virtual ~NullTransport();
 

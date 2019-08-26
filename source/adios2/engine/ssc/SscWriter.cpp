@@ -26,9 +26,9 @@ namespace engine
 {
 
 SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("SscWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, helper::IsRowMajor(io.m_HostLanguage))
+                     helper::Comm comm)
+: Engine("SscWriter", io, name, mode, std::move(comm)),
+  m_DataManSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
 {
     TAU_SCOPED_TIMER_FUNC();
     Init();
@@ -109,11 +109,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscWriter::Init()
 {
     TAU_SCOPED_TIMER_FUNC();
-    MPI_Comm_rank(m_MPIComm, &m_MpiRank);
-    MPI_Comm_size(m_MPIComm, &m_MpiSize);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
     srand(time(NULL));
     InitParameters();
-    helper::HandshakeWriter(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc",
+    helper::HandshakeWriter(m_Comm, m_AppID, m_FullAddresses, m_Name, "ssc",
                             m_Port, m_Channels, m_MaxRanksPerNode,
                             m_MaxAppsPerNode);
     InitTransports();
@@ -231,7 +231,7 @@ void SscWriter::ReplyThread(const std::string &address)
 
 void SscWriter::DoClose(const int transportIndex)
 {
-    MPI_Barrier(m_MPIComm);
+    m_Comm.Barrier();
     m_Listening = false;
     for (auto &i : m_ReplyThreads)
     {

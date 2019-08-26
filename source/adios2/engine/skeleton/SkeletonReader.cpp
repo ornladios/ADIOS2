@@ -23,11 +23,11 @@ namespace engine
 {
 
 SkeletonReader::SkeletonReader(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm mpiComm)
-: Engine("SkeletonReader", io, name, mode, mpiComm)
+                               helper::Comm comm)
+: Engine("SkeletonReader", io, name, mode, std::move(comm))
 {
     m_EndMessage = " in call to IO Open SkeletonReader " + m_Name + "\n";
-    MPI_Comm_rank(mpiComm, &m_ReaderRank);
+    m_ReaderRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)
     {

@@ -59,10 +59,9 @@ namespace core
 
 ADIOS::ADIOS(const std::string configFile, MPI_Comm mpiComm,
              const bool debugMode, const std::string hostLanguage)
-: m_ConfigFile(configFile), m_DebugMode(debugMode), m_HostLanguage(hostLanguage)
+: m_ConfigFile(configFile), m_DebugMode(debugMode),
+  m_HostLanguage(hostLanguage), m_Comm(helper::Comm::Duplicate(mpiComm))
 {
-    SMPI_Comm_dup(mpiComm, &m_MPIComm);
-
     if (!configFile.empty())
     {
         if (configFile.substr(configFile.size() - 3) == "xml")
@@ -90,17 +89,7 @@ ADIOS::ADIOS(const bool debugMode, const std::string hostLanguage)
 {
 }
 
-ADIOS::~ADIOS()
-{
-    // Handle the case where MPI is finalized before the ADIOS destructor is
-    // called, which happens, e.g., with global / static ADIOS objects
-    int flag;
-    MPI_Finalized(&flag);
-    if (!flag)
-    {
-        SMPI_Comm_free(&m_MPIComm);
-    }
-}
+ADIOS::~ADIOS() = default;
 
 IO &ADIOS::DeclareIO(const std::string name)
 {
@@ -128,7 +117,7 @@ IO &ADIOS::DeclareIO(const std::string name)
     }
 
     auto ioPair = m_IOs.emplace(
-        name, IO(*this, name, m_MPIComm, false, m_HostLanguage, m_DebugMode));
+        name, IO(*this, name, false, m_HostLanguage, m_DebugMode));
     IO &io = ioPair.first->second;
     io.SetDeclared();
     return io;

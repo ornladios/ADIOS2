@@ -19,13 +19,13 @@ namespace engine
 
 DataManCommon::DataManCommon(const std::string engineType, IO &io,
                              const std::string &name, const Mode mode,
-                             MPI_Comm mpiComm)
-: Engine(engineType, io, name, mode, mpiComm),
+                             helper::Comm comm)
+: Engine(engineType, io, name, mode, std::move(comm)),
   m_IsRowMajor(helper::IsRowMajor(io.m_HostLanguage)),
-  m_DataManSerializer(mpiComm, m_IsRowMajor)
+  m_DataManSerializer(m_Comm, m_IsRowMajor)
 {
-    MPI_Comm_rank(mpiComm, &m_MpiRank);
-    MPI_Comm_size(mpiComm, &m_MpiSize);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
     GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
     GetParameter(m_IO.m_Parameters, "Port", m_Port);
     GetParameter(m_IO.m_Parameters, "StagingMode", m_StagingMode);

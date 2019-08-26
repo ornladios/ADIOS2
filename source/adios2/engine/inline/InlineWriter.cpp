@@ -23,11 +23,11 @@ namespace engine
 {
 
 InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
-                           MPI_Comm mpiComm)
-: Engine("InlineWriter", io, name, mode, mpiComm)
+                           helper::Comm comm)
+: Engine("InlineWriter", io, name, mode, std::move(comm))
 {
     m_EndMessage = " in call to InlineWriter " + m_Name + " Open\n";
-    MPI_Comm_rank(mpiComm, &m_WriterRank);
+    m_WriterRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)
     {

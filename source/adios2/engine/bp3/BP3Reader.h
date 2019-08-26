@@ -13,6 +13,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/bp3/BP3.h" //format::BP3Deserializer
 #include "adios2/toolkit/transportman/TransportMan.h"
 
@@ -32,10 +33,10 @@ public:
      * @param io
      * @param name
      * @param openMode only read
-     * @param mpiComm
+     * @param comm
      */
     BP3Reader(IO &io, const std::string &name, const Mode mode,
-              MPI_Comm mpiComm);
+              helper::Comm comm);
 
     ~BP3Reader() = default;
 

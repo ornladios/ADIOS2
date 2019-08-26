@@ -24,8 +24,8 @@ namespace engine
 {
 
 DataManWriter::DataManWriter(IO &io, const std::string &name,
-                             const Mode openMode, MPI_Comm mpiComm)
-: DataManCommon("DataManWriter", io, name, openMode, mpiComm)
+                             const Mode openMode, helper::Comm comm)
+: DataManCommon("DataManWriter", io, name, openMode, std::move(comm))
 {
     if (m_StagingMode == "wide")
     {
@@ -43,10 +43,10 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         std::vector<char> allDaVec(32 * m_MpiSize, '\0');
         std::vector<char> allCaVec(32 * m_MpiSize, '\0');
 
-        MPI_Allgather(m_DataAddress.data(), m_DataAddress.size(), MPI_CHAR,
-                      allDaVec.data(), 32, MPI_CHAR, m_MPIComm);
-        MPI_Allgather(m_ControlAddress.data(), m_ControlAddress.size(),
-                      MPI_CHAR, allCaVec.data(), 32, MPI_CHAR, m_MPIComm);
+        m_Comm.Allgather(m_DataAddress.data(), m_DataAddress.size(),
+                         allDaVec.data(), 32);
+        m_Comm.Allgather(m_ControlAddress.data(), m_ControlAddress.size(),
+                         allCaVec.data(), 32);
 
         std::vector<std::string> daVec;
         std::vector<std::string> caVec;

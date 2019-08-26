@@ -26,14 +26,14 @@ namespace engine
 {
 
 SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("SscReader", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, helper::IsRowMajor(io.m_HostLanguage)),
+                     helper::Comm comm)
+: Engine("SscReader", io, name, mode, std::move(comm)),
+  m_DataManSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage)),
   m_RepliedMetadata(std::make_shared<std::vector<char>>())
 {
     TAU_SCOPED_TIMER_FUNC();
 
-    MPI_Comm_rank(mpiComm, &m_MpiRank);
+    m_MpiRank = m_Comm.Rank();
     srand(time(NULL));
 
     // initialize parameters from IO
@@ -50,7 +50,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     }
 
     // retrieve all writer addresses
-    helper::HandshakeReader(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc");
+    helper::HandshakeReader(m_Comm, m_AppID, m_FullAddresses, m_Name, "ssc");
 
     // initialize transports
     m_DataTransport.OpenRequester(m_Timeout, m_DataReceiverBufferSize);
@@ -70,7 +70,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
                                                 address);
         }
     }
-    m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
+    m_DataManSerializer.PutAggregatedMetadata(reply, m_Comm);
     m_DataManSerializer.GetAttributes(m_IO);
 
     if (m_Verbosity >= 5)
@@ -378,7 +378,7 @@ void SscReader::RequestMetadata(const int64_t step)
         reply = m_MetadataTransport.Request(request.data(), request.size(),
                                             address);
     }
-    m_DataManSerializer.PutAggregatedMetadata(reply, m_MPIComm);
+    m_DataManSerializer.PutAggregatedMetadata(reply, m_Comm);
 }
 
 void SscReader::DoClose(const int transportIndex)

@@ -19,6 +19,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2
@@ -33,7 +34,7 @@ public:
     std::string m_Name; ///< from Open, unique identifier (e.g. filename)
     Mode m_OpenMode = Mode::Undefined; ///< at Open from ADIOSTypes.h
     bool m_IsOpen = false; ///< true: open for communication, false: unreachable
-    MPI_Comm m_MPIComm;    ///< current MPI communicator
+    helper::Comm const &m_Comm;     ///< current multi-process communicator
     profiling::IOChrono m_Profiler; ///< profiles Open, Write/Read, Close
 
     struct Status
@@ -47,11 +48,11 @@ public:
     /**
      * Base constructor that all derived classes pass
      * @param type from derived class
-     * @param mpiComm passed to m_MPIComm
+     * @param comm passed to m_Comm
      * @param debugMode passed to m_DebugMode
      */
     Transport(const std::string type, const std::string library,
-              MPI_Comm mpiComm, const bool debugMode);
+              helper::Comm const &comm, const bool debugMode);
 
     virtual ~Transport() = default;
 

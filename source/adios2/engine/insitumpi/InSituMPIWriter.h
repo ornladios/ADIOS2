@@ -17,6 +17,7 @@
 #include "InSituMPISchedules.h"
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/bp3/BP3.h"
 
 namespace adios2
@@ -34,12 +35,12 @@ public:
      * Constructor for Writer writes in ADIOS 1.x BP format
      * @param name unique name given to the engine
      * @param accessMode
-     * @param mpiComm
+     * @param comm
      * @param method
      * @param debugMode
      */
     InSituMPIWriter(IO &adios, const std::string &name, const Mode openMode,
-                    MPI_Comm mpiComm);
+                    helper::Comm comm);
 
     ~InSituMPIWriter();
 

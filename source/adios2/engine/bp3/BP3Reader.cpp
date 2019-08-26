@@ -11,7 +11,7 @@
 #include "BP3Reader.h"
 #include "BP3Reader.tcc"
 
-#include "adios2/helper/adiosFunctions.h" // MPI BroadcastVector
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 namespace adios2
@@ -22,10 +22,10 @@ namespace engine
 {
 
 BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("BP3", io, name, mode, mpiComm),
-  m_BP3Deserializer(mpiComm, m_DebugMode), m_FileManager(mpiComm, m_DebugMode),
-  m_SubFileManager(mpiComm, m_DebugMode)
+                     helper::Comm comm)
+: Engine("BP3", io, name, mode, std::move(comm)),
+  m_BP3Deserializer(m_Comm, m_DebugMode), m_FileManager(m_Comm, m_DebugMode),
+  m_SubFileManager(m_Comm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("BP3Reader::Open");
     Init();
@@ -202,7 +202,7 @@ void BP3Reader::InitBuffer()
     }
 
     // broadcast metadata buffer to all ranks from zero
-    helper::BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer, m_MPIComm);
+    m_Comm.BroadcastVector(m_BP3Deserializer.m_Metadata.m_Buffer);
 
     // fills IO with available Variables and Attributes
     m_BP3Deserializer.ParseMetadata(m_BP3Deserializer.m_Metadata, *this);

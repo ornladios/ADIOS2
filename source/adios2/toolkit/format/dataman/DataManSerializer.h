@@ -13,6 +13,7 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <mutex>
@@ -83,7 +84,7 @@ using DeferredRequestMapPtr = std::shared_ptr<DeferredRequestMap>;
 class DataManSerializer
 {
 public:
-    DataManSerializer(MPI_Comm mpiComm, const bool isRowMajor);
+    DataManSerializer(helper::Comm const &comm, const bool isRowMajor);
 
     // ************ serializer functions
 
@@ -153,7 +154,7 @@ public:
 
     DmvVecPtr GetStepMetadata(const size_t step);
 
-    void PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm);
+    void PutAggregatedMetadata(VecPtr input, helper::Comm const &comm);
 
     int PutDeferredRequest(const std::string &variable, const size_t step,
                            const Dims &start, const Dims &count, void *data);
@@ -262,7 +263,7 @@ private:
     bool m_EnableStat = true;
     int m_MpiRank;
     int m_MpiSize;
-    MPI_Comm m_MpiComm;
+    helper::Comm const &m_Comm;
 
     int m_Verbosity = 0;
 };

@@ -17,8 +17,7 @@
 #include <tuple>
 #include <vector>
 
-#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>,
-                                          // ReduceValue<T>
+#include "adios2/helper/adiosFunctions.h" //helper::GetType<T>, helper::ReadValue<T>
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // Windows complains about SubFileInfoMap levels
@@ -31,8 +30,8 @@ namespace format
 
 std::mutex BP4Serializer::m_Mutex;
 
-BP4Serializer::BP4Serializer(MPI_Comm mpiComm, const bool debugMode)
-: BP4Base(mpiComm, debugMode)
+BP4Serializer::BP4Serializer(helper::Comm const &comm, const bool debugMode)
+: BP4Base(comm, debugMode)
 {
 }
 
@@ -429,7 +428,7 @@ BP4Serializer::AggregateProfilingJSON(const std::string &rankProfilingLog)
     return SetCollectiveProfilingJSON(rankProfilingLog);
 }
 
-void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
+void BP4Serializer::AggregateCollectiveMetadata(helper::Comm const &comm,
                                                 BufferSTL &bufferSTL,
                                                 const bool inMetadataBuffer)
 {
@@ -469,8 +468,7 @@ void BP4Serializer::AggregateCollectiveMetadata(MPI_Comm comm,
     // AggregateMergeIndex(m_MetadataSet.AttributesIndices, comm, bufferSTL,
     // true);
 
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
     if (rank == 0)
     {
         /* no more minifooter in the global metadata*/
@@ -966,16 +964,15 @@ void BP4Serializer::PutMinifooter(const uint64_t pgIndexStart,
 }
 
 void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
-                                   const size_t count, MPI_Comm comm,
+                                   const size_t count, helper::Comm const &comm,
                                    BufferSTL &bufferSTL)
 {
     auto &buffer = bufferSTL.m_Buffer;
     auto &position = bufferSTL.m_Position;
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     size_t countPosition = position;
-    const size_t totalCount = helper::ReduceValues<size_t>(count, comm);
+    const size_t totalCount = comm.ReduceValues<size_t>(count);
 
     if (rank == 0)
     {
@@ -987,7 +984,7 @@ void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
     }
 
     // write contents
-    helper::GathervVectors(index.Buffer, buffer, position, comm);
+    comm.GathervVectors(index.Buffer, buffer, position);
 
     // get total length and write it after count and before index
     if (rank == 0)
@@ -1000,7 +997,7 @@ void BP4Serializer::AggregateIndex(const SerialElementIndex &index,
 
 void BP4Serializer::AggregateMergeIndex(
     const std::unordered_map<std::string, SerialElementIndex> &indices,
-    MPI_Comm comm, BufferSTL &bufferSTL, const bool isRankConstant)
+    helper::Comm const &comm, BufferSTL &bufferSTL, const bool isRankConstant)
 {
     // first serialize index
     std::vector<char> serializedIndices = SerializeIndices(indices, comm);
@@ -1008,8 +1005,8 @@ void BP4Serializer::AggregateMergeIndex(
     std::vector<char> gatheredSerialIndices;
     size_t gatheredSerialIndicesPosition = 0;
 
-    helper::GathervVectors(serializedIndices, gatheredSerialIndices,
-                           gatheredSerialIndicesPosition, comm);
+    comm.GathervVectors(serializedIndices, gatheredSerialIndices,
+                        gatheredSerialIndicesPosition);
 
     // deallocate local serialized Indices
     std::vector<char>().swap(serializedIndices);
@@ -1022,8 +1019,7 @@ void BP4Serializer::AggregateMergeIndex(
     // deallocate gathered serial indices (full in rank 0 only)
     std::vector<char>().swap(gatheredSerialIndices);
 
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     if (rank == 0)
     {
@@ -1054,7 +1050,7 @@ void BP4Serializer::AggregateMergeIndex(
 
 std::vector<char> BP4Serializer::SerializeIndices(
     const std::unordered_map<std::string, SerialElementIndex> &indices,
-    MPI_Comm comm) const noexcept
+    helper::Comm const &comm) const noexcept
 {
     // pre-allocate
     size_t serializedIndicesSize = 0;
@@ -1072,8 +1068,7 @@ std::vector<char> BP4Serializer::SerializeIndices(
     std::vector<char> serializedIndices;
     serializedIndices.reserve(serializedIndicesSize);
 
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     for (const auto &indexPair : indices)
     {
@@ -1099,7 +1094,7 @@ std::vector<char> BP4Serializer::SerializeIndices(
 
 std::unordered_map<std::string, std::vector<BP4Base::SerialElementIndex>>
 BP4Serializer::DeserializeIndicesPerRankSingleThread(
-    const std::vector<char> &serialized, MPI_Comm comm,
+    const std::vector<char> &serialized, helper::Comm const &comm,
     const bool isRankConstant) const noexcept
 {
     std::unordered_map<std::string, std::vector<SerialElementIndex>>
@@ -1161,8 +1156,7 @@ BP4Serializer::DeserializeIndicesPerRankSingleThread(
 
     // BODY OF FUNCTION starts here
     const size_t serializedSize = serialized.size();
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     if (rank != 0 || serializedSize < 8)
     {
@@ -1239,7 +1233,7 @@ BP4Serializer::DeserializeIndicesPerRankSingleThread(
 
 std::unordered_map<std::string, std::vector<BP4Base::SerialElementIndex>>
 BP4Serializer::DeserializeIndicesPerRankThreads(
-    const std::vector<char> &serialized, MPI_Comm comm,
+    const std::vector<char> &serialized, helper::Comm const &comm,
     const bool isRankConstant) const noexcept
 {
     if (m_Threads == 1)
@@ -1341,8 +1335,7 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
 
     // BODY OF FUNCTION starts here
     const size_t serializedSize = serialized.size();
-    int rank;
-    SMPI_Comm_rank(comm, &rank);
+    int rank = comm.Rank();
 
     if (rank != 0 || serializedSize < 8)
     {
@@ -1403,12 +1396,11 @@ BP4Serializer::DeserializeIndicesPerRankThreads(
     return deserialized;
 }
 
-void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
+void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                                                        BufferSTL &outBufferSTL)
 {
-    int rank, size;
-    SMPI_Comm_rank(comm, &rank);
-    SMPI_Comm_size(comm, &size);
+    int rank = comm.Rank();
+    int size = comm.Size();
 
     BufferSTL inBufferSTL;
 
@@ -1453,7 +1445,8 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
         }
     };
 
-    auto lf_SerializeAllIndices = [&](MPI_Comm comm, const int rank) {
+    auto lf_SerializeAllIndices = [&](helper::Comm const &comm,
+                                      const int rank) {
         const size_t pgIndicesSize = m_MetadataSet.PGIndex.Buffer.size();
         const size_t variablesIndicesSize =
             lf_IndicesSize(m_MetadataSet.VarsIndices);
@@ -2143,8 +2136,8 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
     // use bufferSTL (will resize) to GatherV
     // const size_t extraSize = 16 + 12 + 12 + m_MetadataSet.MiniFooterSize;
 
-    helper::GathervVectors(m_SerializedIndices, inBufferSTL.m_Buffer,
-                           inBufferSTL.m_Position, comm, 0, 0);
+    comm.GathervVectors(m_SerializedIndices, inBufferSTL.m_Buffer,
+                        inBufferSTL.m_Position, 0, 0);
 
     // deserialize, it's all local inside rank 0
     if (rank == 0)
@@ -2211,7 +2204,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(MPI_Comm comm,
 void BP4Serializer::MergeSerializeIndicesPerStep(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         &nameRankIndices,
-    MPI_Comm comm, BufferSTL &bufferSTL)
+    helper::Comm const &comm, BufferSTL &bufferSTL)
 {
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
@@ -2536,7 +2529,7 @@ void BP4Serializer::MergeSerializeIndicesPerStep(
 void BP4Serializer::MergeSerializeIndices(
     const std::unordered_map<std::string, std::vector<SerialElementIndex>>
         &nameRankIndices,
-    MPI_Comm comm, BufferSTL &bufferSTL)
+    helper::Comm const &comm, BufferSTL &bufferSTL)
 {
     auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
                                      size_t &position, const uint8_t dataType,
@@ -2897,8 +2890,7 @@ BP4Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
     const size_t rankLogSize = rankLog.size();
-    std::vector<size_t> rankLogsSizes =
-        helper::GatherValues(rankLogSize, m_MPIComm);
+    std::vector<size_t> rankLogsSizes = m_Comm.GatherValues(rankLogSize);
 
     // Gatherv JSON per rank
     std::vector<char> profilingJSON(3);
@@ -2917,9 +2909,8 @@ BP4Serializer::SetCollectiveProfilingJSON(const std::string &rankLog) const
                              header.size());
     }
 
-    helper::GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
-                          rankLogsSizes.size(), &profilingJSON[position],
-                          m_MPIComm);
+    m_Comm.GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
+                         rankLogsSizes.size(), &profilingJSON[position]);
 
     if (m_RankMPI == 0) // add footer to close JSON
     {

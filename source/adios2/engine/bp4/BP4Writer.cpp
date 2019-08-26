@@ -29,12 +29,11 @@ namespace engine
 {
 
 BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("BP4Writer", io, name, mode, mpiComm),
-  m_BP4Serializer(mpiComm, m_DebugMode),
-  m_FileDataManager(mpiComm, m_DebugMode),
-  m_FileMetadataManager(mpiComm, m_DebugMode),
-  m_FileMetadataIndexManager(mpiComm, m_DebugMode)
+                     helper::Comm comm)
+: Engine("BP4Writer", io, name, mode, std::move(comm)),
+  m_BP4Serializer(m_Comm, m_DebugMode), m_FileDataManager(m_Comm, m_DebugMode),
+  m_FileMetadataManager(m_Comm, m_DebugMode),
+  m_FileMetadataIndexManager(m_Comm, m_DebugMode)
 {
     TAU_SCOPED_TIMER("BP4Writer::Open");
     m_IO.m_ReadStreaming = false;
@@ -256,7 +255,7 @@ void BP4Writer::InitBPBuffer()
             m_FileMetadataIndexManager.ReadFile(
                 preMetadataIndex.m_Buffer.data(), preMetadataIndexFileSize);
         }
-        helper::BroadcastVector(preMetadataIndex.m_Buffer, m_MPIComm);
+        m_Comm.BroadcastVector(preMetadataIndex.m_Buffer);
         preMetadataIndexFileSize = preMetadataIndex.m_Buffer.size();
         if (preMetadataIndexFileSize > 0)
         {
@@ -421,7 +420,7 @@ void BP4Writer::WriteProfilingJSONFile()
     if (m_BP4Serializer.m_RankMPI == 0)
     {
         // std::cout << "write profiling file!" << std::endl;
-        transport::FileFStream profilingJSONStream(m_MPIComm, m_DebugMode);
+        transport::FileFStream profilingJSONStream(m_Comm, m_DebugMode);
         auto bpBaseNames = m_BP4Serializer.GetBPBaseNames({m_Name});
         profilingJSONStream.Open(bpBaseNames[0] + "/profiling.json",
                                  Mode::Write);
@@ -478,7 +477,7 @@ void BP4Writer::WriteCollectiveMetadataFile(const bool isFinal)
         return;
     }
     m_BP4Serializer.AggregateCollectiveMetadata(
-        m_MPIComm, m_BP4Serializer.m_Metadata, true);
+        m_Comm, m_BP4Serializer.m_Metadata, true);
 
     if (m_BP4Serializer.m_RankMPI == 0)
     {
@@ -651,12 +650,13 @@ void BP4Writer::AggregateWriteData(const bool isFinal, const int transportIndex)
     // async?
     for (int r = 0; r < m_BP4Serializer.m_Aggregator.m_Size; ++r)
     {
-        std::vector<std::vector<MPI_Request>> dataRequests =
+        aggregator::MPIAggregator::ExchangeRequests dataRequests =
             m_BP4Serializer.m_Aggregator.IExchange(m_BP4Serializer.m_Data, r);
 
-        std::vector<std::vector<MPI_Request>> absolutePositionRequests =
-            m_BP4Serializer.m_Aggregator.IExchangeAbsolutePosition(
-                m_BP4Serializer.m_Data, r);
+        aggregator::MPIAggregator::ExchangeAbsolutePositionRequests
+            absolutePositionRequests =
+                m_BP4Serializer.m_Aggregator.IExchangeAbsolutePosition(
+                    m_BP4Serializer.m_Data, r);
 
         if (m_BP4Serializer.m_Aggregator.m_IsConsumer)
         {

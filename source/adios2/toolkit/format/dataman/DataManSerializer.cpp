@@ -11,8 +11,6 @@
 #include "DataManSerializer.h"
 #include "DataManSerializer.tcc"
 
-#include "adios2/helper/adiosMPIFunctions.h"
-
 #include <cstring>
 #include <iostream>
 
@@ -21,13 +19,14 @@ namespace adios2
 namespace format
 {
 
-DataManSerializer::DataManSerializer(MPI_Comm mpiComm, const bool isRowMajor)
-: m_MpiComm(mpiComm), m_IsRowMajor(isRowMajor),
+DataManSerializer::DataManSerializer(helper::Comm const &comm,
+                                     const bool isRowMajor)
+: m_Comm(comm), m_IsRowMajor(isRowMajor),
   m_IsLittleEndian(helper::IsLittleEndian()),
   m_DeferredRequestsToSend(std::make_shared<DeferredRequestMap>())
 {
-    MPI_Comm_size(m_MpiComm, &m_MpiSize);
-    MPI_Comm_rank(m_MpiComm, &m_MpiRank);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
 }
 
 void DataManSerializer::NewWriterBuffer(size_t bufferSize)
@@ -71,7 +70,7 @@ void DataManSerializer::AggregateMetadata()
     auto localJsonPack = SerializeJson(m_MetadataJson);
     unsigned int size = localJsonPack->size();
     unsigned int maxSize;
-    MPI_Allreduce(&size, &maxSize, 1, MPI_UNSIGNED, MPI_MAX, m_MpiComm);
+    m_Comm.Allreduce(&size, &maxSize, 1, MPI_MAX);
     maxSize += sizeof(uint64_t);
     localJsonPack->resize(maxSize, '\0');
     *(reinterpret_cast<uint64_t *>(localJsonPack->data() +
@@ -79,8 +78,8 @@ void DataManSerializer::AggregateMetadata()
       1) = size;
 
     std::vector<char> globalJsonStr(m_MpiSize * maxSize);
-    MPI_Allgather(localJsonPack->data(), maxSize, MPI_CHAR,
-                  globalJsonStr.data(), maxSize, MPI_CHAR, m_MpiComm);
+    m_Comm.Allgather(localJsonPack->data(), maxSize, globalJsonStr.data(),
+                     maxSize);
 
     nlohmann::json aggMetadata;
 
@@ -258,7 +257,8 @@ VecPtr DataManSerializer::GetAggregatedMetadataPack(const int64_t stepRequested,
     return ret;
 }
 
-void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
+void DataManSerializer::PutAggregatedMetadata(VecPtr input,
+                                              helper::Comm const &comm)
 {
     TAU_SCOPED_TIMER_FUNC();
     if (input == nullptr)
@@ -269,7 +269,7 @@ void DataManSerializer::PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm)
         return;
     }
 
-    helper::BroadcastVector(*input, mpiComm);
+    comm.BroadcastVector(*input);
 
     if (input->size() > 0)
     {
