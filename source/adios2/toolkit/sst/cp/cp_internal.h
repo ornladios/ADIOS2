@@ -23,6 +23,7 @@ typedef struct _CP_GlobalInfo
     CMFormat ReaderActivateFormat;
     CMFormat ReleaseTimestepFormat;
     CMFormat LockReaderDefinitionsFormat;
+    CMFormat CommPatternLockedFormat;
     CMFormat WriterCloseFormat;
     CMFormat ReaderCloseFormat;
     int CustomStructCount;
@@ -74,6 +75,8 @@ typedef struct _WS_ReaderInfo
     long LastSentTimestep;
     int LastReleasedTimestep;
     int ReaderDefinitionsLocked;
+    int ReaderSelectionLockTimestep;
+    SstPreloadModeType PreloadMode;
     long OldestUnreleasedTimestep;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
@@ -146,7 +149,6 @@ struct _SstStream
     /* WRITER-SIDE FIELDS */
     int WriterTimestep;
     int LastReleasedTimestep;
-    int ReaderDefinitionsLocked;
     CPTimestepList QueuedTimesteps;
     int QueuedTimestepCount;
     int QueueLimit;
@@ -192,6 +194,8 @@ struct _SstStream
     SstFullMetadata CurrentMetadata;
     struct _SstParams *WriterConfigParams;
     void *ParamsBlock;
+    int CommPatternLocked;
+    int CommPatternLockedTimestep;
     long DiscardPriorTimestep; /* timesteps numerically less than this will be
                                   discarded with prejudice */
 
@@ -337,6 +341,7 @@ typedef struct _TimestepMetadataMsg
     void *RS_Stream;
     int Timestep;
     int CohortSize;
+    SstPreloadModeType PreloadMode;
     FFSFormatList Formats;
     SstData Metadata;
     SstData AttributeData;
@@ -351,6 +356,7 @@ typedef struct _TimestepMetadataDistributionMsg
 {
     int ReturnValue;
     TSMetadataMsg TSmsg;
+    int CommPatternLockedTimestep;
 } * TSMetadataDistributionMsg;
 
 /*
@@ -398,6 +404,16 @@ struct _LockReaderDefinitionsMsg
     void *WSR_Stream;
     int Timestep;
 };
+
+/*
+ * The CommPatternLocked message informs the reader that writer and the reader
+ * has agreed that the communication pattern is locked starting with Timestep.
+ */
+typedef struct _CommPatternLockedMsg
+{
+    void *RS_Stream;
+    int Timestep;
+} * CommPatternLockedMsg;
 
 /*
  * The WriterClose message informs the readers that the writer is beginning an
@@ -474,6 +490,9 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
 extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
                                             void *Msg_v, void *client_data,
                                             attr_list attrs);
+extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn,
+                                        void *Msg_v, void *client_data,
+                                        attr_list attrs);
 extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_data, attr_list attrs);
 extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
