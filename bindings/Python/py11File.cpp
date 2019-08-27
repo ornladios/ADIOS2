@@ -70,9 +70,39 @@ size_t File::AddTransport(const std::string type, const Params &parameters)
     return m_Stream->m_IO->AddTransport(type, parameters);
 }
 
-std::map<std::string, adios2::Params> File::AvailableVariables() noexcept
+std::map<std::string, adios2::Params>
+File::AvailableVariables(const std::string order) noexcept
 {
-    return m_Stream->m_IO->GetAvailableVariables();
+    Layout layout = ToLayout(order);
+
+    auto vars = m_Stream->m_IO->GetAvailableVariables();
+    for (auto &desc : vars)
+    {
+        auto type = m_Stream->m_IO->InquireVariableType(desc.first);
+
+        if (false)
+        {
+        }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetType<T>())                                     \
+    {                                                                          \
+        auto var = m_Stream->m_IO->InquireVariable<T>(desc.first);             \
+        if (layout == Layout::Original)                                        \
+        {                                                                      \
+            layout = var->GetOriginalLayout();                                 \
+        }                                                                      \
+        bool reverse_dims = layout == Layout::ColumnMajor;                     \
+        if (reverse_dims)                                                      \
+        {                                                                      \
+            auto shape = var->Shape();                                         \
+            std::reverse(shape.begin(), shape.end());                          \
+            desc.second["Shape"] = helper::VectorToCSV(shape);                 \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    }
+    return vars;
 }
 
 std::map<std::string, adios2::Params> File::AvailableAttributes() noexcept

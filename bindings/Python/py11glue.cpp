@@ -588,10 +588,17 @@ PYBIND11_MODULE(adios2, m)
         )md")
 
         .def("available_variables", &adios2::py11::File::AvailableVariables,
-             pybind11::return_value_policy::move, R"md(
+             pybind11::arg("order") = "", pybind11::return_value_policy::move,
+             R"md(
              Returns a 2-level dictionary with variable information. 
              Read mode only.
              
+             Parameters
+                 order
+                     choice of 'C', 'F', or 'K' for row-major, column major
+                     or original layout, respectively. If not provided,
+                     File.read_order is used (which defaults to 'K')
+
              Returns
                  variables dictionary
                      key 

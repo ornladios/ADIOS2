@@ -204,5 +204,19 @@ class TestReadOrder(unittest.TestCase):
         adios2.File.read_order = 'K'
 
 
+class TestAvailableVariables(unittest.TestCase):
+    # FIXME, would be nicer to return scalar (0-d array), as above
+    def test_GlobalArray(self):
+        with adios2.open(filename, 'r') as fh:
+            vars = fh.available_variables()
+            self.assertTrue(vars["global_array"]["Shape"] == "2, 16")
+            # test reversing of shape
+            vars = fh.available_variables(order='F')
+            self.assertTrue(vars["global_array"]["Shape"] == "16, 2")
+
+        # restore default so tests run after this one don't fail
+        adios2.File.read_order = 'K'
+
+
 if __name__ == '__main__':
     unittest.main()
