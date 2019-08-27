@@ -16,6 +16,10 @@
 
 namespace adios2
 {
+namespace helper
+{
+class Comm;
+}
 namespace transport
 {
 
@@ -24,7 +28,7 @@ class FilePOSIX : public Transport
 {
 
 public:
-    FilePOSIX(MPI_Comm mpiComm, const bool debugMode);
+    FilePOSIX(helper::Comm const &comm, const bool debugMode);
 
     ~FilePOSIX();
 

@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * DataManReader.cpp
+ * DataManCommon.cpp
  *
  *  Created on: Feb 12, 2018
  *      Author: Jason Wang
@@ -19,41 +19,24 @@ namespace engine
 
 DataManCommon::DataManCommon(const std::string engineType, IO &io,
                              const std::string &name, const Mode mode,
-                             MPI_Comm mpiComm)
-: Engine(engineType, io, name, mode, mpiComm),
-  m_FileTransport(mpiComm, m_DebugMode)
+                             helper::Comm comm)
+: Engine(engineType, io, name, mode, std::move(comm)),
+  m_IsRowMajor(helper::IsRowMajor(io.m_HostLanguage)),
+  m_DataManSerializer(m_Comm, m_IsRowMajor)
 {
-
-    // initialize parameters
-    MPI_Comm_rank(mpiComm, &m_MpiRank);
-    MPI_Comm_size(mpiComm, &m_MpiSize);
-    m_IsLittleEndian = helper::IsLittleEndian();
-    m_IsRowMajor = helper::IsRowMajor(io.m_HostLanguage);
-    GetStringParameter(m_IO.m_Parameters, "WorkflowMode", m_WorkflowMode);
-    GetBoolParameter(m_IO.m_Parameters, "AlwaysProvideLatestTimestep",
-                     m_ProvideLatest);
-    if (m_WorkflowMode != "file" && m_WorkflowMode != "stream")
-    {
-        throw(std::invalid_argument(
-            "WorkflowMode parameter for DataMan must be File or Stream"));
-    }
-    m_Channels = m_IO.m_TransportsParameters.size();
-    if (m_Channels == 0)
-    {
-        m_Channels = 1;
-        m_IO.m_TransportsParameters.push_back({{"Library", "ZMQ"},
-                                               {"IPAddress", "127.0.0.1"},
-                                               {"Port", "12306"},
-                                               {"Name", m_Name}});
-    }
-    for (size_t i = 0; i < m_Channels; ++i)
-    {
-        m_IO.m_TransportsParameters[i]["Name"] = m_Name + std::to_string(i);
-    }
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
+    GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
+    GetParameter(m_IO.m_Parameters, "Port", m_Port);
+    GetParameter(m_IO.m_Parameters, "StagingMode", m_StagingMode);
+    GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
+    GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
 }
 
-bool DataManCommon::GetStringParameter(Params &params, std::string key,
-                                       std::string &value)
+DataManCommon::~DataManCommon() {}
+
+bool DataManCommon::GetParameter(const Params &params, const std::string &key,
+                                 std::string &value)
 {
     auto it = params.find(key);
     if (it != params.end())
@@ -65,8 +48,20 @@ bool DataManCommon::GetStringParameter(Params &params, std::string key,
     return false;
 }
 
-bool DataManCommon::GetBoolParameter(Params &params, std::string key,
-                                     bool &value)
+bool DataManCommon::GetParameter(const Params &params, const std::string &key,
+                                 int &value)
+{
+    auto it = params.find(key);
+    if (it != params.end())
+    {
+        value = stoi(it->second);
+        return true;
+    }
+    return false;
+}
+
+bool DataManCommon::GetParameter(const Params &params, const std::string &key,
+                                 bool &value)
 {
     auto it = params.find(key);
     if (it != params.end())

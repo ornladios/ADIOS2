@@ -13,6 +13,7 @@
 
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/interop/hdf5/HDF5Common.h"
 
 #include <map>
@@ -33,11 +34,11 @@ public:
      * Constructor for single HDF5 reader engine, reads from HDF5 format
      * @param name unique name given to the engine
      * @param accessMode
-     * @param mpiComm
+     * @param comm
      * @param method
      */
     HDF5ReaderP(IO &adios, const std::string &name, const Mode openMode,
-                MPI_Comm mpiComm);
+                helper::Comm comm);
 
     ~HDF5ReaderP();
 

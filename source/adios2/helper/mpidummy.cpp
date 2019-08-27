@@ -316,6 +316,10 @@ int MPI_Get_processor_name(char *name, int *resultlen)
 int MPI_Reduce(const void *sendbuf, void *recvbuf, int count,
                MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
+    if (sendbuf == MPI_IN_PLACE)
+    {
+        RETURN_CHECK(MPI_SUCCESS);
+    }
     int ier, size_of_type;
     ier = MPIDUMMY::MPI_Type_size(datatype, &size_of_type);
     if (ier != MPI_SUCCESS)

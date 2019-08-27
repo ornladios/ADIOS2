@@ -884,15 +884,14 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
 static void EvpathReaderRegisterTimestep(CP_Services Svcs,
                                          DP_WSR_Stream WSRStream_v,
                                          long Timestep,
-                                         int WriterDefinitionsLocked)
+                                         SstPreloadModeType PreloadMode)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSRStream_v;
     Evpath_WS_Stream WS_Stream =
         WSR_Stream->WS_Stream; /* pointer to writer struct */
 
-    if (WriterDefinitionsLocked)
     {
-        /* go ahead and record read patterns */
+        /* go ahead and record read patterns, just in case we need them */
         TimestepList tmp = WS_Stream->Timesteps;
 
         while (tmp != NULL)
@@ -906,8 +905,8 @@ static void EvpathReaderRegisterTimestep(CP_Services Svcs,
                 tmp->ReaderRequests = ReqTrk;
                 return;
             }
+            tmp = tmp->Next;
         }
-        tmp = tmp->Next;
         printf("TIMESTEP NOT FOUND in READER REGISTER!\n");
     }
 }
@@ -943,7 +942,8 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
         WSR_Stream->WS_Stream; /* pointer to writer struct */
     TimestepList tmp = WS_Stream->Timesteps;
 
-    if (Timestep == WSR_Stream->ReadPatternLockTimestep)
+    if ((!WSR_Stream->ReaderRequests) &&
+        (Timestep >= WSR_Stream->ReadPatternLockTimestep))
     {
         /* save the pattern */
         while (tmp != NULL)
@@ -970,7 +970,6 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
             tmp = WS_Stream->Timesteps;
             while (tmp != NULL)
             {
-
                 SendPreloadMsgs(Svcs, WSR_Stream, tmp);
                 tmp = tmp->Next;
             }
@@ -978,13 +977,17 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
     }
 }
 
-static void EvpathReadPatternLocked(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
-                                    long EffectiveTimestep)
+static void EvpathWSRReadPatternLocked(CP_Services Svcs,
+                                       DP_WSR_Stream WSRStream_v,
+                                       long EffectiveTimestep)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSRStream_v;
     Evpath_WS_Stream WS_Stream =
         WSR_Stream->WS_Stream; /* pointer to writer struct */
 
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Locking the read pattern at Timestep %ld\n",
+                  EffectiveTimestep);
     WSR_Stream->ReadPatternLockTimestep = EffectiveTimestep;
 }
 
@@ -1160,7 +1163,8 @@ extern CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.releaseTimestep = EvpathReleaseTimestep;
     evpathDPInterface.readerRegisterTimestep = EvpathReaderRegisterTimestep;
     evpathDPInterface.readerReleaseTimestep = EvpathReaderReleaseTimestep;
-    evpathDPInterface.readPatternLocked = EvpathReadPatternLocked;
+    evpathDPInterface.WSRreadPatternLocked = EvpathWSRReadPatternLocked;
+    evpathDPInterface.RSreadPatternLocked = NULL;
     evpathDPInterface.destroyReader = EvpathDestroyReader;
     evpathDPInterface.destroyWriter = EvpathDestroyWriter;
     evpathDPInterface.destroyWriterPerReader = EvpathDestroyWriterPerReader;

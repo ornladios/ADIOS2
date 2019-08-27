@@ -15,6 +15,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/dataspaces/ds.h"
 #include "mpi.h"
 
@@ -33,11 +34,11 @@ public:
      * Constructor for DataSpaces writer engine,
      * @param name unique name given to the engine
      * @param accessMode
-     * @param mpiComm
+     * @param comm
      * @param method
      */
     DataSpacesWriter(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm);
+                     helper::Comm comm);
 
     ~DataSpacesWriter();
 

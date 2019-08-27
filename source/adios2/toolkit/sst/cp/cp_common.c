@@ -342,6 +342,8 @@ static FMField TimestepMetadataList[] = {
      FMOffset(struct _TimestepMetadataMsg *, Timestep)},
     {"cohort_size", "integer", sizeof(int),
      FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
+    {"preload_mode", "integer", sizeof(int),
+     FMOffset(struct _TimestepMetadataMsg *, PreloadMode)},
     {"formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct _TimestepMetadataMsg *, Formats)},
     {"metadata", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
@@ -424,6 +426,13 @@ static FMField LockReaderDefinitionsList[] = {
      FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
     {"Timestep", "integer", sizeof(int),
      FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
+    {NULL, NULL, 0, 0}};
+
+static FMField CommPatternLockedList[] = {
+    {"RS_Stream", "integer", sizeof(void *),
+     FMOffset(struct _CommPatternLockedMsg *, RS_Stream)},
+    {"Timestep", "integer", sizeof(int),
+     FMOffset(struct _CommPatternLockedMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMField PeerSetupList[] = {
@@ -882,6 +891,11 @@ static void doFormatRegistration(CP_GlobalInfo CPInfo, CP_DP_Interface DPInfo)
         sizeof(struct _LockReaderDefinitionsMsg));
     CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
                        CP_LockReaderDefinitionsHandler, NULL);
+    CPInfo->CommPatternLockedFormat = CMregister_simple_format(
+        CPInfo->cm, "CommPatternLocked", CommPatternLockedList,
+        sizeof(struct _CommPatternLockedMsg));
+    CMregister_handler(CPInfo->CommPatternLockedFormat,
+                       CP_CommPatternLockedHandler, NULL);
     CPInfo->WriterCloseFormat =
         CMregister_simple_format(CPInfo->cm, "WriterClose", WriterCloseList,
                                  sizeof(struct _WriterCloseMsg));

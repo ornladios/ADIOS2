@@ -27,6 +27,7 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/VariableBase.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/bpOperation/BPOperation.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
@@ -153,10 +154,10 @@ public:
         bool HasSubFiles = false;
     };
 
-    MPI_Comm m_MPIComm;  ///< MPI communicator from Engine
-    int m_RankMPI = 0;   ///< current MPI rank process
-    int m_SizeMPI = 1;   ///< current MPI processes size
-    int m_Processes = 1; ///< number of aggregated MPI processes
+    helper::Comm const &m_Comm; ///< multi-process communicator from Engine
+    int m_RankMPI = 0;          ///< current MPI rank process
+    int m_SizeMPI = 1;          ///< current MPI processes size
+    int m_Processes = 1;        ///< number of aggregated MPI processes
 
     /** statistics verbosity, only 0/1 is supported now */
     unsigned int m_StatsLevel = 1;
@@ -262,7 +263,7 @@ public:
      * @param mpiComm for m_BP1Aggregator
      * @param debugMode true: exceptions checks
      */
-    BP4Base(MPI_Comm mpiComm, const bool debugMode);
+    BP4Base(helper::Comm const &comm, const bool debugMode);
 
     virtual ~BP4Base();
 

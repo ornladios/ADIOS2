@@ -2106,7 +2106,7 @@ build_deploy_msg_for_node_stones(EVdfg_configuration config, int act_num, EVmast
 	case ACT_unfreeze:
 	    break;
 	default:
-	    printf("Bad action in build_deploy_msg_for_nodes %s (%d)\n", ACT_string[act.type], act.type);
+	    printf("Bad action type in build_deploy_msg_for_nodes (action type %d)\n", act.type);
 	    break;
 	}
     }

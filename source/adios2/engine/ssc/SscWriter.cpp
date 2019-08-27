@@ -26,10 +26,9 @@ namespace engine
 {
 
 SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm mpiComm)
-: Engine("SscWriter", io, name, mode, mpiComm),
-  m_DataManSerializer(mpiComm, m_DefaultBufferSize,
-                      helper::IsRowMajor(io.m_HostLanguage))
+                     helper::Comm comm)
+: Engine("SscWriter", io, name, mode, std::move(comm)),
+  m_DataManSerializer(m_Comm, helper::IsRowMajor(io.m_HostLanguage))
 {
     TAU_SCOPED_TIMER_FUNC();
     Init();
@@ -48,7 +47,7 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     if (m_CurrentStep % m_StepsPerAggregation == 0)
     {
         m_CurrentStepActive = true;
-        m_DataManSerializer.NewWriterBuffer(m_DefaultBufferSize);
+        m_DataManSerializer.NewWriterBuffer(m_SerializationBufferSize);
         if (not m_AttributesSet)
         {
             m_DataManSerializer.PutAttributes(m_IO);
@@ -110,11 +109,11 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void SscWriter::Init()
 {
     TAU_SCOPED_TIMER_FUNC();
-    MPI_Comm_rank(m_MPIComm, &m_MpiRank);
-    MPI_Comm_size(m_MPIComm, &m_MpiSize);
+    m_MpiRank = m_Comm.Rank();
+    m_MpiSize = m_Comm.Size();
     srand(time(NULL));
     InitParameters();
-    helper::HandshakeWriter(m_MPIComm, m_AppID, m_FullAddresses, m_Name, "ssc",
+    helper::HandshakeWriter(m_Comm, m_AppID, m_FullAddresses, m_Name, "ssc",
                             m_Port, m_Channels, m_MaxRanksPerNode,
                             m_MaxAppsPerNode);
     InitTransports();
@@ -157,11 +156,11 @@ void SscWriter::InitTransports()
 
 void SscWriter::ReplyThread(const std::string &address)
 {
-    transportman::StagingMan tpm(m_MPIComm, Mode::Write, m_Timeout, 1e9);
-    tpm.OpenTransport(address);
+    adios2::zmq::ZmqReqRep replier;
+    replier.OpenReplier(address, m_Timeout, m_ReceiverBufferSize);
     while (m_Listening)
     {
-        auto request = tpm.ReceiveRequest();
+        auto request = replier.ReceiveRequest();
         if (request == nullptr)
         {
             continue;
@@ -186,7 +185,7 @@ void SscWriter::ReplyThread(const std::string &address)
                         stepRequested, stepProvided, m_AppID);
                 }
             }
-            tpm.SendReply(aggMetadata);
+            replier.SendReply(aggMetadata);
 
             if (m_Verbosity >= 100)
             {
@@ -206,7 +205,7 @@ void SscWriter::ReplyThread(const std::string &address)
             std::unordered_map<std::string, Params> p = m_CompressionParams;
             m_CompressionParamsMutex.unlock();
             auto reply = m_DataManSerializer.GenerateReply(*request, step, p);
-            tpm.SendReply(reply);
+            replier.SendReply(reply);
             if (reply->size() <= 16)
             {
                 if (m_Tolerance)
@@ -232,7 +231,7 @@ void SscWriter::ReplyThread(const std::string &address)
 
 void SscWriter::DoClose(const int transportIndex)
 {
-    MPI_Barrier(m_MPIComm);
+    m_Comm.Barrier();
     m_Listening = false;
     for (auto &i : m_ReplyThreads)
     {

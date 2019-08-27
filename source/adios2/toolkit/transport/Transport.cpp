@@ -17,8 +17,8 @@ namespace adios2
 {
 
 Transport::Transport(const std::string type, const std::string library,
-                     MPI_Comm mpiComm, const bool debugMode)
-: m_Type(type), m_Library(library), m_MPIComm(mpiComm), m_DebugMode(debugMode)
+                     helper::Comm const &comm, const bool debugMode)
+: m_Type(type), m_Library(library), m_Comm(comm), m_DebugMode(debugMode)
 {
 }
 

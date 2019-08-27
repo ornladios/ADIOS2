@@ -16,6 +16,7 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/interop/hdf5/HDF5Common.h"
 
 namespace adios2
@@ -33,11 +34,11 @@ public:
      * Constructor for HDF5 writer engine, writes in hdf5 format
      * @param name unique name given to the engine
      * @param accessMode
-     * @param mpiComm
+     * @param comm
      * @param method
      */
     HDF5WriterP(IO &io, const std::string &name, const Mode mode,
-                MPI_Comm mpiComm);
+                helper::Comm comm);
 
     ~HDF5WriterP();
 

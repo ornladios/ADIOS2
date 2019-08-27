@@ -44,10 +44,10 @@ public:
 
     /**
      * Unique constructor
-     * @param mpiComm
+     * @param comm multi-process communicator
      * @param debug true: extra checks
      */
-    BP4Deserializer(MPI_Comm mpiComm, const bool debugMode);
+    BP4Deserializer(helper::Comm const &comm, const bool debugMode);
 
     ~BP4Deserializer() = default;
 

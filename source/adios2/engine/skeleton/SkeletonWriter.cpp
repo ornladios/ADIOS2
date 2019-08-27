@@ -24,11 +24,11 @@ namespace engine
 {
 
 SkeletonWriter::SkeletonWriter(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm mpiComm)
-: Engine("SkeletonWriter", io, name, mode, mpiComm)
+                               helper::Comm comm)
+: Engine("SkeletonWriter", io, name, mode, std::move(comm))
 {
     m_EndMessage = " in call to SkeletonWriter " + m_Name + " Open\n";
-    MPI_Comm_rank(mpiComm, &m_WriterRank);
+    m_WriterRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)
     {

@@ -14,11 +14,12 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.h"
 #include "adios2/toolkit/format/dataman/DataManSerializer.tcc"
-#include "adios2/toolkit/transport/file/FileFStream.h"
-#include "adios2/toolkit/transportman/wanman/WANMan.h"
+#include "adios2/toolkit/zmq/zmqpubsub/ZmqPubSub.h"
+#include "adios2/toolkit/zmq/zmqreqrep/ZmqReqRep.h"
 
 namespace adios2
 {
@@ -32,36 +33,33 @@ class DataManCommon : public Engine
 
 public:
     DataManCommon(const std::string engineType, IO &io, const std::string &name,
-                  const Mode mode, MPI_Comm mpiComm);
-
-    virtual ~DataManCommon() = default;
+                  const Mode mode, helper::Comm comm);
+    virtual ~DataManCommon();
 
 protected:
+    // external paremeters
+    int m_Verbosity = 0;
+    size_t m_SerializerBufferSize = 128 * 1024 * 1024;
+    size_t m_ReceiverBufferSize = 128 * 1024 * 1024;
+    std::string m_StagingMode = "wide";
+    int m_Timeout = 5;
+
+    // internal variables
     int m_MpiRank;
     int m_MpiSize;
-    int m_Channels;
-    std::string m_WorkflowMode = "stream";
-    bool m_ProvideLatest = false;
-    size_t m_BufferSize = 1024 * 1024 * 1024;
-    bool m_DoMonitor = false;
     int64_t m_CurrentStep = -1;
-
-    bool m_IsLittleEndian;
+    bool m_ThreadActive = true;
     bool m_IsRowMajor;
-    bool m_ContiguousMajor = true;
+    std::string m_IPAddress;
+    int m_Port = 50001;
 
-    int m_Verbosity = 0;
+    format::DataManSerializer m_DataManSerializer;
 
-    transport::FileFStream m_FileTransport;
-
-    std::vector<std::string> m_StreamNames;
-
-    std::shared_ptr<transportman::WANMan> m_WANMan;
-    std::shared_ptr<std::thread> m_DataThread;
-
-    bool GetStringParameter(Params &params, std::string key,
-                            std::string &value);
-    bool GetBoolParameter(Params &params, std::string key, bool &value);
+    bool GetParameter(const Params &params, const std::string &key,
+                      bool &value);
+    bool GetParameter(const Params &params, const std::string &key, int &value);
+    bool GetParameter(const Params &params, const std::string &key,
+                      std::string &value);
 
 }; // end class DataManCommon
 

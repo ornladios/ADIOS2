@@ -24,21 +24,16 @@ TEST_F(DataManEngineTest, WriteRead_2D_P2P_Zfp)
     Dims shape = {5, 5};
     Dims start = {0, 0};
     Dims count = {5, 5};
-    size_t steps = 200;
-    adios2::Params engineParams = {{"WorkflowMode", "stream"}};
-    std::vector<adios2::Params> transportParams = {
-        {{"Library", "ZMQ"},
-         {"IPAddress", "127.0.0.1"},
-         {"Port", "12307"},
-         {"CompressionMethod", "zfp"},
-         {"zfp:precision", "0.001"}}};
+    size_t steps = 1000;
+    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
+                                   {"Port", "12316"}};
 
     // run workflow
-    auto r = std::thread(DataManReaderP2P, shape, start, count, steps,
-                         engineParams, transportParams);
+    auto r =
+        std::thread(DataManReaderP2P, shape, start, count, steps, engineParams);
     std::cout << "Reader thread started" << std::endl;
-    auto w = std::thread(DataManWriter, shape, start, count, steps,
-                         engineParams, transportParams);
+    auto w =
+        std::thread(DataManWriter, shape, start, count, steps, engineParams);
     std::cout << "Writer thread started" << std::endl;
     w.join();
     std::cout << "Writer thread ended" << std::endl;

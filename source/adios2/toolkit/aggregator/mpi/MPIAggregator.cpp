@@ -17,19 +17,21 @@ namespace adios2
 namespace aggregator
 {
 
-MPIAggregator::MPIAggregator() : m_Comm(MPI_COMM_NULL) {}
+MPIAggregator::MPIAggregator() {}
 
 MPIAggregator::~MPIAggregator()
 {
     if (m_IsActive)
     {
-        helper::CheckMPIReturn(MPI_Comm_free(&m_Comm),
-                               "freeing aggregators comm in MPIAggregator "
-                               "destructor, not recommended");
+        m_Comm.Free("freeing aggregators comm in MPIAggregator "
+                    "destructor, not recommended");
     }
 }
 
-void MPIAggregator::Init(const size_t subStreams, MPI_Comm parentComm) {}
+void MPIAggregator::Init(const size_t subStreams,
+                         helper::Comm const &parentComm)
+{
+}
 
 void MPIAggregator::SwapBuffers(const int step) noexcept {}
 
@@ -44,49 +46,46 @@ void MPIAggregator::Close()
 {
     if (m_IsActive)
     {
-        helper::CheckMPIReturn(MPI_Comm_free(&m_Comm),
-                               "freeing aggregators comm at Close\n");
+        m_Comm.Free("freeing aggregators comm at Close\n");
         m_IsActive = false;
     }
 }
 
 // PROTECTED
-void MPIAggregator::InitComm(const size_t subStreams, MPI_Comm parentComm)
+void MPIAggregator::InitComm(const size_t subStreams,
+                             helper::Comm const &parentComm)
 {
-    int parentRank;
-    int parentSize;
-    MPI_Comm_rank(parentComm, &parentRank);
-    MPI_Comm_size(parentComm, &parentSize);
+    int parentRank = parentComm.Rank();
+    int parentSize = parentComm.Size();
 
+    const size_t process = static_cast<size_t>(parentRank);
     const size_t processes = static_cast<size_t>(parentSize);
-    size_t stride = processes / subStreams + 1;
-    const size_t remainder = processes % subStreams;
 
-    size_t consumer = 0;
+    // Divide the processes into S=subStreams groups.
+    const size_t q = processes / subStreams;
+    const size_t r = processes % subStreams;
 
-    for (auto s = 0; s < subStreams; ++s)
+    // Groups [0,r) have size q+1.  Groups [r,S) have size q.
+    const size_t first_in_small_groups = r * (q + 1);
+
+    // Within each group the first process becomes its consumer.
+    if (process >= first_in_small_groups)
     {
-        if (s >= remainder)
-        {
-            stride = processes / subStreams;
-        }
-
-        if (static_cast<size_t>(parentRank) >= consumer &&
-            static_cast<size_t>(parentRank) < consumer + stride)
-        {
-            helper::CheckMPIReturn(
-                MPI_Comm_split(parentComm, static_cast<int>(consumer),
-                               parentRank, &m_Comm),
-                "creating aggregators comm with split at Open");
-            m_ConsumerRank = static_cast<int>(consumer);
-            m_SubStreamIndex = static_cast<size_t>(s);
-        }
-
-        consumer += stride;
+        m_SubStreamIndex = r + (process - first_in_small_groups) / q;
+        m_ConsumerRank = static_cast<int>(first_in_small_groups +
+                                          (m_SubStreamIndex - r) * q);
+    }
+    else
+    {
+        m_SubStreamIndex = process / (q + 1);
+        m_ConsumerRank = static_cast<int>(m_SubStreamIndex * (q + 1));
     }
 
-    MPI_Comm_rank(m_Comm, &m_Rank);
-    MPI_Comm_size(m_Comm, &m_Size);
+    m_Comm = parentComm.Split(m_ConsumerRank, parentRank,
+                              "creating aggregators comm with split at Open");
+
+    m_Rank = m_Comm.Rank();
+    m_Size = m_Comm.Size();
 
     if (m_Rank != 0)
     {
@@ -105,8 +104,7 @@ void MPIAggregator::HandshakeRank(const int rank)
         message = m_Rank;
     }
 
-    helper::CheckMPIReturn(MPI_Bcast(&message, 1, MPI_INT, rank, m_Comm),
-                           "handshake with aggregator rank 0 at Open");
+    m_Comm.Bcast(&message, 1, rank, "handshake with aggregator rank 0 at Open");
 }
 
 } // end namespace aggregator

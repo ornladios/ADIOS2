@@ -60,11 +60,14 @@
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
 set (1x1_CMD "run_test.py -nw 1 -nr 1")
+set (1x1Bulk_CMD "run_test.py -nw 1 -nr 1  --warg=--nx --warg=10000 --warg=--num_steps --warg=101 --rarg=--num_steps --rarg=101")
+set (1x1BulkLockGeometry_CMD "run_test.py -nw 1 -nr 1  --warg=--num_steps --warg=101  --warg=--nx --warg=10000 --rarg=--num_steps --rarg=101 --warg=--lock_geometry --rarg=--lock_geometry")
 set (2x1_CMD "run_test.py -nw 2 -nr 1")
 set (2x1ZeroDataVar_CMD "run_test.py -nw 2 -nr 1 --warg=--zero_data_var")
 set (2x1ZeroDataR64_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWrite -r TestCommonReadR64 --warg=--zero_data_var")
 set (1x2_CMD "run_test.py -nw 1 -nr 2")
 set (3x5_CMD "run_test.py -nw 3 -nr 5")
+set (3x5LockGeometry_CMD "run_test.py -nw 3 -nr 5 --warg=--num_steps --warg=100 --rarg=--num_steps --rarg=100 --warg=--lock_geometry --rarg=--lock_geometry")
 set (5x3_CMD "run_test.py -nw 5 -nr 3")
 set (1x1.Local_CMD "run_test.py -nw 1 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal")
 set (2x1.Local_CMD "run_test.py -nw 2 -nr 1  -w TestCommonWriteLocal -r TestCommonReadLocal")
@@ -118,8 +121,8 @@ set (KillReaders3Max_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 
 set (KillReaders3Max_TIMEOUT "300")
 set (KillReaders3Max_PROPERTIES "RUN_SERIAL;1")
 
-set (KillWriter_2x2_CMD "run_test.py --test_protocol kill_writer   -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
-set (KillWriterTimeout_2x2_CMD "run_test.py --test_protocol kill_writer -nw 2 -nr 2 --interval 2 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
+set (KillWriter_2x2_CMD "run_test.py --test_protocol kill_writer   -nw 2 -nr 2 --interval 4 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000")
+set (KillWriterTimeout_2x2_CMD "run_test.py --test_protocol kill_writer -nw 2 -nr 2 --interval 4 --warg=RendezvousReaderCount=1,WENGINE_PARAMS --rarg=--expect_writer_failure --rarg=--num_steps --rarg=1000 --rarg=--non_blocking")
 
 set (PreciousTimestep_CMD "run_test.py --test_protocol kill_readers  -nw 3 -nr 2 --max_readers 2 --warg=FirstTimestepPrecious=true,RendezvousReaderCount=0,WENGINE_PARAMS --rarg=--ignore_time_gap --rarg=--precious_first")
 

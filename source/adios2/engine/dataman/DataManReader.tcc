@@ -34,38 +34,35 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
     if (m_IsRowMajor)
     {
-        while (m_DataManSerializer.GetVar(data, variable.m_Name,
-                                          variable.m_Start, variable.m_Count,
-                                          m_CurrentStep, variable.m_MemoryStart,
-                                          variable.m_MemoryCount) != 0)
+        while (true)
         {
+            int ret = m_DataManSerializer.GetVar(
+                data, variable.m_Name, variable.m_Start, variable.m_Count,
+                m_CurrentStep, variable.m_MemoryStart, variable.m_MemoryCount);
+            if (ret == 0)
+            {
+                break;
+            }
         }
     }
     else
     {
-        if (m_ContiguousMajor)
+        Dims start = variable.m_Start;
+        Dims count = variable.m_Count;
+        Dims memstart = variable.m_MemoryStart;
+        Dims memcount = variable.m_MemoryCount;
+        std::reverse(start.begin(), start.end());
+        std::reverse(count.begin(), count.end());
+        std::reverse(memstart.begin(), memstart.end());
+        std::reverse(memcount.begin(), memcount.end());
+        while (true)
         {
-            Dims start = variable.m_Start;
-            Dims count = variable.m_Count;
-            Dims memstart = variable.m_MemoryStart;
-            Dims memcount = variable.m_MemoryCount;
-            std::reverse(start.begin(), start.end());
-            std::reverse(count.begin(), count.end());
-            std::reverse(memstart.begin(), memstart.end());
-            std::reverse(memcount.begin(), memcount.end());
-            while (m_DataManSerializer.GetVar(data, variable.m_Name, start,
-                                              count, m_CurrentStep, memstart,
-                                              memcount) != 0)
+            int ret =
+                m_DataManSerializer.GetVar(data, variable.m_Name, start, count,
+                                           m_CurrentStep, memstart, memcount);
+            if (ret == 0)
             {
-            }
-        }
-        else
-        {
-            while (m_DataManSerializer.GetVar(
-                       data, variable.m_Name, variable.m_Start,
-                       variable.m_Count, m_CurrentStep, variable.m_MemoryStart,
-                       variable.m_MemoryCount) != 0)
-            {
+                break;
             }
         }
     }
@@ -75,12 +72,7 @@ template <typename T>
 std::map<size_t, std::vector<typename Variable<T>::Info>>
 DataManReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
 {
-    std::map<size_t, std::vector<typename Variable<T>::Info>> m;
-    for (const auto &i : m_MetaDataMap)
-    {
-        m[i.first] = BlocksInfoCommon(variable, i.first);
-    }
-    return m;
+    return std::map<size_t, std::vector<typename Variable<T>::Info>>();
 }
 
 template <typename T>
@@ -89,14 +81,9 @@ DataManReader::BlocksInfoCommon(const Variable<T> &variable,
                                 const size_t step) const
 {
     std::vector<typename Variable<T>::Info> v;
-    auto it = m_MetaDataMap.find(step);
-    if (it == m_MetaDataMap.end())
-    {
-        return v;
-    }
     T max = std::numeric_limits<T>::min();
     T min = std::numeric_limits<T>::max();
-    for (const auto &i : *it->second)
+    for (const auto &i : *m_CurrentStepMetadata)
     {
         if (i.name == variable.m_Name)
         {

@@ -14,6 +14,7 @@
 #include <fstream>
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/transport/Transport.h"
 
 namespace adios2
@@ -26,7 +27,7 @@ class FileFStream : public Transport
 {
 
 public:
-    FileFStream(MPI_Comm mpiComm, const bool debugMode);
+    FileFStream(helper::Comm const &comm, const bool debugMode);
 
     ~FileFStream() = default;
 

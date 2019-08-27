@@ -13,6 +13,7 @@
 
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/profiling/taustubs/tautimer.hpp"
 
 #include <mutex>
@@ -83,11 +84,15 @@ using DeferredRequestMapPtr = std::shared_ptr<DeferredRequestMap>;
 class DataManSerializer
 {
 public:
-    DataManSerializer(MPI_Comm mpiComm, const size_t writerBufferSize,
-                      const bool isRowMajor);
+    DataManSerializer(helper::Comm const &comm, const bool isRowMajor);
+
+    // ************ serializer functions
 
     // clear and allocate new buffer for writer
     void NewWriterBuffer(size_t size);
+
+    // get attributes from IO and put into m_StaticDataJson
+    void PutAttributes(core::IO &io);
 
     // put a variable for writer
     template <class T>
@@ -105,35 +110,33 @@ public:
                 const Params &params, VecPtr localBuffer = nullptr,
                 JsonPtr metadataJson = nullptr);
 
-    // read attributes from IO and put into m_StaticDataJson
-    void PutAttributes(core::IO &io);
-
-    // read attributes form m_StaticDataJson and put into IO
-    void GetAttributes(core::IO &io);
-
-    // attach m_StaticDataJson to m_MetadataJson
+    // attach attributes to local pack
     void AttachAttributes();
-
-    void SetReverseMajor();
-
-    // get the metadata incorporated local buffer for writer, usually called in
-    // EndStep
-    VecPtr GetLocalPack();
 
     // aggregate metadata across all writer ranks and put it into map
     void AggregateMetadata();
 
+    // get aggregated metadata pack for sending from staging writer to staging
+    // reader
     VecPtr GetAggregatedMetadataPack(const int64_t stepRequested,
                                      int64_t &stepProvided,
                                      const int64_t appID);
 
-    static VecPtr EndSignal(size_t step);
+    // put local metadata and data buffer together and return the merged buffer
+    VecPtr GetLocalPack();
 
+    // generate reply on staging writer based on the request from reader
     VecPtr GenerateReply(
         const std::vector<char> &request, size_t &step,
         const std::unordered_map<std::string, Params> &compressionParams);
 
+    // ************ deserializer functions
+
+    // put binary pack for deserialization
     int PutPack(const VecPtr data);
+
+    // get attributes form m_StaticDataJson and put into IO
+    void GetAttributes(core::IO &io);
 
     template <class T>
     int GetVar(T *output_data, const std::string &varName, const Dims &varStart,
@@ -145,11 +148,13 @@ public:
 
     bool IsStepProtected(const int64_t step);
 
-    DmvVecPtr GetMetaData(const size_t step);
+    // called after reader side received and put aggregated metadata into
+    // deserializer
+    DmvVecPtrMap GetFullMetadataMap();
 
-    const DmvVecPtrMap GetMetaData();
+    DmvVecPtr GetStepMetadata(const size_t step);
 
-    void PutAggregatedMetadata(VecPtr input, MPI_Comm mpiComm);
+    void PutAggregatedMetadata(VecPtr input, helper::Comm const &comm);
 
     int PutDeferredRequest(const std::string &variable, const size_t step,
                            const Dims &start, const Dims &count, void *data);
@@ -160,11 +165,16 @@ public:
                           Dims &ovlpStart, Dims &ovlpCount);
 
     void SetDestination(const std::string &dest);
+
     std::string GetDestination();
 
-    size_t MinStep();
-    size_t Steps();
     size_t LocalBufferSize();
+
+    DmvVecPtr GetLatestStep(int64_t &currentStep,
+                            const int requireMinimumBlocks);
+
+    DmvVecPtr GetEarliestStep(int64_t &currentStep,
+                              const int requireMinimumBlocks);
 
 private:
     template <class T>
@@ -196,6 +206,9 @@ private:
     void CalculateMinMax(const T *data, const Dims &count,
                          nlohmann::json &metaj);
 
+    bool StepHasMinimumBlocks(const size_t step,
+                              const int requireMinimumBlocks);
+
     void Log(const int level, const std::string &message, const bool mpi,
              const bool endline);
 
@@ -219,6 +232,12 @@ private:
     std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsToAggregate;
     std::unordered_map<size_t, std::vector<size_t>> m_ProtectedStepsAggregated;
     std::mutex m_ProtectedStepsMutex;
+
+    // used to count buffers that have been put into deserializer, asynchronous
+    // engines such as dataman use this to tell if a certain step has received
+    // all blocks from all writers
+    std::unordered_map<size_t, int> m_DeserializedBlocksForStep;
+    std::mutex m_DeserializedBlocksForStepMutex;
 
     // Aggregated metadata json, used in writer, accessed from API thread and
     // reply thread, needs mutex
@@ -244,7 +263,7 @@ private:
     bool m_EnableStat = true;
     int m_MpiRank;
     int m_MpiSize;
-    MPI_Comm m_MpiComm;
+    helper::Comm const &m_Comm;
 
     int m_Verbosity = 0;
 };

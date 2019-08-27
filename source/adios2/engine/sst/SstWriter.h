@@ -18,6 +18,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {
@@ -31,7 +32,7 @@ class SstWriter : public Engine
 
 public:
     SstWriter(IO &io, const std::string &name, const Mode mode,
-              MPI_Comm mpiComm);
+              helper::Comm comm);
 
     virtual ~SstWriter();
 

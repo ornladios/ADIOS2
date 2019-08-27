@@ -27,16 +27,12 @@ std::vector<int8_t> data_I8;
 std::vector<int16_t> data_I16;
 std::vector<int32_t> data_I32;
 std::vector<int64_t> data_I64;
-std::array<int8_t, 10> data_U8;
-std::array<int16_t, 10> data_U16;
-std::array<int32_t, 10> data_U32;
-std::array<int64_t, 10> data_U64;
 std::vector<float> data_R32;
 std::vector<double> data_R64;
 std::vector<std::complex<float>> data_C32;
 std::vector<std::complex<double>> data_C64;
-double data_R64_2d[10][2];
-double data_R64_2d_rev[2][10];
+double *data_R64_2d = NULL;
+double *data_R64_2d_rev = NULL;
 
 std::vector<int8_t> in_I8;
 std::vector<int16_t> in_I16;
@@ -123,6 +119,7 @@ int validateSimpleReverseData(std::vector<double> &data_reverse, int step,
     }
     return ret;
 }
+#define TwoD(array, width, r, c) (array[(r)*width + (c)])
 
 void generateCommonTestData(int step, int rank, int size, int Nx, int r64_Nx)
 {
@@ -137,6 +134,11 @@ void generateCommonTestData(int step, int rank, int size, int Nx, int r64_Nx)
     data_R64.resize(r64_Nx);
     data_C32.resize(Nx);
     data_C64.resize(Nx);
+    if (!data_R64_2d)
+    {
+        data_R64_2d = (double *)malloc(Nx * 2 * sizeof(double));
+        data_R64_2d_rev = (double *)malloc(Nx * 2 * sizeof(double));
+    }
 
     if (r64_Nx != Nx)
     {
@@ -158,10 +160,10 @@ void generateCommonTestData(int step, int rank, int size, int Nx, int r64_Nx)
         data_C32[i].real((float)-(j + 10 * i));
         data_C64[i].imag((double)j + 10 * i);
         data_C64[i].real((double)-(j + 10 * i));
-        data_R64_2d[i][0] = (double)j + 10 * i;
-        data_R64_2d[i][1] = (double)10000 + j + 10 * i;
-        data_R64_2d_rev[0][i] = (double)j + 10 * i;
-        data_R64_2d_rev[1][i] = (double)10000 + j + 10 * i;
+        TwoD(data_R64_2d, 2, i, 0) = (double)j + 10 * i;
+        TwoD(data_R64_2d, 2, i, 1) = (double)10000 + j + 10 * i;
+        TwoD(data_R64_2d_rev, Nx, 0, i) = (double)j + 10 * i;
+        TwoD(data_R64_2d_rev, Nx, 1, i) = (double)10000 + j + 10 * i;
     }
     for (int i = Nx; i < r64_Nx; i++)
     {

@@ -7,6 +7,10 @@ std::string fname = "ADIOS2Common";
 std::string engine = "sst";
 adios2::Params engineParams = {}; // parsed from command line
 
+#ifndef TESTING_ADIOS2_ENGINE_COMMON_TESTDATA_H_
+// Usually we get this from TestData.h, but not needed everywhere.
+std::size_t Nx = 10;
+#endif
 bool SharedIO = false;
 bool SharedVar = false;
 int NSteps = 10;
@@ -27,6 +31,7 @@ int ZeroDataRank = 0;
 int DelayWhileHoldingStep = 0;
 int LongFirstDelay = 0;
 int FirstTimestepMustBeZero = 0;
+int LockGeometry = 0;
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
 
@@ -77,6 +82,15 @@ static void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
+        else if (std::string(argv[1]) == "--nx")
+        {
+            std::istringstream ss(argv[2]);
+            if (!(ss >> Nx))
+                std::cerr << "Invalid number for nx (base element count) "
+                          << argv[1] << '\n';
+            argv++;
+            argc--;
+        }
         else if (std::string(argv[1]) == "--expect_time_gap")
         {
 
@@ -110,6 +124,10 @@ static void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--precious_first")
         {
             FirstTimestepMustBeZero = 1;
+        }
+        else if (std::string(argv[1]) == "--lock_geometry")
+        {
+            LockGeometry = 1;
         }
         else if (std::string(argv[1]) == "--ignore_time_gap")
         {

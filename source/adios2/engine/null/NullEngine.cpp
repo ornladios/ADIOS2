@@ -18,8 +18,8 @@ namespace engine
 {
 
 NullEngine::NullEngine(IO &io, const std::string &name, const Mode mode,
-                       MPI_Comm mpiComm)
-: Engine("NULL", io, name, mode, mpiComm)
+                       helper::Comm comm)
+: Engine("NULL", io, name, mode, std::move(comm))
 {
 }
 

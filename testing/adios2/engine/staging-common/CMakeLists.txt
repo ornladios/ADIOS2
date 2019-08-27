@@ -136,7 +136,7 @@ endif()
 set (SIMPLE_MPI_TESTS "")
 set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar;2x1ZeroDataR64")
+  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;3x5LockGeometry;2x1.Local;1x2.Local;3x5.Local;5x3.Local;2x1ZeroDataVar;2x1ZeroDataR64")
   if (ADIOS_HAVE_Fortran)
     set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
   endif()
@@ -195,6 +195,8 @@ if(ADIOS2_HAVE_MPI)
     list (FILTER INSITU_TESTS EXCLUDE REGEX "DelayedReader.*")
     # Fortran scalar reads don't work for InSitu
     list (FILTER INSITU_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
+    # No locking geometry
+    list (FILTER INSITU_TESTS EXCLUDE REGEX "LockGeometry")
     foreach(test ${INSITU_TESTS})
         add_common_test(${test} InSituMPI)
     endforeach()
@@ -203,18 +205,23 @@ endif()
 #
 #   Setup tests for BP engines
 #
+
 if(NOT MSVC)    # not on windows
-    # Local Vars don't work for InSitu
     set (BP_TESTS ${ALL_SIMPLE_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER BP_TESTS EXCLUDE REGEX "DelayedReader")
     # SharedVars fail with BP*
     list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
     foreach(test ${BP_TESTS})
-        add_common_test(${test} BP3)
         add_common_test(${test} BP4)
     endforeach()
+    # BP3 fails to handle lots of timesteps
+    list (FILTER BP_TESTS EXCLUDE REGEX "Bulk.*")
+    foreach(test ${BP_TESTS})
+        add_common_test(${test} BP3)
+    endforeach()
 endif()
+
 
 #
 #   Setup streaming tests for BP4 engine

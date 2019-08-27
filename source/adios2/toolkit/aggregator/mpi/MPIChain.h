@@ -26,18 +26,16 @@ public:
 
     ~MPIChain() = default;
 
-    void Init(const size_t subStreams, MPI_Comm parentComm) final;
+    void Init(const size_t subStreams, helper::Comm const &parentComm) final;
 
-    std::vector<std::vector<MPI_Request>> IExchange(format::Buffer &buffer,
-                                                    const int step) final;
+    ExchangeRequests IExchange(format::Buffer &buffer, const int step) final;
 
-    std::vector<std::vector<MPI_Request>>
+    ExchangeAbsolutePositionRequests
     IExchangeAbsolutePosition(format::Buffer &buffer, const int step) final;
 
-    void Wait(std::vector<std::vector<MPI_Request>> &request,
-              const int step) final;
+    void Wait(ExchangeRequests &requests, const int step) final;
 
-    void WaitAbsolutePosition(std::vector<std::vector<MPI_Request>> &requests,
+    void WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
                               const int step) final;
 
     void SwapBuffers(const int step) noexcept final;

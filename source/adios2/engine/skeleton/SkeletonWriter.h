@@ -14,6 +14,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/Engine.h"
+#include "adios2/helper/adiosComm.h"
 
 namespace adios2
 {
@@ -30,12 +31,12 @@ public:
      * Constructor for Writer
      * @param name unique name given to the engine
      * @param accessMode
-     * @param mpiComm
+     * @param comm
      * @param method
      * @param debugMode
      */
     SkeletonWriter(IO &adios, const std::string &name, const Mode mode,
-                   MPI_Comm mpiComm);
+                   helper::Comm comm);
 
     ~SkeletonWriter() = default;
 

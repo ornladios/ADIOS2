@@ -15,6 +15,7 @@
 
 #include "adios2/common/ADIOSMPI.h"
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/format/buffer/Buffer.h"
 
 namespace adios2
@@ -32,7 +33,7 @@ public:
     size_t m_SubStreamIndex = 0;
 
     /** split Communicator for a substream: producers and consumer (rank=0) */
-    MPI_Comm m_Comm;
+    helper::Comm m_Comm;
 
     /** rank from m_Comm */
     int m_Rank = 0;
@@ -57,20 +58,32 @@ public:
 
     virtual ~MPIAggregator();
 
-    virtual void Init(const size_t subStreams, MPI_Comm parentComm);
+    virtual void Init(const size_t subStreams, helper::Comm const &parentComm);
 
-    virtual std::vector<std::vector<MPI_Request>>
-    IExchange(format::Buffer &buffer, const int step) = 0;
+    struct ExchangeRequests
+    {
+        helper::Comm::Req m_SendSize;
+        helper::Comm::Req m_SendData;
+        helper::Comm::Req m_RecvData;
+    };
 
-    virtual std::vector<std::vector<MPI_Request>>
+    virtual ExchangeRequests IExchange(format::Buffer &buffer,
+                                       const int step) = 0;
+
+    struct ExchangeAbsolutePositionRequests
+    {
+        helper::Comm::Req m_Send;
+        helper::Comm::Req m_Recv;
+    };
+
+    virtual ExchangeAbsolutePositionRequests
     IExchangeAbsolutePosition(format::Buffer &buffer, const int step) = 0;
 
     virtual void
-    WaitAbsolutePosition(std::vector<std::vector<MPI_Request>> &requests,
+    WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
                          const int step) = 0;
 
-    virtual void Wait(std::vector<std::vector<MPI_Request>> &requests,
-                      const int step) = 0;
+    virtual void Wait(ExchangeRequests &requests, const int step) = 0;
 
     virtual void SwapBuffers(const int step) noexcept;
 
@@ -84,7 +97,7 @@ public:
 protected:
     /** Init m_Comm splitting assigning ranks to subStreams (balanced except for
      * the last rank) */
-    void InitComm(const size_t subStreams, MPI_Comm parentComm);
+    void InitComm(const size_t subStreams, helper::Comm const &parentComm);
 
     /** handshakes a single rank with the rest of the m_Comm ranks */
     void HandshakeRank(const int rank = 0);

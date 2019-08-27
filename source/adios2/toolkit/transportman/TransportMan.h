@@ -21,6 +21,10 @@
 
 namespace adios2
 {
+namespace helper
+{
+class Comm;
+}
 namespace transportman
 {
 
@@ -39,10 +43,10 @@ public:
 
     /**
      * Unique base constructor
-     * @param mpiComm
+     * @param comm
      * @param debugMode
      */
-    TransportMan(MPI_Comm mpiComm, const bool debugMode);
+    TransportMan(helper::Comm const &comm, const bool debugMode);
 
     virtual ~TransportMan() = default;
 
@@ -169,7 +173,7 @@ public:
     void SeekToFileBegin(const int transportIndex = 0);
 
 protected:
-    MPI_Comm m_MPIComm;
+    helper::Comm const &m_Comm;
     const bool m_DebugMode = false;
 
     std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName,

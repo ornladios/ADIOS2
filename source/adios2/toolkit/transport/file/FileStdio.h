@@ -17,6 +17,10 @@
 
 namespace adios2
 {
+namespace helper
+{
+class Comm;
+}
 namespace transport
 {
 
@@ -25,7 +29,7 @@ class FileStdio : public Transport
 {
 
 public:
-    FileStdio(MPI_Comm mpiComm, const bool debugMode);
+    FileStdio(helper::Comm const &comm, const bool debugMode);
 
     ~FileStdio();
 
