@@ -761,6 +761,8 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     CP_WSR_Stream->ParentStream = Stream;
     CP_WSR_Stream->LastReleasedTimestep = -1;
     CP_WSR_Stream->Connections = connections_to_reader;
+    CP_WSR_Stream->ReaderDefinitionsLocked = 0;
+    CP_WSR_Stream->ReaderSelectionLockTimestep = -1;
 
     int MySuccess = initWSReader(CP_WSR_Stream, ReturnData->ReaderCohortSize,
                                  ReturnData->CP_ReaderInfo);
@@ -983,13 +985,12 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         AddTSToSentList(Stream, CP_WSR_Stream, Entry->Timestep);
         if (Stream->DP_Interface->readerRegisterTimestep)
         {
-            int ReadPatternFixed = CP_WSR_Stream->ReaderDefinitionsLocked &
-                                   Stream->WriterDefinitionsLocked;
             (Stream->DP_Interface->readerRegisterTimestep)(
                 &Svcs, CP_WSR_Stream->DP_WSR_Stream, Entry->Timestep,
-                Stream->WriterDefinitionsLocked);
+                CP_WSR_Stream->PreloadMode);
         }
 
+        Entry->Msg->PreloadMode = CP_WSR_Stream->PreloadMode;
         PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
         sendOneToWSRCohort(CP_WSR_Stream,
                            Stream->CPInfo->DeliverTimestepMetadataFormat,
@@ -1546,6 +1547,32 @@ static void ProcessReaderStatusList(SstStream Stream,
     PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
 }
 
+static void ActOnTSLockStatus(SstStream Stream)
+{
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
+    for (int i = 0; i < Stream->ReaderCount; i++)
+    {
+        if ((Stream->WriterDefinitionsLocked) &&
+            (Stream->Readers[i]->ReaderDefinitionsLocked == 1))
+        {
+            struct _CommPatternLockedMsg Msg;
+            if (Stream->DP_Interface->WSRreadPatternLocked)
+            {
+                Stream->DP_Interface->WSRreadPatternLocked(
+                    &Svcs, Stream->Readers[i]->DP_WSR_Stream,
+                    Stream->Readers[i]->ReaderSelectionLockTimestep);
+            }
+            Msg.Timestep = Stream->Readers[i]->ReaderSelectionLockTimestep;
+            sendOneToWSRCohort(Stream->Readers[i],
+                               Stream->CPInfo->CommPatternLockedFormat, &Msg,
+                               &Msg.RS_Stream);
+            Stream->Readers[i]->ReaderDefinitionsLocked = 2;
+            Stream->Readers[i]->PreloadMode = SstPreloadLearned;
+        }
+    }
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+}
+
 static void ProcessReleaseList(SstStream Stream, ReturnMetadataInfo Metadata)
 {
     PTHREAD_MUTEX_LOCK(&Stream->DataLock);
@@ -1616,11 +1643,6 @@ static void ProcessLockDefnsList(SstStream Stream, ReturnMetadataInfo Metadata)
                 WS_ReaderInfo Reader = (WS_ReaderInfo)Stream->Readers[j];
 
                 Reader->ReaderDefinitionsLocked = 1;
-                if (Stream->DP_Interface->WSRreadPatternLocked)
-                {
-                    Stream->DP_Interface->WSRreadPatternLocked(
-                        &Svcs, Reader->DP_WSR_Stream, List->Timestep);
-                }
                 CP_verbose(Stream, "LockDefns List, FOUND TS %ld\n",
                            Metadata->LockDefnsList[i].Timestep);
             }
@@ -1925,7 +1947,7 @@ extern void SstInternalProvideTimestep(
         ProcessLockDefnsList(Stream, ReturnData);
         ProcessReleaseList(Stream, ReturnData);
     }
-
+    ActOnTSLockStatus(Stream);
     TAU_START("provide timestep operations");
     if (ReturnData->DiscardThisTimestep)
     {
@@ -2000,7 +2022,34 @@ extern void SstInternalProvideTimestep(
 
 extern void SstWriterDefinitionLock(SstStream Stream, long EffectiveTimestep)
 {
+    PTHREAD_MUTEX_LOCK(&Stream->DataLock);
     Stream->WriterDefinitionsLocked = 1;
+    for (int i = 0; i < Stream->ReaderCount; i++)
+    {
+        if (Stream->Readers[i]->ReaderDefinitionsLocked == 1)
+        {
+            if ((Stream->Rank == 0) &&
+                (Stream->ConfigParams->CPCommPattern == SstCPCommMin))
+            {
+                Stream->LockDefnsList = realloc(
+                    Stream->LockDefnsList, sizeof(Stream->LockDefnsList[0]) *
+                                               (Stream->LockDefnsCount + 1));
+                Stream->LockDefnsList[Stream->LockDefnsCount].Timestep =
+                    EffectiveTimestep;
+                Stream->LockDefnsList[Stream->LockDefnsCount].Reader =
+                    Stream->Readers[i];
+                Stream->LockDefnsCount++;
+            }
+            if (Stream->ConfigParams->CPCommPattern == SstCPCommPeer)
+            {
+                Stream->Readers[i]->ReaderSelectionLockTimestep =
+                    EffectiveTimestep;
+            }
+        }
+    }
+    PTHREAD_MUTEX_UNLOCK(&Stream->DataLock);
+    CP_verbose(Stream, "Writer-side definitions lock as of timestep %d\n",
+               EffectiveTimestep);
 }
 
 extern void SstProvideTimestep(SstStream Stream, SstData LocalMetadata,
@@ -2198,11 +2247,14 @@ extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
             Reader;
         ParentStream->LockDefnsCount++;
     }
-    Reader->ReaderDefinitionsLocked = 1;
-    if (ParentStream->DP_Interface->WSRreadPatternLocked)
+    if ((ParentStream->Rank == 0) ||
+        (ParentStream->ConfigParams->CPCommPattern == SstCPCommPeer))
     {
-        ParentStream->DP_Interface->WSRreadPatternLocked(
-            &Svcs, Reader->DP_WSR_Stream, Msg->Timestep);
+        Reader->ReaderDefinitionsLocked = 1;
+        if (ParentStream->WriterDefinitionsLocked)
+        {
+            Reader->ReaderSelectionLockTimestep = Msg->Timestep;
+        }
     }
     PTHREAD_MUTEX_UNLOCK(&ParentStream->DataLock);
     TAU_STOP_FUNC();

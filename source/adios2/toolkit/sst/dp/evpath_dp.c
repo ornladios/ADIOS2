@@ -942,7 +942,8 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
         WSR_Stream->WS_Stream; /* pointer to writer struct */
     TimestepList tmp = WS_Stream->Timesteps;
 
-    if (Timestep == WSR_Stream->ReadPatternLockTimestep)
+    if ((!WSR_Stream->ReaderRequests) &&
+        (Timestep >= WSR_Stream->ReadPatternLockTimestep))
     {
         /* save the pattern */
         while (tmp != NULL)
@@ -969,7 +970,6 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
             tmp = WS_Stream->Timesteps;
             while (tmp != NULL)
             {
-
                 SendPreloadMsgs(Svcs, WSR_Stream, tmp);
                 tmp = tmp->Next;
             }
@@ -985,6 +985,9 @@ static void EvpathWSRReadPatternLocked(CP_Services Svcs,
     Evpath_WS_Stream WS_Stream =
         WSR_Stream->WS_Stream; /* pointer to writer struct */
 
+    Svcs->verbose(WS_Stream->CP_Stream,
+                  "Locking the read pattern at Timestep %ld\n",
+                  EffectiveTimestep);
     WSR_Stream->ReadPatternLockTimestep = EffectiveTimestep;
 }
 

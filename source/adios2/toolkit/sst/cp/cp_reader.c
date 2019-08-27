@@ -782,6 +782,24 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
     TAU_STOP_FUNC();
 }
 
+extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn,
+                                        void *Msg_v, void *client_data,
+                                        attr_list attrs)
+{
+    CommPatternLockedMsg Msg = (CommPatternLockedMsg)Msg_v;
+    SstStream Stream = (SstStream)Msg->RS_Stream;
+
+    CP_verbose(
+        Stream,
+        "Received a CommPatternLocked message, beginning with Timestep %d.\n",
+        Msg->Timestep);
+
+    pthread_mutex_lock(&Stream->DataLock);
+    Stream->CommPatternLocked = 1;
+    Stream->CommPatternLockedTimestep = Msg->Timestep;
+    pthread_mutex_unlock(&Stream->DataLock);
+}
+
 static long MaxQueuedMetadata(SstStream Stream)
 {
     struct _TimestepMetadataList *Next;
@@ -1173,7 +1191,6 @@ extern void SstReaderDefinitionLock(SstStream Stream, long EffectiveTimestep)
 {
     long Timestep = Stream->ReaderTimestep;
     struct _LockReaderDefinitionsMsg Msg;
-    Stream->ReaderDefinitionsLocked = 1;
 
     memset(&Msg, 0, sizeof(Msg));
     Msg.Timestep = EffectiveTimestep;
@@ -1458,6 +1475,11 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
 
         memset(&msg, 0, sizeof(msg));
         msg.TSmsg = NULL;
+        msg.CommPatternLockedTimestep = -1;
+        if (Stream->CommPatternLocked == 1)
+        {
+            msg.CommPatternLockedTimestep = Stream->CommPatternLockedTimestep;
+        }
         if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
         {
             long NextTimestep = -1;
@@ -1618,6 +1640,17 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
         return ret;
     }
     MetadataMsg = ReturnData->TSmsg;
+    if (ReturnData->CommPatternLockedTimestep != -1)
+    {
+        Stream->CommPatternLockedTimestep =
+            ReturnData->CommPatternLockedTimestep;
+        Stream->CommPatternLocked = 2;
+        if (Stream->DP_Interface->RSreadPatternLocked)
+        {
+            Stream->DP_Interface->RSreadPatternLocked(
+                &Svcs, Stream->DP_Stream, Stream->CommPatternLockedTimestep);
+        }
+    }
     if (MetadataMsg)
     {
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
