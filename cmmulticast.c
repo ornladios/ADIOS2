@@ -222,7 +222,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
     }
     port_num = int_port_num;
 
-    get_qual_hostname(cm, my_host_name, sizeof(my_host_name), svc, NULL, NULL);
+    get_qual_hostname(cm, my_host_name, sizeof(my_host_name) - 1, svc, NULL, NULL);
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = (unsigned short) AF_INET;
