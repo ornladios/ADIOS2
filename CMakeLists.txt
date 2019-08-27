@@ -236,7 +236,11 @@ add_subdirectory(cmake/install/packaging)
 #------------------------------------------------------------------------------#
 # Generating static adios-config
 #------------------------------------------------------------------------------#
-add_subdirectory(cmake/install/post)
+option(ADIOS2_INSTALL_GENERATE_CONFIG "Install a generated adios2-config shell script for non-cmake projects" ON)
+mark_as_advanced(ADIOS2_INSTALL_GENERATE_CONFIG)
+if(ADIOS2_INSTALL_GENERATE_CONFIG)
+  add_subdirectory(cmake/install/post)
+endif()
 
 #------------------------------------------------------------------------------#
 # Configuration summary
