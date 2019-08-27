@@ -1479,7 +1479,7 @@ attr_list attrs;
 		svc->trace_out(cm, "CMself check CMIB transport found no IP_PORT attribute");
 		return 0;
 	}
-	get_qual_hostname(cm, my_host_name, sizeof(my_host_name), svc, NULL, NULL);
+	get_qual_hostname(cm, my_host_name, sizeof(my_host_name) - 1, svc, NULL, NULL);
 
 	if (host_name && (strcmp(host_name, my_host_name) != 0)) {
 		svc->trace_out(cm, "CMself check - Hostnames don't match");
@@ -1662,7 +1662,7 @@ attr_list listen_info;
 		               int_port_num, conn_sock);
 		ret_list = create_attr_list();
 #if !NO_DYNAMIC_LINKING
-		get_qual_hostname(cm, host_name, sizeof(host_name), svc, listen_info, 
+		get_qual_hostname(cm, host_name, sizeof(host_name) - 1 , svc, listen_info, 
 		                  &network_added);
 #endif 
 

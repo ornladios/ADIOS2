@@ -463,7 +463,7 @@ attr_list attrs;
 	svc->trace_out(cm, "CMself check UDP transport found no UDP_PORT attribute");
 	return 0;
     }
-    get_qual_hostname(cm, my_host_name, sizeof(my_host_name), svc, NULL, NULL);
+    get_qual_hostname(cm, my_host_name, sizeof(my_host_name) - 1, svc, NULL, NULL);
 
     if (host_name && (strcmp(host_name, my_host_name) != 0)) {
 	svc->trace_out(cm, "CMself check - Hostnames don't match");
