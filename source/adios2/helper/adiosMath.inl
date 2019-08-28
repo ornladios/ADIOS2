@@ -217,7 +217,7 @@ void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
     T minNorm = std::norm(values[0]);
     T maxNorm = minNorm;
 
-    for (auto i = 1; i < size; ++i)
+    for (size_t i = 1; i < size; ++i)
     {
         T norm = std::norm(values[i]);
 

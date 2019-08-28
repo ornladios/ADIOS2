@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
 
     // write data
-    for (int i = 0; i < steps; ++i)
+    for (size_t i = 0; i < steps; ++i)
     {
         dataManWriter.BeginStep();
         dataManWriter.Put<float>(bpFloats, myFloats.data(), adios2::Mode::Sync);

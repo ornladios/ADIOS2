@@ -69,7 +69,7 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
         std::vector<adios2::Variable<float>> varsR32(NVars);
         std::vector<adios2::Variable<double>> varsR64(NVars);
 
-        for (auto i = 0; i < NVars; ++i)
+        for (size_t i = 0; i < NVars; ++i)
         {
             varsR32[i] =
                 io.DefineVariable<float>("varR32_" + std::to_string(i), shape,
@@ -81,14 +81,14 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
             SmallTestData currentTestData = generateNewSmallTestData(
                 m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
-            for (auto i = 0; i < NVars; ++i)
+            for (size_t i = 0; i < NVars; ++i)
             {
                 bpWriter.Put(varsR32[i], currentTestData.R32.data());
                 bpWriter.Put(varsR64[i], currentTestData.R64.data());

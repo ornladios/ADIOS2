@@ -72,7 +72,7 @@ BP3Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
 
         auto itStep = std::next(indices.begin(), stepsStart);
 
-        for (auto i = 0; i < stepsCount; ++i)
+        for (size_t i = 0; i < stepsCount; ++i)
         {
             if (itStep == indices.end())
             {
@@ -224,7 +224,7 @@ void BP3Deserializer::SetVariableBlockInfo(
                                             ? Dims(blockInfo.Count.size(), 0)
                                             : blockInfo.Start;
 
-            for (auto i = 0; i < dimensions; ++i)
+            for (size_t i = 0; i < dimensions; ++i)
             {
                 if (blockInfoStart[i] + blockInfo.Count[i] > readInCount[i])
                 {
@@ -330,7 +330,7 @@ void BP3Deserializer::SetVariableBlockInfo(
                 std::reverse(readInShape.begin(), readInShape.end());
             }
 
-            for (auto i = 0; i < dimensions; ++i)
+            for (size_t i = 0; i < dimensions; ++i)
             {
                 if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
                 {
@@ -391,7 +391,7 @@ void BP3Deserializer::SetVariableBlockInfo(
 
     auto itStep = std::next(indices.begin(), blockInfo.StepsStart);
 
-    for (auto i = 0; i < blockInfo.StepsCount; ++i)
+    for (size_t i = 0; i < blockInfo.StepsCount; ++i)
     {
         const size_t step = itStep->first;
         const std::vector<size_t> &blockOffsets = itStep->second;
@@ -562,19 +562,24 @@ void BP3Deserializer::PostDataRead(
     if (!blockInfo.MemoryStart.empty())
     {
         if (endianReverse)
-            throw std::invalid_argument("BP3Deserializer.tcc: endianReverse "
+        {
+            throw std::invalid_argument("ERROR: endianReverse "
                                         "not supported with MemorySelection");
+        }
+
         if (m_ReverseDimensions)
+        {
             throw std::invalid_argument(
-                "BP3Deserializer.tcc: ReverseDimensions not supported with "
+                "ERROR: ReverseDimensions not supported with "
                 "MemorySelection");
+        }
 
         auto intersectStart = subStreamBoxInfo.IntersectionBox.first;
         auto intersectCount = subStreamBoxInfo.IntersectionBox.second;
         auto blockStart = subStreamBoxInfo.BlockBox.first;
         auto blockCount = subStreamBoxInfo.BlockBox.second;
         auto memoryStart = blockInfoStart;
-        for (int d = 0; d < intersectStart.size(); d++)
+        for (size_t d = 0; d < intersectStart.size(); d++)
         {
             // change {intersect,block}Count from [start, end] to {start, count}
             intersectCount[d] -= (intersectStart[d] - 1);

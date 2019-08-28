@@ -34,17 +34,17 @@ void printData(double *xy, T *size, T *offset, int rank, int steps)
         myfile << " time   row   columns " << offset[1] << "..."
                << offset[1] + size[1] - 1 << std::endl;
         myfile << "        ";
-        for (int j = 0; j < size[1]; j++)
+        for (int j = 0; j < static_cast<int>(size[1]); j++)
         {
             myfile << std::setw(9) << offset[1] + j;
         }
         myfile << std::endl;
         myfile << "------------------------------------------------------------"
                   "--\n";
-        for (int i = 0; i < size[0]; i++)
+        for (int i = 0; i < static_cast<int>(size[0]); i++)
         {
             myfile << std::setw(5) << step << std::setw(5) << offset[0] + i;
-            for (int j = 0; j < size[1]; j++)
+            for (int j = 0; j < static_cast<int>(size[1]); j++)
             {
                 myfile << std::setw(9) << std::setprecision(2)
                        << data[i * size[1] + j];

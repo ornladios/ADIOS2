@@ -116,7 +116,7 @@ std::vector<RunParams> CreateRunParams()
     }
 
 #define CHECK_ARRAY(VARNAME, A, N, VALUE, STEP, BLOCK, i)                      \
-    for (i = 0; i < N; i++)                                                    \
+    for (size_t i = 0; i < N; i++)                                             \
         if (A[i] != VALUE)                                                     \
         {                                                                      \
             printE("%s[%d] step %zu block %zu: wrote %zu but read %d\n",       \

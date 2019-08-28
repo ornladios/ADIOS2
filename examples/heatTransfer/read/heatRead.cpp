@@ -43,7 +43,7 @@ void Compute(const std::vector<double> &Tin, std::vector<double> &Tout,
      */
     if (firstStep)
     {
-        for (int i = 0; i < dT.size(); i++)
+        for (size_t i = 0; i < dT.size(); ++i)
         {
             dT[i] = 0;
             Tout[i] = Tin[i];
@@ -51,7 +51,7 @@ void Compute(const std::vector<double> &Tin, std::vector<double> &Tout,
     }
     else
     {
-        for (int i = 0; i < dT.size(); i++)
+        for (size_t i = 0; i < dT.size(); ++i)
         {
             dT[i] = Tout[i] - Tin[i];
             Tout[i] = Tin[i];

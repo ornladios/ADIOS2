@@ -150,7 +150,7 @@ Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
     Box<Dims> intersectionStartCount;
     const size_t dimensionsSize = start1.size();
 
-    for (auto d = 0; d < dimensionsSize; ++d)
+    for (size_t d = 0; d < dimensionsSize; ++d)
     {
         // Don't intercept
         const size_t end1 = start1[d] + count1[d] - 1;
@@ -165,7 +165,7 @@ Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
     intersectionStartCount.first.reserve(dimensionsSize);
     intersectionStartCount.second.reserve(dimensionsSize);
 
-    for (auto d = 0; d < dimensionsSize; ++d)
+    for (size_t d = 0; d < dimensionsSize; ++d)
     {
         const size_t intersectionStart =
             (start1[d] < start2[d]) ? start2[d] : start1[d];
@@ -226,7 +226,7 @@ bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
         dSlowest = static_cast<int>(dimensionsSize - 1);
     }
 
-    for (size_t d = dStart; d <= dEnd; ++d)
+    for (int d = dStart; d <= dEnd; ++d)
     {
         if (blockBox.first[d] != intersectionBox.first[d] ||
             blockBox.second[d] != intersectionBox.second[d])
@@ -263,7 +263,7 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
         size_t linearIndex = normalizedPoint[0]; // fastest
         size_t product = 1;
 
-        for (auto p = 1; p < countSize; ++p)
+        for (size_t p = 1; p < countSize; ++p)
         {
             product *= count[p - 1];
             linearIndex += normalizedPoint[p] * product;

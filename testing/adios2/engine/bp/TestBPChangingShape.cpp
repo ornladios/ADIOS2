@@ -61,7 +61,7 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
     auto var = outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
 
     std::vector<double> buf(nsteps, 0.0);
-    for (int i = 0; i < buf.size(); i++)
+    for (size_t i = 0; i < buf.size(); i++)
     {
         buf[i] = rank + static_cast<double>(i) / 10.0;
     }

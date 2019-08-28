@@ -31,17 +31,17 @@ static void printDataStep(const float *data, const size_t start,
     myfile << " step   row   columns " << start << "..." << start + count - 1
            << std::endl;
     myfile << "        ";
-    for (int j = 0; j < count; j++)
+    for (size_t j = 0; j < count; j++)
     {
         myfile << std::setw(9) << start + j;
     }
     myfile << std::endl;
     myfile << "------------------------------------------------------------"
               "--\n";
-    for (int i = 0; i < count; i++)
+    for (size_t i = 0; i < count; i++)
     {
         myfile << std::setw(5) << step << std::setw(5) << start + i;
-        for (int j = 0; j < count; j++)
+        for (size_t j = 0; j < count; j++)
         {
             myfile << std::setw(9) << std::setprecision(4)
                    << data[i * count + j];

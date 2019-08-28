@@ -137,9 +137,6 @@ size_t CompressPNG::Compress(const void *dataIn, const Dims &dimensions,
         }
     }
 
-    const size_t sizeIn =
-        static_cast<size_t>(helper::GetTotalSize(dimensions) * elementSize);
-
     png_structp pngWrite = png_create_write_struct(PNG_LIBPNG_VER_STRING,
                                                    nullptr, nullptr, nullptr);
     png_infop pngInfo = png_create_info_struct(pngWrite);

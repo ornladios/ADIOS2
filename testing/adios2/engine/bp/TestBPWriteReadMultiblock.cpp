@@ -393,13 +393,13 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             EXPECT_EQ(cr64Info.size(), 2 * mpiSize);
 
             // String
-            for (size_t i = 0; i < mpiSize; ++i)
+            for (size_t i = 0; i < static_cast<size_t>(mpiSize); ++i)
             {
                 EXPECT_TRUE(iStringInfo[i].IsValue);
                 EXPECT_EQ(iStringInfo[i].Value, "Testing ADIOS2 String type");
             }
 
-            for (size_t i = 0; i < 2 * mpiSize; ++i)
+            for (size_t i = 0; i < 2 * static_cast<size_t>(mpiSize); ++i)
             {
                 EXPECT_FALSE(i8Info[0].IsValue);
                 EXPECT_EQ(i8Info[i].Count[0], Nx / 2);
@@ -1533,7 +1533,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             EXPECT_EQ(cr32Info.size(), 2 * mpiSize);
             EXPECT_EQ(cr64Info.size(), 2 * mpiSize);
 
-            for (size_t i = 0; i < 2 * mpiSize; ++i)
+            for (size_t i = 0; i < 2 * static_cast<size_t>(mpiSize); ++i)
             {
                 EXPECT_FALSE(i8Info[0].IsValue);
                 EXPECT_FALSE(i16Info[0].IsValue);

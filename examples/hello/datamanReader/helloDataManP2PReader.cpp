@@ -67,11 +67,10 @@ int main(int argc, char *argv[])
     adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
 
     // read data
-    size_t i = 0;
     adios2::Variable<float> bpFloats;
-    auto start_time = std::chrono::system_clock::now();
     adios2::StepStatus status;
-    for (int i = 0; i < steps; ++i)
+
+    for (size_t i = 0; i < steps; ++i)
     {
         status = dataManReader.BeginStep();
         if (status == adios2::StepStatus::OK)

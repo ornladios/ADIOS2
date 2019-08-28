@@ -586,7 +586,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             }
             else if (key == "write")
             {
-                if (currentAppId == settings.appId)
+                if (currentAppId == static_cast<int>(settings.appId))
                 {
                     if (words.size() < 3)
                     {
@@ -647,7 +647,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             }
             else if (key == "read")
             {
-                if (currentAppId == settings.appId)
+                if (currentAppId == static_cast<int>(settings.appId))
                 {
                     if (words.size() < 4)
                     {

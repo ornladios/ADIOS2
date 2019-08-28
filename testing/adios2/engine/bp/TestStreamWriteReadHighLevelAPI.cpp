@@ -304,12 +304,12 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
                 auto vattrr64array =
                     iStep.read_attribute<double>("attrr64array");
 
-                for (auto i = 0; i < vattrStrarray.size(); ++i)
+                for (size_t i = 0; i < vattrStrarray.size(); ++i)
                 {
                     EXPECT_EQ(vattrStrarray[i], m_TestData.S3[i]);
                 }
 
-                for (auto i = 0; i < vattri8array.size(); ++i)
+                for (size_t i = 0; i < vattri8array.size(); ++i)
                 {
                     EXPECT_EQ(vattri8array[i], m_TestData.I8[i]);
                     EXPECT_EQ(vattri16array[i], m_TestData.I16[i]);
@@ -380,12 +380,12 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
                 auto vvarattrr64array =
                     iStep.read_attribute<double>("attrr64array", "r64", "::");
 
-                for (auto i = 0; i < vvarattrStrarray.size(); ++i)
+                for (size_t i = 0; i < vvarattrStrarray.size(); ++i)
                 {
                     EXPECT_EQ(vvarattrStrarray[i], m_TestData.S3[i]);
                 }
 
-                for (auto i = 0; i < vvarattri8array.size(); ++i)
+                for (size_t i = 0; i < vvarattri8array.size(); ++i)
                 {
                     EXPECT_EQ(vvarattri8array[i], m_TestData.I8[i]);
                     EXPECT_EQ(vvarattri16array[i], m_TestData.I16[i]);

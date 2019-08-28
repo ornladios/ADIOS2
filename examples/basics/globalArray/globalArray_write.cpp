@@ -76,11 +76,11 @@ int main(int argc, char *argv[])
         // but Advance() will append steps to the same file.
         adios2::Engine writer = io.Open("globalArray.bp", adios2::Mode::Write);
 
-        for (int step = 0; step < NSTEPS; step++)
+        for (size_t step = 0; step < NSTEPS; step++)
         {
             writer.BeginStep();
 
-            for (int i = 0; i < Nx; i++)
+            for (size_t i = 0; i < Nx; i++)
             {
                 row[i] = step * Nx * nproc * 1.0 + rank * Nx * 1.0 + (double)i;
             }

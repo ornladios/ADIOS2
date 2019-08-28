@@ -267,7 +267,7 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
 
             adios2_perform_gets(engineH);
 
-            for (auto i = 0; i < data_Nx / 2; ++i)
+            for (size_t i = 0; i < data_Nx / 2; ++i)
             {
                 EXPECT_EQ(inI8[i], data_I8[data_Nx / 2 + i]);
                 EXPECT_EQ(inI16[i], data_I16[data_Nx / 2 + i]);

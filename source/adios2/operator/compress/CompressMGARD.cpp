@@ -67,7 +67,7 @@ size_t CompressMGARD::Compress(const void *dataIn, const Dims &dimensions,
     r[1] = 0;
     r[2] = 0;
 
-    for (auto i = 0; i < ndims; i++)
+    for (size_t i = 0; i < ndims; i++)
     {
         r[ndims - i - 1] = static_cast<int>(dimensions[i]);
     }
@@ -134,7 +134,7 @@ size_t CompressMGARD::Decompress(const void *bufferIn, const size_t sizeIn,
     r[1] = 0;
     r[2] = 0;
 
-    for (auto i = 0; i < ndims; i++)
+    for (size_t i = 0; i < ndims; i++)
     {
         r[ndims - i - 1] = static_cast<int>(dimensions[i]);
     }
