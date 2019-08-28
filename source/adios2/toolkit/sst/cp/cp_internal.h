@@ -198,6 +198,7 @@ struct _SstStream
     int CommPatternLockedTimestep;
     long DiscardPriorTimestep; /* timesteps numerically less than this will be
                                   discarded with prejudice */
+    long LastDPNotifiedTimestep;
 
     /* reader side marshal info */
     FFSContext ReaderFFSContext;
