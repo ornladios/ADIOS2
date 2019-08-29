@@ -80,6 +80,12 @@ add_library(adios2
   
   toolkit/profiling/iochrono/Timer.cpp
 
+  toolkit/query/Query.cpp
+  toolkit/query/Worker.cpp
+  toolkit/query/XmlUtil.cpp
+  toolkit/query/XmlWorker.cpp
+  toolkit/query/BlockIndex.cpp
+
   toolkit/transport/Transport.cpp
   toolkit/transport/file/FileStdio.cpp
   toolkit/transport/file/FileFStream.cpp
