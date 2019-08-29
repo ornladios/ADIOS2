@@ -802,7 +802,12 @@ BP4Base::ReadElementIndexHeader(const std::vector<char> &buffer,
         helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
     header.GroupName = ReadBP4String(buffer, position, isLittleEndian);
     header.Name = ReadBP4String(buffer, position, isLittleEndian);
-    header.Path = ReadBP4String(buffer, position, isLittleEndian);
+    // header.Path = ReadBP4String(buffer, position, isLittleEndian);
+    header.Path = "";
+    header.Order = helper::ReadValue<char>(buffer, position, isLittleEndian);
+    // uint8_t unused =
+    helper::ReadValue<uint8_t>(buffer, position, isLittleEndian);
+
     header.DataType =
         helper::ReadValue<int8_t>(buffer, position, isLittleEndian);
     header.CharacteristicsSetsCount =

@@ -586,6 +586,7 @@ protected:
         std::string GroupName;
         std::string Name;
         std::string Path;
+        char Order;
         uint8_t DataType = std::numeric_limits<uint8_t>::max() - 1;
     };
 

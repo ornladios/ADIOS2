@@ -251,11 +251,24 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
     print("      Var Name        : " + varname)
 
     # VAR PATH, 2 bytes length + string without \0
-    sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
-    status, varpath = ReadEncodedString(f, "Var Path", sizeLimit)
-    if not status:
+    # sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
+    # status, varpath = ReadEncodedString(f, "Var Path", sizeLimit)
+    # if not status:
+    #     return False
+    # print("      Var Path        : " + varpath)
+
+    # 1 byte ORDER (K, C, F)
+    order = f.read(1)
+    if (order != b'K' and order != b'C' and order != b'F'):
+        print(
+            "ERROR: Next byte for Order must be 'K', 'C', or 'F' "
+            "but it isn't = {0}".format(order))
         return False
-    print("      Var Path        : " + varpath)
+    print("        Order           : " + order.decode('ascii'))
+
+    # 1 byte UNUSED
+    unused = f.read(1)
+    print("        Unused byte     : {0}".format(ord(unused)))
 
     # 1 byte TYPE
     typeID = np.fromfile(f, dtype=np.uint8, count=1)[0]

@@ -396,13 +396,29 @@ def ReadVarMD(buf, idx, pos, limit, varStartOffset):
           "' ({0} bytes)".format(varNameLen))
 
     # print("        Current offset : {0}".format(varStartOffset + pos))
-    namelimit = limit - (pos - varStartPosition)
-    status, varPath, varPathLen, pos = ReadEncodedStringFromBuffer(
-        buf, pos, "Var Path", namelimit)
-    if not status:
-        return False, pos
-    print("        Var Path        : '" + varPath +
-          "' ({0} bytes)".format(varPathLen))
+    # namelimit = limit - (pos - varStartPosition)
+    # status, varPath, varPathLen, pos = ReadEncodedStringFromBuffer(
+    #     buf, pos, "Var Path", namelimit)
+    # if not status:
+    #     return False, pos
+    # print("        Var Path        : '" + varPath +
+    #       "' ({0} bytes)".format(varPathLen))
+
+    # 1 byte ORDER (K, C, F)
+    order = buf[pos]  # this is an integer value
+    pos = pos + 1
+    if (order != ord('K') and order != ord('C') and order != ord('F')):
+        print(
+            "ERROR: Next byte for Order must be 'K', 'C', or 'F' "
+            "but it isn't = {0} (={1})".format(
+                chr(order), order))
+        return False
+    print("        Order           : " + chr(order))
+
+    # 1 byte UNUSED
+    unused = buf[pos]  # this is an integer value
+    pos = pos + 1
+    print("        Unused byte     : {0}".format(unused))
 
     # 1 byte TYPE
     typeID = buf[pos]
