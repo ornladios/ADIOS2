@@ -1574,6 +1574,14 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                 releasePriorTimesteps(Stream, NextTimestep);
             }
         }
+        if (Stream->Status == PeerFailed)
+        {
+            CP_verbose(Stream,
+                       "SstAdvanceStepMin returning FatalError because of "
+                       "conn failure at timestep %d\n",
+                       Stream->ReaderTimestep);
+            return_value = SstFatalError;
+        }
         if (return_value == SstSuccess)
         {
             RootEntry = waitForNextMetadata(Stream, Stream->ReaderTimestep);

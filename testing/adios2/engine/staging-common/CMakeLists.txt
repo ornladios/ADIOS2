@@ -130,7 +130,7 @@ endif()
 set (SPECIAL_TESTS "TimeoutReader;LatestReader;LatestReaderHold;DiscardWriter;PreciousTimestep;PreciousTimestepDiscard")
 if (MPIEXEC_IS_BINARY)
     # run_test.py can only kill readers/writers if mpiexec is not a shell script
-    list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriter_2x2;KillWriterTimeout_2x2")
+    list(APPEND SPECIAL_TESTS "KillReadersSerialized;KillReaders3Max;KillWriterTimeout_2x2")
 endif()
 
 set (SIMPLE_MPI_TESTS "")
