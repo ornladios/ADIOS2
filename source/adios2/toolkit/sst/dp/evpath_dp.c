@@ -881,10 +881,10 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
-static void EvpathReaderRegisterTimestep(CP_Services Svcs,
-                                         DP_WSR_Stream WSRStream_v,
-                                         long Timestep,
-                                         SstPreloadModeType PreloadMode)
+static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
+                                           DP_WSR_Stream WSRStream_v,
+                                           long Timestep,
+                                           SstPreloadModeType PreloadMode)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSRStream_v;
     Evpath_WS_Stream WS_Stream =
@@ -909,6 +909,18 @@ static void EvpathReaderRegisterTimestep(CP_Services Svcs,
         }
         printf("TIMESTEP NOT FOUND in READER REGISTER!\n");
     }
+}
+
+static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
+                                    long Timestep,
+                                    SstPreloadModeType PreloadMode)
+{
+    Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
+    Svcs->verbose(
+        RS_Stream->CP_Stream,
+        "EVPATH registering reader arrival of TS %ld metadata, preload mode "
+        "%d\n",
+        Timestep, PreloadMode);
 }
 
 static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
@@ -1161,10 +1173,11 @@ extern CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.notifyConnFailure = EvpathNotifyConnFailure;
     evpathDPInterface.provideTimestep = EvpathProvideTimestep;
     evpathDPInterface.releaseTimestep = EvpathReleaseTimestep;
-    evpathDPInterface.readerRegisterTimestep = EvpathReaderRegisterTimestep;
+    evpathDPInterface.readerRegisterTimestep = EvpathWSReaderRegisterTimestep;
     evpathDPInterface.readerReleaseTimestep = EvpathReaderReleaseTimestep;
     evpathDPInterface.WSRreadPatternLocked = EvpathWSRReadPatternLocked;
     evpathDPInterface.RSreadPatternLocked = NULL;
+    evpathDPInterface.timestepArrived = EvpathRSTimestepArrived;
     evpathDPInterface.destroyReader = EvpathDestroyReader;
     evpathDPInterface.destroyWriter = EvpathDestroyWriter;
     evpathDPInterface.destroyWriterPerReader = EvpathDestroyWriterPerReader;
