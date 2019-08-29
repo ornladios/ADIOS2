@@ -226,15 +226,16 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
                       adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Steps(), NSteps);
             EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
-            EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
+            EXPECT_EQ(var_RanksLocalValue.Shape()[0],
+                      static_cast<size_t>(mpiSize));
             EXPECT_EQ(var_RanksLocalValue.Min(), 0);
             EXPECT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
             std::vector<int32_t> rankLocalValueData;
             bpReader.Get(var_RanksLocalValue, rankLocalValueData);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
-            for (int32_t r = 0; r < rankLocalValueData.size(); ++r)
+            for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
-                EXPECT_EQ(rankLocalValueData[r], r);
+                EXPECT_EQ(rankLocalValueData[r], static_cast<int32_t>(r));
             }
 
             EXPECT_TRUE(var_RanksLocalValueString);
@@ -247,7 +248,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
                          adios2::Mode::Sync);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
-            for (int32_t r = 0; r < rankLocalValueData.size(); ++r)
+            for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
                 EXPECT_EQ(rankLocalValueDataString[r], std::to_string(r));
             }
@@ -296,7 +297,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             EXPECT_EQ(var_cr64.Shape().size(), 0);
 
             // loop blocks
-            for (size_t b = 0; b < mpiSize; ++b)
+            for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
             {
                 var_i8.SetBlockSelection(b);
                 var_i16.SetBlockSelection(b);
@@ -411,42 +412,66 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
                         std::string msg = ss.str();
 
                         if (var_i8)
+                        {
                             EXPECT_EQ(I8[i - s], currentTestData.I8[i]) << msg;
+                        }
 
                         if (var_i16)
-                            ASSERT_EQ(I16[i - s], currentTestData.I16[i])
+                        {
+                            EXPECT_EQ(I16[i - s], currentTestData.I16[i])
                                 << msg;
+                        }
                         if (var_i32)
+                        {
                             EXPECT_EQ(I32[i - s], currentTestData.I32[i])
                                 << msg;
+                        }
                         if (var_i64)
+                        {
                             EXPECT_EQ(I64[i - s], currentTestData.I64[i])
                                 << msg;
+                        }
 
                         if (var_u8)
+                        {
                             EXPECT_EQ(U8[i - s], currentTestData.U8[i]) << msg;
+                        }
                         if (var_u16)
+                        {
                             EXPECT_EQ(U16[i - s], currentTestData.U16[i])
                                 << msg;
+                        }
                         if (var_u32)
+                        {
                             EXPECT_EQ(U32[i - s], currentTestData.U32[i])
                                 << msg;
+                        }
                         if (var_u64)
+                        {
                             EXPECT_EQ(U64[i - s], currentTestData.U64[i])
                                 << msg;
+                        }
                         if (var_r32)
+                        {
                             EXPECT_EQ(R32[i - s], currentTestData.R32[i])
                                 << msg;
+                        }
                         if (var_r64)
+                        {
                             EXPECT_EQ(R64[i - s], currentTestData.R64[i])
                                 << msg;
+                        }
 
                         if (var_cr32)
+                        {
                             EXPECT_EQ(CR32[i - s], currentTestData.CR32[i])
                                 << msg;
+                        }
                         if (var_cr64)
+                        {
                             EXPECT_EQ(CR64[i - s], currentTestData.CR64[i])
                                 << msg;
+                        }
                     }
 
                 } // selection loop
@@ -669,9 +694,9 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             std::vector<int32_t> rankLocalValueData;
             bpReader.Get(var_RanksLocalValue, rankLocalValueData);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
-            for (int32_t r = 0; r < rankLocalValueData.size(); ++r)
+            for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
-                EXPECT_EQ(rankLocalValueData[r], r);
+                EXPECT_EQ(rankLocalValueData[r], static_cast<int32_t>(r));
             }
 
             EXPECT_TRUE(var_RanksLocalValueString);
@@ -683,7 +708,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
                          adios2::Mode::Sync);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
-            for (int32_t r = 0; r < rankLocalValueData.size(); ++r)
+            for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
                 EXPECT_EQ(rankLocalValueDataString[r], std::to_string(r));
             }
@@ -731,7 +756,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             EXPECT_EQ(var_cr64.Steps(), NSteps);
             EXPECT_EQ(var_cr64.Shape().size(), 0);
 
-            for (size_t b = 0; b < mpiSize; ++b)
+            for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
             {
                 var_i8.SetBlockSelection(b);
                 var_i16.SetBlockSelection(b);
@@ -879,64 +904,88 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
                                 const size_t indexBlock = q * Nx + p;
 
                                 if (var_i8)
-                                    ASSERT_EQ(I8[indexSel],
+                                {
+                                    EXPECT_EQ(I8[indexSel],
                                               currentTestData.I8[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_i16)
-                                    ASSERT_EQ(I16[indexSel],
+                                {
+                                    EXPECT_EQ(I16[indexSel],
                                               currentTestData.I16[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_i32)
-                                    ASSERT_EQ(I32[indexSel],
+                                {
+                                    EXPECT_EQ(I32[indexSel],
                                               currentTestData.I32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_i64)
-                                    ASSERT_EQ(I64[indexSel],
+                                {
+                                    EXPECT_EQ(I64[indexSel],
                                               currentTestData.I64[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u8)
-                                    ASSERT_EQ(U8[indexSel],
+                                {
+                                    EXPECT_EQ(U8[indexSel],
                                               currentTestData.U8[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u16)
-                                    ASSERT_EQ(U16[indexSel],
+                                {
+                                    EXPECT_EQ(U16[indexSel],
                                               currentTestData.U16[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u32)
-                                    ASSERT_EQ(U32[indexSel],
+                                {
+                                    EXPECT_EQ(U32[indexSel],
                                               currentTestData.U32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u64)
-                                    ASSERT_EQ(U64[indexSel],
+                                {
+                                    EXPECT_EQ(U64[indexSel],
                                               currentTestData.U64[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_r32)
-                                    ASSERT_EQ(R32[indexSel],
+                                {
+                                    EXPECT_EQ(R32[indexSel],
                                               currentTestData.R32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_r64)
-                                    ASSERT_EQ(R64[indexSel],
+                                {
+                                    EXPECT_EQ(R64[indexSel],
                                               currentTestData.R64[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_cr32)
-                                    ASSERT_EQ(CR32[indexSel],
+                                {
+                                    EXPECT_EQ(CR32[indexSel],
                                               currentTestData.CR32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_cr64)
-                                    ASSERT_EQ(CR64[indexSel],
+                                {
+                                    EXPECT_EQ(CR64[indexSel],
                                               currentTestData.CR64[indexBlock])
                                         << msg;
+                                }
                             }
                         }
                     } // i selection loop
@@ -1159,9 +1208,9 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             std::vector<int32_t> rankLocalValueData;
             bpReader.Get(var_RanksLocalValue, rankLocalValueData);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
-            for (int32_t r = 0; r < rankLocalValueData.size(); ++r)
+            for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
-                EXPECT_EQ(rankLocalValueData[r], r);
+                EXPECT_EQ(rankLocalValueData[r], static_cast<int32_t>(r));
             }
 
             EXPECT_TRUE(var_RanksLocalValueString);
@@ -1173,7 +1222,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
                          adios2::Mode::Sync);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
-            for (int32_t r = 0; r < rankLocalValueData.size(); ++r)
+            for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
                 EXPECT_EQ(rankLocalValueDataString[r], std::to_string(r));
             }
@@ -1221,7 +1270,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             EXPECT_EQ(var_cr64.Steps(), NSteps);
             EXPECT_EQ(var_cr64.Shape().size(), 0);
 
-            for (size_t b = 0; b < mpiSize; ++b)
+            for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
             {
                 var_i8.SetBlockSelection(b);
                 var_i16.SetBlockSelection(b);
@@ -1369,64 +1418,88 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
                                 const size_t indexBlock = q * Nx + p;
 
                                 if (var_i8)
-                                    ASSERT_EQ(I8[indexSel],
+                                {
+                                    EXPECT_EQ(I8[indexSel],
                                               currentTestData.I8[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_i16)
-                                    ASSERT_EQ(I16[indexSel],
+                                {
+                                    EXPECT_EQ(I16[indexSel],
                                               currentTestData.I16[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_i32)
-                                    ASSERT_EQ(I32[indexSel],
+                                {
+                                    EXPECT_EQ(I32[indexSel],
                                               currentTestData.I32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_i64)
-                                    ASSERT_EQ(I64[indexSel],
+                                {
+                                    EXPECT_EQ(I64[indexSel],
                                               currentTestData.I64[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u8)
-                                    ASSERT_EQ(U8[indexSel],
+                                {
+                                    EXPECT_EQ(U8[indexSel],
                                               currentTestData.U8[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u16)
-                                    ASSERT_EQ(U16[indexSel],
+                                {
+                                    EXPECT_EQ(U16[indexSel],
                                               currentTestData.U16[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u32)
-                                    ASSERT_EQ(U32[indexSel],
+                                {
+                                    EXPECT_EQ(U32[indexSel],
                                               currentTestData.U32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_u64)
-                                    ASSERT_EQ(U64[indexSel],
+                                {
+                                    EXPECT_EQ(U64[indexSel],
                                               currentTestData.U64[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_r32)
-                                    ASSERT_EQ(R32[indexSel],
+                                {
+                                    EXPECT_EQ(R32[indexSel],
                                               currentTestData.R32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_r64)
-                                    ASSERT_EQ(R64[indexSel],
+                                {
+                                    EXPECT_EQ(R64[indexSel],
                                               currentTestData.R64[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_cr32)
-                                    ASSERT_EQ(CR32[indexSel],
+                                {
+                                    EXPECT_EQ(CR32[indexSel],
                                               currentTestData.CR32[indexBlock])
                                         << msg;
+                                }
 
                                 if (var_cr64)
-                                    ASSERT_EQ(CR64[indexSel],
+                                {
+                                    EXPECT_EQ(CR64[indexSel],
                                               currentTestData.CR64[indexBlock])
                                         << msg;
+                                }
                             }
                         }
                     } // i selection loop
@@ -1635,7 +1708,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
         var_cr32.SetStepSelection({0, var_cr32.Steps()});
         var_cr64.SetStepSelection({0, var_cr64.Steps()});
 
-        for (size_t b = 0; b < mpiSize; ++b)
+        for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
         {
             var_i8.SetBlockSelection(b);
             var_i16.SetBlockSelection(b);
@@ -1701,55 +1774,88 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
                         std::string msg = ss.str();
 
                         if (var_i8)
-                            ASSERT_EQ(I8[s * (Nx - i) + j - i],
+                        {
+                            EXPECT_EQ(I8[s * (Nx - i) + j - i],
                                       currentTestData.I8[j])
                                 << msg;
+                        }
+
                         if (var_i16)
-                            ASSERT_EQ(I16[s * (Nx - i) + j - i],
+                        {
+                            EXPECT_EQ(I16[s * (Nx - i) + j - i],
                                       currentTestData.I16[j])
                                 << msg;
+                        }
+
                         if (var_i32)
+                        {
                             EXPECT_EQ(I32[s * (Nx - i) + j - i],
                                       currentTestData.I32[j])
                                 << msg;
+                        }
+
                         if (var_i64)
+                        {
                             EXPECT_EQ(I64[s * (Nx - i) + j - i],
                                       currentTestData.I64[j])
                                 << msg;
+                        }
 
                         if (var_u8)
+                        {
                             EXPECT_EQ(U8[s * (Nx - i) + j - i],
                                       currentTestData.U8[j])
                                 << msg;
+                        }
+
                         if (var_u16)
+                        {
                             EXPECT_EQ(U16[s * (Nx - i) + j - i],
                                       currentTestData.U16[j])
                                 << msg;
+                        }
+
                         if (var_u32)
+                        {
                             EXPECT_EQ(U32[s * (Nx - i) + j - i],
                                       currentTestData.U32[j])
                                 << msg;
+                        }
+
                         if (var_u64)
+                        {
                             EXPECT_EQ(U64[s * (Nx - i) + j - i],
                                       currentTestData.U64[j])
                                 << msg;
+                        }
+
                         if (var_r32)
+                        {
                             EXPECT_EQ(R32[s * (Nx - i) + j - i],
                                       currentTestData.R32[j])
                                 << msg;
+                        }
+
                         if (var_r64)
+                        {
                             EXPECT_EQ(R64[s * (Nx - i) + j - i],
                                       currentTestData.R64[j])
                                 << msg;
+                        }
 
                         if (var_cr32)
+                        {
                             EXPECT_EQ(CR32[s * (Nx - i) + j - i],
                                       currentTestData.CR32[j])
                                 << msg;
+                        }
+
                         if (var_cr64)
+                        {
                             EXPECT_EQ(CR64[s * (Nx - i) + j - i],
                                       currentTestData.CR64[j])
                                 << msg;
+                        }
                     }
                 } // steps loop
             }     // selection loop

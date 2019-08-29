@@ -36,7 +36,7 @@ private:
                              int step = -1)
     {
         std::string name;
-        int ss = outputfile.size();
+        const size_t ss = outputfile.size();
         if (rank == -1 && step == -1)
         {
             // add suffix if not present already

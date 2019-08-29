@@ -73,7 +73,7 @@ void MGARDAccuracy1D(const std::string tolerance)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             // bpWriter.Put<float>("r32", r32s.data());
@@ -213,7 +213,7 @@ void MGARDAccuracy2D(const std::string tolerance)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             // bpWriter.Put<float>("r32", r32s.data());
@@ -355,7 +355,7 @@ void MGARDAccuracy3D(const std::string tolerance)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             // bpWriter.Put<float>("r32", r32s.data());
@@ -628,7 +628,7 @@ void MGARDAccuracy2DSel(const std::string tolerance)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             // bpWriter.Put<float>("r32", r32s.data());
@@ -762,7 +762,7 @@ void MGARDAccuracy3DSel(const std::string tolerance)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             // bpWriter.Put<float>("r32", r32s.data());
@@ -817,7 +817,7 @@ void MGARDAccuracy3DSel(const std::string tolerance)
 
             double maxDiff = 0;
 
-            for (auto i = 0; i < Nx / 2 * Ny * Nz; ++i)
+            for (size_t i = 0; i < Nx / 2 * Ny * Nz; ++i)
             {
                 std::stringstream ss;
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
@@ -909,7 +909,7 @@ void MGARDAccuracy2DSmallSel(const std::string tolerance)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             // bpWriter.Put<float>("r32", r32s.data());

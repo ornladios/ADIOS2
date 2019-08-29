@@ -184,7 +184,7 @@ void ZfpRate2D(const std::string configFile)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
@@ -301,7 +301,7 @@ void ZfpRate3D(const std::string configFile)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
@@ -349,7 +349,7 @@ void ZfpRate3D(const std::string configFile)
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
 
-            for (auto i = 0; i < Nx * Ny * Nz; ++i)
+            for (size_t i = 0; i < Nx * Ny * Nz; ++i)
             {
                 std::stringstream ss;
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
@@ -418,7 +418,7 @@ void ZfpRate1DSel(const std::string configFile)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
@@ -540,7 +540,7 @@ void ZfpRate2DSel(const std::string configFile)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
@@ -661,7 +661,7 @@ void ZfpRate3DSel(const std::string configFile)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());
@@ -710,7 +710,7 @@ void ZfpRate3DSel(const std::string configFile)
             bpReader.Get(var_r64, decompressedR64s);
             bpReader.EndStep();
 
-            for (auto i = 0; i < Nx / 2 * Ny * Nz; ++i)
+            for (size_t i = 0; i < Nx / 2 * Ny * Nz; ++i)
             {
                 std::stringstream ss;
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
@@ -787,7 +787,7 @@ void ZfpRate2DSmallSel(const std::string configFile)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());

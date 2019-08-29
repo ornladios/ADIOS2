@@ -128,7 +128,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
                 iStep.read<std::string>("ranksLocalValueString");
 
             // loop blocks
-            for (size_t b = 0; b < mpiSize; ++b)
+            for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
             {
                 SmallTestData currentTestData = generateNewSmallTestData(
                     m_TestData, static_cast<int>(currentStep),
@@ -294,7 +294,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
                 iStep.read<std::string>("ranksLocalValueString");
 
             // loop blocks
-            for (size_t b = 0; b < mpiSize; ++b)
+            for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
             {
                 SmallTestData currentTestData = generateNewSmallTestData(
                     m_TestData, static_cast<int>(currentStep),
@@ -509,7 +509,7 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
                                   stepCount);
 
     // loop blocks
-    for (size_t b = 0; b < mpiSize; ++b)
+    for (size_t b = 0; b < static_cast<size_t>(mpiSize); ++b)
     {
         // loop selections
         for (size_t i = 0; i < Nx; ++i)

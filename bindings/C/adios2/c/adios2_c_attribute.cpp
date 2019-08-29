@@ -169,7 +169,7 @@ adios2_error adios2_attribute_data(void *data, size_t *size,
                 *size = attributeCpp->m_Elements;
                 char **dataT = reinterpret_cast<char **>(data);
 
-                for (auto e = 0; e < *size; ++e)
+                for (size_t e = 0; e < *size; ++e)
                 {
                     attributeCpp->m_DataArray[e].copy(
                         dataT[e], attributeCpp->m_DataArray[e].size());

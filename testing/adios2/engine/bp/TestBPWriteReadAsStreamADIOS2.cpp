@@ -348,31 +348,55 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
                 std::string msg = ss.str();
 
                 if (var_i8)
+                {
                     EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
+                }
                 if (var_i16)
+                {
                     EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
+                }
                 if (var_i32)
+                {
                     EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                }
                 if (var_i64)
+                {
                     EXPECT_EQ(I64[i], currentTestData.I64[i]) << msg;
+                }
 
                 if (var_u8)
+                {
                     EXPECT_EQ(U8[i], currentTestData.U8[i]) << msg;
+                }
                 if (var_u16)
+                {
                     EXPECT_EQ(U16[i], currentTestData.U16[i]) << msg;
+                }
                 if (var_u32)
+                {
                     EXPECT_EQ(U32[i], currentTestData.U32[i]) << msg;
+                }
                 if (var_u64)
+                {
                     EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
+                }
                 if (var_r32)
+                {
                     EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
+                }
                 if (var_r64)
+                {
                     EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                }
 
                 if (var_cr32)
+                {
                     EXPECT_EQ(CR32[i], currentTestData.CR32[i]) << msg;
+                }
                 if (var_cr64)
+                {
                     EXPECT_EQ(CR64[i], currentTestData.CR64[i]) << msg;
+                }
             }
             ++t;
         }

@@ -81,7 +81,7 @@ size_t CompressBZIP2::Compress(const void *dataIn, const Dims &dimensions,
     unsigned int destOffset = 0;
     unsigned int sourceOffset = 0;
 
-    for (auto b = 0; b < batches; ++b)
+    for (size_t b = 0; b < batches; ++b)
     {
         char *source =
             const_cast<char *>(reinterpret_cast<const char *>(dataIn)) +
@@ -137,7 +137,7 @@ size_t CompressBZIP2::Decompress(const void *bufferIn, const size_t sizeIn,
 
     size_t expectedSizeOut = 0;
 
-    for (auto b = 0; b < batches; ++b)
+    for (size_t b = 0; b < batches; ++b)
     {
         const std::string bStr = std::to_string(b);
 

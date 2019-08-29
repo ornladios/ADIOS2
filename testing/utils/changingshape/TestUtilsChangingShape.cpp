@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     }
     for (size_t i = 0; i < nsteps; i++)
     {
-        for (int j = 0; j < buf.size(); j++)
+        for (size_t j = 0; j < buf.size(); j++)
         {
             buf[j] = i + rank / 10.0 + static_cast<double>(j) / 100.0;
         }

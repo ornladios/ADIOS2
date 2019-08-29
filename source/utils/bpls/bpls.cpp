@@ -1502,7 +1502,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             printf("    j=0, stepStart=%" PRIu64 " stepCount=%" PRIu64 "\n",
                    stepStart, stepCount);
 
-        if (stepStart + stepCount > nsteps)
+        if (stepStart + stepCount > static_cast<uint64_t>(nsteps))
         {
             printf("ERROR: The sum of start step (%" PRIu64
                    ") and step count (%" PRIu64 ") is larger "
@@ -2653,7 +2653,7 @@ size_t relative_to_absolute_step(core::Variable<T> *variable,
     auto itStep = indices.begin();
     size_t absstep = itStep->first - 1;
 
-    for (int step = 0; step < relstep; step++)
+    for (size_t step = 0; step < relstep; step++)
     {
         ++itStep;
         absstep = itStep->first - 1;
@@ -2676,7 +2676,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
         variable->m_AvailableStepBlockIndexOffsets;
     auto itStep = indices.begin();
 
-    for (int step = 0; step < nsteps; step++)
+    for (size_t step = 0; step < nsteps; step++)
     {
         const size_t absstep = itStep->first;
         Dims d = variable->Shape(absstep - 1);
@@ -2685,7 +2685,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
             continue;
         }
 
-        for (int k = 0; k < ndim; k++)
+        for (size_t k = 0; k < ndim; k++)
         {
             if (firstStep)
             {

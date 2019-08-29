@@ -54,9 +54,9 @@ int main(int argc, char *argv[])
         bpReader.Close();
 
         std::cout << "Selection size: " << bpData.SelectionSize() << "\n";
-        for (auto i = 0; i < bpData.Count()[0]; ++i)
+        for (size_t i = 0; i < bpData.Count()[0]; ++i)
         {
-            for (auto j = 0; j < bpData.Count()[1]; ++j)
+            for (size_t j = 0; j < bpData.Count()[1]; ++j)
             {
                 std::cout << data[i * bpData.Count()[1] + j] << " ";
             }

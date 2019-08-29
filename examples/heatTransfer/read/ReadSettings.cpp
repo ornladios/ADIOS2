@@ -48,7 +48,7 @@ ReadSettings::ReadSettings(int argc, char *argv[], int rank, int nproc)
     npx = convertToUint("N", argv[4]);
     npy = convertToUint("M", argv[5]);
 
-    if (npx * npy != this->nproc)
+    if (npx * npy != static_cast<unsigned int>(this->nproc))
     {
         throw std::invalid_argument("N*M must equal the number of processes");
     }

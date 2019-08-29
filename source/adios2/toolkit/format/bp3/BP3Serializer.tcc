@@ -76,7 +76,7 @@ inline void BP3Serializer::PutVariablePayload(
             // access operator []
             // std::fill_n(itBegin, blockSize, span->m_Value);
 
-            for (auto i = 0; i < blockSize; ++i)
+            for (size_t i = 0; i < blockSize; ++i)
             {
                 itBegin[i] = span->m_Value;
             }

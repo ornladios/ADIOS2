@@ -108,7 +108,7 @@ public:
 
         adios2::Engine writer = io.Open(streamName, adios2::Mode::Write, comm);
 
-        for (size_t step = 0; step < steps; ++step)
+        for (int step = 0; step < steps; ++step)
         {
             size_t idx = 0;
             for (size_t x = 0; x < ndx; ++x)
