@@ -3,7 +3,7 @@
 
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
-
+#include <cctype>
 #include <stdexcept>
 #include <string>
 #include <vector>
