@@ -82,7 +82,7 @@ def readDataToNumpyArray(f, typeName, nElements):
         return np.zeros(1, dtype=np.uint32)
 
 
-def ReadCharacteristicsFromData(f, limit, typeID):
+def ReadCharacteristicsFromData(f, limit, typeID, ndim):
     cStartPosition = f.tell()
     dataTypeName = bp4dbg_utils.GetTypeName(typeID)
     # 1 byte NCharacteristics
@@ -346,7 +346,7 @@ def ReadVMD(f, varidx, varsStartPosition, varsTotalLength):
         print("           offset dim : {0}".format(offset))
 
     sizeLimit = expectedVarBlockLength - (f.tell() - startPosition)
-    status = ReadCharacteristicsFromData(f, sizeLimit, typeID)
+    status = ReadCharacteristicsFromData(f, sizeLimit, typeID, ndims)
     if not status:
         return False
 
