@@ -1,9 +1,9 @@
 #ifndef ADIOS2_QUERY_UTIL_H
 #define ADIOS2_QUERY_UTIL_H
 
+#include <cctype>
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
-#include <cctype>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -25,6 +25,7 @@ static size_t ToUIntValue(const adios2::Params &params, const std::string &key,
         }
         catch (std::exception &e)
         {
+            std::cout << e.what() << std::endl;
             return defaultValue;
         }
     }
