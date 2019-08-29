@@ -1,15 +1,3 @@
-
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
-#include <mpi.h>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
-//#include <pugixml/pugixml/src/pugixml.hpp>
-#include <fstream>
-#include <pugixml.hpp>
-
 #include "Worker.h"
 #include "XmlUtil.h"
 

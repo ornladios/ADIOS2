@@ -1,15 +1,6 @@
 #ifndef ADIOS2_QUERY_INDEX_H
 #define ADIOS2_QUERY_INDEX_H
 
-#include <ios>      //std::ios_base::failure
-#include <iostream> //std::cout
-#include <mpi.h>
-#include <numeric>   // accumulate
-#include <stdexcept> //std::invalid_argument std::exception
-#include <vector>
-
-// #include "adios2.h"
-
 #include "Query.h"
 
 namespace adios2

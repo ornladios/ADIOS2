@@ -3,7 +3,7 @@
 
 #include <ios>      //std::ios_base::failure
 #include <iostream> //std::cout
-#include <mpi.h>
+
 #include <numeric>   // accumulate
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
