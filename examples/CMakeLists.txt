@@ -5,6 +5,7 @@
 
 add_subdirectory(basics)
 add_subdirectory(hello)
+add_subdirectory(query)
 add_subdirectory(useCases)
 
 if(ADIOS2_HAVE_MPI)

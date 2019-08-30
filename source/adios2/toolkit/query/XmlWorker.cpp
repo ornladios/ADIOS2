@@ -7,7 +7,8 @@ namespace query
 {
 void XmlWorker::ParseMe()
 {
-    std::cerr << " ...  will ... build index file if indicated " << std::endl;
+    // std::cerr << "TODO: ...  will ... build index file if indicated " <<
+    // std::endl;
 
     auto lf_FileContents = [&](const std::string &configXML) -> std::string {
         std::ifstream fileStream(configXML);

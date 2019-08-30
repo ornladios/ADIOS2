@@ -42,8 +42,8 @@ m_adios2.DeclareIO(std::string("BLOCKINDEX-Write-")+m_DataReader->Name());
 void Worker::GetResultCoverage(const adios2::Box<adios2::Dims> &outputRegion,
                                std::vector<Box<Dims>> &touchedBlocks)
 {
-    std::cout << "  will evaluate shifting  in output region later  .."
-              << std::endl;
+    // std::cout << "  will evaluate shifting  in output region later  .."
+    //           << std::endl;
     touchedBlocks.clear();
 
     if (m_Query && m_SourceReader)

@@ -1,6 +1,5 @@
-#include <mpi.h>
-
 #include "adios2.h"
+#include <mpi.h>
 
 #include <cstdint>
 #include <iomanip>
@@ -24,20 +23,22 @@ int main(int argc, char *argv[])
 
     try
     {
-        // size_t recommendedSize = 20000;
-        // bool overwrite = false;
-
         std::string configFileName = "query.xml";
         std::string dataFileName = "/tmp/heatbp4.bp";
-        if (argc > 1)
-            configFileName = argv[1];
+        if (argc <= 2)
+        {
+            std::cout << "Usage: " << argv[0] << " configFileName  dataFileName"
+                      << std::endl;
+            return 0;
+        }
 
-        if (argc > 2)
-            dataFileName = argv[2];
+        configFileName = argv[1];
+        dataFileName = argv[2];
 
         if (rank == 0)
         {
-            std::cout << " file = " << configFileName << std::endl;
+            std::cout << " using config file = " << configFileName << std::endl;
+            std::cout << "        data file  = " << dataFileName << std::endl;
         }
 
         adios2::ADIOS ad =
@@ -47,21 +48,14 @@ int main(int argc, char *argv[])
         adios2::Engine reader =
             queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
         adios2::QueryWorker w = adios2::QueryWorker(configFileName, reader);
-        // adios2::query::Worker* w = adios2::query::GetWorker(configFileName,
-        // MPI_COMM_WORLD);
 
         std::vector<adios2::Box<adios2::Dims>> touched_blocks;
-
-        // adios2::ADIOS adios(MPI_COMM_WORLD, adios2::DebugON);
-        // adios2::IO bpIO = adios.DeclareIO("QueryTest");
-        // bpIO.SetEngine("BPFile");
-        // adios2::Engine reader =  bpIO.Open(dataFileName, adios2::Mode::Read);
 
         while (reader.BeginStep() == adios2::StepStatus::OK)
         {
             adios2::Box<adios2::Dims> empty;
             w.GetResultCoverage(empty, touched_blocks);
-            std::cout << " ... use reader to read out touched blocks ... size="
+            std::cout << " ... now can read out touched blocks ... size="
                       << touched_blocks.size() << std::endl;
             reader.EndStep();
         }

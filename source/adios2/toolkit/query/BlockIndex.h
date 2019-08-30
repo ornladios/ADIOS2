@@ -33,7 +33,9 @@ public:
     void Evaluate(const QueryVar &query,
                   std::vector<adios2::Box<adios2::Dims>> &resultSubBlocks)
     {
-        if (m_IdxReader.m_EngineType.find("BP4") >= 0)
+        std::size_t found = m_IdxReader.m_EngineType.find("BP4");
+        if (found != std::string::npos)
+        // if (m_IdxReader.m_EngineType.find("BP4") >= 0)
         {
             RunBP4Stat(query, resultSubBlocks);
         }
