@@ -41,16 +41,12 @@ if(NOT BLOSC_FOUND)
   find_path(BLOSC_INCLUDE_DIR blosc.h ${BLOSC_INCLUDE_OPTS})
   find_library(BLOSC_LIBRARY blosc ${BLOSC_LIBRARY_OPTS})
   if(BLOSC_INCLUDE_DIR)
-    file(STRINGS ${BLOSC_INCLUDE_DIR}/blosc.h _ver_strings
-      REGEX "BLOSC_VERSION_[^ ]* [0-9]+"
+    file(STRINGS ${BLOSC_INCLUDE_DIR}/blosc.h _ver_string
+      REGEX [=[BLOSC_VERSION_STRING +"[^"]*"]=]
     )
-    foreach(v IN LISTS _ver_strings)
-      string(REGEX MATCH "BLOSC_VERSION_([^ ]+) ([0-9]+)" v "${v}")
-      set(BLOSC_VERSION_${CMAKE_MATCH_1} ${CMAKE_MATCH_2})
-    endforeach()
-    set(BLOSC_VERSION
-      ${BLOSC_VERSION_MAJOR}.${BLOSC_VERSION_MINOR}.${BLOSC_VERSION_PATCH}
-    )
+    if(_ver_string MATCHES [=[BLOSC_VERSION_STRING +"([0-9]+.[0-9]+.[0-9]+)]=])
+      set(BLOSC_VERSION ${CMAKE_MATCH_1})
+    endif()
   endif()
 
   include(FindPackageHandleStandardArgs)
