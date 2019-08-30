@@ -11,7 +11,7 @@
 #ifndef ADIOS2_BINDINGS_CXX11_QUERY_H_
 #define ADIOS2_BINDINGS_CXX11_QUERY_H_
 
-#include <memory> // otherwise MSVC complains about std::shared_ptr 
+#include <memory> // otherwise MSVC complains about std::shared_ptr
 
 #include "Engine.h"
 
