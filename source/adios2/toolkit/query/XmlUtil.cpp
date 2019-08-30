@@ -1,4 +1,5 @@
 #include "XmlUtil.h"
+#include <stdexcept>
 
 namespace adios2
 {
