@@ -3,17 +3,8 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(basics)
-add_subdirectory(hello)
-add_subdirectory(query)
-add_subdirectory(useCases)
-
 if(ADIOS2_HAVE_MPI)
-  #if(MPIEXEC_MAX_NUMPROCS GREATER 3)
-    add_subdirectory(heatTransfer)
-  #endif()
+  add_executable(queryTest test_xml.cpp)
+  target_link_libraries(queryTest adios2 MPI::MPI_C pugixml)    
 endif()
 
-if(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL)
-  add_subdirectory(experimental)
-endif()
