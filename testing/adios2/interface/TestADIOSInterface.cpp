@@ -169,7 +169,7 @@ struct MyData
     explicit MyData(const std::vector<Box> &selections)
     : m_Blocks(selections.size()), m_Selections(selections)
     {
-        for (int b = 0; b < NBlocks(); ++b)
+        for (int b = 0; b < static_cast<int>(NBlocks()); ++b)
         {
             m_Blocks[b].resize(selections[b].second[0]);
         }
@@ -257,7 +257,7 @@ public:
 
         MyData<DataType> myData(m_Selections);
 
-        for (int b = 0; b < myData.NBlocks(); ++b)
+        for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
         {
             PopulateBlock(myData, b);
 
@@ -309,7 +309,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put)
     auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
     MyData<T> myData(this->m_Selections);
 
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         this->PopulateBlock(myData, b);
         var.SetSelection(myData.Selection(b));
@@ -368,17 +368,17 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopy)
     }
 #else
     std::vector<typename adios2::Variable<T>::Span> spans;
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         var.SetSelection(myData.Selection(b));
         spans.push_back(writer.Put(var));
     }
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         myData.Place(b, spans[b].data());
     }
 #endif
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         this->PopulateBlock(myData, b);
     }
@@ -398,7 +398,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopyMixed)
 
     MyDataView<T> myData(this->m_Selections);
     std::unique_ptr<T[]> lastBlock;
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         if (b < 1)
         {
@@ -413,7 +413,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopyMixed)
         }
     }
 
-    for (int b = 0; b < myData.NBlocks(); ++b)
+    for (int b = 0; b < static_cast<int>(myData.NBlocks()); ++b)
     {
         this->PopulateBlock(myData, b);
     }

@@ -507,7 +507,7 @@ std::map<size_t, std::shared_ptr<BPOperation>> BP3Base::SetBPOperations(
 {
     std::map<size_t, std::shared_ptr<BPOperation>> bpOperations;
 
-    for (auto i = 0; i < operations.size(); ++i)
+    for (size_t i = 0; i < operations.size(); ++i)
     {
         const std::string type = operations[i].Op->m_Type;
         std::shared_ptr<BPOperation> bp3Operation = SetBPOperation(type);

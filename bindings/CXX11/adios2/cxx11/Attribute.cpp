@@ -59,8 +59,7 @@ namespace adios2
         }                                                                      \
         else                                                                   \
         {                                                                      \
-            return reinterpret_cast<std::vector<T> &>(                         \
-                m_Attribute->m_DataArray);                                     \
+            return helper::NewVectorType<IOType, T>(m_Attribute->m_DataArray); \
         }                                                                      \
     }                                                                          \
                                                                                \

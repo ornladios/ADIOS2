@@ -88,7 +88,7 @@ HelloInsituArgs::HelloInsituArgs(bool isWriter, int argc, char *argv[],
             offsy = posy * ndy;
         }
 
-        if (npx * npy != nproc)
+        if (npx * npy != static_cast<size_t>(nproc))
         {
             throw std::invalid_argument(
                 "N*M must equal the number of processes");

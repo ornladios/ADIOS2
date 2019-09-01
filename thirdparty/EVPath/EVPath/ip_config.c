@@ -536,7 +536,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 		}
 	    }
 	} else {
-	    get_qual_hostname(determined_hostname, sizeof(determined_hostname), NULL /* attrs */, NULL, trace_func, trace_data);
+	    get_qual_hostname(determined_hostname, sizeof(determined_hostname) - 1, NULL /* attrs */, NULL, trace_func, trace_data);
 	    dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG best guess hostname is \"%s\"\n", determined_hostname);
 	}
 	if (determined_IP == -1) {
@@ -568,7 +568,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 
     if (get_string_attr(attrs, CM_IP_INTERFACE, &interface)) {
 	/* don't use predetermined stuff ! */
-	get_qual_hostname(hostname_to_use, sizeof(hostname_to_use), attrs, NULL, trace_func, trace_data);
+	get_qual_hostname(hostname_to_use, sizeof(hostname_to_use) - 1 , attrs, NULL, trace_func, trace_data);
 	IP_to_use = get_self_ip_iface(trace_func, trace_data, interface);
     } else {
 	strcpy(hostname_to_use, determined_hostname);

@@ -57,7 +57,7 @@ void DoAnalysis(adios2::IO &inlineIO, adios2::Engine &inlineReader, int rank,
             {
                 adios2::Dims count = info.Count;
                 const float *vectData = info.Data();
-                for (int i = 0; i < count[0]; ++i)
+                for (size_t i = 0; i < count[0]; ++i)
                 {
                     float datum = vectData[i];
                     std::cout << datum << " ";

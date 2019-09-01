@@ -45,7 +45,7 @@ void PNGAccuracy2D(const std::string compressionLevel)
     std::vector<float> r32s(height * width);
 
     // range 0 to 100*50
-    for (auto i = 0; i < height * width; ++i)
+    for (size_t i = 0; i < height * width; ++i)
     {
         i8s[i] = Random100<int8_t>();
         i16s[i] = Random100<int16_t>();
@@ -146,7 +146,7 @@ void PNGAccuracy2D(const std::string compressionLevel)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<int8_t>("i8", i8s.data());
@@ -354,7 +354,7 @@ void PNGAccuracy2DSel(const std::string accuracy)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (auto step = 0; step < NSteps; ++step)
+        for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", r32s.data());

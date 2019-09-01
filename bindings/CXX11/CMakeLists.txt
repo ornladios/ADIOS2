@@ -11,6 +11,7 @@ target_sources(adios2 PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/IO.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/IO.tcc
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Operator.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Query.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Types.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Types.tcc
 	${CMAKE_CURRENT_SOURCE_DIR}/adios2/cxx11/Variable.cpp
@@ -40,6 +41,7 @@ install(
         adios2/cxx11/Attribute.h
         adios2/cxx11/Engine.h
         adios2/cxx11/Operator.h
+        adios2/cxx11/Query.h
         adios2/cxx11/Types.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11
 )

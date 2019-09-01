@@ -85,7 +85,7 @@ void FC_GLOBAL(adios2_variable_shape_f2c,
         return;
     }
 
-    for (auto d = 0; d < ndims; ++d)
+    for (size_t d = 0; d < ndims; ++d)
     {
         shape[d] = static_cast<int64_t>(shapeC[d]);
     }

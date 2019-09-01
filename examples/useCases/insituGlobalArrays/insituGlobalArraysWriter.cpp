@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 #endif
 
     const size_t maxProc = VarTree.size();
-    if (nproc > maxProc)
+    if (static_cast<size_t>(nproc) > maxProc)
     {
         if (!rank)
         {
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     const size_t nvars = VarTree[rank].size();
     // A 1D array for each variable
     std::vector<std::vector<double>> Vars(nvars);
-    for (int i = 0; i < nvars; i++)
+    for (size_t i = 0; i < nvars; i++)
     {
         Vars[i].resize(SizesTree[rank][i]);
     }
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
             io.AddTransport(t.first, t.second);
         }
 
-        for (int i = 0; i < nvars; i++)
+        for (size_t i = 0; i < nvars; i++)
         {
             size_t nelems = SizesTree[rank][i];
             Vars[i].resize(nelems);
@@ -170,14 +170,14 @@ int main(int argc, char *argv[])
 
         adios2::Engine writer = io.Open("output.bp", adios2::Mode::Write);
 
-        for (int step = 0; step < NSTEPS; step++)
+        for (size_t step = 0; step < NSTEPS; step++)
         {
             writer.BeginStep();
 
-            for (int i = 0; i < nvars; i++)
+            for (size_t i = 0; i < nvars; i++)
             {
                 size_t nelems = SizesTree[rank][i];
-                for (int j = 0; j < nelems; j++)
+                for (size_t j = 0; j < nelems; j++)
                 {
                     Vars[i][j] = ((double)step + 1.0) / 100.0 + (double)rank;
                 }

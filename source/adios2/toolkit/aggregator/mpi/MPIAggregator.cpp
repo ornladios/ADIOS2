@@ -66,14 +66,14 @@ void MPIAggregator::InitComm(const size_t subStreams,
     const size_t r = processes % subStreams;
 
     // Groups [0,r) have size q+1.  Groups [r,S) have size q.
-    const size_t first_in_small_groups = r * (q + 1);
+    const size_t firstInSmallGroups = r * (q + 1);
 
     // Within each group the first process becomes its consumer.
-    if (process >= first_in_small_groups)
+    if (process >= firstInSmallGroups)
     {
-        m_SubStreamIndex = r + (process - first_in_small_groups) / q;
-        m_ConsumerRank = static_cast<int>(first_in_small_groups +
-                                          (m_SubStreamIndex - r) * q);
+        m_SubStreamIndex = r + (process - firstInSmallGroups) / q;
+        m_ConsumerRank =
+            static_cast<int>(firstInSmallGroups + (m_SubStreamIndex - r) * q);
     }
     else
     {

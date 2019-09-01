@@ -39,7 +39,7 @@ typedef struct
 std::string DimsToString(adios2::Dims &dims)
 {
     std::string s = "\"";
-    for (int i = 0; i < dims.size(); i++)
+    for (size_t i = 0; i < dims.size(); i++)
     {
         if (i > 0)
         {
@@ -66,7 +66,8 @@ void ProcessVariableMetadata(int rank, const std::string &name,
     for (auto &block : blocks)
     {
         /* offset in first dimension is encoding writer's rank */
-        if (block.Start.size() > 0 && block.Start[0] == rank)
+        if (block.Start.size() > 0 &&
+            block.Start[0] == static_cast<size_t>(rank))
         {
             /*std::cout << "        Rank " << rank << "     Variable '" << name
                       << "' found a block dimensions = "

@@ -308,11 +308,13 @@ void PrintBox(const Box<size_t> &box) noexcept
 void PrintDims(const Dims &dims) noexcept
 {
     std::cout << "{";
-    for (int i = 0; i < dims.size(); i++)
+    for (size_t i = 0; i < dims.size(); i++)
     {
         std::cout << dims[i];
         if (i < dims.size() - 1)
+        {
             std::cout << ",";
+        }
     }
     std::cout << "}";
 }

@@ -296,6 +296,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, MPI_Comm comm)
     Stream->CPInfo = CP_getCPInfo(Stream->DP_Interface);
 
     Stream->FinalTimestep = INT_MAX; /* set this on close */
+    Stream->LastDPNotifiedTimestep = -1;
 
     Stream->DP_Stream = Stream->DP_Interface->initReader(&Svcs, Stream, &dpInfo,
                                                          Stream->ConfigParams);
@@ -1236,11 +1237,29 @@ extern void SstReleaseStep(SstStream Stream)
     TAU_STOP_FUNC();
 }
 
+static void NotifyDPArrivedMetadataPeer(SstStream Stream)
+{
+    struct _TimestepMetadataList *TS;
+    TS = Stream->Timesteps;
+    while (TS)
+    {
+        if ((TS->MetadataMsg->Metadata != NULL) &&
+            (TS->MetadataMsg->Timestep > Stream->LastDPNotifiedTimestep))
+        {
+            Stream->DP_Interface->timestepArrived(&Svcs, Stream->DP_Stream,
+                                                  TS->MetadataMsg->Timestep,
+                                                  TS->MetadataMsg->PreloadMode);
+            Stream->LastDPNotifiedTimestep = TS->MetadataMsg->Timestep;
+        }
+        TS = TS->Next;
+    }
+}
+
 /*
  * wait for metadata for Timestep indicated to arrive, or fail with EndOfStream
  * or Error
  */
-extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
+static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                                          const float timeout_sec)
 {
 
@@ -1408,6 +1427,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
 
     TAU_STOP("Waiting on metadata per rank per timestep");
 
+    NotifyDPArrivedMetadataPeer(Stream);
     if (Entry)
     {
         if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
@@ -1458,7 +1478,7 @@ extern SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
     }
 }
 
-extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
+static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                                         const float timeout_sec)
 {
     TSMetadataDistributionMsg ReturnData;
@@ -1574,6 +1594,14 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                 releasePriorTimesteps(Stream, NextTimestep);
             }
         }
+        if (Stream->Status == PeerFailed)
+        {
+            CP_verbose(Stream,
+                       "SstAdvanceStepMin returning FatalError because of "
+                       "conn failure at timestep %d\n",
+                       Stream->ReaderTimestep);
+            return_value = SstFatalError;
+        }
         if (return_value == SstSuccess)
         {
             RootEntry = waitForNextMetadata(Stream, Stream->ReaderTimestep);
@@ -1612,6 +1640,7 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
                 msg.ReturnValue = return_value;
             }
         }
+        //        AddArrivedMetadataInfo(Stream, &msg);
         ReturnData = CP_distributeDataFromRankZero(
             Stream, &msg, Stream->CPInfo->TimestepDistributionFormat,
             &free_block);
@@ -1623,6 +1652,8 @@ extern SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode,
             &free_block);
     }
     ret = ReturnData->ReturnValue;
+
+    //    NotifyDPArrivedMetadataMin(Stream, ReturnData);
 
     if (ReturnData->ReturnValue != SstSuccess)
     {

@@ -20,6 +20,7 @@
 #include "adios2/cxx11/Engine.h"
 #include "adios2/cxx11/IO.h"
 #include "adios2/cxx11/Operator.h"
+#include "adios2/cxx11/Query.h"
 #include "adios2/cxx11/Types.h"
 #include "adios2/cxx11/Variable.h"
 #include "adios2/cxx11/fstream/ADIOS2fstream.h"

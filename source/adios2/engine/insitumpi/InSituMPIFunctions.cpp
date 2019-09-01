@@ -259,7 +259,7 @@ std::vector<MPI_Status> CompleteRequests(std::vector<MPI_Request> &requests,
 
     if (ierr == MPI_ERR_IN_STATUS)
     {
-        for (auto i = 0; i < requests.size(); i++)
+        for (size_t i = 0; i < requests.size(); i++)
         {
             if (statuses[i].MPI_ERROR == MPI_ERR_PENDING)
             {

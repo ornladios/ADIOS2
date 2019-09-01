@@ -41,17 +41,17 @@ void printDataStep(const float *data, const adios2::Dims &size,
     myfile << " step   row   columns " << offset[1] << "..."
            << offset[1] + size[1] - 1 << std::endl;
     myfile << "        ";
-    for (int j = 0; j < size[1]; j++)
+    for (size_t j = 0; j < size[1]; j++)
     {
         myfile << std::setw(9) << offset[1] + j;
     }
     myfile << std::endl;
     myfile << "------------------------------------------------------------"
               "--\n";
-    for (int i = 0; i < size[0]; i++)
+    for (size_t i = 0; i < size[0]; i++)
     {
         myfile << std::setw(5) << step << std::setw(5) << offset[0] + i;
-        for (int j = 0; j < size[1]; j++)
+        for (size_t j = 0; j < size[1]; j++)
         {
             myfile << std::setw(9) << std::setprecision(5)
                    << data[i * size[1] + j];

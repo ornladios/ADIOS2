@@ -60,7 +60,7 @@ HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[],
     npx = npy = ndx = ndy = steps = sleeptime = 0;
     gndx = gndy = posx = posy = offsx = offsy = 0;
     int expargs = (isWriter ? 8 : 4);
-    this->nproc = (unsigned int)nproc;
+    this->nproc = static_cast<unsigned int>(nproc);
 
     try
     {
@@ -90,7 +90,7 @@ HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[],
             offsy = posy * ndy;
         }
 
-        if (npx * npy != nproc)
+        if (npx * npy != static_cast<size_t>(nproc))
         {
             throw std::invalid_argument(
                 "N*M must equal the number of processes");

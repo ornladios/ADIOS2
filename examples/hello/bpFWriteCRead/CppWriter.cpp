@@ -24,9 +24,9 @@ int main(int argc, char *argv[])
     const size_t ny = 3;
     std::vector<float> data(nx * ny);
 
-    for (auto i = 0; i < nx; ++i)
+    for (size_t i = 0; i < nx; ++i)
     {
-        for (auto j = 0; j < ny; ++j)
+        for (size_t j = 0; j < ny; ++j)
         {
             data[i * ny + j] = rank * nx * ny + i * ny + j;
         }

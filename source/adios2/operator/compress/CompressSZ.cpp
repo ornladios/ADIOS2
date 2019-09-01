@@ -254,7 +254,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     }
 
     // Get type info
-    int dtype;
+    int dtype = -1;
     if (varType == helper::GetType<double>())
     {
         dtype = SZ_DOUBLE;
@@ -277,7 +277,7 @@ size_t CompressSZ::Compress(const void *dataIn, const Dims &dimensions,
     // r[0] is the fastest changing dimension and r[4] is the lowest changing
     // dimension
     // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
-    for (int i = 0; i < ndims; i++)
+    for (size_t i = 0; i < ndims; i++)
     {
         r[ndims - i - 1] = dimensions[i];
         /*
@@ -330,7 +330,7 @@ size_t CompressSZ::Decompress(const void *bufferIn, const size_t sizeIn,
     // In C, r[0] is the last dimension. In Fortran, r[0] is the first dimension
     std::vector<size_t> rs(5, 0);
     const size_t ndims = dimensions.size();
-    for (auto i = 0; i < ndims; ++i)
+    for (size_t i = 0; i < ndims; ++i)
     {
         rs[ndims - i - 1] = dimensions[i];
     }

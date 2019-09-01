@@ -53,7 +53,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
         out << " time   row   columns " << s.offsy << "..."
             << s.offsy + s.ndy - 1 << std::endl;
         out << "        ";
-        for (int j = 1; j <= s.ndy; ++j)
+        for (unsigned int j = 1; j <= s.ndy; ++j)
         {
             out << std::setw(9) << s.offsy + j - 1;
         }
@@ -66,10 +66,10 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     }
 
     out << std::fixed;
-    for (int i = 1; i <= s.ndx; ++i)
+    for (unsigned int i = 1; i <= s.ndx; ++i)
     {
         out << std::setw(5) << step << std::setw(5) << s.offsx + i - 1;
-        for (int j = 1; j <= s.ndy; ++j)
+        for (unsigned int j = 1; j <= s.ndy; ++j)
         {
             out << std::setw(9) << std::setprecision(5) << ht.T(i, j);
         }

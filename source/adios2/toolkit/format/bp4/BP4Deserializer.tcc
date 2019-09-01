@@ -73,7 +73,7 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
 
         auto itStep = std::next(indices.begin(), stepsStart);
 
-        for (auto i = 0; i < stepsCount; ++i)
+        for (size_t i = 0; i < stepsCount; ++i)
         {
             if (itStep == indices.end())
             {
@@ -225,7 +225,7 @@ void BP4Deserializer::SetVariableBlockInfo(
                                             ? Dims(blockInfo.Count.size(), 0)
                                             : blockInfo.Start;
 
-            for (auto i = 0; i < dimensions; ++i)
+            for (size_t i = 0; i < dimensions; ++i)
             {
                 if (blockInfoStart[i] + blockInfo.Count[i] > readInCount[i])
                 {
@@ -331,7 +331,7 @@ void BP4Deserializer::SetVariableBlockInfo(
                 std::reverse(readInShape.begin(), readInShape.end());
             }
 
-            for (auto i = 0; i < dimensions; ++i)
+            for (size_t i = 0; i < dimensions; ++i)
             {
                 if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
                 {
@@ -392,7 +392,7 @@ void BP4Deserializer::SetVariableBlockInfo(
 
     auto itStep = std::next(indices.begin(), blockInfo.StepsStart);
 
-    for (auto i = 0; i < blockInfo.StepsCount; ++i)
+    for (size_t i = 0; i < blockInfo.StepsCount; ++i)
     {
         const size_t step = itStep->first;
         const std::vector<size_t> &blockOffsets = itStep->second;
@@ -800,7 +800,12 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                             : header.Path + PathSeparator + header.Name;
 
     core::Variable<T> *variable = nullptr;
-    variable = engine.m_IO.InquireVariable<T>(variableName);
+    {
+        // to prevent conflict with DefineVariable
+        std::lock_guard<std::mutex> lock(m_Mutex);
+        variable = engine.m_IO.InquireVariable<T>(variableName);
+    }
+
     if (variable)
     {
         size_t endPositionCurrentStep =

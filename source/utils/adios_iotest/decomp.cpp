@@ -13,7 +13,7 @@ void decompColumnMajor(const size_t ndim, const size_t rank,
     // pos[k] = rank / prod(decomp[i], i=0..k-1) % decomp[k]
 
     size_t prod = 1;
-    for (int k = 0; k < ndim; ++k)
+    for (size_t k = 0; k < ndim; ++k)
     {
         pos[k] = rank / prod % decomp[k];
         prod *= decomp[k];

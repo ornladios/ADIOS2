@@ -77,7 +77,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         //	std::cout << "Writer size is " << writerSize << std::endl;
 
         int rankToRead = mpiRank;
-        if (writerSize < mpiSize)
+        if (writerSize < static_cast<size_t>(mpiSize))
         {
             rankToRead = mpiRank % writerSize;
         }
