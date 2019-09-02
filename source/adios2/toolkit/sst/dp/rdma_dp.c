@@ -50,6 +50,11 @@ struct fabric_state
     struct fid_cq *cq_signal;
     struct fid_av *av;
     pthread_t listener;
+#ifdef SST_HAVE_CRAY_DRC
+    drc_info_handle_t drc_info;
+    uint32_t credential;
+    struct fi_gni_auth_key *auth_key;
+#endif /* SST_HAVE_CRAY_DRC */
 };
 
 /*
@@ -150,8 +155,6 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
         return;
     }
 
-    fabric->info = fi_dupinfo(info);
-
     if (info->mode & FI_CONTEXT2)
     {
         fabric->ctx = calloc(2, sizeof(*fabric->ctx));
@@ -186,6 +189,14 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params)
     fabric->addr_len = info->src_addrlen;
 
     info->domain_attr->mr_mode = FI_MR_BASIC;
+#ifdef SST_HAVE_CRAY_DRC
+    if(strstr(info->fabric_attr->prov_name, "gni") && fabric->auth_key) {
+        info->domain_attr->auth_key = (uint8_t *)fabric->auth_key;
+        info->domain_attr->auth_key_size = sizeof(struct fi_gni_raw_auth_key);
+    }
+#endif /* SST_HAVE_CRAY_DRC */ 
+    fabric->info = fi_dupinfo(info);
+
     fi_fabric(info->fabric_attr, &fabric->fabric, fabric->ctx);
     fi_domain(fabric->fabric, info, &fabric->domain, fabric->ctx);
     info->ep_attr->type = FI_EP_RDM;
@@ -241,14 +252,13 @@ typedef struct _Rdma_RS_Stream
 {
     CManager cm;
     void *CP_Stream;
-    CMFormat ReadRequestFormat;
     int Rank;
     FabricState Fabric;
+    struct _SstParams *Params;
 
     /* writer info */
     int WriterCohortSize;
     CP_PeerCohort PeerCohort;
-    struct _RdmaReaderContactInfo *ReaderContactInfo;
     struct _RdmaWriterContactInfo *WriterContactInfo;
     fi_addr_t *WriterAddr;
 } * Rdma_RS_Stream;
@@ -258,7 +268,6 @@ typedef struct _Rdma_WSR_Stream
     struct _Rdma_WS_Stream *WS_Stream;
     CP_PeerCohort PeerCohort;
     int ReaderCohortSize;
-    struct _RdmaReaderContactInfo *ReaderContactInfo;
     struct _RdmaWriterContactInfo *WriterContactInfo;
 } * Rdma_WSR_Stream;
 
@@ -286,7 +295,6 @@ typedef struct _Rdma_WS_Stream
     FabricState Fabric;
 
     TimestepList Timesteps;
-    CMFormat ReadReplyFormat;
 
     int ReaderCount;
     Rdma_WSR_Stream *Readers;
@@ -302,90 +310,21 @@ typedef struct _RdmaWriterContactInfo
     void *WS_Stream;
     size_t Length;
     void *Address;
+#ifdef SST_HAVE_CRAY_DRC
+    int Credential;
+#endif /* SST_HAVE_CRAY_DRC */
 } * RdmaWriterContactInfo;
-
-typedef struct _RdmaReadRequestMsg
-{
-    long Timestep;
-    size_t Offset;
-    size_t Length;
-    void *WS_Stream;
-    void *RS_Stream;
-    int RequestingRank;
-    int NotifyCondition;
-} * RdmaReadRequestMsg;
-
-static FMField RdmaReadRequestList[] = {
-    {"Timestep", "integer", sizeof(long),
-     FMOffset(RdmaReadRequestMsg, Timestep)},
-    {"Offset", "integer", sizeof(size_t), FMOffset(RdmaReadRequestMsg, Offset)},
-    {"Length", "integer", sizeof(size_t), FMOffset(RdmaReadRequestMsg, Length)},
-    {"WS_Stream", "integer", sizeof(void *),
-     FMOffset(RdmaReadRequestMsg, WS_Stream)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(RdmaReadRequestMsg, RS_Stream)},
-    {"RequestingRank", "integer", sizeof(int),
-     FMOffset(RdmaReadRequestMsg, RequestingRank)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(RdmaReadRequestMsg, NotifyCondition)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec RdmaReadRequestStructs[] = {
-    {"RdmaReadRequest", RdmaReadRequestList, sizeof(struct _RdmaReadRequestMsg),
-     NULL},
-    {NULL, NULL, 0, NULL}};
-
-typedef struct _RdmaReadReplyMsg
-{
-    void *RS_Stream;
-    int NotifyCondition;
-    uint64_t Key;
-    void *Addr;
-} * RdmaReadReplyMsg;
-
-static FMField RdmaReadReplyList[] = {
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(RdmaReadReplyMsg, RS_Stream)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(RdmaReadReplyMsg, NotifyCondition)},
-    {"Key", "integer", sizeof(uint64_t), FMOffset(RdmaReadReplyMsg, Key)},
-    {"Addr", "integer", sizeof(void *), FMOffset(RdmaReadReplyMsg, Addr)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec RdmaReadReplyStructs[] = {
-    {"RdmaReadReply", RdmaReadReplyList, sizeof(struct _RdmaReadReplyMsg),
-     NULL},
-    {NULL, NULL, 0, NULL}};
-
-static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                 void *client_Data, attr_list attrs);
 
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
                                    void **ReaderContactInfoPtr,
                                    struct _SstParams *Params)
 {
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
-    RdmaReaderContactInfo Contact =
-        malloc(sizeof(struct _RdmaReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
     MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
-    CMFormat F;
     FabricState Fabric;
 
     memset(Stream, 0, sizeof(*Stream));
-    memset(Contact, 0, sizeof(*Contact));
-
-    Stream->Fabric = calloc(1, sizeof(struct fabric_state));
-    init_fabric(Stream->Fabric, Params);
-    Fabric = Stream->Fabric;
-    if (!Fabric->info)
-    {
-        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
-        free(Stream);
-        free(Contact);
-        *ReaderContactInfoPtr = NULL;
-        return (NULL);
-    }
 
     /*
      * save the CP_stream value of later use
@@ -394,80 +333,14 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream,
 
     MPI_Comm_rank(comm, &Stream->Rank);
 
-    /*
-     * add a handler for read reply messages
-     */
-    Stream->ReadRequestFormat = CMregister_format(cm, RdmaReadRequestStructs);
-    F = CMregister_format(cm, RdmaReadReplyStructs);
-    CMregister_handler(F, RdmaReadReplyHandler, Svcs);
+    *ReaderContactInfoPtr = NULL;
 
-    Contact->RS_Stream = Stream;
-
-    Stream->ReaderContactInfo = Contact;
-    *ReaderContactInfoPtr = Contact;
+    if(Params) {
+        Stream->Params = malloc(sizeof(*Stream->Params));
+        memcpy(Stream->Params, Params, sizeof(*Params));
+    }
 
     return Stream;
-}
-
-static void RdmaReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
-                                   void *client_Data, attr_list attrs)
-{
-    TAU_START_FUNC();
-    RdmaReadRequestMsg ReadRequestMsg = (RdmaReadRequestMsg)msg_v;
-    Rdma_WSR_Stream WSR_Stream = ReadRequestMsg->WS_Stream;
-
-    Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
-    TimestepList tmp = WS_Stream->Timesteps;
-    CP_Services Svcs = (CP_Services)client_Data;
-
-    Svcs->verbose(WS_Stream->CP_Stream,
-                  "Got a request to read remote memory "
-                  "from reader rank %d: timestep %d, "
-                  "offset %d, length %d\n",
-                  ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
-                  ReadRequestMsg->Offset, ReadRequestMsg->Length);
-    pthread_mutex_lock(&ts_mutex);
-    while (tmp != NULL)
-    {
-        if (tmp->Timestep == ReadRequestMsg->Timestep)
-        {
-            struct _RdmaReadReplyMsg ReadReplyMsg;
-            /* memset avoids uninit byte warnings from valgrind */
-            memset(&ReadReplyMsg, 0, sizeof(ReadReplyMsg));
-            //            ReadReplyMsg.Timestep = ReadRequestMsg->Timestep;
-            //            ReadReplyMsg.DataLength = ReadRequestMsg->Length;
-            //            ReadReplyMsg.Data = tmp->Data->block +
-            //            ReadRequestMsg->Offset;
-            ReadReplyMsg.RS_Stream = ReadRequestMsg->RS_Stream;
-            ReadReplyMsg.NotifyCondition = ReadRequestMsg->NotifyCondition;
-            ReadReplyMsg.Key = tmp->Key;
-            ReadReplyMsg.Addr = tmp->Data->block + ReadRequestMsg->Offset;
-            pthread_mutex_unlock(&ts_mutex);
-            Svcs->verbose(
-                WS_Stream->CP_Stream,
-                "Sending a reply to reader rank %d for remote memory read\n",
-                ReadRequestMsg->RequestingRank);
-            Svcs->sendToPeer(WS_Stream->CP_Stream, WSR_Stream->PeerCohort,
-                             ReadRequestMsg->RequestingRank,
-                             WS_Stream->ReadReplyFormat, &ReadReplyMsg);
-            TAU_STOP_FUNC();
-            return;
-        }
-        tmp = tmp->Next;
-    }
-    pthread_mutex_unlock(&ts_mutex);
-    /*
-     * Shouldn't ever get here because we should never get a request for a
-     * timestep that we don't have.
-     */
-    fprintf(stderr, "Failed to read Timestep %ld, not found\n",
-            ReadRequestMsg->Timestep);
-    /*
-     * in the interest of not failing a writer on a reader failure, don't
-     * assert(0) here.  Probably this sort of error should close the link to
-     * a reader though.
-     */
-    TAU_STOP_FUNC();
 }
 
 typedef struct _RdmaCompletionHandle
@@ -481,108 +354,72 @@ typedef struct _RdmaCompletionHandle
     double StartWTime;
 } * RdmaCompletionHandle;
 
-static void RdmaReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                 void *client_Data, attr_list attrs)
-{
-    TAU_START_FUNC();
-    RdmaReadReplyMsg ReadReplyMsg = (RdmaReadReplyMsg)msg_v;
-    Rdma_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
-    FabricState Fabric = RS_Stream->Fabric;
-    CP_Services Svcs = (CP_Services)client_Data;
-    RdmaCompletionHandle Handle =
-        CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
-    void *LocalDesc = NULL;
-    fi_addr_t SrcAddress;
-    struct fid_mr *LocalMR;
-    struct fi_cq_data_entry CQEntry = {0};
-    ssize_t rc;
-
-    Svcs->verbose(
-        RS_Stream->CP_Stream,
-        "Got a reply to remote memory read from rank %d, condition is %d\n",
-        Handle->Rank, ReadReplyMsg->NotifyCondition);
-
-    SrcAddress = RS_Stream->WriterAddr[Handle->Rank];
-
-    pthread_mutex_lock(&fabric_mutex);
-    if (Fabric->local_mr_req)
-    {
-        // register dest buffer
-        fi_mr_reg(Fabric->domain, Handle->Buffer, Handle->Length, FI_READ, 0, 0,
-                  0, &LocalMR, Fabric->ctx);
-        LocalDesc = fi_mr_desc(LocalMR);
-    }
-
-    do
-    {
-        rc = fi_read(Fabric->signal, Handle->Buffer, Handle->Length, LocalDesc,
-                     SrcAddress, (uint64_t)ReadReplyMsg->Addr,
-                     ReadReplyMsg->Key, Fabric->ctx);
-    } while (rc == -EAGAIN);
-
-    if (rc != 0)
-    {
-        Svcs->verbose(RS_Stream->CP_Stream, "fi_read failed with code %d.\n",
-                      rc);
-    }
-    else
-    {
-        fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
-    }
-
-    if (Fabric->local_mr_req)
-    {
-        fi_close((struct fid *)LocalMR);
-    }
-    pthread_mutex_unlock(&fabric_mutex);
-
-    /*
-     * Signal the condition to wake the reader if they are waiting.
-     */
-    CMCondition_signal(cm, ReadReplyMsg->NotifyCondition);
-    TAU_STOP_FUNC();
-}
-
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream,
                                    struct _SstParams *Params)
 {
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
     MPI_Comm comm = Svcs->getMPIComm(CP_Stream);
-    CMFormat F;
     FabricState Fabric;
+    int rc;
+
 
     memset(Stream, 0, sizeof(struct _Rdma_WS_Stream));
 
+    MPI_Comm_rank(comm, &Stream->Rank);
+
     Stream->Fabric = calloc(1, sizeof(struct fabric_state));
+    Fabric = Stream->Fabric;
+#ifdef SST_HAVE_CRAY_DRC
+    if(Stream->Rank == 0) {
+        rc = drc_acquire(&Fabric->credential, DRC_FLAGS_FLEX_CREDENTIAL);
+        if(rc != DRC_SUCCESS) {
+            Svcs->verbose(CP_Stream, "Could not acquire DRC credential. Failed with %d.\n", rc);
+            goto err_out;
+        } else {
+            Svcs->verbose(CP_Stream, "DRC acquired credential id %d.\n", Fabric->credential);
+        }
+    }
+
+    MPI_Bcast(&Fabric->credential, sizeof(Fabric->credential), MPI_BYTE, 0, comm);
+    rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    if(rc != DRC_SUCCESS) {
+        Svcs->verbose(CP_Stream, "Could not access DRC credential. Failed with %d.\n", rc);
+        goto err_out;
+    }
+
+    Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
+    Fabric->auth_key->type = GNIX_AKT_RAW;
+    Fabric->auth_key->raw.protection_key = drc_get_first_cookie(Fabric->drc_info);
+    Svcs->verbose(CP_Stream, "Using protection key %08x.\n", Fabric->auth_key->raw.protection_key); 
+#endif /* SST_HAVE_CRAY_DRC */
+
     init_fabric(Stream->Fabric, Params);
     Fabric = Stream->Fabric;
     if (!Fabric->info)
     {
         Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
-        free(Stream);
-        return (NULL);
+        goto err_out;
     }
 
-    MPI_Comm_rank(comm, &Stream->Rank);
+    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n", fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     /*
      * save the CP_stream value of later use
      */
     Stream->CP_Stream = CP_Stream;
 
-    /*
-     * add a handler for read request messages
-     */
-    F = CMregister_format(cm, RdmaReadRequestStructs);
-    CMregister_handler(F, RdmaReadRequestHandler, Svcs);
-
-    /*
-     * register read reply message structure so we can send later
-     */
-    Stream->ReadReplyFormat = CMregister_format(cm, RdmaReadReplyStructs);
-
     return (void *)Stream;
+    
+err_out:
+    if(Stream) {
+        if(Stream->Fabric) {
+            free(Stream->Fabric);
+        }
+        free(Stream);
+    }
+    return(NULL);
+
 }
 
 static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
@@ -598,29 +435,11 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     RdmaWriterContactInfo ContactInfo;
     MPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
-    RdmaReaderContactInfo *providedReaderInfo =
-        (RdmaReaderContactInfo *)providedReaderInfo_v;
 
     MPI_Comm_rank(comm, &Rank);
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;
-
-    /*
-     * make a copy of writer contact information (original will not be
-     * preserved)
-     */
-    WSR_Stream->ReaderContactInfo =
-        malloc(sizeof(struct _RdmaReaderContactInfo) * readerCohortSize);
-
-    for (int i = 0; i < readerCohortSize; i++)
-    {
-        WSR_Stream->ReaderContactInfo[i].RS_Stream =
-            providedReaderInfo[i]->RS_Stream;
-        Svcs->verbose(WS_Stream->CP_Stream,
-                      "Received contact for RD_Stream %p, Reader Rank %d\n",
-                      WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
-    }
 
     WSR_Stream->ReaderCohortSize = readerCohortSize;
 
@@ -643,7 +462,9 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs,
     ContactInfo->Address = malloc(ContactInfo->Length);
     fi_getname((fid_t)Fabric->signal, ContactInfo->Address,
                &ContactInfo->Length);
-
+#ifdef SST_HAVE_CRAY_DRC
+    ContactInfo->Credential = Fabric->credential;
+#endif /* SST_HAVE_CRAY_DRC */
     WSR_Stream->WriterContactInfo = ContactInfo;
     *WriterContactInfoPtr = ContactInfo;
 
@@ -660,11 +481,42 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs,
     FabricState Fabric = RS_Stream->Fabric;
     RdmaWriterContactInfo *providedWriterInfo =
         (RdmaWriterContactInfo *)providedWriterInfo_v;
+    void *CP_Stream = RS_Stream->CP_Stream;
+    int rc;
 
     RS_Stream->PeerCohort = PeerCohort;
     RS_Stream->WriterCohortSize = writerCohortSize;
     RS_Stream->WriterAddr =
         calloc(writerCohortSize, sizeof(*RS_Stream->WriterAddr));
+
+    RS_Stream->Fabric = calloc(1, sizeof(struct fabric_state));
+    
+    Fabric = RS_Stream->Fabric;
+#ifdef SST_HAVE_CRAY_DRC
+    if(providedWriterInfo) {
+        Fabric->credential = (*providedWriterInfo)->Credential;
+    } else {
+        Svcs->verbose(CP_Stream, "Writer contact info needed to access DRC credentials.\n", rc);
+    }
+
+    rc = drc_access(Fabric->credential, 0, &Fabric->drc_info);
+    if(rc != DRC_SUCCESS) {
+        Svcs->verbose(CP_Stream, "Could not access DRC credential. Failed with %d.\n", rc);
+    }
+
+    Fabric->auth_key = malloc(sizeof(*Fabric->auth_key));
+    Fabric->auth_key->type = GNIX_AKT_RAW;
+    Fabric->auth_key->raw.protection_key = drc_get_first_cookie(Fabric->drc_info);
+    Svcs->verbose(CP_Stream, "Using protection key %08x.\n", Fabric->auth_key->raw.protection_key);
+#endif /* SST_HAVE_CRAY_DRC */
+
+    init_fabric(RS_Stream->Fabric, RS_Stream->Params);
+    if (!Fabric->info)
+    {
+        Svcs->verbose(CP_Stream, "Could not find a valid transport fabric.\n");
+    }
+
+    Svcs->verbose(CP_Stream, "Fabric Parameters:\n%s\n", fi_tostr(Fabric->info, FI_TYPE_INFO));
 
     /*
      * make a copy of writer contact information (original will not be
@@ -890,16 +742,10 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
-    RdmaReaderContactInfo ReaderContactInfo;
 
     Svcs->verbose(RS_Stream->CP_Stream, "Tearing down RDMA state on reader.\n");
     fini_fabric(RS_Stream->Fabric);
 
-    ReaderContactInfo = RS_Stream->ReaderContactInfo;
-    if (ReaderContactInfo)
-    {
-        free(ReaderContactInfo);
-    }
     free(RS_Stream->WriterContactInfo);
     free(RS_Stream->WriterAddr);
     free(RS_Stream->Fabric);
@@ -928,7 +774,6 @@ static void RdmaDestroyWriterPerReader(CP_Services Svcs,
     WS_Stream->ReaderCount--;
     pthread_mutex_unlock(&wsr_mutex);
 
-    free(WSR_Stream->ReaderContactInfo);
     if (WSR_Stream->WriterContactInfo)
     {
         WriterContactInfo = WSR_Stream->WriterContactInfo;
@@ -938,13 +783,34 @@ static void RdmaDestroyWriterPerReader(CP_Services Svcs,
     free(WSR_Stream);
 }
 
+static FMField RdmaReaderContactList[] = {
+    {"reader_ID", "integer", sizeof(void *),
+     FMOffset(RdmaReaderContactInfo, RS_Stream)},
+    {NULL, NULL, 0, 0}};
+
+static FMStructDescRec RdmaReaderContactStructs[] = {
+    {"RdmaReaderContactInfo", RdmaReaderContactList,
+     sizeof(struct _RdmaReaderContactInfo), NULL},
+    {NULL, NULL, 0, NULL}};
+
 static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 {
     Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
     TimestepList List;
+#ifdef SST_HAVE_CRAY_DRC
+    uint32_t Credential;
+
+    Credential = WS_Stream->Fabric->credential;
+#endif /* SST_HAVE_CRAY_DRC */
 
     Svcs->verbose(WS_Stream->CP_Stream, "Tearing down RDMA state on writer.\n");
     fini_fabric(WS_Stream->Fabric);
+
+#ifdef SST_HAVE_CRAY_DRC
+    if(WS_Stream->Rank == 0) {
+        drc_release(Credential, 0);
+    } 
+#endif /* SST_HAVE_CRAY_DRC */
 
     while (WS_Stream->ReaderCount > 0)
     {
@@ -963,22 +829,15 @@ static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     free(WS_Stream);
 }
 
-static FMField RdmaReaderContactList[] = {
-    {"reader_ID", "integer", sizeof(void *),
-     FMOffset(RdmaReaderContactInfo, RS_Stream)},
-    {NULL, NULL, 0, 0}};
-
-static FMStructDescRec RdmaReaderContactStructs[] = {
-    {"RdmaReaderContactInfo", RdmaReaderContactList,
-     sizeof(struct _RdmaReaderContactInfo), NULL},
-    {NULL, NULL, 0, NULL}};
-
 static FMField RdmaWriterContactList[] = {
     {"writer_ID", "integer", sizeof(void *),
      FMOffset(RdmaWriterContactInfo, WS_Stream)},
     {"Length", "integer", sizeof(int), FMOffset(RdmaWriterContactInfo, Length)},
     {"Address", "integer[Length]", sizeof(char),
      FMOffset(RdmaWriterContactInfo, Address)},
+#ifdef SST_HAVE_CRAY_DRC
+    {"Credential", "integer", sizeof(int), FMOffset(RdmaWriterContactInfo, Credential)},
+#endif /* SST_HAVE_CRAY_DRC */
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec RdmaWriterContactStructs[] = {
