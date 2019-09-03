@@ -162,6 +162,7 @@ class QueryVar : public QueryBase
 {
 public:
     QueryVar(const std::string &varName) : m_VarName(varName) {}
+    ~QueryVar() {}
 
     std::string &GetVarName() { return m_VarName; }
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
